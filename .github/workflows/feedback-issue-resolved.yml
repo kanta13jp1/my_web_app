@@ -8,13 +8,17 @@ concurrency:
   group: feedback-issue-resolved-${{ github.event.issue.number }}
   cancel-in-progress: false
 
-permissions:
-  contents: read
-  issues: read
-  pull-requests: read
+permissions: {}
 
 jobs:
   notify:
+    environment:
+      name: customer-operations-production
+      deployment: false
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
     name: Send Resolution Email
     if: contains(github.event.issue.labels.*.name, 'user-feedback')
     runs-on: ubuntu-latest
@@ -23,7 +27,7 @@ jobs:
     steps:
       - name: Extract feedback metadata
         id: meta
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const issue = context.payload.issue;
@@ -136,17 +140,16 @@ jobs:
           ISSUE_NUMBER: ${{ steps.meta.outputs.issue_number }}
           RESOLUTION_SUMMARY: ${{ steps.meta.outputs.resolution_summary }}
         run: |
+          # 旧 issue-auto-resolver EF は admin-hub へ統合済み (単体では 404)。
+          # status は action 名が含意し files_changed は常に空だったため、
+          # issue.resolve が受ける issue_id / resolution へ写して呼ぶ。
           PAYLOAD=$(jq -cn \
-            --argjson issue_number "$ISSUE_NUMBER" \
-            --arg status "resolved" \
-            --arg fix_description "$RESOLUTION_SUMMARY" \
-            --argjson files_changed "[]" \
+            --argjson issue_id "$ISSUE_NUMBER" \
+            --arg resolution "$RESOLUTION_SUMMARY" \
             '{
-              action: "record_fix",
-              issue_number: $issue_number,
-              status: $status,
-              fix_description: $fix_description,
-              files_changed: $files_changed
+              action: "issue.resolve",
+              issue_id: $issue_id,
+              resolution: $resolution
             }')
 
           curl -s -o /tmp/issue_fix_result.json -w "%{http_code}" \
@@ -154,7 +157,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/issue-auto-resolver" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/admin-hub" \
             --max-time 20 >/tmp/issue_fix_http_code.txt || true
 
       - name: Job Summary

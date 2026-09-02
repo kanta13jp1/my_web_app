@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -137,12 +140,7 @@ void main() {
 
   testWidgets('clears holdings when the user logs out', (tester) async {
     final repository = _FakeInvestmentAssetRepository([
-      _asset(
-        id: 'asset-1',
-        ticker: 'AAPL',
-        quantity: 2,
-        buyPriceJpy: 1000,
-      ),
+      _asset(id: 'asset-1', ticker: 'AAPL', quantity: 2, buyPriceJpy: 1000),
     ]);
 
     await _pumpPanel(tester, repository: repository, userId: 'user-1');
@@ -185,6 +183,74 @@ void main() {
     expect(repository.lastUpdatedDraft?.normalizedTicker, 'AAPL');
     expect(repository.lastUpdatedDraft?.currentPriceJpy, isNull);
     expect(repository.lastUpdatedDraft?.lastPricedAt, isNull);
+  });
+
+  testWidgets('shows form errors for blank, invalid, and negative values', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository(const []);
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    await tester.tap(find.byKey(const Key('investment_asset_add')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pump();
+
+    expect(find.text('銘柄コードを入力してください。'), findsOne);
+    expect(find.text('0より大きい数量を入力してください。'), findsOne);
+    expect(find.text('0以上の取得価格を入力してください。'), findsOne);
+
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_ticker_field')),
+      '7203/T',
+    );
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_quantity_field')),
+      '-1',
+    );
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_buy_price_field')),
+      '-1',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pump();
+
+    expect(
+      find.text('銘柄コードは半角英数字と . _ : - を1〜32文字で入力してください。'),
+      findsOne,
+    );
+    expect(find.text('0より大きい数量を入力してください。'), findsOne);
+    expect(find.text('0以上の取得価格を入力してください。'), findsOne);
+    expect(repository.createCalls, 0);
+  });
+
+  testWidgets('allows quantity edits for an unchanged legacy ticker', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(
+        id: 'asset-legacy',
+        ticker: 'BTC/JPY',
+        quantity: 1,
+        buyPriceJpy: 100,
+        assetType: InvestmentAssetType.crypto,
+      ),
+    ]);
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('investment_asset_edit_asset-legacy')),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_quantity_field')),
+      '2',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls, 1);
+    expect(repository.lastUpdatedDraft?.toUpdateMap()['ticker'], 'BTC/JPY');
   });
 
   testWidgets('adds, edits, and deletes an investment asset', (tester) async {
@@ -269,6 +335,79 @@ void main() {
     );
     expect(find.text('BTC'), findsOne);
   });
+
+  testWidgets('previews CSV and skips an existing ticker by default', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(id: 'asset-aapl', ticker: 'AAPL', quantity: 1, buyPriceJpy: 10000),
+    ]);
+    final csv = Uint8List.fromList(
+      utf8.encode('''
+銘柄,数量,取得単価,現在値
+AAPL Apple,3,16000,19000
+MSFT Microsoft,4,20000,22000
+'''),
+    );
+    await _pumpPanel(
+      tester,
+      repository: repository,
+      userId: 'user-1',
+      csvBytesPicker: () async => csv,
+    );
+
+    await tester.tap(find.byKey(const Key('investment_asset_csv_import')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('investment_csv_preview_dialog')), findsOne);
+    expect(find.text('SBI証券 CSVプレビュー'), findsOne);
+    expect(find.textContaining('新規1・更新0・スキップ1'), findsOne);
+
+    await tester.tap(find.byKey(const Key('investment_csv_import_confirm')));
+    await tester.pumpAndSettle();
+
+    expect(repository.createCalls, 1);
+    expect(repository.updateCalls, 0);
+    expect(repository.lastCreatedDraft?.normalizedTicker, 'MSFT');
+    expect(find.text('MSFT'), findsOne);
+  });
+
+  testWidgets('updates an existing ticker when update policy is selected', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(id: 'asset-aapl', ticker: 'AAPL', quantity: 1, buyPriceJpy: 10000),
+    ]);
+    final csv = Uint8List.fromList(
+      utf8.encode('''
+銘柄,数量,取得単価,現在値
+AAPL Apple,3,16000,19000
+'''),
+    );
+    await _pumpPanel(
+      tester,
+      repository: repository,
+      userId: 'user-1',
+      csvBytesPicker: () async => csv,
+    );
+
+    await tester.tap(find.byKey(const Key('investment_asset_csv_import')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('更新'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.textContaining('新規0・更新1・スキップ0'), findsOne);
+    await tester.tap(find.byKey(const Key('investment_csv_import_confirm')));
+    await tester.pumpAndSettle();
+
+    expect(repository.createCalls, 0);
+    expect(repository.updateCalls, 1);
+    expect(repository.lastUpdatedDraft?.normalizedTicker, 'AAPL');
+    expect(repository.lastUpdatedDraft?.quantity, 3);
+    expect(repository.lastUpdatedDraft?.buyPriceJpy, 16000);
+  });
 }
 
 Future<void> _pumpPanel(
@@ -276,6 +415,7 @@ Future<void> _pumpPanel(
   required InvestmentAssetRepository repository,
   required String? userId,
   DateTime Function()? now,
+  InvestmentCsvBytesPicker? csvBytesPicker,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -287,6 +427,7 @@ Future<void> _pumpPanel(
               repository: repository,
               userId: userId,
               now: now,
+              csvBytesPicker: csvBytesPicker,
             ),
           ),
         ),

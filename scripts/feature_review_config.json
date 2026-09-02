@@ -21,14 +21,14 @@
       {
         "slug": "home",
         "path": "/",
-        "source": "lib/pages/home_dashboard_page.dart",
+        "source": "lib/pages/home_page.dart",
         "priority": "high",
         "review_categories": ["ui_bug", "a11y", "performance"]
       },
       {
         "slug": "landing",
         "path": "/lp",
-        "source": "lib/pages/landing_page.dart",
+        "source": "lib/widgets/landing_page_content.dart",
         "priority": "high",
         "review_categories": ["ui_bug", "a11y", "outdated_docs"]
       },
@@ -42,7 +42,7 @@
       {
         "slug": "ai_university",
         "path": "/ai-university",
-        "source": "lib/pages/ai_university_v2_page.dart",
+        "source": "lib/pages/gemini_university_v2_page.dart",
         "priority": "high",
         "review_categories": ["ui_bug", "a11y", "performance", "outdated_docs"]
       },
@@ -69,7 +69,7 @@
       },
       {
         "slug": "user_manual",
-        "path": "/manual",
+        "path": "/user-manual",
         "source": "lib/pages/user_manual_page.dart",
         "priority": "low",
         "review_categories": ["outdated_docs"]

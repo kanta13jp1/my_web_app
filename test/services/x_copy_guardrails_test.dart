@@ -160,4 +160,71 @@ void main() {
       expect(w, contains('このまま投稿も可能'));
     });
   });
+
+  group('detectStaleYears (年号誤りの事後検出)', () {
+    // 実測: プロンプトに「never write 2024」があるのに X へ出荷された実例。
+    final now = DateTime(2026, 7, 28);
+
+    test('実際に出荷された 2024 誤記を検出する', () {
+      final hits = detectStaleYears(
+        'デイリーブリーフィング — 2024/07/05 朝',
+        now: now,
+      );
+      expect(hits, ['2024']);
+    });
+
+    test('当年・近傍年・翌年の正当な参照は誤検出しない', () {
+      // 2023年統一地方選実績 / 2027年統一地方選 は実在の投稿文面。
+      final hits = detectStaleYears(
+        '2026/07/28時点。2023年統一地方選実績: 183。次回は2027年春。',
+        now: now,
+      );
+      expect(hits, isEmpty);
+    });
+
+    test('年に見えない4桁や年号でない数値は拾わない', () {
+      // 「700まで残り 317人」「公式地方議員数: 383人」などの実数行。
+      final hits = detectStaleYears(
+        '公式地方議員数: 383人 基準340との差分: 43人 700まで残り: 317人',
+        now: now,
+      );
+      expect(hits, isEmpty);
+    });
+
+    test('裸の年(過去実績への言及)は見ない — 完全な日付だけを見る', () {
+      // 実在の投稿文面。ここを拾うと毎回誤警告になり、警告自体が無視される。
+      final hits = detectStaleYears(
+        '2023年統一地方選実績: 62 + 121 = 183',
+        now: now,
+      );
+      expect(hits, isEmpty);
+    });
+
+    test('将来の節目の完全な日付は許す', () {
+      final hits = detectStaleYears(
+        '次回統一地方選(2027/04/11目安)まであと263日',
+        now: now,
+      );
+      expect(hits, isEmpty);
+    });
+
+    test('ISO 形式の取得日時(当年)は許す', () {
+      final hits = detectStaleYears(
+        '取得日時: 2026-07-22T23:13:36.375',
+        now: now,
+      );
+      expect(hits, isEmpty);
+    });
+
+    test('composeStaleYearWarning は投稿を止めず今年を示す', () {
+      final w = composeStaleYearWarning(['2024'], now: now);
+      expect(w, isNotNull);
+      expect(w, contains('2024'));
+      expect(w, contains('2026年'));
+    });
+
+    test('クリーンなら警告は出ない', () {
+      expect(composeStaleYearWarning(const [], now: now), isNull);
+    });
+  });
 }

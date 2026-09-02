@@ -196,9 +196,66 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/mcp-well-known/index.ts"
 
+[functions.resource-optimizer]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/resource-optimizer/index.ts"
+
+[functions.growth-weekly-digest]
+enabled = true
+# Owner-only aggregate endpoint: gateway JWT plus handler-level admin/service-role
+# authorization. GET and anonymous access are intentionally unavailable.
+verify_jwt = true
+entrypoint = "./functions/growth-weekly-digest/index.ts"
+
+[functions.decision-events]
+enabled = true
+# Internal automation only. The function also performs a constant-time exact
+# service-role bearer check before parsing or writing an event.
+verify_jwt = true
+entrypoint = "./functions/decision-events/index.ts"
+
 [functions.autonomous-ops]
 enabled = true
 # Browser-facing: deployed with --no-verify-jwt; owner auth is enforced in-function
 # (user_profiles.is_admin). Requires Function Secret GH_ACTIONS_READ_TOKEN.
 verify_jwt = false
 entrypoint = "./functions/autonomous-ops/index.ts"
+
+[functions.notion-migration-hub]
+enabled = true
+# Browser CORS preflight has no JWT, so gateway verification is disabled.
+# The handler still requires auth.getUser() plus user_profiles.is_admin before
+# using the owner-only NOTION_API_TOKEN or writing migration inventory rows.
+verify_jwt = false
+entrypoint = "./functions/notion-migration-hub/index.ts"
+
+[functions.video-generation-hub]
+enabled = true
+# Browser CORS preflight has no JWT, so gateway verification is disabled.
+# The handler still requires a non-anonymous user through auth.getUser() before
+# every action; internal GPU-engine details are never sent to the client.
+verify_jwt = false
+entrypoint = "./functions/video-generation-hub/index.ts"
+
+[functions.video-worker-hub]
+enabled = true
+# The first-party GPU worker has no user JWT. A dedicated 256-bit
+# VIDEO_WORKER_TOKEN is verified in-function before any lease operation.
+verify_jwt = false
+entrypoint = "./functions/video-worker-hub/index.ts"
+
+[functions.video-commerce-hub]
+enabled = true
+# Browser preflight and service-role hourly automation have no user JWT. The
+# handler verifies either auth.getUser() or the exact service-role bearer and
+# then requires an owner user_id before any publication mutation.
+verify_jwt = false
+entrypoint = "./functions/video-commerce-hub/index.ts"
+
+[functions.account-lifecycle]
+enabled = true
+# Browser preflight has no JWT. User requests are verified again with
+# auth.getUser(); scheduled destructive processing requires service_role.
+verify_jwt = false
+entrypoint = "./functions/account-lifecycle/index.ts"

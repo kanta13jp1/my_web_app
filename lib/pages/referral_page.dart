@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../domain/referral_benefit_copy.dart';
 import '../services/growth_mission_service.dart';
 
 /// 紹介プログラムページ
@@ -74,14 +75,7 @@ class _ReferralPageState extends State<ReferralPage> {
   Future<void> _shareInvite() async {
     final inviteUrl = _inviteUrl;
     if (inviteUrl == null) return;
-    final text = '''
-自分株式会社を一緒に試してみませんか？
-
-Notion・Evernote・MoneyForward・Slack・X の機能を1つに統合したAIライフマネジメントアプリです。
-
-招待リンク:
-$inviteUrl
-''';
+    final text = ReferralBenefitCopy.buildShareText(inviteUrl);
     await SharePlus.instance.share(
       ShareParams(
         subject: '自分株式会社への招待',
@@ -178,7 +172,7 @@ $inviteUrl
           ),
           const SizedBox(height: 14),
           Text(
-            '紹介リンクで初回体験までつなげる',
+            ReferralBenefitCopy.headline,
             style: TextStyle(
               color: colorScheme.onPrimaryContainer,
               fontSize: 22,
@@ -187,7 +181,7 @@ $inviteUrl
           ),
           const SizedBox(height: 8),
           Text(
-            '招待リンクには紹介コードとUTMを付与します。友達がリンクから登録すると、紹介実績として集計されます。',
+            '招待リンクには紹介コードとUTMを付与します。${ReferralBenefitCopy.detail}',
             style: TextStyle(
               color: colorScheme.onPrimaryContainer.withValues(alpha: 0.82),
               height: 1.6,
@@ -252,7 +246,7 @@ $inviteUrl
         Expanded(
           child: _buildStatCard(
             colorScheme,
-            label: '登録完了',
+            label: '特典成立',
             value: '${_snapshot.successfulReferrals}',
             icon: Icons.verified_outlined,
           ),
@@ -403,7 +397,12 @@ $inviteUrl
         const SizedBox(height: 10),
         _buildStep(colorScheme, 1, 'リンクを送る', 'LINE・X・Slackなどで招待リンクを共有します。'),
         _buildStep(colorScheme, 2, '友達が登録する', '紹介コードは端末に保存され、ログイン後に紐づきます。'),
-        _buildStep(colorScheme, 3, '実績が増える', '登録完了した紹介は、グロースダッシュボードにも反映されます。'),
+        _buildStep(
+          colorScheme,
+          3,
+          'Pro課金で特典成立',
+          '登録だけでは報酬を付与せず、友達のPro課金が確認できた時点で2人分のクレジットを一度だけ付与します。',
+        ),
       ],
     );
   }
@@ -469,7 +468,7 @@ $inviteUrl
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              '報酬設計は 1 登録完了 = 500 bonus points を基準にしています。次の実装でランキングと報酬表示を広げます。',
+              ReferralBenefitCopy.detail,
               style: TextStyle(
                 color: colorScheme.onSecondaryContainer,
                 height: 1.6,

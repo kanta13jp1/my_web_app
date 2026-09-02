@@ -55,6 +55,8 @@ void main() {
     expect(review.isFallback, isTrue);
     expect(review.source, 'local-kpi-engine');
     expect(review.summary, contains('浪費抑制スコア'));
+    expect(review.summary, contains('AI連携に失敗しました。浪費抑制スコア'));
+    expect(review.summary, isNot(contains('。。')));
   });
 }
 

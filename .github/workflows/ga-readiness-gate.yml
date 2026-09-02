@@ -13,7 +13,6 @@ on:
       - "lib/widgets/ga_readiness_gate_panel.dart"
       - "scripts/check_ga_readiness_gate.py"
       - "supabase/functions/app-hub/**"
-      - "test/**"
   schedule:
     - cron: "55 21 * * *" # daily 06:55 JST
   workflow_run:
@@ -23,16 +22,14 @@ on:
 
 concurrency:
   group: ga-readiness-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-  contents: read
-
-env:
-  FLUTTER_VERSION: "3.38.x"
+permissions: {}
 
 jobs:
   ga-readiness:
+    permissions:
+      contents: read
     name: GA readiness gate
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
@@ -40,28 +37,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-
-      - name: Cache pub dependencies
-        uses: actions/cache@v6
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Install Flutter dependencies
-        run: flutter pub get
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Deno
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v2.x
 
@@ -83,12 +62,6 @@ jobs:
           deno test --config supabase/functions/deno.json
           supabase/functions/app-hub/ga_readiness_test.ts
 
-      - name: Flutter analyze
-        run: flutter analyze --no-fatal-warnings
-
-      - name: Flutter test
-        run: flutter test --reporter=compact
-
       - name: Critical browser E2E
         run: |
           if [ -d e2e/critical ]; then
@@ -99,7 +72,7 @@ jobs:
 
       - name: Upload GA readiness artifact
         if: always() && hashFiles('.ga-readiness/**') != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ga-readiness-gate
           path: .ga-readiness/

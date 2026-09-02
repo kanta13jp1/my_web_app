@@ -28,12 +28,14 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CANONICAL = REPO_ROOT / ".claude" / "inject-rules.txt"
+CANONICAL_REL = ".claude/inject-rules.txt"
+CANONICAL = REPO_ROOT / CANONICAL_REL
 HOME = Path.home() / ".claude" / "hooks" / "inject-rules.txt"
 
 # Karpathy 80 行 KPI
@@ -91,6 +93,27 @@ def read_text(path: Path) -> str | None:
             return f.read()
     except OSError:
         return None
+
+
+def read_text_from_ref(ref: str) -> str | None:
+    """Read the canonical rules out of a git ref without touching the working tree.
+
+    Callers that run unattended (the daily scheduled sync) use this so they never
+    need the checkout to be on a particular branch or clean. Reading a blob is
+    safe no matter what branch the repo happens to be sitting on.
+    """
+    proc = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "show", f"{ref}:{CANONICAL_REL}"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if proc.returncode != 0:
+        return None
+    return proc.stdout
 
 
 def write_text(path: Path, content: str) -> None:
@@ -179,10 +202,11 @@ def cmd_dry_run(canonical: str, home: str | None) -> dict:
     }
 
 
-def cmd_apply(canonical: str) -> dict:
+def cmd_apply(canonical: str, source: str) -> dict:
     write_text(HOME, canonical)
     return {
         "mode": "apply",
+        "source": source,
         "wrote": str(HOME),
         "lines": line_count(canonical),
     }
@@ -205,13 +229,31 @@ def main() -> int:
     g.add_argument("--reverse", action="store_true", help="home → canonical (= 開発者編集 push 用)")
     g.add_argument("--verify", action="store_true", help="integrity check (= 行数 / rule 数 / critical rule 残存)")
     ap.add_argument("--json", action="store_true", help="JSON output")
+    ap.add_argument(
+        "--from-ref",
+        metavar="REF",
+        help=(
+            "canonical を作業ツリーでなく git ref から読む (例: origin/main)。"
+            "作業ツリーに一切触れないので branch 状態や dirty 状態に依存しない (= 無人実行向け)。"
+            "既定は作業ツリー読み (= 開発者のローカル編集をそのまま反映)"
+        ),
+    )
     args = ap.parse_args()
 
-    canonical_text = read_text(CANONICAL)
+    if args.from_ref:
+        if args.reverse:
+            print("[error] --from-ref は --reverse と併用できません", file=sys.stderr)
+            return 2
+        canonical_source = args.from_ref
+        canonical_text = read_text_from_ref(args.from_ref)
+    else:
+        canonical_source = str(CANONICAL)
+        canonical_text = read_text(CANONICAL)
+
     home_text = read_text(HOME)
 
     if canonical_text is None:
-        print(f"[error] canonical not found: {CANONICAL}", file=sys.stderr)
+        print(f"[error] canonical not found: {canonical_source}", file=sys.stderr)
         return 2
 
     if args.verify:
@@ -244,7 +286,7 @@ def main() -> int:
         return 0 if result["canonical"]["kpi_pass"] else 1
 
     if args.apply:
-        result = cmd_apply(canonical_text)
+        result = cmd_apply(canonical_text, canonical_source)
     elif args.reverse:
         if home_text is None:
             print(f"[error] home not found: {HOME}", file=sys.stderr)

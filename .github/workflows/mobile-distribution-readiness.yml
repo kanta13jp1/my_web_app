@@ -36,8 +36,7 @@ on:
     types:
       - completed
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: mobile-distribution-readiness-${{ github.event.pull_request.number || github.event.workflow_run.id || github.run_id }}
@@ -45,6 +44,8 @@ concurrency:
 
 jobs:
   readiness:
+    permissions:
+      contents: read
     name: Mobile Distribution Readiness
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
@@ -67,7 +68,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
@@ -88,7 +89,7 @@ jobs:
           python scripts/check_mobile_distribution_readiness.py "${args[@]}"
 
       - name: Upload distribution readiness report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: mobile-distribution-readiness-report
           path: tmp/mobile-distribution-readiness/report.json

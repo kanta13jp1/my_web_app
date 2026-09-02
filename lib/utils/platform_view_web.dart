@@ -15,6 +15,22 @@ void registerIframeViewFactory(String viewId, String src) {
   });
 }
 
+void registerVideoViewFactory(String viewId, String src) {
+  ui_web.platformViewRegistry.registerViewFactory(viewId, (int viewIdInt) {
+    final video = web.HTMLVideoElement()
+      ..src = src
+      ..controls = true
+      ..preload = 'metadata'
+      ..setAttribute('playsinline', 'true')
+      ..setAttribute('aria-label', 'AGI Fireworks video')
+      ..style.backgroundColor = '#000000'
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.objectFit = 'contain';
+    return video;
+  });
+}
+
 void registerSandboxedSrcDocIframeViewFactory(
   String viewId,
   String srcDoc, {

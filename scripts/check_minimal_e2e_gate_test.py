@@ -52,6 +52,20 @@ class MinimalE2EGateTest(unittest.TestCase):
         self.assertTrue(ok, messages)
         self.assertFalse(app_change)
 
+    def test_non_app_change_does_not_require_e2e_declaration(self) -> None:
+        ok, messages, app_change = validate(
+            "",
+            [".github/dependabot.yml", ".github/workflows/ci.yml"],
+            set(),
+        )
+
+        self.assertTrue(ok, messages)
+        self.assertFalse(app_change)
+        self.assertEqual(
+            messages,
+            ["Skipped because no application runtime code changed."],
+        )
+
     def test_requires_minimal_black_box_language(self) -> None:
         ok, messages, _ = validate(
             "Tests added.",

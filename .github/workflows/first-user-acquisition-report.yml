@@ -1,0 +1,274 @@
+name: Weekly Existing-user and Revenue KPI
+
+on:
+  schedule:
+    - cron: "15 0 * * 1" # Monday 09:15 JST
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Measured acquisition source"
+        type: choice
+        options:
+          - zenn
+          - x
+        default: zenn
+      medium:
+        description: "UTM medium"
+        type: string
+        default: organic
+      content:
+        description: "UTM content variant"
+        type: string
+        default: oauth_case_study_a
+      campaign_started_at:
+        description: "Publication time in ISO 8601 UTC"
+        type: string
+        required: true
+        default: "2026-08-19T17:46:00Z"
+      limit:
+        description: "Maximum X log rows inspected (X source only)"
+        type: number
+        default: 100
+
+concurrency:
+  group: first-user-acquisition-report-${{ inputs.source || 'zenn' }}-${{ inputs.content || 'oauth_case_study_a' }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  report:
+    environment:
+      name: analytics-production
+      deployment: false
+    permissions:
+      contents: read
+    name: Build privacy-safe aggregate funnel report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || 'https://smmkxxavexumewbfaqpy.supabase.co' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      UTM_SOURCE: ${{ inputs.source || 'zenn' }}
+      UTM_MEDIUM: ${{ inputs.medium || 'organic' }}
+      UTM_CONTENT: ${{ inputs.content || 'oauth_case_study_a' }}
+      CAMPAIGN_STARTED_AT: ${{ inputs.campaign_started_at || '2026-08-19T17:46:00Z' }}
+      REPORT_LIMIT: ${{ inputs.limit || 100 }}
+
+    steps:
+      - name: Validate report inputs and credential
+        shell: bash
+        run: |
+          test -n "${SUPABASE_SERVICE_ROLE_KEY:-}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+          [[ "${UTM_SOURCE}" =~ ^(x|zenn)$ ]] || {
+            echo "::error::source must be x or zenn."
+            exit 1
+          }
+          [[ "${UTM_MEDIUM}" =~ ^[a-z0-9_-]{1,64}$ ]]
+          [[ "${UTM_CONTENT}" =~ ^[a-z0-9_-]{1,64}$ ]]
+          date --date="${CAMPAIGN_STARTED_AT}" >/dev/null
+
+      - name: Build aggregate report
+        shell: bash
+        run: |
+          mkdir -p tmp/first-user-acquisition-report
+          jq -n \
+            --arg action "acquisition.first_user_funnel" \
+            --arg source "${UTM_SOURCE}" \
+            --arg medium "${UTM_MEDIUM}" \
+            --arg content "${UTM_CONTENT}" \
+            --arg startedAt "${CAMPAIGN_STARTED_AT}" \
+            --argjson limit "${REPORT_LIMIT}" \
+            '{
+              action: $action,
+              utmSource: $source,
+              utmMedium: $medium,
+              utmContent: $content,
+              campaignStartedAt: $startedAt,
+              limit: $limit
+            }' > tmp/first-user-acquisition-report/request.json
+
+          http_code=$(curl --silent --show-error \
+            --output tmp/first-user-acquisition-report/report.json \
+            --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @tmp/first-user-acquisition-report/request.json)
+          if [ "${http_code}" != "200" ]; then
+            jq -c . tmp/first-user-acquisition-report/report.json || true
+            echo "::error::First-user report returned HTTP ${http_code}."
+            exit 1
+          fi
+          jq -e --arg source "${UTM_SOURCE}" '
+            .success == true and
+            .attribution.utmSource == $source and
+            .privacy.aggregateOnly == true and
+            .privacy.containsRawVisitorIds == false
+          ' tmp/first-user-acquisition-report/report.json >/dev/null
+
+      - name: Build aggregate existing-user retention report
+        shell: bash
+        run: |
+          report_dir=tmp/first-user-acquisition-report
+          http_code=$(curl --silent --show-error \
+            --output "${report_dir}/existing-user-retention.json" \
+            --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/rest/v1/rpc/display_mode_experiment_summary" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{}')
+          if [ "${http_code}" != "200" ]; then
+            jq -c . "${report_dir}/existing-user-retention.json" || true
+            echo "::error::Existing-user retention report returned HTTP ${http_code}."
+            exit 1
+          fi
+          jq -e '
+            type == "object" and
+            (.weekly | type == "array") and
+            (.weekly_retention | type == "array") and
+            ([paths(scalars) as $path | $path[-1] | tostring] |
+              all(. != "user_id" and . != "email"))
+          ' "${report_dir}/existing-user-retention.json" >/dev/null
+
+      - name: Build acquisition cohort and route evidence
+        shell: bash
+        run: |
+          report_dir=tmp/first-user-acquisition-report
+          http_code=$(curl --silent --show-error \
+            --output "${report_dir}/growth-evidence.json" \
+            --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/rest/v1/rpc/get_tiger_growth_evidence_summary" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"p_window_days":90}')
+          if [ "${http_code}" != "200" ]; then
+            jq -c . "${report_dir}/growth-evidence.json" || true
+            echo "::error::Growth evidence report returned HTTP ${http_code}."
+            exit 1
+          fi
+          jq -e '
+            type == "object" and
+            .privacy.aggregateOnly == true and
+            .privacy.containsUserIds == false and
+            .privacy.containsVisitorIds == false and
+            .privacy.containsEmail == false and
+            .privacy.containsName == false and
+            .privacy.containsPromptText == false and
+            (.cohorts | type == "array") and
+            (.routes | type == "array") and
+            ([paths(scalars) as $path | $path[-1] | tostring] |
+              all(. != "user_id" and . != "auth_user_id" and
+                  . != "visitor_id" and . != "email" and . != "name")) and
+            ([.. | strings] |
+              all(test("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$") | not))
+          ' "${report_dir}/growth-evidence.json" >/dev/null
+
+      - name: Build plan economics readiness evidence
+        shell: bash
+        run: |
+          report_dir=tmp/first-user-acquisition-report
+          http_code=$(curl --silent --show-error \
+            --output "${report_dir}/plan-economics.json" \
+            --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/rest/v1/rpc/get_tiger_plan_economics_summary" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"p_window_days":30}')
+          if [ "${http_code}" != "200" ]; then
+            jq -c . "${report_dir}/plan-economics.json" || true
+            echo "::error::Plan economics report returned HTTP ${http_code}."
+            exit 1
+          fi
+          jq -e '
+            type == "object" and
+            .privacy.aggregateOnly == true and
+            .privacy.containsUserIds == false and
+            .privacy.containsCustomerIds == false and
+            .privacy.containsEmail == false and
+            .privacy.containsPromptText == false and
+            (.plans | type == "array") and
+            (.missingInputs | type == "array" and length > 0) and
+            .decisionMetrics.grossMarginRate == null and
+            .decisionMetrics.customerAcquisitionCostYen == null and
+            .decisionMetrics.paybackMonths == null and
+            .decisionMetrics.monthlyChurnRate == null and
+            .decisionMetrics.lifetimeValueYen == null and
+            ([paths(scalars) as $path | $path[-1] | tostring] |
+              all(. != "user_id" and . != "customer_id" and . != "email"))
+          ' "${report_dir}/plan-economics.json" >/dev/null
+
+      - name: Publish aggregate summary
+        shell: bash
+        run: |
+          report=tmp/first-user-acquisition-report/report.json
+          retention=tmp/first-user-acquisition-report/existing-user-retention.json
+          growth=tmp/first-user-acquisition-report/growth-evidence.json
+          economics=tmp/first-user-acquisition-report/plan-economics.json
+          retention_rate=$(jq -r '.weekly_retention[0].rate // "not available"' "${retention}")
+          if [ "${retention_rate}" != "not available" ]; then
+            retention_rate="${retention_rate}%"
+          fi
+          {
+            echo "## First-user acquisition report"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Source | $(jq -r '.attribution.utmSource' "${report}") |"
+            echo "| Campaign | $(jq -r '.attribution.utmCampaign' "${report}") |"
+            echo "| Content | $(jq -r '.attribution.utmContent' "${report}") |"
+            echo "| Started at | $(jq -r '.campaign.startedAt // "not available"' "${report}") |"
+            echo "| Age (hours) | $(jq -r '.campaign.ageHours // "not available"' "${report}") |"
+            echo "| Decision | $(jq -r '.decision.stage' "${report}") |"
+            echo "| Next variable | $(jq -r '.decision.nextVariable' "${report}") |"
+            echo "| Existing-user KPI week | $(jq -r '.weekly_retention[0].week_start // "not available"' "${retention}") |"
+            echo "| Standard-mode retained users | $(jq -r '.standard_retained // 0' "${retention}") |"
+            echo "| Standard-mode retention rate | ${retention_rate} |"
+            echo "| External revenue (JPY) | $(jq -r '.revenue.revenueJpy' "${report}") |"
+            echo
+            echo "### Unique-user funnel counts"
+            echo
+            echo '```json'
+            jq '.funnel.counts' "${report}"
+            echo '```'
+            echo
+            echo "### Acquisition-source cohort evidence"
+            echo
+            echo '```json'
+            jq '.cohorts' "${growth}"
+            echo '```'
+            echo
+            echo "### Top route evidence"
+            echo
+            echo '```json'
+            jq '.routes[:20]' "${growth}"
+            echo '```'
+            echo
+            echo "### Plan economics readiness"
+            echo
+            echo '```json'
+            jq '{plans, decisionMetrics, missingInputs}' "${economics}"
+            echo '```'
+            echo
+            echo "Metric definitions are included in the JSON reports. The artifact contains aggregate counts only; user, customer, and visitor IDs are omitted."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload aggregate report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: first-user-acquisition-report-${{ inputs.source }}-${{ github.run_id }}
+          path: tmp/first-user-acquisition-report/
+          if-no-files-found: error
+          retention-days: 30

@@ -5,20 +5,24 @@ name: Local Election Snapshot Queue
 # x.candidate approval/finalization actions.
 on:
   schedule:
-    # Daily at 05:35 JST. A daily baseline gives useful diffs without tying
-    # collection to the public posting cadence.
-    - cron: "35 20 * * *"
+    # Every six hours at :35. This follows the official endorsement collector
+    # while keeping collection independent from the public posting cadence.
+    - cron: "35 */6 * * *"
   workflow_dispatch:
 
 concurrency:
   group: local-election-snapshot-queue
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   snapshot-and-queue:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -50,7 +54,7 @@ jobs:
             --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
             --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             --header "Content-Type: application/json" \
-            --data '{"action":"snapshotAndQueue","includeAiSummary":false}' \
+            --data '{"action":"snapshotAndQueue","mode":"local","includeAiSummary":false}' \
             --output "${response_file}" \
             "${SUPABASE_URL}/functions/v1/local-election-intelligence"; then
             if jq -e . "${response_file}" >/dev/null 2>&1; then

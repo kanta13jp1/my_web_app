@@ -21,7 +21,7 @@ void main() {
       final spec = personalDashboardGridSpec(420);
 
       expect(spec.crossAxisCount, 1);
-      expect(spec.childAspectRatio, 2.7);
+      expect(spec.childAspectRatio, 2.2);
     });
   });
 

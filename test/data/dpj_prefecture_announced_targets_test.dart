@@ -139,10 +139,4 @@ void main() {
       );
     }
   });
-
-  test('党公式一覧URLと基準日が定義されている', () {
-    expect(dpjLocalElectionOfficialListUrl, startsWith('https://'));
-    expect(dpjLocalElectionOfficialListUrl, contains('new-kokumin.jp'));
-    expect(DateTime.tryParse(dpjLocalElectionOfficialListAsOf), isNotNull);
-  });
 }

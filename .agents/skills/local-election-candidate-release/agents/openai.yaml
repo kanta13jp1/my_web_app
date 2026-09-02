@@ -1,0 +1,4 @@
+interface:
+  display_name: "Local Election Candidate Release"
+  short_description: "Safely release official local-election candidate updates"
+  default_prompt: "Use $local-election-candidate-release to refresh the official local-election candidate data, validate the Flutter changes, and monitor the release through production."

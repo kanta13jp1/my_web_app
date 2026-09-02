@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as web;
+
+import '../domain/referral_benefit_copy.dart';
 import '../services/growth_mission_service.dart';
 
 /// ホーム画面に表示する友達招待カード。
@@ -62,10 +64,10 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
   }
 
   void _shareToX() {
-    final text = '自分株式会社を一緒に試してみませんか？\n'
-        'Notion・Evernote・MoneyForward・Slack・Xなど21競合の機能を1アプリに統合。完全無料👇\n'
-        '$_shareUrl\n'
-        '#buildinpublic #FlutterWeb #自分株式会社';
+    final text = ReferralBenefitCopy.buildShareText(
+      _shareUrl,
+      includeHashtags: true,
+    );
     final intentUrl =
         'https://x.com/intent/tweet?text=${Uri.encodeComponent(text)}';
     web.window.open(intentUrl, '_blank');
@@ -73,9 +75,12 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
 
   void _nativeShare() {
     try {
-      const text = '21SaaS統合の自分株式会社を試してみよう！完全無料。';
       web.window.navigator.share(
-        web.ShareData(title: '自分株式会社', text: text, url: _shareUrl),
+        web.ShareData(
+          title: '自分株式会社',
+          text: ReferralBenefitCopy.shareSummary,
+          url: _shareUrl,
+        ),
       );
     } catch (_) {
       // Web Share API 非対応ブラウザはフォールバックとしてコピー
@@ -132,7 +137,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '友達を招待する',
+                      ReferralBenefitCopy.headline,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -141,7 +146,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                       ),
                     ),
                     Text(
-                      '招待リンクをシェアして一緒に使おう',
+                      'Pro課金成立で、2人の次回請求に1か月分を自動充当',
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark

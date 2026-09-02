@@ -3,6 +3,7 @@ import {
   assertRejects,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  chargeRefundDecision,
   checkoutPaymentDecision,
   claimStripeWebhookEvent,
   completeStripeWebhookEvent,
@@ -10,6 +11,28 @@ import {
   processStripeWebhookEventOnce,
   StripeWebhookRpcClient,
 } from "./event_processing.ts";
+
+/**
+ * `charge.refunded` の実 payload の形をそのまま再現する fixture。
+ * HexCiv 買い切り (¥500) の全額返金を想定。
+ */
+function refundedCharge(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    id: "ch_1QxYzAIriTNCQL2hexciv",
+    object: "charge",
+    amount: 500,
+    amount_refunded: 500,
+    currency: "jpy",
+    captured: true,
+    paid: true,
+    refunded: true,
+    payment_intent: "pi_1QxYzAIriTNCQL2hexciv",
+    status: "succeeded",
+    ...overrides,
+  };
+}
 
 class FakeRpcClient implements StripeWebhookRpcClient {
   calls: Array<{ functionName: string; args: Record<string, unknown> }> = [];
@@ -40,6 +63,74 @@ Deno.test("checkoutPaymentDecision only fulfills paid sessions", () => {
     paymentStatus: "",
     reason: "checkout_not_paid",
   });
+});
+
+Deno.test("chargeRefundDecision revokes access on a full refund", () => {
+  assertEquals(chargeRefundDecision(refundedCharge()), {
+    shouldRevoke: true,
+    paymentIntentId: "pi_1QxYzAIriTNCQL2hexciv",
+    amount: 500,
+    amountRefunded: 500,
+    reason: null,
+  });
+});
+
+Deno.test("chargeRefundDecision keeps access on a partial refund", () => {
+  // 部分返金で権利を消すと、支払った分が残っている利用者から取り上げてしまう。
+  assertEquals(
+    chargeRefundDecision(
+      refundedCharge({ refunded: false, amount_refunded: 200 }),
+    ),
+    {
+      shouldRevoke: false,
+      paymentIntentId: "pi_1QxYzAIriTNCQL2hexciv",
+      amount: 500,
+      amountRefunded: 200,
+      reason: "partial_refund",
+    },
+  );
+});
+
+Deno.test("chargeRefundDecision revokes when either full-refund signal fires", () => {
+  // 2 根拠の OR。片方のフィールドが API バージョンで移動しても
+  // 「返金済みなのに権利が残る」側へ倒れないことを固定する。
+  assertEquals(
+    chargeRefundDecision(refundedCharge({ refunded: false })).shouldRevoke,
+    true,
+    "amount_refunded >= amount だけでも失効させる",
+  );
+  assertEquals(
+    chargeRefundDecision(
+      refundedCharge({ amount: 0, amount_refunded: 0 }),
+    ).shouldRevoke,
+    true,
+    "refunded=true だけでも失効させる",
+  );
+});
+
+Deno.test("chargeRefundDecision unwraps an expanded payment intent", () => {
+  const decision = chargeRefundDecision(refundedCharge({
+    payment_intent: {
+      id: "pi_expanded",
+      object: "payment_intent",
+      status: "succeeded",
+    },
+  }));
+  assertEquals(decision.paymentIntentId, "pi_expanded");
+  assertEquals(decision.shouldRevoke, true);
+});
+
+Deno.test("chargeRefundDecision cannot act without a payment intent", () => {
+  // 紐付けキーが無い返金を「対象なし」と黙って流すと取りこぼしになるため、
+  // 理由を分けて呼び出し側がログに出せるようにする。
+  for (const value of [null, undefined, "", "   ", 42]) {
+    const decision = chargeRefundDecision(
+      refundedCharge({ payment_intent: value }),
+    );
+    assertEquals(decision.shouldRevoke, false);
+    assertEquals(decision.paymentIntentId, "");
+    assertEquals(decision.reason, "missing_payment_intent");
+  }
 });
 
 Deno.test("claimStripeWebhookEvent claims a new or retryable event", async () => {

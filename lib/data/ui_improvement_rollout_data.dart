@@ -99,9 +99,10 @@ const Map<String, UiImprovementRollout> kUiImprovementRolloutOverrides =
     designSkills: UiImprovementAdoption.applied,
     designMd: UiImprovementAdoption.applied,
     headline:
-        'The home screen now benefits from the shared theme refresh and is being reorganized.',
-    nextStep: 'Improve card priority and reduce cognitive load.',
-    updatedAt: '2026-04-07',
+        'The home screen now surfaces rollout coverage and screen inventory directly.',
+    nextStep:
+        'Keep simplifying the card hierarchy while expanding the new workflow to more high-traffic widgets.',
+    updatedAt: '2026-04-08',
   ),
   '/enterprise': UiImprovementRollout(
     stage: UiImprovementStage.inProgress,

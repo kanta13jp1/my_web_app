@@ -541,6 +541,11 @@ class _MindMapPageState extends State<MindMapPage> {
         title: const Text('マインドマップ生成'),
         actions: [
           IconButton(
+            onPressed: () => Navigator.of(context).pushNamed('/mindmap'),
+            icon: const Icon(Icons.folder_open_outlined),
+            tooltip: '保存済みマップ',
+          ),
+          IconButton(
             onPressed: _isLoading || _isDownloading || !hasMindMap
                 ? null
                 : _downloadMindMapAsPng,

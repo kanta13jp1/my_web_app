@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video Artifact Improvement Loop"
+  short_description: "Review, regenerate, and publish videos within approval"
+  default_prompt: "Use $video-artifact-improvement-loop to review this site's GPU video and, within my explicit authorization limits, purchase credits, regenerate, re-review, and publish the approved result."

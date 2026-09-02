@@ -129,10 +129,15 @@ class AssetLiabilityPlanningService {
   /// 振替元に選んでも保存 ID がこのカードローンを指して「原資未設定」に倒れる
   /// バグの原因だった (#part341)。両者は別 ID に分離する。
   static const String jibunBankCardLoanAccountId = 'jibun_bank_card_loan';
+  // 旧・固定額(¥80,000)の組み込み資金移動タスクの ID。かつては毎ビルドで
+  // 三井住友大塚→じぶん銀行の ¥80,000 移動を自動注入していたが、これは不足額と
+  // 無関係の固定値で、給料の入金先がじぶん銀行のとき「給料入金 + 移動入金」の
+  // 二重計上になり、逆に三井住友を ¥80,000 減らして幻の不足→逆方向の提案を
+  // 生んでいた (ユーザー報告)。自動注入は撤去し、資金移動は不足額に上限が
+  // 掛かる動的提案 (_buildTransferSuggestions) に一本化した。ID 定数は、過去に
+  // 「完了」で退避された永続タスクを組み込み扱いと認識するためだけに残す。
   static const String auPayCardFundingTransferTaskId =
       'transfer_smbc_otsuka_to_jibun_aupay_card_funding';
-  static const int auPayCardFundingTransferDay = 26;
-  static const double auPayCardFundingTransferAmount = 80000;
 
   /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) のデータ駆動定義。
   /// `buildWorkbook(includeDefaultFixedPayments: true)` で当月該当かつ未計上の
@@ -187,6 +192,8 @@ class AssetLiabilityPlanningService {
     Map<String, String> cardBillingAccountIds = const <String, String>{},
     Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs =
         const <String, AssetLiabilityRevolvingCreditConfig>{},
+    Map<String, AssetCardUsagePolicy> cardUsagePolicies =
+        const <String, AssetCardUsagePolicy>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
     List<AssetLiabilityTransferTask> transferTasks =
@@ -273,14 +280,8 @@ class AssetLiabilityPlanningService {
       incomePlans: incomePlans,
       accountsById: accountsById,
     );
-    final effectiveTransferTasks = _withDefaultAuPayCardFundingTransfer(
-      transferTasks: transferTasks,
-      accounts: accounts,
-      baseDate: baseDate,
-      salaryDay: salaryDay,
-    );
     final resolvedTransferTasks = _resolveTransferTasks(
-      transferTasks: effectiveTransferTasks,
+      transferTasks: transferTasks,
       accounts: accounts,
       accountsById: accountsById,
     );
@@ -319,6 +320,21 @@ class AssetLiabilityPlanningService {
           : sum,
     );
 
+    // リボカードの新規利用額は取込明細を正とする。明細が無いカードだけ設定の
+    // 手入力値へフォールバックし、同じ利用額を二重加算しない。
+    final cardStatementTotalsByBillingId = <String, double>{};
+    for (final line in cardStatementLines) {
+      final billingAccountId = line.billingAccountId.trim();
+      if (billingAccountId.isEmpty) {
+        continue;
+      }
+      cardStatementTotalsByBillingId.update(
+        billingAccountId,
+        (current) => current + line.amount,
+        ifAbsent: () => line.amount,
+      );
+    }
+
     final debtMasterRows = accounts
         .where((account) => account.isLiability)
         .map(
@@ -335,6 +351,7 @@ class AssetLiabilityPlanningService {
             defaultCardBillingAccountIds: defaultCardBillingAccountIds,
             cardBillingAccountIds: cardBillingAccountIds,
             revolvingConfigs: revolvingConfigs,
+            cardStatementTotalsByBillingId: cardStatementTotalsByBillingId,
             accountsById: accountsById,
           ),
         )
@@ -457,6 +474,7 @@ class AssetLiabilityPlanningService {
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
       subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
+      cardUsagePolicies: cardUsagePolicies,
     );
   }
 
@@ -734,6 +752,7 @@ class AssetLiabilityPlanningService {
     required Map<String, String> defaultCardBillingAccountIds,
     required Map<String, String> cardBillingAccountIds,
     required Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs,
+    required Map<String, double> cardStatementTotalsByBillingId,
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
     final principal = account.liabilityBalance;
@@ -742,7 +761,10 @@ class AssetLiabilityPlanningService {
       annualRateOverrides: annualRateOverrides,
     );
     final interest = principal * annualRate / 12;
-    final minimumPayment = account.fullPaymentEstimate
+    final isBorrowing = account.kind == AssetLiabilityAccountKind.cardLoan ||
+        account.kind == AssetLiabilityAccountKind.shoppingDebt ||
+        account.kind == AssetLiabilityAccountKind.creditCard;
+    final minimumPayment = (!isBorrowing && account.fullPaymentEstimate)
         ? principal + interest
         : min(
             principal + interest,
@@ -755,17 +777,20 @@ class AssetLiabilityPlanningService {
       account: account,
       monthlyPaymentOverrides: monthlyPaymentOverrides,
     );
-    // リボ払いカードは 請求額 = 設定額 + max(0, リボ残高 − 利用限度額) で確定する。
-    // リボ残高は負債残高 (principal) を用い、手入力/推定額より優先する。
+    // リボ払いカードは「最低返済額 + 当月新規利用額」を25日に返す。
+    // 既存残高は一括返済へ跳ね上げず、明細がある場合は新規利用額を自動反映する。
     final revolvingConfig = _revolvingConfigFor(
       account: account,
       revolvingConfigs: revolvingConfigs,
     );
+    final importedNewUsage = cardStatementTotalsByBillingId[account.id] ??
+        cardStatementTotalsByBillingId[account.name.trim()];
     final revolvingBilling = revolvingConfig == null
         ? null
         : const AssetRevolvingCreditService().computeBilling(
             balance: principal,
             config: revolvingConfig,
+            newUsageAmount: importedNewUsage,
           );
     final scheduledPayment =
         revolvingBilling?.billedAmount ?? manualPayment ?? minimumPayment;
@@ -779,7 +804,10 @@ class AssetLiabilityPlanningService {
     );
     final principalPayment = max(0.0, scheduledPayment - interest);
     final afterPayment = -max(0.0, principal + interest - scheduledPayment);
-    final rawPaymentSourceAccountId = paymentSourceAccountIds[account.id];
+    final rawPaymentSourceAccountId = _lookupPaymentSourceAccountId(
+      account: account,
+      paymentSourceAccountIds: paymentSourceAccountIds,
+    );
     // 振替元が自分自身を指す設定は不正 (ローンを自分自身からは返済できない) なので
     // 未設定扱いにする。これにより「支払原資口座の未設定」セクションに表示され、正しい
     // 口座 (例: じぶん銀行) へ修正できるようになり、見込み残高の自己宛て誤ルーティングも防ぐ。
@@ -805,13 +833,17 @@ class AssetLiabilityPlanningService {
       cardBillingAccountIds: cardBillingAccountIds,
       accountsById: accountsById,
     );
+    final paid = paidAccountNames.contains(account.id) ||
+        paidAccountNames.contains(account.name.trim()) ||
+        paidAccountNames.contains(account.name);
+    final requiresAction = minimumPayment > 0 && scheduledPayment > 0 && !paid;
 
     return AssetLiabilityDebtRow(
       id: account.id,
       name: account.name,
       kind: account.kind,
       balance: account.balance,
-      paymentDay: account.paymentDay,
+      paymentDay: revolvingBilling?.paymentDay ?? account.paymentDay,
       paymentSourceAccountId: paymentSourceAccountId,
       paymentSourceAccountName: paymentSourceAccountName,
       paymentMethod: paymentRouting.paymentMethod,
@@ -839,9 +871,8 @@ class AssetLiabilityPlanningService {
         billingConfirmedAccountIds,
         account,
       ),
-      paid: paidAccountNames.contains(account.id) ||
-          paidAccountNames.contains(account.name.trim()) ||
-          paidAccountNames.contains(account.name),
+      paid: paid,
+      requiresAction: requiresAction,
     );
   }
 
@@ -1199,9 +1230,9 @@ class AssetLiabilityPlanningService {
         0,
         (sum, line) => sum + line.amount,
       );
-      // リボ払いカードは 請求額 = 設定額 + 限度額超過分 で決まり、利用明細(新規利用)は
-      // リボ残高に積み増されるだけなので「明細合計 ≠ 請求額」が正常。一括払い前提の
-      // 不一致アラートは抑止し、内訳は revolvingBilling で表示する。
+      // リボ払いカードは最低返済額へ新規利用額を全額上乗せする。明細がある場合は
+      // その合計が上乗せ額の正となるため、一括払い前提の不一致アラートは抑止し、
+      // 内訳は revolvingBilling で説明する。
       final revolvingBilling = billingRow?.revolvingBilling;
       final isRevolving = revolvingBilling != null;
       final alerts = <String>[];
@@ -1357,7 +1388,7 @@ class AssetLiabilityPlanningService {
     required DateTime baseDate,
     int? salaryDay,
   }) {
-    final byDay = <int, List<AssetLiabilityDebtRow>>{};
+    final byDayAndAction = <(int, bool), List<AssetLiabilityDebtRow>>{};
     for (final row in rows) {
       final day = row.paymentDay;
       if (day == null) {
@@ -1369,12 +1400,17 @@ class AssetLiabilityPlanningService {
       if (row.paid) {
         continue;
       }
-      byDay.putIfAbsent(day, () => <AssetLiabilityDebtRow>[]).add(row);
+      byDayAndAction.putIfAbsent((
+        day,
+        row.requiresAction,
+        // ignore: require_trailing_commas
+      ), () => <AssetLiabilityDebtRow>[]).add(row);
     }
 
     final result = <AssetLiabilityPaymentDayRisk>[];
-    for (final entry in byDay.entries) {
-      final day = entry.key;
+    for (final entry in byDayAndAction.entries) {
+      final day = entry.key.$1;
+      final requiresAction = entry.key.$2;
       final paymentDate = _resolveCyclePaymentDate(baseDate, salaryDay, day);
       final rowsForDay = entry.value
         ..sort((a, b) => b.balance.abs().compareTo(a.balance.abs()));
@@ -1407,13 +1443,23 @@ class AssetLiabilityPlanningService {
               rowsForDay.where((row) => !row.paymentAmountEstimated).length,
           estimatedPaymentCount:
               rowsForDay.where((row) => row.paymentAmountEstimated).length,
+          requiresAction: requiresAction,
           isPast: paymentDate.isBefore(_dateOnly(baseDate)),
           isToday: paymentDate == _dateOnly(baseDate),
         ),
       );
     }
 
-    result.sort((a, b) => a.paymentDay.compareTo(b.paymentDay));
+    result.sort((a, b) {
+      final dayComparison = a.paymentDay.compareTo(b.paymentDay);
+      if (dayComparison != 0) {
+        return dayComparison;
+      }
+      if (a.requiresAction == b.requiresAction) {
+        return 0;
+      }
+      return a.requiresAction ? -1 : 1;
+    });
     return result;
   }
 
@@ -1471,7 +1517,7 @@ class AssetLiabilityPlanningService {
         paymentDay,
       );
       final overdue = row.isDirectCashflowTarget &&
-          !row.paid &&
+          row.requiresAction &&
           !paymentDate.isAfter(_dateOnly(baseDate));
       result.add(
         AssetLiabilityCashflowRow(
@@ -1713,45 +1759,6 @@ class AssetLiabilityPlanningService {
     return result;
   }
 
-  List<AssetLiabilityTransferTask> _withDefaultAuPayCardFundingTransfer({
-    required List<AssetLiabilityTransferTask> transferTasks,
-    required List<AssetLiabilityAccount> accounts,
-    required DateTime baseDate,
-    int? salaryDay,
-  }) {
-    if (transferTasks.any(
-      (task) => task.id == auPayCardFundingTransferTaskId,
-    )) {
-      return transferTasks;
-    }
-
-    final fromAccount = _findCashLikeAccountById(
-      accounts,
-      smbcOtsukaBranchAccountId,
-    );
-    final toAccount = _findCashLikeAccountById(accounts, jibunBankAccountId);
-    if (fromAccount == null || toAccount == null) {
-      return transferTasks;
-    }
-
-    return <AssetLiabilityTransferTask>[
-      ...transferTasks,
-      AssetLiabilityTransferTask(
-        id: auPayCardFundingTransferTaskId,
-        fromAccountId: fromAccount.id,
-        fromAccountName: fromAccount.name,
-        toAccountId: toAccount.id,
-        toAccountName: toAccount.name,
-        amount: auPayCardFundingTransferAmount,
-        dueDate: _resolveCyclePaymentDate(
-          baseDate,
-          salaryDay,
-          auPayCardFundingTransferDay,
-        ),
-      ),
-    ];
-  }
-
   AssetLiabilityAccount? _findCashLikeAccountById(
     List<AssetLiabilityAccount> accounts,
     String accountId,
@@ -1836,7 +1843,9 @@ class AssetLiabilityPlanningService {
     required List<AssetLiabilityCashflowRow> cashflowRows,
   }) {
     final donors = summaries
-        .where((summary) => summary.projectedBalance > _transferDonorReserve)
+        .where(
+          (summary) => summary.projectedBalance > _transferDonorReserve,
+        )
         .toList()
       ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
     final shortages = summaries.where((summary) => summary.isShort).toList()
@@ -1941,6 +1950,37 @@ class AssetLiabilityPlanningService {
     return sourceAccountId;
   }
 
+  String? _lookupPaymentSourceAccountId({
+    required AssetLiabilityAccount account,
+    required Map<String, String> paymentSourceAccountIds,
+  }) {
+    if (paymentSourceAccountIds.isEmpty) return null;
+    final direct = paymentSourceAccountIds[account.id] ??
+        paymentSourceAccountIds[account.name.trim()] ??
+        paymentSourceAccountIds[account.name];
+    if (direct != null && direct.trim().isNotEmpty) return direct;
+
+    final normalizedTarget = _normalize(account.name);
+    final strippedTarget = normalizedTarget.replaceAll(
+      RegExp(r'[^a-zA-Z0-9぀-ゟ゠-ヿ一-龯]'),
+      '',
+    );
+    for (final entry in paymentSourceAccountIds.entries) {
+      final normKey = _normalize(entry.key);
+      final strippedKey = normKey.replaceAll(
+        RegExp(r'[^a-zA-Z0-9぀-ゟ゠-ヿ一-龯]'),
+        '',
+      );
+      if (normKey == normalizedTarget ||
+          (strippedKey.isNotEmpty && strippedKey == strippedTarget) ||
+          normKey.contains(normalizedTarget) ||
+          normalizedTarget.contains(normKey)) {
+        if (entry.value.trim().isNotEmpty) return entry.value;
+      }
+    }
+    return null;
+  }
+
   String _accountIdForName(String name) {
     final key = _normalize(name);
 
@@ -2023,7 +2063,7 @@ class AssetLiabilityPlanningService {
       ({
         AssetLiabilityAccount account,
         String? sourceAccountId,
-        bool isSubscription
+        bool isSubscription,
       })> _buildRecurringFixedCostInjections({
     required List<AssetRecurringFixedCost> recurringFixedCosts,
     required List<AssetLiabilityAccount> existingAccounts,
@@ -2034,7 +2074,7 @@ class AssetLiabilityPlanningService {
       return const <({
         AssetLiabilityAccount account,
         String? sourceAccountId,
-        bool isSubscription
+        bool isSubscription,
       })>[];
     }
     final takenIds = existingAccounts.map((account) => account.id).toSet();
@@ -2043,7 +2083,7 @@ class AssetLiabilityPlanningService {
     final result = <({
       AssetLiabilityAccount account,
       String? sourceAccountId,
-      bool isSubscription
+      bool isSubscription,
     })>[];
     for (final cost in recurringFixedCosts) {
       if (cost.amount <= 0 ||
@@ -2068,14 +2108,13 @@ class AssetLiabilityPlanningService {
       }
       takenIds.add(account.id);
       takenNames.add(_normalize(account.name));
-      result.add(
-        (
-          account: account,
-          sourceAccountId: cost.sourceAccountId,
-          isSubscription:
-              cost.category == AssetRecurringFixedCostCategory.subscription,
-        ),
-      );
+      result.add((
+        account: account,
+        sourceAccountId: cost.sourceAccountId,
+        isSubscription:
+            cost.category == AssetRecurringFixedCostCategory.subscription,
+        // ignore: require_trailing_commas
+      ));
     }
     return result;
   }

@@ -32,8 +32,18 @@ Adoption notes for this cycle:
   long-session recovery, but they do not change the top-level two-instance cap.
 - Claude Code v2.1.122 Bedrock service-tier selection and v2.1.108 prompt-cache
   flags are provider-configuration candidates, not default environment changes.
-- OpenAI Codex CLI rust-v0.128.0 persisted `/goal` workflows are a future
-  Codex #1 planning aid; normal WBS work still uses scoped branches and PRs.
+- OpenAI Codex persisted goals are available to Codex #1 when the active app or
+  CLI runtime exposes the goal APIs. Use them to retain the objective and
+  continuation state, but keep the durable proof in the linked Issue, scoped
+  branch, PR, and validation result. A goal never grants extra authority to
+  merge, deploy, or change production data.
+- Do not pin a task class to the historical GPT-5.5 name. Apply the configured
+  adaptive model router to the models and effort levels exposed by the current
+  runtime, while preserving any explicit user selection.
+- Thread Automations (#1837) and persisted goals solve different problems:
+  automations provide an explicit schedule, while a goal preserves the state of
+  one approved body of work. Neither is a reason to create an unattended
+  dependency-update-to-merge pipeline.
 - Cursor context-usage breakdown, Gemini Code Assist release notes, and Devin
   CI-aware auto-fix are advisory signals unless a local verified workflow is
   explicitly routed.
@@ -51,10 +61,11 @@ path:
 - OpenAI Codex: use the official Codex docs and OpenAI Docs MCP. Codex work is
   routed through the Windows Codex #1 worktree and must keep AGENTS.md /
   `~/.codex/config.toml` as pointer-based instruction memory, not a giant prompt.
-- Gemini Code Assist: agent mode is available in VS Code and IntelliJ, but
-  remains preview-gated. Gemini 3.1 Pro / 3.0 Flash availability depends on
-  license, waitlist, or release-channel status, so it is a candidate fallback
-  only after local availability is verified.
+- Google coding agents: Gemini Code Assist agent mode remains preview-gated.
+  Since 2026-06-18, the IDE extension and Gemini CLI no longer serve requests
+  for Individuals, Google AI Pro, or Google AI Ultra; those users route through
+  Antigravity instead. Gemini Code Assist Standard/Enterprise remains a
+  candidate only after its license and local availability are verified.
 - GitHub Copilot: official changelog confirms Copilot coding agent startup
   improvements and Claude/Codex partner-agent availability. Treat performance
   claims as changelog-scoped; this runbook records the official 50% startup
@@ -64,10 +75,16 @@ Official source pointers:
 
 - https://docs.anthropic.com/en/docs/claude-code/settings
 - https://docs.anthropic.com/en/docs/claude-code/memory
+- https://code.claude.com/docs/en/changelog
+- https://code.claude.com/docs/en/tools-reference#powershell-tool
+- https://code.claude.com/docs/en/llm-gateway
+- https://code.claude.com/docs/en/mcp
 - https://developers.openai.com/codex/cloud
 - https://developers.openai.com/learn/docs-mcp
 - https://developers.google.com/gemini-code-assist/resources/release-notes
 - https://docs.cloud.google.com/gemini/docs/codeassist/gemini-3
+- https://docs.flutter.dev/ai/mcp-server
+- https://docs.cloud.google.com/gemini/docs/codeassist/overview
 - https://github.blog/changelog/2026-02-26-claude-and-codex-now-available-for-copilot-business-pro-users/
 - https://github.blog/changelog/2026-03-19-copilot-coding-agent-now-starts-work-50-faster/
 
@@ -109,9 +126,9 @@ gh run list --workflow=quota-monitor.yml --limit 1
 | 作業種別 | Primary | Fallback 1 | Fallback 2 |
 |---------|---------|-----------|-----------|
 | コード補完・小修正 (5分以内) | GitHub Copilot (VS Code) | Copilot Chat | 手動 |
-| Dart/Flutter ファイル編集 | GitHub Copilot | Gemini Code Assist (VS Code拡張) | Codex CLI |
-| 大規模リファクタリング (500行+) | Gemini Code Assist | Codex | 手動分割 |
-| SQL / アルゴリズム最適化 | Codex CLI | Gemini | 手動 |
+| Dart/Flutter ファイル編集 | GitHub Copilot + Dart/Flutter MCP | Antigravity + Dart/Flutter MCP | Gemini Code Assist Standard/Enterprise + Dart/Flutter MCP |
+| 大規模リファクタリング (500行+) | Codex | Antigravity + Dart/Flutter MCP | 手動分割 |
+| SQL / アルゴリズム最適化 | Codex CLI | Antigravity | 手動 |
 | 設計・戦略・ルール判断 | claude.ai (WEBブラウザ版) | NotebookLM | ドキュメント参照 |
 | EF cleanup / hub migration | claude.ai (WEB版) | Codex | 手動 |
 | Dart format チェック | `dart format .` (CLI直接) | CI確認 | — |
@@ -128,21 +145,26 @@ codex "lib/pages/home_page.dart の fetchData() にエラーハンドリング�
 codex "supabase/functions/tools-hub/index.ts に action=habit.list を追加"
 ```
 
-### Gemini Code Assist セットアップ (VS Code)
+### Dart/Flutter MCP + Google coding agent セットアップ
 
 ```text
-1. VS Code → Extensions → "Gemini Code Assist" インストール
-2. Google アカウントでサインイン
-3. Copilot 同様にインライン補完・チャットが使える
-4. 無料プラン: 個人開発には十分な quota
+1. Dart 3.9+ を確認する: dart --version
+2. project の .gemini/settings.json が SDK 内蔵 `dart mcp-server` を起動する
+3. Antigravity では MCP store の Dart を選ぶか、同じ command を手動登録する
+4. Gemini Code Assist Standard/Enterprise の VS Code Agent Mode では `/mcp` で接続確認する
+5. VS Code Dart extension v3.116+ では workspace の `dart.mcpServer: true` も有効にする
 ```
+
+`dart pub global run dart_mcp_server` は使用しない。Individuals / Google AI
+Pro / Google AI Ultra は 2026-06-18 以降 Gemini Code Assist IDE / Gemini CLI
+の対象外なので、Antigravity へ route する。
 
 ### インスタンス別フォールバック割当
 
 | インスタンス | Claude quota 超過時の代替 |
 |------------|------------------------|
-| **Win版 (Claude Code)** | Copilot + Gemini Code Assist Agent Mode (Gemini 3.1 Pro) + NotebookLM + claude.ai WEB版 |
-| **Win版 (Codex CLI)** | Codex CLI (Memory GA / 主担当) + Copilot + Gemini Code Assist |
+| **Win版 (Claude Code)** | Codex CLI + Copilot + Antigravity + NotebookLM + claude.ai WEB版 |
+| **Win版 (Codex CLI)** | Codex CLI (主担当) + Copilot + Antigravity; Gemini Code Assist は Standard/Enterprise license 確認時のみ |
 
 > 旧 12 instance (PS版#1-6 / VSCode版 / WEB版 / スマホ版 / Codex#1 / Codex#2) は 2026-05-04 dormant 化 (= [`docs/MULTI_INSTANCE_FLEET.md`](MULTI_INSTANCE_FLEET.md)). reactivation 時のみ各 fallback 適用.
 
@@ -271,7 +293,8 @@ Claude Code CLI (設計・編集)
 ### Claude quota 超過時
 
 ```text
-Gemini Code Assist / Codex CLI (編集メイン)
+Codex CLI / Antigravity (編集メイン)
+  + Gemini Code Assist Agent Mode (Standard/Enterprise license 確認時のみ)
   + claude.ai WEB版 (設計判断・限定的)
   + GitHub Copilot (補完)
   + NotebookLM (リサーチ)
@@ -305,7 +328,8 @@ GitHub Copilot (補完のみ)
 
 - [ ] `quota-monitor.yml` の最新ランで使用率確認
 - [ ] `GEMINI_API_KEY` が GitHub Secrets に設定済みか確認
-- [ ] VS Code に Gemini Code Assist 拡張インストール済みか確認
+- [ ] Antigravity、または契約済み Gemini Code Assist Standard/Enterprise が利用可能か確認
+- [ ] Dart/Flutter 作業では `dart --version` が 3.9+ か、`/mcp` が接続済みか確認
 - [ ] Codex CLI が使える状態か確認 (`codex --version`)
 - [ ] GHA 自動ワークフローは継続稼働中か確認 (影響なし)
 - [ ] claude.ai WEB版の残量を確認 (CLI と別枠の可能性あり)
@@ -324,12 +348,15 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 - 自分株式会社の **migration 命名則 / EF deny-by-default / Rule [WORKDIR-ISOLATION]** を Codex Memory に登録推奨
 - ただし **Memory が古くなった場合の reset コマンド** を運用フローに組み込む必要あり (= claude-mem decay と同種の問題)
 
-### Gemini Code Assist Agent Mode GA + Gemini 3.1 Pro
+### Gemini Code Assist Agent Mode / Antigravity
 
-- **Agent Mode が VS Code + IntelliJ で GA** (= 2026-04〜05 wave) — multi-step task plan + execute が Claude Code と同等水準に
-- **Gemini 3.1 Pro / 3.0 Flash** が agent mode + chat + code generation で利用可能
-- → **Claude quota 超過時の primary fallback** を従来 Codex CLI から **Gemini Code Assist Agent Mode (Gemini 3.1 Pro)** に格上げ可能性
-- VS Code Gemini Code Assist 拡張は **2.77.1 以上** に update 推奨 (= agent mode log が正しく Gemini Code Assist に attribute される)
+- Agent Mode は VS Code / IntelliJ で Preview。Standard/Enterprise license と
+  local availability を確認してから利用する。
+- Individuals / Google AI Pro / Google AI Ultra は 2026-06-18 に IDE extension
+  と Gemini CLI の request 提供が終了したため、Antigravity / Antigravity CLI
+  へ移行する。
+- Dart/Flutter 作業は SDK 内蔵 `dart mcp-server` (Dart 3.9+) を使用する。
+  Project 設定は `.gemini/settings.json`、接続確認は Agent Mode の `/mcp`。
 
 ### GitHub Copilot Cloud Agent +20% startup + Claude/Codex model selection
 
@@ -339,9 +366,12 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 
 ### Claude Code 2026-05 (`/tui` + push notification + project purge + /resume PR URL)
 
-- `/tui` fullscreen — flicker-free 画面 (= 12 instance 並列で見やすさ向上)
+- `/tui fullscreen` — optional flicker-free interactive rendering. It is a
+  display preference, not a fleet concurrency control.
 - **Push notification tool** — Remote Control + "Push when Claude decides" でスマホ通知 (= スマホ版 instance 連携)
-- `claude project purge [path]` — project state 完全削除 (= worktree clean 自動化)
+- `claude project purge [path]` — Claude project state (transcripts, tasks,
+  file history, and the config entry) を削除する。Git worktree、branch、または
+  untracked file は削除しないため、worktree cleanup の代替にしない。
 - `/resume <PR URL>` — PR を作成した session に復帰 (= context 連続性向上)
 
 ### Claude Code v2.1.113–v2.1.126 追加機能 (PS#5 S118 2026-05-03)
@@ -359,29 +389,42 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 - `/theme` command + `~/.claude/themes/*.json` — カスタムテーマ作成 (= テーマ切り替えUIとの連携)
 - `--from-pr` が GitLab / Bitbucket / GitHub Enterprise URL を受け付け
 
-**CI / 認証 (v2.1.126) → Issue #1767**
+**CI / 認証 (v2.1.126-v2.1.129) → Issue #1767**
 - `claude auth login` — WSL2/SSH/コンテナ環境で OAuth code をターミナルにペースト可能
-- `/model` picker が `ANTHROPIC_BASE_URL` の gateway `/v1/models` から動的にモデル一覧取得
+- `/model` picker の gateway discovery は v2.1.129+ かつ
+  `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` の opt-in。対象は
+  `ANTHROPIC_BASE_URL` で指定した Anthropic-compatible Messages API gateway
+  の `/v1/models` であり、Azure OpenAI / Bedrock の一般的な fallback ではない。
 - `claude ultrareview [target]` — CI/スクリプトから非インタラクティブに `/ultrareview` 実行 (= GHA に組み込み可能)
-- `/recap` — セッション再開時に前回の context をサマリー提示 (= 12 instance fleet での session 引き継ぎ向上)
+- `/recap` — セッション再開時に前回の context をサマリー提示し、Issue/PR
+  に残した恒久証跡からの引き継ぎを補助する。
 
 **MCP 安定性改善 (v2.1.126) → Issue #1831**
-- MCP auto-retry: サーバー起動時の transient error を自動リトライ
+- 初期接続の transient 5xx / connection refused / timeout は最大3回 retry。
+- HTTP/SSE transport は切断時に指数 backoff で最大5回再接続するが、
+  stdio server は自動再起動しない。認証失敗と404もretry対象外。
 - SSE/HTTP transport で mid-response に connection drop した場合の hang 修正
 - 429 (rate limit) retry: exponential backoff を最低値として適用 (= 13秒で全試行消費するバグ修正)
 - API retry countdown が正確に表示されるよう修正
-- **fleet適用**: `MCP_TIMEOUT=60000` (S119で設定済み) と組み合わせて MCP 安定性が大幅向上
+- **fleet適用**: `MCP_TIMEOUT=60000` (S119で設定済み) は接続待ち時間を
+  延長する設定であり、全transportの自動復旧を保証しない。
 
 **session /recap (v2.1.126)**
 - `CLAUDE_CODE_ENABLE_AWAY_SUMMARY=0` または `/config` でオプトアウト可能
-- **fleet活用**: 12 instance で session 引き継ぎ時に `/recap` で前回 context 即把握
+- **運用**: 現行の2-owner構成で session を再開するときに使う。Issue/PR/WBSを
+  source of truth とし、recapだけに未保存の判断を残さない。
 
 **project purge (v2.1.126)**
-- `claude project purge [path]` — project の全 state (transcript・session) を削除
-- **fleet活用**: worktree cleanup スクリプトに追加でゾンビ session を掃除できる
+- `claude project purge [path]` — project の Claude state を削除する破壊的操作。
+- **運用**: 対象path、`git status`、push済みbranch/PRを確認し、最初に
+  `claude project purge --dry-run [path]`、次にinteractive確認を使う。
+  `--all` / `--yes` をcleanup automationへ組み込まず、Git worktree cleanupと
+  分離する。
 
 **Windows (v2.1.126)**
-- Git for Windows (Git Bash) が不要に — PowerShell を primary shell として使用 (= Win版 fleet の環境要件簡素化)
+- PowerShell tool が有効、または Git Bash が利用できない場合は PowerShell を
+  primary shell として使用できる。全Windows環境で無条件に Bash より優先する
+  仕様ではない。project hooks は既存どおり明示的な `powershell` command を使う。
 
 ### GitHub Copilot 2026-05: GPT-5.3-Codex 昇格
 
@@ -392,12 +435,13 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 
 ```text
 1. Claude Code CLI (= 設計 / 編集 main) ← 不変
-2. Gemini Code Assist Agent Mode (Gemini 3.1 Pro)  ← 昇格
-3. Codex CLI (with Memory)  ← 昇格
+2. Codex CLI  ← 実装 main
+3. Antigravity / Antigravity CLI  ← Google 個人 tier の fallback
 4. Kimi K2.7 Code (OpenAI 互換 API)  ← 新規追加 (2026-07-12)
 5. GitHub Copilot (補完 + Cloud Agent)  ← 不変
 6. NotebookLM (リサーチ / Master Brain)  ← 不変
-7. GHA (= Claude 非依存)  ← 不変
+7. Gemini Code Assist Agent Mode  ← Standard/Enterprise license 確認時のみ
+8. GHA (= Claude 非依存)  ← 不変
 ```
 
 ### Kimi K2.7 Code (Moonshot AI) — 2026-07-12 追加

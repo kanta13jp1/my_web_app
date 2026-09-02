@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// ポッドキャスト管理ページ
 /// エピソード一覧・再生状態・チャンネル管理。
@@ -12,7 +13,13 @@ class PodcastManagerPage extends StatefulWidget {
 }
 
 class _PodcastManagerPageState extends State<PodcastManagerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['episodes', 'channels'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

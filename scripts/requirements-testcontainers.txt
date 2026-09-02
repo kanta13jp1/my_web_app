@@ -1,0 +1,14 @@
+# Reproducible DB + Edge smoke environment. Keep direct and transitive packages
+# pinned to the versions proven by GitHub Actions run 32999902525.
+certifi==2026.7.22
+charset-normalizer==3.5.1
+docker==7.2.0
+idna==3.19
+psycopg[binary]==3.3.4
+psycopg-binary==3.3.4
+python-dotenv==1.2.3
+requests==2.34.2
+testcontainers[postgres]==4.15.0
+typing-extensions==4.16.0
+urllib3==2.7.0
+wrapt==2.3.0

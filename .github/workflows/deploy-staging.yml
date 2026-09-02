@@ -17,6 +17,7 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'assets/data/tiger_*'
   workflow_dispatch:
 
 concurrency:
@@ -26,9 +27,7 @@ concurrency:
   cancel-in-progress: false
 
 # 🚨 修正: ワークフロー全体に必要な権限をトップレベルで設定
-permissions:
-  contents: read # 全体で必要 (子ワークフローを含む)
-  pull-requests: write # 🚨 追加：CIの子ジョブの権限要求を全体で許可するため
+permissions: {}
 
 env:
   ENVIRONMENT: staging
@@ -62,17 +61,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
 
       - name: Cache Flutter pub
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -84,30 +83,66 @@ jobs:
 
       # Supabase Migration (Staging)
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v3
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
         with:
           version: 2.84.2
+
+      - name: Verify staging Supabase isolation
+        run: |
+          if [ -z "$STAGING_PROJECT_ID" ] || [ -z "$STAGING_SUPABASE_URL" ] || [ -z "$PRODUCTION_PROJECT_ID" ] || [ -z "$PRODUCTION_SUPABASE_URL" ]; then
+            echo "Staging and production Supabase isolation inputs are required."
+            exit 1
+          fi
+          if [ "$STAGING_PROJECT_ID" = "$PRODUCTION_PROJECT_ID" ] || [ "$STAGING_SUPABASE_URL" = "$PRODUCTION_SUPABASE_URL" ]; then
+            echo "Staging Supabase must be isolated from production."
+            exit 1
+          fi
+        env:
+          STAGING_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID_STAGING }}
+          STAGING_SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
+          PRODUCTION_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
+          PRODUCTION_SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
 
       - name: Run Supabase migrations
         run: |
           echo "Running Supabase migrations for staging..."
-          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_STAGING }}
-          # Repair any already-applied migrations to avoid duplicate key errors
-          for f in supabase/migrations/*.sql; do
-            version=$(basename "$f" | grep -oP '^\d+')
-            supabase migration repair --status applied "$version" 2>/dev/null || true
-          done
-          supabase db push --include-all
+          STAGING_WORKDIR="$RUNNER_TEMP/musubi-staging"
+          mkdir -p "$STAGING_WORKDIR/supabase/migrations"
+          cp supabase/config.toml "$STAGING_WORKDIR/supabase/config.toml"
+          cp supabase/staging/20260810080000_musubi_staging_prerequisites.sql \
+            "$STAGING_WORKDIR/supabase/migrations/"
+          cp supabase/migrations/*musubi*.sql \
+            "$STAGING_WORKDIR/supabase/migrations/"
+
+          supabase link \
+            --workdir "$STAGING_WORKDIR" \
+            --project-ref "${{ secrets.SUPABASE_PROJECT_ID_STAGING }}"
+          supabase db push --workdir "$STAGING_WORKDIR" --include-all
+          supabase db lint \
+            --workdir "$STAGING_WORKDIR" \
+            --linked \
+            --schema public \
+            --level warning \
+            --fail-on warning
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING }}
-        continue-on-error: true
+        continue-on-error: false
 
       # Build Flutter Web
+      - name: Validate Flutter Supabase configuration
+        run: python scripts/validate_flutter_supabase_env.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_STAGING || secrets.SUPABASE_ANON_KEY_STAGING }}
+
       - name: Build Flutter Web (Staging)
         run: >
           flutter build web --release --pwa-strategy=none
           --dart-define=ENVIRONMENT=staging
+          --dart-define="SUPABASE_URL=$SUPABASE_URL"
+          --dart-define="SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY"
+          --dart-define="SUPABASE_PRODUCTION_PROJECT_REF=$SUPABASE_PRODUCTION_PROJECT_REF"
           --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true
           --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true
           --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true
@@ -115,7 +150,13 @@ jobs:
         env:
           # 修正: シークレット名を _STAGING に変更
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_STAGING }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_STAGING || secrets.SUPABASE_ANON_KEY_STAGING }}
+          SUPABASE_PRODUCTION_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
+
+      - name: Render public Supabase URL into web shell
+        run: python scripts/render_web_supabase_config.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
 
       - name: Verify build output
         run: |
@@ -127,7 +168,7 @@ jobs:
           ls -la build/web
 
       - name: Setup Node for Firebase CLI
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "24"
           cache: npm
@@ -186,10 +227,11 @@ jobs:
             echo "| Firebase channel | staging |"
             echo "| URL | https://my-web-app-b67f4--staging.web.app |"
             echo ""
-            echo "**Actor**: ${{ github.actor }} | **Branch**: \`${{ github.ref_name }}\`"
+            echo "**Actor**: $GITHUB_ACTOR | **Branch**: \`$GITHUB_REF_NAME\`"
           } >> $GITHUB_STEP_SUMMARY
 
   notify:
+    timeout-minutes: 5
     name: Notify Deployment Status
     runs-on: ubuntu-latest
     needs: deploy
@@ -217,7 +259,7 @@ jobs:
       - name: Notify Slack on success
         if: needs.deploy.result == 'success'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
@@ -237,7 +279,7 @@ jobs:
       - name: Notify Slack on failure
         if: needs.deploy.result == 'failure'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
@@ -257,7 +299,7 @@ jobs:
       - name: Comment on commit
         if: needs.deploy.result == 'success'
         continue-on-error: true  # contents: read では失敗する場合があるため
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const deployUrl = process.env.DECODED_URL;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/home_feature_actions.dart';
+import 'home_tier_styles.dart';
 
 class NewFeaturesList extends StatefulWidget {
   const NewFeaturesList({super.key});
@@ -55,6 +56,7 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = HomeTierPalette.of(context);
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.all(16),
@@ -62,25 +64,29 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
       );
     }
     if (_items.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
+      return Padding(
+        padding: const EdgeInsets.all(16),
         child: Text(
           '直近14日間に追加された機能はありません。',
-          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
+          style: TextStyle(
+            color: palette.secondaryText,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
       );
     }
     return Column(
       children: [
         if (_showingLatestFallback)
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 '直近14日間の追加はありません。最新の追加機能を表示しています。',
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: palette.secondaryText,
                   fontSize: 12,
                   height: 1.5,
                 ),
@@ -91,37 +97,11 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
           final label = item['feature_label'] as String? ?? '新機能';
           final desc = item['description'] as String? ?? '';
           final route = _normalizeRoute(item['feature_route'] as String? ?? '');
-          return ListTile(
-            dense: true,
-            leading: const Icon(
-              Icons.new_releases_outlined,
-              size: 18,
-              color: Color(0xFFFF6B35),
-            ),
-            title: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                height: 1.5,
-              ),
-            ),
-            subtitle: desc.isNotEmpty
-                ? Text(
-                    desc,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF94A3B8),
-                      height: 1.5,
-                    ),
-                  )
-                : null,
-            trailing: const Icon(
-              Icons.chevron_right,
-              size: 16,
-              color: Color(0xFF64748B),
-            ),
+          return HomeTierFeatureListTile(
+            icon: Icons.new_releases_outlined,
+            iconColor: const Color(0xFFFF6B35),
+            label: label,
+            description: desc,
             onTap: route.isEmpty
                 ? null
                 : () => openHomeFeature(context, route, label),

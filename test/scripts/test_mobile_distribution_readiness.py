@@ -36,7 +36,7 @@ class MobileDistributionReadinessTest(unittest.TestCase):
                     "publish-release:",
                     "run: flutter build appbundle --release",
                     "run: flutter build ios --simulator --debug",
-                    "uses: actions/upload-artifact@v7",
+                    "uses: actions/upload-artifact@0123456789012345678901234567890123456789 # v7",
                 )
             ),
         )
@@ -46,7 +46,7 @@ class MobileDistributionReadinessTest(unittest.TestCase):
                 (
                     "name: Mobile Distribution Readiness",
                     "run: python scripts/check_mobile_distribution_readiness.py --require-secrets",
-                    "uses: actions/upload-artifact@v7",
+                    "uses: actions/upload-artifact@0123456789012345678901234567890123456789 # v7",
                 )
             ),
         )

@@ -29,8 +29,7 @@ concurrency:
   group: release-readiness-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 env:
   DEFAULT_BASE_URL: https://my-web-app-b67f4.web.app
@@ -42,6 +41,11 @@ env:
 
 jobs:
   readiness:
+    environment:
+      name: observability-production
+      deployment: false
+    permissions:
+      contents: read
     name: Alpha release readiness
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
@@ -49,10 +53,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
@@ -62,7 +66,7 @@ jobs:
         run: flutter pub get
 
       - name: Setup Deno
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v2.x
 
@@ -112,6 +116,10 @@ jobs:
           UPDATE_WBS="${INPUT_UPDATE_WBS:-true}"
           SEND_SLACK_PROBE="${INPUT_SEND_SLACK_PROBE:-false}"
 
+          python scripts/production_journey_probe.py \
+            --base-url "$BASE_URL" \
+            --public-routes web/seo/public-routes.json
+
           args=(
             --base-url "$BASE_URL"
             --supabase-url "$SUPABASE_URL"
@@ -132,7 +140,7 @@ jobs:
 
       - name: Upload readiness artifacts
         if: always() && hashFiles('.release-readiness/**') != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-readiness-runtime-smoke
           path: .release-readiness/

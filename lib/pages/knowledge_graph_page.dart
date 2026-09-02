@@ -1,241 +1,372 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
+
+import '../models/knowledge_graph_rag.dart';
+import '../services/knowledge_graph_rag_service.dart';
+import '../view_models/knowledge_graph_rag_view_model.dart';
 
 class KnowledgeGraphPage extends StatefulWidget {
-  const KnowledgeGraphPage({super.key});
+  const KnowledgeGraphPage({super.key, this.gateway, this.viewModel});
+
+  final KnowledgeGraphRagGateway? gateway;
+  final KnowledgeGraphRagViewModel? viewModel;
 
   @override
   State<KnowledgeGraphPage> createState() => _KnowledgeGraphPageState();
 }
 
 class _KnowledgeGraphPageState extends State<KnowledgeGraphPage> {
-  static const _sourceOptions = <String>[
-    'issues',
-    'wbs',
-    'docs',
-    'memory',
-    'notebooklm',
-  ];
-
   final _queryController = TextEditingController();
-  final _selectedSources = <String>{..._sourceOptions};
-  bool _loading = false;
-  bool _useLlm = true;
-  String? _error;
-  String? _answer;
-  String? _status;
-  String? _traceId;
-  List<Map<String, dynamic>> _citations = [];
+  late final KnowledgeGraphRagViewModel _viewModel;
+  late final bool _ownsViewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsViewModel = widget.viewModel == null;
+    _viewModel = widget.viewModel ??
+        KnowledgeGraphRagViewModel(
+          gateway: widget.gateway ?? const KnowledgeGraphRagService(),
+        );
+    _viewModel.addListener(_onViewModelChanged);
+  }
+
+  void _onViewModelChanged() {
+    if (mounted) setState(() {});
+  }
 
   Future<void> _query() async {
-    final query = _queryController.text.trim();
-    if (query.isEmpty || _selectedSources.isEmpty) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-      _answer = null;
-      _status = null;
-      _traceId = null;
-      _citations = [];
-    });
-
-    try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      final response = await Supabase.instance.client.functions.invoke(
-        'memory-search-hub',
-        body: {
-          'action': 'memory.rag.query',
-          'query': query,
-          'top_k': 8,
-          'sources': _selectedSources.toList()..sort(),
-          'use_llm': _useLlm,
-          if (userId != null) 'user_id': userId,
-        },
-      );
-      final data = response.data as Map<String, dynamic>? ?? {};
-      final citations = (data['citations'] as List? ?? [])
-          .whereType<Map>()
-          .map((item) => item.cast<String, dynamic>())
-          .toList();
-      if (!mounted) return;
-      setState(() {
-        _answer = data['answer'] as String?;
-        _status = data['answer_status'] as String?;
-        _traceId = data['trace_id'] as String?;
-        _citations = citations;
-      });
-    } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _openCitation(String? rawUrl) async {
-    if (rawUrl == null || rawUrl.isEmpty || !rawUrl.startsWith('http')) return;
-    final uri = Uri.tryParse(rawUrl);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  Color _statusColor(String? status) {
-    switch (status) {
-      case 'ok':
-        return const Color(0xFF0F766E);
-      case 'stale_index':
-        return const Color(0xFFB45309);
-      case 'llm_failure':
-        return const Color(0xFF9F1239);
-      case 'no_results':
-        return const Color(0xFF52525B);
-      default:
-        return const Color(0xFF334155);
-    }
+    await _viewModel.search(_queryController.text);
   }
 
   @override
   void dispose() {
+    _viewModel.removeListener(_onViewModelChanged);
+    if (_ownsViewModel) _viewModel.dispose();
     _queryController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final statusColor = _statusColor(_status);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Knowledge Graph RAG'),
+        title: const Text('AI回答と情報源'),
         backgroundColor: const Color(0xFF0F766E),
         foregroundColor: Colors.white,
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
+            _buildQueryControls(),
+            if (_viewModel.errorMessage != null) _buildErrorBanner(),
+            Expanded(child: _buildResult()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQueryControls() {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surface,
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '社内ナレッジだけを根拠に回答し、参照したファイルと範囲を表示します。',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final source in _sourceOptions)
+                for (final source
+                    in KnowledgeGraphRagViewModel.availableSources)
                   FilterChip(
+                    key: Key('knowledge-source-$source'),
                     label: Text(source),
-                    selected: _selectedSources.contains(source),
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedSources.add(source);
-                        } else {
-                          _selectedSources.remove(source);
-                        }
-                      });
-                    },
+                    selected: _viewModel.selectedSources.contains(source),
+                    onSelected: _viewModel.isLoading
+                        ? null
+                        : (selected) =>
+                            _viewModel.setSourceSelected(source, selected),
                   ),
                 FilterChip(
-                  label: const Text('LLM'),
-                  selected: _useLlm,
-                  onSelected: (selected) => setState(() => _useLlm = selected),
+                  key: const Key('knowledge-use-llm'),
+                  avatar: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('AI回答'),
+                  selected: _viewModel.useLlm,
+                  onSelected:
+                      _viewModel.isLoading ? null : _viewModel.setUseLlm,
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _queryController,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Ask about the project',
-                      prefixIcon: Icon(Icons.hub_outlined),
-                    ),
-                    onSubmitted: (_) => _query(),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final queryField = TextField(
+                  key: const Key('knowledge-query-field'),
+                  controller: _queryController,
+                  minLines: 2,
+                  maxLines: 4,
+                  maxLength: 1000,
+                  textInputAction: TextInputAction.search,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: '質問',
+                    hintText: '例: 今四半期の優先事項と、その根拠を教えて',
+                    prefixIcon: Icon(Icons.hub_outlined),
                   ),
-                ),
-                const SizedBox(width: 12),
+                  onSubmitted: (_) => _query(),
+                );
+                final searchButton = FilledButton.icon(
+                  key: const Key('knowledge-query-button'),
+                  onPressed: _viewModel.isLoading ? null : _query,
+                  icon: _viewModel.isLoading
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.search),
+                  label: const Text('根拠付きで回答'),
+                );
+
+                if (constraints.maxWidth < 720) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      queryField,
+                      const SizedBox(height: 10),
+                      SizedBox(height: 48, child: searchButton),
+                    ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: queryField),
+                    const SizedBox(width: 12),
+                    SizedBox(height: 56, child: searchButton),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner() {
+    return MaterialBanner(
+      content: Text(_viewModel.errorMessage!),
+      leading: Icon(
+        _viewModel.requiresLogin ? Icons.lock_outline : Icons.error_outline,
+      ),
+      actions: const <Widget>[SizedBox.shrink()],
+    );
+  }
+
+  Widget _buildResult() {
+    final answer = _viewModel.answer;
+    if (_viewModel.isLoading && answer == null) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 12),
+            Text('情報源を照合して回答を生成しています…'),
+          ],
+        ),
+      );
+    }
+    if (answer == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.find_in_page_outlined, size: 56),
+              SizedBox(height: 12),
+              Text('質問すると、回答内の引用から元文書を確認できます。'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final answerPanel = _AnswerPanel(
+          answer: answer,
+          onCitationPressed: _showCitation,
+        );
+        if (constraints.maxWidth >= 960) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 2, child: answerPanel),
+                const SizedBox(width: 16),
                 SizedBox(
-                  height: 56,
-                  child: FilledButton.icon(
-                    onPressed: _loading ? null : _query,
-                    icon: _loading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.search),
-                    label: const Text('Query'),
+                  width: 380,
+                  child: _SourcesPanel(
+                    citations: answer.citations,
+                    onCitationPressed: _showCitation,
+                    internalScroll: true,
                   ),
                 ),
               ],
             ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(_error!, style: const TextStyle(color: Color(0xFFB91C1C))),
-            ],
-            if (_answer != null) ...[
-              const SizedBox(height: 18),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Chip(
-                          label: Text(_status ?? 'unknown'),
-                          backgroundColor: statusColor.withAlpha(28),
-                          labelStyle: TextStyle(
-                            color: statusColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        if (_traceId != null)
-                          Text(
-                            _traceId!,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF64748B),
-                            ),
-                          ),
-                      ],
+          );
+        }
+        return ListView(
+          key: const Key('knowledge-mobile-result-list'),
+          padding: const EdgeInsets.all(16),
+          children: [
+            answerPanel,
+            const SizedBox(height: 16),
+            _SourcesPanel(
+              citations: answer.citations,
+              onCitationPressed: _showCitation,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showCitation(KnowledgeGraphRagCitation citation) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => _CitationDocumentDialog(citation: citation),
+    );
+  }
+}
+
+class _AnswerPanel extends StatelessWidget {
+  const _AnswerPanel({required this.answer, required this.onCitationPressed});
+
+  final KnowledgeGraphRagAnswer answer;
+  final ValueChanged<KnowledgeGraphRagCitation> onCitationPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final status = _statusPresentation(answer.status);
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '根拠付きAI回答',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    SelectableText(
-                      _answer!,
-                      style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
+                  ),
+                  Chip(
+                    label: Text(status.label),
+                    backgroundColor: status.color.withAlpha(28),
+                    labelStyle: TextStyle(
+                      color: status.color,
+                      fontWeight: FontWeight.w700,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-            if (_citations.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              Text(
-                'Citations',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
+              if (status.message != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  status.message!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: status.color,
+                  ),
                 ),
+              ],
+              const Divider(height: 28),
+              _CitationAnswerText(
+                answer: answer,
+                onCitationPressed: onCitationPressed,
               ),
-              const SizedBox(height: 8),
-              for (var i = 0; i < _citations.length; i++)
-                _CitationTile(
-                  index: i + 1,
-                  citation: _citations[i],
-                  onOpen: _openCitation,
+              if (answer.traceId.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                Text(
+                  'trace ${answer.traceId}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
+              ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CitationAnswerText extends StatelessWidget {
+  const _CitationAnswerText({
+    required this.answer,
+    required this.onCitationPressed,
+  });
+
+  final KnowledgeGraphRagAnswer answer;
+  final ValueChanged<KnowledgeGraphRagCitation> onCitationPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle =
+        Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.55) ??
+            const TextStyle(height: 1.55);
+    return SelectionArea(
+      child: Text.rich(
+        key: const Key('knowledge-answer-text'),
+        TextSpan(
+          style: baseStyle,
+          children: [
+            for (final segment in parseKnowledgeGraphAnswer(answer.answer))
+              if (!segment.isCitation ||
+                  answer.citationById(segment.citationId!) == null)
+                TextSpan(text: segment.text)
+              else
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: ActionChip(
+                      key: Key('knowledge-citation-link-${segment.citationId}'),
+                      avatar: const Icon(Icons.find_in_page_outlined, size: 16),
+                      label: Text(
+                        '${segment.text} '
+                        '${answer.citationById(segment.citationId!)!.fileName} · '
+                        '${answer.citationById(segment.citationId!)!.position.label}',
+                      ),
+                      onPressed: () => onCitationPressed(
+                        answer.citationById(segment.citationId!)!,
+                      ),
+                    ),
+                  ),
+                ),
           ],
         ),
       ),
@@ -243,79 +374,262 @@ class _KnowledgeGraphPageState extends State<KnowledgeGraphPage> {
   }
 }
 
-class _CitationTile extends StatelessWidget {
-  const _CitationTile({
-    required this.index,
-    required this.citation,
-    required this.onOpen,
+class _SourcesPanel extends StatelessWidget {
+  const _SourcesPanel({
+    required this.citations,
+    required this.onCitationPressed,
+    this.internalScroll = false,
   });
 
-  final int index;
-  final Map<String, dynamic> citation;
-  final Future<void> Function(String? rawUrl) onOpen;
+  final List<KnowledgeGraphRagCitation> citations;
+  final ValueChanged<KnowledgeGraphRagCitation> onCitationPressed;
+  final bool internalScroll;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final sourceUrl = citation['source_url'] as String?;
-    final confidence = citation['confidence'];
-    final confidenceText =
-        confidence is num ? '${(confidence * 100).round()}%' : 'n/a';
-
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '参照元 ${citations.length}件',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            if (citations.isEmpty)
+              const Text('参照元はありません。')
+            else if (internalScroll)
+              Expanded(child: _buildCitationList(theme))
+            else
+              _buildCitationList(theme),
+          ],
+        ),
       ),
-      child: ListTile(
-        minVerticalPadding: 12,
-        leading: CircleAvatar(
-          backgroundColor: const Color(0xFFE0F2FE),
-          foregroundColor: const Color(0xFF0369A1),
-          child: Text('$index'),
-        ),
-        title: Text(
-          citation['title'] as String? ?? sourceUrl ?? 'Untitled',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
+    );
+  }
+
+  Widget _buildCitationList(ThemeData theme) {
+    return ListView.separated(
+      shrinkWrap: !internalScroll,
+      physics: internalScroll ? null : const NeverScrollableScrollPhysics(),
+      itemCount: citations.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final citation = citations[index];
+        return Card(
+          key: Key('knowledge-citation-card-${citation.id}'),
+          margin: EdgeInsets.zero,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: theme.colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: ListTile(
+            onTap: () => onCitationPressed(citation),
+            leading: CircleAvatar(child: Text(citation.id)),
+            title: Text(
+              citation.fileName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(citation.position.label),
+                const SizedBox(height: 4),
+                Text(
+                  citation.excerpt,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            trailing: const Icon(Icons.open_in_new),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CitationDocumentDialog extends StatelessWidget {
+  const _CitationDocumentDialog({required this.citation});
+
+  final KnowledgeGraphRagCitation citation;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final before = citation.previewText.substring(0, citation.highlightStart);
+    final highlighted = citation.previewText.substring(
+      citation.highlightStart,
+      citation.highlightEnd,
+    );
+    final after = citation.previewText.substring(citation.highlightEnd);
+
+    return Dialog(
+      key: Key('knowledge-citation-dialog-${citation.id}'),
+      insetPadding: const EdgeInsets.all(20),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 720),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                citation['excerpt'] as String? ?? '',
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('type: ${citation['source_type'] ?? 'unknown'}'),
-                  Text('confidence: $confidenceText'),
-                  Text('synced: ${citation['last_synced_at'] ?? 'unknown'}'),
+                  const Icon(Icons.description_outlined),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          citation.fileName,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          citation.position.label,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: '閉じる',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
                 ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 6,
+                children: [
+                  Chip(label: Text(citation.sourceType)),
+                  Chip(
+                    label: Text(
+                      'confidence ${(citation.confidence * 100).round()}%',
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              Text(
+                '参照箇所をハイライト',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLowest,
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: SelectionArea(
+                      child: Text.rich(
+                        key: Key('knowledge-citation-preview-${citation.id}'),
+                        TextSpan(
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            height: 1.6,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          children: [
+                            if (citation.previewTruncatedBefore)
+                              const TextSpan(text: '…\n'),
+                            TextSpan(text: before),
+                            TextSpan(
+                              text: highlighted,
+                              style: TextStyle(
+                                backgroundColor:
+                                    theme.colorScheme.tertiary.withAlpha(70),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            TextSpan(text: after),
+                            if (citation.previewTruncatedAfter)
+                              const TextSpan(text: '\n…'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                citation.sourceUrl,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
         ),
-        trailing: sourceUrl != null && sourceUrl.startsWith('http')
-            ? IconButton(
-                tooltip: 'Open source',
-                icon: const Icon(Icons.open_in_new),
-                onPressed: () => onOpen(sourceUrl),
-              )
-            : null,
-        titleTextStyle: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF0F172A),
-        ),
       ),
     );
+  }
+}
+
+class _StatusPresentation {
+  const _StatusPresentation(this.label, this.color, [this.message]);
+
+  final String label;
+  final Color color;
+  final String? message;
+}
+
+_StatusPresentation _statusPresentation(String status) {
+  switch (status) {
+    case 'ok':
+      return const _StatusPresentation('verified', Color(0xFF0F766E));
+    case 'stale_index':
+      return const _StatusPresentation(
+        'stale',
+        Color(0xFFB45309),
+        '一部の情報源が24時間以上更新されていません。日付を確認してください。',
+      );
+    case 'llm_failure':
+      return const _StatusPresentation(
+        'extractive',
+        Color(0xFF9F1239),
+        'AI生成に失敗したため、検索結果の抜粋を表示しています。',
+      );
+    case 'citation_fallback':
+      return const _StatusPresentation(
+        'extractive',
+        Color(0xFF9F1239),
+        'AI回答に有効な引用がなかったため、根拠付きの抜粋を表示しています。',
+      );
+    case 'no_results':
+      return const _StatusPresentation(
+        'no results',
+        Color(0xFF52525B),
+        '一致する情報源が見つかりませんでした。',
+      );
+    default:
+      return const _StatusPresentation('unknown', Color(0xFF334155));
   }
 }

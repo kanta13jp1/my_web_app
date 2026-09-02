@@ -15,10 +15,7 @@ concurrency:
   group: wbs-staleness-audit-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: write
-  pull-requests: write
-  actions: write
+permissions: {}
 
 env:
   STALE_DAYS: 3 # この日数以上更新が無いインスタンスを overdue 扱い
@@ -26,10 +23,15 @@ env:
 
 jobs:
   audit:
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}

@@ -1,13 +1,13 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-07-26",
+    "date": "2026-09-02",
     "users": {
-      "total": 60
+      "total": 61
     },
     "featureRequests": {
       "newToday": 0,
-      "openCount": 131,
+      "openCount": 140,
       "newTodayList": [],
       "topOpen": [
         {
@@ -55,6 +55,6 @@
       }
     ]
   },
-  "fetched_at": "2026-07-27T08:29:59+09:00",
-  "report_date": "2026-07-27"
+  "fetched_at": "2026-09-02T09:25:43+09:00",
+  "report_date": "2026-09-02"
 }

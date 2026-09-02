@@ -76,7 +76,7 @@ void main() {
       amount: 30000,
       currentBalance: 200000,
       problem: '内部説明',
-      action: 'カードを一括返済へ戻す',
+      action: '最低返済額に新規利用分を上乗せし25日に返済する',
     );
   }
 
@@ -86,11 +86,12 @@ void main() {
     List<AssetDebtDisciplineViolation> revolving =
         const <AssetDebtDisciplineViolation>[],
     int monitored = 2,
+    bool hasPriorMonthData = true,
   }) {
     return AssetDebtDisciplineReport(
       newBorrowingViolations: newBorrowing,
       revolvingCardViolations: revolving,
-      hasPriorMonthData: true,
+      hasPriorMonthData: hasPriorMonthData,
       totalNewBorrowing: newBorrowing.isEmpty ? 0 : 30000,
       totalCarriedOver: revolving.isEmpty ? 0 : 20000,
       monitoredAccountCount: monitored,
@@ -200,6 +201,42 @@ void main() {
       final chro = actionFor(briefing, 'discipline_ok');
       expect(chro, isNotNull);
       expect(chro!.severity, AdvisorySeverity.info);
+      expect(chro.detail, contains('達成'));
+    });
+
+    test('never claims 追加借入ゼロ was achieved when it was never evaluated', () {
+      // 前月残高が無いと誓約①の評価ループに入らず違反リストが必ず空になる。
+      // その状態を「達成」と書くと規律カードの「判定保留」チップと矛盾する。
+      final briefing = service.build(
+        now: now,
+        disciplineReport: discipline(hasPriorMonthData: false),
+      );
+      final chro = actionFor(briefing, 'discipline_ok');
+      expect(chro, isNotNull);
+      expect(chro!.severity, AdvisorySeverity.info);
+      expect(chro.detail, contains('判定'));
+      expect(
+        chro.detail.contains('カード以外の追加借入ゼロ・新規利用分の25日全額返済を達成'),
+        isFalse,
+      );
+      expect(chro.headline.contains('規律を維持'), isFalse);
+    });
+
+    test('marks pledge 1 as 判定保留 in the violation detail when unevaluated', () {
+      final briefing = service.build(
+        now: now,
+        disciplineReport: discipline(
+          revolving: [
+            violation(type: AssetDebtDisciplineViolationType.revolvingCard),
+          ],
+          hasPriorMonthData: false,
+        ),
+      );
+      final chro = actionFor(briefing, 'discipline_violation');
+      expect(chro, isNotNull);
+      expect(chro!.detail, contains('誓約①カード以外の追加借入ゼロ: 判定保留'));
+      // 誓約②は前月データ不要なので、そのまま未達と出る。
+      expect(chro.detail, contains('誓約②新規利用分の25日全額返済: 未達'));
     });
 
     test('two criticals trigger a CEO priority ruling sorted to the top', () {

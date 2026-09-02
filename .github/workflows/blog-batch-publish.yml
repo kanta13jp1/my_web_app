@@ -30,18 +30,22 @@ concurrency:
   group: blog-batch-publish
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   batch:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: write
     name: Batch Publish All Drafts
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
 
@@ -71,7 +75,7 @@ jobs:
           echo "Total: $COUNT unpublished drafts"
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
@@ -119,9 +123,13 @@ jobs:
 
       - name: Summary
         if: always()
+        env:
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+          PLATFORMS_INPUT: ${{ github.event.inputs.platforms }}
+          DELAY_INPUT: ${{ github.event.inputs.delay_seconds }}
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 実行結果" >> $GITHUB_STEP_SUMMARY
-          echo "- dry_run: ${{ github.event.inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
-          echo "- platforms: ${{ github.event.inputs.platforms }}" >> $GITHUB_STEP_SUMMARY
-          echo "- delay: ${{ github.event.inputs.delay_seconds }}s" >> $GITHUB_STEP_SUMMARY
+          echo "- dry_run: $DRY_RUN_INPUT" >> $GITHUB_STEP_SUMMARY
+          echo "- platforms: $PLATFORMS_INPUT" >> $GITHUB_STEP_SUMMARY
+          echo "- delay: ${DELAY_INPUT}s" >> $GITHUB_STEP_SUMMARY

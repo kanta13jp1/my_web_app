@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../utils/web_image_downloader.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 const String _kGithubRepoUrl = 'https://github.com/kanta13jp1/my_web_app';
 const String _kAdditionalRequestText = '\u8ffd\u52a0\u8981\u671b';
@@ -629,7 +630,14 @@ class ProjectGanttPage extends StatefulWidget {
 }
 
 class _ProjectGanttPageState extends State<ProjectGanttPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['wbs', 'timeline', 'projects', 'hygiene'];
+
+  @override
+  TabController get tabUrlController => _tabs;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabs;
 

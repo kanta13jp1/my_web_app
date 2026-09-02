@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// フィットネス・健康トラッカー
 /// ワークアウト記録・体重推移・健康メトリクス管理。
@@ -13,7 +14,14 @@ class FitnessHealthTrackerPage extends StatefulWidget {
 }
 
 class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['summary', 'workout', 'weight'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

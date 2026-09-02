@@ -1,20 +1,123 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'landing_oauth_callback_failure.dart';
 import 'landing_share_service.dart';
 
 class LandingPageAuthUnavailableException implements Exception {
   const LandingPageAuthUnavailableException();
 }
 
+enum LandingMagicLinkFailureCategory {
+  invalidEmail,
+  rateLimit,
+  deliveryConfiguration,
+  redirectConfiguration,
+  network,
+  unknown,
+}
+
+LandingMagicLinkFailureCategory classifyLandingMagicLinkFailure(Object error) {
+  if (error is AuthException) {
+    final code = (error.code ?? '').toLowerCase();
+    final message = error.message.toLowerCase();
+    final status = error.statusCode?.toString() ?? '';
+
+    if (code == 'email_address_invalid' || message.contains('invalid email')) {
+      return LandingMagicLinkFailureCategory.invalidEmail;
+    }
+    if (code == 'over_email_send_rate_limit' ||
+        code == 'over_request_rate_limit' ||
+        status == '429' ||
+        message.contains('rate limit')) {
+      return LandingMagicLinkFailureCategory.rateLimit;
+    }
+    if (code == 'email_provider_disabled' ||
+        code == 'signup_disabled' ||
+        message.contains('smtp') ||
+        message.contains('email provider') ||
+        message.contains('email address not authorized') ||
+        message.contains('sending email')) {
+      return LandingMagicLinkFailureCategory.deliveryConfiguration;
+    }
+    if (code == 'validation_failed' ||
+        code == 'flow_state_expired' ||
+        code == 'flow_state_not_found' ||
+        message.contains('redirect')) {
+      return LandingMagicLinkFailureCategory.redirectConfiguration;
+    }
+  }
+
+  final text = error.toString().toLowerCase();
+  if (text.contains('socket') ||
+      text.contains('network') ||
+      text.contains('connection') ||
+      text.contains('timeout') ||
+      text.contains('clientexception')) {
+    return LandingMagicLinkFailureCategory.network;
+  }
+  return LandingMagicLinkFailureCategory.unknown;
+}
+
+String landingMagicLinkFailureEventKey(
+  LandingMagicLinkFailureCategory category,
+) {
+  switch (category) {
+    case LandingMagicLinkFailureCategory.invalidEmail:
+      return LandingShareService.funnelMagicLinkFailInvalidEmail;
+    case LandingMagicLinkFailureCategory.rateLimit:
+      return LandingShareService.funnelMagicLinkFailRateLimit;
+    case LandingMagicLinkFailureCategory.deliveryConfiguration:
+      return LandingShareService.funnelMagicLinkFailDeliveryConfig;
+    case LandingMagicLinkFailureCategory.redirectConfiguration:
+      return LandingShareService.funnelMagicLinkFailRedirect;
+    case LandingMagicLinkFailureCategory.network:
+      return LandingShareService.funnelMagicLinkFailNetwork;
+    case LandingMagicLinkFailureCategory.unknown:
+      return LandingShareService.funnelMagicLinkFailUnknown;
+  }
+}
+
+String landingGoogleOAuthFailureEventKey(
+  LandingOAuthCallbackFailureCategory category,
+) {
+  switch (category) {
+    case LandingOAuthCallbackFailureCategory.cancelled:
+      return LandingShareService.funnelGoogleOAuthFailCancelled;
+    case LandingOAuthCallbackFailureCategory.rateLimited:
+      return LandingShareService.funnelGoogleOAuthFailRateLimit;
+    case LandingOAuthCallbackFailureCategory.providerConfiguration:
+      return LandingShareService.funnelGoogleOAuthFailProviderConfig;
+    case LandingOAuthCallbackFailureCategory.redirectConfiguration:
+      return LandingShareService.funnelGoogleOAuthFailRedirect;
+    case LandingOAuthCallbackFailureCategory.callbackExchange:
+      return LandingShareService.funnelGoogleOAuthFailCallbackExchange;
+    case LandingOAuthCallbackFailureCategory.unknown:
+      return LandingShareService.funnelGoogleOAuthFailUnknown;
+  }
+}
+
+class LandingTrialPreviewException implements Exception {
+  final String code;
+  final int? statusCode;
+  final bool canUseInstantPreview;
+
+  const LandingTrialPreviewException(
+    this.code, {
+    this.statusCode,
+    this.canUseInstantPreview = false,
+  });
+
+  @override
+  String toString() =>
+      'LandingTrialPreviewException($code, $statusCode, $canUseInstantPreview)';
+}
+
 class LandingPageViewPoint {
   final DateTime? date;
   final double count;
 
-  const LandingPageViewPoint({
-    required this.date,
-    required this.count,
-  });
+  const LandingPageViewPoint({required this.date, required this.count});
 }
 
 class LandingPageViewStats {
@@ -56,9 +159,7 @@ abstract interface class LandingPageAdapter {
 
   Future<LandingShareSnapshot> loadShareSnapshot();
 
-  Future<LandingShareSnapshot> shareLandingPage({
-    required String channel,
-  });
+  Future<LandingShareSnapshot> shareLandingPage({required String channel});
 
   Future<LandingPageViewStats> loadLpViewStats();
 
@@ -71,9 +172,7 @@ abstract interface class LandingPageAdapter {
   /// LandingPage の initState から明示的に呼ぶ。
   Future<void> recordLpView();
 
-  Future<String> improveTrialPrompt({
-    required String prompt,
-  });
+  Future<String> improveTrialPrompt({required String prompt});
 
   Future<AuthResponse> signUp({
     required String email,
@@ -86,8 +185,10 @@ abstract interface class LandingPageAdapter {
     required String password,
   });
 
-  Future<bool> signInWithGoogle({
-    String? redirectTo,
+  Future<bool> signInWithGoogle({String? redirectTo});
+
+  Future<void> recordGoogleOAuthCallbackFailure({
+    required LandingOAuthCallbackFailureCategory category,
   });
 
   Future<void> sendMagicLink({
@@ -257,21 +358,32 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
   }
 
   @override
-  Future<String> improveTrialPrompt({
-    required String prompt,
-  }) async {
+  Future<String> improveTrialPrompt({required String prompt}) async {
     final client = _supabaseClientOrNull;
     if (client == null) {
       throw const LandingPageAuthUnavailableException();
     }
 
-    final response = await client.functions.invoke(
-      'growth-hub',
-      body: <String, dynamic>{
-        'action': 'landing.trial',
-        'prompt': prompt,
-      },
-    );
+    late final FunctionResponse response;
+    try {
+      response = await client.functions.invoke(
+        'growth-hub',
+        body: <String, dynamic>{'action': 'landing.trial', 'prompt': prompt},
+      );
+    } on FunctionException catch (error) {
+      final details = error.details;
+      final errorCode =
+          details is Map ? details['error']?.toString().trim() : null;
+      final canUseInstantPreview =
+          details is Map && details['canUseInstantPreview'] == true;
+      throw LandingTrialPreviewException(
+        (errorCode == null || errorCode.isEmpty)
+            ? 'trial_ai_unavailable'
+            : errorCode,
+        statusCode: error.status,
+        canUseInstantPreview: canUseInstantPreview,
+      );
+    }
     final data = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
@@ -281,8 +393,12 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       return 'ACTION: $action\nREASON: $reason';
     }
 
-    throw Exception(
-      data['error']?.toString() ?? 'Landing trial preview failed.',
+    throw LandingTrialPreviewException(
+      data['error']?.toString().trim().isNotEmpty == true
+          ? data['error'].toString().trim()
+          : 'trial_ai_unavailable',
+      statusCode: response.status,
+      canUseInstantPreview: data['canUseInstantPreview'] == true,
     );
   }
 
@@ -311,12 +427,25 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
   }
 
   @override
-  Future<bool> signInWithGoogle({
-    String? redirectTo,
-  }) {
-    return _requireAuthClient().signInWithOAuth(
+  Future<bool> signInWithGoogle({String? redirectTo}) async {
+    final launched = await _requireAuthClient().signInWithOAuth(
       OAuthProvider.google,
       redirectTo: redirectTo,
+    );
+    if (launched) {
+      await _recordFunnelEventBestEffort(
+        LandingShareService.funnelGoogleOAuthStart,
+      );
+    }
+    return launched;
+  }
+
+  @override
+  Future<void> recordGoogleOAuthCallbackFailure({
+    required LandingOAuthCallbackFailureCategory category,
+  }) {
+    return _recordFunnelEventBestEffort(
+      landingGoogleOAuthFailureEventKey(category),
     );
   }
 
@@ -327,15 +456,35 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
     bool shouldCreateUser = true,
   }) async {
     final client = _requireAuthClient();
-    await client.signInWithOtp(
-      email: email,
-      emailRedirectTo: emailRedirectTo,
-      shouldCreateUser: shouldCreateUser,
+    await _recordFunnelEventBestEffort(
+      LandingShareService.funnelMagicLinkAttempt,
     );
-    await LandingShareService.recordFunnelEvent(
-      eventKey: LandingShareService.funnelMagicLinkSend,
-      client: _supabaseClientOrNull,
-    );
+    try {
+      await client.signInWithOtp(
+        email: email,
+        emailRedirectTo: emailRedirectTo,
+        shouldCreateUser: shouldCreateUser,
+      );
+      await _recordFunnelEventBestEffort(
+        LandingShareService.funnelMagicLinkSend,
+      );
+    } catch (error) {
+      await _recordFunnelEventBestEffort(
+        landingMagicLinkFailureEventKey(classifyLandingMagicLinkFailure(error)),
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> _recordFunnelEventBestEffort(String eventKey) async {
+    try {
+      await LandingShareService.recordFunnelEvent(
+        eventKey: eventKey,
+        client: _supabaseClientOrNull,
+      );
+    } catch (error) {
+      debugPrint('Landing auth funnel analytics failed: $error');
+    }
   }
 
   @override

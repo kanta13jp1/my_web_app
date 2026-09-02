@@ -1,0 +1,163 @@
+name: Stripe Account Readiness (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      require_charges_enabled:
+        description: "Fail unless live charges are enabled"
+        required: true
+        default: true
+        type: boolean
+      require_payouts_enabled:
+        description: "Fail unless bank payouts are enabled"
+        required: true
+        default: true
+        type: boolean
+
+permissions: {}
+
+concurrency:
+  group: stripe-account-readiness
+  cancel-in-progress: false
+
+env:
+  SCHEDULE_HUB_URL: https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub
+
+jobs:
+  readiness:
+    environment:
+      name: customer-operations-production
+      deployment: false
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Request redacted Stripe account status
+        id: request
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          REQUIRE_CHARGES: ${{ inputs.require_charges_enabled }}
+          REQUIRE_PAYOUTS: ${{ inputs.require_payouts_enabled }}
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_SERVICE_ROLE_KEY:-}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+          HTTP_CODE=$(curl -sS -o stripe-account-readiness.json -w "%{http_code}" \
+            -X POST "${SCHEDULE_HUB_URL}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            --data '{"action":"billing.get_stripe_account_readiness"}')
+          echo "http_code=${HTTP_CODE}" >> "$GITHUB_OUTPUT"
+          echo "Stripe readiness endpoint returned HTTP ${HTTP_CODE}."
+
+      - name: Enforce live charge and payout gates
+        env:
+          HTTP_CODE: ${{ steps.request.outputs.http_code }}
+          REQUIRE_CHARGES: ${{ inputs.require_charges_enabled }}
+          REQUIRE_PAYOUTS: ${{ inputs.require_payouts_enabled }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path("stripe-account-readiness.json")
+          if not path.exists():
+              raise SystemExit("Stripe readiness response is missing.")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          http_code = int(os.environ.get("HTTP_CODE") or 0)
+          if http_code < 200 or http_code >= 300:
+              error = payload.get("error") or f"HTTP {http_code}"
+              raise SystemExit(f"Stripe readiness request failed: {error}")
+          if payload.get("success") is not True:
+              raise SystemExit("Stripe readiness response did not report success=true.")
+
+          account = payload.get("account") or {}
+          print(f"stage={account.get('stage', 'unknown')}")
+          print(
+              "ready_for_external_payment="
+              f"{account.get('ready_for_external_payment', False)}"
+          )
+          print(
+              "ready_for_bank_payout="
+              f"{account.get('ready_for_bank_payout', False)}"
+          )
+          if (
+              os.environ.get("REQUIRE_CHARGES", "").lower() == "true"
+              and account.get("ready_for_external_payment") is not True
+          ):
+              raise SystemExit(
+                  "Live charges are not enabled. Follow account.next_action."
+              )
+          if (
+              os.environ.get("REQUIRE_PAYOUTS", "").lower() == "true"
+              and account.get("ready_for_bank_payout") is not True
+          ):
+              raise SystemExit(
+                  "Bank payouts are not enabled. Follow account.next_action."
+              )
+          PY
+
+      - name: Write readiness summary
+        if: always()
+        env:
+          HTTP_CODE: ${{ steps.request.outputs.http_code }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path("stripe-account-readiness.json")
+          payload = {}
+          if path.exists():
+              try:
+                  payload = json.loads(path.read_text(encoding="utf-8"))
+              except json.JSONDecodeError:
+                  payload = {"error": "response was not valid JSON"}
+          account = payload.get("account") or {}
+          requirements = account.get("requirements") or {}
+
+          def cell(value):
+              return str(value if value is not None else "").replace("|", "\\|")
+
+          lines = [
+              "## Stripe Account Readiness",
+              "",
+              "| Field | Value |",
+              "| --- | --- |",
+              f"| HTTP | {cell(os.environ.get('HTTP_CODE') or 'n/a')} |",
+              f"| Checked at | {cell(payload.get('checked_at'))} |",
+              f"| Mode | {cell(account.get('mode'))} |",
+              f"| Account | {cell(account.get('account_id_redacted'))} |",
+              f"| Charges enabled | {cell(account.get('charges_enabled'))} |",
+              f"| Payouts enabled | {cell(account.get('payouts_enabled'))} |",
+              f"| Stage | {cell(account.get('stage'))} |",
+              f"| Disabled reason | {cell(requirements.get('disabled_reason'))} |",
+              f"| Currently due | {cell(', '.join(requirements.get('currently_due') or []))} |",
+              f"| Past due | {cell(', '.join(requirements.get('past_due') or []))} |",
+              f"| Pending verification | {cell(', '.join(requirements.get('pending_verification') or []))} |",
+              f"| Next action | {cell(account.get('next_action') or payload.get('error'))} |",
+          ]
+          Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text(
+              "\n".join(lines) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload redacted readiness evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: stripe-account-readiness-${{ github.run_id }}
+          path: stripe-account-readiness.json
+          if-no-files-found: warn
+          retention-days: 30

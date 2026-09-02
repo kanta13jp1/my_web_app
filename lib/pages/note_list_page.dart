@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -5,15 +6,21 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/inbox_capture_service.dart';
+import '../services/note_semantic_search_service.dart';
+import '../services/note_tag_service.dart';
 import '../services/public_memo_service.dart';
 import 'note_editor_page.dart';
 
 enum _NoteCardAction {
+  markOrganized,
   duplicate,
   publish,
   unpublish,
   delete,
 }
+
+enum _NoteListView { all, favorites, inbox }
 
 class _LocalDraftEntry {
   final String storageKey;
@@ -38,11 +45,13 @@ class _LocalDraftEntry {
 class NoteListPage extends StatefulWidget {
   final bool prioritizeShareCandidates;
   final SupabaseClient? supabaseClient;
+  final NoteSemanticSearchDataSource? semanticSearchService;
 
   const NoteListPage({
     super.key,
     this.prioritizeShareCandidates = false,
     this.supabaseClient,
+    this.semanticSearchService,
   });
 
   @override
@@ -52,9 +61,12 @@ class NoteListPage extends StatefulWidget {
 class _NoteListPageState extends State<NoteListPage> {
   late final SupabaseClient _supabase;
   late final PublicMemoService _publicMemoService;
+  late final NoteSemanticSearchDataSource _semanticSearchService;
   static const String _draftKeyPrefix = 'note_editor_draft_';
+  static const int _notesPageSize = 500;
   bool _isLoading = true;
   bool _showFavoritesOnly = false;
+  bool _showInboxOnly = false;
   List<Map<String, dynamic>> _notes = [];
   List<_LocalDraftEntry> _draftEntries = [];
   Set<String> _publishedNoteIds = <String>{};
@@ -62,28 +74,174 @@ class _NoteListPageState extends State<NoteListPage> {
   // Win版#108: メモ検索 (title + content 部分一致・case insensitive)
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String? _selectedTag;
+  Timer? _searchDebounce;
+  List<NoteSearchResult> _semanticSearchResults = const <NoteSearchResult>[];
+  String _semanticSearchMode = 'text_fallback';
+  String? _semanticSearchError;
+  bool _isSemanticSearching = false;
+  bool _semanticSearchCompleted = false;
+  int _semanticSearchRequestId = 0;
 
   @override
   void initState() {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _publicMemoService = PublicMemoService(_supabase);
+    _semanticSearchService =
+        widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
+    inboxCaptureRevision.addListener(_handleInboxCapture);
     _fetchNotes();
   }
 
   @override
   void dispose() {
+    inboxCaptureRevision.removeListener(_handleInboxCapture);
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  /// 検索クエリで note を絞り込み (title + content 部分一致・case insensitive)
+  void _handleInboxCapture() {
+    _fetchNotes();
+  }
+
+  /// 検索クエリで note を絞り込み (title + content + tags 部分一致)。
   bool _matchesSearch(Map<String, dynamic> note) {
     if (_searchQuery.isEmpty) return true;
     final q = _searchQuery.toLowerCase();
     final title = (note['title'] as String? ?? '').toLowerCase();
     final content = (note['content'] as String? ?? '').toLowerCase();
-    return title.contains(q) || content.contains(q);
+    return title.contains(q) ||
+        content.contains(q) ||
+        NoteTagService.containsSearch(note['tags'], q);
+  }
+
+  void _handleSearchChanged(String value) {
+    final query = value.trim();
+    _searchDebounce?.cancel();
+    final requestId = ++_semanticSearchRequestId;
+    setState(() {
+      _searchQuery = query;
+      _semanticSearchResults = const <NoteSearchResult>[];
+      _semanticSearchMode = 'text_fallback';
+      _semanticSearchError = null;
+      _semanticSearchCompleted = false;
+      _isSemanticSearching = query.isNotEmpty;
+    });
+    if (query.isEmpty) return;
+
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 350),
+      () => unawaited(_runSemanticSearch(query, requestId)),
+    );
+  }
+
+  void _submitSearch(String value) {
+    final query = value.trim();
+    _searchDebounce?.cancel();
+    if (query.isEmpty) {
+      _handleSearchChanged('');
+      return;
+    }
+    final requestId = ++_semanticSearchRequestId;
+    setState(() {
+      _searchQuery = query;
+      _semanticSearchResults = const <NoteSearchResult>[];
+      _semanticSearchMode = 'text_fallback';
+      _semanticSearchError = null;
+      _semanticSearchCompleted = false;
+      _isSemanticSearching = true;
+    });
+    unawaited(_runSemanticSearch(query, requestId));
+  }
+
+  Future<void> _runSemanticSearch(String query, int requestId) async {
+    try {
+      final response = await _semanticSearchService.search(query);
+      if (!mounted ||
+          requestId != _semanticSearchRequestId ||
+          query != _searchQuery) {
+        return;
+      }
+      setState(() {
+        _semanticSearchResults = response.results;
+        _semanticSearchMode = response.searchMode;
+        _semanticSearchCompleted = true;
+        _isSemanticSearching = false;
+      });
+    } catch (error) {
+      if (!mounted ||
+          requestId != _semanticSearchRequestId ||
+          query != _searchQuery) {
+        return;
+      }
+      setState(() {
+        _semanticSearchError = error.toString();
+        _semanticSearchCompleted = false;
+        _isSemanticSearching = false;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> _visibleNotesForSearch(
+    List<Map<String, dynamic>> notes,
+  ) {
+    final viewFiltered = _showInboxOnly
+        ? notes.where(_isInbox).toList(growable: false)
+        : (_showFavoritesOnly
+            ? notes.where(_isFavorite).toList(growable: false)
+            : notes);
+    final selectedTag = _selectedTag;
+    final locallyFiltered = selectedTag == null
+        ? viewFiltered
+        : viewFiltered
+            .where(
+              (note) => NoteTagService.containsTag(note['tags'], selectedTag),
+            )
+            .toList(growable: false);
+    if (_searchQuery.isEmpty) return locallyFiltered;
+    if (!_semanticSearchCompleted || _semanticSearchError != null) {
+      return locallyFiltered.where(_matchesSearch).toList();
+    }
+
+    final notesById = <String, Map<String, dynamic>>{
+      for (final note in notes) _noteId(note): note,
+    };
+    final semanticMatches = _semanticSearchResults
+        .map(
+      (result) => result.toNoteRow(localNote: notesById[result.id]),
+    )
+        .where(
+      (note) {
+        final matchesView = _showInboxOnly
+            ? _isInbox(note)
+            : (!_showFavoritesOnly || _isFavorite(note));
+        return matchesView &&
+            (selectedTag == null ||
+                NoteTagService.containsTag(note['tags'], selectedTag));
+      },
+    ).toList(growable: false);
+    final semanticIds = semanticMatches.map(_noteId).toSet();
+    final localMatches = locallyFiltered
+        .where(_matchesSearch)
+        .where((note) => !semanticIds.contains(_noteId(note)));
+    return <Map<String, dynamic>>[
+      ...semanticMatches,
+      ...localMatches,
+    ];
+  }
+
+  String _searchStatusText(int resultCount) {
+    if (_isSemanticSearching) return '意味検索中...';
+    if (_semanticSearchError != null) {
+      return 'オンライン検索を利用できないため端末内の一致を表示';
+    }
+    if (_semanticSearchCompleted) {
+      final mode = _semanticSearchMode == 'ai' ? '意味検索' : 'あいまい検索';
+      return '$resultCount件 / $mode';
+    }
+    return '$resultCount件';
   }
 
   Future<void> _fetchNotes() async {
@@ -102,17 +260,7 @@ class _NoteListPageState extends State<NoteListPage> {
         return;
       }
 
-      final data = await _supabase
-          .from('notes')
-          .select(
-            'id, title, content, created_at, is_pinned, is_favorite, reminder_date',
-          )
-          .eq('user_id', userId)
-          .eq('is_archived', false)
-          .order('is_pinned', ascending: false)
-          .order('is_favorite', ascending: false)
-          .order('created_at', ascending: false);
-      final notes = List<Map<String, dynamic>>.from(data);
+      final notes = await _fetchAllNotes(userId);
       final results = await Future.wait<dynamic>([
         _loadDraftEntries(notes),
         _loadPublishedNoteIds(userId),
@@ -140,6 +288,29 @@ class _NoteListPageState extends State<NoteListPage> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _fetchAllNotes(String userId) async {
+    final notes = <Map<String, dynamic>>[];
+    for (var from = 0;; from += _notesPageSize) {
+      final data = await _supabase
+          .from('notes')
+          .select(
+            'id, title, content, created_at, is_pinned, is_favorite, '
+            'reminder_date, tags, capture_status, capture_source, inbox_saved_at',
+          )
+          .eq('user_id', userId)
+          .eq('is_archived', false)
+          .order('is_pinned', ascending: false)
+          .order('is_favorite', ascending: false)
+          .order('created_at', ascending: false)
+          .order('id', ascending: false)
+          .range(from, from + _notesPageSize - 1);
+      final page = List<Map<String, dynamic>>.from(data);
+      notes.addAll(page);
+      if (page.length < _notesPageSize) break;
+    }
+    return notes;
+  }
+
   Future<Set<String>> _loadPublishedNoteIds(String userId) async {
     final memos = await _publicMemoService.getUserPublicMemos(userId);
     return memos.map((memo) => memo.noteId.toString()).toSet();
@@ -164,6 +335,13 @@ class _NoteListPageState extends State<NoteListPage> {
       (note['content'] as String? ?? '').trim();
 
   bool _isFavorite(Map<String, dynamic> note) => note['is_favorite'] == true;
+
+  bool _isInbox(Map<String, dynamic> note) =>
+      note['capture_status'] == inboxCaptureStatus;
+
+  List<String> _noteTags(Map<String, dynamic> note) {
+    return NoteTagService.normalize(note['tags']);
+  }
 
   bool _isPublished(Map<String, dynamic> note) =>
       _publishedNoteIds.contains(_noteId(note));
@@ -314,7 +492,52 @@ class _NoteListPageState extends State<NoteListPage> {
   void _toggleFavoritesOnly() {
     setState(() {
       _showFavoritesOnly = !_showFavoritesOnly;
+      _showInboxOnly = false;
     });
+  }
+
+  void _toggleInboxOnly() {
+    setState(() {
+      _showInboxOnly = !_showInboxOnly;
+      _showFavoritesOnly = false;
+    });
+  }
+
+  void _setListView(_NoteListView view) {
+    setState(() {
+      _showFavoritesOnly = view == _NoteListView.favorites;
+      _showInboxOnly = view == _NoteListView.inbox;
+    });
+  }
+
+  Future<void> _markNoteOrganized(
+    BuildContext context,
+    Map<String, dynamic> note,
+  ) async {
+    final noteId = _noteId(note);
+    if (noteId.isEmpty || !_isInbox(note)) return;
+
+    final tags = _noteTags(note)
+        .where((tag) => tag.toLowerCase() != 'inbox')
+        .toList(growable: false);
+    try {
+      await _supabase.from('notes').update({
+        'capture_status': organizedCaptureStatus,
+        'tags': tags,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', noteId);
+
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('「${_noteTitle(note)}」を整理済みにしました')),
+      );
+      await _fetchNotes();
+    } catch (e) {
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Inboxの更新に失敗しました: $e')),
+      );
+    }
   }
 
   Future<void> _toggleFavorite(
@@ -808,14 +1031,20 @@ class _NoteListPageState extends State<NoteListPage> {
     final dateStr = DateFormat('yyyy/MM/dd HH:mm').format(created);
     final isPinned = note['is_pinned'] as bool? ?? false;
     final isFavorite = _isFavorite(note);
+    final isInbox = _isInbox(note);
     final title = _noteTitle(note);
     final content = _noteContent(note);
+    final tags = _noteTags(note);
     final reminderDate = _reminderDateOf(note);
     final accentColor = highlightShareCandidate
         ? const Color(0xFF6366F1)
         : (highlightReminder
             ? const Color(0xFF0D9488)
-            : (isPinned ? const Color(0xFFFF6B35) : const Color(0xFF6366F1)));
+            : (isInbox
+                ? const Color(0xFF0D9488)
+                : (isPinned
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFF6366F1))));
     final fallbackAccentColor = isFavorite &&
             !highlightReminder &&
             !highlightShareCandidate &&
@@ -842,11 +1071,13 @@ class _NoteListPageState extends State<NoteListPage> {
                 ? Icons.campaign
                 : highlightReminder
                     ? Icons.alarm
-                    : isPinned
-                        ? Icons.push_pin
-                        : isFavorite
-                            ? Icons.star
-                            : Icons.description,
+                    : isInbox
+                        ? Icons.inbox_outlined
+                        : isPinned
+                            ? Icons.push_pin
+                            : isFavorite
+                                ? Icons.star
+                                : Icons.description,
             color: fallbackAccentColor,
             size: 20,
           ),
@@ -887,6 +1118,28 @@ class _NoteListPageState extends State<NoteListPage> {
                       ),
                     ),
                   ),
+                if (isInbox && !highlightShareCandidate) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D9488).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      '未整理',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0D9488),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
                 if (isFavorite) ...[
                   const SizedBox(width: 8),
                   const Icon(
@@ -944,6 +1197,46 @@ class _NoteListPageState extends State<NoteListPage> {
                 ),
               ),
             ],
+            if (tags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                key: ValueKey<String>('note_tags_${_noteId(note)}'),
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final tag in tags.take(6))
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 180),
+                      child: ActionChip(
+                        key: ValueKey<String>(
+                          'note_list_tag_${_noteId(note)}_$tag',
+                        ),
+                        avatar: const Icon(Icons.sell_outlined, size: 14),
+                        label: Text(
+                          tag,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _selectedTag = tag;
+                          });
+                        },
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  if (tags.length > 6)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        '+${tags.length - 6}',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                ],
+              ),
+            ],
             if (content.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
@@ -985,6 +1278,9 @@ class _NoteListPageState extends State<NoteListPage> {
               tooltip: 'メモ操作',
               onSelected: (action) {
                 switch (action) {
+                  case _NoteCardAction.markOrganized:
+                    _markNoteOrganized(context, note);
+                    break;
                   case _NoteCardAction.duplicate:
                     _duplicateNote(context, note);
                     break;
@@ -1006,6 +1302,17 @@ class _NoteListPageState extends State<NoteListPage> {
                 }
               },
               itemBuilder: (context) => [
+                if (isInbox)
+                  const PopupMenuItem<_NoteCardAction>(
+                    value: _NoteCardAction.markOrganized,
+                    child: Row(
+                      children: [
+                        Icon(Icons.inventory_2_outlined, size: 18),
+                        SizedBox(width: 8),
+                        Text('整理済みにする'),
+                      ],
+                    ),
+                  ),
                 const PopupMenuItem<_NoteCardAction>(
                   value: _NoteCardAction.duplicate,
                   child: Row(
@@ -1054,16 +1361,23 @@ class _NoteListPageState extends State<NoteListPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Win版#108: お気に入り → 検索 の順でフィルタ適用
-    final favoritesFiltered =
-        _showFavoritesOnly ? _notes.where(_isFavorite).toList() : _notes;
-    final visibleNotes = _searchQuery.isEmpty
-        ? favoritesFiltered
-        : favoritesFiltered.where(_matchesSearch).toList();
-    final reminderEntries = _reminderEntries(visibleNotes);
+    // 表示モード → 意味検索（失敗時は端末内検索）の順で絞り込む。
+    final availableTags = NoteTagService.collectFromRows(_notes);
+    final tagOptions = <String>[...availableTags];
+    if (_selectedTag != null && !tagOptions.contains(_selectedTag)) {
+      tagOptions.add(_selectedTag!);
+    }
+    final visibleNotes = _visibleNotesForSearch(_notes);
+    final inboxEntries = visibleNotes.where(_isInbox).toList();
+    final inboxIds =
+        inboxEntries.map(_noteId).where((id) => id.isNotEmpty).toSet();
+    final nonInboxNotes = visibleNotes
+        .where((note) => !inboxIds.contains(_noteId(note)))
+        .toList();
+    final reminderEntries = _reminderEntries(nonInboxNotes);
     final reminderIds =
         reminderEntries.map(_noteId).where((id) => id.isNotEmpty).toSet();
-    final reminderExcludedNotes = visibleNotes
+    final reminderExcludedNotes = nonInboxNotes
         .where((note) => !reminderIds.contains(_noteId(note)))
         .toList();
     final shareCandidateEntries = widget.prioritizeShareCandidates
@@ -1078,9 +1392,14 @@ class _NoteListPageState extends State<NoteListPage> {
             .where((note) => !shareCandidateIds.contains(_noteId(note)))
             .toList()
         : reminderExcludedNotes;
-    final hasAnyEntries = _draftEntries.isNotEmpty || visibleNotes.isNotEmpty;
-    final pageTitle =
-        _showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)';
+    final hasAnyEntries = (!_showInboxOnly &&
+            _searchQuery.isEmpty &&
+            _selectedTag == null &&
+            _draftEntries.isNotEmpty) ||
+        visibleNotes.isNotEmpty;
+    final pageTitle = _showInboxOnly
+        ? 'CKO OFFICE (Inbox)'
+        : (_showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)');
 
     return Scaffold(
       key: const Key('note_list_page_scaffold'),
@@ -1092,13 +1411,6 @@ class _NoteListPageState extends State<NoteListPage> {
         backgroundColor: const Color(0xFF6366F1),
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            key: const Key('note_list_page_favorites_filter'),
-            icon: Icon(_showFavoritesOnly ? Icons.star : Icons.star_border),
-            color: _showFavoritesOnly ? const Color(0xFFFFD54F) : Colors.white,
-            tooltip: _showFavoritesOnly ? 'すべてのメモを表示' : 'お気に入りのみ表示',
-            onPressed: _toggleFavoritesOnly,
-          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _fetchNotes,
@@ -1123,14 +1435,15 @@ class _NoteListPageState extends State<NoteListPage> {
             child: TextField(
               key: const Key('note_list_page_search_field'),
               controller: _searchController,
-              onChanged: (value) => setState(() => _searchQuery = value.trim()),
+              onChanged: _handleSearchChanged,
+              onSubmitted: _submitSearch,
               style: const TextStyle(
                 color: Color(0xFFE5E7EB),
                 fontSize: 14,
                 height: 1.5,
               ),
               decoration: InputDecoration(
-                hintText: 'タイトル・本文で検索...',
+                hintText: '自然な言葉でメモを検索...',
                 hintStyle: const TextStyle(
                   color: Color(0xFF94A3B8),
                   height: 1.5,
@@ -1150,7 +1463,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         tooltip: '検索クリア',
                         onPressed: () {
                           _searchController.clear();
-                          setState(() => _searchQuery = '');
+                          _handleSearchChanged('');
                         },
                       )
                     : null,
@@ -1175,23 +1488,123 @@ class _NoteListPageState extends State<NoteListPage> {
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<_NoteListView>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment<_NoteListView>(
+                    value: _NoteListView.all,
+                    icon: Icon(Icons.list_alt),
+                    label: Text('すべて'),
+                  ),
+                  ButtonSegment<_NoteListView>(
+                    value: _NoteListView.favorites,
+                    icon: Icon(
+                      Icons.star_border,
+                      key: Key('note_list_page_favorites_filter'),
+                    ),
+                    label: Text('お気に入り'),
+                  ),
+                  ButtonSegment<_NoteListView>(
+                    value: _NoteListView.inbox,
+                    icon: Icon(
+                      Icons.inbox_outlined,
+                      key: Key('note_list_page_inbox_filter'),
+                    ),
+                    label: Text('Inbox'),
+                  ),
+                ],
+                selected: <_NoteListView>{
+                  if (_showInboxOnly)
+                    _NoteListView.inbox
+                  else if (_showFavoritesOnly)
+                    _NoteListView.favorites
+                  else
+                    _NoteListView.all,
+                },
+                onSelectionChanged: (selection) =>
+                    _setListView(selection.single),
+              ),
+            ),
+          ),
+          if (tagOptions.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Text('タグで絞り込み'),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 180,
+                      maxWidth: 320,
+                    ),
+                    child: DropdownButton<String>(
+                      key: const Key('note_list_tag_filter'),
+                      value: _selectedTag,
+                      isExpanded: true,
+                      hint: const Text('すべてのタグ'),
+                      items: tagOptions
+                          .map(
+                            (tag) => DropdownMenuItem<String>(
+                              value: tag,
+                              child: Text(
+                                tag,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: (tag) {
+                        setState(() {
+                          _selectedTag = tag;
+                        });
+                      },
+                    ),
+                  ),
+                  if (_selectedTag != null)
+                    TextButton.icon(
+                      key: const Key('note_list_tag_filter_clear'),
+                      onPressed: () {
+                        setState(() {
+                          _selectedTag = null;
+                        });
+                      },
+                      icon: const Icon(Icons.clear, size: 18),
+                      label: const Text('解除'),
+                    ),
+                ],
+              ),
+            ),
           if (_searchQuery.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.filter_list,
-                    color: Color(0xFF6366F1),
+                  Icon(
+                    _isSemanticSearching
+                        ? Icons.hourglass_top
+                        : Icons.auto_awesome_outlined,
+                    color: const Color(0xFF6366F1),
                     size: 14,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    '${visibleNotes.length} 件 ヒット',
-                    style: const TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 12,
-                      height: 1.5,
+                  Expanded(
+                    child: Text(
+                      _searchStatusText(visibleNotes.length),
+                      style: const TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -1212,19 +1625,37 @@ class _NoteListPageState extends State<NoteListPage> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              _showFavoritesOnly
-                                  ? 'お気に入りのメモはまだありません'
-                                  : 'まだメモがありません',
+                              _selectedTag != null
+                                  ? '「$_selectedTag」のメモはありません'
+                                  : _showInboxOnly
+                                      ? 'Inboxは空です'
+                                      : (_showFavoritesOnly
+                                          ? 'お気に入りのメモはまだありません'
+                                          : 'まだメモがありません'),
                               style: const TextStyle(
                                 fontSize: 18,
                                 color: Color(0xFFB0B0B0),
                                 height: 1.5,
                               ),
                             ),
-                            if (_showFavoritesOnly) ...[
+                            if (_selectedTag != null) ...[
                               const SizedBox(height: 12),
                               TextButton.icon(
-                                onPressed: _toggleFavoritesOnly,
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedTag = null;
+                                  });
+                                },
+                                icon: const Icon(Icons.clear),
+                                label: const Text('タグ絞り込みを解除'),
+                              ),
+                            ] else if (_showFavoritesOnly ||
+                                _showInboxOnly) ...[
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: _showInboxOnly
+                                    ? _toggleInboxOnly
+                                    : _toggleFavoritesOnly,
                                 icon: const Icon(Icons.list_alt),
                                 label: const Text('すべてのメモを見る'),
                               ),
@@ -1252,7 +1683,20 @@ class _NoteListPageState extends State<NoteListPage> {
                     : ListView(
                         padding: const EdgeInsets.all(16),
                         children: [
-                          if (_draftEntries.isNotEmpty) ...[
+                          if (inboxEntries.isNotEmpty) ...[
+                            _buildSectionHeader(
+                              'Inbox（未整理）',
+                              '思いついたことをそのまま置き、あとから整理できます。',
+                            ),
+                            ...inboxEntries.map(
+                              (note) => _buildNoteCard(context, note),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          if (!_showInboxOnly &&
+                              _searchQuery.isEmpty &&
+                              _selectedTag == null &&
+                              _draftEntries.isNotEmpty) ...[
                             _buildSectionHeader(
                               '下書き',
                               'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
@@ -1332,7 +1776,11 @@ class _NoteListPageState extends State<NoteListPage> {
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/note-editor'),
-        builder: (_) => NoteEditorPage(noteId: noteId),
+        builder: (_) => NoteEditorPage(
+          noteId: noteId,
+          supabaseClient: _supabase,
+          semanticSearchService: _semanticSearchService,
+        ),
       ),
     );
     _fetchNotes();

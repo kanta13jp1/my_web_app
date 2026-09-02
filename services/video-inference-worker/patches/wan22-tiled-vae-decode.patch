@@ -1,0 +1,161 @@
+diff --git a/wan/modules/vae2_2.py b/wan/modules/vae2_2.py
+--- a/wan/modules/vae2_2.py
++++ b/wan/modules/vae2_2.py
+@@ -1049,3 +1049,146 @@ class Wan2_2_VAE:
+         except TypeError as e:
+             logging.info(e)
+             return None
++
++    @staticmethod
++    def _tile_ranges(length, tile_size, tile_stride):
++        ranges = []
++        for start in range(0, length, tile_stride):
++            if (start - tile_stride >= 0 and
++                    start - tile_stride + tile_size >= length):
++                continue
++            ranges.append((start, min(start + tile_size, length)))
++        return ranges
++
++    @staticmethod
++    def _tiled_decode_mask(data, is_bound, border_height, border_width):
++        height, width = data.shape[-2:]
++        h = torch.ones(height, dtype=torch.float32, device="cpu")
++        w = torch.ones(width, dtype=torch.float32, device="cpu")
++
++        feather_height = min(border_height, height)
++        feather_width = min(border_width, width)
++        if not is_bound[0] and feather_height:
++            h[:feather_height] = (
++                torch.arange(feather_height, dtype=torch.float32) + 1
++            ) / feather_height
++        if not is_bound[1] and feather_height:
++            h[-feather_height:] = torch.flip(
++                (torch.arange(feather_height, dtype=torch.float32) + 1) /
++                feather_height,
++                dims=(0, ),
++            )
++        if not is_bound[2] and feather_width:
++            w[:feather_width] = (
++                torch.arange(feather_width, dtype=torch.float32) + 1
++            ) / feather_width
++        if not is_bound[3] and feather_width:
++            w[-feather_width:] = torch.flip(
++                (torch.arange(feather_width, dtype=torch.float32) + 1) /
++                feather_width,
++                dims=(0, ),
++            )
++
++        return torch.minimum(h[:, None], w[None, :]).view(
++            1, 1, 1, height, width)
++
++    def decode_tiled(self, zs, tile_size=32, tile_overlap=8):
++        """Decode spatial tiles on GPU and blend the results on CPU."""
++        try:
++            if not isinstance(zs, list):
++                raise TypeError("zs should be a list")
++            if tile_size <= 0 or tile_overlap < 0 or tile_overlap >= tile_size:
++                raise ValueError("invalid VAE tile geometry")
++
++            tile_stride = tile_size - tile_overlap
++            videos = []
++            with amp.autocast(dtype=self.dtype):
++                for latent in zs:
++                    z = latent.unsqueeze(0)
++                    height, width = z.shape[-2:]
++                    h_ranges = self._tile_ranges(height, tile_size,
++                                                 tile_stride)
++                    w_ranges = self._tile_ranges(width, tile_size,
++                                                 tile_stride)
++                    tile_count = len(h_ranges) * len(w_ranges)
++                    values = None
++                    weight = None
++                    scale_height = None
++                    scale_width = None
++                    tile_index = 0
++
++                    for h, h_end in h_ranges:
++                        for w, w_end in w_ranges:
++                            tile_index += 1
++                            latent_tile = z[:, :, :, h:h_end, w:w_end]
++                            decoded = self.model.decode(latent_tile, self.scale)
++                            decoded_cpu = decoded.to(
++                                device="cpu", dtype=torch.float32).clamp_(-1, 1)
++                            del decoded, latent_tile
++                            if torch.cuda.is_available():
++                                torch.cuda.empty_cache()
++
++                            current_scale_height = (
++                                decoded_cpu.shape[-2] // (h_end - h))
++                            current_scale_width = (
++                                decoded_cpu.shape[-1] // (w_end - w))
++                            if (current_scale_height <= 0 or
++                                    current_scale_width <= 0 or
++                                    decoded_cpu.shape[-2] !=
++                                    (h_end - h) * current_scale_height or
++                                    decoded_cpu.shape[-1] !=
++                                    (w_end - w) * current_scale_width):
++                                raise RuntimeError(
++                                    "unexpected tiled VAE spatial scale")
++
++                            if values is None:
++                                scale_height = current_scale_height
++                                scale_width = current_scale_width
++                                values = torch.zeros(
++                                    (1, decoded_cpu.shape[1],
++                                     decoded_cpu.shape[2],
++                                     height * scale_height,
++                                     width * scale_width),
++                                    dtype=torch.float32,
++                                    device="cpu",
++                                )
++                                weight = torch.zeros(
++                                    (1, 1, 1, height * scale_height,
++                                     width * scale_width),
++                                    dtype=torch.float32,
++                                    device="cpu",
++                                )
++                            elif (current_scale_height != scale_height or
++                                  current_scale_width != scale_width):
++                                raise RuntimeError(
++                                    "inconsistent tiled VAE spatial scale")
++
++                            mask = self._tiled_decode_mask(
++                                decoded_cpu,
++                                is_bound=(h == 0, h_end >= height, w == 0,
++                                          w_end >= width),
++                                border_height=tile_overlap * scale_height,
++                                border_width=tile_overlap * scale_width,
++                            )
++                            target_h = h * scale_height
++                            target_w = w * scale_width
++                            target_h_end = target_h + decoded_cpu.shape[-2]
++                            target_w_end = target_w + decoded_cpu.shape[-1]
++                            values[:, :, :, target_h:target_h_end,
++                                   target_w:target_w_end].add_(decoded_cpu * mask)
++                            weight[:, :, :, target_h:target_h_end,
++                                   target_w:target_w_end].add_(mask)
++                            del decoded_cpu, mask
++                            logging.info(
++                                "VAE tiled decode %s/%s complete", tile_index,
++                                tile_count)
++
++                    if values is None or weight is None or torch.any(weight == 0):
++                        raise RuntimeError("tiled VAE decode left output uncovered")
++                    values.div_(weight).clamp_(-1, 1)
++                    videos.append(values.squeeze(0))
++
++            return videos
++        except TypeError as e:
++            logging.info(e)
++            return None
+diff --git a/wan/textimage2video.py b/wan/textimage2video.py
+index dade34f..ac1832e 100644
+--- a/wan/textimage2video.py
++++ b/wan/textimage2video.py
+@@ -410,3 +410,4 @@ class WanTI2V:
+-                videos = self.vae.decode(x0)
+-
++                videos = self.vae.decode_tiled(
++                    x0, tile_size=32, tile_overlap=8)
++                # decode_tiled returns CPU-backed frames to bound VRAM.
+         if offload_model:

@@ -22,13 +22,31 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'assets/data/tiger_*'
+  # Cloud-first manual gate for branches that should not hydrate Flutter/Deno
+  # dependencies on the developer machine. workflow_dispatch intentionally
+  # runs every scope; PR CI later validates the merge ref with path scoping.
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact 40-character pushed HEAD that this run must validate
+        required: true
+        type: string
   workflow_call:
+    inputs:
+      expected_head_sha:
+        description: Exact 40-character HEAD supplied by the calling workflow
+        required: false
+        type: string
+
+permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
-  # PR 以外 (push / workflow_call) では cancel 無効化
+  # push / workflow_call では cancel 無効化。手動cloud gateは同じrefの
+  # 古いrunを止め、Actions時間も浪費しない。
   # → deploy-prod.yml (cancel-in-progress: false) から呼ばれた CI が cascade cancel される事故を防ぐ
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
 
 jobs:
   lint-and-test:
@@ -56,21 +74,121 @@ jobs:
               exit 0
             fi
           else
-            ref="${GITHUB_REF}"
-            git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
+            # Pin push, workflow_call, and cloud-first manual runs to the event
+            # SHA. Fetching a moving branch ref here could silently validate a
+            # later commit than the one handed off from the local control plane.
+            ref="${GITHUB_SHA}"
+            git fetch --depth=1 origin "${ref}"
+            git checkout --force FETCH_HEAD
+            exit 0
           fi
           git checkout --force refs/remotes/origin/checkout
 
+      - name: Verify manual cloud gate SHA
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Cloud handoff mismatch: expected $EXPECTED_HEAD_SHA, checked out $actual_head_sha."
+            exit 1
+          fi
+          echo "Verified exact cloud handoff SHA: $actual_head_sha"
+
+      - name: Collect PR changed files
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const fs = require('fs');
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            fs.mkdirSync('.ci-logs', { recursive: true });
+            fs.writeFileSync(
+              '.ci-logs/changed-files.txt',
+              files.map((file) => file.filename).join('\n') + '\n',
+            );
+
+      - name: Classify CI scope
+        id: changes
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'pull_request' }}
+        run: |
+          mkdir -p .ci-logs
+          touch .ci-logs/changed-files.txt
+          args=()
+          if [ "$FORCE_ALL" = "true" ]; then
+            args+=(--all)
+          fi
+          python scripts/classify_ci_changes.py \
+            --changed-files .ci-logs/changed-files.txt \
+            --github-output "$GITHUB_OUTPUT" \
+            "${args[@]}"
+
+      - name: Test CI scope classifier
+        run: |
+          python scripts/classify_ci_changes_test.py
+          python scripts/cloud_ci_handoff_test.py
+          python scripts/cloud_first_route_test.py
+          python scripts/generate_infrastructure_map_test.py
+          python scripts/cicd_efficiency_test.py
+          python scripts/pre_commit_quality_gate_test.py
+          python scripts/container_cleanup_guard_test.py
+          python scripts/check_rootless_container_setup_test.py
+          python scripts/check_rootless_container_setup.py
+          python scripts/vscode_terminal_settings_test.py
+          python scripts/ci_failure_digest_test.py
+          python scripts/test_paid_ai_policy.py
+          python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
+
+      - name: Test high-risk dual security review
+        run: >-
+          python -m unittest
+          scripts/test_security_review_input.py
+          scripts/test_run_dual_security_review.py
+          scripts/test_decision_event_migration.py
+
+      - name: Verify high-risk security review dependency lock
+        shell: bash
+        run: |
+          mkdir -p "${RUNNER_TEMP}/high-risk-security-review-wheels"
+          python -m pip download \
+            --disable-pip-version-check \
+            --no-cache-dir \
+            --only-binary=:all: \
+            --require-hashes \
+            --platform manylinux2014_x86_64 \
+            --python-version 312 \
+            --implementation cp \
+            --abi cp312 \
+            --dest "${RUNNER_TEMP}/high-risk-security-review-wheels" \
+            -r scripts/requirements-high-risk-security-review.txt
+
       - name: Setup Flutter
+        if: steps.changes.outputs.flutter == 'true'
         uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x' # 指定のバージョンに戻しました
 
       - name: Get Flutter version
+        if: steps.changes.outputs.flutter == 'true'
         run: flutter --version
 
       - name: Cache Flutter pub
-        uses: actions/cache@v6
+        if: steps.changes.outputs.flutter == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -78,16 +196,28 @@ jobs:
             ${{ runner.os }}-pub-
 
       - name: Install dependencies
+        if: steps.changes.outputs.flutter == 'true'
         run: flutter pub get
 
       - name: Verify dependencies
+        if: steps.changes.outputs.flutter == 'true'
         run: flutter pub get --dry-run
 
       - name: Analyze code
-        run: flutter analyze
+        if: steps.changes.outputs.flutter == 'true'
+        run: python scripts/quality_gate.py --analyze-only --analyzer-artifact-dir .ci-logs/analyzer
         # プロジェクトルール「flutter analyze 常に0エラー」をCIで強制 (continue-on-error 削除)
 
+      - name: Upload analyzer evidence
+        if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/analyzer/result.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: analyzer-evidence
+          path: .ci-logs/analyzer
+          if-no-files-found: ignore
+
       - name: Setup Deno
+        if: steps.changes.outputs.edge == 'true'
         shell: bash
         env:
           DENO_VERSION: v2.9.1
@@ -101,6 +231,7 @@ jobs:
           # 持続障害 (3 回 fail) は rerun に委ねる。
 
       - name: Check Edge Function imports
+        if: steps.changes.outputs.edge == 'true'
         run: python scripts/check_edge_function_imports.py
 
       - name: Check CI/CD docs-only path filters
@@ -111,13 +242,14 @@ jobs:
 
       - name: Upload impossible task degradation report
         if: always() && hashFiles('.ci-logs/impossible-task-degradation.json') != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: impossible-task-degradation-report
           path: .ci-logs/impossible-task-degradation.json
           if-no-files-found: ignore
 
       - name: Deno lint (Edge Functions)
+        if: steps.changes.outputs.edge == 'true'
         id: deno_lint
         run: |
           mkdir -p .ci-logs
@@ -131,14 +263,15 @@ jobs:
         # プロジェクトルール「deno lint 常に0エラー」をCIで強制
 
       - name: Upload Deno lint log
-        if: always() && hashFiles('.ci-logs/deno-lint.log') != ''
-        uses: actions/upload-artifact@v7
+        if: always() && steps.changes.outputs.edge == 'true' && hashFiles('.ci-logs/deno-lint.log') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: deno-lint-log
           path: .ci-logs/deno-lint.log
           if-no-files-found: ignore
 
       - name: Deno test (Edge Functions)
+        if: steps.changes.outputs.edge == 'true'
         id: deno_test
         run: |
           TEST_FILES=$(find supabase/functions -name "*.test.ts" 2>/dev/null | head -1)
@@ -150,12 +283,14 @@ jobs:
         # 74テスト安定稼働中 (2026-04-12 PR#317) — continue-on-error 廃止
 
       - name: Caption transcoder unit tests
+        if: steps.changes.outputs.caption == 'true'
         # services/caption-transcoder (Cloud Run ffmpeg 字幕焼き込み) の純関数
         # テスト。ubuntu-latest は node 20 プリインストールなので数秒で完走し、
         # SRT リスケール等の回帰を EF 側の変更と同一 PR でブロックできる。
         run: node services/caption-transcoder/test.js
 
       - name: Check Edge Function deploy count (ハードキャップ50本以下)
+        if: steps.changes.outputs.edge == 'true'
         run: |
           # deploy-prod.yml のデプロイリストを抽出 (macro-hub体制 — Tier1/Tier2廃止)
           DEPLOYED=$(python3 - <<'PY'
@@ -198,6 +333,7 @@ jobs:
         continue-on-error: false  # 50本超過はCIブロック
 
       - name: Check SQL migration shell quoting artifacts
+        if: steps.changes.outputs.migration == 'true'
         run: |
           # bash quoting pattern '"'"' が SQL ファイルに混入すると SQLSTATE 42601 で deploy-prod が失敗する
           FOUND=$(grep -rl "'\"\\'\"'" supabase/migrations/ 2>/dev/null || true)
@@ -232,14 +368,53 @@ jobs:
         continue-on-error: false  # migration 構文エラーはCIブロック
 
       - name: Check GitHub Actions Node runtime floor
-        run: python scripts/check_github_actions_node_runtime.py
+        run: |
+          python -m unittest discover \
+            -s test/scripts \
+            -p 'test_check_github_actions_node_runtime.py'
+          python scripts/check_github_actions_node_runtime.py
         continue-on-error: false
 
       - name: Check GitHub Actions inline Python safety
         run: python scripts/check_github_actions_python_inline.py
         continue-on-error: false
 
+      - name: Check GitHub Actions status-function placement
+        run: python scripts/check_github_actions_status_functions.py
+        continue-on-error: false
+
+      - name: Check GitHub Actions PowerShell splatting
+        run: python scripts/check_github_actions_powershell_splatting.py
+        continue-on-error: false
+
+      - name: Check GitHub Actions script injection safety
+        run: python scripts/check_github_actions_script_injection.py
+        continue-on-error: false
+
+      - name: Check GitHub Actions security policy
+        run: |
+          python -m unittest discover \
+            -s test/scripts \
+            -p 'test_check_github_actions_security_policy.py'
+          python scripts/check_github_actions_security_policy.py
+          python -m unittest discover \
+            -s test/scripts \
+            -p 'test_check_privileged_workflow_credentials.py'
+          python scripts/check_privileged_workflow_credentials.py
+        continue-on-error: false
+
+      - name: Test tools-hub MCP smoke response compatibility
+        shell: pwsh
+        run: ./test/scripts/tools_hub_mcp_smoke_response_test.ps1
+        continue-on-error: false
+
+      - name: Test Windows terminal doctor fixtures
+        shell: pwsh
+        run: ./scripts/windows_terminal_doctor_test.ps1
+        continue-on-error: false
+
       - name: Check duplicate dispose statements
+        if: steps.changes.outputs.flutter == 'true'
         # part 280 実例 (二重 dispose → dispose 中断 → defunct setState) の再発防止。
         # part 286: timeout でハング検知 + --max-seconds で線形時間 (正規表現の
         # 破滅的バックトラック回帰) を CI でアサート。通常 ~2.5s なので 60s 上限。
@@ -271,23 +446,26 @@ jobs:
         continue-on-error: false
 
       - name: Check formatting
+        if: steps.changes.outputs.flutter == 'true'
         # #1372: treat Dart formatting as a required static-analysis gate.
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Run VM tests
+        if: steps.changes.outputs.flutter == 'true'
         id: flutter_test
         # Keep coverage while bounding Dart VM workers on Windows-sized runners.
         run: flutter test --coverage --concurrency=2
         continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
 
       - name: Run web import smoke tests
+        if: steps.changes.outputs.web == 'true'
         id: flutter_web_test
         run: flutter test --platform chrome test/web_import_smoke_test.dart
         continue-on-error: false
 
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
       - name: Build web (production)
-        if: github.event_name != 'workflow_call'
+        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: >
           flutter build web --release --pwa-strategy=none
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
@@ -295,7 +473,7 @@ jobs:
           FLUTTER_WEB: true
 
       - name: Check build output
-        if: github.event_name != 'workflow_call'
+        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: |
           if [ ! -d "build/web" ]; then
             echo "Build failed: build/web directory not found"
@@ -307,27 +485,49 @@ jobs:
       - name: Job Summary
         if: always()
         run: |
-          BUILD_OK=$([ -d "build/web" ] && echo "✅" || echo "— (skipped: workflow_call)")
           FLUTTER_TEST="${{ steps.flutter_test.outcome }}"
           FLUTTER_WEB_TEST="${{ steps.flutter_web_test.outcome }}"
           DENO_TEST="${{ steps.deno_test.outcome }}"
-          FT_ICON=$([ "$FLUTTER_TEST" = "success" ] && echo "✅" || [ "$FLUTTER_TEST" = "skipped" ] && echo "—" || echo "⚠️")
-          DT_ICON=$([ "$DENO_TEST" = "success" ] && echo "✅" || [ "$DENO_TEST" = "skipped" ] && echo "—" || echo "⚠️")
           {
-            echo "## CI Results — \`${{ github.ref_name }}\` @ \`${GITHUB_SHA:0:7}\`"
+            echo "## CI Results — \`${GITHUB_REF_NAME}\` @ \`${GITHUB_SHA:0:7}\`"
             echo ""
-            echo "| チェック | 結果 |"
-            echo "|---------|------|"
-            echo "| \`flutter analyze\` | ✅ 0エラー (強制) |"
-            echo "| \`deno lint\` | ✅ 0エラー (強制) |"
-            echo "| \`dart format --set-exit-if-changed\` | ✅ 差分なし (強制) |"
-            echo "| \`flutter test --coverage\` | $FT_ICON $FLUTTER_TEST |"
-            echo "| \`flutter test --platform chrome\` | $FLUTTER_WEB_TEST |"
-            echo "| \`deno test\` | $DT_ICON $DENO_TEST (continue-on-error) |"
-            echo "| \`flutter build web --release\` | $BUILD_OK |"
+            echo "| Scope | Required | Outcome |"
+            echo "| --- | --- | --- |"
+            echo "| Flutter analyze / format / VM tests | ${{ steps.changes.outputs.flutter }} | ${FLUTTER_TEST:-skipped} |"
+            echo "| Web import / production build | ${{ steps.changes.outputs.web }} | ${FLUTTER_WEB_TEST:-skipped} |"
+            echo "| Edge Function Deno checks | ${{ steps.changes.outputs.edge }} | ${DENO_TEST:-skipped} |"
+            echo "| Caption transcoder tests | ${{ steps.changes.outputs.caption }} | path-scoped |"
+            echo "| SQL migration checks | ${{ steps.changes.outputs.migration }} | path-scoped |"
             echo ""
             echo "**Actor**: ${{ github.actor }} | **Trigger**: ${{ github.event_name }}"
           } >> $GITHUB_STEP_SUMMARY
+
+  actionlint:
+    name: GitHub Actions syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install actionlint v1.7.12
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive='actionlint_1.7.12_linux_amd64.tar.gz'
+          curl --fail --silent --show-error --location \
+            --output "${RUNNER_TEMP}/${archive}" \
+            "https://github.com/rhysd/actionlint/releases/download/v1.7.12/${archive}"
+          echo '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  '"${RUNNER_TEMP}/${archive}" \
+            | sha256sum --check --strict
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" actionlint
+
+      - name: Lint workflow syntax
+        shell: bash
+        run: "${RUNNER_TEMP}/actionlint -no-color -shellcheck= -pyflakes="
 
   security-check:
     name: Security Check
@@ -374,40 +574,50 @@ jobs:
           fi
           echo "✅ No sensitive files found"
 
-      - name: Check for hardcoded secrets
+      - name: Check Flutter Supabase configuration
         run: |
-          echo "Checking for hardcoded secrets..."
-          # This is a basic check - consider using tools like gitleaks or trufflehog
-          FOUND=0
-          # Dart files
-          if grep -r -E '(password|secret|api_key|private_key)\s*=\s*["\047][^"\047]+["\047]' lib/ --include="*.dart" | grep -v 'your_'; then
-            echo "Warning: Potential hardcoded secrets found in Dart files"
-            FOUND=1
-          fi
-          # TypeScript files (Edge Functions)
-          if grep -r -E '(password|secret|api_key|private_key)\s*=\s*["\047][^"\047]+["\047]' supabase/functions/ --include="*.ts" | grep -v 'your_\|example\|test\|placeholder'; then
-            echo "Warning: Potential hardcoded secrets found in TypeScript files"
-            FOUND=1
-          fi
-          [ "$FOUND" -eq 0 ] && echo "✅ No hardcoded secrets found"
-          echo "Security check completed"
+          python scripts/check_flutter_supabase_config_test.py
+          python scripts/render_web_supabase_config_test.py
+          python scripts/validate_flutter_supabase_env_test.py
+          python scripts/check_flutter_supabase_config.py
 
   pr-comment:
+    timeout-minutes: 5
     name: PR Comment
     runs-on: ubuntu-latest
     needs: [lint-and-test, security-check]
-    if: github.event_name == 'pull_request' && success()
+    if: github.event_name == 'pull_request' && always()
     permissions:
       pull-requests: write
 
     steps:
-      - name: Comment on PR
-        uses: actions/github-script@v9
+      - name: Download analyzer evidence
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
+          name: analyzer-evidence
+          path: .ci-logs/analyzer
+
+      - name: Comment on PR
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          retries: 3
           script: |
-            github.rest.issues.createComment({
+            const fs = require('fs');
+            const passed =
+              '${{ needs.lint-and-test.result }}' === 'success' &&
+              '${{ needs.security-check.result }}' === 'success';
+            let body = passed
+              ? '✅ 変更パスに対応するCIチェックが通過しました。不要なFlutter・Web・Deno処理はスキップされています。'
+              : '❌ 変更パスに対応するCIチェックが完了していません。失敗またはキャンセルされたジョブを確認してください。';
+            const analyzerComment = '.ci-logs/analyzer/comment.md';
+            if (fs.existsSync(analyzerComment)) {
+              body += `\n\n${fs.readFileSync(analyzerComment, 'utf8').trim()}`;
+            }
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ CI全チェック通過！\n\n**必須ゲート (強制)**\n- `flutter analyze` 0エラー ✅\n- `deno lint` 0エラー ✅\n- `dart format` 差分なし ✅\n- `flutter build web --release` 成功 ✅\n\nコードレビュー準備完了です。'
-            })
+              body
+            });

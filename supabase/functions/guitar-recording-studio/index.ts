@@ -8,7 +8,7 @@ import {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Max-Age": "86400",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
@@ -1459,17 +1459,34 @@ async function postPublicRecordingToX(
   }
 
   try {
-    const xPostUrl = `${SUPABASE_URL}/functions/v1/post-x-update`;
+    // 旧 post-x-update EF は削除済み (呼ぶと 404)。schedule-hub の x.post へ。
+    // x.post は user レベルだが SERVICE_ROLE_KEY Bearer で service_role 扱いになる。
+    const xPostUrl = `${SUPABASE_URL}/functions/v1/schedule-hub`;
     const resp = await fetch(xPostUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${SERVICE_ROLE_KEY}`,
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({
+        action: "x.post",
+        text,
+        source: "guitar-recording-studio",
+      }),
     });
     if (!resp.ok) {
       console.warn(`[guitar-recording-studio] X post failed: ${resp.status}`);
+    } else {
+      // hub は投稿失敗を HTTP 200 + success:false で返すことがある。
+      // status だけ見ると失敗を握り潰すのでボディも確認する。
+      const result = await resp.json().catch(() => null);
+      if (!result || result.success !== true || result.posted !== true) {
+        console.warn(
+          `[guitar-recording-studio] X post rejected: ${
+            result?.error ?? result?.warning ?? "not posted"
+          }`,
+        );
+      }
     }
   } catch (e) {
     console.warn(`[guitar-recording-studio] X post error: ${e}`);

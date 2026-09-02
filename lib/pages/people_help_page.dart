@@ -4,7 +4,6 @@ import '../services/people_leave_request_service.dart';
 import 'note_editor_page.dart';
 import 'note_list_page.dart';
 import 'rewards_page.dart';
-import 'stats_page.dart';
 
 class PeopleHelpPage extends StatefulWidget {
   final Widget? onboardingNotePage;
@@ -384,22 +383,12 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
           _buildActionCard(
             context,
             tileKey: const Key('people_help_quick_rewards'),
-            title: 'Rewards',
-            subtitle: 'Review incentives, kudos, and recognition updates.',
+            title: 'Achievements & Rewards',
+            subtitle: 'Review points, levels, badges, and recognition updates.',
             icon: Icons.card_giftcard,
             color: const Color(0xFFFF8F00),
             page: const RewardsPage(),
             routeName: '/rewards',
-          ),
-          _buildActionCard(
-            context,
-            tileKey: const Key('people_help_quick_stats'),
-            title: 'Stats',
-            subtitle: 'Open people metrics and trend snapshots.',
-            icon: Icons.bar_chart,
-            color: const Color(0xFF3D5AFE),
-            page: const StatsPage(),
-            routeName: '/stats',
           ),
           const SizedBox(height: 24),
           _buildLeaveRequestsSection(),

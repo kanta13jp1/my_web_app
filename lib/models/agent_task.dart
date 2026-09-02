@@ -78,4 +78,32 @@ class AgentTask {
   bool get isQueued => status == 'queued';
   bool get isInProgress => status == 'in_progress';
   bool get isCompleted => status == 'completed';
+
+  Map<String, dynamic> get clarityMetadata {
+    final clarity = metadata['clarity'];
+    return clarity is Map
+        ? Map<String, dynamic>.from(clarity)
+        : const <String, dynamic>{};
+  }
+
+  int? get clarityScore {
+    final value = clarityMetadata['score'];
+    if (value is num) return value.round();
+    return int.tryParse(value?.toString() ?? '');
+  }
+
+  int get clarityThreshold {
+    final value = clarityMetadata['threshold'];
+    if (value is num) return value.round();
+    return int.tryParse(value?.toString() ?? '') ?? 6;
+  }
+
+  String get clarityStatus => clarityMetadata['status']?.toString() ?? '';
+
+  bool get needsClarification {
+    final score = clarityScore;
+    return score != null &&
+        clarityStatus != 'clarified' &&
+        score <= clarityThreshold;
+  }
 }

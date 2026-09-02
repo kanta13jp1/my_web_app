@@ -1,0 +1,3293 @@
+{
+  "generated_at": "2026-08-27T02:51:22Z",
+  "source_files": [
+    "docs/competitor-reports/2026-08-27.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 102,
+  "filter_summary": {
+    "total": 102,
+    "by_verdict": {
+      "pass": 98,
+      "review": 4,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 4,
+      "source_http_problem": 8
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-c973fe49ba76",
+        "title": "AI生成スキップ (全プロバイダーが応答せず (上のログのレスポンス本文を確認))",
+        "text": "AI生成スキップ (全プロバイダーが応答せず (上のログのレスポンス本文を確認))",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "AI生成スキップ (全プロバイダーが応答せず (上のログのレスポンス本文を確認))"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c973fe49ba76",
+        "title": "AI生成スキップ (全プロバイダーが応答せず (上のログのレスポンス本文を確認))",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-340f8c6b729c",
+        "title": "可用性チェック結果のみ記録",
+        "text": "可用性チェック結果のみ記録",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "可用性チェック結果のみ記録"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-340f8c6b729c",
+        "title": "可用性チェック結果のみ記録",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-526b9a458498",
+        "title": "Stripe",
+        "text": "Stripe Stripe https://stripe.com/ HTTP 200 ✅ 🟠",
+        "url": "https://stripe.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Stripe",
+          "url": "https://stripe.com/",
+          "status": "HTTP 200",
+          "summary": "Stripe https://stripe.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-526b9a458498",
+        "title": "Stripe",
+        "url": "https://stripe.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7c283be2c341",
+        "title": "Roblox",
+        "text": "Roblox Roblox https://www.roblox.com/ HTTP 200 ✅ 🟡",
+        "url": "https://www.roblox.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Roblox",
+          "url": "https://www.roblox.com/",
+          "status": "HTTP 200",
+          "summary": "Roblox https://www.roblox.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7c283be2c341",
+        "title": "Roblox",
+        "url": "https://www.roblox.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-80a904128f92",
+        "title": "KDDI (au)",
+        "text": "KDDI (au) KDDI (au) https://www.au.com HTTP 200 ✅ 🟠",
+        "url": "https://www.au.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "KDDI (au)",
+          "url": "https://www.au.com",
+          "status": "HTTP 200",
+          "summary": "KDDI (au) https://www.au.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-80a904128f92",
+        "title": "KDDI (au)",
+        "url": "https://www.au.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b468fe06da70",
+        "title": "Devin AI",
+        "text": "Devin AI Devin AI https://cognition.ai HTTP 200 ✅ 🔴",
+        "url": "https://cognition.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Devin AI",
+          "url": "https://cognition.ai",
+          "status": "HTTP 200",
+          "summary": "Devin AI https://cognition.ai HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b468fe06da70",
+        "title": "Devin AI",
+        "url": "https://cognition.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-76a262aee0a7",
+        "title": "GitHub",
+        "text": "GitHub GitHub https://github.com/ HTTP 200 ✅ 🟡",
+        "url": "https://github.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "GitHub",
+          "url": "https://github.com/",
+          "status": "HTTP 200",
+          "summary": "GitHub https://github.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-76a262aee0a7",
+        "title": "GitHub",
+        "url": "https://github.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.93,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "source domain is official or primary",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4b7b03befae7",
+        "title": "Linear",
+        "text": "Linear Linear https://linear.app/ HTTP 200 ✅ 🔴",
+        "url": "https://linear.app/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Linear",
+          "url": "https://linear.app/",
+          "status": "HTTP 200",
+          "summary": "Linear https://linear.app/ HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4b7b03befae7",
+        "title": "Linear",
+        "url": "https://linear.app/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-667aa55b94ac",
+        "title": "Devin (Cognition AI)",
+        "text": "Devin (Cognition AI) Devin (Cognition AI) https://devin.ai/ HTTP 429 ⚠️ 🟠",
+        "url": "https://devin.ai/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 429,
+        "raw": {
+          "title": "Devin (Cognition AI)",
+          "url": "https://devin.ai/",
+          "status": "HTTP 429",
+          "summary": "Devin (Cognition AI) https://devin.ai/ HTTP 429 ⚠️ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-667aa55b94ac",
+        "title": "Devin (Cognition AI)",
+        "url": "https://devin.ai/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.55,
+        "verdict": "pass",
+        "risk_flags": [
+          "source_http_problem"
+        ],
+        "reasons": [
+          "has source URL",
+          "source HTTP status 429"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-75c1f80057c5",
+        "title": "Amazon",
+        "text": "Amazon Amazon https://amazon.com/ HTTP 200 ✅ 🟡",
+        "url": "https://amazon.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Amazon",
+          "url": "https://amazon.com/",
+          "status": "HTTP 200",
+          "summary": "Amazon https://amazon.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-75c1f80057c5",
+        "title": "Amazon",
+        "url": "https://amazon.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d6d3d3c9ffe5",
+        "title": "楽天 (Rakuten)",
+        "text": "楽天 (Rakuten) 楽天 (Rakuten) https://www.rakuten.co.jp/ HTTP 000000 ⚠️ 🟡",
+        "url": "https://www.rakuten.co.jp/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "楽天 (Rakuten)",
+          "url": "https://www.rakuten.co.jp/",
+          "status": "HTTP 000000",
+          "summary": "楽天 (Rakuten) https://www.rakuten.co.jp/ HTTP 000000 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d6d3d3c9ffe5",
+        "title": "楽天 (Rakuten)",
+        "url": "https://www.rakuten.co.jp/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.67,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e4f20b9a533b",
+        "title": "GO",
+        "text": "GO GO https://go.mo-t.com HTTP 200 ✅ 🟠",
+        "url": "https://go.mo-t.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "GO",
+          "url": "https://go.mo-t.com",
+          "status": "HTTP 200",
+          "summary": "GO https://go.mo-t.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e4f20b9a533b",
+        "title": "GO",
+        "url": "https://go.mo-t.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-05acb95d74a0",
+        "title": "Descript",
+        "text": "Descript Descript https://www.descript.com HTTP 200 ✅ 🟠",
+        "url": "https://www.descript.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Descript",
+          "url": "https://www.descript.com",
+          "status": "HTTP 200",
+          "summary": "Descript https://www.descript.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-05acb95d74a0",
+        "title": "Descript",
+        "url": "https://www.descript.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-15a0ef231582",
+        "title": "Hugging Face",
+        "text": "Hugging Face Hugging Face https://huggingface.co/ HTTP 200 ✅ 🟠",
+        "url": "https://huggingface.co/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Hugging Face",
+          "url": "https://huggingface.co/",
+          "status": "HTTP 200",
+          "summary": "Hugging Face https://huggingface.co/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-15a0ef231582",
+        "title": "Hugging Face",
+        "url": "https://huggingface.co/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-452b5513fa3f",
+        "title": "グラファー",
+        "text": "グラファー グラファー https://graffer.jp HTTP 200 ✅ 🟠",
+        "url": "https://graffer.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "グラファー",
+          "url": "https://graffer.jp",
+          "status": "HTTP 200",
+          "summary": "グラファー https://graffer.jp HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-452b5513fa3f",
+        "title": "グラファー",
+        "url": "https://graffer.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a599a7855b0a",
+        "title": "Magic",
+        "text": "Magic Magic https://magic.dev HTTP 200 ✅ 🔴",
+        "url": "https://magic.dev",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Magic",
+          "url": "https://magic.dev",
+          "status": "HTTP 200",
+          "summary": "Magic https://magic.dev HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a599a7855b0a",
+        "title": "Magic",
+        "url": "https://magic.dev",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d0983410ea86",
+        "title": "Microsoft Teams",
+        "text": "Microsoft Teams Microsoft Teams https://www.microsoft.com/microsoft-teams/ HTTP 200 ✅ 🟡",
+        "url": "https://www.microsoft.com/microsoft-teams/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Microsoft Teams",
+          "url": "https://www.microsoft.com/microsoft-teams/",
+          "status": "HTTP 200",
+          "summary": "Microsoft Teams https://www.microsoft.com/microsoft-teams/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d0983410ea86",
+        "title": "Microsoft Teams",
+        "url": "https://www.microsoft.com/microsoft-teams/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.97,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "source domain is official or primary",
+          "HTTP 200 reachable",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e3af15b32f31",
+        "title": "メルカリ (Mercari)",
+        "text": "メルカリ (Mercari) メルカリ (Mercari) https://www.mercari.com/ HTTP 403 ⚠️ 🟡",
+        "url": "https://www.mercari.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 403,
+        "raw": {
+          "title": "メルカリ (Mercari)",
+          "url": "https://www.mercari.com/",
+          "status": "HTTP 403",
+          "summary": "メルカリ (Mercari) https://www.mercari.com/ HTTP 403 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e3af15b32f31",
+        "title": "メルカリ (Mercari)",
+        "url": "https://www.mercari.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.55,
+        "verdict": "pass",
+        "risk_flags": [
+          "source_http_problem"
+        ],
+        "reasons": [
+          "has source URL",
+          "source HTTP status 403"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7b168dde2aaf",
+        "title": "Together AI",
+        "text": "Together AI Together AI https://www.together.ai/ HTTP 200 ✅ 🟠",
+        "url": "https://www.together.ai/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Together AI",
+          "url": "https://www.together.ai/",
+          "status": "HTTP 200",
+          "summary": "Together AI https://www.together.ai/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7b168dde2aaf",
+        "title": "Together AI",
+        "url": "https://www.together.ai/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e55a5aa08c77",
+        "title": "HeyGen",
+        "text": "HeyGen HeyGen https://www.heygen.com/ HTTP 200 ✅ 🟠",
+        "url": "https://www.heygen.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "HeyGen",
+          "url": "https://www.heygen.com/",
+          "status": "HTTP 200",
+          "summary": "HeyGen https://www.heygen.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e55a5aa08c77",
+        "title": "HeyGen",
+        "url": "https://www.heygen.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bd6bed4c4ab3",
+        "title": "弥生",
+        "text": "弥生 弥生 https://www.yayoi-kk.co.jp/ HTTP 200 ✅ 🟠",
+        "url": "https://www.yayoi-kk.co.jp/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "弥生",
+          "url": "https://www.yayoi-kk.co.jp/",
+          "status": "HTTP 200",
+          "summary": "弥生 https://www.yayoi-kk.co.jp/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bd6bed4c4ab3",
+        "title": "弥生",
+        "url": "https://www.yayoi-kk.co.jp/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e14978afee9b",
+        "title": "Replit",
+        "text": "Replit Replit https://replit.com/ HTTP 200 ✅ 🔴",
+        "url": "https://replit.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Replit",
+          "url": "https://replit.com/",
+          "status": "HTTP 200",
+          "summary": "Replit https://replit.com/ HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e14978afee9b",
+        "title": "Replit",
+        "url": "https://replit.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5e7a98886c4e",
+        "title": "Discord",
+        "text": "Discord Discord https://discord.com/ HTTP 200 ✅ 🟠",
+        "url": "https://discord.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Discord",
+          "url": "https://discord.com/",
+          "status": "HTTP 200",
+          "summary": "Discord https://discord.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5e7a98886c4e",
+        "title": "Discord",
+        "url": "https://discord.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ee3e6483db66",
+        "title": "Calm",
+        "text": "Calm Calm https://www.calm.com/ HTTP 200 ✅ 🟠",
+        "url": "https://www.calm.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Calm",
+          "url": "https://www.calm.com/",
+          "status": "HTTP 200",
+          "summary": "Calm https://www.calm.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ee3e6483db66",
+        "title": "Calm",
+        "url": "https://www.calm.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e78f46219fed",
+        "title": "Postman",
+        "text": "Postman Postman https://www.postman.com HTTP 200 ✅ 🟡",
+        "url": "https://www.postman.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Postman",
+          "url": "https://www.postman.com",
+          "status": "HTTP 200",
+          "summary": "Postman https://www.postman.com HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e78f46219fed",
+        "title": "Postman",
+        "url": "https://www.postman.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-75a552be4c07",
+        "title": "Sansan",
+        "text": "Sansan Sansan https://jp.sansan.com/ HTTP 200 ✅ 🟠",
+        "url": "https://jp.sansan.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Sansan",
+          "url": "https://jp.sansan.com/",
+          "status": "HTTP 200",
+          "summary": "Sansan https://jp.sansan.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-75a552be4c07",
+        "title": "Sansan",
+        "url": "https://jp.sansan.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ccddbf1a62fb",
+        "title": "Salesforce",
+        "text": "Salesforce Salesforce https://www.salesforce.com/ HTTP 200 ✅ 🟡",
+        "url": "https://www.salesforce.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Salesforce",
+          "url": "https://www.salesforce.com/",
+          "status": "HTTP 200",
+          "summary": "Salesforce https://www.salesforce.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ccddbf1a62fb",
+        "title": "Salesforce",
+        "url": "https://www.salesforce.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fad395eb836f",
+        "title": "ITANDI BB",
+        "text": "ITANDI BB ITANDI BB https://bb.itandi.co.jp HTTP 000000 ⚠️ 🟡",
+        "url": "https://bb.itandi.co.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "ITANDI BB",
+          "url": "https://bb.itandi.co.jp",
+          "status": "HTTP 000000",
+          "summary": "ITANDI BB https://bb.itandi.co.jp HTTP 000000 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fad395eb836f",
+        "title": "ITANDI BB",
+        "url": "https://bb.itandi.co.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.67,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bfa0f3fa0a2b",
+        "title": "Udemy",
+        "text": "Udemy Udemy https://www.udemy.com HTTP 403 ⚠️ 🟡",
+        "url": "https://www.udemy.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 403,
+        "raw": {
+          "title": "Udemy",
+          "url": "https://www.udemy.com",
+          "status": "HTTP 403",
+          "summary": "Udemy https://www.udemy.com HTTP 403 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bfa0f3fa0a2b",
+        "title": "Udemy",
+        "url": "https://www.udemy.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.55,
+        "verdict": "pass",
+        "risk_flags": [
+          "source_http_problem"
+        ],
+        "reasons": [
+          "has source URL",
+          "source HTTP status 403"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4afa12c5b4d4",
+        "title": "Vanta",
+        "text": "Vanta Vanta https://www.vanta.com HTTP 200 ✅ 🟠",
+        "url": "https://www.vanta.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Vanta",
+          "url": "https://www.vanta.com",
+          "status": "HTTP 200",
+          "summary": "Vanta https://www.vanta.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4afa12c5b4d4",
+        "title": "Vanta",
+        "url": "https://www.vanta.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cc6f96a55b17",
+        "title": "Progate",
+        "text": "Progate Progate https://prog-8.com HTTP 200 ✅ 🟡",
+        "url": "https://prog-8.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Progate",
+          "url": "https://prog-8.com",
+          "status": "HTTP 200",
+          "summary": "Progate https://prog-8.com HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cc6f96a55b17",
+        "title": "Progate",
+        "url": "https://prog-8.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0c9c9fbcccf9",
+        "title": "STORES.jp",
+        "text": "STORES.jp STORES.jp https://stores.jp HTTP 200 ✅ 🟠",
+        "url": "https://stores.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "STORES.jp",
+          "url": "https://stores.jp",
+          "status": "HTTP 200",
+          "summary": "STORES.jp https://stores.jp HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0c9c9fbcccf9",
+        "title": "STORES.jp",
+        "url": "https://stores.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4d22e8607bd8",
+        "title": "freee 人事労務",
+        "text": "freee 人事労務 freee 人事労務 https://www.freee.co.jp/hr/ HTTP 200 ✅ 🟡",
+        "url": "https://www.freee.co.jp/hr/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "freee 人事労務",
+          "url": "https://www.freee.co.jp/hr/",
+          "status": "HTTP 200",
+          "summary": "freee 人事労務 https://www.freee.co.jp/hr/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4d22e8607bd8",
+        "title": "freee 人事労務",
+        "url": "https://www.freee.co.jp/hr/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2c8e80adc3f4",
+        "title": "Notion AI",
+        "text": "Notion AI Notion AI https://www.notion.so/product/ai HTTP 200 ✅ 🟡",
+        "url": "https://www.notion.so/product/ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Notion AI",
+          "url": "https://www.notion.so/product/ai",
+          "status": "HTTP 200",
+          "summary": "Notion AI https://www.notion.so/product/ai HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2c8e80adc3f4",
+        "title": "Notion AI",
+        "url": "https://www.notion.so/product/ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.93,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "source domain is official or primary",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1819aa24878f",
+        "title": "Evernote",
+        "text": "Evernote Evernote https://evernote.com/ HTTP 200 ✅ 🔴",
+        "url": "https://evernote.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Evernote",
+          "url": "https://evernote.com/",
+          "status": "HTTP 200",
+          "summary": "Evernote https://evernote.com/ HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1819aa24878f",
+        "title": "Evernote",
+        "url": "https://evernote.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f8488d35c092",
+        "title": "Zoho",
+        "text": "Zoho Zoho https://www.zoho.com/ HTTP 200 ✅ 🟡",
+        "url": "https://www.zoho.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Zoho",
+          "url": "https://www.zoho.com/",
+          "status": "HTTP 200",
+          "summary": "Zoho https://www.zoho.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f8488d35c092",
+        "title": "Zoho",
+        "url": "https://www.zoho.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-70db62df1188",
+        "title": "Coda",
+        "text": "Coda Coda https://coda.io/ HTTP 200 ✅ 🟠",
+        "url": "https://coda.io/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Coda",
+          "url": "https://coda.io/",
+          "status": "HTTP 200",
+          "summary": "Coda https://coda.io/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-70db62df1188",
+        "title": "Coda",
+        "url": "https://coda.io/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bb4dbb88376e",
+        "title": "Perplexity",
+        "text": "Perplexity Perplexity https://www.perplexity.ai HTTP 403 ⚠️ 🔴",
+        "url": "https://www.perplexity.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 403,
+        "raw": {
+          "title": "Perplexity",
+          "url": "https://www.perplexity.ai",
+          "status": "HTTP 403",
+          "summary": "Perplexity https://www.perplexity.ai HTTP 403 ⚠️ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bb4dbb88376e",
+        "title": "Perplexity",
+        "url": "https://www.perplexity.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.55,
+        "verdict": "pass",
+        "risk_flags": [
+          "source_http_problem"
+        ],
+        "reasons": [
+          "has source URL",
+          "source HTTP status 403"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d5f4ff4ce393",
+        "title": "Calendly",
+        "text": "Calendly Calendly https://calendly.com HTTP 200 ✅ 🔴",
+        "url": "https://calendly.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Calendly",
+          "url": "https://calendly.com",
+          "status": "HTTP 200",
+          "summary": "Calendly https://calendly.com HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d5f4ff4ce393",
+        "title": "Calendly",
+        "url": "https://calendly.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-038abfbba8c5",
+        "title": "NTTドコモ",
+        "text": "NTTドコモ NTTドコモ https://www.docomo.ne.jp HTTP 200 ✅ 🟠",
+        "url": "https://www.docomo.ne.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "NTTドコモ",
+          "url": "https://www.docomo.ne.jp",
+          "status": "HTTP 200",
+          "summary": "NTTドコモ https://www.docomo.ne.jp HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-038abfbba8c5",
+        "title": "NTTドコモ",
+        "url": "https://www.docomo.ne.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fdb3cac84279",
+        "title": "Poshmark",
+        "text": "Poshmark Poshmark https://poshmark.com HTTP 200 ✅ 🟡",
+        "url": "https://poshmark.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Poshmark",
+          "url": "https://poshmark.com",
+          "status": "HTTP 200",
+          "summary": "Poshmark https://poshmark.com HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fdb3cac84279",
+        "title": "Poshmark",
+        "url": "https://poshmark.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-78d75cb64151",
+        "title": "Jasper AI",
+        "text": "Jasper AI Jasper AI https://www.jasper.ai HTTP 200 ✅ 🔴",
+        "url": "https://www.jasper.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Jasper AI",
+          "url": "https://www.jasper.ai",
+          "status": "HTTP 200",
+          "summary": "Jasper AI https://www.jasper.ai HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-78d75cb64151",
+        "title": "Jasper AI",
+        "url": "https://www.jasper.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e6844c618195",
+        "title": "Schoo",
+        "text": "Schoo Schoo https://schoo.jp HTTP 200 ✅ 🟠",
+        "url": "https://schoo.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Schoo",
+          "url": "https://schoo.jp",
+          "status": "HTTP 200",
+          "summary": "Schoo https://schoo.jp HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e6844c618195",
+        "title": "Schoo",
+        "url": "https://schoo.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c81feaec8e7a",
+        "title": "Ameba (サイバーエージェント)",
+        "text": "Ameba (サイバーエージェント) Ameba (サイバーエージェント) https://ameba.jp HTTP 302000 ⚠️ 🟡",
+        "url": "https://ameba.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Ameba (サイバーエージェント)",
+          "url": "https://ameba.jp",
+          "status": "HTTP 302000",
+          "summary": "Ameba (サイバーエージェント) https://ameba.jp HTTP 302000 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c81feaec8e7a",
+        "title": "Ameba (サイバーエージェント)",
+        "url": "https://ameba.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.67,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f5e4c5372986",
+        "title": "Kore.ai",
+        "text": "Kore.ai Kore.ai https://kore.ai HTTP 200 ✅ 🟠",
+        "url": "https://kore.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Kore.ai",
+          "url": "https://kore.ai",
+          "status": "HTTP 200",
+          "summary": "Kore.ai https://kore.ai HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f5e4c5372986",
+        "title": "Kore.ai",
+        "url": "https://kore.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c5f215373f7f",
+        "title": "佐川急便",
+        "text": "佐川急便 佐川急便 https://www.sagawa-exp.co.jp HTTP 200 ✅ 🟡",
+        "url": "https://www.sagawa-exp.co.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "佐川急便",
+          "url": "https://www.sagawa-exp.co.jp",
+          "status": "HTTP 200",
+          "summary": "佐川急便 https://www.sagawa-exp.co.jp HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c5f215373f7f",
+        "title": "佐川急便",
+        "url": "https://www.sagawa-exp.co.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4be87dc4f537",
+        "title": "Synthesia",
+        "text": "Synthesia Synthesia https://www.synthesia.io HTTP 200 ✅ 🟠",
+        "url": "https://www.synthesia.io",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Synthesia",
+          "url": "https://www.synthesia.io",
+          "status": "HTTP 200",
+          "summary": "Synthesia https://www.synthesia.io HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4be87dc4f537",
+        "title": "Synthesia",
+        "url": "https://www.synthesia.io",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-37b93142e9cf",
+        "title": "MoneyForward",
+        "text": "MoneyForward MoneyForward https://moneyforward.com/ HTTP 200 ✅ 🔴",
+        "url": "https://moneyforward.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "MoneyForward",
+          "url": "https://moneyforward.com/",
+          "status": "HTTP 200",
+          "summary": "MoneyForward https://moneyforward.com/ HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-37b93142e9cf",
+        "title": "MoneyForward",
+        "url": "https://moneyforward.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-17bfa4164b6f",
+        "title": "Groq",
+        "text": "Groq Groq https://groq.com HTTP 200 ✅ 🟠",
+        "url": "https://groq.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Groq",
+          "url": "https://groq.com",
+          "status": "HTTP 200",
+          "summary": "Groq https://groq.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-17bfa4164b6f",
+        "title": "Groq",
+        "url": "https://groq.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-70f14b297b03",
+        "title": "Cerebras Systems",
+        "text": "Cerebras Systems Cerebras Systems https://www.cerebras.net HTTP 200 ✅ 🟠",
+        "url": "https://www.cerebras.net",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Cerebras Systems",
+          "url": "https://www.cerebras.net",
+          "status": "HTTP 200",
+          "summary": "Cerebras Systems https://www.cerebras.net HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-70f14b297b03",
+        "title": "Cerebras Systems",
+        "url": "https://www.cerebras.net",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ebe160635ef7",
+        "title": "Google Ads",
+        "text": "Google Ads Google Ads https://ads.google.com HTTP 200 ✅ 🟠",
+        "url": "https://ads.google.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Google Ads",
+          "url": "https://ads.google.com",
+          "status": "HTTP 200",
+          "summary": "Google Ads https://ads.google.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ebe160635ef7",
+        "title": "Google Ads",
+        "url": "https://ads.google.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-201337c14f74",
+        "title": "可用性チェック詳細",
+        "text": "可用性チェック詳細",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "可用性チェック詳細"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-201337c14f74",
+        "title": "可用性チェック詳細",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c8c6b988f183",
+        "title": "競合",
+        "text": "競合 競合 URL HTTP 状態 脅威度",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "競合",
+          "url": "",
+          "status": "HTTP",
+          "summary": "競合 URL HTTP 状態 脅威度"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c8c6b988f183",
+        "title": "競合",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-526b9a458498",
+        "title": "Stripe",
+        "text": "Stripe Stripe https://stripe.com/ HTTP 200 ✅ 🟠",
+        "url": "https://stripe.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Stripe",
+          "url": "https://stripe.com/",
+          "status": "HTTP 200",
+          "summary": "Stripe https://stripe.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-526b9a458498",
+        "title": "Stripe",
+        "url": "https://stripe.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7c283be2c341",
+        "title": "Roblox",
+        "text": "Roblox Roblox https://www.roblox.com/ HTTP 200 ✅ 🟡",
+        "url": "https://www.roblox.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Roblox",
+          "url": "https://www.roblox.com/",
+          "status": "HTTP 200",
+          "summary": "Roblox https://www.roblox.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7c283be2c341",
+        "title": "Roblox",
+        "url": "https://www.roblox.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-80a904128f92",
+        "title": "KDDI (au)",
+        "text": "KDDI (au) KDDI (au) https://www.au.com HTTP 200 ✅ 🟠",
+        "url": "https://www.au.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "KDDI (au)",
+          "url": "https://www.au.com",
+          "status": "HTTP 200",
+          "summary": "KDDI (au) https://www.au.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-80a904128f92",
+        "title": "KDDI (au)",
+        "url": "https://www.au.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b468fe06da70",
+        "title": "Devin AI",
+        "text": "Devin AI Devin AI https://cognition.ai HTTP 200 ✅ 🔴",
+        "url": "https://cognition.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Devin AI",
+          "url": "https://cognition.ai",
+          "status": "HTTP 200",
+          "summary": "Devin AI https://cognition.ai HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b468fe06da70",
+        "title": "Devin AI",
+        "url": "https://cognition.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-76a262aee0a7",
+        "title": "GitHub",
+        "text": "GitHub GitHub https://github.com/ HTTP 200 ✅ 🟡",
+        "url": "https://github.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "GitHub",
+          "url": "https://github.com/",
+          "status": "HTTP 200",
+          "summary": "GitHub https://github.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-76a262aee0a7",
+        "title": "GitHub",
+        "url": "https://github.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.93,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "source domain is official or primary",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4b7b03befae7",
+        "title": "Linear",
+        "text": "Linear Linear https://linear.app/ HTTP 200 ✅ 🔴",
+        "url": "https://linear.app/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Linear",
+          "url": "https://linear.app/",
+          "status": "HTTP 200",
+          "summary": "Linear https://linear.app/ HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4b7b03befae7",
+        "title": "Linear",
+        "url": "https://linear.app/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-667aa55b94ac",
+        "title": "Devin (Cognition AI)",
+        "text": "Devin (Cognition AI) Devin (Cognition AI) https://devin.ai/ HTTP 429 ⚠️ 🟠",
+        "url": "https://devin.ai/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 429,
+        "raw": {
+          "title": "Devin (Cognition AI)",
+          "url": "https://devin.ai/",
+          "status": "HTTP 429",
+          "summary": "Devin (Cognition AI) https://devin.ai/ HTTP 429 ⚠️ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-667aa55b94ac",
+        "title": "Devin (Cognition AI)",
+        "url": "https://devin.ai/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.55,
+        "verdict": "pass",
+        "risk_flags": [
+          "source_http_problem"
+        ],
+        "reasons": [
+          "has source URL",
+          "source HTTP status 429"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-75c1f80057c5",
+        "title": "Amazon",
+        "text": "Amazon Amazon https://amazon.com/ HTTP 200 ✅ 🟡",
+        "url": "https://amazon.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Amazon",
+          "url": "https://amazon.com/",
+          "status": "HTTP 200",
+          "summary": "Amazon https://amazon.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-75c1f80057c5",
+        "title": "Amazon",
+        "url": "https://amazon.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d6d3d3c9ffe5",
+        "title": "楽天 (Rakuten)",
+        "text": "楽天 (Rakuten) 楽天 (Rakuten) https://www.rakuten.co.jp/ HTTP 000000 ⚠️ 🟡",
+        "url": "https://www.rakuten.co.jp/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "楽天 (Rakuten)",
+          "url": "https://www.rakuten.co.jp/",
+          "status": "HTTP 000000",
+          "summary": "楽天 (Rakuten) https://www.rakuten.co.jp/ HTTP 000000 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d6d3d3c9ffe5",
+        "title": "楽天 (Rakuten)",
+        "url": "https://www.rakuten.co.jp/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.67,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e4f20b9a533b",
+        "title": "GO",
+        "text": "GO GO https://go.mo-t.com HTTP 200 ✅ 🟠",
+        "url": "https://go.mo-t.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "GO",
+          "url": "https://go.mo-t.com",
+          "status": "HTTP 200",
+          "summary": "GO https://go.mo-t.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e4f20b9a533b",
+        "title": "GO",
+        "url": "https://go.mo-t.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-05acb95d74a0",
+        "title": "Descript",
+        "text": "Descript Descript https://www.descript.com HTTP 200 ✅ 🟠",
+        "url": "https://www.descript.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Descript",
+          "url": "https://www.descript.com",
+          "status": "HTTP 200",
+          "summary": "Descript https://www.descript.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-05acb95d74a0",
+        "title": "Descript",
+        "url": "https://www.descript.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-15a0ef231582",
+        "title": "Hugging Face",
+        "text": "Hugging Face Hugging Face https://huggingface.co/ HTTP 200 ✅ 🟠",
+        "url": "https://huggingface.co/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Hugging Face",
+          "url": "https://huggingface.co/",
+          "status": "HTTP 200",
+          "summary": "Hugging Face https://huggingface.co/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-15a0ef231582",
+        "title": "Hugging Face",
+        "url": "https://huggingface.co/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-452b5513fa3f",
+        "title": "グラファー",
+        "text": "グラファー グラファー https://graffer.jp HTTP 200 ✅ 🟠",
+        "url": "https://graffer.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "グラファー",
+          "url": "https://graffer.jp",
+          "status": "HTTP 200",
+          "summary": "グラファー https://graffer.jp HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-452b5513fa3f",
+        "title": "グラファー",
+        "url": "https://graffer.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a599a7855b0a",
+        "title": "Magic",
+        "text": "Magic Magic https://magic.dev HTTP 200 ✅ 🔴",
+        "url": "https://magic.dev",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Magic",
+          "url": "https://magic.dev",
+          "status": "HTTP 200",
+          "summary": "Magic https://magic.dev HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a599a7855b0a",
+        "title": "Magic",
+        "url": "https://magic.dev",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d0983410ea86",
+        "title": "Microsoft Teams",
+        "text": "Microsoft Teams Microsoft Teams https://www.microsoft.com/microsoft-teams/ HTTP 200 ✅ 🟡",
+        "url": "https://www.microsoft.com/microsoft-teams/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Microsoft Teams",
+          "url": "https://www.microsoft.com/microsoft-teams/",
+          "status": "HTTP 200",
+          "summary": "Microsoft Teams https://www.microsoft.com/microsoft-teams/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d0983410ea86",
+        "title": "Microsoft Teams",
+        "url": "https://www.microsoft.com/microsoft-teams/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.97,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "source domain is official or primary",
+          "HTTP 200 reachable",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e3af15b32f31",
+        "title": "メルカリ (Mercari)",
+        "text": "メルカリ (Mercari) メルカリ (Mercari) https://www.mercari.com/ HTTP 403 ⚠️ 🟡",
+        "url": "https://www.mercari.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 403,
+        "raw": {
+          "title": "メルカリ (Mercari)",
+          "url": "https://www.mercari.com/",
+          "status": "HTTP 403",
+          "summary": "メルカリ (Mercari) https://www.mercari.com/ HTTP 403 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e3af15b32f31",
+        "title": "メルカリ (Mercari)",
+        "url": "https://www.mercari.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.55,
+        "verdict": "pass",
+        "risk_flags": [
+          "source_http_problem"
+        ],
+        "reasons": [
+          "has source URL",
+          "source HTTP status 403"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7b168dde2aaf",
+        "title": "Together AI",
+        "text": "Together AI Together AI https://www.together.ai/ HTTP 200 ✅ 🟠",
+        "url": "https://www.together.ai/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Together AI",
+          "url": "https://www.together.ai/",
+          "status": "HTTP 200",
+          "summary": "Together AI https://www.together.ai/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7b168dde2aaf",
+        "title": "Together AI",
+        "url": "https://www.together.ai/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e55a5aa08c77",
+        "title": "HeyGen",
+        "text": "HeyGen HeyGen https://www.heygen.com/ HTTP 200 ✅ 🟠",
+        "url": "https://www.heygen.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "HeyGen",
+          "url": "https://www.heygen.com/",
+          "status": "HTTP 200",
+          "summary": "HeyGen https://www.heygen.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e55a5aa08c77",
+        "title": "HeyGen",
+        "url": "https://www.heygen.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bd6bed4c4ab3",
+        "title": "弥生",
+        "text": "弥生 弥生 https://www.yayoi-kk.co.jp/ HTTP 200 ✅ 🟠",
+        "url": "https://www.yayoi-kk.co.jp/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "弥生",
+          "url": "https://www.yayoi-kk.co.jp/",
+          "status": "HTTP 200",
+          "summary": "弥生 https://www.yayoi-kk.co.jp/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bd6bed4c4ab3",
+        "title": "弥生",
+        "url": "https://www.yayoi-kk.co.jp/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e14978afee9b",
+        "title": "Replit",
+        "text": "Replit Replit https://replit.com/ HTTP 200 ✅ 🔴",
+        "url": "https://replit.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Replit",
+          "url": "https://replit.com/",
+          "status": "HTTP 200",
+          "summary": "Replit https://replit.com/ HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e14978afee9b",
+        "title": "Replit",
+        "url": "https://replit.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5e7a98886c4e",
+        "title": "Discord",
+        "text": "Discord Discord https://discord.com/ HTTP 200 ✅ 🟠",
+        "url": "https://discord.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Discord",
+          "url": "https://discord.com/",
+          "status": "HTTP 200",
+          "summary": "Discord https://discord.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5e7a98886c4e",
+        "title": "Discord",
+        "url": "https://discord.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ee3e6483db66",
+        "title": "Calm",
+        "text": "Calm Calm https://www.calm.com/ HTTP 200 ✅ 🟠",
+        "url": "https://www.calm.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Calm",
+          "url": "https://www.calm.com/",
+          "status": "HTTP 200",
+          "summary": "Calm https://www.calm.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ee3e6483db66",
+        "title": "Calm",
+        "url": "https://www.calm.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e78f46219fed",
+        "title": "Postman",
+        "text": "Postman Postman https://www.postman.com HTTP 200 ✅ 🟡",
+        "url": "https://www.postman.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Postman",
+          "url": "https://www.postman.com",
+          "status": "HTTP 200",
+          "summary": "Postman https://www.postman.com HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e78f46219fed",
+        "title": "Postman",
+        "url": "https://www.postman.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-75a552be4c07",
+        "title": "Sansan",
+        "text": "Sansan Sansan https://jp.sansan.com/ HTTP 200 ✅ 🟠",
+        "url": "https://jp.sansan.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Sansan",
+          "url": "https://jp.sansan.com/",
+          "status": "HTTP 200",
+          "summary": "Sansan https://jp.sansan.com/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-75a552be4c07",
+        "title": "Sansan",
+        "url": "https://jp.sansan.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ccddbf1a62fb",
+        "title": "Salesforce",
+        "text": "Salesforce Salesforce https://www.salesforce.com/ HTTP 200 ✅ 🟡",
+        "url": "https://www.salesforce.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Salesforce",
+          "url": "https://www.salesforce.com/",
+          "status": "HTTP 200",
+          "summary": "Salesforce https://www.salesforce.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ccddbf1a62fb",
+        "title": "Salesforce",
+        "url": "https://www.salesforce.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fad395eb836f",
+        "title": "ITANDI BB",
+        "text": "ITANDI BB ITANDI BB https://bb.itandi.co.jp HTTP 000000 ⚠️ 🟡",
+        "url": "https://bb.itandi.co.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "ITANDI BB",
+          "url": "https://bb.itandi.co.jp",
+          "status": "HTTP 000000",
+          "summary": "ITANDI BB https://bb.itandi.co.jp HTTP 000000 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fad395eb836f",
+        "title": "ITANDI BB",
+        "url": "https://bb.itandi.co.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.67,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bfa0f3fa0a2b",
+        "title": "Udemy",
+        "text": "Udemy Udemy https://www.udemy.com HTTP 403 ⚠️ 🟡",
+        "url": "https://www.udemy.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 403,
+        "raw": {
+          "title": "Udemy",
+          "url": "https://www.udemy.com",
+          "status": "HTTP 403",
+          "summary": "Udemy https://www.udemy.com HTTP 403 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bfa0f3fa0a2b",
+        "title": "Udemy",
+        "url": "https://www.udemy.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.55,
+        "verdict": "pass",
+        "risk_flags": [
+          "source_http_problem"
+        ],
+        "reasons": [
+          "has source URL",
+          "source HTTP status 403"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4afa12c5b4d4",
+        "title": "Vanta",
+        "text": "Vanta Vanta https://www.vanta.com HTTP 200 ✅ 🟠",
+        "url": "https://www.vanta.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Vanta",
+          "url": "https://www.vanta.com",
+          "status": "HTTP 200",
+          "summary": "Vanta https://www.vanta.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4afa12c5b4d4",
+        "title": "Vanta",
+        "url": "https://www.vanta.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cc6f96a55b17",
+        "title": "Progate",
+        "text": "Progate Progate https://prog-8.com HTTP 200 ✅ 🟡",
+        "url": "https://prog-8.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Progate",
+          "url": "https://prog-8.com",
+          "status": "HTTP 200",
+          "summary": "Progate https://prog-8.com HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cc6f96a55b17",
+        "title": "Progate",
+        "url": "https://prog-8.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0c9c9fbcccf9",
+        "title": "STORES.jp",
+        "text": "STORES.jp STORES.jp https://stores.jp HTTP 200 ✅ 🟠",
+        "url": "https://stores.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "STORES.jp",
+          "url": "https://stores.jp",
+          "status": "HTTP 200",
+          "summary": "STORES.jp https://stores.jp HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0c9c9fbcccf9",
+        "title": "STORES.jp",
+        "url": "https://stores.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4d22e8607bd8",
+        "title": "freee 人事労務",
+        "text": "freee 人事労務 freee 人事労務 https://www.freee.co.jp/hr/ HTTP 200 ✅ 🟡",
+        "url": "https://www.freee.co.jp/hr/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "freee 人事労務",
+          "url": "https://www.freee.co.jp/hr/",
+          "status": "HTTP 200",
+          "summary": "freee 人事労務 https://www.freee.co.jp/hr/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4d22e8607bd8",
+        "title": "freee 人事労務",
+        "url": "https://www.freee.co.jp/hr/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2c8e80adc3f4",
+        "title": "Notion AI",
+        "text": "Notion AI Notion AI https://www.notion.so/product/ai HTTP 200 ✅ 🟡",
+        "url": "https://www.notion.so/product/ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Notion AI",
+          "url": "https://www.notion.so/product/ai",
+          "status": "HTTP 200",
+          "summary": "Notion AI https://www.notion.so/product/ai HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2c8e80adc3f4",
+        "title": "Notion AI",
+        "url": "https://www.notion.so/product/ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.93,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "source domain is official or primary",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1819aa24878f",
+        "title": "Evernote",
+        "text": "Evernote Evernote https://evernote.com/ HTTP 200 ✅ 🔴",
+        "url": "https://evernote.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Evernote",
+          "url": "https://evernote.com/",
+          "status": "HTTP 200",
+          "summary": "Evernote https://evernote.com/ HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1819aa24878f",
+        "title": "Evernote",
+        "url": "https://evernote.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f8488d35c092",
+        "title": "Zoho",
+        "text": "Zoho Zoho https://www.zoho.com/ HTTP 200 ✅ 🟡",
+        "url": "https://www.zoho.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Zoho",
+          "url": "https://www.zoho.com/",
+          "status": "HTTP 200",
+          "summary": "Zoho https://www.zoho.com/ HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f8488d35c092",
+        "title": "Zoho",
+        "url": "https://www.zoho.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-70db62df1188",
+        "title": "Coda",
+        "text": "Coda Coda https://coda.io/ HTTP 200 ✅ 🟠",
+        "url": "https://coda.io/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Coda",
+          "url": "https://coda.io/",
+          "status": "HTTP 200",
+          "summary": "Coda https://coda.io/ HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-70db62df1188",
+        "title": "Coda",
+        "url": "https://coda.io/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bb4dbb88376e",
+        "title": "Perplexity",
+        "text": "Perplexity Perplexity https://www.perplexity.ai HTTP 403 ⚠️ 🔴",
+        "url": "https://www.perplexity.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 403,
+        "raw": {
+          "title": "Perplexity",
+          "url": "https://www.perplexity.ai",
+          "status": "HTTP 403",
+          "summary": "Perplexity https://www.perplexity.ai HTTP 403 ⚠️ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bb4dbb88376e",
+        "title": "Perplexity",
+        "url": "https://www.perplexity.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.55,
+        "verdict": "pass",
+        "risk_flags": [
+          "source_http_problem"
+        ],
+        "reasons": [
+          "has source URL",
+          "source HTTP status 403"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d5f4ff4ce393",
+        "title": "Calendly",
+        "text": "Calendly Calendly https://calendly.com HTTP 200 ✅ 🔴",
+        "url": "https://calendly.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Calendly",
+          "url": "https://calendly.com",
+          "status": "HTTP 200",
+          "summary": "Calendly https://calendly.com HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d5f4ff4ce393",
+        "title": "Calendly",
+        "url": "https://calendly.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-038abfbba8c5",
+        "title": "NTTドコモ",
+        "text": "NTTドコモ NTTドコモ https://www.docomo.ne.jp HTTP 200 ✅ 🟠",
+        "url": "https://www.docomo.ne.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "NTTドコモ",
+          "url": "https://www.docomo.ne.jp",
+          "status": "HTTP 200",
+          "summary": "NTTドコモ https://www.docomo.ne.jp HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-038abfbba8c5",
+        "title": "NTTドコモ",
+        "url": "https://www.docomo.ne.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fdb3cac84279",
+        "title": "Poshmark",
+        "text": "Poshmark Poshmark https://poshmark.com HTTP 200 ✅ 🟡",
+        "url": "https://poshmark.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Poshmark",
+          "url": "https://poshmark.com",
+          "status": "HTTP 200",
+          "summary": "Poshmark https://poshmark.com HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fdb3cac84279",
+        "title": "Poshmark",
+        "url": "https://poshmark.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-78d75cb64151",
+        "title": "Jasper AI",
+        "text": "Jasper AI Jasper AI https://www.jasper.ai HTTP 200 ✅ 🔴",
+        "url": "https://www.jasper.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Jasper AI",
+          "url": "https://www.jasper.ai",
+          "status": "HTTP 200",
+          "summary": "Jasper AI https://www.jasper.ai HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-78d75cb64151",
+        "title": "Jasper AI",
+        "url": "https://www.jasper.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e6844c618195",
+        "title": "Schoo",
+        "text": "Schoo Schoo https://schoo.jp HTTP 200 ✅ 🟠",
+        "url": "https://schoo.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Schoo",
+          "url": "https://schoo.jp",
+          "status": "HTTP 200",
+          "summary": "Schoo https://schoo.jp HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e6844c618195",
+        "title": "Schoo",
+        "url": "https://schoo.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c81feaec8e7a",
+        "title": "Ameba (サイバーエージェント)",
+        "text": "Ameba (サイバーエージェント) Ameba (サイバーエージェント) https://ameba.jp HTTP 302000 ⚠️ 🟡",
+        "url": "https://ameba.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Ameba (サイバーエージェント)",
+          "url": "https://ameba.jp",
+          "status": "HTTP 302000",
+          "summary": "Ameba (サイバーエージェント) https://ameba.jp HTTP 302000 ⚠️ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c81feaec8e7a",
+        "title": "Ameba (サイバーエージェント)",
+        "url": "https://ameba.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.67,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f5e4c5372986",
+        "title": "Kore.ai",
+        "text": "Kore.ai Kore.ai https://kore.ai HTTP 200 ✅ 🟠",
+        "url": "https://kore.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Kore.ai",
+          "url": "https://kore.ai",
+          "status": "HTTP 200",
+          "summary": "Kore.ai https://kore.ai HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f5e4c5372986",
+        "title": "Kore.ai",
+        "url": "https://kore.ai",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c5f215373f7f",
+        "title": "佐川急便",
+        "text": "佐川急便 佐川急便 https://www.sagawa-exp.co.jp HTTP 200 ✅ 🟡",
+        "url": "https://www.sagawa-exp.co.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "佐川急便",
+          "url": "https://www.sagawa-exp.co.jp",
+          "status": "HTTP 200",
+          "summary": "佐川急便 https://www.sagawa-exp.co.jp HTTP 200 ✅ 🟡"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c5f215373f7f",
+        "title": "佐川急便",
+        "url": "https://www.sagawa-exp.co.jp",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4be87dc4f537",
+        "title": "Synthesia",
+        "text": "Synthesia Synthesia https://www.synthesia.io HTTP 200 ✅ 🟠",
+        "url": "https://www.synthesia.io",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Synthesia",
+          "url": "https://www.synthesia.io",
+          "status": "HTTP 200",
+          "summary": "Synthesia https://www.synthesia.io HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4be87dc4f537",
+        "title": "Synthesia",
+        "url": "https://www.synthesia.io",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-37b93142e9cf",
+        "title": "MoneyForward",
+        "text": "MoneyForward MoneyForward https://moneyforward.com/ HTTP 200 ✅ 🔴",
+        "url": "https://moneyforward.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "MoneyForward",
+          "url": "https://moneyforward.com/",
+          "status": "HTTP 200",
+          "summary": "MoneyForward https://moneyforward.com/ HTTP 200 ✅ 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-37b93142e9cf",
+        "title": "MoneyForward",
+        "url": "https://moneyforward.com/",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-17bfa4164b6f",
+        "title": "Groq",
+        "text": "Groq Groq https://groq.com HTTP 200 ✅ 🟠",
+        "url": "https://groq.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Groq",
+          "url": "https://groq.com",
+          "status": "HTTP 200",
+          "summary": "Groq https://groq.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-17bfa4164b6f",
+        "title": "Groq",
+        "url": "https://groq.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-70f14b297b03",
+        "title": "Cerebras Systems",
+        "text": "Cerebras Systems Cerebras Systems https://www.cerebras.net HTTP 200 ✅ 🟠",
+        "url": "https://www.cerebras.net",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Cerebras Systems",
+          "url": "https://www.cerebras.net",
+          "status": "HTTP 200",
+          "summary": "Cerebras Systems https://www.cerebras.net HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-70f14b297b03",
+        "title": "Cerebras Systems",
+        "url": "https://www.cerebras.net",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ebe160635ef7",
+        "title": "Google Ads",
+        "text": "Google Ads Google Ads https://ads.google.com HTTP 200 ✅ 🟠",
+        "url": "https://ads.google.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": 200,
+        "raw": {
+          "title": "Google Ads",
+          "url": "https://ads.google.com",
+          "status": "HTTP 200",
+          "summary": "Google Ads https://ads.google.com HTTP 200 ✅ 🟠"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ebe160635ef7",
+        "title": "Google Ads",
+        "url": "https://ads.google.com",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.75,
+        "verdict": "pass",
+        "risk_flags": [],
+        "reasons": [
+          "has source URL",
+          "HTTP 200 reachable"
+        ]
+      }
+    }
+  ],
+  "patterns": [
+    {
+      "id": "np-615d6213565f",
+      "company": "multi-source",
+      "topic": "general-signal",
+      "entry_count": 98,
+      "average_confidence": 0.741,
+      "risk_level": "review",
+      "risk_flags": [
+        "source_http_problem"
+      ],
+      "evidence_titles": [
+        "Stripe",
+        "Roblox",
+        "KDDI (au)",
+        "Devin AI",
+        "GitHub"
+      ],
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
+    },
+    {
+      "id": "np-81fdec0e9bff",
+      "company": "devin",
+      "topic": "general-signal",
+      "entry_count": 4,
+      "average_confidence": 0.65,
+      "risk_level": "review",
+      "risk_flags": [
+        "source_http_problem"
+      ],
+      "evidence_titles": [
+        "Devin AI",
+        "Devin (Cognition AI)",
+        "Devin AI",
+        "Devin (Cognition AI)"
+      ],
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
+    },
+    {
+      "id": "np-7c120ae25d18",
+      "company": "microsoft",
+      "topic": "general-signal",
+      "entry_count": 2,
+      "average_confidence": 0.97,
+      "risk_level": "normal",
+      "risk_flags": [],
+      "evidence_titles": [
+        "Microsoft Teams",
+        "Microsoft Teams"
+      ],
+      "recommended_action": "Review microsoft movement for competitor-monitoring follow-up."
+    },
+    {
+      "id": "np-e8fbeb9157cf",
+      "company": "github",
+      "topic": "general-signal",
+      "entry_count": 2,
+      "average_confidence": 0.93,
+      "risk_level": "normal",
+      "risk_flags": [],
+      "evidence_titles": [
+        "GitHub",
+        "GitHub"
+      ],
+      "recommended_action": "Review github movement for competitor-monitoring follow-up."
+    },
+    {
+      "id": "np-380d6202182c",
+      "company": "notion",
+      "topic": "general-signal",
+      "entry_count": 2,
+      "average_confidence": 0.93,
+      "risk_level": "normal",
+      "risk_flags": [],
+      "evidence_titles": [
+        "Notion AI",
+        "Notion AI"
+      ],
+      "recommended_action": "Review notion movement for competitor-monitoring follow-up."
+    },
+    {
+      "id": "np-605c4c7b2c16",
+      "company": "google",
+      "topic": "general-signal",
+      "entry_count": 2,
+      "average_confidence": 0.75,
+      "risk_level": "normal",
+      "risk_flags": [],
+      "evidence_titles": [
+        "Google Ads",
+        "Google Ads"
+      ],
+      "recommended_action": "Review google movement for competitor-monitoring follow-up."
+    }
+  ],
+  "issue_candidates": []
+}

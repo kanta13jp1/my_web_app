@@ -20,15 +20,19 @@ on:
         required: false
         default: "true"
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: daily-anomaly-scan
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-30 ci-audit: scan は冪等 (staged rollout gate / idempotent API) / 手動+schedule 重複時のキュー積み防止
 
 jobs:
   scan:
+    environment:
+      name: observability-production
+      deployment: false
+    permissions:
+      contents: read
     name: Scan all active users
     runs-on: ubuntu-latest
     timeout-minutes: 10

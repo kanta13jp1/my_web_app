@@ -1,0 +1,123 @@
+name: Notion Inventory Cloud Expansion
+
+on:
+  pull_request:
+    paths:
+      - .github/privileged-workflow-credentials.json
+      - .github/workflows/notion-inventory-cloud-expand.yml
+      - scripts/notion_inventory_cloud_expand.py
+      - supabase/functions/notion-migration-hub/cloud_inventory_auth.ts
+      - supabase/functions/notion-migration-hub/cloud_inventory_auth_test.ts
+      - supabase/functions/notion-migration-hub/index.ts
+      - supabase/functions/notion-migration-hub/inventory_expansion_plan.ts
+      - supabase/functions/notion-migration-hub/inventory_expansion_plan_test.ts
+      - test/scripts/test_notion_inventory_cloud_expand.py
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Plan, apply one batch, or drain repeated bounded batches
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+          - drain
+      expected_plan_sha256:
+        description: Exact current plan digest; required for apply or drain
+        required: false
+        default: ""
+        type: string
+      limit:
+        description: Notion containers to expand (1-5)
+        required: true
+        default: "5"
+        type: string
+      max_items:
+        description: Maximum attempts for drain mode (1-100; each plan remains 1-5)
+        required: true
+        default: "100"
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: notion-inventory-cloud-expand
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    name: Validate content-free inventory expansion
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Run focused tests
+        run: |
+          PYTHONPATH=. python test/scripts/test_notion_inventory_cloud_expand.py
+          deno test \
+            supabase/functions/notion-migration-hub/cloud_inventory_auth_test.ts \
+            supabase/functions/notion-migration-hub/inventory_expansion_plan_test.ts
+
+  expand:
+    if: github.event_name != 'pull_request'
+    name: Plan, apply, or drain inventory expansion
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: read
+    env:
+      PYTHONPATH: .
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      INVENTORY_MODE: ${{ inputs.mode }}
+      EXPECTED_PLAN_SHA256: ${{ inputs.expected_plan_sha256 }}
+      INVENTORY_LIMIT: ${{ inputs.limit }}
+      INVENTORY_MAX_ITEMS: ${{ inputs.max_items }}
+
+    steps:
+      - name: Checkout trusted main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Verify trusted main dispatch
+        run: test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Verify expansion logic
+        run: |
+          PYTHONPATH=. python test/scripts/test_notion_inventory_cloud_expand.py
+          deno test \
+            supabase/functions/notion-migration-hub/cloud_inventory_auth_test.ts \
+            supabase/functions/notion-migration-hub/inventory_expansion_plan_test.ts
+
+      - name: Plan, apply, or drain bounded expansion
+        run: >-
+          python scripts/notion_inventory_cloud_expand.py
+          --json-output notion-inventory-cloud-expand.json
+          --summary-output "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve sanitized evidence briefly
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: notion-inventory-cloud-expand-${{ github.run_id }}
+          path: notion-inventory-cloud-expand.json
+          if-no-files-found: error
+          retention-days: 1

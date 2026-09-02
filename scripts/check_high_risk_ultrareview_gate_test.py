@@ -12,8 +12,24 @@ from check_high_risk_ultrareview_gate import (
     missing_perspectives,
     passing_evidence_block,
     passing_exception_block,
+    strip_collapsed_sections,
+    text_risk_reasons,
     validate,
 )
+
+# Trimmed from the real body of #4257 ("deps: update google-genai requirement"),
+# a one-line version bump that the gate used to flag high-risk. All keyword hits
+# live inside the <details> blocks dependabot pastes upstream release notes into.
+DEPENDABOT_BODY = """\
+Updates the requirements on [google-genai](https://github.com/googleapis/python-genai) to permit the latest version.
+<details>
+<summary>Release notes</summary>
+<blockquote>
+<li>Support mTLS in custom client using google auth mtls.get_default_ssl_context</li>
+<li>Populate per-modality prompt token count in embedding responses</li>
+</blockquote>
+</details>
+"""
 
 
 GOOD_BODY = """
@@ -167,6 +183,54 @@ class PassingBlockTest(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         ok, messages, _, _ = validate(buffer.getvalue(), self.HIGH_RISK_FILES, set())
         self.assertTrue(ok, messages)
+
+
+class CollapsedSectionTextRiskTest(unittest.TestCase):
+    """#4257 regression: quoted upstream notes must not make a PR high-risk."""
+
+    def test_dependabot_release_notes_do_not_trigger_text_risk(self) -> None:
+        self.assertEqual(
+            text_risk_reasons(
+                "deps: update google-genai requirement from <3.0.0,>=2.12.0",
+                DEPENDABOT_BODY,
+            ),
+            [],
+        )
+
+    def test_keywords_written_by_the_author_still_trigger(self) -> None:
+        self.assertTrue(
+            text_risk_reasons("fix: rotate key", "This changes the auth flow.")
+        )
+
+    def test_title_keywords_still_trigger(self) -> None:
+        self.assertTrue(text_risk_reasons("fix(billing): stripe webhook", "see below"))
+
+    def test_author_text_outside_details_still_counts(self) -> None:
+        # A risky sentence next to quoted notes must not be masked by the strip.
+        body = "We rotate the service role token here.\n" + DEPENDABOT_BODY
+        self.assertTrue(text_risk_reasons("deps: bump x", body))
+
+    def test_unclosed_details_drops_the_remainder(self) -> None:
+        # Truncated bodies keep the quoted tail out of the scan.
+        self.assertEqual(
+            strip_collapsed_sections("visible part\n<details>\n<p>auth token</p>"),
+            "visible part\n",
+        )
+
+    def test_body_without_details_is_unchanged(self) -> None:
+        self.assertEqual(strip_collapsed_sections("plain body"), "plain body")
+
+    def test_multiple_details_blocks_are_all_removed(self) -> None:
+        body = "<details>auth</details>middle<details>token</details>"
+        self.assertNotIn("auth", strip_collapsed_sections(body))
+        self.assertNotIn("token", strip_collapsed_sections(body))
+        self.assertIn("middle", strip_collapsed_sections(body))
+
+    def test_details_with_attributes_is_removed(self) -> None:
+        self.assertEqual(
+            text_risk_reasons("deps: bump x", '<details open id="n">auth</details>'),
+            [],
+        )
 
 
 if __name__ == "__main__":

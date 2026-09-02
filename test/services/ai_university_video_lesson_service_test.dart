@@ -2,6 +2,45 @@ import 'package:my_web_app/services/ai_university_video_lesson_service.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('supplemental video rows restore every unique published lesson', () {
+    Map<String, dynamic> row(String category, {String? title}) => {
+          'provider': 'openai',
+          'category': category,
+          'title': title ?? category,
+          'content': 'lesson',
+          'source_url': 'https://www.youtube.com/watch?v=-ZxiEPqxKRY',
+        };
+
+    final merged =
+        AiUniversityVideoLessonService.mergeContentRowsByProviderCategory(
+      [
+        row('overview'),
+        row('video_codex_solution_engineering'),
+        row('video_codex_custom_code_review_rules', title: 'stale title'),
+      ],
+      [
+        row('video_codex_record_replay'),
+        row('video_codex_customer_demo'),
+        row('video_codex_ios_xcodebuildmcp'),
+        row('video_codex_solution_engineering'),
+        row('video_codex_custom_code_review_rules', title: 'current title'),
+      ],
+    );
+
+    final videoRows = merged
+        .where((item) => (item['category'] as String).startsWith('video_'))
+        .toList();
+
+    expect(videoRows, hasLength(5));
+    expect(merged, hasLength(6));
+    expect(
+      videoRows.singleWhere(
+        (item) => item['category'] == 'video_codex_custom_code_review_rules',
+      )['title'],
+      'current title',
+    );
+  });
+
   test('topicsFromRows sorts overview before api', () {
     final topics = AiUniversityVideoLessonService.topicsFromRows([
       {
@@ -44,6 +83,51 @@ void main() {
     ]);
 
     expect(selected, overviewTopic);
+  });
+
+  test('youtubeVideoIdFromUrl supports common YouTube URLs', () {
+    const videoId = '-ZxiEPqxKRY';
+
+    expect(
+      AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+        'https://www.youtube.com/watch?v=$videoId',
+      ),
+      videoId,
+    );
+    expect(
+      AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+        'https://youtu.be/$videoId?t=12',
+      ),
+      videoId,
+    );
+    expect(
+      AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+        'https://www.youtube.com/embed/$videoId',
+      ),
+      videoId,
+    );
+    expect(
+      AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+        'https://example.com/watch?v=$videoId',
+      ),
+      isNull,
+    );
+  });
+
+  test('topic exposes YouTube video id and video category label', () {
+    const topic = AiUniversityVideoLessonTopic(
+      provider: 'openai',
+      category: 'video_codex_record_replay',
+      title: 'Codex Record & Replay',
+      content: '一度見せた作業を再利用可能なスキルとして保存する方法を学ぶ。',
+      sourceUrl: 'https://youtu.be/-ZxiEPqxKRY',
+    );
+
+    expect(topic.youtubeVideoId, '-ZxiEPqxKRY');
+    expect(
+      AiUniversityVideoLessonService.categoryLabel(topic.category),
+      '動画レッスン',
+    );
   });
 
   test('buildPrompt includes provider title and clipped source', () {

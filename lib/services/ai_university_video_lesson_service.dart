@@ -14,6 +14,9 @@ class AiUniversityVideoLessonTopic {
   final String? sourceUrl;
 
   String get id => '$provider::$category::$title';
+
+  String? get youtubeVideoId =>
+      AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
 }
 
 class AiUniversityVideoV3Scene {
@@ -74,6 +77,7 @@ class AiUniversityVideoV3Plan {
 
 class AiUniversityVideoLessonService {
   static const int _maxPromptContentChars = 1800;
+  static final RegExp _youtubeVideoIdPattern = RegExp(r'^[A-Za-z0-9_-]{11}$');
 
   static const Map<String, String> _providerLabels = {
     'google': 'Google',
@@ -93,6 +97,27 @@ class AiUniversityVideoLessonService {
     'kling': 'Kling AI',
     'pika': 'Pika',
   };
+
+  static List<Map<String, dynamic>> mergeContentRowsByProviderCategory(
+    Iterable<Map<String, dynamic>> primaryRows,
+    Iterable<Map<String, dynamic>> supplementalRows,
+  ) {
+    final rowsByKey = <String, Map<String, dynamic>>{};
+    var unkeyedRowIndex = 0;
+
+    for (final row in [...primaryRows, ...supplementalRows]) {
+      final provider =
+          (row['provider'] as String? ?? row['provider_id'] as String? ?? '')
+              .trim();
+      final category = (row['category'] as String? ?? '').trim();
+      final key = provider.isNotEmpty && category.isNotEmpty
+          ? '$provider::$category'
+          : 'unkeyed::${unkeyedRowIndex++}';
+      rowsByKey[key] = row;
+    }
+
+    return rowsByKey.values.toList(growable: false);
+  }
 
   static List<AiUniversityVideoLessonTopic> topicsFromRows(
     List<Map<String, dynamic>> rows,
@@ -142,6 +167,39 @@ class AiUniversityVideoLessonService {
 
   static String providerLabel(String provider) =>
       _providerLabels[provider] ?? provider.toUpperCase();
+
+  static String? youtubeVideoIdFromUrl(String? rawUrl) {
+    if (rawUrl == null || rawUrl.trim().isEmpty) return null;
+    final uri = Uri.tryParse(rawUrl.trim());
+    if (uri == null) return null;
+
+    final host = uri.host.toLowerCase().replaceFirst(RegExp(r'^www\.'), '');
+    String? candidate;
+
+    if (host == 'youtu.be') {
+      candidate = uri.pathSegments.isEmpty ? null : uri.pathSegments.first;
+    } else if (host == 'youtube.com' ||
+        host == 'm.youtube.com' ||
+        host == 'music.youtube.com' ||
+        host == 'youtube-nocookie.com') {
+      if (uri.pathSegments.isNotEmpty && uri.pathSegments.first == 'watch') {
+        candidate = uri.queryParameters['v'];
+      } else if (uri.pathSegments.length >= 2 &&
+          const {'embed', 'shorts', 'live'}.contains(uri.pathSegments.first)) {
+        candidate = uri.pathSegments[1];
+      } else {
+        candidate = uri.queryParameters['v'];
+      }
+    }
+
+    final videoId = candidate?.trim();
+    return videoId != null && _youtubeVideoIdPattern.hasMatch(videoId)
+        ? videoId
+        : null;
+  }
+
+  static String youtubeEmbedUrl(String videoId) =>
+      'https://www.youtube.com/embed/$videoId?rel=0';
 
   static AiUniversityVideoV3Plan buildHeyGenV3Plan({
     required String providerLabel,
@@ -201,6 +259,7 @@ class AiUniversityVideoLessonService {
   }
 
   static String categoryLabel(String category) {
+    if (category.startsWith('video_')) return '動画レッスン';
     switch (category) {
       case 'overview':
         return '概要';
@@ -277,19 +336,20 @@ ${plan.clipboardText}
   }
 
   static int _categoryRank(String category) {
+    if (category.startsWith('video_')) return 1;
     switch (category) {
       case 'overview':
         return 0;
       case 'models':
-        return 1;
-      case 'api':
         return 2;
-      case 'use_cases':
+      case 'api':
         return 3;
-      case 'pricing':
+      case 'use_cases':
         return 4;
-      case 'news':
+      case 'pricing':
         return 5;
+      case 'news':
+        return 6;
       default:
         return 99;
     }

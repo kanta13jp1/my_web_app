@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// AIサマリーページ
-/// ai-summarizer Edge Function と連携してコンテンツを要約
+/// 文章・要約アシスタント内の、履歴付きAI要約ページ。
+/// `ai-hub` の summarize.text / secretary.history と連携する。
 class AiSummarizerPage extends StatefulWidget {
   const AiSummarizerPage({super.key});
 

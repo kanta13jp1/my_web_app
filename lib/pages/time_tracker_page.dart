@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 勤怠・時間追跡ページ
 /// app-hub:time.* と連携して作業時間を管理
@@ -12,7 +13,14 @@ class TimeTrackerPage extends StatefulWidget {
 }
 
 class _TimeTrackerPageState extends State<TimeTrackerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['entries', 'projects', 'clock'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
   bool _isLoading = false;

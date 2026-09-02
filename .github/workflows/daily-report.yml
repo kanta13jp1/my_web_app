@@ -9,20 +9,24 @@ concurrency:
   group: daily-report
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  issues: read
-  pull-requests: write
+permissions: {}
 
 jobs:
   daily-report:
+    environment:
+      name: analytics-production
+      deployment: false
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: write
     name: Generate Daily Report
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 200
           token: ${{ secrets.BYPASS_RULES || github.token }}

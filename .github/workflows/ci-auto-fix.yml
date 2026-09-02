@@ -1,261 +1,172 @@
-name: CI Auto-Fix (CI失敗自動修復)
+name: CI Auto-Fix (manual)
 
-# CI が失敗した PR に対して dart fix + dart format + deno fmt を自動適用
+# Automatic mutation after every CI failure created a second check suite and
+# unreviewed bot commits. Keep formatting recovery available, but require an
+# operator to select the affected PR explicitly.
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Open pull request number to format
+        required: true
+        type: string
+      human_review_acknowledged:
+        description: I accept responsibility for reviewing the resulting bot commit before merge
+        required: true
+        type: boolean
 
 concurrency:
-  group: ci-auto-fix-${{ github.event.workflow_run.id }}
+  group: ci-auto-fix-pr-${{ inputs.pr_number }}
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   auto-fix:
-    name: Auto-Fix CI Failures
-    if: github.event.workflow_run.conclusion == 'failure'
+    permissions:
+      contents: write
+      pull-requests: write
+    name: Format changed files
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
-      # ── Step 1: 失敗PRの情報取得 ─────────────────────────────────────────
-      - name: Step 1 - 失敗PRを特定
-        id: pr_info
-        uses: actions/github-script@v9
+      - name: Resolve pull request
+        id: pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
-            const run = context.payload.workflow_run;
-            const branch = run.head_branch;
-
-            // mainブランチ直接pushの場合はスキップ (PRなし)
-            if (branch === 'main' || branch === 'staging' || branch === 'develop') {
-              core.setOutput('has_pr', 'false');
-              core.info(`Branch ${branch} is a protected branch — skipping`);
+            if ('${{ inputs.human_review_acknowledged }}' !== 'true') {
+              core.setFailed('A human operator must acknowledge review responsibility.');
               return;
             }
-
-            // このブランチのオープンPRを検索
-            const prs = await github.rest.pulls.list({
+            if (context.actor.endsWith('[bot]')) {
+              core.setFailed('Bot actors cannot acknowledge human review responsibility.');
+              return;
+            }
+            const number = Number('${{ inputs.pr_number }}');
+            const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'open',
-              head: `${context.repo.owner}:${branch}`,
+              pull_number: number,
             });
-
-            if (prs.data.length === 0) {
-              core.setOutput('has_pr', 'false');
-              core.info(`No open PR found for branch: ${branch}`);
+            if (pr.state !== 'open') {
+              core.setFailed(`PR #${number} is not open.`);
               return;
             }
+            if (pr.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+              core.setFailed('Fork pull requests cannot be mutated by this workflow.');
+              return;
+            }
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: number,
+              per_page: 100,
+            });
+            core.setOutput('branch', pr.head.ref);
+            core.setOutput('number', String(number));
+            core.setOutput(
+              'has_dart',
+              files.some((file) => file.filename.endsWith('.dart')) ? 'true' : 'false',
+            );
+            core.setOutput(
+              'has_deno',
+              files.some((file) =>
+                file.filename.startsWith('supabase/functions/') &&
+                (file.filename.endsWith('.ts') || file.filename.endsWith('.tsx'))
+              ) ? 'true' : 'false',
+            );
 
-            const pr = prs.data[0];
-            core.setOutput('has_pr', 'true');
-            core.setOutput('pr_number', String(pr.number));
-            core.setOutput('branch', branch);
-            core.info(`Found PR #${pr.number} for branch: ${branch}`);
-
-      # ── Step 2: コード取得 ───────────────────────────────────────────────
-      - name: Step 2 - Checkout PR branch
-        if: steps.pr_info.outputs.has_pr == 'true'
-        uses: actions/checkout@v7
+      - name: Checkout PR branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ steps.pr_info.outputs.branch }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ steps.pr.outputs.branch }}
 
-      # ── Step 3: Flutter dart fix ─────────────────────────────────────────
-      - name: Step 3 - Cache Flutter pub
-        if: steps.pr_info.outputs.has_pr == 'true'
-        uses: actions/cache@v6
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Step 3 - Setup Flutter
-        if: steps.pr_info.outputs.has_pr == 'true'
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.38.x'
-          channel: 'stable'
-          cache: true
-
-      - name: Step 3 - flutter pub get
-        if: steps.pr_info.outputs.has_pr == 'true'
-        run: flutter pub get
-
-      - name: Step 3 - dart fix --apply (安全な自動修復)
-        if: steps.pr_info.outputs.has_pr == 'true'
-        id: dart_fix
-        run: |
-          dart fix --apply lib/ 2>/dev/null || true
-          DART_CHANGED=$(git diff --name-only | wc -l | tr -d ' ')
-          echo "dart_changed=$DART_CHANGED" >> $GITHUB_OUTPUT
-          echo "🔧 dart fix 変更: ${DART_CHANGED}ファイル"
-          if [ "$DART_CHANGED" -gt "0" ]; then
-            echo "変更されたファイル:"
-            git diff --name-only
-          fi
-
-      - name: Step 3 - dart format (必須フォーマット自動修復)
-        if: steps.pr_info.outputs.has_pr == 'true'
-        id: dart_format
-        run: |
-          dart format . 2>/dev/null || true
-          DART_FORMAT_CHANGED=$(git diff --name-only -- '*.dart' | wc -l | tr -d ' ')
-          echo "dart_format_changed=$DART_FORMAT_CHANGED" >> $GITHUB_OUTPUT
-          echo "🔧 dart format 変更: ${DART_FORMAT_CHANGED}ファイル"
-
-      # ── Step 4: Deno lint/fmt ────────────────────────────────────────────
-      - name: Step 4 - Setup Deno
-        if: steps.pr_info.outputs.has_pr == 'true'
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Step 4 - deno fmt (フォーマット自動修復)
-        if: steps.pr_info.outputs.has_pr == 'true'
-        id: deno_fmt
-        run: |
-          deno fmt supabase/functions/ 2>/dev/null || true
-          DENO_CHANGED=$(git diff --name-only | wc -l | tr -d ' ')
-          echo "deno_changed=$DENO_CHANGED" >> $GITHUB_OUTPUT
-          echo "🔧 deno fmt 変更: ${DENO_CHANGED}ファイル"
-
-      # ── Step 5: flutter analyze で結果確認 ──────────────────────────────
-      - name: Step 5 - flutter analyze (修復後の確認)
-        if: steps.pr_info.outputs.has_pr == 'true'
-        id: analyze_after
-        run: |
-          set +e
-          RESULT=$(flutter analyze --no-fatal-infos 2>&1)
-          EXIT_CODE=$?
-          set -e
-          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
-          if [ "$EXIT_CODE" = "0" ]; then
-            echo "analyze_clean=true" >> $GITHUB_OUTPUT
-            echo "✅ flutter analyze: 0エラー"
-          else
-            echo "analyze_clean=false" >> $GITHUB_OUTPUT
-            echo "⚠️ flutter analyze: エラー残存"
-            echo "$RESULT" | tail -20
-          fi
-
-      # ── Step 6: 修復をコミット ────────────────────────────────────────────
-      - name: Step 6 - 修復をコミット & プッシュ
-        if: always() && steps.pr_info.outputs.has_pr == 'true'
-        id: commit
-        run: |
-          TOTAL_CHANGED=$(git diff --name-only | wc -l | tr -d ' ')
-          if [ "$TOTAL_CHANGED" = "0" ]; then
-            echo "committed=false" >> $GITHUB_OUTPUT
-            echo "📝 自動修復できる変更なし"
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff --cached --quiet && echo "committed=false" >> $GITHUB_OUTPUT && exit 0
-
-          git commit -m "fix: CI自動修復 dart fix + format + deno fmt (ci-auto-fix.yml)"
-          git pull --rebase origin "${{ steps.pr_info.outputs.branch }}" || true
-          git push origin "${{ steps.pr_info.outputs.branch }}"
-          echo "committed=true" >> $GITHUB_OUTPUT
-          echo "✅ 修復コミット: ${TOTAL_CHANGED}ファイル"
-
-      # ── Step 7: PRにコメント ─────────────────────────────────────────────
-      - name: Step 7 - PRにコメント投稿
-        if: always() && steps.pr_info.outputs.has_pr == 'true'
-        uses: actions/github-script@v9
+      - name: Collect changed files
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
-            const committed  = '${{ steps.commit.outputs.committed }}';
-            const clean      = '${{ steps.analyze_after.outputs.analyze_clean }}';
-            const prNumber   = parseInt('${{ steps.pr_info.outputs.pr_number }}');
-            const dartFiles  = parseInt('${{ steps.dart_fix.outputs.dart_changed }}' || '0');
-            const formatFiles = parseInt('${{ steps.dart_format.outputs.dart_format_changed }}' || '0');
-            const denoFiles  = parseInt('${{ steps.deno_fmt.outputs.deno_changed }}' || '0');
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: Number('${{ steps.pr.outputs.number }}'),
+              per_page: 100,
+            });
+            const fs = require('fs');
+            fs.mkdirSync('.ci-logs', { recursive: true });
+            fs.writeFileSync(
+              '.ci-logs/changed-files.txt',
+              files.map((file) => file.filename).join('\n') + '\n',
+            );
 
-            let body;
-            if (committed === 'true') {
-              const cleanMsg = clean === 'true'
-                ? '✅ `flutter analyze` 0エラーを確認。CI再実行で通過するはずです。'
-                : '⚠️ `flutter analyze` にまだエラーが残っています。手動修正が必要です。';
-              body = [
-                '🤖 **CI自動修復** (`ci-auto-fix.yml`)',
-                '',
-                `\`dart fix --apply\`: ${dartFiles}ファイル修正`,
-                `\`dart format\`: ${formatFiles}ファイル修正`,
-                `\`deno fmt\`: ${denoFiles}ファイル修正`,
-                '',
-                cleanMsg,
-              ].join('\n');
-            } else {
-              body = [
-                '🤖 **CI自動修復** (`ci-auto-fix.yml`)',
-                '',
-                '`dart fix --apply`、`dart format`、`deno fmt` を試みましたが、自動修復できる箇所はありませんでした。',
-                '',
-                '**手動修正が必要です**:',
-                '- `flutter analyze` のエラーログを確認',
-                '- `deno lint supabase/functions/` でDeno側エラーを確認',
-              ].join('\n');
-            }
+      - name: Setup Flutter
+        if: steps.pr.outputs.has_dart == 'true'
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
 
+      # dart format reads package language versions from .dart_tool/package_config.json.
+      - name: Resolve Flutter dependencies for formatter language version
+        if: steps.pr.outputs.has_dart == 'true'
+        run: flutter pub get
+
+      - name: Format changed Dart files
+        if: steps.pr.outputs.has_dart == 'true'
+        shell: bash
+        run: |
+          mapfile -t files < <(
+            { grep -E '\.dart$' .ci-logs/changed-files.txt || true; } \
+              | while IFS= read -r file; do [ -f "$file" ] && printf '%s\n' "$file"; done
+          )
+          if [ "${#files[@]}" -gt 0 ]; then
+            dart format "${files[@]}"
+          fi
+
+      - name: Setup Deno
+        if: steps.pr.outputs.has_deno == 'true'
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.9.1
+
+      - name: Format changed Edge Function files
+        if: steps.pr.outputs.has_deno == 'true'
+        shell: bash
+        run: |
+          mapfile -t files < <(
+            { grep -E '^supabase/functions/.*\.tsx?$' .ci-logs/changed-files.txt || true; } \
+              | while IFS= read -r file; do [ -f "$file" ] && printf '%s\n' "$file"; done
+          )
+          if [ "${#files[@]}" -gt 0 ]; then
+            deno fmt "${files[@]}"
+          fi
+
+      - name: Commit formatting changes
+        id: commit
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+            echo "No formatting changes were needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --update
+          git commit -m "fix: format changed CI files"
+          git push origin "${{ steps.pr.outputs.branch }}"
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Report result
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const committed = '${{ steps.commit.outputs.committed }}' === 'true';
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: prNumber,
-              body,
+              issue_number: Number('${{ steps.pr.outputs.number }}'),
+              body: committed
+                ? `Manual CI Auto-Fix formatted only the changed Dart/Deno files. @${context.actor} acknowledged responsibility for reviewing the bot commit before merge.`
+                : `Manual CI Auto-Fix found no formatting changes. @${context.actor} completed the required human-review acknowledgement.`,
             });
-            core.info(`Commented on PR #${prNumber}`);
-
-      # ── Step 8: schedule_task_runs 記録 ─────────────────────────────────
-      - name: Step 8 - schedule_task_runs 記録
-        if: always()
-        run: |
-          HAS_PR="${{ steps.pr_info.outputs.has_pr }}"
-          COMMITTED="${{ steps.commit.outputs.committed }}"
-          CLEAN="${{ steps.analyze_after.outputs.analyze_clean }}"
-          FORMAT="${{ steps.dart_format.outputs.dart_format_changed }}"
-          STATUS="success"
-          SUMMARY="CI Auto-Fix: has_pr=${HAS_PR}, committed=${COMMITTED}, analyze_clean=${CLEAN}, dart_format=${FORMAT:-0}"
-          curl -s -o /dev/null \
-            -X POST \
-            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -H "Content-Type: application/json" \
-            -H "Prefer: return=minimal" \
-            -d "{\"task_id\":\"ci-auto-fix\",\"status\":\"$STATUS\",\"summary\":\"$SUMMARY\"}" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
-            --max-time 10 || true
-
-      - name: Job Summary
-        if: always()
-        run: |
-          HAS_PR="${{ steps.pr_info.outputs.has_pr }}"
-          PR_NUM="${{ steps.pr_info.outputs.pr_number }}"
-          COMMITTED="${{ steps.commit.outputs.committed }}"
-          CLEAN="${{ steps.analyze_after.outputs.analyze_clean }}"
-          DART="${{ steps.dart_fix.outputs.dart_changed }}"
-          FORMAT="${{ steps.dart_format.outputs.dart_format_changed }}"
-          DENO="${{ steps.deno_fmt.outputs.deno_changed }}"
-          FIX_ICON=$([ "${COMMITTED}" = "true" ] && echo "✅" || echo "—")
-          CLEAN_ICON=$([ "${CLEAN}" = "true" ] && echo "✅" || echo "⚠️")
-          {
-            echo "## CI Auto-Fix $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
-            echo ""
-            echo "| 項目 | 値 |"
-            echo "| --- | --- |"
-            echo "| PR検出 | ${HAS_PR} (PR #${PR_NUM:-なし}) |"
-            echo "| dart fix 修正 | ${DART:-0}ファイル |"
-            echo "| dart format 修正 | ${FORMAT:-0}ファイル |"
-            echo "| deno fmt 修正 | ${DENO:-0}ファイル |"
-            echo "| コミット | $FIX_ICON ${COMMITTED:-false} |"
-            echo "| analyze後 | $CLEAN_ICON clean=${CLEAN:-未実施} |"
-          } >> $GITHUB_STEP_SUMMARY

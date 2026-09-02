@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-07-26T22:14:32Z",
-      "hash": "cd3805c012788e10c829872d14c7ea7a680a934c19ca71fad3bcb800d701ca95",
+      "checked_at": "2026-08-14T21:42:27Z",
+      "hash": "ef5ed59000ef000cb398de8c8a3c155e8b61f189627e3bad5314a032bbe59814",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,14 +46,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.220 / July 25, 2026",
+      "latest_signal": "2.1.232 / August 13, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-07-26T22:14:32Z",
-      "hash": "a5545fd180009614613298fe94c3aa1fc9f83db6d3b478d0683f10f81f8c8e11",
+      "checked_at": "2026-08-14T21:42:27Z",
+      "hash": "0c0ca421e0052172b163f600672402e3fd43da924406e0542fc0e92fc6bcbfcb",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
@@ -90,8 +90,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-07-26T22:14:32Z",
-      "hash": "87cdbd0328b4fe4bf7b67c77e3bee919f7c95d5a610e4d6e5f1b0307a6070949",
+      "checked_at": "2026-08-14T21:42:27Z",
+      "hash": "68b553a0d18b67e7ba26e4d100af5a8803b93be507da1440355f5d221b6d764d",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -109,7 +109,8 @@
         "integration": [
           "MCP",
           "connector",
-          "GitHub"
+          "GitHub",
+          "IDE extension"
         ],
         "quality-cost": [
           "OpenTelemetry",
@@ -132,8 +133,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-07-26T22:14:32Z",
-      "hash": "fb810611d766de35d1e0871c17a4a1f3002733db92d8a57cf7b59de3e313675f",
+      "checked_at": "2026-08-14T21:42:27Z",
+      "hash": "9f9d8def9bc43b713ccd54237c8dfa1eb48dc8475dadaa9365ad51b20226368a",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -148,7 +149,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -177,13 +177,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-23 / ChatGPT Voice and multi-folder projects 26.715 Powered by GPT-Live, ChatGPT Voice lets you",
+      "latest_signal": "2026-08-13 / Computer History Computer History is an opt-in feature in the ChatGPT desktop app on macOS",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-07-26T22:14:32Z",
+      "checked_at": "2026-08-14T21:42:27Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -192,8 +192,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-07-26T22:14:32Z",
-      "hash": "18fb32369b06bd03b69b6917a88aef1155888300a58b0dfd1c87d9c44bf176f8",
+      "checked_at": "2026-08-14T21:42:27Z",
+      "hash": "554104a900c0f9d762a3088f5517f1bf13f6cabe64ebf7cc0d81bbb5c016e028",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.4",
@@ -229,27 +229,21 @@
           "workflow"
         ]
       },
-      "latest_signal": "ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex",
+      "latest_signal": "ChatGPT use cases For the complete documentation index, see llms.txt . Markdown versions of",
       "name": "Codex use cases",
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-07-26T22:14:32Z",
-      "hash": "c4e5b6c4a0e793a343c068d9812c4ec807a58efe12ac935b80c47588407230b8",
+      "checked_at": "2026-08-14T21:42:27Z",
+      "hash": "ae74337e03614eb31784f983251beef3857d6a30b0d9f3734294d6e8c5d8ef73",
       "keyword_groups": {
-        "codex-runtime": [
-          "subagents"
-        ],
         "hooks": [
           "hook",
-          "hooks",
-          "Stop"
+          "hooks"
         ],
         "integration": [
-          "MCP",
-          "Slack",
-          "GitHub"
+          "MCP"
         ],
         "quality-cost": [
           "cost",
@@ -259,17 +253,18 @@
         "schedule": [
           "automation",
           "automations",
+          "schedule",
           "workflow"
         ]
       },
-      "latest_signal": "3.11 / Jul 10, 2026",
+      "latest_signal": "New in Cursor",
       "name": "Cursor changelog",
       "status": 200,
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-07-26T22:14:32Z",
-      "hash": "4a8e7df9eff3350965a418231cbbaa5066a01f7c69fd04f26a7a497d52ea14c5",
+      "checked_at": "2026-08-14T21:42:27Z",
+      "hash": "10926c02ec24c81fb0b9ab573da2d02c439a02fb1124fb872c65876cf8e7a30a",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -278,6 +273,7 @@
         ],
         "hooks": [
           "hook",
+          "hooks",
           "Stop"
         ],
         "integration": [
@@ -302,14 +298,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "July 24, 2026",
+      "latest_signal": "August 12, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-07-26T22:14:32Z",
-      "hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
+      "checked_at": "2026-08-14T21:42:27Z",
+      "hash": "26aadac92b37e4dba989ec21d669ed9e59ae4ee05b67a6ffff38a4ceeb4c903d",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -331,11 +327,11 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.95.0 / August 10, 2026",
       "name": "Gemini Code Assist release notes",
       "status": 200,
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-07-26T22:14:32Z"
+  "updated_at": "2026-08-14T21:42:27Z"
 }

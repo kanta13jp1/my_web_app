@@ -9,25 +9,26 @@ concurrency:
   group: knowledge-vault-lint
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  issues: write
+permissions: {}
 
 jobs:
   lint:
+    permissions:
+      contents: write
+      issues: write
     name: Knowledge Vault Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           token: ${{ secrets.BYPASS_RULES || github.token }}
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 

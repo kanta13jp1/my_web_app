@@ -31,8 +31,10 @@ void main() {
               presets: presets,
               onAddPreset: (preset) => addedPreset = preset,
               onAddCustom: () {},
+              onScanStatement: () {},
               onEdit: (_) {},
               onDelete: (_) {},
+              onReviewDecisionChanged: (_, __) {},
             ),
           ),
         ),
@@ -70,8 +72,10 @@ void main() {
               presets: presets,
               onAddPreset: (_) {},
               onAddCustom: () {},
+              onScanStatement: () {},
               onEdit: (_) {},
               onDelete: (_) {},
+              onReviewDecisionChanged: (_, __) {},
             ),
           ),
         ),
@@ -111,17 +115,20 @@ void main() {
               presets: presets,
               onAddPreset: (_) {},
               onAddCustom: () => customPressed = true,
+              onScanStatement: () {},
               onEdit: (cost) => edited = cost,
               onDelete: (cost) => deleted = cost,
+              onReviewDecisionChanged: (_, __) {},
             ),
           ),
         ),
       );
 
       expect(find.text('Anthropic (Claude)'), findsWidgets);
-      expect(find.textContaining('毎月1日'), findsOneWidget);
-      expect(find.textContaining('¥3,000'), findsOneWidget);
-      expect(find.textContaining('振替元: 三井住友銀行'), findsOneWidget);
+      expect(
+        find.text('毎月1日 / ¥3,000 / 振替元: 三井住友銀行'),
+        findsOneWidget,
+      );
 
       // 行ごとに 名称+内訳 を 1 つの semantics ラベルへまとめる。
       final rowSemantics = find.byWidgetPredicate(
@@ -161,14 +168,65 @@ void main() {
               presets: presets,
               onAddPreset: (_) {},
               onAddCustom: () {},
+              onScanStatement: () {},
               onEdit: (_) {},
               onDelete: (_) {},
+              onReviewDecisionChanged: (_, __) {},
             ),
           ),
         ),
       );
 
       expect(find.textContaining('Apple経由'), findsOneWidget);
+    });
+
+    testWidgets('opens statement scan and updates inventory decision',
+        (tester) async {
+      var scanPressed = false;
+      AssetSubscriptionReviewDecision? changedDecision;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SubscriptionFixedCostCard(
+              costs: const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_notion',
+                  name: 'Notion',
+                  amount: 2000,
+                  paymentDay: 5,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+              sourceAccountNames: const <String, String>{},
+              presets: presets,
+              onAddPreset: (_) {},
+              onAddCustom: () {},
+              onScanStatement: () => scanPressed = true,
+              onEdit: (_) {},
+              onDelete: (_) {},
+              onReviewDecisionChanged: (_, decision) {
+                changedDecision = decision;
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('月額合計 ¥2,000'), findsOneWidget);
+      expect(find.text('年間合計 ¥24,000'), findsOneWidget);
+      expect(find.text('未判定 1件'), findsOneWidget);
+
+      await tester
+          .tap(find.byKey(const Key('subscription_statement_scan_open')));
+      expect(scanPressed, isTrue);
+
+      await tester.tap(find.byKey(const Key('subscription_review_sub_notion')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('解約候補').last);
+      expect(
+        changedDecision,
+        AssetSubscriptionReviewDecision.cancelCandidate,
+      );
     });
   });
 }

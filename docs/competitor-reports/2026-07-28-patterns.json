@@ -1,0 +1,2298 @@
+{
+  "generated_at": "2026-07-27T22:57:46Z",
+  "source_files": [
+    "docs/competitor-reports/2026-07-28.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 74,
+  "filter_summary": {
+    "total": 74,
+    "by_verdict": {
+      "pass": 0,
+      "review": 74,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 74,
+      "sensational_language": 1
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-59099c92a4ef",
+        "title": "エグゼクティブサマリー",
+        "text": "エグゼクティブサマリー",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-59099c92a4ef",
+        "title": "エグゼクティブサマリー",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3885a91dc17b",
+        "title": "#",
+        "text": "# # シグナル 一次日付 判定",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "#",
+          "url": "",
+          "status": "",
+          "summary": "# シグナル 一次日付 判定"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3885a91dc17b",
+        "title": "#",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-83cb0f9d4de3",
+        "title": "★★1",
+        "text": "★★1 ★★1 **Claude Opus 5 は 7-24 に実際に GA していた** — 07-24 レポートの「hype であって event ではない」を訂正 2026-07-24 🔴 自社直撃",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "★★1",
+          "url": "",
+          "status": "",
+          "summary": "★★1 **Claude Opus 5 は 7-24 に実際に GA していた** — 07-24 レポートの「hype であって event ではない」を訂正 2026-07-24 🔴 自社直撃"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-83cb0f9d4de3",
+        "title": "★★1",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f5a3270eb839",
+        "title": "★★2",
+        "text": "★★2 ★★2 **自社 GHA 自動レポートが 3 本柱中 2 本を fake-recency で出稿** (Notion 27 日前 / Slack 60 日前を「新規」として提示) — 🔴 自社プロセス欠陥",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "★★2",
+          "url": "",
+          "status": "",
+          "summary": "★★2 **自社 GHA 自動レポートが 3 本柱中 2 本を fake-recency で出稿** (Notion 27 日前 / Slack 60 日前を「新規」として提示) — 🔴 自社プロセス欠陥"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f5a3270eb839",
+        "title": "★★2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d872bd564262",
+        "title": "★3",
+        "text": "★3 ★3 **MoneyForward AI Cowork「2026年7月提供開始予定」が残り 3 日で未 GA** 最新 7-24 🔴 期日リスク",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "★3",
+          "url": "",
+          "status": "",
+          "summary": "★3 **MoneyForward AI Cowork「2026年7月提供開始予定」が残り 3 日で未 GA** 最新 7-24 🔴 期日リスク"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d872bd564262",
+        "title": "★3",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5d43174f9e8e",
+        "title": "★4",
+        "text": "★4 ★4 **Bluwhale の $10M Series A は 2025-10-22 = 9 ヶ月前**と判明 → 基準 c 不成立で signal 層据え置き 2025-10-22 🟠 候補降格",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "★4",
+          "url": "",
+          "status": "",
+          "summary": "★4 **Bluwhale の $10M Series A は 2025-10-22 = 9 ヶ月前**と判明 → 基準 c 不成立で signal 層据え置き 2025-10-22 🟠 候補降格"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5d43174f9e8e",
+        "title": "★4",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9e5879a45ed7",
+        "title": "★5",
+        "text": "★5 ★5 OpenAI ChatGPT の個人 B/S 軸は既定路線を維持 (Atlas 停止 8-09 据え置き) 6-25 / 7-09 🟠 監視継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "★5",
+          "url": "",
+          "status": "",
+          "summary": "★5 OpenAI ChatGPT の個人 B/S 軸は既定路線を維持 (Atlas 停止 8-09 据え置き) 6-25 / 7-09 🟠 監視継続"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9e5879a45ed7",
+        "title": "★5",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-687b8bd53a78",
+        "title": "★★1. Claude Opus 5 は 7-24 に GA していた — 前回レポートの判定訂正",
+        "text": "★★1. Claude Opus 5 は 7-24 に GA していた — 前回レポートの判定訂正",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "★★1. Claude Opus 5 は 7-24 に GA していた — 前回レポートの判定訂正"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-687b8bd53a78",
+        "title": "★★1. Claude Opus 5 は 7-24 に GA していた — 前回レポートの判定訂正",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7f76e24f563c",
+        "title": "[anthropic.com/news/claude-opus-5](https://www.anthropic.com/news/claude-opus-5) — ページ表示日付 verbatim **\"Jul 24, 2026\"**",
+        "text": "[anthropic.com/news/claude-opus-5](https://www.anthropic.com/news/claude-opus-5) — ページ表示日付 verbatim **\"Jul 24, 2026\"**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[anthropic.com/news/claude-opus-5](https://www.anthropic.com/news/claude-opus-5) — ページ表示日付 verbatim **\"Jul 24, 2026\"**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7f76e24f563c",
+        "title": "[anthropic.com/news/claude-opus-5](https://www.anthropic.com/news/claude-opus-5) — ページ表示日付 verbatim **\"Jul 24, 2026\"**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f9ec53ec83ea",
+        "title": "[Claude Opus 5 System Card (PDF)](https://www-cdn.anthropic.com/c5fbac3f0b1280a933ebd26d3cb8bb9f5bdeaf48/Claude%20Opus%2",
+        "text": "[Claude Opus 5 System Card (PDF)](https://www-cdn.anthropic.com/c5fbac3f0b1280a933ebd26d3cb8bb9f5bdeaf48/Claude%20Opus%205%20System%20Card.pdf) — 表題に **\"July 24, 2026\"**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Opus 5 System Card (PDF)](https://www-cdn.anthropic.com/c5fbac3f0b1280a933ebd26d3cb8bb9f5bdeaf48/Claude%20Opus%205%20System%20Card.pdf) — 表題に **\"July 24, 2026\"**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f9ec53ec83ea",
+        "title": "[Claude Opus 5 System Card (PDF)](https://www-cdn.anthropic.com/c5fbac3f0b1280a933ebd26d3cb8bb9f5bdeaf48/Claude%20Opus%2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-996f81b7893f",
+        "title": "[support.claude.com リリースノート](https://support.claude.com/en/articles/12138966-release-notes) — **July 24, 2026** エントリとして ",
+        "text": "[support.claude.com リリースノート](https://support.claude.com/en/articles/12138966-release-notes) — **July 24, 2026** エントリとして Opus 5 を掲載",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[support.claude.com リリースノート](https://support.claude.com/en/articles/12138966-release-notes) — **July 24, 2026** エントリとして Opus 5 を掲載"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-996f81b7893f",
+        "title": "[support.claude.com リリースノート](https://support.claude.com/en/articles/12138966-release-notes) — **July 24, 2026** エントリとして ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6bba38b16980",
+        "title": "項目",
+        "text": "項目 項目 値",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "項目",
+          "url": "",
+          "status": "",
+          "summary": "項目 値"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6bba38b16980",
+        "title": "項目",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b06a8efde209",
+        "title": "価格",
+        "text": "価格 価格 $5 / MTok in・$25 / MTok out (**Opus 4.8 から据え置き**)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "価格",
+          "url": "",
+          "status": "",
+          "summary": "価格 $5 / MTok in・$25 / MTok out (**Opus 4.8 から据え置き**)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b06a8efde209",
+        "title": "価格",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2577e0e9d101",
+        "title": "コンテキスト",
+        "text": "コンテキスト コンテキスト **1M トークン** (既定かつ最大 / 小さい variant なし)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "コンテキスト",
+          "url": "",
+          "status": "",
+          "summary": "コンテキスト **1M トークン** (既定かつ最大 / 小さい variant なし)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2577e0e9d101",
+        "title": "コンテキスト",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-25a9c8120676",
+        "title": "最大出力",
+        "text": "最大出力 最大出力 128k トークン",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "最大出力",
+          "url": "",
+          "status": "",
+          "summary": "最大出力 128k トークン"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-25a9c8120676",
+        "title": "最大出力",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6d0af7640661",
+        "title": "thinking",
+        "text": "thinking thinking **既定 ON**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "thinking",
+          "url": "",
+          "status": "",
+          "summary": "thinking **既定 ON**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6d0af7640661",
+        "title": "thinking",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-aae7d78d7d5f",
+        "title": "位置づけ",
+        "text": "位置づけ 位置づけ **Claude Max の新既定モデル** / Claude Pro の最強モデル",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "位置づけ",
+          "url": "",
+          "status": "",
+          "summary": "位置づけ **Claude Max の新既定モデル** / Claude Pro の最強モデル"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-aae7d78d7d5f",
+        "title": "位置づけ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1da4a2f54258",
+        "title": "Fast mode",
+        "text": "Fast mode Fast mode 2.5x 速度・2x 価格",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Fast mode",
+          "url": "",
+          "status": "",
+          "summary": "Fast mode 2.5x 速度・2x 価格"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1da4a2f54258",
+        "title": "Fast mode",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a1dee2540320",
+        "title": "ベンチ",
+        "text": "ベンチ ベンチ Frontier-Bench・GDPval-AA で SOTA (サイバーセキュリティは Mythos 5 に劣後)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "ベンチ",
+          "url": "",
+          "status": "",
+          "summary": "ベンチ Frontier-Bench・GDPval-AA で SOTA (サイバーセキュリティは Mythos 5 に劣後)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a1dee2540320",
+        "title": "ベンチ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-432957e2a57d",
+        "title": "7-10 メモリ再設計** = 日次サマリ → **個別・カテゴリ付きエントリ**を Claude が会話中に読み書きする方式へ。**自社 `memory/*.md` の「1 ファイル 1 事実 + frontmatter type」構成と",
+        "text": "7-10 メモリ再設計** = 日次サマリ → **個別・カテゴリ付きエントリ**を Claude が会話中に読み書きする方式へ。**自社 `memory/*.md` の「1 ファイル 1 事実 + frontmatter type」構成と同型が本体機能化**した。`consolidate-memory` skill と [MEMORY-DECAY] rule の差別化は「方式」ではなく「運用規律」側に移る。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7-10 メモリ再設計** = 日次サマリ → **個別・カテゴリ付きエントリ**を Claude が会話中に読み書きする方式へ。**自社 `memory/*.md` の「1 ファイル 1 事実 + frontmatter type」構成と同型が本体機能化**した。`consolidate-memory` skill と [MEMORY-DECAY] rule の差別化は「方式」ではなく「運用規律」側に移る。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-432957e2a57d",
+        "title": "7-10 メモリ再設計** = 日次サマリ → **個別・カテゴリ付きエントリ**を Claude が会話中に読み書きする方式へ。**自社 `memory/*.md` の「1 ファイル 1 事実 + frontmatter type」構成と",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e96ffd7f1491",
+        "title": "7-09 monthly recaps / break reminders / quiet hours (beta)",
+        "text": "7-09 monthly recaps / break reminders / quiet hours (beta)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7-09 monthly recaps / break reminders / quiet hours (beta)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e96ffd7f1491",
+        "title": "7-09 monthly recaps / break reminders / quiet hours (beta)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1131cbb6df40",
+        "title": "7-07 Cowork が web + mobile へ拡張 (リモートセッション) / Microsoft 365 コネクタに**書き込み権限** (メール送信・カレンダー操作・ファイル編集)",
+        "text": "7-07 Cowork が web + mobile へ拡張 (リモートセッション) / Microsoft 365 コネクタに**書き込み権限** (メール送信・カレンダー操作・ファイル編集)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7-07 Cowork が web + mobile へ拡張 (リモートセッション) / Microsoft 365 コネクタに**書き込み権限** (メール送信・カレンダー操作・ファイル編集)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1131cbb6df40",
+        "title": "7-07 Cowork が web + mobile へ拡張 (リモートセッション) / Microsoft 365 コネクタに**書き込み権限** (メール送信・カレンダー操作・ファイル編集)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-de921242bdea",
+        "title": "7-01 Fable 5 / Mythos 5 アクセス復旧 + Enterprise 管理者がモデルと effort レベルを制御可能に",
+        "text": "7-01 Fable 5 / Mythos 5 アクセス復旧 + Enterprise 管理者がモデルと effort レベルを制御可能に",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7-01 Fable 5 / Mythos 5 アクセス復旧 + Enterprise 管理者がモデルと effort レベルを制御可能に"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-de921242bdea",
+        "title": "7-01 Fable 5 / Mythos 5 アクセス復旧 + Enterprise 管理者がモデルと effort レベルを制御可能に",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-dffad6ee06db",
+        "title": "★★2. 自社 GHA 自動レポートの 2/3 が fake-recency だった",
+        "text": "★★2. 自社 GHA 自動レポートの 2/3 が fake-recency だった",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "★★2. 自社 GHA 自動レポートの 2/3 が fake-recency だった"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-dffad6ee06db",
+        "title": "★★2. 自社 GHA 自動レポートの 2/3 が fake-recency だった",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e8f76b239069",
+        "title": "07-27 レポートの記載",
+        "text": "07-27 レポートの記載 07-27 レポートの記載 一次ソースと実日付 遅延 判定",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "07-27 レポートの記載",
+          "url": "",
+          "status": "",
+          "summary": "07-27 レポートの記載 一次ソースと実日付 遅延 判定"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e8f76b239069",
+        "title": "07-27 レポートの記載",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-119e1e2c7fe8",
+        "title": "Notion — HTMLブロック & MCP API 強化 (Notion 3.6)",
+        "text": "Notion — HTMLブロック & MCP API 強化 (Notion 3.6) Notion — HTMLブロック & MCP API 強化 (Notion 3.6) [notion.com/releases/2026-07-01](https://www.notion.com/releases/2026-07-01) = **2026-07-01** **27 日** ❌ 既報を新規として提示",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Notion — HTMLブロック & MCP API 強化 (Notion 3.6)",
+          "url": "",
+          "status": "",
+          "summary": "Notion — HTMLブロック & MCP API 強化 (Notion 3.6) [notion.com/releases/2026-07-01](https://www.notion.com/releases/2026-07-01) = **2026-07-01** **27 日** ❌ 既報を新規として提示"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-119e1e2c7fe8",
+        "title": "Notion — HTMLブロック & MCP API 強化 (Notion 3.6)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b7b916225431",
+        "title": "Slack — Slackbot AI エージェント化 & Today View",
+        "text": "Slack — Slackbot AI エージェント化 & Today View Slack — Slackbot AI エージェント化 & Today View Today ビュー = [slack.com/whats-new](https://slack.com/whats-new) **2026-05-29** / Slackbot GA = [investor.salesforce.com](https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-the-General-Availability-of-Slackbot--Your-Personal-Agent-for-Work/default.aspx) **2026-01-13** **60 日 / 196 日** ❌ 同上",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Slack — Slackbot AI エージェント化 & Today View",
+          "url": "",
+          "status": "",
+          "summary": "Slack — Slackbot AI エージェント化 & Today View Today ビュー = [slack.com/whats-new](https://slack.com/whats-new) **2026-05-29** / Slackbot GA = [investor.salesforce.com](https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-the-General-Availability-of-Slackbot--Your-Personal-Agent-for-Work/default.aspx) **2026-01-13** **60 日 / 196 日** ❌ 同上"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b7b916225431",
+        "title": "Slack — Slackbot AI エージェント化 & Today View",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4c54ebd62637",
+        "title": "GitHub — Code Quality GA (7/20) & Copilot モデル拡充",
+        "text": "GitHub — Code Quality GA (7/20) & Copilot モデル拡充 GitHub — Code Quality GA (7/20) & Copilot モデル拡充 [github.blog/changelog/2026-07-20](https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/) = **2026-07-20** 8 日 ✅ 窓内・正しい",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "GitHub — Code Quality GA (7/20) & Copilot モデル拡充",
+          "url": "",
+          "status": "",
+          "summary": "GitHub — Code Quality GA (7/20) & Copilot モデル拡充 [github.blog/changelog/2026-07-20](https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/) = **2026-07-20** 8 日 ✅ 窓内・正しい"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4c54ebd62637",
+        "title": "GitHub — Code Quality GA (7/20) & Copilot モデル拡充",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4c29173508cd",
+        "title": "★3. MoneyForward AI Cowork — 自己宣言した「7 月提供開始」が残り 3 日で未達",
+        "text": "★3. MoneyForward AI Cowork — 自己宣言した「7 月提供開始」が残り 3 日で未達",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "★3. MoneyForward AI Cowork — 自己宣言した「7 月提供開始」が残り 3 日で未達"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4c29173508cd",
+        "title": "★3. MoneyForward AI Cowork — 自己宣言した「7 月提供開始」が残り 3 日で未達",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5361c4226f8b",
+        "title": "日付",
+        "text": "日付 日付 リリース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "日付",
+          "url": "",
+          "status": "",
+          "summary": "日付 リリース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5361c4226f8b",
+        "title": "日付",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c0ee8d85612e",
+        "title": "2026-07-24",
+        "text": "2026-07-24 2026-07-24 法務向けオンラインカンファレンス「Legal Forward Day 2026」開催",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2026-07-24",
+          "url": "",
+          "status": "",
+          "summary": "2026-07-24 法務向けオンラインカンファレンス「Legal Forward Day 2026」開催"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c0ee8d85612e",
+        "title": "2026-07-24",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f370977c4a33",
+        "title": "2026-07-23",
+        "text": "2026-07-23 2026-07-23 クラウド個別原価に **AIエージェント「工数自動入力エージェント」を一部ユーザー向けに提供開始**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2026-07-23",
+          "url": "",
+          "status": "",
+          "summary": "2026-07-23 クラウド個別原価に **AIエージェント「工数自動入力エージェント」を一部ユーザー向けに提供開始**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f370977c4a33",
+        "title": "2026-07-23",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-38e33072c155",
+        "title": "2026-07-23",
+        "text": "2026-07-23 2026-07-23 クラウド会計 × `board` API 連携開始",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2026-07-23",
+          "url": "",
+          "status": "",
+          "summary": "2026-07-23 クラウド会計 × `board` API 連携開始"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-38e33072c155",
+        "title": "2026-07-23",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b878115cd9b2",
+        "title": "2026-07-16",
+        "text": "2026-07-16 2026-07-16 クラウド個別原価「製販振替機能」提供開始",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2026-07-16",
+          "url": "",
+          "status": "",
+          "summary": "2026-07-16 クラウド個別原価「製販振替機能」提供開始"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b878115cd9b2",
+        "title": "2026-07-16",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-89ff6e2cf4be",
+        "title": "2026-07-07",
+        "text": "2026-07-07 2026-07-07 クラウド請求書Plus「プロジェクトマスタ」提供開始",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2026-07-07",
+          "url": "",
+          "status": "",
+          "summary": "2026-07-07 クラウド請求書Plus「プロジェクトマスタ」提供開始"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-89ff6e2cf4be",
+        "title": "2026-07-07",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-32e25fb3bdcb",
+        "title": "2026-07-06",
+        "text": "2026-07-06 2026-07-06 動画メディア「ME STUDIO」開始",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2026-07-06",
+          "url": "",
+          "status": "",
+          "summary": "2026-07-06 動画メディア「ME STUDIO」開始"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-32e25fb3bdcb",
+        "title": "2026-07-06",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1ead98c5a20e",
+        "title": "2026-07-03",
+        "text": "2026-07-03 2026-07-03 資金管理プラットフォーム `mitosel` 共同開発",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2026-07-03",
+          "url": "",
+          "status": "",
+          "summary": "2026-07-03 資金管理プラットフォーム `mitosel` 共同開発"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1ead98c5a20e",
+        "title": "2026-07-03",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-81f885ee25ba",
+        "title": "7-23 の「工数自動入力エージェント」を一部ユーザー向けに提供開始**は、AI Cowork 本体ではなく**個別プロダクトへの agent 埋め込みが先行**している形。",
+        "text": "7-23 の「工数自動入力エージェント」を一部ユーザー向けに提供開始**は、AI Cowork 本体ではなく**個別プロダクトへの agent 埋め込みが先行**している形。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7-23 の「工数自動入力エージェント」を一部ユーザー向けに提供開始**は、AI Cowork 本体ではなく**個別プロダクトへの agent 埋め込みが先行**している形。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-81f885ee25ba",
+        "title": "7-23 の「工数自動入力エージェント」を一部ユーザー向けに提供開始**は、AI Cowork 本体ではなく**個別プロダクトへの agent 埋め込みが先行**している形。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3f71a62f27bb",
+        "title": "つまり big-bang GA ではなく**漸進投入**の可能性がある。この場合「AI Cowork は GA したのか」は二値で判定できず、**\"AI Cowork ブランドでの統合オーケストレータ\" の有無**で見るべき。",
+        "text": "つまり big-bang GA ではなく**漸進投入**の可能性がある。この場合「AI Cowork は GA したのか」は二値で判定できず、**\"AI Cowork ブランドでの統合オーケストレータ\" の有無**で見るべき。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "つまり big-bang GA ではなく**漸進投入**の可能性がある。この場合「AI Cowork は GA したのか」は二値で判定できず、**\"AI Cowork ブランドでの統合オーケストレータ\" の有無**で見るべき。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3f71a62f27bb",
+        "title": "つまり big-bang GA ではなく**漸進投入**の可能性がある。この場合「AI Cowork は GA したのか」は二値で判定できず、**\"AI Cowork ブランドでの統合オーケストレータ\" の有無**で見るべき。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ea8bfacf63a3",
+        "title": "★4. discovery 候補キュー再ランク (7-31 unlock 向け)",
+        "text": "★4. discovery 候補キュー再ランク (7-31 unlock 向け)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "★4. discovery 候補キュー再ランク (7-31 unlock 向け)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ea8bfacf63a3",
+        "title": "★4. discovery 候補キュー再ランク (7-31 unlock 向け)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a6066658556c",
+        "title": "順位",
+        "text": "順位 順位 候補 基準 a 基準 c (30 日窓) 本日の変化",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "順位",
+          "url": "",
+          "status": "",
+          "summary": "順位 候補 基準 a 基準 c (30 日窓) 本日の変化"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a6066658556c",
+        "title": "順位",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4621e8a37b48",
+        "title": "第 1",
+        "text": "第 1 第 1 **Kubera** ◎ 直撃 (個人 B/S そのもの) ✗ 未成立 7 月の一次を再取得できず。据え置き",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "第 1",
+          "url": "",
+          "status": "",
+          "summary": "第 1 **Kubera** ◎ 直撃 (個人 B/S そのもの) ✗ 未成立 7 月の一次を再取得できず。据え置き"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4621e8a37b48",
+        "title": "第 1",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c382970256a9",
+        "title": "第 2",
+        "text": "第 2 第 2 **EdWealth『Ed』** ○ △ 7-15 GlobeNewswire **13 日連続デルタゼロ**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "第 2",
+          "url": "",
+          "status": "",
+          "summary": "第 2 **EdWealth『Ed』** ○ △ 7-15 GlobeNewswire **13 日連続デルタゼロ**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c382970256a9",
+        "title": "第 2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1efb2b08dffa",
+        "title": "—",
+        "text": "— — **Bluwhale** ◎ 最強 ✗ **不成立確定** 🔻 **signal 層据え置き (下記)**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "—",
+          "url": "",
+          "status": "",
+          "summary": "— **Bluwhale** ◎ 最強 ✗ **不成立確定** 🔻 **signal 層据え置き (下記)**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1efb2b08dffa",
+        "title": "—",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5452008bb7c4",
+        "title": "第 3",
+        "text": "第 3 第 3 Visa AI Financial Assistant ○ ✗ 8 月 US pilot 待ちで構造的に材料が出ない",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "第 3",
+          "url": "",
+          "status": "",
+          "summary": "第 3 Visa AI Financial Assistant ○ ✗ 8 月 US pilot 待ちで構造的に材料が出ない"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5452008bb7c4",
+        "title": "第 3",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-08ae309c4253",
+        "title": "ローンチ ([fintech.global 2026-06-12](https://fintech.global/2026/06/12/bluwhale-launches-ai-native-financial-operating-syst",
+        "text": "ローンチ ([fintech.global 2026-06-12](https://fintech.global/2026/06/12/bluwhale-launches-ai-native-financial-operating-system/)) は正しい = 本日で **46 日 = 30 日窓外**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ローンチ ([fintech.global 2026-06-12](https://fintech.global/2026/06/12/bluwhale-launches-ai-native-financial-operating-system/)) は正しい = 本日で **46 日 = 30 日窓外**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-08ae309c4253",
+        "title": "ローンチ ([fintech.global 2026-06-12](https://fintech.global/2026/06/12/bluwhale-launches-ai-native-financial-operating-syst",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a8b7bf762de5",
+        "title": "$10M Series A は [GlobeNewswire 2025-10-22](https://www.globenewswire.com/news-release/2025/10/22/3170933/0/en/Bluwhale-S",
+        "text": "$10M Series A は [GlobeNewswire 2025-10-22](https://www.globenewswire.com/news-release/2025/10/22/3170933/0/en/Bluwhale-Secures-10-Million-Strategic-Series-A-in-Institutional-Funding.html) が一次** (UOB Venture Management 主導 / SBI Holdings 参加 / Sui・Tezos・Cardano・Arbitrum・Movement Labs)。ventureburn・digitaljournal・odaily 等の記事は**同一ラウンドの再配信**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "$10M Series A は [GlobeNewswire 2025-10-22](https://www.globenewswire.com/news-release/2025/10/22/3170933/0/en/Bluwhale-Secures-10-Million-Strategic-Series-A-in-Institutional-Funding.html) が一次** (UOB Venture Management 主導 / SBI Holdings 参加 / Sui・Tezos・Cardano・Arbitrum・Movement Labs)。ventureburn・digitaljournal・odaily 等の記事は**同一ラウンドの再配信**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a8b7bf762de5",
+        "title": "$10M Series A は [GlobeNewswire 2025-10-22](https://www.globenewswire.com/news-release/2025/10/22/3170933/0/en/Bluwhale-S",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-232fc6f879f6",
+        "title": "→ 「Bluwhale $10M Series A」を新規シグナルとして数えると **9 ヶ月の fake-recency**。基準 c を満たす材料は 6-12 のローンチのみで、それも窓外。",
+        "text": "→ 「Bluwhale $10M Series A」を新規シグナルとして数えると **9 ヶ月の fake-recency**。基準 c を満たす材料は 6-12 のローンチのみで、それも窓外。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "→ 「Bluwhale $10M Series A」を新規シグナルとして数えると **9 ヶ月の fake-recency**。基準 c を満たす材料は 6-12 のローンチのみで、それも窓外。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-232fc6f879f6",
+        "title": "→ 「Bluwhale $10M Series A」を新規シグナルとして数えると **9 ヶ月の fake-recency**。基準 c を満たす材料は 6-12 のローンチのみで、それも窓外。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bf9c71bc3ef8",
+        "title": "★5. OpenAI ChatGPT (7-17 採択済) — 既定路線を維持",
+        "text": "★5. OpenAI ChatGPT (7-17 採択済) — 既定路線を維持",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "★5. OpenAI ChatGPT (7-17 採択済) — 既定路線を維持"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bf9c71bc3ef8",
+        "title": "★5. OpenAI ChatGPT (7-17 採択済) — 既定路線を維持",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9d19f5649fd0",
+        "title": "personal finance**: Plus / Pro の US ユーザーに **2026-06-25** 到達 (web / iOS / Android)。金融口座を接続してダッシュボードで支出を追跡 — [openai.com](",
+        "text": "personal finance**: Plus / Pro の US ユーザーに **2026-06-25** 到達 (web / iOS / Android)。金融口座を接続してダッシュボードで支出を追跡 — [openai.com](https://openai.com/index/personal-finance-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "personal finance**: Plus / Pro の US ユーザーに **2026-06-25** 到達 (web / iOS / Android)。金融口座を接続してダッシュボードで支出を追跡 — [openai.com](https://openai.com/index/personal-finance-chatgpt/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9d19f5649fd0",
+        "title": "personal finance**: Plus / Pro の US ユーザーに **2026-06-25** 到達 (web / iOS / Android)。金融口座を接続してダッシュボードで支出を追跡 — [openai.com](",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c2bef60fe72f",
+        "title": "ChatGPT Work**: **2026-07-09** ローンチ。GPT-5.6 + Codex を束ね、Pro / Enterprise / Edu から web・mobile で展開、数日で Plus / Business へ",
+        "text": "ChatGPT Work**: **2026-07-09** ローンチ。GPT-5.6 + Codex を束ね、Pro / Enterprise / Edu から web・mobile で展開、数日で Plus / Business へ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ChatGPT Work**: **2026-07-09** ローンチ。GPT-5.6 + Codex を束ね、Pro / Enterprise / Edu から web・mobile で展開、数日で Plus / Business へ"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c2bef60fe72f",
+        "title": "ChatGPT Work**: **2026-07-09** ローンチ。GPT-5.6 + Codex を束ね、Pro / Enterprise / Edu から web・mobile で展開、数日で Plus / Business へ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-822578c6c7b5",
+        "title": "Atlas 停止 = 8-09 据え置き** — 7-22 レポートで監視カレンダーに入れた期日に変更なし。agentic browsing は ChatGPT デスクトップ + Chrome 拡張へ再配分",
+        "text": "Atlas 停止 = 8-09 据え置き** — 7-22 レポートで監視カレンダーに入れた期日に変更なし。agentic browsing は ChatGPT デスクトップ + Chrome 拡張へ再配分",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Atlas 停止 = 8-09 据え置き** — 7-22 レポートで監視カレンダーに入れた期日に変更なし。agentic browsing は ChatGPT デスクトップ + Chrome 拡張へ再配分"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-822578c6c7b5",
+        "title": "Atlas 停止 = 8-09 据え置き** — 7-22 レポートで監視カレンダーに入れた期日に変更なし。agentic browsing は ChatGPT デスクトップ + Chrome 拡張へ再配分",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-296f2a6015ae",
+        "title": "discovery セクション",
+        "text": "discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "discovery セクション"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-296f2a6015ae",
+        "title": "discovery セクション",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7c64639afa4a",
+        "title": "現在 **28 社 / cap 50**",
+        "text": "現在 **28 社 / cap 50**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "現在 **28 社 / cap 50**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7c64639afa4a",
+        "title": "現在 **28 社 / cap 50**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-19dd34696f35",
+        "title": "直近採択 = 2026-07-24 Tomo → 本日で **4 日経過 / cooldown 残 3 日**",
+        "text": "直近採択 = 2026-07-24 Tomo → 本日で **4 日経過 / cooldown 残 3 日**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "直近採択 = 2026-07-24 Tomo → 本日で **4 日経過 / cooldown 残 3 日**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-19dd34696f35",
+        "title": "直近採択 = 2026-07-24 Tomo → 本日で **4 日経過 / cooldown 残 3 日**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ef9d84747845",
+        "title": "次回 unlock = 2026-07-31**",
+        "text": "次回 unlock = 2026-07-31**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "次回 unlock = 2026-07-31**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ef9d84747845",
+        "title": "次回 unlock = 2026-07-31**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-31a8832fbf56",
+        "title": "7-31 の採択方針: 第 1 候補 Kubera は**基準 c が 3 サイクル連続で未成立**。この状態が続くなら「基準 a 直撃だが窓内シグナルを構造的に出さない社」として、`EdWealth『Ed』`への切替か、あるいは**その週",
+        "text": "7-31 の採択方針: 第 1 候補 Kubera は**基準 c が 3 サイクル連続で未成立**。この状態が続くなら「基準 a 直撃だが窓内シグナルを構造的に出さない社」として、`EdWealth『Ed』`への切替か、あるいは**その週は採択を見送る**判断を明示的に選ぶ (基準 c を満たさない社を基準 a だけで入れると、Tomo と同じ「追加したが追えない社」を増やす)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7-31 の採択方針: 第 1 候補 Kubera は**基準 c が 3 サイクル連続で未成立**。この状態が続くなら「基準 a 直撃だが窓内シグナルを構造的に出さない社」として、`EdWealth『Ed』`への切替か、あるいは**その週は採択を見送る**判断を明示的に選ぶ (基準 c を満たさない社を基準 a だけで入れると、Tomo と同じ「追加したが追えない社」を増やす)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-31a8832fbf56",
+        "title": "7-31 の採択方針: 第 1 候補 Kubera は**基準 c が 3 サイクル連続で未成立**。この状態が続くなら「基準 a 直撃だが窓内シグナルを構造的に出さない社」として、`EdWealth『Ed』`への切替か、あるいは**その週",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-00a198d679cf",
+        "title": "[Introducing Claude Opus 5 — Anthropic](https://www.anthropic.com/news/claude-opus-5) (Jul 24, 2026)",
+        "text": "[Introducing Claude Opus 5 — Anthropic](https://www.anthropic.com/news/claude-opus-5) (Jul 24, 2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Introducing Claude Opus 5 — Anthropic](https://www.anthropic.com/news/claude-opus-5) (Jul 24, 2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-00a198d679cf",
+        "title": "[Introducing Claude Opus 5 — Anthropic](https://www.anthropic.com/news/claude-opus-5) (Jul 24, 2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5a73e6f1405e",
+        "title": "[Claude Opus 5 System Card (PDF)](https://www-cdn.anthropic.com/c5fbac3f0b1280a933ebd26d3cb8bb9f5bdeaf48/Claude%20Opus%2",
+        "text": "[Claude Opus 5 System Card (PDF)](https://www-cdn.anthropic.com/c5fbac3f0b1280a933ebd26d3cb8bb9f5bdeaf48/Claude%20Opus%205%20System%20Card.pdf) (July 24, 2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Opus 5 System Card (PDF)](https://www-cdn.anthropic.com/c5fbac3f0b1280a933ebd26d3cb8bb9f5bdeaf48/Claude%20Opus%205%20System%20Card.pdf) (July 24, 2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5a73e6f1405e",
+        "title": "[Claude Opus 5 System Card (PDF)](https://www-cdn.anthropic.com/c5fbac3f0b1280a933ebd26d3cb8bb9f5bdeaf48/Claude%20Opus%2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fe196055eb49",
+        "title": "[Claude Release notes — Claude Help Center](https://support.claude.com/en/articles/12138966-release-notes)",
+        "text": "[Claude Release notes — Claude Help Center](https://support.claude.com/en/articles/12138966-release-notes)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Release notes — Claude Help Center](https://support.claude.com/en/articles/12138966-release-notes)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fe196055eb49",
+        "title": "[Claude Release notes — Claude Help Center](https://support.claude.com/en/articles/12138966-release-notes)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2977d372b66b",
+        "title": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more](https://www.notion.com/releases/2026-07-01)",
+        "text": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more](https://www.notion.com/releases/2026-07-01)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more](https://www.notion.com/releases/2026-07-01)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2977d372b66b",
+        "title": "[July 1, 2026 – Notion 3.6: External Agents, HTML blocks, and more](https://www.notion.com/releases/2026-07-01)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8f545bda6a01",
+        "title": "[Slack What's New](https://slack.com/whats-new) (Today ビュー = 2026-05-29)",
+        "text": "[Slack What's New](https://slack.com/whats-new) (Today ビュー = 2026-05-29)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Slack What's New](https://slack.com/whats-new) (Today ビュー = 2026-05-29)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8f545bda6a01",
+        "title": "[Slack What's New](https://slack.com/whats-new) (Today ビュー = 2026-05-29)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e69568140707",
+        "title": "[Salesforce Announces the General Availability of Slackbot](https://investor.salesforce.com/news/news-details/2026/Sales",
+        "text": "[Salesforce Announces the General Availability of Slackbot](https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-the-General-Availability-of-Slackbot--Your-Personal-Agent-for-Work/default.aspx) (2026-01-13)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Salesforce Announces the General Availability of Slackbot](https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-the-General-Availability-of-Slackbot--Your-Personal-Agent-for-Work/default.aspx) (2026-01-13)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e69568140707",
+        "title": "[Salesforce Announces the General Availability of Slackbot](https://investor.salesforce.com/news/news-details/2026/Sales",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ee8e8242f9cf",
+        "title": "[GitHub Code Quality is now generally available — GitHub Changelog](https://github.blog/changelog/2026-07-20-github-code",
+        "text": "[GitHub Code Quality is now generally available — GitHub Changelog](https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/) (2026-07-20)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[GitHub Code Quality is now generally available — GitHub Changelog](https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/) (2026-07-20)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ee8e8242f9cf",
+        "title": "[GitHub Code Quality is now generally available — GitHub Changelog](https://github.blog/changelog/2026-07-20-github-code",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-adfa22adeef6",
+        "title": "[マネーフォワード ニュースリリース一覧](https://corp.moneyforward.com/news/release/)",
+        "text": "[マネーフォワード ニュースリリース一覧](https://corp.moneyforward.com/news/release/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[マネーフォワード ニュースリリース一覧](https://corp.moneyforward.com/news/release/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-adfa22adeef6",
+        "title": "[マネーフォワード ニュースリリース一覧](https://corp.moneyforward.com/news/release/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d29fb3e0e1e7",
+        "title": "[『マネーフォワード AI Cowork』を2026年7月より提供開始予定](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/) (2026-04",
+        "text": "[『マネーフォワード AI Cowork』を2026年7月より提供開始予定](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/) (2026-04-07)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[『マネーフォワード AI Cowork』を2026年7月より提供開始予定](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/) (2026-04-07)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d29fb3e0e1e7",
+        "title": "[『マネーフォワード AI Cowork』を2026年7月より提供開始予定](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/) (2026-04",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ccaf30509cca",
+        "title": "[Bluwhale launches AI-native financial operating system — FinTech Global](https://fintech.global/2026/06/12/bluwhale-lau",
+        "text": "[Bluwhale launches AI-native financial operating system — FinTech Global](https://fintech.global/2026/06/12/bluwhale-launches-ai-native-financial-operating-system/) (2026-06-12)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Bluwhale launches AI-native financial operating system — FinTech Global](https://fintech.global/2026/06/12/bluwhale-launches-ai-native-financial-operating-system/) (2026-06-12)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ccaf30509cca",
+        "title": "[Bluwhale launches AI-native financial operating system — FinTech Global](https://fintech.global/2026/06/12/bluwhale-lau",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7e0dcdc1d184",
+        "title": "[Bluwhale Secures $10 Million Strategic Series A — GlobeNewswire](https://www.globenewswire.com/news-release/2025/10/22/",
+        "text": "[Bluwhale Secures $10 Million Strategic Series A — GlobeNewswire](https://www.globenewswire.com/news-release/2025/10/22/3170933/0/en/Bluwhale-Secures-10-Million-Strategic-Series-A-in-Institutional-Funding.html) (**2025-10-22**)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Bluwhale Secures $10 Million Strategic Series A — GlobeNewswire](https://www.globenewswire.com/news-release/2025/10/22/3170933/0/en/Bluwhale-Secures-10-Million-Strategic-Series-A-in-Institutional-Funding.html) (**2025-10-22**)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7e0dcdc1d184",
+        "title": "[Bluwhale Secures $10 Million Strategic Series A — GlobeNewswire](https://www.globenewswire.com/news-release/2025/10/22/",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fa91635db6bd",
+        "title": "[A new personal finance experience in ChatGPT — OpenAI](https://openai.com/index/personal-finance-chatgpt/)",
+        "text": "[A new personal finance experience in ChatGPT — OpenAI](https://openai.com/index/personal-finance-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[A new personal finance experience in ChatGPT — OpenAI](https://openai.com/index/personal-finance-chatgpt/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fa91635db6bd",
+        "title": "[A new personal finance experience in ChatGPT — OpenAI](https://openai.com/index/personal-finance-chatgpt/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-17347d0d18d0",
+        "title": "[OpenAI is shutting down Atlas — TechCrunch](https://techcrunch.com/2026/07/09/openai-is-shutting-down-atlas-but-its-ai-",
+        "text": "[OpenAI is shutting down Atlas — TechCrunch](https://techcrunch.com/2026/07/09/openai-is-shutting-down-atlas-but-its-ai-browser-ambitions-are-still-growing/) (2026-07-09)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[OpenAI is shutting down Atlas — TechCrunch](https://techcrunch.com/2026/07/09/openai-is-shutting-down-atlas-but-its-ai-browser-ambitions-are-still-growing/) (2026-07-09)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-17347d0d18d0",
+        "title": "[OpenAI is shutting down Atlas — TechCrunch](https://techcrunch.com/2026/07/09/openai-is-shutting-down-atlas-but-its-ai-",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-63ce388c916a",
+        "title": "[Intuit and OpenAI Join Forces — Intuit Investor Relations](https://investors.intuit.com/news-events/press-releases/deta",
+        "text": "[Intuit and OpenAI Join Forces — Intuit Investor Relations](https://investors.intuit.com/news-events/press-releases/detail/1284/intuit-and-openai-join-forces-to-revolutionize-financial-intelligence-powering-every-person-business-and-dream-with-personalized-experiences) (**2025-11-18**)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Intuit and OpenAI Join Forces — Intuit Investor Relations](https://investors.intuit.com/news-events/press-releases/detail/1284/intuit-and-openai-join-forces-to-revolutionize-financial-intelligence-powering-every-person-business-and-dream-with-personalized-experiences) (**2025-11-18**)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-63ce388c916a",
+        "title": "[Intuit and OpenAI Join Forces — Intuit Investor Relations](https://investors.intuit.com/news-events/press-releases/deta",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f8f20ecc596b",
+        "title": "[Tomo emerging from stealth — The AI Insider](https://theaiinsider.tech/2026/07/07/tomo-is-the-ai-champion-helping-peopl",
+        "text": "[Tomo emerging from stealth — The AI Insider](https://theaiinsider.tech/2026/07/07/tomo-is-the-ai-champion-helping-people-bet-on-themselves-emerging-from-stealth-with-5m/) (再配信 / 一次は BusinessWire 2026-06-25)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Tomo emerging from stealth — The AI Insider](https://theaiinsider.tech/2026/07/07/tomo-is-the-ai-champion-helping-people-bet-on-themselves-emerging-from-stealth-with-5m/) (再配信 / 一次は BusinessWire 2026-06-25)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f8f20ecc596b",
+        "title": "[Tomo emerging from stealth — The AI Insider](https://theaiinsider.tech/2026/07/07/tomo-is-the-ai-champion-helping-peopl",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

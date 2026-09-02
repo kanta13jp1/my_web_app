@@ -55,6 +55,34 @@ void main() {
     expect(task.toJson()['priority'], 'high');
   });
 
+  test('AgentTask exposes task clarity metadata', () {
+    final task = AgentTask.fromJson(<String, dynamic>{
+      'id': 'task-clarity',
+      'user_id': 'user-1',
+      'supervisor_agent_id': 'agent-ceo',
+      'assignee_agent_id': 'agent-cmo',
+      'title': 'Improve launch plan',
+      'status': 'queued',
+      'priority': 'high',
+      'task_type': 'delegated_action',
+      'source': 'manual_delegate',
+      'created_at': '2026-03-04T09:00:00.000Z',
+      'updated_at': '2026-03-04T09:05:00.000Z',
+      'metadata': <String, dynamic>{
+        'clarity': <String, dynamic>{
+          'score': 4,
+          'threshold': 6,
+          'status': 'needs_clarification',
+        },
+      },
+    });
+
+    expect(task.clarityScore, 4);
+    expect(task.clarityThreshold, 6);
+    expect(task.clarityStatus, 'needs_clarification');
+    expect(task.needsClarification, isTrue);
+  });
+
   test('AgentMemoryEntry parses layer and content', () {
     final memory = AgentMemoryEntry.fromJson(<String, dynamic>{
       'id': 'memory-1',

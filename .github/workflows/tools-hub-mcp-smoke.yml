@@ -19,8 +19,7 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: tools-hub-mcp-smoke
@@ -28,6 +27,11 @@ concurrency:
 
 jobs:
   smoke:
+    environment:
+      name: observability-production
+      deployment: false
+    permissions:
+      contents: read
     name: MCP facade smoke
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -35,6 +39,8 @@ jobs:
       DEFAULT_SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
       MCP_BEARER_TOKEN: ${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_URL_PROD: ${{ secrets.SUPABASE_URL_PROD || '' }}
+      BASE_URL_INPUT: ${{ inputs.base_url || '' }}
       REGISTRATION_REDIRECT_URI: ${{ inputs.registration_redirect_uri || '' }}
       ENABLE_WRITE_CONFIRMATION_PROBE: ${{ inputs.enable_write_confirmation_probe || false }}
 
@@ -52,15 +58,15 @@ jobs:
 
       - name: Checkout
         if: steps.preflight.outputs.skip != 'true'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Resolve smoke target
         if: steps.preflight.outputs.skip != 'true'
         shell: pwsh
         run: |
-          $baseUrl = "${{ inputs.base_url || '' }}"
+          $baseUrl = $env:BASE_URL_INPUT
           if ([string]::IsNullOrWhiteSpace($baseUrl)) {
-            $supabaseUrl = "${{ secrets.SUPABASE_URL_PROD || '' }}"
+            $supabaseUrl = $env:SUPABASE_URL_PROD
             if ([string]::IsNullOrWhiteSpace($supabaseUrl)) {
               $supabaseUrl = $env:DEFAULT_SUPABASE_URL
             }
@@ -71,10 +77,10 @@ jobs:
               if ($uri.Host.EndsWith(".supabase.co", [StringComparison]::OrdinalIgnoreCase)) {
                 $supabaseUrl = "$($uri.Scheme)://$($uri.Host)"
               } else {
-                $supabaseUrl = "${{ secrets.SUPABASE_URL_PROD || '' }}"
+                $supabaseUrl = $env:SUPABASE_URL_PROD
               }
             } catch {
-              $supabaseUrl = "${{ secrets.SUPABASE_URL_PROD || '' }}"
+              $supabaseUrl = $env:SUPABASE_URL_PROD
             }
           }
 
@@ -90,21 +96,25 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          $args = @("-BaseUrl", $env:TOOLS_HUB_MCP_URL)
+          $smokeParams = @{
+            BaseUrl = $env:TOOLS_HUB_MCP_URL
+          }
 
           if (-not [string]::IsNullOrWhiteSpace($env:REGISTRATION_REDIRECT_URI)) {
-            $args += @("-RegistrationRedirectUri", $env:REGISTRATION_REDIRECT_URI)
+            $smokeParams.RegistrationRedirectUri = $env:REGISTRATION_REDIRECT_URI
           }
 
           if ($env:ENABLE_WRITE_CONFIRMATION_PROBE -eq "true") {
-            $args += "-EnableWriteConfirmationProbe"
+            $smokeParams.EnableWriteConfirmationProbe = $true
           }
 
-          ./scripts/tools_hub_mcp_smoke.ps1 @args
+          ./scripts/tools_hub_mcp_smoke.ps1 @smokeParams
 
       - name: Job summary
         if: always()
         shell: bash
+        env:
+          DCR_REDIRECT_CONFIGURED: ${{ inputs.registration_redirect_uri != '' }}
         run: |
           {
             echo "## tools-hub MCP Smoke"
@@ -115,7 +125,7 @@ jobs:
             echo "| Skipped | \`${{ steps.preflight.outputs.skip }}\` |"
             echo "| Outcome | \`${{ steps.smoke.outcome }}\` |"
             echo "| Auth token configured | \`${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}\` |"
-            echo "| DCR redirect URI configured | \`${{ inputs.registration_redirect_uri != '' }}\` |"
+            echo "| DCR redirect URI configured | \`${DCR_REDIRECT_CONFIGURED}\` |"
             echo "| Write confirmation probe | \`${ENABLE_WRITE_CONFIRMATION_PROBE}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -124,7 +134,6 @@ jobs:
         shell: bash
         env:
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
-          JOB_CANCELLED: ${{ cancelled() }}
         run: |
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
             echo "::warning::SUPABASE_SERVICE_ROLE_KEY missing; skip schedule_task_runs record"
@@ -132,7 +141,7 @@ jobs:
           fi
 
           STATUS="success"
-          if [ "$JOB_CANCELLED" = "true" ]; then
+          if [ -z "$SMOKE_OUTCOME" ] || [ "$SMOKE_OUTCOME" = "cancelled" ]; then
             STATUS="skipped"  # cancel-in-progress: true によるキャンセル (smoke到達前も含む)
           elif [ "$SMOKE_OUTCOME" != "success" ]; then
             STATUS="error"

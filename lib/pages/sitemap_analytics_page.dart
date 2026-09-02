@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// サイトマップ・Web分析ページ
 /// ページ別アクセス数・直帰率・サイトマップ構造表示。
@@ -12,7 +13,13 @@ class SitemapAnalyticsPage extends StatefulWidget {
 }
 
 class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['overview', 'pages'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

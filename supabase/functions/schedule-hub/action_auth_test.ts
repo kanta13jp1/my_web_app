@@ -5,6 +5,13 @@ import {
   SERVICE_ROLE_ONLY_ACTIONS,
 } from "./action_auth.ts";
 
+Deno.test("Stripe account readiness is service-role only", () => {
+  assertEquals(
+    requiredAuthLevel("billing.get_stripe_account_readiness"),
+    "service_role",
+  );
+});
+
 Deno.test("blog/x 書き込み系 4 action は service_role 必須", () => {
   for (
     const action of [
@@ -51,6 +58,13 @@ Deno.test("digest.run は user レベルへ降格 (public から削除)", () => 
   assertEquals(requiredAuthLevel("digest.run"), "user");
   assertEquals(PUBLIC_ACTIONS.includes("digest.run"), false);
   assertEquals(SERVICE_ROLE_ONLY_ACTIONS.includes("digest.run"), false);
+});
+
+Deno.test("動画クレジット購入はログイン user JWT 必須", () => {
+  const action = "billing.create_video_credit_checkout_session";
+  assertEquals(requiredAuthLevel(action), "user");
+  assertEquals(PUBLIC_ACTIONS.includes(action), false);
+  assertEquals(SERVICE_ROLE_ONLY_ACTIONS.includes(action), false);
 });
 
 Deno.test("未知 / user 向け action は user JWT 必須", () => {

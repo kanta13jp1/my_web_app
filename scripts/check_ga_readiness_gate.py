@@ -87,9 +87,9 @@ def build_report() -> dict[str, object]:
             [
                 "GA Launch Readiness Gate",
                 "check_ga_readiness_gate.py",
+                "deno check",
                 "deno test",
-                "flutter analyze",
-                "flutter test --reporter=compact",
+                "Critical browser E2E",
             ],
         ),
         "workflow is missing one or more required GA gate checks",

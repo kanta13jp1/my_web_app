@@ -19,12 +19,18 @@ on:
         required: false
         default: "outcome_first_a"
 
+permissions: {}
+
 concurrency:
   group: x-post-metrics-optimizer
   cancel-in-progress: true  # 2026-07-03 ci-audit: 3h cron × 8x/日のキュー積み防止
 
 jobs:
   collect:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -121,7 +127,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Upload first-user funnel evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: first-user-funnel-${{ github.run_id }}
           path: ${{ runner.temp }}/first-user-funnel.json

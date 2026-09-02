@@ -5,7 +5,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.4.1 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -14,7 +14,9 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
-  supabase_flutter: ^2.0.0
+  # Keep generated Mockito signatures compatible with the current client API.
+  supabase_flutter: 2.14.2
+  posthog_flutter: ^5.36.6
   crypto: ^3.0.7
   cupertino_icons: ^1.0.6
   web: ^1.1.0
@@ -29,9 +31,9 @@ dependencies:
   file_picker: ^11.0.0             # ファイル選択（Web含む）
   archive: ^4.0.9                  # ZIP解凍（XLSX/DOCXインポート）
   xml: ^6.6.1                      # XMLパース（XLSX/DOCXインポート）
-  mime: ^1.0.6                     # MIMEタイプ判定
+  mime: ^2.1.0                     # MIMEタイプ判定
   path: ^1.9.0                     # パス操作
-  google_fonts: ^8.1.0             # Google Fonts
+  google_fonts: ^8.2.1             # Google Fonts
 
   # 画像保存・共有などの周辺機能
   screenshot: ^3.0.0               # Widgetを画像化
@@ -43,22 +45,22 @@ dependencies:
   timeago: ^3.7.0                  # 相対時刻表示（例: 3分前）
   fl_chart: ^1.0.0                 # グラフ描画
   package_info_plus: ^8.0.0        # アプリ情報（バージョン等）
-  uuid: ^4.3.3                     # UUID生成
-  image_picker: ^1.2.2
+  uuid: ^4.6.0                     # UUID生成
+  image_picker: ^1.2.3
   google_generative_ai: ^0.4.7
   confetti: ^0.8.0
-  audioplayers: ^6.7.1
-  table_calendar: ^3.1.2
-  flutter_local_notifications: ^22.0.1
-  timezone: ^0.11.0
-  flutter_map: ^8.0.0
-  latlong2: ^0.9.1
+  audioplayers: 6.7.1
+  table_calendar: ^3.2.1
+  flutter_local_notifications: ^22.3.0
+  timezone: ^0.11.1
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
   http: any
   graphview: ^1.2.0
   flutter_secure_storage: ^10.3.1
-  pdf: ^3.11.1                     # PDF生成 (選挙KPIレポート出力)
-  printing: ^5.13.2                # PDF印刷 (選挙KPIレポート出力)
-  sentry_flutter: ^9.22.0
+  pdf: 3.12.0                      # PDF生成 (選挙KPIレポート出力)
+  printing: 5.14.3                 # PDF印刷 (選挙KPIレポート出力)
+  sentry_flutter: ^9.28.0
   rrule: ^0.2.18
 
 dev_dependencies:
@@ -69,8 +71,10 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   test: ^1.25.8
   mockito: ^5.6.1
-  build_runner: ^2.15.0
+  # 2.16.0 requires Dart 3.11, while CI currently runs Dart 3.10.9.
+  build_runner: 2.15.0
   flutter_launcher_icons: ^0.14.1
+  # 2.4.8 requires meta ^1.18.0, but Flutter 3.38/3.41 pins meta 1.17.0.
   flutter_native_splash: ">=2.4.7 <2.4.8"
 
   supabase: 2.12.2
@@ -103,6 +107,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/landing_journey/
     - web/assets/fonts/
     - assets/legal/
     - assets/sounds/

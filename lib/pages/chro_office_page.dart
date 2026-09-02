@@ -5,7 +5,6 @@ import '../services/agent_org_service.dart';
 import '../widgets/agent_workspace_panel.dart';
 import 'people_help_page.dart';
 import 'rewards_page.dart';
-import 'stats_page.dart';
 
 class ChroOfficePage extends StatefulWidget {
   const ChroOfficePage({super.key});
@@ -87,19 +86,11 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
             const SizedBox(height: 16),
             _buildMenuCard(
               context,
-              'Rewards',
-              'Review incentives and keep the reward system visible.',
+              'Achievements & Rewards',
+              'Review points, levels, badges, and recognition in one place.',
               Icons.card_giftcard,
               const RewardsPage(),
               '/rewards',
-            ),
-            _buildMenuCard(
-              context,
-              'Stats',
-              'Check user-level and team-level HR metrics.',
-              Icons.bar_chart,
-              const StatsPage(),
-              '/stats',
             ),
             _buildMenuCard(
               context,

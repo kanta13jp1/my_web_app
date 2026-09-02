@@ -38,7 +38,7 @@ class FirstUserXCandidateTest(unittest.TestCase):
         self.assertEqual(payload["action"], "x.candidate.create")
         self.assertEqual(
             payload["candidateKey"],
-            "first-user-launch/outcome-first-a/v1",
+            "first-user-launch/outcome-first-hook-b/v2",
         )
         self.assertEqual(payload["candidateType"], "first_user_launch")
         self.assertEqual(
@@ -59,6 +59,34 @@ class FirstUserXCandidateTest(unittest.TestCase):
         self.assertTrue(post["mediaUrl"].endswith(".png"))
         self.assertTrue(post["mediaAlt"])
         self.assertIs(post["linkInReply"], True)
+
+    def test_hook_b_is_the_only_visible_parent_text_change(self) -> None:
+        fixed_suffix = f"\n\n{first_user_x_candidate.FIXED_PARENT_BODY}"
+        control_hook = first_user_x_candidate.CONTROL_PARENT_TEXT.removesuffix(
+            fixed_suffix
+        )
+        hook_b = first_user_x_candidate.PARENT_TEXT.removesuffix(
+            fixed_suffix
+        )
+
+        self.assertTrue(
+            first_user_x_candidate.CONTROL_PARENT_TEXT.endswith(fixed_suffix)
+        )
+        self.assertTrue(first_user_x_candidate.PARENT_TEXT.endswith(fixed_suffix))
+        self.assertNotEqual(hook_b, control_hook)
+        self.assertIn("13表示・クリック0", hook_b)
+
+    def test_creative_cta_and_landing_url_stay_fixed(self) -> None:
+        post = self.build()["postPayload"]
+
+        self.assertEqual(
+            post["mediaUrl"],
+            "https://my-web-app-b67f4.web.app/"
+            "lp-og-first-action-20260720.png",
+        )
+        self.assertEqual(post["replyTexts"], [first_user_x_candidate.REPLY_TEXT])
+        self.assertEqual(post["utmContent"], "outcome_first_a")
+        self.assertIn("登録前に30秒で試せます。カード不要です。", post["text"])
 
     def test_reply_contains_trial_and_campaign_attribution(self) -> None:
         post = self.build()["postPayload"]

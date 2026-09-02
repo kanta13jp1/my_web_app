@@ -384,13 +384,26 @@ git commit -m "自動: 週次SNSドラフト YYYY-MM-DD"
 GitHub PRの自動コードレビュー。
 
 1. `gh pr list --state open` でオープンPRを確認
-2. 各PRの差分を取得し、セキュリティ・パフォーマンス・ロジックバグの観点でレビュー
+2. 各PRの差分を取得し、パフォーマンス・ロジックバグの観点でレビュー
 3. 指摘があれば `gh pr review` でコメント投稿
 4. 問題なければ approve
 5. **CI失敗PR対応**: `ci-auto-fix.yml` が `dart fix --apply` + `deno fmt` を自動適用済みの場合は
    その結果コメントを確認し、残存エラーがあれば追加コメントで手動修正を促す。
    `ci-auto-fix.yml` 未実行の場合は `gh run list --branch <branch>` で CI ログを確認して
    修正可能なエラー (deprecated API / import typo 等) があればコードを直接修正してコミット。
+
+---
+
+### Task: security-audit (毎週月曜 07:17 JST に実行)
+
+`pr-auto-review` とは独立して `.github/workflows/security-audit.yml` を実行する。
+GitHub Actions の最小権限・依存供給網、migration 順序、認証済み decision-event API を監査する。
+高リスク PR は `.github/workflows/high-risk-dual-security-review.yml` で Claude と Codex を
+独立実行し、fallback は二重レビューとして数えない。片方の API credential または
+decision-event 永続化が利用できない場合は、PR に例外 evidence を残して fail closed とする。
+Codex lane は静的な OpenAI API key を保存せず、GitHub OIDC から OpenAI Workload
+Identity Federation で短期 token を取得する。管理画面設定と復旧手順は
+[`OPENAI_WIF_SECURITY_REVIEW_RUNBOOK.md`](OPENAI_WIF_SECURITY_REVIEW_RUNBOOK.md) を参照する。
 
 ---
 

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../widgets/paddle_approval_readiness_card.dart';
 import '../widgets/legal_term_tooltip_text.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// Legal / compliance manager page
 /// - contracts and checklist come from legal-compliance-manager EF
@@ -16,7 +17,14 @@ class LegalComplianceManagerPage extends StatefulWidget {
 }
 
 class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['contracts', 'checklist', 'saas-review', 'harvey'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
   final _harveyPromptCtrl = TextEditingController();

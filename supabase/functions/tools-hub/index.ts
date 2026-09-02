@@ -61,6 +61,10 @@ import {
 } from "../_shared/mcp_external_file.ts";
 import { callExternalMcpTool } from "../_shared/mcp_external_file_client.ts";
 import {
+  dispatchLocalBusinessReferenceAction,
+  fetchLocalBusinessReferences,
+} from "../_shared/local_business_reference.ts";
+import {
   createSupabaseJibunApiStore,
   handleJibunApiAction,
 } from "./jibun_api.ts";
@@ -77,7 +81,7 @@ import {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Max-Age": "86400",
 };
 
@@ -1031,6 +1035,7 @@ async function handleMcpFacade(
           "mcp.wbs.list",
           "mcp.feature_request.create",
           "mcp.user_tasks.list",
+          "mcp.public_businesses.reference_list",
           "mcp.notes.list",
           "mcp.notes.create",
         ],
@@ -1165,6 +1170,41 @@ async function handleMcpFacade(
       },
       content: mcpTextResult(`Found ${enriched.length} user task(s).`),
     });
+  }
+
+  if (toolName === "public_businesses.reference_list") {
+    const targetId = String(args.target_id ?? "fuchu-honmachi-1").trim();
+    if (targetId !== "fuchu-honmachi-1") {
+      await logMcpInvocation(auth.ctx, toolName, args, 400, req);
+      return mcpToolResponse(body, {
+        success: false,
+        tool: toolName,
+        error: "unsupported_target",
+      }, 400);
+    }
+    try {
+      const payload = await fetchLocalBusinessReferences({
+        limit: args.limit ?? 30,
+      });
+      await logMcpInvocation(auth.ctx, toolName, args, 200, req);
+      return mcpToolResponse(body, {
+        success: true,
+        tool: toolName,
+        structuredContent: payload,
+        content: mcpTextResult(
+          `Found ${payload.publicReference.count} public reference place(s). ` +
+            "Ownership type is unknown and the list does not identify the census aggregate.",
+        ),
+      });
+    } catch (error) {
+      console.error("MCP public business reference failed", error);
+      await logMcpInvocation(auth.ctx, toolName, args, 502, req);
+      return mcpToolResponse(body, {
+        success: false,
+        tool: toolName,
+        error: "public_reference_unavailable",
+      }, 502);
+    }
   }
 
   if (toolName === "feature_request.create") {
@@ -5872,6 +5912,14 @@ serve(async (req) => {
     const mcpResponse = await handleMcpFacade(req, action, body, admin);
     if (mcpResponse) return mcpResponse;
 
+    // Public, read-only business references used by the regional map. Keep this
+    // in tools-hub so the browser and authenticated MCP tool share one fetcher
+    // without consuming another production Edge Function slot.
+    if (action === "public_businesses.reference_list") {
+      const result = await dispatchLocalBusinessReferenceAction(body);
+      return json(result.body, result.status);
+    }
+
     // ── 自分API (Notion Developer Platform 対抗 / 2026-07-12 WEB版) ─────────
     // jibunapi.* = 管理系 (Supabase JWT) / api.* = 外部公開系 (jibun_sk_ キー)。
     // GET 呼び出し (AI エージェント / curl) 向けに query params も body へマージする。
@@ -10181,32 +10229,84 @@ ${reportText ? `> ${reportText}` : ""}`,
       case "focus.stats": {
         const days = parseInt(String(body.days ?? "30"), 10);
         const since = new Date(Date.now() - days * 86400000).toISOString();
-        const allItems = await listItems(admin, "focus_timer", userId, 200);
-        const recent = allItems.filter((i: Record<string, unknown>) =>
-          String(i.created_at ?? "") >= since
+        const [focusItems, legacyPomodoroItems] = await Promise.all([
+          listItems(admin, "focus_timer", userId, 200),
+          listItems(admin, "pomodoro", userId, 200),
+        ]);
+        const normalizedFocus = focusItems.map(
+          (item: Record<string, unknown>) => ({
+            ...(item.metadata as Record<string, unknown>),
+            id: item.id,
+            created_at: item.created_at,
+          }),
         );
+        // 旧 `/pomodoro-timer` は `source=pomodoro` に保存していた。
+        // 統合後の集中タイマーで過去実績を失わないよう、新形式へ読み替える。
+        const normalizedLegacy = legacyPomodoroItems.map(
+          (item: Record<string, unknown>) => {
+            const metadata = (item.metadata ?? {}) as Record<string, unknown>;
+            const completedAt = String(
+              metadata.completed_at ?? item.created_at ?? "",
+            );
+            return {
+              id: item.id,
+              task_label: metadata.task_name ?? "ポモドーロ",
+              duration_minutes: metadata.duration_minutes ??
+                metadata.duration_min ?? 25,
+              status: metadata.status === "done"
+                ? "completed"
+                : metadata.status ?? "completed",
+              started_at: metadata.started_at ?? completedAt,
+              completed_at: completedAt,
+              created_at: item.created_at,
+              legacy_source: "pomodoro",
+            };
+          },
+        );
+        const recent = [...normalizedFocus, ...normalizedLegacy]
+          .filter((item: Record<string, unknown>) =>
+            String(item.started_at ?? item.created_at ?? "") >= since
+          )
+          .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
+            String(b.started_at ?? b.created_at ?? "").localeCompare(
+              String(a.started_at ?? a.created_at ?? ""),
+            )
+          );
         const completed = recent.filter((i: Record<string, unknown>) =>
-          (i.metadata as Record<string, unknown>)?.status === "completed"
+          i.status === "completed"
         );
         const totalMinutes = completed.reduce(
           (s: number, i: Record<string, unknown>) =>
-            s +
-            (Number(
-              (i.metadata as Record<string, unknown>)?.duration_minutes,
-            ) || 25),
+            s + (Number(i.duration_minutes) || 25),
           0,
         );
+        const completedDays = new Set(
+          completed.map((item: Record<string, unknown>) =>
+            String(
+              item.completed_at ?? item.started_at ?? item.created_at ?? "",
+            )
+              .slice(0, 10)
+          ),
+        );
+        const cursor = new Date();
+        cursor.setUTCHours(0, 0, 0, 0);
+        if (!completedDays.has(cursor.toISOString().slice(0, 10))) {
+          cursor.setUTCDate(cursor.getUTCDate() - 1);
+        }
+        let streakDays = 0;
+        while (completedDays.has(cursor.toISOString().slice(0, 10))) {
+          streakDays += 1;
+          cursor.setUTCDate(cursor.getUTCDate() - 1);
+        }
         const focusScore = Math.min(100, Math.round(completed.length * 10));
         return json({
           success: true,
-          sessions: recent.map((i: Record<string, unknown>) => ({
-            ...(i.metadata as Record<string, unknown>),
-            id: i.id,
-            created_at: i.created_at,
-          })),
+          sessions: recent,
           stats: {
-            total_sessions: completed.length,
+            total_sessions: recent.length,
+            completed_sessions: completed.length,
             total_minutes: totalMinutes,
+            streak_days: streakDays,
             focus_score: focusScore,
           },
         });
@@ -10818,6 +10918,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             "mcp.wbs.list",
             "mcp.feature_request.create",
             "mcp.user_tasks.list",
+            "mcp.public_businesses.reference_list",
             "mcp.notes.list",
             "mcp.notes.create",
             "mcp_file.connectors",

@@ -117,6 +117,47 @@ void main() {
     );
   });
 
+  test('legacy duplicate routes resolve to the consolidated page', () {
+    const expectedPageByLegacyRoute = <String, String>{
+      '/pomodoro-timer': 'FocusTimerPage',
+      '/referral-program': 'ReferralPage',
+      '/habit-gamification': 'HabitCenterPage',
+      '/goal-tracker': 'GoalCenterPage',
+      '/social-media-scheduler': 'SocialMediaSchedulerPage',
+      '/travel-itinerary': 'TravelItineraryPage',
+      '/video-ad-generator': 'ViralAdGeneratorPage',
+      '/viral-video-generator': 'ViralAdGeneratorPage',
+      '/wip-limit': 'DigestQueuePage',
+      '/local-election-schedule': 'ElectionVictoryPage',
+      '/stats': 'RewardsPage',
+      '/ai-summarizer': 'WritingCenterPage',
+      '/manual': 'UserManualPage',
+    };
+    final cases = _routeCases();
+
+    for (final expected in expectedPageByLegacyRoute.entries) {
+      final routeCase = cases.singleWhere(
+        (candidate) => candidate.labels.contains(expected.key),
+      );
+      expect(
+        routeCase.body,
+        contains(expected.value),
+        reason: '${expected.key} が統合先 ${expected.value} を開いていない',
+      );
+    }
+  });
+
+  test('retired analytics route resolves to canonical non-admin home', () {
+    final routeCase = _routeCases().singleWhere(
+      (candidate) => candidate.labels.contains('/app-analytics-dashboard'),
+    );
+
+    expect(routeCase.body, contains("RouteSettings(name: '/')"));
+    expect(routeCase.body, contains('_AuthenticatedHomePage'));
+    expect(routeCase.body, contains('LandingPage'));
+    expect(routeCase.body, isNot(contains('AdminAnalyticsPage')));
+  });
+
   // 直叩き Navigator.push は onGenerateRoute を通らないので wrapper の対象外。
   // これらは各サイトで settings を持っていないと URL が変わらない。
   test('every direct Navigator.push of a page route passes settings', () {
@@ -235,11 +276,39 @@ void main() {
       reason: 'URL の無いトップ画面機能:\n${offenders.join('\n')}',
     );
   });
+
+  test('distinct home catalog features do not share a route', () {
+    final catalog = File('lib/data/home_tool_catalog.dart').readAsStringSync();
+    final ids = RegExp(
+      r"^      id: '([^']+)',",
+      multiLine: true,
+    ).allMatches(catalog).map((match) => match.group(1)!).toList();
+    final idsByRoute = <String, List<String>>{};
+
+    for (final id in ids) {
+      final route = _catalogRouteForId(id);
+      if (route == null) continue;
+      idsByRoute.putIfAbsent(route, () => <String>[]).add(id);
+    }
+
+    final duplicates = idsByRoute.entries
+        .where((entry) => entry.value.length > 1)
+        .map((entry) => '${entry.key}: ${entry.value.join(', ')}')
+        .toList(growable: false);
+
+    expect(
+      duplicates,
+      isEmpty,
+      reason: '異なるホーム機能が同じ URL を共有している:\n${duplicates.join('\n')}',
+    );
+  });
 }
 
 /// 引数が無いと画面を復元できないため、意図的に別 route へ落とすもの。
 /// URL は必ず変わるが、実際に表示する画面に合わせた URL を名乗る。
 const Map<String?, String> _intentionalFallbacks = <String?, String>{
+  // Retired analytics UI must not expose the unguarded admin analytics page.
+  '/app-analytics-dashboard': '/',
   // 出走表は race マップ全体が必要で URL からは復元できない。
   '/horse-racing/race': '/horse-racing/predictions',
   // `case` ラベルが定数なので識別子のまま照合する (= '/compatibility-result')。
@@ -249,7 +318,7 @@ const Map<String?, String> _intentionalFallbacks = <String?, String>{
 
 /// `_homeToolRoutePathForId` (home_tool_catalog.dart) と同じ対応表。
 String? _catalogRouteForId(String id) => switch (id) {
-      'digital-danshari' => '/real-world-danshari',
+      'digital-danshari' => '/digital-danshari',
       'agent-org' => '/agents',
       'admin-analytics' => '/admin',
       'edge-function-status' => '/edge-functions',

@@ -1,0 +1,2870 @@
+{
+  "schema_version": 4,
+  "generated_at": "2026-09-02T14:57:00.113098+00:00",
+  "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
+  "lane": "course_review",
+  "publication_state": "latest_review",
+  "automation": {
+    "id": "ai-2",
+    "name": "AI大学講座の虎レビュー",
+    "status": "PAUSED",
+    "schedule": "毎時50分（1時間ごと）"
+  },
+  "pool": {
+    "total": 23,
+    "eligible": 23,
+    "provisional": 21,
+    "division_1": 0,
+    "division_2": 0,
+    "division_3": 22,
+    "division_4": 1,
+    "division_5": 0
+  },
+  "utility_weights": {
+    "practical_actionability": 30,
+    "source_freshness": 20,
+    "learning_clarity": 20,
+    "distinctiveness": 15,
+    "learner_evidence": 15
+  },
+  "latest_review": {
+    "cycle_id": "20260902T183425+0900",
+    "started_at": "2026-09-02T18:34:25+09:00",
+    "source_format": "course_review",
+    "surface": {
+      "slug": "course-256fce47-54de-4716-ad2c-478bc2e9613b",
+      "url": "https://aider.chat/docs/config/options.html"
+    },
+    "reviewer": {
+      "seat": 94,
+      "name": "戸村 光",
+      "selection_score": 77.3157,
+      "division": 1,
+      "cycle_utility": 83.42,
+      "aggregate_utility": 82.68
+    },
+    "status": "review_only",
+    "validation": "passed",
+    "finding_count": 3,
+    "top_findings": [
+      {
+        "summary": "The Aider model-selection course has no public learner, outcome, verification, source-evidence, or freshness contract",
+        "severity": "p1",
+        "business_dimensions": [
+          "market_demand",
+          "trust_risk",
+          "scalability"
+        ]
+      },
+      {
+        "summary": "The static 2026 model-family promise lacks a reproducible cost-quality decision rubric and a current dated evidence contract",
+        "severity": "p1",
+        "business_dimensions": [
+          "unit_economics",
+          "competitive_advantage",
+          "trust_risk"
+        ]
+      },
+      {
+        "summary": "No real learner outcome evidence is available for the Aider model-selection course",
+        "severity": "p2",
+        "business_dimensions": [
+          "market_demand",
+          "unit_economics",
+          "scalability"
+        ]
+      }
+    ],
+    "quality": {
+      "framework": "TCE+CLEAR",
+      "overall_score": 100.0,
+      "scores": {
+        "complete": 100,
+        "logical": 100,
+        "evidence": 100,
+        "audience": 100,
+        "relevant": 100
+      },
+      "gate_passed": true,
+      "baseline_cycle_id": null,
+      "focus_dimension": "evidence",
+      "overall_delta": null,
+      "next_focus_dimension": "complete",
+      "next_cycle_experiment": "After the production-data owner publishes all five evidence fields and one fixed-workload comparison lab, run one cohort and compare task pass rate, cost per passing run, latency, tokens, retries, budget compliance, rubric agreement, support contacts, and workplace reuse."
+    },
+    "countermeasure": {
+      "state": "issue_tracking",
+      "label": "対策待ち・Issue #5227",
+      "detail": "専用対策キューで順番待ちです。",
+      "summary": "",
+      "files": [],
+      "lines_changed": 0,
+      "resolved_finding_ids": [
+        "course-aider-static-model-cost-rubric-gap"
+      ],
+      "validation_status": "passed",
+      "validation_messages": [
+        "passed: clean dedicated branch at origin/main ddbc364a4e711555cb74330dd81bed60dca41464",
+        "passed: 125 roster profiles and 125 personas",
+        "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
+        "executed once successfully: Aider model-selection course selected from fresh catalog",
+        "passed: no comparable baseline, focus_dimension=evidence",
+        "passed: official Aider options, leaderboard, and prompt-caching evidence inspected separately; no matching tracked course row found",
+        "executed once successfully: 125 profiles, seat 94"
+      ],
+      "issue": {
+        "number": 5227,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5227",
+        "status": "created",
+        "github_state": "OPEN",
+        "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
+        "remediation_state": "queued",
+        "queue_status": "QUEUED",
+        "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      },
+      "implementation": null,
+      "findings_without_individual_trace": [
+        "course-aider-model-selection-missing-evidence-contract",
+        "course-aider-model-selection-learner-outcome-gap"
+      ]
+    },
+    "course": {
+      "content_id": "256fce47-54de-4716-ad2c-478bc2e9613b",
+      "provider": "aider",
+      "title": "Aider モデル選択 & コスト最適化 — Claude / DeepSeek / GPT-4o 比較 (2026)",
+      "source_url": "https://aider.chat/docs/config/options.html",
+      "reason": "The fresh public catalog proves that the selected Aider model-selection course is active and points to a reachable official source, but all five evidence-contract fields are null. Official Aider evidence exposes model selection controls, model metadata, a dated 225-task leaderboard, benchmark correctness and cost, edit format, reasoning settings, prompt caching, and context controls. The public course nevertheless defines no learner, reproducible workload, dated price-and-benchmark snapshot, decision rubric, or real learner result. Learner evidence is therefore disclosed at the neutral score of 50.",
+      "cycle_utility": 42.0,
+      "aggregate_utility": 42.0,
+      "division": 3
+    }
+  },
+  "history": [
+    {
+      "cycle_id": "20260902T183425+0900",
+      "started_at": "2026-09-02T18:34:25+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "256fce47-54de-4716-ad2c-478bc2e9613b",
+        "title": "Aider モデル選択 & コスト最適化 — Claude / DeepSeek / GPT-4o 比較 (2026)",
+        "url": "https://aider.chat/docs/config/options.html"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 77.3157
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes all five evidence fields and one fixed-workload comparison lab, run one cohort and compare task pass rate, cost per passing run, latency, tokens, retries, budget compliance, rubric agreement, support contacts, and workplace reuse."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aider-model-selection-missing-evidence-contract",
+          "summary": "The Aider model-selection course has no public learner, outcome, verification, source-evidence, or freshness contract",
+          "severity": "p1",
+          "suggested_action": "Publish all five evidence-contract fields together around one budget-constrained Aider workload and a dated evidence snapshot."
+        },
+        {
+          "finding_id": "course-aider-static-model-cost-rubric-gap",
+          "summary": "The static 2026 model-family promise lacks a reproducible cost-quality decision rubric and a current dated evidence contract",
+          "severity": "p1",
+          "suggested_action": "Replace the static three-brand promise with a rerunnable lab that fixes one repository task and budget, records the complete Aider configuration, measures success, tokens, latency, and cost, and separates Aider benchmark cost from current provider pricing."
+        },
+        {
+          "finding_id": "course-aider-model-selection-learner-outcome-gap",
+          "summary": "No real learner outcome evidence is available for the Aider model-selection course",
+          "severity": "p2",
+          "suggested_action": "Collect one privacy-safe cohort aggregate for workload completion, cost per passing run, rubric score, budget compliance, support demand, and workplace reuse without retaining code, prompts, or API keys."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5227",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-aider-static-model-cost-rubric-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main ddbc364a4e711555cb74330dd81bed60dca41464",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
+          "executed once successfully: Aider model-selection course selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: official Aider options, leaderboard, and prompt-caching evidence inspected separately; no matching tracked course row found",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5227,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5227",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aider-model-selection-missing-evidence-contract",
+          "course-aider-model-selection-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T211401+0900",
+      "started_at": "2026-08-31T21:14:01+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "2240c679-a2bc-4322-8643-7499385a1bde",
+        "title": "Aider — AI ペアプログラマー CLI (Git連携 / 複数ファイル編集 / 22k+ Stars)",
+        "url": "https://aider.chat/"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 76.4431
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes the five evidence fields and one 30-to-60-minute fixture-repository lab, run one cohort and compare enrollment-to-start conversion, completion, rubric score, files added to context, undo success, lint/test success, support contacts, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aider-missing-evidence-contract",
+          "summary": "Aider CLI course has no public learner, outcome, verification, source-evidence, or freshness contract",
+          "severity": "p1",
+          "suggested_action": "Publish all five evidence-contract fields together: target learner, one observable multi-file Git outcome, a rubric-backed verification method, dated official evidence sources, and the verification timestamp."
+        },
+        {
+          "finding_id": "course-aider-multi-file-git-lab-gap",
+          "summary": "The public contract does not verify a bounded multi-file Git workflow despite that being the course promise",
+          "severity": "p1",
+          "suggested_action": "Add a 30-to-60-minute fixture-repository lab requiring explicit file selection, one multi-file change, diff review, commit and undo evidence, and a passing lint or test command under a fixed rubric."
+        },
+        {
+          "finding_id": "course-aider-learner-outcome-gap",
+          "summary": "No real learner outcome evidence is available for the Aider CLI course",
+          "severity": "p2",
+          "suggested_action": "Collect one privacy-safe cohort aggregate for start, completion, rubric score, Git/undo/test success, support demand, and workplace application without storing repositories, prompts, or API keys."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5165",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-aider-missing-evidence-contract"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main f38154bfea8a7cdae97a8efe02be3f8aa989970f",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=6",
+          "executed once successfully: Aider CLI course selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: official Aider homepage, usage, Git, and GitHub repository evidence inspected separately; no matching tracked course row found",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5165,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5165",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T211401+0900:2240c679-a2bc-4322-8643-7499385a1bde",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aider-multi-file-git-lab-gap",
+          "course-aider-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T170208+0900",
+      "started_at": "2026-08-31T17:02:08+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "0ee90f87-2319-4b2f-af0f-d298083c752c",
+        "title": "Aider 入門 — インストール・基本操作・Git 連携ワークフロー",
+        "url": "https://aider.chat/docs/usage/tutorial.html"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 77.1966
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner replaces the dead source and publishes one 30-to-60-minute Git workflow lab, run one cohort and compare source reachability, 60-minute completion, rubric score, undo success, lint/test success, support contacts, token-context discipline, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aider-dead-primary-source",
+          "summary": "Aider入門の主要一次資料URLが404で、現行導線へ到達できない",
+          "severity": "p1",
+          "suggested_action": "source_urlを現行の公式UsageまたはInstallationへ更新し、確認日、対象者、到達可能な学習成果、検証方法を5項目のevidence contractとして同時に公開する。"
+        },
+        {
+          "finding_id": "course-aider-verifiable-git-workflow-gap",
+          "summary": "Git変更・undo・テストを一つの再現可能な成果物で検証する契約がない",
+          "severity": "p1",
+          "suggested_action": "小さなfixture repositoryで必要ファイルだけを追加し、ask/code、差分、undo、再実行、commit、lint/test成功証拠を提出する30〜60分labとrubricを追加する。"
+        },
+        {
+          "finding_id": "course-aider-learner-outcome-gap",
+          "summary": "Aider入門の実在学習者成果を示す匿名集計がない",
+          "severity": "p2",
+          "suggested_action": "匿名の開始/完了、Git差分、undo、lint/test、rubric score、職場適用を一cohortで取得し、repository内容やAPI keyを保存せず集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5160",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-aider-dead-primary-source"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main 41f5123c25aa06e46317f137779a9ee68c40d47d",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "executed once successfully: Aider 入門 selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: configured tutorial URL returned 404; current official installation, usage, Git, chat-mode, and lint/test sources were inspected separately",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5160,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5160",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T170208+0900:0ee90f87-2319-4b2f-af0f-d298083c752c",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aider-verifiable-git-workflow-gap",
+          "course-aider-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T134103+0900",
+      "started_at": "2026-08-31T13:41:03+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+        "title": "AI21 Labs 概要",
+        "url": "https://www.ai21.com/"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 76.1036
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes one dated product map and a 30-to-60-minute decision lab, run one cohort and compare product-path accuracy, 60-minute completion, rubric score, source reachability, support contacts, reproducibility, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-ai21-overview-product-boundary-gap",
+          "summary": "AI21の現行provider boundaryであるMaestro、Jamba、導入形態の関係が教材から欠落している",
+          "severity": "p1",
+          "suggested_action": "現行公式overviewを基にMaestro、Jamba、AI21 API、第三者model/BYOK、private deploymentを一枚のdated product mapで分け、各経路の適用条件と一次根拠を示す。"
+        },
+        {
+          "finding_id": "course-ai21-overview-decision-lab-gap",
+          "summary": "Maestro、Jamba/API、private deploymentを要件から選ぶ再現可能な意思決定labがない",
+          "severity": "p1",
+          "suggested_action": "3つのworkload fixtureにprivacy、latency SLO、budget、model constraint、traceability要件を与え、Maestro、Jamba/API、private deploymentから経路を選び一次根拠とtrade-offを提出する30〜60分labを追加する。"
+        },
+        {
+          "finding_id": "course-ai21-overview-evidence-contract-gap",
+          "summary": "対象者、観測可能な学習成果、評価方法、証拠URL、検証日時がすべて未設定",
+          "severity": "p1",
+          "suggested_action": "対象者をenterprise AI導入担当、成果を要件から製品・導入経路を選ぶdecision memo、評価をrubric、証拠を現行official overview群、検証日時をpublish時刻として公開fieldへ設定する。"
+        },
+        {
+          "finding_id": "course-ai21-overview-learner-outcome-gap",
+          "summary": "実在学習者がAI21の製品・導入経路を正しく選べた成果証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名の開始/完了、経路選択、rubric score、再現率、職場適用を一cohortで取得し、秘密情報やprompt本文を保存せず集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5157",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-ai21-overview-product-boundary-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch fast-forwarded to origin/main b7048433823ab2fff81974724768acbc06630d43",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "executed once successfully: AI21 Labs 概要 selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: current AI21 homepage, overview, Maestro, Jamba documentation, and the named tracked migration were inspected separately",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5157,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5157",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T134103+0900:9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-ai21-overview-decision-lab-gap",
+          "course-ai21-overview-evidence-contract-gap",
+          "course-ai21-overview-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T061237+0900",
+      "started_at": "2026-08-31T06:12:37+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+        "title": "AI21 Labs — 利用可能モデル (2026)",
+        "url": "https://docs.ai21.com/docs/jamba-models"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 79.4436
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes one dated platform matrix and model-selection lab, run one cohort and compare source reachability, platform-selection accuracy, endpoint success, 60-minute completion, rubric score, cost-prediction error, support contacts, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-ai21-model-source-platform-contract",
+          "summary": "掲載source URLが404で、platform非区別のjamba-1.5-large/miniを現行モデル一覧として提示している",
+          "severity": "p1",
+          "suggested_action": "source_urlを現行Jambaページへ更新し、AI21 SaaS、managed cloud、self-deployを分けたdated matrixでversion、endpoint、context、availability、deprecationを示す。"
+        },
+        {
+          "finding_id": "course-ai21-model-decision-rubric-gap",
+          "summary": "用途別推奨はあるが、platform、version、品質、latency、costを比較する再現可能な意思決定rubricがない",
+          "severity": "p1",
+          "suggested_action": "3つのworkload fixtureについてcontext、quality threshold、latency SLO、budget、privacy、deployment constraintを与え、dated model/platformを選んで根拠を提出するrubricを追加する。"
+        },
+        {
+          "finding_id": "course-ai21-cost-quality-verification-gap",
+          "summary": "cost efficient・最高精度という主張に、現行platform別の費用、latency、qualityを再計算する課題がない",
+          "severity": "p2",
+          "suggested_action": "日付付き公式pricing/availabilityを参照し、一つのlong-context workloadでtokenまたはhosting cost、latency、quality thresholdを比較して選択理由を提出させる。"
+        },
+        {
+          "finding_id": "course-ai21-model-selection-learner-outcome-gap",
+          "summary": "実在学習者が現行AI21 model/platformを再現可能に選定できた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名の開始/完了、platform選択、dated endpoint成功、rubric score、cost予測誤差、再現率、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5150",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-ai21-model-source-platform-contract"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 28438d008d072ed5a0c96614804e258c62f0d81b",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic AI21 model-availability winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: source 404, current AI21 Jamba and platform availability documentation, and the named tracked course migration were inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5150,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5150",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T061237+0900:5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-ai21-model-decision-rubric-gap",
+          "course-ai21-cost-quality-verification-gap",
+          "course-ai21-model-selection-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T033107+0900",
+      "started_at": "2026-08-31T03:29:37+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "363d108c-37e3-4bb5-a4a2-a34f65416938",
+        "title": "AI21 Labs API 入門",
+        "url": "https://docs.ai21.com/docs/quickstart"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 79.7131
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes one dated-endpoint lab, run one cohort and compare source reachability, first-call success, 60-minute completion, rubric score, token-cost prediction error, support contacts, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-ai21-deprecated-api-contract",
+          "summary": "掲載URLとAI21 SaaSモデル名が現行公式契約から外れている",
+          "severity": "p1",
+          "suggested_action": "source_urlを現行SDKページへ更新し、AI21推奨どおりdated endpointまたはjamba-large/miniを選び、ChatMessageを用いた一つの最小exampleと移行注記を掲載する。"
+        },
+        {
+          "finding_id": "course-ai21-reproducible-lab-gap",
+          "summary": "versioned environment、期待出力、評価rubric、合格閾値がない",
+          "severity": "p1",
+          "suggested_action": "Python/ai21 SDK pin、AI21_API_KEY環境変数、dated model endpoint、fixture、run command、expected output、failure table、rubric、合格閾値を一つの60分labにする。"
+        },
+        {
+          "finding_id": "course-ai21-pricing-evidence-gap",
+          "summary": "固定価格表と無料トライアル記述の検証日・計算課題がない",
+          "severity": "p2",
+          "suggested_action": "価格を現行pricing URLへの日付付き参照へ置換し、API usage fieldから入力・出力token費用を算出する課題と許容誤差を追加する。"
+        },
+        {
+          "finding_id": "course-ai21-learner-outcome-gap",
+          "summary": "実在学習者が現行AI21 APIを再現し費用と品質を判断できた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、初回成功、rubric score、token費用予測誤差、再現率、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5144",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-ai21-deprecated-api-contract"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 139410e80d48f9ec3196e614cf877f71d0446a2d",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic AI21 Labs API winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: current AI21 SDK, Jamba, API, and pricing docs plus the named tracked migration inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5144,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5144",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T033107+0900:363d108c-37e3-4bb5-a4a2-a34f65416938",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-ai21-reproducible-lab-gap",
+          "course-ai21-pricing-evidence-gap",
+          "course-ai21-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T030006+0900",
+      "started_at": "2026-08-31T03:00:06+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "6dba658f-c89c-4a8e-86c6-750c26d51fa2",
+        "title": "Agno エージェント設計パターン & 料金 (2026)",
+        "url": "https://docs.agno.com/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 72.6763
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes a dated architecture-and-TCO lab, run one cohort and compare 60-minute completion, architecture rubric, model-call and latency estimates, TCO estimate error, reproducibility, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agno-pricing-contract-gap",
+          "summary": "料金表が現行Free・Pro・Enterprise体系と一致せず総運用費の境界もない",
+          "severity": "p1",
+          "suggested_action": "確認日付きでFree $0、Pro $150/月、3 seats、1 live connection、追加seat $30/月、追加connection $95/月、Enterprise customを示し、別欄でmodel token、cloud compute、database/storage、運用工数を入力する月額TCO worksheetと更新手順を追加する。"
+        },
+        {
+          "finding_id": "course-agno-architecture-decision-gap",
+          "summary": "Team modeが現行仕様と一致せずAgent・Team・Workflowを選ぶ決定課題がない",
+          "severity": "p1",
+          "suggested_action": "現行coordinate、route、broadcast、tasksとWorkflowを反映し、同じ業務要件をAgent、Team、Workflowの三案で設計して、役割数、制御の決定性、失敗回復、model call、latency、token、監査性から一案を選ぶ60分labとrubricを追加する。"
+        },
+        {
+          "finding_id": "course-agno-verification-gap",
+          "summary": "実行環境、期待出力、失敗診断、提出物、rubric、合格閾値がない",
+          "severity": "p1",
+          "suggested_action": "Python/Agno pin、credential、fixture、run command、expected output、failure table、architecture/TCO提出物、rubric、合格閾値を一つの検証contractとして公開する。"
+        },
+        {
+          "finding_id": "course-agno-design-learner-outcome-gap",
+          "summary": "実在学習者が構成と費用を適切に選べた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、architecture rubric、TCO見積り誤差、実行成功、再設計、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5142",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agno-pricing-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main d2892ac6eb1429f296321e8a1b88a27b8a20cdee",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic Agno design-and-pricing winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: current Agno Agent, Team, Workflow, orchestration, quickstart, and pricing pages plus the named tracked migration inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5142,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5142",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T030006+0900:6dba658f-c89c-4a8e-86c6-750c26d51fa2",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agno-architecture-decision-gap",
+          "course-agno-verification-gap",
+          "course-agno-design-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260830T230009+0900",
+      "started_at": "2026-08-30T23:00:09+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "41283504-615b-4911-9ebb-af81298a5770",
+        "title": "Agno API 入門 — Memory × Knowledge × Tools エージェント構築",
+        "url": "https://docs.agno.com/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 72.1282
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 96.0,
+        "scores": {
+          "complete": 90,
+          "logical": 100,
+          "evidence": 90,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner replaces the examples with one commit-pinned workflow, run one cohort and compare setup success, 60-minute completion, answer-quality rubric, mis-memory rate, latency, token use, storage, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agno-api-current-contract-gap",
+          "summary": "掲載されたMemory・Knowledge APIが現行公式例と一致せずversionも固定されていない",
+          "severity": "p1",
+          "suggested_action": "Agnoの固定versionまたはcommitを明記し、現行のSqliteDb、MemoryManager、Knowledge、vector store、one toolを使う一つの実行例へ置換して、Python version、install command、credential、期待出力、代表的エラー、合格条件を付ける。"
+        },
+        {
+          "finding_id": "course-agno-versioned-environment-gap",
+          "summary": "環境manifest、期待出力、失敗診断、評価方法、合格閾値がない",
+          "severity": "p1",
+          "suggested_action": "Python/Agno pin、provider key、DB/vector backend、fixture、run command、expected output、failure table、rubric、合格閾値を一つの検証contractとして公開する。"
+        },
+        {
+          "finding_id": "course-agno-integrated-lab-gap",
+          "summary": "Memory × Knowledge × Toolsを同じtaskで統合・比較する提出物とrubricがない",
+          "severity": "p1",
+          "suggested_action": "固定taskをstateless、memoryのみ、knowledgeのみ、tools統合構成で実行し、回答品質、再現率、wall time、token、storage、誤記憶を比較する60分labとrubricを設ける。"
+        },
+        {
+          "finding_id": "course-agno-api-learner-outcome-gap",
+          "summary": "実在学習者が現行Agnoで統合agentを再現し設計と費用を判断できた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、setup成功、rubric score、誤記憶率、token/latency/storage差、再現率、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5126",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agno-api-current-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 1f9feb474a305d6a7c1b9e2bfc65663e13c21238",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1080, reviewable=535, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic Agno API winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: current Agno tools, memory, and knowledge docs plus named tracked migration inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5126,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5126",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260830T230009+0900:41283504-615b-4911-9ebb-af81298a5770",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agno-versioned-environment-gap",
+          "course-agno-integrated-lab-gap",
+          "course-agno-api-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260830T162547+0900",
+      "started_at": "2026-08-30T16:25:47+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "0ba849ce-c494-495f-b7c8-b7185f2e2a95",
+        "title": "Agno (旧 phidata) — Python-native エージェントフレームワーク (Memory / Knowledge / Tools)",
+        "url": "https://www.agno.com/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 72.567
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner replaces the examples with one commit-pinned v3 workflow, run one cohort and compare setup success, 60-minute completion, answer-quality rubric, mis-memory rate, migration row-count equality, latency, token use, storage, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agno-v3-api-drift",
+          "summary": "掲載されたmemory・knowledge APIが公式v3.0.1 quickstartと一致せずversionも固定されていない",
+          "severity": "p1",
+          "suggested_action": "Agno v3.0.1または固定commitを明記し、公式SqliteDb、MemoryManager、Knowledge、vector databaseを使う一つの実行例へ置換して、開始コマンド、期待出力、代表的エラー、合格条件を付ける。"
+        },
+        {
+          "finding_id": "course-agno-v3-migration-contract-gap",
+          "summary": "v2からv3へのrun storage移行と後方互換性を扱うenvironment contractがない",
+          "severity": "p1",
+          "suggested_action": "Python、agno version、DB backend、fresh DB前提、v2 fixture、dry-run migration、row-count検証、backup/rollback、credential要否を一つのenvironment manifestとmigration exerciseへ固定する。"
+        },
+        {
+          "finding_id": "course-agno-memory-knowledge-lab-gap",
+          "summary": "memoryとknowledgeの役割を同じtaskで比較する提出物、rubric、cost traceがない",
+          "severity": "p1",
+          "suggested_action": "固定taskをstateless、memoryのみ、knowledgeのみ、統合構成で実行し、回答品質、再現率、wall time、token、storage、誤記憶を比較する60分labを設ける。"
+        },
+        {
+          "finding_id": "course-agno-learner-outcome-gap",
+          "summary": "実在学習者が現行Agnoで統合agentを再現し費用と設計を判断できた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、setup成功、rubric score、誤記憶率、token/latency/storage差、再現率、職場適用を一cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5093",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agno-v3-api-drift"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 4ce2b9ec8aa58e77647862097fdd5d63c5c9a563",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1080, reviewable=535, excluded_missing_source_url=536, evidence_complete=5",
+          "passed: deterministic Agno winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: Agno v3.0.1 release and current memory/knowledge quickstarts plus named tracked migrations inspected separately",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5093,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5093",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260830T162547+0900:0ba849ce-c494-495f-b7c8-b7185f2e2a95",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agno-v3-migration-contract-gap",
+          "course-agno-memory-knowledge-lab-gap",
+          "course-agno-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260830T130051+0900",
+      "started_at": "2026-08-30T13:00:51+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "c2dc853b-071e-479c-acc8-cbe679cc510d",
+        "title": "AgentVerse (OpenBMB/清華大学) — マルチエージェントシミュレーション・役割ベース協調・動的チーム編成 (9/9)",
+        "url": "https://github.com/OpenBMB/AgentVerse"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 74.5105
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner replaces the example with one commit-pinned official Simulation or TaskSolving workflow, run one cohort and compare import success, 60-minute completion, rubric gain, role-selection justification, wall time, and token or backend cost."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agentverse-nonexistent-api-example",
+          "summary": "実行例のAgentVerse、ConversationAgent、TaskDrivenAgentVerseが公式package exportと一致しない",
+          "severity": "p1",
+          "suggested_action": "公式commitを固定し、実在するSimulationまたはTaskSolvingと公式CLIだけで一つのrole-based exampleを再構成し、開始コマンド、期待出力、代表的エラー、合格条件を明示する。"
+        },
+        {
+          "finding_id": "course-agentverse-version-stability-contract-gap",
+          "summary": "refactor中のsimulationとstable release、main commit、依存環境を区別するversion contractがない",
+          "severity": "p1",
+          "suggested_action": "確認日、repository commit、利用framework、stable branch、Python、model backend、credential要否、依存file、既知のrefactor制約を一組のenvironment manifestとして固定する。"
+        },
+        {
+          "finding_id": "course-agentverse-role-collaboration-lab-gap",
+          "summary": "役割分担と動的group compositionを一つのtaskで比較する提出物とrubricがない",
+          "severity": "p1",
+          "suggested_action": "固定taskでsingle agent、固定role team、条件付きrole追加を各1回実行し、品質rubric、wall time、token/cost、役割追加理由を比較する60分labを設ける。"
+        },
+        {
+          "finding_id": "course-agentverse-learner-outcome-gap",
+          "summary": "実在学習者がrole-based collaborationを再現し判断へ使えた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、import成功、rubric score、role選択理由、token/cost差、再現率、職場適用を1 cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5049",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agentverse-nonexistent-api-example"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch fast-forwarded to origin/main 2e6eac446879e0e0b51d846e0fc0ddfe5f20b8c2",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1079, reviewable=534, excluded_missing_source_url=536, evidence_complete=3",
+          "passed: deterministic winner from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: AgentVerse repository, package exports, paper v3, seed migration, named page, and named provider-evidence test inspected",
+          "executed once successfully: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 5049,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5049",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260830T130051+0900:c2dc853b-071e-479c-acc8-cbe679cc510d",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-agentverse-version-stability-contract-gap",
+          "course-agentverse-role-collaboration-lab-gap",
+          "course-agentverse-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260829T002706+0900",
+      "started_at": "2026-08-29T00:27:06+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "50609809-2da6-41ba-9c35-4bbec9668493",
+        "title": "Agentless — 最小構成バグ修正エージェント・エージェントレス設計哲学・SWE-bench高効率 (9/9)",
+        "url": "https://github.com/OpenAutoCoder/Agentless"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 72.7025
+      },
+      "status": "production_verified",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner adds a versioned evidence contract, run one cohort on a fixed SWE-bench issue and compare completion rate, localization accuracy, test pass rate, wall time, and API-cost forecast error against the explanation-only course."
+      },
+      "findings": [
+        {
+          "finding_id": "course-agentless-versioned-efficiency-contract-gap",
+          "summary": "『SWE-bench高効率』を支えるrelease・model・benchmark subset・cost基準が固定されていない",
+          "severity": "p1",
+          "suggested_action": "primary paperと公式release artifactを紐付け、Agentless version、model、SWE-bench subset、resolved count/rate、平均API費用、確認日を一組のversioned evidence blockとして公開する。"
+        },
+        {
+          "finding_id": "course-agentless-one-issue-lab-gap",
+          "summary": "3段階設計を一つのissueで再現する短時間labと成功条件がない",
+          "severity": "p1",
+          "suggested_action": "固定した1 SWE-bench issueで疑わしいfile、edit location、候補patch、regression/reproduction result、最終patchを提出する60分labを追加する。"
+        },
+        {
+          "finding_id": "course-agentless-runtime-cost-trace-gap",
+          "summary": "環境pin、候補数、token/API費用、wall timeを残す再現traceがない",
+          "severity": "p1",
+          "suggested_action": "Python、Agentless release、dataset revision、model、候補数、threads、token、API費用、wall time、test結果を1 run manifestへ保存する。"
+        },
+        {
+          "finding_id": "course-agentless-learner-outcome-gap",
+          "summary": "実在学習者がrepair workflowを再現し実務判断へ使えた証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名のlab開始/完了、localization正解、test結果、費用予測差、再現率、職場適用を1 cohortで取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "対策済み・Issue #4982 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-agentless-versioned-efficiency-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean branch equals origin/main 782c5b6b2c24936f6c8b7987376e3db485d0d588",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1078, reviewable=533, excluded_missing_source_url=536",
+          "passed: deterministic winner from fresh catalog",
+          "passed: Agentless repository, SWE-bench guide, primary paper, and named source/test paths inspected",
+          "executed once successfully against shared history root after input schema correction: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4982,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4982",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260829T002706+0900:50609809-2da6-41ba-9c35-4bbec9668493",
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "07434f750b30d914f124e299bcfa9a13f42495bf",
+          "workflow_run": "33294134019",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33294134019/job/99211875004",
+          "pr_number": 5048,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5048",
+          "production_url": null,
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-agentless-one-issue-lab-gap",
+          "course-agentless-runtime-cost-trace-gap",
+          "course-agentless-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T235300+0900",
+      "started_at": "2026-08-28T23:53:00+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
+        "title": "Adobe Firefly 最新情報",
+        "url": "https://firefly.adobe.com/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 78.4601
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After a dated source contract is added by the production-data owner, run one cohort through the August batch-interface task and compare completion time, usable-output rate, and stale-source detection with the overview-only course."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-latest-source-contract-gap",
+          "summary": "『最新情報』コースの登録出典が日付付きrelease sourceではなく一般アプリ入口である",
+          "severity": "p1",
+          "suggested_action": "production data所有者がAdobe公式What's newを一次出典として追加し、確認日、最新release month、対象feature、stale判定を公開契約として検証する。"
+        },
+        {
+          "finding_id": "course-firefly-change-to-workflow-gap",
+          "summary": "release差分を実務workflowへ変換する短時間課題がない",
+          "severity": "p1",
+          "suggested_action": "直近releaseから1機能を選び、旧workflow、新workflow、入力、出力、所要時間、採用基準を比較する30分課題を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-freshness-automation-gap",
+          "summary": "更新確認日、change ledger、freshness threshold、stale fallbackがない",
+          "severity": "p1",
+          "suggested_action": "公式release月と教材確認日を保持し、閾値超過時にstale表示と更新Issueを生成する小さなfreshness contractを設計する。"
+        },
+        {
+          "finding_id": "course-firefly-learner-outcome-gap",
+          "summary": "最新機能が学習成果や実務効率を改善した実在学習者証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名の課題完了、旧新workflow時間、修正回数、usable output、職場適用の最小eventを定義し、1 cohortで比較する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4979",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-latest-source-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean branch equals origin/main 782c5b6b2c24936f6c8b7987376e3db485d0d588",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1078, reviewable=533, excluded_missing_source_url=536",
+          "passed: deterministic winner from fresh catalog",
+          "passed: Adobe app entrance and What's new updated 2026-08-19 plus named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4979,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4979",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260828T235300+0900:f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-firefly-change-to-workflow-gap",
+          "course-firefly-freshness-automation-gap",
+          "course-firefly-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T100917+0900",
+      "started_at": "2026-08-28T10:09:17+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "c1ea41da-b447-4c7b-aee7-630d03c6a516",
+        "title": "Adobe Firefly モデル一覧",
+        "url": "https://helpx.adobe.com/firefly/using/firefly-image-3.html"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 78.0766
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After replacing the source with a monitored current official registry and publishing one 30-minute same-brief two-model comparison lab, measure source-link success, task-fit choice, credits per usable artifact, revision count, completion, and follow-on course conversion for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-source-url-staleness",
+          "summary": "モデル一覧コースの登録出典がHTTP 404で学習者を一次情報へ導けない",
+          "severity": "p1",
+          "suggested_action": "production data所有者が現行Adobe公式モデル情報へ出典を更新し、確認日、HTTP到達性、対象モデル範囲を公開契約として検証する。"
+        },
+        {
+          "finding_id": "course-firefly-task-model-rubric-gap",
+          "summary": "モデル一覧という題名に対して現行モデル分類とtask-to-model選択rubricがない",
+          "severity": "p1",
+          "suggested_action": "確認日付きのAdobe公式registryを基準に、model由来、用途、設定、生成枚数、強み、制約を比較する更新可能な表と選択課題を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-credit-output-economics-gap",
+          "summary": "モデル別creditと生成枚数の差を学習者の成果単価へ変換する比較課題がない",
+          "severity": "p1",
+          "suggested_action": "同じbriefを2種類のmodelで試し、credit、生成枚数、採用枚数、修正回数、所要時間を記録する30分比較課題を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-commercial-safety-boundary-gap",
+          "summary": "商業利用安全という一般化がAdobe proprietary modelとpartner modelの判断責任を分けていない",
+          "severity": "p1",
+          "suggested_action": "Adobe公式記述を出典に、proprietaryとpartner model、学習データ、利用条件、用途適合、商用利用判断を分ける確認課題へ置き換える。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4951",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-source-url-staleness"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean branch equals origin/main 30da8265755cc64583d4e464a6b8af2db31b38d2",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved from fresh catalog",
+          "passed: selected source returned 404; current Adobe text-to-image, credit, and partner-model sources inspected; named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4951,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4951",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-firefly-task-model-rubric-gap",
+          "course-firefly-credit-output-economics-gap",
+          "course-firefly-commercial-safety-boundary-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T021401+0900",
+      "started_at": "2026-08-28T02:14:01+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "955ae2e6-9909-4635-aacd-790ab23aa7c8",
+        "title": "Adobe Firefly とは",
+        "url": "https://firefly.adobe.com/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 76.8689
+      },
+      "status": "production_verified",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After publishing one role-specific 30-minute Firefly artifact lab, measure model-provenance and beta-condition accuracy, capability choice, artifact completion, generative-credit estimate error, and follow-on course conversion for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-commercial-use-claim-boundary",
+          "summary": "商業利用安全という単一正解がnon-beta条件、partner model、法域差を省略する",
+          "severity": "p1",
+          "suggested_action": "Adobe公式FAQを出典に、Adobe modelの学習データ、non-betaの商用利用、betaの製品内表示、partner modelの個別条件、法域ごとの専門確認を分ける判断課題へ置き換える。"
+        },
+        {
+          "finding_id": "course-firefly-capability-map-freshness-gap",
+          "summary": "4機能中心の入門が現行の画像・映像・音声・Boards・partner model構成を説明できない",
+          "severity": "p1",
+          "suggested_action": "確認日付きの公式feature mapを基準に、役割別job-to-be-doneからimage、video、audio、ideation、editing、partner modelの一つを選ぶ比較演習を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-credit-cost-decision-gap",
+          "summary": "standard・premium機能とgenerative creditsを使った作成量・plan適合判断がない",
+          "severity": "p1",
+          "suggested_action": "価格を転記せず公式credit FAQを参照し、指定成果物のstandard/premium区分、月間生成量、利用者数、credit不足時の代替を見積もる更新可能な演習を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-first-artifact-outcome-gap",
+          "summary": "誰が何を作り何をもって成功とするかを示す最初の成果物と学習者証拠がない",
+          "severity": "p2",
+          "suggested_action": "marketing、design、videoの一役割を選び、機能選択、prompt、1成果物、credit見積もり、provenance確認、採用理由を提出する30分課題を計測する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "対策済み・Issue #4945 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-commercial-use-claim-boundary"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded clean branch to origin/main 8c1fd4167279765df2aa79ca6b9d6db62cd65782",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved",
+          "passed: selected source, Adobe FAQ, credits, feature page, and named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12"
+        ],
+        "issue": {
+          "number": 4945,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4945",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8",
+          "remediation_state": "production_verified",
+          "queue_status": "RUNNING",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "6df2949465b0df557a83ebe99bf6d64203dc0e34",
+          "workflow_run": "33641832307",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33641832307/job/100286760628",
+          "pr_number": 5222,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5222",
+          "production_url": null,
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-firefly-capability-map-freshness-gap",
+          "course-firefly-credit-cost-decision-gap",
+          "course-firefly-first-artifact-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260827T232859+0900",
+      "started_at": "2026-08-27T23:28:59+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "746a2878-6a2d-4787-91e2-1778ebdda8ce",
+        "title": "Adobe Firefly API 利用方法",
+        "url": "https://developer.adobe.com/firefly-api/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 77.2379
+      },
+      "status": "production_verified",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After publishing a versioned server-side OAuth and v3 Generate Image lab, measure secret-handling rubric accuracy, first-call success, non-2xx recovery, request-volume estimate error, completion time, and support requests for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-firefly-server-auth-boundary",
+          "summary": "講座名はAPI利用方法を約束するが、公開教材はClient IDとClient Secretを安全なserver-side OAuth経路だけで扱う必須境界を教えていない。",
+          "severity": "p1",
+          "suggested_action": "公式認証ページを出典として、server-side限定、secret非公開、24時間token更新を確認する失敗先行の認証演習と合格条件を追加する。"
+        },
+        {
+          "finding_id": "course-firefly-production-readiness-gap",
+          "summary": "公式のGenerate Image実習は教育用でproduction-readyではないと明記される一方、講座にはversioned endpoint、error handling、logging、usage budget、失敗判定を含む実運用移行課題がない。",
+          "severity": "p1",
+          "suggested_action": "v3 Generate Imageの小規模labを固定し、1件と複数件のrequest、非2xx処理、token refresh、structured logging、上限付きusage budget、production-readiness checklistを採点する。"
+        },
+        {
+          "finding_id": "course-firefly-learner-value-evidence-gap",
+          "summary": "実在学習者が安全な認証、API選択、失敗処理、利用量判断をできた証拠と、誰がどの成果に支払うかを示す講座固有データがない。",
+          "severity": "p2",
+          "suggested_action": "匿名の成果指標として、初回call成功、secret handling、API選択理由、非2xx recovery、使用量見積もり、完了時間を役割別に収集する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "対策済み・Issue #4941 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-firefly-server-auth-boundary"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 8125bd9c0c5f59a44245bd1d7145072e683469f1",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved",
+          "passed: Adobe auth, tutorial, capability overview, and named source/test paths inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: report_only, one reviewer, three findings, CLEAR 100, Issue #4941 linked"
+        ],
+        "issue": {
+          "number": 4941,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4941",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce",
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "49fcad3512a6635a49afe27735ac47d1cc6d18a8",
+          "workflow_run": "33372883094",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33372883094/job/99431227307",
+          "pr_number": 5139,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5139",
+          "production_url": null,
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-firefly-production-readiness-gap",
+          "course-firefly-learner-value-evidence-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260826T230834+0900",
+      "started_at": "2026-08-26T23:08:34+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+        "title": "Adept AI モデル一覧 (2026年)",
+        "url": "https://huggingface.co/adept/fuyu-8b"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 76.6278
+      },
+      "status": "issue_closed",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After adding a dated model inventory and a pinned small-input lab, measure source-table completion, first-run success, GPU memory, estimated cost, license classification accuracy, and completion time for one learner cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "course-fuyu-2026-freshness-mismatch",
+          "summary": "講座名は『モデル一覧 (2026年)』を約束するが、選択先は2023年公開・最終更新のFuyu-8B単一モデルカードで、2026年時点の一覧や現行提供状況を裏づけない。",
+          "severity": "p1",
+          "suggested_action": "講座名を証拠範囲に合わせるか、2026年確認日、対象モデル一覧、各モデルの更新日・ライセンス・提供状態、現行性が確認できない項目を明示した出典表へ置き換える。"
+        },
+        {
+          "finding_id": "course-fuyu-reproducible-evaluation-gap",
+          "summary": "モデルカードには推論例があるが、講座としての固定環境、入力サイズ、必要GPU・メモリ、実行時間、費用、成功・失敗判定を持つ小規模実習がない。",
+          "severity": "p1",
+          "suggested_action": "固定されたTransformers環境と小さな画像入力で、必要資源、期待出力、失敗例、fine-tuning不要の評価範囲を示す再現可能なラボと合格基準を設計する。"
+        },
+        {
+          "finding_id": "course-fuyu-learner-and-commercial-proof-gap",
+          "summary": "実在学習者がライセンス、現行性、モデル制約、再現手順を正しく判断できた証拠と、誰が何の成果に支払うかを示す講座固有データがない。",
+          "severity": "p2",
+          "suggested_action": "匿名の学習成果として、更新日・ライセンス分類、初回実行成功、制約説明、採用可否の根拠、完了時間を収集し、対象学習者別に公開する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_closed",
+        "label": "Issue #4905 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-fuyu-2026-freshness-mismatch"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main f273d2253d34983f51a7996bd8a63ee05fe02a8b",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1077, reviewable=532, excluded_missing_source_url=536",
+          "passed: deterministic winner preserved",
+          "passed: Hugging Face HTTP 200; model card and API metadata inspected; Adept blog Cloudflare challenge disclosed",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: 114 tests",
+          "passed: READY with zero missing packages and no tracked dependency changes",
+          "passed: 2 tests",
+          "passed: no diff errors and clean worktree"
+        ],
+        "issue": {
+          "number": 4905,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4905",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-fuyu-reproducible-evaluation-gap",
+          "course-fuyu-learner-and-commercial-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260826T151103+0900",
+      "started_at": "2026-08-26T15:11:03+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "63c96c0b-834c-4979-b387-ff4d4393aced",
+        "title": "Adept AI とは",
+        "url": "https://www.adept.ai/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 76.4343
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the bounded source-timeline repair, measure official-source click-through and timeline classification accuracy, then test one learner cohort for completion time and correct identification of unknown current product availability."
+      },
+      "findings": [
+        {
+          "finding_id": "course-adept-undated-product-lifecycle",
+          "summary": "tracked日本語overviewが、異なる時点のACT-1 / ACT-2、Fuyu-8B、Adept Agent Platform、Amazonとの関係を出典日と戦略変更の境界なしに現行事実として並べている。",
+          "severity": "p1",
+          "suggested_action": "公式確認日と日付付き一次情報を追加し、ACT-1とFuyu-8Bを歴史的発表、2024年6月更新とAWLを後続戦略として分離し、現行提供は公式サイトで再確認するよう明示する。"
+        },
+        {
+          "finding_id": "course-adept-verifiable-workflow-gap",
+          "summary": "Adept AI とはという講座名に対し、学習者が公式情報から歴史、現行方針、利用可能な製品を検証する実習と合格条件がない。",
+          "severity": "p1",
+          "suggested_action": "4本の日付付き公式記事を用い、技術発表と現行戦略を分類し、不明点をunknownとして残す検証課題と合格基準を設計する。"
+        },
+        {
+          "finding_id": "course-adept-learner-outcome-proof-gap",
+          "summary": "講座固有価値と実在学習者の理解・検証成果を示す証拠が公開情報にない。",
+          "severity": "p2",
+          "suggested_action": "日付付きタイムラインと現行性検証の結果を匿名で収集し、正答率、完了時間、unknownを正しく残せた率を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/gemini_university_provider_evidence_test.dart"
+        ],
+        "lines_changed": 48,
+        "resolved_finding_ids": [
+          "course-adept-undated-product-lifecycle"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main adca34ead",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1076, reviewable=531, excluded_missing_source_url=536",
+          "passed: division-5 excluded and deterministic winner preserved",
+          "passed: homepage HTTP 403 recorded; four dated official posts inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: 94 tests",
+          "passed: READY with zero missing packages and no tracked dependency changes",
+          "passed: 2 tests",
+          "passed"
+        ],
+        "issue": {
+          "number": 4878,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4878",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced",
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "379d95b69c88ce2eeb9b6a1a85ed477f3209ba78",
+          "workflow_run": "32957032879",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/32957032879",
+          "pr_number": null,
+          "pr_url": null,
+          "production_url": null,
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-adept-verifiable-workflow-gap",
+          "course-adept-learner-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260826T071116+0900",
+      "started_at": "2026-08-26T07:11:16+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
+        "title": "01.AI (Yi) API 利用方法",
+        "url": "https://platform.01.ai/docs"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 75.3463
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the bounded trust repair, measure official-document click-through and authenticated model-list confirmation, then test one learner cohort for first-request success rate and median completion time."
+      },
+      "findings": [
+        {
+          "finding_id": "course-01ai-unversioned-provider-claims",
+          "summary": "tracked日本語overviewが検証日なしでYi-Lightningの価格・性能とOpenAI API完全互換を断定し、2024年更新の公式文書との差分や再確認手順を示していない。",
+          "severity": "p1",
+          "suggested_action": "未検証の価格・性能断定を削除し、公式文書の確認日、OpenAI互換形式の位置づけ、認証後のモデル一覧確認、仕様変更可能性を明示する。"
+        },
+        {
+          "finding_id": "course-01ai-verifiable-first-request-gap",
+          "summary": "API利用方法という講座名に対し、講座固有の前提条件、モデル確認、request、期待応答、代表エラー、合格条件が公開講座行にない。",
+          "severity": "p1",
+          "suggested_action": "認証後モデル一覧確認、1回のchat completion、期待応答、401/404境界、合格条件を版付き日本語実習として設計する。"
+        },
+        {
+          "finding_id": "course-01ai-learner-outcome-proof-gap",
+          "summary": "講座固有価値と実在学習者のAPI成果を示す証拠が公開情報にない。",
+          "severity": "p2",
+          "suggested_action": "検証可能な最小課題と匿名の結果提出を設け、初回成功率、完了時間、自己回復率を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/gemini_university_provider_evidence_test.dart"
+        ],
+        "lines_changed": 51,
+        "resolved_finding_ids": [
+          "course-01ai-unversioned-provider-claims"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main 2a3fcd288",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1075, reviewable=530, excluded_missing_source_url=536",
+          "passed: division-5 excluded and deterministic winner preserved",
+          "passed: HTTP 200, Last-Modified 2024-08-23, current shell and cached quickstart inspected",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: analyze, Dart format, full VM tests with coverage, web import smoke, and production web build",
+          "passed: squash merged to main at 42c0491d32b9f95445c0e83ce1cf0f9c0a42634b"
+        ],
+        "issue": {
+          "number": 4855,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4855",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "3c725dd9cf7d81d14504a090bfc471750a7a0147",
+          "workflow_run": "32919898382",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/32919898382",
+          "pr_number": null,
+          "pr_url": null,
+          "production_url": null,
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-01ai-verifiable-first-request-gap",
+          "course-01ai-learner-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260826T061027+0900",
+      "started_at": "2026-08-26T06:10:27+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "5b7e5f70-2652-4949-b00d-6bbc768fbb96",
+        "title": "Adept AI API 入門 (Fuyu-8B)",
+        "url": "https://www.adept.ai/"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 74.9248
+      },
+      "status": "production_verified",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Verify one current official Adept API endpoint or explicitly reclassify the course, then measure one anonymous cohort for first-request success rate and median completion time."
+      },
+      "findings": [
+        {
+          "finding_id": "course-adept-verifiable-api-path-gap",
+          "summary": "API入門という講座名に対し、講座固有のrequest、前提条件、実行順序、成功条件が公開証拠から確認できない。",
+          "severity": "p1",
+          "suggested_action": "検証可能なprovider APIが存在することを先に確認し、認証準備、1回のrequest、期待応答、代表的エラー、合格条件を日本語の短い実習にする。"
+        },
+        {
+          "finding_id": "course-adept-source-verification-gap",
+          "summary": "講座の出典URLがHTTP 403で、Fuyu-8Bを現在利用できるAPIとして裏付ける公式手順を独立検証できない。",
+          "severity": "p1",
+          "suggested_action": "providerの現行公式API文書、利用可否、モデル識別子、確認日を検証し、確認できない間は講座名と学習目標を断定しない。"
+        },
+        {
+          "finding_id": "course-adept-learner-outcome-proof-gap",
+          "summary": "講座固有価値と実在学習者のAPI成果を示す証拠が公開情報にない。",
+          "severity": "p2",
+          "suggested_action": "検証可能な最小課題と匿名の結果提出を設け、初回成功率、完了時間、自己回復率を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "対策済み・Issue #4850 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded to origin/main f22061cce",
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: active=1075, reviewable=530, excluded_missing_source_url=536",
+          "passed: division-5 excluded and deterministic winner preserved",
+          "passed as access evidence: HTTP 403 with Cloudflare challenge",
+          "executed exactly once against shared history root: 125 profiles, seat 12",
+          "passed: 92 shared Tiger tests",
+          "passed: 219 missing package roots hydrated once with enforce-lockfile; tracked files unchanged",
+          "passed: 21 tests",
+          "passed: clean, HEAD equals origin/main f22061cce"
+        ],
+        "issue": {
+          "number": 4850,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4850",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96",
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "8017a3761b9a536126ecf1342090a3a6c5976f11",
+          "workflow_run": "33295179209",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33295179209/job/99214790019",
+          "pr_number": 5060,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5060",
+          "production_url": null,
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-adept-verifiable-api-path-gap",
+          "course-adept-source-verification-gap",
+          "course-adept-learner-outcome-proof-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260824T011146+0900",
+      "started_at": "2026-08-24T01:11:46+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "647dc452-f75d-4dd9-8292-332bada2e2f9",
+        "title": "LLM理論：大規模言語モデルの仕組み — Transformer・Attention・創発的現象 完全解説 (10/10)",
+        "url": "https://en.wikipedia.org/wiki/Large_language_model"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 75.0278
+      },
+      "status": "production_verified",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-llm-capstone-learning-path",
+          "summary": "10/10完結編の名称に対し、Transformer・Attention・創発的現象を結ぶ講座固有の到達目標、読解順序、演習、到達確認が公開面にない。",
+          "severity": "p1",
+          "suggested_action": "冒頭に3つの到達目標と対象節の読解順序を示し、Attentionの情報流と創発性の測定論争を説明する短い概念マップ課題・採点基準を追加する。"
+        },
+        {
+          "finding_id": "course-llm-source-revision-boundary",
+          "summary": "可変な二次資料だけを講座出典にしているが、revision固定、確認日、変化しやすい2026年の主張を一次資料で再確認する境界がない。",
+          "severity": "p1",
+          "suggested_action": "講座に確認日とMediaWiki revision IDを保存し、Transformer原論文、創発性と測定依存性の主要論文など、採点対象の核心主張ごとに一次資料を固定する。"
+        },
+        {
+          "finding_id": "course-llm-learner-outcome-proof",
+          "summary": "講座完了後に実在学習者がTransformer・Attention・創発的現象を区別し統合できたことを示す成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "匿名の概念マップ課題、反論を含む短答問題、完了後自己評価を設け、初回正答率と再学習率を継続集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "対策済み・Issue #4763 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles; 99 unique weight profiles)",
+          "public Data API catalog export: passed (active=1073, reviewable=528)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (one active row; HTTPS source; HTTP 200; revision 1370470611)",
+          "select_reviewer.py: executed exactly once (125 profiles; seat 12; deterministic output saved)",
+          "course_review_issue.py --execute: passed (Issue #4763; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; three proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only history=7; latest cycle 20260824T011146+0900; no missing Issue evidence)",
+          "test_course_review_continuity.py: passed (4 tests)",
+          "test_reviewer_selection.py: passed (14 tests)",
+          "direct Dart TigerReviewLaneStatus contract check: passed (history=7; courses=5; all review_only entries have Issue evidence)",
+          "git diff --check: passed",
+          "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32651352280; public JSON equality verified)"
+        ],
+        "issue": {
+          "number": 4763,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4763",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9",
+          "remediation_state": "production_verified",
+          "queue_status": "EXTERNAL_IN_PROGRESS",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32651352280",
+          "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-llm-capstone-learning-path",
+          "course-llm-source-revision-boundary",
+          "course-llm-learner-outcome-proof"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T232120+0900",
+      "started_at": "2026-08-23T23:21:20+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "e1712bb5-2bca-4fc0-8347-0529513411d3",
+        "title": "01.AI (Yi) とは",
+        "url": "https://www.01.ai/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 74.9711
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-intro-current-scope-map",
+          "summary": "『01.AI (Yi) とは』という講座名に対し、現在の会社・Yiモデル・WorldWise基盤・TrueNorth製品群の関係を日付付きで示す講座固有の導入マップがない。",
+          "severity": "p1",
+          "suggested_action": "講座冒頭に確認日、会社、Yiモデル群、WorldWise基盤、TrueNorth製品群の4層マップと、学習後に説明できるべき3項目を追加する。"
+        },
+        {
+          "finding_id": "course-intro-learner-outcome-proof",
+          "summary": "入門講座が会社・モデル・現行製品の区別に役立ったことを示す実在学習者の課題・完了・成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "5分の分類課題と次に調べる公式ページを選ぶ到達確認を設け、匿名の完了率・初回正答率・受講後自己評価を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4757",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "public Data API catalog export: passed (active=1072, reviewable=527)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (active row; HTTPS source; HTTP 200)",
+          "select_reviewer.py: selection JSON saved once (125 profiles; seat 9; stdout encoding warning did not alter output)",
+          "course_review_issue.py --execute: passed (Issue #4757; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T232120+0900)",
+          "flutter test --no-pub --concurrency=1 test/models/tiger_review_lane_status_test.dart: passed (5 tests)"
+        ],
+        "issue": {
+          "number": 4757,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4757",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-intro-current-scope-map",
+          "course-intro-learner-outcome-proof"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T175240+0900",
+      "started_at": "2026-08-23T17:54:10+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+        "title": "01.AI (Yi) 最新情報",
+        "url": "https://www.01.ai/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 68.8967
+      },
+      "status": "production_verified",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-latest-dated-synthesis",
+          "summary": "『最新情報』講座として、確認日・主要差分・日付付き一次情報を結ぶ講座固有の要約がない。",
+          "severity": "p1",
+          "suggested_action": "講座に確認日、前回からの主要変更、日付付き公式ページへのリンク、旧情報との扱いを明示する短い更新サマリーを追加する。"
+        },
+        {
+          "finding_id": "course-latest-learner-proof",
+          "summary": "最新情報を実務判断へ変換できたかを示す実在学習者の課題・成果証拠がない。",
+          "severity": "p2",
+          "suggested_action": "日付付き3点サマリーと旧情報との差分を作る短い課題を設け、匿名の完了率・正答率・自己評価を集計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "対策済み・Issue #4734 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "public Data API catalog export: passed (active=1071, reviewable=526)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (active row; HTTPS source; HTTP 200)",
+          "select_reviewer.py: passed once (125 profiles; seat 9)",
+          "course_review_issue.py --execute: passed (Issue #4734; cycle dedupe evidence recorded)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T175240+0900)",
+          "flutter test test/models/tiger_review_lane_status_test.dart: passed (4 tests)",
+          "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32629724865; public JSON equality verified)"
+        ],
+        "issue": {
+          "number": 4734,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4734",
+          "status": "existing",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32629724865",
+          "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-latest-dated-synthesis",
+          "course-latest-learner-proof"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T165404+0900",
+      "started_at": "2026-08-23T16:54:04+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+        "title": "01.AI (Yi) モデル一覧",
+        "url": "https://platform.01.ai/docs"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 73.0376
+      },
+      "status": "production_verified",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-model-list-freshness",
+          "summary": "モデル一覧の現行性を検証できる更新日・稼働モデル証拠が講座出典にない。",
+          "severity": "p1",
+          "suggested_action": "公式の稼働モデルAPIまたは更新日のあるモデル表を定期確認し、講座に確認日と差分検証手順を明示する。"
+        },
+        {
+          "finding_id": "course-model-list-learner-proof",
+          "summary": "モデル比較後に学習者が適切なモデルを選べたかを示す実在学習者証拠がない。",
+          "severity": "p2",
+          "suggested_action": "用途・予算・文脈長からモデルを選ぶ短い課題と、匿名集計できる完了・正答指標を設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "対策済み・Issue #4737 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed (125 profiles)",
+          "validate_personas.py: passed (125 profiles)",
+          "public Data API catalog export: passed (active=1071, reviewable=526)",
+          "select_course.py: passed (division-5 excluded; deterministic winner preserved)",
+          "target validation: passed (active row; HTTPS source; reachable)",
+          "select_reviewer.py: passed once (125 profiles; seat 12)",
+          "validate_cycle_report.py: passed (schema 4; lane=course_review; one reviewer; two proposals)",
+          "build_lane_status.py --lane course_review: passed (course-only status; latest cycle 20260823T165404+0900)",
+          "flutter test test/models/tiger_review_lane_status_test.dart: passed (4 tests)",
+          "deploy_lane_to_production.py --lane course_review --execute: passed (workflow 32627164504; public JSON equality verified)"
+        ],
+        "issue": {
+          "number": 4737,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4737",
+          "status": "existing",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615",
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32627164504",
+          "production_url": "https://my-web-app-b67f4.web.app/assets/assets/data/tiger_course_review_status.json",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "course-model-list-freshness",
+          "course-model-list-learner-proof"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T153734+0900",
+      "started_at": "2026-08-23T15:38:16.4383006+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "course",
+        "id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
+        "title": "01.AI (Yi) API 利用方法",
+        "url": "https://platform.01.ai/docs"
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 74.4337
+      },
+      "status": "issue_closed",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "comparison-claim-evidence",
+          "summary": "競合比較の公開主張に出典・確認時点を一貫して結び付ける必要がある。",
+          "severity": "p1",
+          "suggested_action": "競合別の価格・機能主張について、出典URLと最終確認日を管理する別レビューを行う。"
+        },
+        {
+          "finding_id": "comparison-funnel-evidence",
+          "summary": "比較流入から登録までの実測根拠が今回のレビュー入力にない。",
+          "severity": "p2",
+          "suggested_action": "既存計測の匿名集計を別運用で確認し、比較到達・CTA・登録のファネルを根拠化する。"
+        },
+        {
+          "finding_id": "comparison-maintainability",
+          "summary": "比較ページの巨大な単一ソースと専用試験不足が訴求変更の検証コストを高めている。",
+          "severity": "p2",
+          "suggested_action": "別タスクで競合データと表示部を分離し、代表ルートのCTA・比較表をウィジェット試験で固定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_closed",
+        "label": "Issue #4739 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "select_feature.py: passed (13 features)",
+          "select_reviewer.py: passed (125 profiles; JSON output saved)",
+          "public Data API catalog export: passed (active=1071, reviewable=526, excluded source URL=536)",
+          "select_course.py: passed",
+          "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
+          "comparison source and test filename inspection: completed"
+        ],
+        "issue": {
+          "number": 4739,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
+          "status": "existing",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "comparison-claim-evidence",
+          "comparison-funnel-evidence",
+          "comparison-maintainability"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T152316+0900",
+      "started_at": "2026-08-23T15:24:30+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "course",
+        "id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+        "title": "01.AI (Yi) モデル一覧",
+        "url": "https://platform.01.ai/docs"
+      },
+      "reviewer": {
+        "seat": 1,
+        "name": "ドラゴン細井",
+        "selection_score": 79.5059
+      },
+      "status": "issue_closed",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-freshness-review",
+          "summary": "選出講座に出典更新確認の運用が必要。",
+          "severity": "p2",
+          "suggested_action": "公式出典の確認日と更新検知を講座運用で記録し、再確認対象を明示する。"
+        },
+        {
+          "finding_id": "course-outcome-evidence",
+          "summary": "講座選定データに学習成果の根拠がない。",
+          "severity": "p2",
+          "suggested_action": "講座編集の別タスクで、対象者・到達行動・確認方法を根拠付きで管理する。"
+        },
+        {
+          "finding_id": "content-failure-observability",
+          "summary": "教材取得失敗時の事業影響を測定できない。",
+          "severity": "p2",
+          "suggested_action": "別の計測設計レビューで、失敗・再試行・フォールバック表示を匿名かつ最小限に観測する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_closed",
+        "label": "Issue #4738 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "public Data API catalog export: passed (active=1071, reviewable=526)",
+          "select_feature.py: passed",
+          "select_reviewer.py: passed (125 profiles)",
+          "select_course.py: passed",
+          "AI University browser inspection: blocked by browser URL safety policy; no workaround attempted"
+        ],
+        "issue": {
+          "number": 4738,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
+          "status": "existing",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-freshness-review",
+          "course-outcome-evidence",
+          "content-failure-observability"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T152239+0900",
+      "started_at": "2026-08-23T15:22:47+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "course",
+        "id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+        "title": "01.AI (Yi) モデル一覧",
+        "url": "https://platform.01.ai/docs"
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 73.5265
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "ai_university_catalog_pagination",
+          "summary": "AI大学の主カタログ取得をページングし、PostgRESTの1,000行上限を超える有効講座も表示対象にする。",
+          "severity": "p2",
+          "suggested_action": "sort_orderとidで安定順序を付け、1,000件単位で全有効行を取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "主カタログに安定順序のページングを追加し、回帰契約テストを更新した。",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/ai_university_published_video_fetch_contract_test.dart"
+        ],
+        "lines_changed": 27,
+        "resolved_finding_ids": [
+          "ai_university_catalog_pagination"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "flutter test test/pages/ai_university_published_video_fetch_contract_test.dart: passed",
+          "dart analyze changed files: passed"
+        ],
+        "issue": {},
+        "implementation": null,
+        "findings_without_individual_trace": []
+      }
+    }
+  ],
+  "courses": [
+    {
+      "content_id": "e1712bb5-2bca-4fc0-8347-0529513411d3",
+      "provider": "01ai",
+      "title": "01.AI (Yi) とは",
+      "source_url": "https://www.01.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 67.4,
+      "completed_cycles": 1,
+      "last_cycle_utility": 67.4,
+      "last_reviewed_at": "2026-08-23T14:21:20+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "525273ba-539f-4dd4-b436-a6a74a5e8cc5",
+      "provider": "01ai",
+      "title": "01.AI (Yi) 最新情報",
+      "source_url": "https://www.01.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 65.1,
+      "completed_cycles": 1,
+      "last_cycle_utility": 65.1,
+      "last_reviewed_at": "2026-08-23T08:54:10+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "647dc452-f75d-4dd9-8292-332bada2e2f9",
+      "provider": "academic",
+      "title": "LLM理論：大規模言語モデルの仕組み — Transformer・Attention・創発的現象 完全解説 (10/10)",
+      "source_url": "https://en.wikipedia.org/wiki/Large_language_model",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 57.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 57.0,
+      "last_reviewed_at": "2026-08-23T16:11:46+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "22befb67-6147-4a4b-999c-ee1ad6fa9615",
+      "provider": "01ai",
+      "title": "01.AI (Yi) モデル一覧",
+      "source_url": "https://platform.01.ai/docs",
+      "division": 3,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 53.22,
+      "completed_cycles": 3,
+      "last_cycle_utility": 56.25,
+      "last_reviewed_at": "2026-08-23T07:54:04+00:00",
+      "reason": "講座レビュー3回・効用53.2点で3部"
+    },
+    {
+      "content_id": "746a2878-6a2d-4787-91e2-1778ebdda8ce",
+      "provider": "adobe_firefly",
+      "title": "Adobe Firefly API 利用方法",
+      "source_url": "https://developer.adobe.com/firefly-api/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 47.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 47.75,
+      "last_reviewed_at": "2026-08-27T14:28:59+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "2240c679-a2bc-4322-8643-7499385a1bde",
+      "provider": "aider",
+      "title": "Aider — AI ペアプログラマー CLI (Git連携 / 複数ファイル編集 / 22k+ Stars)",
+      "source_url": "https://aider.chat/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 45.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 45.75,
+      "last_reviewed_at": "2026-08-31T12:14:01+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
+      "provider": "adept",
+      "title": "Adept AI モデル一覧 (2026年)",
+      "source_url": "https://huggingface.co/adept/fuyu-8b",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 42.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 42.75,
+      "last_reviewed_at": "2026-08-26T14:08:34+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "256fce47-54de-4716-ad2c-478bc2e9613b",
+      "provider": "aider",
+      "title": "Aider モデル選択 & コスト最適化 — Claude / DeepSeek / GPT-4o 比較 (2026)",
+      "source_url": "https://aider.chat/docs/config/options.html",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 42.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 42.0,
+      "last_reviewed_at": "2026-09-02T09:34:25+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
+      "provider": "ai21",
+      "title": "AI21 Labs 概要",
+      "source_url": "https://www.ai21.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 40.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 40.25,
+      "last_reviewed_at": "2026-08-31T04:41:03+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "63c96c0b-834c-4979-b387-ff4d4393aced",
+      "provider": "adept",
+      "title": "Adept AI とは",
+      "source_url": "https://www.adept.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 39.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 39.75,
+      "last_reviewed_at": "2026-08-26T06:11:03+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "955ae2e6-9909-4635-aacd-790ab23aa7c8",
+      "provider": "adobe_firefly",
+      "title": "Adobe Firefly とは",
+      "source_url": "https://firefly.adobe.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 38.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 38.75,
+      "last_reviewed_at": "2026-08-27T17:14:01+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "0ba849ce-c494-495f-b7c8-b7185f2e2a95",
+      "provider": "agno",
+      "title": "Agno (旧 phidata) — Python-native エージェントフレームワーク (Memory / Knowledge / Tools)",
+      "source_url": "https://www.agno.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 37.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 37.0,
+      "last_reviewed_at": "2026-08-30T07:25:47+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "6dba658f-c89c-4a8e-86c6-750c26d51fa2",
+      "provider": "agno",
+      "title": "Agno エージェント設計パターン & 料金 (2026)",
+      "source_url": "https://docs.agno.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 34.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 34.75,
+      "last_reviewed_at": "2026-08-30T18:00:06+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "0ee90f87-2319-4b2f-af0f-d298083c752c",
+      "provider": "aider",
+      "title": "Aider 入門 — インストール・基本操作・Git 連携ワークフロー",
+      "source_url": "https://aider.chat/docs/usage/tutorial.html",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 32.5,
+      "completed_cycles": 1,
+      "last_cycle_utility": 32.5,
+      "last_reviewed_at": "2026-08-31T08:02:08+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "50609809-2da6-41ba-9c35-4bbec9668493",
+      "provider": "agentless",
+      "title": "Agentless — 最小構成バグ修正エージェント・エージェントレス設計哲学・SWE-bench高効率 (9/9)",
+      "source_url": "https://github.com/OpenAutoCoder/Agentless",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 31.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 31.25,
+      "last_reviewed_at": "2026-08-28T15:27:06+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
+      "provider": "ai21",
+      "title": "AI21 Labs — 利用可能モデル (2026)",
+      "source_url": "https://docs.ai21.com/docs/jamba-models",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 31.0,
+      "completed_cycles": 1,
+      "last_cycle_utility": 31.0,
+      "last_reviewed_at": "2026-08-30T21:12:37+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "41283504-615b-4911-9ebb-af81298a5770",
+      "provider": "agno",
+      "title": "Agno API 入門 — Memory × Knowledge × Tools エージェント構築",
+      "source_url": "https://docs.agno.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 30.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 30.25,
+      "last_reviewed_at": "2026-08-30T14:00:09+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "5b7e5f70-2652-4949-b00d-6bbc768fbb96",
+      "provider": "adept",
+      "title": "Adept AI API 入門 (Fuyu-8B)",
+      "source_url": "https://www.adept.ai/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 30.2,
+      "completed_cycles": 1,
+      "last_cycle_utility": 30.2,
+      "last_reviewed_at": "2026-08-25T21:10:27+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
+      "provider": "adobe_firefly",
+      "title": "Adobe Firefly 最新情報",
+      "source_url": "https://firefly.adobe.com/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 29.75,
+      "completed_cycles": 1,
+      "last_cycle_utility": 29.75,
+      "last_reviewed_at": "2026-08-28T14:53:00+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "c1ea41da-b447-4c7b-aee7-630d03c6a516",
+      "provider": "adobe_firefly",
+      "title": "Adobe Firefly モデル一覧",
+      "source_url": "https://helpx.adobe.com/firefly/using/firefly-image-3.html",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 28.5,
+      "completed_cycles": 1,
+      "last_cycle_utility": 28.5,
+      "last_reviewed_at": "2026-08-28T01:09:17+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "c2dc853b-071e-479c-acc8-cbe679cc510d",
+      "provider": "agentverse",
+      "title": "AgentVerse (OpenBMB/清華大学) — マルチエージェントシミュレーション・役割ベース協調・動的チーム編成 (9/9)",
+      "source_url": "https://github.com/OpenBMB/AgentVerse",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 26.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 26.25,
+      "last_reviewed_at": "2026-08-30T04:00:51+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "363d108c-37e3-4bb5-a4a2-a34f65416938",
+      "provider": "ai21",
+      "title": "AI21 Labs API 入門",
+      "source_url": "https://docs.ai21.com/docs/quickstart",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 25.25,
+      "completed_cycles": 1,
+      "last_cycle_utility": 25.25,
+      "last_reviewed_at": "2026-08-30T18:29:37+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
+      "provider": "01ai",
+      "title": "01.AI (Yi) API 利用方法",
+      "source_url": "https://platform.01.ai/docs",
+      "division": 4,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 40.58,
+      "completed_cycles": 2,
+      "last_cycle_utility": 39.25,
+      "last_reviewed_at": "2026-08-25T22:11:16+00:00",
+      "reason": "講座レビュー2回・効用40.6点で4部"
+    }
+  ]
+}

@@ -134,4 +134,37 @@ void main() {
     expect(find.text('Realtime comment'), findsOneWidget);
     expect(latestCount, 4);
   });
+
+  testWidgets('falls back to manual refresh after a realtime disconnect', (
+    tester,
+  ) async {
+    final service = _FakeNoteCommentsService(<NoteComment>[]);
+    addTearDown(service.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 640,
+            child: NoteCommentsPanel(
+              noteId: 1,
+              service: service,
+              currentUserId: 'user-1',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    service.controller.addError(
+      'RealtimeSubscribeException(status: '
+      'RealtimeSubscribeStatus.channelError, details: '
+      'RealtimeCloseEvent(code: 1000, reason: ))',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('手動更新'), findsOneWidget);
+    expect(find.text('リアルタイム'), findsNothing);
+  });
 }

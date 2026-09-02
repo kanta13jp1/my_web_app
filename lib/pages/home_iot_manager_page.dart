@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// ホーム IoT 管理ページ
 /// スマートデバイス一覧・状態制御・自動化ルール。
@@ -12,7 +13,13 @@ class HomeIotManagerPage extends StatefulWidget {
 }
 
 class _HomeIotManagerPageState extends State<HomeIotManagerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['devices', 'automations'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

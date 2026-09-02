@@ -1,6 +1,6 @@
 # Asset Management AI Model Evaluation Plan
 
-Last updated: 2026-05-17
+Last updated: 2026-08-29
 
 ## Purpose
 
@@ -42,6 +42,7 @@ The executable bench foundation lives in:
 | Frontend | Add a compact asset-management UI panel | Render-safe Flutter diff and golden/manual smoke note |
 | Agent | Issue to branch to PR to CI summary | Complete PR body, checks, and cleanup |
 | Research | Summarize model/source changes into WBS actions | Source links and non-duplicated Issue routing |
+| Advice suppression | Respect a card's completed one-shot-payment change record | No repeated setup-change prompt; deterministic monthly payoff target remains |
 
 ## Metrics
 
@@ -69,6 +70,13 @@ The executable bench foundation lives in:
 - Image/video models are not part of money calculation. They can support docs,
   demos, or user education after compliance review.
 - Money calculations remain deterministic Dart/SQL logic.
+- Card usage policy (`card_usage_policies`) is deterministic application state,
+  not model memory. When `enforce_one_shot` is true, prompts must omit further
+  instructions to call the issuer or change the payment setting for that card.
+  The calculated balance-reduction monthly target must remain in the report.
+- Evaluation fixtures must cover reload of `changed_at` and the audit memo,
+  suppression for only the matching card ID, and restoration of the ordinary
+  setup advice when the completion flag is turned off.
 - AI can explain already-calculated values, generate checklists, or propose
   developer tasks.
 - #2521 routing defaults must cite a `scripts/internal_ai_bench.py` report or

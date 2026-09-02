@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-07-04",
+    "date": "2026-09-01",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-07-04T00:00:00Z",
+  "generatedAt": "2026-09-01T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -26,406 +26,405 @@
       "category": "release",
       "changeCategories": [
         "automation",
-        "docs",
         "feature",
         "fix"
       ],
       "changes": [
         {
-          "category": "fix",
-          "id": "pr-3766",
+          "category": "automation",
+          "id": "pr-5152",
           "links": [
             {
-              "title": "PR #3766",
+              "title": "PR #5152",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3766"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5152"
             }
           ],
-          "mergedAt": "2026-07-04T04:06:04Z",
-          "summary": "#3766 fix(x-share): URLをリプライへ回す + 動画をトレンド反映で毎回変化 (#3764)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3763",
-          "links": [
-            {
-              "title": "PR #3763",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3763"
-            }
-          ],
-          "mergedAt": "2026-07-04T02:47:42Z",
-          "summary": "#3763 fix(viral-video): Hedra音声アセット(audio_id)復活+ゲート非依存化+診断常時付記 (#3751)"
+          "mergedAt": "2026-09-01T17:21:18Z",
+          "summary": "#5152 ci: bump the github-actions group across 1 directory with 5 updates"
         },
         {
           "category": "feature",
-          "id": "pr-3760",
+          "id": "pr-5153",
           "links": [
             {
-              "title": "PR #3760",
+              "title": "PR #5153",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3760"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5153"
             }
           ],
-          "mergedAt": "2026-07-03T14:37:21Z",
-          "summary": "#3760 [CI/CD自動最適化] 2026-07-03 (concurrency追加 + cron 6h削減)"
+          "mergedAt": "2026-09-01T16:50:20Z",
+          "summary": "#5153 deps: bump the python-dependencies group with 3 updates"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5192",
+          "links": [
+            {
+              "title": "PR #5192",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5192"
+            }
+          ],
+          "mergedAt": "2026-09-01T16:49:18Z",
+          "summary": "#5192 feat: publish YouTube lesson for Claude Code 101 your first prompt"
         },
         {
           "category": "fix",
-          "id": "pr-3752",
+          "id": "pr-5188",
           "links": [
             {
-              "title": "PR #3752",
+              "title": "PR #5188",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3752"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5188"
             }
           ],
-          "mergedAt": "2026-07-02T18:51:31Z",
-          "summary": "#3752 fix(viral-video): OpenAI TTS無条件フォールバック + speech_chain診断 (#3751)"
+          "mergedAt": "2026-09-01T16:20:18Z",
+          "summary": "#5188 fix(asset-management): resolve RenderBox layout failure in card reconciliation table (#5187)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5168",
+          "links": [
+            {
+              "title": "PR #5168",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5168"
+            }
+          ],
+          "mergedAt": "2026-09-01T09:48:33Z",
+          "summary": "#5168 fix(seo): prerender legal trust routes"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5174",
+          "links": [
+            {
+              "title": "PR #5174",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5174"
+            }
+          ],
+          "mergedAt": "2026-09-01T09:33:38Z",
+          "summary": "#5174 test: align Kochi official endorsement counts with 2026-08-31 snapshot"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5186",
+          "links": [
+            {
+              "title": "PR #5186",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5186"
+            }
+          ],
+          "mergedAt": "2026-09-01T05:12:42Z",
+          "summary": "#5186 fix(video): enable guarded scheduled improvement control"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5172",
+          "links": [
+            {
+              "title": "PR #5172",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5172"
+            }
+          ],
+          "mergedAt": "2026-09-01T00:19:38Z",
+          "summary": "#5172 feat: enrich Tiger reviewer profiles round 9"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5173",
+          "links": [
+            {
+              "title": "PR #5173",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5173"
+            }
+          ],
+          "mergedAt": "2026-09-01T00:07:25Z",
+          "summary": "#5173 test: align Kochi endorsement expectations"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5170",
+          "links": [
+            {
+              "title": "PR #5170",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5170"
+            }
+          ],
+          "mergedAt": "2026-08-31T17:46:00Z",
+          "summary": "#5170 feat: publish YouTube lesson for Claude Code 101 installing"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5162",
+          "links": [
+            {
+              "title": "PR #5162",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5162"
+            }
+          ],
+          "mergedAt": "2026-08-31T16:03:08Z",
+          "summary": "#5162 fix(ai-hub): enforce action access policy"
         },
         {
           "category": "automation",
-          "id": "pr-3703",
+          "id": "pr-5164",
           "links": [
             {
-              "title": "PR #3703",
+              "title": "PR #5164",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3703"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5164"
             }
           ],
-          "mergedAt": "2026-07-02T17:01:39Z",
-          "summary": "#3703 ci: bump the github-actions group across 2 directories with 2 updates"
+          "mergedAt": "2026-08-31T12:29:30Z",
+          "summary": "#5164 ci: exclude Tiger review status files from full deploy and CI triggers (#5156)"
         },
         {
           "category": "fix",
-          "id": "pr-3738",
+          "id": "pr-5139",
           "links": [
             {
-              "title": "PR #3738",
+              "title": "PR #5139",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3738"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5139"
             }
           ],
-          "mergedAt": "2026-07-02T16:48:42Z",
-          "summary": "#3738 fix: keep hedra video generation after speech failures"
+          "mergedAt": "2026-08-31T09:13:45Z",
+          "summary": "#5139 fix: Adobe Firefly API講座の安全運用演習を追加 (#4941)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5134",
+          "links": [
+            {
+              "title": "PR #5134",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5134"
+            }
+          ],
+          "mergedAt": "2026-08-31T08:39:56Z",
+          "summary": "#5134 feat(analytics): report plan economics readiness for #4744"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5147",
+          "links": [
+            {
+              "title": "PR #5147",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5147"
+            }
+          ],
+          "mergedAt": "2026-08-30T20:05:28Z",
+          "summary": "#5147 Allow discovery-backed Notion inventory growth"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5145",
+          "links": [
+            {
+              "title": "PR #5145",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5145"
+            }
+          ],
+          "mergedAt": "2026-08-30T18:59:00Z",
+          "summary": "#5145 Scale guarded cloud Notion inventory drain"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5141",
+          "links": [
+            {
+              "title": "PR #5141",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5141"
+            }
+          ],
+          "mergedAt": "2026-08-30T18:33:28Z",
+          "summary": "#5141 Expand Notion inventory through guarded cloud batches"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5140",
+          "links": [
+            {
+              "title": "PR #5140",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5140"
+            }
+          ],
+          "mergedAt": "2026-08-30T18:10:45Z",
+          "summary": "#5140 Classify remaining Notion inventory in cloud audits"
         },
         {
           "category": "fix",
-          "id": "pr-3735",
+          "id": "pr-5138",
           "links": [
             {
-              "title": "PR #3735",
+              "title": "PR #5138",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3735"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5138"
             }
           ],
-          "mergedAt": "2026-07-01T18:28:55Z",
-          "summary": "#3735 fix: recover hedra presenter video tts"
+          "mergedAt": "2026-08-30T17:47:52Z",
+          "summary": "#5138 Fix Notion cloud apply summary after inventory repair"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5137",
+          "links": [
+            {
+              "title": "PR #5137",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5137"
+            }
+          ],
+          "mergedAt": "2026-08-30T17:28:13Z",
+          "summary": "#5137 Repair staged Notion inventory gaps safely in cloud"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5136",
+          "links": [
+            {
+              "title": "PR #5136",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5136"
+            }
+          ],
+          "mergedAt": "2026-08-30T17:24:05Z",
+          "summary": "#5136 feat(video): persist pending improvement approvals"
         },
         {
           "category": "fix",
-          "id": "pr-3733",
+          "id": "pr-5133",
           "links": [
             {
-              "title": "PR #3733",
+              "title": "PR #5133",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3733"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5133"
             }
           ],
-          "mergedAt": "2026-07-01T11:53:03Z",
-          "summary": "#3733 fix: allow generated audio uploads for viral videos"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3712",
-          "links": [
-            {
-              "title": "PR #3712",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3712"
-            }
-          ],
-          "mergedAt": "2026-06-29T14:48:12Z",
-          "summary": "#3712 fix: fall back to OpenAI TTS for AI secretary videos"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3711",
-          "links": [
-            {
-              "title": "PR #3711",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3711"
-            }
-          ],
-          "mergedAt": "2026-06-29T11:19:23Z",
-          "summary": "#3711 fix: route AI secretary videos through ElevenLabs audio"
+          "mergedAt": "2026-08-30T16:39:01Z",
+          "summary": "#5133 fix(manual): disclose paid plan limits honestly"
         },
         {
           "category": "feature",
-          "id": "pr-3704",
+          "id": "pr-5132",
           "links": [
             {
-              "title": "PR #3704",
+              "title": "PR #5132",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3704"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5132"
             }
           ],
-          "mergedAt": "2026-06-29T09:38:53Z",
-          "summary": "#3704 deps: update google-genai requirement from <3.0.0,>=2.9.0 to >=2.10.0,<3.0.0 in the python-dependencies group"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3702",
-          "links": [
-            {
-              "title": "PR #3702",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3702"
-            }
-          ],
-          "mergedAt": "2026-06-29T09:38:36Z",
-          "summary": "#3702 deps: bump @playwright/test from 1.61.0 to 1.61.1 in the npm-dev-dependencies group"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3694",
-          "links": [
-            {
-              "title": "PR #3694",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3694"
-            }
-          ],
-          "mergedAt": "2026-06-29T01:31:01Z",
-          "summary": "#3694 Add paid conversion metrics to admin analytics"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3701",
-          "links": [
-            {
-              "title": "PR #3701",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3701"
-            }
-          ],
-          "mergedAt": "2026-06-29T01:21:15Z",
-          "summary": "#3701 Fix AI secretary share video template"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3692",
-          "links": [
-            {
-              "title": "PR #3692",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3692"
-            }
-          ],
-          "mergedAt": "2026-06-27T13:20:42Z",
-          "summary": "#3692 Add revenue funnel attribution for supporter checkout"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3691",
-          "links": [
-            {
-              "title": "PR #3691",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3691"
-            }
-          ],
-          "mergedAt": "2026-06-27T11:43:05Z",
-          "summary": "#3691 Show upgrade dialog on free AI limit"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3690",
-          "links": [
-            {
-              "title": "PR #3690",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3690"
-            }
-          ],
-          "mergedAt": "2026-06-27T11:15:25Z",
-          "summary": "#3690 Add X post metrics optimizer"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3689",
-          "links": [
-            {
-              "title": "PR #3689",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3689"
-            }
-          ],
-          "mergedAt": "2026-06-27T06:53:30Z",
-          "summary": "#3689 Fix freemium landing pricing copy"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3686",
-          "links": [
-            {
-              "title": "PR #3686",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3686"
-            }
-          ],
-          "mergedAt": "2026-06-27T03:47:12Z",
-          "summary": "#3686 feat: handle billing checkout return state"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3682",
-          "links": [
-            {
-              "title": "PR #3682",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3682"
-            }
-          ],
-          "mergedAt": "2026-06-27T01:34:50Z",
-          "summary": "#3682 fix: finish monetization terms landing links"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3679",
-          "links": [
-            {
-              "title": "PR #3679",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3679"
-            }
-          ],
-          "mergedAt": "2026-06-26T10:12:45Z",
-          "summary": "#3679 docs(legal): 特定商取引法ページに運営者情報を記入 (#3640)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3661",
-          "links": [
-            {
-              "title": "PR #3661",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3661"
-            }
-          ],
-          "mergedAt": "2026-06-25T18:36:58Z",
-          "summary": "#3661 fix(billing): Edge Function の env値を .trim() でコピペ空白事故から防御"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3659",
-          "links": [
-            {
-              "title": "PR #3659",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3659"
-            }
-          ],
-          "mergedAt": "2026-06-25T14:51:46Z",
-          "summary": "#3659 feat(billing): AI使用量メータリング + フリーミアム上限ゲート (#3645 #3646)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3652",
-          "links": [
-            {
-              "title": "PR #3652",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3652"
-            }
-          ],
-          "mergedAt": "2026-06-25T14:35:32Z",
-          "summary": "#3652 feat(billing): 特商法・利用規約ページ追加 + 課金導線/返却URL整備 (収益化P0 #3639)"
+          "mergedAt": "2026-08-30T15:52:04Z",
+          "summary": "#5132 feat(video): add authorized cloud publication loop"
         },
         {
           "category": "automation",
-          "id": "pr-3657",
+          "id": "pr-5129",
           "links": [
             {
-              "title": "PR #3657",
+              "title": "PR #5129",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3657"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5129"
             }
           ],
-          "mergedAt": "2026-06-25T14:31:26Z",
-          "summary": "#3657 ci: deploy-prod.yml に Flutter pub キャッシュ追加 (2026-06-25 ci-audit)"
+          "mergedAt": "2026-08-30T15:17:03Z",
+          "summary": "#5129 feat: publish Claude Code workflow lesson in AI University"
         },
         {
-          "category": "docs",
-          "id": "pr-3650",
+          "category": "fix",
+          "id": "pr-5128",
           "links": [
             {
-              "title": "PR #3650",
+              "title": "PR #5128",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3650"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5128"
             }
           ],
-          "mergedAt": "2026-06-25T11:46:54Z",
-          "summary": "#3650 docs: add VS Code terminal troubleshooting guide"
+          "mergedAt": "2026-08-30T15:12:43Z",
+          "summary": "#5128 fix: neutralize unsupported uniqueness claims"
         },
         {
-          "category": "docs",
-          "id": "pr-3638",
+          "category": "fix",
+          "id": "pr-5118",
           "links": [
             {
-              "title": "PR #3638",
+              "title": "PR #5118",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3638"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5118"
             }
           ],
-          "mergedAt": "2026-06-25T11:29:26Z",
-          "summary": "#3638 docs: update AI character principles"
+          "mergedAt": "2026-08-30T14:35:27Z",
+          "summary": "#5118 fix(home): hide feature request exception details"
         },
         {
-          "category": "automation",
-          "id": "pr-3637",
+          "category": "fix",
+          "id": "pr-5121",
           "links": [
             {
-              "title": "PR #3637",
+              "title": "PR #5121",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3637"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5121"
             }
           ],
-          "mergedAt": "2026-06-25T09:29:55Z",
-          "summary": "#3637 ci: disambiguate monthly AI tool watch"
+          "mergedAt": "2026-08-30T14:13:25Z",
+          "summary": "#5121 fix(a11y): isolate landing form accessible names"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5123",
+          "links": [
+            {
+              "title": "PR #5123",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5123"
+            }
+          ],
+          "mergedAt": "2026-08-30T14:08:04Z",
+          "summary": "#5123 fix: preserve WBS columns during Notion cloud import"
         },
         {
           "category": "feature",
-          "id": "pr-3633",
+          "id": "pr-5122",
           "links": [
             {
-              "title": "PR #3633",
+              "title": "PR #5122",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3633"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5122"
             }
           ],
-          "mergedAt": "2026-06-24T14:20:07Z",
-          "summary": "#3633 [CI/CD自動最適化] cancel-in-progress 修正 2 本 2026-06-24"
+          "mergedAt": "2026-08-30T13:55:41Z",
+          "summary": "#5122 feat: AI大学にTOEIC対策機能を追加"
         },
         {
-          "category": "feature",
-          "id": "pr-3631",
+          "category": "fix",
+          "id": "pr-5120",
           "links": [
             {
-              "title": "PR #3631",
+              "title": "PR #5120",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3631"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5120"
             }
           ],
-          "mergedAt": "2026-06-24T05:47:17Z",
-          "summary": "#3631 feat(election): 公開ノートの立憲ベンチマークを週次cronバッチ値へ同期"
+          "mergedAt": "2026-08-30T13:40:41Z",
+          "summary": "#5120 fix: validate Notion WBS writes before cloud apply"
         }
       ],
-      "date": "2026-07-04",
+      "date": "2026-09-01",
       "extensions": {
         "aiToolWatch": {
-          "changedSourceCount": 4,
+          "changedSourceCount": 5,
           "signalCount": 0,
           "source": "docs/ai-tool-watch/latest-report.json"
         }

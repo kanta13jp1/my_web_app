@@ -35,9 +35,7 @@ on:
         default: "5"
         type: string
 
-permissions:
-  contents: read
-  issues: write
+permissions: {}
 
 concurrency:
   group: session-residuals-sync
@@ -45,6 +43,9 @@ concurrency:
 
 jobs:
   sync:
+    permissions:
+      contents: read
+      issues: write
     name: Scan memos + create residual Issues
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -54,21 +55,29 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 5
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
       - name: Resolve params
         id: params
+        env:
+          DAYS_INPUT: ${{ inputs.days || '1' }}
+          APPLY_INPUT: ${{ inputs.apply }}
+          LIMIT_INPUT: ${{ inputs.limit || '5' }}
         run: |
-          DAYS="${{ inputs.days || '1' }}"
-          APPLY="${{ inputs.apply || 'true' }}"   # cron run = true (= dispatch defaults to false for safety)
-          LIMIT="${{ inputs.limit || '5' }}"
+          DAYS="$DAYS_INPUT"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            APPLY="true"
+          else
+            APPLY="$APPLY_INPUT"
+          fi
+          LIMIT="$LIMIT_INPUT"
           echo "days=$DAYS"   >> $GITHUB_OUTPUT
           echo "apply=$APPLY" >> $GITHUB_OUTPUT
           echo "limit=$LIMIT" >> $GITHUB_OUTPUT

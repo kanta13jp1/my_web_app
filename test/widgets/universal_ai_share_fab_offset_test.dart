@@ -41,6 +41,22 @@ void main() {
     );
   });
 
+  test('MUSUBIではDM送信ボタンの上に退避する', () {
+    for (final routePath in <String>['/musubi', '/social-feed']) {
+      expect(
+        resolveAiShareFabBottomOffset(
+          routePath: routePath,
+          screenWidth: 1280,
+        ),
+        kAiShareFabMusubiBottomOffset,
+      );
+    }
+    expect(
+      kAiShareFabMusubiBottomOffset,
+      greaterThan(kAiShareFabDefaultBottomOffset),
+    );
+  });
+
   test('anonymous landing hides only the universal share FAB', () {
     expect(
       shouldShowUniversalAiShareFab(routePath: '/', isLoggedIn: false),
@@ -52,6 +68,25 @@ void main() {
     );
     expect(
       shouldShowUniversalAiShareFab(routePath: '/notes', isLoggedIn: false),
+      isTrue,
+    );
+  });
+
+  test('compact screens never receive a content-obscuring share FAB', () {
+    expect(
+      shouldShowUniversalAiShareFab(
+        routePath: '/ai-university',
+        isLoggedIn: true,
+        screenWidth: 390,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldShowUniversalAiShareFab(
+        routePath: '/ai-university',
+        isLoggedIn: true,
+        screenWidth: 800,
+      ),
       isTrue,
     );
   });

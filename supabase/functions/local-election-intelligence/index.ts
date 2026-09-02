@@ -13,11 +13,28 @@ import {
   X_POST_CANDIDATE_HUB_SOURCE,
 } from "./snapshot_history.ts";
 import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
+import {
+  buildElectionIntelligenceSnapshot,
+  type ElectionModeId,
+  type ElectionModeRegistry,
+  fallbackElectionModeRegistry,
+  fallbackOfficialEndorsementSnapshot,
+  normalizeElectionModeRegistry,
+  normalizeOfficialEndorsementSnapshot,
+  type OfficialEndorsementSnapshot,
+  parseElectionMode,
+  verifyElectionGoalSources,
+} from "./election_mode.ts";
+import {
+  parseGo2SenkyoScheduleHtml,
+  parseNewKokuminElectionListHtml,
+  type ScheduleOverviewEntry,
+} from "./schedule_source_parsers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Max-Age": "86400",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
@@ -38,6 +55,10 @@ const CDP_LOCAL_AUTHORITIES_URL =
 // R28: 立憲実数の repo asset(週次 update_cdp_benchmark.mjs が正本)。
 const CDP_BENCHMARK_ASSET_URL =
   "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/cdp_local_members.json";
+const ELECTION_MODE_REGISTRY_ASSET_URL =
+  "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/kokumin_election_modes.json";
+const OFFICIAL_ENDORSEMENT_ASSET_URL =
+  "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/kokumin_local_endorsements.json";
 const NEW_KOKUMIN_ELECTIONS_URL =
   "https://local-elections.new-kokumin.jp/electionslist/";
 const NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL =
@@ -48,7 +69,7 @@ const MINIMUM_EXPECTED_OFFICIAL_ELECTION_PREFECTURE_LINKS = 10;
 const SCHEDULE_PAST_DAYS = 14;
 const NEXT_UNIFIED_LOCAL_ELECTION_SCHEDULE_END = "2027-04-25";
 // ユーザー要件: 最低でも 1ヶ月分 (30日) の地方選予定を取得する。
-// new-kokumin は 1,014件のデータを返すため cap に余裕を持たせる。
+// new-kokumin は 1,000件超のデータを返すため cap に余裕を持たせる。
 // PS版#112: window 60→90 / cap 100→200
 // Win版#80: cap 200→300 + SCHEDULE_MIN_WINDOW_DAYS=30 の最低保証を追加
 const SCHEDULE_WINDOW_DAYS = 90;
@@ -206,13 +227,6 @@ interface ScheduleCandidateRow {
   statusLabel: string;
   votes: number;
   xHandle: string;
-}
-
-interface ScheduleOverviewEntry {
-  electionName: string;
-  prefecture: string;
-  voteDate: string;
-  detailUrl: string;
 }
 
 interface ScheduleSourceEntries {
@@ -518,6 +532,7 @@ const MANUAL_SCHEDULE_SUPPLEMENTS: ManualScheduleSupplement[] = [
 interface SnapshotRequest {
   action: "snapshot" | "snapshotAndQueue";
   includeAiSummary: boolean;
+  mode: ElectionModeId;
 }
 
 interface MemberDetailRequest {
@@ -548,6 +563,12 @@ serve(async (req) => {
     }
     if (parsedRequest.action === "snapshotAndQueue") {
       requireServiceRole(req);
+    }
+    if (parsedRequest.mode !== "local") {
+      throw new HttpError(
+        409,
+        `Election mode ${parsedRequest.mode} is registered but its collector is not active.`,
+      );
     }
 
     const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
@@ -603,6 +624,12 @@ serve(async (req) => {
     }));
 
     const historical = await fetchHistoricalResult();
+    const electionRegistryResult = await loadElectionModeRegistry();
+    const officialEndorsementResult = await loadOfficialEndorsementSnapshot();
+    const goalVerification = await verifyElectionGoalSources(
+      electionRegistryResult.registry,
+      fetchText,
+    );
     const scrapedScheduledCandidates = (
       await mapWithConcurrency(
         [...officialElectionPrefectureLinks.entries()],
@@ -633,7 +660,19 @@ serve(async (req) => {
         ]
         : []),
       ...scheduleResult.collectionQuality.issues,
+      ...electionRegistryResult.issues,
+      ...officialEndorsementResult.issues,
+      ...goalVerification.issues,
     ];
+
+    const electionIntelligence = buildElectionIntelligenceSnapshot({
+      registry: electionRegistryResult.registry,
+      selectedMode: parsedRequest.mode,
+      verifiedGoalIds: goalVerification.verifiedGoalIds,
+      officialEndorsements: officialEndorsementResult.snapshot,
+      officialCurrentLocalMembers,
+      official2023TotalWins: historical.totalWins,
+    });
 
     const snapshotBase = {
       fetchedAt: new Date().toISOString(),
@@ -649,6 +688,7 @@ serve(async (req) => {
       official2023FirstHalfWins: historical.firstHalfWins,
       official2023SecondHalfWins: historical.secondHalfWins,
       official2023TotalWins: historical.totalWins,
+      electionIntelligence,
       sources: [
         {
           label: "Official members",
@@ -680,6 +720,26 @@ serve(async (req) => {
           category: "official_local_elections",
           note: "Official planned-candidate source.",
         },
+        {
+          label: "Election mode and goal registry",
+          url: ELECTION_MODE_REGISTRY_ASSET_URL,
+          category: "election_intelligence_registry",
+          note:
+            "Versioned mode definitions and official goal-source contracts.",
+        },
+        {
+          label: "Official local-election endorsement snapshot",
+          url: OFFICIAL_ENDORSEMENT_ASSET_URL,
+          category: "official_endorsement_snapshot",
+          note:
+            "Machine-validated snapshot generated from the party's official PDF.",
+        },
+        ...electionIntelligence.goals.map((goal) => ({
+          label: goal.title,
+          url: goal.sourceUrl,
+          category: "official_party_goal",
+          note: `Official goal source (${goal.verificationStatus}).`,
+        })),
         {
           label: "CDP local authorities",
           url: CDP_LOCAL_AUTHORITIES_URL,
@@ -738,6 +798,17 @@ serve(async (req) => {
           scheduleResult.collectionQuality.failedRequiredSourceUrls,
         parserEmptyRequiredScheduleSourceUrls:
           scheduleResult.collectionQuality.parserEmptyRequiredSourceUrls,
+        electionModeRegistryLoaded: electionRegistryResult.issues.length === 0,
+        officialEndorsementSnapshotLoaded:
+          officialEndorsementResult.issues.length === 0,
+        verifiedGoalSourceCount: goalVerification.verifiedGoalIds.length,
+        expectedGoalSourceCount: electionRegistryResult.registry.modes
+          .flatMap((mode) => mode.goals).length,
+        electionIntelligenceIssues: [
+          ...electionRegistryResult.issues,
+          ...officialEndorsementResult.issues,
+          ...goalVerification.issues,
+        ],
         issues: collectionQualityIssues,
       },
     };
@@ -854,6 +925,7 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
     return {
       action: "snapshot",
       includeAiSummary: url.searchParams.get("includeAiSummary") !== "false",
+      mode: parseElectionMode(url.searchParams.get("mode")),
     };
   }
 
@@ -866,12 +938,14 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
       // Persistence runs normally do not need request-time AI prose. The
       // canonical dataset excludes AI fields either way.
       includeAiSummary: body.includeAiSummary === true,
+      mode: parseElectionMode(body.mode),
     };
   }
 
   return {
     action: "snapshot",
     includeAiSummary: body.includeAiSummary !== false,
+    mode: parseElectionMode(body.mode),
   };
 }
 
@@ -1082,6 +1156,40 @@ async function fetchText(url: string): Promise<string> {
     return await response.text();
   } finally {
     clearTimeout(timeoutId);
+  }
+}
+
+async function loadElectionModeRegistry(): Promise<{
+  registry: ElectionModeRegistry;
+  issues: string[];
+}> {
+  try {
+    const registry = normalizeElectionModeRegistry(
+      JSON.parse(await fetchText(ELECTION_MODE_REGISTRY_ASSET_URL)),
+    );
+    return { registry, issues: [] };
+  } catch (_error) {
+    return {
+      registry: fallbackElectionModeRegistry(),
+      issues: ["election_mode_registry_fetch_or_validation_failed"],
+    };
+  }
+}
+
+async function loadOfficialEndorsementSnapshot(): Promise<{
+  snapshot: OfficialEndorsementSnapshot;
+  issues: string[];
+}> {
+  try {
+    const snapshot = normalizeOfficialEndorsementSnapshot(
+      JSON.parse(await fetchText(OFFICIAL_ENDORSEMENT_ASSET_URL)),
+    );
+    return { snapshot, issues: [] };
+  } catch (_error) {
+    return {
+      snapshot: fallbackOfficialEndorsementSnapshot(),
+      issues: ["official_endorsement_snapshot_fetch_or_validation_failed"],
+    };
   }
 }
 
@@ -1492,7 +1600,7 @@ async function fetchScheduleOverviewEntries(
       urls.map(async (url) => {
         try {
           const html = await fetchText(url);
-          const entries = parseScheduleOverviewEntries(html);
+          const entries = parseGo2SenkyoScheduleHtml(html);
           return {
             entries,
             health: {
@@ -1563,65 +1671,6 @@ async function fetchNewKokuminScheduleEntries(): Promise<
       parsedEntryCount: entries.length,
     },
   };
-}
-
-function parseNewKokuminElectionListHtml(
-  html: string,
-): ScheduleOverviewEntry[] {
-  const entries: ScheduleOverviewEntry[] = [];
-  const prefSectionRegex =
-    /<section[^>]+class="[^"]*\bpref-section\b[^"]*"[^>]*>([\s\S]*?)<\/section>/gi;
-  for (const sectionMatch of html.matchAll(prefSectionRegex)) {
-    const sectionHtml = sectionMatch[1] ?? "";
-    const prefTitleMatch = sectionHtml.match(
-      /<h2[^>]+class="[^"]*pref-section-title[^"]*"[^>]*>([\s\S]*?)<\/h2>/i,
-    );
-    const prefecture = normalizeWhitespace(
-      decodeHtml(stripTags(prefTitleMatch?.[1] ?? "")),
-    ).trim();
-    if (!isPrefectureName(prefecture)) continue;
-
-    const itemRegex =
-      /<li[^>]+class="[^"]*\belection-item\b[^"]*"[^>]*>([\s\S]*?)<\/li>/gi;
-    for (const itemMatch of sectionHtml.matchAll(itemRegex)) {
-      const itemHtml = itemMatch[1] ?? "";
-      const nameMatch = itemHtml.match(
-        /<p[^>]+class="[^"]*election-item-name[^"]*"[^>]*>([\s\S]*?)<\/p>/i,
-      );
-      const electionName = normalizeWhitespace(
-        decodeHtml(stripTags(nameMatch?.[1] ?? "")),
-      ).trim();
-      if (!electionName) continue;
-
-      const datesMatch = itemHtml.match(
-        /<p[^>]+class="[^"]*election-item-dates[^"]*"[^>]*>([\s\S]*?)<\/p>/i,
-      );
-      const datesText = normalizeWhitespace(
-        decodeHtml(stripTags(datesMatch?.[1] ?? "")),
-      );
-      const voteDate = extractNewKokuminVoteDate(datesText);
-      if (!voteDate) continue;
-
-      const linkMatch = itemHtml.match(
-        /href="(https?:\/\/local-elections\.new-kokumin\.jp\/form\/[^"]+)"/i,
-      );
-      const detailUrl = linkMatch?.[1]?.trim() ?? "";
-      entries.push({ electionName, prefecture, voteDate, detailUrl });
-    }
-  }
-  return entries;
-}
-
-function extractNewKokuminVoteDate(datesText: string): string {
-  const voteMatch = datesText.match(
-    /投開票[：:]\s*(\d{4}年\d{1,2}月\d{1,2}日)/,
-  );
-  if (voteMatch?.[1]) return extractIsoDate(voteMatch[1]);
-  const termMatch = datesText.match(
-    /任期満了[：:]\s*(\d{4}年\d{1,2}月\d{1,2}日)/,
-  );
-  if (termMatch?.[1]) return extractIsoDate(termMatch[1]);
-  return "";
 }
 
 function buildManualScheduledCandidates(
@@ -1738,57 +1787,6 @@ function mergeScheduledCandidates(
     });
   }
   return [...merged.values()];
-}
-
-function parseScheduleOverviewEntries(html: string): ScheduleOverviewEntry[] {
-  const entries: ScheduleOverviewEntry[] = [];
-  const seen = new Set<string>();
-  let currentVoteDate = "";
-  for (const match of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gsi)) {
-    const rowHtml = match[1] ?? "";
-    const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gsi)].map((
-      cellMatch,
-    ) => cellMatch[1] ?? "");
-    if (cells.length < 2) {
-      continue;
-    }
-    const detectedVoteDate = normalizeSlashedDate(
-      normalizeWhitespace(decodeHtml(stripTags(cells[0]))),
-    );
-    if (detectedVoteDate !== "") {
-      currentVoteDate = detectedVoteDate;
-    }
-    const electionCell = cells.length >= 3 ? cells[1] : cells[0];
-    const prefectureCell = cells.length >= 3 ? cells[2] : cells[1];
-    const detailMatch = electionCell.match(
-      /<a[^>]+href="([^"]*\/local\/senkyo\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/i,
-    );
-    if (!detailMatch || currentVoteDate === "") {
-      continue;
-    }
-    const electionName = normalizeWhitespace(
-      decodeHtml(stripTags(detailMatch[2] ?? "")),
-    ).trim();
-    const prefecture = extractPrefectureLabel(
-      normalizeWhitespace(decodeHtml(stripTags(prefectureCell))),
-    );
-    if (electionName === "" || !isPrefectureName(prefecture)) {
-      continue;
-    }
-    const detailUrl = new URL(detailMatch[1], ELECTION_SCHEDULE_URL).toString();
-    const key = `${currentVoteDate}:${prefecture}:${electionName}:${detailUrl}`;
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    entries.push({
-      electionName,
-      prefecture,
-      voteDate: currentVoteDate,
-      detailUrl,
-    });
-  }
-  return entries;
 }
 
 async function enrichScheduleEntry(

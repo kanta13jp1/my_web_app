@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// ビデオ会議管理ページ
 /// video-meeting-manager Edge Function と連携 (Zoom/Google Meet/Teams競合)
@@ -11,7 +12,14 @@ class VideoMeetingPage extends StatefulWidget {
 }
 
 class _VideoMeetingPageState extends State<VideoMeetingPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['rooms', 'minutes', 'action-items', 'stats'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late TabController _tabController;
   bool _isLoading = false;

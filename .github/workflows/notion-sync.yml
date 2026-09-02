@@ -6,13 +6,13 @@ name: Notion Mirror Sync (hourly)
 # Anthropic / Claude Code outage 時もユーザーが Notion mirror で WBS 閲覧可能。
 #
 # 事前条件 (Win#132 part 5 で登録済):
-#   - Supabase Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
-#   - Supabase Secrets: NOTION_ROADMAP_PAGE_ID / NOTION_MEMORY_DATABASE_ID
+#   - Supabase Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID or DATA_SOURCE_ID
+#   - Supabase Secrets: NOTION_ROADMAP_PAGE_ID / NOTION_MEMORY_DATABASE_ID or DATA_SOURCE_ID
 #   - EF schedule-hub notion.sync_{wbs,roadmap,memory_index}
 
 on:
   schedule:
-    - cron: "10 */2 * * *" # 2時間ごと10分 (2026-06-10 ci-audit: 毎時→2時間, 360runs/月削減)
+    - cron: "10 */4 * * *" # 4時間ごと10分 (2026-06-10 ci-audit: 毎時→2時間 / 2026-07-21 ci-audit: 2時間→4時間, 180runs/月削減)
   workflow_dispatch:
     inputs:
       offset:
@@ -36,27 +36,38 @@ concurrency:
   group: notion-sync
   cancel-in-progress: false # 前回を待って逐次実行 (Notion rate limit 3 req/sec / 350ms sleep)
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   sync-notion:
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: read
     name: Sync project mirrors → Notion
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Call schedule-hub:notion.sync_wbs
         id: sync
+        env:
+          LIMIT_INPUT: ${{ github.event.inputs.limit || '30' }}
+          OFFSET_INPUT: ${{ github.event.inputs.offset || '0' }}
         run: |
+          PAYLOAD=$(jq -n \
+            --arg limit "$LIMIT_INPUT" \
+            --arg offset "$OFFSET_INPUT" \
+            '{action: "notion.sync_wbs", limit: ($limit | tonumber), offset: ($offset | tonumber)}')
           RESP=$(curl -sS -X POST \
             "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
-            -d "{\"action\":\"notion.sync_wbs\",\"limit\":${{ github.event.inputs.limit || '30' }},\"offset\":${{ github.event.inputs.offset || '0' }}}" \
+            -d "$PAYLOAD" \
             --max-time 600)
 
           echo "Response: $RESP"
@@ -102,10 +113,10 @@ jobs:
               echo "::warning::Notion sync EF idle timeout — batch too large for Supabase 150s limit (will retry next hour)"
               exit 0
             fi
-            # Notion API rate limit (HTTP 429) → soft-fail (will retry next hour)
+            # EF 内 retry が尽きた 429 は fail させ、resilience watch が再実行・通知する。
             if echo "$RESP" | grep -q "rate_limited\|\"429\""; then
-              echo "::warning::Notion API rate limited (HTTP 429) — will retry next cron"
-              exit 0
+              echo "::error::Notion API rate limit retries exhausted (HTTP 429)"
+              exit 1
             fi
             # Notion DB-level inaccessible (share with Integration / DB deleted) → always soft-fail
             if echo "$RESP" | grep -q "Could not find database"; then
@@ -260,7 +271,7 @@ jobs:
               sys.exit(0)
           error = str(data.get("error", "unknown"))
           if "notion_not_configured" in error:
-              print("::warning::NOTION_MEMORY_DATABASE_ID not configured yet — skip")
+              print("::warning::Notion memory database/data-source ID not configured yet — skip")
               sys.exit(0)
           print(f"::error::notion.sync_memory_index failed: {error}")
           sys.exit(1)

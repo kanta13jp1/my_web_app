@@ -1,12 +1,10 @@
 name: GitHub Issue Fix
 
-# Open Issue を 1 件ずつ修正レーンに載せるオーケストレーター
-# 10:00 JST に oldest-first で対象 Issue を選び、修正ブランチ + draft PR を自動作成する
-# 以後は通常の CI と ci-auto-fix.yml が小さな整形/自動修復を引き継ぐ
+# Open Issue を明示指定で修正レーンに載せる手動オーケストレーター
+# feature-freeze 中は plan-only draft の自動増加を防ぐため schedule を停止する
+# 実装担当が決まった Issue だけ workflow_dispatch で起動する
 
 on:
-  schedule:
-    - cron: '0 1 * * *' # 10:00 JST
   workflow_dispatch:
     inputs:
       issue_number:
@@ -22,13 +20,17 @@ concurrency:
   group: github-issue-fix
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+permissions: {}
 
 jobs:
   orchestrate:
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
     name: Issue -> Draft PR bootstrap
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -38,14 +40,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           token: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
 
       - name: Step 1 - Select target issue
         id: target
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           REQUESTED_ISSUE: ${{ github.event.inputs.issue_number || '' }}
         with:

@@ -22,13 +22,17 @@ on:
         description: Number of repeated smoke passes for stability
         required: false
         default: "3"
+  workflow_run:
+    workflows:
+      - Deploy to Production
+    types:
+      - completed
 
 concurrency:
   group: minimal-e2e-gate-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   pr-e2e-declaration:
@@ -43,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -51,9 +55,13 @@ jobs:
       - name: Collect changed files
         run: |
           mkdir -p .ci-logs
+          # Three-dot (base...head) diffs from the MERGE BASE = only this PR's
+          # changes. Two separate args is a two-dot diff against the base *tip*,
+          # so files that landed on main after the branch point get attributed
+          # here, turning docs-only PRs into "application code changed".
+          # fetch-depth: 0 above guarantees the merge base is present.
           git diff --name-only \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}" \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
             > .ci-logs/changed-files.txt
 
       - name: Skip if docs-only change
@@ -84,6 +92,23 @@ jobs:
           python scripts/check_no_verify_bypass.py
           --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
+      - name: Test Dependabot pub policy
+        if: steps.docs_check.outputs.docs_only != 'true'
+        run: python scripts/check_dependabot_pub_policy_test.py
+
+      - name: Guard Dependabot pub updates
+        if: steps.docs_check.outputs.docs_only != 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
+        run: |
+          git show \
+            "${{ github.event.pull_request.base.sha }}:pubspec.yaml" \
+            > .ci-logs/pubspec.base.yaml
+          git show \
+            "${{ github.event.pull_request.head.sha }}:pubspec.yaml" \
+            > .ci-logs/pubspec.head.yaml
+          python scripts/check_dependabot_pub_policy.py \
+            --base-pubspec .ci-logs/pubspec.base.yaml \
+            --head-pubspec .ci-logs/pubspec.head.yaml
+
       - name: Check minimal E2E PR contract
         if: steps.docs_check.outputs.docs_only != 'true'
         run: >
@@ -91,142 +116,43 @@ jobs:
           --event "$GITHUB_EVENT_PATH"
           --changed-files .ci-logs/changed-files.txt
 
-      - name: Wait for deterministic CI checks
-        id: deterministic_ci
-        if: steps.docs_check.outputs.docs_only != 'true'
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          python scripts/check_pr_deterministic_ci.py
-          --repo "${{ github.repository }}"
-          --sha "${{ github.event.pull_request.head.sha }}"
-          --changed-files .ci-logs/changed-files.txt
-          --required-check "Lint, Format, and Test"
-          --required-check "Security Check"
-          --timeout-seconds 1800
-          --poll-seconds 20
-          --summary-md .ci-logs/deterministic-ci-summary.md
-
-      - name: Upload deterministic validation summary
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: deterministic-validation-summary
-          path: .ci-logs/deterministic-ci-summary.md
-          if-no-files-found: ignore
-
-      - name: Enforce deterministic CI result
-        if: steps.docs_check.outputs.docs_only != 'true' && steps.deterministic_ci.outcome == 'failure'
-        run: exit 1
-
-  deterministic-validation-comment:
-    name: Deterministic validation PR comment
-    runs-on: ubuntu-latest
-    needs: pr-e2e-declaration
-    if: always() && github.event_name == 'pull_request'
-    permissions:
-      actions: read
-      issues: write
-
-    steps:
-      - name: Download deterministic validation summary
-        continue-on-error: true
-        uses: actions/download-artifact@v8
-        with:
-          name: deterministic-validation-summary
-          path: .ci-logs
-
-      - name: Comment deterministic validation summary
-        if: hashFiles('.ci-logs/deterministic-ci-summary.md') != ''
-        continue-on-error: true
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const fs = require('fs');
-            const path = '.ci-logs/deterministic-ci-summary.md';
-            const marker = '<!-- deterministic-validation-summary -->';
-            const body = `${marker}\n${fs.readFileSync(path, 'utf8')}`;
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              per_page: 100,
-            });
-            const previous = comments.data.find((comment) =>
-              comment.user?.type === 'Bot' && comment.body?.includes(marker)
-            );
-            if (previous) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: previous.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }
-
   public-e2e-stability:
+    permissions:
+      contents: read
     name: Public E2E stability smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
-      - name: Skip if docs-only PR
-        id: docs_check
-        if: github.event_name == 'pull_request'
-        run: |
-          git diff --name-only \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}" \
-            > /tmp/e2e-changed-files.txt
-          DOCS_ONLY=true
-          while IFS= read -r f; do
-            [[ -z "$f" ]] && continue
-            case "$f" in
-              docs/*|memory/*|.claude/*|.codex/*|.agents/*|*.md|.github/ISSUE_TEMPLATE/*|.github/PULL_REQUEST_TEMPLATE.md)
-                ;;
-              *)
-                DOCS_ONLY=false
-                break
-                ;;
-            esac
-          done < /tmp/e2e-changed-files.txt
-          if [ "$DOCS_ONLY" = "true" ] && [ -s /tmp/e2e-changed-files.txt ]; then
-            echo "docs_only=true" >> "$GITHUB_OUTPUT"
-            echo "✅ docs-only PR — E2E smoke skipped (no app code changed)" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "docs_only=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Setup Node
-        if: steps.docs_check.outputs.docs_only != 'true'
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "22"
           cache: npm
 
       - name: Install dependencies
-        if: steps.docs_check.outputs.docs_only != 'true'
         run: npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
+
       - name: Install Chromium
-        if: steps.docs_check.outputs.docs_only != 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Run repeated public smoke tests
-        if: steps.docs_check.outputs.docs_only != 'true'
         run: >
           npm run e2e:smoke --
           --project=chromium
@@ -238,7 +164,6 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/public-smoke-results.json
 
       - name: Run desktop and mobile visual evidence tests
-        if: steps.docs_check.outputs.docs_only != 'true'
         run: >
           npm run e2e:visual --
           --project=chromium
@@ -249,7 +174,7 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-evidence-results.json
 
       - name: Summarize Playwright evidence
-        if: always() && steps.docs_check.outputs.docs_only != 'true'
+        if: always()
         run: |
           node scripts/summarize_playwright_results.mjs \
             playwright-report/public-smoke-results.json \
@@ -257,8 +182,8 @@ jobs:
             --out playwright-report/issue-summary.md
 
       - name: Upload Playwright report
-        if: always() && steps.docs_check.outputs.docs_only != 'true'
-        uses: actions/upload-artifact@v7
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: minimal-e2e-playwright-report
           path: |

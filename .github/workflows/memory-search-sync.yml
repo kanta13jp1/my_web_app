@@ -3,10 +3,9 @@ name: Memory Search Sync
 on:
   workflow_dispatch:
   schedule:
-    - cron: "12 */2 * * *"  # 2026-06-11 ci-audit: 毎時→2時間, 360runs/月削減
+    - cron: "12 */4 * * *"  # 2026-06-11 ci-audit: 毎時→2時間 / 2026-07-21 ci-audit: 2時間→4時間, 180runs/月削減
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: memory-search-sync
@@ -14,10 +13,15 @@ concurrency:
 
 jobs:
   sync:
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Pre-flight budget check
         env:

@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/asset_chat.dart';
+import 'asset_chat_privacy_settings_service.dart';
 import 'offline_secure_mode_settings_service.dart';
 
 typedef AiHubChatInvoker = Future<Map<String, dynamic>> Function(
@@ -147,15 +149,99 @@ class AiHubChatService {
   final SupabaseClient? _supabase;
   final AiHubChatInvoker? _invoker;
   final OfflineSecureModeSettingsService _offlineSettingsService;
+  final AssetChatPrivacySettingsService _assetChatPrivacySettingsService;
 
   const AiHubChatService({
     SupabaseClient? supabase,
     AiHubChatInvoker? invoker,
     OfflineSecureModeSettingsService offlineSettingsService =
         const OfflineSecureModeSettingsService(),
+    AssetChatPrivacySettingsService assetChatPrivacySettingsService =
+        const AssetChatPrivacySettingsService(),
   })  : _supabase = supabase,
         _invoker = invoker,
-        _offlineSettingsService = offlineSettingsService;
+        _offlineSettingsService = offlineSettingsService,
+        _assetChatPrivacySettingsService = assetChatPrivacySettingsService;
+
+  Future<AssetChatResponse> sendAssetChat({
+    required String message,
+    String? threadId,
+    int snapshotMonths = 3,
+    int historyMessages = 8,
+    String? piiMode,
+  }) async {
+    final normalizedMessage = message.trim();
+    if (normalizedMessage.isEmpty) {
+      throw const AiHubChatException('message required');
+    }
+    if (normalizedMessage.length > 4000) {
+      throw const AiHubChatException('message must be at most 4000 characters');
+    }
+    if (_invoker == null) {
+      final client = _supabase ?? Supabase.instance.client;
+      if (client.auth.currentUser == null) {
+        throw const AiHubChatException('login_required');
+      }
+    }
+    if (AiHubChatQuotaGuard.isCoolingDown()) {
+      throw const AiHubChatException('AI quota cooldown');
+    }
+    final resolvedPiiMode = piiMode ??
+        ((await _assetChatPrivacySettingsService.loadMaskMoneyAmounts())
+            ? 'mask'
+            : 'off');
+
+    try {
+      final data = await _invoke(
+        await _withOfflinePolicy({
+          'action': 'ai_hub.asset_chat',
+          'message': normalizedMessage,
+          if (threadId != null && threadId.trim().isNotEmpty)
+            'thread_id': threadId.trim(),
+          'snapshot_months': snapshotMonths.clamp(1, 12),
+          'history_messages': historyMessages.clamp(0, 20),
+          'pii_mode': resolvedPiiMode,
+        }),
+      );
+      final reply = data['reply']?.toString().trim();
+      final responseThreadId = data['thread_id']?.toString().trim();
+      if (data['success'] == true &&
+          reply != null &&
+          reply.isNotEmpty &&
+          responseThreadId != null &&
+          responseThreadId.isNotEmpty) {
+        return AssetChatResponse(
+          threadId: responseThreadId,
+          threadTitle: data['thread_title']?.toString().trim() ?? '',
+          threadCreated: data['thread_created'] == true,
+          reply: reply,
+          usage: AssetChatUsage(
+            tokensIn: _asInt(data['tokens_in']) ?? 0,
+            tokensOut: _asInt(data['tokens_out']) ?? 0,
+            estimatedCostUsd: _asDouble(data['estimated_cost_usd']) ?? 0,
+            provider: data['provider']?.toString().trim() ?? '',
+            model: data['model']?.toString().trim() ?? '',
+          ),
+        );
+      }
+      throw _buildAiHubFailureException(
+        data,
+        fallbackMessage: 'Asset chat response was empty',
+      );
+    } catch (error) {
+      final detail = error.toString();
+      if (RegExp(
+        r'429|quota|rate.?limit',
+        caseSensitive: false,
+      ).hasMatch(detail)) {
+        AiHubChatQuotaGuard.markQuotaExceeded();
+      }
+      if (error is AiHubChatException) {
+        rethrow;
+      }
+      throw AiHubChatException(detail);
+    }
+  }
 
   Future<AiHubChatResponse> sendProviderChat({
     required String message,

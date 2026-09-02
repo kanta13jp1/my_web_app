@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 class ElectionStrategyPage extends StatefulWidget {
   const ElectionStrategyPage({super.key});
@@ -13,7 +14,20 @@ class ElectionStrategyPage extends StatefulWidget {
 }
 
 class _ElectionStrategyPageState extends State<ElectionStrategyPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  // タブ: 戦況マップ / 予測 / 地上戦 / 戦略 / 素材
+  @override
+  List<String> get tabUrlSlugs => const <String>[
+        'map',
+        'forecast',
+        'ground-game',
+        'strategy',
+        'assets',
+      ];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   final TextEditingController _strategyController = TextEditingController();
   late TabController _tabController;

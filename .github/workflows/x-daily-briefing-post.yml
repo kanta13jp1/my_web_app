@@ -42,11 +42,15 @@ concurrency:
   group: x-daily-briefing-post
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   candidate:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:

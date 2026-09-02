@@ -17,6 +17,31 @@ enum InvestmentAssetType {
   }
 }
 
+enum InvestmentTickerValidationError { empty, invalidFormat }
+
+String normalizeInvestmentTicker(String value) => value.trim().toUpperCase();
+
+InvestmentTickerValidationError? investmentTickerValidationError(
+  String? value, {
+  String? existingTicker,
+}) {
+  final normalized = normalizeInvestmentTicker(value ?? '');
+  if (normalized.isEmpty) {
+    return InvestmentTickerValidationError.empty;
+  }
+  if (_investmentTickerPattern.hasMatch(normalized)) {
+    return null;
+  }
+
+  // Keep already-stored legacy symbols editable without accepting a new
+  // unsupported ticker at the market-price boundary.
+  if (existingTicker != null &&
+      normalized == normalizeInvestmentTicker(existingTicker)) {
+    return null;
+  }
+  return InvestmentTickerValidationError.invalidFormat;
+}
+
 class InvestmentAsset {
   const InvestmentAsset({
     required this.id,
@@ -66,6 +91,7 @@ class InvestmentAsset {
     return InvestmentAssetDraft(
       assetType: assetType,
       ticker: ticker,
+      existingTicker: ticker,
       quantity: quantity,
       buyPriceJpy: buyPriceJpy,
       buyDate: buyDate,
@@ -79,6 +105,7 @@ class InvestmentAssetDraft {
   const InvestmentAssetDraft({
     required this.assetType,
     required this.ticker,
+    this.existingTicker,
     required this.quantity,
     required this.buyPriceJpy,
     this.buyDate,
@@ -88,16 +115,17 @@ class InvestmentAssetDraft {
 
   final InvestmentAssetType assetType;
   final String ticker;
+  final String? existingTicker;
   final double quantity;
   final double buyPriceJpy;
   final DateTime? buyDate;
   final double? currentPriceJpy;
   final DateTime? lastPricedAt;
 
-  String get normalizedTicker => ticker.trim().toUpperCase();
+  String get normalizedTicker => normalizeInvestmentTicker(ticker);
 
   Map<String, dynamic> toInsertMap({required String userId}) {
-    _validate(userId: userId);
+    _validate(userId: userId, allowExistingTicker: false);
     return <String, dynamic>{'user_id': userId.trim(), ...toUpdateMap()};
   }
 
@@ -114,12 +142,24 @@ class InvestmentAssetDraft {
     };
   }
 
-  void _validate({String? userId}) {
+  void _validate({String? userId, bool allowExistingTicker = true}) {
     if (userId != null && userId.trim().isEmpty) {
       throw ArgumentError.value(userId, 'userId', 'must not be empty');
     }
-    if (normalizedTicker.isEmpty) {
-      throw ArgumentError.value(ticker, 'ticker', 'must not be empty');
+    switch (investmentTickerValidationError(
+      ticker,
+      existingTicker: allowExistingTicker ? existingTicker : null,
+    )) {
+      case InvestmentTickerValidationError.empty:
+        throw ArgumentError.value(ticker, 'ticker', 'must not be empty');
+      case InvestmentTickerValidationError.invalidFormat:
+        throw ArgumentError.value(
+          ticker,
+          'ticker',
+          'must be 1-32 chars of A-Z, 0-9, dot, underscore, colon, or hyphen',
+        );
+      case null:
+        break;
     }
     if (!quantity.isFinite || quantity <= 0) {
       throw ArgumentError.value(quantity, 'quantity', 'must be positive');
@@ -146,6 +186,8 @@ class InvestmentAssetDraft {
     }
   }
 }
+
+final RegExp _investmentTickerPattern = RegExp(r'^[A-Z0-9._:-]{1,32}$');
 
 String _requiredString(Map<String, dynamic> row, String key) {
   final value = row[key]?.toString().trim() ?? '';

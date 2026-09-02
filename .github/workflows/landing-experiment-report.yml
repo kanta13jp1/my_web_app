@@ -9,11 +9,15 @@ concurrency:
   group: landing-experiment-report
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   report:
+    environment:
+      name: analytics-production
+      deployment: false
+    permissions:
+      contents: read
     name: Build aggregate LP experiment report
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -23,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Require report credentials
         shell: bash
@@ -51,7 +55,7 @@ jobs:
 
       - name: Upload aggregate report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: landing-experiment-report
           path: tmp/landing-experiment-report/

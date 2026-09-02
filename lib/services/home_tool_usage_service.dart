@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../utils/feature_route_labels.dart';
 import 'one_in_two_out_assist_service.dart';
 
 class HomeToolUsageService {
@@ -14,7 +15,9 @@ class HomeToolUsageService {
     SharedPreferences? prefs,
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    return List<String>.from(store.getStringList(_recentToolsKey) ?? const []);
+    return _canonicalizeRecentTools(
+      store.getStringList(_recentToolsKey) ?? const <String>[],
+    );
   }
 
   static Future<void> recordToolUse(
@@ -23,21 +26,27 @@ class HomeToolUsageService {
     DateTime? now,
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    final existing = List<String>.from(
+    final canonicalToolId = _canonicalToolId(toolId);
+    final existing = _canonicalizeRecentTools(
       store.getStringList(_recentToolsKey) ?? const [],
     );
     final next = <String>[
-      toolId,
-      ...existing.where((entry) => entry != toolId),
+      canonicalToolId,
+      ...existing.where((entry) => entry != canonicalToolId),
     ].take(_maxRecentTools).toList();
     await store.setStringList(_recentToolsKey, next);
 
-    final counts = _decodeIntMap(store.getString(_usageCountsKey));
-    counts[toolId] = (counts[toolId] ?? 0) + 1;
+    final counts = _canonicalizeIntMap(
+      _decodeIntMap(store.getString(_usageCountsKey)),
+    );
+    counts[canonicalToolId] = (counts[canonicalToolId] ?? 0) + 1;
     await store.setString(_usageCountsKey, jsonEncode(counts));
 
-    final lastUsedAt = _decodeStringMap(store.getString(_lastUsedAtKey));
-    lastUsedAt[toolId] = (now ?? DateTime.now()).toUtc().toIso8601String();
+    final lastUsedAt = _canonicalizeLastUsedAtMap(
+      _decodeStringMap(store.getString(_lastUsedAtKey)),
+    );
+    lastUsedAt[canonicalToolId] =
+        (now ?? DateTime.now()).toUtc().toIso8601String();
     await store.setString(_lastUsedAtKey, jsonEncode(lastUsedAt));
   }
 
@@ -46,8 +55,12 @@ class HomeToolUsageService {
     SharedPreferences? prefs,
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    final counts = _decodeIntMap(store.getString(_usageCountsKey));
-    final lastUsedAt = _decodeStringMap(store.getString(_lastUsedAtKey));
+    final counts = _canonicalizeIntMap(
+      _decodeIntMap(store.getString(_usageCountsKey)),
+    );
+    final lastUsedAt = _canonicalizeLastUsedAtMap(
+      _decodeStringMap(store.getString(_lastUsedAtKey)),
+    );
 
     return candidates
         .map(
@@ -63,6 +76,48 @@ class HomeToolUsageService {
           ),
         )
         .toList(growable: false);
+  }
+
+  static List<String> _canonicalizeRecentTools(Iterable<String> toolIds) {
+    final seen = <String>{};
+    return toolIds
+        .map(_canonicalToolId)
+        .where(seen.add)
+        .take(_maxRecentTools)
+        .toList(growable: false);
+  }
+
+  static Map<String, int> _canonicalizeIntMap(Map<String, int> values) {
+    final canonical = <String, int>{};
+    for (final entry in values.entries) {
+      final id = _canonicalToolId(entry.key);
+      canonical[id] = (canonical[id] ?? 0) + entry.value;
+    }
+    return canonical;
+  }
+
+  static Map<String, String> _canonicalizeLastUsedAtMap(
+    Map<String, String> values,
+  ) {
+    final canonical = <String, String>{};
+    for (final entry in values.entries) {
+      final id = _canonicalToolId(entry.key);
+      final current = _tryParseDateTime(canonical[id]);
+      final candidate = _tryParseDateTime(entry.value);
+      if (current == null ||
+          (candidate != null && candidate.isAfter(current))) {
+        canonical[id] = entry.value;
+      }
+    }
+    return canonical;
+  }
+
+  static String _canonicalToolId(String toolId) {
+    final route = toolId.startsWith('/') ? toolId : '/$toolId';
+    final canonicalRoute = canonicalFeatureRoutePath(route);
+    return canonicalRoute.startsWith('/')
+        ? canonicalRoute.substring(1)
+        : canonicalRoute;
   }
 
   static Future<void> clear({SharedPreferences? prefs}) async {
@@ -93,8 +148,9 @@ class HomeToolUsageService {
     try {
       final decoded = jsonDecode(value);
       if (decoded is! Map) return <String, String>{};
-      return decoded
-          .map((key, rawValue) => MapEntry(key.toString(), '$rawValue'));
+      return decoded.map(
+        (key, rawValue) => MapEntry(key.toString(), '$rawValue'),
+      );
     } catch (_) {
       return <String, String>{};
     }

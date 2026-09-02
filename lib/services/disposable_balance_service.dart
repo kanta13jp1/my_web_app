@@ -112,6 +112,62 @@ class DisposableBalanceResult {
   final List<DisposableBalanceActionRecommendation> requiredActions;
 }
 
+/// サーバー提案と端末側の決定的な不足判定を統合する。
+///
+/// 給与明細・固定費の登録有無は端末側の最新入力を正とし、サーバーの古い結果で
+/// 表示を消したり復活させたりしない。節約・負債更新など他の提案はキー単位で
+/// 重複を除いて追加する。
+class DisposableBalanceActionMergeService {
+  const DisposableBalanceActionMergeService();
+
+  static const Set<String> _localAuthoritativeActionKeys = <String>{
+    'upload_current_payslip',
+    'add_recurring_expenses',
+  };
+
+  List<Map<String, dynamic>> merge({
+    required Iterable<Map<String, dynamic>> serverActions,
+    required Iterable<Map<String, dynamic>> localActions,
+  }) {
+    final local =
+        localActions.map(Map<String, dynamic>.from).toList(growable: false);
+    final server =
+        serverActions.map(Map<String, dynamic>.from).toList(growable: false);
+    final merged = <Map<String, dynamic>>[];
+    final seenKeys = <String>{};
+
+    void add(Map<String, dynamic> action) {
+      final key = _actionKey(action);
+      if (key.isNotEmpty && !seenKeys.add(key)) {
+        return;
+      }
+      merged.add(action);
+    }
+
+    for (final action in local) {
+      if (_localAuthoritativeActionKeys.contains(_actionKey(action))) {
+        add(action);
+      }
+    }
+    for (final action in server) {
+      if (_localAuthoritativeActionKeys.contains(_actionKey(action))) {
+        continue;
+      }
+      add(action);
+    }
+    for (final action in local) {
+      if (!_localAuthoritativeActionKeys.contains(_actionKey(action))) {
+        add(action);
+      }
+    }
+
+    return List<Map<String, dynamic>>.unmodifiable(merged);
+  }
+
+  String _actionKey(Map<String, dynamic> action) =>
+      (action['action_key'] ?? action['actionKey'])?.toString().trim() ?? '';
+}
+
 class DisposableBalanceService {
   const DisposableBalanceService();
 

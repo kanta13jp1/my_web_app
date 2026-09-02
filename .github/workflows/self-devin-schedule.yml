@@ -22,13 +22,17 @@ concurrency:
   group: self-devin-schedule
   cancel-in-progress: false
 
-permissions:
-  actions: write
-  contents: read
-  issues: write
+permissions: {}
 
 jobs:
   route-next-feature-request:
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      actions: write
+      contents: read
+      issues: write
     name: WBS -> Issue fix lane
     runs-on: ubuntu-latest
     timeout-minutes: 12

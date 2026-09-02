@@ -1,0 +1,4 @@
+自分株式会社 (= Jibun Inc.) 最近 7 日:
+- (Win Claude part346) — 0 byte 化インシデントの訂正 + 恒久ガード + read-only
+
+#buildinpublic #flutter #supabase #claudecode #aifleet

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 class FinancialReportPage extends StatefulWidget {
   const FinancialReportPage({super.key});
@@ -11,7 +12,14 @@ class FinancialReportPage extends StatefulWidget {
 }
 
 class _FinancialReportPageState extends State<FinancialReportPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  // タブ: 日次 / 週次 / 月次
+  @override
+  List<String> get tabUrlSlugs => const <String>['daily', 'weekly', 'monthly'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   late TabController _tabController;
   Map<String, Map<String, double>> _assetData = {};
   List<String> _sortedDates = [];

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 仮想AI組織マネージャー
 /// 12部署20エージェントの仮想組織を管理する。
@@ -13,7 +14,14 @@ class VirtualOrganizationPage extends StatefulWidget {
 }
 
 class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['departments', 'agents', 'tasks'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

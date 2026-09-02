@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/platform_view.dart' as platform_view;
+import '../utils/route_document_title.dart';
 
 /// 自分株式会社 — 基本理念ページ
 ///
@@ -22,58 +24,379 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
     super.initState();
     for (final v in _videos) {
       final src = v.mp4Url ?? 'https://www.youtube.com/embed/${v.id}';
-      platform_view.registerIframeViewFactory(
-        'youtube-${v.id}',
-        src,
-      );
+      platform_view.registerIframeViewFactory('youtube-${v.id}', src);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final video = _videos[_selectedVideoIdx];
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text(
-          '基本理念 — 自分株式会社',
-          style: TextStyle(
-            color: Color(0xFFE5E7EB),
-            fontSize: 18,
-            height: 1.5,
+    return Title(
+      key: const Key('philosophy_document_title'),
+      title: philosophyDocumentTitle,
+      color: const Color(0xFF7986CB),
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0A0A0A),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1A1A1A),
+          title: const Text(
+            '基本理念 — 自分株式会社',
+            style: TextStyle(
+              color: Color(0xFFE5E7EB),
+              fontSize: 18,
+              height: 1.5,
+            ),
           ),
+          iconTheme: const IconThemeData(color: Color(0xFFE5E7EB)),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFFE5E7EB)),
-      ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 980),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _heroHeader(),
-                  const SizedBox(height: 32),
-                  _videoSelector(),
-                  const SizedBox(height: 16),
-                  _videoEmbed(video),
-                  const SizedBox(height: 12),
-                  _videoMeta(video),
-                  const SizedBox(height: 48),
-                  _ninePrinciplesSection(),
-                  const SizedBox(height: 48),
-                  _transcriptSection(),
-                  const SizedBox(height: 48),
-                  _ctaSection(),
-                  const SizedBox(height: 32),
-                ],
+        body: SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 980),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _heroHeader(),
+                    const SizedBox(height: 32),
+                    _operatingGuideSection(),
+                    const SizedBox(height: 48),
+                    _inventoryExampleSection(),
+                    const SizedBox(height: 48),
+                    _editorialPolicySection(),
+                    const SizedBox(height: 48),
+                    _videoSelector(),
+                    const SizedBox(height: 16),
+                    _videoEmbed(video),
+                    const SizedBox(height: 12),
+                    _videoMeta(video),
+                    const SizedBox(height: 48),
+                    _ninePrinciplesSection(),
+                    const SizedBox(height: 48),
+                    _transcriptSection(),
+                    const SizedBox(height: 48),
+                    _ctaSection(),
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ─── 実践ガイド ───────────────────────────────────────────────────
+  Widget _operatingGuideSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _guideHeading('自分株式会社を30日で運営する実践ガイド'),
+        const SizedBox(height: 8),
+        const Text(
+          '自分株式会社は法人設立の話ではありません。自分をCEOと捉え、'
+          '時間・お金・健康・スキルを経営資源として配分する自己経営のフレームワークです。',
+          style: TextStyle(fontSize: 14, color: Color(0xFFCBD5E1), height: 1.8),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          '個人の P/L・B/S',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFFAFAFA),
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          '金額だけでなく、時間・集中力・健康・信用まで含めて、短期の成果と長期の価値を分けて見ます。',
+          style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8), height: 1.7),
+        ),
+        const SizedBox(height: 16),
+        _guideGrid(_businessGuideMetrics, wideColumns: 4),
+        const SizedBox(height: 32),
+        const Text(
+          '人生を6部署に分けて点検する',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFFAFAFA),
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          '問題を一つの尺度で判断せず、役割ごとに分けると、次にどこへ資源を配分するか決めやすくなります。',
+          style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8), height: 1.7),
+        ),
+        const SizedBox(height: 16),
+        _guideGrid(_operatingDepartments, wideColumns: 3),
+        const SizedBox(height: 32),
+        const Text(
+          '30日の運営サイクル',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFFAFAFA),
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          '人生計画を一度で完成させず、観察・判断・実行・振り返りを短い周期で繰り返します。',
+          style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8), height: 1.7),
+        ),
+        const SizedBox(height: 16),
+        _guideGrid(_operatingCycle, wideColumns: 4),
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0x1A7986CB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x667986CB)),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'AIはCEOの代わりではなく伴走役',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFFAFAFA),
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'AIは状況を整理し、理由と選択肢を示します。どの提案を採用し、'
+                '何を実行するかを決めるのは常にあなたです。迷う時間を減らし、'
+                '生活へ戻れることを重視します。',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFFCBD5E1),
+                  height: 1.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _guideHeading(String title) {
+    return Row(
+      children: [
+        Container(width: 4, height: 24, color: const Color(0xFF4DB6AC)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFFAFAFA),
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _guideGrid(List<_GuideItem> items, {required int wideColumns}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 720 ? wideColumns : 1;
+        final cardWidth = (constraints.maxWidth - (columns - 1) * 12) / columns;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: items
+              .map(
+                (item) => SizedBox(
+                  width: cardWidth,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF333333)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(item.icon, size: 20, color: item.color),
+                        const SizedBox(height: 10),
+                        Text(
+                          item.title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFFAFAFA),
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          item.description,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFCBD5E1),
+                            height: 1.7,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+
+  // ─── 記入例 ────────────────────────────────────────────────────────
+  Widget _inventoryExampleSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _guideHeading('3分でできる棚卸しの記入例'),
+        const SizedBox(height: 8),
+        const Text(
+          '以下は、仕事に追われて学習時間を確保できない会社員を想定した架空の例です。'
+          '実在する利用者の体験談や成果ではありません。',
+          style: TextStyle(fontSize: 14, color: Color(0xFFCBD5E1), height: 1.8),
+        ),
+        const SizedBox(height: 16),
+        _guideGrid(_inventoryExample, wideColumns: 3),
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0x1A4DB6AC),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x664DB6AC)),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'この例で選ぶ「今月の1件」',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFFAFAFA),
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '最優先課題は「睡眠不足で学習が続かない」。最初の行動は、'
+                '今夜23時にスマートフォンを充電場所へ置くこと。成果指標は、'
+                '学習時間の長さではなく、翌朝の体調と週2回着手できたかで確認します。',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFFCBD5E1),
+                  height: 1.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        const Text(
+          '架空ケース：30日でどう見直すか',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFFAFAFA),
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          '目標を達成した物語ではなく、判断を小さく更新する手順の例です。結果を保証するものではありません。',
+          style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8), height: 1.7),
+        ),
+        const SizedBox(height: 16),
+        _guideGrid(_thirtyDayExample, wideColumns: 4),
+      ],
+    );
+  }
+
+  // ─── 編集方針 ──────────────────────────────────────────────────────
+  Widget _editorialPolicySection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF151515),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF333333)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'このページの編集方針',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFFAFAFA),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            '自分株式会社の考え方を、日々の意思決定に使える独自の運用ガイドとして整理しています。'
+            '記入例はすべて説明用の架空例です。医療・法律・投資など専門判断の代わりにはならず、'
+            '必要な場合は各分野の専門家へ相談してください。最終更新: 2026年8月23日',
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFFCBD5E1),
+              height: 1.8,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: () => Navigator.of(
+                  context,
+                ).pushNamed('/development-achievements'),
+                icon: const Icon(Icons.history, size: 16),
+                label: const Text('開発実績と更新履歴'),
+              ),
+              TextButton.icon(
+                onPressed: () => launchUrl(
+                  Uri.parse('https://github.com/kanta13jp1'),
+                  mode: LaunchMode.externalApplication,
+                ),
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('GitHub @kanta13jp1'),
+              ),
+              TextButton.icon(
+                onPressed: () => Navigator.of(context).pushNamed('/privacy'),
+                icon: const Icon(Icons.privacy_tip_outlined, size: 16),
+                label: const Text('データの取り扱い'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -173,6 +496,20 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
   }
 
   Widget _videoEmbed(_Video v) {
+    if (!kIsWeb) {
+      return const AspectRatio(
+        aspectRatio: 16 / 9,
+        child: ColoredBox(
+          color: Color(0xFF111827),
+          child: Center(
+            child: Text(
+              '動画はWeb版で視聴できます',
+              style: TextStyle(color: Color(0xFF94A3B8)),
+            ),
+          ),
+        ),
+      );
+    }
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
@@ -241,11 +578,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
       children: [
         Row(
           children: [
-            Container(
-              width: 4,
-              height: 24,
-              color: const Color(0xFFFF6B35),
-            ),
+            Container(width: 4, height: 24, color: const Color(0xFFFF6B35)),
             const SizedBox(width: 12),
             const Text(
               '基本理念 9 原則',
@@ -273,10 +606,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
               runSpacing: 16,
               children: _principles.map((p) {
                 final cardW = (constraints.maxWidth - (cols - 1) * 16) / cols;
-                return SizedBox(
-                  width: cardW,
-                  child: _principleCard(p),
-                );
+                return SizedBox(width: cardW, child: _principleCard(p));
               }).toList(),
             );
           },
@@ -351,11 +681,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
       children: [
         Row(
           children: [
-            Container(
-              width: 4,
-              height: 24,
-              color: const Color(0xFF7986CB),
-            ),
+            Container(width: 4, height: 24, color: const Color(0xFF7986CB)),
             const SizedBox(width: 12),
             const Text(
               '完全文字起こし',
@@ -393,10 +719,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
           unselectedWidgetColor: const Color(0xFF94A3B8),
         ),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
-          ),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           collapsedIconColor: const Color(0xFF7986CB),
           iconColor: const Color(0xFF7986CB),
@@ -458,9 +781,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                   color: Color(0xFFCBD5E1),
                   height: 1.5,
                 ),
-                tableBorder: TableBorder.all(
-                  color: const Color(0xFF444444),
-                ),
+                tableBorder: TableBorder.all(color: const Color(0xFF444444)),
               ),
             ),
           ],
@@ -494,11 +815,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
           const Text(
             '自分株式会社で、あなたの人生のミッション・KPI・バランスシートを可視化',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white,
-              height: 1.7,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.white, height: 1.7),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
@@ -529,6 +846,179 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
 // ─────────────────────────────────────────────────────────────────────
 // データ
 // ─────────────────────────────────────────────────────────────────────
+
+class _GuideItem {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color color;
+
+  const _GuideItem({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.color,
+  });
+}
+
+const _businessGuideMetrics = [
+  _GuideItem(
+    title: '売上',
+    description: '給与だけでなく、仕事・学習・発信で相手へ届けた価値。',
+    icon: Icons.trending_up,
+    color: Color(0xFF66BB6A),
+  ),
+  _GuideItem(
+    title: '経費',
+    description: 'お金に加えて、使った時間・集中力・回復力。',
+    icon: Icons.timer_outlined,
+    color: Color(0xFFFFB74D),
+  ),
+  _GuideItem(
+    title: '資産',
+    description: 'スキル・健康・信用・人間関係・再利用できる知識。',
+    icon: Icons.account_balance_outlined,
+    color: Color(0xFF4DB6AC),
+  ),
+  _GuideItem(
+    title: '利益',
+    description: '次の選択に使える、お金・時間・心の余白。',
+    icon: Icons.spa_outlined,
+    color: Color(0xFF7986CB),
+  ),
+];
+
+const _operatingDepartments = [
+  _GuideItem(
+    title: '本社',
+    description: 'ミッション、目標、優先順位を決める。',
+    icon: Icons.apartment_outlined,
+    color: Color(0xFFFF6B35),
+  ),
+  _GuideItem(
+    title: '人事',
+    description: '健康、睡眠、休養、習慣を整える。',
+    icon: Icons.favorite_outline,
+    color: Color(0xFFEF5350),
+  ),
+  _GuideItem(
+    title: 'R&D',
+    description: '学習、実験、スキル開発を進める。',
+    icon: Icons.science_outlined,
+    color: Color(0xFF42A5F5),
+  ),
+  _GuideItem(
+    title: '財務',
+    description: '収入、支出、資産、負債を把握する。',
+    icon: Icons.account_balance_wallet_outlined,
+    color: Color(0xFF66BB6A),
+  ),
+  _GuideItem(
+    title: 'マーケ営業',
+    description: '価値を伝え、人との接点を育てる。',
+    icon: Icons.campaign_outlined,
+    color: Color(0xFFAB47BC),
+  ),
+  _GuideItem(
+    title: '横断',
+    description: 'AIや自動化で部署間の情報を整理する。',
+    icon: Icons.hub_outlined,
+    color: Color(0xFF26A69A),
+  ),
+];
+
+const _operatingCycle = [
+  _GuideItem(
+    title: '1週目 観察',
+    description: '時間・お金・体調・未完了タスクを記録する。',
+    icon: Icons.visibility_outlined,
+    color: Color(0xFF42A5F5),
+  ),
+  _GuideItem(
+    title: '2週目 判断',
+    description: 'ミッションに照らして最優先課題を一つ選ぶ。',
+    icon: Icons.rule_outlined,
+    color: Color(0xFFFFB74D),
+  ),
+  _GuideItem(
+    title: '3週目 実行',
+    description: '48時間以内に始められる最小の一手へ分解する。',
+    icon: Icons.play_arrow_outlined,
+    color: Color(0xFF66BB6A),
+  ),
+  _GuideItem(
+    title: '4週目 振り返り',
+    description: '昨日の自分からの変化を確認し、翌月の配分を決める。',
+    icon: Icons.replay_outlined,
+    color: Color(0xFF7986CB),
+  ),
+];
+
+const _inventoryExample = [
+  _GuideItem(
+    title: '本社｜今月の方針',
+    description: '残業を増やさず、週2回だけ学習を始められる状態をつくる。',
+    icon: Icons.flag_outlined,
+    color: Color(0xFFFF6B35),
+  ),
+  _GuideItem(
+    title: '人事｜土台',
+    description: '平均睡眠6時間。まず23時以降のスマートフォン利用を減らす。',
+    icon: Icons.bedtime_outlined,
+    color: Color(0xFFEF5350),
+  ),
+  _GuideItem(
+    title: 'R&D｜学習',
+    description: '教材を増やさず、購入済み講座を火曜と土曜に20分だけ進める。',
+    icon: Icons.school_outlined,
+    color: Color(0xFF42A5F5),
+  ),
+  _GuideItem(
+    title: '財務｜固定費',
+    description: '未利用のサブスクを1件確認し、続ける理由がなければ停止する。',
+    icon: Icons.receipt_long_outlined,
+    color: Color(0xFF66BB6A),
+  ),
+  _GuideItem(
+    title: 'マーケ営業｜価値',
+    description: '学んだことを業務改善メモ1枚にし、同僚へ共有する。',
+    icon: Icons.record_voice_over_outlined,
+    color: Color(0xFFAB47BC),
+  ),
+  _GuideItem(
+    title: '横断｜振り返り',
+    description: 'AIに週次ログを要約させ、採用する次の行動は自分で決める。',
+    icon: Icons.auto_awesome_outlined,
+    color: Color(0xFF26A69A),
+  ),
+];
+
+const _thirtyDayExample = [
+  _GuideItem(
+    title: '1週目｜事実を集める',
+    description: '就寝時刻、残業、学習を始められた日だけを記録する。',
+    icon: Icons.edit_note_outlined,
+    color: Color(0xFF42A5F5),
+  ),
+  _GuideItem(
+    title: '2週目｜一つに絞る',
+    description: '教材不足ではなく睡眠不足を、今月の最優先課題にする。',
+    icon: Icons.filter_1_outlined,
+    color: Color(0xFFFFB74D),
+  ),
+  _GuideItem(
+    title: '3週目｜小さく試す',
+    description: '就寝前の置き場所を変え、火曜に20分だけ教材を開く。',
+    icon: Icons.science_outlined,
+    color: Color(0xFF66BB6A),
+  ),
+  _GuideItem(
+    title: '4週目｜配分を直す',
+    description: '体調と着手回数を確認し、続ける行動を一つだけ残す。',
+    icon: Icons.tune_outlined,
+    color: Color(0xFF7986CB),
+  ),
+];
 
 class _Video {
   final String id;

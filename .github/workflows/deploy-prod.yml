@@ -16,6 +16,16 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/workflows/**'
+      - 'lefthook.yml'
+      - 'scripts/classify_ci_changes.py'
+      - 'scripts/classify_ci_changes_test.py'
+      - 'scripts/cicd_efficiency_test.py'
+      - 'scripts/quality_gate_test.py'
+      - 'scripts/pre_commit_quality_gate.py'
+      - 'scripts/pre_commit_quality_gate_test.py'
+      - 'scripts/check_ga_readiness_gate.py'
+      - 'assets/data/tiger_*'
   workflow_dispatch:
 
 concurrency:
@@ -29,9 +39,7 @@ concurrency:
   # group が同じため同時並行はゼロ・GitHub Actions リソース消費は変わらない。
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 env:
   ENVIRONMENT: production
@@ -41,7 +49,12 @@ env:
 jobs:
   ci:
     name: Run CI Checks
+    # Pull requests already passed this required workflow. Re-run it only for
+    # an operator-triggered deployment that has no preceding protected PR.
+    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/ci.yml
+    with:
+      expected_head_sha: ${{ github.sha }}
     permissions:
       contents: read
       pull-requests: write
@@ -50,6 +63,7 @@ jobs:
     name: Deploy to Production Environment
     runs-on: ubuntu-latest
     needs: ci
+    if: always() && (needs.ci.result == 'success' || needs.ci.result == 'skipped')
     timeout-minutes: 45
     environment:
       name: production
@@ -57,6 +71,10 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
+      deployable: ${{ steps.changes.outputs.deployable }}
+      web: ${{ steps.changes.outputs.web }}
+      edge: ${{ steps.changes.outputs.edge }}
+      migration: ${{ steps.changes.outputs.migration }}
 
     permissions:
       contents: write
@@ -74,13 +92,64 @@ jobs:
           git fetch --tags --prune origin "+${GITHUB_REF}:refs/remotes/origin/checkout"
           git checkout --force refs/remotes/origin/checkout
 
+      - name: Collect pushed files
+        if: github.event_name == 'push'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const fs = require('fs');
+            const comparison = await github.rest.repos.compareCommitsWithBasehead({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `${context.payload.before}...${context.sha}`,
+              per_page: 100,
+            });
+            fs.mkdirSync('.deploy-logs', { recursive: true });
+            fs.writeFileSync(
+              '.deploy-logs/changed-files.txt',
+              (comparison.data.files || []).map((file) => file.filename).join('\n') + '\n',
+            );
+
+      - name: Classify deploy scope
+        id: changes
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'push' }}
+        run: |
+          mkdir -p .deploy-logs
+          touch .deploy-logs/changed-files.txt
+          args=()
+          if [ "$FORCE_ALL" = "true" ]; then
+            args+=(--all)
+          fi
+          python scripts/classify_ci_changes.py \
+            --changed-files .deploy-logs/changed-files.txt \
+            --github-output "$GITHUB_OUTPUT" \
+            "${args[@]}"
+
+      - name: Detect DB and Edge smoke scope
+        id: db_edge_smoke
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'push' }}
+        run: |
+          if [ "$FORCE_ALL" = "true" ] || grep -Eq \
+            '^(supabase/(migrations|functions)/|scripts/(testcontainers_supabase_smoke.py|requirements-testcontainers.txt)|test/fixtures/testcontainers/|test/scripts/test_testcontainers_supabase_smoke.py)' \
+            .deploy-logs/changed-files.txt; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Flutter
+        if: steps.changes.outputs.web == 'true'
         uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
       - name: Cache Flutter pub
-        uses: actions/cache@v6
+        if: steps.changes.outputs.web == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -88,12 +157,24 @@ jobs:
             ${{ runner.os }}-pub-
 
       - name: Install dependencies
+        if: steps.changes.outputs.web == 'true'
         run: flutter pub get
 
       - name: Generate version
         id: version
+        if: steps.changes.outputs.web == 'true'
         run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          # `git describe` only sees tags reachable from the checked-out commit.
+          # Release tags created on another merged branch can therefore be missed,
+          # causing an existing version/tag to be reused. Select the highest global
+          # three-part SemVer tag instead.
+          LATEST_TAG=$(
+            git tag --list 'v[0-9]*.[0-9]*.[0-9]*' \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+              | sort -V \
+              | tail -n 1
+          )
+          LATEST_TAG=${LATEST_TAG:-v1.0.0}
           VERSION=${LATEST_TAG#v}
           IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
           MAJOR=${VERSION_PARTS[0]}
@@ -105,10 +186,12 @@ jobs:
           echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Update pubspec.yaml version
+        if: steps.changes.outputs.web == 'true'
         run: |
           sed -i "s/^version: .*/version: ${{ steps.version.outputs.version }}+${{ github.run_number }}/" pubspec.yaml
 
       - name: Generate Release Notes data
+        if: steps.changes.outputs.web == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -122,139 +205,56 @@ jobs:
             --output web/release-notes.json
 
       - name: Check migration timestamp collisions
+        if: steps.changes.outputs.migration == 'true'
         run: python scripts/check_migration_timestamps.py
 
+      - name: Setup Python for DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+
+      - name: Setup Deno for DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        shell: bash
+        env:
+          DENO_VERSION: v2.9.1
+        run: bash scripts/ci/install_deno_from_github.sh
+
+      - name: Install DB and Edge smoke dependencies
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        run: python -m pip install --requirement scripts/requirements-testcontainers.txt
+
+      - name: Gate production changes with DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+        run: |
+          python test/scripts/test_testcontainers_supabase_smoke.py
+          python scripts/testcontainers_supabase_smoke.py --plan
+          python scripts/testcontainers_supabase_smoke.py --artifacts-dir .testcontainers-logs
+
+      - name: Upload production DB and Edge smoke artifacts
+        if: always() && steps.db_edge_smoke.outputs.required == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: production-testcontainers-smoke-logs
+          path: .testcontainers-logs/
+          if-no-files-found: ignore
+          include-hidden-files: true
+
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v3
+        if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
         with:
           version: 2.84.2
 
       - name: Run Supabase migrations
+        if: steps.changes.outputs.migration == 'true'
         run: |
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }} --password ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
-          # Repair known stuck migrations (duplicate key from aborted deploys).
-          # All are idempotent (ON CONFLICT DO NOTHING / IF NOT EXISTS / UPDATE).
-          supabase migration repair --status reverted 20260424225000 2>/dev/null || true  # pre-push recovery_plan backfill — always runs first (idempotent COALESCE)
-          supabase migration repair --status reverted 20260424234000 2>/dev/null || true
-          supabase migration repair --status reverted 20260424235000 2>/dev/null || true
-          supabase migration repair --status reverted 20260424240000 2>/dev/null || true
-          supabase migration repair --status reverted 20260424241500 2>/dev/null || true
-          supabase migration repair --status reverted 20260424242000 2>/dev/null || true
-          supabase migration repair --status reverted 20260424243500 2>/dev/null || true
-          supabase migration repair --status reverted 20260424244000 2>/dev/null || true
-          supabase migration repair --status reverted 20260424245500 2>/dev/null || true
-          supabase migration repair --status reverted 20260424250000 2>/dev/null || true
-          supabase migration repair --status reverted 20260424251500 2>/dev/null || true
-          supabase migration repair --status reverted 20260424252000 2>/dev/null || true
-          supabase migration repair --status reverted 20260424253500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425001000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425003000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425013000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425021000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425022000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425030000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425031500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425033000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425034500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425040000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425041500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425044500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425050000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425051500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425053000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425054500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425060000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425061500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425063000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425064500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425092000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425093500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425095000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425100000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425101500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425103000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425104500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425110000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425111500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425113000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425114500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425120000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425121500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425123000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425124500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425125000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425130500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425132000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425133500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425140000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425141500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425143000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425144500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425150000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425160000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425170000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425142000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425171500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425173000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425174500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425175000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425180000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425181500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425183000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425183100 2>/dev/null || true
-          supabase migration repair --status reverted 20260425184500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425195000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425200000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425200100 2>/dev/null || true
-          supabase migration repair --status reverted 20260425201500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425211500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425220000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425223000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425202000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425203000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425210000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425225000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425230000 2>/dev/null || true
-          supabase migration repair --status applied 20260425231500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425231600 2>/dev/null || true
-          supabase migration repair --status reverted 20260425233000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425234000 2>/dev/null || true
-          supabase migration repair --status reverted 20260425235000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426000000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426000500 2>/dev/null || true
-          supabase migration repair --status reverted 20260426005000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426010000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426015000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426020000 2>/dev/null || true
-          supabase migration repair --status applied 20260426100000 2>/dev/null || true  # permanently skip — replaced by 20260428146000_wbs_github_issue_sync_v2
-          supabase migration repair --status reverted 20260426110000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426120000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426121000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426122000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426125000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426130000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426131500 2>/dev/null || true
-          supabase migration repair --status reverted 20260426132000 2>/dev/null || true
-          supabase migration repair --status applied 20260426133000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426134500 2>/dev/null || true
-          supabase migration repair --status reverted 20260426142000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426140000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426143500 2>/dev/null || true
-          supabase migration repair --status reverted 20260426150000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426151000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426151500 2>/dev/null || true
-          supabase migration repair --status reverted 20260426153000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426180000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426180100 2>/dev/null || true
-          supabase migration repair --status reverted 20260426185000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426190000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426191500 2>/dev/null || true
-          supabase migration repair --status reverted 20260426205000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426205100 2>/dev/null || true
-          supabase migration repair --status applied 20260426215000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426215100 2>/dev/null || true
-          supabase migration repair --status applied 20260426222000 2>/dev/null || true
-          supabase migration repair --status applied 20260426235000 2>/dev/null || true
+          # Detect the exact failed version and repair only after a classified push error.
+          # Unknown failures remain blocking; no migration history is changed speculatively.
           python scripts/ci_failure_digest.py supabase-db-push \
             --include-all \
             --recent-limit 10 \
@@ -265,14 +265,15 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
       - name: Upload Supabase migration logs
-        if: always() && hashFiles('.deploy-logs/**') != ''
-        uses: actions/upload-artifact@v7
+        if: always() && steps.changes.outputs.migration == 'true' && hashFiles('.deploy-logs/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: supabase-migration-logs
           path: .deploy-logs/
           if-no-files-found: ignore
 
       - name: Cleanup consolidated Edge Functions
+        if: steps.changes.outputs.edge == 'true'
         run: |
           # EFハードキャップ: 50本以下。Tier1/Tier2廃止。
           # 旧スタンドアロンEFを全削除 — 6つのmacro-hubに統合済み。
@@ -516,14 +517,31 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy Supabase Edge Functions
+        if: steps.changes.outputs.edge == 'true'
         run: |
+          required_video_secrets=(
+            VIDEO_WORKER_TOKEN
+            VIDEO_WORKER_WAKE_TOKEN
+            VIDEO_WORKER_WAKE_URL
+          )
+          available_secret_names="$(
+            supabase secrets list --output json |
+              jq -r '.[] | .name // empty'
+          )"
+          for secret_name in "${required_video_secrets[@]}"; do
+            if ! grep -qx "${secret_name}" <<<"${available_secret_names}"; then
+              echo "::error::Required first-party video secret is missing: ${secret_name}"
+              exit 1
+            fi
+          done
+
           # EFハードキャップ: 50本以下 (Tier1/Tier2廃止 — 2026-04-12 VSCode版#61)
           # 全250本を16本のhubにaction分岐統合 (11 hub + 5 standalone)。新規機能は既存hubへのaction追加のみ。
           # 新しいEFを作成する場合は必ず既存hubの数を減らして50本以下を維持すること。
           #
-          # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
-          # preflight requests (which carry no Authorization header) are not
-          # rejected by Supabase's platform-level JWT check.
+          # Public/browser functions that own a custom auth handshake use
+          # --no-verify-jwt. Sensitive owner-only endpoints keep gateway JWT
+          # verification and repeat authorization inside the handler.
           #
           # Remote dependency CDNs can occasionally return transient 5xx errors
           # while the Supabase CLI builds each function graph. Retry per
@@ -582,13 +600,24 @@ jobs:
             fi
           }
 
-          # --- Standalone (5本: 複雑すぎてhub統合困難) ---
+          # --- Standalone (8本: 複雑すぎてhub統合困難) ---
           # local-election-intelligence は line 275 にあり (並び順維持のため)
           deploy_function get-home-dashboard --no-verify-jwt
           deploy_function ai-assistant --no-verify-jwt
-          deploy_function growth-weekly-digest --no-verify-jwt
+          # Owner-only growth aggregates. Gateway JWT verification remains on;
+          # the handler also requires user_profiles admin or service role.
+          deploy_function growth-weekly-digest
           deploy_function guitar-recording-studio --no-verify-jwt
           deploy_function autonomous-ops --no-verify-jwt
+          # Owner-only Notion inventory. Browser JWT + user_profiles.is_admin
+          # are both checked in-function before NOTION_API_TOKEN is used.
+          deploy_function notion-migration-hub --no-verify-jwt
+          # User JWT is verified at the gateway and again in-function. The
+          # caller's JWT is forwarded to the security-invoker/RLS RPC.
+          deploy_function resource-optimizer
+          # Internal Issue #1352 decision-chain writer. Gateway JWT verification
+          # plus an exact service-role bearer check is enforced in-function.
+          deploy_function decision-events
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
           deploy_function core-hub --no-verify-jwt
@@ -598,6 +627,29 @@ jobs:
           deploy_function app-hub --no-verify-jwt
           deploy_function schedule-hub --no-verify-jwt
           deploy_function stripe-webhook --no-verify-jwt
+
+          # --- 買い切り販売 (2026-07-28 追加) ---
+          # ここへ足し忘れると migration だけ本番へ入り、購入ボタンが存在しない
+          # 関数を叩く半着地になる (CI は緑のまま通るので気づけない)。
+          # 認証は関数内で auth.getUser() により行う。
+          deploy_function shop-checkout --no-verify-jwt
+          deploy_function shop-download --no-verify-jwt
+          # 販売 funnel の計測 (2026-07-29 追加)。未ログインの閲覧者も数えるため
+          # 認証は要求せず、書き込める内容を列挙値に限定して守っている。
+          deploy_function shop-funnel --no-verify-jwt
+
+          # --- 自社GPUによる有償AI動画生成 ---
+          # 利用者APIはCORSを通し、関数内auth.getUser()でJWTを必須化する。
+          # worker APIは用途を分けた専用tokenで認証する。
+          deploy_function video-generation-hub --no-verify-jwt
+          deploy_function video-worker-hub --no-verify-jwt
+          # 承認済みの exact artifact/review だけを、非公開配信・Stripe固定価格・
+          # /shop 検証・rollback の順に公開する。service role定期実行も関数内で再認証。
+          deploy_function video-commerce-hub --no-verify-jwt
+          # 退会申請は user JWT、期限到来後の破壊的 worker は service_role を
+          # 関数内で再検証する。scheduled workflow は owner/legal 承認後に
+          # ACCOUNT_DELETION_AUTOMATION_ENABLED=true で有効化する。
+          deploy_function account-lifecycle --no-verify-jwt
 
           # --- Mega-Hub (5本: 旧Tier2全統合) ---
           deploy_function tools-hub --no-verify-jwt
@@ -614,7 +666,7 @@ jobs:
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 23 functions deployed (ハードキャップ50本に対し23本 — 余裕27本)
+          # Total: 33 functions deployed (ハードキャップ50本に対し33本 — 余裕17本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
@@ -651,7 +703,15 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
+      - name: Validate Flutter Supabase configuration
+        if: steps.changes.outputs.web == 'true'
+        run: python scripts/validate_flutter_supabase_env.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+
       - name: Build Flutter Web (Production)
+        if: steps.changes.outputs.web == 'true'
         run: |
           flutter build web \
             --release \
@@ -659,27 +719,42 @@ jobs:
             --build-name=${{ steps.version.outputs.version }} \
             --build-number=${{ github.run_number }} \
             --dart-define=ENVIRONMENT=production \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
             --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
             --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_PROVIDER_ROUTING_ENABLED=true \
+            --dart-define=POSTHOG_PROJECT_TOKEN=$POSTHOG_PROJECT_TOKEN \
+            --dart-define=POSTHOG_HOST=$POSTHOG_HOST \
             --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
+
+      - name: Render public Supabase URL into web shell
+        if: steps.changes.outputs.web == 'true'
+        run: python scripts/render_web_supabase_config.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
 
       - name: Write version.json
+        if: steps.changes.outputs.web == 'true'
         run: |
           echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
           cp web/release-notes.json build/web/release-notes.json
 
       - name: Cache-bust OGP image URLs
+        if: steps.changes.outputs.web == 'true'
         run: |
           sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
 
       - name: Prerender per-route static HTML + sitemap (SEO)
+        if: steps.changes.outputs.web == 'true'
         run: |
           # SEO 監査 H1/H2/H4/H3 対応。厳選 /vs-<slug> の静的HTML (自己参照
           # canonical + 固有 meta/JSON-LD + クロール可能本文) を build/web に生成。
@@ -694,13 +769,22 @@ jobs:
           python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
 
+      - name: Verify production journey static route contract
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          python3 scripts/production_journey_probe.py \
+            --root-dir build/web \
+            --public-routes web/seo/public-routes.json
+
       - name: Setup Node for Firebase CLI
-        uses: actions/setup-node@v7
+        if: steps.changes.outputs.web == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "24"
           cache: npm
 
       - name: Deploy to Firebase Hosting (Production)
+        if: steps.changes.outputs.web == 'true'
         id: firebase_cli_deploy
         continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
         shell: bash
@@ -735,6 +819,7 @@ jobs:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
 
       - name: Verify deploy reflects current commit
+        if: steps.changes.outputs.web == 'true'
         continue-on-error: true
         run: |
           EXPECTED="${{ github.sha }}"
@@ -751,29 +836,40 @@ jobs:
           echo "::warning::Deploy verification: production shows $DEPLOYED, expected $EXPECTED. A later queued run may have superseded this one."
 
       - name: Push Release Tag
+        if: steps.changes.outputs.web == 'true'
         id: push_tag
-        # Win版#131 part 15: tag push が GitHub App workflow protection で reject される場合
-        # (commit range に .github/workflows/*.yml 変更含む + GH_PAT 未設定) は warning に
-        # して deploy 続行 (Firebase Hosting reflection が本体・tag は補助)
-        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          TAG=${{ steps.version.outputs.tag }}
-          if git ls-remote --tags origin "$TAG" | grep -q .; then
-            echo "Tag $TAG already exists remotely, skipping tag push."
-          else
-            git tag -a "$TAG" -m "Release $TAG"
-            if ! git push origin "$TAG" 2>&1; then
-              echo "::warning::Tag push rejected (GH_PAT 未設定 or workflow scope 不足)。Firebase Hosting deploy は成功済の可能性高い。GH_PAT を Settings>Secrets に設定すれば次回から成功する"
-              exit 0
+          set -euo pipefail
+          REMOTE_TAG=$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}")
+          if [ -n "$REMOTE_TAG" ]; then
+            EXISTING_TARGET=$(printf '%s\n' "$REMOTE_TAG" | awk '$2 ~ /\^\{\}$/ {print $1; exit}')
+            if [ -z "$EXISTING_TARGET" ]; then
+              EXISTING_TARGET=$(printf '%s\n' "$REMOTE_TAG" | awk 'NR == 1 {print $1}')
             fi
+            if [ "$EXISTING_TARGET" != "$GITHUB_SHA" ]; then
+              echo "::error::Existing tag $TAG points to $EXISTING_TARGET, expected $GITHUB_SHA"
+              exit 1
+            fi
+            echo "Tag $TAG already points to the current commit."
+          else
+            # The custom checkout intentionally has no persisted Git credentials.
+            # Create the ref through the authenticated API so it always targets
+            # the commit that was actually built and deployed, even if main moves.
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+              -f ref="refs/tags/$TAG" \
+              -f sha="$GITHUB_SHA" \
+              --silent
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        if: steps.changes.outputs.web == 'true'
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: Release ${{ steps.version.outputs.version }}
           body: |
             ## Release ${{ steps.version.outputs.version }}
@@ -786,10 +882,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Verify Release Tag Target
+        if: steps.changes.outputs.web == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          REF_TYPE=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type')
+          REF_SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.sha')
+          if [ "$REF_TYPE" = "tag" ]; then
+            REF_SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$REF_SHA" --jq '.object.sha')
+          fi
+          if [ "$REF_SHA" != "$GITHUB_SHA" ]; then
+            echo "::error::Release tag $TAG points to $REF_SHA, expected $GITHUB_SHA"
+            exit 1
+          fi
+          echo "Release tag $TAG verified at $GITHUB_SHA."
+
       - name: Broadcast release notification
+        if: steps.changes.outputs.web == 'true'
         continue-on-error: true
         env:
-          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           curl -fsS -X POST \
@@ -806,21 +921,24 @@ jobs:
           TAG="${{ steps.version.outputs.tag }}"
           SHA="${GITHUB_SHA:0:7}"
           {
-            echo "## 🚀 Production Deploy — v${VERSION} (${SHA})"
+            echo "## 🚀 Production Deploy (${SHA})"
             echo ""
             echo "| 項目 | 値 |"
             echo "|-----|---|"
-            echo "| バージョン | \`${TAG}\` |"
+            echo "| Web / Firebase | ${{ steps.changes.outputs.web }} |"
+            echo "| Edge Functions | ${{ steps.changes.outputs.edge }} |"
+            echo "| SQL migrations | ${{ steps.changes.outputs.migration }} |"
+            echo "| バージョン | \`${TAG:-unchanged}\` |"
             echo "| コミット | \`${SHA}\` |"
             echo "| Actor | ${{ github.actor }} |"
             echo "| 本番URL | https://my-web-app-b67f4.web.app/ |"
-            echo "| Edge Functions | 21本デプロイ済み (ハードキャップ50本以下) |"
           } >> $GITHUB_STEP_SUMMARY
 
   # -----------------------------------------------------------------
   # 通知ジョブ
   # -----------------------------------------------------------------
   notify:
+    timeout-minutes: 5
     name: Notify Deployment Status
     runs-on: ubuntu-latest
     needs: [deploy]
@@ -831,88 +949,66 @@ jobs:
 
     steps:
       - name: Notify Slack on Success
-        if: needs.deploy.result == 'success'
+        if: needs.deploy.result == 'success' && needs.deploy.outputs.deployable == 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         run: |
-          cat <<EOF > payload.json
-          {
-            "text": "✅ Production Deployment Successful!",
-            "blocks": [
-              {
-                "type": "header",
-                "text": { "type": "plain_text", "text": "✅ Production Deployment Successful!" }
-              },
-              {
-                "type": "section",
-                "fields": [
-                  { "type": "mrkdwn", "text": "*Environment:*\nProduction" },
-                  { "type": "mrkdwn", "text": "*Branch:*\n\`${{ github.ref_name }}\`" },
-                  { "type": "mrkdwn", "text": "*Commit:*\n\`${{ github.sha }}\`" },
-                  { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
-                ]
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "View Workflow" },
-                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                  },
-                  {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "View Site" },
-                    "url": "https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
-          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
+          jq -n \
+            --arg branch "$GITHUB_REF_NAME" \
+            --arg commit "$GITHUB_SHA" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg workflow_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --arg site_url "https://$FIREBASE_PROJECT_ID.web.app" \
+            '{
+              text: "✅ Production Deployment Successful!",
+              blocks: [
+                {type: "header", text: {type: "plain_text", text: "✅ Production Deployment Successful!"}},
+                {type: "section", fields: [
+                  {type: "mrkdwn", text: "*Environment:*\nProduction"},
+                  {type: "mrkdwn", text: ("*Branch:*\n`" + $branch + "`")},
+                  {type: "mrkdwn", text: ("*Commit:*\n`" + $commit + "`")},
+                  {type: "mrkdwn", text: ("*Author:*\n" + $actor)}
+                ]},
+                {type: "actions", elements: [
+                  {type: "button", text: {type: "plain_text", text: "View Workflow"}, url: $workflow_url},
+                  {type: "button", text: {type: "plain_text", text: "View Site"}, url: $site_url}
+                ]}
+              ]
+            }' > payload.json
+          curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
       - name: Notify Slack on Failure
         if: needs.deploy.result == 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
         run: |
-          cat <<EOF > payload.json
-          {
-            "text": "❌ Production Deployment Failed!",
-            "blocks": [
-              {
-                "type": "header",
-                "text": { "type": "plain_text", "text": "❌ Production Deployment Failed!" }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*Deploy Status:* \`${{ needs.deploy.result }}\`\n*Author:* ${{ github.actor }}"
-                }
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "View Logs" },
-                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                    "style": "danger"
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
-          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
+          jq -n \
+            --arg result "$DEPLOY_RESULT" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg workflow_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '{
+              text: "❌ Production Deployment Failed!",
+              blocks: [
+                {type: "header", text: {type: "plain_text", text: "❌ Production Deployment Failed!"}},
+                {type: "section", text: {type: "mrkdwn", text: ("*Deploy Status:* `" + $result + "`\n*Author:* " + $actor)}},
+                {type: "actions", elements: [
+                  {type: "button", text: {type: "plain_text", text: "View Logs"}, url: $workflow_url, style: "danger"}
+                ]}
+              ]
+            }' > payload.json
+          curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
       - name: Comment on commit
-        if: needs.deploy.result == 'success'
+        if: needs.deploy.result == 'success' && needs.deploy.outputs.deployable == 'true'
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: context.sha,
-              body: 'Successfully deployed to **Production**!\n\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
+              body: 'Production deployment completed.\n\n- **Web**: ${{ needs.deploy.outputs.web }}\n- **Edge Functions**: ${{ needs.deploy.outputs.edge }}\n- **Migrations**: ${{ needs.deploy.outputs.migration }}\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
             })

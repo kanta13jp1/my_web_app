@@ -1296,6 +1296,43 @@ void main() {
     expect(text, contains('utm_content=post_to_x'));
   });
 
+  test(
+    'postToX keeps the URL in the lead when linkInReply is off with a thread',
+    () async {
+      // R24: AIシェアの既定。従来は linkInReply=true をハードコードしていたが、
+      // 実測 (2026-04-27〜07-25 / 350投稿) では URL クリックの 94% がリードに
+      // URL を持つ投稿から出ており、リプライ側 CTA は 30 imp に留まった。
+      // スレッド返信が「ある」場合でもリードに URL が残ることを固定する。
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedBody = body;
+          return {
+            'success': true,
+            'posted': true,
+            'tweetId': '100',
+            'replyTweetIds': ['101'],
+          };
+        },
+      );
+
+      await service.postToX(
+        context: page,
+        text: 'デイリーブリーフィング\n${page.url}',
+        threadReplies: const ['1. 【AI】OpenAI\nなぜ重要か: 仕事の入口が変わる。'],
+      );
+
+      final text = capturedBody?['text']?.toString() ?? '';
+      final replies = capturedBody?['replyTexts'] as List;
+      expect(text, contains(page.url));
+      expect(capturedBody?['linkInReply'], isFalse);
+      // 本文にURLがあるので、URL入りの CTA リプライは足さない。
+      expect(replies.length, 1);
+      expect(replies.single.toString(), contains('OpenAI'));
+      expect(replies.single.toString(), isNot(contains(page.url)));
+    },
+  );
+
   test('postToX can move the link to a reply thread', () async {
     Map<String, dynamic>? capturedBody;
     final service = UniversalXShareService(

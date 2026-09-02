@@ -17,19 +17,20 @@ concurrency:
   group: managed-mcp-policy-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   audit:
+    permissions:
+      contents: read
     name: Validate managed MCP register
     runs-on: ubuntu-latest
     timeout-minutes: 8
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -54,7 +55,7 @@ jobs:
 
       - name: Upload managed MCP audit artifacts
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: managed-mcp-policy-audit
           path: .ci-logs/

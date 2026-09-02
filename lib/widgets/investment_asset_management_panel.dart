@@ -1,14 +1,20 @@
 import 'dart:async';
+import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/investment_asset.dart';
 import '../models/investment_portfolio_history.dart';
+import '../services/csv_bytes_decoder.dart';
 import '../services/investment_asset_repository.dart';
+import '../services/investment_csv_import_service.dart';
 import '../services/investment_portfolio_history_service.dart';
 import '../services/investment_valuation_service.dart';
 import 'investment_portfolio_history_chart.dart';
+
+typedef InvestmentCsvBytesPicker = Future<Uint8List?> Function();
 
 /// 投資資産の登録・一覧・編集・削除をまとめたダッシュボードパネル。
 class InvestmentAssetManagementPanel extends StatefulWidget {
@@ -20,6 +26,9 @@ class InvestmentAssetManagementPanel extends StatefulWidget {
     this.historyService = const InvestmentPortfolioHistoryService(),
     this.currencyFormatter,
     this.now,
+    this.csvBytesPicker,
+    this.csvBytesDecoder = const CsvBytesDecoder(),
+    this.csvImportService = const InvestmentCsvImportService(),
   });
 
   final InvestmentAssetRepository repository;
@@ -28,6 +37,9 @@ class InvestmentAssetManagementPanel extends StatefulWidget {
   final InvestmentPortfolioHistoryService historyService;
   final String Function(double value)? currencyFormatter;
   final DateTime Function()? now;
+  final InvestmentCsvBytesPicker? csvBytesPicker;
+  final CsvBytesDecoder csvBytesDecoder;
+  final InvestmentCsvImportService csvImportService;
 
   @override
   State<InvestmentAssetManagementPanel> createState() =>
@@ -56,6 +68,7 @@ class _InvestmentAssetManagementPanelState
   bool _loading = false;
   bool _historyLoading = false;
   bool _saving = false;
+  bool _importingCsv = false;
   int _loadSequence = 0;
   int _historyLoadSequence = 0;
   InvestmentHistoryPeriod _historyPeriod = InvestmentHistoryPeriod.oneYear;
@@ -154,6 +167,99 @@ class _InvestmentAssetManagementPanelState
         _historyLoadError = error;
         _historyLoading = false;
       });
+    }
+  }
+
+  Future<Uint8List?> _pickCsvBytes() async {
+    final picker = widget.csvBytesPicker;
+    if (picker != null) return picker();
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const <String>['csv'],
+      allowMultiple: false,
+      withData: true,
+    );
+    return result?.files.single.bytes;
+  }
+
+  Future<void> _openCsvImport() async {
+    final userId = _normalizedUserId;
+    if (userId == null || _saving || _importingCsv) return;
+
+    setState(() => _importingCsv = true);
+    try {
+      final bytes = await _pickCsvBytes();
+      if (bytes == null || bytes.isEmpty || !mounted) return;
+      final text = widget.csvBytesDecoder.decode(
+        bytes,
+        looksValid: InvestmentCsvImportService.looksLikeCsv,
+        formatName: '投資資産CSV',
+      );
+      final parsed = widget.csvImportService.parse(text);
+      final policy = await showDialog<InvestmentCsvDuplicatePolicy>(
+        context: context,
+        builder: (context) => InvestmentCsvImportPreviewDialog(
+          parsed: parsed,
+          existingAssets: _assets,
+          importService: widget.csvImportService,
+        ),
+      );
+      if (policy == null || !mounted || _normalizedUserId != userId) return;
+
+      final plan = widget.csvImportService.buildPlan(
+        parsed: parsed,
+        existingAssets: _assets,
+        duplicatePolicy: policy,
+      );
+      if (plan.writeCount == 0) {
+        _showMessage('取り込む銘柄はありませんでした。');
+        return;
+      }
+
+      setState(() => _saving = true);
+      final saved = <InvestmentAsset>[];
+      for (final update in plan.updates) {
+        saved.add(
+          await widget.repository.update(
+            userId: userId,
+            assetId: update.asset.id,
+            draft: update.draft,
+          ),
+        );
+      }
+      for (final draft in plan.creates) {
+        saved.add(await widget.repository.create(userId: userId, draft: draft));
+      }
+      if (!mounted) return;
+      final updatedIds = plan.updates.map((item) => item.asset.id).toSet();
+      setState(() {
+        _assets = _sorted(<InvestmentAsset>[
+          for (final asset in _assets)
+            if (!updatedIds.contains(asset.id)) asset,
+          ...saved,
+        ]);
+      });
+      unawaited(_loadHistory(userId));
+      _showMessage(
+        '${plan.creates.length}件追加・${plan.updates.length}件更新・'
+        '${plan.skippedDuplicates}件スキップしました。',
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Investment CSV import failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (!mounted) return;
+      final detail = error is FormatException ? error.message : null;
+      _showMessage(
+        detail == null ? '投資資産CSVを取り込めませんでした。' : '投資資産CSVを取り込めませんでした: $detail',
+      );
+      unawaited(_load(showLoading: false));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _importingCsv = false;
+        });
+      }
     }
   }
 
@@ -295,6 +401,20 @@ class _InvestmentAssetManagementPanelState
                   ),
                 ),
                 IconButton(
+                  key: const Key('investment_asset_csv_import'),
+                  tooltip: '証券CSVを取り込む',
+                  onPressed:
+                      _normalizedUserId == null || _saving || _importingCsv
+                          ? null
+                          : _openCsvImport,
+                  icon: _importingCsv
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.upload_file_outlined),
+                ),
+                IconButton(
                   key: const Key('investment_asset_add'),
                   tooltip: '銘柄を追加',
                   onPressed:
@@ -424,10 +544,7 @@ class _InvestmentAssetManagementPanelState
         _Metric(label: acquisitionLabel, value: _yen(acquisitionValue)),
         _Metric(label: '銘柄数', value: '${portfolio.items.length}'),
         if (portfolio.unpricedAssetCount > 0)
-          _Metric(
-            label: '価格未取得',
-            value: '${portfolio.unpricedAssetCount}件',
-          ),
+          _Metric(label: '価格未取得', value: '${portfolio.unpricedAssetCount}件'),
       ],
     );
   }
@@ -518,6 +635,123 @@ class _InvestmentAssetManagementPanelState
               valueColor: valueColor,
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class InvestmentCsvImportPreviewDialog extends StatefulWidget {
+  const InvestmentCsvImportPreviewDialog({
+    super.key,
+    required this.parsed,
+    required this.existingAssets,
+    required this.importService,
+  });
+
+  final InvestmentCsvParseResult parsed;
+  final List<InvestmentAsset> existingAssets;
+  final InvestmentCsvImportService importService;
+
+  @override
+  State<InvestmentCsvImportPreviewDialog> createState() =>
+      _InvestmentCsvImportPreviewDialogState();
+}
+
+class _InvestmentCsvImportPreviewDialogState
+    extends State<InvestmentCsvImportPreviewDialog> {
+  InvestmentCsvDuplicatePolicy _policy = InvestmentCsvDuplicatePolicy.skip;
+
+  @override
+  Widget build(BuildContext context) {
+    final plan = widget.importService.buildPlan(
+      parsed: widget.parsed,
+      existingAssets: widget.existingAssets,
+      duplicatePolicy: _policy,
+    );
+    final theme = Theme.of(context);
+    return AlertDialog(
+      key: const Key('investment_csv_preview_dialog'),
+      title: Text('${widget.parsed.broker.label} CSVプレビュー'),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${widget.parsed.rows.length}銘柄を検出 '
+                '（新規${plan.creates.length}・更新${plan.updates.length}・'
+                'スキップ${plan.skippedDuplicates}・'
+                '読込不可${plan.invalidRows}）',
+                key: const Key('investment_csv_preview_summary'),
+              ),
+              const SizedBox(height: 12),
+              Text('重複ticker', style: theme.textTheme.labelLarge),
+              const SizedBox(height: 8),
+              SegmentedButton<InvestmentCsvDuplicatePolicy>(
+                key: const Key('investment_csv_duplicate_policy'),
+                segments: const <ButtonSegment<InvestmentCsvDuplicatePolicy>>[
+                  ButtonSegment<InvestmentCsvDuplicatePolicy>(
+                    value: InvestmentCsvDuplicatePolicy.skip,
+                    label: Text('スキップ'),
+                    icon: Icon(Icons.skip_next_outlined),
+                  ),
+                  ButtonSegment<InvestmentCsvDuplicatePolicy>(
+                    value: InvestmentCsvDuplicatePolicy.update,
+                    label: Text('更新'),
+                    icon: Icon(Icons.update_outlined),
+                  ),
+                ],
+                selected: <InvestmentCsvDuplicatePolicy>{_policy},
+                onSelectionChanged: (selection) {
+                  setState(() => _policy = selection.single);
+                },
+              ),
+              const SizedBox(height: 12),
+              for (final row in widget.parsed.rows.take(20))
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(row.draft.normalizedTicker),
+                  subtitle: Text(
+                    '数量 ${row.draft.quantity} / '
+                    '取得単価 ¥${row.draft.buyPriceJpy.toStringAsFixed(2)}'
+                    '${row.mergedRowCount > 1 ? ' / ${row.mergedRowCount}行統合' : ''}',
+                  ),
+                ),
+              if (widget.parsed.rows.length > 20)
+                Text('ほか ${widget.parsed.rows.length - 20}銘柄'),
+              if (widget.parsed.issues.isNotEmpty) ...[
+                const Divider(),
+                Text(
+                  '読み込めない行',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+                for (final issue in widget.parsed.issues.take(5))
+                  Text('行${issue.lineNumber}: ${issue.message}'),
+                if (widget.parsed.issues.length > 5)
+                  Text('ほか ${widget.parsed.issues.length - 5}行'),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton.icon(
+          key: const Key('investment_csv_import_confirm'),
+          onPressed: plan.writeCount == 0
+              ? null
+              : () => Navigator.of(context).pop(_policy),
+          icon: const Icon(Icons.upload_file_outlined),
+          label: Text('${plan.writeCount}件を取り込む'),
         ),
       ],
     );
@@ -631,6 +865,7 @@ class _InvestmentAssetEditorDialogState
       InvestmentAssetDraft(
         assetType: _assetType,
         ticker: ticker,
+        existingTicker: asset?.ticker,
         quantity: _parseNumber(_quantityController.text)!,
         buyPriceJpy: _parseNumber(_buyPriceController.text)!,
         buyDate: _buyDate,
@@ -680,9 +915,10 @@ class _InvestmentAssetEditorDialogState
                   hintText: '例: AAPL / BTC',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? '銘柄コードを入力してください。'
-                    : null,
+                validator: (value) => _tickerValidationMessage(
+                  value,
+                  existingTicker: widget.asset?.ticker,
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -764,6 +1000,18 @@ String _assetTypeLabel(InvestmentAssetType type) {
     InvestmentAssetType.crypto => '暗号資産',
     InvestmentAssetType.reit => 'REIT',
     InvestmentAssetType.etf => 'ETF',
+  };
+}
+
+String? _tickerValidationMessage(String? value, {String? existingTicker}) {
+  return switch (investmentTickerValidationError(
+    value,
+    existingTicker: existingTicker,
+  )) {
+    InvestmentTickerValidationError.empty => '銘柄コードを入力してください。',
+    InvestmentTickerValidationError.invalidFormat =>
+      '銘柄コードは半角英数字と . _ : - を1〜32文字で入力してください。',
+    null => null,
   };
 }
 

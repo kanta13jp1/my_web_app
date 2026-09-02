@@ -17,9 +17,7 @@ concurrency:
   group: wbs-sync
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  issues: write
+permissions: {}
 
 env:
   SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
@@ -27,6 +25,12 @@ env:
 
 jobs:
   sync:
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: read
+      issues: write
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

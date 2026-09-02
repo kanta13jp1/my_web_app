@@ -15,6 +15,7 @@ const post = {
 
 Deno.test("first user funnel waits for publish without leaking visitors", () => {
   const report = buildFirstUserFunnelReport({
+    utmSource: "x",
     utmMedium: "organic",
     utmContent: "outcome_first_a",
     post: null,
@@ -59,6 +60,7 @@ Deno.test("first user funnel counts each visitor once and changes one variable",
     },
   ];
   const report = buildFirstUserFunnelReport({
+    utmSource: "x",
     utmMedium: "organic",
     utmContent: "outcome_first_a",
     post,
@@ -91,6 +93,7 @@ Deno.test("first user funnel advances to payout verification after paid event", 
     "supporter_checkout",
   ];
   const report = buildFirstUserFunnelReport({
+    utmSource: "x",
     utmMedium: "organic",
     utmContent: "outcome_first_a",
     post: { ...post, latestImpressions: 12000, latestUrlClicks: 50 },
@@ -115,5 +118,56 @@ Deno.test("first user funnel advances to payout verification after paid event", 
     paymentCaptured: true,
     bankPayoutVerified: false,
     sessionGoalComplete: false,
+  });
+});
+
+Deno.test("Zenn first user funnel preserves the 24-hour measurement window", () => {
+  const report = buildFirstUserFunnelReport({
+    utmSource: "zenn",
+    utmMedium: "organic",
+    utmContent: "oauth_case_study_a",
+    campaignStartedAt: "2026-08-19T17:46:00.000Z",
+    post: null,
+    events: [],
+    payments: [],
+    nowMs: Date.parse("2026-08-20T15:00:00.000Z"),
+  });
+
+  assertObjectMatch(report, {
+    attribution: {
+      utmSource: "zenn",
+      utmMedium: "organic",
+      utmCampaign: "first_user_growth",
+      utmContent: "oauth_case_study_a",
+    },
+    campaign: {
+      source: "zenn",
+      startedAt: "2026-08-19T17:46:00.000Z",
+    },
+    x: null,
+    decision: {
+      stage: "collecting_24h",
+      nextVariable: "none",
+    },
+  });
+});
+
+Deno.test("Zenn first user funnel diagnoses distribution after 24 hours", () => {
+  const report = buildFirstUserFunnelReport({
+    utmSource: "zenn",
+    utmMedium: "organic",
+    utmContent: "oauth_case_study_a",
+    campaignStartedAt: "2026-08-19T17:46:00.000Z",
+    post: null,
+    events: [],
+    payments: [],
+    nowMs: Date.parse("2026-08-20T17:47:00.000Z"),
+  });
+
+  assertObjectMatch(report, {
+    decision: {
+      stage: "reach_bottleneck",
+      nextVariable: "article_distribution",
+    },
   });
 });

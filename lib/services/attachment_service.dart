@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
-import '../main.dart';
+import 'supabase_client_provider.dart';
 import '../models/attachment.dart';
 import 'direct_storage_upload_service.dart';
 

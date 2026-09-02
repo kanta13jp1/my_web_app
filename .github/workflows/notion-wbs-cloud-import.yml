@@ -1,0 +1,104 @@
+name: Notion WBS Cloud Import
+
+on:
+  pull_request:
+    paths:
+      - .github/privileged-workflow-credentials.json
+      - .github/workflows/notion-wbs-cloud-import.yml
+      - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
+      - scripts/notion_wbs_cloud_import.py
+      - scripts/notion_wbs_import_plan.py
+      - test/scripts/test_notion_wbs_cloud_import.py
+      - test/scripts/test_notion_wbs_import_plan.py
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Plan, repair staged inventory gaps, or apply one safe batch
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - repair_inventory
+          - apply
+      expected_plan_sha256:
+        description: Exact current plan digest; required for repair or apply
+        required: false
+        default: ""
+        type: string
+      safe_offset:
+        description: Offset within deterministically ordered safe logical groups
+        required: true
+        default: "0"
+        type: string
+      limit:
+        description: Logical groups to process (1-100)
+        required: true
+        default: "100"
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: notion-wbs-cloud-import
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    name: Validate bounded importer without secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Run focused unit tests
+        run: |
+          PYTHONPATH=. python test/scripts/test_notion_wbs_import_plan.py
+          PYTHONPATH=. python test/scripts/test_notion_wbs_cloud_import.py
+
+  import:
+    if: github.event_name != 'pull_request'
+    name: Plan, repair inventory, or apply one safe WBS batch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: read
+    env:
+      PYTHONPATH: .
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      IMPORT_MODE: ${{ inputs.mode }}
+      EXPECTED_PLAN_SHA256: ${{ inputs.expected_plan_sha256 }}
+      SAFE_OFFSET: ${{ inputs.safe_offset }}
+      IMPORT_LIMIT: ${{ inputs.limit }}
+
+    steps:
+      - name: Checkout trusted main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Verify importer logic
+        run: |
+          PYTHONPATH=. python test/scripts/test_notion_wbs_import_plan.py
+          PYTHONPATH=. python test/scripts/test_notion_wbs_cloud_import.py
+
+      - name: Plan or apply bounded batch
+        run: >-
+          python scripts/notion_wbs_cloud_import.py
+          --json-output notion-wbs-cloud-import.json
+          --summary-output "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve sanitized evidence briefly
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: notion-wbs-cloud-import-${{ github.run_id }}
+          path: notion-wbs-cloud-import.json
+          if-no-files-found: error
+          retention-days: 1

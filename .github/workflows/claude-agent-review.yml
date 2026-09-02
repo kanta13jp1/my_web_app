@@ -22,57 +22,139 @@ on:
         required: false
         default: 'false'
         type: string
+      pr_number:
+        description: 'PR number to review from a trusted main dispatch'
+        required: true
+        default: ''
+        type: string
 
 concurrency:
-  group: claude-agent-review-${{ github.event.pull_request.number || github.run_id }}
+  group: claude-agent-review-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
   cancel-in-progress: true
 
-# Multi-provider AI PR review with automatic fallback:
-#   Primary:  Claude claude-sonnet-4-6 (ANTHROPIC_API_KEY)
+# Multi-provider AI PR review with manual, main-only credential access:
+#   Primary:  Claude claude-sonnet-5 (ANTHROPIC_API_KEY)
 #   Fallback: Gemini 1.5 Flash free tier (GEMINI_API_KEY)
-#   Both absent/quota → skip gracefully, PRs are never blocked
+#   Both fail → skip gracefully with a ::warning::, PRs are never blocked
+#
+# Measured 2026-07-29: no PR had ever actually been reviewed. Both providers
+# rejected every request while the job reported success, and logging only status
+# codes hid why. With response bodies logged, both causes appeared at once:
+#   Claude HTTP 400 - "Your credit balance is too low to access the Anthropic
+#                      API"  -> account billing, NOT the model id
+#   Gemini HTTP 404 - "models/gemini-1.5-flash is not found for API version
+#                      v1beta"  -> genuinely retired
+# Neither is fixable in this file. The gemini-1.5-flash pin appears in 5
+# workflows and needs one consistent change to an id verified via ListModels.
+# Keep logging the bodies: the status codes alone pointed at the wrong cause.
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: {}
 
 jobs:
   review:
+    environment:
+      name: ai-review-production
+      deployment: false
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: write
     name: AI Agent Code Review
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # A pull_request workflow is branch-controlled and must never receive a
+    # repository or environment credential. Review is explicitly dispatched
+    # from main; PR contents are fetched as immutable data and never executed.
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview != 'true' && github.ref == 'refs/heads/main'
 
     steps:
+      - name: Resolve PR number
+        id: pr
+        env:
+          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number }}
+        run: |
+          PR_NUM=$(printf '%s' "$INPUT_PR_NUMBER" | tr -d '[:space:]#')
+          case "$PR_NUM" in
+            ''|*[!0-9]*)
+              echo "::error::pr_number must be a non-empty integer."
+              exit 1
+              ;;
+          esac
+          echo "number=$PR_NUM" >> "$GITHUB_OUTPUT"
+
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Fetch immutable PR commits
+        id: commits
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" > /tmp/pr.json
+          BASE_REF=$(jq -r '.base.ref' /tmp/pr.json)
+          BASE_SHA=$(jq -r '.base.sha' /tmp/pr.json)
+          HEAD_SHA=$(jq -r '.head.sha' /tmp/pr.json)
+          if [ "$BASE_REF" != "main" ]; then
+            echo "::error::Credential-bearing review is restricted to PRs targeting main."
+            exit 1
+          fi
+          test "$BASE_SHA" != null && test "$HEAD_SHA" != null
+          git cat-file -e "${BASE_SHA}^{commit}" || git fetch --no-tags origin "$BASE_SHA"
+          git fetch --no-tags origin \
+            "+refs/pull/${PR_NUMBER}/head:refs/remotes/pull/${PR_NUMBER}/head"
+          FETCHED_HEAD=$(git rev-parse "refs/remotes/pull/${PR_NUMBER}/head")
+          if [ "$FETCHED_HEAD" != "$HEAD_SHA" ]; then
+            echo "::error::Fetched PR head does not match the GitHub API head SHA."
+            exit 1
+          fi
+          echo "base=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
       - name: Extract PR diff
         id: diff
+        env:
+          BASE_SHA: ${{ steps.commits.outputs.base }}
+          HEAD_SHA: ${{ steps.commits.outputs.head }}
         run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          RANGE="${BASE_SHA}...${HEAD_SHA}"
 
-          if [ -n "$BASE_SHA" ]; then
-            git diff "${BASE_SHA}...${HEAD_SHA}" -- \
-              '*.dart' '*.ts' '*.yaml' '*.sql' '*.json' \
-              | head -n 400 > pr_diff.txt
-          else
-            git diff HEAD~1...HEAD -- \
-              '*.dart' '*.ts' '*.yaml' '*.sql' '*.json' \
-              | head -n 400 > pr_diff.txt
-          fi
+          # These must match the extensions the repo actually uses. The list
+          # previously carried '*.yaml' (4 files) while omitting '*.yml' (124,
+          # including all 117 workflows) and '*.py' (218), so workflow and
+          # script changes were never reviewed — the job just reported
+          # "Diff extracted: 0 lines" and passed.
+          git diff "$RANGE" -- \
+            '*.dart' '*.ts' '*.yml' '*.yaml' '*.sql' '*.json' '*.py' '*.ps1' \
+            | head -n 400 > pr_diff.txt
 
           LINES=$(wc -l < pr_diff.txt | tr -d ' ')
           echo "lines=$LINES" >> $GITHUB_OUTPUT
           echo "Diff extracted: ${LINES} lines"
 
+          # An allowlist drifts silently. If files changed but none matched,
+          # say so and name the extensions, so the next drift is visible
+          # instead of looking like "nothing to review".
+          CHANGED=$(git diff --name-only "$RANGE" | wc -l | tr -d ' ')
+          if [ "$LINES" -eq 0 ] && [ "$CHANGED" -gt 0 ]; then
+            EXTS=$(git diff --name-only "$RANGE" | sed -n 's/.*\.//p' | sort -u | tr '\n' ' ')
+            echo "::warning::AI review skipped: ${CHANGED} changed file(s), none matching the reviewed extensions (saw: ${EXTS})"
+          fi
+
       - name: AI Review (Claude primary / Gemini fallback)
         id: review
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           DIFF_LINES="${{ steps.diff.outputs.lines }}"
@@ -86,11 +168,12 @@ jobs:
           REVIEW_PROMPT="自分株式会社 (Flutter Web + Supabase) のPRをレビューしてください。
 
           【観点 — static アナライザが検出できないものに集中】
-          1. セキュリティ: ハードコードシークレット / SQL injection / 認証バイパス
-          2. ルール違反: ダミーデータ使用 / flutter analyze スキップ / continue-on-error 不適切追加
-          3. EF 上限管理: 新規 supabase function が Tier1 (100本デプロイ制限) 超過リスク
-          4. アーキテクチャ: 複雑ロジックがフロントに置かれ Edge Function ファーストに反する
-          5. データ整合性: 実 Supabase データを使っているか (ダミーデータ禁止)
+          1. ルール違反: ダミーデータ使用 / flutter analyze スキップ / continue-on-error 不適切追加
+          2. EF 上限管理: 新規 supabase function が Tier1 (100本デプロイ制限) 超過リスク
+          3. アーキテクチャ: 複雑ロジックがフロントに置かれ Edge Function ファーストに反する
+          4. データ整合性: 実 Supabase データを使っているか (ダミーデータ禁止)
+
+          セキュリティ観点は独立した high-risk-dual-security-review.yml に委譲する。
 
           問題なし → 「✅ LGTM — 問題なし」の1行のみ。
           問題あり → 各問題を「### 問題N: タイトル\n**ファイル:** path\n**内容:** 説明\n**修正:** 方法」で列挙。
@@ -107,7 +190,7 @@ jobs:
           if [ -n "$ANTHROPIC_API_KEY" ]; then
             echo "🤖 Claude API 試行中..."
             PAYLOAD=$(jq -cn --arg prompt "$REVIEW_PROMPT" '{
-              model: "claude-sonnet-4-6",
+              model: "claude-sonnet-5",
               max_tokens: 1500,
               messages: [{ role: "user", content: $prompt }]
             }')
@@ -125,10 +208,14 @@ jobs:
 
             if [ "$HTTP_CODE" = "200" ]; then
               REVIEW_TEXT=$(echo "$RESP_BODY" | jq -r '.content[0].text // ""')
-              USED_MODEL="claude-sonnet-4-6"
+              USED_MODEL="claude-sonnet-5"
               echo "✅ Claude レビュー成功"
             else
+              # Print the body. Logging only the status code is why a retired
+              # model id sat here undetected: every run showed "HTTP 400" with
+              # no indication of what was wrong.
               echo "⚠️ Claude API HTTP $HTTP_CODE — Gemini にフォールバック"
+              echo "$RESP_BODY" | head -c 500
             fi
           fi
 
@@ -155,13 +242,24 @@ jobs:
               echo "✅ Gemini レビュー成功"
             else
               echo "⚠️ Gemini API HTTP $GEMINI_CODE"
+              echo "$GEMINI_BODY" | head -c 500
             fi
           fi
 
           # ── No usable result → graceful skip ──────────────────────────────
+          # Still non-blocking, but no longer silent: the old message asserted
+          # "keys missing or quota exceeded" even when both keys were set and
+          # the real cause was a rejected model id, so every failure read as
+          # expected behaviour.
           if [ -z "$REVIEW_TEXT" ]; then
-            echo "AI レビュースキップ (API キー未設定 or 両プロバイダー quota 超過)" \
-              | tee -a "$GITHUB_STEP_SUMMARY"
+            REASON="不明"
+            if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$GEMINI_API_KEY" ]; then
+              REASON="API キー未設定"
+            else
+              REASON="全プロバイダーが応答せず (上のログの HTTP コードと本文を確認)"
+            fi
+            echo "::warning::AI レビューは実行されませんでした — ${REASON}"
+            echo "AI レビュースキップ: ${REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
@@ -175,7 +273,7 @@ jobs:
       - name: Post Review Comment
         if: steps.review.outputs.text != '' && !startsWith(steps.review.outputs.text, '✅ LGTM')
         continue-on-error: true
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           REVIEW_BODY: ${{ steps.review.outputs.text }}
           REVIEW_MODEL: ${{ steps.review.outputs.model }}
@@ -184,14 +282,10 @@ jobs:
             const body = process.env.REVIEW_BODY || '';
             const model = process.env.REVIEW_MODEL || 'AI';
             if (!body || body.startsWith('✅ LGTM')) return;
-            if (!context.issue || !context.issue.number) {
-              core.info('PR コンテキストなし (workflow_dispatch) — コメントスキップ');
-              return;
-            }
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: Number('${{ steps.pr.outputs.number }}'),
               body: `## 🤖 AI Agent コードレビュー\n\n${body}\n\n---\n*Powered by ${model}*`
             });
 
@@ -211,7 +305,7 @@ jobs:
               echo "スキップ (差分なし / API キー未設定 / 両プロバイダー quota 超過)"
             fi
             echo ""
-            echo "**PR**: #${{ github.event.pull_request.number || 'N/A' }} | **Actor**: ${{ github.actor }}"
+            echo "**PR**: #${{ steps.pr.outputs.number }} | **Actor**: ${{ github.actor }}"
           } >> $GITHUB_STEP_SUMMARY
 
   high-risk-ultrareview-gate:
@@ -225,7 +319,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -233,9 +327,14 @@ jobs:
       - name: Collect changed files
         run: |
           mkdir -p .ci-logs
+          # Three-dot (base...head) diffs from the MERGE BASE, i.e. only what this
+          # PR changed. Two separate args (base head) is a two-dot diff against the
+          # base *tip*, so every file that landed on main after the branch point
+          # gets attributed to this PR. #4248 measured 1 real file reported as 97,
+          # which dragged unrelated PRs into the high-risk path patterns.
+          # fetch-depth: 0 above guarantees the merge base is present.
           git diff --name-only \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}" \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
             > .ci-logs/high-risk-changed-files.txt
 
       - name: Check high-risk ultrareview contract
@@ -252,7 +351,7 @@ jobs:
 
       - name: Upload gate evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: high-risk-ultrareview-gate
           path: .ci-logs/high-risk-*.txt
@@ -262,68 +361,172 @@ jobs:
   # Runs comprehensive multi-agent review via Claude Code CLI.
   # Triggered manually; never blocks PRs; billed separately.
   ultrareview:
+    environment:
+      name: ai-review-production
+      deployment: false
     name: Claude ultrareview (opt-in)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview == 'true' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
+      issues: read
       pull-requests: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      # workflow_dispatch carries no pull_request context, so the PR number must
+      # come from an explicit input. Reading github.event.pull_request.number
+      # alone made this job unable to review any PR (see #1779 follow-up).
+      - name: Resolve PR number
+        id: pr
+        env:
+          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          PR_NUM="${INPUT_PR_NUMBER:-$EVENT_PR_NUMBER}"
+          PR_NUM=$(printf '%s' "$PR_NUM" | tr -d '[:space:]#')
+          if [ -z "$PR_NUM" ]; then
+            echo "::error::ultrareview needs a PR number. Re-run with -f pr_number=<PR#>."
+            exit 1
+          fi
+          case "$PR_NUM" in
+            *[!0-9]*)
+              echo "::error::pr_number must be numeric (got '${PR_NUM}')."
+              exit 1
+              ;;
+          esac
+          echo "number=$PR_NUM" >> "$GITHUB_OUTPUT"
+          echo "Reviewing PR #${PR_NUM}"
+
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+          ref: refs/pull/${{ steps.pr.outputs.number }}/head
+          persist-credentials: false
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
+      - name: Record owner-requested ultrareview suspension
+        if: steps.paid_ai_policy.outputs.enabled != 'true'
+        run: echo "Claude ultrareview is disabled by owner policy." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '20'
 
       - name: Install Claude Code CLI
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         run: npm install -g @anthropic-ai/claude-code@latest 2>&1 | tail -3
 
       - name: Run ultrareview
         id: ultrareview
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CLAUDE_CODE_MAX_OUTPUT_TOKENS: "4000"
+          PR_NUM: ${{ steps.pr.outputs.number }}
         run: |
-          PR_NUM="${{ github.event.pull_request.number }}"
-          if [ -z "$PR_NUM" ]; then
-            echo "No PR number available, running diff-based review instead"
-            PR_NUM=""
-          fi
-
-          REVIEW_OUTPUT=""
-          if [ -n "$PR_NUM" ]; then
-            # Try claude ultrareview (Claude Code v2.1.126+)
-            REVIEW_OUTPUT=$(claude --non-interactive ultrareview "$PR_NUM" 2>&1) || \
-            REVIEW_OUTPUT=$(claude -p "Perform a comprehensive multi-perspective ultrareview of PR #${PR_NUM} in the kanta13jp1/my_web_app repository. Cover: security vulnerabilities, architecture violations (Edge Function first), dummy data, EF count limits, and Dart/Flutter best practices." --non-interactive 2>&1) || \
-            REVIEW_OUTPUT="ultrareview requires Claude Code v2.1.126+ with ANTHROPIC_API_KEY and GitHub access"
+          # ultrareview is a cloud-hosted session, so it depends on what the
+          # credential is entitled to rather than on raw model access. Prefer a
+          # subscription token when one is configured, and drop the API key in
+          # that case so the precedence is unambiguous.
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            unset ANTHROPIC_API_KEY
+            AUTH="CLAUDE_CODE_OAUTH_TOKEN (subscription)"
+          elif [ -n "$ANTHROPIC_API_KEY" ]; then
+            AUTH="ANTHROPIC_API_KEY (API key)"
           else
-            REVIEW_OUTPUT="No PR context — ultrareview skipped for branch push"
+            echo "::error::No Claude credential configured — set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN."
+            exit 1
+          fi
+          echo "Auth: ${AUTH}"
+
+          # Pre-flight: prove the credential itself reaches the API before
+          # blaming ultrareview. "Ultrareview is currently unavailable." does not
+          # distinguish a bad credential from a genuinely unavailable feature,
+          # and `claude auth status` is useless here — it reports
+          # "loggedIn": true even for a completely invalid token.
+          #
+          # This probe is only meaningful in CI: on a developer machine the CLI
+          # silently falls back to the keychain session when the configured
+          # token is bad, so the call succeeds and proves nothing. A runner has
+          # no such fallback, so a failure here means the configured credential
+          # is bad.
+          if claude -p "Reply with exactly: OK" > auth_probe.txt 2>&1; then
+            echo "Credential check: OK ($(head -c 100 auth_probe.txt | tr -d '\n'))"
+          else
+            echo "::error::The configured Claude credential (${AUTH}) failed a minimal API call, so it cannot be used for ultrareview either. Re-issue it with \`claude setup-token\` and update the repo secret."
+            head -20 auth_probe.txt
+            exit 1
           fi
 
-          echo "output<<ULTRA_EOF" >> $GITHUB_OUTPUT
-          echo "$REVIEW_OUTPUT" | head -200 >> $GITHUB_OUTPUT
-          echo "ULTRA_EOF" >> $GITHUB_OUTPUT
+          # `claude ultrareview <PR#>` is the real subcommand; there is no
+          # --non-interactive flag (the CLI rejects it as an unknown option),
+          # which is why the previous invocation could never have succeeded.
+          status=0
+          claude ultrareview "$PR_NUM" --timeout 15 > ultrareview.txt 2>&1 || status=$?
+          cat ultrareview.txt
+
+          if [ "$status" -ne 0 ]; then
+            if grep -qi "currently unavailable" ultrareview.txt; then
+              # Observed on every dispatch so far with API-key auth (3 runs
+              # across ~17h). Say what to check instead of just "exited 1".
+              echo "::error::ultrareview could not launch using ${AUTH}. It is a cloud-hosted session whose availability depends on the credential's entitlement. If only an API key is configured, add a CLAUDE_CODE_OAUTH_TOKEN repo secret from \`claude setup-token\` (requires a Claude subscription). If a subscription token is already in use, the service is likely temporarily unavailable — retry later."
+            else
+              echo "::error::claude ultrareview exited ${status} for PR #${PR_NUM} (auth: ${AUTH})."
+            fi
+            exit "$status"
+          fi
+          if [ ! -s ultrareview.txt ]; then
+            echo "::error::claude ultrareview produced no output for PR #${PR_NUM}."
+            exit 1
+          fi
+
+          # Never substitute a placeholder string for a review that did not run:
+          # it would be posted as if it were ultrareview findings.
+          echo "ran=true" >> "$GITHUB_OUTPUT"
 
       - name: Post ultrareview comment
-        if: steps.ultrareview.outputs.output != ''
-        continue-on-error: true
-        uses: actions/github-script@v9
+        if: steps.ultrareview.outputs.ran == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
-          ULTRA_BODY: ${{ steps.ultrareview.outputs.output }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
         with:
           script: |
-            const body = process.env.ULTRA_BODY || '';
-            if (!body || !context.issue?.number) return;
+            const fs = require('fs');
+            const path = require('path');
+            // Read findings from disk rather than a step output: no heredoc
+            // delimiter collisions and no 1MB GITHUB_OUTPUT ceiling. Resolve
+            // against the workspace so this never depends on the step's cwd.
+            const raw = fs
+              .readFileSync(path.join(process.env.GITHUB_WORKSPACE, 'ultrareview.txt'), 'utf8')
+              .trim();
+            if (!raw) {
+              core.setFailed('ultrareview produced no findings to post.');
+              return;
+            }
+            const prNumber = Number(process.env.PR_NUMBER);
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed(`Invalid PR number: ${process.env.PR_NUMBER}`);
+              return;
+            }
+            const LIMIT = 60000;
+            const body = raw.length > LIMIT
+              ? `${raw.slice(0, LIMIT)}\n\n_…truncated; see the workflow run log for the full findings._`
+              : raw;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: prNumber,
               body: `## 🔬 Claude ultrareview (multi-agent)\n\n${body}\n\n---\n*Claude Code ultrareview — [bc58b50b #1779](https://github.com/kanta13jp1/my_web_app/issues/1779)*`
             });
+            core.info(`Posted ultrareview comment to PR #${prNumber}`);

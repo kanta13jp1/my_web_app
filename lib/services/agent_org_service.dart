@@ -712,6 +712,7 @@ class AgentOrgService {
     String? conversationId,
     bool createMessage = true,
     String? actorAgentId,
+    Map<String, dynamic> metadata = const <String, dynamic>{},
   }) async {
     final userId = _requireUserId();
     final normalizedTitle = title.trim();
@@ -769,6 +770,7 @@ class AgentOrgService {
           'task_type': taskType,
           'source': source,
           'metadata': <String, dynamic>{
+            ...metadata,
             'delegated_at': DateTime.now().toIso8601String(),
           },
         })
@@ -824,6 +826,34 @@ class AgentOrgService {
     }
 
     return task;
+  }
+
+  Future<AgentTask> updateTaskClarity({
+    required String taskId,
+    required Map<String, dynamic> clarity,
+  }) async {
+    final userId = _requireUserId();
+    final task = await _loadTaskById(taskId);
+    if (task == null) {
+      throw StateError('Task not found.');
+    }
+
+    final dynamic updatedTask = await _supabase
+        .from('agent_tasks')
+        .update({
+          'metadata': <String, dynamic>{
+            ...task.metadata,
+            'clarity': clarity,
+          },
+        })
+        .eq('id', taskId)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+    return AgentTask.fromJson(
+      Map<String, dynamic>.from(updatedTask as Map),
+    );
   }
 
   Future<void> updateTaskStatus({

@@ -105,6 +105,10 @@
           {
             "type": "command",
             "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/post-tool-use-dart-format.ps1"
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/post-tool-use-ai-antipatterns.ps1"
           }
         ]
       }

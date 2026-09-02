@@ -15,19 +15,27 @@ on:
         type: string
         default: ""
 
+permissions: {}
+
 concurrency:
   group: post-x-with-media
   cancel-in-progress: false
 
 jobs:
   post:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Build tweet text
         id: tweet
+        env:
+          CUSTOM_TEXT_INPUT: ${{ github.event.inputs.text || '' }}
         run: |
-          CUSTOM_TEXT="${{ github.event.inputs.text }}"
+          CUSTOM_TEXT="$CUSTOM_TEXT_INPUT"
           if [ -n "$CUSTOM_TEXT" ]; then
             TEXT="$CUSTOM_TEXT"
           else
@@ -45,8 +53,10 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Post to X with OGP image
+        env:
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'false' }}
         run: |
-          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          DRY_RUN="$DRY_RUN_INPUT"
           # Default to false for scheduled runs
           if [ -z "$DRY_RUN" ]; then
             DRY_RUN="false"

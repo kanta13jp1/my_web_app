@@ -379,7 +379,7 @@ const List<PageComplianceRecord> kDesignComplianceData = [
   ),
   PageComplianceRecord(
     route: '/ai-writing-assistant',
-    name: 'AI文章支援',
+    name: 'AI文章・要約アシスタント',
     category: DesignCategory.ai,
     compliance: [true, true, false, false, true, true, false],
     auditDate: '2026-04-03',
@@ -717,7 +717,7 @@ const List<PageComplianceRecord> kDesignComplianceData = [
     category: DesignCategory.ai,
   ),
   PageComplianceRecord(
-    route: '/danshari',
+    route: '/digital-danshari',
     name: '断捨離ガイド',
     category: DesignCategory.personal,
   ),
@@ -752,9 +752,9 @@ const List<PageComplianceRecord> kDesignComplianceData = [
     category: DesignCategory.personal,
   ),
   PageComplianceRecord(
-    route: '/stats',
-    name: '統計・分析',
-    category: DesignCategory.admin,
+    route: '/rewards',
+    name: '実績・リワード',
+    category: DesignCategory.personal,
   ),
   PageComplianceRecord(
     route: '/activity-feed',
@@ -862,7 +862,7 @@ const List<PageComplianceRecord> kDesignComplianceData = [
   ),
   PageComplianceRecord(
     route: '/spreadsheet-database',
-    name: 'スプレッドシートDB',
+    name: '表計算',
     category: DesignCategory.notes,
   ),
   PageComplianceRecord(

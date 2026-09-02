@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 集中タイマーページ (ポモドーロ)
 /// focus-timer Edge Function と連携して集中セッションを管理
@@ -15,7 +16,13 @@ class FocusTimerPage extends StatefulWidget {
 }
 
 class _FocusTimerPageState extends State<FocusTimerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['timer', 'stats'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late TabController _tabController;
 

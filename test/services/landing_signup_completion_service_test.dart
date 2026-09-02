@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/growth_acquisition_service.dart';
+import 'package:my_web_app/services/landing_conversion_analytics.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,6 +47,18 @@ class _RecordingAcquisitionService extends GrowthAcquisitionService {
   }
 }
 
+class _RecordingConversionAnalytics implements LandingConversionAnalytics {
+  final List<String> eventKeys = <String>[];
+
+  @override
+  Future<void> captureExperimentEvent({
+    required String eventKey,
+    Map<String, Object> properties = const <String, Object>{},
+  }) async {
+    eventKeys.add(eventKey);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -53,6 +66,7 @@ void main() {
   const visitorId = '00000000-0000-4000-8000-000000000001';
   late _RecordingLandingAdapter adapter;
   late _RecordingAcquisitionService acquisitionService;
+  late _RecordingConversionAnalytics conversionAnalytics;
   late DateTime now;
   late LandingSignupCompletionService service;
 
@@ -60,9 +74,11 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     adapter = _RecordingLandingAdapter();
     acquisitionService = _RecordingAcquisitionService();
+    conversionAnalytics = _RecordingConversionAnalytics();
     now = DateTime.utc(2026, 7, 23, 1);
     service = LandingSignupCompletionService(
       landingPageAdapter: adapter,
+      conversionAnalytics: conversionAnalytics,
       acquisitionService: acquisitionService,
       clock: () => now,
     );
@@ -88,6 +104,7 @@ void main() {
 
       expect(adapter.eventKeys, <String>[eventKey]);
       expect(adapter.visitorIds, <String>[visitorId]);
+      expect(conversionAnalytics.eventKeys, <String>[eventKey]);
       expect(acquisitionService.funnelStages, <String>[
         'signup_complete:$visitorId',
       ]);

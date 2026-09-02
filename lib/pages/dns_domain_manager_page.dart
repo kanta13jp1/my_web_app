@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// DNS・ドメイン管理ページ
 /// dns-domain-manager Edge Function と連携してドメイン設定を管理
@@ -12,7 +13,13 @@ class DnsDomainManagerPage extends StatefulWidget {
 }
 
 class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['domains', 'records', 'ssl'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

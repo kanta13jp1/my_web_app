@@ -196,6 +196,9 @@ def validate(body: str, changed_files: list[str], labels: set[str]) -> tuple[boo
     app_change = any(is_app_code_change(path) for path in changed_files)
     messages: list[str] = []
 
+    if not app_change:
+        return True, ["Skipped because no application runtime code changed."], False
+
     if not body.strip():
         messages.append("PR body is empty; add a Minimal E2E Gate section.")
         return False, messages, app_change

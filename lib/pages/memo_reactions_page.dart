@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/public_memo_service.dart';
+
 /// メモリアクション確認ページ
 /// 公開メモへのリアクション（絵文字）の集計と投票を表示
 class MemoReactionsPage extends StatefulWidget {
-  const MemoReactionsPage({super.key});
+  final MemoReactionService? publicMemoService;
+
+  const MemoReactionsPage({super.key, this.publicMemoService});
 
   @override
   State<MemoReactionsPage> createState() => _MemoReactionsPageState();
 }
 
 class _MemoReactionsPageState extends State<MemoReactionsPage> {
-  final _supabase = Supabase.instance.client;
+  late final MemoReactionService _publicMemoService;
   final _memoIdController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
@@ -29,6 +33,13 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _publicMemoService =
+        widget.publicMemoService ?? PublicMemoService(Supabase.instance.client);
+  }
+
+  @override
   void dispose() {
     _memoIdController.dispose();
     super.dispose();
@@ -42,30 +53,14 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
       return;
     }
 
-    if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final response = await _supabase.functions.invoke(
-        'core-hub',
-        body: {'action': 'memo.share_list', 'memo_id': memoId},
-      );
-      final data = response.data;
-      if (data is Map<String, dynamic>) {
-        final rawReactions = data['reactions'] as Map<String, dynamic>? ?? {};
-        final rawUser = data['userReactions'] as List<dynamic>? ?? [];
-        setState(() {
-          _reactions =
-              rawReactions.map((k, v) => MapEntry(k, (v as num).toInt()));
-          _userReactions = rawUser.map((e) => e.toString()).toList();
-        });
-      }
+      final data = await _publicMemoService.loadReactions(memoId);
+      _applyReactionPayload(data);
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'リアクション取得に失敗しました: $e');
     } finally {
@@ -74,24 +69,41 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
   }
 
   Future<void> _toggle(String reaction) async {
-    if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
     final memoId = int.tryParse(_memoIdController.text.trim());
     if (memoId == null) return;
 
     try {
-      await _supabase.functions.invoke(
-        'core-hub',
-        body: {'action': 'memo.share', 'memo_id': memoId, 'reaction': reaction},
+      final data = await _publicMemoService.toggleReaction(
+        memoId: memoId,
+        reaction: reaction,
       );
-      await _load();
+      _applyReactionPayload(data);
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'リアクション送信に失敗しました: $e');
       }
     }
+  }
+
+  void _applyReactionPayload(Map<String, dynamic> data) {
+    final rawReactions = data['reactions'];
+    final rawUser = data['userReactions'];
+    final reactions = <String, int>{};
+    if (rawReactions is Map) {
+      for (final entry in rawReactions.entries) {
+        if (entry.value is num) {
+          reactions[entry.key.toString()] = (entry.value as num).toInt();
+        }
+      }
+    }
+    final userReactions = rawUser is List
+        ? rawUser.map((value) => value.toString()).toList()
+        : <String>[];
+    if (!mounted) return;
+    setState(() {
+      _reactions = reactions;
+      _userReactions = userReactions;
+    });
   }
 
   @override
@@ -160,6 +172,8 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                     label:
                         '${_reactionLabels[r] ?? r} $count件${isActive ? " 選択中" : ""}',
                     button: true,
+                    excludeSemantics: true,
+                    onTap: () => _toggle(r),
                     child: GestureDetector(
                       onTap: () => _toggle(r),
                       child: Container(

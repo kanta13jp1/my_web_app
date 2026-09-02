@@ -8,6 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../pages/landing_page.dart';
 import '../services/external_format_service.dart';
+import '../services/evernote_migration_ledger_service.dart';
+import '../services/evernote_migration_commit_service.dart';
 import '../services/gamification_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/import_service.dart';
@@ -25,7 +27,15 @@ class _ImportPageState extends State<ImportPage> {
   final GrowthAcquisitionService _acquisitionService =
       const GrowthAcquisitionService();
   late ImportService _importService;
+  late EvernoteMigrationLedgerService _evernoteMigrationLedgerService;
+  late EvernoteMigrationCommitService _evernoteMigrationCommitService;
+  bool _migrationLedgerInitialized = false;
+  bool _isMigrationLedgerLoading = false;
+  String? _migrationLedgerError;
+  List<EvernoteMigrationBatch> _evernoteMigrationBatches =
+      const <EvernoteMigrationBatch>[];
   ImportPreviewResult? _preview;
+  Uint8List? _selectedFileBytes;
   ImportExecutionResult? _lastImportResult;
   String? _selectedSource;
   final TextEditingController _notionTokenController = TextEditingController();
@@ -57,6 +67,57 @@ class _ImportPageState extends State<ImportPage> {
       listen: false,
     );
     _importService = ImportService(gamificationService);
+    _evernoteMigrationCommitService =
+        EvernoteMigrationCommitService.supabase(Supabase.instance.client);
+    if (!_migrationLedgerInitialized) {
+      _migrationLedgerInitialized = true;
+      _evernoteMigrationLedgerService = EvernoteMigrationLedgerService();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_loadEvernoteMigrationLedger());
+      });
+    }
+  }
+
+  Future<void> _loadEvernoteMigrationLedger() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    if (mounted) {
+      setState(() {
+        _isMigrationLedgerLoading = true;
+        _migrationLedgerError = null;
+      });
+    }
+    try {
+      final batches = await _evernoteMigrationLedgerService.loadBatches(
+        userId: user.id,
+      );
+      if (!mounted) return;
+      setState(() => _evernoteMigrationBatches = batches);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _migrationLedgerError = error.toString());
+    } finally {
+      if (mounted) setState(() => _isMigrationLedgerLoading = false);
+    }
+  }
+
+  Future<void> _recordEvernotePreview(ImportPreviewResult preview) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null || preview.sourceType != 'evernote') return;
+    try {
+      await _evernoteMigrationLedgerService.recordPreview(
+        userId: user.id,
+        preview: preview,
+      );
+      await _loadEvernoteMigrationLedger();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _migrationLedgerError = error.toString());
+      _showMessage(
+        'ENEX preview is safe, but the migration ledger could not be saved: '
+        '$error',
+      );
+    }
   }
 
   Future<void> _pickFile(String sourceType) async {
@@ -93,7 +154,9 @@ class _ImportPageState extends State<ImportPage> {
       }
       setState(() {
         _preview = preview;
+        _selectedFileBytes = bytes;
       });
+      await _recordEvernotePreview(preview);
       unawaited(_acquisitionService.recordImportPreview(sourceType));
     } catch (error) {
       if (!mounted) {
@@ -179,7 +242,10 @@ class _ImportPageState extends State<ImportPage> {
         pageLimit: dialogPageLimit,
       );
       if (!mounted) return;
-      setState(() => _preview = preview);
+      setState(() {
+        _preview = preview;
+        _selectedFileBytes = null;
+      });
       unawaited(_acquisitionService.recordImportPreview('notion_api'));
     } catch (error) {
       if (!mounted) return;
@@ -202,10 +268,28 @@ class _ImportPageState extends State<ImportPage> {
 
     setState(() => _isImporting = true);
     try {
-      final result = await _importService.importNotes(
-        userId: user.id,
-        notes: preview.notes,
-      );
+      final ImportExecutionResult result;
+      if (preview.sourceType == 'evernote') {
+        final bytes = _selectedFileBytes;
+        if (bytes == null) {
+          throw StateError('Select the ENEX file again before importing.');
+        }
+        final evernoteResult = await _evernoteMigrationCommitService.commit(
+          userId: user.id,
+          exportBytes: bytes,
+          preview: preview,
+        );
+        result = ImportExecutionResult(
+          insertedCount: evernoteResult.importedNoteCount,
+          importMode: 'evernote-lossless',
+        );
+        await _loadEvernoteMigrationLedger();
+      } else {
+        result = await _importService.importNotes(
+          userId: user.id,
+          notes: preview.notes,
+        );
+      }
       if (!mounted) {
         return;
       }
@@ -214,6 +298,7 @@ class _ImportPageState extends State<ImportPage> {
       );
       setState(() {
         _preview = null;
+        _selectedFileBytes = null;
         _lastImportResult = result;
       });
     } catch (error) {
@@ -221,6 +306,9 @@ class _ImportPageState extends State<ImportPage> {
         return;
       }
       _showMessage('Import failed: $error');
+      if (preview.sourceType == 'evernote') {
+        unawaited(_loadEvernoteMigrationLedger());
+      }
     } finally {
       if (mounted) {
         setState(() => _isImporting = false);
@@ -361,6 +449,8 @@ class _ImportPageState extends State<ImportPage> {
             'Full note import now also runs on a Supabase Edge Function first, so larger competitor migrations do not depend entirely on browser-side batching.',
           ),
           const SizedBox(height: 20),
+          _buildEvernoteMigrationProgressPanel(currentUser),
+          const SizedBox(height: 20),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -377,7 +467,7 @@ class _ImportPageState extends State<ImportPage> {
                 sourceType: 'evernote',
                 title: 'Evernote (ENEX)',
                 subtitle:
-                    'Preview ENEX exports and convert them into plain-text notes.',
+                    'Archive ENEX, import notes and attachments, then verify hashes before source deletion.',
                 icon: Icons.note_alt,
               ),
               _sourceCard(
@@ -448,15 +538,36 @@ class _ImportPageState extends State<ImportPage> {
                     Text('File: ${preview.fileName}'),
                     const SizedBox(height: 4),
                     Text('Notes ready to import: ${preview.notes.length}'),
-                    if (currentUser == null) ...[
+                    if (preview.sourceExportSha256 != null) ...[
+                      const SizedBox(height: 4),
+                      Text('Attachments detected: ${preview.resourceCount}'),
+                      const SizedBox(height: 4),
+                      SelectableText(
+                        'Export SHA-256: ${preview.sourceExportSha256}',
+                      ),
+                    ],
+                    if (!preview.canCommit) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        preview.commitBlockedReason!,
+                        key: const Key('import-commit-safety-gate'),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
+                      ),
+                    ] else if (currentUser == null) ...[
                       const SizedBox(height: 12),
                       const Text(
                         'Preview is ready. Sign in or create an account from the landing page, then come back to import the full batch.',
                       ),
                     ] else ...[
                       const SizedBox(height: 12),
-                      const Text(
-                        'When you confirm import, the full batch will use the Edge Function pipeline first and fall back locally only if needed.',
+                      Text(
+                        preview.sourceType == 'evernote'
+                            ? 'Import stores a private ENEX recovery archive, commits each note with all attachments, and verifies downloaded hashes before marking the batch verified.'
+                            : 'When you confirm import, the full batch will use the Edge Function pipeline first and fall back locally only if needed.',
                       ),
                     ],
                     if (preview.warnings.isNotEmpty) ...[
@@ -476,7 +587,9 @@ class _ImportPageState extends State<ImportPage> {
                     ],
                     const SizedBox(height: 16),
                     FilledButton.icon(
-                      onPressed: _isImporting || preview.notes.isEmpty
+                      onPressed: _isImporting ||
+                              preview.notes.isEmpty ||
+                              !preview.canCommit
                           ? null
                           : currentUser == null
                               ? _openLandingPage
@@ -487,9 +600,11 @@ class _ImportPageState extends State<ImportPage> {
                       label: Text(
                         _isImporting
                             ? 'Importing...'
-                            : currentUser == null
-                                ? 'Open sign-up to import'
-                                : 'Import these notes',
+                            : !preview.canCommit
+                                ? 'Migration safety gate active'
+                                : currentUser == null
+                                    ? 'Open sign-up to import'
+                                    : 'Import these notes',
                       ),
                     ),
                   ],
@@ -780,6 +895,128 @@ class _ImportPageState extends State<ImportPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEvernoteMigrationProgressPanel(User? currentUser) {
+    final progress = EvernoteMigrationProgress.fromBatches(
+      _evernoteMigrationBatches,
+    );
+    final hasPreview = progress.sourceNoteCount > 0;
+    final hasImported = progress.importedNoteCount > 0;
+    final hasVerified = progress.verifiedNoteCount > 0;
+    final hasSourceDeleted = progress.sourceDeletedNoteCount > 0;
+
+    return Card(
+      key: const Key('evernote-migration-progress-panel'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Evernote migration ledger',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                if (_isMigrationLedgerLoading)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    tooltip: 'Refresh migration ledger',
+                    onPressed: currentUser == null
+                        ? null
+                        : _loadEvernoteMigrationLedger,
+                    icon: const Icon(Icons.refresh),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (currentUser == null)
+              const Text(
+                'Sign in to save staged Evernote migration batches and their verification state.',
+              )
+            else ...[
+              LinearProgressIndicator(value: progress.overallFraction),
+              const SizedBox(height: 8),
+              Text(
+                '${progress.overallPercent}% across export preview, import, verification, and Evernote source deletion',
+                key: const Key('evernote-migration-overall-progress'),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  _migrationStageChip('ENEX export + preview', hasPreview),
+                  const Icon(Icons.arrow_forward, size: 16),
+                  _migrationStageChip('Import', hasImported),
+                  const Icon(Icons.arrow_forward, size: 16),
+                  _migrationStageChip('Verify', hasVerified),
+                  const Icon(Icons.arrow_forward, size: 16),
+                  _migrationStageChip(
+                    'Delete from Evernote',
+                    hasSourceDeleted,
+                  ),
+                  const Icon(Icons.arrow_forward, size: 16),
+                  _migrationStageChip('Cancel subscription', false),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  Text('Batches: ${progress.batchCount}'),
+                  Text('Previewed: ${progress.sourceNoteCount} notes'),
+                  Text('Attachments: ${progress.sourceResourceCount}'),
+                  Text('Imported: ${progress.importedNoteCount}'),
+                  Text('Verified: ${progress.verifiedNoteCount}'),
+                  Text(
+                    'Deleted from Evernote: '
+                    '${progress.sourceDeletedNoteCount}',
+                  ),
+                ],
+              ),
+            ],
+            if (_migrationLedgerError != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Migration ledger unavailable: $_migrationLedgerError',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+            const SizedBox(height: 12),
+            const Text(
+              'Evernote notes are deleted only after the matching imported batch passes note, attachment, metadata, and recovery checks.',
+              style: TextStyle(height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _migrationStageChip(String label, bool completed) {
+    return Chip(
+      avatar: Icon(
+        completed ? Icons.check_circle : Icons.schedule,
+        size: 18,
+        color: completed ? Colors.green : null,
+      ),
+      label: Text(label),
     );
   }
 

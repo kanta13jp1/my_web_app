@@ -34,11 +34,15 @@ concurrency:
   group: ogp-image-refresh
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   refresh:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: write
     name: OGP Image Refresh
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -71,7 +75,7 @@ jobs:
 
       - name: Step 2 - Checkout
         if: steps.precheck.outputs.skip != 'true'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.BYPASS_RULES || github.token }}
 

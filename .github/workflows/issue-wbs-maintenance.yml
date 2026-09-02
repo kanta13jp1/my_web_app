@@ -11,12 +11,13 @@ concurrency:
   group: issue-wbs-maintenance-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  actions: write
-  contents: read
+permissions: {}
 
 jobs:
   dispatch-canonical-sync:
+    permissions:
+      actions: write
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

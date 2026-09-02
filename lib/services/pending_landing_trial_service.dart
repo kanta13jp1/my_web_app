@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PendingLandingTrial {
   const PendingLandingTrial({
     required this.email,
+    this.authMethod = 'email',
     required this.intent,
     required this.prompt,
     required this.action,
@@ -13,15 +14,19 @@ class PendingLandingTrial {
   });
 
   final String email;
+  final String authMethod;
   final String intent;
   final String prompt;
   final String action;
   final String reason;
   final DateTime createdAt;
 
+  bool get acceptsAuthenticatedUser => authMethod == 'oauth';
+
   Map<String, Object> toJson() => <String, Object>{
-        'version': 1,
+        'version': 2,
         'email': email,
+        'auth_method': authMethod,
         'intent': intent,
         'prompt': prompt,
         'action': action,
@@ -32,16 +37,21 @@ class PendingLandingTrial {
   static PendingLandingTrial? fromJson(Object? value) {
     if (value is! Map) return null;
     final data = Map<String, dynamic>.from(value);
-    if (data['version'] != 1) return null;
+    final version = data['version'];
+    if (version != 1 && version != 2) return null;
 
     final email = data['email']?.toString().trim().toLowerCase() ?? '';
+    final authMethod = version == 2
+        ? data['auth_method']?.toString().trim().toLowerCase() ?? ''
+        : 'email';
     final intent = data['intent']?.toString().trim() ?? '';
     final prompt = data['prompt']?.toString().trim() ?? '';
     final action = data['action']?.toString().trim() ?? '';
     final reason = data['reason']?.toString().trim() ?? '';
     final createdAt = DateTime.tryParse(data['created_at']?.toString() ?? '');
-    if (email.isEmpty ||
-        !email.contains('@') ||
+    if (!_supportedAuthMethods.contains(authMethod) ||
+        (authMethod == 'email' && (email.isEmpty || !email.contains('@'))) ||
+        (authMethod == 'oauth' && email.isNotEmpty) ||
         !_supportedIntents.contains(intent) ||
         prompt.isEmpty ||
         action.isEmpty ||
@@ -52,6 +62,7 @@ class PendingLandingTrial {
 
     return PendingLandingTrial(
       email: email,
+      authMethod: authMethod,
       intent: intent,
       prompt: prompt,
       action: action,
@@ -65,13 +76,14 @@ class PendingLandingTrial {
     'learning',
     'money',
   };
+  static const Set<String> _supportedAuthMethods = <String>{'email', 'oauth'};
 }
 
 /// Keeps the anonymous LP result long enough to survive the Magic Link round trip.
 ///
-/// The payload stays in browser-local storage and is released only to an
-/// authenticated user whose normalized email matches the address used to send
-/// the link.
+/// The payload stays in browser-local storage. Email flows require the same
+/// normalized address; OAuth flows release it only after this browser returns
+/// with an authenticated user.
 class PendingLandingTrialService {
   const PendingLandingTrialService({
     this.ttl = const Duration(hours: 24),
@@ -110,6 +122,30 @@ class PendingLandingTrialService {
     await prefs.setString(storageKey, jsonEncode(trial.toJson()));
   }
 
+  Future<void> saveForOAuth({
+    required String intent,
+    required String prompt,
+    required String action,
+    required String reason,
+    SharedPreferences? preferences,
+  }) async {
+    final trial = PendingLandingTrial(
+      email: '',
+      authMethod: 'oauth',
+      intent: intent.trim(),
+      prompt: prompt.trim(),
+      action: action.trim(),
+      reason: reason.trim(),
+      createdAt: _now(),
+    );
+    if (PendingLandingTrial.fromJson(trial.toJson()) == null) {
+      throw ArgumentError('Pending landing trial fields are incomplete.');
+    }
+
+    final prefs = preferences ?? await SharedPreferences.getInstance();
+    await prefs.setString(storageKey, jsonEncode(trial.toJson()));
+  }
+
   Future<PendingLandingTrial?> loadForEmail(
     String? email, {
     SharedPreferences? preferences,
@@ -119,7 +155,10 @@ class PendingLandingTrialService {
 
     final prefs = preferences ?? await SharedPreferences.getInstance();
     final trial = await _readValid(prefs);
-    if (trial == null || trial.email != normalizedEmail) return null;
+    if (trial == null ||
+        (!trial.acceptsAuthenticatedUser && trial.email != normalizedEmail)) {
+      return null;
+    }
     return trial;
   }
 
@@ -132,7 +171,10 @@ class PendingLandingTrialService {
 
     final prefs = preferences ?? await SharedPreferences.getInstance();
     final trial = await _readValid(prefs);
-    if (trial == null || trial.email != normalizedEmail) return false;
+    if (trial == null ||
+        (!trial.acceptsAuthenticatedUser && trial.email != normalizedEmail)) {
+      return false;
+    }
     return prefs.remove(storageKey);
   }
 

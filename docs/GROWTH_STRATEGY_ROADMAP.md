@@ -32777,6 +32777,27 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 理念的貢献: deny-by-default (AI_DEV_PRINCIPLES 原則 2) を schedule-hub 全 action で達成
 - 懸念: なし (billing supporter の public 据え置きは収益導線の意図的判断として action_auth.ts コメント + PR に文書化済み)
 
+## セッション記録: WEB版 (2026-07-13) — AIシェア動画エンジン二択化 + 97Kデータダイジェスト移植 + X operator 403 修復
+
+**契機**: ユーザー依頼 3 連鎖 — ① Arcads 比較動画品質の cinematic 動画対応 ② 過去 3 ヶ月インプレッション上位 (97K/79K/13K = 集計シリーズ) の分析と AIシェアへの移植 ③ 本番 403 (X operator role required) の修復。
+
+**実施** (PR 4 本すべて merged):
+
+- [PR #3935](https://github.com/kanta13jp1/my_web_app/pull/3935): viral-video-ad-generator に type=cinematic_video (fal.ai queue API / FAL_TEXT_TO_VIDEO_MODEL で Veo/Kling/Seedance 差替可)。AiShareVideoEngine 設定 (presenter=Hedra 既定 / cinematic) + 設定パネル切替 UI + fal_video.ts 純関数分離。レビュー指摘「終端失敗時 7.5 分ポーリング」を processing 限定 falRequestId 返却で解消
+- [PR #3947](https://github.com/kanta13jp1/my_web_app/pull/3947): TTS 読み辞書に 厳重→げんじゅう (実観測誤読)
+- [PR #4002](https://github.com/kanta13jp1/my_web_app/pull/4002): R24/R26 (並行フロー先行マージ分) の残存プロンプト矛盾 5 件解消 — (d) ブロック不在日の骨格要求矛盾 (捏造圧力 high)、関連性ゲート(B) 優先順位、鮮度例外ゲート、🔴🟡 スコープ、DISABLED ヘッダ折畳み。4 観点レビュー→敵対的検証 (confirmed 8/12) の残反映分
+- [PR #4008](https://github.com/kanta13jp1/my_web_app/pull/4008): オーナーへ X operator (user_profiles.is_admin) 付与 migration — x.post が R系ハードニング (07-12) で operator 限定化された一方オーナー未付与で本番 403。トリガーガード (20260712144000) の正規経路 = migration (postgres 権限) で付与。あわせて 2d38e1b が壊した MCP カタログ deno test を追随修正し main 緑化
+
+**次回優先**: 本番デプロイ後の AIシェア投稿 実機再試行 (403→成功確認) → データレポート型リードの初回実測 (Archetype lift n>=2 蓄積)。
+
+### Philosophy Alignment (WEB 2026-07-13)
+
+- 主要実装: AIシェア動画エンジン二択化 + 97K 実測構造のプロンプト移植 + X operator 認可修復
+- 該当原則: 5 (商品=ユーザー価値: 実測 114 倍差の勝ち型をプロダクトへ) / 8 (KPI=昨日の自分: 自アカウントの実測インプレッションを唯一の裁定者に) / 7 (資産負債: main 壊れテスト・認可付与漏れという負債を即返済)
+- 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
+- 理念的貢献: 「数字は実在するもののみ」の捏造ガードを保ったまま実データ供給を拡張 (AI_DEV_PRINCIPLES: deny-by-default と整合)
+- 懸念: なし (アーキタイプ採否は実測リフト行 n>=2 ゲートに委譲済み)
+
 ## セッション記録: Win Claude part 333 (2026-07-12→14) — schedule-hub publicActions 書き込み系 lockdown (PR #3975)
 
 **契機**: publicActions に認証不要で公開されていた書き込み系 4 action — Web アプリ同梱の anon key (= 実質公開) だけで第三者がオーナーの Qiita/dev.to/X 資格情報での投稿・hub_data への system 書き込みが可能だった。
@@ -33242,6 +33263,64 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 11日連続同一制約 / ユーザー数 60人 (前日比 +1) / **Notion Developer Platform 公開**が最大脅威シグナル継続
 
+### セッション記録: Claude Schedule 2026-07-29 00:02 UTC
+
+**実施内容**:
+- GHA 生成済み日次レポート確認 (`docs/daily-reports/2026-07-29.md`: ユーザー60人 / 新規FR 0件 / 未対応131件 / WF failure hygiene 7件 open)
+- Supabase エンドポイント: プロキシ policy 空応答 (13日連続 / daily-digest・viral-growth-engine・post-x-update・schedule_task_runs 記録 スキップ)
+- GitHub auto-review Issues: 0件 (対応不要)
+- WebSearch 競合インテリジェンス収集 (Notion / Slack / GitHub)
+- `docs/daily-reports/2026-07-29.md` に Claude Schedule 補足セクション追記
+- `docs/competitor-reports/2026-07-29.md` に WebSearch 競合インテリジェンス 3社分を追記 (GHA static-template を上書き強化)
+
+**競合動向サマリー (WebSearch 2026-07-29)**:
+- **🔴 Notion 3.6 (7/1)**: エージェント機能強化 (組織図 AI 生成・クイズ自動作成・カレンダー管理) + Microsoft Office 完全互換 (PPTX/XLSX/DOCX 読み書き) + AI モデル選択肢拡大 (Opus 4.8 / Grok 4.3 / GLM 5.2)
+- **🟠 Slack MCP GA**: Slackbot MCP クライアントが 20+ パートナー (Atlassian/Notion/Zoom/Linear/Canva) と接続。AI Guardrails 導入。Slack が「AI オーケストレーション ハブ」へ転換
+- **🟡 GitHub Code Quality GA (7/20)**: CodeQL + AI 検出 + Copilot Autofix の統合有償製品。Copilot モバイルエージェント (iOS/Android) から CI 修正 PR をワンタップ作成。Claude Opus 5 を Copilot に統合
+
+**AIアクション提案**:
+1. **Notion Office エクスポート差別化**: XLSX/DOCX インポートは実装済みだが、エージェントによる Office エクスポート EF を追加し「Notion 完全代替」のユースケースを完結させる
+2. **自分株式会社 MCP Server 公開**: Slack MCP GA 対抗として自社 MCP サーバーを公開し、Slack/Linear/Canva との連携起点を確保。AI大学で比較コンテンツを展開
+3. **モバイルエージェント体験強化**: GitHub Copilot モバイルエージェント対抗として「スマホ → 資産管理 + AI タスク実行 → 通知」フローを最適化し、個人ユースケースでの差別化を訴求
+
+**更新ドキュメント**:
+- `docs/daily-reports/2026-07-29.md`: Claude Schedule 補足セクション (X投稿ステータス / AI提案 / スケジュールヘルス) 追記
+- `docs/competitor-reports/2026-07-29.md`: WebSearch 競合インテリジェンス 3社分 (Notion 3.6 / Slack MCP GA / GitHub Code Quality GA)
+
+**Philosophy Alignment (Schedule 2026-07-29 00:02 UTC)**:
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により空応答 — 13日連続 / **Notion 3.6 の Microsoft Office 完全互換**が最大脅威シグナル (XLSX/DOCX エクスポート未対応が差別化ギャップ) / Slack MCP GA でエコシステム競争が本格化
+
+### セッション記録: Claude Schedule 2026-07-28 00:02 UTC
+
+**実施内容**:
+- GHA 生成済み日次レポート確認 (`docs/daily-reports/2026-07-28.md`: ユーザー60人 / 新規FR 0件 / 未対応131件 / WF failure 8件)
+- Supabase エンドポイント: プロキシ policy 403 (13日連続 / daily-digest・viral-growth-engine・schedule_task_runs 記録 スキップ)
+- GitHub auto-review Issues: 0件 (対応不要)
+- WebSearch 競合インテリジェンス収集 (Notion / Slack / GitHub)
+- `docs/competitor-reports/2026-07-28.md` に WebSearch 追記セクションを追加 (GHA static-template に加筆)
+
+**競合動向サマリー (WebSearch 2026-07-28)**:
+- **🔴 GitHub MCP ステートレス化 — 本日施行**: MCP プロトコルが 2026-07-28 にステートレス移行。GitHub MCP Server は先行対応済み。自社セッションへの影響確認要
+- **🔴 GitHub Models 廃止 — 2026-07-30 (残り2日)**: 完全廃止。GitHub Copilot 経由のモデル利用へ移行
+- **🟠 Notion Developer Platform**: External Agents API (Alpha) / Notion CLI / Agent SDK / Markdown API を公開。Notion が developer ecosystem を拡張
+- **🟠 Notion Workers クレジットダッシュボード (7/24)**: Workers 使用量をクレジット一覧で管理可能に
+- **🟡 Slack AI Guardrails + 新 Block Kit ブロック群**: コンテンツ安全フィルタ / `slack create agent` コマンド追加
+
+**AIアクション提案**:
+1. **GitHub MCP stateless 動作確認**: 本日施行の MCP stateless 化が `mcp__github__*` ツール群に影響しないか確認し、異常あれば `AI_FALLBACK_RUNBOOK.md` に追記
+2. **GitHub Models 廃止 (7-30) 影響調査**: GHA ワークフロー内で GitHub Models を参照していないか grep 確認 (残り2日)
+3. **Notion Developer Platform 差別化整理**: External Agents API (Alpha) 仕様を `docs/competitor-reports/` に蓄積し、自社 API 設計との差別化ポイントを整理
+
+**更新ドキュメント**:
+- `docs/competitor-reports/2026-07-28.md`: WebSearch 追記セクションを加筆 (GitHub MCP stateless / GitHub Models廃止 / Notion Developer Platform)
+
+**Philosophy Alignment (Schedule 2026-07-28 00:02 UTC)**:
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 13日連続 / GitHub MCP ステートレス化が本日施行 (自社直撃) / GitHub Models が7-30廃止予定
+
 ### セッション記録: Claude Schedule 2026-07-27 00:02 UTC
 
 **実施内容**:
@@ -33268,3 +33347,223 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — 12日連続同一制約 / ユーザー数 60人 (前日比 ±0) / Notion HTMLブロック + Slack Today View が新たな差別化脅威として浮上
+
+## 2026-07-28 (Win Claude part346) — 0 byte 化インシデントの訂正 + 恒久ガード + read-only 再設計
+
+**種別**: 前回 (part342) 記録の訂正 + 再発時の被害遮断 (プロダクト機能変更なし)
+
+### 訂正: cron は truncation については実質無罪
+
+2026-07-21 の記録は `JibunKK-InjectRulesAutoSync` (毎日 03:30) を「第一容疑」とし、MEMORY.md では ⏰ 期限つき項目として「毎日 03:30 再発しうる」と扱っていた。**この位置づけを訂正する。**
+
+追加調査で判明したこと:
+
+- **3 晩 (07-22/23/24) cron は発火し、truncation はゼロ**。毎晩同じ挙動なのに被害は 1 回だけ = cron 犯人説を弱める
+- **メカニズムが不在**: dirty tree では `git pull` は overwrite 拒否で abort しファイルに触れない / `post-merge`・`post-checkout`・`post-rewrite` hook は 1 つも存在しない / `sync_inject_rules.py --apply` は `write_text(HOME, ...)` のみで **repo 外にしか書かない** (repo 側へ書く `--reverse` は排他グループで cron からは呼ばれない)
+- **Defender は 07-21 に修復・検疫を一切していない** (Id 1116/1117/1015 = 0 件)
+- **プロセス帰属は誰も記録していなかった** (Object Access 監査 OFF・Sysmon 未導入) → **遡及的な証明は不可能**
+- 「pull が abort し続けて配布ルールが stale」も**外れ**だった: worktree 版 7588B と origin/main 版 7515B の差はちょうど 73 行分の CRLF で、内容は一致
+
+**結論**: truncation の原因は既存データでは証明できず、3 晩再発していない稀事象。原因追跡は前向き計装に一本化し、恒久防御は「拒否」側に置く方針へ転換した。
+
+### 実装したもの
+
+1. **CI guard** (PR #4368 / merged): `.github/workflows/` と `.claude/` の tracked ファイルが「main で非空 → PR head で 0 byte」になったら fail。この 2 つの木は**空でも無言で壊れる**唯一の領域 (0 byte の workflow は走らないだけ、0 byte の `.claude` 設定は hook が消えるだけ) で、他ツリーは build/実行が即失敗するため射程外。削除は許可 (retire は削除が正しい操作)。変更集合は three-dot・サイズ比較は base tip (merge-base だと `feature-releases-sync.yml` 型を取り逃す)
+2. **cron の read-only 再設計**: `sync_inject_rules.py` に `--from-ref` を追加し、canonical を作業ツリーでなく git ref から読む。cron 側は `git pull` を廃し `git fetch` + `--from-ref origin/main` へ。これで **cron は作業ツリーに触れる能力を完全に失う**。既定は従来通り作業ツリー読み (開発者のローカル編集を無視しないため)
+3. **一時的な forensic watcher** (`scripts/watch_protected_files.ps1`): 0 byte 化の瞬間に `Win32_Process` を全コマンドライン付きでダンプ。**repo には一切書かず**ログは repo 外。**捕獲 or 30 日で自己終了**。時刻非依存 (03:30 相関は n=1 で、その cron 自体が無罪になったため、時刻を鍵にするのは偶然に計器を合わせる行為)
+
+**cron を直す理由も変わった** — truncation の fix ではなく、「worktree がクリーンな晩に `git pull origin main` が成功し、**Codex の WIP branch に main を無断マージする**」という別の実在リスクへの対処である (git の定義通りの動作)。
+
+### 残る限界 (正直な記載)
+
+watcher が名指しできるのはスナップショット時点で**生存しているプロセス**のみ。数ミリ秒で exit する犯人なら時刻とファイル一覧しか取れない — それ自体が 4688 プロセス生成監査へエスカレーションすべき signal となる。
+
+### Philosophy Alignment (Win Claude part346)
+
+- 主要実施: 未証明の原因断定を訂正 + 恒久 CI guard + cron の read-only 化 + 期限つき計装
+- 該当原則: 1 (CEO 感: 射程・sunset・強制点をすべてユーザーが決定) / 6 (資本=時間: 沈黙する破壊を CI で止め将来の調査時間を回収) / 7 (資産負債: CI/CD と設定を守る資産を追加し、未証明の因果を負債として明示訂正)
+- 整合性スコア: 3/9 ✅ — インシデント対応・基盤整備のため機能設計向けの判定基準は適用外
+- 特記: **最大の教訓は前回と同じ形で自分に返ってきた** — 07-21 は「自動レポートが未検証の復元先を推奨していた」ことが最大の発見だったが、その記録自身が cron を「第一容疑」と書いていた。訂正しなければ同じ過ちの再生産になる
+
+### セッション記録: Claude Schedule daily-report (2026-07-30 00:02 UTC / WEB版)
+
+**種別**: 日次レポート + 競合モニタリング + ロードマップ推進
+
+#### 実施内容
+
+1. **日次メトリクス取得**: 総ユーザー 61人 / 新規リクエスト 0件 / 未対応 131件 / 直近24h コミット 55件
+2. **競合新機能調査 (WebSearch)** — 主要3社:
+   - **Notion v3.6**: AI エージェントがカレンダー・通話・DOCX/XLSX/PPTX に対応。Notion Mail 廃止 (2026-09-22) 発表 → 移行難民狙いの LP 準備チャンス
+   - **Slack**: 2026-07-28 に 30+ AI 機能追加・Slackbot 分析 Business+ 拡張
+   - **GitHub**: Code Quality GA (2026-07-20) + GitHub Models 廃止 (2026-07-30) + Copilot に Claude Opus 5 追加
+3. **GitHub Issue auto-review 確認**: 0件 (アクション不要)
+4. **日次レポート更新**: `docs/daily-reports/2026-07-30.md` に競合詳細・AI提案追記
+5. **X 投稿**: Supabase Edge Function 直接アクセス不可 (ネットワークポリシー) → 手動投稿推奨文を daily report に記録
+6. **Schedule ヘルスチェック**: curl exit 56 (ネットワークポリシーで Supabase REST 直接アクセス不可 / GHA 経路は正常稼働)
+
+#### 競合インサイト (本日の最重要発見)
+
+- **Notion Mail 廃止 (09-22)** が移行需要を生む可能性 → 8月中に移行 LP を準備
+- **GitHub Models 廃止 (07-30)** で AI API 比較コンテンツへの検索需要が増加中 → AI大学コンテンツ強化
+- **SKILL.md の業界標準化** (GitHub Copilot + OpenAI Codex 0.146.0 が採用) → 自社 skill 資産の可搬性棚卸しを推奨
+
+#### AI アクション提案
+
+1. Notion Mail 廃止 (09-22) に合わせた移行 LP セクション追加 (8月末目標)
+2. AI大学に「GitHub Models 廃止後の代替 AI API 比較」コンテンツ追加 (SEO 流入狙い)
+3. agent-board 機能を #buildinpublic で X 投稿 (Notion AI Agent との差別化訴求)
+
+#### Philosophy Alignment
+
+- 該当原則: 4 (商品=価値 / 競合を観測し自社の差別化を更新する) / 6 (資本=時間 / 自動化で調査時間をゼロトークンへ) / 8 (KPI / ユーザー 61人→次の milestone へ向けた施策立案)
+- ネットワークポリシー制約: Supabase Edge Function / REST への直接 HTTP アクセス不可 → GHA 経路が正規パス (既知)
+
+### セッション記録: Claude Schedule daily-report (2026-07-31 00:02 UTC / WEB版)
+
+**種別**: 日次レポート + 競合モニタリング + ロードマップ推進
+
+#### 実施内容
+
+1. **日次メトリクス確認**: GHA 生成済み (総ユーザー 61人 / 新規リクエスト 0件 / 未対応 131件)
+2. **競合新機能調査 (WebSearch)** — 主要3社:
+   - **Notion v3.6**: HTMLブロック追加 (ボタン/フォーム埋め込み) / Async Markdown API / AIミーティング音声対応 / MCP 改善
+   - **Slack**: 30+ AI 機能追加 (Slackbot AI / Today & Activity ビュー / Focus Mode / MCP連携 / Slack CRM 独自ドメインメール)
+   - **GitHub**: Code Quality GA (2026-07-20) — Org展開・品質ダッシュボード・カバレッジ強制 / Actions 悪意ワークフロー事前承認機能
+3. **GitHub Issue auto-review 確認**: 0件 (アクション不要)
+4. **競合レポート更新**: `docs/competitor-reports/2026-07-31.md` を static-template から WebSearch 実データへ更新
+5. **日次レポート更新**: `docs/daily-reports/2026-07-31.md` の競合動向セクションをインサイト付きに強化
+6. **Supabase API 制約**: ネットワークポリシーで smmkxxavexumewbfaqpy.supabase.co への直接 HTTP アクセス不可 (GHA 経路は正常)
+
+#### 競合インサイト (本日の最重要発見)
+
+- **Notion のプラットフォーム開放加速** (HTMLブロック+MCP): Notion は「プレーンテキスト」を超えて「実行環境」になりつつある → 自社の agent-board + AI大学が「実行可能な知識ベース」として差別化できる好機
+- **GitHub Code Quality GA**: コード品質管理ツール市場に GitHub が本格参入 → AI大学で「GitHub Code Quality 解説」コンテンツを追加し SEO 流入を狙う
+- **Slack の AI Workspace OS 化**: 30+ 機能でチャット以上のプラットフォームへ → 自社は「個人の知的資産管理×AI」で垂直統合の強みを維持
+
+#### AI アクション提案
+
+1. AI大学に「GitHub Code Quality GA 解説 + 代替ツール比較」を追加 (SEO流入・技術ユーザー獲得)
+2. agent-board 機能を #buildinpublic で X 投稿 (Notion AI Agent との差別化訴求)
+3. Notion HTMLブロック対抗として「実行可能メモ」LP セクションを 8月末に追加
+
+#### Philosophy Alignment
+
+- 該当原則: 4 (商品=価値 / 競合を観測し自社の差別化を更新する) / 6 (資本=時間 / 自動化で調査時間をゼロトークンへ) / 8 (KPI / ユーザー 61人→次の milestone へ向けた施策立案)
+- ネットワークポリシー制約: Supabase Edge Function / REST への直接 HTTP アクセス不可 → GHA 経路が正規パス (既知・継続)
+
+### セッション記録: Claude Schedule daily-report (2026-08-01 00:02 UTC / WEB版)
+
+**種別**: 日次レポート + 競合モニタリング + ロードマップ推進
+
+#### 実施内容
+
+1. **日次メトリクス確認**: GHA 生成済み (総ユーザー 61人 / 新規リクエスト 0件 / 未対応 131件)
+2. **競合新機能調査 (WebSearch)** — 主要3社:
+   - **Notion**: カスタムエージェント & Workers GA (外部API連携自動化) / AI会議メモ強化 (録音・話者ラベル) / ナビゲーション UI 全面刷新
+   - **Slack**: 30+ AI 機能追加 (AIワークスペースOS化・ネイティブCRM・MCP GA) / Slack AI を有料プランに標準搭載 (アドオン廃止)
+   - **GitHub**: Copilot デスクトップアプリ テクニカルプレビュー (Build 2026) / Dependabot × AI エージェント割り当て / トークン課金体系へ移行
+3. **GitHub Issue auto-review 確認**: 0件 (アクション不要)
+4. **競合レポート更新**: `docs/competitor-reports/2026-08-01.md` を static-template から WebSearch 実データへ更新
+5. **Supabase API 制約**: ネットワークポリシーで smmkxxavexumewbfaqpy.supabase.co への直接 HTTP アクセス不可 (GHA 経路は正常・既知継続)
+6. **X投稿**: Supabase viral-growth-engine / post-x-update ともにプロキシブロックにより未実行 (GHA 経路への切り替えを推奨)
+
+#### 競合インサイト (本日の最重要発見)
+
+- **Notion のエージェント化加速**: カスタムエージェント & Workers により「メモツール→AI実行環境」へ進化 → 自社の agent-board + AI大学が「実行可能な知識ベース」で差別化できる好機
+- **Slack の AI 有料プラン標準搭載**: アドオン廃止でコスト圧力が増大 → 自社は個人向け「完全無料×AI×知的資産管理」で対抗軸を明確化する機会
+- **GitHub Copilot トークン課金移行**: 開発者コスト管理が重要に → AI大学で「Copilot コスト最適化」コンテンツを追加し SEO 流入を狙う
+
+#### AI アクション提案
+
+1. AI大学に「GitHub Copilot トークン課金体系 解説 + コスト最適化ガイド」を追加 (SEO流入・開発者ユーザー獲得)
+2. Notion カスタムエージェント対抗として「自社 agent-board の差別化ポイント」を LP・#buildinpublic X 投稿で発信
+3. Slack AI 有料標準搭載に対し「個人×完全AI統合×コスト0」の訴求を Landing Page に追加
+
+#### Philosophy Alignment
+
+- 該当原則: 4 (商品=価値 / 競合を観測し自社の差別化を更新する) / 6 (資本=時間 / 自動化で調査時間をゼロトークンへ) / 8 (KPI / ユーザー 61人→次の milestone へ向けた施策立案)
+- ネットワークポリシー制約: Supabase Edge Function / REST への直接 HTTP アクセス不可 → GHA 経路が正規パス (既知・継続)
+
+### Rule 17 WF health check (2026-08-14 01:41 JST)
+
+- 直近30 run: success 10 / failure 2 / cancelled 2 / active 0（結論未確定のscheduled runを除く）
+- 失敗 WF: Minimal E2E Gate 2件 — アプリ変更のないDependabot Actions更新にもPR本文宣言を要求した誤判定
+- 不要処理を削減: 非アプリ変更はMinimal E2E宣言不要、PR時の未デプロイ公開URL smoke runnerを廃止、docs-only PRのCI起動を除外、ローカルSDK差のあるDart formatは固定SDKのCIへ集約
+- 維持する証明: アプリ変更のFlutter analyze/test/Web build、main反映後の公開Playwright、変更種別ごとのWeb/Edge/DBデプロイ
+- orphan branch: blog-publish 2 / daily-report 2 / その他 0（削除閾値5以下）
+
+### 収益化セッション記録: Google登録コールバック復旧 (2026-08-19 JST)
+
+**対象ファネル**: `trial/save CTA -> Google OAuth start -> signup_complete`
+
+- 最新のLP集計では trial 39件、save CTA 3件、Google OAuth start 2件に対し、検証済み signup_complete は0件。10仮説の勝敗は引き続き `insufficient_data` とする。
+- 本番Supabase OAuth開始URLはGoogleへHTTP 302し、client IDとSupabase callback URLが付くことを確認。入口ではなく、同意後の失敗復旧と原因計測を次の最小ボトルネックと判断した。
+- Google callbackの失敗を6つの匿名カテゴリへ分類し、raw description、メール、tokenを保存せず集計する。失敗時は古いsignup pendingを削除し、第一画面にGoogle再試行とMagic Link復旧を表示する。
+- 集計レポートはcallback失敗の総数とカテゴリを出し、登録完了0件のまま失敗が観測された場合は `repair_google_oauth_callback_failure` を次の行動として返す。
+- 検証: Flutter対象テスト、390px mobile widget、Python report 15件、`flutter analyze`、コミット前品質ゲートが成功。P0 WBSは #4617、親の着金タスクは #4129。
+- 獲得側の公開候補は承認済みだが、X APIが一時ロックでHTTP 403を返したため未投稿。オーナーがXで解除を確認するまで再試行しない。
+- 完了条件は変更しない。未知の外部ユーザーの登録・初回価値・実決済、Stripe paid payout、銀行口座への1円以上の着金がすべて未確認のため、収益化ゴールはOPENを維持する。
+
+### SEO根本原因セッション記録: sitemap更新日精度 (2026-08-20 JST)
+
+- 週次順位は2026-08-19の検証済み結果（`自分株式会社`で自然検索96件まで対象ドメイン未検出）を継続参照し、7日未満の重複計測は行わなかった。
+- 前回の「再クロール待ち」から発見シグナル生成まで掘り下げ、全47 URLの`lastmod`をページ更新と無関係なデプロイ日に揃える実装を確認した。
+- Googleが検証可能な重要更新日のみを利用できるよう、`date_modified`を明示した`/philosophy`だけに`lastmod=2026-08-19`を出し、未確認46 URLでは省略するよう修正した。URL一覧・本文・導線は変更していない。
+- 検証: SEO生成テスト17件、Python構文確認、`flutter analyze --no-pub`、Web release build、47 URL/1 lastmodの生成物監査、ローカルブラウザ描画が成功。順位への寄与は未断定で、次回は無関係デプロイ後の日付維持と週次のクロール／インデックス変化を確認する。
+
+### 販売基盤セッション記録: AI成果物の公開ループ (2026-08-22 JST)
+
+- ChatGPTの明示exportとCodex・Claude Code・Antigravityの指定workspace成果物を、画像・音声・動画・デザイン・文章・プロンプト・アイデア・ゲーム・テンプレート・bundleの商品候補として扱う管理ループを追加した。
+- 取込は指定pathだけをlocal scanし、SHA-256でdedupする。秘密情報・PIIのmatched valueやファイル本文はDBへ送らず、出所、権利・同意、人間の寄与、価格、private object、size、hashの9 hard gateをstage別に記録する。
+- `ready`とlive公開を分離し、linked商品は全gateと人手承認が揃うまで`is_active=true`をDB triggerで拒否する。問題時は販売停止、stage rollback、修正版の再取込で閉ループに戻す。
+- 管理画面、migration contract、local intake test、responsive widget test、運用docs、repository skillを同じ設計へ同期した。既存購入・download・Stripe Priceをrollbackで削除しない。
+- 検証はFlutter 12件、local intake 5件、変更対象の静的解析、linked Supabaseのmigration dry-run、1440px/390pxブラウザ表示で実施し、live商品自体はactive化していない。
+
+### 資産管理セッション記録: Obsidian保管庫から残高一括取込 (2026-08-26 JST)
+
+- Issue #4868 として、ローカルObsidian保管庫の明示的な残高表を資産管理画面へ取り込むMVPを実装した。
+- Chromeのフォルダー選択権限内でMarkdownだけを読み、`.obsidian/` を除外する。本文はブラウザ内で解析し、確認後に選択された口座名・残高だけを既存の `cfo_assets` へ保存する。
+- 新規・更新・同額・古い・同日競合を差分表示し、新しい確認日の同額残高は口座鮮度の更新候補とする。古い残高と競合は自動反映しない。
+- 保管庫由来の残高更新では使途不明金を自動生成せず、取引履歴・給与・支払予定・カード明細・推定サブスクは誤更新防止のためMVP対象外とした。
+- 検証はパーサー5件、レスポンシブWidget 2件、既存資産管理ページのスモーク1件、変更対象ファイルの静的解析で実施した。全体解析とWeb buildはRAM保護のためCIへ委ねる。
+
+### 虎レビュー改善記録: 登録管理指標カードの段階分割 (2026-08-29 JST)
+
+- Issue #4834 の主要ページ分割を継続し、登録管理の追加指標カードを `admin_analytics_page.dart` から専用Widgetへ抽出した。親ページの集計とデータ取得は変更していない。
+- 連続登録ゼロが集計窓上限に達した場合の「N日以上」表示、体験前離脱警告、正常時の登録効率表示を専用Widgetテスト3件で固定した。
+- Flutter 3.38.10 で専用Widgetテスト3件と関連Widgetテスト3件、変更3ファイルの静的解析、フォーマット検査が成功した。Chromeの既存統合テストはロード後に進行せず、空きRAM保護のため停止し、PR CIでの検証に回す。
+
+### 虎レビュー改善記録: Agent Tool Guardカードの段階分割 (2026-08-29 JST)
+
+- Issue #4834 の主要ページ分割を継続し、Agent Tool Guardの空状態、実行概要、ブロック理由、直近実行一覧を `admin_analytics_page.dart` から専用Widgetへ抽出した。ログ取得と集計は親ページに残した。
+- 元のKPIピル表示、色、文言、最大12件、新鮮度による年表示の切り替えを維持し、`admin_analytics_page.dart` を6,791行から6,540行へ縮小した。
+- Flutter 3.38.10 で専用Widgetテスト3件、変更対象の静的解析、フォーマット検査が成功した。全体buildとブラウザ自動化は空きRAM保護のため起動せず、PR CIでの検証に回す。
+
+### 虎レビュー改善記録: 登録ファネルカードの段階分割 (2026-08-30 JST)
+
+- Issue #4834 の主要ページ分割を継続し、今日・過去30日で共用する登録ファネルの表示責務を `admin_analytics_page.dart` から専用Widgetへ抽出した。目標差分、必要送信数、ボトルネックの算出は親ページに残した。
+- 6段階の件数、4つの転換率、目標未達時だけ表示するボトルネックと必要送信数、分母0時の `--` 表示を維持し、`admin_analytics_page.dart` を6,540行から6,362行へ縮小した。
+- Flutter 3.38.10 で専用Widgetテスト3件、変更対象の静的解析、フォーマット検査が成功した。全体buildとブラウザ自動化は空きRAM保護のため起動せず、PR CIでの検証に回す。
+
+### 開発基盤セッション記録: Rootless Podman Dev Container準備 (2026-08-29 JST)
+
+- Issue #2842 向けに、Container Tools と Dev Containers のPodman設定、非root Flutter 3.38.10 Dev Container、Windows/WSL2・Linuxのrunbook、静的回帰テストを追加した。
+- Flutter containerは`keep-id`、capability全削除、`no-new-privileges`、sudo拒否、非特権port 8080を固定し、Supabaseはhost側rootless runtimeから起動してruntime socketをDev Containerへ渡さない。
+- 公式一次情報で、Container ToolsのPodman provider IDとDev Containersの`dev.containers.dockerPath`が別設定であること、Windows Podman machineがrootless既定かつRAM 6 GBを要することを確認した。
+- ローカルはRAM使用93.8%、空き0.97 GB、C:空き9.95 GBで安全ゲート未達だったため、Podman導入・machine作成・image取得・Supabase/Flutter live smokeは実行していない。Issueは実機検証完了までOPENを維持する。
+- 静的contract 7件、repository checker、既存VS Code settings 4件、PowerShell parser、setup dry-run、diff checkは成功した。コンテナbuildとAuth/DB/volume/port smokeは安全なhostでの後続検証へ残す。
+
+### 開発基盤セッション記録: Rootless検証のクラウド移行 (2026-08-30 JST)
+
+- Owner特例でWindowsへPodman 5.8.3とrootless WSL2 machineを導入し、rootless UID mapping、Docker API互換、`keep-id` volume write、port 80拒否、IPv4明示時の8080応答を実測した。
+- Supabase最小構成はDB healthy到達後のschema初期化中にhost RAMが99.9%へ達しexit 137となった。`supabase stop`でvolume backupを保持し、Podman machineとuser-mode networkを停止した。image/volumeのpruneやrootful切替は行っていない。
+- 重いimage取得・Dev Container build・Supabase Auth/DB smokeを2つのGitHub-hosted runnerへ分離するcloud-first workflowを追加した。production secretを使わず、workflow/job権限はread-only、証跡はartifactへ保存する。
+- repository contractを8件へ拡張し、`pull_request_target`、secret参照、privileged container、不完全cleanupを拒否する。ローカル実機はVS Code統合の診断用途へ縮小し、標準の再現可能な証明はクラウドへ移した。
+
+### 開発基盤セッション記録: Rootlessコンテナ受け入れ完了 (2026-08-30 JST)
+
+- Issue #2842 の標準経路を、Flutter Dev Container は rootless Podman、Supabase Auth/DB は Rootless Docker とするクラウド分離構成へ固定した。
+- GitHub Actions run 33298773318 で Podman 5.8.4 / Flutter 3.38.10 の非root build、`keep-id` volume write、sudo拒否、capability削除、`no-new-privileges` が成功した。
+- 同runで Docker 29.7.2 / Supabase CLI 2.116.0 のrootless security option、daemon UID 1001、通常ユーザー所有socket、Docker API互換、DB ready、Auth gateway HTTP 200、volume permission error 0件を確認した。
+- Supabase検証はrepositoryの`config.toml`だけを一時projectへコピーし、既存application migration/seedのfrom-scratch driftをrootless runtime受け入れから分離した。停止はephemeral runner上で`--no-backup`を使用し、orphan container 0件とdaemon停止を確認した。
+- workflowはread-only権限、production secretなし、`pull_request_target`なし、privileged containerなしを維持した。ローカルのPodman/WSL2 machineは停止したままとし、重い再検証はクラウドへ限定する。

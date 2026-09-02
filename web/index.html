@@ -12,11 +12,7 @@
 
   <meta
     name="description"
-    content="仕事・学習・お金の悩みを1行入れると、AIが「今日やる1件」と最初の10分行動を提案。登録前に30秒で試せて、無料コア・カード不要。"
-  >
-  <meta
-    name="keywords"
-    content="自分株式会社,Jibun Inc,Notion代替,Evernote代替,MoneyForward代替,Slack代替,Chatwork代替,X代替,Twitter代替,Animaworks代替,Claude Code代替,Codex代替,netkeiba代替,OpenClaw代替,Claude Cowork代替,ジョブカン代替,Amazon代替,Alexa代替,Kindle代替,Google代替,GoogleKeep代替,GoogleWorkspace代替,Microsoft代替,OneNote代替,MicrosoftToDo代替,Copilot代替,Discord代替,LINE代替,LINEメモ代替,Facebook代替,MetaAI代替,Liven代替,飲食管理代替,ロイヤルティアプリ代替,GitHub代替,GitHubActions代替,コード管理代替,AIライフマネジメント,AI productivity,タスク管理,資産管理,習慣化,メモアプリ,生産性向上,MAGIシステム,Flutter,Supabase,バックオフィス代替,習慣管理アプリ,AIエージェント,AI大学,AIプロバイダー比較,ユーザータスク管理,WBS,プロジェクト管理,Cursor代替,Lovable代替,v0代替,Windsurf代替"
+    content="自分株式会社は、自分自身を一つの会社に見立て、仕事・学習・お金・健康を整理するライフマネジメントアプリです。登録前にAIの提案を1件試せます。"
   >
   <meta name="author" content="自分株式会社 (Jibun Inc.)">
   <meta
@@ -33,10 +29,10 @@
 
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://my-web-app-b67f4.web.app/">
-  <meta property="og:title" content="自分株式会社 | 今日やる1件をAIが決める">
+  <meta property="og:title" content="自分株式会社 | 人生を経営するAIライフマネジメントアプリ">
   <meta
     property="og:description"
-    content="悩みを1行入れるだけ。AIが今日の最優先1件・理由・最初の10分行動を提案。登録前に30秒で試せます。"
+    content="自分自身を一つの会社に見立て、人生のCEOとして仕事・学習・お金・健康を経営。AIが今日やる1件まで整理します。"
   >
   <meta
     property="og:image"
@@ -52,10 +48,10 @@
 
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://my-web-app-b67f4.web.app/">
-  <meta property="twitter:title" content="自分株式会社 | 今日やる1件をAIが決める">
+  <meta property="twitter:title" content="自分株式会社 | 人生を経営するAIライフマネジメントアプリ">
   <meta
     property="twitter:description"
-    content="悩みを1行入れるだけ。AIが今日の最優先1件・理由・最初の10分行動を提案。登録前に30秒で試せます。"
+    content="自分自身を一つの会社に見立て、人生のCEOとして仕事・学習・お金・健康を経営。AIが今日やる1件まで整理します。"
   >
   <meta
     property="twitter:image"
@@ -66,9 +62,11 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" href="favicon.png">
 
-  <link rel="preconnect" href="https://smmkxxavexumewbfaqpy.supabase.co" crossorigin>
-  <link rel="dns-prefetch" href="//smmkxxavexumewbfaqpy.supabase.co">
+  <link rel="preconnect" href="__SUPABASE_URL__" crossorigin>
+  <link rel="dns-prefetch" href="__SUPABASE_URL__">
   <link rel="preload" href="flutter_bootstrap.js" as="script">
+  <link rel="preload" href="main.dart.js" as="script" fetchpriority="high">
+  <link rel="preload" href="assets/web/assets/fonts/NotoSansJP-Regular.ttf" as="font" type="font/ttf" crossorigin>
   <!--
     Google Fonts (Noto Sans JP / Noto Serif JP) のランタイム読み込みは廃止した。
     - この CSS は日本語の unicode-range 分割により **458kB / 496 シャード宣言**
@@ -81,19 +79,20 @@
     追加ダウンロードゼロ / ローカルに Noto Sans JP があればそれを使う)。
   -->
 
-  <title>自分株式会社 | AIが今日の最優先タスクを整理</title>
+  <title>自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ</title>
   <link rel="manifest" href="manifest.json">
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
+    "@id": "https://my-web-app-b67f4.web.app/#software-application",
     "name": "自分株式会社",
     "alternateName": "Jibun Inc.",
     "url": "https://my-web-app-b67f4.web.app/",
-    "description": "AIが最優先タスクを1件に絞り、行動理由と次の一手まで整理するライフマネジメントアプリ。",
+    "description": "自分自身を一つの会社に見立て、人生のCEOとして仕事・学習・お金・健康を経営する考え方をAIで実践できるライフマネジメントアプリ。",
     "applicationCategory": "ProductivityApplication",
-    "operatingSystem": "Web, iOS, Android",
+    "operatingSystem": "Web",
     "availableLanguage": ["ja", "en"],
     "offers": {
       "@type": "Offer",
@@ -101,21 +100,14 @@
       "priceCurrency": "JPY"
     },
     "featureList": [
-      "今日の最優先タスク提案（Notion・Todoist代替）",
-      "ノート・メモ管理（Evernote・Notion代替）",
-      "資産・家計管理（MoneyForward代替）",
-      "チームコラボ・メッセージ（Slack・Chatwork代替）",
-      "習慣化・ルーティン管理",
-      "AIによる行動整理・MAGIシステム",
-      "ソーシャル投稿・記事管理（X代替）",
-      "48時間以内の次の一手整理",
-      "提案の保存と再開",
-      "無料体験導線"
+      "AIによる次の行動候補の提案",
+      "提案理由の表示",
+      "登録前にAI提案を1件体験",
+      "登録後に今回の提案を引き綩ぎ"
     ],
     "inLanguage": "ja",
     "publisher": {
-      "@type": "Organization",
-      "name": "自分株式会社"
+      "@id": "https://my-web-app-b67f4.web.app/#organization"
     },
     "potentialAction": {
       "@type": "RegisterAction",
@@ -124,33 +116,33 @@
   }
   </script>
 
-  <script type="application/ld+json">
+  <script type="application/ld+json" data-homepage-schema="faq">
   {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Notionと何が違うの?",
+        "name": "AIが勝手にやることを決めるのですか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "自分株式会社はAIが「今日やるべき1件」を決めてくれる点が最大の違いです。Notionは情報整理ツールですが、本アプリはAIが優先順位を付けて行動提案まで行います。メモ・資産管理・習慣化も1つのアプリで完結します。"
+          "text": "いいえ。AIは入力内容を整理して、次に動かす1件の候補と理由を提案します。実行するかはユーザーが決めます。"
         }
       },
       {
         "@type": "Question",
-        "name": "無料で使い続けられますか? 有料プランはありますか?",
+        "name": "登録時にカード情報は必要ですか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "はい、無料で始められます。登録なしでAI提案を1回体験でき、登録後も基本機能は無料で利用できます。Pro/Teamは追加機能・上限緩和・開発支援のための有料プランです。"
+          "text": "いいえ。無料登録の画面ではカード情報を求めません。有料プランは別の料金画面で内容を確認してから申し込めます。"
         }
       },
       {
         "@type": "Question",
-        "name": "データは安全ですか?",
+        "name": "登録する前に試せますか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "データはSupabase (PostgreSQL) に保存され、行レベルのセキュリティで各ユーザーが自分のデータのみアクセスできます。AIに送信されるのはあなたが入力したテキストのみで、第三者に販売・共有することはありません。"
+          "text": "はい。いま詰まっていることを1行入力し、AIの提案を1件確認するまでは登録不要です。提案を引き継ぎたい場合だけ無料登録へ進みます。"
         }
       },
       {
@@ -158,7 +150,7 @@
         "name": "NotionやEvernoteからデータを移行できますか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "インポート機能を実装中です。現在はMarkdown形式のテキストをメモとして貼り付けて取り込めます。Notionエクスポートのサポートを近日公開予定です。"
+          "text": "対応形式と取り込み内容は、登録後のインポート画面で確認できます。元データを削除せず、内容を確認してから利用してください。"
         }
       },
       {
@@ -166,7 +158,7 @@
         "name": "AIは具体的に何をしてくれますか?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "タスク・習慣・資産・状況をもとに「今日の最優先アクション1件」を提案します。なぜそれをすべきかの理由と、48時間以内の次の一手まで整理してくれます。MAGIシステムで3つの視点から意思決定をサポートします。"
+          "text": "入力内容を整理し、次に動かす1件の候補と、その理由を提案します。提案を実行するかはユーザーが決めます。"
         }
       },
       {
@@ -191,6 +183,7 @@
         "name": "自分株式会社",
         "alternateName": "Jibun Inc.",
         "url": "https://my-web-app-b67f4.web.app/",
+        "description": "自分自身を一つの会社に見立て、人生のCEOとして仕事・学習・お金・健康を経営するAIライフマネジメントサービス。",
         "logo": {
           "@type": "ImageObject",
           "url": "https://my-web-app-b67f4.web.app/icons/Icon-512.png",
@@ -208,8 +201,10 @@
         "url": "https://my-web-app-b67f4.web.app/",
         "name": "自分株式会社",
         "alternateName": "Jibun Inc.",
+        "description": "自分株式会社の公式サイト。自分の人生を会社として捉え、AIと一緒に次の行動を決めるライフマネジメントアプリです。",
         "inLanguage": "ja",
-        "publisher": { "@id": "https://my-web-app-b67f4.web.app/#organization" }
+        "publisher": { "@id": "https://my-web-app-b67f4.web.app/#organization" },
+        "about": { "@id": "https://my-web-app-b67f4.web.app/#software-application" }
       }
     ]
   }
@@ -237,11 +232,28 @@
     }
 
     #seo-shell {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483646;
       min-height: 100vh;
       display: flex;
       align-items: flex-start;
       justify-content: center;
       padding: 56px 24px 32px;
+      overflow-y: auto;
+      background: #f5f7fa;
+      opacity: 1;
+      transition: opacity 120ms ease-out;
+    }
+
+    #seo-shell[data-flutter-prewarm="true"] {
+      opacity: 1;
+    }
+
+    #seo-shell[data-flutter-ready="true"] {
+      opacity: 0;
+      pointer-events: none;
+      transition-duration: 120ms;
     }
 
     .seo-card {
@@ -272,6 +284,14 @@
       font-size: 54px;
       line-height: 1.18;
       letter-spacing: 0;
+    }
+
+    .seo-kicker {
+      margin: 12px auto 0;
+      color: #245078;
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.45;
     }
 
     .seo-lead {
@@ -342,6 +362,90 @@
       color: #5b6573;
       font-size: 13px;
       line-height: 1.6;
+    }
+
+    .seo-about {
+      max-width: 860px;
+      margin: 36px auto 0;
+      padding: 24px;
+      border: 1px solid #d8e0e9;
+      border-radius: 8px;
+      background: #ffffff;
+      text-align: left;
+    }
+
+    .seo-about h2 {
+      margin: 0;
+      color: #172033;
+      font-size: 24px;
+      line-height: 1.45;
+    }
+
+    .seo-about p {
+      margin: 12px 0 0;
+      color: #526071;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .seo-about ul {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 18px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .seo-about li {
+      padding: 12px;
+      border-radius: 6px;
+      background: #eef5fb;
+      color: #26364a;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.55;
+    }
+
+    .seo-about a {
+      color: #1769d2;
+      font-weight: 700;
+    }
+
+    .seo-about h3 {
+      margin: 24px 0 0;
+      color: #172033;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .seo-business-map {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0 0;
+    }
+
+    .seo-business-map div {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid #d9e4ee;
+      border-radius: 6px;
+      background: #f8fbfe;
+    }
+
+    .seo-business-map dt {
+      color: #245078;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .seo-business-map dd {
+      margin: 6px 0 0;
+      color: #526071;
+      font-size: 13px;
+      line-height: 1.65;
     }
 
     .seo-flow {
@@ -426,6 +530,23 @@
         line-height: 1.75;
       }
 
+      .seo-kicker {
+        font-size: 18px;
+      }
+
+      .seo-about {
+        margin-top: 28px;
+        padding: 20px 16px;
+      }
+
+      .seo-about ul {
+        grid-template-columns: 1fr;
+      }
+
+      .seo-business-map {
+        grid-template-columns: 1fr 1fr;
+      }
+
       .seo-links a {
         width: 100%;
         min-width: 0;
@@ -447,28 +568,101 @@
         transform: rotate(90deg);
       }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      #seo-shell {
+        transition: none;
+      }
+    }
   </style>
+  <script>
+    window.initializePostHogForFlutter = async function(projectToken, host) {
+      if (!projectToken || window.__posthogFlutterInitialized) return;
+
+      const normalizedHost = (host || 'https://us.i.posthog.com').replace(/\/$/, '');
+      if (!window.posthog || typeof window.posthog.init !== 'function') {
+        const assetHost = normalizedHost.replace('.i.posthog.com', '-assets.i.posthog.com');
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.async = true;
+          script.crossOrigin = 'anonymous';
+          script.src = `${assetHost}/static/array.js`;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error('PostHog script failed to load'));
+          document.head.appendChild(script);
+        });
+      }
+
+      window.posthog.init(projectToken, {
+        api_host: normalizedHost,
+        autocapture: false,
+        capture_pageview: false,
+        capture_pageleave: false,
+        disable_session_recording: true,
+        person_profiles: 'never',
+        advanced_disable_feature_flags_on_first_load: true
+      });
+      window.__posthogFlutterInitialized = true;
+    };
+  </script>
 </head>
 <body>
   <div id="seo-shell">
     <main class="seo-card" aria-labelledby="seo-title">
-      <p class="seo-badge">無料コア・カード不要</p>
-      <h1 id="seo-title">今日やるべき1件を、<br>AIが決める。</h1>
+      <p class="seo-badge">登録前にAI提案を1件体験</p>
+      <h1 id="seo-title">自分株式会社</h1>
+      <p class="seo-kicker">人生を経営するAIライフマネジメントアプリ</p>
       <p class="seo-lead" lang="ja">
-        予定・メモ・資産・学習が散らばって、次に何をするか迷っていませんか。
-        自分株式会社は、いま困っていることをAIが整理し、理由つきの具体的な一手に変えます。
-        まず登録なしで1回試し、残したいと思ったときだけ30秒で保存できます。
+        自分株式会社は、自分自身を一つの会社に見立て、人生のCEOとして
+        仕事・学習・お金・健康を経営する考え方をAIで実践できるサービスです。
+        散らばった情報をまとめ、いま困っていることを理由つきの具体的な一手に変えます。
       </p>
       <div class="seo-trust" aria-label="安心して試せる理由">
-        <span>✓ 登録前に体験</span>
-        <span>✓ クレジットカード不要</span>
-        <span>✓ データは本人だけに表示</span>
+        <span>✓ AIは提案、決めるのは本人</span>
+        <span>✓ 登録時にカード入力なし</span>
+        <span>✓ 利用規約とプライバシーを公開</span>
       </div>
       <nav class="seo-links" aria-label="体験を始める">
-        <a class="primary" href="https://my-web-app-b67f4.web.app/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth">5分だけ無料で試す</a>
+        <a id="seo-trial-cta" class="primary" href="/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth">登録なしで1件試す</a>
         <a class="secondary" href="#seo-how">使い方を見る</a>
       </nav>
-      <p class="seo-note">基本機能は無料。いつでも停止できます。</p>
+      <p class="seo-note">提案を引き継ぎたい場合だけ、無料登録へ進めます。</p>
+
+      <section class="seo-about" aria-labelledby="seo-about-title">
+        <h2 id="seo-about-title">自分株式会社とは</h2>
+        <p>
+          自分の人生を会社に見立て、自分が最終決定権を持つCEOとして、
+          時間・お金・スキルを育てていく自己経営の考え方です。
+          このサイトでは、AIが状況を整理し、今日やる1件まで具体化します。
+        </p>
+        <ul>
+          <li>自分が人生のCEOとして決める</li>
+          <li>時間・お金・スキルを資産として育てる</li>
+          <li>他人ではなく昨日の自分をKPIにする</li>
+        </ul>
+        <h3>個人経営の基本構造</h3>
+        <dl class="seo-business-map">
+          <div>
+            <dt>売上</dt>
+            <dd>給与だけでなく、仕事・学習・発信で届けた価値</dd>
+          </div>
+          <div>
+            <dt>経費</dt>
+            <dd>お金に加えて、使った時間・集中力・回復力</dd>
+          </div>
+          <div>
+            <dt>資産</dt>
+            <dd>スキル・健康・信用・人間関係・再利用できる知識</dd>
+          </div>
+          <div>
+            <dt>利益</dt>
+            <dd>次の選択に使えるお金・時間・心の余白</dd>
+          </div>
+        </dl>
+        <p>
+          <a href="/philosophy">個人のP/L・B/S、6部署、30日運営サイクルを読む</a>
+        </p>
+      </section>
 
       <section class="seo-flow" id="seo-how" aria-label="利用の流れ">
         <article class="seo-flow-step">
@@ -489,7 +683,7 @@
           <p>役立つと分かってから無料登録し、提案を残せます。</p>
         </article>
       </section>
-      <p class="seo-loading" role="status">無料体験を準備しています...</p>
+      <p id="seo-loading-status" class="seo-loading" role="status" aria-live="polite">無料体験を準備しています...</p>
       <nav class="seo-links" aria-label="運営者情報" style="margin-top:20px">
         <a class="secondary" href="https://my-web-app-b67f4.web.app/philosophy">経営哲学</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/tokusho">特定商取引法に基づく表記</a>
@@ -503,6 +697,110 @@
     </main>
   </div>
   <script>
+    // Supabase Auth consumes OAuth callback parameters during Flutter startup.
+    // Convert failures to an allowlisted category first, and remove raw provider
+    // text from the address bar so the LP can recover without retaining PII.
+    (function preserveSafeOAuthCallbackFailure() {
+      var url = new URL(window.location.href);
+      var query = url.searchParams;
+      var hashValue = url.hash.replace(/^#/, '');
+      var queryStart = hashValue.indexOf('?');
+      var hash = new URLSearchParams(
+        queryStart >= 0 ? hashValue.slice(queryStart + 1) : hashValue
+      );
+      var error = hash.get('error') || query.get('error') || '';
+      var code = hash.get('error_code') || query.get('error_code') || '';
+      var description =
+        hash.get('error_description') || query.get('error_description') || '';
+      if (!error && !code && !description) return;
+
+      var signal = (error + ' ' + code + ' ' + description).toLowerCase();
+      var category = 'unknown';
+      if (
+        signal.indexOf('access_denied') !== -1 ||
+        signal.indexOf('cancelled') !== -1 ||
+        signal.indexOf('canceled') !== -1 ||
+        signal.indexOf('user denied') !== -1
+      ) {
+        category = 'cancelled';
+      } else if (
+        signal.indexOf('rate_limit') !== -1 ||
+        signal.indexOf('too many requests') !== -1 ||
+        signal.indexOf('429') !== -1
+      ) {
+        category = 'rate_limit';
+      } else if (
+        signal.indexOf('provider_disabled') !== -1 ||
+        signal.indexOf('provider is not enabled') !== -1 ||
+        signal.indexOf('unsupported provider') !== -1
+      ) {
+        category = 'provider_config';
+      } else if (
+        signal.indexOf('redirect') !== -1 ||
+        signal.indexOf('callback url') !== -1
+      ) {
+        category = 'redirect';
+      } else if (
+        signal.indexOf('flow_state') !== -1 ||
+        signal.indexOf('pkce') !== -1 ||
+        signal.indexOf('code exchange') !== -1 ||
+        signal.indexOf('exchange external code') !== -1 ||
+        signal.indexOf('unable to exchange') !== -1 ||
+        signal.indexOf('oauth state') !== -1
+      ) {
+        category = 'callback_exchange';
+      }
+
+      query.delete('error');
+      query.delete('error_code');
+      query.delete('error_description');
+      query.set('oauth_callback_failure', category);
+      url.hash = '';
+      window.history.replaceState(
+        window.history.state,
+        '',
+        url.pathname + url.search
+      );
+    })();
+
+    // The SEO shell is interactive before Flutter's first frame. On the root
+    // landing page, keep the in-flight app download instead of reloading the
+    // same 4MB+ bundle just to add lp_intent=trial to the URL.
+    (function preserveLandingTrialBoot() {
+      var trialCta = document.getElementById('seo-trial-cta');
+      var loadingStatus = document.getElementById('seo-loading-status');
+      if (!trialCta) return;
+
+      trialCta.addEventListener('click', function(event) {
+        var target = new URL(trialCta.href, window.location.href);
+        var isPlainPrimaryClick =
+          event.button === 0 &&
+          !event.altKey &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.shiftKey;
+        var isRootHandoff =
+          window.location.pathname === '/' &&
+          target.origin === window.location.origin &&
+          target.pathname === '/';
+
+        if (!isPlainPrimaryClick || !isRootHandoff) return;
+
+        event.preventDefault();
+        window.history.replaceState(
+          window.history.state,
+          '',
+          target.pathname + target.search + target.hash
+        );
+        trialCta.textContent = '無料体験を読み込んでいます...';
+        trialCta.setAttribute('aria-busy', 'true');
+        if (loadingStatus) {
+          loadingStatus.textContent =
+            '入力画面へ自動で切り替わります。この画面のままお待ちください。';
+        }
+      });
+    })();
+
     // -----------------------------------------------------------------------
     // SEO shell: dynamic meta tags for public memo pages
     // When the URL is /public-memo?id=XXX, fetch memo metadata from the
@@ -510,8 +808,9 @@
     // Flutter loads, so social crawlers and search engines see real content.
     // -----------------------------------------------------------------------
     (function () {
-      var SUPABASE_FUNC_BASE =
-        'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1';
+      var SUPABASE_FUNC_BASE = '__SUPABASE_URL__/functions/v1';
+      var supabaseUrlIsConfigured =
+        SUPABASE_FUNC_BASE.indexOf('__SUPABASE_URL__') === -1;
 
       function setMeta(property, content) {
         var el = document.querySelector(
@@ -582,6 +881,10 @@
         '/ai-image-generator': {
           title: 'AI画像生成 | 自分株式会社',
           desc: 'OpenAI画像生成とメディア管理を統合したAI画像生成ツール。サイズ、スタイル、生成履歴をまとめて扱えます。'
+        },
+        '/philosophy': {
+          title: '自分株式会社とは？人生を経営する9原則と実践方法',
+          desc: '自分株式会社とは、自分の人生を会社に見立て、自分がCEOとして時間・お金・健康・スキルを経営する考え方です。9原則、個人のP/L・B/S、6部署、30日運営サイクルを解説します。'
         },
         '/referral': {
           title: '紹介プログラム | 自分株式会社',
@@ -923,7 +1226,7 @@
                 "name": compName + "から自分株式会社に乗り換えられますか?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "30秒でアカウント登録できます。既存データはMarkdown形式で取り込め、NotionとEvernoteはインポート機能もあります。無料コアからお試しいただけます。"
+                  "text": "無料登録の画面ではカード情報を求めません。既存データの対応形式と取り込み内容は、登録後のインポート画面で確認できます。"
                 }
               }
             ]
@@ -965,6 +1268,7 @@
             'https://my-web-app-b67f4.web.app/blog/post?id=' +
               encodeURIComponent(blogId)
           );
+          if (!supabaseUrlIsConfigured) return;
           fetch(
             SUPABASE_FUNC_BASE +
               '/core-hub?action=blog.public.view&id=' +
@@ -999,6 +1303,7 @@
           'https://my-web-app-b67f4.web.app/public-memo?id=' +
             encodeURIComponent(memoId)
         );
+        if (!supabaseUrlIsConfigured) return;
         fetch(SUPABASE_FUNC_BASE + '/get-public-memo-preview?id=' + encodeURIComponent(memoId))
           .then(function (res) { return res.json(); })
           .then(function (data) {
@@ -1025,9 +1330,41 @@
 
     window.addEventListener('flutter-first-frame', function () {
       var seoShell = document.getElementById('seo-shell');
-      if (seoShell) {
-        seoShell.remove();
-      }
+      if (!seoShell) return;
+
+      // flutter-first-frame can fire while the web renderer is still warming
+      // the bundled Japanese font and glyph atlas. Removing the readable SEO
+      // shell immediately exposed a blank frame followed by tofu glyphs in the
+      // primary CTA. Keep the shell as an overlay through a short stabilization
+      // window and several additional painted frames. Keep it fully opaque
+      // during that wait so two different landing pages never appear stacked,
+      // then hand off with only a brief fade.
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          window.setTimeout(function () {
+            seoShell.setAttribute('data-flutter-prewarm', 'true');
+            var stableFramesRemaining = 12;
+            function revealAfterStableFrames() {
+              requestAnimationFrame(function () {
+                stableFramesRemaining -= 1;
+                if (stableFramesRemaining > 0) {
+                  revealAfterStableFrames();
+                  return;
+                }
+
+                seoShell.setAttribute('data-flutter-ready', 'true');
+                seoShell.setAttribute('aria-hidden', 'true');
+                window.setTimeout(function () {
+                  if (seoShell.isConnected) {
+                    seoShell.remove();
+                  }
+                }, 150);
+              });
+            }
+            revealAfterStableFrames();
+          }, 700);
+        });
+      });
     });
   </script>
   <script>
@@ -1127,6 +1464,7 @@
       }
     }, true);
   </script>
+  <script src="paddle_sandbox_bridge.js"></script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

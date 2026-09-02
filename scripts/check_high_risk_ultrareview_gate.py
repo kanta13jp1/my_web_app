@@ -201,8 +201,39 @@ def path_risk_reasons(changed_files: list[str]) -> list[str]:
     return reasons
 
 
+# Dependency-bump PRs (dependabot etc.) paste the upstream project's release
+# notes and changelog into the body inside <details> blocks. Those are not words
+# the PR author wrote about *this* change, but the keyword scan used to read them
+# and flag the PR high-risk on its own.
+#
+# Measured on #4257 (a one-line `google-genai` version bump): the body contained
+# `token` x1 and `auth` x2, and **all three hits sat inside <details> blocks** --
+# upstream commit subjects like "Support mTLS in custom client using google auth
+# mtls.get_default_ssl_context". The PR touched no risky path and carried no
+# risky label, yet the gate demanded an ultrareview declaration.
+#
+# Collapsed sections are therefore excluded before matching. Text the author
+# actually wrote in the visible description still counts, so a genuinely risky
+# PR is unaffected; path and label signals are untouched either way.
+COLLAPSED_SECTION_RE = re.compile(
+    r"<details\b.*?</details\s*>",
+    flags=re.IGNORECASE | re.DOTALL,
+)
+
+
+def strip_collapsed_sections(body: str) -> str:
+    """Drop <details>…</details> regions so quoted upstream notes are not scanned.
+
+    An unclosed <details> (truncated body) drops the remainder as well, which is
+    the safe direction here: everything after the marker is quoted material.
+    """
+    stripped = COLLAPSED_SECTION_RE.sub(" ", body)
+    opener = re.search(r"<details\b", stripped, flags=re.IGNORECASE)
+    return stripped[: opener.start()] if opener else stripped
+
+
 def text_risk_reasons(title: str, body: str) -> list[str]:
-    text = f"{title}\n{body}"
+    text = f"{title}\n{strip_collapsed_sections(body)}"
     if has_any(HIGH_RISK_TEXT_PATTERNS, text):
         return ["Title/body contains high-risk keywords."]
     return []

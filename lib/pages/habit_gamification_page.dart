@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 習慣ゲーミフィケーションページ
 /// habit-gamification Edge Function と連携
@@ -12,7 +13,14 @@ class HabitGamificationPage extends StatefulWidget {
 }
 
 class _HabitGamificationPageState extends State<HabitGamificationPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['challenges', 'badges', 'leaderboard'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

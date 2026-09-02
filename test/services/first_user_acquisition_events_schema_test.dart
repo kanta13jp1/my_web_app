@@ -4,14 +4,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _migrationPath =
     'supabase/migrations/20260724120000_first_user_acquisition_events.sql';
+const _zennMigrationPath =
+    'supabase/migrations/20260820060752_allow_zenn_first_user_attribution.sql';
 
 void main() {
   group('first user acquisition event schema', () {
     late final String sql;
+    late final String zennSql;
 
     setUpAll(() {
       sql = File(
         _migrationPath,
+      ).readAsStringSync().replaceAll('\r\n', '\n').toLowerCase();
+      zennSql = File(
+        _zennMigrationPath,
       ).readAsStringSync().replaceAll('\r\n', '\n').toLowerCase();
     });
 
@@ -70,6 +76,27 @@ void main() {
           '  to service_role',
         ),
       );
+    });
+
+    test('adds Zenn without weakening the private table boundary', () {
+      expect(
+        zennSql,
+        contains(
+          'drop constraint if exists '
+          'first_user_acquisition_events_utm_source_check',
+        ),
+      );
+      expect(zennSql, contains("check (utm_source in ('x', 'zenn'))"));
+      expect(
+        zennSql,
+        contains(
+          'validate constraint '
+          'first_user_acquisition_events_utm_source_check',
+        ),
+      );
+      expect(zennSql, isNot(contains('disable row level security')));
+      expect(zennSql, isNot(contains('grant ')));
+      expect(zennSql, isNot(contains('revoke ')));
     });
 
     test('does not persist user content or direct personal identifiers', () {

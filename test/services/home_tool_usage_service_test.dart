@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,10 +26,10 @@ void main() {
       now: now.add(const Duration(minutes: 2)),
     );
 
-    expect(
-      await HomeToolUsageService.loadRecentToolIds(prefs: prefs),
-      <String>['alpha', 'beta'],
-    );
+    expect(await HomeToolUsageService.loadRecentToolIds(prefs: prefs), <String>[
+      'alpha',
+      'beta',
+    ]);
 
     final signals = await HomeToolUsageService.loadUsageSignals(
       prefs: prefs,
@@ -65,10 +67,62 @@ void main() {
       await HomeToolUsageService.recordToolUse(id, prefs: prefs);
     }
 
-    expect(
-      await HomeToolUsageService.loadRecentToolIds(prefs: prefs),
-      <String>['seven', 'six', 'five', 'four', 'three', 'two'],
+    expect(await HomeToolUsageService.loadRecentToolIds(prefs: prefs), <String>[
+      'seven',
+      'six',
+      'five',
+      'four',
+      'three',
+      'two',
+    ]);
+  });
+
+  test('legacy tool usage is merged into the canonical tool id', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'home_recent_tool_ids_v1': <String>[
+        'local-election-schedule',
+        'alpha',
+        'local-election-700',
+      ],
+      'home_tool_usage_counts_v1': jsonEncode(<String, int>{
+        'local-election-schedule': 2,
+        'local-election-700': 3,
+      }),
+      'home_tool_last_used_at_v1': jsonEncode(<String, String>{
+        'local-election-schedule': '2026-08-22T09:00:00.000Z',
+        'local-election-700': '2026-08-22T08:00:00.000Z',
+      }),
+    });
+    final prefs = await SharedPreferences.getInstance();
+
+    expect(await HomeToolUsageService.loadRecentToolIds(prefs: prefs), <String>[
+      'local-election-700',
+      'alpha',
+    ]);
+
+    final signals = await HomeToolUsageService.loadUsageSignals(
+      prefs: prefs,
+      candidates: const <HomeToolUsageCandidate>[
+        HomeToolUsageCandidate(
+          id: 'local-election-700',
+          title: 'Local elections',
+          sectionId: 'special',
+        ),
+      ],
     );
+    expect(signals.single.openCount, 5);
+    expect(signals.single.lastUsedAt?.toUtc(), DateTime.utc(2026, 8, 22, 9));
+
+    await HomeToolUsageService.recordToolUse(
+      'local-election-schedule',
+      prefs: prefs,
+      now: DateTime.utc(2026, 8, 22, 10),
+    );
+    final storedCounts =
+        jsonDecode(prefs.getString('home_tool_usage_counts_v1')!)
+            as Map<String, dynamic>;
+    expect(storedCounts['local-election-700'], 6);
+    expect(storedCounts.containsKey('local-election-schedule'), isFalse);
   });
 
   test('clear removes recency and usage signals', () async {

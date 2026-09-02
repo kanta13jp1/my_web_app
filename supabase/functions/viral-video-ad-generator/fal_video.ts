@@ -10,6 +10,25 @@ export const FAL_QUEUE_BASE = "https://queue.fal.run";
 // "fal-ai/veo3" や "fal-ai/kling-video/v2.5-turbo/pro/text-to-video" 等へ切替。
 export const DEFAULT_FAL_TEXT_TO_VIDEO_MODEL = "fal-ai/veo3/fast";
 
+// fal の API キーは env 名が 2 系統ある。コードは歴史的に FAL_KEY を読むが、
+// 運用側の手順書は FAL_API_KEY を正としており、実際に FAL_API_KEY だけが
+// 登録されている期間があった (2026-07-25 実障害: 値は 2026-04-18 から存在した
+// のに名前だけがズレていて、AIシェアの動画が "FAL_KEY not configured" で
+// 静かに落ちていた。投稿自体は成功するので丸一日気づけなかった)。
+// core-hub の GITHUB_PAT ?? GITHUB_TOKEN ?? GH_TOKEN と同じ連鎖にして、
+// どちらの名前で登録されていても動くようにする。
+export const FAL_API_KEY_ENV_NAMES = ["FAL_KEY", "FAL_API_KEY"] as const;
+
+export function resolveFalApiKey(
+  lookup: (name: string) => string | undefined,
+): string {
+  for (const name of FAL_API_KEY_ENV_NAMES) {
+    const value = lookup(name)?.trim();
+    if (value != null && value.length > 0) return value;
+  }
+  return "";
+}
+
 export type FalQueueStatus = "queued" | "processing" | "completed" | "failed";
 
 export type FalSubmitResult = {

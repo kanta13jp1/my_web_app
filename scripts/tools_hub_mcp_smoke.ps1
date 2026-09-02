@@ -88,6 +88,24 @@ function Get-ResponseText {
   if ($null -eq $Response) {
     return ""
   }
+
+  if ($Response.GetType().FullName -eq "System.Net.Http.HttpResponseMessage") {
+    if ($null -eq $Response.Content) {
+      return ""
+    }
+    try {
+      return $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+    } catch {
+      if (
+        $_.Exception -is [System.ObjectDisposedException] -or
+        $_.Exception.InnerException -is [System.ObjectDisposedException]
+      ) {
+        return ""
+      }
+      throw
+    }
+  }
+
   $stream = $Response.GetResponseStream()
   if ($null -eq $stream) {
     return ""
@@ -121,6 +139,11 @@ function Invoke-SmokeRequest {
     $params.Body = $Body | ConvertTo-Json -Depth 30
   }
 
+  $invokeWebRequestCommand = Get-Command Invoke-WebRequest -CommandType Cmdlet -ErrorAction Stop
+  if ($invokeWebRequestCommand.Parameters.ContainsKey("SkipHttpErrorCheck")) {
+    $params.SkipHttpErrorCheck = $true
+  }
+
   try {
     $response = Invoke-WebRequest @params
     $text = [string]$response.Content
@@ -139,7 +162,13 @@ function Invoke-SmokeRequest {
       throw
     }
 
-    $text = Get-ResponseText $response
+    $text = ""
+    if ($null -ne $_.ErrorDetails) {
+      $text = [string]$_.ErrorDetails.Message
+    }
+    if ([string]::IsNullOrWhiteSpace($text)) {
+      $text = Get-ResponseText $response
+    }
     return [pscustomobject]@{
       StatusCode = [int]$response.StatusCode
       Headers = $response.Headers
@@ -156,6 +185,13 @@ function Get-SmokeHeader {
   )
   if ($null -eq $Headers) {
     return ""
+  }
+
+  if ($null -ne $Headers.PSObject.Methods["TryGetValues"]) {
+    $headerValues = $null
+    if ($Headers.TryGetValues($Name, [ref]$headerValues)) {
+      return (@($headerValues) -join ", ")
+    }
   }
 
   $value = $null
@@ -304,6 +340,10 @@ function Assert-McpAuditLog {
   }
 
   Fail $Message
+}
+
+if ($MyInvocation.InvocationName -eq ".") {
+  return
 }
 
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {

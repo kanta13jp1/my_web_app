@@ -1,0 +1,73 @@
+name: Protected Files Non-empty Guard
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+      - ".claude/**"
+      - "scripts/check_protected_files_nonempty.py"
+      - "test/scripts/test_check_protected_files_nonempty.py"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+      - ".claude/**"
+      - "scripts/check_protected_files_nonempty.py"
+      - "test/scripts/test_check_protected_files_nonempty.py"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: protected-files-nonempty-guard-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    permissions:
+      contents: read
+    name: Check protected files emptied
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Resolve comparison refs
+        id: refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+          else
+            base="${{ github.event.before }}"
+            head="${GITHUB_SHA}"
+            if [[ -z "${base}" || "${base}" =~ ^0+$ ]]; then
+              base="${head}^"
+            fi
+          fi
+          git fetch --no-tags origin "$base" "$head" || true
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+
+      - name: Run guard
+        run: |
+          python scripts/check_protected_files_nonempty.py \
+            --base-ref "${{ steps.refs.outputs.base }}" \
+            --head-ref "${{ steps.refs.outputs.head }}"
+
+      - name: Run unit tests
+        run: python -m unittest discover -s test/scripts -p "test_check_protected_files_nonempty.py"

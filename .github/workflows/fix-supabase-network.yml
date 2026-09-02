@@ -21,11 +21,15 @@ concurrency:
   group: supabase-network-fix
   cancel-in-progress: true
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   manage-network:
+    environment:
+      name: platform-security-production
+      deployment: false
+    permissions:
+      contents: read
     name: Supabase Network Restrictions
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -33,14 +37,16 @@ jobs:
     steps:
       - name: Determine action
         id: action
+        env:
+          ACTION_INPUT: ${{ github.event.inputs.action || 'check' }}
         run: |
           # push トリガー時は allow-all をデフォルト
           if [ "${{ github.event_name }}" = "push" ]; then
             echo "action=allow-all" >> $GITHUB_OUTPUT
             echo "🔧 push トリガー検出 — allow-all で実行"
           else
-            echo "action=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
-            echo "🔧 workflow_dispatch — action=${{ github.event.inputs.action }}"
+            echo "action=$ACTION_INPUT" >> $GITHUB_OUTPUT
+            echo "🔧 workflow_dispatch — action=$ACTION_INPUT"
           fi
 
       - name: Check current Network Restrictions

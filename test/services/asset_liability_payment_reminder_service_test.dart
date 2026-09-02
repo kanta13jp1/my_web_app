@@ -63,6 +63,23 @@ void main() {
       expect(reminders.buildCandidates(workbook: workbook, now: now), isEmpty);
     });
 
+    test('excludes zero-yen review-only rows', () {
+      final now = DateTime(2026, 5, 29);
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布': 10000,
+          'じぶん銀行カードローン': -100000,
+        },
+        baseDate: now,
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0,
+        },
+      );
+
+      expect(workbook.cashflowRows.single.overdue, isFalse);
+      expect(reminders.buildCandidates(workbook: workbook, now: now), isEmpty);
+    });
+
     test('adds shortage risk text without mutating cashflow data', () {
       final now = DateTime(2026, 5, 15);
       final workbook = planner.buildWorkbook(

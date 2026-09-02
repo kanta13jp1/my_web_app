@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 旅行プランナーページ
 /// lifestyle-hub (travel.*) 連携
@@ -12,7 +13,14 @@ class TravelItineraryPage extends StatefulWidget {
 }
 
 class _TravelItineraryPageState extends State<TravelItineraryPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['itinerary', 'bookings', 'packing', 'budget'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
   bool _isLoading = false;

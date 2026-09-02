@@ -1,4 +1,4 @@
-import '../main.dart';
+import 'supabase_client_provider.dart';
 
 /// 添付ファイル数のキャッシュサービス
 class AttachmentCacheService {

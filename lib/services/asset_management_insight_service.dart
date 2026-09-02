@@ -1,4 +1,5 @@
 import '../models/asset_liability_workbook.dart';
+import '../models/daily_todo.dart';
 import '../models/user_profile.dart';
 import 'asset_debt_discipline_monitor.dart';
 import 'asset_debt_trend_analyzer.dart';
@@ -262,11 +263,16 @@ class AssetManagementInsightReport {
   /// 月をまたいだ負債トレンド（リボ複利・残高増加・超長期完済）の指摘。
   final List<AssetDebtTrendInsight> debtTrendInsights;
 
-  /// 「借金しない宣言」モニターの月次評価（追加借入ゼロ／カード一括）。null=未評価。
+  /// 「借金しない宣言」モニターの月次評価
+  /// （カード以外の追加借入ゼロ／新規利用分の25日返済）。null=未評価。
   final AssetDebtDisciplineReport? disciplineReport;
 
   /// 「まず、これだけ」段階別トリアージ (今日3件まで/今週/今月/専門窓口)。null=未評価。
   final AssetTriagePlan? triagePlan;
+
+  /// 「今日やること」ToDo の日々の実行状況（完遂/繰り越し借金/連続日数）。
+  /// null=ToDo 未使用。細木数子AI が金銭の負債と並べて行動へ助言するための入力。
+  final DailyTodoDigest? dailyTodoDigest;
 
   const AssetManagementInsightReport({
     required this.workbook,
@@ -285,6 +291,7 @@ class AssetManagementInsightReport {
     this.debtTrendInsights = const <AssetDebtTrendInsight>[],
     this.disciplineReport,
     this.triagePlan,
+    this.dailyTodoDigest,
   });
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
@@ -293,9 +300,7 @@ class AssetManagementInsightReport {
 
   List<AssetDebtTrendInsight> get criticalDebtTrendInsights {
     return debtTrendInsights
-        .where(
-          (insight) => insight.severity == AssetDebtTrendSeverity.critical,
-        )
+        .where((insight) => insight.severity == AssetDebtTrendSeverity.critical)
         .toList(growable: false);
   }
 
@@ -327,6 +332,7 @@ class AssetManagementInsightService {
         AssetManagementImplementationContext.defaultAssetManagementContexts,
     double minimumSafetyBalance = defaultMinimumSafetyBalance,
     int upcomingPaymentWarningDays = defaultUpcomingPaymentWarningDays,
+    bool livingExpensePriorityMode = false,
     String? mainAccountId,
     Map<String, double> priorMonthAccountBalances = const <String, double>{},
     AssetDebtTrendAnalyzer debtTrendAnalyzer = const AssetDebtTrendAnalyzer(),
@@ -334,6 +340,7 @@ class AssetManagementInsightService {
         const AssetDebtDisciplineMonitor(),
     AssetTriageGuideService triageGuideService =
         const AssetTriageGuideService(),
+    DailyTodoDigest? dailyTodoDigest,
   }) {
     final breakdown = _availableMoneyBreakdown(
       workbook: workbook,
@@ -360,7 +367,8 @@ class AssetManagementInsightService {
       upcomingPaymentWarningDays: upcomingPaymentWarningDays,
       minimumSafetyBalance: minimumSafetyBalance,
       todayInsight: today,
-    )..sort(_compareActionItems);
+      livingExpensePriorityMode: livingExpensePriorityMode,
+    );
     final movementSuggestions = _buildMovementSuggestions(
       workbook: workbook,
       windows: <AssetManagementAvailableMoneyInsight>[today, week, month],
@@ -390,6 +398,7 @@ class AssetManagementInsightService {
     final disciplineReport = disciplineMonitor.evaluate(
       workbook: workbook,
       priorBalancesByAccountId: priorMonthAccountBalances,
+      cardUsagePolicies: workbook.cardUsagePolicies,
     );
     final triagePlan = triageGuideService.buildPlan(
       workbook: workbook,
@@ -413,6 +422,7 @@ class AssetManagementInsightService {
       debtTrendInsights: debtTrendInsights,
       disciplineReport: disciplineReport,
       triagePlan: triagePlan,
+      dailyTodoDigest: dailyTodoDigest,
     );
   }
 
@@ -421,6 +431,7 @@ class AssetManagementInsightService {
     required int upcomingPaymentWarningDays,
     required double minimumSafetyBalance,
     required AssetManagementAvailableMoneyInsight todayInsight,
+    required bool livingExpensePriorityMode,
   }) {
     final actions = <AssetManagementInsightActionItem>[];
     final today = _dateOnly(workbook.baseDate);
@@ -676,6 +687,22 @@ class AssetManagementInsightService {
       );
     }
 
+    if (livingExpensePriorityMode) {
+      final debtRowsById = <String, AssetLiabilityDebtRow>{
+        for (final row in workbook.debtMasterRows) row.id: row,
+      };
+      actions.sort(
+        (a, b) => _compareLivingExpensePriorityActionItems(
+          a,
+          b,
+          debtRowsById: debtRowsById,
+          subscriptionFixedCostAccountIds:
+              workbook.subscriptionFixedCostAccountIds,
+        ),
+      );
+    } else {
+      actions.sort(_compareActionItems);
+    }
     return actions;
   }
 
@@ -686,8 +713,10 @@ class AssetManagementInsightService {
   }) {
     final today = _dateOnly(workbook.baseDate);
     final payday = AssetManagementAvailableMoney.nextPayday(today);
-    final remainingDays =
-        AssetManagementAvailableMoney.remainingDaysToPayday(today, payday);
+    final remainingDays = AssetManagementAvailableMoney.remainingDaysToPayday(
+      today,
+      payday,
+    );
     final daysThisWeek = AssetManagementAvailableMoney.daysUntilWeekEnd(
       today,
       remainingDays: remainingDays,
@@ -721,8 +750,9 @@ class AssetManagementInsightService {
     };
     final end = switch (window) {
       AssetManagementInsightWindow.today => start,
-      AssetManagementInsightWindow.week =>
-        start.add(Duration(days: breakdown.daysThisWeek - 1)),
+      AssetManagementInsightWindow.week => start.add(
+          Duration(days: breakdown.daysThisWeek - 1),
+        ),
       AssetManagementInsightWindow.month => breakdown.payday,
     };
     return AssetManagementAvailableMoneyInsight(
@@ -1228,6 +1258,69 @@ class AssetManagementInsightService {
     return a.title.compareTo(b.title);
   }
 
+  int _compareLivingExpensePriorityActionItems(
+    AssetManagementInsightActionItem a,
+    AssetManagementInsightActionItem b, {
+    required Map<String, AssetLiabilityDebtRow> debtRowsById,
+    required Set<String> subscriptionFixedCostAccountIds,
+  }) {
+    final aRank = _livingExpensePriorityRank(
+      a,
+      debtRowsById: debtRowsById,
+      subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
+    );
+    final bRank = _livingExpensePriorityRank(
+      b,
+      debtRowsById: debtRowsById,
+      subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
+    );
+    final priority = aRank.compareTo(bRank);
+    if (priority != 0) {
+      return priority;
+    }
+    // 同じ生活防衛バケット内では、OFF 時と同じ重要度・期日・件名順を維持する。
+    return _compareActionItems(a, b);
+  }
+
+  int _livingExpensePriorityRank(
+    AssetManagementInsightActionItem item, {
+    required Map<String, AssetLiabilityDebtRow> debtRowsById,
+    required Set<String> subscriptionFixedCostAccountIds,
+  }) {
+    if (item.type == AssetManagementInsightActionType.emergencyLivingExpense) {
+      return 0;
+    }
+
+    final relatedId = item.relatedAccountId;
+    final relatedRow = relatedId == null ? null : debtRowsById[relatedId];
+    final isLifeline = relatedRow != null &&
+        relatedRow.fullPaymentEstimate &&
+        !relatedRow.paid &&
+        relatedRow.scheduledPaymentAmount > 0 &&
+        !relatedRow.includedInBillingAccount &&
+        !subscriptionFixedCostAccountIds.contains(relatedRow.id);
+    if (isLifeline) {
+      return 0;
+    }
+
+    if (item.type == AssetManagementInsightActionType.overduePayment) {
+      return 1;
+    }
+
+    final isHighInterestLoan = relatedRow != null &&
+        !relatedRow.fullPaymentEstimate &&
+        relatedRow.kind == AssetLiabilityAccountKind.cardLoan &&
+        relatedRow.annualRate >=
+            AssetTriageGuideService.highInterestRateThreshold &&
+        relatedRow.balance.abs() > 1 &&
+        !relatedRow.paid;
+    if (isHighInterestLoan) {
+      return 2;
+    }
+
+    return 3;
+  }
+
   int _severityRank(AssetManagementInsightSeverity severity) {
     return switch (severity) {
       AssetManagementInsightSeverity.critical => 3,
@@ -1365,6 +1458,13 @@ class AssetManagementInsightPromptBuilder {
       report.developerRequests.map((item) => item.severity.name),
     );
     final workbook = report.workbook;
+    final completedOneShotCardNames = workbook.debtMasterRows
+        .where(
+          (row) => workbook.cardUsagePolicies[row.id]?.enforceOneShot == true,
+        )
+        .map((row) => row.name)
+        .toSet()
+        .join('、');
     final buffer = StringBuffer()
       ..writeln('あなたは「細木数子」を彷彿とさせる、ズバズバ断言型の資産管理アシスタントです。')
       ..writeln(
@@ -1383,11 +1483,14 @@ class AssetManagementInsightPromptBuilder {
         '再計算する場合は「概算」と明記し、Dart計算値と矛盾する断定はしないでください。',
       )
       ..writeln(
-        'リボ払いカードの扱い: リボ払いカード(is_revolving が true / revolving_billing を持つカード)の請求額は'
-        '「リボ設定額＋利用限度額の超過分」で確定します。請求額と「カード請求内訳(紐づけ負債の合計)」'
-        '「取込明細合計(今月の新規利用)」は一致しないのが正常です。これらの差を「照合不一致」「ズレ」'
-        '「要修正」「今日中に直せ」等として指摘しないでください。リボ払いカードの照合は完了済みとして扱い、'
-        '明細の取り込みも催促しないでください。',
+        'リボ払いカードの扱い: 返済予定額は「既存残高への最低返済額＋当月の新規利用額」で、'
+        '返済日は毎月25日です。取込明細がある場合はその合計を新規利用額として全額上乗せします。'
+        '既存残高の一括返済は手元資金を圧迫するため要求・最優先化しないでください。',
+      )
+      ..writeln(
+        '新規利用分を全額返済する設定記録: ${completedOneShotCardNames.isEmpty ? 'なし' : completedOneShotCardNames}。'
+        '記録済みカードには、残高一括返済やリボ/分割設定の即時解除を促さず、25日の返済予定と'
+        '既存残高を圧縮する最低返済額だけを提示してください。',
       )
       ..writeln(
         '支払済みの扱い: 「支払済み:はい」または「期限超過:いいえ」の負債・支払いは、今月分の支払いが'
@@ -1395,6 +1498,24 @@ class AssetManagementInsightPromptBuilder {
         '指摘・督促してはいけません。支払済みの負債は「今月の支払いと利息」での利息・元金の説明にのみ用い、'
         '未払い合計・期限超過・今日中に払うべき支払いの文脈からは必ず除外してください。'
         '「支払日別リスク」に載っていない負債は期限超過ではありません。',
+      )
+      ..writeln(
+        '受取済み収入の扱い: 「受取済み:はい」または received が true の給与・入金予定は'
+        '入金完了済みです。これらを「未受取」「期限超過」「未入金」として督促・指摘してはいけません。',
+      )
+      ..writeln(
+        '支払予定額の優先: 各負債の今月支払うべき額には、機械的な推定最低支払額ではなく'
+        '「今月支払予定額（約定返済額/手入力額）」を採用してください。',
+      )
+      ..writeln(
+        '解約済みサブスクの扱い: 金額が0円、または解約済み（disabled/canceled）のサブスクリプションは'
+        '「サブスク地獄」「無駄な固定費」「未払い支出」として言及してはいけません。'
+        '現在アクティブなサブスクリプションのみを固定費削減の対象として助言してください。',
+      )
+      ..writeln(
+        '金利・残高の正確性: 各負債の年利（年利15.00%等）や残高（-7,519,280円等）は、過去の記憶や'
+        '一般的な貸金金利（18.0%）で推測せず、必ず「総合サマリー」「負債マスタ詳細」に記載されている確定値を'
+        'そのまま引用してください。',
       )
       ..writeln(
         '残高と支払額の区別: 各負債の「残高」は総借入残高であり、今月の延滞額・今月や今日に'
@@ -1422,7 +1543,7 @@ class AssetManagementInsightPromptBuilder {
         '該当データが無い月だけ、そのカテゴリには触れなくて構いません。',
       )
       ..writeln(
-        '下記「借金しない宣言モニター」は本人の固い誓約です。違反（追加借入の発生・カードの非一括/リボ）があれば、'
+        '下記「借金しない宣言モニター」は本人の固い誓約です。違反（カード以外の追加借入・新規利用分の25日返済不足）があれば、'
         'どの口座でいくらかを具体的に挙げ、「次はこうする」を断言してください。'
         '逆に両誓約を守れている月は、必ず明確に褒めて継続を後押ししてください（締めの総評でも触れる）。',
       )
@@ -1483,7 +1604,7 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('## 今月の問題点と翌月の改善（負債トレンド）')
       ..write(_debtTrendLines(report))
       ..writeln()
-      ..writeln('## 借金しない宣言モニター（追加借入ゼロ／カード一括）')
+      ..writeln('## 借金しない宣言モニター（カード以外の追加借入ゼロ／新規利用分の25日返済）')
       ..write(_disciplineLines(report))
       ..writeln()
       ..writeln('## 今日やることトリアージ（Dart計算・この順番のまま提示すること）')
@@ -1604,6 +1725,7 @@ class AssetManagementInsightPromptBuilder {
         '優先度:${row.priorityLabel} / '
         '推定額:${row.paymentAmountEstimated ? 'はい' : 'いいえ'} / '
         '支払済み:${row.paid ? 'はい' : 'いいえ'} / '
+        '要対応:${row.requiresAction ? 'はい' : 'いいえ'} / '
         '支払原資:${row.paymentSourceAccountName ?? '未設定'} / '
         '支払い方式:${row.paymentMethodLabel ?? row.paymentMethod.name} / '
         'カード請求先:${row.billingAccountName ?? 'なし'}',
@@ -1626,7 +1748,8 @@ class AssetManagementInsightPromptBuilder {
         '支払予定合計:${_formatAmount(risk.scheduledPaymentTotal)} / '
         '手入力支払合計:${_formatAmount(risk.manualPaymentTotal)} / '
         '利息見込み合計:${_formatAmount(risk.interestEstimateTotal)} / '
-        '状態:${risk.isPast ? '期限超過' : risk.isToday ? '本日' : '今後'}',
+        '区分:${risk.requiresAction ? '要対応' : '確認のみ'} / '
+        '状態:${!risk.requiresAction ? '確認のみ' : risk.isPast ? '期限超過' : risk.isToday ? '本日' : '今後'}',
       );
     }
     return buffer.toString();
@@ -1738,16 +1861,15 @@ class AssetManagementInsightPromptBuilder {
     for (final group in reconciliation.groups) {
       final revolving = group.revolvingBilling;
       if (revolving != null) {
-        // リボ払いは請求額=設定額+限度超過分。明細合計との差は不一致ではない旨を明示する。
+        // リボ払いは最低返済額+新規利用額を25日に返す。既存残高は一括返済しない。
         buffer.writeln(
           '- 明細照合(リボ払い):${group.billingAccountName} / '
-          '請求額:${_formatAmount(revolving.billedAmount)}'
-          '(=リボ設定額${_formatAmount(revolving.monthlyAmount)}'
-          '+限度超過${_formatAmount(revolving.overLimitAmount)}) / '
-          'リボ残高:${_formatAmount(revolving.balance)} / '
-          '利用限度額:${_formatAmount(revolving.creditLimit)} / '
-          '取込明細合計(今月の新規利用):${_formatAmount(group.statementLineTotal)} / '
-          '注記:リボ払いのため請求額は明細合計と一致しないのが正常(不一致ではない)',
+          '25日返済:${_formatAmount(revolving.billedAmount)}'
+          '(=最低返済${_formatAmount(revolving.monthlyAmount)}'
+          '+新規利用分全額${_formatAmount(revolving.newUsageAmount)}) / '
+          '既存残高:${_formatAmount(revolving.existingBalanceAmount)} / '
+          '取込明細合計:${_formatAmount(group.statementLineTotal)} / '
+          '注記:既存残高の一括返済は要求せず、新規利用分だけを最低返済額へ上乗せ',
         );
         continue;
       }
@@ -1816,24 +1938,32 @@ class AssetManagementInsightPromptBuilder {
       return '- 規律モニター未評価。\n';
     }
     final buffer = StringBuffer()
-      ..writeln('- 誓約①「追加の借金をしない」: '
-          '${discipline.zeroNewBorrowingAchieved ? '達成' : '違反あり'}'
-          '${discipline.hasPriorMonthData ? '' : '（前月データ未蓄積のため判定保留）'}')
-      ..writeln('- 誓約②「カードは必ず一括返済」: '
-          '${discipline.lumpSumAchieved ? '達成' : '違反あり'}')
+      ..writeln(
+        '- 誓約①「カード以外の追加借入をしない」: '
+        '${discipline.zeroNewBorrowingAchieved ? '達成' : '違反あり'}'
+        '${discipline.hasPriorMonthData ? '' : '（前月データ未蓄積のため判定保留）'}',
+      )
+      ..writeln(
+        '- 誓約②「新規利用分は最低返済額へ上乗せし25日に全額返済」: '
+        '${discipline.newUsageRepaymentAchieved ? '達成' : '違反あり'}',
+      )
       ..writeln('- 今月の新規借入推定合計: ${_formatAmount(discipline.totalNewBorrowing)}')
-      ..writeln('- リボ/分割で翌月へ繰り越す残高合計: '
-          '${_formatAmount(discipline.totalCarriedOver)}');
+      ..writeln(
+        '- リボ/分割で翌月へ繰り越す残高合計: '
+        '${_formatAmount(discipline.totalCarriedOver)}',
+      );
     if (discipline.isCompliant) {
       buffer.writeln('- 今月は両誓約を守れています。AIはこの達成を必ず褒め、継続を後押ししてください。');
       return buffer.toString();
     }
     for (final violation in discipline.allViolations) {
       buffer
-        ..writeln('- [${violation.severity.name}] '
-            '${_disciplineTypeLabel(violation.type)} / ${violation.accountName} / '
-            '金額:${_formatAmount(violation.amount)} / '
-            '残高:${_formatAmount(violation.currentBalance)}')
+        ..writeln(
+          '- [${violation.severity.name}] '
+          '${_disciplineTypeLabel(violation.type)} / ${violation.accountName} / '
+          '金額:${_formatAmount(violation.amount)} / '
+          '残高:${_formatAmount(violation.currentBalance)}',
+        )
         ..writeln('  - 問題点: ${violation.problem}')
         ..writeln('  - 対応: ${violation.action}');
     }
@@ -1843,7 +1973,7 @@ class AssetManagementInsightPromptBuilder {
   String _disciplineTypeLabel(AssetDebtDisciplineViolationType type) {
     return switch (type) {
       AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
-      AssetDebtDisciplineViolationType.revolvingCard => 'カード非一括(リボ/分割)',
+      AssetDebtDisciplineViolationType.revolvingCard => '新規利用分の25日返済不足',
     };
   }
 

@@ -20,8 +20,7 @@ on:
         required: false
         default: "false"
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: mcp-audit-anomaly
@@ -29,18 +28,27 @@ concurrency:
 
 jobs:
   script-test:
+    permissions:
+      contents: read
     name: MCP audit anomaly script test
     runs-on: ubuntu-latest
     timeout-minutes: 8
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Deno
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v2.x
+
+      - name: Cache Deno modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/deno
+          key: deno-${{ hashFiles('deno.lock') }}
+          restore-keys: deno-
 
       - name: Deno check
         run: deno check scripts/mcp_audit_anomaly.ts scripts/mcp_audit_anomaly_test.ts
@@ -52,6 +60,11 @@ jobs:
         run: deno test scripts/mcp_audit_anomaly_test.ts
 
   detect:
+    environment:
+      name: platform-security-production
+      deployment: false
+    permissions:
+      contents: read
     name: Detect MCP audit anomalies
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -59,12 +72,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Deno
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v2.x
+
+      - name: Cache Deno modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/deno
+          key: deno-${{ hashFiles('deno.lock') }}
+          restore-keys: deno-
 
       - name: Detect anomaly
         run: >
@@ -103,23 +123,25 @@ jobs:
 
       - name: Upload anomaly summary
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: mcp-audit-anomaly-summary
           path: mcp-audit-anomaly-summary.json
           if-no-files-found: ignore
 
   terraform-plan:
+    permissions:
+      contents: read
     name: Terraform MCP OAuth client plan
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
         with:
           terraform_version: 1.8.5
 

@@ -1,0 +1,265 @@
+name: Production Observability Monitor
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/production-observability-monitor.yml"
+      - "lib/main.dart"
+      - "lib/services/supabase_trace_context.dart"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "scripts/production_observability_monitor.py"
+      - "supabase/functions/**/*.ts"
+      - "test/scripts/test_production_observability_monitor.py"
+      - "test/services/supabase_trace_context_test.dart"
+  workflow_dispatch:
+    inputs:
+      run_production:
+        description: "Fetch configured production telemetry and alert on breaches"
+        required: false
+        default: false
+        type: boolean
+      verify_trace_correlation:
+        description: "Send a W3C trace probe and prove it appears in Supabase logs"
+        required: false
+        default: false
+        type: boolean
+      force_alert_validation:
+        description: "Create/update a deterministic validation alert issue"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "41 * * * *"
+
+concurrency:
+  group: production-observability-monitor-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  validate:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: "3.38.10"
+          cache: true
+
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+
+      - name: Validate deterministic trace and monitor behavior
+        run: |
+          flutter pub get
+          flutter test test/services/supabase_trace_context_test.dart
+          deno test --allow-read supabase/functions/_shared/trace_context_test.ts
+          python test/scripts/test_production_observability_monitor.py
+
+      - name: Validate workflow and scripts
+        run: |
+          python -m py_compile scripts/production_observability_monitor.py test/scripts/test_production_observability_monitor.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/production-observability-monitor.yml')"
+
+  monitor:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_production)
+    environment:
+      name: observability-production
+      deployment: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      FORCE_ALERT_VALIDATION: ${{ inputs.force_alert_validation || 'false' }}
+      P95_ALERT_MS: ${{ vars.OBSERVABILITY_P95_ALERT_MS || '5000' }}
+      ERROR_RATE_ALERT: ${{ vars.OBSERVABILITY_ERROR_RATE_ALERT || '0.20' }}
+      SENTRY_ERROR_ALERT: ${{ vars.OBSERVABILITY_SENTRY_ERROR_ALERT || '20' }}
+      NODE_LOAD5_ALERT: ${{ vars.OBSERVABILITY_NODE_LOAD5_ALERT || '4' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Require production telemetry configuration
+        run: |
+          test -n "$SUPABASE_SERVICE_ROLE_KEY" || { echo "::error::SUPABASE_SERVICE_ROLE_KEY missing"; exit 1; }
+          test -n "$SUPABASE_PROJECT_REF" || { echo "::error::SUPABASE_PROJECT_ID_PROD missing"; exit 1; }
+          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "::error::SUPABASE_ACCESS_TOKEN missing"; exit 1; }
+
+      - name: Fetch aggregate sources
+        run: |
+          set -euo pipefail
+          START=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+          END=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          curl --fail --silent --show-error --max-time 30 \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"observability.provider_health"}' \
+            "$SUPABASE_URL/functions/v1/ai-hub" > ai-hub-health.json
+          curl --fail --silent --show-error --max-time 30 \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/analytics/endpoints/metrics" \
+            > supabase-metrics.prom
+
+          SENTRY_CONFIG_COUNT=0
+          for value in "$SENTRY_AUTH_TOKEN" "$SENTRY_ORG" "$SENTRY_PROJECT"; do
+            if [ -n "$value" ]; then SENTRY_CONFIG_COUNT=$((SENTRY_CONFIG_COUNT + 1)); fi
+          done
+          if [ "$SENTRY_CONFIG_COUNT" -eq 0 ]; then
+            echo '{"groups":[]}' > sentry-stats.json
+            echo "SENTRY_STATUS=unconfigured" >> "$GITHUB_ENV"
+            echo "::notice::Sentry telemetry is optional and not configured; Supabase and AI Hub remain authoritative."
+          elif [ "$SENTRY_CONFIG_COUNT" -ne 3 ]; then
+            echo "::error::Sentry configuration is partial; set token, org, and project together."
+            exit 1
+          else
+            curl --fail --silent --show-error --max-time 30 \
+              -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
+              "https://sentry.io/api/0/projects/$SENTRY_ORG/$SENTRY_PROJECT/" \
+              > sentry-project.json
+            SENTRY_PROJECT_ID=$(jq -er '.id' sentry-project.json)
+            curl --fail --silent --show-error --max-time 30 --get \
+              -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" \
+              --data-urlencode "field=sum(quantity)" \
+              --data-urlencode "groupBy=category" \
+              --data-urlencode "category=error" \
+              --data-urlencode "interval=1h" \
+              --data-urlencode "start=$START" \
+              --data-urlencode "end=$END" \
+              --data-urlencode "project=$SENTRY_PROJECT_ID" \
+              "https://sentry.io/api/0/organizations/$SENTRY_ORG/stats_v2/" \
+              > sentry-stats.json
+            echo "SENTRY_STATUS=configured" >> "$GITHUB_ENV"
+          fi
+
+      - name: Prove W3C trace correlation in production logs
+        if: github.event_name == 'workflow_dispatch' && inputs.verify_trace_correlation
+        run: |
+          set -euo pipefail
+          TRACE_ID=$(openssl rand -hex 16)
+          SPAN_ID=$(openssl rand -hex 8)
+          TRACEPARENT="00-$TRACE_ID-$SPAN_ID-01"
+          START=$(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
+
+          curl --fail --silent --show-error --max-time 30 \
+            -H "traceparent: $TRACEPARENT" \
+            -H "tracestate: codex=issue-2849" \
+            "$SUPABASE_URL/functions/v1/health-check" > trace-probe-response.json
+          jq --exit-status --arg trace "$TRACE_ID" '.trace_id == $trace' \
+            trace-probe-response.json >/dev/null || {
+              echo "::error::Production health-check did not return the propagated trace ID."
+              exit 1
+            }
+
+          SQL="select timestamp, source, log_attributes['trace_id'] as trace_id, log_attributes['trace.id'] as trace_dot_id, event_message from logs where source in ('edge_logs','function_edge_logs','function_logs') and (log_attributes['trace_id'] = '$TRACE_ID' or log_attributes['trace.id'] = '$TRACE_ID' or position(event_message, '$TRACE_ID') > 0) order by timestamp desc limit 20"
+          for attempt in 1 2 3 4 5 6 7 8; do
+            END=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            curl --fail --silent --show-error --max-time 30 --get \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              --data-urlencode "sql=$SQL" \
+              --data-urlencode "iso_timestamp_start=$START" \
+              --data-urlencode "iso_timestamp_end=$END" \
+              "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/analytics/endpoints/logs" \
+              > trace-query.json
+            jq --arg trace "$TRACE_ID" \
+              '[.result[]? | select((.trace_id // "") == $trace or (.trace_dot_id // "") == $trace or ((.event_message // "") | contains($trace))) | {timestamp, source, trace_id: $trace}]' \
+              trace-query.json > trace-correlation.json
+            if [ "$(jq 'length' trace-correlation.json)" -gt 0 ]; then
+              echo "W3C trace correlation proven for trace_id=$TRACE_ID"
+              break
+            fi
+            if [ "$attempt" -eq 8 ]; then
+              echo "::error::Trace ID did not appear in Supabase logs within the verification window."
+              exit 1
+            fi
+            sleep 15
+          done
+
+      - name: Evaluate thresholds
+        id: evaluate
+        run: |
+          FORCE_ARGS=()
+          if [ "$FORCE_ALERT_VALIDATION" = "true" ]; then
+            FORCE_ARGS=(--force-alert-label "issue-2849-live-proof")
+          fi
+          python scripts/production_observability_monitor.py \
+            --ai-hub-json ai-hub-health.json \
+            --supabase-metrics supabase-metrics.prom \
+            --sentry-json sentry-stats.json \
+            --output-json production-observability.json \
+            --output-md production-observability.md \
+            --p95-alert-ms "$P95_ALERT_MS" \
+            --error-rate-alert "$ERROR_RATE_ALERT" \
+            --sentry-error-alert "$SENTRY_ERROR_ALERT" \
+            --resource-alert "node_load5=$NODE_LOAD5_ALERT" \
+            --sentry-status "$SENTRY_STATUS" \
+            "${FORCE_ARGS[@]}" | tee monitor-output.txt
+          cat monitor-output.txt >> "$GITHUB_OUTPUT"
+          cat production-observability.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish aggregate observability dashboard
+        id: dashboard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MARKER="[observability-dashboard:v1]"
+          { echo "$MARKER"; cat production-observability.md; } > dashboard-body.md
+          ISSUE=$(gh issue list --state open --search "$MARKER in:body" --json number --jq '.[0].number // empty')
+          if [ -n "$ISSUE" ]; then
+            gh issue edit "$ISSUE" --body-file dashboard-body.md
+          else
+            URL=$(gh issue create \
+              --title "[Dashboard][Observability] Production telemetry" \
+              --body-file dashboard-body.md \
+              --label automation)
+            ISSUE=${URL##*/}
+          fi
+          echo "issue=$ISSUE" >> "$GITHUB_OUTPUT"
+          echo "Production dashboard: #$ISSUE" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create or update deduplicated breach issue
+        if: steps.evaluate.outputs.breach == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEDUPE_KEY: ${{ steps.evaluate.outputs.dedupe_key }}
+          FORCED_ALERT: ${{ steps.evaluate.outputs.forced_alert }}
+        run: |
+          MARKER="[observability-dedupe:$DEDUPE_KEY]"
+          ISSUE=$(gh issue list --state open --search "$MARKER in:body" --json number --jq '.[0].number // empty')
+          { echo "$MARKER"; cat production-observability.md; } > issue-body.md
+          if [ -n "$ISSUE" ]; then
+            gh issue comment "$ISSUE" --body-file issue-body.md
+          else
+            TITLE="[Alert][Observability] Production telemetry threshold breach"
+            if [ "$FORCED_ALERT" = "true" ]; then
+              TITLE="[Validation][Observability] Dedupe alert live proof"
+            fi
+            gh issue create --title "$TITLE" --body-file issue-body.md --label automation --label bug
+          fi
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: production-observability
+          path: |
+            production-observability.json
+            production-observability.md
+            trace-correlation.json

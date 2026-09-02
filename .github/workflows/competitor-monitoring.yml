@@ -22,32 +22,46 @@ concurrency:
   group: competitor-monitoring
   cancel-in-progress: true  # 2026-06-24 ci-audit: 日次モニタリング concurrent 防止
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   generate-report:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: write
+      issues: read
     name: Competitor Intelligence Report
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # competitorsはRLSでpublic SELECTのみ許可。service roleは不要。
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 10
           token: ${{ secrets.BYPASS_RULES || github.token }}
 
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
       # ── Step 1: 日付・イベントカレンダー判定 ─────────────────────────────
       - name: Step 1 - 日付 + 特記イベント検出
         id: calendar
+        env:
+          EVENT_OVERRIDE_INPUT: ${{ github.event.inputs.event_override || '' }}
+          FOCUS_COMPETITOR_INPUT: ${{ github.event.inputs.focus_competitor || '' }}
         run: |
           TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
           MONTH=$(TZ=Asia/Tokyo date +'%m')
@@ -78,14 +92,14 @@ jobs:
           esac
 
           # 手動 override
-          if [ -n "${{ github.event.inputs.event_override }}" ]; then
-            SPECIAL_EVENT="${{ github.event.inputs.event_override }}"
+          if [ -n "$EVENT_OVERRIDE_INPUT" ]; then
+            SPECIAL_EVENT="$EVENT_OVERRIDE_INPUT"
             EVENT_DESC="手動指定イベント: $SPECIAL_EVENT"
           fi
 
           echo "special_event=$SPECIAL_EVENT" >> $GITHUB_OUTPUT
           echo "event_desc=$EVENT_DESC" >> $GITHUB_OUTPUT
-          echo "focus=${{ github.event.inputs.focus_competitor || '' }}" >> $GITHUB_OUTPUT
+          echo "focus=$FOCUS_COMPETITOR_INPUT" >> $GITHUB_OUTPUT
 
           echo "📅 Today: $TODAY"
           echo "🎯 Special event: ${SPECIAL_EVENT:-なし}"
@@ -115,8 +129,6 @@ jobs:
       # ── Step 3: 競合サイト可用性チェック (competitors テーブル動的取得 / 190社対応) ──
       - name: Step 3 - 競合可用性チェック (動的取得)
         id: availability
-        env:
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           > /tmp/avail_results.txt
 
@@ -136,8 +148,8 @@ jobs:
           # Phase 1 スキーマ: website カラム / Phase 3 スキーマ: website_url カラム (両方 SELECT)
           COMP_JSON=$(curl -sf \
             "$SUPABASE_URL/rest/v1/competitors?select=display_name,website,website_url,threat_level&is_active=eq.true&limit=50" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" 2>/dev/null || echo "[]")
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" 2>/dev/null || echo "[]")
 
           COMP_COUNT=$(echo "$COMP_JSON" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
 
@@ -176,6 +188,8 @@ jobs:
       # ── Step 4: AI で戦略インテリジェンスレポート生成 ─────────────────────
       - name: Step 4 - AI 戦略インテリジェンス生成 (Gemini primary / Claude fallback)
         id: ai_report
+        env:
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
           TODAY="${{ steps.calendar.outputs.today }}"
           SPECIAL_EVENT="${{ steps.calendar.outputs.special_event }}"
@@ -261,6 +275,10 @@ jobs:
               echo "✅ Gemini Flash 生成成功 (${#AI_REPORT} chars)"
             else
               echo "⚠️ Gemini Flash 失敗 — Claude fallback へ"
+              # The response was already captured; it was simply never shown,
+              # so a retired-model 404 looked identical to a quota problem.
+              echo "$GEMINI_RESPONSE" | head -c 500
+              echo
             fi
           fi
 
@@ -283,14 +301,28 @@ jobs:
               if [ -n "$AI_REPORT" ] && [ ${#AI_REPORT} -gt 100 ]; then
                 USED_MODEL="claude-sonnet-4-6"
                 echo "✅ Claude fallback 成功 (${#AI_REPORT} chars)"
+              else
+                echo "⚠️ Claude fallback 失敗"
+                echo "$CLAUDE_RESPONSE" | head -c 500
+                echo
               fi
             fi
           fi
 
           # ── Fallback: スタティックテンプレート ─────────────────────────────
+          # This branch publishes a report that looks like the others, so a
+          # total AI outage reads as a normal green run. Say so out loud, and
+          # state the reason accurately: the old text blamed missing keys even
+          # when both were set and the providers had rejected the requests.
           if [ -z "$AI_REPORT" ] || [ ${#AI_REPORT} -le 100 ]; then
             USED_MODEL="static-template"
-            AI_REPORT=$(printf '## AI生成スキップ (API未設定 or 全プロバイダー失敗)\n\n競合インテリジェンス生成には GEMINI_API_KEY または ANTHROPIC_API_KEY が必要です。\n\n## 可用性チェック結果のみ記録\n\n%s' "$(cat /tmp/avail_results.txt)")
+            if [ -z "$GEMINI_API_KEY" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+              SKIP_REASON="API キー未設定"
+            else
+              SKIP_REASON="全プロバイダーが応答せず (上のログのレスポンス本文を確認)"
+            fi
+            echo "::warning::競合インテリジェンスは AI 生成されませんでした — ${SKIP_REASON}。static-template を公開します。"
+            AI_REPORT=$(printf '## AI生成スキップ (%s)\n\n本レポートは AI 生成ではなく静的テンプレートです。\n\n## 可用性チェック結果のみ記録\n\n%s' "$SKIP_REASON" "$(cat /tmp/avail_results.txt)")
           fi
 
           echo "used_model=$USED_MODEL" >> $GITHUB_OUTPUT

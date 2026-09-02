@@ -9,26 +9,31 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/utils/route_url_sync.dart';
+import 'package:my_web_app/utils/route_document_title.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
+import 'package:my_web_app/pages/agent_board_page.dart';
 import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
+import 'package:my_web_app/pages/agi_fireworks_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
-import 'package:my_web_app/pages/daily_habits_page.dart';
+import 'package:my_web_app/pages/habit_center_page.dart';
 import 'package:my_web_app/pages/my_struggle_page.dart';
 import 'package:my_web_app/pages/prison_mode_page.dart';
 import 'package:my_web_app/pages/bookmark_folders_page.dart';
 import 'package:my_web_app/pages/behavior_log_page.dart';
-import 'package:my_web_app/pages/wip_limit_page.dart';
 import 'package:my_web_app/pages/danshari_page.dart';
 import 'package:my_web_app/pages/email_cleanup_page.dart';
 import 'package:my_web_app/pages/local_smart_cleanup_page.dart';
 import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
+import 'package:my_web_app/pages/digital_product_store_pages.dart';
+import 'package:my_web_app/pages/hexciv_shop_page.dart';
+import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
@@ -49,6 +54,7 @@ import 'package:my_web_app/pages/public_memo_directory_page.dart';
 import 'package:my_web_app/pages/ai_university_ranking_page.dart';
 import 'package:my_web_app/pages/ai_university_video_page.dart';
 import 'package:my_web_app/pages/ai_university_voice_page.dart';
+import 'package:my_web_app/pages/content_dubbing_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/competitor_browse_page.dart';
@@ -59,6 +65,7 @@ import 'package:my_web_app/pages/privacy_policy_page.dart';
 import 'package:my_web_app/pages/ai_dev_principles_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
+import 'package:my_web_app/pages/account_deletion_page.dart';
 import 'package:my_web_app/pages/public_profile_page.dart';
 import 'package:my_web_app/pages/blog_page.dart';
 import 'package:my_web_app/pages/blog_compose_page.dart';
@@ -67,6 +74,7 @@ import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
+import 'package:my_web_app/pages/admin_artifact_publishing_page.dart';
 import 'package:my_web_app/pages/admin/feedback_list_page.dart';
 import 'package:my_web_app/pages/admin/quota_dashboard_page.dart';
 import 'package:my_web_app/pages/admin/blog_management_page.dart';
@@ -74,7 +82,7 @@ import 'package:my_web_app/pages/admin/blog_draft_editor_page.dart';
 import 'package:my_web_app/pages/admin/maintenance_management_page.dart';
 import 'package:my_web_app/pages/home_insights_page.dart';
 import 'package:my_web_app/pages/career_monthly_kpi_page.dart';
-import 'package:my_web_app/pages/life_goals_page.dart';
+import 'package:my_web_app/pages/goal_center_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/eval_approval_page.dart';
@@ -94,6 +102,12 @@ import 'package:my_web_app/pages/template_marketplace_page.dart';
 import 'package:my_web_app/pages/referral_page.dart';
 import 'package:my_web_app/pages/kanban_board_page.dart';
 import 'package:my_web_app/pages/compatibility_check_page.dart';
+import 'package:my_web_app/models/iq_test.dart';
+import 'package:my_web_app/pages/iq_test_page.dart';
+import 'package:my_web_app/pages/iq_test_questions_page.dart';
+import 'package:my_web_app/pages/iq_test_result_page.dart';
+import 'package:my_web_app/pages/iq_training_drill_page.dart';
+import 'package:my_web_app/pages/iq_training_page.dart';
 import 'package:my_web_app/pages/personality_test_questions_page.dart';
 import 'package:my_web_app/pages/personality_test_result_page.dart';
 import 'package:my_web_app/pages/table_data_page.dart';
@@ -124,14 +138,16 @@ import 'package:my_web_app/pages/health_page.dart';
 import 'package:my_web_app/pages/medical_notes_page.dart';
 import 'package:my_web_app/pages/mental_check_page.dart';
 import 'package:my_web_app/pages/settings_page.dart';
+import 'package:my_web_app/pages/ai_form_assistant_page.dart';
 import 'package:my_web_app/pages/theme_selector_page.dart';
 import 'package:my_web_app/pages/ai_university_faculty_select_page.dart';
 import 'package:my_web_app/pages/ai_university_department_select_page.dart';
-import 'package:my_web_app/pages/stats_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
+import 'package:my_web_app/pages/tiger_review_lane_status_page.dart';
 import 'package:my_web_app/pages/ai_provider_status_page.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/pages/asset_chat_history_page.dart';
 import 'package:my_web_app/pages/cfo_office_page.dart';
 import 'package:my_web_app/pages/cho_office_page.dart';
 import 'package:my_web_app/pages/chro_office_page.dart';
@@ -156,6 +172,7 @@ import 'package:my_web_app/pages/donation_crowdfunding_page.dart';
 import 'package:my_web_app/pages/emergency_contacts_page.dart';
 import 'package:my_web_app/pages/knowledge_base_page.dart';
 import 'package:my_web_app/pages/knowledge_graph_page.dart';
+import 'package:my_web_app/pages/user_knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
@@ -170,7 +187,6 @@ import 'package:my_web_app/pages/mindmap_diagram_page.dart';
 import 'package:my_web_app/pages/auction_marketplace_page.dart';
 import 'package:my_web_app/pages/qr_code_generator_page.dart';
 import 'package:my_web_app/pages/parking_reservation_page.dart';
-import 'package:my_web_app/pages/referral_program_page.dart';
 import 'package:my_web_app/pages/analytics_export_page.dart';
 import 'package:my_web_app/pages/workflow_templates_page.dart';
 import 'package:my_web_app/pages/customer_feedback_page.dart';
@@ -207,17 +223,21 @@ import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
-import 'package:my_web_app/pages/video_ad_generator_page.dart';
-import 'package:my_web_app/pages/viral_video_generator_page.dart';
+import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
+import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
+import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
+import 'package:my_web_app/ui/features/proactive_form_check/proactive_form_check_feature.dart';
+import 'package:my_web_app/ui/features/custom_task_list/custom_task_list_feature.dart';
 import 'package:my_web_app/pages/youtube_stats_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
 import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
 import 'package:my_web_app/pages/public_guitar_gallery_page.dart';
 import 'package:my_web_app/pages/music_collaboration_page.dart';
+import 'package:my_web_app/ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
 import 'package:my_web_app/pages/event_ticketing_page.dart';
 import 'package:my_web_app/pages/ai_assistant_chat_page.dart';
-import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
+import 'package:my_web_app/pages/writing_center_page.dart';
 import 'package:my_web_app/pages/wiki_database_page.dart';
 import 'package:my_web_app/pages/time_tracker_page.dart';
 import 'package:my_web_app/pages/voice_memo_transcriber_page.dart';
@@ -228,17 +248,17 @@ import 'package:my_web_app/pages/crm_sales_pipeline_page.dart';
 import 'package:my_web_app/pages/horse_racing_predictor_page.dart';
 import 'package:my_web_app/pages/horse_provider_leaderboard_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_page.dart';
+import 'package:my_web_app/pages/art_museum_directory_page.dart';
 import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
 import 'package:my_web_app/pages/meal_log_page.dart';
 import 'package:my_web_app/pages/life_goals_kpi_page.dart';
 import 'package:my_web_app/pages/language_learning_page.dart';
-import 'package:my_web_app/pages/habit_gamification_page.dart';
 import 'package:my_web_app/pages/focus_capture_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
+import 'package:my_web_app/ui/features/local_business_map/local_business_map_feature.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
-import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
 import 'package:my_web_app/pages/release_notes_page.dart';
 import 'package:my_web_app/pages/pet_care_manager_page.dart';
@@ -260,11 +280,9 @@ import 'package:my_web_app/pages/sitemap_analytics_page.dart';
 import 'package:my_web_app/pages/access_control_page.dart';
 import 'package:my_web_app/pages/personal_dashboard_page.dart';
 import 'package:my_web_app/pages/my_skills_page.dart';
-import 'package:my_web_app/pages/goal_tracker_page.dart';
 import 'package:my_web_app/pages/bookmark_sync_page.dart';
 import 'package:my_web_app/pages/jibun_api_page.dart';
 import 'package:my_web_app/pages/ui_design_status_page.dart';
-import 'package:my_web_app/pages/ai_summarizer_page.dart';
 import 'package:my_web_app/pages/revenue_forecaster_page.dart';
 import 'package:my_web_app/pages/weather_widget_page.dart';
 import 'package:my_web_app/pages/team_chat_page.dart';
@@ -298,18 +316,17 @@ import 'package:my_web_app/pages/ai_university_streaks_page.dart';
 import 'package:my_web_app/pages/english_reading_curriculum_page.dart';
 import 'package:my_web_app/pages/english_reading_practice_page.dart';
 import 'package:my_web_app/pages/english_reading_dashboard_page.dart';
+import 'package:my_web_app/ui/features/toeic/toeic_feature.dart';
 import 'package:my_web_app/pages/ai_workflow_automation_page.dart';
 import 'package:my_web_app/pages/ab_testing_manager_page.dart';
 import 'package:my_web_app/pages/habit_tracker_page.dart';
 import 'package:my_web_app/pages/agent_department_manager_page.dart';
 import 'package:my_web_app/pages/agent_performance_monitor_page.dart';
 import 'package:my_web_app/pages/ai_share_button_settings_page.dart';
-import 'package:my_web_app/pages/app_analytics_dashboard_page.dart';
 import 'package:my_web_app/pages/cfo_cost_ledger_page.dart';
 import 'package:my_web_app/pages/compatibility_result_page.dart';
 import 'package:my_web_app/pages/leave_management_page.dart';
 import 'package:my_web_app/pages/performance_review_page.dart';
-import 'package:my_web_app/pages/pomodoro_timer_page.dart';
 import 'package:my_web_app/pages/health_check_page.dart';
 import 'package:my_web_app/pages/horseracing_race_detail_page.dart';
 import 'package:my_web_app/pages/monthly_kpi_dashboard_page.dart';
@@ -326,6 +343,8 @@ import 'utils/app_logger.dart';
 import 'utils/error_reporter.dart';
 
 import 'services/supabase_client_provider.dart';
+import 'services/supabase_runtime_config.dart';
+import 'services/supabase_trace_context.dart';
 
 export 'services/supabase_client_provider.dart';
 
@@ -344,11 +363,14 @@ Future<void> main() async {
   usePathUrlStrategy();
 
   final NotificationService notificationService = NotificationService();
+  final supabaseConfig = SupabaseRuntimeConfig.fromCompileTimeEnvironment();
 
   await Supabase.initialize(
-    url: 'https://smmkxxavexumewbfaqpy.supabase.co',
-    publishableKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
+    url: supabaseConfig.url,
+    publishableKey: supabaseConfig.publishableKey,
+    // Keep trace IDs in Supabase logs even when the Sentry transaction is not
+    // exported. The wrapper adds identifiers only; payloads are never copied.
+    httpClient: SupabaseTracingHttpClient(),
   );
 
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
@@ -465,7 +487,8 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
 String _initialRouteName() {
   final uri = Uri.base;
   if (uri.path.isNotEmpty && uri.path != '/') {
-    return uri.hasQuery ? '${uri.path}?${uri.query}' : uri.path;
+    final path = normalizeRoutePath(uri.path);
+    return uri.hasQuery ? '$path?${uri.query}' : path;
   }
   if (uri.fragment.startsWith('/')) {
     return uri.fragment;
@@ -484,12 +507,13 @@ Route<dynamic> generateAppRoute(
   required LandingSignupCompletionService signupCompletionService,
 }) {
   final uri = Uri.parse(settings.name ?? '/');
+  final routePath = normalizeRoutePath(uri.path);
   // 全ての named route 遷移を利用履歴に記録する単一チョークポイント。
   // 主要導線の直叩き pushNamed が記録されず、最近使った / よく使われる
   // 機能が「サイト案内AI」しか並ばなかった機能不全 (#3279) を解消する。
   recordFeatureRouteNavigation(settings.name);
 
-  switch (uri.path) {
+  switch (routePath) {
     case '/':
       return MaterialPageRoute(
         builder: (_) => supabase.auth.currentSession != null
@@ -506,6 +530,41 @@ Route<dynamic> generateAppRoute(
           signupCompletionService: signupCompletionService,
         ),
       );
+    case '/agi-fireworks':
+      return MaterialPageRoute(
+        builder: (_) => const AgiFireworksPage(),
+        settings: settings,
+      );
+    case '/shop':
+      return MaterialPageRoute(
+        builder: (_) => const DigitalProductStorePage(),
+        settings: settings,
+      );
+    case '/shop/product':
+      return MaterialPageRoute(
+        builder: (_) => DigitalProductPage(
+          productId: uri.queryParameters['product_id'] ?? '',
+          purchaseResult: uri.queryParameters['purchase'],
+          funnel: ShopFunnelService(),
+        ),
+        settings: settings,
+      );
+    case '/shop/downloads':
+      return MaterialPageRoute(
+        builder: (_) => const ShopDownloadsPage(),
+        settings: settings,
+      );
+    // 既存の共有URL・Stripe戻りURLを壊さない後方互換ルート。
+    case '/shop/hexciv':
+      return MaterialPageRoute(
+        builder: (_) => HexcivShopPage(
+          purchaseResult: uri.queryParameters['purchase'],
+          // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
+          // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
+          funnel: ShopFunnelService(),
+        ),
+        settings: settings,
+      );
     case '/home':
       return MaterialPageRoute(builder: (_) => const HomePage());
     case '/agents':
@@ -517,6 +576,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const AutonomousOpsConsolePage(),
         settings: settings,
+      );
+    case '/agent-board':
+      return MaterialPageRoute(
+        builder: (_) => const AgentBoardPage(),
+        settings: const RouteSettings(name: '/agent-board'),
       );
     case '/ai-company-builder':
       return MaterialPageRoute(
@@ -532,6 +596,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const AiUniversityVoicePage(),
       );
+    case '/content-dubbing':
+      return MaterialPageRoute(
+        builder: (_) => const ContentDubbingPage(),
+        settings: settings,
+      );
     case '/ai-university-video':
       final args = settings.arguments as Map<String, dynamic>?;
       return MaterialPageRoute(
@@ -539,6 +608,11 @@ Route<dynamic> generateAppRoute(
           initialProvider: args?['provider'] as String?,
           initialCategory: args?['category'] as String?,
         ),
+      );
+    case '/ai-university-toeic':
+      return MaterialPageRoute(
+        builder: (_) => const ToeicFeature(),
+        settings: settings,
       );
     case '/ai-university':
     case '/gemini-university':
@@ -549,10 +623,12 @@ Route<dynamic> generateAppRoute(
         ),
       );
     case '/danshari':
+    case '/digital-danshari':
       return MaterialPageRoute(builder: (_) => const DanshariPage());
     case '/memory-drill':
       return MaterialPageRoute(builder: (_) => const MemoryDrillPage());
     case '/digest-queue':
+    case '/wip-limit':
       return MaterialPageRoute(builder: (_) => const DigestQueuePage());
     case '/growth-mission':
       return MaterialPageRoute(
@@ -560,6 +636,7 @@ Route<dynamic> generateAppRoute(
         settings: const RouteSettings(name: '/growth-mission'),
       );
     case '/referral':
+    case '/referral-program':
       return MaterialPageRoute(
         builder: (_) => const ReferralPage(),
         settings: RouteSettings(name: settings.name),
@@ -581,6 +658,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => PublicMemoDetailPage(memoId: memoId),
         settings: RouteSettings(name: settings.name),
       );
+    case '/manual':
     case '/user-manual':
       return MaterialPageRoute(builder: (_) => const UserManualPage());
     case '/site-guide-ai':
@@ -689,16 +767,12 @@ Route<dynamic> generateAppRoute(
         settings: const RouteSettings(name: '/election-dashboard'),
       );
     case '/local-election-700':
+    case '/local-election-schedule':
       return MaterialPageRoute(
         builder: (_) => ElectionVictoryPage(
           publicView: supabase.auth.currentSession == null,
         ),
         settings: RouteSettings(name: settings.name),
-      );
-    case '/local-election-schedule':
-      return MaterialPageRoute(
-        builder: (_) => const ElectionVictoryPage(),
-        settings: const RouteSettings(name: '/local-election-schedule'),
       );
     case '/public/local-election-700':
       return MaterialPageRoute(
@@ -732,7 +806,7 @@ Route<dynamic> generateAppRoute(
     case '/shopping-list':
       return MaterialPageRoute(builder: (_) => const ShoppingListPage());
     case '/daily-habits':
-      return MaterialPageRoute(builder: (_) => const DailyHabitsPage());
+      return MaterialPageRoute(builder: (_) => const HabitCenterPage());
     case '/self-touch-tracker':
       return MaterialPageRoute(
         builder: (_) => SelfTouchTrackerPage(
@@ -754,8 +828,6 @@ Route<dynamic> generateAppRoute(
       );
     case '/behavior-log':
       return MaterialPageRoute(builder: (_) => const BehaviorLogPage());
-    case '/wip-limit':
-      return MaterialPageRoute(builder: (_) => const WipLimitPage());
     case '/feature-requests':
       return MaterialPageRoute(
         builder: (_) => const FeatureRequestsPage(),
@@ -763,6 +835,11 @@ Route<dynamic> generateAppRoute(
     case '/profile-settings':
       return MaterialPageRoute(
         builder: (_) => const ProfileSettingsPage(),
+      );
+    case '/account-deletion':
+      return MaterialPageRoute(
+        builder: (_) => const AccountDeletionPage(),
+        settings: const RouteSettings(name: '/account-deletion'),
       );
     case '/u':
       final userId = uri.queryParameters['id'] ?? '';
@@ -811,9 +888,10 @@ Route<dynamic> generateAppRoute(
     case '/activity-feed':
       return MaterialPageRoute(builder: (_) => const ActivityFeedPage());
     case '/rewards':
+    case '/stats':
       return MaterialPageRoute(builder: (_) => const RewardsPage());
     case '/life-goals':
-      return MaterialPageRoute(builder: (_) => const LifeGoalsPage());
+      return MaterialPageRoute(builder: (_) => const GoalCenterPage());
     case '/thought-capture':
       return MaterialPageRoute(
         builder: (_) => const ThoughtCapturePage(),
@@ -851,6 +929,11 @@ Route<dynamic> generateAppRoute(
     case '/admin':
       return MaterialPageRoute(
         builder: (_) => const AdminAnalyticsPage(),
+      );
+    case '/admin/artifact-publishing':
+      return MaterialPageRoute(
+        builder: (_) => const AdminArtifactPublishingPage(),
+        settings: settings,
       );
     case '/templates':
       return MaterialPageRoute(
@@ -917,6 +1000,44 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => PersonalityTestResultPage(testId: resultTestId),
       );
+    case '/iq-test':
+      return MaterialPageRoute(builder: (_) => const IqTestPage());
+    // 出題中のテストは testId と seed が無いと復元できない (再開もできない)。
+    // 直接 URL で開かれた場合はハブへ落とす。
+    case '/iq-test-questions':
+      final iqQuestionsArgs = settings.arguments as IqTestSessionArgs?;
+      if (iqQuestionsArgs == null) {
+        return MaterialPageRoute(builder: (_) => const IqTestPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTestQuestionsPage(
+          testId: iqQuestionsArgs.testId,
+          questionSeed: iqQuestionsArgs.questionSeed,
+        ),
+      );
+    case '/iq-test-result':
+      final iqTestId = settings.arguments as int?;
+      if (iqTestId == null) {
+        return MaterialPageRoute(builder: (_) => const IqTestPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTestResultPage(testId: iqTestId),
+      );
+    case '/iq-training':
+      return MaterialPageRoute(builder: (_) => const IqTrainingPage());
+    // ドリルは対象領域とレベルが引数。無ければプラン画面へ落とす。
+    case '/iq-training-drill':
+      final iqDrillArgs = settings.arguments as IqTrainingDrillArgs?;
+      if (iqDrillArgs == null) {
+        return MaterialPageRoute(builder: (_) => const IqTrainingPage());
+      }
+      return MaterialPageRoute(
+        builder: (_) => IqTrainingDrillPage(
+          planId: iqDrillArgs.planId,
+          category: iqDrillArgs.category,
+          level: iqDrillArgs.level,
+        ),
+      );
     case '/enterprise':
       return MaterialPageRoute(builder: (_) => const EnterprisePage());
     case '/corporate-bank-account-cost':
@@ -931,10 +1052,16 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const EmbeddingLabPage());
     case '/settings':
       return MaterialPageRoute(builder: (_) => const SettingsPage());
+    case '/settings/ai-form-assistant':
+      return MaterialPageRoute(
+        builder: (_) => supabase.auth.currentSession == null
+            ? LandingPage(
+                signupCompletionService: signupCompletionService,
+              )
+            : const AiFormAssistantPage(),
+      );
     case '/settings/theme':
       return MaterialPageRoute(builder: (_) => const ThemeSelectorPage());
-    case '/stats':
-      return MaterialPageRoute(builder: (_) => const StatsPage());
     case '/health':
       return MaterialPageRoute(builder: (_) => const HealthPage());
     case '/mental-check':
@@ -1006,6 +1133,39 @@ Route<dynamic> generateAppRoute(
       );
     case '/ai-status':
       return MaterialPageRoute(builder: (_) => const AiStatusPage());
+    case '/tiger-review-status':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewHubPage(),
+        settings: const RouteSettings(name: TigerReviewHubPage.routeName),
+      );
+    case '/tiger-reviewers':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.reviewers,
+        ),
+        settings: const RouteSettings(name: '/tiger-reviewers'),
+      );
+    case '/tiger-site-reviews':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.site,
+        ),
+        settings: const RouteSettings(name: '/tiger-site-reviews'),
+      );
+    case '/tiger-course-reviews':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.courses,
+        ),
+        settings: const RouteSettings(name: '/tiger-course-reviews'),
+      );
+    case '/tiger-feature-reviews':
+      return MaterialPageRoute(
+        builder: (_) => const TigerReviewLaneStatusPage(
+          kind: TigerReviewLane.features,
+        ),
+        settings: const RouteSettings(name: '/tiger-feature-reviews'),
+      );
     case '/ai-provider-status':
       return MaterialPageRoute(
         builder: (_) => const AiProviderStatusPage(),
@@ -1020,6 +1180,10 @@ Route<dynamic> generateAppRoute(
     case '/asset-management':
       return MaterialPageRoute(
         builder: (_) => const AssetManagementPage(),
+      );
+    case '/asset-chat-history':
+      return MaterialPageRoute(
+        builder: (_) => const AssetChatHistoryPage(),
       );
     case '/cfo-office':
       return MaterialPageRoute(builder: (_) => const CfoOfficePage());
@@ -1055,6 +1219,7 @@ Route<dynamic> generateAppRoute(
       );
     case '/mcp-file-search':
       return MaterialPageRoute(builder: (_) => const McpFileSearchPage());
+    case '/musubi':
     case '/social-feed':
       return MaterialPageRoute(builder: (_) => const SocialFeedPage());
     case '/sobriety-campaign':
@@ -1113,10 +1278,6 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const ParkingReservationPage(),
       );
-    case '/referral-program':
-      return MaterialPageRoute(
-        builder: (_) => const ReferralProgramPage(),
-      );
     case '/analytics-export':
       return MaterialPageRoute(
         builder: (_) => const AnalyticsExportPage(),
@@ -1154,6 +1315,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const WorkflowAutomationPage(),
       );
     case '/social-scheduler':
+    case '/social-media-scheduler':
       return MaterialPageRoute(
         builder: (_) => const SocialMediaSchedulerPage(),
       );
@@ -1196,12 +1358,15 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const DnsDomainManagerPage(),
       );
     case '/focus-timer':
+    case '/pomodoro-timer':
       return MaterialPageRoute(builder: (_) => const FocusTimerPage());
     case '/digital-wallet':
       return MaterialPageRoute(builder: (_) => const DigitalWalletPage());
     case '/loyalty-points':
       return MaterialPageRoute(builder: (_) => const LoyaltyPointsPage());
     case '/viral-ad-generator':
+    case '/video-ad-generator':
+    case '/viral-video-generator':
       return MaterialPageRoute(
         builder: (_) => const ViralAdGeneratorPage(),
       );
@@ -1211,13 +1376,15 @@ Route<dynamic> generateAppRoute(
       );
     case '/landing-ab-test':
       return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
-    case '/video-ad-generator':
+    case '/video-studio':
       return MaterialPageRoute(
-        builder: (_) => const VideoAdGeneratorPage(),
+        builder: (_) => VideoStudioFeature(initialUri: uri),
+        settings: RouteSettings(name: settings.name),
       );
-    case '/viral-video-generator':
+    case '/notion-migration':
       return MaterialPageRoute(
-        builder: (_) => const ViralVideoGeneratorPage(),
+        builder: (_) => const NotionMigrationFeature(),
+        settings: RouteSettings(name: settings.name),
       );
     case '/youtube-stats':
       return MaterialPageRoute(builder: (_) => const YoutubeStatsPage());
@@ -1228,6 +1395,10 @@ Route<dynamic> generateAppRoute(
     case '/guitar-recording-studio':
       return MaterialPageRoute(
         builder: (_) => const GuitarRecordingStudioPage(),
+      );
+    case '/beatles-guitar-tabs':
+      return MaterialPageRoute(
+        builder: (_) => const BeatlesGuitarTabsFeature(),
       );
     case '/public-guitar-gallery':
       return MaterialPageRoute(
@@ -1257,7 +1428,7 @@ Route<dynamic> generateAppRoute(
       );
     case '/ai-writing-assistant':
       return MaterialPageRoute(
-        builder: (_) => const AiWritingAssistantPage(),
+        builder: (_) => const WritingCenterPage(),
       );
     case '/wiki-database':
       return MaterialPageRoute(builder: (_) => const WikiDatabasePage());
@@ -1304,12 +1475,14 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const HorseProviderLeaderboardPage(),
       );
     case '/travel-itinerary':
-      return MaterialPageRoute(
-        builder: (_) => const TravelItineraryPlannerPage(),
-      );
     case '/travel-planner':
       return MaterialPageRoute(
         builder: (_) => const TravelItineraryPage(),
+      );
+    case '/art-museums':
+      return MaterialPageRoute(
+        builder: (_) => const ArtMuseumDirectoryPage(),
+        settings: settings,
       );
     case '/virtual-whiteboard':
       return MaterialPageRoute(
@@ -1363,7 +1536,9 @@ Route<dynamic> generateAppRoute(
       );
     case '/habit-gamification':
       return MaterialPageRoute(
-        builder: (_) => const HabitGamificationPage(),
+        builder: (_) => const HabitCenterPage(
+          initialSection: HabitCenterSection.rewards,
+        ),
       );
     case '/focus-capture':
       return MaterialPageRoute(
@@ -1376,6 +1551,10 @@ Route<dynamic> generateAppRoute(
     case '/real-estate':
       return MaterialPageRoute(
         builder: (_) => const RealEstateTrackerPage(),
+      );
+    case '/local-business-map':
+      return MaterialPageRoute(
+        builder: (_) => const LocalBusinessMapFeature(),
       );
     case '/home-iot':
       return MaterialPageRoute(
@@ -1415,10 +1594,28 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const PersonalDashboardPage(),
       );
+    case '/procrastination-reset':
+      return MaterialPageRoute(
+        builder: (_) => const ProcrastinationResetFeature(),
+        settings: const RouteSettings(
+          name: ProcrastinationResetFeature.routeName,
+        ),
+      );
+    case '/proactive-form-check':
+      return MaterialPageRoute(
+        builder: (_) => const ProactiveFormCheckFeature(),
+        settings: const RouteSettings(
+          name: ProactiveFormCheckFeature.routeName,
+        ),
+      );
     case '/my-skills':
       return MaterialPageRoute(builder: (_) => const MySkillsPage());
     case '/goal-tracker':
-      return MaterialPageRoute(builder: (_) => const GoalTrackerPage());
+      return MaterialPageRoute(
+        builder: (_) => const GoalCenterPage(
+          initialSection: GoalCenterSection.legacyGoals,
+        ),
+      );
     case '/career-monthly-kpi':
       return MaterialPageRoute(
         builder: (_) => const CareerMonthlyKpiPage(),
@@ -1437,7 +1634,9 @@ Route<dynamic> generateAppRoute(
       );
     case '/ai-summarizer':
       return MaterialPageRoute(
-        builder: (_) => const AiSummarizerPage(),
+        builder: (_) => const WritingCenterPage(
+          initialSection: WritingCenterSection.summaries,
+        ),
         settings: const RouteSettings(name: '/ai-summarizer'),
       );
     case '/revenue-forecaster':
@@ -1510,6 +1709,11 @@ Route<dynamic> generateAppRoute(
       );
     case '/brain-dump':
       return MaterialPageRoute(builder: (_) => const BrainDumpPage());
+    case '/custom-task-list':
+      return MaterialPageRoute(
+        settings: const RouteSettings(name: '/custom-task-list'),
+        builder: (_) => const CustomTaskListPage(),
+      );
     case '/project-gantt':
       return MaterialPageRoute(builder: (_) => const ProjectGanttPage());
     case '/user-tasks':
@@ -1609,10 +1813,6 @@ Route<dynamic> generateAppRoute(
       );
     case '/habit-tracker':
       return MaterialPageRoute(builder: (_) => const HabitTrackerPage());
-    case '/social-media-scheduler':
-      return MaterialPageRoute(
-        builder: (_) => const SocialMediaSchedulerPage(),
-      );
     case '/agent-department-manager':
       return MaterialPageRoute(
         builder: (_) => const AgentDepartmentManagerPage(),
@@ -1623,7 +1823,14 @@ Route<dynamic> generateAppRoute(
       );
     case '/app-analytics-dashboard':
       return MaterialPageRoute(
-        builder: (_) => const AppAnalyticsDashboardPage(),
+        settings: const RouteSettings(name: '/'),
+        builder: (_) => supabase.auth.currentSession != null
+            ? _AuthenticatedHomePage(
+                signupCompletionService: signupCompletionService,
+              )
+            : LandingPage(
+                signupCompletionService: signupCompletionService,
+              ),
       );
     case '/deployment-monitoring':
       return MaterialPageRoute(
@@ -1647,8 +1854,6 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const PerformanceReviewPage(),
       );
-    case '/pomodoro-timer':
-      return MaterialPageRoute(builder: (_) => const PomodoroTimerPage());
     case '/health-check':
       return MaterialPageRoute(builder: (_) => const HealthCheckPage());
     case '/memory-search':
@@ -1659,6 +1864,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const KnowledgeGraphPage(),
         settings: const RouteSettings(name: '/knowledge-graph'),
+      );
+    case '/my-knowledge-graph':
+      return MaterialPageRoute(
+        builder: (_) => const UserKnowledgeGraphPage(),
+        settings: const RouteSettings(name: '/my-knowledge-graph'),
       );
     case '/settings/ai-share-button':
       return MaterialPageRoute(
@@ -1713,10 +1923,10 @@ Route<dynamic> generateAppRoute(
         builder: (_) => HorseracingRaceDetailPage(race: race),
       );
     default:
-      if (uri.path.startsWith('/vs-')) {
+      if (routePath.startsWith('/vs-')) {
         return MaterialPageRoute(
           builder: (_) => ComparisonPage(
-            competitorKey: uri.path.replaceFirst('/vs-', ''),
+            competitorKey: routePath.replaceFirst('/vs-', ''),
           ),
           settings: settings,
         );
@@ -1778,60 +1988,67 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
 
-    return MaterialApp(
-      title: '自分株式会社', //  旧: マイメモ -> 新: 自分株式会社
-      debugShowCheckedModeBanner: false,
-      scaffoldMessengerKey: _scaffoldMessengerKey,
-      navigatorKey: _navigatorKey,
-      initialRoute: _initialRouteName(),
-      theme: themeService.overrideTheme ?? themeService.getLightTheme(),
-      darkTheme: themeService.overrideTheme ?? themeService.getDarkTheme(),
-      themeMode: themeService.overrideTheme != null
-          ? ThemeMode.light
-          : themeService.getFlutterThemeMode(),
-      builder: (context, child) {
-        return GlobalHeaderClockShell(
-          navigatorKey: _navigatorKey,
-          child: UniversalAiShareShell(
+    return ValueListenableBuilder(
+      valueListenable: universalAiShareRouteObserver.currentPage,
+      builder: (context, currentPage, _) => MaterialApp(
+        title: documentTitleForRoute(currentPage.routePath),
+        debugShowCheckedModeBanner: false,
+        scaffoldMessengerKey: _scaffoldMessengerKey,
+        navigatorKey: _navigatorKey,
+        initialRoute: _initialRouteName(),
+        theme: themeService.overrideTheme ?? themeService.getLightTheme(),
+        darkTheme: themeService.overrideTheme ?? themeService.getDarkTheme(),
+        themeMode: themeService.overrideTheme != null
+            ? ThemeMode.light
+            : themeService.getFlutterThemeMode(),
+        builder: (context, child) {
+          return GlobalHeaderClockShell(
             navigatorKey: _navigatorKey,
-            child: MaintenanceShell(
-              routeListenable: universalAiShareRouteObserver.currentPage,
-              child: Column(
-                children: [
-                  if (_showUpdateBanner)
-                    UpdateBanner(
-                      onDismiss: () =>
-                          setState(() => _showUpdateBanner = false),
-                    ),
-                  Expanded(child: child ?? const SizedBox.shrink()),
-                ],
+            // 時計とビルド番号はログイン後の業務用クロームに限定する。
+            // 公開LPに内部ステータス風の帯を出すと、未完成・デバッグ中に
+            // 見えるうえ、狭幅ではラベルが切れて信頼を損なう。
+            showClockBar: supabase.auth.currentSession != null,
+            child: UniversalAiShareShell(
+              navigatorKey: _navigatorKey,
+              child: MaintenanceShell(
+                routeListenable: universalAiShareRouteObserver.currentPage,
+                child: Column(
+                  children: [
+                    if (_showUpdateBanner)
+                      UpdateBanner(
+                        onDismiss: () =>
+                            setState(() => _showUpdateBanner = false),
+                      ),
+                    Expanded(child: child ?? const SizedBox.shrink()),
+                  ],
+                ),
               ),
             ),
+          );
+        },
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ja'), Locale('en')],
+        locale: const Locale('ja'),
+        navigatorObservers: <NavigatorObserver>[
+          _growthPresenceObserver,
+          universalAiShareRouteObserver,
+          // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
+          // LP View 計測を可視化まで遅延させる (可視化ゲート)。
+          deepLinkVisibilityRouteObserver,
+          if (MyApp._sentryNavigatorObserver != null)
+            MyApp._sentryNavigatorObserver!,
+        ],
+        onGenerateRoute: (settings) => ensureRouteAnnouncesUrl(
+          generateAppRoute(
+            settings,
+            signupCompletionService: widget.signupCompletionService,
           ),
-        );
-      },
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('ja'), Locale('en')],
-      locale: const Locale('ja'),
-      navigatorObservers: <NavigatorObserver>[
-        _growthPresenceObserver,
-        universalAiShareRouteObserver,
-        // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
-        // LP View 計測を可視化まで遅延させる (可視化ゲート)。
-        deepLinkVisibilityRouteObserver,
-        if (MyApp._sentryNavigatorObserver != null)
-          MyApp._sentryNavigatorObserver!,
-      ],
-      onGenerateRoute: (settings) => ensureRouteAnnouncesUrl(
-        generateAppRoute(
           settings,
-          signupCompletionService: widget.signupCompletionService,
         ),
-        settings,
       ),
     );
   }

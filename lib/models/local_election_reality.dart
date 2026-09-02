@@ -1,3 +1,5 @@
+import 'election_intelligence.dart';
+
 class LocalElectionRealitySource {
   final String label;
   final String url;
@@ -701,6 +703,7 @@ class LocalElectionRealityHistoryPoint {
 
 class LocalElectionRealitySnapshot {
   final DateTime fetchedAt;
+  final ElectionIntelligenceSnapshot electionIntelligence;
   final int baselineCurrentLocalMembers;
   final int officialCurrentLocalMembers;
   final int targetLocalMembers;
@@ -722,6 +725,8 @@ class LocalElectionRealitySnapshot {
 
   const LocalElectionRealitySnapshot({
     required this.fetchedAt,
+    this.electionIntelligence =
+        const ElectionIntelligenceSnapshot.localFallback(),
     required this.baselineCurrentLocalMembers,
     required this.officialCurrentLocalMembers,
     required this.targetLocalMembers,
@@ -744,6 +749,8 @@ class LocalElectionRealitySnapshot {
 
   LocalElectionRealitySnapshot.empty()
       : fetchedAt = DateTime.fromMillisecondsSinceEpoch(0),
+        electionIntelligence =
+            const ElectionIntelligenceSnapshot.localFallback(),
         baselineCurrentLocalMembers = 340,
         officialCurrentLocalMembers = 0,
         targetLocalMembers = 700,
@@ -767,6 +774,13 @@ class LocalElectionRealitySnapshot {
     return LocalElectionRealitySnapshot(
       fetchedAt: DateTime.tryParse(json['fetchedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
+      electionIntelligence: ElectionIntelligenceSnapshot.fromJson(
+        json['electionIntelligence'] is Map
+            ? Map<String, dynamic>.from(
+                json['electionIntelligence'] as Map,
+              )
+            : <String, dynamic>{},
+      ),
       baselineCurrentLocalMembers: _readInt(
         json['baselineCurrentLocalMembers'],
         fallback: 340,
@@ -810,6 +824,7 @@ class LocalElectionRealitySnapshot {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'fetchedAt': fetchedAt.toIso8601String(),
+      'electionIntelligence': electionIntelligence.toJson(),
       'baselineCurrentLocalMembers': baselineCurrentLocalMembers,
       'officialCurrentLocalMembers': officialCurrentLocalMembers,
       'targetLocalMembers': targetLocalMembers,
@@ -833,7 +848,14 @@ class LocalElectionRealitySnapshot {
     };
   }
 
-  bool get hasData => officialCurrentLocalMembers > 0;
+  bool get hasData {
+    if (electionIntelligence.selectedMode == ElectionModeId.local) {
+      return officialCurrentLocalMembers > 0;
+    }
+    return electionIntelligence.goals.isNotEmpty ||
+        electionIntelligence.achievements.isNotEmpty ||
+        upcomingSchedules.isNotEmpty;
+  }
 
   List<String> get suspiciousEmptyOfficialPrefectures {
     final memberPrefectures = members

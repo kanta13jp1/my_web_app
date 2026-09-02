@@ -110,6 +110,39 @@ fi
 
 ---
 
+## X Analytics CSV の取り込み (R24 / 月次)
+
+`x.performance_context` の学習母集団は、既定では `x_post_log` = **アプリの AI シェア経由で
+投稿したものだけ**。実測 (2026-04-27〜07-25 / 350 投稿) では、サイトへの URL クリック 304 件
+のうち **302 件がアプリ外の手動投稿**から出ていた。取り込まない限り、学習ループはアカウント
+最大の勝ち筋を一度も見ない。
+
+手順:
+
+1. [X Analytics のコンテンツ画面](https://x.com/i/account_analytics/content?type=posts&sort=impressions&dir=desc&days=90)
+   右上のダウンロードから CSV をエクスポートする。
+2. 本番サイトにログインした状態の DevTools > Application > Local Storage から
+   `sb-<ref>-auth-token` の `access_token` をコピーし、環境変数に入れる。
+3. まず dry-run で件数を確認し、問題なければ `--commit` を付けて取り込む。
+
+```bash
+python scripts/x_analytics_import.py "path/to/account_analytics_content.csv"
+```
+
+```bash
+python scripts/x_analytics_import.py "path/to/account_analytics_content.csv" --commit
+```
+
+取り込んだ行は `learning_cohort='historical_benchmark'` になる。CSV は投稿からの経過時間が
+バラバラな lifetime cumulative なので、投稿年齢を揃えた勝ち exemplar のランキングには
+入れず、アカウント水準の獲得事実の供給に使う。
+
+`x.analytics_import` は X operator ロールを要求する。スクリプトはパスワードを扱わず、
+呼び出し側が渡したアクセストークンを Bearer で中継するだけ。トークンは短命なので 401 が
+返ったら取り直す。
+
+---
+
 ## 投稿テンプレート集
 
 ### T-1 記事告知

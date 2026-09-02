@@ -32,21 +32,60 @@ import {
   summarizePlatformFailures,
 } from "./upstream_error.ts";
 import { requiredAuthLevel } from "./action_auth.ts";
+import { summarizeStripeAccountReadiness } from "./stripe_account_readiness.ts";
 import {
   billingAllowedHosts,
   resolveBillingReturnUrl,
 } from "./billing_return_url.ts";
+import {
+  classifySupporterBuyer,
+  type SupporterBuyerContext,
+  supporterBuyerStripeParams,
+} from "../_shared/supporter_buyer.ts";
+import {
+  videoCreditPack,
+  videoCreditPackMetadata,
+} from "../_shared/video_credit_packs.ts";
+import {
+  isMissingStripeCustomer,
+  stripeApiErrorDetails,
+  stripeApiErrorFromResponse,
+} from "./stripe_api_error.ts";
+import {
+  buildNotionProperties,
+  extractNotionErrorDetail,
+  type NotionPropertyMapping as NotionBuilderMapping,
+} from "../_shared/notion_property_builder.ts";
+import {
+  NOTION_API_VERSION,
+  NotionDataSourceError,
+  resolveNotionDataSourceId,
+} from "../_shared/notion_data_source.ts";
+
+// WBS -> Notion データベースの列マッピング (Issue #1287)。
+// Notion は Title-type property の内部 ID を常に "title" に固定するため、
+// rich_text 列は "task_title" にリネーム済 (title 名の衝突回避)。
+// buildNotionProperties が型別の厳格ラップ + title 衝突検知を一元化する。
+const NOTION_WBS_PROPERTY_MAPPINGS: NotionBuilderMapping[] = [
+  { name: "id", type: "title" },
+  { name: "task_title", type: "rich_text" },
+  { name: "instance", type: "select" },
+  { name: "status", type: "select" },
+  { name: "progress", type: "number" },
+  { name: "deadline", type: "date" },
+  { name: "updated_at", type: "date" },
+];
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
-const NOTION_VERSION = "2022-06-28";
+const NOTION_VERSION = NOTION_API_VERSION;
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -349,10 +388,28 @@ async function stripePostForm(
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const err = asRecord(data.error) ?? {};
-    throw new Error(
-      asString(err.message) || `Stripe API failed: ${response.status}`,
-    );
+    throw stripeApiErrorFromResponse(response.status, data);
+  }
+  return asRecord(data) ?? {};
+}
+
+async function stripeGet(
+  path: string,
+): Promise<Record<string, unknown>> {
+  const key = stripeSecretKey();
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  const response = await fetch(`https://api.stripe.com/v1${path}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Stripe-Version": "2026-06-24.dahlia",
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw stripeApiErrorFromResponse(response.status, data);
   }
   return asRecord(data) ?? {};
 }
@@ -373,10 +430,11 @@ async function getBillingSubscription(
 async function getOrCreateStripeCustomer(
   admin: SupabaseClient,
   userId: string,
+  replaceExisting = false,
 ): Promise<string> {
   const current = await getBillingSubscription(admin, userId);
   const existingCustomer = asString(current?.stripe_customer_id);
-  if (existingCustomer) return existingCustomer;
+  if (existingCustomer && !replaceExisting) return existingCustomer;
 
   const { data: userData, error: userError } = await admin.auth.admin
     .getUserById(userId);
@@ -394,10 +452,41 @@ async function getOrCreateStripeCustomer(
     stripe_customer_id: customerId,
     tier: asString(current?.tier, "free"),
     status: asString(current?.status, "active"),
-    metadata: { ...(asRecord(current?.metadata) ?? {}), source: "checkout" },
+    metadata: {
+      ...(asRecord(current?.metadata) ?? {}),
+      source: replaceExisting ? "checkout_customer_repair" : "checkout",
+    },
   }, { onConflict: "user_id" });
   if (error) throw new Error(error.message);
   return customerId;
+}
+
+async function resolveSupporterBuyerContext(
+  admin: SupabaseClient,
+  userId: string | null,
+): Promise<SupporterBuyerContext> {
+  if (!userId) return classifySupporterBuyer({ userId: null });
+
+  const [authResult, profileResult] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin
+      .from("user_profiles")
+      .select("is_admin, role")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  if (authResult.error) throw new Error(authResult.error.message);
+  if (profileResult.error) throw new Error(profileResult.error.message);
+
+  const profile = asRecord(profileResult.data) ?? {};
+  const authMetadata = asRecord(authResult.data.user?.app_metadata) ?? {};
+  return classifySupporterBuyer({
+    userId,
+    isAnonymous: authResult.data.user?.is_anonymous === true,
+    profileIsAdmin: profile.is_admin === true,
+    profileRole: asString(profile.role) || null,
+    authRole: asString(authMetadata.role) || null,
+  });
 }
 
 function defaultNewsSignalFeeds(): Array<Record<string, string>> {
@@ -1129,14 +1218,51 @@ async function notionFetch(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  return await externalFetch(
+  const traceId = `schedule-hub.notion${path}`;
+  const response = await externalFetch(
     "notion",
     `https://api.notion.com/v1${path}`,
     {
       ...init,
       headers: mergeHeaders(notionHeaders(token), init.headers),
     },
-    { traceId: `schedule-hub.notion${path}` },
+    {
+      traceId,
+      retryStatuses: [408, 429, 500, 502, 503, 504],
+      baseDelayMs: 1_000,
+      maxDelayMs: 30_000,
+      jitterRatio: 0.2,
+    },
+  );
+
+  // Retryable responses only reach this point after succeeding; exhausted
+  // retries throw ExternalFetchError. Log validation/auth details immediately
+  // without retrying so CI and Edge logs retain Notion's request context.
+  if (!response.ok) {
+    const detail = await response.clone().text().catch(() => "");
+    console.error(JSON.stringify({
+      level: "ERROR",
+      at: new Date().toISOString(),
+      target_api: "notion",
+      status: response.status,
+      retryable: false,
+      response_body: detail.slice(0, 500),
+      request_id: response.headers.get("x-notion-request-id"),
+      trace_id: traceId,
+    }));
+  }
+  return response;
+}
+
+async function configuredNotionDataSourceId(
+  token: string,
+  databaseId: string | null | undefined,
+  dataSourceId: string | null | undefined,
+  dataSourceName: string | null | undefined,
+): Promise<string> {
+  return await resolveNotionDataSourceId(
+    (path, init) => notionFetch(token, path, init),
+    { databaseId, dataSourceId, dataSourceName },
   );
 }
 
@@ -1298,21 +1424,25 @@ async function replaceNotionPageChildren(
   return { archived, appended };
 }
 
-async function upsertNotionDatabasePage(
+async function upsertNotionDataSourcePage(
   token: string,
-  dbId: string,
+  dataSourceId: string,
   titleProperty: string,
   titleValue: string,
   properties: Record<string, unknown>,
 ): Promise<"created" | "updated"> {
-  const notionDbId = normalizeNotionId(dbId);
-  const queryResp = await notionFetch(token, `/databases/${notionDbId}/query`, {
-    method: "POST",
-    body: JSON.stringify({
-      filter: { property: titleProperty, title: { equals: titleValue } },
-      page_size: 1,
-    }),
-  });
+  const notionDataSourceId = normalizeNotionId(dataSourceId);
+  const queryResp = await notionFetch(
+    token,
+    `/data_sources/${notionDataSourceId}/query`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        filter: { property: titleProperty, title: { equals: titleValue } },
+        page_size: 1,
+      }),
+    },
+  );
   if (!queryResp.ok) {
     const detail = await queryResp.text().catch(() => "");
     throw new Error(
@@ -1349,7 +1479,10 @@ async function upsertNotionDatabasePage(
   const createResp = await notionFetch(token, "/pages", {
     method: "POST",
     body: JSON.stringify({
-      parent: { database_id: notionDbId },
+      parent: {
+        type: "data_source_id",
+        data_source_id: notionDataSourceId,
+      },
       properties,
     }),
   });
@@ -1436,7 +1569,7 @@ function notionPreflightFixes(
 
 async function validateNotionDatabaseSchema(
   token: string,
-  dbId: string,
+  dataSourceId: string,
   required: RequiredNotionProperty[],
   options: { checkAdvancedProperties?: boolean } = {},
 ): Promise<{
@@ -1452,17 +1585,20 @@ async function validateNotionDatabaseSchema(
   findings: NotionPreflightFinding[];
   human_fix_required: string[];
 }> {
-  const notionDbId = normalizeNotionId(dbId);
-  const resp = await notionFetch(token, `/databases/${notionDbId}`);
+  const notionDataSourceId = normalizeNotionId(dataSourceId);
+  const resp = await notionFetch(
+    token,
+    `/data_sources/${notionDataSourceId}`,
+  );
   if (!resp.ok) {
     const detail = await resp.text().catch(() => "");
     const category = notionPreflightFetchCategory(resp.status, detail);
     const finding: NotionPreflightFinding = {
       category,
       severity: "error",
-      message: `Notion database schema fetch failed: HTTP ${resp.status}.`,
+      message: `Notion data-source schema fetch failed: HTTP ${resp.status}.`,
       recommendation: category === "missing_permission"
-        ? "Share the target Notion database with the integration and verify NOTION_WBS_DATABASE_ID."
+        ? "Share the target Notion data source with the integration and verify the configured Notion IDs."
         : "Retry the Notion schema preflight and inspect the returned API detail.",
     };
     return {
@@ -1544,8 +1680,9 @@ async function validateNotionDatabaseSchema(
       const propertyId = asString(property.id, name);
       if (type === "relation") {
         const relation = (property.relation ?? {}) as Record<string, unknown>;
+        let relationDataSourceId = asString(relation.data_source_id);
         const relationDbId = asString(relation.database_id);
-        if (!relationDbId) {
+        if (!relationDataSourceId && !relationDbId) {
           findings.push({
             category: "advanced_property_constraint",
             severity: "warning",
@@ -1553,15 +1690,41 @@ async function validateNotionDatabaseSchema(
             property_id: propertyId,
             property_type: type,
             message:
-              `Relation property "${name}" does not expose relation.database_id.`,
+              `Relation property "${name}" does not expose a target data-source or database ID.`,
             recommendation:
               "Verify the relation target database is shared with the Notion integration.",
           });
           continue;
         }
+
+        if (!relationDataSourceId) {
+          try {
+            relationDataSourceId = await configuredNotionDataSourceId(
+              token,
+              relationDbId,
+              null,
+              null,
+            );
+          } catch (error) {
+            findings.push({
+              category: "advanced_property_constraint",
+              severity: "error",
+              property_name: name,
+              property_id: propertyId,
+              property_type: type,
+              message:
+                `Relation target for "${name}" could not be resolved to a data source: ${
+                  String(error)
+                }.`,
+              recommendation:
+                "Share the related database and configure an explicit data-source ID if it has multiple data sources.",
+            });
+            continue;
+          }
+        }
         const relationResp = await notionFetch(
           token,
-          `/databases/${relationDbId}`,
+          `/data_sources/${normalizeNotionId(relationDataSourceId)}`,
         );
         if (!relationResp.ok) {
           const detail = await relationResp.text().catch(() => "");
@@ -1670,8 +1833,25 @@ serve(async (req: Request) => {
       userId = await getUserId(req);
       if (!userId) return json({ error: "Unauthorized" }, 401);
     }
+    if (
+      authLevel === "public" &&
+      !serviceRoleRequest &&
+      action === "billing.create_supporter_checkout_session"
+    ) {
+      userId = await getUserId(req);
+    }
 
     switch (action) {
+      case "billing.get_stripe_account_readiness": {
+        const key = stripeSecretKey();
+        const account = await stripeGet("/account");
+        return json({
+          success: true,
+          checked_at: new Date().toISOString(),
+          account: summarizeStripeAccountReadiness(account, key),
+        });
+      }
+
       case "billing.status": {
         const billing = await getBillingSubscription(admin, userId!);
         const periodStart = currentBillingPeriodStart();
@@ -1736,6 +1916,7 @@ serve(async (req: Request) => {
 
       case "billing.create_supporter_checkout_session": {
         const amountJpy = supporterAmountJpy();
+        const buyerContext = await resolveSupporterBuyerContext(admin, userId);
         const returnUrl = billingReturnUrl(
           body.return_url,
           "/subscription-billing",
@@ -1758,6 +1939,7 @@ serve(async (req: Request) => {
           "payment_intent_data[metadata][offer]": "founding_supporter",
           "payment_intent_data[metadata][milestone_code]": "first-yen-revenue",
           "payment_intent_data[metadata][amount_jpy]": String(amountJpy),
+          ...supporterBuyerStripeParams(buyerContext),
           ...supporterAttributionParams(body),
         });
         return json({
@@ -1766,6 +1948,78 @@ serve(async (req: Request) => {
           checkout_url: session.url,
           amount_jpy: amountJpy,
         });
+      }
+
+      case "billing.create_video_credit_checkout_session": {
+        const pack = videoCreditPack(body.pack_key);
+        if (!pack) {
+          return json({ error: "invalid_video_credit_pack" }, 400);
+        }
+        try {
+          let customerId = await getOrCreateStripeCustomer(admin, userId!);
+          const returnUrl = billingReturnUrl(body.return_url, "/video-studio");
+          const metadata = videoCreditPackMetadata(userId!, pack);
+          const createSession = (stripeCustomerId: string) =>
+            stripePostForm("/checkout/sessions", {
+              mode: "payment",
+              locale: "ja",
+              customer: stripeCustomerId,
+              success_url: withBillingParam(
+                returnUrl,
+                "video_credits_success",
+              ),
+              cancel_url: withBillingParam(returnUrl, "video_credits_cancel"),
+              "line_items[0][price_data][currency]": "jpy",
+              "line_items[0][price_data][product_data][name]":
+                `AI動画クレジット ${pack.name}`,
+              "line_items[0][price_data][product_data][description]":
+                pack.description,
+              "line_items[0][price_data][unit_amount]": String(pack.amountJpy),
+              "line_items[0][quantity]": "1",
+              "metadata[offer]": metadata.offer,
+              "metadata[user_id]": metadata.user_id,
+              "metadata[video_credit_pack_key]": metadata.video_credit_pack_key,
+              "metadata[video_credits]": metadata.video_credits,
+              "metadata[amount_jpy]": metadata.amount_jpy,
+              "payment_intent_data[metadata][offer]": metadata.offer,
+              "payment_intent_data[metadata][user_id]": metadata.user_id,
+              "payment_intent_data[metadata][video_credit_pack_key]":
+                metadata.video_credit_pack_key,
+              "payment_intent_data[metadata][video_credits]":
+                metadata.video_credits,
+              "payment_intent_data[metadata][amount_jpy]": metadata.amount_jpy,
+            });
+
+          let session: Record<string, unknown>;
+          try {
+            session = await createSession(customerId);
+          } catch (error) {
+            if (!isMissingStripeCustomer(error)) throw error;
+            console.warn(
+              "[schedule-hub] repairing stale Stripe customer",
+              stripeApiErrorDetails(error),
+            );
+            customerId = await getOrCreateStripeCustomer(admin, userId!, true);
+            session = await createSession(customerId);
+          }
+
+          return json({
+            success: true,
+            id: session.id,
+            checkout_url: session.url,
+            pack: {
+              key: pack.key,
+              credits: pack.credits,
+              amount_jpy: pack.amountJpy,
+            },
+          });
+        } catch (error) {
+          console.error(
+            "[schedule-hub] video credit checkout failed",
+            stripeApiErrorDetails(error) ?? { code: "internal_error" },
+          );
+          return json({ error: "video_credit_checkout_unavailable" }, 502);
+        }
       }
 
       case "billing.create_portal_session": {
@@ -1997,7 +2251,8 @@ serve(async (req: Request) => {
           text,
           mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
         });
-        const log = await addItem(admin, "x_post", userId!, {
+        const logOwnerUserId = userId ?? `gha`;
+        const log = await addItem(admin, `x_post`, logOwnerUserId, {
           ...baseLog,
           status: "posted",
           tweet_id: result.tweetId,
@@ -3488,20 +3743,31 @@ serve(async (req: Request) => {
       case "notion.preflight_wbs": {
         const token = Deno.env.get("NOTION_API_TOKEN");
         const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
-        if (!token || !dbId) {
+        const configuredDataSourceId = Deno.env.get(
+          "NOTION_WBS_DATA_SOURCE_ID",
+        );
+        if (!token || (!dbId && !configuredDataSourceId)) {
           return json(
             {
               success: false,
               error: "notion_not_configured",
-              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_WBS_DATABASE_ID or NOTION_WBS_DATA_SOURCE_ID",
             },
             503,
           );
         }
 
-        const schema = await validateNotionDatabaseSchema(
+        const dataSourceId = await configuredNotionDataSourceId(
           token,
           dbId,
+          configuredDataSourceId,
+          Deno.env.get("NOTION_WBS_DATA_SOURCE_NAME"),
+        );
+        const schema = await validateNotionDatabaseSchema(
+          token,
+          dataSourceId,
           NOTION_WBS_REQUIRED_PROPERTIES,
           { checkAdvancedProperties: true },
         );
@@ -3534,27 +3800,38 @@ serve(async (req: Request) => {
       // upsert (last_edited 順で最新 500 件)。Anthropic outage 時もユーザーが
       // Notion mirror で WBS を閲覧できる = SPOF 解消。
       // Auth: service_role (public action / GHA cron から呼ぶ想定)
-      // Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
+      // Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID or DATA_SOURCE_ID
       case "notion.sync_wbs": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = normalizeNotionId(Deno.env.get("NOTION_WBS_DATABASE_ID"));
-        if (!token || !dbId) {
+        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        const configuredDataSourceId = Deno.env.get(
+          "NOTION_WBS_DATA_SOURCE_ID",
+        );
+        if (!token || (!dbId && !configuredDataSourceId)) {
           return json(
             {
               success: false,
               error: "notion_not_configured",
-              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_WBS_DATABASE_ID or NOTION_WBS_DATA_SOURCE_ID",
             },
             503,
           );
         }
 
+        const dataSourceId = await configuredNotionDataSourceId(
+          token,
+          dbId,
+          configuredDataSourceId,
+          Deno.env.get("NOTION_WBS_DATA_SOURCE_NAME"),
+        );
         // Supabase 側から最新 WBS (last_edited 順 30 件) を取得
         // 30件 × ~150ms/task ≈ 4.5s sleep + HTTP = ~30s 合計 (Supabase 150s limit に余裕)
         // 毎時 cron で 30件ずつローリング sync → 141件 ≒ 5h で全件完了
         const schema = await validateNotionDatabaseSchema(
           token,
-          dbId,
+          dataSourceId,
           NOTION_WBS_REQUIRED_PROPERTIES,
           { checkAdvancedProperties: body.advanced_preflight === true },
         );
@@ -3686,28 +3963,32 @@ serve(async (req: Request) => {
           // → rich_text property は task_title にリネーム済 (user 手動)。
           //
           // null 値の property は omit (Notion API は `{date: null}` を受けるが
-          // 他の type では 400 になるため全て conditional 構築)
-          const properties: Record<string, unknown> = {
-            id: { title: [{ text: { content: String(t.id) } }] },
-            task_title: {
-              rich_text: [{ text: { content: String(t.title ?? "") } }],
-            },
-            instance: { select: { name: normalizeInstance(t.instance) } },
-            status: { select: { name: normalizeStatus(t.status) } },
-            progress: { number: Number(t.progress ?? 0) },
+          // 他の type では 400 になるため未設定値は skip)。
+          // buildNotionProperties が型別ラップ + title 衝突検知を一元化 (Issue #1287)。
+          const propertyValues: Record<string, unknown> = {
+            id: String(t.id),
+            task_title: String(t.title ?? ""),
+            instance: normalizeInstance(t.instance),
+            status: normalizeStatus(t.status),
+            progress: Number(t.progress ?? 0),
           };
-          if (t.end_date) {
-            properties.deadline = { date: { start: String(t.end_date) } };
-          }
-          if (t.updated_at) {
-            properties.updated_at = { date: { start: String(t.updated_at) } };
+          if (t.end_date) propertyValues.deadline = String(t.end_date);
+          if (t.updated_at) propertyValues.updated_at = String(t.updated_at);
+
+          const built = buildNotionProperties(
+            NOTION_WBS_PROPERTY_MAPPINGS,
+            propertyValues,
+          );
+          const properties = built.properties;
+          for (const warning of built.warnings) {
+            errors.push(`mapping ${t.id}: ${warning}`);
           }
 
           try {
             // 既存 page を id (Title) で検索
             const queryResp = await notionFetch(
               token,
-              `/databases/${dbId}/query`,
+              `/data_sources/${dataSourceId}/query`,
               {
                 method: "POST",
                 body: JSON.stringify({
@@ -3744,7 +4025,9 @@ serve(async (req: Request) => {
                 failed++;
                 const eb = await patchResp.text().catch(() => "");
                 errors.push(
-                  `patch ${t.id}: HTTP ${patchResp.status} ${eb.slice(0, 200)}`,
+                  `patch ${t.id}: ${
+                    extractNotionErrorDetail(patchResp.status, eb).detail
+                  }`,
                 );
               }
             } else {
@@ -3752,7 +4035,10 @@ serve(async (req: Request) => {
               const createResp = await notionFetch(token, "/pages", {
                 method: "POST",
                 body: JSON.stringify({
-                  parent: { database_id: dbId },
+                  parent: {
+                    type: "data_source_id",
+                    data_source_id: dataSourceId,
+                  },
                   properties,
                 }),
               });
@@ -3761,8 +4047,8 @@ serve(async (req: Request) => {
                 failed++;
                 const eb = await createResp.text().catch(() => "");
                 errors.push(
-                  `create ${t.id}: HTTP ${createResp.status} ${
-                    eb.slice(0, 200)
+                  `create ${t.id}: ${
+                    extractNotionErrorDetail(createResp.status, eb).detail
                   }`,
                 );
               }
@@ -3872,22 +4158,29 @@ serve(async (req: Request) => {
       // Fallback: GHA から rows を渡して Notion DB へ upsert.
       case "notion.sync_memory_index": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = normalizeNotionId(
-          Deno.env.get("NOTION_MEMORY_DATABASE_ID"),
+        const dbId = Deno.env.get("NOTION_MEMORY_DATABASE_ID");
+        const configuredDataSourceId = Deno.env.get(
+          "NOTION_MEMORY_DATA_SOURCE_ID",
         );
-        if (!token || !dbId) {
+        if (!token || (!dbId && !configuredDataSourceId)) {
           return json(
             {
               success: false,
               error: "notion_not_configured",
               missing: !token
                 ? "NOTION_API_TOKEN"
-                : "NOTION_MEMORY_DATABASE_ID",
+                : "NOTION_MEMORY_DATABASE_ID or NOTION_MEMORY_DATA_SOURCE_ID",
             },
             503,
           );
         }
 
+        const dataSourceId = await configuredNotionDataSourceId(
+          token,
+          dbId,
+          configuredDataSourceId,
+          Deno.env.get("NOTION_MEMORY_DATA_SOURCE_NAME"),
+        );
         const limitN = clampNumber(body.limit, 50, 1, 100);
         const offsetN = Math.max(asNumber(body.offset, 0), 0);
         const delayMs = clampNumber(body.delay_ms, 800, 400, 2500);
@@ -3947,9 +4240,9 @@ serve(async (req: Request) => {
           }
 
           try {
-            const result = await upsertNotionDatabasePage(
+            const result = await upsertNotionDataSourcePage(
               token,
-              dbId,
+              dataSourceId,
               "filename",
               filePath,
               properties,
@@ -4053,21 +4346,32 @@ serve(async (req: Request) => {
       // ─── Notion WBS Mirror Repair ───
       case "notion.fix_wbs_all_instances": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = normalizeNotionId(Deno.env.get("NOTION_WBS_DATABASE_ID"));
-        if (!token || !dbId) {
+        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        const configuredDataSourceId = Deno.env.get(
+          "NOTION_WBS_DATA_SOURCE_ID",
+        );
+        if (!token || (!dbId && !configuredDataSourceId)) {
           return json(
             {
               success: false,
               error: "notion_not_configured",
-              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_WBS_DATABASE_ID or NOTION_WBS_DATA_SOURCE_ID",
             },
             503,
           );
         }
 
+        const dataSourceId = await configuredNotionDataSourceId(
+          token,
+          dbId,
+          configuredDataSourceId,
+          Deno.env.get("NOTION_WBS_DATA_SOURCE_NAME"),
+        );
         const notionHeaders = {
           "Authorization": `Bearer ${token}`,
-          "Notion-Version": "2022-06-28",
+          "Notion-Version": NOTION_VERSION,
           "Content-Type": "application/json",
         };
         const validInstances = new Set([
@@ -4115,7 +4419,7 @@ serve(async (req: Request) => {
           if (pageSize <= 0) break;
           const queryResp: Response = await externalFetch(
             "notion",
-            `https://api.notion.com/v1/databases/${dbId}/query`,
+            `https://api.notion.com/v1/data_sources/${dataSourceId}/query`,
             {
               method: "POST",
               headers: notionHeaders,
@@ -4192,28 +4496,24 @@ serve(async (req: Request) => {
         for (const [taskId, pageId] of pageIdByTaskId.entries()) {
           const task = tasksById.get(taskId);
           if (!task) missing++;
-          const properties: Record<string, unknown> = {
-            instance: {
-              select: { name: normalizeInstance(task?.instance ?? "codex") },
-            },
+          // buildNotionProperties が型別ラップ + title 衝突検知を一元化 (Issue #1287)。
+          // id (title) は pageId 指定 patch のため values に含めず skip させる。
+          const propertyValues: Record<string, unknown> = {
+            instance: normalizeInstance(task?.instance ?? "codex"),
           };
           if (task) {
-            properties.task_title = {
-              rich_text: [{ text: { content: String(task.title ?? "") } }],
-            };
-            properties.status = {
-              select: { name: normalizeStatus(task.status) },
-            };
-            properties.progress = { number: Number(task.progress ?? 0) };
-            if (task.end_date) {
-              properties.deadline = { date: { start: String(task.end_date) } };
-            }
+            propertyValues.task_title = String(task.title ?? "");
+            propertyValues.status = normalizeStatus(task.status);
+            propertyValues.progress = Number(task.progress ?? 0);
+            if (task.end_date) propertyValues.deadline = String(task.end_date);
             if (task.updated_at) {
-              properties.updated_at = {
-                date: { start: String(task.updated_at) },
-              };
+              propertyValues.updated_at = String(task.updated_at);
             }
           }
+          const properties = buildNotionProperties(
+            NOTION_WBS_PROPERTY_MAPPINGS,
+            propertyValues,
+          ).properties;
 
           const patchResp = await externalFetch(
             "notion",
@@ -4231,7 +4531,9 @@ serve(async (req: Request) => {
             failed++;
             const text = await patchResp.text().catch(() => "");
             errors.push(
-              `patch ${taskId}: HTTP ${patchResp.status} ${text.slice(0, 180)}`,
+              `patch ${taskId}: ${
+                extractNotionErrorDetail(patchResp.status, text).detail
+              }`,
             );
           }
           await new Promise((r) => setTimeout(r, delayMs));
@@ -4239,7 +4541,7 @@ serve(async (req: Request) => {
 
         const verifyResp = await externalFetch(
           "notion",
-          `https://api.notion.com/v1/databases/${dbId}/query`,
+          `https://api.notion.com/v1/data_sources/${dataSourceId}/query`,
           {
             method: "POST",
             headers: notionHeaders,
@@ -4347,6 +4649,14 @@ serve(async (req: Request) => {
         success: false,
         ...externalFetchErrorPayload(e),
       }, 503);
+    }
+    if (e instanceof NotionDataSourceError) {
+      return json({
+        success: false,
+        error: e.code,
+        detail: e.detail ?? e.message,
+        upstream_status: e.status ?? null,
+      }, e.status ? 502 : 422);
     }
     return json({ error: String(e) }, 500);
   }

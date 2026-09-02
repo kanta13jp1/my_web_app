@@ -16,9 +16,7 @@ on:
           - "true"
           - "false"
 
-permissions:
-  contents: read
-  issues: write
+permissions: {}
 
 concurrency:
   group: claude-session-hygiene-cron
@@ -26,6 +24,9 @@ concurrency:
 
 jobs:
   hygiene:
+    permissions:
+      contents: read
+      issues: write
     name: Session PRE-check + threshold cleanup
     runs-on: windows-latest
     timeout-minutes: 10
@@ -36,22 +37,24 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 5
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
       - name: Run session hygiene check
         id: hygiene
         shell: pwsh
+        env:
+          APPLY_INPUT: ${{ inputs.apply }}
         run: |
           New-Item -ItemType Directory -Force -Path memory | Out-Null
           $applyArg = @()
-          if ("${{ github.event_name }}" -eq "schedule" -or "${{ inputs.apply }}" -eq "true") {
+          if ($env:GITHUB_EVENT_NAME -eq "schedule" -or $env:APPLY_INPUT -eq "true") {
             $applyArg = @("--apply")
           }
 
@@ -70,7 +73,7 @@ jobs:
 
       - name: Upload hygiene report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: claude-session-hygiene-report
           path: |

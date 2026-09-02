@@ -5,6 +5,10 @@ void registerIframeViewFactory(String viewId, String src) {
   // no-op on non-web platforms
 }
 
+void registerVideoViewFactory(String viewId, String src) {
+  // no-op on non-web platforms
+}
+
 void registerSandboxedSrcDocIframeViewFactory(
   String viewId,
   String srcDoc, {

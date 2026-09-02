@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 車両・フリート管理ページ
 /// 車両一覧・走行記録・メンテナンス管理。
@@ -13,7 +14,14 @@ class VehicleFleetManagerPage extends StatefulWidget {
 }
 
 class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs =>
+      const <String>['vehicles', 'trips', 'maintenance'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
 

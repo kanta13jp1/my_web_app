@@ -10,14 +10,23 @@ agent work safe or risky.
 from __future__ import annotations
 
 import argparse
+import ctypes
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+
+
+GIB = 1024 ** 3
+RESOURCE_RAM_USED_WARN_PCT = 85.0
+RESOURCE_RAM_FREE_WARN_GB = 2.0
+RESOURCE_DISK_FREE_WARN_GB = 26.0
+RESOURCE_WORKTREE_REVIEW_COUNT = 50
 
 
 @dataclass(frozen=True)
@@ -113,6 +122,144 @@ def worktree_entries(root: Path) -> list[dict[str, str]]:
     if current:
         entries.append(current)
     return entries
+
+
+def physical_memory_snapshot() -> dict[str, float | str | None]:
+    """Return a dependency-free physical-memory snapshot when supported."""
+
+    total_bytes: int | None = None
+    free_bytes: int | None = None
+    source = "unavailable"
+
+    if os.name == "nt":
+        class MemoryStatusEx(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        status = MemoryStatusEx()
+        status.dwLength = ctypes.sizeof(MemoryStatusEx)
+        try:
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+                total_bytes = int(status.ullTotalPhys)
+                free_bytes = int(status.ullAvailPhys)
+                source = "GlobalMemoryStatusEx"
+        except (AttributeError, OSError):
+            pass
+    elif hasattr(os, "sysconf"):
+        try:
+            page_size = int(os.sysconf("SC_PAGE_SIZE"))
+            total_bytes = int(os.sysconf("SC_PHYS_PAGES")) * page_size
+            free_bytes = int(os.sysconf("SC_AVPHYS_PAGES")) * page_size
+            source = "sysconf"
+        except (OSError, TypeError, ValueError):
+            total_bytes = None
+            free_bytes = None
+
+    if not total_bytes or free_bytes is None:
+        return {
+            "source": source,
+            "total_gb": None,
+            "free_gb": None,
+            "used_pct": None,
+        }
+
+    free_bytes = max(0, min(free_bytes, total_bytes))
+    return {
+        "source": source,
+        "total_gb": round(total_bytes / GIB, 2),
+        "free_gb": round(free_bytes / GIB, 2),
+        "used_pct": round((1 - (free_bytes / total_bytes)) * 100, 1),
+    }
+
+
+def resource_budget_snapshot(
+    root: Path,
+    worktrees: list[dict[str, str]],
+) -> dict[str, Any]:
+    memory = physical_memory_snapshot()
+    disk_root = Path(root.anchor) if root.anchor else root
+    try:
+        disk = shutil.disk_usage(disk_root)
+        disk_total_gb: float | None = round(disk.total / GIB, 2)
+        disk_free_gb: float | None = round(disk.free / GIB, 2)
+    except OSError:
+        disk_total_gb = None
+        disk_free_gb = None
+
+    ram_used_pct = memory["used_pct"]
+    ram_free_gb = memory["free_gb"]
+    parallel_gate = "unknown"
+    if isinstance(ram_used_pct, (int, float)) and isinstance(ram_free_gb, (int, float)):
+        parallel_gate = (
+            "allow"
+            if ram_used_pct < RESOURCE_RAM_USED_WARN_PCT
+            and ram_free_gb > RESOURCE_RAM_FREE_WARN_GB
+            else "hold"
+        )
+
+    return {
+        "memory": memory,
+        "disk_path": str(disk_root),
+        "disk_total_gb": disk_total_gb,
+        "disk_free_gb": disk_free_gb,
+        "registered_worktrees": len(worktrees),
+        "parallel_agent_gate": parallel_gate,
+        "thresholds": {
+            "ram_used_warn_pct": RESOURCE_RAM_USED_WARN_PCT,
+            "ram_free_warn_gb": RESOURCE_RAM_FREE_WARN_GB,
+            "disk_free_warn_gb": RESOURCE_DISK_FREE_WARN_GB,
+            "worktree_review_count": RESOURCE_WORKTREE_REVIEW_COUNT,
+        },
+    }
+
+
+def resource_budget_warnings(snapshot: dict[str, Any]) -> list[str]:
+    warnings: list[str] = []
+    memory = snapshot["memory"]
+    used_pct = memory["used_pct"]
+    free_gb = memory["free_gb"]
+    thresholds = snapshot["thresholds"]
+
+    if used_pct is None or free_gb is None:
+        warnings.append("physical memory resource budget is unavailable")
+    else:
+        if used_pct >= thresholds["ram_used_warn_pct"]:
+            warnings.append(
+                f"RAM usage {used_pct:.1f}% is at or above "
+                f"{thresholds['ram_used_warn_pct']:.1f}%; hold parallel/heavy work"
+            )
+        if free_gb <= thresholds["ram_free_warn_gb"]:
+            warnings.append(
+                f"free RAM {free_gb:.2f} GB is at or below "
+                f"{thresholds['ram_free_warn_gb']:.2f} GB; hold parallel/heavy work"
+            )
+
+    disk_free_gb = snapshot["disk_free_gb"]
+    if disk_free_gb is None:
+        warnings.append("disk resource budget is unavailable")
+    elif disk_free_gb < thresholds["disk_free_warn_gb"]:
+        warnings.append(
+            f"free disk {disk_free_gb:.2f} GB is below "
+            f"{thresholds['disk_free_warn_gb']:.2f} GB"
+        )
+
+    worktree_count = snapshot["registered_worktrees"]
+    if worktree_count >= thresholds["worktree_review_count"]:
+        warnings.append(
+            f"registered worktree count {worktree_count} is at or above review threshold "
+            f"{thresholds['worktree_review_count']}; audit keep/remove status before cleanup"
+        )
+
+    return warnings
 
 
 def env_snapshot() -> dict[str, str]:
@@ -485,6 +632,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
     dirty_lines = [line for line in dirty.splitlines() if line.strip()]
     remote_url = git_text(["remote", "get-url", "origin"], root, default="unknown")
     worktrees = worktree_entries(root)
+    resource_budget = resource_budget_snapshot(root, worktrees)
     codex_version = codex_cli_version(root)
     notebooklm = notebooklm_snapshot(root)
     claude_remote_control = analyze_claude_remote_control(root)
@@ -493,6 +641,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
     session_state = session_state_snapshot(root)
 
     warnings: list[str] = []
+    warnings.extend(resource_budget_warnings(resource_budget))
     if dirty_lines:
         warnings.append(f"working tree has {len(dirty_lines)} uncommitted path(s)")
     if not upstream:
@@ -571,6 +720,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "managed_mcp": managed_mcp,
         "context_injection": context_injection,
         "session_state": session_state,
+        "resource_budget": resource_budget,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -590,6 +740,14 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- Dirty paths: `{report['dirty_count']}`",
         f"- Remote: `{report['remote']}`",
         f"- Codex CLI: `{report['codex_cli_version']}`",
+        "",
+        "## Resource Budget",
+        f"- RAM used: `{report['resource_budget']['memory']['used_pct'] if report['resource_budget']['memory']['used_pct'] is not None else 'unknown'}%`",
+        f"- RAM free / total: `{report['resource_budget']['memory']['free_gb'] if report['resource_budget']['memory']['free_gb'] is not None else 'unknown'} / {report['resource_budget']['memory']['total_gb'] if report['resource_budget']['memory']['total_gb'] is not None else 'unknown'} GB`",
+        f"- Disk free / total ({report['resource_budget']['disk_path']}): `{report['resource_budget']['disk_free_gb'] if report['resource_budget']['disk_free_gb'] is not None else 'unknown'} / {report['resource_budget']['disk_total_gb'] if report['resource_budget']['disk_total_gb'] is not None else 'unknown'} GB`",
+        f"- Registered worktrees: `{report['resource_budget']['registered_worktrees']}`",
+        f"- Parallel/heavy-work gate (single sample): `{report['resource_budget']['parallel_agent_gate']}`",
+        f"- Thresholds: RAM `< {report['resource_budget']['thresholds']['ram_used_warn_pct']}%` and `> {report['resource_budget']['thresholds']['ram_free_warn_gb']} GB free`; disk `>= {report['resource_budget']['thresholds']['disk_free_warn_gb']} GB free`; worktree review `>= {report['resource_budget']['thresholds']['worktree_review_count']}`",
         "",
         "## Permission / Sandbox Snapshot",
     ]

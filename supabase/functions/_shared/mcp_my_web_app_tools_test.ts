@@ -19,12 +19,13 @@ Deno.test("MCP tool catalog exposes the prototype + notes CRUD tools", () => {
     "wbs.tasks.list",
     "feature_request.create",
     "user_tasks.list",
+    "public_businesses.reference_list",
     "notes.list",
     "notes.create",
   ]);
   assertEquals(tools[1].write_confirmation_required, true);
   // 書き込み系 (notes.create) も confirmation 必須のまま公開される。
-  assertEquals(tools[4].write_confirmation_required, true);
+  assertEquals(tools[5].write_confirmation_required, true);
 });
 
 Deno.test("MCP action names map to tool scopes", () => {
@@ -46,6 +47,9 @@ Deno.test("MCP action names map to tool scopes", () => {
     "feature_request.create",
   );
   assertEquals(mcpRequestedScopes("feature_request.create"), ["create"]);
+  assertEquals(mcpRequestedScopes("public_businesses.reference_list"), [
+    "read",
+  ]);
   assertEquals(isMcpWriteTool("feature_request.create"), true);
 });
 

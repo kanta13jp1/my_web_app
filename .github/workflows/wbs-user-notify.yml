@@ -14,11 +14,15 @@ concurrency:
   group: wbs-user-notify
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   notify:
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
 

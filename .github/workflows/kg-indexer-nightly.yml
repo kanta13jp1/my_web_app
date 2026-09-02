@@ -10,9 +10,7 @@ on:
         required: false
         default: "true"
 
-permissions:
-  contents: read
-  issues: write
+permissions: {}
 
 concurrency:
   group: kg-indexer-nightly-${{ github.ref }}
@@ -20,6 +18,12 @@ concurrency:
 
 jobs:
   index:
+    environment:
+      name: analytics-production
+      deployment: false
+    permissions:
+      contents: read
+      issues: write
     name: Build Knowledge Graph source records
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -29,13 +33,14 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Resolve apply mode
         id: mode
         shell: bash
+        env:
+          APPLY_INPUT: ${{ inputs.apply }}
         run: |
-          APPLY_INPUT="${{ inputs.apply }}"
           if [ -z "$APPLY_INPUT" ]; then
             APPLY_INPUT="true"
           fi
@@ -110,7 +115,7 @@ jobs:
 
       - name: Upload indexer artifacts
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: kg-indexer-records
           path: tmp/kg-indexer/

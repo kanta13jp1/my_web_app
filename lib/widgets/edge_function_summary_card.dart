@@ -348,15 +348,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/social-media-scheduler',
       'SNSスケジューラーページ > 投稿予約・プラットフォーム選択',
     ),
-    // 追加 (cs-check 自動連携 2026-04-19)
-    _FnDef(
-      'app-analytics-dashboard',
-      'アプリアナリティクスダッシュボード',
-      true,
-      '/app-analytics-dashboard',
-      'アナリティクスページ > DAU・セッション数・人気ページ確認',
-    ),
-    // 追加 (cs-check 自動連携 2026-04-19)
     _FnDef(
       'address-book',
       'アドレス帳 (連絡先管理)',
@@ -844,6 +835,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       false,
       null,
       'MCP クライアント向け Well-Known エンドポイント (UIなし / サーバーサイド専用)',
+    ),
+    // 追加 (cs-check 自動連携 2026-07-29)
+    _FnDef(
+      'shop-funnel',
+      'デジタル商品ストアのファネル (商品一覧・購入フロー)',
+      true,
+      '/shop',
+      'デジタル作品ストア > 商品確認・購入フロー開始',
+    ),
+    _FnDef(
+      'shop-checkout',
+      'Stripe Checkout セッション作成 (デジタル商品購入)',
+      true,
+      '/shop',
+      '商品詳細ページ > 購入ボタン → Stripe Checkout へ遷移',
+    ),
+    _FnDef(
+      'shop-download',
+      '購入済みデジタル商品の署名付きURL発行',
+      true,
+      '/shop/downloads',
+      '購入済みページ > ダウンロードボタンを押す',
     ),
   ];
 

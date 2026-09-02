@@ -10,19 +10,23 @@ concurrency:
   group: cs-check
   cancel-in-progress: true  # 2026-06-24 ci-audit: 2h cron キュー積み防止
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   cs-check:
+    environment:
+      name: customer-operations-production
+      deployment: false
+    permissions:
+      contents: write
+      pull-requests: write
     name: CS Auto-Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Step 1 - 未返信サポートチケット取得
         id: tickets
@@ -120,15 +124,21 @@ jobs:
         run: |
           INFRA_ERRORS=""
 
-          SUPABASE_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -H "Content-Type: application/json" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/development-achievements" \
+          # 旧実装は削除済み EF development-achievements を叩いており、返る 404 は
+          # >=500/000/403 のいずれにも当たらないため DB が全断でも常に緑だった。
+          # 生存 probe は health-check (public / --no-verify-jwt) を使う。
+          # ただし health-check は unhealthy でも HTTP 200 を返す設計なので、
+          # status コードだけでなく body の status まで見ないと再び dead-green になる。
+          SUPABASE_CODE=$(curl -s -o /tmp/supabase-health.json -w "%{http_code}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/health-check" \
             --max-time 10)
-          echo "🔍 Supabase: HTTP $SUPABASE_CODE"
-          if [ "$SUPABASE_CODE" -ge 500 ] 2>/dev/null || [ "$SUPABASE_CODE" = "000" ] || [ "$SUPABASE_CODE" = "403" ]; then
+          SUPABASE_STATUS=$(jq -r '.status // "unparseable"' /tmp/supabase-health.json 2>/dev/null || echo "unparseable")
+          echo "🔍 Supabase: HTTP $SUPABASE_CODE / status=$SUPABASE_STATUS"
+          if [ "$SUPABASE_CODE" != "200" ]; then
             INFRA_ERRORS="${INFRA_ERRORS}- Supabase: HTTP ${SUPABASE_CODE}\n"
+          elif [ "$SUPABASE_STATUS" != "healthy" ]; then
+            FAILED_CHECKS=$(jq -r '[.checks // {} | to_entries[] | select(.value.ok != true) | .key] | join(",")' /tmp/supabase-health.json 2>/dev/null || echo "")
+            INFRA_ERRORS="${INFRA_ERRORS}- Supabase: ${SUPABASE_STATUS} (failed: ${FAILED_CHECKS:-unknown})\n"
           fi
 
           FIREBASE_CODE=$(curl -s -o /dev/null -w "%{http_code}" \

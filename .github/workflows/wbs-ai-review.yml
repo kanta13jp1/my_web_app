@@ -29,11 +29,15 @@ concurrency:
   group: wbs-ai-review
   cancel-in-progress: true  # 2026-06-23 ci-audit: 2h cron Gemini API 重複コスト防止
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   review:
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: read
     name: WBS AI Review
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -146,9 +150,14 @@ jobs:
               })
 
               # Gemini call
+              # '-s' not '-sf': -f suppresses the response body on an HTTP
+              # error, so a 404 arrived here as an empty string and surfaced
+              # only as "Expecting value: line 1 column 1 (char 0)" — a JSON
+              # parse error that says nothing about the actual cause.
+              proc = None
               try:
                   proc = subprocess.run(
-                      ['curl', '-sf', '-X', 'POST',
+                      ['curl', '-s', '-X', 'POST',
                        f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}',
                        '-H', 'Content-Type: application/json',
                        '-d', payload, '--max-time', '30'],
@@ -165,6 +174,15 @@ jobs:
                   score = ai.get('score', 0)
               except Exception as e:
                   print(f"⚠️ {tid}: Gemini error — {e}", flush=True)
+                  # Echo what the API actually said. Without this the cause of
+                  # a 17+ day silent outage was invisible.
+                  if proc is not None:
+                      body = (proc.stdout or '').strip()
+                      if body:
+                          print(f"   response: {body[:300]}", flush=True)
+                      err = (proc.stderr or '').strip()
+                      if err:
+                          print(f"   stderr:   {err[:200]}", flush=True)
                   errors += 1
                   continue
 
@@ -210,6 +228,17 @@ jobs:
           print(f"approved: {approved}")
           print(f"rejected: {rejected}")
           print(f"errors:   {errors}")
+
+          # An errors-only run reviewed nothing, but still exited 0 and read as
+          # a healthy green. Say so out loud instead. Kept non-fatal so a
+          # partial outage does not block the rest of the schedule.
+          if errors and not (approved or rejected):
+              print(
+                  f"::warning::WBS AI review reviewed nothing: all {errors} "
+                  f"task(s) failed. See the response bodies logged above."
+              )
+          elif errors:
+              print(f"::warning::WBS AI review: {errors} task(s) failed.")
 
           # GHA outputs
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:

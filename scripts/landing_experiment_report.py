@@ -46,6 +46,26 @@ REPORT_SELECT = ",".join(
         "last_event_at",
     )
 )
+FUNNEL_EVENT_KEYS = (
+    "funnel_trial_run",
+    "funnel_save_cta",
+    "funnel_magic_link_attempt",
+    "funnel_magic_link_send",
+    "funnel_magic_link_fail_invalid_email",
+    "funnel_magic_link_fail_rate_limit",
+    "funnel_magic_link_fail_delivery_config",
+    "funnel_magic_link_fail_redirect",
+    "funnel_magic_link_fail_network",
+    "funnel_magic_link_fail_unknown",
+    "funnel_google_oauth_start",
+    "funnel_google_oauth_fail_cancelled",
+    "funnel_google_oauth_fail_rate_limit",
+    "funnel_google_oauth_fail_provider_config",
+    "funnel_google_oauth_fail_redirect",
+    "funnel_google_oauth_fail_callback_exchange",
+    "funnel_google_oauth_fail_unknown",
+    "funnel_inbox_open",
+)
 
 
 class ReportContractError(ValueError):
@@ -203,6 +223,63 @@ def validate_arm_rows(rows: Any) -> dict[tuple[str, str], ArmStats]:
     return parsed
 
 
+def experiment_observation_window(
+    arms: dict[tuple[str, str], ArmStats],
+) -> tuple[str | None, str | None]:
+    dates: list[str] = []
+    for arm in arms.values():
+        for value in (arm.first_event_at, arm.last_event_at):
+            if not value:
+                continue
+            try:
+                parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise ReportContractError(
+                    f"invalid experiment event timestamp: {value}"
+                ) from exc
+            dates.append(parsed.date().isoformat())
+    if not dates:
+        return (None, None)
+    return (min(dates), max(dates))
+
+
+def summarize_funnel_rows(rows: Any) -> dict[str, int]:
+    if not isinstance(rows, list):
+        raise ReportContractError("app analytics response must be a list")
+
+    totals = {event_key: 0 for event_key in FUNNEL_EVENT_KEYS}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ReportContractError("every app analytics row must be an object")
+        source_details = row.get("source_details")
+        if source_details is None:
+            continue
+        if not isinstance(source_details, dict):
+            raise ReportContractError("app analytics source_details must be an object")
+        for event_key in FUNNEL_EVENT_KEYS:
+            value = source_details.get(event_key, 0)
+            if isinstance(value, bool):
+                raise ReportContractError(
+                    f"app analytics {event_key} must be an integer"
+                )
+            if isinstance(value, float) and not value.is_integer():
+                raise ReportContractError(
+                    f"app analytics {event_key} must be an integer"
+                )
+            try:
+                count = int(value)
+            except (TypeError, ValueError) as exc:
+                raise ReportContractError(
+                    f"app analytics {event_key} must be an integer"
+                ) from exc
+            if count < 0:
+                raise ReportContractError(
+                    f"app analytics {event_key} must be non-negative"
+                )
+            totals[event_key] += count
+    return totals
+
+
 def wilson_interval(
     successes: int,
     trials: int,
@@ -288,6 +365,8 @@ def build_report(
     arms: dict[tuple[str, str], ArmStats],
     *,
     synthetic_offsets: dict[tuple[str, str], int] | None = None,
+    funnel_counts: dict[str, int] | None = None,
+    funnel_observation_window: tuple[str | None, str | None] = (None, None),
     minimum_views_per_arm: int = 100,
     minimum_metric_denominator_per_arm: int = 20,
     minimum_total_primary_successes: int = 10,
@@ -312,6 +391,83 @@ def build_report(
     global_submit_gate_ready = (
         total_signup_submits >= minimum_total_primary_successes
     )
+    observed_funnel = funnel_counts or {}
+    magic_link_failures = {
+        "invalid_email": observed_funnel.get(
+            "funnel_magic_link_fail_invalid_email"
+        ),
+        "rate_limit": observed_funnel.get(
+            "funnel_magic_link_fail_rate_limit"
+        ),
+        "delivery_configuration": observed_funnel.get(
+            "funnel_magic_link_fail_delivery_config"
+        ),
+        "redirect_configuration": observed_funnel.get(
+            "funnel_magic_link_fail_redirect"
+        ),
+        "network": observed_funnel.get("funnel_magic_link_fail_network"),
+        "unknown": observed_funnel.get("funnel_magic_link_fail_unknown"),
+    }
+    magic_link_failure_total = (
+        sum(value or 0 for value in magic_link_failures.values())
+        if funnel_counts is not None
+        else None
+    )
+    magic_link_attempts = observed_funnel.get("funnel_magic_link_attempt")
+    magic_link_sends = observed_funnel.get("funnel_magic_link_send")
+    google_oauth_starts = observed_funnel.get("funnel_google_oauth_start")
+    google_oauth_failures = {
+        "cancelled": observed_funnel.get("funnel_google_oauth_fail_cancelled"),
+        "rate_limit": observed_funnel.get("funnel_google_oauth_fail_rate_limit"),
+        "provider_configuration": observed_funnel.get(
+            "funnel_google_oauth_fail_provider_config"
+        ),
+        "redirect_configuration": observed_funnel.get(
+            "funnel_google_oauth_fail_redirect"
+        ),
+        "callback_exchange": observed_funnel.get(
+            "funnel_google_oauth_fail_callback_exchange"
+        ),
+        "unknown": observed_funnel.get("funnel_google_oauth_fail_unknown"),
+    }
+    google_oauth_failure_total = (
+        sum(value or 0 for value in google_oauth_failures.values())
+        if funnel_counts is not None
+        else None
+    )
+
+    if funnel_counts is None:
+        recommended_next_action = "fetch_auth_handoff_diagnostics"
+    elif (observed_funnel.get("funnel_save_cta") or 0) == 0:
+        recommended_next_action = "increase_qualified_trial_and_save_cta_traffic"
+    elif (magic_link_attempts or 0) + (google_oauth_starts or 0) == 0:
+        recommended_next_action = "improve_registration_cta_handoff"
+    elif (magic_link_attempts or 0) > 0 and (magic_link_sends or 0) == 0:
+        recommended_next_action = "repair_magic_link_delivery_or_use_google_oauth"
+    elif (google_oauth_failure_total or 0) > 0 and total_non_anonymous_completes == 0:
+        recommended_next_action = "repair_google_oauth_callback_failure"
+    elif total_non_anonymous_completes == 0:
+        recommended_next_action = "verify_oauth_callback_and_signup_completion"
+    else:
+        recommended_next_action = "move_activated_users_to_checkout"
+
+    funnel_diagnostics = {
+        "status": "available" if funnel_counts is not None else "not_fetched",
+        "observation_start": funnel_observation_window[0],
+        "observation_end": funnel_observation_window[1],
+        "counting": "aggregate_events_not_unique_visitors",
+        "trial_runs": observed_funnel.get("funnel_trial_run"),
+        "save_ctas": observed_funnel.get("funnel_save_cta"),
+        "magic_link_attempts": magic_link_attempts,
+        "magic_link_sends": magic_link_sends,
+        "magic_link_failures": magic_link_failures,
+        "magic_link_failure_total": magic_link_failure_total,
+        "google_oauth_starts": google_oauth_starts,
+        "google_oauth_failures": google_oauth_failures,
+        "google_oauth_failure_total": google_oauth_failure_total,
+        "inbox_opens": observed_funnel.get("funnel_inbox_open"),
+        "recommended_next_action": recommended_next_action,
+    }
 
     hypotheses: list[dict[str, Any]] = []
     for hypothesis_id in HYPOTHESES:
@@ -422,6 +578,7 @@ def build_report(
             "global_signup_submit_gate_ready": global_submit_gate_ready,
             "auth_and_performance_guardrail": "requires_separate_telemetry",
         },
+        "funnel_diagnostics": funnel_diagnostics,
         "hypotheses": hypotheses,
     }
 
@@ -439,6 +596,7 @@ def _format_rate(arm: dict[str, Any]) -> str:
 
 def render_markdown(report: dict[str, Any]) -> str:
     gates = report["gates"]
+    funnel = report["funnel_diagnostics"]
     lines = [
         "# Landing experiment decision report",
         "",
@@ -460,6 +618,28 @@ def render_markdown(report: dict[str, Any]) -> str:
         "- Minimum primary successes per hypothesis: "
         f"{gates['minimum_total_primary_successes']}",
         f"- Auth/performance guardrail: {gates['auth_and_performance_guardrail']}",
+        "",
+        "## Signup handoff diagnostics",
+        "",
+        f"- Status: {funnel['status']}",
+        "- Observation window: "
+        f"{funnel['observation_start'] or 'unknown'} to "
+        f"{funnel['observation_end'] or 'unknown'}",
+        f"- Trial runs: {funnel['trial_runs'] if funnel['trial_runs'] is not None else 'missing'}",
+        f"- Save CTA events: {funnel['save_ctas'] if funnel['save_ctas'] is not None else 'missing'}",
+        "- Magic Link attempts: "
+        f"{funnel['magic_link_attempts'] if funnel['magic_link_attempts'] is not None else 'missing'}",
+        "- Successful Magic Link sends: "
+        f"{funnel['magic_link_sends'] if funnel['magic_link_sends'] is not None else 'missing'}",
+        "- Categorized Magic Link failures: "
+        f"{funnel['magic_link_failure_total'] if funnel['magic_link_failure_total'] is not None else 'missing'}",
+        "- Google OAuth starts: "
+        f"{funnel['google_oauth_starts'] if funnel['google_oauth_starts'] is not None else 'missing'}",
+        "- Categorized Google OAuth callback failures: "
+        f"{funnel['google_oauth_failure_total'] if funnel['google_oauth_failure_total'] is not None else 'missing'}",
+        f"- Inbox opens: {funnel['inbox_opens'] if funnel['inbox_opens'] is not None else 'missing'}",
+        f"- Recommended next action: {funnel['recommended_next_action']}",
+        "- Counting note: aggregate event counts, not unique visitors.",
         "",
         "## Hypotheses",
         "",
@@ -542,6 +722,48 @@ def fetch_arm_rows(
     return payload
 
 
+def fetch_funnel_rows(
+    supabase_url: str,
+    service_role_key: str,
+    *,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    timeout: int = 20,
+) -> list[dict[str, Any]]:
+    if not service_role_key.strip():
+        raise ReportContractError("SUPABASE_SERVICE_ROLE_KEY is required")
+    query_parameters = {
+        "select": "date,source_details",
+        "order": "date.asc",
+    }
+    if start_date:
+        query_parameters["date"] = f"gte.{start_date}"
+    if end_date:
+        query_parameters["and"] = f"(date.lte.{end_date})"
+    query = urllib.parse.urlencode(query_parameters)
+    url = f"{supabase_url.rstrip('/')}/rest/v1/app_analytics?{query}"
+    request = urllib.request.Request(
+        url,
+        headers={
+            "apikey": service_role_key,
+            "Authorization": f"Bearer {service_role_key}",
+            "Accept": "application/json",
+            "User-Agent": "my-web-app-landing-experiment-report/1.0",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        message = exc.read().decode("utf-8", errors="replace")[:500]
+        raise ReportContractError(
+            f"signup handoff report API returned HTTP {exc.code}: {message}"
+        ) from exc
+    if not isinstance(payload, list):
+        raise ReportContractError("signup handoff report API returned non-list JSON")
+    return payload
+
+
 def write_report(path: str, content: str) -> None:
     report_path = Path(path)
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -577,7 +799,21 @@ def main(argv: list[str] | None = None) -> int:
         )
         arms = validate_arm_rows(rows)
         offsets = parse_synthetic_offsets(args.synthetic_view_offset)
-        report = build_report(arms, synthetic_offsets=offsets)
+        observation_window = experiment_observation_window(arms)
+        funnel_rows = fetch_funnel_rows(
+            args.supabase_url,
+            service_role_key,
+            start_date=observation_window[0],
+            end_date=observation_window[1],
+            timeout=args.timeout,
+        )
+        funnel_counts = summarize_funnel_rows(funnel_rows)
+        report = build_report(
+            arms,
+            synthetic_offsets=offsets,
+            funnel_counts=funnel_counts,
+            funnel_observation_window=observation_window,
+        )
         markdown = render_markdown(report)
         write_report(
             args.json_report,

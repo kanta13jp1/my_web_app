@@ -1,0 +1,152 @@
+name: Cloud Development Checks
+
+on:
+  pull_request:
+    paths:
+      - .devcontainer/**
+      - .github/workflows/cloud-development.yml
+      - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
+      - AGENTS.md
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Cloud validation profile
+        required: true
+        default: full
+        type: choice
+        options:
+          - workspace
+          - format
+          - analyze
+          - test
+          - web-build
+          - full
+  workflow_call:
+    inputs:
+      profile:
+        description: Cloud validation profile
+        required: false
+        default: full
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: cloud-development-${{ github.ref }}-${{ inputs.profile || 'full' }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: ${{ inputs.profile || 'full' }} on GitHub runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      CLOUD_PROFILE: ${{ inputs.profile || 'full' }}
+
+    steps:
+      - name: Checkout shallow source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 1
+
+      - name: Validate cloud workspace descriptors
+        shell: bash
+        run: |
+          python -m json.tool .devcontainer/devcontainer.json > /dev/null
+          python -m json.tool .devcontainer/flutter-local/devcontainer.json > /dev/null
+
+      - name: Set up repository-pinned Flutter SDK
+        if: env.CLOUD_PROFILE != 'workspace'
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Resolve dependencies in cloud
+        if: env.CLOUD_PROFILE != 'workspace'
+        run: flutter pub get
+
+      - name: Format changed Dart files in cloud
+        id: format
+        if: env.CLOUD_PROFILE == 'format'
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch --no-tags --depth=1 origin "${DEFAULT_BRANCH}"
+          mapfile -t files < <(
+            git diff --name-only --diff-filter=ACMR \
+              "origin/${DEFAULT_BRANCH}" HEAD -- '*.dart' \
+              | while IFS= read -r file; do
+                  [ -f "$file" ] && printf '%s\n' "$file"
+                done
+          )
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changed Dart files were found."
+            exit 0
+          fi
+
+          dart format "${files[@]}"
+          if git diff --quiet -- "${files[@]}"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "The changed Dart files already match the pinned formatter."
+            exit 0
+          fi
+
+          mkdir -p cloud-format-output/files
+          git diff --binary -- "${files[@]}" > cloud-format-output/cloud-format.patch
+          printf '%s\n' "${files[@]}" > cloud-format-output/manifest.txt
+          for file in "${files[@]}"; do
+            mkdir -p "cloud-format-output/files/$(dirname "$file")"
+            cp "$file" "cloud-format-output/files/$file"
+          done
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Preserve formatter output briefly
+        if: steps.format.outputs.changed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: cloud-format-${{ github.run_id }}
+          path: cloud-format-output
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Analyze in cloud
+        if: env.CLOUD_PROFILE == 'analyze' || env.CLOUD_PROFILE == 'full'
+        run: flutter analyze
+
+      - name: Test in cloud
+        if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
+        run: flutter test --concurrency=2
+
+      - name: Build Flutter Web in cloud
+        id: web_build
+        if: env.CLOUD_PROFILE == 'web-build' || env.CLOUD_PROFILE == 'full'
+        run: flutter build web --release --pwa-strategy=none
+
+      - name: Preserve web build briefly
+        if: steps.web_build.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: cloud-web-build-${{ github.run_id }}
+          path: build/web
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Cloud execution summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Cloud Development Checks'
+            echo ''
+            echo '| Item | Value |'
+            echo '| --- | --- |'
+            echo "| profile | \`${CLOUD_PROFILE}\` |"
+            echo "| ref | \`${GITHUB_REF}\` |"
+            echo "| commit | \`${GITHUB_SHA}\` |"
+            echo '| local Flutter/Dart work | none |'
+            echo '| artifact retention | 1 day when a web build or formatter output runs |'
+          } >> "$GITHUB_STEP_SUMMARY"

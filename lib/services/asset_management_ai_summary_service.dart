@@ -261,6 +261,8 @@ class AssetManagementAiSummaryService {
         ),
       },
       'personal_context_signals': _buildPersonalContextSignals(report),
+      if (report.dailyTodoDigest != null && !report.dailyTodoDigest!.isEmpty)
+        'daily_todo': report.dailyTodoDigest!.toAiJson(),
       'priority_situation_cards': report.actionItems
           .map(
             (item) => _actionToDetailedSituationCard(
@@ -306,25 +308,23 @@ class AssetManagementAiSummaryService {
         ),
         'note': '定型生成の既知提案。already_issued=true は既にGitHub Issue起票済みで、'
             'AIはこれらを繰り返さず未起票の新規提案だけを返す。',
-        'items': report.developerRequests.map(
-          (request) {
-            final existingIssue = _existingIssueSummary(
-              existingDeveloperIssuesByTitle[request.title],
-            );
-            if (existingIssue != null) {
-              // 起票済み提案は echo の材料にならないよう本文を渡さない。
-              return <String, dynamic>{
-                'title': request.title,
-                'already_issued': true,
-                'existing_github_issue': existingIssue,
-                'note': '起票済み。本文・JSONブロックとも再掲禁止。',
-              };
-            }
-            return _developerRequestToJson(request)
-              ..['already_issued'] = false
-              ..['existing_github_issue'] = null;
-          },
-        ).toList(growable: false),
+        'items': report.developerRequests.map((request) {
+          final existingIssue = _existingIssueSummary(
+            existingDeveloperIssuesByTitle[request.title],
+          );
+          if (existingIssue != null) {
+            // 起票済み提案は echo の材料にならないよう本文を渡さない。
+            return <String, dynamic>{
+              'title': request.title,
+              'already_issued': true,
+              'existing_github_issue': existingIssue,
+              'note': '起票済み。本文・JSONブロックとも再掲禁止。',
+            };
+          }
+          return _developerRequestToJson(request)
+            ..['already_issued'] = false
+            ..['existing_github_issue'] = null;
+        }).toList(growable: false),
         'required_output_contract': const <String>[
           '現状の痛み',
           '根拠データ',
@@ -490,8 +490,9 @@ class AssetManagementAiSummaryService {
         '',
       ],
       '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。細木数子を彷彿とさせる、厳しめで愛情のある断言口調にしてください。曖昧にせず、今日・今週・今月にやることを具体的に言い切ってください。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
-      '現在データ優先ルール: 唯一の「現在の事実」は「AIに渡す詳細ペイロード」とアクションアイテムだけです。previous_ai_analyses（metrics_snapshot）は過去時点のスナップショットで、現在の事実ではありません。履歴に出てくる金額・使用可能額・未払い・期限超過を、現在のものとして断定・督促してはいけません。現在の使用可能額がプラスなら「不足」「マイナス」と言わず、現在のアクションアイテムや支払日別リスクに無い負債を「期限超過」「未払い」と呼ばないでください。現在値と履歴が矛盾する場合は必ず現在値を採用してください。',
+      '現在データ優先ルール: 唯一の「現在の事実」は「AIに渡す詳細ペイロード」とアクションアイテムだけです。previous_ai_analyses（metrics_snapshot）は過去時点のスナップショットで、現在の事実ではありません。履歴に出てくる金額・使用可能額・未払い・期限超過を、現在のものとして断定・督促してはいけません。現在の使用可能額がプラスなら「不足」「マイナス」と言わず、現在のアクションアイテムや支払日別リスクに無い負債、または paid が true の負債を「期限超過」「未払い」と呼ばないでください。受取済み（received: true）の給与・収入を「未受取」「期限超過」として督促してはいけません。今月支払うべき額には推定最低支払額ではなく「今月支払予定額（scheduled_payment_amount）」を用い、解約済みサブスク（金額0円または非アクティブ）を「サブスク地獄」「未払支出」と言及してはいけません。負債の年利（annual_rate）や負債総額は、過去の記憶ではなく必ずペイロード内の確定値（annual_rate, balance）を採用してください。現在値と履歴が矛盾する場合は必ず現在値を採用してください。',
       '履歴利用ルール: previous_ai_analyses がある場合は、各 metrics_snapshot（純資産・未払い合計・使用可能額）の数値と今回の現在値を比較し、「前回比 純資産○円」「未払い合計が△円減/増」のように差分（改善点・悪化点・据え置き点）を述べてください。過去の本文や言い回しを引用・再掲するのではなく、必ず今回の現在値を主語にして書いてください。',
+      '日々の行動ルール: daily_todo がある場合は、金銭の負債と同じ熱量で「行動の借金」にも言及してください。carried_over（やらずに繰り越したタスク）は max_carry_over_days が大きいほど厳しく叱り、具体的なタイトルを挙げて「今日こそ片づけなさい」と言い切ってください。active_streak_days が続いていれば必ず褒め、recent_days のこなした実績を根拠に「この調子」と背中を押してください。today_pending が残っていれば寝る前にやり切るよう促してください。daily_todo が無い、または空のときは行動の借金には触れず、金銭面の助言に集中してください（存在しない実績を捏造しないこと）。',
       '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. 最後にズバッと総評」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3つよ。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
       '開発者向け改善提案の出力ルール: implementation_context を読んで現状の機能を実際にレビューしてから提案してください。developer_requests は定型生成の既知提案一覧で、already_issued が true のものは既にGitHub Issue起票済みです。本文の「7. 開発者向け改善提案」にも既知提案・起票済み提案やその言い換えを書かないでください。items の title と同一または類似のタイトルは本文にもJSONにも出力禁止です。まだ起票されていない新規の改善提案だけを最大3件返し、新規提案が1件も無い場合は本文には「新規提案なし（既知の提案はすべて起票済みです）」と1行だけ書いてください。各提案は「現状できること（機能レビュー）」「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
       '新規改善提案の機械可読出力ルール: 応答の最後にコードブロックを1つだけ出力してください。コードブロックの開始行は必ず「```json ai-new-proposals」の1行とし、ai-new-proposals を次の行に分けないでください。中身は本文の「7. 開発者向け改善提案」と同じ新規提案を {"title","description","evidence":[],"implementation_steps":[],"acceptance_criteria":[],"source_references":[]} の配列で返し、evidence・implementation_steps・acceptance_criteria・source_references も本文と同じ内容で必ず埋めてください。タイトルは既存Issueと区別できる具体的な日本語にしてください。新規提案がない場合は空配列 [] だけを出力してください。',
@@ -867,8 +868,10 @@ class AssetManagementAiSummaryService {
       'balance': row.balance,
       'liability_share': row.liabilityShare,
       'payment_day': row.paymentDay,
-      'scheduled_payment_date':
-          _paymentDateFor(row, baseDate)?.toIso8601String(),
+      'scheduled_payment_date': _paymentDateFor(
+        row,
+        baseDate,
+      )?.toIso8601String(),
       'payment_source_account_id': row.paymentSourceAccountId,
       'payment_source_account_name': row.paymentSourceAccountName,
       'payment_method': row.paymentMethod.name,
@@ -1054,10 +1057,8 @@ class AssetManagementAiSummaryService {
   ) {
     final revolving = group.revolvingBilling;
     if (revolving != null) {
-      // リボ払い: 請求額は revolving_billing.billed_amount で確定する。設定内訳合計や
-      // 取込明細合計は請求額と比較しても無意味なため top-level の比較対象から外し、
-      // 「請求額の構成要素ではない参考値」として明示ラベル付きで渡す。
-      // (生の合計を請求額の隣に置くと AI が自前で差を取り「不一致」と誤指摘するため)
+      // リボ払い: 25日の返済予定は最低返済額 + 当月新規利用額。
+      // 既存残高は一括返済せず、最低返済額で圧縮する。
       return <String, dynamic>{
         'billing_account_id': group.billingAccountId,
         'billing_account_name': group.billingAccountName,
@@ -1069,29 +1070,26 @@ class AssetManagementAiSummaryService {
         'reconciliation_status': 'ok_revolving_no_action_needed',
         'revolving_billing': <String, dynamic>{
           'monthly_amount': revolving.monthlyAmount,
-          'credit_limit': revolving.creditLimit,
+          'new_usage_amount': revolving.newUsageAmount,
+          'existing_balance_amount': revolving.existingBalanceAmount,
+          'payment_day': revolving.paymentDay,
           'balance': revolving.balance,
-          'over_limit_amount': revolving.overLimitAmount,
           'billed_amount': revolving.billedAmount,
         },
-        'reference_only_not_billed': <String, dynamic>{
+        'statement_context': <String, dynamic>{
           'new_usage_this_month_total': group.statementLineTotal,
           'debts_routed_to_card_total': group.configuredDetailTotal,
-          'note': 'これらは請求額の構成要素ではない参考値。リボ払いの請求額は '
-              'revolving_billing.billed_amount のみで確定する。これらとの差を'
-              '「不一致」「ズレ」として判断・指摘しないこと。',
+          'note': '取込明細合計は新規利用額として25日の返済予定へ全額上乗せする。'
+              '紐づけ負債合計は参考値で、既存残高の一括返済額ではない。',
         },
-        'reconciliation_note': 'リボ払いカード。請求額=リボ設定額+max(0,リボ残高-利用限度額)で確定する。'
-            '取込明細(今月の新規利用)はリボ残高へ積み増される参考値、設定内訳は紐づけ管理用の参考値で、'
-            'いずれも請求額とは一致しないのが正常。不一致・要修正として扱わず、照合は完了とみなすこと。',
-        'configured_items':
-            group.configuredItems.map(_cardReviewItemToJson).toList(
-                  growable: false,
-                ),
-        'statement_lines':
-            group.statementLines.map(_statementLineToJson).toList(
-                  growable: false,
-                ),
+        'reconciliation_note': 'リボ払いカード。25日の返済予定=最低返済額+当月新規利用額。'
+            '既存残高は一括返済せず最低返済額で圧縮し、新規利用分だけを同月に全額返す。',
+        'configured_items': group.configuredItems
+            .map(_cardReviewItemToJson)
+            .toList(growable: false),
+        'statement_lines': group.statementLines
+            .map(_statementLineToJson)
+            .toList(growable: false),
       };
     }
     return <String, dynamic>{
@@ -1106,13 +1104,12 @@ class AssetManagementAiSummaryService {
       'needs_review': group.needsReview,
       'alerts': group.alerts,
       'is_revolving': false,
-      'configured_items':
-          group.configuredItems.map(_cardReviewItemToJson).toList(
-                growable: false,
-              ),
-      'statement_lines': group.statementLines.map(_statementLineToJson).toList(
-            growable: false,
-          ),
+      'configured_items': group.configuredItems
+          .map(_cardReviewItemToJson)
+          .toList(growable: false),
+      'statement_lines': group.statementLines
+          .map(_statementLineToJson)
+          .toList(growable: false),
     };
   }
 

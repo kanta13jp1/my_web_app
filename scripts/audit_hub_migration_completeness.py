@@ -104,14 +104,46 @@ HUB_ACTIONS: dict[str, tuple[str, str]] = {
 }
 
 
+# HUB_ACTIONS の「action」列は歴史的に旧 EF 名がそのまま入っており、実在する
+# action 名ではない (hub 内の action はドット区切り: core-hub に
+# "development-achievements" という action は無い / 正は achievements.list)。
+# hub の割り当ては正しいので、hub は HUB_ACTIONS から採り、action 名は
+# 実装を読んで確認できたものだけをここに置く。未確認のものは推測を出さず
+# 「hub の switch を見ろ」と案内する (誤った action 名を案内する方が有害)。
+VERIFIED_ACTIONS: dict[str, str] = {
+    "get-support-tickets": "support.list",
+    "reply-support-request": "support.reply",
+    "notify-feature-request": "notify.feature_request",
+    "development-achievements": "achievements.list",
+    "get-admin-users": "users.list",
+    "get-growth-roadmap-progress": "roadmap.progress",
+    "get-competitor-features": "competitor.list",
+    "post-x-update": "x.post",
+    "x-media-post": "x.post",
+}
+
+# reply-support-request は HUB_ACTIONS に項目自体が無い (admin-hub support.reply)。
+VERIFIED_HUBS: dict[str, str] = {
+    "reply-support-request": "admin-hub",
+    "x-media-post": "growth-hub",
+}
+
+
 def hub_guidance(ef_name: str) -> str:
     mapped = HUB_ACTIONS.get(ef_name)
-    if not mapped:
+    hub = VERIFIED_HUBS.get(ef_name) or (mapped[0] if mapped else None)
+    if hub is None:
         return (
             "Use the consolidated hub/action listed in deploy-prod.yml "
             f"for retired EF '{ef_name}'."
         )
-    hub, action = mapped
+    action = VERIFIED_ACTIONS.get(ef_name)
+    if action is None:
+        return (
+            f"Retired EF '{ef_name}' was merged into '{hub}'. The action name is "
+            f"NOT the old EF name — find the matching case in "
+            f"supabase/functions/{hub}/index.ts."
+        )
     return f"Use client.functions.invoke('{hub}', body: {{'action': '{action}'}})."
 
 
@@ -125,33 +157,99 @@ def load_dead_list(workflow_path: str) -> list[str]:
     return re.findall(r"\s+(\S+)", m.group(1))
 
 
-def scan_stale_refs(dead_list: list[str], search_dirs: list[str]) -> dict[str, list[str]]:
-    # Multi-line regex: .invoke( optionally followed by whitespace/newline then 'ef-name'
-    _invoke_re = re.compile(r"""\.invoke\(\s*['"]([^'"]+)['"]\s*[,)]""", re.DOTALL)
-    _url_re_tmpl = "/functions/v1/{ef}"
+SCANNED_SUFFIXES = (".dart", ".py", ".ts", ".yml", ".yaml")
+
+
+def load_existing_functions(repo_root: str) -> set[str]:
+    """Function names that actually have a directory under supabase/functions/.
+
+    DEAD_LIST is hand-maintained and provably incomplete (development-achievements,
+    notify-feature-request, personal-dashboard, system-status and
+    app-analytics-dashboard were all deleted without being listed). Detecting
+    against the filesystem instead means a reference to any non-existent function
+    is caught whether or not somebody remembered to update the list.
+    """
+    fdir = os.path.join(repo_root, "supabase", "functions")
+    existing: set[str] = set()
+    if not os.path.isdir(fdir):
+        return existing
+    for name in os.listdir(fdir):
+        if name.startswith("_"):
+            continue
+        if os.path.isdir(os.path.join(fdir, name)):
+            existing.add(name)
+    return existing
+
+
+def scan_stale_refs(
+    dead_list: list[str],
+    search_dirs: list[str],
+    existing_functions: set[str] | None = None,
+) -> dict[str, list[str]]:
+    # functions.invoke('ef-name', ...) — anchored on `functions.` so that unrelated
+    # APIs that happen to expose invoke() (e.g. LangChain samples embedded in
+    # AI-University page content) are not treated as EF calls.
+    _invoke_re = re.compile(
+        r"""functions\s*\.\s*invoke\(\s*['"]([^'"]+)['"]\s*[,)]""", re.DOTALL
+    )
+    # functions.invoke(someVariable, ...) — dispatch through a variable rather than
+    # a literal. The literal regex above cannot see through this indirection, which
+    # is exactly how `endpoint = 'post-x-update'; invoke(endpoint, ...)` stayed green.
+    _dynamic_invoke_re = re.compile(
+        r"""functions\s*\.\s*invoke\(\s*[A-Za-z_$][\w$]*\s*[,)]"""
+    )
+    # Bare string literal equal to a retired EF name. Only trusted in files that
+    # ALSO dispatch dynamically — EF name literals are legitimate and common in
+    # catalog/metadata files (edge_function_summary_card.dart, home_tool_catalog.dart)
+    # and in hub sources, so applying this everywhere buries the real hits in noise.
+    _literal_re = re.compile(r"""['"]([a-z0-9][a-z0-9-]{2,})['"]""")
+    # /functions/v1/<name> — an EF endpoint URL. The name must resolve to a real
+    # directory; anything else is a guaranteed 404 at runtime. Template
+    # interpolation (`/functions/v1/${x}`) does not match and is skipped.
+    _url_name_re = re.compile(r"/functions/v1/([A-Za-z0-9][A-Za-z0-9._-]*)")
     stale: dict[str, list[str]] = {}
     dead_set = set(dead_list)
+    existing = existing_functions or set()
+    this_file = os.path.abspath(__file__)
+
+    def is_stale(name: str) -> bool:
+        # Prefer ground truth (does the directory exist?) and fall back to the
+        # hand-maintained DEAD_LIST when the functions dir is unavailable.
+        if existing:
+            return name not in existing
+        return name in dead_set
     for d in search_dirs:
         for root, _dirs, files in os.walk(d):
             for fname in files:
-                if not (fname.endswith(".dart") or fname.endswith(".py") or fname.endswith(".ts")):
+                if not fname.endswith(SCANNED_SUFFIXES):
                     continue
                 path = os.path.join(root, fname)
+                # This script necessarily contains every retired EF name.
+                if os.path.abspath(path) == this_file:
+                    continue
                 try:
                     with open(path, encoding="utf-8") as handle:
                         fc = handle.read()
                 except Exception:
                     continue
+                hits: set[str] = set()
                 # Multi-line invoke() scan
                 for m in _invoke_re.finditer(fc):
-                    ef = m.group(1)
-                    if ef in dead_set:
-                        stale.setdefault(ef, []).append(path)
-                # URL-pattern scan (single-line, fast)
-                for ef in dead_set:
-                    if f"/functions/v1/{ef}" in fc:
-                        if path not in stale.get(ef, []):
-                            stale.setdefault(ef, []).append(path)
+                    if is_stale(m.group(1)):
+                        hits.add(m.group(1))
+                # Variable-indirection scan. Keyed on DEAD_LIST rather than on
+                # "not an existing function" because every lowercase string
+                # literal would otherwise match.
+                if _dynamic_invoke_re.search(fc):
+                    for m in _literal_re.finditer(fc):
+                        if m.group(1) in dead_set:
+                            hits.add(m.group(1))
+                # EF endpoint URL scan
+                for m in _url_name_re.finditer(fc):
+                    if is_stale(m.group(1)):
+                        hits.add(m.group(1))
+                for ef in hits:
+                    stale.setdefault(ef, []).append(path)
     # Deduplicate file lists
     return {k: sorted(set(v)) for k, v in stale.items()}
 
@@ -167,12 +265,20 @@ def main() -> int:
     dead_list = load_dead_list(workflow)
     print(f"Loaded {len(dead_list)} retired EF names from DEAD_LIST")
 
+    # .github と supabase/functions を外すと、GHA workflow の curl と
+    # EF から EF を叩く fetch が原理的に検出できない (実際 cs-check.yml と
+    # guitar-recording-studio が消えた EF を叩いたまま緑で通っていた)。
     search_dirs = [
         os.path.join(repo_root, "lib"),
         os.path.join(repo_root, "scripts"),
+        os.path.join(repo_root, ".github"),
+        os.path.join(repo_root, "supabase", "functions"),
     ]
 
-    stale = scan_stale_refs(dead_list, search_dirs)
+    existing_functions = load_existing_functions(repo_root)
+    print(f"Found {len(existing_functions)} live EF directories")
+
+    stale = scan_stale_refs(dead_list, search_dirs, existing_functions)
 
     if stale:
         print(f"\n[FAIL] STALE EF REFS DETECTED ({len(stale)} EF(s)):", file=sys.stderr)
@@ -188,7 +294,10 @@ def main() -> int:
         )
         return 1
 
-    print(f"[OK] No stale EF references found in lib/ or scripts/")
+    print(
+        "[OK] No stale EF references found in "
+        "lib/, scripts/, .github/ or supabase/functions/"
+    )
     return 0
 
 

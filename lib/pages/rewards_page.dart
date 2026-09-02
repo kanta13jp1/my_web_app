@@ -22,7 +22,12 @@ class _RewardsPageState extends State<RewardsPage> {
   Future<void> _fetchUserStats() async {
     try {
       final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+        return;
+      }
 
       final data = await supabase
           .from('user_stats')
@@ -49,7 +54,7 @@ class _RewardsPageState extends State<RewardsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(' ステータス報酬'),
+        title: const Text('実績・リワード'),
         backgroundColor: const Color(0xFFFFC107),
         foregroundColor: Colors.black,
       ),

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,7 +43,7 @@ READINESS_WORKFLOW_MARKERS = (
     "Video Pipeline Secret Readiness",
     "check_video_pipeline_secret_readiness.py",
     "--require-secrets",
-    "actions/upload-artifact@v7",
+    r"re:uses:\s*actions/upload-artifact@[0-9a-f]{40}\s+#\s*v7\b",
 )
 
 DOC_MARKERS: dict[str, tuple[str, ...]] = {
@@ -92,7 +93,15 @@ def check_file_contains(
         return
 
     content = path.read_text(encoding="utf-8")
-    missing = [marker for marker in markers if marker not in content]
+    missing = [
+        marker
+        for marker in markers
+        if not (
+            re.search(marker.removeprefix("re:"), content)
+            if marker.startswith("re:")
+            else marker in content
+        )
+    ]
     add_check(
         checks,
         name,

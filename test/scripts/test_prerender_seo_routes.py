@@ -74,25 +74,46 @@ class HomepageSocialPreviewTest(unittest.TestCase):
             cls.repo_root / "web" / "lp-og-first-action-20260720.png"
         )
 
-    def test_home_meta_matches_first_action_value_proposition(self) -> None:
+    def test_home_meta_matches_brand_search_intent(self) -> None:
         self.assertIn(
             '<meta property="og:title" '
-            'content="自分株式会社 | 今日やる1件をAIが決める">',
+            'content="自分株式会社 | 人生を経営するAIライフマネジメントアプリ">',
             self.index_html,
         )
         self.assertIn(
-            'content="悩みを1行入れるだけ。AIが今日の最優先1件・理由・'
-            '最初の10分行動を提案。登録前に30秒で試せます。"',
+            'content="自分自身を一つの会社に見立て、人生のCEOとして仕事・学習・'
+            'お金・健康を経営。AIが今日やる1件まで整理します。"',
             self.index_html,
         )
         self.assertIn(
-            'content="仕事・学習・お金の悩みを1行入れると、AIが'
-            '「今日やる1件」と最初の10分行動を提案。登録前に30秒で試せて、'
-            '無料コア・カード不要。"',
+            'content="自分株式会社は、自分自身を一つの会社に見立て、仕事・学習・'
+            'お金・健康を整理するライフマネジメントアプリです。'
+            '登録前にAIの提案を1件試せます。"',
             self.index_html,
         )
+        self.assertIn(
+            '<title>自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ</title>',
+            self.index_html,
+        )
+        self.assertNotIn('<meta\n    name="keywords"', self.index_html)
         self.assertNotIn(
             '<meta property="og:title" content="自分株式会社 | 190社以上の競合SaaS',
+            self.index_html,
+        )
+
+    def test_homepage_explains_the_brand_in_visible_semantic_html(self) -> None:
+        self.assertIn('<h1 id="seo-title">自分株式会社</h1>', self.index_html)
+        self.assertIn('<h2 id="seo-about-title">自分株式会社とは</h2>', self.index_html)
+        self.assertIn('自分が人生のCEOとして決める', self.index_html)
+        self.assertIn('<h3>個人経営の基本構造</h3>', self.index_html)
+        self.assertIn('<dt>売上</dt>', self.index_html)
+        self.assertIn('<dt>経費</dt>', self.index_html)
+        self.assertIn('<dt>資産</dt>', self.index_html)
+        self.assertIn('<dt>利益</dt>', self.index_html)
+        self.assertIn('個人のP/L・B/S、6部署、30日運営サイクルを読む', self.index_html)
+        self.assertIn('href="/philosophy"', self.index_html)
+        self.assertIn(
+            '"@id": "https://my-web-app-b67f4.web.app/#software-application"',
             self.index_html,
         )
 
@@ -243,6 +264,86 @@ class PublicRouteTest(unittest.TestCase):
             out,
         )
 
+    def test_philosophy_route_renders_original_guide_and_visible_faq(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(
+            item for item in routes["routes"] if item["path"] == "/philosophy"
+        )
+        index_html = (repo_root / "web" / "index.html").read_text(
+            encoding="utf-8"
+        )
+
+        out = build_public_route_html(index_html, route, BASE)
+
+        self.assertIn(
+            "<title>自分株式会社とは？人生を経営する9原則と実践方法</title>",
+            out,
+        )
+        self.assertIn("個人のP/LとB/Sで生活を見直す", out)
+        self.assertIn("人生を6部署に分けて点検する", out)
+        self.assertIn("30日で回す自分株式会社の運営サイクル", out)
+        self.assertIn("3分でできる棚卸しの記入例", out)
+        self.assertIn("架空ケース：30日でどう見直すか", out)
+        self.assertIn("実在する利用者の体験談や成果ではなく", out)
+        self.assertIn("このページの編集方針", out)
+        self.assertIn('data-prerender="public-faq"', out)
+        self.assertIn("自分株式会社とは何ですか？", out)
+        self.assertIn('href="/development-achievements"', out)
+        self.assertIn('href="https://github.com/kanta13jp1"', out)
+        self.assertIn("GitHub @kanta13jp1", out)
+        self.assertIn('<time datetime="2026-08-23">2026-08-23</time>', out)
+
+        blocks = re.findall(
+            r'<script type="application/ld\+json" data-prerender="public">'
+            r"(.*?)</script>",
+            out,
+            re.DOTALL,
+        )
+        self.assertEqual(len(blocks), 1)
+        parsed = json.loads(blocks[0].replace("\\u003c", "<"))
+        types = [item["@type"] for item in parsed["@graph"]]
+        self.assertEqual(types, ["WebPage", "BreadcrumbList", "FAQPage"])
+        webpage = parsed["@graph"][0]
+        self.assertEqual(webpage["datePublished"], "2026-04-18")
+        self.assertEqual(webpage["dateModified"], "2026-08-23")
+        faq = parsed["@graph"][2]
+        self.assertEqual(len(faq["mainEntity"]), 4)
+
+        all_blocks = re.findall(
+            r'<script type="application/ld\+json"[^>]*>(.*?)</script>',
+            out,
+            re.DOTALL,
+        )
+        all_schemas = [
+            json.loads(block.replace("\\u003c", "<")) for block in all_blocks
+        ]
+        faq_pages = []
+        for schema in all_schemas:
+            nodes = schema.get("@graph", [schema])
+            faq_pages.extend(
+                node for node in nodes if node.get("@type") == "FAQPage"
+            )
+        self.assertEqual(len(faq_pages), 1)
+        visible_faq = re.search(
+            r'<section id="philosophy-faq" data-prerender="public-faq">'
+            r"(.*?)</section>",
+            out,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(visible_faq)
+        visible_questions = re.findall(
+            r"<dt>(.*?)</dt>", visible_faq.group(1), re.DOTALL
+        )
+        structured_questions = [
+            item["name"] for item in faq_pages[0]["mainEntity"]
+        ]
+        self.assertEqual(structured_questions, visible_questions)
+
     def test_ai_university_config_uses_dedicated_social_image(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         routes = json.loads(
@@ -280,6 +381,67 @@ class PublicRouteTest(unittest.TestCase):
             )
         )
 
+    def test_billing_route_exposes_approved_prices_and_direct_marker(
+        self,
+    ) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(
+            item
+            for item in routes["routes"]
+            if item["path"] == "/subscription-billing"
+        )
+
+        out = build_public_route_html(TEMPLATE, route, BASE)
+
+        self.assertIn("<title>プランと応援 | 自分株式会社</title>", out)
+        self.assertIn("月額980円", out)
+        self.assertIn("月額2,980円", out)
+        self.assertIn("1回100円", out)
+        self.assertIn(
+            'href="/subscription-billing?entry=static_pricing"',
+            out,
+        )
+
+    def test_privacy_route_renders_approved_markdown_verbatim(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(
+            item for item in routes["routes"] if item["path"] == "/privacy"
+        )
+        policy = (repo_root / route["markdown_source"]).read_text(
+            encoding="utf-8"
+        )
+
+        out = build_public_route_html(
+            TEMPLATE,
+            {**route, "_markdown_text": policy},
+            BASE,
+        )
+
+        self.assertIn('data-prerender="markdown-source"', out)
+        self.assertIn(
+            'data-source="assets/legal/privacy_policy.md"',
+            out,
+        )
+        self.assertIn("Privacy Policy / プライバシーポリシー", out)
+        self.assertIn("ユーザーの権利", out)
+        self.assertIn("Stripe, Inc.", out)
+        self.assertIn(
+            "本サービスはカード番号を保持しない",
+            out,
+        )
+        self.assertNotIn("<https://stripe.com/privacy>", out)
+        self.assertIn("&lt;https://stripe.com/privacy&gt;", out)
+
 
 class SitemapTest(unittest.TestCase):
     def test_sitemap_contents_and_wellformed(self) -> None:
@@ -290,6 +452,7 @@ class SitemapTest(unittest.TestCase):
         self.assertIn(f"<loc>{BASE}/</loc>", doc)
         self.assertIn(f"<loc>{BASE}/vs-notion</loc>", doc)
         self.assertIn(f"<loc>{BASE}/competitors</loc>", doc)
+        self.assertIn(f"<loc>{BASE}/shop</loc>", doc)
         self.assertIn("<lastmod>2026-07-09</lastmod>", doc)
         # doorway 化していた routeless URL は含まれない
         self.assertNotIn("/vs-yamato", doc)
@@ -298,6 +461,27 @@ class SitemapTest(unittest.TestCase):
         doc = build_sitemap(BASE, [], "2026-07-09")
         home = doc.split(f"<loc>{BASE}/</loc>")[1].split("</url>")[0]
         self.assertIn("<priority>1.0</priority>", home)
+
+    def test_sitemap_omits_unverified_lastmod_values(self) -> None:
+        doc = build_sitemap(
+            BASE,
+            ["notion"],
+            None,
+            {"/philosophy": "2026-08-23"},
+        )
+
+        self.assertEqual(doc.count("<lastmod>"), 1)
+        philosophy = doc.split(f"<loc>{BASE}/philosophy</loc>")[1].split(
+            "</url>", 1
+        )[0]
+        home = doc.split(f"<loc>{BASE}/</loc>")[1].split("</url>", 1)[0]
+        comparison = doc.split(f"<loc>{BASE}/vs-notion</loc>")[1].split(
+            "</url>", 1
+        )[0]
+
+        self.assertIn("<lastmod>2026-08-23</lastmod>", philosophy)
+        self.assertNotIn("<lastmod>", home)
+        self.assertNotIn("<lastmod>", comparison)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,2133 @@
+{
+  "schema_version": 4,
+  "generated_at": "2026-09-02T14:57:00.113098+00:00",
+  "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
+  "lane": "feature_review",
+  "publication_state": "latest_review",
+  "automation": {
+    "id": "automation-4",
+    "name": "機能の虎レビュー",
+    "status": "PAUSED",
+    "schedule": "毎時15分（1時間ごと）"
+  },
+  "pool": {
+    "total": 13,
+    "eligible": 13,
+    "provisional": 8,
+    "division_1": 0,
+    "division_2": 4,
+    "division_3": 9,
+    "division_4": 0,
+    "division_5": 0,
+    "eliminated": 0
+  },
+  "utility_weights": {
+    "user_value": 30,
+    "business_impact": 25,
+    "observed_usage": 20,
+    "reliability_trust": 15,
+    "operating_efficiency": 10
+  },
+  "latest_review": {
+    "cycle_id": "20260902T222324+0900",
+    "started_at": "2026-09-02T22:23:24+09:00",
+    "source_format": "feature_review",
+    "surface": {
+      "slug": "ai_hub",
+      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/ai-hub"
+    },
+    "reviewer": {
+      "seat": 94,
+      "name": "戸村 光",
+      "selection_score": 68.8216,
+      "division": 1,
+      "cycle_utility": 82.08,
+      "aggregate_utility": 82.68
+    },
+    "status": "review_only",
+    "validation": "passed",
+    "finding_count": 3,
+    "top_findings": [
+      {
+        "summary": "未分類actionが自動的にpublic扱いとなり、dispatcherとpolicyの完全性が検証されない",
+        "severity": "p1",
+        "business_dimensions": [
+          "trust_risk",
+          "scalability",
+          "founder_execution"
+        ]
+      },
+      {
+        "summary": "匿名home.popularが利用件数を返し、呼び出しごとにservice-roleで最大2,000行を集計する",
+        "severity": "p2",
+        "business_dimensions": [
+          "trust_risk",
+          "unit_economics",
+          "competitive_advantage"
+        ]
+      },
+      {
+        "summary": "action別の需要・失敗・遅延・下流費用を判断できる本番証拠がない",
+        "severity": "p2",
+        "business_dimensions": [
+          "market_demand",
+          "unit_economics",
+          "scalability"
+        ]
+      }
+    ],
+    "quality": {
+      "framework": "TCE+CLEAR",
+      "overall_score": 100.0,
+      "scores": {
+        "complete": 100,
+        "logical": 100,
+        "evidence": 100,
+        "audience": 100,
+        "relevant": 100
+      },
+      "gate_passed": true,
+      "baseline_cycle_id": "20260828T004359+0900",
+      "focus_dimension": "complete",
+      "overall_delta": 0.0,
+      "next_focus_dimension": "complete",
+      "next_cycle_experiment": "After implementing a fail-closed complete registry and privacy-bounded popularity aggregate, compare explicit action classification coverage, anonymous low-count responses, database rows scanned, cache hit rate, p95 latency, authorization regressions, and action-level cost per successful request."
+    },
+    "countermeasure": {
+      "state": "issue_tracking",
+      "label": "対策待ち・Issue #5237",
+      "detail": "専用対策キューで順番待ちです。",
+      "summary": "",
+      "files": [],
+      "lines_changed": 0,
+      "resolved_finding_ids": [
+        "ai-hub-access-policy-default-public-gap"
+      ],
+      "validation_status": "passed",
+      "validation_messages": [
+        "passed: fast-forwarded dedicated branch to origin/main 5807ec0ca9d15ad11395e191700a73b9b101a90b",
+        "passed: 125 roster profiles and 125 personas",
+        "executed once successfully: ai_hub selected from 13 configured features",
+        "passed: focus_dimension=evidence",
+        "passed: prior fix verified; 100 top-level actions, 72 explicit classifications, 28 default-public actions",
+        "passed: HTTP 200 returned five route labels and global use counts",
+        "executed once successfully against feature history: 125 profiles, seat 94"
+      ],
+      "issue": {
+        "number": 5237,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5237",
+        "status": "created",
+        "github_state": "OPEN",
+        "dedupe_key": "tiger-feature-review:20260902T222324+0900:ai_hub",
+        "remediation_state": "queued",
+        "queue_status": "QUEUED",
+        "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      },
+      "implementation": null,
+      "findings_without_individual_trace": [
+        "ai-hub-public-popularity-telemetry-boundary",
+        "ai-hub-action-economics-evidence-gap"
+      ]
+    },
+    "feature": {
+      "slug": "ai_hub",
+      "title": "ai-hub",
+      "kind": "edge_function",
+      "reason": "PR #5162 closed the prior authentication findings with an extracted policy and focused tests. The current dispatcher still has 100 measured top-level action labels while only 72 are explicitly classified; the policy defaults all other actions to public. An anonymous production home.popular request also returned global route counts after a service-role-backed scan. No per-action production analytics were available, so observed usage remains the neutral score of 50.",
+      "cycle_utility": 63.7,
+      "aggregate_utility": 62.2,
+      "division": 3
+    }
+  },
+  "history": [
+    {
+      "cycle_id": "20260902T222324+0900",
+      "started_at": "2026-09-02T22:23:24+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "ai_hub",
+        "title": "ai-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 68.8216
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260828T004359+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After implementing a fail-closed complete registry and privacy-bounded popularity aggregate, compare explicit action classification coverage, anonymous low-count responses, database rows scanned, cache hit rate, p95 latency, authorization regressions, and action-level cost per successful request."
+      },
+      "findings": [
+        {
+          "finding_id": "ai-hub-access-policy-default-public-gap",
+          "summary": "未分類actionが自動的にpublic扱いとなり、dispatcherとpolicyの完全性が検証されない",
+          "severity": "p1",
+          "suggested_action": "全top-level actionをpublic・authenticated・service_roleの単一registryへ明示登録し、未登録actionを拒否するfail-closed実装とdispatcher完全性テストを追加する。"
+        },
+        {
+          "finding_id": "ai-hub-public-popularity-telemetry-boundary",
+          "summary": "匿名home.popularが利用件数を返し、呼び出しごとにservice-roleで最大2,000行を集計する",
+          "severity": "p2",
+          "suggested_action": "公開要件を明文化し、最小集計件数・固定期間・キャッシュまたは事前集計を導入し、匿名応答に必要なrouteと丸めた指標だけを返す。"
+        },
+        {
+          "finding_id": "ai-hub-action-economics-evidence-gap",
+          "summary": "action別の需要・失敗・遅延・下流費用を判断できる本番証拠がない",
+          "severity": "p2",
+          "suggested_action": "機密値を除外したaction別集計としてrequest、success、p95 latency、estimated cost、provider fallback、retryを定期出力し、公開人気指標とは分離する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5237",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "ai-hub-access-policy-default-public-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: fast-forwarded dedicated branch to origin/main 5807ec0ca9d15ad11395e191700a73b9b101a90b",
+          "passed: 125 roster profiles and 125 personas",
+          "executed once successfully: ai_hub selected from 13 configured features",
+          "passed: focus_dimension=evidence",
+          "passed: prior fix verified; 100 top-level actions, 72 explicit classifications, 28 default-public actions",
+          "passed: HTTP 200 returned five route labels and global use counts",
+          "executed once successfully against feature history: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5237,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5237",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260902T222324+0900:ai_hub",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "ai-hub-public-popularity-telemetry-boundary",
+          "ai-hub-action-economics-evidence-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T233058+0900",
+      "started_at": "2026-08-31T23:30:58+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "home",
+        "title": "Home",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 76.4343
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260827T033027+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After maintainers approve an anonymous consent-compatible Home funnel, compare section start-to-completion, D7 retention, paid conversion, and feature-request completion by journey, then choose one measured high-value responsibility for extraction."
+      },
+      "findings": [
+        {
+          "finding_id": "home-outcome-evidence-gap",
+          "summary": "Homeの主要導線と追加要望フローが継続価値・登録・支払いへ寄与するかを機能単位で判断できない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を確認したうえで、今日の1件、主要セクション、追加要望の表示・開始・完了を匿名集計し、D7継続と有料転換へ接続する最小ファネルを設計する。"
+        },
+        {
+          "finding_id": "home-implementation-concentration-persists",
+          "summary": "Homeは前回の失敗案内修復後も10,041行・69 imports・11 FutureBuilder・15 collapsible sectionsを単一ページで調整している",
+          "severity": "p2",
+          "suggested_action": "匿名ファネルで優先度を確定してから、追加要望、今日の1件、課金ナッジ、非同期summaryを独立widgetと注入可能なcontrollerへ段階分割する。"
+        },
+        {
+          "finding_id": "home-error-recovery-repair-retained",
+          "summary": "前回の追加要望3失敗経路の修復はsource・unit test・CI・本番deploy証拠で維持されている",
+          "severity": "p3",
+          "suggested_action": "現在の公開failure分類とretry契約を回帰基準として維持し、今後のHome分割時も同じ契約testを移行する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5166",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "home-outcome-evidence-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: dedicated branch fast-forwarded to origin/main e74e2c86c33b31269c297e79bf09f7b52b7d8a78",
+          "passed: 125 roster profiles and 125 personas",
+          "executed successfully: deterministic home winner from 13 eligible features",
+          "passed: baseline 20260827T033027+0900 at CLEAR 100, focus_dimension=complete",
+          "passed: production HTTP 200; current Home source and failure contract inspected without Flutter or Dart",
+          "passed: Issue #4916 records PR #5118, CI 33316719113, deploy 33317282783, and remaining scope",
+          "executed successfully once after neutral evidence scan: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5166,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5166",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T233058+0900:home",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "home-implementation-concentration-persists",
+          "home-error-recovery-repair-retained"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T180859+0900",
+      "started_at": "2026-08-31T18:08:59+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "landing",
+        "title": "ランディングページ",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 77.2198
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After maintainers reduce the active hypothesis set and publish minimum-sample and stopping rules, compare time-to-decision, signup completion per active arm, and share-origin CTA progression against this cycle."
+      },
+      "findings": [
+        {
+          "finding_id": "landing-experiment-decision-signal-sparse",
+          "summary": "10仮説・20アームに対して最新登録送信が5件で、実験の意思決定信号が分散している",
+          "severity": "p1",
+          "suggested_action": "仮説を顧客課題と獲得経路で優先順位づけし、同時稼働数を絞り、各仮説の最小標本量・停止条件・採用判断をcloud reportへ明示する。"
+        },
+        {
+          "finding_id": "landing-share-message-divergence",
+          "summary": "X共有文はギター録音と21 SaaS統合を主役にし、heroのAI生活経営・今日の最優先1件と焦点がずれる",
+          "severity": "p2",
+          "suggested_action": "共有文の主語をheroの一文価値提案へ合わせ、ギター録音やSaaS統合は検証済みの補助証拠として扱う候補を比較する。"
+        },
+        {
+          "finding_id": "landing-responsibility-concentration",
+          "summary": "7,608行の単一landing実装に実験・auth・trial・social proof・sharingが集中している",
+          "severity": "p2",
+          "suggested_action": "既存の契約testを保ちながら、editorial section、experiment decision、conversion handoff、social proof、sharingを独立した責務へ段階分割する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5161",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "landing-experiment-decision-signal-sparse"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch fast-forwarded to origin/main 7773883a4ed33ebd9b0bde352c51520fddc339fa",
+          "passed: 125 roster profiles and 125 personas",
+          "executed successfully: deterministic landing winner from 13 eligible features",
+          "passed: no schema-v5 comparable landing baseline, focus_dimension=evidence",
+          "passed: production HTTP 200 and current landing source, service, tests, prior cycle inspected",
+          "passed: latest ten report runs succeeded; latest run 33361189926 reported 20 arms and 5 signup submits",
+          "executed successfully after schema correction: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5161,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5161",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T180859+0900:landing",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "landing-share-message-divergence",
+          "landing-responsibility-concentration"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T080010+0900",
+      "started_at": "2026-08-31T08:00:10+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "comparison",
+        "title": "競合比較一覧",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 76.1943
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After maintainers publish search/category controls and freshness metadata, compare representative-card discovery time, zero-result rate, source reachability, /vs-* progression, and comparison-assisted registration against the current baseline."
+      },
+      "findings": [
+        {
+          "finding_id": "comparison-discovery-search-category-gap",
+          "summary": "174社規模の一覧に名称検索とcategory絞り込みがなく、目的の比較候補へ到達しにくい",
+          "severity": "p1",
+          "suggested_action": "表示名とcategoryを対象にしたkeyboard-accessible検索、category filter、結果件数、全解除操作を追加し、代表fixtureで目的候補への到達時間を測る。"
+        },
+        {
+          "finding_id": "comparison-freshness-provenance-gap",
+          "summary": "料金、日本展開、overlap、脅威度に更新日時や根拠が表示されず、比較判断の鮮度を確認できない",
+          "severity": "p1",
+          "suggested_action": "competitor単位のverified_atとsource URLを保持し、cardまたはdetail handoffで最終確認日と根拠を表示し、期限超過データを明示する。"
+        },
+        {
+          "finding_id": "comparison-review-source-drift-persistent",
+          "summary": "review設定sourceが実際の/competitors実装と一致しない状態が前回指摘後も残る",
+          "severity": "p2",
+          "suggested_action": "保護されたfeature_review_configのcomparison.sourceをcompetitor_browse_page.dartへ更新し、個別/vs-*ページは別featureとして明示管理する。"
+        },
+        {
+          "finding_id": "comparison-browse-outcome-evidence-gap",
+          "summary": "一覧表示、filter、カード遷移の実利用成果がなく、観測利用を中立50点から更新できない",
+          "severity": "p2",
+          "suggested_action": "privacy境界を確認し、一覧表示、検索/filter利用、zero result、/vs-*遷移を匿名集計する最小event contractを設ける。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5158",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "comparison-discovery-search-category-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch ready at origin/main 3bbefe8e22a2dea5e034d7fc636ddd4de4f5562f",
+          "passed: 125 roster profiles and 125 personas",
+          "executed successfully: deterministic comparison winner from 13 eligible features",
+          "passed: no schema-v5 comparable baseline, focus_dimension=evidence",
+          "passed: production HTTP 200, current route, browse source, focused widget test, and feature configuration inspected",
+          "executed once successfully: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5158,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5158",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T080010+0900:comparison",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "comparison-freshness-provenance-gap",
+          "comparison-review-source-drift-persistent",
+          "comparison-browse-outcome-evidence-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T040750+0900",
+      "started_at": "2026-08-31T04:07:50+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "ai_university",
+        "title": "AI University entry",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 83.8473
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Instrument one privacy-safe entry-to-first-lesson funnel by discovery path and compare first-lesson start plus seven-day repeat-learning rates for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "ai-university-entry-outcome-funnel-gap",
+          "summary": "The entry page records content-recovery events and several bounded learning-task outcomes, but it lacks one measurable path from discovery choice to first lesson, completion, repeat learning, and paid conversion.",
+          "severity": "p1",
+          "suggested_action": "Define a privacy-safe page-level funnel with stable discovery-path labels and measure entry, first-lesson start, completion, seven-day repeat learning, and attributable paid conversion without free-form user data."
+        },
+        {
+          "finding_id": "ai-university-discovery-decision-overload",
+          "summary": "The entry surface exposes many simultaneous discovery modes without evidence that a first-time learner can identify the best next lesson quickly.",
+          "severity": "p1",
+          "suggested_action": "Define one outcome-oriented first-step path for new learners, retain exploration for returning learners, and compare time-to-first-lesson and repeat learning against the current surface."
+        },
+        {
+          "finding_id": "ai-university-monolith-operating-cost",
+          "summary": "An 8,483-line stateful page coordinates discovery, content loading, progress, sharing, quizzes, RLHF, and analytics, raising the cost of safely improving the learner funnel.",
+          "severity": "p2",
+          "suggested_action": "Define an entry-to-outcome contract first, then extract independently owned discovery and outcome modules behind stable interfaces with focused contract tests."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5146",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: dedicated worktree fast-forwarded cleanly to origin/main 724624964cc5a90743884a4724ae5e38e7f9591e",
+          "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
+          "passed: deterministic winner ai_university from 13 eligible features",
+          "passed: 8,483-line entry surface, 40 matched tests, recovery semantics, broad discovery controls, and unknown production outcomes captured",
+          "passed: 125 profiles, deterministic seat 12"
+        ],
+        "issue": {
+          "number": 5146,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5146",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T040750+0900:ai_university",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "ai-university-entry-outcome-funnel-gap",
+          "ai-university-discovery-decision-overload",
+          "ai-university-monolith-operating-cost"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T000451+0900",
+      "started_at": "2026-08-31T00:04:51+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "admin_analytics",
+        "title": "admin_analytics",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 72.5129
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Instrument source-state badges and one top operator workflow, then measure successful-load rate and median time-to-decision for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "admin-analytics-configured-route-mismatch",
+          "summary": "The configured /admin/analytics review URL does not match the application route /admin, so automated and human checks cannot prove that they reached the intended dashboard.",
+          "severity": "p1",
+          "suggested_action": "Choose one canonical URL, add an explicit compatibility alias or redirect for the other path, and protect both with a route-level contract test before changing shared links."
+        },
+        {
+          "finding_id": "admin-analytics-silent-evidence-degradation",
+          "summary": "Several independent metric loaders turn failures into empty, hidden, null, or debug-only states without a page-level freshness and completeness ledger.",
+          "severity": "p1",
+          "suggested_action": "Expose per-panel source, observed-at timestamp, success/failure state, and retry action; reserve zero for measured zero and label unavailable evidence explicitly."
+        },
+        {
+          "finding_id": "admin-analytics-decision-surface-and-outcome-gap",
+          "summary": "A 6,362-line page combines many operator domains, but available tests and telemetry do not show which panels shorten decisions or improve commercial outcomes.",
+          "severity": "p2",
+          "suggested_action": "Define the top three recurring operator decisions, group panels by decision and cadence, record time-to-decision and action completion, and continue extracting independently tested modules."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5131",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: dedicated worktree fast-forwarded cleanly to origin/main 4b02aac7ac657c6f61113d4c173a9eb42de7a1d7",
+          "passed: roster 2026-08-23 and personas 2026-08-30 schema 2, 125 profiles each",
+          "passed: deterministic winner admin_analytics from 13 eligible features",
+          "passed: route mismatch, 6,362-line surface, eleven loaders, silent degradation patterns, six widget tests, and unknown production outcomes captured",
+          "passed after rejecting one invalid draft dimension: 125 profiles, deterministic seat 7"
+        ],
+        "issue": {
+          "number": 5131,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5131",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T000451+0900:admin_analytics",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "admin-analytics-configured-route-mismatch",
+          "admin-analytics-silent-evidence-degradation",
+          "admin-analytics-decision-surface-and-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260830T200304+0900",
+      "started_at": "2026-08-30T20:03:04+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "user_manual",
+        "title": "user_manual",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 81.7188
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After canonical route compatibility and a three-step task guide are deployed, require /manual-to-/user-manual arrival at 100%, measure manual_view-to-task_complete conversion and median completion time, and compare D7 continuation plus support contacts for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "user-manual-configured-route-mismatch",
+          "summary": "レビュー設定の/manualと実際の/user-manualが不一致で、設定URLから対象マニュアルへ到達できない",
+          "severity": "p1",
+          "suggested_action": "設定と公開導線を/user-manualへ統一し、旧/manualは明示的な互換redirectまたはroute aliasで正規URLへ送るcontract testを追加する。"
+        },
+        {
+          "finding_id": "user-manual-stale-trust-and-audience-boundary",
+          "summary": "随時更新を掲げるマニュアルの更新日が実ソースより約5か月古く、利用者向け手順と管理者・内部自動化情報が混在する",
+          "severity": "p1",
+          "suggested_action": "公開対象をエンドユーザーの主要タスクへ限定し、管理者・内部運用資料を分離したうえで、更新日をsource commitまたはrelease metadataから生成する。"
+        },
+        {
+          "finding_id": "user-manual-first-value-and-measurement-gap",
+          "summary": "16節の機能列挙に初回価値までの短い導線と成功計測がなく、マニュアルが継続利用へ寄与したか検証できない",
+          "severity": "p1",
+          "suggested_action": "上部に役割別の3ステップ導線と検索・目次を置き、manual_viewから主要task_start、task_complete、D7継続までprivacy-bounded funnelを測定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5110",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 6d8903dd63467d61cad2e692522a0d26d8d64bb1",
+          "passed: roster 2026-08-23, personas 2026-08-30, schema 2, 125 profiles each",
+          "passed: deterministic winner user_manual from 13 eligible features",
+          "passed: route mismatch, source freshness, 16-section content boundary, absent dedicated tests, and unknown production outcomes captured",
+          "executed exactly once against shared history: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5110,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5110",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260830T200304+0900:user_manual",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "user-manual-configured-route-mismatch",
+          "user-manual-stale-trust-and-audience-boundary",
+          "user-manual-first-value-and-measurement-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260829T011200+0900",
+      "started_at": "2026-08-29T01:12:00+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "growth_weekly_digest",
+        "title": "growth-weekly-digest",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 69.9624
+      },
+      "status": "issue_closed",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-reviewed access control and the response contract are deployed, require unauthorized rejection at 100%, successful channel rendering at 100%, and one owner-assigned action with measured next-week signup delta for four consecutive weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "growth-weekly-digest-public-service-role-query-boundary",
+          "summary": "no-JWTの公開endpointがservice-role clientで集客・紹介集計を実行し、呼出主体を検証しない",
+          "severity": "p0",
+          "suggested_action": "owner-reviewedな認証・認可方針を決め、GET可否、JWT検証、admin/service-role境界、rate limit、公開可能な集計粒度をfail-closed contractとhandler testで固定する。"
+        },
+        {
+          "finding_id": "growth-weekly-digest-response-envelope-mismatch",
+          "summary": "standalone pageが{success,digest} envelopeを展開せず、成功レスポンスでも空のチャネル表示になる",
+          "severity": "p1",
+          "suggested_action": "standalone pageもGrowthMissionServiceと同じくdata.digestを展開し、success/error、channels、week range、summary fieldsを共通fixtureで検証する。"
+        },
+        {
+          "finding_id": "growth-weekly-digest-decision-contract-gap",
+          "summary": "digestは前週差を列挙するが、owner、閾値、優先action、実行結果を結ぶ意思決定contractを持たない",
+          "severity": "p1",
+          "suggested_action": "各週に1つのdecision owner、閾値付き優先チャネル、次action、due date、翌週outcomeを記録し、閲覧から実行までprivacy-boundedに測定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_closed",
+        "label": "Issue #4984 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main f59dc6615baff51ab1fdb915c7d11b91067fb6d4",
+          "passed: roster 2026-08-23, personas 2026-08-28, schema 2, 125 profiles each",
+          "passed: deterministic winner growth_weekly_digest from 13 eligible features",
+          "passed: deployment auth mode, service-role query boundary, response envelope, consumers, tests, and unknown production outcomes captured",
+          "executed exactly once against shared history: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 4984,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4984",
+          "status": "existing",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "growth-weekly-digest-public-service-role-query-boundary",
+          "growth-weekly-digest-response-envelope-mismatch",
+          "growth-weekly-digest-decision-contract-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T171600+0900",
+      "started_at": "2026-08-28T17:16:00+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "gemini_university",
+        "title": "gemini_university",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 75.2124
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owners define one provider-count source of truth and one crawlable provider-selection action, instrument privacy-bounded search-to-quiz events and require improved quiz completion without reduced provider discovery over one four-week cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "gemini-university-public-count-contract-gap",
+          "summary": "公開訴求の259社と実装上の351 tab前提が同期するtested source-of-truthを持たない",
+          "severity": "p1",
+          "suggested_action": "active providerの正規化済みunique countを一つのbuild inputとして算出し、SEO title、H1、description、points、runtime表示、sitemap testが同じ値を参照するcontractを設計する。"
+        },
+        {
+          "finding_id": "gemini-university-crawlable-first-action-gap",
+          "summary": "非JavaScript公開面がAI大学の最初の学習actionではなく汎用landing funnelへ続く",
+          "severity": "p1",
+          "suggested_action": "非JS shellにproviderを探す、1教材を開く、1問quizを解くという3段階と、JS起動後に同じproviderまたはcategoryへ復元する明示的なfirst-action linkを追加する。"
+        },
+        {
+          "finding_id": "gemini-university-learning-funnel-evidence-gap",
+          "summary": "運用計測がfetch障害とretryに限定され、学習funnelと成果を観測できない",
+          "severity": "p1",
+          "suggested_action": "個人識別子や自由記述を送らない現行privacy境界を維持し、provider_search、provider_selected、content_opened、quiz_completed、review_returnedの集計eventを段階導入する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4958",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "gemini-university-public-count-contract-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 720be3aa0696cfce16fa752e820edde21fbc5153",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: deterministic winner gemini_university from 13 eligible features",
+          "passed: public shell, provider count, paginated fetch, navigation, loading semantics, retry analytics, and unknown learner outcomes captured",
+          "executed exactly once against shared history root: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 4958,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4958",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "gemini-university-crawlable-first-action-gap",
+          "gemini-university-learning-funnel-evidence-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T120337+0900",
+      "started_at": "2026-08-28T12:03:37+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "philosophy",
+        "title": "philosophy",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 79.9025
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After product owners choose one direct three-minute first action and separate AI University videos, instrument philosophy CTA clicks and require an improvement in first-action completion without reducing guide completion over one four-week cohort."
+      },
+      "findings": [
+        {
+          "finding_id": "philosophy-cta-activation-handoff-gap",
+          "summary": "長い理念説明の最終CTAがlanding rootへ戻り、具体的な初回行動へ接続しない",
+          "severity": "p1",
+          "suggested_action": "最初の3分棚卸しまたは30日運営開始へ直結する明示的なdestinationと計測可能なeventを設計し、CTA文言・遷移・完了状態を同じcontractで検証する。"
+        },
+        {
+          "finding_id": "philosophy-video-scope-and-trust-gap",
+          "summary": "理念動画selectorへ無関係なAI大学4動画と出典なしの精密市場主張が混在する",
+          "severity": "p1",
+          "suggested_action": "philosophyページは理念動画だけに限定し、AI大学動画は専用hubへ移す。残す精密主張には確認日と一次出典を付け、selectorのscopeをtestで固定する。"
+        },
+        {
+          "finding_id": "philosophy-visitor-outcome-evidence-gap",
+          "summary": "長文ガイドが実在visitorの行動・継続・成果へ結び付く証拠がない",
+          "severity": "p2",
+          "suggested_action": "匿名eventでhero到達、3分棚卸し到達、CTA click、first-action完了を測り、短い任意feedbackで役立った判断と未解決課題を集める。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4952",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "philosophy-cta-activation-handoff-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main b8f234042eabf6a9adb651394375030944c733e3",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: deterministic winner philosophy from 13 eligible features",
+          "passed: HTTP 200; CTA, video scope, mobile, title, SEO, FAQ, and unknown analytics evidence captured",
+          "executed exactly once against shared history root: 125 profiles, seat 9"
+        ],
+        "issue": {
+          "number": 4952,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4952",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "philosophy-video-scope-and-trust-gap",
+          "philosophy-visitor-outcome-evidence-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T074605+0900",
+      "started_at": "2026-08-28T07:46:05+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "schedule_hub",
+        "title": "schedule-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 68.5457
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After an owner-reviewed fail-closed action registry and handler authorization matrix are deployed, require sensitive-action rejection at 100%, unclassified actions at zero, and incident-free operation for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "schedule-hub-owner-mutation-auth-boundary",
+          "summary": "通常のログイン利用者がowner資格情報を使う公開・更新・削除actionへ到達できる認可境界になっている",
+          "severity": "p0",
+          "suggested_action": "全53 actionをside-effect classで明示列挙し、owner tokenまたはservice-role mutationを伴うactionをservice_roleへfail-closedで分類し、匿名・一般user・service roleのhandler-level認可matrixを追加する。"
+        },
+        {
+          "finding_id": "schedule-hub-auth-classification-drift",
+          "summary": "53 actionのside effectと認可levelを結ぶ完全なcontractがなく、新規actionが暗黙にuser権限になる",
+          "severity": "p1",
+          "suggested_action": "action registryへauth levelとside-effect categoryを同居させ、switch case集合との完全一致、未知action拒否、全mutationのservice-roleまたは明示user ownershipを機械検証する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4948",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean at origin/main 5098469613d7e8b78ed374d797ebbe9aa15fc702",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: deterministic winner schedule_hub",
+          "passed: 4,663 lines, 53 actions, owner-mutation authorization evidence captured",
+          "executed exactly once: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 4948,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4948",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "schedule-hub-owner-mutation-auth-boundary",
+          "schedule-hub-auth-classification-drift"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T042953+0900",
+      "started_at": "2026-08-28T04:29:53+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "horse_racing",
+        "title": "horse_racing",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 49,
+        "name": "岩井良明",
+        "selection_score": 68.4108
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-reviewed risk wording and ROI instrumentation are available, compare acknowledgement, budget-setting, calibrated error, ROI by bet type, and seven-day repeat use for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "horse-racing-risk-framing-gap",
+          "summary": "AIの賭け目を『特におすすめ』として提示する一方、損失可能性・非保証・利用上限を同じ判断面で説明していない",
+          "severity": "p0",
+          "suggested_action": "法務・責任ある利用方針の人手確認を経て、推奨表示、購入馬券記録、的中率カードの各判断点に不確実性、非保証、予算上限、休止導線を一貫して表示し、理解度と離脱率を測定する。"
+        },
+        {
+          "finding_id": "horse-racing-calibration-economics-gap",
+          "summary": "的中率と払戻額を前面に出すが、賭金正規化ROI、期間、母数品質、予測確率の較正を同時に示していない",
+          "severity": "p1",
+          "suggested_action": "券種・期間別に投下額、払戻額、ROI、母数、信頼区間、予測確率と実績の較正を表示し、データ不足時はランキングや推奨を保留する。"
+        },
+        {
+          "finding_id": "horse-racing-regression-coverage-gap",
+          "summary": "3,719行の単一ページが予想・学習・馬券記録・表示を担うが、同ページを直接扱うwidget testがない",
+          "severity": "p2",
+          "suggested_action": "データ取得境界と表示モデルを分離し、未ログイン、エラー、見送り推奨、馬券金額、的中率母数、タブURL同期を固定fixtureのwidget testで保護する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4946",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 roster entries",
+          "passed: 125 personas",
+          "passed: HTTP 200, 3,719 source lines, recommendation and payout evidence captured, no direct widget test",
+          "passed: clean dedicated worktree before report publication"
+        ],
+        "issue": {
+          "number": 4946,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4946",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "horse-racing-risk-framing-gap",
+          "horse-racing-calibration-economics-gap",
+          "horse-racing-regression-coverage-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260828T004359+0900",
+      "started_at": "2026-08-28T00:43:59+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "ai_hub",
+        "title": "ai-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 68.112
+      },
+      "status": "production_verified",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "認証registryと表形式route testの導入後、匿名・一般利用者・許可ロール別HTTP結果と観測actionへの匿名アクセス件数を測定する。"
+      },
+      "findings": [
+        {
+          "finding_id": "ai-hub-unauthenticated-observability",
+          "summary": "観測系4 actionが認証対象外のままservice-roleデータを返し得る",
+          "severity": "p0",
+          "suggested_action": "観測系actionを明示的な認証・権限registryへ移し、匿名401、一般利用者403、許可ロール成功を固定するroute-levelテストを追加する。"
+        },
+        {
+          "finding_id": "ai-hub-home-recommend-user-scope",
+          "summary": "home.recommendが認証済み主体ではなくbody.user_idで利用履歴を参照する",
+          "severity": "p1",
+          "suggested_action": "home.recommendを認証必須にし、検索対象をgetUserId(req)の値へ固定して、別user_id指定を拒否する契約テストを追加する。"
+        },
+        {
+          "finding_id": "ai-hub-dispatcher-policy-regression-gap",
+          "summary": "113 actionの認証・例外境界をroute-level回帰テストが固定していない",
+          "severity": "p2",
+          "suggested_action": "dispatcherからaction registry、auth policy、response sanitizationを抽出し、全actionの区分を表形式テストで固定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "対策済み・Issue #4943 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 roster entries",
+          "passed: 125 personas",
+          "passed: 113 cases, 8784 lines, no route-level index import",
+          "passed: clean dedicated worktree before report publication"
+        ],
+        "issue": {
+          "number": 4943,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4943",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "723f34d7cb56be9919044f21808dd24aefd50874",
+          "workflow_run": "33411638751",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33411638751/job/99552613946",
+          "pr_number": 5162,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5162",
+          "production_url": null,
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "ai-hub-unauthenticated-observability",
+          "ai-hub-home-recommend-user-scope",
+          "ai-hub-dispatcher-policy-regression-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260827T221025+0900",
+      "started_at": "2026-08-27T22:10:25+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "core_hub",
+        "title": "core-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 70.6913
+      },
+      "status": "production_verified",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "owner review後にunauthenticated list/toggle route testを追加し、401率とreaction成功率を追跡する。"
+      },
+      "findings": [
+        {
+          "finding_id": "core-hub-anonymous-reactions-auth-drift",
+          "summary": "匿名リアクションとして実装された2 actionが共通認証ゲートで401になる",
+          "severity": "p1",
+          "suggested_action": "匿名許可ポリシーをaction定義と単一の型付きregistryへ統合し、memo.react.list/toggleの未認証route-levelテストと本番smokeを追加する。"
+        },
+        {
+          "finding_id": "core-hub-legacy-reaction-action-client",
+          "summary": "メモリアクション確認画面がreaction actionではなく旧memo.share actionを呼ぶ",
+          "severity": "p1",
+          "suggested_action": "MemoReactionsPageをPublicMemoServiceへ統合し、memo.react.list/toggleだけを呼ぶwidget/service契約テストを追加する。"
+        },
+        {
+          "finding_id": "core-hub-route-policy-test-gap",
+          "summary": "45 actionの共有認証・例外境界をroute-levelテストが固定していない",
+          "severity": "p2",
+          "suggested_action": "dispatcherからaction registryとauth policyを抽出し、全actionの認証区分・未知action・例外sanitizeを表形式テストで固定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "対策済み・Issue #4937 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 personas",
+          "memo.public.list=200; memo.react.list=401",
+          "passed: 45 cases, 3059 lines, no route-level index import",
+          "passed: clean dedicated worktree before report publication"
+        ],
+        "issue": {
+          "number": 4937,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4937",
+          "status": "created",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": {
+          "commit_sha": "ec314d3f767ea3245c3af7aa1fd7db51cfad9f4c",
+          "workflow_run": "33234270397",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33234270397/job/99053902129",
+          "pr_number": 4987,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/4987",
+          "production_url": null,
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "core-hub-anonymous-reactions-auth-drift",
+          "core-hub-legacy-reaction-action-client",
+          "core-hub-route-policy-test-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260827T033027+0900",
+      "started_at": "2026-08-27T03:30:27+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "home",
+        "title": "Home",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 75.8089
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "追加要望の表示から送信完了までを匿名計測し、3失敗経路の分類済みcopyと再試行を依存注入widget testで固定した後、完了率を基準値と比較する。"
+      },
+      "findings": [
+        {
+          "finding_id": "home-feature-request-error-disclosure",
+          "summary": "追加要望の3つの失敗経路が内部例外文字列を利用者へ直接表示する",
+          "severity": "p1",
+          "suggested_action": "FilePicker・AI診断・送信を許可済みの失敗分類へ分け、安定した案内と再試行導線を提供し、3経路の回帰テストを追加する。"
+        },
+        {
+          "finding_id": "home-implementation-concentration",
+          "summary": "ホームの多数の非同期状態と導線が1万行の単一実装へ集中している",
+          "severity": "p2",
+          "suggested_action": "まず追加要望、課金ナッジ、今日の1件を独立widgetと依存注入可能なcontrollerへ段階分割し、失敗状態を専用testで固定する。"
+        },
+        {
+          "finding_id": "home-feature-observability-gap",
+          "summary": "ホーム導線と改善要望の実利用成果を機能単位で判断できない",
+          "severity": "p2",
+          "suggested_action": "既存の同意・分析境界を確認し、今日の1件、課金ナッジ、追加要望の表示から完了までを匿名集計する最小ファネルを設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #4916",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 125 profiles",
+          "passed: 125 personas",
+          "passed: 121 tests",
+          "passed: no diff errors and clean worktree"
+        ],
+        "issue": {
+          "number": 4916,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4916",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
+          "remediation_state": "queued",
+          "queue_status": "PARTIAL_WAIT",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "home-feature-request-error-disclosure",
+          "home-implementation-concentration",
+          "home-feature-observability-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260824T220400+0900",
+      "started_at": "2026-08-24T22:04:00+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "landing",
+        "title": "ランディングページ",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 77.328
+      },
+      "status": "production_verified",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "landing-social-proof-failure-recovery",
+          "summary": "社会的証明の取得失敗を正常な初期状態と区別できず再試行できない",
+          "severity": "p1",
+          "suggested_action": "取得失敗をlive-regionで通知し、同じ場所から公開集計を再読み込みできる操作を提供する。"
+        },
+        {
+          "finding_id": "landing-implementation-concentration",
+          "summary": "多数の獲得実験と認証・体験状態が単一LP実装へ集中している",
+          "severity": "p2",
+          "suggested_action": "社会的証明、登録、体験結果を独立widgetへ段階分割し、それぞれの失敗状態を専用testで固定する。"
+        },
+        {
+          "finding_id": "landing-feature-observability-gap",
+          "summary": "本レビュー環境でLP機能別の実利用と社会的証明障害の転換影響を確認できない",
+          "severity": "p2",
+          "suggested_action": "既存の同意・分析境界を確認し、社会的証明の失敗・再試行と後続CTAを匿名集計できる最小計測を設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "本番対策済み",
+        "detail": "変更・検証・本番反映の証拠が記録されています。",
+        "summary": "",
+        "files": [
+          "lib/pages/landing_page.dart",
+          "test/pages/landing_page_conversion_test.dart"
+        ],
+        "lines_changed": 87,
+        "resolved_finding_ids": [
+          "landing-social-proof-failure-recovery"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 50 tests",
+          "passed: No issues found",
+          "passed: 0 files changed",
+          "passed"
+        ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": "dc307a7b28bfa33403e1673fc12f68a814f897ef",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32731548310",
+          "production_url": "https://my-web-app-b67f4.web.app/",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "landing-implementation-concentration",
+          "landing-feature-observability-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260824T002432+0900",
+      "started_at": "2026-08-24T00:24:32+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "comparison",
+        "title": "競合比較一覧",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 74.61
+      },
+      "status": "production_verified",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "comparison-load-failure-recovery",
+          "summary": "競合データ取得失敗を正常な0件として表示し、利用者が復旧できない",
+          "severity": "p1",
+          "suggested_action": "取得失敗を独立したlive-regionエラー状態として表示し、同じ画面から再読み込みできる操作を提供する。"
+        },
+        {
+          "finding_id": "comparison-review-source-drift",
+          "summary": "レビュー設定のsourceが実際の一覧routeと一致しない",
+          "severity": "p2",
+          "suggested_action": "保護されたレビュー設定のcomparison.sourceを実routeに合わせ、個別 /vs-* ページは別対象として管理する。"
+        },
+        {
+          "finding_id": "comparison-browse-observability-gap",
+          "summary": "競合一覧入口の利用と個別比較への転換を直接観測できない",
+          "severity": "p2",
+          "suggested_action": "プライバシー境界を確認した上で、一覧表示、フィルター利用、個別比較遷移を集計可能な最小イベントとして設計する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "本番対策済み",
+        "detail": "変更・検証・本番反映の証拠が記録されています。",
+        "summary": "",
+        "files": [
+          "lib/pages/competitor_browse_page.dart",
+          "test/pages/competitor_browse_page_test.dart"
+        ],
+        "lines_changed": 176,
+        "resolved_finding_ids": [
+          "comparison-load-failure-recovery"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 1 test",
+          "passed: No issues found",
+          "passed: 0 files changed",
+          "passed"
+        ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": "23d97ae4aae6e8505f68a311ff9f008122565744",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32648607959",
+          "production_url": "https://my-web-app-b67f4.web.app/",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "comparison-review-source-drift",
+          "comparison-browse-observability-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T172138+0900",
+      "started_at": "2026-08-23T17:21:38+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "ai_university",
+        "title": "AI大学入口ページ",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 78.0406
+      },
+      "status": "production_verified",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "ai-university-loading-semantics",
+          "summary": "読み込み中のspinnerが支援技術へ状態を通知しない",
+          "severity": "p1",
+          "suggested_action": "読み込みspinnerを、意味のある日本語labelとliveRegionを持つSemanticsで包み、状態を自動通知する。"
+        },
+        {
+          "finding_id": "ai-university-cold-entry-latency",
+          "summary": "SEOシェルから実AI大学画面への切り替えが遅い",
+          "severity": "p1",
+          "suggested_action": "実測の初回教材表示時間を計測し、bundle分割、初期データ量、provider描画範囲を別設計で最適化する。"
+        },
+        {
+          "finding_id": "ai-university-monolith-test-cost",
+          "summary": "8千行超の単一ページと専用widget test不足が改善速度を下げる",
+          "severity": "p2",
+          "suggested_action": "ロード状態、provider navigation、教材表示を独立widgetへ分割し、代表的なwidget testを段階的に追加する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "production_verified",
+        "label": "本番対策済み",
+        "detail": "変更・検証・本番反映の証拠が記録されています。",
+        "summary": "",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/gemini_university_loading_semantics_test.dart"
+        ],
+        "lines_changed": 30,
+        "resolved_finding_ids": [
+          "ai-university-loading-semantics"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: 1 test",
+          "passed: No issues found",
+          "passed: 0 files changed",
+          "passed"
+        ],
+        "issue": {},
+        "implementation": {
+          "commit_sha": "087271567f2312c718f9695d0a81c51de07f5888",
+          "workflow_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/32628679913",
+          "production_url": "https://my-web-app-b67f4.web.app/",
+          "release_status": "passed"
+        },
+        "findings_without_individual_trace": [
+          "ai-university-cold-entry-latency",
+          "ai-university-monolith-test-cost"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T153734+0900",
+      "started_at": "2026-08-23T15:38:16.4383006+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "feature",
+        "id": "comparison",
+        "title": "comparison",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 74.4337
+      },
+      "status": "issue_closed",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "comparison-claim-evidence",
+          "summary": "競合比較の公開主張に出典・確認時点を一貫して結び付ける必要がある。",
+          "severity": "p1",
+          "suggested_action": "競合別の価格・機能主張について、出典URLと最終確認日を管理する別レビューを行う。"
+        },
+        {
+          "finding_id": "comparison-funnel-evidence",
+          "summary": "比較流入から登録までの実測根拠が今回のレビュー入力にない。",
+          "severity": "p2",
+          "suggested_action": "既存計測の匿名集計を別運用で確認し、比較到達・CTA・登録のファネルを根拠化する。"
+        },
+        {
+          "finding_id": "comparison-maintainability",
+          "summary": "比較ページの巨大な単一ソースと専用試験不足が訴求変更の検証コストを高めている。",
+          "severity": "p2",
+          "suggested_action": "別タスクで競合データと表示部を分離し、代表ルートのCTA・比較表をウィジェット試験で固定する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_closed",
+        "label": "Issue #4739 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "select_feature.py: passed (13 features)",
+          "select_reviewer.py: passed (125 profiles; JSON output saved)",
+          "public Data API catalog export: passed (active=1071, reviewable=526, excluded source URL=536)",
+          "select_course.py: passed",
+          "01.AI source URL inspection: reachable; only generic documentation navigation was observable",
+          "comparison source and test filename inspection: completed"
+        ],
+        "issue": {
+          "number": 4739,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4739",
+          "status": "existing",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "comparison-claim-evidence",
+          "comparison-funnel-evidence",
+          "comparison-maintainability"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T152316+0900",
+      "started_at": "2026-08-23T15:24:30+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "feature",
+        "id": "ai_university",
+        "title": "ai_university",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 1,
+        "name": "ドラゴン細井",
+        "selection_score": 79.5059
+      },
+      "status": "issue_closed",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "course-freshness-review",
+          "summary": "選出講座に出典更新確認の運用が必要。",
+          "severity": "p2",
+          "suggested_action": "公式出典の確認日と更新検知を講座運用で記録し、再確認対象を明示する。"
+        },
+        {
+          "finding_id": "course-outcome-evidence",
+          "summary": "講座選定データに学習成果の根拠がない。",
+          "severity": "p2",
+          "suggested_action": "講座編集の別タスクで、対象者・到達行動・確認方法を根拠付きで管理する。"
+        },
+        {
+          "finding_id": "content-failure-observability",
+          "summary": "教材取得失敗時の事業影響を測定できない。",
+          "severity": "p2",
+          "suggested_action": "別の計測設計レビューで、失敗・再試行・フォールバック表示を匿名かつ最小限に観測する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_closed",
+        "label": "Issue #4738 終了・反映証拠確認待ち",
+        "detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "public Data API catalog export: passed (active=1071, reviewable=526)",
+          "select_feature.py: passed",
+          "select_reviewer.py: passed (125 profiles)",
+          "select_course.py: passed",
+          "AI University browser inspection: blocked by browser URL safety policy; no workaround attempted"
+        ],
+        "issue": {
+          "number": 4738,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/4738",
+          "status": "existing",
+          "github_state": "CLOSED",
+          "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
+          "remediation_state": "closed_pending_proof",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-freshness-review",
+          "course-outcome-evidence",
+          "content-failure-observability"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260823T152239+0900",
+      "started_at": "2026-08-23T15:22:47+09:00",
+      "source_format": "legacy_combined",
+      "subject": {
+        "kind": "feature",
+        "id": "ai_university",
+        "title": "ai_university",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 73.5265
+      },
+      "status": "implemented",
+      "review_status": "fixed",
+      "validation_status": "passed",
+      "quality": null,
+      "findings": [
+        {
+          "finding_id": "ai_university_catalog_pagination",
+          "summary": "AI大学の主カタログ取得をページングし、PostgRESTの1,000行上限を超える有効講座も表示対象にする。",
+          "severity": "p2",
+          "suggested_action": "sort_orderとidで安定順序を付け、1,000件単位で全有効行を取得する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "implemented",
+        "label": "対策実施・検証済み",
+        "detail": "個別の指摘IDとの紐付けも記録済みです。",
+        "summary": "主カタログに安定順序のページングを追加し、回帰契約テストを更新した。",
+        "files": [
+          "lib/pages/gemini_university_v2_page.dart",
+          "test/pages/ai_university_published_video_fetch_contract_test.dart"
+        ],
+        "lines_changed": 27,
+        "resolved_finding_ids": [
+          "ai_university_catalog_pagination"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "validate_roster.py: passed",
+          "validate_personas.py: passed",
+          "flutter test test/pages/ai_university_published_video_fetch_contract_test.dart: passed",
+          "dart analyze changed files: passed"
+        ],
+        "issue": {},
+        "implementation": null,
+        "findings_without_individual_trace": []
+      }
+    }
+  ],
+  "features": [
+    {
+      "slug": "home",
+      "kind": "page",
+      "title": "home",
+      "path": "/",
+      "source": "lib/pages/home_page.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 70.37,
+      "completed_cycles": 2,
+      "last_cycle_utility": 71.3,
+      "last_reviewed_at": "2026-08-31T14:30:58+00:00",
+      "reason": "機能レビュー2回・効用70.4点で2部"
+    },
+    {
+      "slug": "landing",
+      "kind": "page",
+      "title": "landing",
+      "path": "/lp",
+      "source": "lib/widgets/landing_page_content.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 68.23,
+      "completed_cycles": 2,
+      "last_cycle_utility": 64.4,
+      "last_reviewed_at": "2026-08-31T09:08:59+00:00",
+      "reason": "機能レビュー2回・効用68.2点で2部"
+    },
+    {
+      "slug": "comparison",
+      "kind": "page",
+      "title": "comparison",
+      "path": "/competitors",
+      "source": "lib/pages/comparison_page.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 65.14,
+      "completed_cycles": 3,
+      "last_cycle_utility": 61.7,
+      "last_reviewed_at": "2026-08-30T23:00:10+00:00",
+      "reason": "機能レビュー3回・効用65.1点で2部"
+    },
+    {
+      "slug": "ai_university",
+      "kind": "page",
+      "title": "ai_university",
+      "path": "/ai-university",
+      "source": "lib/pages/gemini_university_v2_page.dart",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 65.12,
+      "completed_cycles": 4,
+      "last_cycle_utility": 65.2,
+      "last_reviewed_at": "2026-08-30T19:07:50+00:00",
+      "reason": "機能レビュー4回・効用65.1点で2部"
+    },
+    {
+      "slug": "core_hub",
+      "kind": "edge_function",
+      "title": "core-hub",
+      "path": "",
+      "source": "supabase/functions/core-hub/index.ts",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 62.9,
+      "completed_cycles": 1,
+      "last_cycle_utility": 62.9,
+      "last_reviewed_at": "2026-08-27T13:10:25+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "ai_hub",
+      "kind": "edge_function",
+      "title": "ai-hub",
+      "path": "",
+      "source": "supabase/functions/ai-hub/index.ts",
+      "priority": "high",
+      "division": 3,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 62.2,
+      "completed_cycles": 2,
+      "last_cycle_utility": 63.7,
+      "last_reviewed_at": "2026-09-02T13:23:24+00:00",
+      "reason": "機能レビュー2回・効用62.2点で3部"
+    },
+    {
+      "slug": "horse_racing",
+      "kind": "page",
+      "title": "horse_racing",
+      "path": "/horse-racing",
+      "source": "lib/pages/horse_racing_predictor_page.dart",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 60.4,
+      "completed_cycles": 1,
+      "last_cycle_utility": 60.4,
+      "last_reviewed_at": "2026-08-27T19:29:53+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "schedule_hub",
+      "kind": "edge_function",
+      "title": "schedule-hub",
+      "path": "",
+      "source": "supabase/functions/schedule-hub/index.ts",
+      "priority": "high",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 60.35,
+      "completed_cycles": 1,
+      "last_cycle_utility": 60.35,
+      "last_reviewed_at": "2026-08-27T22:46:05+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "philosophy",
+      "kind": "page",
+      "title": "philosophy",
+      "path": "/philosophy",
+      "source": "lib/pages/philosophy_page.dart",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 57.65,
+      "completed_cycles": 1,
+      "last_cycle_utility": 57.65,
+      "last_reviewed_at": "2026-08-28T03:03:37+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "gemini_university",
+      "kind": "page",
+      "title": "gemini_university",
+      "path": "/gemini-university",
+      "source": "lib/pages/gemini_university_v2_page.dart",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 50.8,
+      "completed_cycles": 1,
+      "last_cycle_utility": 50.8,
+      "last_reviewed_at": "2026-08-28T08:16:00+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "growth_weekly_digest",
+      "kind": "edge_function",
+      "title": "growth-weekly-digest",
+      "path": "",
+      "source": "supabase/functions/growth-weekly-digest/index.ts",
+      "priority": "medium",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 44.35,
+      "completed_cycles": 1,
+      "last_cycle_utility": 44.35,
+      "last_reviewed_at": "2026-08-28T16:12:00+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "admin_analytics",
+      "kind": "page",
+      "title": "admin_analytics",
+      "path": "/admin/analytics",
+      "source": "lib/pages/admin_analytics_page.dart",
+      "priority": "low",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 43.4,
+      "completed_cycles": 1,
+      "last_cycle_utility": 43.4,
+      "last_reviewed_at": "2026-08-30T15:04:51+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "slug": "user_manual",
+      "kind": "page",
+      "title": "user_manual",
+      "path": "/user-manual",
+      "source": "lib/pages/user_manual_page.dart",
+      "priority": "low",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 40.15,
+      "completed_cycles": 1,
+      "last_cycle_utility": 40.15,
+      "last_reviewed_at": "2026-08-30T11:03:04+00:00",
+      "reason": "機能レビュー実績が2回未満のため暫定3部"
+    }
+  ]
+}

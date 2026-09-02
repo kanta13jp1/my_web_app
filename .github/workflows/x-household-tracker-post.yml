@@ -20,16 +20,21 @@ concurrency:
   group: x-household-tracker-post
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   post:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
     steps:
       - name: Validate secrets
         shell: bash
@@ -43,7 +48,7 @@ jobs:
         id: mode
         shell: bash
         run: |
-          dry_run="${{ github.event.inputs.dry_run }}"
+          dry_run="$DRY_RUN_INPUT"
           if [ -z "${dry_run}" ]; then dry_run="false"; fi
           echo "dry_run=${dry_run}" >> "${GITHUB_OUTPUT}"
 

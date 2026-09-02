@@ -47,7 +47,7 @@ void main() {
       });
     });
 
-    test('rejects values that violate database constraints', () {
+    test('rejects blank and invalid tickers', () {
       expect(
         () => const InvestmentAssetDraft(
           assetType: InvestmentAssetType.etf,
@@ -59,13 +59,82 @@ void main() {
       );
       expect(
         () => const InvestmentAssetDraft(
-          assetType: InvestmentAssetType.reit,
-          ticker: '8951',
-          quantity: 0,
+          assetType: InvestmentAssetType.stock,
+          ticker: '7203/T',
+          quantity: 1,
           buyPriceJpy: 100,
         ).toUpdateMap(),
         throwsArgumentError,
       );
+      expect(
+        () => InvestmentAssetDraft(
+          assetType: InvestmentAssetType.stock,
+          ticker: List<String>.filled(33, 'A').join(),
+          quantity: 1,
+          buyPriceJpy: 100,
+        ).toUpdateMap(),
+        throwsArgumentError,
+      );
+    });
+
+    test('keeps an unchanged legacy ticker editable', () {
+      const draft = InvestmentAssetDraft(
+        assetType: InvestmentAssetType.crypto,
+        ticker: 'BTC/JPY',
+        existingTicker: ' btc/jpy ',
+        quantity: 1,
+        buyPriceJpy: 100,
+      );
+
+      expect(draft.toUpdateMap()['ticker'], 'BTC/JPY');
+      expect(
+        () => draft.toInsertMap(userId: 'user-1'),
+        throwsArgumentError,
+      );
+      expect(
+        () => const InvestmentAssetDraft(
+          assetType: InvestmentAssetType.crypto,
+          ticker: 'ETH/JPY',
+          existingTicker: 'BTC/JPY',
+          quantity: 1,
+          buyPriceJpy: 100,
+        ).toUpdateMap(),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects negative quantity and prices', () {
+      expect(
+        () => const InvestmentAssetDraft(
+          assetType: InvestmentAssetType.reit,
+          ticker: '8951',
+          quantity: -1,
+          buyPriceJpy: 100,
+        ).toUpdateMap(),
+        throwsArgumentError,
+      );
+      expect(
+        () => const InvestmentAssetDraft(
+          assetType: InvestmentAssetType.stock,
+          ticker: '7203.T',
+          quantity: 1,
+          buyPriceJpy: -1,
+        ).toUpdateMap(),
+        throwsArgumentError,
+      );
+      expect(
+        () => const InvestmentAssetDraft(
+          assetType: InvestmentAssetType.crypto,
+          ticker: 'BTC-JPY',
+          quantity: 1,
+          buyPriceJpy: 100,
+          currentPriceJpy: -1,
+        ).toUpdateMap(),
+        throwsArgumentError,
+      );
+    });
+
+    test('requires a current price when last-priced timestamp is set', () {
       expect(
         () => InvestmentAssetDraft(
           assetType: InvestmentAssetType.stock,

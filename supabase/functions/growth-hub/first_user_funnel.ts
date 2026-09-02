@@ -36,8 +36,10 @@ export type FirstUserXPost = {
 };
 
 type FirstUserFunnelInput = {
+  utmSource: string;
   utmMedium: string;
   utmContent: string;
+  campaignStartedAt?: string | null;
   post: FirstUserXPost | null;
   events: readonly FirstUserAcquisitionEvent[];
   payments: readonly FirstUserPayment[];
@@ -92,6 +94,8 @@ function latestWindow(post: FirstUserXPost | null): {
 }
 
 function decision(
+  utmSource: string,
+  campaignStarted: boolean,
   post: FirstUserXPost | null,
   ageHours: number | null,
   impressions: number | null,
@@ -103,7 +107,7 @@ function decision(
   nextVariable: string;
   nextAction: string;
 } {
-  if (!post) {
+  if (!post && !campaignStarted) {
     return {
       stage: "awaiting_publish",
       nextVariable: "publish",
@@ -111,7 +115,7 @@ function decision(
         "Obtain explicit owner approval, publish the prepared X candidate once, and keep every other variable fixed.",
     };
   }
-  if ((ageHours ?? 0) < 3) {
+  if (utmSource === "x" && (ageHours ?? 0) < 3) {
     return {
       stage: "collecting_3h",
       nextVariable: "none",
@@ -119,7 +123,19 @@ function decision(
         "Keep the post unchanged until the first comparable 3-hour X window is available.",
     };
   }
-  if ((impressions ?? 0) < 100) {
+  if (
+    utmSource !== "x" &&
+    (ageHours ?? 0) < 24 &&
+    counts.view === 0
+  ) {
+    return {
+      stage: "collecting_24h",
+      nextVariable: "none",
+      nextAction:
+        "Keep the published article and measured CTA unchanged until the 24-hour organic acquisition window is available.",
+    };
+  }
+  if (utmSource === "x" && (impressions ?? 0) < 100) {
     return {
       stage: "reach_bottleneck",
       nextVariable: "hook",
@@ -127,7 +143,15 @@ function decision(
         "For the next approved post, change only the opening hook and retain the image, CTA, and landing URL.",
     };
   }
-  if (urlClicks === 0 && counts.view === 0) {
+  if (utmSource !== "x" && counts.view === 0) {
+    return {
+      stage: "reach_bottleneck",
+      nextVariable: "article_distribution",
+      nextAction:
+        "Change only the article distribution surface or headline while preserving the CTA and landing URL.",
+    };
+  }
+  if (utmSource === "x" && urlClicks === 0 && counts.view === 0) {
     return {
       stage: "click_bottleneck",
       nextVariable: "link_placement",
@@ -214,7 +238,11 @@ export function buildFirstUserFunnelReport(
       countUnique(input.events, stage),
     ]),
   ) as Record<FirstUserFunnelStage, number>;
-  const postDateMs = input.post ? Date.parse(input.post.postedAt) : Number.NaN;
+  const campaignStartedAt = input.post?.postedAt ?? input.campaignStartedAt ??
+    null;
+  const postDateMs = campaignStartedAt
+    ? Date.parse(campaignStartedAt)
+    : Number.NaN;
   const nowMs = input.nowMs ?? Date.now();
   const ageHours = Number.isFinite(postDateMs)
     ? Number(((nowMs - postDateMs) / 3_600_000).toFixed(2))
@@ -228,6 +256,8 @@ export function buildFirstUserFunnelReport(
     0,
   );
   const next = decision(
+    input.utmSource,
+    campaignStartedAt !== null && Number.isFinite(postDateMs),
     input.post,
     ageHours,
     window.impressions,
@@ -241,13 +271,18 @@ export function buildFirstUserFunnelReport(
     target: {
       unknownUserSignupCompletes: 1,
       firstRevenueJpy: 1,
-      xImpressionsPerPost: 10000,
+      xImpressionsPerPost: input.utmSource === "x" ? 10000 : null,
     },
     attribution: {
-      utmSource: "x",
+      utmSource: input.utmSource,
       utmMedium: input.utmMedium,
       utmCampaign: "first_user_growth",
       utmContent: input.utmContent,
+    },
+    campaign: {
+      source: input.utmSource,
+      startedAt: campaignStartedAt,
+      ageHours,
     },
     x: input.post
       ? {

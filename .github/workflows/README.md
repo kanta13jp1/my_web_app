@@ -2,12 +2,33 @@
 
 このディレクトリには、CI/CDパイプラインを構成するGitHub Actionsワークフローが含まれています。
 
+- **Infrastructure Documentation** (`infrastructure-docs.yml`): main の関連変更から Supabase / GitHub Actions 構成図を生成し、Actions artifact と `generated/infrastructure-docs` ブランチへ公開します。
+
 2026-05-07 #1706: AI-tool workflow changes must cite official sources, stay in the Claude Code #1 + Codex #1 two-instance flow, and avoid starting persistent local dev server / node / dart processes.
 
 2026-05-17 #2535: Guarded child subagents are allowed under Claude Code #1 or
 Codex #1 for bounded research, critique, memory review, large-output
 inspection, or disjoint implementation. They must not become new workflow/WBS
 owners or leave persistent local processes behind.
+
+## Paid Claude/Codex billing suspension (2026-08-30)
+
+Owner decision: paid Claude and Codex automation remains disabled until the
+repository reaches **zero open GitHub Issues**. The repository variable
+`PAID_AI_CLAUDE_CODEX_ENABLED` is `false`, and affected workflows remain
+manually disabled while the policy change is reviewed.
+
+Every credential-bearing workflow also uses
+`.github/actions/paid-ai-policy`. Even if a workflow is re-enabled by mistake,
+it receives no Anthropic credential or OpenAI WIF configuration unless both
+conditions are proven:
+
+1. the owner manually sets `PAID_AI_CLAUDE_CODEX_ENABLED=true`; and
+2. the live GitHub search reports `is:issue is:open` count `0`.
+
+An Issue-count lookup failure is fail-closed. Reactivation is never automatic.
+`quota-monitor.yml` remains active because it reads administrative cost data
+and does not submit model inference requests.
 
 ## 📋 ワークフロー一覧
 
@@ -28,7 +49,7 @@ owners or leave persistent local processes behind.
 | **tools-hub MCP Smoke** | `tools-hub-mcp-smoke.yml` | 6時間毎 / 手動 | tools-hub MCP facade の metadata / tools/list / auth gate / optional AuthKit token smoke + schedule_task_runs記録 |
 | **NotebookLM Intake Gate** | `notebooklm-intake-gate.yml` | Daily 06:45 JST / manual | Normalize `notebooklm list --json`, deduplicate against Issues/docs, and update `docs/notebooklm-intake` for #1606 |
 | **Dependency Audit** | `dependency-audit.yml` | 毎週月曜 08:00 JST / 手動 | Flutter pub outdated + Deno import バージョン監査 + schedule_task_runs記録 + Job Summary |
-| **Claude Agent PR Review** | `claude-agent-review.yml` | PR (main/staging/develop) / 手動 | **Claude Managed Agents** — PR即時AIレビュー (ルール違反・EF上限・アーキテクチャ観点) |
+| **Claude Agent PR Review** | `claude-agent-review.yml` | 手動停止中 | **課金停止中** — Issues=0 + owner opt-in後のみClaude認証情報を利用 |
 | **User Feedback Resolved** | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-request` EF でリリース通知メール |
 | **Workflow Failure Handler** | `workflow-failure-handler.yml` | workflow_run: [completed] | workflow-failure Issue clustering by root-cause key, duplicate comments, and recovery auto-close |
 | **YouTube Analysis** | `youtube-analysis.yml` | 毎日 11:00 JST / 手動 | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` PR自動マージ |
@@ -52,7 +73,7 @@ owners or leave persistent local processes behind.
 | `schedule_task_runs` DB記録 | ✅ スケジュール9本 (daily-report/cs-check/ef-audit/infra-health/cron-batch/dep-audit/youtube-analysis/ci-auto-fix/ai-university-update) |
 | `$GITHUB_STEP_SUMMARY` | ✅ 全17本 |
 | `dependabot` 自動更新 | ✅ Actions + pub + pip (毎週月曜) |
-| **Claude Managed Agents 統合** | ✅ claude-agent-review.yml (`ANTHROPIC_API_KEY` 要設定) |
+| **Claude Managed Agents 統合** | ⏸ 課金停止中 (`PAID_AI_CLAUDE_CODEX_ENABLED=false`) |
 | **ユーザーフィードバックパイプライン** | ✅ feedback-issue-resolved.yml (`SUPABASE_SERVICE_ROLE_KEY` 使用) |
 | **CI失敗自動修復** | ✅ ci-auto-fix.yml (`dart fix --apply` + `dart format` + `deno fmt` → PR自動コミット) |
 | **YouTube競合分析自動化** | ✅ youtube-analysis.yml (`yt-dlp` 毎日スナップショット → TSV更新) |
@@ -183,7 +204,7 @@ Slackへデプロイ結果を通知
 - `SUPABASE_PROJECT_ID_DEV`
 - `SUPABASE_DB_PASSWORD_DEV`
 - `SUPABASE_URL_DEV`
-- `SUPABASE_ANON_KEY_DEV`
+- `SUPABASE_PUBLISHABLE_KEY_DEV`（`SUPABASE_ANON_KEY_DEV` は移行期間のfallbackのみ）
 - `FIREBASE_SERVICE_ACCOUNT_DEV`
 - `FIREBASE_PROJECT_ID`
 - `SLACK_WEBHOOK_URL` (オプション)
@@ -235,7 +256,7 @@ Development環境デプロイと同様ですが、ステージング環境向け
 - `SUPABASE_PROJECT_ID_STAGING`
 - `SUPABASE_DB_PASSWORD_STAGING`
 - `SUPABASE_URL_STAGING`
-- `SUPABASE_ANON_KEY_STAGING`
+- `SUPABASE_PUBLISHABLE_KEY_STAGING`（`SUPABASE_ANON_KEY_STAGING` は移行期間のfallbackのみ）
 - `FIREBASE_SERVICE_ACCOUNT_STAGING`
 - `FIREBASE_PROJECT_ID`
 - `SLACK_WEBHOOK_URL` (オプション)
@@ -296,7 +317,7 @@ LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
 - `SUPABASE_PROJECT_ID_PROD`
 - `SUPABASE_DB_PASSWORD_PROD`
 - `SUPABASE_URL_PROD`
-- `SUPABASE_ANON_KEY_PROD`
+- `SUPABASE_PUBLISHABLE_KEY_PROD`（`SUPABASE_ANON_KEY_PROD` は移行期間のfallbackのみ）
 - `FIREBASE_SERVICE_ACCOUNT_PROD`
 - `FIREBASE_PROJECT_ID`
 - `SLACK_WEBHOOK_URL` (オプション)

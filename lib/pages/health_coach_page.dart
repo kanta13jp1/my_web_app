@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// ヘルスコーチ — Liven 対抗
 /// lifestyle-hub (fitness.* / meal.* / recipe.*) 連携
@@ -11,7 +12,13 @@ class HealthCoachPage extends StatefulWidget {
 }
 
 class _HealthCoachPageState extends State<HealthCoachPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TabRouteUrlSync {
+  @override
+  List<String> get tabUrlSlugs => const <String>['summary', 'meals', 'advice'];
+
+  @override
+  TabController get tabUrlController => _tabController;
+
   final _supabase = Supabase.instance.client;
 
   bool _isLoading = false;

@@ -9,6 +9,7 @@ class PrivacyPolicyPage extends StatefulWidget {
   const PrivacyPolicyPage({super.key, this.showBackButton = true});
 
   static const assetPath = 'assets/legal/privacy_policy.md';
+  static const aiDataMapAssetPath = 'assets/legal/ai_data_handling_map.md';
 
   final bool showBackButton;
 
@@ -17,9 +18,15 @@ class PrivacyPolicyPage extends StatefulWidget {
 }
 
 class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
-  late final Future<String> _policy = rootBundle.loadString(
-    PrivacyPolicyPage.assetPath,
-  );
+  late final Future<String> _policy = _loadPolicyWithAiDataMap();
+
+  Future<String> _loadPolicyWithAiDataMap() async {
+    final documents = await Future.wait([
+      rootBundle.loadString(PrivacyPolicyPage.aiDataMapAssetPath),
+      rootBundle.loadString(PrivacyPolicyPage.assetPath),
+    ]);
+    return '${documents[0].trim()}\n\n---\n\n${documents[1].trim()}';
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -38,6 +38,7 @@ import {
   getFalQueueRequestResult,
   getFalQueueRequestStatus,
   isFalExhaustedBalanceError,
+  resolveFalApiKey,
   submitFalTextToVideoJob,
 } from "./fal_video.ts";
 import {
@@ -53,13 +54,14 @@ import {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Max-Age": "86400",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
-const FAL_KEY = Deno.env.get("FAL_KEY") ?? "";
+// FAL_KEY / FAL_API_KEY のどちらで登録されていても解決する (詳細は fal_video.ts)。
+const FAL_KEY = resolveFalApiKey((name) => Deno.env.get(name));
 // type=cinematic_video 用の fal.ai text-to-video モデル。secret で
 // Veo/Kling/Seedance 等の任意の fal ホストモデルへ差し替え可能。
 const FAL_TEXT_TO_VIDEO_MODEL = Deno.env.get("FAL_TEXT_TO_VIDEO_MODEL") ??
@@ -559,7 +561,7 @@ serve(async (req) => {
       videoProvider = `fal:${FAL_TEXT_TO_VIDEO_MODEL}`;
       if (!FAL_KEY) {
         videoStatus = "fallback_text";
-        videoReason = "FAL_KEY not configured";
+        videoReason = "FAL_KEY / FAL_API_KEY not configured";
       } else {
         try {
           let falRequestId = firstNonEmptyString(body.falRequestId);

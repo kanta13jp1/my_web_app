@@ -16,7 +16,10 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'assets/data/tiger_*'
   workflow_dispatch:
+
+permissions: {}
 
 concurrency:
   group: deploy-dev
@@ -57,17 +60,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
 
       - name: Cache Flutter pub
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -79,7 +82,7 @@ jobs:
 
       # Supabase Migration (Development)
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v3
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
         with:
           version: 2.84.2
 
@@ -99,15 +102,28 @@ jobs:
         continue-on-error: false  # Database migrations must ALWAYS succeed (hard fail)
 
       # Build Flutter Web
+      - name: Validate Flutter Supabase configuration
+        run: python scripts/validate_flutter_supabase_env.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_ANON_KEY_DEV }}
+
       - name: Build Flutter Web (Development)
         run: >
           flutter build web --release
           --pwa-strategy=none
           --dart-define=ENVIRONMENT=development
+          --dart-define=SUPABASE_URL=$SUPABASE_URL
+          --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_DEV }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_ANON_KEY_DEV }}
+
+      - name: Render public Supabase URL into web shell
+        run: python scripts/render_web_supabase_config.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
 
       - name: Verify build output
         run: |
@@ -119,7 +135,7 @@ jobs:
           ls -la build/web
 
       - name: Setup Node for Firebase CLI
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "24"
           cache: npm
@@ -183,10 +199,11 @@ jobs:
             echo "| Firebase channel | dev |"
             echo "| URL | https://my-web-app-b67f4--dev.web.app |"
             echo ""
-            echo "**Actor**: ${{ github.actor }} | **Branch**: \`${{ github.ref_name }}\`"
+            echo "**Actor**: $GITHUB_ACTOR | **Branch**: \`$GITHUB_REF_NAME\`"
           } >> $GITHUB_STEP_SUMMARY
 
   notify:
+    timeout-minutes: 5
     name: Notify Deployment Status
     runs-on: ubuntu-latest
     needs: deploy
@@ -198,7 +215,7 @@ jobs:
     steps:
       - name: Get commit message
         id: get_commit_message
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const commit = await github.rest.repos.getCommit({
@@ -227,7 +244,7 @@ jobs:
       - name: Notify Slack on success
         if: needs.deploy.result == 'success'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
@@ -285,7 +302,7 @@ jobs:
       - name: Notify Slack on failure
         if: needs.deploy.result == 'failure'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
@@ -332,7 +349,7 @@ jobs:
       - name: Comment on commit
         if: needs.deploy.result == 'success'
         continue-on-error: true  # contents: read では失敗する場合があるため
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const deployUrl = process.env.DECODED_URL;

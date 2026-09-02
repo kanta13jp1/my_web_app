@@ -18,6 +18,7 @@ class FirstUserGrowthAttribution {
     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   );
   static final RegExp _tokenPattern = RegExp(r'^[a-z0-9_-]{1,64}$');
+  static const Set<String> supportedSources = <String>{'x', 'zenn'};
 
   final String visitorId;
   final String utmSource;
@@ -36,7 +37,7 @@ class FirstUserGrowthAttribution {
     final source = _token(params['utm_source']);
     final campaign = _token(params['utm_campaign']);
     if (!_visitorIdPattern.hasMatch(normalizedVisitorId) ||
-        source != 'x' ||
+        !supportedSources.contains(source) ||
         campaign != 'first_user_growth') {
       return null;
     }
@@ -67,7 +68,7 @@ class FirstUserGrowthAttribution {
       json['captured_at']?.toString() ?? '',
     )?.toUtc();
     if (!_visitorIdPattern.hasMatch(visitorId) ||
-        source != 'x' ||
+        !supportedSources.contains(source) ||
         campaign != 'first_user_growth' ||
         !_tokenPattern.hasMatch(medium) ||
         !_tokenPattern.hasMatch(content) ||
@@ -121,10 +122,18 @@ class GrowthAcquisitionService {
   static const String touchLanding = 'touch_landing';
   static const String touchProfile = 'touch_profile';
   static const String touchXFirstUserGrowth = 'touch_x_first_user_growth';
+  static const String touchZennFirstUserGrowth = 'touch_zenn_first_user_growth';
   static const String touchImport = 'touch_import';
   static const String touchPublicMemo = 'touch_public_memo';
   static const String touchReferral = 'touch_referral';
   static const String touchComparison = 'touch_comparison';
+
+  /// R24: 公開データトラッカー (例 `/public/local-election-700`) への着地。
+  /// 実測 (X analytics 2026-04-27〜07-25 / 350 投稿) では、サイトへの URL
+  /// クリック 304 件のうち 286 件 (94%) がこの公開トラッカーへ着地していた。
+  /// これまで着地点にプロダクト導線も計測もなく、最大の流入がそのまま
+  /// 行き止まりになっていたため、専用のタッチポイントとして計上する。
+  static const String touchPublicTracker = 'touch_public_tracker';
 
   static const String importPreviewNotion = 'import_preview_notion';
   static const String importPreviewEvernote = 'import_preview_evernote';
@@ -132,15 +141,31 @@ class GrowthAcquisitionService {
 
   static const String importSignupCta = 'import_signup_cta';
   static const String publicMemoSignupCta = 'public_memo_signup_cta';
+  static const String publicTrackerSignupCta = 'public_tracker_signup_cta';
 
   static const String signupSubmitLanding = 'signup_submit_landing';
   static const String signupSubmitProfile = 'signup_submit_profile';
   static const String signupSubmitXFirstUserGrowth =
       'signup_submit_x_first_user_growth';
+  static const String signupSubmitZennFirstUserGrowth =
+      'signup_submit_zenn_first_user_growth';
   static const String signupSubmitImport = 'signup_submit_import';
   static const String signupSubmitPublicMemo = 'signup_submit_public_memo';
   static const String signupSubmitReferral = 'signup_submit_referral';
   static const String signupSubmitComparison = 'signup_submit_comparison';
+  static const String signupSubmitPublicTracker =
+      'signup_submit_public_tracker';
+
+  static const String funnelBillingView = 'funnel_billing_view';
+  static const String funnelUpgradeClick = 'funnel_upgrade_click';
+  static const String funnelCheckoutSuccess = 'funnel_checkout_success';
+  static const String funnelCheckoutCancel = 'funnel_checkout_cancel';
+  static const Set<String> billingFunnelStages = <String>{
+    funnelBillingView,
+    funnelUpgradeClick,
+    funnelCheckoutSuccess,
+    funnelCheckoutCancel,
+  };
 
   static const String _latestTouchpointKey = 'growth_latest_touchpoint';
   static const String _latestTouchpointUpdatedAtKey =
@@ -165,9 +190,8 @@ class GrowthAcquisitionService {
 
   final SupabaseClient? _clientOverride;
 
-  const GrowthAcquisitionService({
-    SupabaseClient? clientOverride,
-  }) : _clientOverride = clientOverride;
+  const GrowthAcquisitionService({SupabaseClient? clientOverride})
+      : _clientOverride = clientOverride;
 
   SupabaseClient? get _client {
     if (_clientOverride != null) {
@@ -195,6 +219,10 @@ class GrowthAcquisitionService {
       case '/public-memo':
       case '/public-memos':
         return touchPublicMemo;
+      // 公開トラッカーは UTM 無しの生 URL で共有されてきた実績があるため、
+      // ルートパスからも必ず計上する (UTM 付き着地は utm 側の判定が優先)。
+      case '/public/local-election-700':
+        return touchPublicTracker;
       case '/referral':
         return touchReferral;
       default:
@@ -204,13 +232,18 @@ class GrowthAcquisitionService {
 
   static bool isFirstUserGrowthUri(Uri uri) {
     final params = uri.queryParameters;
-    return _lowerParam(params, 'utm_source') == 'x' &&
+    return FirstUserGrowthAttribution.supportedSources.contains(
+          _lowerParam(params, 'utm_source'),
+        ) &&
         _lowerParam(params, 'utm_campaign') == 'first_user_growth';
   }
 
   static String? signalForIncomingUri(Uri uri) {
     if (!isFirstUserGrowthUri(uri)) {
       return null;
+    }
+    if (_lowerParam(uri.queryParameters, 'utm_source') == 'zenn') {
+      return touchZennFirstUserGrowth;
     }
     switch (_lowerParam(uri.queryParameters, 'utm_medium')) {
       case 'profile':
@@ -239,6 +272,8 @@ class GrowthAcquisitionService {
         return signupSubmitProfile;
       case touchXFirstUserGrowth:
         return signupSubmitXFirstUserGrowth;
+      case touchZennFirstUserGrowth:
+        return signupSubmitZennFirstUserGrowth;
       case touchImport:
         return signupSubmitImport;
       case touchPublicMemo:
@@ -247,6 +282,8 @@ class GrowthAcquisitionService {
         return signupSubmitReferral;
       case touchComparison:
         return signupSubmitComparison;
+      case touchPublicTracker:
+        return signupSubmitPublicTracker;
       default:
         return signupSubmitLanding;
     }
@@ -311,9 +348,26 @@ class GrowthAcquisitionService {
     await _recordSignal(publicMemoSignupCta);
   }
 
+  /// 公開トラッカーの着地ページに置いた「本体を試す」CTA の押下を記録する。
+  Future<void> recordPublicTrackerSignUpCta() async {
+    await _persistLatestTouchpoint(touchPublicTracker);
+    await _recordSignal(publicTrackerSignupCta);
+  }
+
   Future<void> recordLandingSignupSubmit() async {
     final latestTouchpoint = await loadLatestTouchpoint();
     await _recordSignal(resolveSignupSubmitSignal(latestTouchpoint));
+  }
+
+  Future<void> recordBillingFunnelStage({required String stage}) async {
+    if (!billingFunnelStages.contains(stage)) {
+      throw ArgumentError.value(
+        stage,
+        'stage',
+        'Unsupported billing funnel stage',
+      );
+    }
+    await _recordSignal(stage);
   }
 
   Future<bool> recordFirstUserFunnelStage({
@@ -347,7 +401,7 @@ class GrowthAcquisitionService {
         jsonEncode(attribution.toJson()),
       );
     } else {
-      // A direct/non-campaign LP visit must not inherit an older X campaign.
+      // A direct/non-campaign LP visit must not inherit an older campaign.
       // Post-auth activation and billing routes intentionally load the stored
       // seven-day attribution because auth redirects strip the original UTM.
       if (_landingFirstUserFunnelStages.contains(stage)) {
@@ -412,9 +466,7 @@ class GrowthAcquisitionService {
     return attribution;
   }
 
-  Future<void> notifySignupSuccess({
-    required String? signupUserId,
-  }) async {
+  Future<void> notifySignupSuccess({required String? signupUserId}) async {
     final userId = signupUserId?.trim();
     if (userId == null || userId.isEmpty) {
       return;
@@ -462,10 +514,7 @@ class GrowthAcquisitionService {
     }
   }
 
-  Future<void> _recordSignal(
-    String signalKey, {
-    DateTime? now,
-  }) async {
+  Future<void> _recordSignal(String signalKey, {DateTime? now}) async {
     final client = _client;
     if (client == null) {
       return;
@@ -490,54 +539,7 @@ class GrowthAcquisitionService {
         'Growth acquisition signal returned an unexpected payload: $payload',
       );
     } catch (error, stackTrace) {
-      debugPrint('Growth acquisition signal fallback activated: $error');
-      debugPrintStack(stackTrace: stackTrace);
-    }
-
-    await _recordSignalFallback(
-      signalKey: signalKey,
-      dateKey: dateKey,
-    );
-  }
-
-  Future<void> _recordSignalFallback({
-    required String signalKey,
-    required String dateKey,
-  }) async {
-    final client = _client;
-    if (client == null) {
-      return;
-    }
-
-    try {
-      final existing = await client
-          .from('app_analytics')
-          .select(
-            'date, landing_views, conversions, share_count, source_details',
-          )
-          .eq('date', dateKey)
-          .maybeSingle();
-
-      if (existing == null) {
-        await client.from('app_analytics').upsert(<String, dynamic>{
-          'date': dateKey,
-          'landing_views': 0,
-          'conversions': 0,
-          'share_count': 0,
-          'source_details': <String, int>{signalKey: 1},
-        });
-        return;
-      }
-
-      final row = _asMap(existing);
-      final sourceDetails = _normalizeSourceDetails(row['source_details'])
-        ..update(signalKey, (count) => count + 1, ifAbsent: () => 1);
-
-      await client.from('app_analytics').update(<String, dynamic>{
-        'source_details': sourceDetails,
-      }).eq('date', dateKey);
-    } catch (error, stackTrace) {
-      debugPrint('Growth acquisition fallback failed: $error');
+      debugPrint('Growth acquisition signal failed: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
   }
@@ -550,34 +552,6 @@ class GrowthAcquisitionService {
       return Map<String, dynamic>.from(value);
     }
     return <String, dynamic>{};
-  }
-
-  Map<String, int> _normalizeSourceDetails(dynamic raw) {
-    if (raw is! Map) {
-      return <String, int>{};
-    }
-
-    final result = <String, int>{};
-    raw.forEach((key, value) {
-      final count = _toInt(value);
-      if (count > 0) {
-        result[key.toString()] = count;
-      }
-    });
-    return result;
-  }
-
-  int _toInt(dynamic value) {
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
-    return 0;
   }
 
   String _formatDate(DateTime date) {

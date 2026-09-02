@@ -547,6 +547,8 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Scale AI',
     status: AiProviderStatus.notImplemented,
     tier: AiProviderTier.premium,
+    entryPoint: 'https://scale.com/',
+    note: r'Data labeling to enterprise AI — RLHF supply / Scale Donovan (DoD)',
   ),
   AiProviderEntry(
     id: 'poolside',
@@ -882,7 +884,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Baseten',
     status: AiProviderStatus.notImplemented,
     tier: AiProviderTier.performance,
-    entryPoint: '(未実装 — 本番モデルデプロイ基盤)',
+    entryPoint: 'https://www.baseten.co/',
     note: '本番向け AI モデルデプロイメント基盤 (Truss + GPU autoscale)',
   ),
   AiProviderEntry(
@@ -1309,22 +1311,6 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://www.runpod.io/',
     note:
         r'格安 GPU マーケットプレイス — RTX3090 $0.19/h / Serverless 200ms CS / 30+ GPU SKU / 秒課金',
-  ),
-  AiProviderEntry(
-    id: 'scale_ai',
-    displayName: 'Scale AI',
-    status: AiProviderStatus.notImplemented,
-    entryPoint: 'https://scale.com/',
-    note:
-        r'データラベリング→Enterprise AI — RLHF供給 / Scale Donovan (DoD) / $13.8B / $1B+ 売上 / Alexandr Wang',
-  ),
-  AiProviderEntry(
-    id: 'baseten',
-    displayName: 'Baseten',
-    status: AiProviderStatus.notImplemented,
-    entryPoint: 'https://www.baseten.co/',
-    note:
-        r'ML推論インフラ — Chains SDK / OpenAI互換50%安 / Series E $5B / Nvidia $150M投資 / Blackwell 225%効率',
   ),
   AiProviderEntry(
     id: 'arize_ai',

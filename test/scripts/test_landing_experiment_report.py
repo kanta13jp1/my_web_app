@@ -14,8 +14,11 @@ from landing_experiment_report import (  # noqa: E402
     ReportContractError,
     build_report,
     fetch_arm_rows,
+    fetch_funnel_rows,
+    experiment_observation_window,
     parse_synthetic_offsets,
     render_markdown,
+    summarize_funnel_rows,
     validate_arm_rows,
     wilson_interval,
 )
@@ -245,6 +248,78 @@ class LandingExperimentReportTest(unittest.TestCase):
         ]
         self.assertEqual(len(hypothesis_rows), 10)
 
+    def test_reports_aggregate_signup_handoff_without_pii(self) -> None:
+        rows = fixture_rows()
+        rows[0]["first_event_at"] = "2026-07-22T01:00:00Z"
+        rows[-1]["last_event_at"] = "2026-08-19T02:00:00+00:00"
+        arms = validate_arm_rows(rows)
+        window = experiment_observation_window(arms)
+        counts = summarize_funnel_rows(
+            [
+                {
+                    "date": "2026-08-18",
+                    "source_details": {
+                        "funnel_trial_run": 3,
+                        "funnel_save_cta": 2,
+                        "funnel_magic_link_attempt": 3,
+                        "funnel_magic_link_send": 2,
+                        "funnel_magic_link_fail_delivery_config": 1,
+                        "funnel_google_oauth_start": 1,
+                        "funnel_google_oauth_fail_redirect": 1,
+                        "funnel_inbox_open": 1,
+                        "unrelated_event": 99,
+                    },
+                },
+                {
+                    "date": "2026-08-19",
+                    "source_details": {"funnel_trial_run": 1},
+                },
+            ]
+        )
+
+        report = build_report(
+            arms,
+            funnel_counts=counts,
+            funnel_observation_window=window,
+        )
+        markdown = render_markdown(report)
+
+        self.assertEqual(window, ("2026-07-22", "2026-08-19"))
+        self.assertEqual(report["funnel_diagnostics"]["trial_runs"], 4)
+        self.assertEqual(report["funnel_diagnostics"]["magic_link_attempts"], 3)
+        self.assertEqual(report["funnel_diagnostics"]["magic_link_sends"], 2)
+        self.assertEqual(
+            report["funnel_diagnostics"]["magic_link_failure_total"], 1
+        )
+        self.assertEqual(report["funnel_diagnostics"]["google_oauth_starts"], 1)
+        self.assertEqual(
+            report["funnel_diagnostics"]["google_oauth_failure_total"], 1
+        )
+        self.assertEqual(
+            report["funnel_diagnostics"]["google_oauth_failures"][
+                "redirect_configuration"
+            ],
+            1,
+        )
+        self.assertEqual(report["funnel_diagnostics"]["inbox_opens"], 1)
+        self.assertEqual(
+            report["funnel_diagnostics"]["recommended_next_action"],
+            "repair_google_oauth_callback_failure",
+        )
+        self.assertIn("Magic Link attempts: 3", markdown)
+        self.assertIn("Successful Magic Link sends: 2", markdown)
+        self.assertIn("Categorized Google OAuth callback failures: 1", markdown)
+        self.assertIn("Categorized Magic Link failures: 1", markdown)
+        self.assertIn("Google OAuth starts: 1", markdown)
+        self.assertIn("Inbox opens: 1", markdown)
+        self.assertNotIn("unrelated_event", json.dumps(report))
+
+    def test_rejects_invalid_aggregate_funnel_counts(self) -> None:
+        with self.assertRaisesRegex(ReportContractError, "must be non-negative"):
+            summarize_funnel_rows(
+                [{"source_details": {"funnel_magic_link_send": -1}}]
+            )
+
     @patch("landing_experiment_report.urllib.request.urlopen")
     def test_fetches_only_service_role_aggregate_view(self, urlopen) -> None:
         response = urlopen.return_value.__enter__.return_value
@@ -260,6 +335,32 @@ class LandingExperimentReportTest(unittest.TestCase):
         self.assertIn("landing_experiment_arm_stats", request.full_url)
         self.assertIn("unique_mobile_views", request.full_url)
         self.assertNotIn("landing_experiment_events?", request.full_url)
+        self.assertEqual(
+            request.get_header("Authorization"),
+            "Bearer service-role-test-key",
+        )
+
+    @patch("landing_experiment_report.urllib.request.urlopen")
+    def test_fetches_only_aggregate_signup_handoff_rows(self, urlopen) -> None:
+        response = urlopen.return_value.__enter__.return_value
+        response.read.return_value = json.dumps(
+            [{"date": "2026-08-19", "source_details": {}}]
+        ).encode("utf-8")
+
+        rows = fetch_funnel_rows(
+            "https://example.supabase.co",
+            "service-role-test-key",
+            start_date="2026-07-22",
+            end_date="2026-08-19",
+        )
+
+        self.assertEqual(len(rows), 1)
+        request = urlopen.call_args.args[0]
+        self.assertIn("app_analytics", request.full_url)
+        self.assertIn("source_details", request.full_url)
+        self.assertIn("gte.2026-07-22", request.full_url)
+        self.assertIn("lte.2026-08-19", request.full_url)
+        self.assertNotIn("visitor", request.full_url)
         self.assertEqual(
             request.get_header("Authorization"),
             "Bearer service-role-test-key",

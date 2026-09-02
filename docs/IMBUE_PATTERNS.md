@@ -24,6 +24,28 @@ PHILOSOPHY (what) / AI_DEV (how) / AI_CHARACTER (who) の 3 軸が揃っても�
 本サービスのミッションと完全に重なる。これを自分株式会社の機能設計に
 パターンとして注入する。
 
+## 2026-08-26 公式ソース再レビュー
+
+Imbue の現在の公式方針は、人間が AI に従属するのでなく、自分のソフトウェアと
+agent を作成・変更・制御できることを重視している。また、agent UX では
+inspectability が信頼性と同じく重要だと説明している。
+
+- [Empowering humans in the age of AI](https://ideas.imbue.com/p/empowering-humans-in-the-age-of-ai)
+- [Why AI agents don't work (yet)](https://imbue.com/blog/latent-space-imbue)
+- [Human agency vs. "agentic" AI](https://imbue.com/blog/human-agency-vs-agentic-ai-kanjun-on-the-nonzero-podcast)
+
+この再レビューでは、候補だった「Transparent Reasoning Trail」と
+「Autonomy Preservation in Automation」を独立したパターン 8 / 9 に増やさない。
+前者はパターン 6 のユーザー向け根拠要約とパターン 7 の review、後者は
+パターン 1 の最終決定権とパターン 7 の preview / approval / undo を強化する
+横断要件として扱う。これによりチェックリストを重複させず、既存の7パターンを
+後方互換のまま維持する。
+
+「透明性」は private chain-of-thought の保存・表示を意味しない。表示するのは
+ユーザーが提案を評価するための簡潔な根拠、参照情報、不確実性、想定影響である。
+また、本ドキュメントは設計契約を定めるものであり、scheduled task の確認/undo UIが
+全機能へ実装済みだとは主張しない。個別UIは feature freeze と優先順位に従って扱う。
+
 ---
 
 ## 7 パターン
@@ -143,6 +165,8 @@ moment of truth (= 行動への変換) で価値が消失する。推論結果�
   までを 1 つのフローで完結
 - AI 出力に **`actions: [{table, op, payload}]` フィールド** を必須化
   (= AI 自身が行動可能なコード/データを生成)
+- 各 action の `reasoning` は、内部思考の逐語開示ではなく、ユーザーが判断できる
+  **1-2文の根拠要約**とする。必要に応じて参照情報・不確実性・代替案を併記する
 - ユーザー確認モーダル → 承認 → service_role で INSERT (RLS 経由) → UI 反映
 - ❌ NG: AI が「では goals に 'X を達成する' を追加しましょう」とテキストで
   返し、ユーザーが手動でフォームに入力
@@ -163,6 +187,10 @@ AI 提案 = 叩き台。
 - 新機能 (ai-* / *-judgment / *-planner) は **必ず "review/edit panel"** を併設
   - パネル要件: 提案を 1 項目ずつ削除/追加/編集可能 / "シミュレーション"
     ボタンで影響予測表示 / "適用" ボタンでパターン 6 の DB INSERT 発火
+- 自動化された理由、変更対象、適用前後の差分、想定影響を apply 前にpreviewする
+- cancelを常に提供し、可逆な変更にはundo、不可逆な変更には明示的な再確認と
+  compensating action（復旧手順）を用意する
+- 誰が・いつ・どの根拠を確認して適用したかをaudit trailへ残す
 - AI 出力をいきなり apply しない。**review → edit → simulate → apply** の
   4 段階を経由
 - 既存 ai-assistant 出力もこのフローに統一 (legacy "送信ボタンですぐ適用" を廃止)
@@ -181,8 +209,8 @@ AI 提案 = 叩き台。
 - [ ] **パターン 3 (Scaling laws)**: 新習慣/目標は小規模実験 → 拡大パス予測の 2 段階か?
 - [ ] **パターン 4 (Sanitized data)**: 曖昧入力に明確化プロンプトを返す UI があるか?
 - [ ] **パターン 5 (Anti-vanity)**: 評価指標が件数/連続日数でなく質を測っているか?
-- [ ] **パターン 6 (Reasoning→DB)**: AI 出力に `actions[]` (table/op/payload) を含むか?
-- [ ] **パターン 7 (Sculptor UI)**: review → edit → simulate → apply の 4 段階を経由するか?
+- [ ] **パターン 6 (Reasoning→DB)**: `actions[]` とユーザー向け根拠要約を含むか?
+- [ ] **パターン 7 (Sculptor UI)**: review → edit → simulate → apply と cancel/undoを経由するか?
 
 合計 7 項目中:
 - 6+ ✅ → 即実装可
@@ -246,3 +274,4 @@ AI 提案 = 叩き台。
 | 日付 | 変更 |
 | --- | --- |
 | 2026-04-27 | 初版 (NotebookLM `2fc6d86f-2bbd-4fdc-ad9e-f302d93b5c6e` から蒸留) |
+| 2026-08-26 | Imbue公式方針を再確認し、根拠要約・preview・cancel/undo・audit要件を既存パターン 6/7へ統合 |
