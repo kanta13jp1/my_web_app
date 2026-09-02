@@ -2145,15 +2145,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           state.annualRateEvidences,
         );
         _monthlyPaidAccountNames = Set<String>.from(state.paidAccountNames);
-        _billingConfirmedAccountIds = Set<String>.from(
+        final autoReconciledBillingConfirmed = Set<String>.from(
           state.billingConfirmedAccountIds,
         );
-        _paymentSourceAccountIds = Map<String, String>.from(
-          state.paymentSourceAccountIds,
-        );
-        _cardBillingAccountIds = Map<String, String>.from(
-          state.cardBillingAccountIds,
-        );
+        for (final paidName in state.paidAccountNames) {
+          final trimmed = paidName.trim();
+          autoReconciledBillingConfirmed.add(paidName);
+          autoReconciledBillingConfirmed.add(trimmed);
+          autoReconciledBillingConfirmed.add(trimmed.toLowerCase());
+        }
+        for (final entry in state.actualPaymentAmounts.entries) {
+          if (entry.value > 0) {
+            autoReconciledBillingConfirmed.add(entry.key);
+          }
+        }
+        _billingConfirmedAccountIds = autoReconciledBillingConfirmed;
+        _paymentSourceAccountIds = <String, String>{
+          ...defaultSources,
+          ...state.paymentSourceAccountIds,
+        };
+        _cardBillingAccountIds = <String, String>{
+          ...defaultCardBillingAccounts,
+          ...state.cardBillingAccountIds,
+        };
         _cardStatementLines = List<AssetLiabilityCardStatementLine>.from(
           state.cardStatementLines,
         );
