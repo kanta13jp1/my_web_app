@@ -20,7 +20,9 @@ void main() {
       final transactions = _createTableBlock(sql, 'mf_transactions');
 
       expect(
-          accounts, contains('id uuid primary key default gen_random_uuid()'));
+        accounts,
+        contains('id uuid primary key default gen_random_uuid()'),
+      );
       expect(
         accounts,
         contains(
@@ -61,8 +63,10 @@ void main() {
           '    references public.mf_accounts (user_id, mf_account_id)',
         ),
       );
-      expect(transactions,
-          contains("check (jsonb_typeof(raw_payload) = 'object')"));
+      expect(
+        transactions,
+        contains("check (jsonb_typeof(raw_payload) = 'object')"),
+      );
     });
 
     test('adds owner-first indexes for sync freshness and transaction reads',
@@ -140,7 +144,8 @@ void main() {
         expect(
           sql,
           contains(
-              'create or replace function public.set_${table}_updated_at()'),
+            'create or replace function public.set_${table}_updated_at()',
+          ),
         );
         expect(sql, contains('create trigger ${table}_updated_at'));
         expect(
