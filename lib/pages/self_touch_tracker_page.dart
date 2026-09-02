@@ -383,8 +383,11 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.health_and_safety_outlined,
-                        size: 40, color: cs.primary),
+                    Icon(
+                      Icons.health_and_safety_outlined,
+                      size: 40,
+                      color: cs.primary,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       _disclosure.title,

@@ -79,7 +79,7 @@ void main() {
       ),
       isNotNull,
     );
-    expect(find.text('医療上の診断・治療ではありません'), oneWidget);
-    expect(find.textContaining('厚生労働省'), oneWidget);
+    expect(find.text('医療上の診断・治療ではありません'), findsOneWidget);
+    expect(find.textContaining('厚生労働省'), findsOneWidget);
   });
 }
