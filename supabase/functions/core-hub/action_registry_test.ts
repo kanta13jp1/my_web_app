@@ -14,7 +14,6 @@ const EXPECTED_ACTIONS: Record<CoreHubAuthPolicy, string[]> = {
     "memo.public.view",
     "memo.react.list",
     "memo.react.toggle",
-    "page.share_generate",
   ],
   service_role: [
     "design.audit.upsert",
@@ -48,6 +47,7 @@ const EXPECTED_ACTIONS: Record<CoreHubAuthPolicy, string[]> = {
     "notification.mark_all",
     "notification.mark_read",
     "notify.feature",
+    "page.share_generate",
     "ogp.fetch",
     "onboarding.complete",
     "onboarding.get",
