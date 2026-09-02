@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-09-02T16:59:43.968165+00:00",
+  "generated_at": "2026-09-02T20:31:43.319819+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 24,
-    "eligible": 24,
-    "provisional": 22,
+    "total": 25,
+    "eligible": 25,
+    "provisional": 23,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 23,
+    "division_3": 24,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,27 +28,27 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260903T014418+0900",
-    "started_at": "2026-09-03T01:44:18+09:00",
+    "cycle_id": "20260903T052534+0900",
+    "started_at": "2026-09-03T05:25:34+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-183e7514-c5ac-487f-a78a-ddbbcbbd1088",
-      "url": "https://aleph-alpha.com/"
+      "slug": "course-40980f39-5721-42f4-b08f-5b9483eb1671",
+      "url": "https://docs.aleph-alpha.com/docs/introduction/getting-started/"
     },
     "reviewer": {
-      "seat": 12,
-      "name": "迫 佑樹",
-      "selection_score": 73.3644,
+      "seat": 9,
+      "name": "平出 心",
+      "selection_score": 71.6958,
       "division": 1,
-      "cycle_utility": 83.25,
-      "aggregate_utility": 85.38
+      "cycle_utility": 93.33,
+      "aggregate_utility": 90.9
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "The Aleph Alpha overview course has no public learner, outcome, verification, source-evidence, or freshness contract",
+        "summary": "API入門なのに対象開発者、観察可能な初回成果、確認方法、根拠URL、確認日時がすべて未設定",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -57,21 +57,21 @@
         ]
       },
       {
-        "summary": "The generic overview does not turn Aleph Alpha's differentiated positioning into a verifiable first decision",
+        "summary": "設定済みgetting-started URLがAPI手順ではなくPhariaAI HOMEへ転送され、講座タイトルの約束を検証できない",
         "severity": "p1",
         "business_dimensions": [
-          "market_demand",
-          "competitive_advantage",
-          "unit_economics"
+          "trust_risk",
+          "customer_pain",
+          "competitive_advantage"
         ]
       },
       {
-        "summary": "No real learner outcome evidence is available for the Aleph Alpha overview course",
+        "summary": "公開UIで確認できるAleph Alpha固有評価はAtMan名称の再生問題で、API入門の実行能力を証明しない",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
-          "scalability",
-          "trust_risk"
+          "unit_economics",
+          "customer_pain"
         ]
       }
     ],
@@ -90,56 +90,146 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After the production-data owner publishes all five evidence fields and one sourced decision lab, run one cohort and compare artifact submission, rubric score, citation quality, decision confidence, support contacts, continuation, and workplace reuse."
+      "next_cycle_experiment": "After a curator verifies the current official API path and publishes a credential-safe first-request fixture, compare source reachability, task start, valid request construction, completion time, support contacts, and follow-on conversion for four weeks."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5253",
-      "detail": "The findings require changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+      "label": "対策待ち・Issue #5279",
+      "detail": "The required source correction and course evidence contract mutate production course data and need curator verification of current provider documentation; they are outside the bounded automatic repair boundary.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
-      "resolved_finding_ids": [
-        "course-aleph-alpha-decision-path-gap"
-      ],
+      "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch fast-forwarded to origin/main c397877425b046c27aacf8cd85791a15124bc881",
+        "passed: clean dedicated branch at origin/main 3df2211b9efac8354cbf228552fcd4deb611b029",
         "passed: 125 roster profiles and 125 personas",
         "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
-        "executed once successfully: Aleph Alpha overview selected from fresh catalog",
+        "executed once successfully: Aleph Alpha API introduction selected from 538 eligible courses",
         "passed: no comparable baseline, focus_dimension=evidence",
-        "passed: HTTP 200 official Aleph Alpha positioning and customer examples inspected separately; no matching tracked course row found in lib or test",
-        "executed once successfully with course-history scope: 125 profiles, seat 12"
+        "passed: configured URL redirected to PhariaAI HOME; evidence-contract fields absent; provider quiz and display logic inspected",
+        "executed once successfully against shared history: 125 profiles, seat 9"
       ],
       "issue": {
-        "number": 5253,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5253",
+        "number": 5279,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5279",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260903T014418+0900:183e7514-c5ac-487f-a78a-ddbbcbbd1088",
+        "dedupe_key": "tiger-course-review:20260903T052534+0900:40980f39-5721-42f4-b08f-5b9483eb1671",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-aleph-alpha-missing-evidence-contract",
-        "course-aleph-alpha-learner-outcome-gap"
+        "course-aleph-alpha-api-evidence-contract-gap",
+        "course-aleph-alpha-api-source-redirect-gap",
+        "course-aleph-alpha-api-assessment-mismatch"
       ]
     },
     "course": {
-      "content_id": "183e7514-c5ac-487f-a78a-ddbbcbbd1088",
+      "content_id": "40980f39-5721-42f4-b08f-5b9483eb1671",
       "provider": "aleph_alpha",
-      "title": "Aleph Alpha 概要",
-      "source_url": "https://aleph-alpha.com/",
-      "reason": "The fresh public catalog proves that the selected Aleph Alpha overview course is active and links to a reachable official company source, but all five evidence-contract fields are null. The current official homepage describes sovereign, domain-specialized models, custom evaluation, European infrastructure, production co-building, and measurable customer examples. The public course nevertheless defines no target learner, concrete decision, assessed artifact, dated evidence source, or real learner result. Learner evidence is therefore disclosed at the neutral score of 50.",
-      "cycle_utility": 44.75,
-      "aggregate_utility": 44.75,
+      "title": "Aleph Alpha API 入門",
+      "source_url": "https://docs.aleph-alpha.com/docs/introduction/getting-started/",
+      "reason": "The fresh public catalog proves that the selected Aleph Alpha API introduction is active, but all five evidence-contract fields are null. Its configured official getting-started URL redirects to the broad PhariaAI HOME documentation root, and the named course UI source provides only a provider-level AtMan recall quiz rather than a verified first request. Practical actionability, source freshness, and learning clarity are therefore weak; no learner outcome evidence was available, so learner evidence remains neutral at 50.",
+      "cycle_utility": 35.8,
+      "aggregate_utility": 35.8,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260903T052534+0900",
+      "started_at": "2026-09-03T05:25:34+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "40980f39-5721-42f4-b08f-5b9483eb1671",
+        "title": "Aleph Alpha API 入門",
+        "url": "https://docs.aleph-alpha.com/docs/introduction/getting-started/"
+      },
+      "reviewer": {
+        "seat": 9,
+        "name": "平出 心",
+        "selection_score": 71.6958
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After a curator verifies the current official API path and publishes a credential-safe first-request fixture, compare source reachability, task start, valid request construction, completion time, support contacts, and follow-on conversion for four weeks."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aleph-alpha-api-evidence-contract-gap",
+          "summary": "API入門なのに対象開発者、観察可能な初回成果、確認方法、根拠URL、確認日時がすべて未設定",
+          "severity": "p1",
+          "suggested_action": "現行PhariaAIの公式API資料を人手で確定し、対象者、前提、最小リクエスト、期待レスポンス、検証手順、根拠URL、確認日時の5項目を一括公開する。"
+        },
+        {
+          "finding_id": "course-aleph-alpha-api-source-redirect-gap",
+          "summary": "設定済みgetting-started URLがAPI手順ではなくPhariaAI HOMEへ転送され、講座タイトルの約束を検証できない",
+          "severity": "p1",
+          "suggested_action": "Aleph Alphaの現行公式資料で安定したAPI開始ページを確認し、講座内の全手順・モデル名・認証方式をその版に合わせ、リンク切れを定期検証する。"
+        },
+        {
+          "finding_id": "course-aleph-alpha-api-assessment-mismatch",
+          "summary": "公開UIで確認できるAleph Alpha固有評価はAtMan名称の再生問題で、API入門の実行能力を証明しない",
+          "severity": "p2",
+          "suggested_action": "秘密情報を入力させない固定fixtureまたは公式sandboxで、リクエスト構造、期待レスポンス、代表エラー、利用継続のgo/no-goメモを採点する課題へ置き換える。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5279",
+        "detail": "The required source correction and course evidence contract mutate production course data and need curator verification of current provider documentation; they are outside the bounded automatic repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main 3df2211b9efac8354cbf228552fcd4deb611b029",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
+          "executed once successfully: Aleph Alpha API introduction selected from 538 eligible courses",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: configured URL redirected to PhariaAI HOME; evidence-contract fields absent; provider quiz and display logic inspected",
+          "executed once successfully against shared history: 125 profiles, seat 9"
+        ],
+        "issue": {
+          "number": 5279,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5279",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260903T052534+0900:40980f39-5721-42f4-b08f-5b9483eb1671",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aleph-alpha-api-evidence-contract-gap",
+          "course-aleph-alpha-api-source-redirect-gap",
+          "course-aleph-alpha-api-assessment-mismatch"
+        ]
+      }
+    },
     {
       "cycle_id": "20260903T014418+0900",
       "started_at": "2026-09-03T01:44:18+09:00",
@@ -155,7 +245,7 @@
         "name": "迫 佑樹",
         "selection_score": 73.3644
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -196,9 +286,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5253",
-        "detail": "The findings require changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5253 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -219,13 +309,21 @@
           "number": 5253,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5253",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260903T014418+0900:183e7514-c5ac-487f-a78a-ddbbcbbd1088",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "689262b3e47a8fe8661a8dd14bd1a8c2e6a11341",
+          "workflow_run": "33658559238",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33658559238/job/100343322833",
+          "pr_number": 5254,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5254",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-aleph-alpha-missing-evidence-contract",
           "course-aleph-alpha-learner-outcome-gap"
@@ -247,7 +345,7 @@
         "name": "戸村 光",
         "selection_score": 77.3157
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -288,9 +386,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5227",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5227 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -311,13 +409,21 @@
           "number": 5227,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5227",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "f7d45fba21d8366680ecad2dbb34eb21edfccd4f",
+          "workflow_run": "33650190827",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33650190827/job/100315105541",
+          "pr_number": 5245,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5245",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-aider-model-selection-missing-evidence-contract",
           "course-aider-model-selection-learner-outcome-gap"
@@ -339,7 +445,7 @@
         "name": "戸村 光",
         "selection_score": 76.4431
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -380,9 +486,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5165",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5165 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -403,13 +509,21 @@
           "number": 5165,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5165",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260831T211401+0900:2240c679-a2bc-4322-8643-7499385a1bde",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "c397877425b046c27aacf8cd85791a15124bc881",
+          "workflow_run": "33656480182",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33656480182/job/100336507252",
+          "pr_number": 5250,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5250",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-aider-multi-file-git-lab-gap",
           "course-aider-learner-outcome-gap"
@@ -431,7 +545,7 @@
         "name": "戸村 光",
         "selection_score": 77.1966
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -472,9 +586,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5160",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5160 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -495,13 +609,21 @@
           "number": 5160,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5160",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260831T170208+0900:0ee90f87-2319-4b2f-af0f-d298083c752c",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "c397877425b046c27aacf8cd85791a15124bc881",
+          "workflow_run": "33656480182",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33656480182/job/100336507252",
+          "pr_number": 5250,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5250",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-aider-verifiable-git-workflow-gap",
           "course-aider-learner-outcome-gap"
@@ -523,7 +645,7 @@
         "name": "戸村 光",
         "selection_score": 76.1036
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -570,9 +692,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5157",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5157 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -593,13 +715,21 @@
           "number": 5157,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5157",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260831T134103+0900:9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "ea9722f907ebbd4ee13e55e0c73027562fcdfb61",
+          "workflow_run": "33657491204",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33657491204/job/100339754176",
+          "pr_number": 5251,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5251",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-ai21-overview-decision-lab-gap",
           "course-ai21-overview-evidence-contract-gap",
@@ -622,7 +752,7 @@
         "name": "迫 佑樹",
         "selection_score": 79.4436
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -669,9 +799,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5150",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5150 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -692,13 +822,21 @@
           "number": 5150,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5150",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260831T061237+0900:5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "ea9722f907ebbd4ee13e55e0c73027562fcdfb61",
+          "workflow_run": "33657491204",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33657491204/job/100339754176",
+          "pr_number": 5251,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5251",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-ai21-model-decision-rubric-gap",
           "course-ai21-cost-quality-verification-gap",
@@ -721,7 +859,7 @@
         "name": "迫 佑樹",
         "selection_score": 79.7131
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -768,9 +906,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5144",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5144 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -791,13 +929,21 @@
           "number": 5144,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5144",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260831T033107+0900:363d108c-37e3-4bb5-a4a2-a34f65416938",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "689262b3e47a8fe8661a8dd14bd1a8c2e6a11341",
+          "workflow_run": "33658559238",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33658559238/job/100343322833",
+          "pr_number": 5254,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5254",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-ai21-reproducible-lab-gap",
           "course-ai21-pricing-evidence-gap",
@@ -820,7 +966,7 @@
         "name": "平出 心",
         "selection_score": 72.6763
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -867,9 +1013,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5142",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5142 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -890,13 +1036,21 @@
           "number": 5142,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5142",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260831T030006+0900:6dba658f-c89c-4a8e-86c6-750c26d51fa2",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "71a621ea9fac2526170b3c56ae19bcaca49471c3",
+          "workflow_run": "33659559471",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33659559471/job/100346577094",
+          "pr_number": 5255,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5255",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-agno-architecture-decision-gap",
           "course-agno-verification-gap",
@@ -919,7 +1073,7 @@
         "name": "迫 佑樹",
         "selection_score": 72.1282
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -966,9 +1120,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5126",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5126 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -989,13 +1143,21 @@
           "number": 5126,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5126",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260830T230009+0900:41283504-615b-4911-9ebb-af81298a5770",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "33d62e0653f9b4dccfb848183274b3c411e56c1b",
+          "workflow_run": "33663671984",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33663671984/job/100360194193",
+          "pr_number": 5259,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5259",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-agno-versioned-environment-gap",
           "course-agno-integrated-lab-gap",
@@ -1092,7 +1254,7 @@
           "dedupe_key": "tiger-course-review:20260830T162547+0900:0ba849ce-c494-495f-b7c8-b7185f2e2a95",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1191,7 +1353,7 @@
           "dedupe_key": "tiger-course-review:20260830T130051+0900:c2dc853b-071e-479c-acc8-cbe679cc510d",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1289,7 +1451,7 @@
           "dedupe_key": "tiger-course-review:20260829T002706+0900:50609809-2da6-41ba-9c35-4bbec9668493",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": {
           "commit_sha": "07434f750b30d914f124e299bcfa9a13f42495bf",
@@ -1395,7 +1557,7 @@
           "dedupe_key": "tiger-course-review:20260828T235300+0900:f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1493,7 +1655,7 @@
           "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1590,8 +1752,8 @@
           "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8",
           "remediation_state": "production_verified",
-          "queue_status": "RUNNING",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": {
           "commit_sha": "6df2949465b0df557a83ebe99bf6d64203dc0e34",
@@ -1692,7 +1854,7 @@
           "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": {
           "commit_sha": "49fcad3512a6635a49afe27735ac47d1cc6d18a8",
@@ -1796,7 +1958,7 @@
           "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
           "remediation_state": "closed_pending_proof",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1895,7 +2057,7 @@
           "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": {
           "commit_sha": "379d95b69c88ce2eeb9b6a1a85ed477f3209ba78",
@@ -2000,7 +2162,7 @@
           "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": {
           "commit_sha": "3c725dd9cf7d81d14504a090bfc471750a7a0147",
@@ -2102,7 +2264,7 @@
           "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": {
           "commit_sha": "8017a3761b9a536126ecf1342090a3a6c5976f11",
@@ -2192,7 +2354,7 @@
           "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9",
           "remediation_state": "production_verified",
           "queue_status": "EXTERNAL_IN_PROGRESS",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": {
           "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
@@ -2269,7 +2431,7 @@
           "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2341,7 +2503,7 @@
           "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": {
           "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
@@ -2417,7 +2579,7 @@
           "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": {
           "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
@@ -2497,7 +2659,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2572,7 +2734,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T19:28:09.837818+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2816,6 +2978,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 37.0,
       "last_reviewed_at": "2026-08-30T07:25:47+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "40980f39-5721-42f4-b08f-5b9483eb1671",
+      "provider": "aleph_alpha",
+      "title": "Aleph Alpha API 入門",
+      "source_url": "https://docs.aleph-alpha.com/docs/introduction/getting-started/",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 35.8,
+      "completed_cycles": 1,
+      "last_cycle_utility": 35.8,
+      "last_reviewed_at": "2026-09-02T20:25:34+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {
