@@ -16262,7 +16262,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cycleEndExclusive,
     );
     final debtInputs = <AssetCalendarDebtInput>[
-      for (final row in debtRows) AssetCalendarDebtInput.fromDebtRow(row),
+      for (final row in debtRows)
+        AssetCalendarDebtInput.fromDebtRow(
+          row,
+          paymentDayOverrides: _debtPaymentDayOverrides,
+        ),
     ];
     final inflowInputs = <AssetCalendarInflowInput>[
       for (final inflow in monthInflowEntries)
