@@ -219,6 +219,16 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     switch (action) {
+      case "capabilities":
+        return jsonResponse({
+          success: true,
+          scheduler_actions: [
+            "authorization_status",
+            "run_authorized_improvement",
+            "review_authorized_artifact",
+            "status",
+          ],
+        });
       case "catalog":
         return jsonResponse({ success: true, ...publicCatalog() });
       case "balance":
