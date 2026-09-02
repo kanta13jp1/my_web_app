@@ -363,7 +363,10 @@ class AssetPaymentCalendarService {
         if (!inSchedule(date)) {
           continue;
         }
-        final amount = (!row.paid && row.scheduledPaymentAmount > _epsilon)
+        final isFuture = asOf != null &&
+            date.isAfter(DateTime(asOf.year, asOf.month, asOf.day));
+        final effectivePaid = isFuture ? false : row.paid;
+        final amount = (!effectivePaid && row.scheduledPaymentAmount > _epsilon)
             ? row.scheduledPaymentAmount
             : null;
         if (amount != null) {
@@ -383,11 +386,11 @@ class AssetPaymentCalendarService {
                 ? AssetCalendarEventKind.subscription
                 : AssetCalendarEventKind.debtPayment,
             label: row.isFixedCost
-                ? (row.paid ? '${row.name} (支払済)' : row.name)
-                : (row.paid ? '${row.name} (支払済)' : '${row.name} 返済'),
+                ? (effectivePaid ? '${row.name} (支払済)' : row.name)
+                : (effectivePaid ? '${row.name} (支払済)' : '${row.name} 返済'),
             amount: amount,
             sourceId: row.id.isEmpty ? null : row.id,
-            isPaid: row.paid,
+            isPaid: effectivePaid,
           ),
         );
       }
