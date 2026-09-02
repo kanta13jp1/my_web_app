@@ -2230,11 +2230,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   Future<void> _shareOnX() async {
     const siteUrl = 'https://my-web-app-b67f4.web.app/';
     final userCount = _totalUsers > 10 ? '登録者$_totalUsers人突破！' : '';
-    final text = 'スマホでギター録音＋21のSaaSを1アプリに統合。'
+    final text = 'AI生活経営アシスタントで、今日の最優先1件に集中する。'
         '自分株式会社 $userCount\n'
         '無料コアから使えます。Proで支援できます👇\n'
         '$siteUrl\n'
-        '#FlutterWeb #buildinpublic #自分株式会社 #ギター録音';
+        '#FlutterWeb #自分株式会社 #AIアシスタント #生活経営';
     final uri = Uri.https('x.com', '/intent/tweet', {'text': text});
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
