@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-31T10:03:42.659660+00:00",
+  "generated_at": "2026-09-02T11:30:46.325483+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "reviewer_league",
   "publication_state": "latest_assignment",
@@ -13,10 +13,10 @@
   "pool": {
     "total": 125,
     "eligible": 125,
-    "provisional": 118,
-    "division_1": 7,
+    "provisional": 117,
+    "division_1": 8,
     "division_2": 0,
-    "division_3": 118,
+    "division_3": 117,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0,
@@ -33,50 +33,50 @@
     }
   },
   "latest_assignment": {
-    "cycle_id": "20260831T180859+0900",
-    "started_at": "2026-08-31T18:08:59+09:00",
-    "source_format": "feature_review",
+    "cycle_id": "20260902T183425+0900",
+    "started_at": "2026-09-02T18:34:25+09:00",
+    "source_format": "course_review",
     "surface": {
-      "slug": "landing",
-      "url": "https://my-web-app-b67f4.web.app/lp"
+      "slug": "course-256fce47-54de-4716-ad2c-478bc2e9613b",
+      "url": "https://aider.chat/docs/config/options.html"
     },
     "reviewer": {
-      "seat": 11,
-      "name": "野口 功司",
-      "selection_score": 77.2198,
+      "seat": 94,
+      "name": "戸村 光",
+      "selection_score": 77.3157,
       "division": 1,
-      "cycle_utility": 92.42,
-      "aggregate_utility": 89.79
+      "cycle_utility": 83.42,
+      "aggregate_utility": 83.22
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "10仮説・20アームに対して最新登録送信が5件で、実験の意思決定信号が分散している",
+        "summary": "The Aider model-selection course has no public learner, outcome, verification, source-evidence, or freshness contract",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
-          "go_to_market",
-          "customer_pain"
+          "trust_risk",
+          "scalability"
         ]
       },
       {
-        "summary": "X共有文はギター録音と21 SaaS統合を主役にし、heroのAI生活経営・今日の最優先1件と焦点がずれる",
-        "severity": "p2",
+        "summary": "The static 2026 model-family promise lacks a reproducible cost-quality decision rubric and a current dated evidence contract",
+        "severity": "p1",
         "business_dimensions": [
-          "go_to_market",
-          "customer_pain",
-          "market_demand"
+          "unit_economics",
+          "competitive_advantage",
+          "trust_risk"
         ]
       },
       {
-        "summary": "7,608行の単一landing実装に実験・auth・trial・social proof・sharingが集中している",
+        "summary": "No real learner outcome evidence is available for the Aider model-selection course",
         "severity": "p2",
         "business_dimensions": [
-          "go_to_market",
-          "customer_pain",
-          "revenue_model"
+          "market_demand",
+          "unit_economics",
+          "scalability"
         ]
       }
     ],
@@ -95,46 +95,478 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After maintainers reduce the active hypothesis set and publish minimum-sample and stopping rules, compare time-to-decision, signup completion per active arm, and share-origin CTA progression against this cycle."
+      "next_cycle_experiment": "After the production-data owner publishes all five evidence fields and one fixed-workload comparison lab, run one cohort and compare task pass rate, cost per passing run, latency, tokens, retries, budget compliance, rubric agreement, support contacts, and workplace reuse."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5161",
-      "detail": "実験の優先順位、最小標本量、停止条件、共有メッセージ、段階分割にはproduct判断が必要で、証拠から一意に定まる低リスク自動修正ではない。",
+      "label": "対策待ち・Issue #5227",
+      "detail": "The findings require changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "landing-experiment-decision-signal-sparse"
+        "course-aider-static-model-cost-rubric-gap"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch fast-forwarded to origin/main 7773883a4ed33ebd9b0bde352c51520fddc339fa",
+        "passed: clean dedicated branch at origin/main ddbc364a4e711555cb74330dd81bed60dca41464",
         "passed: 125 roster profiles and 125 personas",
-        "executed successfully: deterministic landing winner from 13 eligible features",
-        "passed: no schema-v5 comparable landing baseline, focus_dimension=evidence",
-        "passed: production HTTP 200 and current landing source, service, tests, prior cycle inspected",
-        "passed: latest ten report runs succeeded; latest run 33361189926 reported 20 arms and 5 signup submits",
-        "executed successfully after schema correction: 125 profiles, seat 11"
+        "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
+        "executed once successfully: Aider model-selection course selected from fresh catalog",
+        "passed: no comparable baseline, focus_dimension=evidence",
+        "passed: official Aider options, leaderboard, and prompt-caching evidence inspected separately; no matching tracked course row found",
+        "executed once successfully: 125 profiles, seat 94"
       ],
       "issue": {
-        "number": 5161,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5161",
+        "number": 5227,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5227",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260831T180859+0900:landing",
+        "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "landing-share-message-divergence",
-        "landing-responsibility-concentration"
+        "course-aider-model-selection-missing-evidence-contract",
+        "course-aider-model-selection-learner-outcome-gap"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260902T183425+0900",
+      "started_at": "2026-09-02T18:34:25+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "256fce47-54de-4716-ad2c-478bc2e9613b",
+        "title": "Aider モデル選択 & コスト最適化 — Claude / DeepSeek / GPT-4o 比較 (2026)",
+        "url": "https://aider.chat/docs/config/options.html"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 77.3157
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes all five evidence fields and one fixed-workload comparison lab, run one cohort and compare task pass rate, cost per passing run, latency, tokens, retries, budget compliance, rubric agreement, support contacts, and workplace reuse."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aider-model-selection-missing-evidence-contract",
+          "summary": "The Aider model-selection course has no public learner, outcome, verification, source-evidence, or freshness contract",
+          "severity": "p1",
+          "suggested_action": "Publish all five evidence-contract fields together around one budget-constrained Aider workload and a dated evidence snapshot."
+        },
+        {
+          "finding_id": "course-aider-static-model-cost-rubric-gap",
+          "summary": "The static 2026 model-family promise lacks a reproducible cost-quality decision rubric and a current dated evidence contract",
+          "severity": "p1",
+          "suggested_action": "Replace the static three-brand promise with a rerunnable lab that fixes one repository task and budget, records the complete Aider configuration, measures success, tokens, latency, and cost, and separates Aider benchmark cost from current provider pricing."
+        },
+        {
+          "finding_id": "course-aider-model-selection-learner-outcome-gap",
+          "summary": "No real learner outcome evidence is available for the Aider model-selection course",
+          "severity": "p2",
+          "suggested_action": "Collect one privacy-safe cohort aggregate for workload completion, cost per passing run, rubric score, budget compliance, support demand, and workplace reuse without retaining code, prompts, or API keys."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5227",
+        "detail": "The findings require changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-aider-static-model-cost-rubric-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main ddbc364a4e711555cb74330dd81bed60dca41464",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
+          "executed once successfully: Aider model-selection course selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: official Aider options, leaderboard, and prompt-caching evidence inspected separately; no matching tracked course row found",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5227,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5227",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aider-model-selection-missing-evidence-contract",
+          "course-aider-model-selection-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260901T000029+0900",
+      "started_at": "2026-09-01T00:00:29+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 71.1252
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260831T200351+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Publish one Tiger status-only commit through a dedicated lightweight workflow, record zero Flutter/pub/build/release executions, and require public digest equality within five minutes plus a rollback rehearsal."
+      },
+      "findings": [
+        {
+          "finding_id": "site-review-status-publication-path-removed",
+          "summary": "Tiger status-only commitの重いdeployを止める修正は入ったが代替publish経路がなく、次のreview statusは無関係なweb deployまで本番に反映されない",
+          "severity": "p1",
+          "suggested_action": "既存のassets/data/tiger_* paths-ignoreは維持し、同ファイルだけを対象にした軽量publish workflowを追加する。Flutter、pub get、アプリbuild、release作成を行わず、既存Hosting成果物へstatus JSONだけを安全に反映し、公開asset digest equalityとrollbackを証明する。deploy_lane_to_production.pyもこの専用workflowを正規証拠として認識させる。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5169",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated worktree at exact origin/main e74e2c86c33b31269c297e79bf09f7b52b7d8a78",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers",
+          "passed: 125 profiles",
+          "passed: 125 personas, 103 unique weight profiles, 105 unique domain profiles",
+          "passed: all Tiger status paths are ignored by CI/deploy triggers and no dedicated publisher exists",
+          "passed: exact current main deployed and current production is healthy",
+          "passed: this cycle isolates the missing lightweight publication path and retains the separate economics gap",
+          "not run: report-only review requires no Flutter validation"
+        ],
+        "issue": {
+          "number": 5169,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5169",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260901T000029+0900:whole_site",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-review-status-publication-path-removed"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T233058+0900",
+      "started_at": "2026-08-31T23:30:58+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "home",
+        "title": "Home",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 11,
+        "name": "野口 功司",
+        "selection_score": 76.4343
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260827T033027+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After maintainers approve an anonymous consent-compatible Home funnel, compare section start-to-completion, D7 retention, paid conversion, and feature-request completion by journey, then choose one measured high-value responsibility for extraction."
+      },
+      "findings": [
+        {
+          "finding_id": "home-outcome-evidence-gap",
+          "summary": "Homeの主要導線と追加要望フローが継続価値・登録・支払いへ寄与するかを機能単位で判断できない",
+          "severity": "p1",
+          "suggested_action": "既存の同意・分析境界を確認したうえで、今日の1件、主要セクション、追加要望の表示・開始・完了を匿名集計し、D7継続と有料転換へ接続する最小ファネルを設計する。"
+        },
+        {
+          "finding_id": "home-implementation-concentration-persists",
+          "summary": "Homeは前回の失敗案内修復後も10,041行・69 imports・11 FutureBuilder・15 collapsible sectionsを単一ページで調整している",
+          "severity": "p2",
+          "suggested_action": "匿名ファネルで優先度を確定してから、追加要望、今日の1件、課金ナッジ、非同期summaryを独立widgetと注入可能なcontrollerへ段階分割する。"
+        },
+        {
+          "finding_id": "home-error-recovery-repair-retained",
+          "summary": "前回の追加要望3失敗経路の修復はsource・unit test・CI・本番deploy証拠で維持されている",
+          "severity": "p3",
+          "suggested_action": "現在の公開failure分類とretry契約を回帰基準として維持し、今後のHome分割時も同じ契約testを移行する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5166",
+        "detail": "匿名計測は同意・privacy・analytics契約の確認を要し、Home分割も3 files/200 linesの低リスク自動修正境界を超えるため、product変更を行わない。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "home-outcome-evidence-gap"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: dedicated branch fast-forwarded to origin/main e74e2c86c33b31269c297e79bf09f7b52b7d8a78",
+          "passed: 125 roster profiles and 125 personas",
+          "executed successfully: deterministic home winner from 13 eligible features",
+          "passed: baseline 20260827T033027+0900 at CLEAR 100, focus_dimension=complete",
+          "passed: production HTTP 200; current Home source and failure contract inspected without Flutter or Dart",
+          "passed: Issue #4916 records PR #5118, CI 33316719113, deploy 33317282783, and remaining scope",
+          "executed successfully once after neutral evidence scan: 125 profiles, seat 11"
+        ],
+        "issue": {
+          "number": 5166,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5166",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260831T233058+0900:home",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "home-implementation-concentration-persists",
+          "home-error-recovery-repair-retained"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T211401+0900",
+      "started_at": "2026-08-31T21:14:01+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "2240c679-a2bc-4322-8643-7499385a1bde",
+        "title": "Aider — AI ペアプログラマー CLI (Git連携 / 複数ファイル編集 / 22k+ Stars)",
+        "url": "https://aider.chat/"
+      },
+      "reviewer": {
+        "seat": 94,
+        "name": "戸村 光",
+        "selection_score": 76.4431
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After the production-data owner publishes the five evidence fields and one 30-to-60-minute fixture-repository lab, run one cohort and compare enrollment-to-start conversion, completion, rubric score, files added to context, undo success, lint/test success, support contacts, and workplace application."
+      },
+      "findings": [
+        {
+          "finding_id": "course-aider-missing-evidence-contract",
+          "summary": "Aider CLI course has no public learner, outcome, verification, source-evidence, or freshness contract",
+          "severity": "p1",
+          "suggested_action": "Publish all five evidence-contract fields together: target learner, one observable multi-file Git outcome, a rubric-backed verification method, dated official evidence sources, and the verification timestamp."
+        },
+        {
+          "finding_id": "course-aider-multi-file-git-lab-gap",
+          "summary": "The public contract does not verify a bounded multi-file Git workflow despite that being the course promise",
+          "severity": "p1",
+          "suggested_action": "Add a 30-to-60-minute fixture-repository lab requiring explicit file selection, one multi-file change, diff review, commit and undo evidence, and a passing lint or test command under a fixed rubric."
+        },
+        {
+          "finding_id": "course-aider-learner-outcome-gap",
+          "summary": "No real learner outcome evidence is available for the Aider CLI course",
+          "severity": "p2",
+          "suggested_action": "Collect one privacy-safe cohort aggregate for start, completion, rubric score, Git/undo/test success, support demand, and workplace application without storing repositories, prompts, or API keys."
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5165",
+        "detail": "The finding requires changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "course-aider-missing-evidence-contract"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main f38154bfea8a7cdae97a8efe02be3f8aa989970f",
+          "passed: 125 roster profiles and 125 personas",
+          "passed: active=1081, reviewable=536, excluded_missing_source_url=536, evidence_complete=6",
+          "executed once successfully: Aider CLI course selected from fresh catalog",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: official Aider homepage, usage, Git, and GitHub repository evidence inspected separately; no matching tracked course row found",
+          "executed once successfully: 125 profiles, seat 94"
+        ],
+        "issue": {
+          "number": 5165,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5165",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260831T211401+0900:2240c679-a2bc-4322-8643-7499385a1bde",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-aider-multi-file-git-lab-gap",
+          "course-aider-learner-outcome-gap"
+        ]
+      }
+    },
+    {
+      "cycle_id": "20260831T200351+0900",
+      "started_at": "2026-08-31T20:03:51+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 26,
+        "name": "荒木 杏奈",
+        "selection_score": 79.4618
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260831T161649+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Run the current Weekly Existing-user and Revenue KPI workflow once in GitHub Actions, record plans, five decision-metric non-null counts, and missingInputs, then compare the same fields after one 30-day measurement window."
+      },
+      "findings": [
+        {
+          "finding_id": "site-review-plan-economics-evidence-not-generated",
+          "summary": "plan別economicsの集計基盤は本番反映済みだが、対応workflowはmerge後に一度も走っておらず、粗利・CAC・回収期間・churn・LTVは設計上nullのままで意思決定証拠がまだ生成されていない",
+          "severity": "p1",
+          "suggested_action": "新規の計測機能は増やさず、Issue #5149を親追跡として現在mainのWeekly Existing-user and Revenue KPIをcloudで1回実行する。plan-economics.jsonのplans・decisionMetrics・missingInputsを保存し、nullの5指標と5欠測入力をowner、計測窓、取得元、次回判定日へ割り当てる。実測が揃うまでlistPriceMrrYenを売上や粗利として扱わない。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5163",
+        "detail": "提案のみで、対策実施の記録はありません。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated worktree fast-forwarded to exact origin/main f62a42cd410eda32d7f7d4119f3652fe10fc47b3",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers",
+          "passed: 125 profiles",
+          "passed: 125 personas, 103 unique weight profiles, 105 unique domain profiles",
+          "passed: exact economics-readiness commit deployed the migration with DB smoke and intentionally skipped unrelated Flutter/Hosting work",
+          "passed: latest successful aggregate report predates economics-readiness merge and therefore contains no current plan-economics artifact",
+          "passed: cycle Issue #5163 advances #5149 with new readiness/deployment evidence and excludes the already-tracked status-deploy recurrence",
+          "not run: report-only review requires no Flutter validation"
+        ],
+        "issue": {
+          "number": 5163,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5163",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260831T200351+0900:whole_site",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-review-plan-economics-evidence-not-generated"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T180859+0900",
       "started_at": "2026-08-31T18:08:59+09:00",
@@ -5904,21 +6336,6 @@
   ],
   "reviewers": [
     {
-      "seat": 26,
-      "name": "荒木 杏奈",
-      "tier": "division_3",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": 93.75,
-      "completed_cycles": 1,
-      "low_utility_streak": 0,
-      "last_cycle_utility": 93.75,
-      "last_selected_at": "2026-08-31T07:16:49+00:00",
-      "reason": "担当実績が2回未満のため暫定3部"
-    },
-    {
       "seat": 7,
       "name": "榊󠄀原 清一",
       "tier": "division_1",
@@ -5926,12 +6343,27 @@
       "provisional": false,
       "eligible": true,
       "floor_protected": false,
-      "utility_score": 93.71,
-      "completed_cycles": 7,
+      "utility_score": 94.09,
+      "completed_cycles": 8,
       "low_utility_streak": 0,
-      "last_cycle_utility": 94.15,
-      "last_selected_at": "2026-08-30T20:56:06+00:00",
-      "reason": "担当7回・効用93.7点で1部"
+      "last_cycle_utility": 94.0,
+      "last_selected_at": "2026-08-31T15:00:29+00:00",
+      "reason": "担当8回・効用94.1点で1部"
+    },
+    {
+      "seat": 26,
+      "name": "荒木 杏奈",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 93.92,
+      "completed_cycles": 2,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 94.0,
+      "last_selected_at": "2026-08-31T11:03:51+00:00",
+      "reason": "担当2回・効用93.9点で1部"
     },
     {
       "seat": 32,
@@ -5962,21 +6394,6 @@
       "last_cycle_utility": 91.33,
       "last_selected_at": "2026-08-27T19:29:53+00:00",
       "reason": "担当実績が2回未満のため暫定3部"
-    },
-    {
-      "seat": 11,
-      "name": "野口 功司",
-      "tier": "division_1",
-      "division": 1,
-      "provisional": false,
-      "eligible": true,
-      "floor_protected": false,
-      "utility_score": 89.79,
-      "completed_cycles": 12,
-      "low_utility_streak": 0,
-      "last_cycle_utility": 92.42,
-      "last_selected_at": "2026-08-31T09:08:59+00:00",
-      "reason": "担当12回・効用89.8点で1部"
     },
     {
       "seat": 9,
@@ -6024,6 +6441,21 @@
       "reason": "担当2回・効用87.2点で1部"
     },
     {
+      "seat": 11,
+      "name": "野口 功司",
+      "tier": "division_1",
+      "division": 1,
+      "provisional": false,
+      "eligible": true,
+      "floor_protected": false,
+      "utility_score": 86.0,
+      "completed_cycles": 13,
+      "low_utility_streak": 0,
+      "last_cycle_utility": 82.08,
+      "last_selected_at": "2026-08-31T14:30:58+00:00",
+      "reason": "担当13回・効用86.0点で1部"
+    },
+    {
       "seat": 94,
       "name": "戸村 光",
       "tier": "division_1",
@@ -6031,12 +6463,12 @@
       "provisional": false,
       "eligible": true,
       "floor_protected": false,
-      "utility_score": 83.93,
-      "completed_cycles": 2,
+      "utility_score": 83.22,
+      "completed_cycles": 4,
       "low_utility_streak": 0,
-      "last_cycle_utility": 83.08,
-      "last_selected_at": "2026-08-31T08:02:08+00:00",
-      "reason": "担当2回・効用83.9点で1部"
+      "last_cycle_utility": 83.42,
+      "last_selected_at": "2026-09-02T09:34:25+00:00",
+      "reason": "担当4回・効用83.2点で1部"
     },
     {
       "seat": 2,
