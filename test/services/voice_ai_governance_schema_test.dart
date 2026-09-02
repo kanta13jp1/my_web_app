@@ -66,7 +66,9 @@ void main() {
       ),
     );
     expect(migration, contains('new.consent_updated_at := pg_catalog.now()'));
-    expect(migration,
-        isNot(contains('alter table if exists public.user_profiles')));
+    expect(
+      migration,
+      isNot(contains('alter table if exists public.user_profiles')),
+    );
   });
 }

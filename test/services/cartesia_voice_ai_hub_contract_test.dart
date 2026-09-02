@@ -33,7 +33,9 @@ void main() {
     expect(source, contains('"sonic-3-2026-01-12"'));
     expect(source, contains('websocket_access_token: accessToken'));
     expect(
-        source, contains('max_session_seconds: CARTESIA_MAX_SESSION_SECONDS'));
+      source,
+      contains('max_session_seconds: CARTESIA_MAX_SESSION_SECONDS'),
+    );
     expect(source, contains('model_id: CARTESIA_MODEL_ID'));
     expect(source, contains('id: Deno.env.get("CARTESIA_VOICE_ID")'));
     expect(source, isNot(contains('api_key: apiKey')));
