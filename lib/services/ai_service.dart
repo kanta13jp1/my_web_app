@@ -140,42 +140,10 @@ class AIService {
       MagiSystemSettings.defaultCasperModel;
   static const String _defaultDeepSeekModel = 'deepseek-chat';
 
-  AIService([
-    SupabaseClient? supabaseClient,
-    String? _legacyGoogleAiApiKey,
-    String? _legacyOpenAiApiKey,
-    String? _legacyAnthropicApiKey,
-    String? _legacyDeepSeekApiKey,
-    Object? _legacyHttpClient,
-    MagiSystemSettingsService magiSettingsService =
-        const MagiSystemSettingsService(),
-    OfflineSecureModeSettingsService offlineSettingsService =
-        const OfflineSecureModeSettingsService(),
-  ])  : _supabase = supabaseClient ?? supabase,
-        _magiSettingsService = magiSettingsService,
-        _offlineSettingsService = offlineSettingsService;
-
-  AIService.withMagiKeys({
-    SupabaseClient? supabaseClient,
-    String? geminiApiKey,
-    String? openAIApiKey,
-    String? anthropicApiKey,
-    String? deepSeekApiKey,
-    Object? httpClient,
-    MagiSystemSettingsService magiSettingsService =
-        const MagiSystemSettingsService(),
-    OfflineSecureModeSettingsService offlineSettingsService =
-        const OfflineSecureModeSettingsService(),
-  }) : this(
-          supabaseClient,
-          geminiApiKey,
-          openAIApiKey,
-          anthropicApiKey,
-          deepSeekApiKey,
-          httpClient,
-          magiSettingsService,
-          offlineSettingsService,
-        );
+  AIService([SupabaseClient? supabaseClient])
+      : _supabase = supabaseClient ?? supabase,
+        _magiSettingsService = const MagiSystemSettingsService(),
+        _offlineSettingsService = const OfflineSecureModeSettingsService();
 
   /// レート制限エラー時に指数バックオフで再試行するヘルパー
   Future<T> _retryWithBackoff<T>(
