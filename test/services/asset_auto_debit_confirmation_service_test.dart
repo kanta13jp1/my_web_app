@@ -8,6 +8,38 @@ void main() {
   const planning = AssetLiabilityPlanningService();
 
   group('AssetAutoDebitConfirmationService', () {
+    test(
+        'Issue #5216: does not trigger shortfall warning for credit card negative balances with unknown limit',
+        () {
+      expect(
+        autoDebitSourceInsufficient(
+          balance: -525792,
+          kind: AssetLiabilityAccountKind.creditCard,
+          creditLimit: null,
+          paymentAmount: 3000,
+        ),
+        isFalse,
+      );
+      expect(
+        autoDebitSourceInsufficient(
+          balance: -525792,
+          kind: null,
+          creditLimit: null,
+          paymentAmount: 3000,
+        ),
+        isFalse,
+      );
+      expect(
+        autoDebitSourceInsufficient(
+          balance: -525792,
+          kind: AssetLiabilityAccountKind.creditCard,
+          creditLimit: 600000,
+          paymentAmount: 80000,
+        ),
+        isTrue, // 525792 + 80000 = 605792 > 600000
+      );
+    });
+
     test('lists direct payments whose date has already passed this month', () {
       // 6/15 時点。ガス(12日)は過去、水道(22日)・家賃/KDDI(25日)は未来。
       final workbook = planning.buildWorkbook(
