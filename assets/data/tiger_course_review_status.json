@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-09-02T10:22:00.159441+00:00",
+  "generated_at": "2026-09-02T14:57:00.113098+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -41,7 +41,7 @@
       "selection_score": 77.3157,
       "division": 1,
       "cycle_utility": 83.42,
-      "aggregate_utility": 83.22
+      "aggregate_utility": 82.68
     },
     "status": "review_only",
     "validation": "passed",
@@ -95,7 +95,7 @@
     "countermeasure": {
       "state": "issue_tracking",
       "label": "対策待ち・Issue #5227",
-      "detail": "The findings require changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+      "detail": "専用対策キューで順番待ちです。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
@@ -118,9 +118,9 @@
         "status": "created",
         "github_state": "OPEN",
         "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
-        "remediation_state": null,
-        "queue_status": null,
-        "synced_at": null
+        "remediation_state": "queued",
+        "queue_status": "QUEUED",
+        "synced_at": "2026-09-02T14:56:04.145228+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
@@ -198,7 +198,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5227",
-        "detail": "The findings require changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -221,9 +221,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -290,7 +290,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5165",
-        "detail": "The finding requires changing protected production course data that is not represented by a bounded tracked course source file, which is outside the automatic repair boundary.",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -313,9 +313,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260831T211401+0900:2240c679-a2bc-4322-8643-7499385a1bde",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -382,7 +382,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5160",
-        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -405,9 +405,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260831T170208+0900:0ee90f87-2319-4b2f-af0f-d298083c752c",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -480,7 +480,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5157",
-        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -503,9 +503,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260831T134103+0900:9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -579,7 +579,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5150",
-        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -602,9 +602,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260831T061237+0900:5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -678,7 +678,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5144",
-        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -701,9 +701,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260831T033107+0900:363d108c-37e3-4bb5-a4a2-a34f65416938",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -777,7 +777,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5142",
-        "detail": "主要指摘の修正にはprotected production course dataを前進migrationで変更する必要があり、共有契約の自動修正禁止境界を越える。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -800,9 +800,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-course-review:20260831T030006+0900:6dba658f-c89c-4a8e-86c6-750c26d51fa2",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -901,7 +901,7 @@
           "dedupe_key": "tiger-course-review:20260830T230009+0900:41283504-615b-4911-9ebb-af81298a5770",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1000,7 +1000,7 @@
           "dedupe_key": "tiger-course-review:20260830T162547+0900:0ba849ce-c494-495f-b7c8-b7185f2e2a95",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1099,7 +1099,7 @@
           "dedupe_key": "tiger-course-review:20260830T130051+0900:c2dc853b-071e-479c-acc8-cbe679cc510d",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1197,7 +1197,7 @@
           "dedupe_key": "tiger-course-review:20260829T002706+0900:50609809-2da6-41ba-9c35-4bbec9668493",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "07434f750b30d914f124e299bcfa9a13f42495bf",
@@ -1303,7 +1303,7 @@
           "dedupe_key": "tiger-course-review:20260828T235300+0900:f0ce952d-841b-4d6b-88ed-4d6317f74a9e",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1401,7 +1401,7 @@
           "dedupe_key": "tiger-course-review:20260828T100917+0900:c1ea41da-b447-4c7b-aee7-630d03c6a516",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1426,7 +1426,7 @@
         "name": "迫 佑樹",
         "selection_score": 76.8689
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -1473,9 +1473,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4945",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4945 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1495,13 +1495,21 @@
           "number": 4945,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4945",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260828T021401+0900:955ae2e6-9909-4635-aacd-790ab23aa7c8",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "RUNNING",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "6df2949465b0df557a83ebe99bf6d64203dc0e34",
+          "workflow_run": "33641832307",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33641832307/job/100286760628",
+          "pr_number": 5222,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5222",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-firefly-capability-map-freshness-gap",
           "course-firefly-credit-cost-decision-gap",
@@ -1524,7 +1532,7 @@
         "name": "迫 佑樹",
         "selection_score": 77.2379
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -1565,9 +1573,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4941",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4941 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1588,13 +1596,21 @@
           "number": 4941,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4941",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-course-review:20260827T232859+0900:746a2878-6a2d-4787-91e2-1778ebdda8ce",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "49fcad3512a6635a49afe27735ac47d1cc6d18a8",
+          "workflow_run": "33372883094",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33372883094/job/99431227307",
+          "pr_number": 5139,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5139",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "course-firefly-production-readiness-gap",
           "course-firefly-learner-value-evidence-gap"
@@ -1688,7 +1704,7 @@
           "dedupe_key": "tiger-course-review:20260826T230834+0900:fbf4eab5-f695-4ab4-bc54-b72c4abec19a",
           "remediation_state": "closed_pending_proof",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1787,7 +1803,7 @@
           "dedupe_key": "tiger-course-review:20260826T151103+0900:63c96c0b-834c-4979-b387-ff4d4393aced",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "379d95b69c88ce2eeb9b6a1a85ed477f3209ba78",
@@ -1892,7 +1908,7 @@
           "dedupe_key": "tiger-course-review:20260826T071116+0900:4ec30eda-d8f5-4cef-b88d-b5e18a34e914",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "3c725dd9cf7d81d14504a090bfc471750a7a0147",
@@ -1994,7 +2010,7 @@
           "dedupe_key": "tiger-course-review:20260826T061027+0900:5b7e5f70-2652-4949-b00d-6bbc768fbb96",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "8017a3761b9a536126ecf1342090a3a6c5976f11",
@@ -2084,7 +2100,7 @@
           "dedupe_key": "tiger-course-review:20260824T011146+0900:647dc452-f75d-4dd9-8292-332bada2e2f9",
           "remediation_state": "production_verified",
           "queue_status": "EXTERNAL_IN_PROGRESS",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "7b30251dc8cbd3398e7ad044f536670ba6c640ad",
@@ -2161,7 +2177,7 @@
           "dedupe_key": "tiger-course-review:20260823T232120+0900:e1712bb5-2bca-4fc0-8347-0529513411d3",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2233,7 +2249,7 @@
           "dedupe_key": "tiger-course-review:20260823T175240+0900:525273ba-539f-4dd4-b436-a6a74a5e8cc5",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "20b20d3ce18515752a09e11beb6efd32cee12e49",
@@ -2309,7 +2325,7 @@
           "dedupe_key": "tiger-course-review:20260823T165404+0900:22befb67-6147-4a4b-999c-ee1ad6fa9615",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "18eedc47ea0769b871ba191b7ff9162252afb8f3",
@@ -2389,7 +2405,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2464,7 +2480,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [

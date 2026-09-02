@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-08-31T11:13:40.726307+00:00",
+  "generated_at": "2026-09-02T14:57:00.113098+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "site_review",
   "publication_state": "latest_review",
@@ -10,34 +10,34 @@
     "status": "PAUSED",
     "schedule": "毎時25分（1時間ごと）"
   },
-  "review_count": 26,
+  "review_count": 27,
   "latest_review": {
-    "cycle_id": "20260831T200351+0900",
-    "started_at": "2026-08-31T20:03:51+09:00",
+    "cycle_id": "20260901T000029+0900",
+    "started_at": "2026-09-01T00:00:29+09:00",
     "source_format": "site_review",
     "surface": {
       "slug": "whole_site",
       "url": "https://my-web-app-b67f4.web.app/"
     },
     "reviewer": {
-      "seat": 26,
-      "name": "荒木 杏奈",
-      "selection_score": 79.4618,
+      "seat": 7,
+      "name": "榊󠄀原 清一",
+      "selection_score": 71.1252,
       "division": 1,
       "cycle_utility": 94.0,
-      "aggregate_utility": 93.92
+      "aggregate_utility": 94.09
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 1,
     "top_findings": [
       {
-        "summary": "plan別economicsの集計基盤は本番反映済みだが、対応workflowはmerge後に一度も走っておらず、粗利・CAC・回収期間・churn・LTVは設計上nullのままで意思決定証拠がまだ生成されていない",
+        "summary": "Tiger status-only commitの重いdeployを止める修正は入ったが代替publish経路がなく、次のreview statusは無関係なweb deployまで本番に反映されない",
         "severity": "p1",
         "business_dimensions": [
-          "unit_economics",
-          "revenue_model",
-          "founder_execution"
+          "founder_execution",
+          "scalability",
+          "trust_risk"
         ]
       }
     ],
@@ -52,48 +52,126 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260831T161649+0900",
+      "baseline_cycle_id": "20260831T200351+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "Run the current Weekly Existing-user and Revenue KPI workflow once in GitHub Actions, record plans, five decision-metric non-null counts, and missingInputs, then compare the same fields after one 30-day measurement window."
+      "next_cycle_experiment": "Publish one Tiger status-only commit through a dedicated lightweight workflow, record zero Flutter/pub/build/release executions, and require public digest equality within five minutes plus a rollback rehearsal."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5163",
-      "detail": "提案のみで、対策実施の記録はありません。",
+      "label": "対策待ち・Issue #5169",
+      "detail": "専用対策キューで順番待ちです。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated worktree fast-forwarded to exact origin/main f62a42cd410eda32d7f7d4119f3652fe10fc47b3",
+        "passed: clean dedicated worktree at exact origin/main e74e2c86c33b31269c297e79bf09f7b52b7d8a78",
         "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers",
         "passed: 125 profiles",
         "passed: 125 personas, 103 unique weight profiles, 105 unique domain profiles",
-        "passed: exact economics-readiness commit deployed the migration with DB smoke and intentionally skipped unrelated Flutter/Hosting work",
-        "passed: latest successful aggregate report predates economics-readiness merge and therefore contains no current plan-economics artifact",
-        "passed: cycle Issue #5163 advances #5149 with new readiness/deployment evidence and excludes the already-tracked status-deploy recurrence",
+        "passed: all Tiger status paths are ignored by CI/deploy triggers and no dedicated publisher exists",
+        "passed: exact current main deployed and current production is healthy",
+        "passed: this cycle isolates the missing lightweight publication path and retains the separate economics gap",
         "not run: report-only review requires no Flutter validation"
       ],
       "issue": {
-        "number": 5163,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5163",
+        "number": 5169,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5169",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-site-review:20260831T200351+0900:whole_site",
-        "remediation_state": null,
-        "queue_status": null,
-        "synced_at": null
+        "dedupe_key": "tiger-site-review:20260901T000029+0900:whole_site",
+        "remediation_state": "queued",
+        "queue_status": "QUEUED",
+        "synced_at": "2026-09-02T14:56:04.145228+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "site-review-plan-economics-evidence-not-generated"
+        "site-review-status-publication-path-removed"
       ]
     }
   },
   "history": [
+    {
+      "cycle_id": "20260901T000029+0900",
+      "started_at": "2026-09-01T00:00:29+09:00",
+      "source_format": "site_review",
+      "subject": {
+        "kind": "site",
+        "id": "whole_site",
+        "title": "whole_site",
+        "url": "https://my-web-app-b67f4.web.app/"
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 71.1252
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260831T200351+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "Publish one Tiger status-only commit through a dedicated lightweight workflow, record zero Flutter/pub/build/release executions, and require public digest equality within five minutes plus a rollback rehearsal."
+      },
+      "findings": [
+        {
+          "finding_id": "site-review-status-publication-path-removed",
+          "summary": "Tiger status-only commitの重いdeployを止める修正は入ったが代替publish経路がなく、次のreview statusは無関係なweb deployまで本番に反映されない",
+          "severity": "p1",
+          "suggested_action": "既存のassets/data/tiger_* paths-ignoreは維持し、同ファイルだけを対象にした軽量publish workflowを追加する。Flutter、pub get、アプリbuild、release作成を行わず、既存Hosting成果物へstatus JSONだけを安全に反映し、公開asset digest equalityとrollbackを証明する。deploy_lane_to_production.pyもこの専用workflowを正規証拠として認識させる。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5169",
+        "detail": "専用対策キューで順番待ちです。",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated worktree at exact origin/main e74e2c86c33b31269c297e79bf09f7b52b7d8a78",
+          "passed: root, subscription-billing, and privacy returned HTTP 200 with required markers",
+          "passed: 125 profiles",
+          "passed: 125 personas, 103 unique weight profiles, 105 unique domain profiles",
+          "passed: all Tiger status paths are ignored by CI/deploy triggers and no dedicated publisher exists",
+          "passed: exact current main deployed and current production is healthy",
+          "passed: this cycle isolates the missing lightweight publication path and retains the separate economics gap",
+          "not run: report-only review requires no Flutter validation"
+        ],
+        "issue": {
+          "number": 5169,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5169",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-site-review:20260901T000029+0900:whole_site",
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "site-review-status-publication-path-removed"
+        ]
+      }
+    },
     {
       "cycle_id": "20260831T200351+0900",
       "started_at": "2026-08-31T20:03:51+09:00",
@@ -140,7 +218,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5163",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -162,9 +240,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260831T200351+0900:whole_site",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -218,7 +296,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5159",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -239,9 +317,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260831T161649+0900:whole_site",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -264,7 +342,7 @@
         "name": "高澤 有紀",
         "selection_score": 69.478
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -293,9 +371,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5156",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5156 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -314,13 +392,21 @@
           "number": 5156,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5156",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260831T120514+0900:whole_site",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "cd339934e719dcac6eeb4f62071211f7aa3e2d47",
+          "workflow_run": "33390906567",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33390906567/job/99484156204",
+          "pr_number": 5164,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5164",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "site-review-status-full-deploy-coupling"
         ]
@@ -396,7 +482,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5149",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -416,9 +502,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260831T055606+0900:whole_site",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -494,7 +580,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5135",
-        "detail": "提案のみで、対策実施の記録はありません。",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -514,9 +600,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-site-review:20260831T010530+0900:whole_site",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -613,7 +699,7 @@
           "dedupe_key": "tiger-site-review:20260830T210736+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -716,7 +802,7 @@
           "dedupe_key": "tiger-site-review:20260830T192700+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -820,7 +906,7 @@
           "dedupe_key": "tiger-site-review:20260830T170216+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -924,7 +1010,7 @@
           "dedupe_key": "tiger-site-review:20260830T150936+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1021,7 +1107,7 @@
           "dedupe_key": "tiger-site-review:20260829T012910+0900:whole_site",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "e9caa539b664ff39cf1ae7460611fafbffb07941",
@@ -1125,7 +1211,7 @@
           "dedupe_key": "tiger-site-review:20260828T190700+0900:whole_site",
           "remediation_state": "production_verified",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "e80ac2271d0806624219227531bcbc046eddb9a6",
@@ -1229,7 +1315,7 @@
           "dedupe_key": "tiger-site-review:20260828T145600+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1325,7 +1411,7 @@
           "dedupe_key": "tiger-site-review:20260828T090106+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1421,7 +1507,7 @@
           "dedupe_key": "tiger-site-review:20260828T051725+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1447,7 +1533,7 @@
         "name": "高澤 有紀",
         "selection_score": 71.6385
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -1494,9 +1580,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4944",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #4944 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1513,13 +1599,21 @@
           "number": 4944,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/4944",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-site-review:20260828T011400+0900:whole_site",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "SUCCEEDED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "2314eeaad138f27507507c9906403dc829d9696b",
+          "workflow_run": "33492873877",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33492873877/job/99812091039",
+          "pr_number": 5168,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5168",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "site-deep-route-canonical-collapse",
           "site-pricing-prequalification-shell-gap",
@@ -1618,7 +1712,7 @@
           "dedupe_key": "tiger-site-review:20260827T214913+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "PARTIAL_WAIT",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1724,7 +1818,7 @@
           "dedupe_key": "tiger-site-review:20260826T220910+0900:whole_site",
           "remediation_state": "queued",
           "queue_status": "PARTIAL_WAIT",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1826,7 +1920,7 @@
           "dedupe_key": "tiger-site-review:20260825T133307+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1929,7 +2023,7 @@
           "dedupe_key": "tiger-site-review:20260825T124533+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2031,7 +2125,7 @@
           "dedupe_key": "tiger-site-review:20260825T090429+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2133,7 +2227,7 @@
           "dedupe_key": "tiger-site-review:20260825T083902+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2239,7 +2333,7 @@
           "dedupe_key": "tiger-site-review:20260823T214617+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2339,7 +2433,7 @@
           "dedupe_key": "tiger-site-review:20260823T195559+0900:whole_site",
           "remediation_state": "superseded",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2418,7 +2512,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -2493,7 +2587,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-08-30T15:34:56.652193+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
