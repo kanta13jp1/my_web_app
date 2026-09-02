@@ -131,6 +131,7 @@ void main() {
       '/local-election-schedule': 'ElectionVictoryPage',
       '/stats': 'RewardsPage',
       '/ai-summarizer': 'WritingCenterPage',
+      '/manual': 'UserManualPage',
     };
     final cases = _routeCases();
 
