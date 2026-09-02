@@ -658,6 +658,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => PublicMemoDetailPage(memoId: memoId),
         settings: RouteSettings(name: settings.name),
       );
+    case '/manual':
     case '/user-manual':
       return MaterialPageRoute(builder: (_) => const UserManualPage());
     case '/site-guide-ai':
