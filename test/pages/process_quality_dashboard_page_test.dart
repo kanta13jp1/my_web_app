@@ -71,6 +71,11 @@ void main() {
     expect(chart, findsOneWidget);
     expect(find.text('レビュー 5.00分/単位'), findsOneWidget);
     expect(find.text('指摘 0.25件/単位'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('要確認'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('要確認'), findsOneWidget);
   });
 
