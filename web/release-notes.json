@@ -31,6 +31,19 @@
       ],
       "changes": [
         {
+          "category": "automation",
+          "id": "pr-5152",
+          "links": [
+            {
+              "title": "PR #5152",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5152"
+            }
+          ],
+          "mergedAt": "2026-09-01T17:21:18Z",
+          "summary": "#5152 ci: bump the github-actions group across 1 directory with 5 updates"
+        },
+        {
           "category": "feature",
           "id": "pr-5153",
           "links": [
@@ -406,19 +419,6 @@
           ],
           "mergedAt": "2026-08-30T13:40:41Z",
           "summary": "#5120 fix: validate Notion WBS writes before cloud apply"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5117",
-          "links": [
-            {
-              "title": "PR #5117",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5117"
-            }
-          ],
-          "mergedAt": "2026-08-30T12:38:41Z",
-          "summary": "#5117 fix(video): release failed review retry index"
         }
       ],
       "date": "2026-09-01",

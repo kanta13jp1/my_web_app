@@ -53,22 +53,48 @@ class AssetCashflowForecastInputs {
       }
     }
 
-    final recurringIncome = <AssetCashflowRecurringEntry>[
-      for (final template in recurringIncomeTemplates)
-        if (template.dayOfMonth > 0 && template.amount > 0)
+    final recurringIncome = <AssetCashflowRecurringEntry>[];
+    final seenIncomeKeys = <String>{};
+
+    String normalizeIncomeLabel(String label) {
+      final s = label.toLowerCase().replaceAll(RegExp(r'[\s　・_\-]'), '');
+      return s
+          .replaceAll('給料', '給与')
+          .replaceAll('給与振込', '給与')
+          .replaceAll('手当', '給与')
+          .replaceAll('salary', '給与');
+    }
+
+    for (final template in recurringIncomeTemplates) {
+      if (template.dayOfMonth > 0 && template.amount > 0) {
+        final key =
+            '${template.dayOfMonth}_${normalizeIncomeLabel(template.name)}';
+        seenIncomeKeys.add(key);
+        recurringIncome.add(
           AssetCashflowRecurringEntry(
             dayOfMonth: template.dayOfMonth,
             amount: template.amount,
             label: template.name,
           ),
-      for (final rule in inflowRules)
-        if (rule.dayOfMonth > 0 && rule.amount > 0)
-          AssetCashflowRecurringEntry(
-            dayOfMonth: rule.dayOfMonth,
-            amount: rule.amount,
-            label: rule.label,
-          ),
-    ];
+        );
+      }
+    }
+
+    for (final rule in inflowRules) {
+      if (rule.dayOfMonth > 0 && rule.amount > 0) {
+        final key = '${rule.dayOfMonth}_${normalizeIncomeLabel(rule.label)}';
+        if (!seenIncomeKeys.contains(key)) {
+          seenIncomeKeys.add(key);
+          recurringIncome.add(
+            AssetCashflowRecurringEntry(
+              dayOfMonth: rule.dayOfMonth,
+              amount: rule.amount,
+              label: rule.label,
+            ),
+          );
+        }
+      }
+    }
 
     final recurringOutflow = <AssetCashflowRecurringEntry>[
       for (final row in debtRows)

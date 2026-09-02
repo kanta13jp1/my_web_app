@@ -1163,8 +1163,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final debugDisposableBalanceResult =
         widget.debugInitialDisposableBalanceResult;
     if (debugDisposableBalanceResult != null) {
-      _serverDisposableBalanceResult =
-          Map<String, dynamic>.from(debugDisposableBalanceResult);
+      _serverDisposableBalanceResult = Map<String, dynamic>.from(
+        debugDisposableBalanceResult,
+      );
     }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
@@ -7110,10 +7111,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted) return;
     final today = _todayDateKey();
     setState(() {
-      final todayMap = _assetData.putIfAbsent(
-        today,
-        () => <String, double>{},
-      );
+      final todayMap = _assetData.putIfAbsent(today, () => <String, double>{});
       for (final candidate in candidates) {
         if (!_assetTypes.contains(candidate.accountName)) {
           _assetTypes.add(candidate.accountName);
@@ -7897,9 +7895,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     final keys = <String>{};
     for (final row in rows) {
-      final key = _extractSmbcImportKey(
-        row['description']?.toString() ?? '',
-      );
+      final key = _extractSmbcImportKey(row['description']?.toString() ?? '');
       if (key != null) {
         keys.add(key);
       }
@@ -11503,10 +11499,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       prefKey: _recurringFixedCostsDeletedMirrorKey,
       prefs: store,
       rpc: (additions, removals) async {
-        await _supabase.rpc('apply_recurring_fixed_cost_tombstones', params: {
-          'p_add_ids': additions,
-          'p_remove_ids': removals,
-        });
+        await _supabase.rpc(
+          'apply_recurring_fixed_cost_tombstones',
+          params: {'p_add_ids': additions, 'p_remove_ids': removals},
+        );
       },
       afterSync: mirrorCurrentOnSuccess
           ? () => _mirrorRecurringFixedCostsNow(throwOnFailure: true)
@@ -11993,7 +11989,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       } catch (rollbackError) {
         debugPrint(
-            'recurring fixed cost dirty rollback failed: $rollbackError');
+          'recurring fixed cost dirty rollback failed: $rollbackError',
+        );
       }
       try {
         await _recurringFixedCostStore.save(previous, prefs: store);
@@ -12171,8 +12168,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) async {
     final isSubscription =
         cost.category == AssetRecurringFixedCostCategory.subscription;
-    final formattedMonthlyAmount =
-        NumberFormat('#,##0').format(cost.amount.round());
+    final formattedMonthlyAmount = NumberFormat(
+      '#,##0',
+    ).format(cost.amount.round());
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -12342,21 +12340,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     if (!mounted) return;
     if (addedCount == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('追加できる新しいサブスクはありませんでした。')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('追加できる新しいサブスクはありませんでした。')));
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$addedCount件のサブスクを棚卸しに追加しました。')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$addedCount件のサブスクを棚卸しに追加しました。')));
   }
 
   String _normalizeSubscriptionName(String value) {
-    return value.toLowerCase().replaceAll(
-          RegExp(r'[\s\-_./・（）()]+'),
-          '',
-        );
+    return value.toLowerCase().replaceAll(RegExp(r'[\s\-_./・（）()]+'), '');
   }
 
   /// `_recentFlows`(複数月分の収支履歴)から、支出のみを description パースして
@@ -16262,7 +16257,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cycleEndExclusive,
     );
     final debtInputs = <AssetCalendarDebtInput>[
-      for (final row in debtRows) AssetCalendarDebtInput.fromDebtRow(row),
+      for (final row in debtRows)
+        AssetCalendarDebtInput.fromDebtRow(
+          row,
+          paymentDayOverrides: _debtPaymentDayOverrides,
+        ),
     ];
     final inflowInputs = <AssetCalendarInflowInput>[
       for (final inflow in monthInflowEntries)
@@ -23089,8 +23088,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: const TextStyle(fontSize: 12, height: 1.5),
             )
           else
-            for (final violation
-                in report.allViolations.take(violationDisplayLimit))
+            for (final violation in report.allViolations.take(
+              violationDisplayLimit,
+            ))
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _buildAssetDisciplineViolationTile(violation),
@@ -30227,10 +30227,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 TextButton.icon(
                   onPressed: _showObsidianVaultImportDialog,
-                  icon: const Icon(
-                    Icons.folder_open,
-                    color: Color(0xFF7C3AED),
-                  ),
+                  icon: const Icon(Icons.folder_open, color: Color(0xFF7C3AED)),
                   label: const Text('Obsidian保管庫から取込'),
                 ),
                 TextButton.icon(
