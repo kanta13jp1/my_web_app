@@ -183,7 +183,7 @@ class _FakeHorseRacingGateway implements HorseRacingDataGateway {
 
   final bool authenticated;
   final HorseRacingDashboardSnapshot snapshot;
-  final Object? loadError;
+  final Exception? loadError;
 
   @override
   bool get isAuthenticated => authenticated;

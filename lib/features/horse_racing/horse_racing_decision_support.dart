@@ -38,9 +38,9 @@ class HorseRacingResponsibleUseCard extends StatelessWidget {
         runSpacing: 10,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 420),
-            child: Column(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
