@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-09-02T14:30:43.827781+00:00",
+  "generated_at": "2026-09-02T14:57:00.113098+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -96,7 +96,7 @@
     "countermeasure": {
       "state": "issue_tracking",
       "label": "対策待ち・Issue #5237",
-      "detail": "The highest-priority finding changes authentication and authorization policy at a protected Edge Function boundary and requires explicit human review, so it is outside the automatic repair boundary.",
+      "detail": "専用対策キューで順番待ちです。",
       "summary": "",
       "files": [],
       "lines_changed": 0,
@@ -119,9 +119,9 @@
         "status": "created",
         "github_state": "OPEN",
         "dedupe_key": "tiger-feature-review:20260902T222324+0900:ai_hub",
-        "remediation_state": null,
-        "queue_status": null,
-        "synced_at": null
+        "remediation_state": "queued",
+        "queue_status": "QUEUED",
+        "synced_at": "2026-09-02T14:56:04.145228+00:00"
       },
       "implementation": null,
       "findings_without_individual_trace": [
@@ -198,7 +198,7 @@
       "countermeasure": {
         "state": "issue_tracking",
         "label": "対策待ち・Issue #5237",
-        "detail": "The highest-priority finding changes authentication and authorization policy at a protected Edge Function boundary and requires explicit human review, so it is outside the automatic repair boundary.",
+        "detail": "専用対策キューで順番待ちです。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -221,9 +221,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260902T222324+0900:ai_hub",
-          "remediation_state": null,
-          "queue_status": null,
-          "synced_at": null
+          "remediation_state": "queued",
+          "queue_status": "QUEUED",
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -315,7 +315,7 @@
           "dedupe_key": "tiger-feature-review:20260831T233058+0900:home",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -407,7 +407,7 @@
           "dedupe_key": "tiger-feature-review:20260831T180859+0900:landing",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -504,7 +504,7 @@
           "dedupe_key": "tiger-feature-review:20260831T080010+0900:comparison",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -593,7 +593,7 @@
           "dedupe_key": "tiger-feature-review:20260831T040750+0900:ai_university",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -682,7 +682,7 @@
           "dedupe_key": "tiger-feature-review:20260831T000451+0900:admin_analytics",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -771,7 +771,7 @@
           "dedupe_key": "tiger-feature-review:20260830T200304+0900:user_manual",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -860,7 +860,7 @@
           "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -951,7 +951,7 @@
           "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1041,7 +1041,7 @@
           "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1123,7 +1123,7 @@
           "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1210,7 +1210,7 @@
           "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1298,7 +1298,7 @@
           "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "723f34d7cb56be9919044f21808dd24aefd50874",
@@ -1394,7 +1394,7 @@
           "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": {
           "commit_sha": "ec314d3f767ea3245c3af7aa1fd7db51cfad9f4c",
@@ -1490,7 +1490,7 @@
           "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
           "remediation_state": "queued",
           "queue_status": "PARTIAL_WAIT",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1782,7 +1782,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1857,7 +1857,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:06:36.487625+00:00"
+          "synced_at": "2026-09-02T14:56:04.145228+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
