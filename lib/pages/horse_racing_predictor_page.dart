@@ -3,8 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../features/horse_racing/horse_racing_data_gateway.dart';
+import '../features/horse_racing/horse_racing_decision_support.dart';
+import '../features/horse_racing/horse_racing_performance_view_model.dart';
 import '../widgets/home_back_button.dart';
 import 'horse_provider_leaderboard_page.dart';
 import 'horseracing_race_detail_page.dart';
@@ -51,9 +53,14 @@ ErrorType _parseErrorType(dynamic error) {
 /// JRA/NAR の出走表を自動取得し、Gemini AI が全レースの3連単を予想する。
 /// netkeiba 競合 — 完全自動化パイプライン版
 class HorseRacingPredictorPage extends StatefulWidget {
-  const HorseRacingPredictorPage({super.key, this.initialTabIndex = 0});
+  const HorseRacingPredictorPage({
+    super.key,
+    this.initialTabIndex = 0,
+    this.gateway,
+  });
 
   final int initialTabIndex;
+  final HorseRacingDataGateway? gateway;
 
   @override
   State<HorseRacingPredictorPage> createState() =>
@@ -62,7 +69,7 @@ class HorseRacingPredictorPage extends StatefulWidget {
 
 class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     with SingleTickerProviderStateMixin {
-  final _supabase = Supabase.instance.client;
+  late final HorseRacingDataGateway _gateway;
   late final TabController _tabController;
   late int _lastSyncedTabIndex;
 
@@ -73,6 +80,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   ErrorType? _errorType;
   RaceType _selectedRaceType = RaceType.all;
   String _selectedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  int _dailyBudgetYen = 1000;
+  bool _purchasesPaused = false;
 
   List<Map<String, dynamic>> _todayRaces = [];
   List<Map<String, dynamic>> _predictionHistory = [];
@@ -82,11 +91,12 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   @override
   void initState() {
     super.initState();
+    _gateway = widget.gateway ?? SupabaseHorseRacingDataGateway();
     final initialIndex = widget.initialTabIndex < 0
         ? 0
         : widget.initialTabIndex > 3
-            ? 3
-            : widget.initialTabIndex;
+        ? 3
+        : widget.initialTabIndex;
     _lastSyncedTabIndex = initialIndex;
     _tabController = TabController(
       length: 4,
@@ -123,7 +133,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<void> _loadAll() async {
-    if (_supabase.auth.currentUser == null) {
+    if (!_gateway.isAuthenticated) {
       setState(() => _isLoading = false);
       return;
     }
@@ -132,41 +142,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       _error = null;
     });
     try {
-      final results = await Future.wait([
-        _supabase.functions.invoke(
-          'tools-hub',
-          body: {
-            'action': 'horseracing.today',
-            'date': _selectedDate,
-            'type': _selectedRaceType.name,
-          },
-        ),
-        _supabase.functions.invoke(
-          'tools-hub',
-          body: {'action': 'horseracing.predictions', 'limit': 30},
-        ),
-        _supabase.functions.invoke(
-          'tools-hub',
-          body: {'action': 'horseracing.accuracy'},
-        ), // Trailing comma added here
-      ]);
-      final d0 = results[0].data;
-      _todayRaces = d0 is Map ? _mapList(d0['races']) : [];
-      final d1 = results[1].data;
-      _predictionHistory = d1 is Map ? _mapList(d1['predictions']) : [];
-      final d2 = results[2].data;
-      if (d2 is Map) {
-        final stats = _dynamicMap(d2['stats']);
-        _accuracyStats = {
-          ...stats,
-          'recent_hits': d2['recent_hits'],
-          'bet_type_accuracy': d2['bet_type_accuracy'],
-          'learning': d2['learning'],
-        };
-      } else {
-        _accuracyStats = {};
-      }
-      _betTickets = await _fetchBetTickets();
+      final snapshot = await _gateway.loadDashboard(
+        date: _selectedDate,
+        raceType: _selectedRaceType.name,
+      );
+      _todayRaces = snapshot.todayRaces;
+      _predictionHistory = snapshot.predictionHistory;
+      _accuracyStats = snapshot.accuracyStats;
+      _betTickets = snapshot.betTickets;
     } catch (e) {
       final errorType = _parseErrorType(e);
       final errorMsg = switch (errorType) {
@@ -188,20 +171,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<List<Map<String, dynamic>>> _fetchBetTickets() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return [];
-    final rows = await _supabase
-        .from('hub_data')
-        .select('id, metadata, created_at')
-        .eq('source', 'horse_bet_ticket')
-        .filter('metadata->>user_id', 'eq', userId)
-        .order('created_at', ascending: false)
-        .limit(80);
-    return rows
-        .whereType<Map>()
-        .map(_dynamicMap)
-        .where((row) => row.isNotEmpty)
-        .toList();
+    return _gateway.fetchBetTickets();
   }
 
   Future<void> _reloadBetTickets() async {
@@ -211,14 +181,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       if (mounted) setState(() => _betTickets = tickets);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('馬券記録の再読み込みに失敗しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('馬券記録の再読み込みに失敗しました')));
     }
   }
 
   Future<void> _runAiPredictions({Map<String, dynamic>? race}) async {
-    if (_supabase.auth.currentUser == null) {
+    if (!_gateway.isAuthenticated) {
       setState(() => _isLoading = false);
       return;
     }
@@ -230,23 +200,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           : '${race?['venue'] ?? ''} ${race?['race_number'] ?? ''}RをAI予想中です';
     });
     try {
-      final response = await _supabase.functions.invoke(
-        'tools-hub',
-        body: {
-          'action': 'horseracing.predict_all',
-          'date': _selectedDate,
-          'type': _selectedRaceType.name,
-          'limit': raceId == null ? 80 : 1,
-          if (raceId != null) 'race_id': raceId,
-          if (raceId != null) 'force': true,
-        },
+      final data = await _gateway.runPredictions(
+        date: _selectedDate,
+        raceType: _selectedRaceType.name,
+        raceId: raceId,
       );
-      final data = response.data;
-      final count = data is Map ? (data['count'] as num?)?.toInt() ?? 0 : 0;
-      final failureCount =
-          data is Map ? (data['failure_count'] as num?)?.toInt() ?? 0 : 0;
-      final remaining =
-          data is Map ? (data['remaining'] as num?)?.toInt() ?? 0 : 0;
+      final count = (data['count'] as num?)?.toInt() ?? 0;
+      final failureCount = (data['failure_count'] as num?)?.toInt() ?? 0;
+      final remaining = (data['remaining'] as num?)?.toInt() ?? 0;
       if (mounted) {
         setState(() {
           _predictionStatus = count > 0
@@ -267,7 +228,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<void> _refreshAccuracyLearning() async {
-    if (_supabase.auth.currentUser == null) {
+    if (!_gateway.isAuthenticated) {
       setState(() => _isLoading = false);
       return;
     }
@@ -276,15 +237,12 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       _predictionStatus = 'レース結果と予想を照合し、券種別の学習データを更新しています';
     });
     try {
-      await _supabase.functions.invoke(
-        'tools-hub',
-        body: {'action': 'horseracing.evaluate_accuracy'},
-      );
+      await _gateway.refreshAccuracyLearning();
       await _loadAll();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('券種別の的中率と学習データを更新しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('券種別の的中率と学習データを更新しました')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -296,7 +254,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<void> _runLearningBackfill() async {
-    if (_supabase.auth.currentUser == null) {
+    if (!_gateway.isAuthenticated) {
       setState(() => _isLoading = false);
       return;
     }
@@ -305,19 +263,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       _predictionStatus = '過去21日分のレースを低リスク基準で再予想し、結果と照合しています';
     });
     try {
-      final response = await _supabase.functions.invoke(
-        'tools-hub',
-        body: {
-          'action': 'horseracing.backfill_learning_data',
-          'date_to': _selectedDate,
-          'days': 21,
-          'limit': 160,
-        },
-      );
-      final data = response.data;
-      final backfilled =
-          data is Map ? (data['backfilled'] as num?)?.toInt() ?? 0 : 0;
-      final evaluation = data is Map && data['evaluation'] is Map
+      final data = await _gateway.runLearningBackfill(dateTo: _selectedDate);
+      final backfilled = (data['backfilled'] as num?)?.toInt() ?? 0;
+      final evaluation = data['evaluation'] is Map
           ? Map<String, dynamic>.from(data['evaluation'] as Map)
           : const <String, dynamic>{};
       final evaluated = (evaluation['evaluated'] as num?)?.toInt() ?? 0;
@@ -325,9 +273,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            '過去レース学習を更新しました: 予想$backfilled件 / 評価$evaluated件',
-          ),
+          content: Text('過去レース学習を更新しました: 予想$backfilled件 / 評価$evaluated件'),
         ),
       );
     } catch (_) {
@@ -411,8 +357,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
 
   bool _isGarbledHorseResult(Map<String, dynamic>? result) {
     if (result == null) return false;
-    return ['first_place', 'second_place', 'third_place']
-        .any((field) => _looksGarbledHorseText(result[field]));
+    return [
+      'first_place',
+      'second_place',
+      'third_place',
+    ].any((field) => _looksGarbledHorseText(result[field]));
   }
 
   String _horseResultName(Map<String, dynamic> result, String field) {
@@ -447,13 +396,15 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
-    final races = _todayRaces
-        .where(
-          (race) =>
-              _selectedDate != today || _postTimeMinutes(race) >= nowMinutes,
-        )
-        .toList()
-      ..sort((a, b) => _postTimeMinutes(a).compareTo(_postTimeMinutes(b)));
+    final races =
+        _todayRaces
+            .where(
+              (race) =>
+                  _selectedDate != today ||
+                  _postTimeMinutes(race) >= nowMinutes,
+            )
+            .toList()
+          ..sort((a, b) => _postTimeMinutes(a).compareTo(_postTimeMinutes(b)));
     return races.isEmpty ? null : races.first;
   }
 
@@ -514,10 +465,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           children: [
             const Text(
               '競馬AI予想',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                height: 1.5,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
             const SizedBox(width: 8),
             GestureDetector(
@@ -525,10 +473,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               child: Chip(
                 label: Text(
                   _selectedDate,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
+                  style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
                 avatar: const Icon(Icons.calendar_today, size: 14),
                 padding: EdgeInsets.zero,
@@ -553,8 +498,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                settings:
-                    const RouteSettings(name: '/horse-provider-leaderboard'),
+                settings: const RouteSettings(
+                  name: '/horse-provider-leaderboard',
+                ),
                 builder: (_) => const HorseProviderLeaderboardPage(),
               ),
             ),
@@ -563,10 +509,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             padding: EdgeInsets.all(12),
             child: Tooltip(
               message: 'AI予想はバッチ処理 (毎時自動) で生成されます',
-              child: Icon(
-                Icons.auto_awesome,
-                color: Color(0xFFFF6B35),
-              ),
+              child: Icon(Icons.auto_awesome, color: Color(0xFFFF6B35)),
             ),
           ),
           IconButton(
@@ -576,70 +519,88 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        switch (_errorType) {
-                          ErrorType.network => Icons.cloud_off,
-                          ErrorType.serviceUnavailable => Icons.hourglass_empty,
-                          ErrorType.api => Icons.error,
-                          _ => Icons.warning,
-                        },
-                        size: 64,
-                        color: _errorType == ErrorType.network ||
-                                _errorType == ErrorType.serviceUnavailable
-                            ? const Color(0xFFFF6B35)
-                            : const Color(0xFFE53935),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        switch (_errorType) {
-                          ErrorType.network => 'ネットワーク接続エラー',
-                          ErrorType.serviceUnavailable => 'サーバー混雑中',
-                          ErrorType.api => 'サーバーエラー',
-                          _ => 'エラーが発生しました',
-                        },
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFF9CA3AF),
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      FilledButton.icon(
-                        onPressed: _loadAll,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('再試行'),
-                      ),
-                    ],
-                  ),
-                )
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildTodayTab(),
-                    _buildHistoryTab(),
-                    _buildAccuracyTab(),
-                    _buildBetTicketsTab(),
-                  ],
-                ),
+      body: Column(
+        children: [
+          HorseRacingResponsibleUseCard(
+            dailyBudgetYen: _dailyBudgetYen,
+            paused: _purchasesPaused,
+            onBudgetChanged: (value) {
+              setState(() => _dailyBudgetYen = value);
+            },
+            onPauseChanged: (value) {
+              setState(() => _purchasesPaused = value);
+            },
+          ),
+          Expanded(child: _buildBodyContent()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBodyContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              switch (_errorType) {
+                ErrorType.network => Icons.cloud_off,
+                ErrorType.serviceUnavailable => Icons.hourglass_empty,
+                ErrorType.api => Icons.error,
+                _ => Icons.warning,
+              },
+              size: 64,
+              color:
+                  _errorType == ErrorType.network ||
+                      _errorType == ErrorType.serviceUnavailable
+                  ? const Color(0xFFFF6B35)
+                  : const Color(0xFFE53935),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              switch (_errorType) {
+                ErrorType.network => 'ネットワーク接続エラー',
+                ErrorType.serviceUnavailable => 'サーバー混雑中',
+                ErrorType.api => 'サーバーエラー',
+                _ => 'エラーが発生しました',
+              },
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: _loadAll,
+              icon: const Icon(Icons.refresh),
+              label: const Text('再試行'),
+            ),
+          ],
+        ),
+      );
+    }
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildTodayTab(),
+        _buildHistoryTab(),
+        _buildAccuracyTab(),
+        _buildBetTicketsTab(),
+      ],
     );
   }
 
@@ -723,8 +684,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Widget _buildTodayActionBar() {
     final total = _todayRaces.length;
     final predicted = _todayRaces.where(_hasPrediction).length;
-    final entriesReady =
-        _todayRaces.where((race) => _entriesOf(race).length >= 3).length;
+    final entriesReady = _todayRaces
+        .where((race) => _entriesOf(race).length >= 3)
+        .length;
     final next = _nextRace();
     final nextLabel = next == null
         ? '次走なし'
@@ -736,8 +698,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       decoration: BoxDecoration(
         color: const Color(0xFF141414),
         borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: const Color(0xFFFF6B35).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -766,8 +729,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFFFF6B35),
                   foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                 ),
               ),
             ],
@@ -866,11 +831,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: const Row(
               children: [
-                Icon(
-                  Icons.info_outline,
-                  color: Color(0xFFFF6B35),
-                  size: 16,
-                ),
+                Icon(Icons.info_outline, color: Color(0xFFFF6B35), size: 16),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -892,10 +853,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               final cols = w >= 1100
                   ? 4
                   : w >= 820
-                      ? 3
-                      : w >= 540
-                          ? 2
-                          : 1;
+                  ? 3
+                  : w >= 540
+                  ? 2
+                  : 1;
               if (cols == 1) {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -960,8 +921,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final color = isOverseas
         ? const Color(0xFF059669)
         : isJra
-            ? const Color(0xFF2563EB)
-            : const Color(0xFF7C3AED);
+        ? const Color(0xFF2563EB)
+        : const Color(0xFF7C3AED);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -976,8 +937,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             isOverseas
                 ? Icons.flight_takeoff
                 : isJra
-                    ? Icons.stadium
-                    : Icons.location_on,
+                ? Icons.stadium
+                : Icons.location_on,
             color: color,
             size: 16,
           ),
@@ -1002,8 +963,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               isOverseas
                   ? '海外'
                   : isJra
-                      ? 'JRA'
-                      : '地方',
+                  ? 'JRA'
+                  : '地方',
               style: TextStyle(
                 color: color,
                 fontSize: 10,
@@ -1054,8 +1015,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       statusColor = const Color(0xFFF59E0B);
       statusLabel = '再取得待ち';
     } else if (hasResult) {
-      statusColor =
-          isCorrect == true ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
+      statusColor = isCorrect == true
+          ? const Color(0xFF4CAF50)
+          : const Color(0xFFE53935);
       statusLabel = isCorrect == true ? '的中' : '外れ';
     } else if (status == 'scheduled') {
       statusColor = const Color(0xFFFF6B35);
@@ -1082,8 +1044,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           collapsedBackgroundColor: const Color(0xFF1E1E1E),
           clipBehavior: Clip.antiAlias,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          childrenPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          childrenPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           leading: Container(
             width: 44,
             height: 44,
@@ -1286,16 +1250,18 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (isCorrect == true
-                          ? const Color(0xFF4CAF50)
-                          : const Color(0xFFE53935))
-                      .withValues(alpha: 0.08),
+                  color:
+                      (isCorrect == true
+                              ? const Color(0xFF4CAF50)
+                              : const Color(0xFFE53935))
+                          .withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: (isCorrect == true
-                            ? const Color(0xFF4CAF50)
-                            : const Color(0xFFE53935))
-                        .withValues(alpha: 0.3),
+                    color:
+                        (isCorrect == true
+                                ? const Color(0xFF4CAF50)
+                                : const Color(0xFFE53935))
+                            .withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -1361,36 +1327,34 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   label: Text(pred == null ? 'このレースをAI予想' : 'AI再予想'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFFFF6B35),
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      height: 1.5,
-                    ),
+                    textStyle: const TextStyle(fontSize: 12, height: 1.5),
                   ),
                   onPressed: _isPredicting
                       ? null
                       : () => _runAiPredictions(race: race),
                 ),
                 TextButton.icon(
-                  icon: const Icon(Icons.receipt_long, size: 14),
-                  label: const Text('購入記録'),
+                  icon: Icon(
+                    _purchasesPaused
+                        ? Icons.pause_circle_outline
+                        : Icons.receipt_long,
+                    size: 14,
+                  ),
+                  label: Text(_purchasesPaused ? '購入休止中' : '購入記録'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFFFFB199),
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      height: 1.5,
-                    ),
+                    textStyle: const TextStyle(fontSize: 12, height: 1.5),
                   ),
-                  onPressed: () => _showBetTicketDialog(race),
+                  onPressed: _purchasesPaused
+                      ? null
+                      : () => _showBetTicketDialog(race),
                 ),
                 TextButton.icon(
                   icon: const Icon(Icons.table_chart_outlined, size: 14),
                   label: const Text('詳細マトリックス'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF6366F1),
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      height: 1.5,
-                    ),
+                    textStyle: const TextStyle(fontSize: 12, height: 1.5),
                   ),
                   onPressed: () => Navigator.push(
                     context,
@@ -1421,11 +1385,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         ),
         child: const Row(
           children: [
-            Icon(
-              Icons.psychology_outlined,
-              color: Color(0xFF9CA3AF),
-              size: 18,
-            ),
+            Icon(Icons.psychology_outlined, color: Color(0xFF9CA3AF), size: 18),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -1468,8 +1428,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ],
         ),
         borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: const Color(0xFF0D9488).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: const Color(0xFF0D9488).withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1512,14 +1473,20 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               _placeLabel('1着候補', names[0], const Color(0xFFFFC107)),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
-                child:
-                    Icon(Icons.arrow_forward, color: Colors.white38, size: 14),
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: Colors.white38,
+                  size: 14,
+                ),
               ),
               _placeLabel('2着候補', names[1], const Color(0xFF9CA3AF)),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
-                child:
-                    Icon(Icons.arrow_forward, color: Colors.white38, size: 14),
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: Colors.white38,
+                  size: 14,
+                ),
               ),
               _placeLabel('3着候補', names[2], const Color(0xFFA1887F)),
             ],
@@ -1588,8 +1555,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ],
         ),
         borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: const Color(0xFFFF6B35).withValues(alpha: 0.25)),
+        border: Border.all(
+          color: const Color(0xFFFF6B35).withValues(alpha: 0.25),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1599,7 +1567,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               const Icon(Icons.psychology, color: Color(0xFFFF6B35), size: 16),
               const SizedBox(width: 8),
               const Text(
-                '低リスクAI予想',
+                'AI予測（参考情報）',
                 style: TextStyle(
                   color: Color(0xFFFF6B35),
                   fontWeight: FontWeight.bold,
@@ -1642,14 +1610,20 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               _placeLabel('1着', first, const Color(0xFFFFC107)),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
-                child:
-                    Icon(Icons.arrow_forward, color: Colors.white38, size: 14),
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: Colors.white38,
+                  size: 14,
+                ),
               ),
               _placeLabel('2着', second, const Color(0xFF9CA3AF)),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
-                child:
-                    Icon(Icons.arrow_forward, color: Colors.white38, size: 14),
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: Colors.white38,
+                  size: 14,
+                ),
               ),
               _placeLabel('3着', third, const Color(0xFFA1887F)),
             ],
@@ -1717,14 +1691,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   ) {
     if (suggestions.isEmpty) return const SizedBox.shrink();
     final recommended =
-        suggestions.where((item) => item['recommended'] == true).toList()
-          ..sort(
-            (a, b) => ((a['priority'] as num?)?.toInt() ?? 99)
-                .compareTo((b['priority'] as num?)?.toInt() ?? 99),
-          );
-    final sorted = [...suggestions]..sort(
-        (a, b) => ((a['priority'] as num?)?.toInt() ?? 99)
-            .compareTo((b['priority'] as num?)?.toInt() ?? 99),
+        suggestions.where((item) => item['recommended'] == true).toList()..sort(
+          (a, b) => ((a['priority'] as num?)?.toInt() ?? 99).compareTo(
+            (b['priority'] as num?)?.toInt() ?? 99,
+          ),
+        );
+    final sorted = [...suggestions]
+      ..sort(
+        (a, b) => ((a['priority'] as num?)?.toInt() ?? 99).compareTo(
+          (b['priority'] as num?)?.toInt() ?? 99,
+        ),
       );
 
     return Column(
@@ -1762,7 +1738,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ),
             ),
             child: Text(
-              '特におすすめ: ${recommended.map((item) => item['bet_type'] == '購入しない' ? '購入しない (${item['rationale'] ?? '見送り推奨'})' : '${item['bet_type']} ${item['combination']}').join(' / ')}',
+              'AI参考候補（購入を推奨しません）: ${recommended.map((item) => item['bet_type'] == '購入しない' ? '購入しない (${item['rationale'] ?? '見送り判断'})' : '${item['bet_type']} ${item['combination']}').join(' / ')}',
               style: const TextStyle(
                 color: Color(0xFFD1FAE5),
                 fontSize: 11,
@@ -1796,8 +1772,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final borderColor = hit == true
         ? const Color(0xFF4CAF50)
         : hit == false
-            ? const Color(0xFFE53935)
-            : riskColor;
+        ? const Color(0xFFE53935)
+        : riskColor;
     return Container(
       constraints: const BoxConstraints(minWidth: 128),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
@@ -1827,10 +1803,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 hit == true
                     ? '的中'
                     : hit == false
-                        ? '不的中'
-                        : isSkip
-                            ? '見送り'
-                            : _riskLabel(risk),
+                    ? '不的中'
+                    : isSkip
+                    ? '見送り'
+                    : _riskLabel(risk),
                 style: TextStyle(
                   color: borderColor,
                   fontSize: 10,
@@ -1908,6 +1884,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     return _dynamicMap(ticket['metadata']);
   }
 
+  int _recordedStakeForDate(String date) {
+    return _betTickets.fold<int>(0, (sum, ticket) {
+      final metadata = _ticketMetadata(ticket);
+      if (metadata['race_date']?.toString() != date) return sum;
+      return sum + _toIntValue(metadata['total_amount']);
+    });
+  }
+
   String _horseNumberLabel(
     List<Map<String, dynamic>> entries,
     String horseName,
@@ -1935,10 +1919,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     return null;
   }
 
-  int? _horseNumberValue(
-    List<Map<String, dynamic>> entries,
-    String horseName,
-  ) {
+  int? _horseNumberValue(List<Map<String, dynamic>> entries, String horseName) {
     final entry = _entryForHorse(entries, horseName);
     final value = entry?['horse_number'];
     if (value is num) return value.toInt();
@@ -2008,7 +1989,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         : (entries.length * 0.6).ceil().clamp(1, entries.length);
     final hasOdds =
         entries.where((entry) => entry['win_odds'] != null).length >=
-            requiredOdds;
+        requiredOdds;
     final skipRecommended = confidence < 0.42 || dataQuality < 0.28 || !hasOdds;
     final n1 = _horseNumberValue(entries, first);
     final n2 = _horseNumberValue(entries, second);
@@ -2083,11 +2064,21 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         skipRecommended ? 0 : 9,
         skipRecommended
             ? '信頼度とデータ充足度が低いため、資金保全を優先して購入見送り。'
-            : '低リスク券種に限定すれば購入検討可。オッズ急変時は見送り。',
+            : '相対比較の参考候補です。購入を推奨せず、オッズ急変や不明点があれば見送ってください。',
         purchaseAction: 'skip',
       ),
-      suggestion('複勝', l1, [first], [n1], 'low', 0.14, 3, !skipRecommended, 1,
-          '本命馬が3着以内に入る前提の最小リスク本線。'),
+      suggestion(
+        '複勝',
+        l1,
+        [first],
+        [n1],
+        'low',
+        0.14,
+        3,
+        !skipRecommended,
+        1,
+        '本命馬が3着以内に入る前提の最小リスク本線。',
+      ),
       suggestion(
         'ワイド',
         '$l1-$l2 / $l1-$l3',
@@ -2101,10 +2092,30 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         '本命から相手2頭へ分散し、3着内の組み合わせを狙う。',
         tickets: wideTickets,
       ),
-      suggestion('単勝', l1, [first], [n1], 'medium', 0.02, 1, false, 3,
-          '本命の勝ち切り狙い。複勝よりブレが大きい。'),
-      suggestion('馬連', '$l1-$l2', [first, second], [n1, n2], 'medium', -0.02, 1,
-          false, 4, '上位2頭の順不同。'),
+      suggestion(
+        '単勝',
+        l1,
+        [first],
+        [n1],
+        'medium',
+        0.02,
+        1,
+        false,
+        3,
+        '本命の勝ち切り狙い。複勝よりブレが大きい。',
+      ),
+      suggestion(
+        '馬連',
+        '$l1-$l2',
+        [first, second],
+        [n1, n2],
+        'medium',
+        -0.02,
+        1,
+        false,
+        4,
+        '上位2頭の順不同。',
+      ),
       suggestion(
         '枠連',
         f1 != null && f2 != null ? '$f1-$f2' : '$l1-$l2の枠',
@@ -2118,18 +2129,48 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         '枠番ベースで上位2頭を押さえる。',
         frames: [f1, f2],
       ),
-      suggestion('馬単', '$l1→$l2', [first, second], [n1, n2], 'high', -0.08, 1,
-          false, 6, '本命1着固定。順序リスクが高い。'),
-      suggestion('3連複', '$l1-$l2-$l3', [first, second, third], [n1, n2, n3],
-          'high', -0.12, 1, false, 7, '上位3頭の順不同。'),
-      suggestion('3連単', '$l1→$l2→$l3', [first, second, third], [n1, n2, n3],
-          'high', -0.18, 1, false, 8, '着順完全固定。少額向け。'),
+      suggestion(
+        '馬単',
+        '$l1→$l2',
+        [first, second],
+        [n1, n2],
+        'high',
+        -0.08,
+        1,
+        false,
+        6,
+        '本命1着固定。順序リスクが高い。',
+      ),
+      suggestion(
+        '3連複',
+        '$l1-$l2-$l3',
+        [first, second, third],
+        [n1, n2, n3],
+        'high',
+        -0.12,
+        1,
+        false,
+        7,
+        '上位3頭の順不同。',
+      ),
+      suggestion(
+        '3連単',
+        '$l1→$l2→$l3',
+        [first, second, third],
+        [n1, n2, n3],
+        'high',
+        -0.18,
+        1,
+        false,
+        8,
+        '着順完全固定。少額向け。',
+      ),
     ];
   }
 
   String _riskLabel(String risk) {
     return switch (risk) {
-      'low' => '低リスク',
+      'low' => '相対リスク低（損失あり）',
       'medium' => '中リスク',
       'high' => '高リスク',
       _ => risk,
@@ -2172,16 +2213,20 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       '単勝' => horses.first == first,
       '複勝' => actualTop3.contains(horses.first),
       '馬単' => horses.length >= 2 && horses[0] == first && horses[1] == second,
-      '馬連' => horses.length >= 2 &&
-          (([horses[0], horses[1]]..sort()).join('|') == actualPair.join('|')),
+      '馬連' =>
+        horses.length >= 2 &&
+            (([horses[0], horses[1]]..sort()).join('|') ==
+                actualPair.join('|')),
       'ワイド' => _wideSuggestionHit(suggestion, actualTop3),
-      '3連複' => horses.length >= 3 &&
-          (([horses[0], horses[1], horses[2]]..sort()).join('|') ==
-              ([first, second, third]..sort()).join('|')),
-      '3連単' => horses.length >= 3 &&
-          horses[0] == first &&
-          horses[1] == second &&
-          horses[2] == third,
+      '3連複' =>
+        horses.length >= 3 &&
+            (([horses[0], horses[1], horses[2]]..sort()).join('|') ==
+                ([first, second, third]..sort()).join('|')),
+      '3連単' =>
+        horses.length >= 3 &&
+            horses[0] == first &&
+            horses[1] == second &&
+            horses[2] == third,
       _ => null,
     };
   }
@@ -2218,22 +2263,21 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final entries = _entriesOf(race);
     final pred = _firstMap(race['horse_predictions']);
     if (pred == null) return [_BetLineDraft(betType: 'ワイド')];
-    final suggestions = _predictionBetSuggestions(pred, entries)
-        .where((suggestion) => suggestion['recommended'] == true)
-        .toList()
-      ..sort((a, b) => ((a['priority'] as num?)?.toInt() ?? 99)
-          .compareTo((b['priority'] as num?)?.toInt() ?? 99));
+    final suggestions =
+        _predictionBetSuggestions(
+            pred,
+            entries,
+          ).where((suggestion) => suggestion['recommended'] == true).toList()
+          ..sort(
+            (a, b) => ((a['priority'] as num?)?.toInt() ?? 99).compareTo(
+              (b['priority'] as num?)?.toInt() ?? 99,
+            ),
+          );
     final recommendedDrafts = <_BetLineDraft>[];
     for (final suggestion in suggestions) {
       final betType = suggestion['bet_type']?.toString() ?? 'ワイド';
       if (betType == '購入しない') {
-        return [
-          _BetLineDraft(
-            betType: '購入しない',
-            combination: '見送り',
-            amount: 0,
-          ),
-        ];
+        return [_BetLineDraft(betType: '購入しない', combination: '見送り', amount: 0)];
       }
       final tickets = _mapList(suggestion['tickets']);
       if (tickets.isNotEmpty) {
@@ -2270,28 +2314,26 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     if (numbers.length < 3) return [_BetLineDraft(betType: 'ワイド')];
 
     return [
-      _BetLineDraft(
-        betType: 'ワイド',
-        combination: '${numbers[0]}-${numbers[1]}',
-      ),
-      _BetLineDraft(
-        betType: 'ワイド',
-        combination: '${numbers[0]}-${numbers[2]}',
-      ),
-      _BetLineDraft(
-        betType: 'ワイド',
-        combination: '${numbers[1]}-${numbers[2]}',
-      ),
+      _BetLineDraft(betType: 'ワイド', combination: '${numbers[0]}-${numbers[1]}'),
+      _BetLineDraft(betType: 'ワイド', combination: '${numbers[0]}-${numbers[2]}'),
+      _BetLineDraft(betType: 'ワイド', combination: '${numbers[1]}-${numbers[2]}'),
     ];
   }
 
   Future<void> _showBetTicketDialog(Map<String, dynamic> race) async {
-    final userId = _supabase.auth.currentUser?.id;
+    if (_purchasesPaused) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('購入記録は休止中です。見送りを続けてください。')));
+      return;
+    }
+    final userId = _gateway.userId;
     if (userId == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ログインすると購入馬券を記録できます')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ログインすると購入馬券を記録できます')));
       return;
     }
 
@@ -2332,9 +2374,12 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               0,
               (sum, draft) => sum + _toIntValue(draft.amountCtrl.text),
             );
+            final recordedToday = _recordedStakeForDate(_selectedDate);
             final isSkipRecord =
                 drafts.any((draft) => draft.betType == '購入しない') &&
-                    drafts.every((draft) => draft.betType == '購入しない');
+                drafts.every((draft) => draft.betType == '購入しない');
+            final exceedsBudget =
+                !isSkipRecord && recordedToday + total > _dailyBudgetYen;
 
             return AlertDialog(
               title: const Text('購入馬券を記録'),
@@ -2475,7 +2520,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         controller: memoCtrl,
                         decoration: const InputDecoration(
                           labelText: 'メモ',
-                          hintText: '例: フローラS ワイド3点。低リスク本線。',
+                          hintText: '例: 予算内で記録。判断に迷った点も残す。',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -2483,12 +2528,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color:
-                              const Color(0xFFFF6B35).withValues(alpha: 0.08),
+                          color: const Color(
+                            0xFFFF6B35,
+                          ).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color:
-                                const Color(0xFFFF6B35).withValues(alpha: 0.25),
+                            color: const Color(
+                              0xFFFF6B35,
+                            ).withValues(alpha: 0.25),
                           ),
                         ),
                         child: Row(
@@ -2506,6 +2553,31 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                           ],
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '本日の記録 ${_yen(recordedToday)} / '
+                        '予算上限 ${_yen(_dailyBudgetYen)}',
+                        style: TextStyle(
+                          color: exceedsBudget
+                              ? const Color(0xFFFCA5A5)
+                              : const Color(0xFF9CA3AF),
+                          fontSize: 12,
+                          height: 1.45,
+                          fontWeight: exceedsBudget
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      if (exceedsBudget)
+                        const Text(
+                          '予算上限を超えるため保存できません。金額を減らすか、本日は購入を休止してください。',
+                          key: Key('horse-racing-budget-exceeded'),
+                          style: TextStyle(
+                            color: Color(0xFFFCA5A5),
+                            fontSize: 12,
+                            height: 1.45,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -2518,20 +2590,21 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 FilledButton.icon(
                   icon: const Icon(Icons.save),
                   label: Text(isSkipRecord ? '見送りを記録' : '記録する'),
-                  onPressed: total <= 0 && !isSkipRecord
+                  onPressed: (total <= 0 && !isSkipRecord) || exceedsBudget
                       ? null
                       : () async {
                           final lines = <Map<String, dynamic>>[];
                           for (final draft in drafts) {
-                            final combination =
-                                draft.combinationCtrl.text.trim();
+                            final combination = draft.combinationCtrl.text
+                                .trim();
                             final amount = _toIntValue(draft.amountCtrl.text);
                             if (draft.betType == '購入しない') {
                               if (!isSkipRecord) continue;
                               lines.add({
                                 'bet_type': '購入しない',
-                                'combination':
-                                    combination.isEmpty ? '見送り' : combination,
+                                'combination': combination.isEmpty
+                                    ? '見送り'
+                                    : combination,
                                 'amount': 0,
                               });
                               continue;
@@ -2545,33 +2618,29 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                           }
                           if (lines.isEmpty) return;
                           final now = DateTime.now();
-                          await _supabase.from('hub_data').insert({
-                            'source': 'horse_bet_ticket',
-                            'metadata': {
-                              'user_id': userId,
-                              'race_id': race['id'],
-                              'race_id_ext': race['race_id_ext'],
-                              'race_date': race['race_date'],
-                              'venue': venue,
-                              'race_number': raceNumber,
-                              'race_name': raceName,
-                              'post_time': race['post_time'],
-                              'receipt_no': receiptCtrl.text.trim().isEmpty
-                                  ? null
-                                  : receiptCtrl.text.trim(),
-                              'accepted_time': acceptedAtCtrl.text.trim(),
-                              'purchased_at': now.toIso8601String(),
-                              'line_count': lines.length,
-                              'total_amount': total,
-                              'payout_amount': 0,
-                              'settled': isSkipRecord,
-                              'purchase_decision':
-                                  isSkipRecord ? 'skip' : 'buy',
-                              'memo': memoCtrl.text.trim().isEmpty
-                                  ? null
-                                  : memoCtrl.text.trim(),
-                              'lines': lines,
-                            },
+                          await _gateway.createBetTicket({
+                            'user_id': userId,
+                            'race_id': race['id'],
+                            'race_id_ext': race['race_id_ext'],
+                            'race_date': race['race_date'],
+                            'venue': venue,
+                            'race_number': raceNumber,
+                            'race_name': raceName,
+                            'post_time': race['post_time'],
+                            'receipt_no': receiptCtrl.text.trim().isEmpty
+                                ? null
+                                : receiptCtrl.text.trim(),
+                            'accepted_time': acceptedAtCtrl.text.trim(),
+                            'purchased_at': now.toIso8601String(),
+                            'line_count': lines.length,
+                            'total_amount': total,
+                            'payout_amount': 0,
+                            'settled': isSkipRecord,
+                            'purchase_decision': isSkipRecord ? 'skip' : 'buy',
+                            'memo': memoCtrl.text.trim().isEmpty
+                                ? null
+                                : memoCtrl.text.trim(),
+                            'lines': lines,
                           });
                           if (dialogContext.mounted) {
                             Navigator.pop(dialogContext);
@@ -2580,9 +2649,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                           if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(isSkipRecord
-                                  ? '購入見送りを記録しました'
-                                  : '購入馬券を記録しました: ${_yen(total)}'),
+                              content: Text(
+                                isSkipRecord
+                                    ? '購入見送りを記録しました'
+                                    : '購入馬券を記録しました: ${_yen(total)}',
+                              ),
                             ),
                           );
                         },
@@ -2603,8 +2674,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<void> _showSettleBetTicketDialog(Map<String, dynamic> ticket) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    if (_gateway.userId == null) return;
+    final ticketId = ticket['id'];
+    if (ticketId == null) return;
     final metadata = _ticketMetadata(ticket);
     final payoutCtrl = TextEditingController(
       text: _toIntValue(metadata['payout_amount']) == 0
@@ -2663,21 +2735,18 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           FilledButton(
             onPressed: () async {
               final payout = _toIntValue(payoutCtrl.text);
-              await _supabase
-                  .from('hub_data')
-                  .update({
-                    'metadata': {
-                      ...metadata,
-                      'payout_amount': payout,
-                      'settled': true,
-                      'settled_at': DateTime.now().toIso8601String(),
-                      'settlement_memo': memoCtrl.text.trim().isEmpty
-                          ? null
-                          : memoCtrl.text.trim(),
-                    },
-                  })
-                  .eq('id', ticket['id'])
-                  .filter('metadata->>user_id', 'eq', userId);
+              await _gateway.settleBetTicket(
+                ticketId: ticketId,
+                metadata: {
+                  ...metadata,
+                  'payout_amount': payout,
+                  'settled': true,
+                  'settled_at': DateTime.now().toIso8601String(),
+                  'settlement_memo': memoCtrl.text.trim().isEmpty
+                      ? null
+                      : memoCtrl.text.trim(),
+                },
+              );
               if (dialogContext.mounted) Navigator.pop(dialogContext);
               await _reloadBetTickets();
             },
@@ -2691,19 +2760,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Widget _buildBetTicketsTab() {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
+    if (!_gateway.isAuthenticated) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.lock_outline,
-                color: Color(0xFF9CA3AF),
-                size: 52,
-              ),
+              Icon(Icons.lock_outline, color: Color(0xFF9CA3AF), size: 52),
               SizedBox(height: 12),
               Text(
                 'ログインすると購入馬券を記録できます',
@@ -2716,12 +2780,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ),
               SizedBox(height: 8),
               Text(
-                '購入金額、買い目、払戻、振り返りを保存して、低リスク運用の精度を上げます。',
+                '購入金額、買い目、払戻、振り返りを保存し、予算上限と損失を確認します。',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  height: 1.5,
-                ),
+                style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
               ),
             ],
           ),
@@ -2736,11 +2797,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.receipt_long,
-                color: Color(0xFF9CA3AF),
-                size: 52,
-              ),
+              Icon(Icons.receipt_long, color: Color(0xFF9CA3AF), size: 52),
               SizedBox(height: 12),
               Text(
                 '購入馬券はまだありません',
@@ -2755,10 +2812,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               Text(
                 '今日のレースカードから「購入記録」を押すと、馬券を保存できます。',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  height: 1.5,
-                ),
+                style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
               ),
             ],
           ),
@@ -2766,16 +2820,12 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       );
     }
 
-    final stake = _betTickets.fold<int>(
-      0,
-      (sum, ticket) =>
-          sum + _toIntValue(_ticketMetadata(ticket)['total_amount']),
+    final performance = HorseRacingPerformanceViewModel.from(
+      accuracyStats: _accuracyStats,
+      betTickets: _betTickets,
     );
-    final payout = _betTickets.fold<int>(
-      0,
-      (sum, ticket) =>
-          sum + _toIntValue(_ticketMetadata(ticket)['payout_amount']),
-    );
+    final stake = performance.totalStakeYen;
+    final payout = performance.totalPayoutYen;
     final unsettled = _betTickets
         .where((ticket) => _ticketMetadata(ticket)['settled'] != true)
         .length;
@@ -2806,6 +2856,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   '${profit >= 0 ? '+' : ''}${_yen(profit)}',
                   profit >= 0 ? Icons.trending_up : Icons.trending_down,
                 ),
+                _summaryChip(
+                  'ROI',
+                  performance.roiPercent == null
+                      ? '算出不可'
+                      : '${performance.roiPercent!.toStringAsFixed(1)}%',
+                  Icons.percent,
+                ),
+                _summaryChip('期間', performance.periodLabel, Icons.date_range),
                 _summaryChip('未確定', '$unsettled件', Icons.hourglass_bottom),
               ],
             ),
@@ -2841,8 +2899,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6B35).withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(8),
@@ -2891,10 +2951,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     settled ? '確定' : '未確定',
                     style: const TextStyle(fontSize: 11, height: 1.4),
                   ),
-                  backgroundColor: (settled
-                          ? const Color(0xFF4CAF50)
-                          : const Color(0xFFFFC107))
-                      .withValues(alpha: 0.16),
+                  backgroundColor:
+                      (settled
+                              ? const Color(0xFF4CAF50)
+                              : const Color(0xFFFFC107))
+                          .withValues(alpha: 0.16),
                 ),
               ],
             ),
@@ -2952,10 +3013,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 const SizedBox(width: 12),
                 Text(
                   '払戻 ${_yen(payout)}',
-                  style: const TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
+                  style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -2992,10 +3050,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             SizedBox(height: 8),
             Text(
               '予想履歴がありません',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ],
         ),
@@ -3025,24 +3080,12 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         if (resultNeedsRepair) {
           cardBg = const Color(0xFFF59E0B).withValues(alpha: 0.04);
           trailing = const Chip(
-            label: Text(
-              '再取得待ち',
-              style: TextStyle(
-                fontSize: 11,
-                height: 1.5,
-              ),
-            ),
+            label: Text('再取得待ち', style: TextStyle(fontSize: 11, height: 1.5)),
           );
         } else if (!hasResult) {
           cardBg = const Color(0xFF1E1E1E);
           trailing = const Chip(
-            label: Text(
-              '未結果',
-              style: TextStyle(
-                fontSize: 11,
-                height: 1.5,
-              ),
-            ),
+            label: Text('未結果', style: TextStyle(fontSize: 11, height: 1.5)),
           );
         } else if (isCorrect == true) {
           cardBg = const Color(0xFF4CAF50).withValues(alpha: 0.06);
@@ -3068,14 +3111,18 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           );
         } else {
           cardBg = const Color(0xFFE53935).withValues(alpha: 0.04);
-          trailing =
-              const Icon(Icons.cancel, color: Color(0xFFE53935), size: 20);
+          trailing = const Icon(
+            Icons.cancel,
+            color: Color(0xFFE53935),
+            size: 20,
+          );
         }
         return Card(
           color: cardBg,
           margin: const EdgeInsets.only(bottom: 8),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: const Color(0xFFFF6B35).withValues(alpha: 0.12),
@@ -3147,11 +3194,17 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final learning = _accuracyStats['learning'] is Map
         ? Map<String, dynamic>.from(_accuracyStats['learning'] as Map)
         : <String, dynamic>{};
+    final performance = HorseRacingPerformanceViewModel.from(
+      accuracyStats: _accuracyStats,
+      betTickets: _betTickets,
+    );
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          HorseRacingEvidencePanel(summary: performance),
+          const SizedBox(height: 16),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -3164,7 +3217,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             child: Column(
               children: [
                 const Text(
-                  'AI 3連単 的中率',
+                  'AI予測の実績（参考値）',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 14,
@@ -3254,7 +3307,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           ),
           const SizedBox(height: 8),
-          _buildBetTypeLearningSection(betTypeAccuracy, learning),
+          _buildBetTypeLearningSection(betTypeAccuracy, learning, performance),
           const SizedBox(height: 12),
           ..._systemInfoRows(),
         ],
@@ -3265,13 +3318,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Widget _buildBetTypeLearningSection(
     List<Map<String, dynamic>> betTypeAccuracy,
     Map<String, dynamic> learning,
+    HorseRacingPerformanceViewModel performance,
   ) {
     final dailyAccuracy = _mapList(learning['daily_accuracy']);
     final backfillStatus = _mapList(learning['backfill_status']);
-    final placeRow =
-        betTypeAccuracy.where((r) => r['bet_type'] == '複勝').firstOrNull;
-    final wideRow =
-        betTypeAccuracy.where((r) => r['bet_type'] == 'ワイド').firstOrNull;
+    final placeRow = betTypeAccuracy
+        .where((r) => r['bet_type'] == '複勝')
+        .firstOrNull;
+    final wideRow = betTypeAccuracy
+        .where((r) => r['bet_type'] == 'ワイド')
+        .firstOrNull;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -3357,14 +3413,23 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               runSpacing: 8,
               children: [
                 for (final row in betTypeAccuracy)
-                  _buildBetTypeAccuracyCard(row),
+                  _buildBetTypeAccuracyCard(
+                    row,
+                    performance.betTypes
+                        .where(
+                          (item) => item.betType == row['bet_type']?.toString(),
+                        )
+                        .firstOrNull,
+                  ),
               ],
             ),
           ],
           if (learning.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
-              '推奨更新: ${learning['best_low_risk_bet_type'] ?? '集計中'} を現時点の最有力低リスク券種として学習中',
+              performance.rankingOnHold
+                  ? '参考指標: データ不足のため券種ランキングと購入推奨を保留中'
+                  : '参考指標: ${learning['best_low_risk_bet_type'] ?? '集計中'} の統計を継続観測中（購入推奨ではありません）',
               style: const TextStyle(
                 color: Color(0xFF9CA3AF),
                 fontSize: 11,
@@ -3431,8 +3496,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       decoration: BoxDecoration(
         color: const Color(0xFF0B1220),
         borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3547,18 +3613,24 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     );
   }
 
-  Widget _buildBetTypeAccuracyCard(Map<String, dynamic> row) {
+  Widget _buildBetTypeAccuracyCard(
+    Map<String, dynamic> row,
+    HorseRacingBetTypeEvidence? evidence,
+  ) {
     final betType = row['bet_type']?.toString() ?? '-';
     final total = (row['total_predictions'] as num?)?.toInt() ?? 0;
     final hits = (row['hits'] as num?)?.toInt() ?? 0;
     final rate = (row['hit_rate_pct'] as num?)?.toDouble() ?? 0;
+    final roiLabel = evidence?.roiPercent == null
+        ? '算出不可'
+        : '${evidence!.roiPercent!.toStringAsFixed(1)}%';
     final color = rate >= 50
         ? const Color(0xFF4CAF50)
         : rate >= 25
-            ? const Color(0xFFFFC107)
-            : const Color(0xFFFF6B35);
+        ? const Color(0xFFFFC107)
+        : const Color(0xFFFF6B35);
     return Container(
-      width: 132,
+      width: 184,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
@@ -3588,7 +3660,24 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           ),
           Text(
-            '$hits / $total 的中',
+            '$hits / $total 的中（母数 $total）',
+            style: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 10,
+              height: 1.4,
+            ),
+          ),
+          Text(
+            '95%信頼区間 ${evidence?.confidenceInterval?.label ?? '算出不可'}',
+            style: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 10,
+              height: 1.4,
+            ),
+          ),
+          Text(
+            '投下 ${_yen(evidence?.stakeYen ?? 0)} / '
+            'ROI $roiLabel',
             style: const TextStyle(
               color: Color(0xFF9CA3AF),
               fontSize: 10,
@@ -3602,16 +3691,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
 
   List<Widget> _systemInfoRows() {
     return [
-      ('予想対象', '全レースの購入しない・単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単'),
-      ('低リスク推奨', '信頼度やデータ不足時は購入しない。購入時は複勝とワイド中心'),
-      ('学習ループ', '結果取得後に券種別的中率と購入見送り判断を計算し、翌日以降の推奨へ蓄積'),
-      ('AIモデル', 'Gemini / GPT / Sonnet / Opus / grok・xAI / DeepSeek を候補化'),
-      ('取得パラメータ', '血統・前走・馬体重・騎手・調教師・厩舎・タイム・オッズ・人気'),
-      ('データソース', 'netkeiba.com (JRA/NAR)'),
-      ('予想方式', '全券種 + 購入判断の低リスク提案'),
-      ('取得タイミング', '毎朝 07:30 JST 自動実行'),
-      ('結果取得', '毎日 17:30 / 21:00 JST 自動実行'),
-    ]
+          ('予想対象', '全レースの購入しない・単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単'),
+          ('購入判断', '予測は購入を推奨しない。データ不足や迷いがあれば購入しない'),
+          ('学習ループ', '結果取得後に券種別の母数・的中率・見送り判断を計算し、参考指標へ蓄積'),
+          ('AIモデル', 'Gemini / GPT / Sonnet / Opus / grok・xAI / DeepSeek を候補化'),
+          ('取得パラメータ', '血統・前走・馬体重・騎手・調教師・厩舎・タイム・オッズ・人気'),
+          ('データソース', 'netkeiba.com (JRA/NAR)'),
+          ('予想方式', '全券種の参考候補 + 購入見送り判断（結果保証なし）'),
+          ('取得タイミング', '毎朝 07:30 JST 自動実行'),
+          ('結果取得', '毎日 17:30 / 21:00 JST 自動実行'),
+        ]
         .map<Widget>(
           (pair) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -3645,12 +3734,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         .toList();
   }
 
-  Widget _statCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _statCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -3705,8 +3789,8 @@ class _BetLineDraft {
     required this.betType,
     String combination = '',
     int amount = 100,
-  })  : combinationCtrl = TextEditingController(text: combination),
-        amountCtrl = TextEditingController(text: amount.toString());
+  }) : combinationCtrl = TextEditingController(text: combination),
+       amountCtrl = TextEditingController(text: amount.toString());
 
   String betType;
   final TextEditingController combinationCtrl;
