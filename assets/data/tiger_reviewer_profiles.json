@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-09-02",
-  "source_snapshot": "canonical tiger-personas.json (2026-09-02)",
+  "snapshot_date": "2026-09-03",
+  "source_snapshot": "canonical tiger-personas.json (2026-09-03)",
   "reviewer_count": 125,
   "disclaimer": "年齢は生年月日を公開一次情報で確認できた場合のみ、スナップショット日時点で表示します。未確認の年齢は推測していません。肩書き・事業内容・出演実績は公開情報から構成したスナップショットです。",
   "profiles": [
@@ -4116,18 +4116,28 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社CREAM HONPO 代表取締役",
-      "business_summary": "飲食・宿泊・接客",
+      "company_role": "株式会社CREAM HONPO 代表取締役社長（2023年11月時点。現職の一次根拠なし）",
+      "business_summary": "スイーツ専門店『クリーム本舗』の運営（2023年11月時点）。公式会社概要では現在の代表者が別人",
       "business_domains": [
         "飲食・宿泊・接客"
       ],
       "appearances": 11,
       "investment_count": 3,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。飲食・宿泊・接客の公開職歴と、番組集計上の出演11回・出資3回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.7,
-      "profile_completeness_percent": 51,
-      "review_reflection_percent": 51,
+      "public_viewpoint_summary": "本人に直接帰属できる審査発言は今回未確認。2023年の会社発行資料で確認できるスイーツ専門店の多店舗運営歴と、番組集計上の出演11回・出資3回から、店舗単位の採算・需要・再現性に関する質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
+      "profile_url": "https://cream-fc.com/company.html",
+      "evidence_links": [
+        {
+          "label": "現在の運営会社・代表者・事業内容（公式会社概要）",
+          "url": "https://cream-fc.com/company.html"
+        },
+        {
+          "label": "2023年時点の肩書き・店舗事業（会社発行資料）",
+          "url": "https://www.prdesse.com/posts/download_file/20707/pdf/pdf_file"
+        }
+      ],
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 56,
+      "review_reflection_percent": 58,
       "review_reflection_mode": "profile_balanced",
       "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
@@ -4169,7 +4179,9 @@
       "evidence_source_ids": [
         "S002",
         "S003",
-        "S004"
+        "S004",
+        "S116",
+        "S117"
       ]
     },
     {
@@ -4245,21 +4257,35 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社 FIT PLACE代表",
-      "business_summary": "IT・SaaS・プラットフォーム、人材・採用・組織",
+      "company_role": "株式会社FIT PLACE 代表取締役",
+      "business_summary": "24時間フィットネスジム『FIT PLACE24』の運営とパーソナルトレーニングの提供",
       "business_domains": [
-        "IT・SaaS・プラットフォーム",
-        "人材・採用・組織"
+        "美容・ウェルネス",
+        "フランチャイズ・多店舗展開"
       ],
       "appearances": 11,
       "investment_count": 2,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。IT・SaaS・プラットフォーム、人材・採用・組織の公開職歴と、番組集計上の出演11回・出資2回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/2/",
-      "evidence_confidence": 2.7,
-      "profile_completeness_percent": 51,
-      "review_reflection_percent": 51,
-      "review_reflection_mode": "profile_balanced",
-      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "公式サービスページの本人名義メッセージでは、価格負担を抑え、楽しく正しく自分のペースで継続できるフィットネス体験を掲げている。レビューでは顧客の継続性、価格設計、店舗展開の再現性を質問軸に反映するが、本人の審査発言や意見としては断定しない。",
+      "profile_url": "https://fitplace.jp/company/",
+      "evidence_links": [
+        {
+          "label": "現職肩書き・事業内容（公式会社概要）",
+          "url": "https://fitplace.jp/company/"
+        },
+        {
+          "label": "現職肩書き（特定商取引法に基づく表記）",
+          "url": "https://fitplace.jp/legal-notice/"
+        },
+        {
+          "label": "本人名義のサービス方針（公式サービスページ）",
+          "url": "https://fitplace.jp/personal-subsc/"
+        }
+      ],
+      "evidence_confidence": 4.0,
+      "profile_completeness_percent": 73,
+      "review_reflection_percent": 83,
+      "review_reflection_mode": "profile_guided",
+      "review_application_rule": "中立スキャン後、確認済みプロフィール由来の重点観点を指摘の優先順位づけに強く反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "scalability",
@@ -4287,18 +4313,21 @@
         }
       ],
       "review_style_tags": [
-        "balanced_risk"
+        "balanced_risk",
+        "customer_access_and_retention"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
-        "現職肩書き・事業内容の一次公開情報",
         "本人の審査姿勢が確認できる一次公開情報",
         "出演・出資実績の追加検証"
       ],
       "evidence_source_ids": [
         "S002",
         "S008",
-        "S004"
+        "S004",
+        "S118",
+        "S119",
+        "S120"
       ]
     },
     {
@@ -6215,15 +6244,25 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社俺豚 代表",
-      "business_summary": "経営支援・コンサルティング",
+      "company_role": "株式会社俺豚 代表（番組出演時。現職の一次根拠なし）",
+      "business_summary": "豚骨ラーメン店『俺の豚骨』の運営（愛知県の2021年営業許可一覧で確認）",
       "business_domains": [
-        "経営支援・コンサルティング"
+        "飲食・宿泊・接客"
       ],
       "appearances": 3,
       "investment_count": 1,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。経営支援・コンサルティングの公開職歴と、番組集計上の出演3回・出資1回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/2/",
+      "public_viewpoint_summary": "本人に直接帰属できる審査発言と現職は今回未確認。愛知県の営業許可一覧で確認できる株式会社俺豚の豚骨ラーメン店運営歴と、番組集計上の出演3回・出資1回から、飲食店の需要・採算に関する質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
+      "profile_url": "https://www.pref.aichi.jp/uploaded/attachment/394951.pdf",
+      "evidence_links": [
+        {
+          "label": "株式会社俺豚の飲食店営業（愛知県営業許可一覧）",
+          "url": "https://www.pref.aichi.jp/uploaded/attachment/394951.pdf"
+        },
+        {
+          "label": "番組出演時の肩書き（公開キャスト資料）",
+          "url": "https://atsu-blog.com/tigerfunding-president-list/2/"
+        }
+      ],
       "evidence_confidence": 2.3,
       "profile_completeness_percent": 48,
       "review_reflection_percent": 47,
@@ -6267,7 +6306,8 @@
       "evidence_source_ids": [
         "S002",
         "S008",
-        "S004"
+        "S004",
+        "S115"
       ]
     },
     {
@@ -8247,11 +8287,11 @@
     }
   ],
   "enrichment": {
-    "round": 10,
+    "round": 11,
     "batch_size": 5,
     "policy": "一次公開情報を優先し、未確認情報は推測しない。プロフィール由来のレビュー観点は証拠強度に応じて段階反映する。",
-    "average_profile_completeness_percent": 67.6,
-    "average_review_reflection_percent": 73.1,
+    "average_profile_completeness_percent": 67.8,
+    "average_review_reflection_percent": 73.4,
     "verified_birth_dates": 12,
     "next_batch": [
       {
@@ -8288,8 +8328,8 @@
         ]
       },
       {
-        "seat": 66,
-        "name": "吉野繁",
+        "seat": 69,
+        "name": "川中子 輝昂",
         "profile_completeness_percent": 51,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -8299,8 +8339,8 @@
         ]
       },
       {
-        "seat": 68,
-        "name": "山澤 礼明",
+        "seat": 70,
+        "name": "磯遊晋介",
         "profile_completeness_percent": 51,
         "research_targets": [
           "生年月日の一次公開情報",
