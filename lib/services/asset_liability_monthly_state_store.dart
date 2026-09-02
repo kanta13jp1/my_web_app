@@ -427,10 +427,7 @@ class AssetLiabilityMonthlyStateStore {
         state.cardBillingAccountIds,
       );
     }
-    await prefs.setString(
-      cardBillingPrefsKey,
-      jsonEncode(allCardBilling),
-    );
+    await prefs.setString(cardBillingPrefsKey, jsonEncode(allCardBilling));
 
     final allCardStatements = decodeCardStatementLines(
       _safeGetString(prefs, cardStatementPrefsKey),
@@ -486,7 +483,10 @@ class AssetLiabilityMonthlyStateStore {
       updatedAtMap.remove(monthKey);
     }
 
-    await prefs.setString(paidPrefsKey, jsonEncode(_encodePaid(allPaidAccounts)));
+    await prefs.setString(
+      paidPrefsKey,
+      jsonEncode(_encodePaid(allPaidAccounts)),
+    );
     await prefs.setString(stateUpdatedAtPrefsKey, jsonEncode(updatedAtMap));
   }
 
@@ -505,7 +505,9 @@ class AssetLiabilityMonthlyStateStore {
     return decodeStringMap(_safeGetString(prefs, defaultCardBillingPrefsKey));
   }
 
-  Future<void> saveDefaultCardBillingAccounts(Map<String, String> accounts) async {
+  Future<void> saveDefaultCardBillingAccounts(
+    Map<String, String> accounts,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(defaultCardBillingPrefsKey, jsonEncode(accounts));
   }
@@ -522,14 +524,17 @@ class AssetLiabilityMonthlyStateStore {
     await prefs.setString(debtPaymentDayPrefsKey, jsonEncode(overrides));
   }
 
-  Future<List<AssetLiabilityRecurringIncomeTemplate>> loadRecurringIncomeTemplates() async {
+  Future<List<AssetLiabilityRecurringIncomeTemplate>>
+      loadRecurringIncomeTemplates() async {
     final prefs = await SharedPreferences.getInstance();
     return decodeRecurringIncomeTemplates(
       _safeGetString(prefs, recurringIncomeTemplatePrefsKey),
     );
   }
 
-  Future<void> saveRecurringIncomeTemplates(List<AssetLiabilityRecurringIncomeTemplate> templates) async {
+  Future<void> saveRecurringIncomeTemplates(
+    List<AssetLiabilityRecurringIncomeTemplate> templates,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       recurringIncomeTemplatePrefsKey,
@@ -554,7 +559,9 @@ class AssetLiabilityMonthlyStateStore {
 
   Future<List<AssetLiabilityMonthlySnapshot>> loadMonthlySnapshots() async {
     final prefs = await SharedPreferences.getInstance();
-    return decodeMonthlySnapshots(_safeGetString(prefs, monthlySnapshotPrefsKey));
+    return decodeMonthlySnapshots(
+      _safeGetString(prefs, monthlySnapshotPrefsKey),
+    );
   }
 
   Future<void> saveMonthlySnapshot(
@@ -649,8 +656,10 @@ class AssetLiabilityMonthlyStateStore {
     int? b, {
     int salaryDay = 25,
   }) {
-    return salaryCyclePaymentDayRank(a, salaryDay: salaryDay)
-        .compareTo(salaryCyclePaymentDayRank(b, salaryDay: salaryDay));
+    return salaryCyclePaymentDayRank(
+      a,
+      salaryDay: salaryDay,
+    ).compareTo(salaryCyclePaymentDayRank(b, salaryDay: salaryDay));
   }
 
   static AssetLiabilityMonthlyState copyPreviousMonthState({

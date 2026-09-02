@@ -19,8 +19,8 @@ class AssetCalendarDebtInput {
     AssetLiabilityDebtRow row, {
     Map<String, int>? paymentDayOverrides,
   }) {
-    final overrideDay = paymentDayOverrides?[row.id] ??
-        paymentDayOverrides?[row.name];
+    final overrideDay =
+        paymentDayOverrides?[row.id] ?? paymentDayOverrides?[row.name];
     return AssetCalendarDebtInput(
       id: row.id,
       name: row.name,
