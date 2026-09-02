@@ -69,8 +69,8 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(chart, findsOneWidget);
-    expect(find.textContaining('レビュー 5.00分/単位'), findsOneWidget);
-    expect(find.textContaining('指摘 0.25件/単位'), findsOneWidget);
+    expect(find.text('レビュー 5.00分/単位'), findsOneWidget);
+    expect(find.text('指摘 0.25件/単位'), findsOneWidget);
     expect(find.text('要確認'), findsOneWidget);
   });
 
