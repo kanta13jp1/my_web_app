@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-09-02T14:57:00.113098+00:00",
+  "generated_at": "2026-09-02T18:45:48.103802+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "feature_review",
   "publication_state": "latest_review",
@@ -13,10 +13,10 @@
   "pool": {
     "total": 13,
     "eligible": 13,
-    "provisional": 8,
+    "provisional": 7,
     "division_1": 0,
-    "division_2": 4,
-    "division_3": 9,
+    "division_2": 5,
+    "division_3": 8,
     "division_4": 0,
     "division_5": 0,
     "eliminated": 0
@@ -29,37 +29,28 @@
     "operating_efficiency": 10
   },
   "latest_review": {
-    "cycle_id": "20260902T222324+0900",
-    "started_at": "2026-09-02T22:23:24+09:00",
+    "cycle_id": "20260903T033449+0900",
+    "started_at": "2026-09-03T03:34:49+09:00",
     "source_format": "feature_review",
     "surface": {
-      "slug": "ai_hub",
-      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/ai-hub"
+      "slug": "core_hub",
+      "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub"
     },
     "reviewer": {
-      "seat": 94,
-      "name": "戸村 光",
-      "selection_score": 68.8216,
+      "seat": 7,
+      "name": "榊󠄀原 清一",
+      "selection_score": 72.8358,
       "division": 1,
-      "cycle_utility": 82.08,
-      "aggregate_utility": 82.68
+      "cycle_utility": 92.58,
+      "aggregate_utility": 93.31
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "未分類actionが自動的にpublic扱いとなり、dispatcherとpolicyの完全性が検証されない",
+        "summary": "匿名リアクション識別子が転送IPの無塩SHA-256と共有fallbackに依存したまま",
         "severity": "p1",
-        "business_dimensions": [
-          "trust_risk",
-          "scalability",
-          "founder_execution"
-        ]
-      },
-      {
-        "summary": "匿名home.popularが利用件数を返し、呼び出しごとにservice-roleで最大2,000行を集計する",
-        "severity": "p2",
         "business_dimensions": [
           "trust_risk",
           "unit_economics",
@@ -67,12 +58,21 @@
         ]
       },
       {
-        "summary": "action別の需要・失敗・遅延・下流費用を判断できる本番証拠がない",
+        "summary": "匿名toggleの書込み経路に明示的なrequest throttleと429契約がない",
+        "severity": "p1",
+        "business_dimensions": [
+          "unit_economics",
+          "scalability",
+          "trust_risk"
+        ]
+      },
+      {
+        "summary": "公開メモ画面がreaction失敗時の回復案内を表示しない",
         "severity": "p2",
         "business_dimensions": [
-          "market_demand",
-          "unit_economics",
-          "scalability"
+          "customer_pain",
+          "go_to_market",
+          "market_demand"
         ]
       }
     ],
@@ -87,59 +87,151 @@
         "relevant": 100
       },
       "gate_passed": true,
-      "baseline_cycle_id": "20260828T004359+0900",
+      "baseline_cycle_id": "20260827T221025+0900",
       "focus_dimension": "complete",
       "overall_delta": 0.0,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After implementing a fail-closed complete registry and privacy-bounded popularity aggregate, compare explicit action classification coverage, anonymous low-count responses, database rows scanned, cache hit rate, p95 latency, authorization regressions, and action-level cost per successful request."
+      "next_cycle_experiment": "After owner-reviewed HMAC rotation and 429 policy are deployed, compare fallback usage, toggle writes per memo and identifier, 429 rate, reaction success rate, retry recovery, p95 latency, and reaction-to-view conversion for seven days."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5237",
-      "detail": "専用対策キューで順番待ちです。",
+      "label": "対策待ち・Issue #5268",
+      "detail": "The highest-priority actions cross anonymous identity, privacy, abuse prevention, and shared Edge Function policy, which are protected boundaries requiring explicit human review and cloud validation.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [
-        "ai-hub-access-policy-default-public-gap"
+        "core-hub-anonymous-reaction-rate-limit-gap-followup"
       ],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: fast-forwarded dedicated branch to origin/main 5807ec0ca9d15ad11395e191700a73b9b101a90b",
+        "passed: clean dedicated branch at origin/main c04fba8f603a639cdcd11b841b6262164303bd33",
         "passed: 125 roster profiles and 125 personas",
-        "executed once successfully: ai_hub selected from 13 configured features",
-        "passed: focus_dimension=evidence",
-        "passed: prior fix verified; 100 top-level actions, 72 explicit classifications, 28 default-public actions",
-        "passed: HTTP 200 returned five route labels and global use counts",
-        "executed once successfully against feature history: 125 profiles, seat 94"
+        "executed once successfully: core_hub selected from 13 eligible configured features",
+        "passed: baseline 20260827T221025+0900, focus_dimension=complete",
+        "passed: memo.public.list=200 and memo.react.list=200 for public memo 61",
+        "passed: auth fix and trace headers retained; residual identity, throttle, and recovery-feedback gaps documented",
+        "executed once successfully: 125 profiles, seat 7"
       ],
       "issue": {
-        "number": 5237,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5237",
+        "number": 5268,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5268",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-feature-review:20260902T222324+0900:ai_hub",
-        "remediation_state": "queued",
-        "queue_status": "QUEUED",
-        "synced_at": "2026-09-02T14:56:04.145228+00:00"
+        "dedupe_key": "tiger-feature-review:20260903T033449+0900:core_hub",
+        "remediation_state": null,
+        "queue_status": null,
+        "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "ai-hub-public-popularity-telemetry-boundary",
-        "ai-hub-action-economics-evidence-gap"
+        "core-hub-anonymous-identity-hash-boundary-followup",
+        "core-hub-reaction-recovery-feedback-gap-followup"
       ]
     },
     "feature": {
-      "slug": "ai_hub",
-      "title": "ai-hub",
+      "slug": "core_hub",
+      "title": "core-hub",
       "kind": "edge_function",
-      "reason": "PR #5162 closed the prior authentication findings with an extracted policy and focused tests. The current dispatcher still has 100 measured top-level action labels while only 72 are explicitly classified; the policy defaults all other actions to public. An anonymous production home.popular request also returned global route counts after a service-role-backed scan. No per-action production analytics were available, so observed usage remains the neutral score of 50.",
-      "cycle_utility": 63.7,
-      "aggregate_utility": 62.2,
-      "division": 3
+      "reason": "The deterministic configured-feature selector chose core_hub for this single feature-review cycle; missing feature analytics will receive the neutral score of 50.",
+      "cycle_utility": 67.25,
+      "aggregate_utility": 65.8,
+      "division": 2
     }
   },
   "history": [
+    {
+      "cycle_id": "20260903T033449+0900",
+      "started_at": "2026-09-03T03:34:49+09:00",
+      "source_format": "feature_review",
+      "subject": {
+        "kind": "feature",
+        "id": "core_hub",
+        "title": "core-hub",
+        "url": null
+      },
+      "reviewer": {
+        "seat": 7,
+        "name": "榊󠄀原 清一",
+        "selection_score": 72.8358
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": "20260827T221025+0900",
+        "focus_dimension": "complete",
+        "overall_delta": 0.0,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After owner-reviewed HMAC rotation and 429 policy are deployed, compare fallback usage, toggle writes per memo and identifier, 429 rate, reaction success rate, retry recovery, p95 latency, and reaction-to-view conversion for seven days."
+      },
+      "findings": [
+        {
+          "finding_id": "core-hub-anonymous-identity-hash-boundary-followup",
+          "summary": "匿名リアクション識別子が転送IPの無塩SHA-256と共有fallbackに依存したまま",
+          "severity": "p1",
+          "suggested_action": "短期ローテーションするサーバー側secretを用いたHMAC識別子、保持期限、proxy header信頼境界、fallback拒否または短命session識別をowner review付きで設計する。"
+        },
+        {
+          "finding_id": "core-hub-anonymous-reaction-rate-limit-gap-followup",
+          "summary": "匿名toggleの書込み経路に明示的なrequest throttleと429契約がない",
+          "severity": "p1",
+          "suggested_action": "memo・短期匿名識別子・時間窓ごとの上限と429契約を共有edge policyに追加し、許容burst、監視、route-level abuse testを固定する。"
+        },
+        {
+          "finding_id": "core-hub-reaction-recovery-feedback-gap-followup",
+          "summary": "公開メモ画面がreaction失敗時の回復案内を表示しない",
+          "severity": "p2",
+          "suggested_action": "非妨害型の再試行案内と匿名化されたaction成功・失敗・遅延イベントを追加し、UI feedbackとedge metricsを同じSLOへ接続する。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5268",
+        "detail": "The highest-priority actions cross anonymous identity, privacy, abuse prevention, and shared Edge Function policy, which are protected boundaries requiring explicit human review and cloud validation.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [
+          "core-hub-anonymous-reaction-rate-limit-gap-followup"
+        ],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main c04fba8f603a639cdcd11b841b6262164303bd33",
+          "passed: 125 roster profiles and 125 personas",
+          "executed once successfully: core_hub selected from 13 eligible configured features",
+          "passed: baseline 20260827T221025+0900, focus_dimension=complete",
+          "passed: memo.public.list=200 and memo.react.list=200 for public memo 61",
+          "passed: auth fix and trace headers retained; residual identity, throttle, and recovery-feedback gaps documented",
+          "executed once successfully: 125 profiles, seat 7"
+        ],
+        "issue": {
+          "number": 5268,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5268",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-feature-review:20260903T033449+0900:core_hub",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "core-hub-anonymous-identity-hash-boundary-followup",
+          "core-hub-reaction-recovery-feedback-gap-followup"
+        ]
+      }
+    },
     {
       "cycle_id": "20260902T222324+0900",
       "started_at": "2026-09-02T22:23:24+09:00",
@@ -155,7 +247,7 @@
         "name": "戸村 光",
         "selection_score": 68.8216
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -196,9 +288,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5237",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5237 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -219,13 +311,21 @@
           "number": 5237,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5237",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-feature-review:20260902T222324+0900:ai_hub",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "d1831d8c6c4f38dea9435705115289311355fb37",
+          "workflow_run": "33646921593",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33646921593/job/100304145217",
+          "pr_number": 5241,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5241",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "ai-hub-public-popularity-telemetry-boundary",
           "ai-hub-action-economics-evidence-gap"
@@ -247,7 +347,7 @@
         "name": "野口 功司",
         "selection_score": 76.4343
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -288,9 +388,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5166",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5166 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -311,13 +411,21 @@
           "number": 5166,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5166",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-feature-review:20260831T233058+0900:home",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "da66d4dee5d553934aed3d2e488f4b40fa34d5dd",
+          "workflow_run": "33654594831",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33654594831/job/100334909924",
+          "pr_number": 5249,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5249",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "home-implementation-concentration-persists",
           "home-error-recovery-repair-retained"
@@ -407,7 +515,7 @@
           "dedupe_key": "tiger-feature-review:20260831T180859+0900:landing",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -504,7 +612,7 @@
           "dedupe_key": "tiger-feature-review:20260831T080010+0900:comparison",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -529,7 +637,7 @@
         "name": "迫 佑樹",
         "selection_score": 83.8473
       },
-      "status": "issue_tracking",
+      "status": "production_verified",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -570,9 +678,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #5146",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "production_verified",
+        "label": "対策済み・Issue #5146 本番検証済み",
+        "detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -589,13 +697,21 @@
           "number": 5146,
           "url": "https://github.com/kanta13jp1/my_web_app/issues/5146",
           "status": "created",
-          "github_state": "OPEN",
+          "github_state": "CLOSED",
           "dedupe_key": "tiger-feature-review:20260831T040750+0900:ai_university",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "production_verified",
+          "queue_status": "ALREADY_RESOLVED",
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
-        "implementation": null,
+        "implementation": {
+          "commit_sha": "ec74b6513711ef26a61675fc9c410778f215fa5e",
+          "workflow_run": "33660836621",
+          "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33660836621/job/100356069883",
+          "pr_number": 5256,
+          "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5256",
+          "production_url": null,
+          "release_status": "passed"
+        },
         "findings_without_individual_trace": [
           "ai-university-entry-outcome-funnel-gap",
           "ai-university-discovery-decision-overload",
@@ -682,7 +798,7 @@
           "dedupe_key": "tiger-feature-review:20260831T000451+0900:admin_analytics",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -771,7 +887,7 @@
           "dedupe_key": "tiger-feature-review:20260830T200304+0900:user_manual",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -860,7 +976,7 @@
           "dedupe_key": "tiger-feature-review:20260829T011200+0900:growth_weekly_digest",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -951,7 +1067,7 @@
           "dedupe_key": "tiger-feature-review:20260828T171600+0900:gemini_university",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1041,7 +1157,7 @@
           "dedupe_key": "tiger-feature-review:20260828T120337+0900:philosophy",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1123,7 +1239,7 @@
           "dedupe_key": "tiger-feature-review:20260828T074605+0900:schedule_hub",
           "remediation_state": "queued",
           "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1147,7 +1263,7 @@
         "name": "岩井良明",
         "selection_score": 68.4108
       },
-      "status": "issue_tracking",
+      "status": "remediation_needs_attention",
       "review_status": "review_only",
       "validation_status": "passed",
       "quality": {
@@ -1188,9 +1304,9 @@
         }
       ],
       "countermeasure": {
-        "state": "issue_tracking",
-        "label": "対策待ち・Issue #4946",
-        "detail": "専用対策キューで順番待ちです。",
+        "state": "remediation_needs_attention",
+        "label": "要確認・Issue #4946",
+        "detail": "legal_responsible_gambling_review_required",
         "summary": "",
         "files": [],
         "lines_changed": 0,
@@ -1208,9 +1324,9 @@
           "status": "created",
           "github_state": "OPEN",
           "dedupe_key": "tiger-feature-review:20260828T042953+0900:horse_racing",
-          "remediation_state": "queued",
-          "queue_status": "QUEUED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "remediation_state": "needs_attention",
+          "queue_status": "NEEDS_ATTENTION",
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1298,7 +1414,7 @@
           "dedupe_key": "tiger-feature-review:20260828T004359+0900:ai_hub",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": {
           "commit_sha": "723f34d7cb56be9919044f21808dd24aefd50874",
@@ -1394,7 +1510,7 @@
           "dedupe_key": "tiger-feature-review:20260827T221025+0900:core_hub",
           "remediation_state": "production_verified",
           "queue_status": "SUCCEEDED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": {
           "commit_sha": "ec314d3f767ea3245c3af7aa1fd7db51cfad9f4c",
@@ -1490,7 +1606,7 @@
           "dedupe_key": "tiger-feature-review:20260827T033027+0900:home",
           "remediation_state": "queued",
           "queue_status": "PARTIAL_WAIT",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1782,7 +1898,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1857,7 +1973,7 @@
           "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
           "remediation_state": "closed_pending_proof",
           "queue_status": "ALREADY_RESOLVED",
-          "synced_at": "2026-09-02T14:56:04.145228+00:00"
+          "synced_at": "2026-09-02T18:20:58.390737+00:00"
         },
         "implementation": null,
         "findings_without_individual_trace": [
@@ -1954,6 +2070,22 @@
       "reason": "機能レビュー2回・効用68.2点で2部"
     },
     {
+      "slug": "core_hub",
+      "kind": "edge_function",
+      "title": "core-hub",
+      "path": "",
+      "source": "supabase/functions/core-hub/index.ts",
+      "priority": "high",
+      "division": 2,
+      "provisional": false,
+      "eligible": true,
+      "utility_score": 65.8,
+      "completed_cycles": 2,
+      "last_cycle_utility": 67.25,
+      "last_reviewed_at": "2026-09-02T18:34:49+00:00",
+      "reason": "機能レビュー2回・効用65.8点で2部"
+    },
+    {
       "slug": "comparison",
       "kind": "page",
       "title": "comparison",
@@ -1984,22 +2116,6 @@
       "last_cycle_utility": 65.2,
       "last_reviewed_at": "2026-08-30T19:07:50+00:00",
       "reason": "機能レビュー4回・効用65.1点で2部"
-    },
-    {
-      "slug": "core_hub",
-      "kind": "edge_function",
-      "title": "core-hub",
-      "path": "",
-      "source": "supabase/functions/core-hub/index.ts",
-      "priority": "high",
-      "division": 3,
-      "provisional": true,
-      "eligible": true,
-      "utility_score": 62.9,
-      "completed_cycles": 1,
-      "last_cycle_utility": 62.9,
-      "last_reviewed_at": "2026-08-27T13:10:25+00:00",
-      "reason": "機能レビュー実績が2回未満のため暫定3部"
     },
     {
       "slug": "ai_hub",
