@@ -40,7 +40,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
   void initState() {
     super.initState();
     for (final v in _videos) {
-      final src = v.mp4Url ?? 'https://www.youtube.com/embed/${v.id}';
+      final src = 'https://www.youtube.com/embed/${v.id}';
       platform_view.registerIframeViewFactory('youtube-${v.id}', src);
     }
     unawaited(
@@ -600,11 +600,11 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
             const SizedBox(width: 12),
             TextButton.icon(
               onPressed: () => launchUrl(
-                Uri.parse(v.mp4Url ?? 'https://youtu.be/${v.id}'),
+                Uri.parse('https://youtu.be/${v.id}'),
                 mode: LaunchMode.externalApplication,
               ),
               icon: const Icon(Icons.open_in_new, size: 16),
-              label: Text(v.mp4Url != null ? 'MP4 で見る' : 'YouTube で見る'),
+              label: const Text('YouTube で見る'),
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFFFF6B35),
               ),
@@ -1102,17 +1102,11 @@ class _Video {
   final String duration;
   final String description;
 
-  /// 自前ホスト MP4 URL (= YouTube アップロード前の暫定動画).
-  /// 設定時は YouTube iframe ではなく `<iframe src=mp4Url>` で直再生する.
-  /// YouTube アップロード完了後 `id` を実 YouTube ID に書き換えて null 戻し.
-  final String? mp4Url;
-
   const _Video({
     required this.id,
     required this.label,
     required this.duration,
     required this.description,
-    this.mp4Url,
   });
 }
 
