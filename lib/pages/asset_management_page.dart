@@ -1,3 +1,4 @@
+import 'package:my_web_app/services/asset_pain_metric_service.dart';
 // ignore_for_file: require_trailing_commas
 
 import 'dart:async';
@@ -18421,6 +18422,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                _buildDailyInterestBleedBanner(),
                 _buildOverviewStatChip(
                   label: '浪費額',
                   value: _formatYen(training.wasteExpense),
@@ -18791,6 +18793,68 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDailyInterestBleedBanner() {
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook == null) return const SizedBox.shrink();
+    final bleed = AssetPainMetricService.calculateDailyInterestBleed(workbook);
+    if (bleed <= 0) return const SizedBox.shrink();
+    final lostHours = AssetPainMetricService.dailyLostLaborHours(workbook);
+    final lostHoursText = lostHours > 0
+        ? ' (毎日約${lostHours.toStringAsFixed(1)}時間の労働が利息だけで消失)'
+        : '';
+    final stolenFuture = AssetPainMetricService.stolenFutureTotal(
+      workbook: workbook,
+      months: 6,
+    );
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF87171)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.bloodtype_outlined,
+            color: Color(0xFFDC2626),
+            size: 24,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '🩸 本日の利息流血額: ${_formatManagementYen(bleed)} / 日$lostHoursText',
+                  style: const TextStyle(
+                    color: Color(0xFF991B1B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                if (stolenFuture > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '🔥 半年間の利息流出予測: ${_formatManagementYen(stolenFuture)} が将来資金から奪われます',
+                      style: const TextStyle(
+                        color: Color(0xFFB91C1C),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
