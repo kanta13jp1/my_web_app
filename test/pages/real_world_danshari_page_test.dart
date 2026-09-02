@@ -58,6 +58,11 @@ void main() {
       value: themeService,
       child: MaterialApp(
         home: RealWorldDanshariPage(viewModel: viewModel),
+        routes: {
+          '/user-manual': (_) => const Scaffold(
+                body: Text('リアル断捨離マニュアル'),
+              ),
+        },
       ),
     );
   }
@@ -104,6 +109,31 @@ void main() {
     expect(find.text('棚のこぼれ跡を拭く'), findsOneWidget);
     expect(find.text('約5分'), findsOneWidget);
     expect(find.byKey(const Key('photo-action-0')), findsOneWidget);
+  });
+
+  testWidgets('opens the related real-world decluttering help',
+      (tester) async {
+    await tester.pumpWidget(
+      buildPage(
+        PhotoActionAdvisorViewModel(
+          imagePicker: _FakePicker(image: _image),
+          analyzer: _QueueAnalyzer([_advice]),
+        ),
+      ),
+    );
+
+    await tester.ensureVisible(find.text('写真をアップロード'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('写真をアップロード'));
+    await tester.pumpAndSettle();
+
+    final helpLink = find.byKey(const Key('photo-action-help-link'));
+    await tester.ensureVisible(helpLink);
+    await tester.pumpAndSettle();
+    await tester.tap(helpLink);
+    await tester.pumpAndSettle();
+
+    expect(find.text('リアル断捨離マニュアル'), findsOneWidget);
   });
 
   testWidgets('keeps the image and retries after an analysis failure',
