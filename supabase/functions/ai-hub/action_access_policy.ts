@@ -14,6 +14,9 @@ export type AiHubAuthorizationDecision =
   };
 
 export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
+  "provider.models",
+  "provider.embed",
+  "provider.generate",
   "search.query",
   "task.clarity.evaluate",
   "secretary.task",
@@ -104,7 +107,7 @@ export function authorizeAiHubAction(
   const access = aiHubActionAccess(action);
   if (access === "public") return { allowed: true };
   if (access === "authenticated") {
-    return context.userId
+    return context.userId || context.isServiceRole
       ? { allowed: true }
       : { allowed: false, status: 401, error: "Unauthorized" };
   }

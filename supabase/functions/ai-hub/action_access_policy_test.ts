@@ -1,5 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  AUTHENTICATED_AI_HUB_ACTIONS,
   aiHubActionAccess,
   authorizeAiHubAction,
   resolveAuthenticatedUserId,
@@ -12,11 +13,41 @@ Deno.test(
     const cases = [
       { action: "home.popular", access: "public" },
       { action: "home.recommend", access: "authenticated" },
+      { action: "provider.generate", access: "authenticated" },
+      { action: "provider.embed", access: "authenticated" },
       { action: "observability.sessions", access: "service_role" },
     ] as const;
 
     for (const testCase of cases) {
       assertEquals(aiHubActionAccess(testCase.action), testCase.access);
+    }
+  },
+);
+
+Deno.test(
+  "server-managed provider actions reject anonymous callers and allow authenticated or service-role callers",
+  () => {
+    for (const action of [
+      "provider.models",
+      "provider.embed",
+      "provider.generate",
+    ]) {
+      assertEquals(AUTHENTICATED_AI_HUB_ACTIONS.has(action), true);
+      assertEquals(
+        authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+        { allowed: false, status: 401, error: "Unauthorized" },
+      );
+      assertEquals(
+        authorizeAiHubAction(action, {
+          userId: "regular-user",
+          isServiceRole: false,
+        }),
+        { allowed: true },
+      );
+      assertEquals(
+        authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+        { allowed: true },
+      );
     }
   },
 );
