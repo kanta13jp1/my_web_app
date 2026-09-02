@@ -13,8 +13,9 @@ void main() {
           return <String, dynamic>{
             'success': true,
             'available': true,
-            'access_token': 'short-lived-token',
-            'websocket_url': 'wss://api.cartesia.ai/tts/websocket',
+            'transport': 'backend_proxy',
+            'websocket_access_token': 'short-lived-proxy-token',
+            'websocket_url': 'wss://example.supabase.co/functions/v1/ai-hub',
             'api_version': '2026-03-01',
             'model_id': 'sonic-3-2026-01-12',
             'voice_id': 'voice-id',
@@ -28,6 +29,8 @@ void main() {
       expect(action, 'voice.cartesia_session.start');
       expect(body, isEmpty);
       expect(config.isUsable, isTrue);
+      expect(config.usesBackendProxy, isTrue);
+      expect(config.accessToken, 'short-lived-proxy-token');
       expect(config.modelId, 'sonic-3-2026-01-12');
       expect(config.maxSessionSeconds, 300);
     });

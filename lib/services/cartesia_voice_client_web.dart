@@ -51,7 +51,8 @@ class WebCartesiaVoiceClient implements CartesiaVoiceClient {
       queryParameters: <String, String>{
         ...Uri.parse(config.websocketUrl).queryParameters,
         'cartesia_version': config.apiVersion,
-        'access_token': config.accessToken,
+        (config.usesBackendProxy ? 'voice_token' : 'access_token'):
+            config.accessToken,
       },
     );
     final socket = web.WebSocket(uri.toString());
@@ -59,8 +60,10 @@ class WebCartesiaVoiceClient implements CartesiaVoiceClient {
     final connected = Completer<void>();
 
     socket.onopen = ((web.Event _) {
-      _onStatus?.call('connected');
-      if (!connected.isCompleted) connected.complete();
+      _onStatus?.call(config.usesBackendProxy ? 'connecting' : 'connected');
+      if (!config.usesBackendProxy && !connected.isCompleted) {
+        connected.complete();
+      }
     }).toJS;
     socket.onerror = ((web.Event _) {
       const message = 'Cartesia WebSocket connection failed';
@@ -70,6 +73,11 @@ class WebCartesiaVoiceClient implements CartesiaVoiceClient {
       }
     }).toJS;
     socket.onclose = ((web.CloseEvent event) {
+      if (!connected.isCompleted) {
+        connected.completeError(
+          StateError('Cartesia connection closed (${event.code})'),
+        );
+      }
       if (_active && event.code != 1000) {
         _onError?.call('Cartesia connection closed (${event.code})');
       }
@@ -77,10 +85,25 @@ class WebCartesiaVoiceClient implements CartesiaVoiceClient {
     socket.onmessage = ((web.MessageEvent event) {
       final raw = event.data;
       if (raw is! JSString) return;
-      _handleSocketMessage(raw.toDart);
+      final type = _handleSocketMessage(raw.toDart);
+      if (config.usesBackendProxy && type == 'ready') {
+        _onStatus?.call('connected');
+        if (!connected.isCompleted) connected.complete();
+      } else if (config.usesBackendProxy &&
+          type == 'error' &&
+          !connected.isCompleted) {
+        connected.completeError(
+          StateError('Cartesia backend proxy setup failed'),
+        );
+      }
     }).toJS;
 
-    await connected.future.timeout(const Duration(seconds: 8));
+    try {
+      await connected.future.timeout(const Duration(seconds: 8));
+    } catch (_) {
+      await stop();
+      rethrow;
+    }
     _startRecognition();
   }
 
@@ -143,26 +166,30 @@ class WebCartesiaVoiceClient implements CartesiaVoiceClient {
     _onStatus?.call('speaking');
     final contextId = '${DateTime.now().microsecondsSinceEpoch}';
     try {
-      socket.send(
-        jsonEncode(<String, dynamic>{
-          'model_id': config.modelId,
-          'transcript': style.prepareTranscript(text),
-          'voice': <String, String>{'mode': 'id', 'id': config.voiceId},
-          'language': 'ja',
-          'context_id': contextId,
-          'output_format': const <String, dynamic>{
-            'container': 'raw',
-            'encoding': 'pcm_f32le',
-            'sample_rate': _sampleRate,
-          },
-          'generation_config': <String, dynamic>{
-            'speed': style.speed,
-            'volume': 1,
-            'emotion': style.emotion,
-          },
-          'continue': false,
-        }).toJS,
-      );
+      final payload = <String, dynamic>{
+        'model_id': config.modelId,
+        'transcript': style.prepareTranscript(text),
+        'voice': <String, String>{'mode': 'id', 'id': config.voiceId},
+        'language': 'ja',
+        'context_id': contextId,
+        'output_format': const <String, dynamic>{
+          'container': 'raw',
+          'encoding': 'pcm_f32le',
+          'sample_rate': _sampleRate,
+        },
+        'generation_config': <String, dynamic>{
+          'speed': style.speed,
+          'volume': 1,
+          'emotion': style.emotion,
+        },
+        'continue': false,
+      };
+      if (config.usesBackendProxy) {
+        payload['type'] = 'generate';
+        payload['feature'] = 'site_guide_cartesia_voice';
+        payload['voice_id'] = config.voiceId;
+      }
+      socket.send(jsonEncode(payload).toJS);
     } catch (error) {
       _speaking = false;
       _onError?.call('Cartesia generation request failed: $error');
@@ -170,19 +197,27 @@ class WebCartesiaVoiceClient implements CartesiaVoiceClient {
     }
   }
 
-  void _handleSocketMessage(String raw) {
+  String? _handleSocketMessage(String raw) {
     try {
       final data = jsonDecode(raw);
-      if (data is! Map<String, dynamic>) return;
+      if (data is! Map<String, dynamic>) return null;
       final type = data['type']?.toString();
       if (type == 'chunk') {
         final encoded = data['data']?.toString() ?? '';
         if (encoded.isNotEmpty) _queuePcmChunk(base64Decode(encoded));
-        return;
+        return type;
       }
       if (type == 'done') {
         _resumeAfterPlayback();
-        return;
+        return type;
+      }
+      if (type == 'blocked') {
+        _speaking = false;
+        _onError?.call(
+          data['reason']?.toString() ?? 'voice_usage_limit_exceeded',
+        );
+        _startRecognition();
+        return type;
       }
       if (type == 'error') {
         _speaking = false;
@@ -191,8 +226,10 @@ class WebCartesiaVoiceClient implements CartesiaVoiceClient {
         );
         _startRecognition();
       }
+      return type;
     } catch (error) {
       _onError?.call('Invalid Cartesia stream event: $error');
+      return null;
     }
   }
 

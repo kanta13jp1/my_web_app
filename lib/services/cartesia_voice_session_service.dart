@@ -13,16 +13,21 @@ class CartesiaVoiceSessionConfig {
     required this.modelId,
     required this.voiceId,
     required this.maxSessionSeconds,
+    this.transport = 'direct',
   });
 
   factory CartesiaVoiceSessionConfig.fromJson(Map<String, dynamic> json) {
+    final accessToken =
+        (json['websocket_access_token'] ?? json['access_token'])?.toString() ??
+            '';
     return CartesiaVoiceSessionConfig(
-      accessToken: json['access_token']?.toString() ?? '',
+      accessToken: accessToken,
       websocketUrl: json['websocket_url']?.toString() ?? '',
       apiVersion: json['api_version']?.toString() ?? '',
       modelId: json['model_id']?.toString() ?? '',
       voiceId: json['voice_id']?.toString() ?? '',
       maxSessionSeconds: (json['max_session_seconds'] as num?)?.toInt() ?? 0,
+      transport: json['transport']?.toString() ?? 'direct',
     );
   }
 
@@ -32,6 +37,9 @@ class CartesiaVoiceSessionConfig {
   final String modelId;
   final String voiceId;
   final int maxSessionSeconds;
+  final String transport;
+
+  bool get usesBackendProxy => transport == 'backend_proxy';
 
   bool get isUsable =>
       accessToken.isNotEmpty &&
@@ -39,7 +47,8 @@ class CartesiaVoiceSessionConfig {
       apiVersion.isNotEmpty &&
       modelId.isNotEmpty &&
       voiceId.isNotEmpty &&
-      maxSessionSeconds > 0;
+      maxSessionSeconds > 0 &&
+      (transport == 'direct' || usesBackendProxy);
 }
 
 class CartesiaVoiceUnavailable implements Exception {

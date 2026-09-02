@@ -23,6 +23,7 @@ import 'admin/quota_dashboard_page.dart';
 import 'admin/blog_management_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
+import 'voice_ai_governance_page.dart';
 
 class _FunnelMetrics {
   final int trialRuns;
@@ -2129,6 +2130,42 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         onTap: () => Navigator.pushNamed(
                           context,
                           '/admin/artifact-publishing',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Card(
+                      color: const Color(0xFF1A1A2E),
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.record_voice_over_outlined,
+                          color: Color(0xFFFF6B35),
+                        ),
+                        title: const Text(
+                          'Voice AI cost monitor',
+                          style: TextStyle(
+                            color: Color(0xFFE5E7EB),
+                            fontWeight: FontWeight.bold,
+                            height: 1.5,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'TTS/STT usage, estimated cost, and realtime latency',
+                          style: TextStyle(
+                            color: Color(0xB3E5E7EB),
+                            height: 1.5,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Color(0x8AE5E7EB),
+                        ),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const VoiceAiGovernancePage(adminMode: true),
+                          ),
                         ),
                       ),
                     ),

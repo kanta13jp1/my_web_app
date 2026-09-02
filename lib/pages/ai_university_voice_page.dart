@@ -86,9 +86,20 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
         body: {
           'action': 'voice.tts',
           'text': text,
+          'provider': 'elevenlabs',
+          'feature': 'ai_university_voice',
         },
       );
       final data = resp.data as Map<String, dynamic>?;
+      final error = data?['error'] as String? ?? '';
+      if (error == 'voice_usage_limit_exceeded') {
+        setState(() => _ttsStatus = 'blocked');
+        return;
+      }
+      if (error == 'voice_training_consent_or_provider_zdr_required') {
+        setState(() => _ttsStatus = 'privacy_blocked');
+        return;
+      }
       final base64Audio = data?['audio_base64'] as String? ?? '';
       final fallback = data?['fallback'] as String? ?? '';
       if (base64Audio.isEmpty) {
@@ -104,9 +115,15 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
       _audio!.src = 'data:audio/mpeg;base64,$base64Audio';
       _audio!.play();
       setState(() => _ttsStatus = 'playing');
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
-      setState(() => _ttsStatus = 'error');
+      setState(
+        () => _ttsStatus = error.toString().contains(
+              'voice_training_consent_or_provider_zdr_required',
+            )
+            ? 'privacy_blocked'
+            : 'error',
+      );
     }
   }
 
@@ -287,9 +304,13 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                               ? '音声生成中...'
                               : _ttsStatus == 'playing'
                                   ? '再生中...'
-                                  : _ttsStatus == 'error'
-                                      ? '音声エラー（テキスト表示）'
-                                      : '問題文',
+                                  : _ttsStatus == 'blocked'
+                                      ? 'Voice AI usage limit reached'
+                                      : _ttsStatus == 'privacy_blocked'
+                                          ? 'Enable voice consent in Settings'
+                                          : _ttsStatus == 'error'
+                                              ? '音声エラー（テキスト表示）'
+                                              : '問題文',
                           style: const TextStyle(
                             color: Color(0xFF3D5AFE),
                             fontWeight: FontWeight.bold,
