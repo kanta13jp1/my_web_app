@@ -19,8 +19,8 @@ class AssetCalendarDebtInput {
     AssetLiabilityDebtRow row, {
     Map<String, int>? paymentDayOverrides,
   }) {
-    final overrideDay = paymentDayOverrides?[row.id] ??
-        paymentDayOverrides?[row.name];
+    final overrideDay =
+        paymentDayOverrides?[row.id] ?? paymentDayOverrides?[row.name];
     return AssetCalendarDebtInput(
       id: row.id,
       name: row.name,
@@ -28,7 +28,8 @@ class AssetCalendarDebtInput {
       paymentDay: overrideDay ?? row.paymentDay,
       scheduledPaymentAmount: row.scheduledPaymentAmount,
       isDirectCashflowTarget: row.isDirectCashflowTarget,
-      isFixedCost: row.kind == AssetLiabilityAccountKind.utility ||
+      isFixedCost:
+          row.kind == AssetLiabilityAccountKind.utility ||
           row.fullPaymentEstimate,
       paid: row.paid,
     );
@@ -175,8 +176,8 @@ class AssetPaymentCalendarMonth {
   /// ショート回避に必要な追加入金額(=最大不足幅)。ショートなしなら 0。
   double get shortfallRecoveryAmount =>
       worstProjectedBalance != null && worstProjectedBalance! < 0
-          ? -worstProjectedBalance!
-          : 0;
+      ? -worstProjectedBalance!
+      : 0;
 
   double get scheduledOutflowTotal =>
       scheduledDebtPaymentTotal + subscriptionTotal;
@@ -283,9 +284,9 @@ class AssetPaymentCalendarService {
 
     String fixedCostKey(String name, DateTime date, double amount) {
       final normalizedName = name.trim().toLowerCase().replaceAll(
-            RegExp(r'\s+'),
-            '',
-          );
+        RegExp(r'\s+'),
+        '',
+      );
       return '$normalizedName|${_dateKey(date)}|${amount.toStringAsFixed(2)}';
     }
 
@@ -363,7 +364,8 @@ class AssetPaymentCalendarService {
         if (!inSchedule(date)) {
           continue;
         }
-        final isFuture = asOf != null &&
+        final isFuture =
+            asOf != null &&
             date.isAfter(DateTime(asOf.year, asOf.month, asOf.day));
         final effectivePaid = isFuture ? false : row.paid;
         final amount = (!effectivePaid && row.scheduledPaymentAmount > _epsilon)
