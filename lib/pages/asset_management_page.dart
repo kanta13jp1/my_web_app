@@ -2087,11 +2087,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final defaultPaymentSettings =
           await _assetLiabilityRepository.loadDefaultPaymentSettings();
       final defaultSources =
-          defaultPaymentSettings?.paymentSourceAccountIds ??
-          const <String, String>{};
+          defaultPaymentSettings.paymentSourceAccountIds;
       final defaultCardBillingAccounts =
-          defaultPaymentSettings?.cardBillingAccountIds ??
-          const <String, String>{};
+          defaultPaymentSettings.cardBillingAccountIds;
       // #part295: ロード時もトゥームストーン済み支払日上書きを除外する
       // (pull とロードの順序に依らず「削除した上書き」を復活させない)。
       final loadedDebtOverrides =
