@@ -111,8 +111,7 @@ void main() {
     expect(find.byKey(const Key('photo-action-0')), findsOneWidget);
   });
 
-  testWidgets('opens the related real-world decluttering help',
-      (tester) async {
+  testWidgets('opens the related real-world decluttering help', (tester) async {
     await tester.pumpWidget(
       buildPage(
         PhotoActionAdvisorViewModel(
