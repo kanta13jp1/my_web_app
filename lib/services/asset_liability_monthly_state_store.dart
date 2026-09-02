@@ -380,8 +380,8 @@ class AssetLiabilityMonthlyStateStore {
     } else {
       allAnnualRateEvidences[monthKey] =
           Map<String, AssetLiabilityAnnualRateEvidence>.from(
-            state.annualRateEvidences,
-          );
+        state.annualRateEvidences,
+      );
     }
 
     await prefs.setString(annualRatePrefsKey, jsonEncode(allAnnualRates));
@@ -525,7 +525,7 @@ class AssetLiabilityMonthlyStateStore {
   }
 
   Future<List<AssetLiabilityRecurringIncomeTemplate>>
-  loadRecurringIncomeTemplates() async {
+      loadRecurringIncomeTemplates() async {
     final prefs = await SharedPreferences.getInstance();
     return decodeRecurringIncomeTemplates(
       _safeGetString(prefs, recurringIncomeTemplatePrefsKey),
@@ -842,7 +842,7 @@ class AssetLiabilityMonthlyStateStore {
   }
 
   static Map<String, Map<String, AssetLiabilityAnnualRateEvidence>>
-  decodeAnnualRateEvidences(String? raw) {
+      decodeAnnualRateEvidences(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
       return <String, Map<String, AssetLiabilityAnnualRateEvidence>>{};
     }
@@ -962,7 +962,7 @@ class AssetLiabilityMonthlyStateStore {
   }
 
   static Map<String, List<AssetLiabilityCardStatementLine>>
-  decodeCardStatementLines(String? raw) {
+      decodeCardStatementLines(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
       return <String, List<AssetLiabilityCardStatementLine>>{};
     }
@@ -985,15 +985,13 @@ class AssetLiabilityMonthlyStateStore {
           final id = rawLine['id']?.toString().trim();
           final billingAccountId =
               rawLine['billingAccountId']?.toString().trim() ??
-              rawLine['billing_account_id']?.toString().trim();
+                  rawLine['billing_account_id']?.toString().trim();
           final description = rawLine['description']?.toString().trim();
           final amount = _parseNonNullDouble(rawLine['amount']);
-          final postedAtText =
-              rawLine['postedAt']?.toString() ??
+          final postedAtText = rawLine['postedAt']?.toString() ??
               rawLine['posted_at']?.toString();
-          final postedAt = postedAtText == null
-              ? null
-              : DateTime.tryParse(postedAtText);
+          final postedAt =
+              postedAtText == null ? null : DateTime.tryParse(postedAtText);
           if (id == null ||
               id.isEmpty ||
               billingAccountId == null ||
@@ -1065,12 +1063,10 @@ class AssetLiabilityMonthlyStateStore {
               date: date,
               name: name,
               amount: amount,
-              destinationAccountId: rawPlan['destinationAccountId']
-                  ?.toString()
-                  .trim(),
-              destinationAccountName: rawPlan['destinationAccountName']
-                  ?.toString()
-                  .trim(),
+              destinationAccountId:
+                  rawPlan['destinationAccountId']?.toString().trim(),
+              destinationAccountName:
+                  rawPlan['destinationAccountName']?.toString().trim(),
               received: rawPlan['received'] == true,
             ),
           );
@@ -1104,39 +1100,31 @@ class AssetLiabilityMonthlyStateStore {
             continue;
           }
           final id = rawTask['id']?.toString().trim();
-          final fromAccountId =
-              rawTask['fromAccountId']?.toString().trim() ??
+          final fromAccountId = rawTask['fromAccountId']?.toString().trim() ??
               rawTask['from_account_id']?.toString().trim();
-          final toAccountId =
-              rawTask['toAccountId']?.toString().trim() ??
+          final toAccountId = rawTask['toAccountId']?.toString().trim() ??
               rawTask['to_account_id']?.toString().trim();
           final amount = _parseNonNullDouble(rawTask['amount']);
           final dueDateText =
               rawTask['dueDate']?.toString() ?? rawTask['due_date']?.toString();
-          final completedAtText =
-              rawTask['completedAt']?.toString() ??
+          final completedAtText = rawTask['completedAt']?.toString() ??
               rawTask['completed_at']?.toString();
-          final dueDate = dueDateText == null
-              ? null
-              : DateTime.tryParse(dueDateText);
+          final dueDate =
+              dueDateText == null ? null : DateTime.tryParse(dueDateText);
           final completedAt = completedAtText == null
               ? null
               : DateTime.tryParse(completedAtText);
-          final completionMemo =
-              _cleanNullableString(
+          final completionMemo = _cleanNullableString(
                 rawTask['completionMemo'] ?? rawTask['completion_memo'],
               ) ??
               '';
-          final canceledAtText =
-              rawTask['canceledAt']?.toString() ??
+          final canceledAtText = rawTask['canceledAt']?.toString() ??
               rawTask['cancelledAt']?.toString() ??
               rawTask['canceled_at']?.toString() ??
               rawTask['cancelled_at']?.toString();
-          final canceledAt = canceledAtText == null
-              ? null
-              : DateTime.tryParse(canceledAtText);
-          final cancellationReason =
-              _cleanNullableString(
+          final canceledAt =
+              canceledAtText == null ? null : DateTime.tryParse(canceledAtText);
+          final cancellationReason = _cleanNullableString(
                 rawTask['cancellationReason'] ??
                     rawTask['cancelReason'] ??
                     rawTask['cancellation_reason'] ??
@@ -1158,14 +1146,12 @@ class AssetLiabilityMonthlyStateStore {
             AssetLiabilityTransferTask(
               id: id,
               fromAccountId: fromAccountId,
-              fromAccountName:
-                  _cleanNullableString(
+              fromAccountName: _cleanNullableString(
                     rawTask['fromAccountName'] ?? rawTask['from_account_name'],
                   ) ??
                   fromAccountId,
               toAccountId: toAccountId,
-              toAccountName:
-                  _cleanNullableString(
+              toAccountName: _cleanNullableString(
                     rawTask['toAccountName'] ?? rawTask['to_account_name'],
                   ) ??
                   toAccountId,
@@ -1188,7 +1174,7 @@ class AssetLiabilityMonthlyStateStore {
   }
 
   static List<AssetLiabilityRecurringIncomeTemplate>
-  decodeRecurringIncomeTemplates(String? raw) {
+      decodeRecurringIncomeTemplates(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
       return <AssetLiabilityRecurringIncomeTemplate>[];
     }
@@ -1263,9 +1249,8 @@ class AssetLiabilityMonthlyStateStore {
       }
       final monthKey = rawSnapshot['monthKey']?.toString().trim();
       final savedAtText = rawSnapshot['savedAt']?.toString();
-      final savedAt = savedAtText == null
-          ? null
-          : DateTime.tryParse(savedAtText);
+      final savedAt =
+          savedAtText == null ? null : DateTime.tryParse(savedAtText);
       final positiveAssetTotal = _parseNonNullDouble(
         rawSnapshot['positiveAssetTotal'],
       );
@@ -1391,7 +1376,7 @@ class AssetLiabilityMonthlyStateStore {
   }
 
   static Map<String, AssetLiabilityAnnualRateEvidence>
-  annualRateEvidencesForMonth(String? raw, String monthKey) {
+      annualRateEvidencesForMonth(String? raw, String monthKey) {
     return sanitizeAnnualRateEvidences(
       Map<String, AssetLiabilityAnnualRateEvidence>.from(
         decodeAnnualRateEvidences(raw)[monthKey] ??
@@ -1411,7 +1396,7 @@ class AssetLiabilityMonthlyStateStore {
   }
 
   static Map<String, AssetLiabilityAnnualRateEvidence>
-  sanitizeAnnualRateEvidences(
+      sanitizeAnnualRateEvidences(
     Map<String, AssetLiabilityAnnualRateEvidence> values,
   ) {
     return <String, AssetLiabilityAnnualRateEvidence>{
@@ -1588,13 +1573,12 @@ class AssetLiabilityMonthlyStateStore {
     final migratedCardStatementLines = <AssetLiabilityCardStatementLine>[
       for (final line in state.cardStatementLines)
         line.copyWith(
-          billingAccountId:
-              legacyKeyToAccountId[line.billingAccountId] ??
+          billingAccountId: legacyKeyToAccountId[line.billingAccountId] ??
               line.billingAccountId,
           billingAccountName:
               legacyKeyToAccountId.containsKey(line.billingAccountId)
-              ? null
-              : line.billingAccountName,
+                  ? null
+                  : line.billingAccountName,
         ),
     ];
 
