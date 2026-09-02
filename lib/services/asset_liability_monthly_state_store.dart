@@ -412,7 +412,7 @@ class AssetLiabilityMonthlyStateStore {
       jsonEncode(allBillingConfirmed.map((k, v) => MapEntry(k, v.toList()))),
     );
 
-    final allSources = decodeStringMapMap(
+    final allSources = decodePaymentSourceAccounts(
       _safeGetString(prefs, paymentSourcePrefsKey),
     );
     if (state.paymentSourceAccountIds.isEmpty) {
@@ -422,8 +422,9 @@ class AssetLiabilityMonthlyStateStore {
         state.paymentSourceAccountIds,
       );
     }
+    await prefs.setString(paymentSourcePrefsKey, jsonEncode(allSources));
 
-    final allCardBilling = decodeStringMapMap(
+    final allCardBilling = decodeCardBillingAccounts(
       _safeGetString(prefs, cardBillingPrefsKey),
     );
     if (state.cardBillingAccountIds.isEmpty) {
@@ -433,6 +434,10 @@ class AssetLiabilityMonthlyStateStore {
         state.cardBillingAccountIds,
       );
     }
+    await prefs.setString(
+      cardBillingPrefsKey,
+      jsonEncode(allCardBilling),
+    );
 
     final allCardStatements = decodeCardStatementLines(
       _safeGetString(prefs, cardStatementPrefsKey),
@@ -444,6 +449,10 @@ class AssetLiabilityMonthlyStateStore {
         state.cardStatementLines,
       );
     }
+    await prefs.setString(
+      cardStatementPrefsKey,
+      jsonEncode(_encodeCardStatementLines(allCardStatements)),
+    );
 
     final allIncomePlans = decodeIncomePlans(
       _safeGetString(prefs, incomePrefsKey),
@@ -455,6 +464,10 @@ class AssetLiabilityMonthlyStateStore {
         state.incomePlans,
       );
     }
+    await prefs.setString(
+      incomePrefsKey,
+      jsonEncode(_encodeIncomePlans(allIncomePlans)),
+    );
 
     final allTransferTasks = decodeTransferTasks(
       _safeGetString(prefs, transferTaskPrefsKey),
@@ -466,6 +479,10 @@ class AssetLiabilityMonthlyStateStore {
         state.transferTasks,
       );
     }
+    await prefs.setString(
+      transferTaskPrefsKey,
+      jsonEncode(_encodeTransferTasks(allTransferTasks)),
+    );
 
     final updatedAtMap = _decodeUpdatedAtMap(
       _safeGetString(prefs, stateUpdatedAtPrefsKey),
@@ -476,12 +493,7 @@ class AssetLiabilityMonthlyStateStore {
       updatedAtMap.remove(monthKey);
     }
 
-    await prefs.setString(paidPrefsKey, jsonEncode(encodePaidAccounts(allPaidAccounts)));
-    await prefs.setString(paymentSourcePrefsKey, jsonEncode(allSources));
-    await prefs.setString(cardBillingPrefsKey, jsonEncode(allCardBilling));
-    await prefs.setString(cardStatementPrefsKey, jsonEncode(encodeCardStatementLines(allCardStatements)));
-    await prefs.setString(incomePrefsKey, jsonEncode(encodeIncomePlans(allIncomePlans)));
-    await prefs.setString(transferTaskPrefsKey, jsonEncode(encodeTransferTasks(allTransferTasks)));
+    await prefs.setString(paidPrefsKey, jsonEncode(_encodePaid(allPaidAccounts)));
     await prefs.setString(stateUpdatedAtPrefsKey, jsonEncode(updatedAtMap));
   }
 
@@ -528,7 +540,7 @@ class AssetLiabilityMonthlyStateStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       recurringIncomeTemplatePrefsKey,
-      jsonEncode(encodeRecurringIncomeTemplates(templates)),
+      jsonEncode(_encodeRecurringIncomeTemplates(templates)),
     );
   }
 
@@ -566,7 +578,7 @@ class AssetLiabilityMonthlyStateStore {
     ]..sort((a, b) => a.monthKey.compareTo(b.monthKey));
     await prefs.setString(
       monthlySnapshotPrefsKey,
-      jsonEncode(encodeMonthlySnapshots(nextSnapshots)),
+      jsonEncode(_encodeMonthlySnapshots(nextSnapshots)),
     );
   }
 
