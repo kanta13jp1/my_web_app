@@ -1,33 +1,52 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_pain_metric_service.dart';
 
 void main() {
   group('AssetPainMetricService', () {
-    const service = AssetPainMetricService();
+    test('Issue #5203: static bleed and stolen future calculations', () {
+      const planner = AssetLiabilityPlanningService();
+      final workbook = planner.buildWorkbook(
+        baseDate: DateTime(2026, 8, 25),
+        latestSnapshot: const <String, double>{
+          'モビット': -500000,
+          '三井住友銀行': 100000,
+        },
+        annualRateOverrides: const <String, double>{
+          'mobit': 18.0,
+        },
+      );
 
-    test('estimates hourly wage from monthly income or default', () {
-      expect(service.estimateHourlyWage(monthlyIncome: null), 2500);
-      expect(service.estimateHourlyWage(monthlyIncome: 0), 2500);
-      expect(service.estimateHourlyWage(monthlyIncome: 400000), 2500);
-      expect(service.estimateHourlyWage(monthlyIncome: 800000), 5000);
+      final bleed =
+          AssetPainMetricService.calculateDailyInterestBleed(workbook);
+      expect(bleed, greaterThan(0));
+      final hours = AssetPainMetricService.dailyLostLaborHours(workbook);
+      expect(hours, greaterThan(0));
+      final stolen = AssetPainMetricService.stolenFutureTotal(
+        workbook: workbook,
+        months: 6,
+      );
+      expect(stolen, greaterThan(bleed * 30));
     });
 
-    test('formats labor time for minutes and hours', () {
-      expect(service.formatLaborTime(1250, hourlyWage: 2500), '30分');
-      expect(service.formatLaborTime(5000, hourlyWage: 2500), '2.0時間');
-      expect(service.formatLaborTime(6250, hourlyWage: 2500), '2.5時間');
-      expect(service.formatLaborTime(0, hourlyWage: 2500), '0分');
+    test('calculates hourly wage from income correctly', () {
+      const service = AssetPainMetricService();
+      expect(service.estimateHourlyWage(), 2500);
+      expect(service.estimateHourlyWage(monthlyIncome: 400000), 2500);
+      expect(service.estimateHourlyWage(monthlyIncome: 480000), 3000);
+    });
+
+    test('formats amount into labor time appropriately', () {
+      const service = AssetPainMetricService();
+      expect(service.formatLaborTime(0), '0分');
+      expect(service.formatLaborTime(1250), '30分');
+      expect(service.formatLaborTime(5000), '2.0時間');
     });
 
     test('calculates daily interest loss and lost labor hours', () {
-      final dailyLoss = service.dailyInterestLoss(monthlyInterestTotal: 90000);
-      expect(dailyLoss, 3000);
-
-      final lostHours = service.dailyLaborHoursLost(
-        monthlyInterestTotal: 90000,
-        hourlyWage: 2500,
-      );
-      expect(lostHours, 1.2);
+      const service = AssetPainMetricService();
+      expect(service.dailyInterestLoss(monthlyInterestTotal: 30000), 1000);
+      expect(service.dailyLaborHoursLost(monthlyInterestTotal: 30000), 0.4);
     });
   });
 }
