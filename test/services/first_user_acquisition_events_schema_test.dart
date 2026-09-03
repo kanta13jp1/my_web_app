@@ -6,11 +6,14 @@ const _migrationPath =
     'supabase/migrations/20260724120000_first_user_acquisition_events.sql';
 const _zennMigrationPath =
     'supabase/migrations/20260820060752_allow_zenn_first_user_attribution.sql';
+const _launchChannelMigrationPath =
+    'supabase/migrations/20260903053500_allow_producthunt_hackernews_attribution.sql';
 
 void main() {
   group('first user acquisition event schema', () {
     late final String sql;
     late final String zennSql;
+    late final String launchChannelSql;
 
     setUpAll(() {
       sql = File(
@@ -19,6 +22,35 @@ void main() {
       zennSql = File(
         _zennMigrationPath,
       ).readAsStringSync().replaceAll('\r\n', '\n').toLowerCase();
+      launchChannelSql = File(
+        _launchChannelMigrationPath,
+      ).readAsStringSync().replaceAll('\r\n', '\n').toLowerCase();
+    });
+
+    test('adds reviewed launch channels without weakening table privacy', () {
+      expect(
+        launchChannelSql,
+        contains(
+          'drop constraint if exists '
+          'first_user_acquisition_events_utm_source_check',
+        ),
+      );
+      expect(
+        launchChannelSql,
+        contains(
+          "check (utm_source in ('x', 'zenn', 'producthunt', 'hackernews'))",
+        ),
+      );
+      expect(
+        launchChannelSql,
+        contains(
+          'validate constraint '
+          'first_user_acquisition_events_utm_source_check',
+        ),
+      );
+      expect(launchChannelSql, isNot(contains('disable row level security')));
+      expect(launchChannelSql, isNot(contains('grant ')));
+      expect(launchChannelSql, isNot(contains('revoke ')));
     });
 
     test('deduplicates every visitor, campaign variant, and funnel stage', () {

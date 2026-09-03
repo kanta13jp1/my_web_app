@@ -467,6 +467,18 @@ const TOUCHPOINT_DEFS = [
     signupSignal: "signup_submit_x_first_user_growth",
   },
   {
+    id: "producthunt_first_user_growth",
+    label: "Product Hunt first-user campaign",
+    touchSignal: "touch_producthunt_first_user_growth",
+    signupSignal: "signup_submit_producthunt_first_user_growth",
+  },
+  {
+    id: "hackernews_first_user_growth",
+    label: "Hacker News first-user campaign",
+    touchSignal: "touch_hackernews_first_user_growth",
+    signupSignal: "signup_submit_hackernews_first_user_growth",
+  },
+  {
     id: "import",
     label: "Import",
     touchSignal: "touch_import",
@@ -576,7 +588,12 @@ async function recordAcquisitionSignal(
 }
 
 const firstUserFunnelStageSet = new Set<string>(FIRST_USER_FUNNEL_STAGES);
-const firstUserAcquisitionSourceSet = new Set(["x", "zenn"]);
+const firstUserAcquisitionSourceSet = new Set([
+  "x",
+  "zenn",
+  "producthunt",
+  "hackernews",
+]);
 const firstUserTokenPattern = /^[a-z0-9_-]{1,64}$/;
 
 async function recordFirstUserFunnelSignal(
