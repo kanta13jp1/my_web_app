@@ -182,4 +182,97 @@ void main() {
     expect(await submit(completionSeconds: 0), isFalse);
     expect(writes, 0);
   });
+
+
+  test('Firefly latest-info task records bounded workflow evidence', () async {
+    final rows = <Map<String, Object>>[];
+    final analytics = AiUniversityLearningOutcomeAnalytics(
+      task: AiUniversityLearningOutcomeTask.fireflyLatestInfo,
+      writer: (row) async => rows.add(row),
+    );
+
+    expect(await analytics.recordViewed(), isTrue);
+    expect(
+      await analytics.recordFireflyLatestInfoCompleted(
+        correctAnswers: 3,
+        selfRating: 4,
+        releaseFeature: 'interfaces_batch',
+        outputKind: 'asset_batch',
+        inputAssetCount: 100,
+        legacyWorkflowMinutes: 60,
+        latestWorkflowMinutes: 30,
+        revisionCount: 1,
+        usableOutput: true,
+        workplaceApplicable: true,
+        adoptionDecision: 'pilot',
+      ),
+      isTrue,
+    );
+
+    expect(rows.first, <String, Object>{
+      'event_name': 'task_viewed',
+      'task_version': 'adobe_firefly_news_20260903_v1',
+      'provider': 'adobe_firefly',
+      'category': 'news',
+    });
+    expect(rows.last, <String, Object>{
+      'event_name': 'task_completed',
+      'task_version': 'adobe_firefly_news_20260903_v1',
+      'provider': 'adobe_firefly',
+      'category': 'news',
+      'correct_answers': 3,
+      'total_questions': 3,
+      'self_rating': 4,
+      'release_feature': 'interfaces_batch',
+      'output_kind': 'asset_batch',
+      'input_asset_count': 100,
+      'legacy_workflow_minutes': 60,
+      'latest_workflow_minutes': 30,
+      'revision_count': 1,
+      'usable_output': true,
+      'workplace_applicable': true,
+      'adoption_decision': 'pilot',
+    });
+  });
+
+  test('Firefly latest-info task rejects values outside finite contracts',
+      () async {
+    var writes = 0;
+    final analytics = AiUniversityLearningOutcomeAnalytics(
+      task: AiUniversityLearningOutcomeTask.fireflyLatestInfo,
+      writer: (_) async => writes += 1,
+    );
+
+    Future<bool> submit({
+      String releaseFeature = 'central_workspace',
+      String outputKind = 'image',
+      int inputAssetCount = 10,
+      int legacyWorkflowMinutes = 30,
+      int latestWorkflowMinutes = 15,
+      int revisionCount = 1,
+      String adoptionDecision = 'pilot',
+    }) =>
+        analytics.recordFireflyLatestInfoCompleted(
+          correctAnswers: 3,
+          selfRating: 4,
+          releaseFeature: releaseFeature,
+          outputKind: outputKind,
+          inputAssetCount: inputAssetCount,
+          legacyWorkflowMinutes: legacyWorkflowMinutes,
+          latestWorkflowMinutes: latestWorkflowMinutes,
+          revisionCount: revisionCount,
+          usableOutput: true,
+          workplaceApplicable: true,
+          adoptionDecision: adoptionDecision,
+        );
+
+    expect(await submit(releaseFeature: 'unknown'), isFalse);
+    expect(await submit(outputKind: 'free_text'), isFalse);
+    expect(await submit(inputAssetCount: 501), isFalse);
+    expect(await submit(legacyWorkflowMinutes: 0), isFalse);
+    expect(await submit(latestWorkflowMinutes: 121), isFalse);
+    expect(await submit(revisionCount: 21), isFalse);
+    expect(await submit(adoptionDecision: 'maybe'), isFalse);
+    expect(writes, 0);
+  });
 }
