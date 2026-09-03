@@ -1,9 +1,11 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/hedra_audio_start.dart';
+import '../models/hedra_audio_input.dart';
 import '../models/hedra_video_batch.dart';
 import '../models/kgi_csf_kpi.dart';
 import '../services/heygen_multilingual_sns_service.dart';
@@ -11,6 +13,7 @@ import '../services/viral_ad_legacy_history_service.dart';
 import '../services/x_post_attribution.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/hedra_audio_start_field.dart';
+import '../widgets/hedra_audio_input_panel.dart';
 import '../widgets/hedra_batch_selector.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
@@ -51,6 +54,12 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   String _selectedOutputType = 'image';
   int _hedraBatchSize = 1;
   String _hedraAudioStartInput = '0';
+  final _hedraTtsController = TextEditingController();
+  HedraAudioInputMode _hedraAudioMode = HedraAudioInputMode.textToSpeech;
+  String _hedraTtsVoice = 'female_narrator';
+  double _hedraTtsStability = 0.5;
+  double _hedraTtsSpeed = 1.0;
+  HedraAudioFile? _hedraAudioFile;
   bool _isPosting = false;
 
   @override
@@ -64,6 +73,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _hedraTtsController.dispose();
     super.dispose();
   }
 
@@ -148,6 +158,24 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       );
       return;
     }
+    Map<String, Object>? hedraAudioInput;
+    if (_selectedOutputType == 'presenter_video') {
+      final inputError = _hedraAudioMode == HedraAudioInputMode.textToSpeech
+          ? validateHedraTtsText(_hedraTtsController.text)
+          : validateHedraAudioFile(_hedraAudioFile);
+      if (inputError != null) {
+        setState(() => _errorMessage = inputError);
+        return;
+      }
+      hedraAudioInput = buildHedraAudioInputPayload(
+        mode: _hedraAudioMode,
+        file: _hedraAudioFile,
+        text: _hedraTtsController.text,
+        voice: _hedraTtsVoice,
+        stability: _hedraTtsStability,
+        speed: _hedraTtsSpeed,
+      );
+    }
     if (!await _confirmHedraBatchCost()) return;
     final previousImageUrl = _generatedAd?['generatedImageUrl']?.toString();
     setState(() {
@@ -167,6 +195,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           'confirmBatchCost':
               _selectedOutputType == 'presenter_video' && _hedraBatchSize > 1,
           'audioStartMs': hedraAudioStartMs,
+          if (hedraAudioInput != null) 'audioInput': hedraAudioInput,
           if (previousImageUrl != null && previousImageUrl.isNotEmpty)
             'generatedImageUrl': previousImageUrl,
         },
@@ -183,6 +212,46 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _pickHedraAudioFile() async {
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['mp3', 'wav', 'm4a'],
+        allowMultiple: false,
+        withData: true,
+      );
+      if (!mounted || result == null || result.files.isEmpty) return;
+      final selected = result.files.single;
+      final bytes = selected.bytes;
+      if (bytes == null) {
+        setState(() => _errorMessage = '音声ファイルを読み込めませんでした。');
+        return;
+      }
+      final file = HedraAudioFile(
+        name: selected.name,
+        mimeType: _hedraAudioMimeType(selected.name),
+        bytes: bytes,
+      );
+      final error = validateHedraAudioFile(file);
+      setState(() {
+        _hedraAudioFile = error == null ? file : null;
+        _errorMessage = error;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = '音声ファイルを選択できませんでした: $error');
+    }
+  }
+
+  String _hedraAudioMimeType(String fileName) {
+    final extension = fileName.split('.').last.toLowerCase();
+    return switch (extension) {
+      'wav' => 'audio/wav',
+      'm4a' => 'audio/mp4',
+      _ => 'audio/mpeg',
+    };
   }
 
   Future<bool> _confirmHedraBatchCost() async {
@@ -538,6 +607,22 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             ],
           ),
           if (_selectedOutputType == 'presenter_video') ...[
+            const SizedBox(height: 16),
+            HedraAudioInputPanel(
+              mode: _hedraAudioMode,
+              ttsController: _hedraTtsController,
+              voice: _hedraTtsVoice,
+              stability: _hedraTtsStability,
+              speed: _hedraTtsSpeed,
+              file: _hedraAudioFile,
+              enabled: !_loading,
+              onModeChanged: (value) => setState(() => _hedraAudioMode = value),
+              onVoiceChanged: (value) => setState(() => _hedraTtsVoice = value),
+              onStabilityChanged: (value) =>
+                  setState(() => _hedraTtsStability = value),
+              onSpeedChanged: (value) => setState(() => _hedraTtsSpeed = value),
+              onPickFile: _pickHedraAudioFile,
+            ),
             const SizedBox(height: 16),
             HedraAudioStartField(
               value: _hedraAudioStartInput,
