@@ -1369,23 +1369,45 @@ class AssetManagementAiSummaryService {
     final text = rawText.replaceAll(RegExp(r'[*_`#\\]'), '');
     final errors = <String>[];
 
-    void validateAmount(String label, double expected) {
-      final line = text
-          .split(RegExp(r'[\r\n]+'))
-          .where((candidate) => candidate.contains(label))
-          .firstOrNull;
+    void validateAmount(
+      String label,
+      double expected, {
+      bool compareAbsolute = false,
+    }) {
+      String? line;
+      for (final candidate in text.split(RegExp(r'[\r\n]+'))) {
+        if (candidate.contains(label)) {
+          line = candidate;
+          break;
+        }
+      }
       if (line == null) return;
       final match = RegExp(r'[-−]?\s*[0-9][0-9,]*\s*円').firstMatch(line);
       if (match == null) return;
-      final actual = _parseYen(match.group(0)!);
-      if (actual == null || (actual - expected).abs() <= 1) return;
+      final parsed = _parseYen(match.group(0)!);
+      if (parsed == null) return;
+      final actual = compareAbsolute ? parsed.abs() : parsed;
+      final target = compareAbsolute ? expected.abs() : expected;
+      if ((actual - target).abs() <= 1) return;
       errors.add('$labelが確定値と不一致');
     }
 
     validateAmount('純資産', workbook.netWorth);
-    validateAmount('負債合計', workbook.liabilityTotal.abs());
-    validateAmount('負債総額', workbook.liabilityTotal.abs());
-    validateAmount('借入総額', workbook.liabilityTotal.abs());
+    validateAmount(
+      '負債合計',
+      workbook.liabilityTotal,
+      compareAbsolute: true,
+    );
+    validateAmount(
+      '負債総額',
+      workbook.liabilityTotal,
+      compareAbsolute: true,
+    );
+    validateAmount(
+      '借入総額',
+      workbook.liabilityTotal,
+      compareAbsolute: true,
+    );
     validateAmount('資産合計', workbook.positiveAssetTotal);
     validateAmount('現金同等資産', workbook.cashLikeTotal);
     validateAmount('今月支払予定合計', workbook.monthlyScheduledPaymentTotal);
@@ -1422,7 +1444,7 @@ class AssetManagementAiSummaryService {
     for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
       final start = text.indexOf(row.name);
       if (start < 0) continue;
-      final end = (start + 320).clamp(0, text.length);
+      final end = start + 320 < text.length ? start + 320 : text.length;
       final context = text.substring(start, end);
       if (unpaidLanguage.any(context.contains)) {
         errors.add('${row.name}を支払済みなのに督促');
@@ -1432,7 +1454,7 @@ class AssetManagementAiSummaryService {
     for (final income in workbook.incomePlans.where((plan) => plan.received)) {
       final start = text.indexOf(income.name);
       if (start < 0) continue;
-      final end = (start + 240).clamp(0, text.length);
+      final end = start + 240 < text.length ? start + 240 : text.length;
       final context = text.substring(start, end);
       if (context.contains('未受取') || context.contains('未入金')) {
         errors.add('${income.name}を受取済みなのに未受取扱い');
