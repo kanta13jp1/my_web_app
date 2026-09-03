@@ -39,11 +39,16 @@ AssetCashflowStatement _statementWithEstimate() {
 Widget _app(double width) {
   return MaterialApp(
     home: Scaffold(
-      body: SizedBox(
-        width: width,
-        child: AssetCashflowStatementCard(
-          statement: _statementWithEstimate(),
-          currencyFormatter: (value) => '¥${value.round()}',
+      body: SingleChildScrollView(
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: width,
+            child: AssetCashflowStatementCard(
+              statement: _statementWithEstimate(),
+              currencyFormatter: (value) => '¥${value.round()}',
+            ),
+          ),
         ),
       ),
     ),
