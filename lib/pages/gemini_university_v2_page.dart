@@ -150,28 +150,24 @@ const Set<String> _providerNameUpperTokens = {
 String humanizeProviderId(String id) {
   final override = _providerDisplayNameOverrides[id];
   if (override != null && override.isNotEmpty) return override;
-  final tokens = id
-      .split(RegExp(r'[-_\s]+'))
-      .where((t) => t.isNotEmpty)
-      .toList();
+  final tokens =
+      id.split(RegExp(r'[-_\s]+')).where((t) => t.isNotEmpty).toList();
   if (tokens.isEmpty) return id;
-  return tokens
-      .map((t) {
-        final lower = t.toLowerCase();
-        if (_providerNameUpperTokens.contains(lower)) {
-          return lower.toUpperCase();
-        }
-        return t[0].toUpperCase() + t.substring(1);
-      })
-      .join(' ');
+  return tokens.map((t) {
+    final lower = t.toLowerCase();
+    if (_providerNameUpperTokens.contains(lower)) {
+      return lower.toUpperCase();
+    }
+    return t[0].toUpperCase() + t.substring(1);
+  }).join(' ');
 }
 
 _ProviderMeta _fallbackProviderMeta(String id) => _ProviderMeta(
-  name: humanizeProviderId(id),
-  emoji: '🤖',
-  color: const Color(0xFF607D8B),
-  officialUrl: '',
-);
+      name: humanizeProviderId(id),
+      emoji: '🤖',
+      color: const Color(0xFF607D8B),
+      officialUrl: '',
+    );
 
 // プロバイダー検索シートのカテゴリ分類 (id + 表示名のキーワードで先勝ち判定)。
 // 351 タブの平坦リストを領域別に絞り込む二段ナビの基盤。網羅でなく到達性向上が目的。
@@ -5669,9 +5665,9 @@ class AiUniversityPage extends StatefulWidget {
   final AiUniversityContentAnalytics? contentAnalytics;
   final AiUniversityLearningOutcomeAnalytics? learningOutcomeAnalytics;
   final AiUniversityLearningOutcomeAnalytics?
-  modelSelectionLearningOutcomeAnalytics;
+      modelSelectionLearningOutcomeAnalytics;
   final AiUniversityLearningOutcomeAnalytics?
-  fireflyApiLearningOutcomeAnalytics;
+      fireflyApiLearningOutcomeAnalytics;
   final AiUniversityFuyuLabAnalytics? fuyuLabAnalytics;
   final AiUniversityAgentlessLabAnalytics? agentlessLabAnalytics;
 
@@ -5694,11 +5690,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   late final AiUniversityContentAnalytics _contentAnalytics;
   late final AiUniversityLearningOutcomeAnalytics _learningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
-  _modelSelectionLearningOutcomeAnalytics;
+      _modelSelectionLearningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
-  _fireflyApiLearningOutcomeAnalytics;
+      _fireflyApiLearningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
-  _llmMechanicsLearningOutcomeAnalytics;
+      _llmMechanicsLearningOutcomeAnalytics;
   late final AiUniversityFuyuLabAnalytics _fuyuLabAnalytics;
   late final AiUniversityAgentlessLabAnalytics _agentlessLabAnalytics;
 
@@ -5737,34 +5733,30 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   @override
   void initState() {
     super.initState();
-    _contentAnalytics =
-        widget.contentAnalytics ??
+    _contentAnalytics = widget.contentAnalytics ??
         AiUniversityContentAnalytics.supabase(_supabase);
-    _learningOutcomeAnalytics =
-        widget.learningOutcomeAnalytics ??
+    _learningOutcomeAnalytics = widget.learningOutcomeAnalytics ??
         AiUniversityLearningOutcomeAnalytics.supabase(_supabase);
     _modelSelectionLearningOutcomeAnalytics =
         widget.modelSelectionLearningOutcomeAnalytics ??
-        AiUniversityLearningOutcomeAnalytics.supabase(
-          _supabase,
-          task: AiUniversityLearningOutcomeTask.modelSelection,
-        );
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.modelSelection,
+            );
     _fireflyApiLearningOutcomeAnalytics =
         widget.fireflyApiLearningOutcomeAnalytics ??
-        AiUniversityLearningOutcomeAnalytics.supabase(
-          _supabase,
-          task: AiUniversityLearningOutcomeTask.fireflyApi,
-        );
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.fireflyApi,
+            );
     _llmMechanicsLearningOutcomeAnalytics =
         AiUniversityLearningOutcomeAnalytics.supabase(
-          _supabase,
-          task: AiUniversityLearningOutcomeTask.llmMechanics,
-        );
-    _fuyuLabAnalytics =
-        widget.fuyuLabAnalytics ??
+      _supabase,
+      task: AiUniversityLearningOutcomeTask.llmMechanics,
+    );
+    _fuyuLabAnalytics = widget.fuyuLabAnalytics ??
         AiUniversityFuyuLabAnalytics.supabase(_supabase);
-    _agentlessLabAnalytics =
-        widget.agentlessLabAnalytics ??
+    _agentlessLabAnalytics = widget.agentlessLabAnalytics ??
         AiUniversityAgentlessLabAnalytics.supabase(_supabase);
     _fetchContent();
     _loadAnsweredQuizzes();
@@ -5944,20 +5936,17 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     switch (variant) {
       case 0:
         // A: 正解数フォーカス
-        text =
-            '🎓 AI 大学でクイズ $count/$total 問正解！\n'
+        text = '🎓 AI 大学でクイズ $count/$total 問正解！\n'
             'Google・OpenAI・Anthropic など主要AIを体系的に学習中。\n'
             '$url';
       case 1:
         // B: プロバイダー制覇フォーカス
-        text =
-            '🏆 AI 大学で $count 社のAIプロバイダーを制覇中！\n'
+        text = '🏆 AI 大学で $count 社のAIプロバイダーを制覇中！\n'
             'Google・OpenAI・DeepSeek・Mistral など $total 社を比較学習できます。\n'
             '$url';
       default:
         // C: ランキング/競争フォーカス
-        text =
-            '📊 AI 大学ランキングに挑戦中！正解 $count 問達成 🎯\n'
+        text = '📊 AI 大学ランキングに挑戦中！正解 $count 問達成 🎯\n'
             '複数のAIを使い比べながら正しく理解。ランキングで競おう！\n'
             '$url';
     }
@@ -5987,9 +5976,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         metrics: AiUniversityXPostMetrics(
           correctAnswers: _answeredQuizzes.length,
           totalQuestions: _quizzes.length,
-          providerCount: _providers.isNotEmpty
-              ? _providers.length
-              : _quizzes.length,
+          providerCount:
+              _providers.isNotEmpty ? _providers.length : _quizzes.length,
           currentStreak: 0,
           insight: 'モデル間の設計思想の違い',
         ),
@@ -6226,9 +6214,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   Future<void> _captureAndDownload() async {
     try {
-      final boundary =
-          _shareCardKey.currentContext?.findRenderObject()
-              as RenderRepaintBoundary?;
+      final boundary = _shareCardKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
       if (boundary == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -6278,7 +6265,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     try {
       const pageSize = 1000;
       final contentRows = <Map<String, dynamic>>[];
-      for (var offset = 0; ; offset += pageSize) {
+      for (var offset = 0;; offset += pageSize) {
         final page = await _supabase
             .from('ai_university_content')
             .select()
@@ -6305,9 +6292,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
       final rows =
           AiUniversityVideoLessonService.mergeContentRowsByProviderCategory(
-            contentRows,
-            (publishedVideoRows as List).cast<Map<String, dynamic>>(),
-          );
+        contentRows,
+        (publishedVideoRows as List).cast<Map<String, dynamic>>(),
+      );
 
       final Map<String, List<Map<String, dynamic>>> grouped = {};
       for (final row in rows) {
@@ -6319,18 +6306,16 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       }
 
       // DB が空なら _providerMeta の全キーをフォールバックで表示
-      final providers = grouped.isEmpty
-          ? _providerMeta.keys.toList()
-          : grouped.keys.toList();
+      final providers =
+          grouped.isEmpty ? _providerMeta.keys.toList() : grouped.keys.toList();
       if (grouped.isEmpty) {
         _contentAnalytics
             .record(AiUniversityContentEvent.fallbackShown)
             .ignore();
       }
       final requestedProvider = widget.initialProviderId;
-      final requestedIndex = requestedProvider == null
-          ? -1
-          : providers.indexOf(requestedProvider);
+      final requestedIndex =
+          requestedProvider == null ? -1 : providers.indexOf(requestedProvider);
       final initialIndex = requestedIndex >= 0 ? requestedIndex : 0;
 
       _tabController?.dispose();
@@ -6704,9 +6689,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       helpful: helpful,
     );
     final snapshot = ok ? await _rlhfService.loadSnapshot() : null;
-    final fineTuneReadiness = ok
-        ? await _fineTuneReadinessService.loadSnapshot()
-        : null;
+    final fineTuneReadiness =
+        ok ? await _fineTuneReadinessService.loadSnapshot() : null;
     if (!mounted) return;
     setState(() {
       _rlhfSubmitting[providerId] = false;
@@ -6732,9 +6716,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     _saveAnsweredQuizzes();
     _contentAnalytics.record(AiUniversityContentEvent.quizCompleted).ignore();
     context.read<GamificationService>().awardPoints(
-      50,
-      reason: 'AI大学クイズ正解: ${_meta(providerId).name}',
-    );
+          50,
+          reason: 'AI大学クイズ正解: ${_meta(providerId).name}',
+        );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('🎉 正解！ +50pt — ${_meta(providerId).name}'),
@@ -6789,14 +6773,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       setState(() => _fsrsNextDue[providerId] = result.nextDue);
     }
     // Memory Agent プロファイル更新 (バックグラウンド)
-    _learnerProfileService
-        .updateProfile(
-          sessionSummary: 'クイズ正解: $providerId',
-          scores: [
-            {'provider': providerId, 'correct': true},
-          ],
-        )
-        .ignore();
+    _learnerProfileService.updateProfile(
+      sessionSummary: 'クイズ正解: $providerId',
+      scores: [
+        {'provider': providerId, 'correct': true},
+      ],
+    ).ignore();
   }
 
   void _refreshUniversityContent() {
@@ -6812,8 +6794,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   void _openVideoLessonGenerator() {
     final controller = _tabController;
-    final provider =
-        controller != null &&
+    final provider = controller != null &&
             controller.index >= 0 &&
             controller.index < _providers.length
         ? _providers[controller.index]
@@ -7300,8 +7281,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     providerNames.isNotEmpty
                         ? providerNames.first
                         : genre.focusAreas.isNotEmpty
-                        ? genre.focusAreas.first
-                        : genre.title,
+                            ? genre.focusAreas.first
+                            : genre.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -7512,8 +7493,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final fineTuneColor = fineTune.readyForFineTune
         ? const Color(0xFF22C55E)
         : fineTune.readyForEvalBatch
-        ? const Color(0xFF38BDF8)
-        : const Color(0xFFF59E0B);
+            ? const Color(0xFF38BDF8)
+            : const Color(0xFFF59E0B);
 
     return Card(
       color: const Color(0xFF151B27),
@@ -7974,12 +7955,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final learningOutcomeAnalytics = isLlmMechanicsTask
         ? _llmMechanicsLearningOutcomeAnalytics
         : isFireflyApiTask
-        ? _fireflyApiLearningOutcomeAnalytics
-        : isModelSelectionTask
-        ? _modelSelectionLearningOutcomeAnalytics
-        : _learningOutcomeAnalytics;
-    final hasLearningOutcomeTask =
-        isLatestInfoTask ||
+            ? _fireflyApiLearningOutcomeAnalytics
+            : isModelSelectionTask
+                ? _modelSelectionLearningOutcomeAnalytics
+                : _learningOutcomeAnalytics;
+    final hasLearningOutcomeTask = isLatestInfoTask ||
         isModelSelectionTask ||
         isFireflyApiTask ||
         isLlmMechanicsTask;
@@ -8154,8 +8134,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   }
 
   Widget _buildFallbackCard(String providerId, Color surface) {
-    final markdown =
-        _fallback[providerId] ??
+    final markdown = _fallback[providerId] ??
         '## ${_meta(providerId).name}\n\nコンテンツは準備中です。\n\n毎週月曜の AI 大学更新タスクで DB が自動更新されます。';
     return Card(
       color: surface,
