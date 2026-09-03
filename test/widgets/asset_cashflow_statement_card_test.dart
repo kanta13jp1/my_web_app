@@ -30,12 +30,7 @@ AssetCashflowStatement _statementWithEstimate() {
     snapshots: [
       _snapshot('2026-05', netWorth: -1000),
       _snapshot('2026-06', netWorth: -1200),
-      _snapshot(
-        '2026-07',
-        income: 500,
-        expense: 300,
-        netWorth: -1100,
-      ),
+      _snapshot('2026-07', income: 500, expense: 300, netWorth: -1100),
     ],
     asOf: DateTime(2026, 7, 15),
   );
@@ -62,20 +57,13 @@ void main() {
     await tester.pumpWidget(_app(720));
 
     expect(
-      find.byKey(
-        const Key('asset_cashflow_statement_estimate_2026-06'),
-      ),
+      find.byKey(const Key('asset_cashflow_statement_estimate_2026-06')),
       findsOneWidget,
     );
-    expect(
-      find.text('純資産差からの推定CF（評価損益・口座追加等を含む）'),
-      findsOneWidget,
-    );
+    expect(find.text('純資産差からの推定CF（評価損益・口座追加等を含む）'), findsOneWidget);
     expect(find.text('≈-¥200'), findsOneWidget);
     expect(
-      find.byKey(
-        const Key('asset_cashflow_statement_amount_2026-05'),
-      ),
+      find.byKey(const Key('asset_cashflow_statement_amount_2026-05')),
       findsOneWidget,
     );
     expect(find.text('—'), findsOneWidget);
@@ -88,10 +76,7 @@ void main() {
     await tester.pumpWidget(_app(320));
 
     expect(find.text('≈-¥200'), findsOneWidget);
-    expect(
-      find.text('純資産差からの推定CF（評価損益・口座追加等を含む）'),
-      findsOneWidget,
-    );
+    expect(find.text('純資産差からの推定CF（評価損益・口座追加等を含む）'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
