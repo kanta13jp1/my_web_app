@@ -196,9 +196,23 @@
     {
       "name": "Tomo",
       "url": "https://tomo.ai",
-      "category": "personal AI life coach / iMessage-native multi-domain life agent + generative companion micro-apps (savings/budgeting/fitness) / 人生統合カテゴリ (coding 偏り是正) / 監視=App Store 更新履歴 + BusinessWire(BCV portfolio) / 退役trigger=2026-08-23 までに新規シグナル 0 なら退役",
+      "category": "personal AI life coach / iMessage-native multi-domain life agent + generative companion micro-apps (savings/budgeting/fitness) / 人生統合カテゴリ (coding 偏り是正) / 監視=App Store 更新履歴 + BusinessWire(BCV portfolio) / 退役trigger=2026-08-23 は【2026-07-31 解除】(= 07-30 に App Store 実測で約5週7版の出荷を確認し『新規シグナル0』の根拠が消滅 / 名寄せは発行主体 MAPO LABS INC. + id6757726935 で固定)",
       "added": "discovery",
       "added_date": "2026-07-24"
+    },
+    {
+      "name": "Hint",
+      "url": "https://hinthome.com/",
+      "category": "personal AI home intelligence / 住居=個人B/S最大資産の継続運営 (保証期限・料金改定・季節保守・業者接続) / Lifestyle カテゴリ (coding 偏り是正 第2弾) / 法人=Home Hub Labs, Inc. / 監視=App Store id6758353765 版履歴 (baseline 1.10.0 @2026-07-31) + BusinessWire 発行主体 / ⚠️名寄せ注意=「HINT: Housing Intelligence」id6670622876 は別アプリ・Hint Water は飲料 / ⚠️ICP は自社の楔(リボ・借金からの生活再建)と直交=持ち家保有者層 / 【2026-09-03 復旧】07-31 の正規 discovery が main 未マージのまま孤立ローカルブランチ codex/rescue-compmon-20260731-20260818 に取り残されていたのを本日発見し復旧",
+      "added": "discovery",
+      "added_date": "2026-07-31"
+    },
+    {
+      "name": "EdWealth『Ed』",
+      "url": "https://edwealth.ai",
+      "category": "personal finance AI coach / 個人B/S隣接 (MoneyForward 近接) / 監視=App Store id6755764161 版履歴 (baseline v0.2.3 @2026-09-03) + GlobeNewswire 発行主体 / 【2026-09-03採択】07-31に一度却下 (edwealth.ai のApp Storeリンク先が同一IDでEdgen/Finture Development Limitedの別アプリと判明し実体不一致で却下) → 09-03に独立シグナルで再評価し採択: 08-31 GlobeNewswire『MoneyBench』ベンチマーク発表 (Ed vs ChatGPT vs Gemini、Ed 62.3%で優位) は07-15 launch wireの再配信ではない新規プレスイベント + App Store版履歴が v0.2.0(Aug11)→v0.2.1(Aug23)→v0.2.2(Aug26)→v0.2.3(Aug29-30)と継続出荷を確認 = wire頼みでない検証可能な独立シグナル",
+      "added": "discovery",
+      "added_date": "2026-09-03"
     }
   ],
   "discovery_history": [
@@ -1098,6 +1112,28 @@
         "GitHub Copilot / OpenAI Codex / Cursor / Claude Code (= いずれも既存 competitor の更新であり新規社ではない / ただし Copilot の .github/skills SKILL.md GA と Codex の Claude Code plugin marketplace 対応は『自社拡張フォーマットの標準化』として戦略級)",
         "Notion / Slack / Evernote / netkeiba / Chatwork / ジョブカン / Amazon / Animaworks / Replit / Lovable / Bolt.new / Devin / Qoder / Lindy / Salesforce / Microsoft (= 窓 1 日 + 宿題検算を優先したため本日は個別確認せず = **『変化なし』ではなく『未観測』**)",
         "OpenCode (= coding tool 偏り [基準 b 逆行] のため signal 層留置 / 本日変化なし)"
+      ]
+    },
+    {
+      "date": "2026-07-31",
+      "name": "Hint",
+      "category": "personal AI home intelligence / 住居運営 (Lifestyle)",
+      "reason": "【2026-09-03 バックフィル注記】本 entry は 2026-07-31 に正規の discovery 判断として作成されたが、コミット cc6f5c69c が main へマージされないまま孤立ローカルブランチ codex/rescue-compmon-20260731-20260818 に取り残されていた (origin にも push されていない)。2026-09-03 (34 日後) の定例実行で発見し、原文のまま本ファイルへ復旧した。以降は原文: unlock 日 (= 2026-07-24 Tomo 採択から 7 日 / cooldown 明け初日). 事前計画の第 1 候補 EdWealth『Ed』は本日却下 (edwealth.ai の iOS リンク先 id6755764161 は Seller が Finture Development Limited の別アプリ『Edgen』の同一 ID・版履歴 0.0.1 Jan 4〜0.0.20 Jul 10 で『7-15 launch』と矛盾・課金は銘柄シグナル配信で wire の記述と乖離) → 却下し signal 層からも降格. Hint 採択根拠 = 基準 b (未カバー領域) 最強: 既存 28 社の約45%が AI dev tool/coding 系に偏る中、Hint はカテゴリ Lifestyle・対象は住居 = 個人 B/S 最大の資産で保険料・光熱費・修繕という負債/固定費側にも触れる。基準 c 成立: 2026-07-29 全米ローンチ (採択日の2日前, dateline 'CHARLOTTE, N.C.--Jul 29, 2026') + App Store 実測で Jul 9 初版から3週間で10版 (1.10.0 = 採択当日). 法人 = Home Hub Labs, Inc. / 共同創業 Martha Stewart + Yih-Han Ma (CEO) + Kyle Rush (CTO) / Slow Ventures 主導 $10M seed (額・投資家名は Fortune/TechCrunch 由来で wire 本文は非開示). ⚠️ICP は自社の楔 (リボ・借金からの生活再建) と直交 = 持ち家保有者向けで同じ顧客を取り合う競合ではないが narrative の隣接競合として監視価値は高い. 監視チャネル = App Store id6758353765 版履歴 (baseline 1.10.0 @2026-07-31) + BusinessWire 発行主体追跡. 名寄せ注意 = 『HINT: Housing Intelligence』id6670622876 は別アプリ・Hint Water は飲料. 29社/cap 50. https://hinthome.com/ + https://apps.apple.com/us/app/hint-home-intelligence/id6758353765",
+      "skipped_candidates": [
+        "EdWealth『Ed』(= ❌ 却下・signal 層からも降格 / 実体 = Edgen / Finture Development Limited のトレーディングシグナルアプリのリブランド / 版履歴 0.0.1 = Jan 4 で『7-15 launch』と矛盾)",
+        "BridgeApp (= signal 層据え置き / 日付を持つ一次が無く 7-27 launch の出所はワイヤ再配信のみ)",
+        "Kubera (= 『構造的非発信』バケット維持 / App Store/Play 直リンク無し・kubera.com/blog は日付非表示 / 基準 c 6 サイクル連続未成立)",
+        "Tomo (= 7-24 採択済 = 対象外 / 本 commit で退役 trigger 2026-08-23 を解除 = 07-30 App Store 実測で根拠喪失確認済)"
+      ]
+    },
+    {
+      "date": "2026-09-03",
+      "name": "EdWealth『Ed』",
+      "category": "personal finance AI coach",
+      "reason": "前回 Claude 正式 report (2026-07-31、ただし main 未マージで発見は本日) から 34 日ぶりの定例実行。discovery cooldown (7 日) は大幅に経過済み. 07-31 に却下した EdWealth『Ed』を、独立した新シグナル 2 点で再評価し採択: (1) 2026-08-31 GlobeNewswire『EdWealth Announces MoneyBench Benchmark Comparing AI Money Answers From Ed, ChatGPT and Gemini』(Ed が ChatGPT/Gemini との比較で 62.3% 対 20.8%/17.0% で優位と主張) は 07-15 launch wire とは内容の異なる新規プレスイベントであり再配信ではない. (2) App Store 版履歴 (id6755764161) が v0.2.0 (Aug11, Plan/Goals/daily Briefs/Desk 追加) → v0.2.1 (Aug23) → v0.2.2 (Aug26) → v0.2.3 (Aug29-30, Financial Fitness スコア機能) と活発に継続出荷しており、wire だけに依存しない検証可能な独立シグナルが確認できた. 07-31 却下の根拠だった『実体不一致』(edwealth.ai のリンク先が Edgen/Finture Development Limited の別アプリと同一 ID) 自体は変わらないが、その後の 8 月の活動 (MoneyBench PR + 継続的な App Store 更新) は Edgen ブランドとは独立して EdWealth/Ed ブランドでの製品開発が現実に進んでいることを示す. 基準 c (30 日窓内の一次シグナル) が独立して成立、基準 a (個人金融 AI コーチ = MoneyForward 隣接カテゴリでの直接競合) は維持. 監視チャネルを App Store id6755764161 版履歴 + GlobeNewswire 発行主体追跡に固定. 30 社/cap 50. フレッシュ discovery 探索 (2-3 クエリ) では他に有力な新規候補見つからず (SEO リスティクル記事のみ) — 次サイクルは『社名 + raises/launches』等より絞ったクエリを推奨. https://edwealth.ai + https://apps.apple.com/us/app/edwealth-your-money-person/id6755764161 + https://www.globenewswire.com/news-release/2026/08/31/3353179/0/en/edwealth-announces-moneybench-benchmark-comparing-ai-money-answers-from-ed-chatgpt-and-gemini.html",
+      "skipped_candidates": [
+        "フレッシュ discovery 探索候補群 (NxCode / Mocha / a0.dev / Operon AI / LexFinity / EmpathAI 等) は SEO リスティクル/比較記事のドメインのみで日付付き一次ソースが無く、実在企業として確認できず不採択",
+        "既存 29 社の窓内更新は discovery 対象外 (既存 competitor の更新)"
       ]
     }
   ],
