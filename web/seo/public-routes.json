@@ -27,10 +27,13 @@
     },
     {
       "path": "/gemini-university",
-      "title": "AI大学 259社 | Google・OpenAI・Anthropicを学ぶ",
-      "description": "Google / OpenAI / Anthropic など259社を体系的に学ぶ無料のAI大学。クイズ・ランキング・バッジで、最新のAIプロバイダーを継続的に習得できます。",
-      "h1": "AI大学 — 259社のAIを学ぶ",
-      "points": ["Google・OpenAI・Anthropic含む259社を網羅", "最新AIプロバイダーの動向を継続キャッチアップ", "クイズとバッジで学習を継続", "無料で利用可能"]
+      "title": "AI大学 {provider_count}社 | Google・OpenAI・Anthropicを学ぶ",
+      "description": "Google / OpenAI / Anthropic など{provider_count}社を体系的に学ぶ無料のAI大学。クイズ・ランキング・バッジで、最新のAIプロバイダーを継続的に習得できます。",
+      "h1": "AI大学 — {provider_count}社のAIを学ぶ",
+      "points": ["Google・OpenAI・Anthropic含む{provider_count}社を網羅", "最新AIプロバイダーの動向を継続キャッチアップ", "クイズとバッジで学習を継続", "無料で利用可能"],
+      "sections": [{"id": "first-learning-action", "heading": "最初の学習を3ステップで始める", "points": ["プロバイダーを検索する", "教材を1つ開いて要点を読む", "クイズを1問完了して理解を確認する"]}],
+      "links": [{"href": "/gemini-university?tab=openai", "label": "OpenAIの教材から始める"}],
+      "contract_markers": ["最初の学習を3ステップで始める", "OpenAIの教材から始める"]
     },
     {
       "path": "/project-gantt",

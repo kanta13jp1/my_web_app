@@ -14,6 +14,7 @@ import 'package:web/web.dart' as web_api;
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_university_agentless_lab_analytics.dart';
+import '../services/ai_university_catalog.dart';
 import '../services/ai_university_content_analytics.dart';
 import '../services/ai_university_fuyu_lab_analytics.dart';
 import '../services/ai_university_learning_outcome_analytics.dart';
@@ -6364,9 +6365,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
       final Map<String, List<Map<String, dynamic>>> grouped = {};
       for (final row in rows) {
-        final provider =
-            (row['provider'] as String?) ?? (row['provider_id'] as String?);
-        if (provider == null) continue;
+        final provider = normalizeAiUniversityProviderId(
+          row['provider'] ?? row['provider_id'],
+        );
+        if (provider.isEmpty) continue;
         (grouped[provider] ??= []).add(row);
       }
 
@@ -6404,6 +6406,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _tabController = tc;
         });
         rebindTabUrlSync();
+        _contentAnalytics
+            .record(AiUniversityContentEvent.contentOpened)
+            .ignore();
       }
       if (isRetry) {
         _contentAnalytics
@@ -6445,6 +6450,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final controller = _tabController;
     final index = _providers.indexOf(providerId);
     if (controller == null || index < 0) return;
+    _contentAnalytics
+        .record(AiUniversityContentEvent.providerSelected)
+        .ignore();
+    _contentAnalytics.record(AiUniversityContentEvent.contentOpened).ignore();
     controller.animateTo(index);
     _loadFsrsDue(providerId);
   }
@@ -6607,8 +6616,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     );
   }
 
-  // 351 タブの到達性改善: 検索 + カテゴリ別一覧から選択したタブへジャンプする。
+  // 大規模タブ一覧の到達性改善: 検索 + カテゴリ別一覧から選択したタブへジャンプする。
   void _showProviderSearch() {
+    _contentAnalytics.record(AiUniversityContentEvent.providerSearch).ignore();
     final order = <String>[
       ..._providerCategoryRules.map((e) => e.key),
       'その他',
@@ -6769,8 +6779,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   Future<void> _awardQuizPoints(String providerId) async {
     if (_answeredQuizzes.contains(providerId)) return;
+    final isReview = _fsrsDue[providerId]?.isNotEmpty ?? false;
     setState(() => _answeredQuizzes.add(providerId));
     _saveAnsweredQuizzes();
+    _contentAnalytics.record(AiUniversityContentEvent.quizCompleted).ignore();
     context
         .read<GamificationService>()
         .awardPoints(50, reason: 'AI大学クイズ正解: ${_meta(providerId).name}');
@@ -6819,6 +6831,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       questionId: providerId,
       grade: 3,
     );
+    if (isReview) {
+      _contentAnalytics.record(AiUniversityContentEvent.reviewReturned).ignore();
+    }
     if (mounted) {
       setState(() => _fsrsNextDue[providerId] = result.nextDue);
     }
@@ -6999,9 +7014,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'AI 大学',
-          style: TextStyle(
+        title: Text(
+          aiUniversityProviderCountForDisplay(
+                    liveProviderCount: _providers.length,
+                  ) >
+                  0
+              ? 'AI 大学（社）'
+              : 'AI 大学',
+          style: const TextStyle(
             color: Color(0xFFE5E7EB),
             fontWeight: FontWeight.w700,
           ),
@@ -8340,6 +8360,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                               questionId: providerId,
                               grade: 1,
                             );
+                            if (dueCards.isNotEmpty) {
+                              _contentAnalytics
+                                  .record(AiUniversityContentEvent.reviewReturned)
+                                  .ignore();
+                            }
                             if (mounted) {
                               setState(() {
                                 _fsrsNextDue[providerId] = result.nextDue;
