@@ -58,6 +58,7 @@
 | 5-2 | プロンプト・メモリ・ログに秘密鍵を書かない (§2-1 と同一)。鍵が必要な処理は GHA / EF 側で実行する |
 | 5-3 | MCP server を外部公開する場合は [`MCP_AUTH_SECURITY_PRINCIPLES.md`](MCP_AUTH_SECURITY_PRINCIPLES.md) の 10/10 必須 |
 | 5-4 | 自動化 (cron / routine / workflow) は実行ログを残し、異常は監視 runbook ([`PRODUCTION_MONITORING_RUNBOOK.md`](PRODUCTION_MONITORING_RUNBOOK.md)) の cadence で点検する |
+| 5-5 | AI に渡す差分のマスキング、コンテキスト除外、ベンダー別データ利用設定、四半期確認は [`AI_AGENT_DATA_PROTECTION_STANDARD.md`](AI_AGENT_DATA_PROTECTION_STANDARD.md) を正本とする。未確認のオプトアウト状態を「有効」とみなさない |
 
 ## 6. データ・SaaS アクセス管理
 
@@ -118,5 +119,6 @@
 - [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) — インシデント対応 (§8)
 - [`PRODUCTION_MONITORING_RUNBOOK.md`](PRODUCTION_MONITORING_RUNBOOK.md) — 監視 cadence (§5-4)
 - [`SUPABASE_LOG_DRAINS_REQUIREMENTS.md`](SUPABASE_LOG_DRAINS_REQUIREMENTS.md) — 外部ログ転送、保持、削除、費用統制 (§6-7)
+- [`AI_AGENT_DATA_PROTECTION_STANDARD.md`](AI_AGENT_DATA_PROTECTION_STANDARD.md) — AI コンテキスト除外、CI マスキング、ベンダー別データ利用設定 (§5-5)
 - [`MCP_AUTH_SECURITY_PRINCIPLES.md`](MCP_AUTH_SECURITY_PRINCIPLES.md) / [`AI_DEV_PRINCIPLES.md`](AI_DEV_PRINCIPLES.md) — 技術設計原則 (§5)
 - [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md) — 運用憲章 (5 正本)
