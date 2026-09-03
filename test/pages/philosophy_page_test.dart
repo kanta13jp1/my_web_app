@@ -142,6 +142,7 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.tap(feedback);
+    await tester.pumpAndSettle();
     await tester.tap(
       find.byKey(const Key('philosophy_submit_feedback')),
     );
