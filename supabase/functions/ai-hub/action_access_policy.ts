@@ -9,9 +9,31 @@ export type AiHubAuthorizationDecision =
   | { allowed: true }
   | {
     allowed: false;
-    status: 401 | 403;
-    error: "Unauthorized" | "Forbidden";
+    status: 400 | 401 | 403;
+    error: "Unauthorized" | "Forbidden" | "UnknownAction";
   };
+
+export const PUBLIC_AI_HUB_ACTIONS = new Set([
+  "judgment.get",
+  "judgment.get.legacy",
+  "tags.suggest",
+  "search.index_note",
+  "provider.list",
+  "provider.chat",
+  "provider.chat_auto",
+  "edge_llm.invoke",
+  "election.analyze",
+  "english_reading.list_lessons",
+  "english_reading.get_lesson",
+  "home.popular",
+  "university.content",
+  "university.content_all",
+  "university.content_by_faculty",
+  "university.department_list",
+  "university.faculty_list",
+  "university.provider_by_department",
+  "university.leaderboard",
+]);
 
 export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "provider.models",
@@ -40,10 +62,13 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "company_builder.pause",
   "company_builder.resume",
   "company_builder.stop",
-  "company_builder.global_kill_switch",
   "quiz.fsrs_next",
   "quiz.fsrs_grade",
   "quiz.fsrs_stats",
+  "university.badges",
+  "university.record_score",
+  "university.streak",
+  "university.streak_update",
   "university.rlhf_signal",
   "university.rlhf_snapshot",
   "user_data.finetune_readiness",
@@ -92,12 +117,19 @@ export const SERVICE_ROLE_AI_HUB_ACTIONS = new Set([
   "observability.heatmap",
   "observability.sessions",
   "observability.session_steps",
+  "company_builder.worker",
+  "company_builder.global_kill_switch",
+  "asset.anomaly.scan_all",
+  "asset_liability.verify_annual_rate_evidence",
+  "university.upsert",
+  "university.award_badge",
 ]);
 
-export function aiHubActionAccess(action: string): AiHubActionAccess {
+export function aiHubActionAccess(action: string): AiHubActionAccess | null {
   if (SERVICE_ROLE_AI_HUB_ACTIONS.has(action)) return "service_role";
   if (AUTHENTICATED_AI_HUB_ACTIONS.has(action)) return "authenticated";
-  return "public";
+  if (PUBLIC_AI_HUB_ACTIONS.has(action)) return "public";
+  return null;
 }
 
 export function authorizeAiHubAction(
@@ -105,6 +137,10 @@ export function authorizeAiHubAction(
   context: AiHubAuthorizationContext,
 ): AiHubAuthorizationDecision {
   const access = aiHubActionAccess(action);
+  if (access === null) {
+    // Fail-closed for any unregistered action
+    return { allowed: false, status: 400, error: "UnknownAction" };
+  }
   if (access === "public") return { allowed: true };
   if (access === "authenticated") {
     return context.userId || context.isServiceRole

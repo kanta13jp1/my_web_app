@@ -941,8 +941,10 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const EdgeFunctionStatusPage(),
       );
     case '/admin':
+    case '/admin/analytics':
       return MaterialPageRoute(
         builder: (_) => const AdminAnalyticsPage(),
+        settings: settings,
       );
     case '/admin/artifact-publishing':
       return MaterialPageRoute(

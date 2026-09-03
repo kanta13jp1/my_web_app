@@ -68,6 +68,15 @@ bool autoDebitSourceInsufficient({
     }
     return (-balance) + paymentAmount > creditLimit;
   }
+  // If kind is null or unknown but balance is negative, it represents a credit
+  // line or debt account. Do not trigger cash shortfall warnings on negative balances
+  // unless credit limit is specified and exceeded.
+  if (balance < 0) {
+    if (creditLimit != null && creditLimit > 0) {
+      return (-balance) + paymentAmount > creditLimit;
+    }
+    return false;
+  }
   return balance < paymentAmount;
 }
 
@@ -139,6 +148,23 @@ class AssetAutoDebitConfirmationService {
   /// 引落だけを順次差し引いた値になる (残高不足で弾かれる引落は実際には残高を
   /// 減らさないため差し引かない)。行単位で生残高と独立比較すると
   /// 「個別には足りるが合計では足りない」ケースを取りこぼすため (part338 教訓)。
+  static AssetLiabilityAccount? _resolveSourceAccount(
+    String? sourceAccountId,
+    Map<String, AssetLiabilityAccount> accountById,
+  ) {
+    if (sourceAccountId == null || sourceAccountId.trim().isEmpty) return null;
+    final direct = accountById[sourceAccountId];
+    if (direct != null) return direct;
+    final normalizedTarget = sourceAccountId.trim().toLowerCase();
+    for (final account in accountById.values) {
+      if (account.id.toLowerCase() == normalizedTarget ||
+          account.name.trim().toLowerCase() == normalizedTarget) {
+        return account;
+      }
+    }
+    return null;
+  }
+
   List<AssetAutoDebitConfirmation> pendingConfirmationDetails(
     AssetLiabilityWorkbook workbook,
   ) {
@@ -159,8 +185,7 @@ class AssetAutoDebitConfirmationService {
     );
     final details = rows.map((row) {
       final sourceAccountId = row.paymentSourceAccountId;
-      final source =
-          sourceAccountId == null ? null : accountById[sourceAccountId];
+      final source = _resolveSourceAccount(sourceAccountId, accountById);
       return AssetAutoDebitConfirmation(
         row: row,
         sourceAccountBalance: effectiveBalanceByRowId.containsKey(row.accountId)
