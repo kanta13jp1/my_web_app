@@ -22108,6 +22108,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return switch (source) {
       'deterministic fallback / feature flag off' => 'ルールベース要約 / AI無効',
       'deterministic fallback / ai-hub failed' => 'ルールベース要約 / AI接続失敗',
+      'deterministic fallback / grounding validation failed' =>
+        'ルールベース要約 / AIデータ矛盾を検出',
       'deterministic fallback / waiting for ai-hub' => 'ルールベース要約 / AI応答待ち',
       _ => source
           .replaceAll('deterministic fallback', 'ルールベース要約')
@@ -22155,10 +22157,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryInFlightKey = key;
       _assetManagementAiSummaryRequestKey = key;
     });
-    // 保存済み分析の再利用判定。指紋は基準日単位で回転するため「同日最新の
-    // 1 行」だけ見れば足りる。再利用条件は (a) 指紋完全一致 (データ不変) か
-    // (b) 生成からクールダウン時間内 (引落済み等の編集毎に指紋が変わるため、
-    // 完全一致だけだと 1 セッションで何度も 1 分超のプレミアム生成が走る)。
+    // 保存済み分析は指紋が完全一致するときだけ再利用する。基準日が同じでも
+    // 支払済み・金利・残高・解約状態のどれかが変われば別の事実なので、生成時刻が
+    // 新しいことを理由に古い本文を現在キーへ付け替えてはならない。
     // 手動の「AI要約を更新」(force) は常に再生成する。
     if (!force) {
       AssetManagementAiAnalysisHistoryEntry? reusable;
@@ -22167,9 +22168,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           report.workbook.baseDate,
         );
         if (latest != null &&
-            (latest.requestFingerprint == key ||
-                DateTime.now().difference(latest.generatedAt) <
-                    _assetManagementAiSummaryAutoRefreshCooldown)) {
+            AssetManagementAiSummaryRefresh.canReusePersisted(
+              currentKey: key,
+              cachedKey: latest.requestFingerprint,
+            )) {
           reusable = latest;
         }
       } catch (_) {
@@ -22250,15 +22252,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
     }
-    // 生成試行を (成功/失敗を問わず) 記録する。失敗しても履歴には残らないため、
-    // この時刻が次回以降のクールダウン判定の唯一の手掛かりになる。
-    unawaited(_recordAssetManagementAiSummaryAttempt(report.workbook.baseDate));
     final result = await _assetManagementAiSummaryService.generateSummary(
       report: report,
       previousAnalyses: previousAnalyses,
       existingDeveloperIssuesByTitle: existingIssuesByTitle,
     );
     if (result.usedExternalAi) {
+      // 成功は失敗リトライのクールダウン対象にしない。データ指紋が変わったら
+      // 直ちに最新値で再生成できるよう、過去の失敗時刻も消す。
+      unawaited(_clearAssetManagementAiSummaryAttempt());
       try {
         await _assetManagementAiAnalysisHistoryService.saveResult(
           result: result,
@@ -22271,6 +22273,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       } catch (_) {
         // AI分析の表示を優先し、履歴保存失敗は次回の再試行に任せます。
       }
+    } else {
+      // AI接続失敗または整合性検証失敗だけを連続試行の抑止対象にする。
+      unawaited(
+        _recordAssetManagementAiSummaryAttempt(report.workbook.baseDate),
+      );
     }
     if (!mounted) {
       return;
@@ -22343,6 +22350,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return delta.isNegative ? Duration.zero : delta;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<void> _clearAssetManagementAiSummaryAttempt() async {
+    try {
+      final store = await SharedPreferences.getInstance();
+      await store.remove(_assetManagementAiSummaryLastAttemptPrefKey);
+    } catch (_) {
+      // best-effort の失敗クールダウン用途のため、削除失敗は致命ではない。
     }
   }
 
