@@ -213,10 +213,10 @@ class _CorporateSiteReadinessPageState
   }
 
   Widget _buildIntro() {
-    return Card(
+    return const Card(
       elevation: 0,
-      color: const Color(0xFFE6FFFA),
-      child: const Padding(
+      color: Color(0xFFE6FFFA),
+      child: Padding(
         padding: EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
