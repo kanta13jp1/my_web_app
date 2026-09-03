@@ -93,107 +93,10 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
   }
 
   Future<void> _editRoiParameters(AiFeatureRoiSummary feature) async {
-    final parameters = feature.parameters;
-    final controllers = <TextEditingController>[
-      TextEditingController(
-        text: parameters.minutesSavedPerSuccess.toString(),
-      ),
-      TextEditingController(text: parameters.hourlyValueUsd.toString()),
-      TextEditingController(
-        text: parameters.directCostSavingUsdPerSuccess.toString(),
-      ),
-      TextEditingController(
-        text: parameters.avoidedLossUsdPerSuccess.toString(),
-      ),
-      TextEditingController(
-        text: parameters.valueCreatedUsdPerSuccess.toString(),
-      ),
-    ];
     final result = await showDialog<List<double>>(
       context: context,
-      builder: (dialogContext) {
-        String? validationError;
-        return StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-            title: Text('ROI assumptions: ${feature.featureKey}'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Enter your own estimates. Defaults are zero and no '
-                    'external pricing claims are applied.',
-                  ),
-                  const SizedBox(height: 12),
-                  _roiInput(
-                    controllers[0],
-                    'Minutes saved per successful use',
-                  ),
-                  _roiInput(controllers[1], 'Hourly value (USD)'),
-                  _roiInput(
-                    controllers[2],
-                    'Direct saving per success (USD)',
-                  ),
-                  _roiInput(
-                    controllers[3],
-                    'Avoided loss per success (USD)',
-                  ),
-                  _roiInput(
-                    controllers[4],
-                    'Value created per success (USD)',
-                  ),
-                  if (validationError != null)
-                    Text(
-                      validationError!,
-                      style: const TextStyle(color: _red),
-                    ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  final values = controllers
-                      .map((controller) => double.tryParse(controller.text))
-                      .toList();
-                  const maximums = <double>[
-                    1440,
-                    10000,
-                    1000000,
-                    1000000,
-                    1000000,
-                  ];
-                  final invalid = values.indexed.any(
-                    (entry) =>
-                        entry.$2 == null ||
-                        entry.$2! < 0 ||
-                        entry.$2! > maximums[entry.$1],
-                  );
-                  if (invalid) {
-                    setDialogState(() {
-                      validationError =
-                          'Use non-negative values within the displayed limits.';
-                    });
-                    return;
-                  }
-                  Navigator.of(dialogContext).pop(
-                    values.cast<double>(),
-                  );
-                },
-                child: const Text('Save assumptions'),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (_) => _RoiAssumptionsDialog(feature: feature),
     );
-    for (final controller in controllers) {
-      controller.dispose();
-    }
     if (result == null || !mounted) return;
     setState(() => _savingRoiFeature = feature.featureKey);
     try {
@@ -218,17 +121,6 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
     } finally {
       if (mounted) setState(() => _savingRoiFeature = null);
     }
-  }
-
-  Widget _roiInput(TextEditingController controller, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: InputDecoration(labelText: label),
-      ),
-    );
   }
 
   @override
@@ -866,6 +758,125 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
           style: TextStyle(color: Color(0xFFCBD5E1)),
         ),
       ),
+    );
+  }
+}
+
+class _RoiAssumptionsDialog extends StatefulWidget {
+  const _RoiAssumptionsDialog({required this.feature});
+
+  final AiFeatureRoiSummary feature;
+
+  @override
+  State<_RoiAssumptionsDialog> createState() => _RoiAssumptionsDialogState();
+}
+
+class _RoiAssumptionsDialogState extends State<_RoiAssumptionsDialog> {
+  static const _maximums = <double>[
+    1440,
+    10000,
+    1000000,
+    1000000,
+    1000000,
+  ];
+
+  late final List<TextEditingController> _controllers;
+  String? _validationError;
+
+  @override
+  void initState() {
+    super.initState();
+    final parameters = widget.feature.parameters;
+    _controllers = <TextEditingController>[
+      TextEditingController(
+        text: parameters.minutesSavedPerSuccess.toString(),
+      ),
+      TextEditingController(text: parameters.hourlyValueUsd.toString()),
+      TextEditingController(
+        text: parameters.directCostSavingUsdPerSuccess.toString(),
+      ),
+      TextEditingController(
+        text: parameters.avoidedLossUsdPerSuccess.toString(),
+      ),
+      TextEditingController(
+        text: parameters.valueCreatedUsdPerSuccess.toString(),
+      ),
+    ];
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _save() {
+    final values = _controllers
+        .map((controller) => double.tryParse(controller.text))
+        .toList();
+    final invalid = values.indexed.any(
+      (entry) =>
+          entry.$2 == null || entry.$2! < 0 || entry.$2! > _maximums[entry.$1],
+    );
+    if (invalid) {
+      setState(() {
+        _validationError =
+            'Use non-negative values within the displayed limits.';
+      });
+      return;
+    }
+    Navigator.of(context).pop(values.cast<double>());
+  }
+
+  Widget _input(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(labelText: label),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('ROI assumptions: ${widget.feature.featureKey}'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Enter your own estimates. Defaults are zero and no '
+              'external pricing claims are applied.',
+            ),
+            const SizedBox(height: 12),
+            _input(_controllers[0], 'Minutes saved per successful use'),
+            _input(_controllers[1], 'Hourly value (USD)'),
+            _input(_controllers[2], 'Direct saving per success (USD)'),
+            _input(_controllers[3], 'Avoided loss per success (USD)'),
+            _input(_controllers[4], 'Value created per success (USD)'),
+            if (_validationError != null)
+              Text(
+                _validationError!,
+                style: const TextStyle(color: Color(0xFFEF4444)),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _save,
+          child: const Text('Save assumptions'),
+        ),
+      ],
     );
   }
 }
