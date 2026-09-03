@@ -33,6 +33,7 @@ import {
 } from "./upstream_error.ts";
 import { requiredAuthLevel } from "./action_auth.ts";
 import { summarizeStripeAccountReadiness } from "./stripe_account_readiness.ts";
+import { summarizeDailyBillingMetrics } from "./daily_billing_metrics.ts";
 import {
   billingAllowedHosts,
   resolveBillingReturnUrl,
@@ -2122,31 +2123,53 @@ serve(async (req: Request) => {
 
       case "digest.run": {
         const today = new Date().toISOString().split("T")[0];
-        const [usersRes, newFrRes, openFrRes, topFrRes, achievementsRes] =
-          await Promise.all([
-            admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
-            admin
-              .from("feature_requests")
-              .select("id, title, created_at")
-              .gte("created_at", `${today}T00:00:00Z`)
-              .order("created_at", { ascending: false })
-              .limit(10),
-            admin
-              .from("feature_requests")
-              .select("count", { count: "exact", head: true })
-              .eq("status", "open"),
-            admin
-              .from("feature_requests")
-              .select("title, votes")
-              .eq("status", "open")
-              .order("votes", { ascending: false })
-              .limit(5),
-            admin
-              .from("development_achievements")
-              .select("title, completed_at")
-              .order("completed_at", { ascending: false })
-              .limit(5),
-          ]);
+        // Revenue is an owner-only operating metric. The same action is used by
+        // the signed-in admin page, so only the service-role automation receives
+        // the billing aggregate. No subscription row or customer identifier is
+        // returned at either boundary.
+        const billingPromise = serviceRoleRequest
+          ? admin
+            .from("billing_subscriptions")
+            .select("tier, status")
+            .eq("status", "active")
+            .in("tier", ["pro", "team"])
+          : Promise.resolve({ data: [], error: null });
+        const [
+          usersRes,
+          newFrRes,
+          openFrRes,
+          topFrRes,
+          achievementsRes,
+          billingRes,
+        ] = await Promise.all([
+          admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
+          admin
+            .from("feature_requests")
+            .select("id, title, created_at")
+            .gte("created_at", `${today}T00:00:00Z`)
+            .order("created_at", { ascending: false })
+            .limit(10),
+          admin
+            .from("feature_requests")
+            .select("count", { count: "exact", head: true })
+            .eq("status", "open"),
+          admin
+            .from("feature_requests")
+            .select("title, votes")
+            .eq("status", "open")
+            .order("votes", { ascending: false })
+            .limit(5),
+          admin
+            .from("development_achievements")
+            .select("title, completed_at")
+            .order("completed_at", { ascending: false })
+            .limit(5),
+          billingPromise,
+        ]);
+        if (billingRes.error) throw new Error(billingRes.error.message);
+        const billingMetrics = serviceRoleRequest
+          ? summarizeDailyBillingMetrics(billingRes.data ?? [])
+          : null;
         return json({
           success: true,
           digest: {
@@ -2161,6 +2184,7 @@ serve(async (req: Request) => {
               topOpen: topFrRes.data ?? [],
             },
             recentAchievements: achievementsRes.data ?? [],
+            ...(billingMetrics ?? {}),
           },
         });
       }
