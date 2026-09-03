@@ -2,16 +2,10 @@
 -- Existing notes are classified-by-default so only new quick captures enter pending.
 
 alter table public.notes
-  add column if not exists classification_status text,
+  add column if not exists classification_status text not null default 'classified',
   add column if not exists classification_category text,
   add column if not exists classification_source text,
   add column if not exists classified_at timestamptz;
-
-update public.notes
-set classification_status = 'classified',
-    classification_source = coalesce(classification_source, 'existing'),
-    classified_at = coalesce(classified_at, updated_at, created_at, now())
-where classification_status is null;
 
 alter table public.notes
   alter column classification_status set default 'classified',
