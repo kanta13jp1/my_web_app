@@ -27,10 +27,17 @@ GitHub-hosted runner too:
 2. Store the sandbox price ID as the repository variable
    `PADDLE_SANDBOX_PRICE_ID`.
 3. Set the sandbox default payment link domain to `localhost` in Paddle.
-4. Configure the B2B VAT and Customer Portal values described in
+4. Configure the Customer Portal value described in
    [`PADDLE_B2B_VAT_INVOICE_VERIFICATION.md`](PADDLE_B2B_VAT_INVOICE_VERIFICATION.md).
-5. Run **Paddle Sandbox Checkout Cloud Validation** manually with
+5. Configure the B2B VAT values only when the Owner has a legitimate matching
+   VAT/Tax ID and explicitly authorizes its sandbox-only use. Paddle does not
+   provide a documented sandbox-specific identifier.
+6. Only then run **Paddle Sandbox Checkout Cloud Validation** manually with
    **Run the real Paddle sandbox checkout and B2B VAT matrix** enabled.
+
+Without an authorized valid VAT/Tax ID, leave the real B2B job disabled. Do not
+substitute another company's identifier, Paddle's tax number, or an example
+value.
 
 The real job builds a non-release app, serves it only on the runner's temporary
 `localhost:7357`, and runs the checkout and B2B VAT scenarios serially without retries. It
