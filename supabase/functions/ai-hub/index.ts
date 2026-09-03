@@ -82,6 +82,11 @@ import {
   handleWeeklySpendingCoachingAction,
 } from "./expense_ai.ts";
 import {
+  handleNoteClassificationAction,
+  type NoteClassificationDb,
+  NoteClassificationError,
+} from "./note_classification.ts";
+import {
   type DisposableBalanceDb,
   DisposableBalanceError,
   handleDisposableBalanceAction,
@@ -4670,6 +4675,32 @@ serve(async (req: Request) => {
         });
       }
 
+      case "notes.classify": {
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        const result = await handleNoteClassificationAction({
+          db: admin as unknown as NoteClassificationDb,
+          body,
+          userId: userId ?? "",
+          generate: geminiKey
+            ? async (prompt) => {
+              const usage = await checkAndRecordAiUsage(
+                supabaseUsageStore(admin),
+                userId ?? "",
+              );
+              if (!usage.allowed) {
+                throw new Error("Monthly AI query limit reached");
+              }
+              const budget = await checkBudget("ef", "ai-hub");
+              if (!budget.ok) {
+                throw new Error("AI budget limit reached");
+              }
+              return await callGemini(prompt, geminiKey);
+            }
+            : undefined,
+        });
+        return json({ success: true, ...result });
+      }
+
       case "search.query": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const query = String(body.query ?? "").trim();
@@ -8709,6 +8740,9 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof ExpenseAiError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof NoteClassificationError) {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof DisposableBalanceError) {
