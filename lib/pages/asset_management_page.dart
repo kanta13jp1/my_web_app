@@ -22167,7 +22167,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         final latest = await _latestAssetManagementAiAnalysisForBaseDate(
           report.workbook.baseDate,
         );
-        if (latest != null && latest.requestFingerprint == key) {
+        if (latest != null &&
+            AssetManagementAiSummaryRefresh.canReusePersisted(
+              currentKey: key,
+              cachedKey: latest.requestFingerprint,
+            )) {
           reusable = latest;
         }
       } catch (_) {
