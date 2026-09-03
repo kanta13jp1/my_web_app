@@ -35,6 +35,7 @@ class AssetManagementAiSummaryRefresh {
   }) {
     return currentKey == cachedKey;
   }
+
   /// 直近の生成「試行」(成功/失敗を問わず) からクールダウン時間内なので、
   /// 再生成を諦めて定型要約でしのぐべきか。
   ///
