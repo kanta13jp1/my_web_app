@@ -14,6 +14,7 @@ import 'package:web/web.dart' as web_api;
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_university_agentless_lab_analytics.dart';
+import '../services/ai_university_agentverse_lab_analytics.dart';
 import '../services/ai_university_content_analytics.dart';
 import '../services/ai_university_fuyu_lab_analytics.dart';
 import '../services/ai_university_learning_outcome_analytics.dart';
@@ -28,6 +29,7 @@ import '../widgets/ai_university_latest_info_task_card.dart';
 import '../widgets/ai_university_firefly_api_task_card.dart';
 import '../widgets/ai_university_fuyu_lab_task_card.dart';
 import '../widgets/ai_university_agentless_lab_task_card.dart';
+import '../widgets/ai_university_agentverse_lab_task_card.dart';
 import '../widgets/ai_university_llm_mechanics_task_card.dart';
 import '../widgets/ai_university_model_selection_task_card.dart';
 import '../widgets/ai_university_published_video_banner.dart';
@@ -5749,6 +5751,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       _llmMechanicsLearningOutcomeAnalytics;
   late final AiUniversityFuyuLabAnalytics _fuyuLabAnalytics;
   late final AiUniversityAgentlessLabAnalytics _agentlessLabAnalytics;
+  late final AiUniversityAgentVerseLabAnalytics _agentVerseLabAnalytics;
 
   List<String> _providers = [];
   Map<String, List<Map<String, dynamic>>> _content = {};
@@ -5810,6 +5813,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         AiUniversityFuyuLabAnalytics.supabase(_supabase);
     _agentlessLabAnalytics = widget.agentlessLabAnalytics ??
         AiUniversityAgentlessLabAnalytics.supabase(_supabase);
+    _agentVerseLabAnalytics =
+        AiUniversityAgentVerseLabAnalytics.supabase(_supabase);
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
@@ -8030,6 +8035,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         provider == 'academic' && category == 'llm_mechanics';
     final isFuyuLab = provider == 'adept' && category == 'api';
     final isAgentlessLab = provider == 'agentless' && category == 'overview';
+    final isAgentVerseLab =
+        provider == 'agentverse' && category == 'overview';
     final learningOutcomeAnalytics = isLlmMechanicsTask
         ? _llmMechanicsLearningOutcomeAnalytics
         : isFireflyApiTask
@@ -8181,6 +8188,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   AiUniversityAgentlessLabTaskCard(
                     onStart: _agentlessLabAnalytics.recordStarted,
                     onSubmit: _agentlessLabAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isAgentVerseLab) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityAgentVerseLabTaskCard(
+                    onStart: _agentVerseLabAnalytics.recordStarted,
+                    onImportChecked:
+                        _agentVerseLabAnalytics.recordImportChecked,
+                    onSubmit: _agentVerseLabAnalytics.recordCompleted,
                   ),
                 ],
                 if (youtubeVideoId != null) ...[
