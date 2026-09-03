@@ -150,22 +150,27 @@ const Set<String> _providerNameUpperTokens = {
 String humanizeProviderId(String id) {
   final override = _providerDisplayNameOverrides[id];
   if (override != null && override.isNotEmpty) return override;
-  final tokens =
-      id.split(RegExp(r'[-_\s]+')).where((t) => t.isNotEmpty).toList();
+  final tokens = id
+      .split(RegExp(r'[-_\s]+'))
+      .where((t) => t.isNotEmpty)
+      .toList();
   if (tokens.isEmpty) return id;
-  return tokens.map((t) {
-    final lower = t.toLowerCase();
-    if (_providerNameUpperTokens.contains(lower)) return lower.toUpperCase();
-    return t[0].toUpperCase() + t.substring(1);
-  }).join(' ');
+  return tokens
+      .map((t) {
+        final lower = t.toLowerCase();
+        if (_providerNameUpperTokens.contains(lower))
+          return lower.toUpperCase();
+        return t[0].toUpperCase() + t.substring(1);
+      })
+      .join(' ');
 }
 
 _ProviderMeta _fallbackProviderMeta(String id) => _ProviderMeta(
-      name: humanizeProviderId(id),
-      emoji: '🤖',
-      color: const Color(0xFF607D8B),
-      officialUrl: '',
-    );
+  name: humanizeProviderId(id),
+  emoji: '🤖',
+  color: const Color(0xFF607D8B),
+  officialUrl: '',
+);
 
 // プロバイダー検索シートのカテゴリ分類 (id + 表示名のキーワードで先勝ち判定)。
 // 351 タブの平坦リストを領域別に絞り込む二段ナビの基盤。網羅でなく到達性向上が目的。
@@ -1996,12 +2001,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'arcee_ai': _Quiz(
     question: 'Arcee AI Trinity シリーズのライセンスと出身国は?',
-    options: [
-      'MIT / 中国',
-      'Apache 2.0 / 米国',
-      'GPL / 英国',
-      'Proprietary / カナダ',
-    ],
+    options: ['MIT / 中国', 'Apache 2.0 / 米国', 'GPL / 英国', 'Proprietary / カナダ'],
     correct: 1,
   ),
   'minimax': _Quiz(
@@ -2071,12 +2071,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'fish_audio': _Quiz(
     question: 'Fish Audio のオープンソース TTS モデル名は?',
-    options: [
-      'Whisper Voice',
-      'Fish Speech S1',
-      'Bark Tiny',
-      'XTTS-v3',
-    ],
+    options: ['Whisper Voice', 'Fish Speech S1', 'Bark Tiny', 'XTTS-v3'],
     correct: 1,
   ),
   'atlas_cloud': _Quiz(
@@ -2191,22 +2186,12 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'stepfun': _Quiz(
     question: 'Step 3.5 Flash の MoE アーキテクチャで、1トークンあたり何パラメータが活性化する？',
-    options: [
-      '196B（全体）',
-      '70B',
-      '11B',
-      '7B',
-    ],
+    options: ['196B（全体）', '70B', '11B', '7B'],
     correct: 2,
   ),
   'modular': _Quiz(
     question: 'Modular が 2026年2月に買収した AI serving ライブラリは？',
-    options: [
-      'vLLM',
-      'BentoML',
-      'Triton Inference Server',
-      'Ray Serve',
-    ],
+    options: ['vLLM', 'BentoML', 'Triton Inference Server', 'Ray Serve'],
     correct: 1,
   ),
   'radixark': _Quiz(
@@ -2221,12 +2206,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'baseten': _Quiz(
     question: 'Baseten の GPU 時間課金で最も安いインスタンスの開始価格は？',
-    options: [
-      '\$0.10/hr',
-      '\$0.63/hr',
-      '\$1.60/hr',
-      '\$3.20/hr',
-    ],
+    options: ['\$0.10/hr', '\$0.63/hr', '\$1.60/hr', '\$3.20/hr'],
     correct: 1,
   ),
   'baichuan': _Quiz(
@@ -2241,42 +2221,22 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'lepton': _Quiz(
     question: 'NVIDIA が 2025 年に買収した Lepton AI の独自推論エンジン名は？',
-    options: [
-      'Thunder',
-      'Tuna',
-      'Flash',
-      'Turbo',
-    ],
+    options: ['Thunder', 'Tuna', 'Flash', 'Turbo'],
     correct: 1,
   ),
   'krutrim': _Quiz(
     question: 'Krutrim AI がサポートするインド言語の生成対応言語数は？',
-    options: [
-      '5 言語',
-      '10 言語',
-      '15 言語',
-      '22+ 言語',
-    ],
+    options: ['5 言語', '10 言語', '15 言語', '22+ 言語'],
     correct: 1,
   ),
   'deepgram': _Quiz(
     question: 'Deepgram Nova-2 STT の料金は？',
-    options: [
-      r'$0.0012/min',
-      r'$0.0043/min',
-      r'$0.0120/min',
-      r'$0.0250/min',
-    ],
+    options: [r'$0.0012/min', r'$0.0043/min', r'$0.0120/min', r'$0.0250/min'],
     correct: 1,
   ),
   'did': _Quiz(
     question: 'D-ID Talks API の入力として正しい組み合わせは？',
-    options: [
-      'テキスト + テキスト',
-      '画像 + 音声',
-      '動画 + テキスト',
-      '音声 + 音声',
-    ],
+    options: ['テキスト + テキスト', '画像 + 音声', '動画 + テキスト', '音声 + 音声'],
     correct: 1,
   ),
   'cartesia': _Quiz(
@@ -2301,12 +2261,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'synthesia': _Quiz(
     question: 'Synthesia が対応している言語数は？',
-    options: [
-      '50 言語',
-      '80 言語',
-      '140 言語',
-      '200 言語',
-    ],
+    options: ['50 言語', '80 言語', '140 言語', '200 言語'],
     correct: 2,
   ),
   'play_ht': _Quiz(
@@ -2481,12 +2436,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'replit': _Quiz(
     question: 'Replit FY2025 の年間売上はいくらか？',
-    options: [
-      r'$24M',
-      r'$240M (FY2024 $10M から 24× 成長)',
-      r'$2.4B',
-      r'$40M',
-    ],
+    options: [r'$24M', r'$240M (FY2024 $10M から 24× 成長)', r'$2.4B', r'$40M'],
     correct: 1,
   ),
   'cursor': _Quiz(
@@ -5718,9 +5668,9 @@ class AiUniversityPage extends StatefulWidget {
   final AiUniversityContentAnalytics? contentAnalytics;
   final AiUniversityLearningOutcomeAnalytics? learningOutcomeAnalytics;
   final AiUniversityLearningOutcomeAnalytics?
-      modelSelectionLearningOutcomeAnalytics;
+  modelSelectionLearningOutcomeAnalytics;
   final AiUniversityLearningOutcomeAnalytics?
-      fireflyApiLearningOutcomeAnalytics;
+  fireflyApiLearningOutcomeAnalytics;
   final AiUniversityFuyuLabAnalytics? fuyuLabAnalytics;
   final AiUniversityAgentlessLabAnalytics? agentlessLabAnalytics;
 
@@ -5743,11 +5693,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   late final AiUniversityContentAnalytics _contentAnalytics;
   late final AiUniversityLearningOutcomeAnalytics _learningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
-      _modelSelectionLearningOutcomeAnalytics;
+  _modelSelectionLearningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
-      _fireflyApiLearningOutcomeAnalytics;
+  _fireflyApiLearningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
-      _llmMechanicsLearningOutcomeAnalytics;
+  _llmMechanicsLearningOutcomeAnalytics;
   late final AiUniversityFuyuLabAnalytics _fuyuLabAnalytics;
   late final AiUniversityAgentlessLabAnalytics _agentlessLabAnalytics;
 
@@ -5786,30 +5736,34 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   @override
   void initState() {
     super.initState();
-    _contentAnalytics = widget.contentAnalytics ??
+    _contentAnalytics =
+        widget.contentAnalytics ??
         AiUniversityContentAnalytics.supabase(_supabase);
-    _learningOutcomeAnalytics = widget.learningOutcomeAnalytics ??
+    _learningOutcomeAnalytics =
+        widget.learningOutcomeAnalytics ??
         AiUniversityLearningOutcomeAnalytics.supabase(_supabase);
     _modelSelectionLearningOutcomeAnalytics =
         widget.modelSelectionLearningOutcomeAnalytics ??
-            AiUniversityLearningOutcomeAnalytics.supabase(
-              _supabase,
-              task: AiUniversityLearningOutcomeTask.modelSelection,
-            );
+        AiUniversityLearningOutcomeAnalytics.supabase(
+          _supabase,
+          task: AiUniversityLearningOutcomeTask.modelSelection,
+        );
     _fireflyApiLearningOutcomeAnalytics =
         widget.fireflyApiLearningOutcomeAnalytics ??
-            AiUniversityLearningOutcomeAnalytics.supabase(
-              _supabase,
-              task: AiUniversityLearningOutcomeTask.fireflyApi,
-            );
+        AiUniversityLearningOutcomeAnalytics.supabase(
+          _supabase,
+          task: AiUniversityLearningOutcomeTask.fireflyApi,
+        );
     _llmMechanicsLearningOutcomeAnalytics =
         AiUniversityLearningOutcomeAnalytics.supabase(
-      _supabase,
-      task: AiUniversityLearningOutcomeTask.llmMechanics,
-    );
-    _fuyuLabAnalytics = widget.fuyuLabAnalytics ??
+          _supabase,
+          task: AiUniversityLearningOutcomeTask.llmMechanics,
+        );
+    _fuyuLabAnalytics =
+        widget.fuyuLabAnalytics ??
         AiUniversityFuyuLabAnalytics.supabase(_supabase);
-    _agentlessLabAnalytics = widget.agentlessLabAnalytics ??
+    _agentlessLabAnalytics =
+        widget.agentlessLabAnalytics ??
         AiUniversityAgentlessLabAnalytics.supabase(_supabase);
     _fetchContent();
     _loadAnsweredQuizzes();
@@ -5958,15 +5912,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       return true;
     } catch (_) {
       try {
-        await _supabase.from('ai_university_scores').upsert(
-          {
-            'user_id': user.id,
-            'provider_id': providerId,
-            'quiz_correct': true,
-            'studied_at': DateTime.now().toIso8601String(),
-          },
-          onConflict: 'user_id,provider_id',
-        );
+        await _supabase.from('ai_university_scores').upsert({
+          'user_id': user.id,
+          'provider_id': providerId,
+          'quiz_correct': true,
+          'studied_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'user_id,provider_id');
         await _supabase.rpc(
           'update_ai_university_streak',
           params: {'p_user_id': user.id},
@@ -5989,17 +5940,20 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     switch (variant) {
       case 0:
         // A: 正解数フォーカス
-        text = '🎓 AI 大学でクイズ $count/$total 問正解！\n'
+        text =
+            '🎓 AI 大学でクイズ $count/$total 問正解！\n'
             'Google・OpenAI・Anthropic など主要AIを体系的に学習中。\n'
             '$url';
       case 1:
         // B: プロバイダー制覇フォーカス
-        text = '🏆 AI 大学で $count 社のAIプロバイダーを制覇中！\n'
+        text =
+            '🏆 AI 大学で $count 社のAIプロバイダーを制覇中！\n'
             'Google・OpenAI・DeepSeek・Mistral など $total 社を比較学習できます。\n'
             '$url';
       default:
         // C: ランキング/競争フォーカス
-        text = '📊 AI 大学ランキングに挑戦中！正解 $count 問達成 🎯\n'
+        text =
+            '📊 AI 大学ランキングに挑戦中！正解 $count 問達成 🎯\n'
             '複数のAIを使い比べながら正しく理解。ランキングで競おう！\n'
             '$url';
     }
@@ -6029,8 +5983,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         metrics: AiUniversityXPostMetrics(
           correctAnswers: _answeredQuizzes.length,
           totalQuestions: _quizzes.length,
-          providerCount:
-              _providers.isNotEmpty ? _providers.length : _quizzes.length,
+          providerCount: _providers.isNotEmpty
+              ? _providers.length
+              : _quizzes.length,
           currentStreak: 0,
           insight: 'モデル間の設計思想の違い',
         ),
@@ -6040,14 +5995,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       final message = result.posted
           ? '$account にAI大学の学習ログを投稿しました'
           : 'X投稿文を作成しました。SupabaseのX API secret設定を確認してください';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AI X投稿に失敗しました: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('AI X投稿に失敗しました: $error')));
     } finally {
       if (mounted) {
         setState(() => _xPostSubmitting = false);
@@ -6117,9 +6072,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.auto_awesome),
-                    label: Text(
-                      _xPostSubmitting ? 'AI生成・投稿中' : 'AI生成してXへ投稿',
-                    ),
+                    label: Text(_xPostSubmitting ? 'AI生成・投稿中' : 'AI生成してXへ投稿'),
                     onPressed: _xPostSubmitting
                         ? null
                         : () {
@@ -6157,13 +6110,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           // ヘッダー
           Row(
             children: [
-              const Text(
-                '🎓',
-                style: TextStyle(
-                  fontSize: 32,
-                  height: 1.5,
-                ),
-              ),
+              const Text('🎓', style: TextStyle(fontSize: 32, height: 1.5)),
               const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -6245,13 +6192,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             ),
             child: Row(
               children: [
-                const Text(
-                  '📊',
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
+                const Text('📊', style: TextStyle(fontSize: 14, height: 1.5)),
                 const SizedBox(width: 8),
                 Text(
                   'クイズ正解: $count / $total 問',
@@ -6281,8 +6222,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   Future<void> _captureAndDownload() async {
     try {
-      final boundary = _shareCardKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
+      final boundary =
+          _shareCardKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
       if (boundary == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -6303,9 +6245,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       a.click();
       a.remove();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('画像を保存しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('画像を保存しました')));
       }
     } catch (e) {
       if (mounted) {
@@ -6332,7 +6274,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     try {
       const pageSize = 1000;
       final contentRows = <Map<String, dynamic>>[];
-      for (var offset = 0;; offset += pageSize) {
+      for (var offset = 0; ; offset += pageSize) {
         final page = await _supabase
             .from('ai_university_content')
             .select()
@@ -6359,9 +6301,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
       final rows =
           AiUniversityVideoLessonService.mergeContentRowsByProviderCategory(
-        contentRows,
-        (publishedVideoRows as List).cast<Map<String, dynamic>>(),
-      );
+            contentRows,
+            (publishedVideoRows as List).cast<Map<String, dynamic>>(),
+          );
 
       final Map<String, List<Map<String, dynamic>>> grouped = {};
       for (final row in rows) {
@@ -6373,16 +6315,18 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       }
 
       // DB が空なら _providerMeta の全キーをフォールバックで表示
-      final providers =
-          grouped.isEmpty ? _providerMeta.keys.toList() : grouped.keys.toList();
+      final providers = grouped.isEmpty
+          ? _providerMeta.keys.toList()
+          : grouped.keys.toList();
       if (grouped.isEmpty) {
         _contentAnalytics
             .record(AiUniversityContentEvent.fallbackShown)
             .ignore();
       }
       final requestedProvider = widget.initialProviderId;
-      final requestedIndex =
-          requestedProvider == null ? -1 : providers.indexOf(requestedProvider);
+      final requestedIndex = requestedProvider == null
+          ? -1
+          : providers.indexOf(requestedProvider);
       final initialIndex = requestedIndex >= 0 ? requestedIndex : 0;
 
       _tabController?.dispose();
@@ -6462,9 +6406,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final topics = <AiUniversityVideoLessonTopic>[];
     for (final rows in _content.values) {
       topics.addAll(
-        AiUniversityVideoLessonService.topicsFromRows(rows).where(
-          (topic) => topic.youtubeVideoId != null,
-        ),
+        AiUniversityVideoLessonService.topicsFromRows(
+          rows,
+        ).where((topic) => topic.youtubeVideoId != null),
       );
     }
     topics.sort((a, b) => a.title.compareTo(b.title));
@@ -6484,8 +6428,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         final windowHeight = MediaQuery.sizeOf(dialogContext).height;
         return Dialog(
           backgroundColor: const Color(0xFF1A1A1A),
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
@@ -6509,8 +6455,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color:
-                              const Color(0xFFFF6B35).withValues(alpha: 0.16),
+                          color: const Color(
+                            0xFFFF6B35,
+                          ).withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         alignment: Alignment.center,
@@ -6582,8 +6529,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         foregroundColor: const Color(0xFFFFA07A),
                         minimumSize: const Size(0, 44),
                         side: BorderSide(
-                          color:
-                              const Color(0xFFFF6B35).withValues(alpha: 0.46),
+                          color: const Color(
+                            0xFFFF6B35,
+                          ).withValues(alpha: 0.46),
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -6619,10 +6567,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   // 大規模タブ一覧の到達性改善: 検索 + カテゴリ別一覧から選択したタブへジャンプする。
   void _showProviderSearch() {
     _contentAnalytics.record(AiUniversityContentEvent.providerSearch).ignore();
-    final order = <String>[
-      ..._providerCategoryRules.map((e) => e.key),
-      'その他',
-    ];
+    final order = <String>[..._providerCategoryRules.map((e) => e.key), 'その他'];
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -6646,9 +6591,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               byCategory.putIfAbsent(cat, () => []).add(id);
             }
             final categories = byCategory.keys.toList()
-              ..sort(
-                (a, b) => order.indexOf(a).compareTo(order.indexOf(b)),
-              );
+              ..sort((a, b) => order.indexOf(a).compareTo(order.indexOf(b)));
             return DraggableScrollableSheet(
               expand: false,
               initialChildSize: 0.85,
@@ -6757,8 +6700,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       helpful: helpful,
     );
     final snapshot = ok ? await _rlhfService.loadSnapshot() : null;
-    final fineTuneReadiness =
-        ok ? await _fineTuneReadinessService.loadSnapshot() : null;
+    final fineTuneReadiness = ok
+        ? await _fineTuneReadinessService.loadSnapshot()
+        : null;
     if (!mounted) return;
     setState(() {
       _rlhfSubmitting[providerId] = false;
@@ -6783,9 +6727,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     setState(() => _answeredQuizzes.add(providerId));
     _saveAnsweredQuizzes();
     _contentAnalytics.record(AiUniversityContentEvent.quizCompleted).ignore();
-    context
-        .read<GamificationService>()
-        .awardPoints(50, reason: 'AI大学クイズ正解: ${_meta(providerId).name}');
+    context.read<GamificationService>().awardPoints(
+      50,
+      reason: 'AI大学クイズ正解: ${_meta(providerId).name}',
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('🎉 正解！ +50pt — ${_meta(providerId).name}'),
@@ -6807,15 +6752,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     }
     if (!await _recordQuizScoreToSupabase(providerId)) {
       try {
-        await _supabase.from('ai_university_scores').upsert(
-          {
-            'user_id': user.id,
-            'provider_id': providerId,
-            'quiz_correct': true,
-            'studied_at': DateTime.now().toIso8601String(),
-          },
-          onConflict: 'user_id,provider_id',
-        );
+        await _supabase.from('ai_university_scores').upsert({
+          'user_id': user.id,
+          'provider_id': providerId,
+          'quiz_correct': true,
+          'studied_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'user_id,provider_id');
         // ストリーク更新 (DB関数で連続学習日数を計算)
         await _supabase.rpc(
           'update_ai_university_streak',
@@ -6832,18 +6774,22 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       grade: 3,
     );
     if (isReview) {
-      _contentAnalytics.record(AiUniversityContentEvent.reviewReturned).ignore();
+      _contentAnalytics
+          .record(AiUniversityContentEvent.reviewReturned)
+          .ignore();
     }
     if (mounted) {
       setState(() => _fsrsNextDue[providerId] = result.nextDue);
     }
     // Memory Agent プロファイル更新 (バックグラウンド)
-    _learnerProfileService.updateProfile(
-      sessionSummary: 'クイズ正解: $providerId',
-      scores: [
-        {'provider': providerId, 'correct': true},
-      ],
-    ).ignore();
+    _learnerProfileService
+        .updateProfile(
+          sessionSummary: 'クイズ正解: $providerId',
+          scores: [
+            {'provider': providerId, 'correct': true},
+          ],
+        )
+        .ignore();
   }
 
   void _refreshUniversityContent() {
@@ -6859,7 +6805,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   void _openVideoLessonGenerator() {
     final controller = _tabController;
-    final provider = controller != null &&
+    final provider =
+        controller != null &&
             controller.index >= 0 &&
             controller.index < _providers.length
         ? _providers[controller.index]
@@ -6867,9 +6814,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     Navigator.pushNamed(
       context,
       '/ai-university-video',
-      arguments: {
-        if (provider != null) 'provider': provider,
-      },
+      arguments: {if (provider != null) 'provider': provider},
     );
   }
 
@@ -6964,10 +6909,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     style: TextStyle(color: Color(0xFFFFA07A), fontSize: 12),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
-                    Icons.expand_more,
-                    color: Color(0xFFFFA07A),
-                  ),
+                  const Icon(Icons.expand_more, color: Color(0xFFFFA07A)),
                 ],
               ),
             ),
@@ -7038,11 +6980,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               tooltip: 'その他',
               onSelected: _handleUniversityMenuAction,
               itemBuilder: (_) => [
-                _universityMenuItem(
-                  'toeic',
-                  Icons.school_outlined,
-                  'TOEIC対策',
-                ),
+                _universityMenuItem('toeic', Icons.school_outlined, 'TOEIC対策'),
                 _universityMenuItem(
                   'reading',
                   Icons.menu_book_outlined,
@@ -7135,10 +7073,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   const Expanded(
                     child: Text(
                       'DBから取得できませんでした。フォールバック表示中。',
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 12, height: 1.5),
                     ),
                   ),
                   TextButton(
@@ -7294,9 +7229,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: genre.accentColor.withValues(alpha: 0.32),
-          ),
+          border: Border.all(color: genre.accentColor.withValues(alpha: 0.32)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -7360,8 +7293,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     providerNames.isNotEmpty
                         ? providerNames.first
                         : genre.focusAreas.isNotEmpty
-                            ? genre.focusAreas.first
-                            : genre.title,
+                        ? genre.focusAreas.first
+                        : genre.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -7470,8 +7403,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 ),
                 if (stats.dueToday > 0)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
@@ -7570,8 +7505,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final fineTuneColor = fineTune.readyForFineTune
         ? const Color(0xFF22C55E)
         : fineTune.readyForEvalBatch
-            ? const Color(0xFF38BDF8)
-            : const Color(0xFFF59E0B);
+        ? const Color(0xFF38BDF8)
+        : const Color(0xFFF59E0B);
 
     return Card(
       color: const Color(0xFF151B27),
@@ -7644,10 +7579,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 runSpacing: 8,
                 children: [
                   _buildRlhfMetricChip('シグナル', '${snapshot.totalSignals}'),
-                  _buildRlhfMetricChip(
-                    'このAI',
-                    providerSignals.toString(),
-                  ),
+                  _buildRlhfMetricChip('このAI', providerSignals.toString()),
                   _buildRlhfMetricChip(
                     '平均',
                     snapshot.averageRating.toStringAsFixed(1),
@@ -7868,9 +7800,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: m.color.withValues(alpha: 0.28),
-        ),
+        border: Border.all(color: m.color.withValues(alpha: 0.28)),
         boxShadow: [
           BoxShadow(
             color: m.color.withValues(alpha: 0.12),
@@ -7881,13 +7811,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       ),
       child: Row(
         children: [
-          Text(
-            m.emoji,
-            style: const TextStyle(
-              fontSize: 32,
-              height: 1.5,
-            ),
-          ),
+          Text(m.emoji, style: const TextStyle(fontSize: 32, height: 1.5)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -7990,29 +7914,20 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       fontStyle: FontStyle.italic,
       height: 1.5,
     ),
-    listBullet: const TextStyle(
-      color: Color(0xFFB0B0B0),
-      height: 1.5,
-    ),
+    listBullet: const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
     code: const TextStyle(
       color: Color(0xFF81C784),
       fontFamily: 'monospace',
       fontSize: 13,
       height: 1.5,
     ),
-    blockquote: const TextStyle(
-      color: Color(0xFFB0B0B0),
-      height: 1.5,
-    ),
+    blockquote: const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
     tableHead: const TextStyle(
       color: Color(0xFFE5E7EB),
       fontWeight: FontWeight.bold,
     ),
     tableBody: const TextStyle(color: Color(0xFFE5E7EB), height: 1.6),
-    tableBorder: TableBorder.all(
-      color: const Color(0xFF2A2A2A),
-      width: 1,
-    ),
+    tableBorder: TableBorder.all(color: const Color(0xFF2A2A2A), width: 1),
     tableCellsPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
     tableHeadAlign: TextAlign.start,
   );
@@ -8039,8 +7954,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       evidenceSourceUrl,
       evidenceVerifiedAt,
     ].any((value) => value != null && value.isNotEmpty);
-    final youtubeVideoId =
-        AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
+    final youtubeVideoId = AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+      sourceUrl,
+    );
     final isLatestInfoTask = provider == '01ai' && category == 'news';
     final isModelSelectionTask = provider == '01ai' && category == 'models';
     final isFireflyApiTask = provider == 'adobe_firefly' && category == 'api';
@@ -8051,11 +7967,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final learningOutcomeAnalytics = isLlmMechanicsTask
         ? _llmMechanicsLearningOutcomeAnalytics
         : isFireflyApiTask
-            ? _fireflyApiLearningOutcomeAnalytics
-            : isModelSelectionTask
-                ? _modelSelectionLearningOutcomeAnalytics
-                : _learningOutcomeAnalytics;
-    final hasLearningOutcomeTask = isLatestInfoTask ||
+        ? _fireflyApiLearningOutcomeAnalytics
+        : isModelSelectionTask
+        ? _modelSelectionLearningOutcomeAnalytics
+        : _learningOutcomeAnalytics;
+    final hasLearningOutcomeTask =
+        isLatestInfoTask ||
         isModelSelectionTask ||
         isFireflyApiTask ||
         isLlmMechanicsTask;
@@ -8151,8 +8068,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         if (evidenceSourceUrl != null &&
                             evidenceSourceUrl.isNotEmpty)
                           TextButton.icon(
-                            icon:
-                                const Icon(Icons.fact_check_outlined, size: 14),
+                            icon: const Icon(
+                              Icons.fact_check_outlined,
+                              size: 14,
+                            ),
                             label: const Text('学習設計の根拠を開く'),
                             onPressed: () => _launchUrl(evidenceSourceUrl),
                           ),
@@ -8228,7 +8147,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   }
 
   Widget _buildFallbackCard(String providerId, Color surface) {
-    final markdown = _fallback[providerId] ??
+    final markdown =
+        _fallback[providerId] ??
         '## ${_meta(providerId).name}\n\nコンテンツは準備中です。\n\n毎週月曜の AI 大学更新タスクで DB が自動更新されます。';
     return Card(
       color: surface,
@@ -8268,8 +8188,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           children: [
             if (dueCards.isNotEmpty) ...[
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -8332,10 +8254,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             const SizedBox(height: 12),
             Text(
               quiz.question,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w500, height: 1.5),
             ),
             const SizedBox(height: 8),
             ...List.generate(quiz.options.length, (i) {
@@ -8360,7 +8279,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                             );
                             if (dueCards.isNotEmpty) {
                               _contentAnalytics
-                                  .record(AiUniversityContentEvent.reviewReturned)
+                                  .record(
+                                    AiUniversityContentEvent.reviewReturned,
+                                  )
                                   .ignore();
                             }
                             if (mounted) {
@@ -8447,10 +8368,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   SizedBox(width: 8),
                   Text(
                     '解説を生成中...',
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.5,
-                    ),
+                    style: TextStyle(fontSize: 12, height: 1.5),
                   ),
                 ],
               ),
