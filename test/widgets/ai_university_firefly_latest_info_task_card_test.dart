@@ -31,7 +31,9 @@ void main() {
       find.byKey(const Key('firefly-latest-output-asset_batch')),
     );
     await tapVisible(
-        tester, find.byKey(const Key('firefly-latest-assets-100')));
+      tester,
+      find.byKey(const Key('firefly-latest-assets-100')),
+    );
     await tapVisible(tester, find.byKey(const Key('firefly-latest-legacy-60')));
     await tapVisible(tester, find.byKey(const Key('firefly-latest-new-30')));
     await tapVisible(
@@ -39,7 +41,9 @@ void main() {
       find.byKey(const Key('firefly-latest-revisions-1')),
     );
     await tapVisible(
-        tester, find.byKey(const Key('firefly-latest-usable-yes')));
+      tester,
+      find.byKey(const Key('firefly-latest-usable-yes')),
+    );
     await tapVisible(
       tester,
       find.byKey(const Key('firefly-latest-workplace-yes')),
@@ -58,20 +62,22 @@ void main() {
   testWidgets('keeps submission disabled until the full comparison is done',
       (tester) async {
     await tester.pumpWidget(
-      subject(({
-        required correctAnswers,
-        required selfRating,
-        required releaseFeature,
-        required outputKind,
-        required inputAssetCount,
-        required legacyWorkflowMinutes,
-        required latestWorkflowMinutes,
-        required revisionCount,
-        required usableOutput,
-        required workplaceApplicable,
-        required adoptionDecision,
-      }) async =>
-          true),
+      subject(
+        ({
+          required correctAnswers,
+          required selfRating,
+          required releaseFeature,
+          required outputKind,
+          required inputAssetCount,
+          required legacyWorkflowMinutes,
+          required latestWorkflowMinutes,
+          required revisionCount,
+          required usableOutput,
+          required workplaceApplicable,
+          required adoptionDecision,
+        }) async =>
+            true,
+      ),
     );
 
     final submit = find.byKey(const Key('firefly-latest-submit'));
@@ -141,20 +147,22 @@ void main() {
   testWidgets('shows a retryable error when aggregate submission is rejected',
       (tester) async {
     await tester.pumpWidget(
-      subject(({
-        required correctAnswers,
-        required selfRating,
-        required releaseFeature,
-        required outputKind,
-        required inputAssetCount,
-        required legacyWorkflowMinutes,
-        required latestWorkflowMinutes,
-        required revisionCount,
-        required usableOutput,
-        required workplaceApplicable,
-        required adoptionDecision,
-      }) async =>
-          false),
+      subject(
+        ({
+          required correctAnswers,
+          required selfRating,
+          required releaseFeature,
+          required outputKind,
+          required inputAssetCount,
+          required legacyWorkflowMinutes,
+          required latestWorkflowMinutes,
+          required revisionCount,
+          required usableOutput,
+          required workplaceApplicable,
+          required adoptionDecision,
+        }) async =>
+            false,
+      ),
     );
 
     await completeTask(tester);
