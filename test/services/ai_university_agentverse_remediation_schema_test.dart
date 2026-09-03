@@ -53,9 +53,7 @@ void main() {
     expect(updates, hasLength(1));
     expect(
       sql,
-      contains(
-        'expected exactly one agentverse/overview AI University row',
-      ),
+      contains('expected exactly one agentverse/overview AI University row'),
     );
     expect(sql, contains('if v_target_count <> 1 then'));
     expect(sql, contains("where provider = 'agentverse'"));
@@ -84,7 +82,9 @@ void main() {
 
     expect(
       events,
-      contains("event_name in ('lab_started', 'import_checked', 'lab_completed')"),
+      contains(
+        "event_name in ('lab_started', 'import_checked', 'lab_completed')",
+      ),
     );
     expect(
       events,
@@ -121,11 +121,15 @@ void main() {
 
     expect(
       page,
-      contains("import '../services/ai_university_agentverse_lab_analytics.dart';"),
+      contains(
+        "import '../services/ai_university_agentverse_lab_analytics.dart';",
+      ),
     );
     expect(
       page,
-      contains("import '../widgets/ai_university_agentverse_lab_task_card.dart';"),
+      contains(
+        "import '../widgets/ai_university_agentverse_lab_task_card.dart';",
+      ),
     );
     expect(
       page,
