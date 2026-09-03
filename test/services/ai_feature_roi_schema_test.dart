@@ -14,9 +14,11 @@ void main() {
 
   test('stores bounded per-user assumptions behind forced RLS', () {
     expect(
-        sql,
-        contains(
-            'create table if not exists public.ai_feature_roi_parameters'));
+      sql,
+      contains(
+        'create table if not exists public.ai_feature_roi_parameters',
+      ),
+    );
     expect(
       sql,
       contains(
