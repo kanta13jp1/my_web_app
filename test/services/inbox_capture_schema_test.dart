@@ -12,9 +12,13 @@ void main() {
 
   test('adds an explicit Inbox lifecycle to existing owner-scoped notes', () {
     expect(
-        captureSql, contains('add column if not exists capture_status text'));
+      captureSql,
+      contains('add column if not exists capture_status text'),
+    );
     expect(
-        captureSql, contains('add column if not exists capture_source text'));
+      captureSql,
+      contains('add column if not exists capture_source text'),
+    );
     expect(
       captureSql,
       contains('add column if not exists inbox_saved_at timestamptz'),
