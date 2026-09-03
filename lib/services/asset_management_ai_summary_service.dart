@@ -1384,8 +1384,7 @@ class AssetManagementAiSummaryService {
       if (line == null) return;
       final labelIndex = line.indexOf(label);
       final valueText = line.substring(labelIndex + label.length);
-      final match =
-          RegExp(r'[-−]?\s*[0-9][0-9,]*\s*円').firstMatch(valueText);
+      final match = RegExp(r'[-−]?\s*[0-9][0-9,]*\s*円').firstMatch(valueText);
       if (match == null) return;
       final parsed = _parseYen(match.group(0)!);
       if (parsed == null) return;
@@ -1396,21 +1395,9 @@ class AssetManagementAiSummaryService {
     }
 
     validateAmount('純資産', workbook.netWorth);
-    validateAmount(
-      '負債合計',
-      workbook.liabilityTotal,
-      compareAbsolute: true,
-    );
-    validateAmount(
-      '負債総額',
-      workbook.liabilityTotal,
-      compareAbsolute: true,
-    );
-    validateAmount(
-      '借入総額',
-      workbook.liabilityTotal,
-      compareAbsolute: true,
-    );
+    validateAmount('負債合計', workbook.liabilityTotal, compareAbsolute: true);
+    validateAmount('負債総額', workbook.liabilityTotal, compareAbsolute: true);
+    validateAmount('借入総額', workbook.liabilityTotal, compareAbsolute: true);
     validateAmount('資産合計', workbook.positiveAssetTotal);
     validateAmount('現金同等資産', workbook.cashLikeTotal);
     validateAmount('今月支払予定合計', workbook.monthlyScheduledPaymentTotal);
