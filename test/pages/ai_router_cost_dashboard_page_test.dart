@@ -166,7 +166,7 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.textContaining('openai / gpt-4o-mini'), findsWidgets);
-    await tester.tap(find.byTooltip('Apply').first);
+    await tester.tap(find.byTooltip('Apply').last);
     await tester.pumpAndSettle();
 
     expect(saved, isTrue);
