@@ -26,7 +26,7 @@ void main() {
       expect(router, contains('DEFAULT_CLAUDE_HAIKU_MODEL'));
       expect(router, contains('DEFAULT_CLAUDE_SONNET_MODEL'));
       expect(aiHub, contains('selectClaudeModelForEffort'));
-      expect(aiHub, contains('routedClaude.model'));
+      expect(aiHub, contains('claudeRoute.model'));
     });
 
     test('records model-level request, token, and cost evidence', () {
