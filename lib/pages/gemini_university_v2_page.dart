@@ -7012,15 +7012,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       );
     }
 
+    final providerCount = aiUniversityProviderCountForDisplay(
+      liveProviderCount: _providers.length,
+    );
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          aiUniversityProviderCountForDisplay(
-                    liveProviderCount: _providers.length,
-                  ) >
-                  0
-              ? 'AI 大学（社）'
-              : 'AI 大学',
+          providerCount > 0 ? 'AI 大学（$providerCount社）' : 'AI 大学',
           style: const TextStyle(
             color: Color(0xFFE5E7EB),
             fontWeight: FontWeight.w700,
