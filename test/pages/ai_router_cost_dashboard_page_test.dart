@@ -146,16 +146,11 @@ void main() {
     expect(find.text('AI Router Cost'), findsOneWidget);
     expect(find.text('AI feature ROI'), findsOneWidget);
 
-    await tester.scrollUntilVisible(find.byTooltip('Apply').first, 250);
-    expect(find.textContaining('openai / gpt-4o-mini'), findsWidgets);
-    await tester.tap(find.byTooltip('Apply').first);
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-
-    expect(saved, isTrue);
-
-    await tester.scrollUntilVisible(
+    expect(
       find.byTooltip('Edit ROI assumptions for summary'),
-      250,
+      findsOneWidget,
     );
     await tester.tap(find.byTooltip('Edit ROI assumptions for summary'));
     await tester.pumpAndSettle();
@@ -167,6 +162,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(savedRoi, isTrue);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('openai / gpt-4o-mini'), findsWidgets);
+    await tester.tap(find.byTooltip('Apply').first);
+    await tester.pumpAndSettle();
+
+    expect(saved, isTrue);
     expect(tester.takeException(), isNull);
   });
 }
