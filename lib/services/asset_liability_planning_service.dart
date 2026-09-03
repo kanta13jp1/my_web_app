@@ -308,10 +308,7 @@ class AssetLiabilityPlanningService {
 
     final positiveAssetTotal = accounts.fold<double>(
       0,
-      (sum, account) => account.balance > 0 &&
-              !scheduledExpenseAccountIds.contains(account.id)
-          ? sum + account.balance
-          : sum,
+      (sum, account) => account.balance > 0 ? sum + account.balance : sum,
     );
     final liabilityTotal = accounts.fold<double>(
       0,
