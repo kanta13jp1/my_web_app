@@ -2148,7 +2148,7 @@ void main() {
           'rent',
           'kddi_provider',
           'gas_bill',
-          'chatgpt_pro',
+          'custom_chatgptpro',
         ]),
       );
       expect(
