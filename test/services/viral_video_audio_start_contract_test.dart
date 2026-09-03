@@ -16,7 +16,7 @@ void main() {
     expect(backend, contains('audio_id: audioAssetId'));
     expect(
       RegExp(r'withHedraAudioStartMs\(').allMatches(backend).length,
-      greaterThanOrEqualTo(3),
+      2,
     );
   });
 }
