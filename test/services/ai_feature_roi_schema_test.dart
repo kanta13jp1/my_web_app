@@ -62,8 +62,14 @@ void main() {
         'grant select on table public.ai_feature_usage_cost_daily to service_role',
       ),
     );
-    expect(sql, isNot(contains('prompt')));
-    expect(sql, isNot(contains('response_text')));
-    expect(sql, isNot(contains('user_id uuid as')));
+    final aggregateView = RegExp(
+      r'create or replace view public\.ai_feature_usage_cost_daily.*?'
+      r'from public\.ai_hub_chat_logs',
+      dotAll: true,
+    ).firstMatch(sql)?.group(0);
+    expect(aggregateView, isNotNull);
+    expect(aggregateView, isNot(contains('prompt')));
+    expect(aggregateView, isNot(contains('response_text')));
+    expect(aggregateView, isNot(contains('user_id')));
   });
 }

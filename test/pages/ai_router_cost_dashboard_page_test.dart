@@ -145,9 +145,9 @@ void main() {
 
     expect(find.text('AI Router Cost'), findsOneWidget);
     expect(find.text('AI feature ROI'), findsOneWidget);
-    expect(find.textContaining('openai / gpt-4o-mini'), findsWidgets);
 
     await tester.scrollUntilVisible(find.byTooltip('Apply').first, 250);
+    expect(find.textContaining('openai / gpt-4o-mini'), findsWidgets);
     await tester.tap(find.byTooltip('Apply').first);
     await tester.pumpAndSettle();
 
