@@ -32,6 +32,11 @@ type ModelPrice = {
   output_usd_per_million: number;
 };
 
+export interface ApiCostOptions {
+  cacheReadInputTokens?: number;
+  cacheCreationInputTokens?: number;
+}
+
 const DEFAULT_LIMITS_USD: Record<BudgetScope, number> = {
   month: 5000,
   instance: 400,
@@ -299,11 +304,22 @@ export function calculateApiCost(
   model: string,
   input_tokens: number,
   output_tokens: number,
+  options: ApiCostOptions = {},
 ): number {
   const price = selectModelPrice(model);
   const inputCost = (normalizeTokenCount(input_tokens) / 1_000_000) *
     price.input_usd_per_million;
   const outputCost = (normalizeTokenCount(output_tokens) / 1_000_000) *
     price.output_usd_per_million;
-  return Number((inputCost + outputCost).toFixed(8));
+  // Anthropic's default five-minute cache writes cost 1.25x base input and
+  // cache reads cost 0.1x. Non-Anthropic callers omit these optional counts.
+  const cacheReadCost = (
+    normalizeTokenCount(options.cacheReadInputTokens ?? 0) / 1_000_000
+  ) * price.input_usd_per_million * 0.1;
+  const cacheCreationCost = (
+    normalizeTokenCount(options.cacheCreationInputTokens ?? 0) / 1_000_000
+  ) * price.input_usd_per_million * 1.25;
+  return Number(
+    (inputCost + outputCost + cacheReadCost + cacheCreationCost).toFixed(8),
+  );
 }

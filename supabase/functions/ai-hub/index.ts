@@ -46,6 +46,11 @@ import {
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
 import {
+  ANTHROPIC_PROMPT_CACHE_ENV,
+  anthropicPromptCacheEnabled,
+  buildAnthropicMessagesBody,
+} from "../_shared/anthropic_prompt_cache.ts";
+import {
   buildTaskClarityPrompt,
   evaluateTaskClarityHeuristically,
   normalizeTaskClarityResult,
@@ -397,13 +402,16 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     envKey: "ANTHROPIC_API_KEY",
     chatUrl: "https://api.anthropic.com/v1/messages",
     defaultModel: "claude-haiku-4-5-20251001",
-    buildBody: (messages, model) => ({
-      model,
-      max_tokens: 512,
-      messages: (messages as { role: string; content: string }[]).filter(
-        (m) => m.role !== "system",
+    buildBody: (messages, model) =>
+      buildAnthropicMessagesBody(
+        messages as { role: string; content: string }[],
+        model,
+        {
+          cacheSystem: anthropicPromptCacheEnabled(
+            Deno.env.get(ANTHROPIC_PROMPT_CACHE_ENV),
+          ),
+        },
       ),
-    }),
     parseResponse: (data) => String(pick(data, "content", 0, "text") ?? ""),
   },
   // Google Gemini は Bearer ではなく ?key=xxx クエリ認証 — provider.chat で特殊分岐
@@ -708,6 +716,8 @@ function estimateTokensFromChars(chars: number): number {
 function providerUsageTokens(data: unknown): {
   inputTokens?: number;
   outputTokens?: number;
+  cacheReadInputTokens?: number;
+  cacheCreationInputTokens?: number;
 } {
   const input = pick(data, "usage", "input_tokens") ??
     pick(data, "usage", "prompt_tokens") ??
@@ -715,6 +725,12 @@ function providerUsageTokens(data: unknown): {
   const output = pick(data, "usage", "output_tokens") ??
     pick(data, "usage", "completion_tokens") ??
     pick(data, "usageMetadata", "candidatesTokenCount");
+  const cacheRead = pick(data, "usage", "cache_read_input_tokens");
+  const cacheCreation = pick(
+    data,
+    "usage",
+    "cache_creation_input_tokens",
+  );
   const normalize = (value: unknown): number | undefined =>
     typeof value === "number" && Number.isFinite(value) && value >= 0
       ? Math.round(value)
@@ -722,6 +738,8 @@ function providerUsageTokens(data: unknown): {
   return {
     inputTokens: normalize(input),
     outputTokens: normalize(output),
+    cacheReadInputTokens: normalize(cacheRead),
+    cacheCreationInputTokens: normalize(cacheCreation),
   };
 }
 
@@ -773,6 +791,8 @@ async function callSingleProvider(
     modelUsed?: string;
     inputTokens?: number;
     outputTokens?: number;
+    cacheReadInputTokens?: number;
+    cacheCreationInputTokens?: number;
     error?: string;
     isRetriable: boolean;
   }
@@ -870,6 +890,8 @@ async function callSingleProvider(
       modelUsed,
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
+      cacheReadInputTokens: usage.cacheReadInputTokens,
+      cacheCreationInputTokens: usage.cacheCreationInputTokens,
       isRetriable: false,
     };
   } catch (e) {
@@ -6946,6 +6968,10 @@ serve(async (req: Request) => {
               outputChars?: number | null;
               estimatedCostUsd?: number | null;
               errorMessage?: string | null;
+              inputTokens?: number | null;
+              outputTokens?: number | null;
+              cacheReadInputTokens?: number | null;
+              cacheCreationInputTokens?: number | null;
             },
           ) => {
             try {
@@ -6961,6 +6987,11 @@ serve(async (req: Request) => {
                 session_id: sessionId,
                 input_chars: inputChars,
                 output_chars: params.outputChars ?? null,
+                input_tokens: params.inputTokens ?? null,
+                output_tokens: params.outputTokens ?? null,
+                cache_read_input_tokens: params.cacheReadInputTokens ?? null,
+                cache_creation_input_tokens: params.cacheCreationInputTokens ??
+                  null,
                 error_message: params.errorMessage ?? null,
                 action: "provider.chat",
                 status_code: params.statusCode,
@@ -7022,10 +7053,12 @@ serve(async (req: Request) => {
             data = JSON.parse(respText);
           } catch {
             const outputChars = respText.slice(0, 2000).length;
+            const inputTokens = estimateTokensFromChars(inputChars);
+            const outputTokens = estimateTokensFromChars(outputChars);
             const estimatedCost = calculateApiCost(
               requestedModel,
-              estimateTokensFromChars(inputChars),
-              estimateTokensFromChars(outputChars),
+              inputTokens,
+              outputTokens,
             );
             await logProviderChat({
               success: true,
@@ -7033,6 +7066,8 @@ serve(async (req: Request) => {
               model: requestedModel,
               outputChars,
               estimatedCostUsd: estimatedCost,
+              inputTokens,
+              outputTokens,
             });
             await recordSpend("ef", "ai-hub", estimatedCost);
             return json({
@@ -7060,6 +7095,7 @@ serve(async (req: Request) => {
           const modelUsed = pick(data, "model");
           const outputChars = content.length;
           const usedModel = String(modelUsed ?? requestedModel);
+          const usage = providerUsageTokens(data);
           // 本文が空のレスポンスは成功扱いにしない。reasoning モデルが
           // 推論で予算を使い切ると finish_reason=length かつ本文が空になり、
           // 旧コードは success:true(空文字)で返してフォールバック連鎖を
@@ -7075,6 +7111,10 @@ serve(async (req: Request) => {
               model: usedModel,
               outputChars,
               errorMessage: `${failureStatus}: ${finishReason ?? "no-content"}`,
+              inputTokens: usage.inputTokens,
+              outputTokens: usage.outputTokens,
+              cacheReadInputTokens: usage.cacheReadInputTokens,
+              cacheCreationInputTokens: usage.cacheCreationInputTokens,
             });
             return json({
               success: false,
@@ -7086,10 +7126,18 @@ serve(async (req: Request) => {
                 "AI応答が空、または出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
             }, 502);
           }
+          const inputTokens = usage.inputTokens ??
+            estimateTokensFromChars(inputChars);
+          const outputTokens = usage.outputTokens ??
+            estimateTokensFromChars(outputChars);
           const estimatedCost = calculateApiCost(
             usedModel,
-            estimateTokensFromChars(inputChars),
-            estimateTokensFromChars(outputChars),
+            inputTokens,
+            outputTokens,
+            {
+              cacheReadInputTokens: usage.cacheReadInputTokens,
+              cacheCreationInputTokens: usage.cacheCreationInputTokens,
+            },
           );
           await logProviderChat({
             success: true,
@@ -7097,6 +7145,10 @@ serve(async (req: Request) => {
             model: usedModel,
             outputChars,
             estimatedCostUsd: estimatedCost,
+            inputTokens,
+            outputTokens,
+            cacheReadInputTokens: usage.cacheReadInputTokens,
+            cacheCreationInputTokens: usage.cacheCreationInputTokens,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
           return json({
@@ -7113,6 +7165,11 @@ serve(async (req: Request) => {
               session_id: sessionId,
               input_chars: inputChars,
               output_chars: outputChars,
+              input_tokens: inputTokens,
+              output_tokens: outputTokens,
+              cache_read_input_tokens: usage.cacheReadInputTokens ?? null,
+              cache_creation_input_tokens: usage.cacheCreationInputTokens ??
+                null,
               action: "provider.chat",
               status_code: 200,
               provider_choice_reason: providerChoiceReason,
@@ -7214,6 +7271,8 @@ serve(async (req: Request) => {
         let usedModel: string | undefined;
         let usedInputTokens: number | undefined;
         let usedOutputTokens: number | undefined;
+        let usedCacheReadInputTokens: number | undefined;
+        let usedCacheCreationInputTokens: number | undefined;
 
         // リクエスト全体の時間予算。実障害(2026-07-06): 予算なしで遅延プロバイダを
         // 順に待つと edge の wall-clock を超え、gateway 502 でクライアントに
@@ -7257,6 +7316,8 @@ serve(async (req: Request) => {
               usedModel = result.modelUsed;
               usedInputTokens = result.inputTokens;
               usedOutputTokens = result.outputTokens;
+              usedCacheReadInputTokens = result.cacheReadInputTokens;
+              usedCacheCreationInputTokens = result.cacheCreationInputTokens;
             } else {
               const attemptMs = Math.round(
                 performance.now() - attemptStartedAt,
@@ -7310,6 +7371,8 @@ serve(async (req: Request) => {
                 usedModel = result.modelUsed;
                 usedInputTokens = result.inputTokens;
                 usedOutputTokens = result.outputTokens;
+                usedCacheReadInputTokens = result.cacheReadInputTokens;
+                usedCacheCreationInputTokens = result.cacheCreationInputTokens;
                 break outerLoop;
               }
               const attemptMs = Math.round(
@@ -7384,6 +7447,10 @@ serve(async (req: Request) => {
             usedModel ?? usedProvider,
             inputTokens,
             outputTokens,
+            {
+              cacheReadInputTokens: usedCacheReadInputTokens,
+              cacheCreationInputTokens: usedCacheCreationInputTokens,
+            },
           );
           await admin.from("ai_hub_chat_logs").insert({
             provider: usedProvider,
@@ -7398,6 +7465,8 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             input_tokens: inputTokens,
             output_tokens: outputTokens,
+            cache_read_input_tokens: usedCacheReadInputTokens ?? null,
+            cache_creation_input_tokens: usedCacheCreationInputTokens ?? null,
             action: "provider.chat_auto",
             status_code: 200,
             routing_effort: effortSelection.effort,
@@ -7416,6 +7485,12 @@ serve(async (req: Request) => {
           effort: effortSelection.effort,
           effort_source: effortSelection.source,
           claude_route: usedProvider === "anthropic" ? claudeRoute : null,
+          cache_usage: usedProvider === "anthropic"
+            ? {
+              cache_read_input_tokens: usedCacheReadInputTokens ?? 0,
+              cache_creation_input_tokens: usedCacheCreationInputTokens ?? 0,
+            }
+            : null,
           status: "implemented",
           text: resultText,
           provider_choice_reason: providerChoiceReason,
@@ -7512,6 +7587,8 @@ serve(async (req: Request) => {
         let usedModel: string | undefined;
         let usedInputTokens: number | undefined;
         let usedOutputTokens: number | undefined;
+        let usedCacheReadInputTokens: number | undefined;
+        let usedCacheCreationInputTokens: number | undefined;
         let failureDetail: string | undefined;
 
         if (providerId) {
@@ -7546,6 +7623,8 @@ serve(async (req: Request) => {
             usedModel = result.modelUsed;
             usedInputTokens = result.inputTokens;
             usedOutputTokens = result.outputTokens;
+            usedCacheReadInputTokens = result.cacheReadInputTokens;
+            usedCacheCreationInputTokens = result.cacheCreationInputTokens;
           } else if (result.isRetriable) {
             // Quota/rate-limit: try fallback chain (anthropic → google → openai)
             const fallbackChain = ["anthropic", "google", "openai"].filter(
@@ -7567,6 +7646,9 @@ serve(async (req: Request) => {
                 usedModel = fbResult.modelUsed;
                 usedInputTokens = fbResult.inputTokens;
                 usedOutputTokens = fbResult.outputTokens;
+                usedCacheReadInputTokens = fbResult.cacheReadInputTokens;
+                usedCacheCreationInputTokens =
+                  fbResult.cacheCreationInputTokens;
                 break;
               }
             }
@@ -7606,6 +7688,8 @@ serve(async (req: Request) => {
               usedModel = result.modelUsed;
               usedInputTokens = result.inputTokens;
               usedOutputTokens = result.outputTokens;
+              usedCacheReadInputTokens = result.cacheReadInputTokens;
+              usedCacheCreationInputTokens = result.cacheCreationInputTokens;
             } else {
               failureDetail = `manual preference failed: ${
                 result.error ?? manualPreference.provider
@@ -7634,6 +7718,9 @@ serve(async (req: Request) => {
                   usedModel = result.modelUsed;
                   usedInputTokens = result.inputTokens;
                   usedOutputTokens = result.outputTokens;
+                  usedCacheReadInputTokens = result.cacheReadInputTokens;
+                  usedCacheCreationInputTokens =
+                    result.cacheCreationInputTokens;
                   break outerLoop;
                 }
               }
@@ -7688,6 +7775,10 @@ serve(async (req: Request) => {
           usedModel ?? usedProvider,
           inputTokens,
           outputTokens,
+          {
+            cacheReadInputTokens: usedCacheReadInputTokens,
+            cacheCreationInputTokens: usedCacheCreationInputTokens,
+          },
         );
         let parsedJson: unknown = null;
         let parseError: string | undefined;
@@ -7714,6 +7805,8 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             input_tokens: inputTokens,
             output_tokens: outputTokens,
+            cache_read_input_tokens: usedCacheReadInputTokens ?? null,
+            cache_creation_input_tokens: usedCacheCreationInputTokens ?? null,
             action: "edge_llm.invoke",
             status_code: 200,
             routing_effort: effortSelection.effort,
@@ -7734,6 +7827,12 @@ serve(async (req: Request) => {
           effort: effortSelection.effort,
           effort_source: effortSelection.source,
           claude_route: usedProvider === "anthropic" ? claudeRoute : null,
+          cache_usage: usedProvider === "anthropic"
+            ? {
+              cache_read_input_tokens: usedCacheReadInputTokens ?? 0,
+              cache_creation_input_tokens: usedCacheCreationInputTokens ?? 0,
+            }
+            : null,
           text: resultText,
           response_format: responseFormat,
           parsed_json: parsedJson,
