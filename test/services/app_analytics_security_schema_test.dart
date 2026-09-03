@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 const _migrationPath =
     'supabase/migrations/20260827003000_harden_app_analytics_writes.sql';
 const _launchAllowlistMigrationPath =
-    'supabase/migrations/20260903053500_allow_producthunt_hackernews_attribution.sql';
+    'supabase/migrations/20260903053600_allow_producthunt_hackernews_analytics_signals.sql';
 
 void main() {
   late String sql;
