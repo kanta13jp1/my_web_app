@@ -2417,6 +2417,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const EnterprisePage()),
     ),
     HomeToolEntry(
+      id: 'corporate-site-readiness',
+      sectionId: 'growth',
+      title: '法人口座サイト準備チェック',
+      subtitle: '会社情報の不足確認と事業計画・WBSからのHTML生成',
+      icon: Icons.domain_verification_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        '法人口座',
+        '銀行審査',
+        '会社概要',
+        'バーチャルオフィス',
+        '事業計画',
+        'WBS',
+        'コーポレートサイト',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/corporate-site-readiness'),
+    ),
+    HomeToolEntry(
       id: 'feature-flags',
       sectionId: 'growth',
       title: '機能フラグ管理',

@@ -51,6 +51,7 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "challenges.list",
   "trigger.analyze",
   "analyze.reality",
+  "corporate_site.readiness",
   "company_builder.list",
   "company_builder.get",
   "company_builder.bootstrap",
