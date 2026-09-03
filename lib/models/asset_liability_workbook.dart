@@ -1478,7 +1478,11 @@ class AssetLiabilityWorkbook {
 
   /// 直接観測した残高だけで構成する現在口座一覧。
   List<AssetLiabilityAccount> get currentAccounts => accounts
-      .where((account) => !scheduledExpenseAccountIds.contains(account.id))
+      .where(
+        (account) =>
+            account.balance >= 0 ||
+            !scheduledExpenseAccountIds.contains(account.id),
+      )
       .toList(growable: false);
 
   /// 直接観測した残高だけで構成する現在負債一覧。
