@@ -90,9 +90,7 @@ function parseAudioFile(input: Record<string, unknown>): HedraFileAudioInput {
   const fileName = typeof input.fileName === "string"
     ? input.fileName.trim()
     : "";
-  if (
-    !fileName || fileName.length > 120 || /[\\/\0-\x1f]/u.test(fileName)
-  ) {
+  if (!fileName || fileName.length > 120 || hasUnsafeFileNameChars(fileName)) {
     throw new Error("audioInput.fileName is invalid");
   }
   const mimeType = normalizedMimeType(input.mimeType);
@@ -115,6 +113,13 @@ function parseAudioFile(input: Record<string, unknown>): HedraFileAudioInput {
     throw new Error("audioInput file signature does not match mimeType");
   }
   return { mode: "file", fileName, mimeType, bytes };
+}
+
+function hasUnsafeFileNameChars(value: string): boolean {
+  return [...value].some((character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return character === "/" || character === "\\" || codePoint <= 0x1f;
+  });
 }
 
 function normalizedMimeType(
