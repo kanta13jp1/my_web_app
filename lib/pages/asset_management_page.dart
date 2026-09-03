@@ -22275,7 +22275,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } else {
       // AI接続失敗または整合性検証失敗だけを連続試行の抑止対象にする。
-      unawaited(_recordAssetManagementAiSummaryAttempt(report.workbook.baseDate));
+      unawaited(
+        _recordAssetManagementAiSummaryAttempt(report.workbook.baseDate),
+      );
     }
     if (!mounted) {
       return;
