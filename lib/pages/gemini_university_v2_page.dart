@@ -158,8 +158,9 @@ String humanizeProviderId(String id) {
   return tokens
       .map((t) {
         final lower = t.toLowerCase();
-        if (_providerNameUpperTokens.contains(lower))
+        if (_providerNameUpperTokens.contains(lower)) {
           return lower.toUpperCase();
+        }
         return t[0].toUpperCase() + t.substring(1);
       })
       .join(' ');
@@ -5912,12 +5913,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       return true;
     } catch (_) {
       try {
-        await _supabase.from('ai_university_scores').upsert({
-          'user_id': user.id,
-          'provider_id': providerId,
-          'quiz_correct': true,
-          'studied_at': DateTime.now().toIso8601String(),
-        }, onConflict: 'user_id,provider_id');
+        await _supabase.from('ai_university_scores').upsert(
+          {
+            'user_id': user.id,
+            'provider_id': providerId,
+            'quiz_correct': true,
+            'studied_at': DateTime.now().toIso8601String(),
+          },
+          onConflict: 'user_id,provider_id',
+        );
         await _supabase.rpc(
           'update_ai_university_streak',
           params: {'p_user_id': user.id},
@@ -6752,12 +6756,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     }
     if (!await _recordQuizScoreToSupabase(providerId)) {
       try {
-        await _supabase.from('ai_university_scores').upsert({
-          'user_id': user.id,
-          'provider_id': providerId,
-          'quiz_correct': true,
-          'studied_at': DateTime.now().toIso8601String(),
-        }, onConflict: 'user_id,provider_id');
+        await _supabase.from('ai_university_scores').upsert(
+          {
+            'user_id': user.id,
+            'provider_id': providerId,
+            'quiz_correct': true,
+            'studied_at': DateTime.now().toIso8601String(),
+          },
+          onConflict: 'user_id,provider_id',
+        );
         // ストリーク更新 (DB関数で連続学習日数を計算)
         await _supabase.rpc(
           'update_ai_university_streak',
