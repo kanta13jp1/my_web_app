@@ -4,12 +4,18 @@ import 'package:test/test.dart';
 
 const _migrationPath =
     'supabase/migrations/20260827003000_harden_app_analytics_writes.sql';
+const _launchAllowlistMigrationPath =
+    'supabase/migrations/20260903053500_allow_producthunt_hackernews_attribution.sql';
 
 void main() {
   late String sql;
+  late String launchAllowlistSql;
 
   setUpAll(() {
     sql = File(_migrationPath).readAsStringSync().toLowerCase();
+    launchAllowlistSql = File(
+      _launchAllowlistMigrationPath,
+    ).readAsStringSync().toLowerCase();
   });
 
   test('exposes only aggregate rows and columns to browser roles', () {
@@ -114,8 +120,39 @@ void main() {
     ).allMatches(allowlistBody!).map((match) => match.group(1)!).toSet();
     expect(keys, isNotEmpty);
     for (final key in keys) {
-      expect(sql, contains("'$key'"), reason: '$key must be allowed by SQL');
+      expect(
+        launchAllowlistSql,
+        contains("'$key'"),
+        reason: '$key must be allowed by the latest SQL function definition',
+      );
     }
+  });
+
+  test('launch allowlist preserves the service-role-only function boundary',
+      () {
+    expect(
+      launchAllowlistSql,
+      contains(
+        'create or replace function '
+        'public.is_app_analytics_source_key_allowed',
+      ),
+    );
+    expect(
+      launchAllowlistSql,
+      contains(
+        'revoke all on function '
+        'public.is_app_analytics_source_key_allowed(text)\n'
+        'from public, anon, authenticated',
+      ),
+    );
+    expect(
+      launchAllowlistSql,
+      contains(
+        'grant execute on function '
+        'public.is_app_analytics_source_key_allowed(text)\n'
+        'to service_role',
+      ),
+    );
   });
 
   test('Landing auth diagnostics stay aligned with the SQL allowlist', () {
@@ -128,7 +165,12 @@ void main() {
 
     expect(keys, isNotEmpty);
     for (final key in keys) {
-      expect(sql, contains("'$key'"), reason: '$key must be allowed by SQL');
+      expect(
+        launchAllowlistSql,
+        contains("'$key'"),
+        reason:
+            '$key must remain allowed by the latest SQL function definition',
+      );
     }
   });
 
