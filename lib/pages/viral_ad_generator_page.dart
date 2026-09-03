@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../models/kgi_csf_kpi.dart';
+import '../models/hedra_audio_start.dart';
 import '../models/hedra_video_batch.dart';
+import '../models/kgi_csf_kpi.dart';
 import '../services/heygen_multilingual_sns_service.dart';
 import '../services/viral_ad_legacy_history_service.dart';
 import '../services/x_post_attribution.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
+import '../widgets/hedra_audio_start_field.dart';
 import '../widgets/hedra_batch_selector.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
@@ -48,6 +50,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   String _selectedLang = 'ja';
   String _selectedOutputType = 'image';
   int _hedraBatchSize = 1;
+  String _hedraAudioStartInput = '0';
   bool _isPosting = false;
 
   @override
@@ -135,6 +138,16 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   }
 
   Future<void> _generateAd() async {
+    final hedraAudioStartMs = _selectedOutputType == 'presenter_video'
+        ? parseHedraAudioStartMs(_hedraAudioStartInput)
+        : 0;
+    if (hedraAudioStartMs == null) {
+      setState(
+        () => _errorMessage =
+            '音声開始オフセットは$hedraAudioStartMinMs〜$hedraAudioStartMaxMs msの整数で入力してください。',
+      );
+      return;
+    }
     if (!await _confirmHedraBatchCost()) return;
     final previousImageUrl = _generatedAd?['generatedImageUrl']?.toString();
     setState(() {
@@ -153,6 +166,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               _selectedOutputType == 'presenter_video' ? _hedraBatchSize : 1,
           'confirmBatchCost':
               _selectedOutputType == 'presenter_video' && _hedraBatchSize > 1,
+          'audioStartMs': hedraAudioStartMs,
           if (previousImageUrl != null && previousImageUrl.isNotEmpty)
             'generatedImageUrl': previousImageUrl,
         },
@@ -524,6 +538,12 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             ],
           ),
           if (_selectedOutputType == 'presenter_video') ...[
+            const SizedBox(height: 16),
+            HedraAudioStartField(
+              value: _hedraAudioStartInput,
+              enabled: !_loading,
+              onChanged: (value) => _hedraAudioStartInput = value,
+            ),
             const SizedBox(height: 16),
             HedraBatchSelector(
               value: _hedraBatchSize,
