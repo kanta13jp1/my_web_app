@@ -8050,9 +8050,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             ? _fireflyLatestInfoLearningOutcomeAnalytics
             : isFireflyApiTask
                 ? _fireflyApiLearningOutcomeAnalytics
-            : isModelSelectionTask
-                ? _modelSelectionLearningOutcomeAnalytics
-                : _learningOutcomeAnalytics;
+                : isModelSelectionTask
+                    ? _modelSelectionLearningOutcomeAnalytics
+                    : _learningOutcomeAnalytics;
     final hasLearningOutcomeTask = isLatestInfoTask ||
         isModelSelectionTask ||
         isFireflyApiTask ||

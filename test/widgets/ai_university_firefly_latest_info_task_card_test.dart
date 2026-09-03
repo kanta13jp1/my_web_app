@@ -30,14 +30,16 @@ void main() {
       tester,
       find.byKey(const Key('firefly-latest-output-asset_batch')),
     );
-    await tapVisible(tester, find.byKey(const Key('firefly-latest-assets-100')));
+    await tapVisible(
+        tester, find.byKey(const Key('firefly-latest-assets-100')));
     await tapVisible(tester, find.byKey(const Key('firefly-latest-legacy-60')));
     await tapVisible(tester, find.byKey(const Key('firefly-latest-new-30')));
     await tapVisible(
       tester,
       find.byKey(const Key('firefly-latest-revisions-1')),
     );
-    await tapVisible(tester, find.byKey(const Key('firefly-latest-usable-yes')));
+    await tapVisible(
+        tester, find.byKey(const Key('firefly-latest-usable-yes')));
     await tapVisible(
       tester,
       find.byKey(const Key('firefly-latest-workplace-yes')),
@@ -79,7 +81,8 @@ void main() {
     expect(tester.widget<FilledButton>(submit).onPressed, isNotNull);
   });
 
-  testWidgets('submits only finite aggregate workflow evidence', (tester) async {
+  testWidgets('submits only finite aggregate workflow evidence',
+      (tester) async {
     Map<String, Object>? submitted;
     await tester.pumpWidget(
       subject(({

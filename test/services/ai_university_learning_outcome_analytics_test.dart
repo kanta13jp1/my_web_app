@@ -183,7 +183,6 @@ void main() {
     expect(writes, 0);
   });
 
-
   test('Firefly latest-info task records bounded workflow evidence', () async {
     final rows = <Map<String, Object>>[];
     final analytics = AiUniversityLearningOutcomeAnalytics(
