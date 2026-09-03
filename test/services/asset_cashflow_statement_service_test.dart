@@ -6,13 +6,14 @@ AssetLiabilityMonthlySnapshot _snapshot(
   String monthKey, {
   double? income,
   double expense = 0,
+  double netWorth = 0,
 }) {
   return AssetLiabilityMonthlySnapshot(
     monthKey: monthKey,
     savedAt: DateTime(2026, 1, 1),
     positiveAssetTotal: 0,
     liabilityTotal: 0,
-    netWorth: 0,
+    netWorth: netWorth,
     cashLikeTotal: 0,
     monthlyScheduledPaymentTotal: 0,
     monthlyPaidPaymentTotal: expense,
@@ -89,6 +90,44 @@ void main() {
       expect(statement.yearToDateTrackedMonths, 1);
       expect(statement.yearToDateUntrackedMonths, 1);
       expect(statement.hasUntrackedYearToDateMonths, isTrue);
+    });
+
+    test('untracked income exposes net worth delta as display-only estimate', () {
+      final statement = service.build(
+        snapshots: [
+          _snapshot('2026-05', netWorth: -1000),
+          _snapshot('2026-06', netWorth: -1200),
+          _snapshot(
+            '2026-07',
+            income: 500,
+            expense: 300,
+            netWorth: -1100,
+          ),
+        ],
+        asOf: DateTime(2026, 7, 15),
+      );
+
+      final may = statement.months[0];
+      final june = statement.months[1];
+      final july = statement.months[2];
+
+      expect(may.displayCashflow, isNull);
+      expect(may.usesNetWorthEstimate, isFalse);
+      expect(june.cashflow, isNull);
+      expect(june.estimatedCashflowFromNetWorth, -200);
+      expect(june.displayCashflow, -200);
+      expect(june.usesNetWorthEstimate, isTrue);
+      expect(july.cashflow, 200);
+      expect(july.estimatedCashflowFromNetWorth, isNull);
+      expect(july.displayCashflow, 200);
+      expect(july.usesNetWorthEstimate, isFalse);
+
+      // 推定値は実績の年初来累積・黒字/赤字件数へ混ぜない。
+      expect(statement.yearToDateCashflow, 200);
+      expect(statement.yearToDateTrackedMonths, 1);
+      expect(statement.yearToDateUntrackedMonths, 2);
+      expect(statement.surplusMonthCount, 1);
+      expect(statement.deficitMonthCount, 0);
     });
 
     test('surplus/deficit counts over trailing 12 months, tracked only', () {
