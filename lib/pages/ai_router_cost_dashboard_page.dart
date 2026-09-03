@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -33,6 +35,7 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
   String? _selectedTask;
   bool _loading = true;
   bool _saving = false;
+  String? _savingRoiFeature;
   String? _error;
 
   @override
@@ -89,6 +92,145 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
     }
   }
 
+  Future<void> _editRoiParameters(AiFeatureRoiSummary feature) async {
+    final parameters = feature.parameters;
+    final controllers = <TextEditingController>[
+      TextEditingController(
+        text: parameters.minutesSavedPerSuccess.toString(),
+      ),
+      TextEditingController(text: parameters.hourlyValueUsd.toString()),
+      TextEditingController(
+        text: parameters.directCostSavingUsdPerSuccess.toString(),
+      ),
+      TextEditingController(
+        text: parameters.avoidedLossUsdPerSuccess.toString(),
+      ),
+      TextEditingController(
+        text: parameters.valueCreatedUsdPerSuccess.toString(),
+      ),
+    ];
+    final result = await showDialog<List<double>>(
+      context: context,
+      builder: (dialogContext) {
+        String? validationError;
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: Text('ROI assumptions: ${feature.featureKey}'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Enter your own estimates. Defaults are zero and no '
+                    'external pricing claims are applied.',
+                  ),
+                  const SizedBox(height: 12),
+                  _roiInput(
+                    controllers[0],
+                    'Minutes saved per successful use',
+                  ),
+                  _roiInput(controllers[1], 'Hourly value (USD)'),
+                  _roiInput(
+                    controllers[2],
+                    'Direct saving per success (USD)',
+                  ),
+                  _roiInput(
+                    controllers[3],
+                    'Avoided loss per success (USD)',
+                  ),
+                  _roiInput(
+                    controllers[4],
+                    'Value created per success (USD)',
+                  ),
+                  if (validationError != null)
+                    Text(
+                      validationError!,
+                      style: const TextStyle(color: _red),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  final values = controllers
+                      .map((controller) => double.tryParse(controller.text))
+                      .toList();
+                  const maximums = <double>[
+                    1440,
+                    10000,
+                    1000000,
+                    1000000,
+                    1000000,
+                  ];
+                  final invalid = values.indexed.any(
+                    (entry) =>
+                        entry.$2 == null ||
+                        entry.$2! < 0 ||
+                        entry.$2! > maximums[entry.$1],
+                  );
+                  if (invalid) {
+                    setDialogState(() {
+                      validationError =
+                          'Use non-negative values within the displayed limits.';
+                    });
+                    return;
+                  }
+                  Navigator.of(dialogContext).pop(
+                    values.cast<double>(),
+                  );
+                },
+                child: const Text('Save assumptions'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    for (final controller in controllers) {
+      controller.dispose();
+    }
+    if (result == null || !mounted) return;
+    setState(() => _savingRoiFeature = feature.featureKey);
+    try {
+      await _service.saveRoiParameters(
+        featureKey: feature.featureKey,
+        minutesSavedPerSuccess: result[0],
+        hourlyValueUsd: result[1],
+        directCostSavingUsdPerSuccess: result[2],
+        avoidedLossUsdPerSuccess: result[3],
+        valueCreatedUsdPerSuccess: result[4],
+      );
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${feature.featureKey}: ROI assumptions saved')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) setState(() => _savingRoiFeature = null);
+    }
+  }
+
+  Widget _roiInput(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(labelText: label),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dashboard = _dashboard;
@@ -123,24 +265,30 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (_error != null) _errorBanner(_error!),
-                  if (dashboard == null || dashboard.tasks.isEmpty)
+                  if (dashboard == null)
                     _emptyState()
                   else ...[
                     _summaryRow(dashboard),
                     const SizedBox(height: 16),
-                    _taskSelector(dashboard),
+                    _roiSection(dashboard.roi),
                     const SizedBox(height: 16),
-                    if (selected != null) ...[
-                      _recommendation(selected),
+                    if (dashboard.tasks.isEmpty)
+                      _emptyState()
+                    else ...[
+                      _taskSelector(dashboard),
                       const SizedBox(height: 16),
-                      _chart(selected),
-                      const SizedBox(height: 16),
-                      ...selected.candidates.map(
-                        (candidate) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: _candidateTile(selected!, candidate),
+                      if (selected != null) ...[
+                        _recommendation(selected),
+                        const SizedBox(height: 16),
+                        _chart(selected),
+                        const SizedBox(height: 16),
+                        ...selected.candidates.map(
+                          (candidate) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _candidateTile(selected!, candidate),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ],
                 ],
@@ -150,35 +298,44 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
   }
 
   Widget _summaryRow(AiRouterCostDashboard dashboard) {
-    return Row(
-      children: [
-        Expanded(
-          child: _metricCard(
-            icon: Icons.route_outlined,
-            label: 'Requests',
-            value: dashboard.totalRequests.toString(),
-            color: _blue,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _metricCard(
-            icon: Icons.attach_money,
-            label: 'Cost',
-            value: '\$${dashboard.totalCostUsd.toStringAsFixed(4)}',
-            color: _orange,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _metricCard(
-            icon: Icons.auto_graph,
-            label: 'Models',
-            value: dashboard.candidateCount.toString(),
-            color: _green,
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth < 720 ? 2 : 3;
+        final width = (constraints.maxWidth - (columns - 1) * 10) / columns;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            SizedBox(
+              width: width,
+              child: _metricCard(
+                icon: Icons.route_outlined,
+                label: 'Requests',
+                value: dashboard.totalRequests.toString(),
+                color: _blue,
+              ),
+            ),
+            SizedBox(
+              width: width,
+              child: _metricCard(
+                icon: Icons.attach_money,
+                label: 'Cost',
+                value: '\$${dashboard.totalCostUsd.toStringAsFixed(4)}',
+                color: _orange,
+              ),
+            ),
+            SizedBox(
+              width: width,
+              child: _metricCard(
+                icon: Icons.auto_graph,
+                label: 'Models',
+                value: dashboard.candidateCount.toString(),
+                color: _green,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -215,6 +372,222 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
             style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _roiSection(AiFeatureRoiDashboard roi) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _panel,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _blue.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.insights_outlined, color: _blue),
+              SizedBox(width: 8),
+              Text(
+                'AI feature ROI',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Benefits use only your saved assumptions; unset values remain zero.',
+            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          _roiMetricGrid(roi.overall),
+          if (roi.dailyTrend.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _roiTrendChart(roi.dailyTrend),
+          ],
+          const SizedBox(height: 16),
+          if (roi.features.isEmpty)
+            const Text(
+              'No AI feature usage in this period.',
+              style: TextStyle(color: Color(0xFFCBD5E1)),
+            )
+          else
+            ...roi.features.map(_roiFeatureTile),
+        ],
+      ),
+    );
+  }
+
+  Widget _roiMetricGrid(AiFeatureRoiMetric metric) {
+    final roiValue =
+        metric.roiPct == null ? '—' : '${metric.roiPct!.toStringAsFixed(1)}%';
+    final items = <({String label, String value, Color color})>[
+      (label: 'ROI', value: roiValue, color: _blue),
+      (
+        label: 'Benefit',
+        value: '\$${metric.totalBenefitUsd.toStringAsFixed(2)}',
+        color: _green,
+      ),
+      (
+        label: 'Net',
+        value: '\$${metric.netBenefitUsd.toStringAsFixed(2)}',
+        color: metric.netBenefitUsd >= 0 ? _green : _red,
+      ),
+      (
+        label: 'API cost',
+        value: '\$${metric.apiCostUsd.toStringAsFixed(4)}',
+        color: _orange,
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth < 640 ? 2 : 4;
+        final width = (constraints.maxWidth - (columns - 1) * 8) / columns;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: width,
+                child: _metricCard(
+                  icon: Icons.circle,
+                  label: item.label,
+                  value: item.value,
+                  color: item.color,
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _roiTrendChart(List<AiFeatureRoiTrendPoint> trend) {
+    final spots = <FlSpot>[
+      for (final entry in trend.indexed)
+        if (entry.$2.roiPct != null)
+          FlSpot(entry.$1.toDouble(), entry.$2.roiPct!),
+    ];
+    if (spots.isEmpty) {
+      return const Text(
+        'ROI trend is undefined while API cost is zero.',
+        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+      );
+    }
+    var minY = spots.map((spot) => spot.y).reduce(math.min);
+    var maxY = spots.map((spot) => spot.y).reduce(math.max);
+    minY = math.min(0, minY);
+    maxY = math.max(0, maxY);
+    if (minY == maxY) {
+      minY -= 1;
+      maxY += 1;
+    }
+    return SizedBox(
+      height: 220,
+      child: LineChart(
+        LineChartData(
+          minX: 0,
+          maxX: math.max(1, trend.length - 1).toDouble(),
+          minY: minY,
+          maxY: maxY,
+          gridData: const FlGridData(show: true, drawVerticalLine: false),
+          borderData: FlBorderData(show: false),
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            leftTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: true, reservedSize: 48),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 32,
+                getTitlesWidget: (value, _) {
+                  final index = value.toInt();
+                  if (index < 0 || index >= trend.length) {
+                    return const SizedBox.shrink();
+                  }
+                  if (index != 0 && index != trend.length - 1) {
+                    return const SizedBox.shrink();
+                  }
+                  final date = trend[index].usageDate;
+                  return Text(
+                    date.length >= 10 ? date.substring(5) : date,
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 10,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              color: _blue,
+              barWidth: 3,
+              dotData: const FlDotData(show: true),
+              belowBarData: BarAreaData(
+                show: true,
+                color: _blue.withValues(alpha: 0.12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _roiFeatureTile(AiFeatureRoiSummary feature) {
+    final roiValue =
+        feature.roiPct == null ? '—' : '${feature.roiPct!.toStringAsFixed(1)}%';
+    final isSaving = _savingRoiFeature == feature.featureKey;
+    return Container(
+      key: ValueKey('roi-feature-${feature.featureKey}'),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _line),
+      ),
+      child: ListTile(
+        title: Text(
+          feature.featureKey,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        subtitle: Text(
+          'ROI $roiValue · benefit '
+          '\$${feature.totalBenefitUsd.toStringAsFixed(2)} · '
+          '${feature.successCount}/${feature.requestCount} successful',
+          style: const TextStyle(color: Color(0xFF94A3B8)),
+        ),
+        trailing: IconButton(
+          tooltip: 'Edit ROI assumptions for ${feature.featureKey}',
+          onPressed: isSaving ? null : () => _editRoiParameters(feature),
+          icon: isSaving
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.tune),
+        ),
       ),
     );
   }
