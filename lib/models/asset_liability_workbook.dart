@@ -1423,6 +1423,11 @@ class AssetLiabilityWorkbook {
   final int manualPaymentCount;
   final int estimatedPaymentCount;
 
+  /// 残高スナップショットには存在せず、当月の資金繰り計画だけに注入された
+  /// 固定費・サブスクの口座 ID。これらは支払予定には含めるが、現在負債・
+  /// 純資産・負債件数には含めない。
+  final Set<String> scheduledExpenseAccountIds;
+
   /// サブスク区分 (AssetRecurringFixedCostCategory.subscription) として登録された
   /// 定期固定費の口座 ID 集合。資金繰り上は utility 負債として計上され
   /// fullPaymentEstimate=true になるため、家賃・光熱費などの「生命線」と
@@ -1466,9 +1471,20 @@ class AssetLiabilityWorkbook {
     required this.topFourDebtShare,
     required this.manualPaymentCount,
     required this.estimatedPaymentCount,
+    this.scheduledExpenseAccountIds = const <String>{},
     this.subscriptionFixedCostAccountIds = const <String>{},
     this.cardUsagePolicies = const <String, AssetCardUsagePolicy>{},
   });
+
+  /// 直接観測した残高だけで構成する現在口座一覧。
+  List<AssetLiabilityAccount> get currentAccounts => accounts
+      .where((account) => !scheduledExpenseAccountIds.contains(account.id))
+      .toList(growable: false);
+
+  /// 直接観測した残高だけで構成する現在負債一覧。
+  List<AssetLiabilityDebtRow> get currentDebtRows => debtMasterRows
+      .where((row) => !scheduledExpenseAccountIds.contains(row.id))
+      .toList(growable: false);
 
   List<AssetLiabilityCashflowRow> get overdueCashflowRows {
     return cashflowRows.where((row) => row.overdue).toList();
