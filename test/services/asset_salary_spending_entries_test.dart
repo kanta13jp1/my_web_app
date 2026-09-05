@@ -5,8 +5,12 @@ import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 String _title(Map<String, dynamic> flow) =>
     flow['description']?.toString() ?? '';
 
-AssetLiabilityIncomePlan _plan(String name, DateTime date, double amount,
-    {bool received = true}) {
+AssetLiabilityIncomePlan _plan(
+  String name,
+  DateTime date,
+  double amount, {
+  bool received = true,
+}) {
   return AssetLiabilityIncomePlan(
     id: name,
     date: date,
