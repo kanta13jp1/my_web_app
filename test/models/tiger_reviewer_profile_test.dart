@@ -16,14 +16,14 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(11));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(12));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
       expect(catalog.verifiedBirthDates, 12);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(
         catalog.nextBatchNames,
-        <String>['渡正行', '足立暢', '泉舞', '川中子 輝昂', '磯遊晋介'],
+        <String>['渡正行', '足立暢', '泉舞', '日熊秀貴', '井川 意高'],
       );
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
