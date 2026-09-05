@@ -1,11 +1,10 @@
 {
-  "fetched_at": "2026-09-05T08:03:49Z",
+  "fetched_at": "2026-09-05T13:15:28Z",
   "tickets": {
-    "http_code": "200",
+    "http_code": "000000",
     "count": 0,
-    "ok": true,
+    "ok": false,
     "data": {
-      "success": true,
       "tickets": []
     }
   },
@@ -19,12 +18,12 @@
       "ok": true
     },
     "guitar-recording-studio": {
-      "code": "200",
-      "ok": true
+      "code": "000000",
+      "ok": false
     },
     "health-check": {
-      "code": "200",
-      "ok": true
+      "code": "000000",
+      "ok": false
     }
   }
 }
