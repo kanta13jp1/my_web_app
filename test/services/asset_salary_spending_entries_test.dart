@@ -5,7 +5,8 @@ import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 String _title(Map<String, dynamic> flow) =>
     flow['description']?.toString() ?? '';
 
-AssetLiabilityIncomePlan _plan(String name, DateTime date, double amount) {
+AssetLiabilityIncomePlan _plan(String name, DateTime date, double amount,
+    {bool received = true}) {
   return AssetLiabilityIncomePlan(
     id: name,
     date: date,
@@ -13,7 +14,7 @@ AssetLiabilityIncomePlan _plan(String name, DateTime date, double amount) {
     amount: amount,
     destinationAccountId: null,
     destinationAccountName: null,
-    received: false,
+    received: received,
   );
 }
 
@@ -98,7 +99,51 @@ void main() {
       );
     });
 
-    test('income plans dedupe by same date and amount', () {
+    test('unreceived salary plan does not inflate payslip income', () {
+      final result = AssetSalarySpendingEntries.build(
+        cardStatementLines: const [],
+        recentFlows: const [],
+        monthlyIncomePlans: [
+          _plan('給料予定', DateTime(2026, 8, 25), 450000, received: false),
+        ],
+        payslipSalaryIncomes: const [
+          {'pay_date': '2026-08-25', 'amount': 421277},
+        ],
+        payslipRows: const [
+          {'pay_date': '2026-08-25', 'net_amount': 421277},
+        ],
+        flowDisplayTitle: _title,
+      );
+
+      expect(result.incomes, hasLength(1));
+      expect(result.incomes.single.amount, 421277);
+    });
+
+    test('received plan mirrored in flows and payslips is counted once', () {
+      final result = AssetSalarySpendingEntries.build(
+        cardStatementLines: const [],
+        recentFlows: const [
+          {
+            'action_type': 'conquer',
+            'amount': 421277,
+            'occurred_at': '2026-08-25',
+            'description': '給料',
+          },
+        ],
+        monthlyIncomePlans: [
+          _plan('給料', DateTime(2026, 8, 25), 421277),
+        ],
+        payslipSalaryIncomes: const [
+          {'pay_date': '2026-08-25', 'amount': 421277},
+        ],
+        payslipRows: const [],
+        flowDisplayTitle: _title,
+      );
+      expect(result.incomes, hasLength(1));
+      expect(result.incomes.single.amount, 421277);
+    });
+
+    test('received income plans dedupe by same date and amount', () {
       final result = AssetSalarySpendingEntries.build(
         cardStatementLines: const [],
         recentFlows: const [],
