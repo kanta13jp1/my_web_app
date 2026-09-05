@@ -1640,13 +1640,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     final incomeTotal = entries.incomes
         .where((entry) =>
-            !entry.date.isBefore(start) &&
-            entry.date.isBefore(endExclusive))
+            !entry.date.isBefore(start) && entry.date.isBefore(endExclusive))
         .fold<double>(0, (sum, entry) => sum + entry.amount);
     final recordedIncome = cycleFlows
         .where((flow) => flow['action_type'] == 'conquer')
-        .fold<double>(0, (sum, flow) =>
-            sum + _numberFromDynamic(flow['amount']));
+        .fold<double>(
+            0, (sum, flow) => sum + _numberFromDynamic(flow['amount']));
     return (incomeTotal - recordedIncome).round();
   }
 
