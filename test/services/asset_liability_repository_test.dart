@@ -1398,7 +1398,8 @@ void main() {
       );
     });
 
-    test('does not upload snapshots when the server read is unavailable', () async {
+    test('does not upload snapshots when the server read is unavailable',
+        () async {
       final local = _FakeAssetLiabilityRepository();
       await local.saveMonthlySnapshot(_sampleSnapshot('2026-09'));
       final remote = _RecordingAssetLiabilityRemoteStore();
