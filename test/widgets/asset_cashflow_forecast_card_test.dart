@@ -43,6 +43,39 @@ AssetCashflowForecast _shortfallForecast() {
 
 void main() {
   group('AssetCashflowForecastCard', () {
+    testWidgets('shows a negative monthly low even when month-end recovers', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 9, 5),
+        startingBalance: 172928,
+        horizonMonths: 1,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 421277),
+        ],
+        recurringOutflow: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 15, amount: 233498),
+        ],
+      );
+      expect(forecast.worstBalance, -60570);
+      expect(forecast.months.single.closingBalance, 360707);
+      await _pump(tester, forecast);
+      expect(find.text('● 月末残高'), findsOneWidget);
+      expect(find.text('◆ 月内最低残高'), findsOneWidget);
+      final details = find.byKey(
+        const Key('asset_cashflow_forecast_month_details'),
+      );
+      await tester.ensureVisible(details);
+      await tester.tap(find.text('月別内訳（月末・月内最低）'));
+      await tester.pumpAndSettle();
+      expect(find.text('2026/9 月末 ¥360707 / 月内最低 ¥-60570'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('renders the chart and a shortfall warning', (tester) async {
       await _pump(tester, _shortfallForecast());
 

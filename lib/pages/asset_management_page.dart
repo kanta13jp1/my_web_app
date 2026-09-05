@@ -1615,15 +1615,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }).toList();
   }
 
-  /// 給料サイクル [reference] (= `[salaryCycleStart, salaryCycleEndExclusive)`)
-  /// に受給した給与収入の合計 (円)。給与明細(payslips) / salary_incomes から集計する。
-  ///
-  /// 収支カード等は `wealth_struggles` の収入フロー(conquer)だけを収入とみなすため、
-  /// 給料を給与明細でのみ管理しているユーザーは収入が ¥0 = 常に赤字に見えてしまう。
-  /// このヘルパーで給与明細の給料をサイクル収入へ合算する。二重計上を避けるため、
-  /// [cycleFlows] 内の収入フロー(conquer)および payslips↔salary_incomes 間で
-  /// 同日同額の収入は 1 件に畳む(canonical な
-  /// [AssetSalarySpendingEntries] の dedup と同方針)。
+  /// 給与明細・受取済み計画のうち、収入フローにまだ含まれない金額。
+  /// 使いみちカードと同じ実績入力・重複排除を使う。
   int _cycleSalaryIncomeTotal(
     DateTime reference,
     List<Map<String, dynamic>> cycleFlows,
@@ -1637,58 +1630,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       reference,
       salaryDay: _salaryDay,
     );
-    String dayAmountKey(DateTime date, int amount) {
-      final y = date.year.toString().padLeft(4, '0');
-      final m = date.month.toString().padLeft(2, '0');
-      final d = date.day.toString().padLeft(2, '0');
-      return '$y-$m-$d:$amount';
-    }
-
-    // 既存の収入フロー(conquer)と同日同額の給料は二重計上になるため除外する。
-    final seen = <String>{};
-    for (final flow in cycleFlows) {
-      if ((flow['action_type']?.toString() ?? '') != 'conquer') {
-        continue;
-      }
-      final occurredAt = DateTime.tryParse(
-        flow['occurred_at']?.toString() ?? '',
-      )?.toLocal();
-      if (occurredAt == null) {
-        continue;
-      }
-      seen.add(
-        dayAmountKey(occurredAt, _numberFromDynamic(flow['amount']).round()),
-      );
-    }
-
-    var total = 0;
-    void addSalary(DateTime? payDate, int amount) {
-      if (payDate == null || amount <= 0) {
-        return;
-      }
-      if (payDate.isBefore(start) || !payDate.isBefore(endExclusive)) {
-        return;
-      }
-      // 既出 (conquer フロー or payslips↔salary_incomes 重複) は畳む。
-      if (!seen.add(dayAmountKey(payDate, amount))) {
-        return;
-      }
-      total += amount;
-    }
-
-    for (final row in _payslipSalaryIncomes) {
-      addSalary(
-        DateTime.tryParse(row['pay_date']?.toString() ?? ''),
-        _numberFromDynamic(row['amount']).round(),
-      );
-    }
-    for (final row in _payslipRows) {
-      addSalary(
-        DateTime.tryParse(row['pay_date']?.toString() ?? ''),
-        _numberFromDynamic(row['net_amount']).round(),
-      );
-    }
-    return total;
+    final entries = AssetSalarySpendingEntries.build(
+      cardStatementLines: const [],
+      recentFlows: cycleFlows,
+      monthlyIncomePlans: _monthlyIncomePlans,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      payslipRows: _payslipRows,
+      flowDisplayTitle: _flowDisplayTitle,
+    );
+    final incomeTotal = entries.incomes
+        .where((entry) =>
+            !entry.date.isBefore(start) && entry.date.isBefore(endExclusive))
+        .fold<double>(0, (sum, entry) => sum + entry.amount);
+    final recordedIncome = cycleFlows
+        .where((flow) => flow['action_type'] == 'conquer')
+        .fold<double>(
+            0, (sum, flow) => sum + _numberFromDynamic(flow['amount']));
+    return (incomeTotal - recordedIncome).round();
   }
 
   /// 給料日サイクルの期間ラベル (例: "5/25〜6/24")。
@@ -18145,7 +18103,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               runSpacing: 10,
               children: [
                 _buildFlowPriorityMetric(
-                  label: '期間支出',
+                  label: unknownSection == null ? '期間支出' : '期間支出（未照合含む）',
                   value: _formatYen(breakdown.totalExpense),
                   color: const Color(0xFFB91C1C),
                 ),
@@ -18157,7 +18115,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: const Color(0xFF0F766E),
                 ),
                 _buildFlowPriorityMetric(
-                  label: '残り目安',
+                  label: '収支差額',
                   value:
                       remaining == null ? '未計算' : _formatSignedYen(remaining),
                   color: remaining == null || remaining >= 0
@@ -18178,6 +18136,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     color: const Color(0xFFD97706),
                   ),
               ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '受取済みの収入を集計しています。収支差額は現在の現金残高や、今後の支払後に使える額ではありません。',
+              style: TextStyle(fontSize: 12, height: 1.5),
             ),
             const SizedBox(height: 16),
             if (breakdown.sections.isEmpty)
@@ -18260,7 +18223,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   border: Border.all(color: const Color(0xFFFBBF24)),
                 ),
                 child: Text(
-                  '残高差分から ${_formatYen(unknownSection.amount)} を使途不明金として自動記録しています。下の収支履歴で行をタップすると、家賃・返済・食費などへ後から分類できます。',
+                  '使途不明金 ${_formatYen(unknownSection.amount)} は内訳の照合が必要です。'
+                  '残高差分からの自動記録には、口座間移動・現金引出し・返済などが含まれる可能性があり、全額が消費や浪費とは限りません。'
+                  '収支履歴を明細と照合し、振替・返済・支出を確認してください。',
                   style: const TextStyle(
                     color: Color(0xFF92400E),
                     fontSize: 12,
@@ -22108,6 +22073,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return switch (source) {
       'deterministic fallback / feature flag off' => 'ルールベース要約 / AI無効',
       'deterministic fallback / ai-hub failed' => 'ルールベース要約 / AI接続失敗',
+      'deterministic fallback / grounding validation failed' =>
+        'ルールベース要約 / AIデータ矛盾を検出',
       'deterministic fallback / waiting for ai-hub' => 'ルールベース要約 / AI応答待ち',
       _ => source
           .replaceAll('deterministic fallback', 'ルールベース要約')
@@ -22155,10 +22122,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryInFlightKey = key;
       _assetManagementAiSummaryRequestKey = key;
     });
-    // 保存済み分析の再利用判定。指紋は基準日単位で回転するため「同日最新の
-    // 1 行」だけ見れば足りる。再利用条件は (a) 指紋完全一致 (データ不変) か
-    // (b) 生成からクールダウン時間内 (引落済み等の編集毎に指紋が変わるため、
-    // 完全一致だけだと 1 セッションで何度も 1 分超のプレミアム生成が走る)。
+    // 保存済み分析は指紋が完全一致するときだけ再利用する。基準日が同じでも
+    // 支払済み・金利・残高・解約状態のどれかが変われば別の事実なので、生成時刻が
+    // 新しいことを理由に古い本文を現在キーへ付け替えてはならない。
     // 手動の「AI要約を更新」(force) は常に再生成する。
     if (!force) {
       AssetManagementAiAnalysisHistoryEntry? reusable;
@@ -22167,9 +22133,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           report.workbook.baseDate,
         );
         if (latest != null &&
-            (latest.requestFingerprint == key ||
-                DateTime.now().difference(latest.generatedAt) <
-                    _assetManagementAiSummaryAutoRefreshCooldown)) {
+            AssetManagementAiSummaryRefresh.canReusePersisted(
+              currentKey: key,
+              cachedKey: latest.requestFingerprint,
+            )) {
           reusable = latest;
         }
       } catch (_) {
@@ -22250,15 +22217,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
     }
-    // 生成試行を (成功/失敗を問わず) 記録する。失敗しても履歴には残らないため、
-    // この時刻が次回以降のクールダウン判定の唯一の手掛かりになる。
-    unawaited(_recordAssetManagementAiSummaryAttempt(report.workbook.baseDate));
     final result = await _assetManagementAiSummaryService.generateSummary(
       report: report,
       previousAnalyses: previousAnalyses,
       existingDeveloperIssuesByTitle: existingIssuesByTitle,
     );
     if (result.usedExternalAi) {
+      // 成功は失敗リトライのクールダウン対象にしない。データ指紋が変わったら
+      // 直ちに最新値で再生成できるよう、過去の失敗時刻も消す。
+      unawaited(_clearAssetManagementAiSummaryAttempt());
       try {
         await _assetManagementAiAnalysisHistoryService.saveResult(
           result: result,
@@ -22271,6 +22238,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       } catch (_) {
         // AI分析の表示を優先し、履歴保存失敗は次回の再試行に任せます。
       }
+    } else {
+      // AI接続失敗または整合性検証失敗だけを連続試行の抑止対象にする。
+      unawaited(
+        _recordAssetManagementAiSummaryAttempt(report.workbook.baseDate),
+      );
     }
     if (!mounted) {
       return;
@@ -22343,6 +22315,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return delta.isNegative ? Duration.zero : delta;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<void> _clearAssetManagementAiSummaryAttempt() async {
+    try {
+      final store = await SharedPreferences.getInstance();
+      await store.remove(_assetManagementAiSummaryLastAttemptPrefKey);
+    } catch (_) {
+      // best-effort の失敗クールダウン用途のため、削除失敗は致命ではない。
     }
   }
 

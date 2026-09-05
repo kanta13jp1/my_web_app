@@ -260,6 +260,12 @@ class AssetLiabilityPlanningService {
       for (final injected in injectedFixedCosts)
         if (injected.isSubscription) injected.account.id,
     };
+    // 残高スナップショットに無く、資金繰りのためだけに注入した将来支出。
+    // 支払予定・カレンダーには残すが、現在負債・純資産へは混入させない。
+    final scheduledExpenseAccountIds = <String>{
+      for (final cost in applicableDefaultFixedCosts) cost.accountId,
+      for (final injected in injectedFixedCosts) injected.account.id,
+    };
     if (injectedFixedCosts.isNotEmpty) {
       accounts
         ..addAll(injectedFixedCosts.map((injected) => injected.account))
@@ -306,7 +312,10 @@ class AssetLiabilityPlanningService {
     );
     final liabilityTotal = accounts.fold<double>(
       0,
-      (sum, account) => account.balance < 0 ? sum + account.balance : sum,
+      (sum, account) => account.balance < 0 &&
+              !scheduledExpenseAccountIds.contains(account.id)
+          ? sum + account.balance
+          : sum,
     );
     final netWorth = positiveAssetTotal + liabilityTotal;
     final cashLikeTotal = accounts.fold<double>(
@@ -358,9 +367,10 @@ class AssetLiabilityPlanningService {
         .toList()
       ..sort((a, b) => b.balance.abs().compareTo(a.balance.abs()));
 
-    final repaymentPriorityRows = List<AssetLiabilityDebtRow>.from(
-      debtMasterRows,
-    )..sort(_compareDebtPriority);
+    final repaymentPriorityRows = debtMasterRows
+        .where((row) => !scheduledExpenseAccountIds.contains(row.id))
+        .toList()
+      ..sort(_compareDebtPriority);
 
     final directDebtRows = debtMasterRows
         .where((row) => row.isDirectCashflowTarget)
@@ -430,6 +440,7 @@ class AssetLiabilityPlanningService {
       (sum, plan) => plan.received ? sum : sum + plan.amount,
     );
     final topFourDebtTotal = debtMasterRows
+        .where((row) => !scheduledExpenseAccountIds.contains(row.id))
         .take(4)
         .fold<double>(0, (sum, row) => sum + row.balance.abs());
     final manualPaymentCount =
@@ -473,6 +484,7 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : topFourDebtTotal / liabilityTotal.abs(),
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
+      scheduledExpenseAccountIds: scheduledExpenseAccountIds,
       subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
       cardUsagePolicies: cardUsagePolicies,
     );
