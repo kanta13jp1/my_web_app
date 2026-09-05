@@ -723,6 +723,17 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
 
+      - name: Resolve normalized AI University provider catalog
+        id: ai_university_catalog
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          mkdir -p .ci-generated
+          provider_count=$(python3 scripts/ai_university_provider_catalog.py \
+            --output .ci-generated/ai-university-catalog.json)
+          echo "provider_count=$provider_count" >> "$GITHUB_OUTPUT"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
       - name: Build Flutter Web (Production)
         if: steps.changes.outputs.web == 'true'
         run: |
@@ -736,6 +747,7 @@ jobs:
             --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
+            --dart-define=AI_UNIVERSITY_PROVIDER_COUNT=${{ steps.ai_university_catalog.outputs.provider_count }} \
             --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
             --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
@@ -760,6 +772,7 @@ jobs:
         run: |
           echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
           cp web/release-notes.json build/web/release-notes.json
+          cp .ci-generated/ai-university-catalog.json build/web/ai-university-catalog.json
 
       - name: Cache-bust OGP image URLs
         if: steps.changes.outputs.web == 'true'
@@ -777,7 +790,8 @@ jobs:
             --template build/web/index.html \
             --outdir build/web \
             --routes web/seo/comparison-routes.json \
-            --public-routes web/seo/public-routes.json
+            --public-routes web/seo/public-routes.json \
+            --ai-university-catalog .ci-generated/ai-university-catalog.json
           # 実在ルートのみの sitemap を当日 lastmod で再生成 (build 済みへ出力)
           python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
