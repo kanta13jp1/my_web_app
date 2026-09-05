@@ -1417,6 +1417,34 @@ void main() {
       );
     });
 
+    test('snapshot conflicts retain the newer version per month', () async {
+      final older = _sampleSnapshot('2026-08');
+      final newer = _sampleSnapshot(
+        '2026-08',
+        savedAt: DateTime.utc(2026, 9, 1),
+      );
+      for (final remoteIsNewer in [true, false]) {
+        final local = _FakeAssetLiabilityRepository();
+        await local.saveMonthlySnapshot(remoteIsNewer ? older : newer);
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedMonthlySnapshots([remoteIsNewer ? newer : older]);
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+
+        expect((await repository.loadMonthlySnapshots()).single, newer);
+        expect((await local.loadMonthlySnapshots()).single, newer);
+        expect(
+          remote.calls.where((c) => c.startsWith('saveMonthlySnapshot')),
+          isEmpty,
+        );
+      }
+    });
+
     test('loads generated monthly reports from remote store', () async {
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore()
@@ -2196,10 +2224,13 @@ AssetLiabilityRecurringIncomeTemplate _sampleRecurringIncomeTemplate() {
   );
 }
 
-AssetLiabilityMonthlySnapshot _sampleSnapshot(String monthKey) {
+AssetLiabilityMonthlySnapshot _sampleSnapshot(
+  String monthKey, {
+  DateTime? savedAt,
+}) {
   return AssetLiabilityMonthlySnapshot(
     monthKey: monthKey,
-    savedAt: DateTime.utc(2026, 5, 31, 12),
+    savedAt: savedAt ?? DateTime.utc(2026, 5, 31, 12),
     positiveAssetTotal: 120000,
     liabilityTotal: -7200000,
     netWorth: -7080000,
