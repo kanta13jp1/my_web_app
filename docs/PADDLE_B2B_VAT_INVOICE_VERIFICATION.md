@@ -45,15 +45,19 @@ before the payment-provider adoption decision is complete.
 
 ## Cloud configuration
 
-### Official sandbox VAT scenario request
+### Official sandbox VAT scenario status
 
-On 2026-08-31 JST, the Owner sent Paddle Seller Support a request for an
-officially supported sandbox-only B2B VAT scenario. The request asks for a
-country, postal code, sandbox-safe VAT/tax identifier, and the expected tax or
-reverse-charge result without using a real third-party identifier. Paddle
-confirmed receipt and stated an expected response time of one to two business
-days. Do not send duplicate follow-ups or substitute an unverified identifier
-while the response is pending.
+On 2026-09-02 UTC, Paddle Seller Support confirmed that Paddle does not provide
+a documented sandbox-specific VAT/tax identifier for B2B validation or reverse
+charge testing. Support could not provide a country, postal code, identifier,
+and guaranteed tax outcome combination. Successful tax-ID validation still
+requires a valid VAT/tax identifier. The sanitized response summary is recorded
+in [#2846](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5511613768).
+
+Do not substitute a third party's VAT ID, Paddle's own tax number, or an
+unverified example. The real B2B job must remain guarded and skipped unless the
+Owner has a legitimate identifier for the matching buyer country and address
+and explicitly authorizes its use in the sandbox-only Actions secret.
 
 Create these repository secrets. Never paste their values into an Issue, PR,
 artifact, log, or screenshot:
@@ -62,7 +66,7 @@ artifact, log, or screenshot:
 | --- | --- |
 | `PADDLE_SANDBOX_CLIENT_TOKEN` | Paddle frontend token beginning with `test_`. |
 | `PADDLE_SANDBOX_B2B_EMAIL` | Sandbox purchaser email whose direct or forwarded inbox can receive Customer Portal magic links. |
-| `PADDLE_SANDBOX_B2B_TAX_IDENTIFIER` | Valid test VAT/Tax ID for the selected official scenario. |
+| `PADDLE_SANDBOX_B2B_TAX_IDENTIFIER` | Owner-controlled valid VAT/Tax ID for the matching sandbox buyer scenario. Paddle does not provide a sandbox-only value. |
 
 Create these repository variables:
 
@@ -70,9 +74,9 @@ Create these repository variables:
 | --- | --- | --- |
 | `PADDLE_SANDBOX_PRICE_ID` | `pri_...` | Sandbox price under test. |
 | `PADDLE_SANDBOX_CUSTOMER_PORTAL_URL` | `https://sandbox-customer-portal.paddle.com/cpl_...` | Stable generic sandbox portal URL copied from Paddle. No query string or temporary token. |
-| `PADDLE_SANDBOX_B2B_COUNTRY_CODE` | two uppercase letters | Billing country for the confirmed scenario. |
-| `PADDLE_SANDBOX_B2B_COUNTRY_NAME` | Paddle's English country label | Playwright option label. |
-| `PADDLE_SANDBOX_B2B_POSTAL_CODE` | valid postal code | Billing address evidence. |
+| `PADDLE_SANDBOX_B2B_COUNTRY_CODE` | two uppercase letters | Billing country that legitimately matches the Owner-controlled identifier. |
+| `PADDLE_SANDBOX_B2B_COUNTRY_NAME` | Paddle's English country label | Playwright option label for the same country. |
+| `PADDLE_SANDBOX_B2B_POSTAL_CODE` | valid postal code | Matching billing-address evidence. |
 | `PADDLE_SANDBOX_B2B_BUSINESS_NAME` | non-personal test name | Sandbox business name. |
 | `PADDLE_SANDBOX_B2B_EXPECTED_TAX` | digits in Paddle minor units | Expected post-VAT-ID tax from the confirmed scenario. Use `0` only when Paddle's rules and the chosen transaction support it. |
 
@@ -83,7 +87,9 @@ runner.
 ## Run and acceptance evidence
 
 1. In Paddle sandbox, confirm the product, price, default payment link, generic
-   Customer Portal URL, and a B2B country/address/VAT-ID scenario.
+   Customer Portal URL, and an Owner-controlled valid B2B
+   country/address/VAT-ID scenario. If no such scenario is available, leave the
+   real B2B job disabled.
 2. Set the secrets and variables above.
 3. In GitHub Actions, run **Paddle Sandbox Checkout Cloud Validation** with
    **Run the real Paddle sandbox checkout and B2B VAT matrix** enabled.
@@ -103,9 +109,9 @@ evidence artifact.
 | --- | --- | --- | --- | --- |
 | 2026-08-30 | Receipt email and attached PDF | Paddle is the issuer and a paid PDF invoice is retrievable | Passed for the #2845 sandbox checkout: USD 1.00 subtotal + USD 0.09 sales tax = USD 1.09 total. This does not prove B2B VAT or Customer Portal access. | [Owner screenshot review](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5468736129); source images were not persisted because they contain personal and sandbox transaction data. |
 | 2026-08-31 | Customer Portal invoice path | Purchase-email magic-link login exposes payment history and an invoice action for a completed transaction | Passed: the Owner authenticated through the generic sandbox portal, saw four paid USD 1.09 payments, opened one payment detail, and reached **View invoice**. The detail showed the expected product and USD 1.00 subtotal + USD 0.09 sales tax = USD 1.09 total. | [Owner screenshot review](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5468736129); source images were not persisted because they contain sandbox transaction data. |
-| Pending | B2B VAT recalculation | Confirmed expected tax and changed tax/total | Not run: project sandbox values not supplied | — |
-| Pending | Valid card completion | Completed transaction ID | Not run: project sandbox values not supplied | — |
-| Pending | B2B invoice portal | The B2B transaction is visible through the already-verified portal path and exposes its invoice | Not run: completed B2B sandbox transaction required | — |
+| Blocked | B2B VAT recalculation | Confirmed expected tax and changed tax/total | Not run: Paddle does not provide a sandbox-specific identifier, and no Owner-controlled valid scenario was authorized | [Paddle Support summary](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5511613768) |
+| Blocked | Valid card completion | Completed transaction ID | Not run: the guarded B2B scenario requires a valid VAT/Tax ID | [Paddle Support summary](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5511613768) |
+| Blocked | B2B invoice portal | The B2B transaction is visible through the already-verified portal path and exposes its invoice | Not run: no completed B2B VAT sandbox transaction exists | [Paddle Support summary](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5511613768) |
 
 ## Invoice retrieval UX check
 
@@ -125,9 +131,9 @@ In the sandbox-enabled debug artifact, open `/subscription-billing` and inspect
 
 The generic portal, purchase-email magic link, payment-history list, payment
 detail, and **View invoice** action were verified by the Owner on 2026-08-31.
-The remaining portal check is limited to confirming that the eventual B2B VAT
-transaction appears through the same path; no new portal design or credential
-mechanism is required.
+If an Owner-controlled valid VAT scenario is authorized later, the remaining
+portal check is limited to confirming that its B2B transaction appears through
+the same path; no new portal design or credential mechanism is required.
 
 If the URL is missing, points to the live portal, uses HTTP, has extra path
 segments, or contains any query parameter, the button stays disabled. The UI
@@ -135,6 +141,13 @@ never promises that entering a VAT ID always makes tax zero.
 
 ## Completion record
 
-Close #2846 only after the three remaining B2B rows above have dated evidence,
-the pull request is merged, required CI is green, and WBS progress is
-synchronized.
+PR #5106 merged the sandbox-only implementation with required CI green. Issue
+#2846 was closed as **not planned** on 2026-09-03 JST after Paddle confirmed the
+upstream sandbox limitation. GitHub Issues WBS Sync then completed successfully.
+This closure does not claim that VAT-ID recalculation or reverse charge was
+verified.
+
+Reopen #2846 only if Paddle publishes an official sandbox identifier/scenario,
+or if the Owner supplies a legitimate matching VAT/Tax ID and explicitly
+authorizes its sandbox-only handling. In either case, collect dated evidence for
+the three blocked rows before changing the result to passed.

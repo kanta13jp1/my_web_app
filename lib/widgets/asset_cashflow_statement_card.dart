@@ -296,36 +296,72 @@ class AssetCashflowStatementCard extends StatelessWidget {
 
   Widget _buildMonthRow(ThemeData theme, AssetCashflowMonth month) {
     final cashflow = month.cashflow;
+    final displayCashflow = month.displayCashflow;
+    final usesEstimate = month.usesNetWorthEstimate;
+    final detail = cashflow != null
+        ? '収入 ${_yen(month.income!)} / 支出 ${_yen(month.expense)}'
+        : usesEstimate
+            ? '純資産差からの推定CF（評価損益・口座追加等を含む）'
+            : '収入未登録';
+    final amount = displayCashflow == null
+        ? '—'
+        : '${usesEstimate ? '≈' : ''}${_signedYen(displayCashflow)}';
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final monthLabel = SizedBox(
             width: 48,
             child: Text(
               _monthLabel(month.monthKey),
               style: theme.textTheme.bodyMedium,
             ),
-          ),
-          Expanded(
-            child: cashflow == null
-                ? Text(
-                    '収入未登録',
-                    style: theme.textTheme.bodySmall?.copyWith(color: _muted),
-                  )
-                : Text(
-                    '収入 ${_yen(month.income!)} / 支出 ${_yen(month.expense)}',
-                    style: theme.textTheme.bodySmall?.copyWith(color: _muted),
-                  ),
-          ),
-          Text(
-            cashflow == null ? '—' : _signedYen(cashflow),
+          );
+          final detailLabel = Text(
+            detail,
+            key: usesEstimate
+                ? Key('asset_cashflow_statement_estimate_${month.monthKey}')
+                : null,
+            style: theme.textTheme.bodySmall?.copyWith(color: _muted),
+          );
+          final amountLabel = Text(
+            amount,
+            key: Key('asset_cashflow_statement_amount_${month.monthKey}'),
+            textAlign: TextAlign.end,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: _cashflowColor(cashflow),
+              color: _cashflowColor(displayCashflow),
             ),
-          ),
-        ],
+          );
+
+          if (constraints.maxWidth < 360) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    monthLabel,
+                    Expanded(child: amountLabel),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 48, top: 2),
+                  child: detailLabel,
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              monthLabel,
+              Expanded(child: detailLabel),
+              const SizedBox(width: 8),
+              amountLabel,
+            ],
+          );
+        },
       ),
     );
   }
@@ -339,7 +375,9 @@ class AssetCashflowStatementCard extends StatelessWidget {
         Expanded(
           child: Text(
             '収入が未登録の月 (${statement.yearToDateUntrackedMonths}か月) は'
-            '累積・黒字/赤字カウントから除外しています。',
+            '実績の累積・黒字/赤字カウントから除外します。'
+            '前月比較できる月は純資産差を推定CFとして表示しますが、'
+            '評価損益・口座追加等を含む参考値です。',
             style: theme.textTheme.labelSmall?.copyWith(color: _muted),
           ),
         ),
