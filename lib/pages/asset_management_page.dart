@@ -16357,11 +16357,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.calendar_month, color: Color(0xFF1D4ED8)),
-                const SizedBox(width: 8),
-                const Expanded(
+                Icon(Icons.calendar_month, color: Color(0xFF1D4ED8)),
+                SizedBox(width: 8),
+                Expanded(
                   child: Text(
                     'マネーカレンダー',
                     style: TextStyle(
