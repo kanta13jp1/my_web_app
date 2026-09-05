@@ -214,7 +214,7 @@ void main() {
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
       expect(scaffold.floatingActionButton, isNull);
       expect(
-        tester.getRect(find.byType(ListView).first).bottom,
+        tester.getRect(find.byWidget(scaffold.body!)).bottom,
         lessThanOrEqualTo(tester.getRect(dock).top),
       );
       await tester.tap(find.byKey(const Key('asset_chat_open_button')));
