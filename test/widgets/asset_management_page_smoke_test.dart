@@ -201,6 +201,30 @@ void main() {
   });
 
   group('AssetManagementPage smoke', () {
+    testWidgets('mobile chat reserves space outside the scrolling content', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await _pumpAssetPage(tester);
+      final dock = find.byKey(const Key('asset_chat_docked_bar'));
+      expect(dock, findsOneWidget);
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.floatingActionButton, isNull);
+      expect(
+        tester.getRect(find.byType(ListView).first).bottom,
+        lessThanOrEqualTo(tester.getRect(dock).top),
+      );
+      await tester.tap(find.byKey(const Key('asset_chat_open_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_panel')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byKey(const Key('asset_chat_close_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_open_button')), findsOneWidget);
+      await _unmount(tester);
+    });
+
     testWidgets('sticky asset chat entry opens and closes the panel', (
       tester,
     ) async {
@@ -1481,7 +1505,7 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('回避ライン'), findsOneWidget);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
       expect(
         find.byKey(const Key('asset_shift_payment_mobit')),
         findsOneWidget,
@@ -1504,7 +1528,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('回避ライン'), findsNothing);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -1547,7 +1571,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('回避ライン'), findsNothing);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -2119,10 +2143,10 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('回避ライン'), findsOneWidget);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
       // ただし26日へ移せば次回支払は 7/26 = 次サイクル(給料日後)扱いになり、
       // 当サイクルの支払が消えるため事前判定が「回避できます」。
-      expect(find.textContaining('を26日へ(回避できます)'), findsOneWidget);
+      expect(find.textContaining('の設定を26日へ(試算上の不足なし)'), findsOneWidget);
 
       await _unmount(tester);
     });

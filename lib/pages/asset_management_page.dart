@@ -9492,7 +9492,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         background = okBg;
         foreground = okFg;
         icon = Icons.cloud_done;
-        text = 'サーバ同期済み';
+        text = 'サーバ保存済み（残高・明細との照合は別途必要）';
     }
     final tappable = summary.level != AssetSyncLevel.allSynced;
     return InkWell(
@@ -9671,7 +9671,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
       backgroundColor: const Color(0xFF64748B),
-      floatingActionButton: AssetChatWidget(service: _aiHubChatService),
+      floatingActionButton: MediaQuery.sizeOf(context).width < 600
+          ? null
+          : AssetChatWidget(service: _aiHubChatService),
+      bottomNavigationBar: MediaQuery.sizeOf(context).width < 600
+          ? SafeArea(
+              top: false,
+              child: Padding(
+                key: const Key('asset_chat_docked_bar'),
+                padding: const EdgeInsets.all(8),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  heightFactor: 1,
+                  child: AssetChatWidget(service: _aiHubChatService),
+                ),
+              ),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SingleChildScrollView(
         controller: _scrollController,
@@ -13878,7 +13894,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     final shiftedShortfall = shifted.firstShortfallDate;
     if (shiftedShortfall == null) {
-      return '(回避できます)';
+      return '(試算上の不足なし)';
     }
     final currentShortfall = calendar.firstShortfallDate;
     if (currentShortfall != null &&
@@ -16282,7 +16298,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ...shortfallDaySummary.events.where(
           (event) =>
               event.kind == AssetCalendarEventKind.debtPayment &&
-              event.sourceId != null,
+              event.sourceId != null &&
+              debtInputs.any(
+                (debt) =>
+                    debt.id == event.sourceId &&
+                    debt.paymentDay != _salaryDay + 1,
+              ),
         ),
     ];
     final shiftCandidates = <MapEntry<AssetCalendarEvent, String>>[
@@ -16559,6 +16580,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ],
               ),
+            if (!isPastCycle)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  '固定費予定は、この給与サイクル内の支払予定を集計しています。サブスク一覧の登録額合計とは対象期間が異なります。同じ請求を通常固定費・サブスク・返済へ重複登録しないよう明細で照合してください。',
+                  key: Key('asset_calendar_fixed_cost_scope'),
+                  style: TextStyle(fontSize: 11, height: 1.5),
+                ),
+              ),
             if (calendar.firstShortfallDate != null) ...[
               const SizedBox(height: 8),
               Container(
@@ -16605,7 +16635,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '回避ライン: ショート日までに ${_formatYen(calendar.shortfallRecoveryAmount)} の入金、またはサイクル内支払の同額圧縮で黒字化します。',
+                      '登録データに基づく不足額の試算: ${_formatYen(calendar.shortfallRecoveryAmount)}。残高・支払済み状態・支払日を明細と照合してから判断してください。入金や支出削減の時期によって結果は変わります。',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -16625,7 +16655,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '返済日の変更は「負債マスタ」の支払日設定から。給料日($_salaryDay日)以降へ動かすと次サイクル(給料日後)の支払いになり、ショートを避けやすくなります。',
+                      '以下はアプリ内の支払日設定です。契約上の返済期限は変わりません。明細に記載された支払日を確認し、設定が古い場合のみ修正してください。',
                       style: TextStyle(
                         fontSize: 10,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -16649,7 +16679,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               ),
                               icon: const Icon(Icons.schedule_send, size: 14),
                               label: Text(
-                                '${entry.key.label}を26日へ${entry.value}',
+                                '${entry.key.label}の設定を${_salaryDay + 1}日へ${entry.value}',
                                 style: const TextStyle(fontSize: 11),
                               ),
                             ),
@@ -16666,7 +16696,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                         icon: const Icon(Icons.double_arrow, size: 14),
                         label: Text(
-                          '$comboSuggestionLabelを26日へ(回避できます)',
+                          '$comboSuggestionLabelの設定を${_salaryDay + 1}日へ(試算上の不足なし)',
                           style: const TextStyle(fontSize: 11),
                         ),
                       ),
