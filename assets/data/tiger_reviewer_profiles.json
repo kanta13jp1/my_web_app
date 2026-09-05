@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-09-05",
-  "source_snapshot": "canonical tiger-personas.json (2026-09-05)",
+  "snapshot_date": "2026-09-06",
+  "source_snapshot": "canonical tiger-personas.json (2026-09-06)",
   "reviewer_count": 125,
   "disclaimer": "年齢は生年月日を公開一次情報で確認できた場合のみ、スナップショット日時点で表示します。未確認の年齢は推測していません。肩書き・事業内容・出演実績は公開情報から構成したスナップショットです。",
   "profiles": [
@@ -4475,19 +4475,18 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "オルソ株式会社代表取締役",
-      "business_summary": "美容・ウェルネス、教育・スクール",
+      "company_role": "オルソ株式会社 代表者（公式会社概要記載）",
+      "business_summary": "体操・スポーツ教室の運営とコンサルティング、スポーツ教室業務の受託、体操用品等の製造・販売、飲食店経営（公式会社概要の事業内容）",
       "business_domains": [
-        "美容・ウェルネス",
         "教育・スクール"
       ],
       "appearances": 9,
       "investment_count": 2,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。美容・ウェルネス、教育・スクールの公開職歴と、番組集計上の出演9回・出資2回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/2/",
-      "evidence_confidence": 2.7,
-      "profile_completeness_percent": 51,
-      "review_reflection_percent": 51,
+      "public_viewpoint_summary": "公式の代表メッセージでは、体操を通じた礼儀・コミュニケーションと、できた達成感を通じた子どもの成長を重視している。レビューでは利用者の成長実感と教育サービスの継続性を補助的な質問候補にする。教育方針からのモデル化であり、本人の審査発言としては扱わない。",
+      "profile_url": "https://or-so.com/company/",
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 62,
+      "review_reflection_percent": 67,
       "review_reflection_mode": "profile_balanced",
       "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
@@ -4517,7 +4516,8 @@
         }
       ],
       "review_style_tags": [
-        "balanced_risk"
+        "balanced_risk",
+        "learner_achievement"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
@@ -4528,7 +4528,14 @@
       "evidence_source_ids": [
         "S002",
         "S008",
-        "S004"
+        "S004",
+        "S123"
+      ],
+      "evidence_links": [
+        {
+          "label": "公式会社概要・代表メッセージ",
+          "url": "https://or-so.com/company/"
+        }
       ]
     },
     {
@@ -4537,18 +4544,19 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "大王製紙 株式会社 元会長",
-      "business_summary": "経営支援・コンサルティング",
+      "company_role": "大王製紙 元代表取締役社長・元会長／著者・ビジネスコンサルティング提供者",
+      "business_summary": "著書の刊行、ビジネスコンサルティング、トークライブ・オンラインサロン（公式サイト案内）",
       "business_domains": [
-        "経営支援・コンサルティング"
+        "経営支援・コンサルティング",
+        "マーケティング・メディア"
       ],
       "appearances": 9,
       "investment_count": 0,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。経営支援・コンサルティングの公開職歴と、番組集計上の出演9回・出資0回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.7,
-      "profile_completeness_percent": 51,
-      "review_reflection_percent": 51,
+      "public_viewpoint_summary": "公式プロフィールで大王製紙の社長・会長経験、公式サービス案内でビジネス相談と交流サービスを確認。レビューでは相談の提供価値とサービスの継続性を補助的な質問候補にする。直接帰属できる審査発言は未確認で、本人の見解としては扱わない。",
+      "profile_url": "https://ikawamototaka.com/profile/",
+      "evidence_confidence": 3.0,
+      "profile_completeness_percent": 56,
+      "review_reflection_percent": 58,
       "review_reflection_mode": "profile_balanced",
       "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
@@ -4578,7 +4586,8 @@
         }
       ],
       "review_style_tags": [
-        "evidence_demanding"
+        "evidence_demanding",
+        "advisory_service_value"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
@@ -4588,7 +4597,19 @@
       ],
       "evidence_source_ids": [
         "S002",
-        "S003"
+        "S003",
+        "S124",
+        "S125"
+      ],
+      "evidence_links": [
+        {
+          "label": "公式プロフィール（生年のみ・月日未確認）",
+          "url": "https://ikawamototaka.com/profile/"
+        },
+        {
+          "label": "公式サービス案内",
+          "url": "https://ikawamototaka.com/service/"
+        }
       ]
     },
     {
@@ -8297,11 +8318,11 @@
     }
   ],
   "enrichment": {
-    "round": 12,
+    "round": 13,
     "batch_size": 5,
     "policy": "一次公開情報を優先し、未確認情報は推測しない。プロフィール由来のレビュー観点は証拠強度に応じて段階反映する。",
-    "average_profile_completeness_percent": 68.0,
-    "average_review_reflection_percent": 73.6,
+    "average_profile_completeness_percent": 68.1,
+    "average_review_reflection_percent": 73.8,
     "verified_birth_dates": 12,
     "next_batch": [
       {
@@ -8338,8 +8359,8 @@
         ]
       },
       {
-        "seat": 71,
-        "name": "日熊秀貴",
+        "seat": 73,
+        "name": "沓名 裕城",
         "profile_completeness_percent": 51,
         "research_targets": [
           "生年月日の一次公開情報",
@@ -8349,8 +8370,8 @@
         ]
       },
       {
-        "seat": 72,
-        "name": "井川 意高",
+        "seat": 74,
+        "name": "山田久太郎",
         "profile_completeness_percent": 51,
         "research_targets": [
           "生年月日の一次公開情報",
