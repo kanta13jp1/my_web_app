@@ -30,7 +30,7 @@ Future<bool> showCriticalActionDialog({
 }
 
 class CriticalActionDialog extends StatefulWidget {
-  const CriticalActionDialog({
+  CriticalActionDialog({
     required this.title,
     required this.impact,
     required this.actionLabel,
