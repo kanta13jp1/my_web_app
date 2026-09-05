@@ -20,9 +20,8 @@ declare
 
 この講座は、OpenBMB/AgentVerseの公式repositoryを固定して、実在する
 TaskSolving exportと公式CLIを再現し、同じ課題をsingle agent、fixed role
-team、conditional role teamの3条件で比較します。旧講座のAgentVerse、
-ConversationAgent、TaskDrivenAgentVerseというimportは、固定commitのpackage
-exportに存在しないため使用しません。
+team、conditional role teamの3条件で比較します。旧講座で紹介された非公式classの
+importは、固定commitのpackage exportに存在しないため使用しません。
 
 公開時点の実在学習者データは0件です。以下のrubricと匿名集計を実施するまで、
 学習効果、再現率、職場適用率を断定しません。
