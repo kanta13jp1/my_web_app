@@ -16371,18 +16371,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                   ),
                 ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
                 IconButton(
                   key: const Key('asset_calendar_prev_month'),
                   tooltip: '前のサイクル',
                   icon: const Icon(Icons.chevron_left),
                   onPressed: () => _shiftCalendarCycle(-1),
                 ),
-                Text(
-                  '${DateFormat('yyyy/M/d').format(calendar.rangeStart)}'
-                  '〜${DateFormat('M/d').format(cycleLastDay)}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    height: 1.4,
+                Flexible(
+                  child: Text(
+                    '${DateFormat('yyyy/M/d').format(calendar.rangeStart)}'
+                    '〜${DateFormat('M/d').format(cycleLastDay)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -18547,15 +18554,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   height: 1.5,
                 ),
               ),
-              const Spacer(),
-              Text(
-                source,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isDark
-                      ? const Color(0xFFB0B0B0)
-                      : const Color(0xFF64748B),
-                  height: 1.5,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  source,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark
+                        ? const Color(0xFFB0B0B0)
+                        : const Color(0xFF64748B),
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],
@@ -30920,13 +30930,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              height: 1.5,
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
           ),
         ],

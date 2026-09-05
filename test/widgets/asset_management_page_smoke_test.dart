@@ -204,8 +204,10 @@ void main() {
     testWidgets('mobile chat reserves space outside the scrolling content', (
       tester,
     ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       await _pumpAssetPage(tester);
       final dock = find.byKey(const Key('asset_chat_docked_bar'));
       expect(dock, findsOneWidget);
