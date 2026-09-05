@@ -116,8 +116,8 @@ void main() {
   });
 
   test('page mounts the dedicated card only on agentverse overview', () {
-    final page = File('lib/pages/gemini_university_v2_page.dart')
-        .readAsStringSync();
+    final page =
+        File('lib/pages/gemini_university_v2_page.dart').readAsStringSync();
 
     expect(
       page,
