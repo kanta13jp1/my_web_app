@@ -16,14 +16,14 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(13));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(14));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
       expect(catalog.verifiedBirthDates, 12);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(
         catalog.nextBatchNames,
-        <String>['渡正行', '足立暢', '泉舞', '沓名 裕城', '山田久太郎'],
+        <String>['沓名 裕城', '渡正行', '足立暢', '泉舞', '三崎優太（青汁王子）'],
       );
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
@@ -103,6 +103,17 @@ void main() {
       expect(ikawa.reviewReflectionMode, 'profile_balanced');
       expect(ikawa.evidenceLinks, hasLength(2));
       expect(ikawa.ageLabel(DateTime(2026, 9, 6)), '公開情報未確認');
+      final kutsuna = catalog.profilesBySeat[73]!;
+      expect(kutsuna.companyRole, contains('現職は未確認'));
+      expect(kutsuna.businessSummary, contains('2024年10月21日'));
+      expect(kutsuna.reviewReflectionMode, 'neutral_guarded');
+      expect(kutsuna.evidenceLinks, hasLength(2));
+      final yamada = catalog.profilesBySeat[74]!;
+      expect(yamada.businessSummary, contains('フランチャイズ'));
+      expect(yamada.reviewReflectionPercent, 67);
+      expect(yamada.reviewReflectionMode, 'profile_balanced');
+      expect(yamada.evidenceLinks, hasLength(2));
+      expect(yamada.ageLabel(DateTime(2026, 9, 7)), '公開情報未確認');
       final watari = catalog.profilesBySeat[116]!;
       expect(watari.ageLabel(DateTime(2026, 8, 26)), '公開情報未確認');
       expect(watari.reviewReflectionMode, 'neutral_guarded');

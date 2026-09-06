@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-09-06",
-  "source_snapshot": "canonical tiger-personas.json (2026-09-06)",
+  "snapshot_date": "2026-09-07",
+  "source_snapshot": "canonical tiger-personas.json (2026-09-07)",
   "reviewer_count": 125,
   "disclaimer": "年齢は生年月日を公開一次情報で確認できた場合のみ、スナップショット日時点で表示します。未確認の年齢は推測していません。肩書き・事業内容・出演実績は公開情報から構成したスナップショットです。",
   "profiles": [
@@ -4618,22 +4618,20 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "株式会社非常電源メンテナンスサービス代表取締役社長",
-      "business_summary": "金融・投資・資産管理、マーケティング・メディア、製造・エネルギー・環境",
+      "company_role": "株式会社非常電源メンテナンスサービス 代表取締役（過去の採用情報記載。現職は未確認）",
+      "business_summary": "非常用発電設備の保守点検・更新、負荷試験機器と蓄電池の販売・保守等（過去の採用情報）。同社の登記記録は2024年10月21日閉鎖（Gビズインフォ）。",
       "business_domains": [
-        "金融・投資・資産管理",
-        "マーケティング・メディア",
         "製造・エネルギー・環境"
       ],
       "appearances": 8,
       "investment_count": 2,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。金融・投資・資産管理、マーケティング・メディア、製造・エネルギー・環境の公開職歴と、番組集計上の出演8回・出資2回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.7,
-      "profile_completeness_percent": 51,
-      "review_reflection_percent": 51,
-      "review_reflection_mode": "profile_balanced",
-      "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
+      "public_viewpoint_summary": "過去の採用情報で非常用電源設備の保守事業を確認。掲載会社の登記閉鎖を公的情報で確認したため、現職や継続中の事業とは扱わない。レビューでは設備保守の需要と運用体制を質問候補に限って用いる。本人の審査発言・現職は未確認で、会社の閉鎖を本人の能力や意見の推測に用いない。",
+      "profile_url": "https://info.gbiz.go.jp/hojin/ichiran?hojinBango=2021001056969",
+      "evidence_confidence": 2.5,
+      "profile_completeness_percent": 44,
+      "review_reflection_percent": 48,
+      "review_reflection_mode": "neutral_guarded",
+      "review_application_rule": "中立スキャンを優先し、プロフィール由来の情報は質問候補の生成にのみ限定して反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
         {
           "dimension": "unit_economics",
@@ -4661,10 +4659,7 @@
         }
       ],
       "review_style_tags": [
-        "customer_first",
-        "balanced_risk",
-        "acquisition_and_conversion",
-        "capital_and_downside_control"
+        "balanced_risk"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
@@ -4675,7 +4670,19 @@
       "evidence_source_ids": [
         "S002",
         "S003",
-        "S004"
+        "S004",
+        "S126",
+        "S127"
+      ],
+      "evidence_links": [
+        {
+          "label": "法人の登記閉鎖（Gビズインフォ）",
+          "url": "https://info.gbiz.go.jp/hojin/ichiran?hojinBango=2021001056969"
+        },
+        {
+          "label": "過去の肩書き・事業内容（採用情報）",
+          "url": "https://employment.en-japan.com/comp-73319/"
+        }
       ]
     },
     {
@@ -4684,18 +4691,20 @@
       "roster_status": "historical",
       "birth_date": null,
       "birth_date_source_url": null,
-      "company_role": "アロマプリエール代表",
-      "business_summary": "美容・ウェルネス",
+      "company_role": "メンエスQチャンネル 代表／メンズエステ運営コンサルティング・開業支援",
+      "business_summary": "メンズエステの運営コンサルティング、接客・運用マニュアルと研修提供、「ゆめはな」「アロマプリエール」のフランチャイズ加盟店募集・運営支援",
       "business_domains": [
-        "美容・ウェルネス"
+        "美容・ウェルネス",
+        "経営支援・コンサルティング",
+        "フランチャイズ・多店舗展開"
       ],
       "appearances": 8,
       "investment_count": 2,
-      "public_viewpoint_summary": "直接帰属できる審査発言は今回未確認。美容・ウェルネスの公開職歴と、番組集計上の出演8回・出資2回から質問優先度だけを限定的にモデル化し、本人の見解としては扱わない。",
-      "profile_url": "https://atsu-blog.com/tigerfunding-president-list/",
-      "evidence_confidence": 2.7,
-      "profile_completeness_percent": 51,
-      "review_reflection_percent": 51,
+      "public_viewpoint_summary": "本人の事業サイトでは、健全な店舗運営とセラピストが働き続けやすい環境づくり、開業前後の支援を掲げている。レビューでは接客・研修の再現性と運営支援体制を補助的な質問候補にする。公開された事業方針からのモデル化であり、本人の審査発言や法令適合性の保証としては扱わない。",
+      "profile_url": "https://hisataroyamada.com/",
+      "evidence_confidence": 3.3,
+      "profile_completeness_percent": 62,
+      "review_reflection_percent": 67,
       "review_reflection_mode": "profile_balanced",
       "review_application_rule": "中立スキャンを軸に、確認済みプロフィール由来の観点だけを補助的に反映します。本人の実際の意見として断定したり、口調を模倣したりしません。",
       "review_focus_dimensions": [
@@ -4725,7 +4734,8 @@
         }
       ],
       "review_style_tags": [
-        "balanced_risk"
+        "balanced_risk",
+        "service_training_and_retention"
       ],
       "next_research_targets": [
         "生年月日の一次公開情報",
@@ -4736,7 +4746,19 @@
       "evidence_source_ids": [
         "S002",
         "S003",
-        "S004"
+        "S004",
+        "S128",
+        "S129"
+      ],
+      "evidence_links": [
+        {
+          "label": "本人事業サイト・運営方針",
+          "url": "https://hisataroyamada.com/"
+        },
+        {
+          "label": "フランチャイズ募集・開業支援",
+          "url": "https://hisataroyamada.com/franchise.html"
+        }
       ]
     },
     {
@@ -8318,13 +8340,24 @@
     }
   ],
   "enrichment": {
-    "round": 13,
+    "round": 14,
     "batch_size": 5,
     "policy": "一次公開情報を優先し、未確認情報は推測しない。プロフィール由来のレビュー観点は証拠強度に応じて段階反映する。",
     "average_profile_completeness_percent": 68.1,
-    "average_review_reflection_percent": 73.8,
+    "average_review_reflection_percent": 73.9,
     "verified_birth_dates": 12,
     "next_batch": [
+      {
+        "seat": 73,
+        "name": "沓名 裕城",
+        "profile_completeness_percent": 44,
+        "research_targets": [
+          "生年月日の一次公開情報",
+          "現職肩書き・事業内容の一次公開情報",
+          "本人の審査姿勢が確認できる一次公開情報",
+          "出演・出資実績の追加検証"
+        ]
+      },
       {
         "seat": 116,
         "name": "渡正行",
@@ -8359,19 +8392,8 @@
         ]
       },
       {
-        "seat": 73,
-        "name": "沓名 裕城",
-        "profile_completeness_percent": 51,
-        "research_targets": [
-          "生年月日の一次公開情報",
-          "現職肩書き・事業内容の一次公開情報",
-          "本人の審査姿勢が確認できる一次公開情報",
-          "出演・出資実績の追加検証"
-        ]
-      },
-      {
-        "seat": 74,
-        "name": "山田久太郎",
+        "seat": 75,
+        "name": "三崎優太（青汁王子）",
         "profile_completeness_percent": 51,
         "research_targets": [
           "生年月日の一次公開情報",
