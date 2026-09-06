@@ -7,18 +7,36 @@ on:
       - 'lib/**/enex*.dart'
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
+      - 'lib/pages/note_tasks_page.dart'
+      - 'lib/pages/note_navigation_page.dart'
+      - 'lib/pages/note_collections_page.dart'
+      - 'lib/pages/space_sharing_page.dart'
+      - 'lib/services/space_sharing_service.dart'
+      - 'lib/services/note_task_service.dart'
+      - 'lib/services/note_navigation_service.dart'
+      - 'lib/services/note_collection_service.dart'
+      - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
+      - 'lib/main.dart'
       - 'lib/widgets/markdown_preview.dart'
       - 'test/**/evernote*.dart'
       - 'test/**/enex*.dart'
       - 'test/pages/import_page_test.dart'
       - 'test/pages/note_editor_page_test.dart'
+      - 'test/pages/note_tasks_page_test.dart'
+      - 'test/pages/note_navigation_page_test.dart'
+      - 'test/pages/note_collections_page_test.dart'
+      - 'test/pages/space_sharing_page_test.dart'
+      - 'test/services/note_collection_service_test.dart'
+      - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
       - 'pubspec.yaml'
       - 'pubspec.lock'
       - 'docs/CLOUD_FIRST_DEVELOPMENT.md'
       - 'docs/technical/EVERNOTE_*.md'
+      - 'supabase/migrations/*evernote*.sql'
+      - 'supabase/tests/evernote_*.sql'
       - '.github/workflows/evernote-migration-cloud-check.yml'
   push:
     branches:
@@ -28,17 +46,35 @@ on:
       - 'lib/**/enex*.dart'
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
+      - 'lib/pages/note_tasks_page.dart'
+      - 'lib/pages/note_navigation_page.dart'
+      - 'lib/pages/note_collections_page.dart'
+      - 'lib/pages/space_sharing_page.dart'
+      - 'lib/services/space_sharing_service.dart'
+      - 'lib/services/note_task_service.dart'
+      - 'lib/services/note_navigation_service.dart'
+      - 'lib/services/note_collection_service.dart'
+      - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
+      - 'lib/main.dart'
       - 'lib/widgets/markdown_preview.dart'
       - 'test/**/evernote*.dart'
       - 'test/**/enex*.dart'
       - 'test/pages/import_page_test.dart'
       - 'test/pages/note_editor_page_test.dart'
+      - 'test/pages/note_tasks_page_test.dart'
+      - 'test/pages/note_navigation_page_test.dart'
+      - 'test/pages/note_collections_page_test.dart'
+      - 'test/pages/space_sharing_page_test.dart'
+      - 'test/services/note_collection_service_test.dart'
+      - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
       - 'pubspec.yaml'
       - 'pubspec.lock'
       - 'docs/technical/EVERNOTE_*.md'
+      - 'supabase/migrations/*evernote*.sql'
+      - 'supabase/tests/evernote_*.sql'
       - '.github/workflows/evernote-migration-cloud-check.yml'
   workflow_dispatch:
     inputs:
@@ -132,10 +168,30 @@ jobs:
             printf '%s\n' \
               lib/pages/import_page.dart \
               lib/pages/note_editor_page.dart \
+              lib/pages/note_tasks_page.dart \
+              lib/pages/note_navigation_page.dart \
+              lib/pages/note_collections_page.dart \
+              lib/pages/space_sharing_page.dart \
+              lib/pages/note_tags_page.dart \
+              lib/services/note_task_service.dart \
+              lib/services/note_tag_hierarchy_service.dart \
+              lib/services/note_navigation_service.dart \
+              lib/services/note_collection_service.dart \
+              lib/services/space_sharing_service.dart \
+              lib/widgets/note_tasks_panel.dart \
               lib/pages/note_list_page.dart \
+              lib/main.dart \
               lib/widgets/markdown_preview.dart \
               test/pages/import_page_test.dart \
               test/pages/note_editor_page_test.dart \
+              test/pages/note_tasks_page_test.dart \
+              test/pages/note_navigation_page_test.dart \
+              test/pages/note_collections_page_test.dart \
+              test/pages/space_sharing_page_test.dart \
+              test/pages/note_tags_page_test.dart \
+              test/services/note_collection_service_test.dart \
+              test/services/note_tag_hierarchy_service_test.dart \
+              test/widgets/note_tasks_panel_test.dart \
               test/pages/note_list_page_test.dart \
               test/widgets/markdown_preview_test.dart
           } | while IFS= read -r file; do
@@ -172,6 +228,14 @@ jobs:
           if [ -s .ci-logs/evernote-cloud-format.patch ]; then
             echo 'mismatch=true' >> "$GITHUB_OUTPUT"
             echo "::warning::Formatting or pubspec.lock differs; download the patch artifact."
+            patch_bytes="$(wc -c < .ci-logs/evernote-cloud-format.patch)"
+            if [ "$patch_bytes" -le 100000 ]; then
+              echo "::group::Cloud formatting patch"
+              cat .ci-logs/evernote-cloud-format.patch
+              echo "::endgroup::"
+            else
+              echo "::warning::Formatting patch is too large to print safely."
+            fi
           else
             echo 'mismatch=false' >> "$GITHUB_OUTPUT"
           fi
@@ -214,3 +278,77 @@ jobs:
         run: |
           echo "::error::Apply and review the evernote-cloud-format-patch artifact."
           exit 1
+
+
+  hierarchy-db-contract:
+    name: Evernote hierarchy, navigation, nested-tag, history, and Task database contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - name: Checkout immutable event revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Apply hierarchy, navigation, nested-tag, history, and Task migrations to disposable Postgres
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install --yes postgresql-client
+          fi
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_collections_bootstrap.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831005351_add_evernote_note_collections.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831010954_add_evernote_note_history_gate.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831014500_add_evernote_note_tasks_gate.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831023000_add_note_task_assignees.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831031500_add_note_feature_notifications.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831040000_add_evernote_navigation_inventory.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831041000_add_evernote_nested_tags.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831050000_add_evernote_note_collection_management.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831060000_add_evernote_space_sharing.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_collections_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_collection_management_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_space_sharing_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_nested_tags_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_navigation_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_tasks_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_history_contract.sql

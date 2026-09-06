@@ -16,4 +16,21 @@ void main() {
     expect(kIsWeb, isFalse);
     expect(notificationSchedulingSupported, isTrue);
   });
+
+  test('note reminder IDs are stable and source-specific', () {
+    final first = NotificationService.noteFeatureReminderIdForSource(
+      'task-reminder:abc',
+    );
+    final repeated = NotificationService.noteFeatureReminderIdForSource(
+      'task-reminder:abc',
+    );
+    final other = NotificationService.noteFeatureReminderIdForSource(
+      'note-reminder:abc',
+    );
+
+    expect(first, repeated);
+    expect(first, isNot(other));
+    expect(first, inInclusiveRange(1100000000, 1899999999));
+  });
 }
+

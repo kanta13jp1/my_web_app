@@ -122,8 +122,11 @@ class ImportPreviewResult {
 
   bool get usedEdgeFunction => previewMode == 'edge-function';
 
-  String get previewModeLabel =>
-      usedEdgeFunction ? 'Edge Function preview' : 'Local fallback preview';
+  String get previewModeLabel => switch (previewMode) {
+        'edge-function' => 'Edge Function preview',
+        'local-streaming' => 'Memory-bounded streaming preview',
+        _ => 'Local fallback preview',
+      };
 
   bool get canCommit => commitBlockedReason == null;
 
@@ -211,6 +214,54 @@ class ImportService {
             'Edge Function preview is unavailable right now, so a local preview was used.',
       );
     }
+  }
+
+  Future<ImportPreviewResult> buildEvernoteStreamingPreview({
+    required String fileName,
+    required Stream<List<int>> source,
+    int? totalBytes,
+    void Function(int processedBytes, int? totalBytes)? onProgress,
+  }) async {
+    final notes = <ImportedNoteDraft>[];
+    var hasEmptyResource = false;
+    final summary = await _evernoteEnexParser.parseStream(
+      source,
+      totalBytes: totalBytes,
+      onProgress: onProgress,
+      onNote: (note) {
+        if (note.resources.any((resource) => resource.data.isEmpty)) {
+          hasEmptyResource = true;
+        }
+        notes.add(
+          _toStreamingEvernotePreviewDraft(
+            note,
+            includeContentSample: notes.length < 12,
+          ),
+        );
+      },
+    );
+    final commitBlockedReason =
+        summary.warnings.isNotEmpty || hasEmptyResource
+            ? 'Evernote commit remains paused because at least one attachment '
+                'could not be decoded without warnings.'
+            : null;
+
+    return ImportPreviewResult(
+      sourceType: 'evernote',
+      sourceLabel: 'Evernote',
+      fileName: fileName,
+      notes: List<ImportedNoteDraft>.unmodifiable(notes),
+      warnings: <String>[
+        'Memory-bounded streaming preview parsed ${summary.noteCount} note(s).',
+        'Only the first 12 note previews retain up to 2,000 characters; all note ids and hashes remain available for verification.',
+        '${summary.resourceCount} attachment resource(s) were detected.',
+        ...summary.warnings,
+      ],
+      previewMode: 'local-streaming',
+      sourceExportSha256: summary.exportSha256,
+      resourceCount: summary.resourceCount,
+      commitBlockedReason: commitBlockedReason,
+    );
   }
 
   /// Notion API トークンを使って直接ページ一覧をプレビュー取得する。
@@ -438,7 +489,7 @@ class ImportService {
   ImportedNoteDraft _toImportedEvernoteDraft(EvernoteEnexNote note) {
     return ImportedNoteDraft(
       title: note.title,
-      content: note.plainText,
+      content: note.markdownText,
       source: 'evernote',
       tags: note.tags,
       sourceId: note.sourceId,
@@ -447,6 +498,31 @@ class ImportService {
       sourceContentSha256: note.contentSha256,
       sourceResourceCount: note.resources.length,
       sourceMetadata: note.toImportMetadata(),
+    );
+  }
+
+  ImportedNoteDraft _toStreamingEvernotePreviewDraft(
+    EvernoteEnexNote note, {
+    required bool includeContentSample,
+  }) {
+    final contentSample = includeContentSample
+        ? String.fromCharCodes(note.markdownText.runes.take(2000))
+        : '';
+    return ImportedNoteDraft(
+      title: note.title,
+      content: contentSample,
+      source: 'evernote',
+      tags: note.tags,
+      sourceId: note.sourceId,
+      sourceCreatedAt: note.createdAt,
+      sourceUpdatedAt: note.updatedAt,
+      sourceContentSha256: note.contentSha256,
+      sourceResourceCount: note.resources.length,
+      sourceMetadata: <String, dynamic>{
+        'streaming_preview': true,
+        'preview_sample': includeContentSample,
+        'preview_content_truncated': contentSample != note.markdownText,
+      },
     );
   }
 

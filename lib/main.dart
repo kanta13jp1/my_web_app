@@ -59,6 +59,8 @@ import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/competitor_browse_page.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
+import 'package:my_web_app/pages/note_navigation_page.dart';
+import 'package:my_web_app/pages/note_tasks_page.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
 import 'package:my_web_app/pages/legal_document_page.dart';
 import 'package:my_web_app/pages/privacy_policy_page.dart';
@@ -1174,6 +1176,16 @@ Route<dynamic> generateAppRoute(
       // Win版#110: feature_releases から「ノート」deep link
       return MaterialPageRoute(
         builder: (_) => const NoteListPage(),
+        settings: settings,
+      );
+    case '/note-tasks':
+      return MaterialPageRoute(
+        builder: (_) => const NoteTasksPage(),
+        settings: settings,
+      );
+    case '/note-navigation':
+      return MaterialPageRoute(
+        builder: (_) => const NoteNavigationPage(),
         settings: settings,
       );
     case '/asset-management':
