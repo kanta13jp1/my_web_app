@@ -31,7 +31,9 @@ class _MonthlyRepository extends SharedPreferencesAssetLiabilityRepository {
   );
 
   @override
-  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async => state;
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    return state;
+  }
 
   @override
   Future<void> saveMonth({
@@ -46,12 +48,16 @@ class _EmptyHistory extends AssetManagementAiAnalysisHistoryService {
   @override
   Future<List<AssetManagementAiAnalysisHistoryEntry>> loadRecent({
     int limit = 5,
-  }) async => <AssetManagementAiAnalysisHistoryEntry>[];
+  }) async {
+    return <AssetManagementAiAnalysisHistoryEntry>[];
+  }
 
   @override
   Future<AssetManagementAiAnalysisHistoryEntry?> loadLatestForBaseDate({
     required String reportBaseDate,
-  }) async => null;
+  }) async {
+    return null;
+  }
 
   @override
   Future<void> saveResult({
