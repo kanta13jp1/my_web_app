@@ -144,6 +144,7 @@ jobs:
           python scripts/classify_ci_changes_test.py
           python scripts/cloud_ci_handoff_test.py
           python scripts/cloud_first_route_test.py
+          python -m unittest scripts/kg_index_common_test.py scripts/kg_index_workflow_test.py
           python scripts/generate_infrastructure_map_test.py
           python scripts/cicd_efficiency_test.py
           python scripts/pre_commit_quality_gate_test.py
