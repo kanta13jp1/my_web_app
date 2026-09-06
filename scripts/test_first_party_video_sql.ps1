@@ -12,12 +12,14 @@ $authorizationMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/202
 $authorizationRetryMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830123038_allow_authorized_video_retry_after_failure.sql'
 $authorizationRetryIndexMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830123552_allow_authorized_video_retry_index.sql'
 $pendingAuthorizationMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830162041_persist_pending_video_improvement_authorizations.sql'
+$authorizedReviewMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260902090000_add_authorized_video_review_rpc.sql'
 $publicationFixturePath = Join-Path $repositoryRoot 'supabase/tests/video_publication_pre_migration.sql'
 $publicationMigrationPath = Join-Path $repositoryRoot 'supabase/migrations/20260830151707_create_video_publication_authorizations.sql'
 $bootstrapPath = Join-Path $repositoryRoot 'supabase/tests/video_service_bootstrap.sql'
 $contractPath = Join-Path $repositoryRoot 'supabase/tests/first_party_video_service_contract.sql'
 $artifactContractPath = Join-Path $repositoryRoot 'supabase/tests/video_artifact_review_loop_contract.sql'
 $authorizationContractPath = Join-Path $repositoryRoot 'supabase/tests/video_improvement_authorization_contract.sql'
+$authorizedReviewContractPath = Join-Path $repositoryRoot 'supabase/tests/video_authorized_artifact_review_contract.sql'
 $publicationContractPath = Join-Path $repositoryRoot 'supabase/tests/video_publication_authorization_contract.sql'
 
 try {
@@ -54,11 +56,13 @@ try {
       $authorizationRetryMigrationPath,
       $authorizationRetryIndexMigrationPath,
       $pendingAuthorizationMigrationPath,
+      $authorizedReviewMigrationPath,
       $publicationFixturePath,
       $publicationMigrationPath,
       $contractPath,
       $artifactContractPath,
       $authorizationContractPath,
+      $authorizedReviewContractPath,
       $publicationContractPath
     )) {
     Get-Content -LiteralPath $sqlPath -Raw |

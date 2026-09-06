@@ -50,6 +50,13 @@ import {
   DEFAULT_CAPTION_STYLE,
   DEFAULT_CAPTION_TIMING,
 } from "./captions.ts";
+import {
+  type HedraBatchVariant,
+  normalizeHedraBatchResponse,
+  parseHedraBatchSize,
+  parseHedraGenerationIds,
+  withHedraBatchSize,
+} from "./hedra_batch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -320,6 +327,17 @@ serve(async (req) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
     });
+    const accessToken = bearerToken(req.headers.get("Authorization"));
+    if (!accessToken) {
+      return jsonRes({ error: "Authentication required" }, 401);
+    }
+    const { data: authData, error: authError } = await admin.auth.getUser(
+      accessToken,
+    );
+    if (authError || !authData.user) {
+      return jsonRes({ error: "Invalid authentication" }, 401);
+    }
+    const authenticatedUserId = authData.user.id;
 
     if (req.method === "GET") {
       const url = new URL(req.url);
@@ -339,6 +357,7 @@ serve(async (req) => {
         const { data } = await admin
           .from("viral_ad_generations")
           .select("*")
+          .eq("user_id", authenticatedUserId)
           .order("created_at", { ascending: false })
           .limit(20);
         return jsonRes({ success: true, history: data ?? [] });
@@ -367,6 +386,10 @@ serve(async (req) => {
       imageUrl?: string;
       generatedImageUrl?: string;
       hedraGenerationId?: string;
+      hedraGenerationIds?: string[];
+      hedraBatchGenerationId?: string;
+      batchSize?: number;
+      confirmBatchCost?: boolean;
       falRequestId?: string;
       preferredModel?: string;
       creativePipeline?: string[];
@@ -375,6 +398,65 @@ serve(async (req) => {
     const templateKey = body.template ?? "dark_war";
     const lang = (body.lang ?? "ja") as "ja" | "en";
     const type = body.type ?? "image";
+    let hedraBatchSize: number;
+    try {
+      hedraBatchSize = parseHedraBatchSize(body.batchSize);
+    } catch (error) {
+      return jsonRes({ error: String(error) }, 400);
+    }
+    if (type !== "presenter_video" && hedraBatchSize !== 1) {
+      return jsonRes({
+        error: "batchSize is supported only for presenter_video",
+      }, 400);
+    }
+    let requestedHedraGenerationIds = parseHedraGenerationIds(
+      body.hedraGenerationIds,
+    );
+    const requestedHedraBatchGenerationId = firstNonEmptyString(
+      body.hedraBatchGenerationId,
+    );
+    const isHedraBatchStatusPoll = requestedHedraBatchGenerationId != null ||
+      requestedHedraGenerationIds.length > 0;
+    if (
+      hedraBatchSize > 1 && !isHedraBatchStatusPoll &&
+      body.confirmBatchCost !== true
+    ) {
+      return jsonRes({
+        error:
+          "confirmBatchCost=true is required when batchSize is greater than 1",
+      }, 400);
+    }
+    if (isHedraBatchStatusPoll) {
+      if (
+        requestedHedraBatchGenerationId == null ||
+        requestedHedraBatchGenerationId.length > 200
+      ) {
+        return jsonRes({
+          error: "hedraBatchGenerationId is required for batch polling",
+        }, 400);
+      }
+      const { data: ownedBatch, error: ownedBatchError } = await admin
+        .from("viral_ad_generations")
+        .select("batch_size,batch_results")
+        .eq("user_id", authenticatedUserId)
+        .eq("batch_generation_id", requestedHedraBatchGenerationId)
+        .maybeSingle();
+      if (ownedBatchError || !ownedBatch) {
+        return jsonRes({ error: "Hedra batch group not found" }, 404);
+      }
+      const storedBatch = normalizeHedraBatchResponse({
+        batch_size: ownedBatch.batch_size,
+        batch_results: ownedBatch.batch_results,
+      });
+      requestedHedraGenerationIds = storedBatch.generationIds;
+      hedraBatchSize = parseHedraBatchSize(ownedBatch.batch_size);
+      if (requestedHedraGenerationIds.length === 0) {
+        return jsonRes(
+          { error: "Hedra batch group has no generation IDs" },
+          409,
+        );
+      }
+    }
     const preferredModel = typeof body.preferredModel === "string" &&
         body.preferredModel.trim().length > 0
       ? body.preferredModel.trim()
@@ -410,7 +492,9 @@ serve(async (req) => {
     const caption = script.join("\n") + "\n\n" + hashtags.join(" ");
     const imagePrompt = body.customPrompt ?? template.imagePrompt;
 
-    let generatedImageUrl: string | null = null;
+    let generatedImageUrl: string | null = type === "presenter_video"
+      ? firstNonEmptyString(body.generatedImageUrl, body.imageUrl)
+      : null;
     let generatedVideoUrl: string | null = null;
     let generatedPreviewUrl: string | null = null;
     let generatedDownloadUrl: string | null = null;
@@ -424,6 +508,9 @@ serve(async (req) => {
     let storedAudioPath: string | null = null;
     let videoAudioProvider: string | null = null;
     let hedraGenerationId: string | null = null;
+    let hedraBatchGenerationId: string | null = null;
+    let hedraGenerationIds: string[] = [];
+    let hedraBatchResults: HedraBatchVariant[] = [];
     let hedraProgress: number | null = null;
     let hedraEtaSec: number | null = null;
     let captionStatus: string | null = null;
@@ -470,7 +557,14 @@ serve(async (req) => {
           const existingGenerationId = firstNonEmptyString(
             body.hedraGenerationId,
           );
-          const hedraVideo = existingGenerationId
+          const hedraVideo = isHedraBatchStatusPoll
+            ? await getHedraBatchGenerationStatus(
+              HEDRA_API_KEY,
+              requestedHedraGenerationIds,
+              requestedHedraBatchGenerationId,
+              hedraBatchSize,
+            )
+            : existingGenerationId
             ? await getHedraGenerationStatus(
               HEDRA_API_KEY,
               existingGenerationId,
@@ -488,6 +582,7 @@ serve(async (req) => {
               ),
               lang,
               requiresUploadedAudio: templateKey === "ai_secretary_site_tour",
+              batchSize: hedraBatchSize,
             });
           generatedVideoUrl = hedraVideo.videoUrl;
           generatedPreviewUrl = hedraVideo.previewUrl;
@@ -499,12 +594,19 @@ serve(async (req) => {
           storedAudioPath = hedraVideo.storedAudioPath ?? null;
           videoAudioProvider = hedraVideo.audioProvider ?? null;
           hedraGenerationId = hedraVideo.id;
+          hedraBatchGenerationId = hedraVideo.batchGenerationId;
+          hedraGenerationIds = hedraVideo.generationIds;
+          hedraBatchResults = hedraVideo.batchResults;
           hedraProgress = hedraVideo.progress;
           hedraEtaSec = hedraVideo.etaSec;
-          const rawVideoUrl = firstNonEmptyString(
-            hedraVideo.videoUrl,
-            hedraVideo.downloadUrl,
-          );
+          const rawVideoUrl = hedraVideo.batchResults.some(
+              isHedraBatchVariantPending,
+            )
+            ? null
+            : firstNonEmptyString(
+              hedraVideo.videoUrl,
+              hedraVideo.downloadUrl,
+            );
           // Hedra 生成 mp4 を Storage へ保存する前に、muted-autoplay 向けの字幕を
           // 焼き込む。フラグ未設定/失敗時は素の mp4 (rawVideoUrl) をそのまま保存する。
           let videoToStore = rawVideoUrl;
@@ -540,6 +642,14 @@ serve(async (req) => {
             storedVideoUrl = stored?.url ?? null;
             storedVideoPath = stored?.path ?? null;
             generatedVideoUrl = storedVideoUrl ?? generatedVideoUrl;
+            if (generatedVideoUrl && hedraBatchResults.length > 0) {
+              hedraBatchResults = hedraBatchResults.map((variant, index) =>
+                variant.id === hedraVideo.id ||
+                  (hedraVideo.id == null && index === 0)
+                  ? { ...variant, videoUrl: generatedVideoUrl }
+                  : variant
+              );
+            }
           }
           if (!generatedVideoUrl) {
             videoReason = videoReason ?? "Hedra video is not complete yet";
@@ -634,7 +744,12 @@ serve(async (req) => {
       }
     }
 
-    const generationStatus = generatedVideoUrl != null
+    const hasPendingHedraBatch = hedraBatchResults.some((variant) =>
+      isHedraBatchVariantPending(variant)
+    );
+    const generationStatus = hasPendingHedraBatch
+      ? "processing"
+      : generatedVideoUrl != null
       ? "video_ready"
       : generatedImageUrl != null
       ? "ready"
@@ -646,29 +761,46 @@ serve(async (req) => {
     // 生成履歴をDBに記録
     let recordId: string | null = null;
     try {
-      const { data: inserted } = await admin
-        .from("viral_ad_generations")
-        .insert({
-          template_key: templateKey,
-          lang,
-          type,
-          script: JSON.stringify(script),
-          caption,
-          image_prompt: imagePrompt,
-          generated_image_url: generatedImageUrl,
-          generated_video_url: storedVideoUrl ?? generatedVideoUrl,
-          generated_preview_url: generatedPreviewUrl,
-          generated_download_url: generatedDownloadUrl,
-          fal_job_id: falJobId,
-          hashtags,
-          video_provider: videoProvider,
-          video_status: videoStatus,
-          video_reason: videoReason,
-          status: generationStatus,
-        })
-        .select("id")
-        .single();
-      recordId = inserted?.id ?? null;
+      const historyRecord = {
+        template_key: templateKey,
+        user_id: authenticatedUserId,
+        lang,
+        type,
+        script: JSON.stringify(script),
+        caption,
+        image_prompt: imagePrompt,
+        generated_image_url: generatedImageUrl,
+        generated_video_url: storedVideoUrl ?? generatedVideoUrl,
+        generated_preview_url: generatedPreviewUrl,
+        generated_download_url: generatedDownloadUrl,
+        fal_job_id: falJobId,
+        hashtags,
+        video_provider: videoProvider,
+        video_status: videoStatus,
+        video_reason: videoReason,
+        status: generationStatus,
+        batch_generation_id: hedraBatchGenerationId,
+        batch_size: hedraBatchSize,
+        batch_results: hedraBatchResults,
+      };
+      if (isHedraBatchStatusPoll && hedraBatchGenerationId) {
+        const { data: updated } = await admin
+          .from("viral_ad_generations")
+          .update(historyRecord)
+          .eq("user_id", authenticatedUserId)
+          .eq("batch_generation_id", hedraBatchGenerationId)
+          .select("id")
+          .maybeSingle();
+        recordId = updated?.id ?? null;
+      }
+      if (recordId == null) {
+        const { data: inserted } = await admin
+          .from("viral_ad_generations")
+          .insert(historyRecord)
+          .select("id")
+          .single();
+        recordId = inserted?.id ?? null;
+      }
     } catch (_e) {
       // テーブル未作成の場合は続行
     }
@@ -695,6 +827,10 @@ serve(async (req) => {
       storedAudioPath,
       videoAudioProvider,
       hedraGenerationId,
+      hedraGenerationIds,
+      hedraBatchGenerationId,
+      hedraBatchSize,
+      hedraBatchResults,
       hedraProgress,
       hedraEtaSec,
       falJobId,
@@ -718,6 +854,8 @@ serve(async (req) => {
         ? "Call x-media-post with this videoUrl and caption to post to X"
         : generatedImageUrl != null
         ? "Call x-media-post with this imageUrl and caption to post to X"
+        : hedraGenerationIds.length > 0
+        ? "Hedra generation is still processing. Poll again with hedraGenerationIds."
         : hedraGenerationId != null
         ? "Hedra generation is still processing. Poll again with hedraGenerationId."
         : type === "cinematic_video" && videoStatus === "processing"
@@ -746,6 +884,11 @@ function jsonRes(data: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function bearerToken(header: string | null): string | null {
+  const match = header?.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || null;
 }
 
 function defaultVoiceForLang(lang: "ja" | "en"): string {
@@ -813,6 +956,10 @@ type HedraVideoResult = {
   progress: number | null;
   etaSec: number | null;
   reason: string | null;
+  batchGenerationId: string | null;
+  batchSize: number;
+  generationIds: string[];
+  batchResults: HedraBatchVariant[];
 };
 
 async function createHedraPresenterVideo(params: {
@@ -825,6 +972,7 @@ async function createHedraPresenterVideo(params: {
   imageUrl: string | null;
   lang: "ja" | "en";
   requiresUploadedAudio?: boolean;
+  batchSize: number;
 }): Promise<HedraVideoResult> {
   const rawImageUrl = firstNonEmptyString(params.imageUrl);
   if (!rawImageUrl) {
@@ -997,6 +1145,7 @@ async function createHedraVideoFromUploadedAudio(
     prompt: string;
     voice: string;
     lang: "ja" | "en";
+    batchSize: number;
   },
   media: {
     audioGeneration: Record<string, unknown>;
@@ -1007,7 +1156,7 @@ async function createHedraVideoFromUploadedAudio(
     fallbackText: string;
   },
 ): Promise<HedraVideoResult> {
-  const generationBody: Record<string, unknown> = {
+  const generationBody = withHedraBatchSize({
     type: "video",
     ai_model_id: HEDRA_AVATAR_MODEL_ID,
     start_keyframe_url: media.imageUrl,
@@ -1018,7 +1167,7 @@ async function createHedraVideoFromUploadedAudio(
       resolution: "540p",
       enhance_prompt: true,
     },
-  };
+  }, params.batchSize);
   let payload: unknown;
   // Hedra は audio_generation.type="audio" (URL渡し) を拒否するため、
   // アップロード音声は歴史的に実績のあるアセット方式 (audio_id) を最優先で使う。
@@ -1030,25 +1179,41 @@ async function createHedraVideoFromUploadedAudio(
   // 応答から asset 失敗理由が見えず、壊れた text_to_speech の 400 だけが表面化していた)。
   let assetFailureReason: string | null = null;
   if (uploadedAudioUrl) {
+    let audioAssetId: string | null = null;
     for (let attempt = 1; attempt <= 2; attempt += 1) {
       try {
-        const audioAssetId = await createHedraAudioAssetFromUrl(
+        audioAssetId = await createHedraAudioAssetFromUrl(
           params.apiKey,
           uploadedAudioUrl,
           `${storageSafeSegment(params.title ?? "share-update")}.mp3`,
         );
-        const assetBody: Record<string, unknown> = {
-          type: "video",
-          ai_model_id: HEDRA_AVATAR_MODEL_ID,
-          start_keyframe_url: media.imageUrl,
-          audio_id: audioAssetId,
-          generated_video_inputs: {
-            text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
-            aspect_ratio: "16:9",
-            resolution: "540p",
-            enhance_prompt: true,
-          },
-        };
+        break;
+      } catch (assetError) {
+        assetFailureReason = providerErrorMessage(assetError);
+        console.error(
+          `[vvag-asset] Hedra audio asset creation failed (attempt ${attempt}/2)`,
+          assetFailureReason,
+        );
+        if (isHedraInsufficientCreditsError(assetError)) {
+          throw new Error(hedraInsufficientCreditsMessage(assetError));
+        }
+        if (attempt < 2) await delay(1500);
+      }
+    }
+    if (audioAssetId) {
+      const assetBody = withHedraBatchSize({
+        type: "video",
+        ai_model_id: HEDRA_AVATAR_MODEL_ID,
+        start_keyframe_url: media.imageUrl,
+        audio_id: audioAssetId,
+        generated_video_inputs: {
+          text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
+          aspect_ratio: "16:9",
+          resolution: "540p",
+          enhance_prompt: true,
+        },
+      }, params.batchSize);
+      try {
         const assetPayload = await hedraJsonRequest(
           params.apiKey,
           "/generations",
@@ -1064,18 +1229,13 @@ async function createHedraVideoFromUploadedAudio(
           storedAudioPath: media.storedAudioPath,
           audioProvider: media.audioProvider,
         };
-      } catch (assetError) {
-        assetFailureReason = providerErrorMessage(assetError);
-        console.error(
-          `[vvag-asset] Hedra audio asset flow failed (attempt ${attempt}/2)`,
-          assetFailureReason,
-        );
-        // クレジット不足(402)はリトライや text_to_speech フォールバックでも必ず失敗し、
-        // 追加でクレジットを消費するだけ。即座に明確なメッセージで打ち切る。
-        if (isHedraInsufficientCreditsError(assetError)) {
-          throw new Error(hedraInsufficientCreditsMessage(assetError));
+      } catch (generationError) {
+        if (isHedraInsufficientCreditsError(generationError)) {
+          throw new Error(hedraInsufficientCreditsMessage(generationError));
         }
-        if (attempt < 2) await delay(1500);
+        // A generation submission can be charged even if its response or a
+        // later status request fails. Never auto-submit a second batch here.
+        throw generationError;
       }
     }
   }
@@ -1804,10 +1964,44 @@ async function getHedraGenerationStatus(
   return { ...normalized, id: normalized.id ?? generationId };
 }
 
+async function getHedraBatchGenerationStatus(
+  apiKey: string,
+  generationIds: string[],
+  batchGenerationId: string | null,
+  batchSize: number,
+): Promise<HedraVideoResult> {
+  const results = await Promise.all(
+    generationIds.map((generationId) =>
+      getHedraGenerationStatus(apiKey, generationId)
+    ),
+  );
+  return combineHedraBatchResults(
+    results,
+    batchGenerationId,
+    batchSize,
+  );
+}
+
 async function pollHedraGeneration(
   apiKey: string,
   initial: HedraVideoResult,
 ): Promise<HedraVideoResult> {
+  if (initial.generationIds.length > 1) {
+    let current = initial;
+    for (const delayMs of [3000, 5000, 8000, 10000, 10000]) {
+      if (current.batchResults.every(isHedraBatchVariantTerminal)) {
+        return current;
+      }
+      await delay(delayMs);
+      current = await getHedraBatchGenerationStatus(
+        apiKey,
+        current.generationIds,
+        current.batchGenerationId,
+        current.batchSize,
+      );
+    }
+    return current;
+  }
   let current = initial;
   const generationId = current.id;
   if (!generationId || isHedraTerminal(current)) return current;
@@ -1817,6 +2011,67 @@ async function pollHedraGeneration(
     if (isHedraTerminal(current)) return current;
   }
   return current;
+}
+
+function combineHedraBatchResults(
+  results: HedraVideoResult[],
+  batchGenerationId: string | null,
+  batchSize: number,
+): HedraVideoResult {
+  const variants = results.map((result) => ({
+    id: result.id,
+    status: result.status,
+    videoUrl: result.videoUrl,
+    previewUrl: result.previewUrl,
+    downloadUrl: result.downloadUrl,
+    progress: result.progress,
+    etaSec: result.etaSec,
+    reason: result.reason,
+  }));
+  const primary =
+    results.find((result) =>
+      result.videoUrl != null || result.downloadUrl != null
+    ) ?? results[0];
+  const allTerminal = variants.every(isHedraBatchVariantTerminal);
+  const hasFailure = variants.some((variant) =>
+    ["failed", "error", "canceled", "cancelled"].includes(
+      variant.status.toLowerCase(),
+    )
+  );
+  return {
+    id: primary?.id ?? null,
+    status: allTerminal ? (hasFailure ? "partial" : "completed") : "processing",
+    videoUrl: primary?.videoUrl ?? null,
+    previewUrl: primary?.previewUrl ?? null,
+    downloadUrl: primary?.downloadUrl ?? null,
+    progress: variants.length === 0
+      ? null
+      : variants.reduce((sum, item) => sum + (item.progress ?? 0), 0) /
+        variants.length,
+    etaSec: variants
+      .map((item) => item.etaSec)
+      .filter((value): value is number => value != null)
+      .reduce((max, value) => Math.max(max, value), 0) || null,
+    reason:
+      results.map((result) => result.reason).find((reason) => reason != null) ??
+        null,
+    batchGenerationId,
+    batchSize,
+    generationIds: variants
+      .map((variant) => variant.id)
+      .filter((id): id is string => id != null),
+    batchResults: variants,
+  };
+}
+
+function isHedraBatchVariantTerminal(variant: HedraBatchVariant): boolean {
+  if (variant.videoUrl || variant.downloadUrl) return true;
+  return ["complete", "completed", "failed", "error", "canceled", "cancelled"]
+    .includes(variant.status.toLowerCase());
+}
+
+function isHedraBatchVariantPending(variant: HedraBatchVariant): boolean {
+  return !isHedraBatchVariantTerminal(variant);
 }
 
 function isHedraTerminal(result: HedraVideoResult): boolean {
@@ -1944,6 +2199,7 @@ async function hedraJsonRequest(
 }
 
 function normalizeHedraVideoResponse(payload: unknown): HedraVideoResult {
+  const batch = normalizeHedraBatchResponse(payload);
   const record = asRecord(payload) ?? {};
   const video = asRecord(record["video"]);
   const result = asRecord(record["result"]);
@@ -1952,22 +2208,29 @@ function normalizeHedraVideoResponse(payload: unknown): HedraVideoResult {
     : [];
   const firstBatchResult = asRecord(batchResults[0]);
   const asset = asRecord(record["asset"]);
+  const primaryBatchResult =
+    batch.variants.find((variant) =>
+      variant.videoUrl != null || variant.downloadUrl != null
+    ) ?? batch.variants[0];
   return {
     id: firstNonEmptyString(
       record["id"],
       record["generation_id"],
       record["video_id"],
+      primaryBatchResult?.id,
       firstBatchResult?.["id"],
       video?.["id"],
       result?.["id"],
     ),
     status: firstNonEmptyString(
       record["status"],
+      primaryBatchResult?.status,
       firstBatchResult?.["status"],
       video?.["status"],
       result?.["status"],
     ) ?? "submitted",
     videoUrl: firstNonEmptyString(
+      primaryBatchResult?.videoUrl,
       record["download_url"],
       record["url"],
       record["video_url"],
@@ -1978,6 +2241,7 @@ function normalizeHedraVideoResponse(payload: unknown): HedraVideoResult {
       result?.["download_url"],
     ),
     previewUrl: firstNonEmptyString(
+      primaryBatchResult?.previewUrl,
       record["preview_url"],
       record["streaming_url"],
       record["thumbnail_url"],
@@ -1985,16 +2249,22 @@ function normalizeHedraVideoResponse(payload: unknown): HedraVideoResult {
       result?.["preview_url"],
     ),
     downloadUrl: firstNonEmptyString(
+      primaryBatchResult?.downloadUrl,
       record["download_url"],
       video?.["download_url"],
       result?.["download_url"],
     ),
     progress: firstNumber(
       record["progress"],
+      primaryBatchResult?.progress,
       firstBatchResult?.["progress"],
       result?.["progress"],
     ),
-    etaSec: firstNumber(record["eta_sec"], result?.["eta_sec"]),
+    etaSec: firstNumber(
+      record["eta_sec"],
+      primaryBatchResult?.etaSec,
+      result?.["eta_sec"],
+    ),
     reason: firstNonEmptyString(
       record["error_message"],
       record["error"],
@@ -2002,6 +2272,10 @@ function normalizeHedraVideoResponse(payload: unknown): HedraVideoResult {
       result?.["error_message"],
       result?.["error"],
     ),
+    batchGenerationId: batch.batchGenerationId,
+    batchSize: batch.batchSize,
+    generationIds: batch.generationIds,
+    batchResults: batch.variants,
   };
 }
 

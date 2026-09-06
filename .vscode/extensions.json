@@ -2,6 +2,8 @@
   "recommendations": [
     "Dart-Code.dart-code",
     "Dart-Code.flutter",
+    "denoland.vscode-deno",
+    "redhat.java",
     "ms-azuretools.vscode-containers",
     "ms-vscode-remote.remote-containers"
   ]

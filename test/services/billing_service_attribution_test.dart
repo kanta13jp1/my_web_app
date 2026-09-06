@@ -80,4 +80,30 @@ void main() {
       'landing_touchpoint': 'touch_x_first_user_growth',
     });
   });
+
+  test('keeps Product Hunt attribution through auth and billing', () {
+    final attribution = BillingSupporterAttribution.fromUri(
+      Uri.parse('https://example.com/subscription-billing?entry=onboarding'),
+      fallbackTouchpoint:
+          GrowthAcquisitionService.touchProductHuntFirstUserGrowth,
+      firstUserAttribution: FirstUserGrowthAttribution(
+        visitorId: '00000000-0000-4000-8000-000000000003',
+        utmSource: 'producthunt',
+        utmMedium: 'launch',
+        utmCampaign: 'first_user_growth',
+        utmContent: 'ph_launch_v1',
+        capturedAt: DateTime.utc(2026, 9, 3),
+      ),
+    );
+
+    expect(attribution.toJson(), {
+      'utm_source': 'producthunt',
+      'utm_medium': 'launch',
+      'utm_campaign': 'first_user_growth',
+      'utm_content': 'ph_launch_v1',
+      'experiment_key': 'first_user_growth',
+      'variant': 'ph_launch_v1',
+      'landing_touchpoint': 'touch_producthunt_first_user_growth',
+    });
+  });
 }

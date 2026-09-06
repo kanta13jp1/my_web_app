@@ -1,8 +1,10 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  buildAiFeatureRoiDashboard,
   buildAiRouterCostDashboard,
   normalizeAiRouterPreference,
   normalizeAiRoutingTask,
+  parseAiFeatureRoiParameterInput,
 } from "./ai_router_cost_optimization.ts";
 
 Deno.test("normalizeAiRoutingTask groups common task aliases", () => {
@@ -114,4 +116,101 @@ Deno.test("normalizeAiRouterPreference ignores disabled or blank rows", () => {
     normalizeAiRouterPreference({ task: "summary", provider: "" }),
     null,
   );
+});
+
+Deno.test("buildAiFeatureRoiDashboard keeps unconfigured estimates honest", () => {
+  const dashboard = buildAiFeatureRoiDashboard([
+    {
+      usage_date: "2026-09-01",
+      feature_key: "summary",
+      request_count: 4,
+      success_count: 3,
+      api_cost_usd: 2,
+    },
+  ]);
+
+  assertEquals(dashboard.currency, "USD");
+  assertEquals(dashboard.overall.total_benefit_usd, 0);
+  assertEquals(dashboard.overall.net_benefit_usd, -2);
+  assertEquals(dashboard.overall.roi_pct, -100);
+  assertEquals(dashboard.features[0].parameters.hourly_value_usd, 0);
+});
+
+Deno.test("buildAiFeatureRoiDashboard calculates configurable benefit tiers", () => {
+  const dashboard = buildAiFeatureRoiDashboard(
+    [
+      {
+        usage_date: "2026-09-01",
+        feature_key: "summary",
+        request_count: 2,
+        success_count: 2,
+        api_cost_usd: 10,
+      },
+      {
+        usage_date: "2026-09-02",
+        feature_key: "summary",
+        request_count: 1,
+        success_count: 1,
+        api_cost_usd: 5,
+      },
+    ],
+    [{
+      feature_key: "Summary",
+      minutes_saved_per_success: 30,
+      hourly_value_usd: 60,
+      direct_cost_saving_usd_per_success: 5,
+      avoided_loss_usd_per_success: 2,
+      value_created_usd_per_success: 3,
+    }],
+  );
+
+  assertEquals(dashboard.overall.request_count, 3);
+  assertEquals(dashboard.overall.direct_cost_reduction_usd, 105);
+  assertEquals(dashboard.overall.avoided_loss_usd, 6);
+  assertEquals(dashboard.overall.value_created_usd, 9);
+  assertEquals(dashboard.overall.total_benefit_usd, 120);
+  assertEquals(dashboard.overall.net_benefit_usd, 105);
+  assertEquals(dashboard.overall.roi_pct, 700);
+  assertEquals(dashboard.daily_trend.length, 2);
+  assertEquals(dashboard.daily_trend[0].roi_pct, 700);
+});
+
+Deno.test("buildAiFeatureRoiDashboard leaves zero-cost ROI undefined", () => {
+  const dashboard = buildAiFeatureRoiDashboard(
+    [{
+      usage_date: "2026-09-01",
+      feature_key: "translation",
+      request_count: 1,
+      success_count: 1,
+      api_cost_usd: 0,
+    }],
+    [{
+      feature_key: "translation",
+      minutes_saved_per_success: 10,
+      hourly_value_usd: 30,
+      direct_cost_saving_usd_per_success: 0,
+      avoided_loss_usd_per_success: 0,
+      value_created_usd_per_success: 0,
+    }],
+  );
+
+  assertEquals(dashboard.overall.total_benefit_usd, 5);
+  assertEquals(dashboard.overall.roi_pct, null);
+});
+
+Deno.test("parseAiFeatureRoiParameterInput rejects invalid estimates", () => {
+  let error: unknown;
+  try {
+    parseAiFeatureRoiParameterInput({
+      feature_key: "summary",
+      minutes_saved_per_success: -1,
+      hourly_value_usd: 10,
+      direct_cost_saving_usd_per_success: 0,
+      avoided_loss_usd_per_success: 0,
+      value_created_usd_per_success: 0,
+    });
+  } catch (caught) {
+    error = caught;
+  }
+  assertEquals(error instanceof TypeError, true);
 });

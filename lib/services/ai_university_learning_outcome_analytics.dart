@@ -11,6 +11,11 @@ enum AiUniversityLearningOutcomeTask {
     provider: '01ai',
     category: 'news',
   ),
+  fireflyLatestInfo(
+    taskVersion: 'adobe_firefly_news_20260903_v1',
+    provider: 'adobe_firefly',
+    category: 'news',
+  ),
   modelSelection(
     taskVersion: '01ai_models_20260829_v1',
     provider: '01ai',
@@ -78,12 +83,36 @@ class AiUniversityLearningOutcomeAnalytics {
     'non_2xx_recovery_passed',
     'estimated_daily_requests',
     'completion_seconds',
+    'release_feature',
+    'output_kind',
+    'input_asset_count',
+    'legacy_workflow_minutes',
+    'latest_workflow_minutes',
+    'revision_count',
+    'usable_output',
+    'workplace_applicable',
+    'adoption_decision',
   };
   static const Set<String> allowedFireflyLearnerRoles = <String>{
     'developer',
     'operations',
     'creator',
     'product_owner',
+  };
+  static const Set<String> allowedFireflyLatestInfoFeatures = <String>{
+    'central_workspace',
+    'interfaces_batch',
+  };
+  static const Set<String> allowedFireflyOutputKinds = <String>{
+    'image',
+    'video',
+    'asset_batch',
+  };
+  static const Set<int> allowedFireflyInputAssetCounts = <int>{1, 10, 100, 500};
+  static const Set<String> allowedFireflyAdoptionDecisions = <String>{
+    'adopt',
+    'pilot',
+    'defer',
   };
 
   final AiUniversityLearningOutcomeWriter? _writer;
@@ -155,6 +184,66 @@ class AiUniversityLearningOutcomeAnalytics {
       'non_2xx_recovery_passed': non2xxRecoveryPassed,
       'estimated_daily_requests': estimatedDailyRequests,
       'completion_seconds': completionSeconds,
+    });
+  }
+
+  Future<bool> recordFireflyLatestInfoCompleted({
+    required int correctAnswers,
+    required int selfRating,
+    required String releaseFeature,
+    required String outputKind,
+    required int inputAssetCount,
+    required int legacyWorkflowMinutes,
+    required int latestWorkflowMinutes,
+    required int revisionCount,
+    required bool usableOutput,
+    required bool workplaceApplicable,
+    required String adoptionDecision,
+  }) {
+    if (task != AiUniversityLearningOutcomeTask.fireflyLatestInfo) {
+      return Future.value(false);
+    }
+    if (correctAnswers < 0 || correctAnswers > 3) return Future.value(false);
+    if (selfRating < 1 || selfRating > 5) return Future.value(false);
+    if (!allowedFireflyLatestInfoFeatures.contains(releaseFeature)) {
+      return Future.value(false);
+    }
+    if (!allowedFireflyOutputKinds.contains(outputKind)) {
+      return Future.value(false);
+    }
+    if (!allowedFireflyInputAssetCounts.contains(inputAssetCount)) {
+      return Future.value(false);
+    }
+    if (legacyWorkflowMinutes < 1 || legacyWorkflowMinutes > 120) {
+      return Future.value(false);
+    }
+    if (latestWorkflowMinutes < 1 || latestWorkflowMinutes > 120) {
+      return Future.value(false);
+    }
+    if (revisionCount < 0 || revisionCount > 20) {
+      return Future.value(false);
+    }
+    if (!allowedFireflyAdoptionDecisions.contains(adoptionDecision)) {
+      return Future.value(false);
+    }
+
+    return _record(<String, Object>{
+      'event_name': 'task_completed',
+      'task_version': task.taskVersion,
+      'provider': task.provider,
+      'category': task.category,
+      'correct_answers': correctAnswers,
+      'total_questions': 3,
+      'self_rating': selfRating,
+      'release_feature': releaseFeature,
+      'output_kind': outputKind,
+      'input_asset_count': inputAssetCount,
+      'legacy_workflow_minutes': legacyWorkflowMinutes,
+      'latest_workflow_minutes': latestWorkflowMinutes,
+      'revision_count': revisionCount,
+      'usable_output': usableOutput,
+      'workplace_applicable': workplaceApplicable,
+      'adoption_decision': adoptionDecision,
     });
   }
 

@@ -29,20 +29,27 @@ GitHub-hosted runner too:
 3. Set the sandbox default payment link domain to `localhost` in Paddle.
 4. Configure the Customer Portal value described in
    [`PADDLE_B2B_VAT_INVOICE_VERIFICATION.md`](PADDLE_B2B_VAT_INVOICE_VERIFICATION.md).
-5. Configure the B2B VAT values only when the Owner has a legitimate matching
-   VAT/Tax ID and explicitly authorizes its sandbox-only use. Paddle does not
-   provide a documented sandbox-specific identifier.
-6. Only then run **Paddle Sandbox Checkout Cloud Validation** manually with
-   **Run the real Paddle sandbox checkout and B2B VAT matrix** enabled.
+5. Run **Paddle Sandbox Checkout Cloud Validation** with
+   `run_real_sandbox_e2e=true` and `run_b2b_vat_e2e=false` (the default).
+   This runs cancel, declined-card, and success without any B2B settings.
+   Keep `run_static_validation=true` unless the same commit already passed
+   the static cloud job.
+6. Only when the Owner has a legitimate matching VAT/Tax ID and explicitly
+   authorizes its sandbox-only use, configure the B2B values and additionally
+   select `run_b2b_vat_e2e=true`. Both flags must be true for B2B testing.
 
-Without an authorized valid VAT/Tax ID, leave the real B2B job disabled. Do not
+Without an authorized valid VAT/Tax ID, keep `run_b2b_vat_e2e=false`.
+Paddle does not provide a documented sandbox-specific identifier. Do not
 substitute another company's identifier, Paddle's tax number, or an example
-value.
+value. A green basic matrix with B2B skipped does not verify VAT or reverse
+charge. Selecting B2B with missing configuration fails before SDK setup or
+checkout; it is never silently downgraded to a basic-only run.
 
 The real job builds a non-release app, serves it only on the runner's temporary
-`localhost:7357`, and runs the checkout and B2B VAT scenarios serially without retries. It
-uploads sanitized Paddle event data, the Playwright report, and screenshots
-after payment fields are no longer visible. Never put a Paddle API key in
+`localhost:7357`, and runs the selected scenarios serially without retries. It uploads sanitized
+Paddle event data, the Playwright report, and screenshots with checkout iframes
+masked (including any still-open failed-card form). Automatic screenshots,
+traces, and video remain disabled. Never put a Paddle API key in
 GitHub Actions or Flutter; this flow accepts only a `test_` client-side token.
 
 Keep local preflight work lightweight:

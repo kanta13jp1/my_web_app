@@ -2,8 +2,10 @@
   "private": true,
   "scripts": {
     "e2e": "playwright test",
-    "e2e:smoke": "playwright test test/e2e/public_smoke.spec.ts",
+    "e2e:smoke": "playwright test test/e2e/public_smoke.spec.ts test/e2e/generated/public_no_signup_trial.spec.ts",
+    "e2e:agents": "playwright test test/e2e/generated/public_no_signup_trial.spec.ts",
     "e2e:visual": "playwright test test/e2e/visual_evidence.spec.ts",
+    "e2e:visual:regression": "playwright test test/e2e/visual_regression.spec.ts",
     "workflow:guard": "python scripts/check_remote_synced.py --require-clean",
     "workflow:blog-publish": "bash scripts/t1-dispatch.sh",
     "hooks:install": "lefthook install --force",

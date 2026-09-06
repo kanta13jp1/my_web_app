@@ -35,6 +35,62 @@ export type AiRouterPreference = {
   updated_at: string | null;
 };
 
+export type AiFeatureUsageCostDailyRow = {
+  usage_date?: unknown;
+  feature_key?: unknown;
+  request_count?: unknown;
+  success_count?: unknown;
+  api_cost_usd?: unknown;
+};
+
+export type AiFeatureRoiParameterRow = {
+  feature_key?: unknown;
+  minutes_saved_per_success?: unknown;
+  hourly_value_usd?: unknown;
+  direct_cost_saving_usd_per_success?: unknown;
+  avoided_loss_usd_per_success?: unknown;
+  value_created_usd_per_success?: unknown;
+  updated_at?: unknown;
+};
+
+export type AiFeatureRoiParameters = {
+  feature_key: string;
+  minutes_saved_per_success: number;
+  hourly_value_usd: number;
+  direct_cost_saving_usd_per_success: number;
+  avoided_loss_usd_per_success: number;
+  value_created_usd_per_success: number;
+  updated_at: string | null;
+};
+
+export type AiFeatureRoiMetric = {
+  request_count: number;
+  success_count: number;
+  api_cost_usd: number;
+  direct_cost_reduction_usd: number;
+  avoided_loss_usd: number;
+  value_created_usd: number;
+  total_benefit_usd: number;
+  net_benefit_usd: number;
+  roi_pct: number | null;
+};
+
+export type AiFeatureRoiSummary = AiFeatureRoiMetric & {
+  feature_key: string;
+  parameters: AiFeatureRoiParameters;
+};
+
+export type AiFeatureRoiTrendPoint = AiFeatureRoiMetric & {
+  usage_date: string;
+};
+
+export type AiFeatureRoiDashboard = {
+  currency: "USD";
+  overall: AiFeatureRoiMetric;
+  features: AiFeatureRoiSummary[];
+  daily_trend: AiFeatureRoiTrendPoint[];
+};
+
 export type AiRouterCandidate = {
   task: string;
   provider: string;
@@ -100,6 +156,96 @@ const TASK_LABELS: Record<string, string> = {
   chat: "Chat",
   other: "Other",
 };
+
+const ROI_PARAMETER_LIMITS = {
+  minutes_saved_per_success: 1440,
+  hourly_value_usd: 10_000,
+  direct_cost_saving_usd_per_success: 1_000_000,
+  avoided_loss_usd_per_success: 1_000_000,
+  value_created_usd_per_success: 1_000_000,
+} as const;
+
+export function normalizeAiFeatureKey(value: unknown): string {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const compact = raw.replace(/[^a-z0-9_./:-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 64);
+  return compact || "unknown";
+}
+
+export function parseAiFeatureRoiParameterInput(
+  row: AiFeatureRoiParameterRow,
+): AiFeatureRoiParameters {
+  const normalized = normalizeAiFeatureRoiParameters(row);
+  for (const [key, maximum] of Object.entries(ROI_PARAMETER_LIMITS)) {
+    const raw = row[key as keyof AiFeatureRoiParameterRow];
+    const value = nullableNumber(raw);
+    if (value === null || value < 0 || value > maximum) {
+      throw new TypeError(`${key} must be between 0 and ${maximum}`);
+    }
+  }
+  return normalized;
+}
+
+export function buildAiFeatureRoiDashboard(
+  dailyRows: AiFeatureUsageCostDailyRow[],
+  parameterRows: AiFeatureRoiParameterRow[] = [],
+): AiFeatureRoiDashboard {
+  const parametersByFeature = new Map<string, AiFeatureRoiParameters>();
+  for (const row of parameterRows) {
+    const parameters = normalizeAiFeatureRoiParameters(row);
+    parametersByFeature.set(parameters.feature_key, parameters);
+  }
+
+  const rows = dailyRows.map((row) => ({
+    usageDate: textValue(row.usage_date).slice(0, 10),
+    featureKey: normalizeAiFeatureKey(row.feature_key),
+    requestCount: nonNegativeInteger(row.request_count),
+    successCount: nonNegativeInteger(row.success_count),
+    apiCostUsd: nonNegativeNumber(row.api_cost_usd),
+  })).filter((row) => row.usageDate.length === 10);
+
+  const featureKeys = new Set(parametersByFeature.keys());
+  for (const row of rows) featureKeys.add(row.featureKey);
+
+  const features = [...featureKeys].map((featureKey) => {
+    const parameters = parametersByFeature.get(featureKey) ??
+      emptyAiFeatureRoiParameters(featureKey);
+    const usage = sumUsage(rows.filter((row) => row.featureKey === featureKey));
+    return {
+      feature_key: featureKey,
+      parameters,
+      ...calculateRoiMetric(usage, parameters),
+    };
+  }).sort((a, b) =>
+    b.request_count - a.request_count ||
+    a.feature_key.localeCompare(b.feature_key)
+  );
+
+  const rowsByDate = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const list = rowsByDate.get(row.usageDate) ?? [];
+    list.push(row);
+    rowsByDate.set(row.usageDate, list);
+  }
+  const dailyTrend = [...rowsByDate.entries()].map(([usageDate, dateRows]) => {
+    const metrics = dateRows.map((row) =>
+      calculateRoiMetric(
+        sumUsage([row]),
+        parametersByFeature.get(row.featureKey) ??
+          emptyAiFeatureRoiParameters(row.featureKey),
+      )
+    );
+    return { usage_date: usageDate, ...sumRoiMetrics(metrics) };
+  }).sort((a, b) => a.usage_date.localeCompare(b.usage_date));
+
+  return {
+    currency: "USD",
+    overall: sumRoiMetrics(features),
+    features,
+    daily_trend: dailyTrend,
+  };
+}
 
 export function normalizeAiRoutingTask(value: unknown): string {
   const raw = String(value ?? "").trim().toLowerCase();
@@ -350,6 +496,140 @@ function minPositive(values: number[]): number | null {
   return finite.length === 0 ? null : Math.min(...finite);
 }
 
+function normalizeAiFeatureRoiParameters(
+  row: AiFeatureRoiParameterRow,
+): AiFeatureRoiParameters {
+  return {
+    feature_key: normalizeAiFeatureKey(row.feature_key),
+    minutes_saved_per_success: boundedNumber(
+      row.minutes_saved_per_success,
+      ROI_PARAMETER_LIMITS.minutes_saved_per_success,
+    ),
+    hourly_value_usd: boundedNumber(
+      row.hourly_value_usd,
+      ROI_PARAMETER_LIMITS.hourly_value_usd,
+    ),
+    direct_cost_saving_usd_per_success: boundedNumber(
+      row.direct_cost_saving_usd_per_success,
+      ROI_PARAMETER_LIMITS.direct_cost_saving_usd_per_success,
+    ),
+    avoided_loss_usd_per_success: boundedNumber(
+      row.avoided_loss_usd_per_success,
+      ROI_PARAMETER_LIMITS.avoided_loss_usd_per_success,
+    ),
+    value_created_usd_per_success: boundedNumber(
+      row.value_created_usd_per_success,
+      ROI_PARAMETER_LIMITS.value_created_usd_per_success,
+    ),
+    updated_at: textValue(row.updated_at) || null,
+  };
+}
+
+function emptyAiFeatureRoiParameters(
+  featureKey: string,
+): AiFeatureRoiParameters {
+  return {
+    feature_key: featureKey,
+    minutes_saved_per_success: 0,
+    hourly_value_usd: 0,
+    direct_cost_saving_usd_per_success: 0,
+    avoided_loss_usd_per_success: 0,
+    value_created_usd_per_success: 0,
+    updated_at: null,
+  };
+}
+
+type NormalizedUsage = {
+  requestCount: number;
+  successCount: number;
+  apiCostUsd: number;
+};
+
+function sumUsage(rows: NormalizedUsage[]): NormalizedUsage {
+  return rows.reduce((sum, row) => ({
+    requestCount: sum.requestCount + row.requestCount,
+    successCount: sum.successCount + row.successCount,
+    apiCostUsd: sum.apiCostUsd + row.apiCostUsd,
+  }), { requestCount: 0, successCount: 0, apiCostUsd: 0 });
+}
+
+function calculateRoiMetric(
+  usage: NormalizedUsage,
+  parameters: AiFeatureRoiParameters,
+): AiFeatureRoiMetric {
+  const laborValue = usage.successCount *
+    (parameters.minutes_saved_per_success / 60) *
+    parameters.hourly_value_usd;
+  const directCostReduction = laborValue + usage.successCount *
+      parameters.direct_cost_saving_usd_per_success;
+  const avoidedLoss = usage.successCount *
+    parameters.avoided_loss_usd_per_success;
+  const valueCreated = usage.successCount *
+    parameters.value_created_usd_per_success;
+  const totalBenefit = directCostReduction + avoidedLoss + valueCreated;
+  const netBenefit = totalBenefit - usage.apiCostUsd;
+  return {
+    request_count: usage.requestCount,
+    success_count: usage.successCount,
+    api_cost_usd: roundNumber(usage.apiCostUsd, 8),
+    direct_cost_reduction_usd: roundNumber(directCostReduction, 8),
+    avoided_loss_usd: roundNumber(avoidedLoss, 8),
+    value_created_usd: roundNumber(valueCreated, 8),
+    total_benefit_usd: roundNumber(totalBenefit, 8),
+    net_benefit_usd: roundNumber(netBenefit, 8),
+    roi_pct: usage.apiCostUsd > 0
+      ? roundNumber((netBenefit / usage.apiCostUsd) * 100, 2)
+      : null,
+  };
+}
+
+function sumRoiMetrics(
+  metrics: AiFeatureRoiMetric[],
+): AiFeatureRoiMetric {
+  const summed = metrics.reduce((sum, metric) => ({
+    request_count: sum.request_count + metric.request_count,
+    success_count: sum.success_count + metric.success_count,
+    api_cost_usd: sum.api_cost_usd + metric.api_cost_usd,
+    direct_cost_reduction_usd: sum.direct_cost_reduction_usd +
+      metric.direct_cost_reduction_usd,
+    avoided_loss_usd: sum.avoided_loss_usd + metric.avoided_loss_usd,
+    value_created_usd: sum.value_created_usd + metric.value_created_usd,
+    total_benefit_usd: sum.total_benefit_usd + metric.total_benefit_usd,
+    net_benefit_usd: sum.net_benefit_usd + metric.net_benefit_usd,
+    roi_pct: null,
+  }), emptyRoiMetric());
+  const cost = roundNumber(summed.api_cost_usd, 8);
+  const net = roundNumber(summed.net_benefit_usd, 8);
+  return {
+    request_count: summed.request_count,
+    success_count: summed.success_count,
+    api_cost_usd: cost,
+    direct_cost_reduction_usd: roundNumber(
+      summed.direct_cost_reduction_usd,
+      8,
+    ),
+    avoided_loss_usd: roundNumber(summed.avoided_loss_usd, 8),
+    value_created_usd: roundNumber(summed.value_created_usd, 8),
+    total_benefit_usd: roundNumber(summed.total_benefit_usd, 8),
+    net_benefit_usd: net,
+    roi_pct: cost > 0 ? roundNumber((net / cost) * 100, 2) : null,
+  };
+}
+
+function emptyRoiMetric(): AiFeatureRoiMetric {
+  return {
+    request_count: 0,
+    success_count: 0,
+    api_cost_usd: 0,
+    direct_cost_reduction_usd: 0,
+    avoided_loss_usd: 0,
+    value_created_usd: 0,
+    total_benefit_usd: 0,
+    net_benefit_usd: 0,
+    roi_pct: null,
+  };
+}
+
 function textValue(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -357,6 +637,20 @@ function textValue(value: unknown): string {
 function numberValue(value: unknown): number {
   const parsed = nullableNumber(value);
   return parsed ?? 0;
+}
+
+function nonNegativeInteger(value: unknown): number {
+  const parsed = nullableNumber(value);
+  return parsed === null ? 0 : Math.max(0, Math.round(parsed));
+}
+
+function nonNegativeNumber(value: unknown): number {
+  const parsed = nullableNumber(value);
+  return parsed === null ? 0 : Math.max(0, parsed);
+}
+
+function boundedNumber(value: unknown, maximum: number): number {
+  return clamp(nonNegativeNumber(value), 0, maximum);
 }
 
 function nullableNumber(value: unknown): number | null {
