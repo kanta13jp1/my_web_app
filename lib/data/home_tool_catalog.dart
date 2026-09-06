@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../pages/aero_lab_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -2352,6 +2354,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['ABテスト', 'ランディング', 'LP', 'CVR', 'コンバージョン'],
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'aero-lab',
+      sectionId: 'growth',
+      title: '3D実験室 · AERO LAB',
+      subtitle: 'エンジンを回して、開いて、空気の流れを学ぶ',
+      icon: Icons.science_outlined,
+      color: const Color(0xFF00838F),
+      keywords: const <String>['3D', 'AERO LAB', 'エンジン', '実験', 'Astra'],
+      onOpen: (context) => _pushPage(context, const AeroLabPage()),
     ),
     HomeToolEntry(
       id: 'video-studio',
