@@ -454,6 +454,10 @@ class _VideoCard extends StatelessWidget {
 
 /// Wikimedia Commons の実画像を表示する。読み込み中・取得失敗時は透明を返し、
 /// 背後の絵文字土台がそのまま見えるようにする (フレームが空にならない)。
+///
+/// Web(CanvasKit)は cross-origin 画像を canvas に描けず失敗するため、
+/// [WebHtmlElementStrategy.fallback] で失敗時に HTML の `<img>` 要素へ切り替え、
+/// CORS 制約下でも Commons 画像を表示できるようにする (非Web環境では無視される)。
 class _PrintImage extends StatelessWidget {
   const _PrintImage({required this.file});
 
@@ -465,6 +469,7 @@ class _PrintImage extends StatelessWidget {
       _commonsImageUrl(file),
       fit: BoxFit.cover,
       gaplessPlayback: true,
+      webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
         return const SizedBox.shrink();

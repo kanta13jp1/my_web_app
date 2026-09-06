@@ -27,6 +27,15 @@ on:
       - 'scripts/check_ga_readiness_gate.py'
       - 'assets/data/tiger_*'
   workflow_dispatch:
+    inputs:
+      deploy_scope:
+        description: "Deployment scope (use web_only for asset-only releases)"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - web_only
 
 concurrency:
   group: deploy-prod
@@ -114,10 +123,14 @@ jobs:
         id: changes
         shell: bash
         env:
-          FORCE_ALL: ${{ github.event_name != 'push' }}
+          FORCE_ALL: ${{ github.event_name != 'push' && inputs.deploy_scope != 'web_only' }}
+          WEB_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_scope == 'web_only' }}
         run: |
           mkdir -p .deploy-logs
           touch .deploy-logs/changed-files.txt
+          if [ "$WEB_ONLY" = "true" ]; then
+            printf 'web/index.html\n' >> .deploy-logs/changed-files.txt
+          fi
           args=()
           if [ "$FORCE_ALL" = "true" ]; then
             args+=(--all)
@@ -131,7 +144,7 @@ jobs:
         id: db_edge_smoke
         shell: bash
         env:
-          FORCE_ALL: ${{ github.event_name != 'push' }}
+          FORCE_ALL: ${{ github.event_name != 'push' && inputs.deploy_scope != 'web_only' }}
         run: |
           if [ "$FORCE_ALL" = "true" ] || grep -Eq \
             '^(supabase/(migrations|functions)/|scripts/(testcontainers_supabase_smoke.py|requirements-testcontainers.txt)|test/fixtures/testcontainers/|test/scripts/test_testcontainers_supabase_smoke.py)' \

@@ -29,6 +29,23 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("if: steps.changes.outputs.edge == 'true'", deploy)
         self.assertIn("if: steps.changes.outputs.migration == 'true'", deploy)
 
+    def test_manual_web_only_deploy_skips_database_and_edge_scope(self) -> None:
+        deploy = self.read(".github/workflows/deploy-prod.yml")
+        self.assertIn("deploy_scope:", deploy)
+        self.assertIn("- web_only", deploy)
+        self.assertIn(
+            "WEB_ONLY: ${{ github.event_name == 'workflow_dispatch' && "
+            "inputs.deploy_scope == 'web_only' }}",
+            deploy,
+        )
+        self.assertEqual(
+            deploy.count(
+                "FORCE_ALL: ${{ github.event_name != 'push' && "
+                "inputs.deploy_scope != 'web_only' }}"
+            ),
+            2,
+        )
+        self.assertIn("printf 'web/index.html\\n'", deploy)
     def test_deploy_uses_global_semver_and_rejects_tag_mismatch(self) -> None:
         deploy = self.read(".github/workflows/deploy-prod.yml")
         self.assertNotIn("git describe --tags", deploy)
