@@ -68,6 +68,41 @@ class _EmptyHistory extends AssetManagementAiAnalysisHistoryService {
   }) async {}
 }
 
+class _StaleHistory extends _EmptyHistory {
+  AssetManagementAiAnalysisHistoryEntry? firstSaved;
+  int reads = 0;
+
+  @override
+  Future<AssetManagementAiAnalysisHistoryEntry?> loadLatestForBaseDate({
+    required String reportBaseDate,
+  }) async {
+    reads++;
+    return firstSaved;
+  }
+
+  @override
+  Future<void> saveResult({
+    required AssetManagementAiSummaryResult result,
+    required AssetManagementInsightReport report,
+    required String requestFingerprint,
+  }) async {
+    // Model a history store whose newest visible record is still the old one.
+    firstSaved ??= AssetManagementAiAnalysisHistoryEntry(
+      id: 'synthetic-history',
+      requestFingerprint: requestFingerprint,
+      summaryText: result.text,
+      status: result.status.name,
+      source: result.source,
+      generatedAt: result.generatedAt,
+      createdAt: result.generatedAt,
+      reportBaseDate: report.workbook.baseDate,
+      providerChoiceReason: null,
+      providerRoute: const <String, dynamic>{},
+      inputPayload: result.payload,
+    );
+  }
+}
+
 class _ControlledAi extends AssetManagementAiSummaryService {
   _ControlledAi() : super(aiEnabled: true);
 
@@ -367,6 +402,131 @@ void main() {
       findRichText: true,
     );
     await _pumpUntil(tester, () => newText.evaluate().isNotEmpty);
+    expect(oldText, findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('page remount rejects an obsolete persisted summary',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          clipboardText =
+              (call.arguments as Map<Object?, Object?>)['text']?.toString();
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+    final repository = _MonthlyRepository();
+    final ai = _ControlledAi();
+    final history = _StaleHistory();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          aiSummaryService: ai,
+          aiAnalysisHistoryService: history,
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{'bank': 30000},
+          },
+        ),
+      ),
+    );
+    await _pumpUntil(tester, () => ai.responses.isNotEmpty);
+    expect(ai.requests.first.workbook.incomePlans.single.received, isFalse);
+    ai.complete(0, 'Old synthetic income is unreceived');
+    final oldText = find.text(
+      'Old synthetic income is unreceived',
+      findRichText: true,
+    );
+    await _pumpUntil(tester, () => oldText.evaluate().isNotEmpty);
+    final copy = find.text('分析結果をコピー');
+    await tester.ensureVisible(copy);
+    await tester.tap(copy);
+    await tester.pump();
+    expect(clipboardText, 'Old synthetic income is unreceived');
+    final received = find.byKey(
+      const Key('asset_income_received_synthetic-income'),
+    );
+    await tester.ensureVisible(received);
+    await tester.tap(received);
+    await tester.pump();
+    expect(oldText, findsNothing);
+    clipboardText = null;
+    await tester.ensureVisible(copy);
+    await tester.tap(copy);
+    await tester.pump();
+    expect(clipboardText, isNotNull);
+    expect(clipboardText, isNot(isEmpty));
+    expect(
+      clipboardText,
+      isNot(contains('Old synthetic income is unreceived')),
+    );
+    await _pumpUntil(tester, () => ai.responses.length == 2);
+    expect(ai.requests.last.workbook.incomePlans.single.received, isTrue);
+    expect(repository.state.incomePlans.single.received, isTrue);
+    ai.complete(1, 'Current synthetic income is received');
+    final newText = find.text(
+      'Current synthetic income is received',
+      findRichText: true,
+    );
+    await _pumpUntil(tester, () => newText.evaluate().isNotEmpty);
+    expect(oldText, findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+    expect(
+      history.firstSaved?.summaryText,
+      'Old synthetic income is unreceived',
+    );
+    final previousReads = history.reads;
+    final reloadedAi = _ControlledAi();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          aiSummaryService: reloadedAi,
+          aiAnalysisHistoryService: history,
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{'bank': 30000},
+          },
+        ),
+      ),
+    );
+    for (var frame = 0; frame < 100 && reloadedAi.responses.isEmpty; frame++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(oldText, findsNothing);
+    }
+    expect(history.reads, greaterThan(previousReads));
+    expect(reloadedAi.responses, hasLength(1));
+    expect(
+      reloadedAi.requests.single.workbook.incomePlans.single.received,
+      isTrue,
+    );
+    expect(tester.widget<Checkbox>(received).value, isTrue);
+    reloadedAi.complete(0, 'Reloaded current income is received');
+    final reloadedText = find.text(
+      'Reloaded current income is received',
+      findRichText: true,
+    );
+    await _pumpUntil(tester, () => reloadedText.evaluate().isNotEmpty);
     expect(oldText, findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
