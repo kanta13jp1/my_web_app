@@ -1,20 +1,130 @@
-# Cloud-first development workflow  This repository defaults heavy development work to GitHub-hosted runners so a local Windows machine does not need to hold Flutter build caches or run memory-intensive analysis, tests, and web builds.  ## Execution boundary  Run locally only lightweight control-plane operations:  - inspect and edit a small scoped change; - inspect `git status` and the final diff; - push a branch or update a pull request; - dispatch a GitHub Actions workflow and read its logs; - perform a short production HTTP/revision smoke check.  Run in GitHub Actions:  - `flutter pub get`; - `flutter analyze`; - `flutter test`; - `flutter build web`; - release and deployment gates; - generated build artifact creation.  Do not start a local Flutter/Dart build, analysis, test, browser automation, or media pipeline when RAM usage is at least 85% or free physical memory is below 2 GB. Preserve edits, dispatch the cloud check, and wait for its result instead.  ## Cloud editing workspace  Use the default `.devcontainer/devcontainer.json` with GitHub Codespaces when a change needs an interactive editor. It intentionally uses the GitHub default Codespaces image as a lightweight control plane: it provides Git and GitHub CLI, but it does not install Flutter, run `flutter pub get`, or create build output. The workflow guide opens automatically.  Create a codespace only after checking the payer and available quota:  ```powershell gh codespace create -r kanta13jp1/my_web_app -b <branch> --devcontainer-path .devcontainer/devcontainer.json ```  Stop or delete the codespace when the edit is preserved in a remote branch:  ```powershell gh codespace stop -c <codespace-name> gh codespace delete -c <codespace-name> ```  For the smallest edits, prefer the GitHub web editor or Git Data API and skip provisioning a codespace. GitHub Codespaces can incur usage charges after included quota; this repository never creates one automatically.  The former rootless-Podman Flutter environment remains available at `.devcontainer/flutter-local/devcontainer.json`. It is a resource-heavy local fallback, not the default. Select it only when local RAM and disk are healthy and local execution is explicitly required. ## Manual cloud validation  The workflow supports five profiles:  | Profile | Cloud work | | --- | --- | | workspace | validate cloud/local workspace descriptors without installing Flutter | | `analyze` | dependency resolution and static analysis | | `test` | dependency resolution and tests | | `web-build` | dependency resolution and release web build | | `full` | analysis, tests, and release web build |  Dispatch against the branch that contains the change:  ```powershell gh workflow run cloud-development.yml --ref <branch> -f profile=full ```  Find and watch the run without creating local build output:  ```powershell $runId = gh run list --workflow cloud-development.yml --branch <branch> --limit 1 --json databaseId --jq '.[0].databaseId' gh run watch $runId --exit-status ```  Use `workspace` for dev-container-only changes, a narrower Flutter profile while iterating, and `full` before merge. The workflow cancels an older run for the same ref/profile, checks out only one commit of history, reuses the hosted Flutter cache, and keeps web artifacts for one day.  ## Pull requests and deployment  A pull request that changes this policy or its workflow runs the full cloud check automatically. Product pull requests continue to use the repository CI as the merge gate. Production deployment remains owned by `.github/workflows/deploy-prod.yml`; do not download a web build and deploy it from the local PC.  Verify deployment by matching the production `version.json` commit to the merged commit and checking the target route over HTTP. Browser QA is optional when API/HTTP evidence is sufficient and should run only after local resource pressure is safe.  ## Recovery  If a cloud run fails, inspect its logs and make the smallest source change. Do not reproduce a runner-scale failure locally unless the user explicitly requests it and the resource gate is healthy. Artifacts are temporary evidence, not a long-term store.  ## Notion migration cloud audit  Use the read-only cloud audit to inspect the latest migration batch without opening Notion, running Flutter locally, or downloading source content:      gh workflow run notion-migration-cloud-audit.yml --ref main  The job reads only aggregate progress from the owner-scoped migration control plane. Its log, job summary, and one-day artifact contain counts and gate states only; page titles, note bodies, attachments, workspace identifiers, source IDs, and credentials are excluded.  The audit never imports, deletes, or cancels a subscription. A source deletion gate opens only when at least one item has passed all seven checks and has separately recorded owner authorization. The subscription cancellation gate opens only after every item is source-deleted, every required capability is verified, and the guarded migration batch is complete. 
-## Notion WBS cloud import
+# Cloud-first development workflow
 
-Use the serialized manual workflow for WBS data that has already been inventoried and durably staged. It never needs a local Flutter checkout, browser session, Notion page download, or local build cache.
+This repository treats the local Windows PC as a lightweight control plane.
+GitHub owns source preservation, dependency hydration, analysis, tests, builds,
+browser checks, and short-lived review artifacts. Supabase owns private
+migration staging and server-side processing.
 
-First run a read-only plan from trusted `main`:
+## Default execution path
+
+Use this order for every task:
+
+1. Inspect only the small amount of local state needed to avoid overwriting user
+   work.
+2. Prefer the GitHub connector, Git Data API, or GitHub web editor for bounded
+   source changes. Do not create a local worktree merely to edit files that the
+   remote API can update safely.
+3. Commit to a scoped `codex/` branch and open a draft pull request.
+4. Dispatch GitHub Actions against the exact 40-character branch HEAD.
+5. Read logs and summaries remotely. Download an artifact only when a person
+   must inspect it.
+6. Keep production deployment in the deployment workflow, never on the local
+   PC.
+
+Use GitHub Codespaces only when interactive multi-file editing is genuinely
+needed and after checking quota or billing. A codespace is never created
+automatically.
+
+## Resource boundary
+
+Run locally only lightweight control-plane operations:
+
+- inspect `git status`, a small diff, or a single text file;
+- preserve a small scoped edit when no remote edit route exists;
+- push a committed branch, update a pull request, or dispatch a workflow;
+- read Actions logs or perform a short HTTP/revision check.
+
+Run in GitHub Actions:
+
+- `flutter pub get`;
+- `flutter analyze`;
+- `flutter test`;
+- `flutter build web`;
+- browser smoke tests;
+- generated artifacts and release gates.
+
+Run in Supabase or another private cloud worker:
+
+- streaming ENEX parsing;
+- attachment transfer, hashing, OCR, and media conversion;
+- migration ledger updates and aggregate audits;
+- recovery export generation and verification.
+
+Do not start a local Flutter/Dart build, analysis, test, browser automation,
+server, media pipeline, or ENEX expansion when RAM usage is at least 85%, free
+physical memory is below 4 GiB, or free disk is below 30 GiB. Preserve the
+current edit remotely and dispatch a cloud workflow. Resume resource-intensive
+local work only after two measurements, at least eight seconds apart, both show
+RAM below 85%, at least 4 GiB free memory, at least 30 GiB free disk,
+and no Dart/Flutter process.
+
+A request to continue does not bypass this resource gate.
+
+## Exact-revision cloud validation
+
+`.github/workflows/cloud-development.yml` supports these profiles:
+
+| Profile | Cloud work |
+| --- | --- |
+| `workspace` | Validate cloud workspace descriptors without Flutter |
+| `format` | Format changed Dart files and preserve a one-day patch artifact |
+| `analyze` | Resolve dependencies and run static analysis |
+| `test` | Resolve dependencies and run tests |
+| `web-build` | Resolve dependencies and create a release web build |
+| `full` | Analyze, test, and create a release web build |
+
+Manual runs require the exact branch HEAD. This prevents a moving branch from
+silently validating a different revision:
 
 ```powershell
-gh workflow run notion-wbs-cloud-import.yml --ref main -f mode=plan -f safe_offset=0 -f limit=100
+$branch = 'codex/<task>'
+$sha = gh api "repos/kanta13jp1/my_web_app/commits/$branch" --jq .sha
+gh workflow run cloud-development.yml --ref $branch `
+  -f profile=full `
+  -f expected_head_sha=$sha
 ```
 
-Read the sanitized one-day artifact or job summary. It contains counts, the current SHA-256 plan digest, mapping-gate status, and no titles, page IDs, task IDs, paths, or credentials. Apply only that exact plan digest and at most 100 deterministic logical groups:
+When the GitHub connector is available, perform the same branch lookup and
+workflow dispatch through the connector so the local PC does not need GitHub
+CLI or a hydrated checkout.
 
-```powershell
-gh workflow run notion-wbs-cloud-import.yml --ref main -f mode=apply -f expected_plan_sha256=<digest-from-latest-plan> -f safe_offset=0 -f limit=100
-```
+A pull-request event validates GitHub's immutable event revision. A reusable
+workflow caller may also pass `expected_head_sha`; if supplied, the same
+lowercase 40-character validation is enforced.
 
-After every applied batch, run `plan` again because inserts and updates intentionally change the digest. Advance `safe_offset` only after the prior batch has persisted destination and migration evidence. The workflow serializes runs, bulk-upserts each phase, verifies destination content before recording import evidence, and is safe to re-run after an interrupted phase. Conflicting groups stay untouched for separate preservation review.
+## Cloud editing workspace
 
-This workflow never deletes Notion content. Source deletion remains controlled by seven per-item verification checks plus separately recorded owner authorization; subscription cancellation remains blocked until every item and required capability passes the migration control-plane gates. 
+The default `.devcontainer/devcontainer.json` is a lightweight GitHub
+Codespaces control plane. It does not install Flutter, run `flutter pub get`,
+open a browser, or create build output during startup.
+
+The former rootless-Podman Flutter environment remains available at
+`.devcontainer/flutter-local/devcontainer.json`. It is a resource-heavy,
+explicit fallback and must never be selected automatically.
+
+## Personal migration data
+
+Personal ENEX files, Obsidian vault contents, attachments, credentials, browser
+profiles, production exports, and signed URLs must never be committed to Git,
+uploaded to Actions, printed in logs, or preserved as workflow artifacts.
+
+The browser streams a selected export directly to an owner-private Supabase
+Storage bucket in bounded resumable chunks. Server-side workers process the
+staged object sequentially. Logs and summaries contain only opaque IDs, counts,
+hashes, timings, and gate states.
+
+Evernote deletion always requires a fresh explicit approval after a batch is
+fully verified. Subscription cancellation remains blocked until all data,
+feature parity, recovery, account, and billing checks pass.
+
+## Artifacts, caches, and cleanup
+
+- Hosted-runner dependency caches stay in GitHub.
+- Web builds and review patches have one-day retention.
+- Do not download build artifacts merely to redeploy them locally.
+- Never delete unrelated local worktrees or caches to manufacture headroom.
+- Close only resources opened by the current task.
+- Keep unmerged work preserved in the remote branch and draft pull request.
+
+If cloud execution is unavailable, report the infrastructure blocker. Do not
+fall back to a heavy local run while the resource gate is active.

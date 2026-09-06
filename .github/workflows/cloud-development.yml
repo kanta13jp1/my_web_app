@@ -3,10 +3,11 @@ name: Cloud Development Checks
 on:
   pull_request:
     paths:
-      - .devcontainer/**
-      - .github/workflows/cloud-development.yml
-      - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
-      - AGENTS.md
+      - '.devcontainer/**'
+      - '.github/workflows/cloud-development.yml'
+      - 'docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md'
+      - 'AGENTS.md'
+      - 'scripts/cloud_development_guard_test.py'
   workflow_dispatch:
     inputs:
       profile:
@@ -16,16 +17,26 @@ on:
         type: choice
         options:
           - workspace
+          - format
           - analyze
           - test
           - web-build
           - full
+      expected_head_sha:
+        description: Exact lowercase 40-character branch HEAD to validate
+        required: true
+        type: string
   workflow_call:
     inputs:
       profile:
         description: Cloud validation profile
         required: false
         default: full
+        type: string
+      expected_head_sha:
+        description: Optional exact lowercase 40-character revision
+        required: false
+        default: ''
         type: string
 
 permissions: {}
@@ -50,6 +61,49 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Verify immutable handoff revision
+        if: github.event_name == 'workflow_dispatch' || inputs.expected_head_sha != ''
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Expected $EXPECTED_HEAD_SHA but checked out $actual_head_sha."
+            exit 1
+          fi
+
+      - name: Validate selected profile
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$CLOUD_PROFILE" in
+            workspace|format|analyze|test|web-build|full) ;;
+            *)
+              echo "::error::Unsupported cloud profile: $CLOUD_PROFILE"
+              exit 1
+              ;;
+          esac
+
+      - name: Reject personal migration archives in Git
+        shell: bash
+        run: |
+          set -euo pipefail
+          tracked_archives="$(git ls-files -- '*.enex' '*.enex.gz' '*.enex.zip')"
+          if [ -n "$tracked_archives" ]; then
+            echo "::error::Personal migration archives must never enter Git or Actions artifacts."
+            printf '%s\n' "$tracked_archives"
+            exit 1
+          fi
+
+      - name: Test cloud handoff guards
+        run: python scripts/cloud_development_guard_test.py
+
       - name: Validate cloud workspace descriptors
         shell: bash
         run: |
@@ -65,6 +119,52 @@ jobs:
       - name: Resolve dependencies in cloud
         if: env.CLOUD_PROFILE != 'workspace'
         run: flutter pub get
+
+      - name: Format changed Dart files in cloud
+        id: format
+        if: env.CLOUD_PROFILE == 'format'
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch --no-tags --depth=1 origin "${DEFAULT_BRANCH}"
+          mapfile -t files < <(
+            git diff --name-only --diff-filter=ACMR \
+              "origin/${DEFAULT_BRANCH}" HEAD -- '*.dart' \
+              | while IFS= read -r file; do
+                  [ -f "$file" ] && printf '%s\n' "$file"
+                done
+          )
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changed Dart files were found."
+            exit 0
+          fi
+
+          dart format "${files[@]}"
+          if git diff --quiet -- "${files[@]}"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "The changed Dart files already match the pinned formatter."
+            exit 0
+          fi
+
+          mkdir -p cloud-format-output/files
+          git diff --binary -- "${files[@]}" > cloud-format-output/cloud-format.patch
+          printf '%s\n' "${files[@]}" > cloud-format-output/manifest.txt
+          for file in "${files[@]}"; do
+            mkdir -p "cloud-format-output/files/$(dirname "$file")"
+            cp "$file" "cloud-format-output/files/$file"
+          done
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Preserve formatter output briefly
+        if: steps.format.outputs.changed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: cloud-format-${{ github.run_id }}
+          path: cloud-format-output
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Analyze in cloud
         if: env.CLOUD_PROFILE == 'analyze' || env.CLOUD_PROFILE == 'full'
@@ -97,9 +197,10 @@ jobs:
             echo ''
             echo '| Item | Value |'
             echo '| --- | --- |'
-            echo "| profile | \`${CLOUD_PROFILE}\` |"
-            echo "| ref | \`${GITHUB_REF}\` |"
-            echo "| commit | \`${GITHUB_SHA}\` |"
+            echo "| profile | \`$CLOUD_PROFILE\` |"
+            echo "| ref | \`$GITHUB_REF\` |"
+            echo "| commit | \`$GITHUB_SHA\` |"
             echo '| local Flutter/Dart work | none |'
-            echo '| artifact retention | 1 day when a web build runs |'
+            echo '| artifact retention | 1 day when a web build or formatter output runs |'
+            echo '| personal migration data | rejected from Git and artifacts |'
           } >> "$GITHUB_STEP_SUMMARY"
