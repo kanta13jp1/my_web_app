@@ -246,6 +246,27 @@ class TestTestcontainersSupabaseSmoke(unittest.TestCase):
         self.assertIn("manual_override", checks)
         self.assertIn("applies twice", checks)
 
+    def test_plan_includes_issue_2921_agent_module_handoff_contract(self) -> None:
+        plan = module.build_plan(
+            ROOT / "test" / "fixtures" / "testcontainers" / "sql",
+            ROOT / "test" / "fixtures" / "testcontainers" / "edge-db-smoke.ts",
+            ROOT / "supabase" / "functions" / "health-check" / "index.ts",
+        )
+        self.assertEqual(
+            plan["issue_2921_agent_module_handoff_sql"],
+            [
+                "supabase/tests/issue2921_agent_module_bootstrap.sql",
+                "supabase/migrations/20260903093652_agent_module_role_handoffs.sql",
+                "supabase/tests/issue2921_agent_module_handoff_contract.sql",
+            ],
+        )
+        checks = " ".join(plan["issue_2921_agent_module_handoff_checks"])
+        self.assertIn("front-office and management", checks)
+        self.assertIn("trusted JWT identities", checks)
+        self.assertIn("cross-tenant access fail closed", checks)
+        self.assertIn("append-only events", checks)
+        self.assertIn("applies twice", checks)
+
     def test_plan_includes_issue_4927_recurring_tombstone_contract(self) -> None:
         plan = module.build_plan(
             ROOT / "test" / "fixtures" / "testcontainers" / "sql",

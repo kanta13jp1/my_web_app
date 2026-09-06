@@ -1,8 +1,8 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   aiHubActionAccess,
-  authorizeAiHubAction,
   AUTHENTICATED_AI_HUB_ACTIONS,
+  authorizeAiHubAction,
   PUBLIC_AI_HUB_ACTIONS,
   resolveAuthenticatedUserId,
   SERVICE_ROLE_AI_HUB_ACTIONS,
@@ -11,6 +11,7 @@ import {
 Deno.test("aiHubActionAccess classifies registered actions correctly", () => {
   assertEquals(aiHubActionAccess("judgment.get"), "public");
   assertEquals(aiHubActionAccess("search.query"), "authenticated");
+  assertEquals(aiHubActionAccess("corporate_site.readiness"), "authenticated");
   assertEquals(aiHubActionAccess("observability.heatmap"), "service_role");
   assertEquals(aiHubActionAccess("unknown.random.action"), null);
 });
@@ -88,14 +89,34 @@ Deno.test("disjointness of action registry sets", () => {
   const srv = [...SERVICE_ROLE_AI_HUB_ACTIONS];
 
   for (const a of pub) {
-    assertEquals(AUTHENTICATED_AI_HUB_ACTIONS.has(a), false, `${a} is in both public and authenticated`);
-    assertEquals(SERVICE_ROLE_AI_HUB_ACTIONS.has(a), false, `${a} is in both public and service_role`);
+    assertEquals(
+      AUTHENTICATED_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both public and authenticated`,
+    );
+    assertEquals(
+      SERVICE_ROLE_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both public and service_role`,
+    );
   }
   for (const a of auth) {
-    assertEquals(SERVICE_ROLE_AI_HUB_ACTIONS.has(a), false, `${a} is in both authenticated and service_role`);
+    assertEquals(
+      SERVICE_ROLE_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both authenticated and service_role`,
+    );
   }
   for (const a of srv) {
-    assertEquals(PUBLIC_AI_HUB_ACTIONS.has(a), false, `${a} is in both service_role and public`);
-    assertEquals(AUTHENTICATED_AI_HUB_ACTIONS.has(a), false, `${a} is in both service_role and authenticated`);
+    assertEquals(
+      PUBLIC_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both service_role and public`,
+    );
+    assertEquals(
+      AUTHENTICATED_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both service_role and authenticated`,
+    );
   }
 });
