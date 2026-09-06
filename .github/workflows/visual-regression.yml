@@ -1,0 +1,151 @@
+name: Flutter Visual Regression
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/actions/setup-flutter-sdk/**
+      - .github/workflows/visual-regression.yml
+      - lib/**
+      - web/**
+      - pubspec.yaml
+      - pubspec.lock
+      - package.json
+      - package-lock.json
+      - playwright.config.ts
+      - scripts/flutter_spa_server.py
+      - test/e2e/**
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: Generate reviewed baseline candidates instead of comparing
+        required: true
+        default: false
+        type: boolean
+
+permissions: {}
+
+concurrency:
+  group: visual-regression-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  compare:
+    name: Compare reviewed Flutter baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      E2E_BASE_URL: http://127.0.0.1:7357
+      PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-regression-results.json
+      UPDATE_SNAPSHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.update_snapshots && 'true' || 'false' }}
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked dependencies and Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Build isolated Flutter Web fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build web --release --pwa-strategy=none \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+
+      - name: Start short-lived SPA server
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs
+          python3 scripts/flutter_spa_server.py \
+            --directory build/web \
+            --port 7357 \
+            > .ci-logs/visual-regression-server.log 2>&1 &
+          echo "$!" > .ci-logs/visual-regression-server.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:7357/privacy \
+              --output .ci-logs/visual-regression-health.html \
+              && grep --quiet '<title>' \
+              .ci-logs/visual-regression-health.html; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo '::error::The temporary Flutter Web server did not become ready.'
+          exit 1
+
+      - name: Compare or generate reviewed baselines
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_args=()
+          if [[ "$UPDATE_SNAPSHOTS" == 'true' ]]; then
+            snapshot_args+=(--update-snapshots)
+          fi
+          npm run e2e:visual:regression -- \
+            --project=chromium \
+            --project=mobile-chrome \
+            --retries=0 \
+            "${snapshot_args[@]}"
+
+      - name: Stop short-lived SPA server
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f .ci-logs/visual-regression-server.pid ]]; then
+            kill "$(cat .ci-logs/visual-regression-server.pid)" 2>/dev/null || true
+          fi
+
+      - name: Write visual comparison summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Flutter visual regression'
+            echo
+            echo "- mode: \`${UPDATE_SNAPSHOTS}\` (true generates candidates; false compares)"
+            echo '- source: exact PR/branch Flutter Web build served only on runner localhost'
+            echo '- surfaces: landing, privacy, terms'
+            echo '- viewports: desktop Chromium and mobile Chromium'
+            echo '- threshold: maxDiffPixelRatio = 0.002'
+            echo '- production smoke remains separate in `e2e-smoke.yml` / `minimal-e2e-gate.yml`'
+            echo "- actual / expected / diff evidence: [workflow artifacts](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}#artifacts)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload actual, expected, diff, and candidate evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: visual-regression-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            test/e2e/visual_regression.spec.ts-snapshots/
+            .ci-logs/visual-regression-server.log
+          if-no-files-found: warn
+          retention-days: 14
