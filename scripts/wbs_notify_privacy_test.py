@@ -11,11 +11,12 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = (ROOT / ".github/workflows/wbs-user-tasks-notify.yml").read_text(encoding="utf-8")
 
-def block(name):
-    section = SOURCE.split("      - name: " + name + "\n", 1)[1].split("\n      - name:", 1)[0]
+def block(name, source):
+    section = source.split("      - name: " + name + "\n", 1)[1].split("\n      - name:", 1)[0]
     return textwrap.dedent(section.split("        run: |\n", 1)[1])
 
 class NotifyTest(unittest.TestCase):
+    source = SOURCE
     def run_step(self, name, response="", status="200", transport="0", limit="10", key="synthetic-key"):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -34,9 +35,10 @@ curl() {
 }
 """
             result = subprocess.run(
-                ["bash", "-c", mock + block(name)], text=True, capture_output=True, timeout=10,
+                ["bash", "-c", mock + block(name, self.source)], text=True, capture_output=True, timeout=10,
                 env={**os.environ, "SUPABASE_URL": "https://example.invalid",
-                     "SUPABASE_ANON_KEY": key, "LIMIT": limit, "TMPDIR": directory,
+                     "SUPABASE_ANON_KEY": key, "SERVICE_ROLE_KEY": key,
+                     "TOOLS_HUB_URL": "https://example.invalid/functions/v1/tools-hub", "LIMIT": limit, "TMPDIR": directory,
                      "FIXTURE": str(fixture), "CALL_MARKER": str(root / "called"),
                      "REQUEST_FILE": str(root / "request.json"),
                      "FAKE_STATUS": status, "FAKE_TRANSPORT": transport},
@@ -89,6 +91,18 @@ curl() {
         self.assertNotIn("steps.precheck.outputs.skip", SOURCE)
         self.assertIn("python scripts/wbs_notify_privacy_test.py",
                       (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+
+class NotifyServiceRoleTest(NotifyTest):
+    source = (ROOT / ".github/workflows/wbs-user-notify.yml").read_text(encoding="utf-8")
+
+    def test_protected_environment_and_configured_destination_preserved(self):
+        self.assertIn("name: wbs-automation-production", self.source)
+        self.assertIn("deployment: false", self.source)
+        self.assertIn("SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}", self.source)
+        self.assertIn('if [ -z "$TOOLS_HUB_URL" ]', self.source)
+        self.assertNotIn("cat /tmp", self.source)
+        self.assertNotIn("smmkxxavexumewbfaqpy", self.source)
+
 
 if __name__ == "__main__":
     unittest.main()
