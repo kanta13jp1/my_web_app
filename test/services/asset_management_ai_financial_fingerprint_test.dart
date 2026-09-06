@@ -1,0 +1,117 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
+import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
+import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
+import 'package:my_web_app/services/asset_management_insight_service.dart';
+
+// Synthetic inputs only; no account access or external AI requests.
+void main() {
+  final service = AssetManagementAiSummaryService(
+    now: () => DateTime(2026, 9, 6, 12),
+  );
+
+  void expectInvalidated(
+    AssetManagementInsightReport before,
+    AssetManagementInsightReport after,
+  ) {
+    final oldKey = service.buildRequestFingerprint(before);
+    final currentKey = service.buildRequestFingerprint(after);
+    expect(currentKey, isNot(oldKey));
+    expect(
+      AssetManagementAiSummaryRefresh.canReusePersisted(
+        currentKey: currentKey,
+        cachedKey: oldKey,
+      ),
+      isFalse,
+    );
+    expect(
+      AssetManagementAiSummaryRefresh.isStale(
+        currentKey: currentKey,
+        resultKey: oldKey,
+        hasResult: true,
+      ),
+      isTrue,
+    );
+  }
+
+  Map<String, dynamic> workbookPayload(AssetManagementInsightReport report) {
+    return service.buildPayload(report)['workbook'] as Map<String, dynamic>;
+  }
+
+  group('Issue 5201 current financial input cache contract', () {
+    test('unchanged inputs can reuse a persisted summary', () {
+      final firstKey = service.buildRequestFingerprint(_report());
+      final secondKey = service.buildRequestFingerprint(_report());
+      expect(secondKey, firstKey);
+      expect(
+        AssetManagementAiSummaryRefresh.canReusePersisted(
+          currentKey: secondKey,
+          cachedKey: firstKey,
+        ),
+        isTrue,
+      );
+    });
+
+    test('receiving income invalidates the unreceived summary', () {
+      final before = _report();
+      final after = _report(received: true);
+      final oldPlans = workbookPayload(before)['income_plans'] as List<dynamic>;
+      final newPlans = workbookPayload(after)['income_plans'] as List<dynamic>;
+      expect(oldPlans.single['received'], isFalse);
+      expect(newPlans.single['received'], isTrue);
+      expectInvalidated(before, after);
+    });
+
+    test('a corrected debt balance invalidates the old balance summary', () {
+      final before = _report();
+      final after = _report(debtBalance: -60000);
+      final oldRows =
+          workbookPayload(before)['debt_master_rows'] as List<dynamic>;
+      final newRows =
+          workbookPayload(after)['debt_master_rows'] as List<dynamic>;
+      expect(oldRows.single['balance'], -90000);
+      expect(newRows.single['balance'], -60000);
+      expectInvalidated(before, after);
+    });
+
+    test('a contractual payment correction invalidates the old summary', () {
+      final before = _report();
+      final after = _report(monthlyPayment: 3000);
+      final oldRows =
+          workbookPayload(before)['debt_master_rows'] as List<dynamic>;
+      final newRows =
+          workbookPayload(after)['debt_master_rows'] as List<dynamic>;
+      expect(oldRows.single['scheduled_payment_amount'], 6000);
+      expect(newRows.single['scheduled_payment_amount'], 3000);
+      expectInvalidated(before, after);
+    });
+  });
+}
+
+AssetManagementInsightReport _report({
+  bool received = false,
+  double debtBalance = -90000,
+  double monthlyPayment = 6000,
+}) {
+  const planner = AssetLiabilityPlanningService();
+  const insight = AssetManagementInsightService();
+  final workbook = planner.buildWorkbook(
+    latestSnapshot: <String, double>{'bank': 30000, 'PayPay': debtBalance},
+    baseDate: DateTime(2026, 9, 6),
+    monthlyPaymentOverrides: <String, double>{'paypay_card': monthlyPayment},
+    paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
+    incomePlans: <AssetLiabilityIncomePlan>[
+      AssetLiabilityIncomePlan(
+        id: 'synthetic-income',
+        date: DateTime(2026, 9, 5),
+        name: 'Synthetic income',
+        amount: 40000,
+        destinationAccountId: 'bank',
+        destinationAccountName: 'bank',
+        received: received,
+      ),
+    ],
+  );
+  return insight.buildReport(workbook: workbook);
+}
