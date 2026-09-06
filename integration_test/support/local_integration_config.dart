@@ -10,7 +10,7 @@ void validateLocalIntegrationConfig({
   if (!enabled ||
       uri == null ||
       uri.scheme != 'http' ||
-      !const {'localhost', '127.0.0.1', '[::1]'}.contains(uri.host) ||
+      !const {'localhost', '127.0.0.1', '::1'}.contains(uri.host) ||
       uri.userInfo.isNotEmpty ||
       publishableKey.isEmpty ||
       !publishableKey.startsWith('sb_publishable_') ||
