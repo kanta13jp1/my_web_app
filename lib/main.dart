@@ -129,6 +129,7 @@ import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/corporate_bank_account_simulator_page.dart';
+import 'package:my_web_app/pages/corporate_site_readiness_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
 import 'package:my_web_app/pages/api_playground_page.dart';
 import 'package:my_web_app/pages/categories_page.dart';
@@ -1051,6 +1052,10 @@ Route<dynamic> generateAppRoute(
     case '/corporate-bank-account-cost':
       return MaterialPageRoute(
         builder: (_) => const CorporateBankAccountSimulatorPage(),
+      );
+    case '/corporate-site-readiness':
+      return MaterialPageRoute(
+        builder: (_) => const CorporateSiteReadinessPage(),
       );
     case '/ai-secretary':
       return MaterialPageRoute(builder: (_) => const AISecretaryPage());

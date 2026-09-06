@@ -131,6 +131,12 @@ import {
   sha256Hex,
 } from "./company_research.ts";
 import {
+  CORPORATE_SITE_READINESS_DISCLAIMER,
+  generateCorporateSiteHtml,
+  reviewCorporateSiteDocument,
+  validateCorporateSiteProfile,
+} from "./corporate_site_readiness.ts";
+import {
   assertA2AVersion,
   buildCompanyAgentCard,
   COMPANY_A2A_CONTENT_TYPE,
@@ -5194,6 +5200,82 @@ serve(async (req: Request) => {
           });
         } catch {
           return json({ success: true, text });
+        }
+      }
+
+      case "corporate_site.readiness": {
+        const mode = asString(body.mode).toLowerCase();
+        if (mode !== "review" && mode !== "generate") {
+          return json({ error: "mode must be review or generate" }, 400);
+        }
+        const profile = {
+          companyName: asString(body.company_name),
+          representativeName: asString(body.representative_name),
+          registeredAddress: asString(body.registered_address),
+          businessPlanSummary: asString(body.business_plan_summary),
+          virtualOffice: body.virtual_office === true,
+        };
+
+        try {
+          validateCorporateSiteProfile(profile);
+          if (mode === "generate") {
+            const rawMilestones = Array.isArray(body.wbs_milestones)
+              ? body.wbs_milestones
+              : asString(body.wbs_milestones).split(/\r?\n/);
+            const html = generateCorporateSiteHtml({
+              ...profile,
+              contact: asString(body.contact),
+              wbsMilestones: rawMilestones.map(asString).filter(Boolean),
+            });
+            return json({
+              success: true,
+              mode,
+              html,
+              disclaimer: CORPORATE_SITE_READINESS_DISCLAIMER,
+            });
+          }
+
+          const sourceUrl = asString(body.url);
+          if (!sourceUrl) return json({ error: "url required" }, 400);
+          const document = await fetchPublicResearchDocument(sourceUrl);
+          const result = reviewCorporateSiteDocument(
+            document.markdown,
+            profile,
+          );
+          return json({
+            success: true,
+            mode,
+            source: {
+              canonical_url: document.canonicalUrl,
+              title: document.title,
+              http_status: document.httpStatus,
+            },
+            result: {
+              ready_for_document_review: result.readyForDocumentReview,
+              score: result.score,
+              checks: result.checks,
+              missing_required_items: result.missingRequiredItems,
+              manual_review_items: result.manualReviewItems,
+              disclaimer: result.disclaimer,
+            },
+          });
+        } catch (error) {
+          const message = error instanceof Error
+            ? error.message
+            : String(error);
+          const normalized = message.toLowerCase();
+          const invalidInput = normalized.includes("required") ||
+            normalized.includes("characters or fewer") ||
+            normalized.includes("source url") ||
+            normalized.includes("private") ||
+            normalized.includes("local network") ||
+            normalized.includes("not allowed") ||
+            normalized.includes("only http");
+          return json({
+            success: false,
+            status: invalidInput ? "invalid_request" : "site_fetch_failed",
+            message,
+          }, invalidInput ? 400 : 422);
         }
       }
 
