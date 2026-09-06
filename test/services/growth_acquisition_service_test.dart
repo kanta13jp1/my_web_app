@@ -115,6 +115,26 @@ void main() {
     );
   });
 
+  test('maps first-user Reddit UTMs to a distinct campaign touch signal', () {
+    final uri = Uri.parse(
+      'https://my-web-app-b67f4.web.app/'
+      '?utm_source=reddit&utm_medium=community&utm_campaign=first_user_growth'
+      '&utm_content=sideproject_launch_a',
+    );
+
+    expect(GrowthAcquisitionService.isFirstUserGrowthUri(uri), isTrue);
+    expect(
+      GrowthAcquisitionService.signalForIncomingUri(uri),
+      GrowthAcquisitionService.touchRedditFirstUserGrowth,
+    );
+    expect(
+      GrowthAcquisitionService.resolveSignupSubmitSignal(
+        GrowthAcquisitionService.touchRedditFirstUserGrowth,
+      ),
+      GrowthAcquisitionService.signupSubmitRedditFirstUserGrowth,
+    );
+  });
+
   test('resolves signup submit signal from latest touchpoint', () {
     expect(
       GrowthAcquisitionService.resolveSignupSubmitSignal(
@@ -218,6 +238,37 @@ void main() {
     expect(attribution?.utmMedium, 'organic');
     expect(attribution?.utmCampaign, 'first_user_growth');
     expect(attribution?.utmContent, 'oauth_case_study_a');
+  });
+
+  test('persists Reddit attribution through the post-auth funnel', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    const visitorId = '00000000-0000-4000-8000-000000000003';
+    final now = DateTime.utc(2026, 9, 3, 8, 10);
+    const service = GrowthAcquisitionService();
+    final uri = Uri.parse(
+      'https://my-web-app-b67f4.web.app/'
+      '?utm_source=reddit&utm_medium=community&utm_campaign=first_user_growth'
+      '&utm_content=sideproject_launch_a',
+    );
+
+    expect(
+      await service.recordFirstUserFunnelStage(
+        stage: 'view',
+        visitorId: visitorId,
+        currentUri: uri,
+        now: now,
+      ),
+      isFalse,
+    );
+
+    final attribution = await service.loadFirstUserAttribution(
+      now: now.add(const Duration(hours: 1)),
+    );
+    expect(attribution?.visitorId, visitorId);
+    expect(attribution?.utmSource, 'reddit');
+    expect(attribution?.utmMedium, 'community');
+    expect(attribution?.utmCampaign, 'first_user_growth');
+    expect(attribution?.utmContent, 'sideproject_launch_a');
   });
 
   test('does not inherit a prior X campaign on a direct LP view', () async {

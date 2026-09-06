@@ -576,7 +576,12 @@ async function recordAcquisitionSignal(
 }
 
 const firstUserFunnelStageSet = new Set<string>(FIRST_USER_FUNNEL_STAGES);
-const firstUserAcquisitionSourceSet = new Set(["x", "zenn"]);
+const firstUserAcquisitionSourceSet = new Set(["x", "zenn", "reddit"]);
+const firstUserAcquisitionIssueBySource = new Map([
+  ["x", 3883],
+  ["zenn", 3749],
+  ["reddit", 3750],
+]);
 const firstUserTokenPattern = /^[a-z0-9_-]{1,64}$/;
 
 async function recordFirstUserFunnelSignal(
@@ -1935,7 +1940,7 @@ async function buildFirstUserAcquisitionReport(
   });
   return {
     ...report,
-    issue: utmSource === "zenn" ? 3749 : 3883,
+    issue: firstUserAcquisitionIssueBySource.get(utmSource),
     reportGeneratedAt: new Date().toISOString(),
   };
 }

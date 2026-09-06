@@ -18,7 +18,7 @@ class FirstUserGrowthAttribution {
     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   );
   static final RegExp _tokenPattern = RegExp(r'^[a-z0-9_-]{1,64}$');
-  static const Set<String> supportedSources = <String>{'x', 'zenn'};
+  static const Set<String> supportedSources = <String>{'x', 'zenn', 'reddit'};
 
   final String visitorId;
   final String utmSource;
@@ -123,6 +123,8 @@ class GrowthAcquisitionService {
   static const String touchProfile = 'touch_profile';
   static const String touchXFirstUserGrowth = 'touch_x_first_user_growth';
   static const String touchZennFirstUserGrowth = 'touch_zenn_first_user_growth';
+  static const String touchRedditFirstUserGrowth =
+      'touch_reddit_first_user_growth';
   static const String touchImport = 'touch_import';
   static const String touchPublicMemo = 'touch_public_memo';
   static const String touchReferral = 'touch_referral';
@@ -149,6 +151,8 @@ class GrowthAcquisitionService {
       'signup_submit_x_first_user_growth';
   static const String signupSubmitZennFirstUserGrowth =
       'signup_submit_zenn_first_user_growth';
+  static const String signupSubmitRedditFirstUserGrowth =
+      'signup_submit_reddit_first_user_growth';
   static const String signupSubmitImport = 'signup_submit_import';
   static const String signupSubmitPublicMemo = 'signup_submit_public_memo';
   static const String signupSubmitReferral = 'signup_submit_referral';
@@ -242,8 +246,11 @@ class GrowthAcquisitionService {
     if (!isFirstUserGrowthUri(uri)) {
       return null;
     }
-    if (_lowerParam(uri.queryParameters, 'utm_source') == 'zenn') {
-      return touchZennFirstUserGrowth;
+    switch (_lowerParam(uri.queryParameters, 'utm_source')) {
+      case 'zenn':
+        return touchZennFirstUserGrowth;
+      case 'reddit':
+        return touchRedditFirstUserGrowth;
     }
     switch (_lowerParam(uri.queryParameters, 'utm_medium')) {
       case 'profile':
@@ -274,6 +281,8 @@ class GrowthAcquisitionService {
         return signupSubmitXFirstUserGrowth;
       case touchZennFirstUserGrowth:
         return signupSubmitZennFirstUserGrowth;
+      case touchRedditFirstUserGrowth:
+        return signupSubmitRedditFirstUserGrowth;
       case touchImport:
         return signupSubmitImport;
       case touchPublicMemo:
