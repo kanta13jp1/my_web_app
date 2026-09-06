@@ -21877,6 +21877,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 12),
           _buildAssetManagementDeveloperRequestList(
             _combinedDeveloperRequests(report),
+            report,
           ),
         ],
       ),
@@ -22585,8 +22586,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ];
   }
 
-  bool _isAiGeneratedDeveloperRequest(AssetManagementDeveloperRequest request) {
-    final aiRequests = _assetManagementAiSummaryResult?.aiDeveloperRequests ??
+  bool _isAiGeneratedDeveloperRequest(
+    AssetManagementDeveloperRequest request,
+    AssetManagementInsightReport report,
+  ) {
+    final currentResult = _assetManagementAiSummaryService.currentResultFor(
+      report: report,
+      result: _assetManagementAiSummaryResult,
+      resultKey: _assetManagementAiSummaryResultKey,
+    );
+    final aiRequests = currentResult?.aiDeveloperRequests ??
         const <AssetManagementDeveloperRequest>[];
     if (aiRequests.isEmpty) {
       return false;
@@ -24489,6 +24498,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetManagementDeveloperRequestList(
     List<AssetManagementDeveloperRequest> requests,
+    AssetManagementInsightReport report,
   ) {
     _requestExistingDeveloperIssuesIfNeeded(requests);
     final visibleRequests = _isCheckingExistingDeveloperRequestIssues
@@ -24551,7 +24561,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       height: 1.4,
                     ),
                   ),
-                  if (_isAiGeneratedDeveloperRequest(request)) ...[
+                  if (_isAiGeneratedDeveloperRequest(request, report)) ...[
                     const SizedBox(height: 4),
                     _buildTextStatusChip(
                       label: 'AI新規提案（未起票のみ登録可）',

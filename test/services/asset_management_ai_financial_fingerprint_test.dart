@@ -18,7 +18,7 @@ void main() {
     final oldKey = service.buildRequestFingerprint(before);
     final currentKey = service.buildRequestFingerprint(after);
     expect(currentKey, isNot(oldKey));
-    final oldResult = service.buildWaitingForAiResult(before);
+    final oldResult = _aiResult(before);
     expect(
       service.currentResultFor(
         report: after,
@@ -27,7 +27,7 @@ void main() {
       ),
       isNull,
     );
-    final newResult = service.buildWaitingForAiResult(after);
+    final newResult = _aiResult(after);
     expect(
       service.currentResultFor(
         report: after,
@@ -63,6 +63,29 @@ void main() {
   }
 
   group('Issue 5201 current financial input cache contract', () {
+    test('missing result or provenance is never current', () {
+      final report = _report();
+      final key = service.buildRequestFingerprint(report);
+      expect(
+        service.currentResultFor(
+          report: report,
+          result: null,
+          resultKey: key,
+        ),
+        isNull,
+      );
+      for (final unknownKey in <String?>[null, '']) {
+        expect(
+          service.currentResultFor(
+            report: report,
+            result: _aiResult(report),
+            resultKey: unknownKey,
+          ),
+          isNull,
+        );
+      }
+    });
+
     test('unchanged inputs can reuse a persisted summary', () {
       final firstKey = service.buildRequestFingerprint(_report());
       final secondKey = service.buildRequestFingerprint(_report());
@@ -133,4 +156,22 @@ AssetManagementInsightReport _report({
     ],
   );
   return insight.buildReport(workbook: workbook);
+}
+
+AssetManagementAiSummaryResult _aiResult(AssetManagementInsightReport report) {
+  return AssetManagementAiSummaryResult(
+    status: AssetManagementAiSummaryStatus.aiGenerated,
+    text: 'Synthetic AI summary',
+    source: 'synthetic test provider',
+    errorMessage: null,
+    generatedAt: DateTime(2026, 9, 6, 12),
+    payload: AssetManagementAiSummaryService().buildPayload(report),
+    aiDeveloperRequests: const <AssetManagementDeveloperRequest>[
+      AssetManagementDeveloperRequest(
+        title: 'Synthetic request',
+        description: 'Suggestion based on this input only',
+        severity: AssetManagementInsightSeverity.warning,
+      ),
+    ],
+  );
 }
