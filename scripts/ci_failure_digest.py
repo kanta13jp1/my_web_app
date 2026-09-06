@@ -222,6 +222,7 @@ def diagnostic_lines(log_text: str) -> list[str]:
             r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\s+",
             "", line,
         ).strip()
+        line = re.sub(r"^##\[error\]\s*", "error: ", line)
         if not line or NOISE_LINE_RE.search(line):
             continue
         if re.match(

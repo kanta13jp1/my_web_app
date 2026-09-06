@@ -66,6 +66,15 @@ class WorkflowFailureClusterTest(unittest.TestCase):
                 self.assertNotIn("locally", draft)
                 self.assertTrue("cloud" in draft or "GitHub-hosted" in draft)
 
+    def test_github_error_annotation_is_actionable(self) -> None:
+        self.assertEqual(
+            ci_failure_digest.extract_error_signature(
+                "2026-09-06T10:00:00Z ##[error]Required input is missing\n"
+                "2026-09-06T10:00:01Z ##[error]Process completed with exit code 1.\n"
+            ),
+            "error: Required input is missing",
+        )
+
     def test_classifies_required_failure_families(self) -> None:
         cases = [
             (
