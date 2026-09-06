@@ -9,6 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/pages/real_world_danshari_page.dart';
 import 'package:my_web_app/services/theme_service.dart'; // 追加
 
+import 'support/local_integration_config.dart';
+
 // --- 1. ImagePickerのみモック化 ---
 class MockImagePicker extends Mock implements ImagePicker {
   @override
@@ -104,18 +106,13 @@ void main() {
     const supabaseKey = String.fromEnvironment('TEST_SUPABASE_PUBLISHABLE_KEY');
     const email = String.fromEnvironment('TEST_SUPABASE_EMAIL');
     const password = String.fromEnvironment('TEST_SUPABASE_PASSWORD');
-    final uri = Uri.tryParse(supabaseUrl);
-    if (!enabled ||
-        uri == null ||
-        uri.scheme != 'http' ||
-        !const {'localhost', '127.0.0.1', '[::1]'}.contains(uri.host) ||
-        uri.userInfo.isNotEmpty ||
-        supabaseKey.isEmpty ||
-        !supabaseKey.startsWith('sb_publishable_') ||
-        email.isEmpty ||
-        password.isEmpty) {
-      fail('Explicit local-only integration test configuration is required.');
-    }
+    validateLocalIntegrationConfig(
+      enabled: enabled,
+      url: supabaseUrl,
+      publishableKey: supabaseKey,
+      email: email,
+      password: password,
+    );
     await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
     addTearDown(() => Supabase.instance.dispose());
     final supabase = Supabase.instance.client;

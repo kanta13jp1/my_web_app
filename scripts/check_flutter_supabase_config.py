@@ -45,6 +45,13 @@ def source_violations(label: str, text: str) -> list[str]:
     for description, pattern in SOURCE_PATTERNS:
         if pattern.search(normalized_text):
             violations.append(f"{label}: {description}")
+    if label.startswith(("integration_test/", "test_driver/")):
+        credential_literal = re.compile(
+            r"\bpassword\s*(?::|=)\s*['\"][^'\"\r\n]+['\"]",
+            re.IGNORECASE,
+        )
+        if credential_literal.search(normalized_text):
+            violations.append(f"{label}: literal integration-test password")
     return violations
 
 

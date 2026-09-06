@@ -38,6 +38,26 @@ class CheckFlutterSupabaseConfigTest(unittest.TestCase):
 
         self.assertEqual(source_violations("web/index.html", text), [])
 
+    def test_rejects_test_password_literals_without_disclosing_values(self) -> None:
+        for directory in ("integration_test", "test_driver"):
+            for literal in ("password: 'synthetic-only'", 'password = "synthetic-only"'):
+                with self.subTest(directory=directory, literal=literal):
+                    violations = source_violations(f"{directory}/sample.dart", literal)
+                    self.assertEqual(
+                        violations,
+                        [f"{directory}/sample.dart: literal integration-test password"],
+                    )
+                    self.assertNotIn("synthetic-only", str(violations))
+
+    def test_allows_explicit_test_password_configuration(self) -> None:
+        self.assertEqual(
+            source_violations(
+                "integration_test/sample.dart",
+                "const password = String.fromEnvironment('TEST_PASSWORD'); "
+                "password: password",
+            ),
+            [],
+        )
     def test_runtime_config_must_fail_closed(self) -> None:
         unsafe = """
         String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://example.test')
