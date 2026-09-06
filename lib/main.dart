@@ -91,6 +91,7 @@ import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/eval_approval_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/price_tracker_page.dart';
+import 'package:my_web_app/pages/process_quality_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_observability_page.dart';
 import 'package:my_web_app/pages/ai_router_cost_dashboard_page.dart';
 import 'package:my_web_app/pages/task_budget_assistant_page.dart';
@@ -706,8 +707,11 @@ Route<dynamic> generateAppRoute(
         settings: settings,
       );
     case '/philosophy':
+      final initialStep = uri.queryParameters['step'] == 'quick-inventory'
+          ? PhilosophyInitialStep.quickInventory
+          : PhilosophyInitialStep.overview;
       return MaterialPageRoute(
-        builder: (_) => const PhilosophyPage(),
+        builder: (_) => PhilosophyPage(initialStep: initialStep),
         settings: settings,
       );
     case '/privacy':
@@ -911,6 +915,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const PurchaseLogPage());
     case '/price-tracker':
       return MaterialPageRoute(builder: (_) => const PriceTrackerPage());
+    case '/process-quality-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const ProcessQualityDashboardPage(),
+      );
     case '/ai-observability':
       return MaterialPageRoute(
         builder: (_) => const AiObservabilityPage(),
