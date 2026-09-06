@@ -151,6 +151,7 @@ jobs:
           python scripts/vscode_terminal_settings_test.py
           python scripts/ci_failure_digest_test.py
           python scripts/generate_context_bundle_test.py
+          python scripts/codex_backlog_selection_test.py
           python scripts/network_restrictions_guard_test.py
           python test/scripts/test_workflow_failure_cluster.py
           python scripts/wbs_notify_privacy_test.py
