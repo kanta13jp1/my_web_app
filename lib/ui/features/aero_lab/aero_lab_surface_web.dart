@@ -59,7 +59,7 @@ class _AeroLabSurfaceState extends State<AeroLabSurface> with RouteAware {
               ..referrerPolicy = 'no-referrer'
               ..allow =
                   "display-capture 'self'; camera 'none'; microphone 'none'; "
-                  "geolocation 'none'"
+                      "geolocation 'none'"
               ..style.border = 'none'
               ..style.width = '100%'
               ..style.height = '100%';
