@@ -47,7 +47,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('競合サービス の代わりに'), findsOneWidget);
-    expect(find.byKey(const Key('comparison-evidence-unavailable')), findsNWidgets(2));
+    expect(find.byKey(const Key('comparison-evidence-unavailable')),
+        findsNWidgets(2));
     expect(find.text('複数サービスへのログインが面倒'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -59,7 +60,8 @@ void main() {
       await tester.pumpWidget(_ctaApp(hasImport: hasImport));
       await tester.tap(find.byKey(ComparisonCtaPanel.secondaryButtonKey));
       await tester.pumpAndSettle();
-      expect(find.text(hasImport ? 'import destination' : 'home destination'), findsOneWidget);
+      expect(find.text(hasImport ? 'import destination' : 'home destination'),
+          findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
@@ -72,7 +74,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('home destination'), findsOneWidget);
     expect(find.byType(ComparisonCtaPanel), findsNothing);
-    expect(Navigator.of(tester.element(find.text('home destination'))).canPop(), isFalse);
+    expect(Navigator.of(tester.element(find.text('home destination'))).canPop(),
+        isFalse);
   });
 }
 

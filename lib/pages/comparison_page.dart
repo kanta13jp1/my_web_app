@@ -67602,8 +67602,8 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   @override
   void initState() {
     super.initState();
-    final recorder = widget.touchRecorder ??
-        _acquisitionService.recordComparisonTouch;
+    final recorder =
+        widget.touchRecorder ?? _acquisitionService.recordComparisonTouch;
     unawaited(recorder(widget.competitorKey));
   }
 
