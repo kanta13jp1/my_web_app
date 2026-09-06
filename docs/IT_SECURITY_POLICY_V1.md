@@ -40,6 +40,8 @@
 | 3-3 | 画面ロック: 離席時ロック + 自動ロック (数分) を設定 |
 | 3-4 | 端末の譲渡・廃棄時はストレージ消去 (暗号化済みであれば回復キー破棄でも可) |
 | 3-5 | 不審な実行ファイル・ブラウザ拡張を入れない。Microsoft Defender を無効化しない |
+| 3-6 | VS Code・terminal・Git・build/test・開発serverは**標準ユーザーで実行**する。昇格は承認済みinstaller・driver・system policy等の単発taskに限定し、完了後は直ちに非昇格へ戻す。editor/shellの「常に管理者として実行」を禁止する |
+| 3-7 | Antivirus/EDR除外はdefault denyとする。検知eventで因果を確認し、endpoint-security ownerが正確なfile/contextへ期限付き承認した場合だけ許可する。folder/extension/user profile/workspace/editor/shell/process全体の除外を禁止し、手順・証跡・撤回は [`VSCODE_TERMINAL_TROUBLESHOOTING.md`](VSCODE_TERMINAL_TROUBLESHOOTING.md) §4を正本とする |
 
 ## 4. ネットワーク / VPN
 
@@ -77,6 +79,7 @@
 |------|------|
 | 四半期 | クレデンシャル棚卸し: 発行済み PAT / API key / SaaS アカウント一覧を確認し、不要分を失効 (§1-4) |
 | 四半期 | 端末設定確認: 暗号化有効 / OS 更新 / 画面ロック (§3) |
+| 四半期 | Endpoint例外台帳とeditor/shellの「常に管理者として実行」を棚卸しし、期限切れ除外を撤回する (§3-6/3-7) |
 | 四半期 | Supabase Organization Owner一覧と削除・移管権限を確認し、不要なOwnerを削除 (§6-4/6-5) |
 | 週次 | 最新の暗号化database backup、restore drill、artifact保持を確認 (§6-6) |
 | 随時 | 露出検知時は §2-5 即時対応 (定期を待たない) |
@@ -118,5 +121,6 @@
 - [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) — インシデント対応 (§8)
 - [`PRODUCTION_MONITORING_RUNBOOK.md`](PRODUCTION_MONITORING_RUNBOOK.md) — 監視 cadence (§5-4)
 - [`SUPABASE_LOG_DRAINS_REQUIREMENTS.md`](SUPABASE_LOG_DRAINS_REQUIREMENTS.md) — 外部ログ転送、保持、削除、費用統制 (§6-7)
+- [`VSCODE_TERMINAL_TROUBLESHOOTING.md`](VSCODE_TERMINAL_TROUBLESHOOTING.md) — 標準ユーザー実行とendpoint-security例外の承認・検証・撤回 (§3-6/3-7)
 - [`MCP_AUTH_SECURITY_PRINCIPLES.md`](MCP_AUTH_SECURITY_PRINCIPLES.md) / [`AI_DEV_PRINCIPLES.md`](AI_DEV_PRINCIPLES.md) — 技術設計原則 (§5)
 - [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md) — 運用憲章 (5 正本)
