@@ -27353,12 +27353,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             dataRowMinHeight: 44,
             dataRowMaxHeight: 56,
             columns: const [
-              DataColumn(label: Text('口座')),
-              DataColumn(label: Text('現在残高'), numeric: true),
-              DataColumn(label: Text('今後の支払い'), numeric: true),
-              DataColumn(label: Text('今後の入金'), numeric: true),
-              DataColumn(label: Text('支払後残高'), numeric: true),
-              DataColumn(label: Text('判定')),
+              DataColumn(label: SizedBox(width: 64, child: Text('口座'))),
+              DataColumn(
+                label: SizedBox(width: 96, child: Text('現在残高')),
+                numeric: true,
+              ),
+              DataColumn(
+                label: SizedBox(width: 128, child: Text('今後の支払い')),
+                numeric: true,
+              ),
+              DataColumn(
+                label: SizedBox(width: 112, child: Text('今後の入金')),
+                numeric: true,
+              ),
+              DataColumn(
+                label: SizedBox(width: 112, child: Text('支払後残高')),
+                numeric: true,
+              ),
+              DataColumn(label: SizedBox(width: 64, child: Text('判定'))),
             ],
             rows: [
               for (final summary in summaries)
