@@ -153,6 +153,7 @@ jobs:
           python scripts/vscode_terminal_settings_test.py
           python scripts/ci_failure_digest_test.py
           python scripts/ci_job_summary_test.py
+          python scripts/generate_context_bundle_test.py
           python scripts/codex_backlog_selection_test.py
           python scripts/network_restrictions_guard_test.py
           python test/scripts/test_workflow_failure_cluster.py
@@ -517,6 +518,22 @@ jobs:
         env:
           CI_STEPS_JSON: ${{ toJSON(steps) }}
         run: python scripts/ci_job_summary.py
+
+      - name: Capture tested-source context
+        if: always() && hashFiles('scripts/generate_context_bundle.py') != ''
+        env:
+          CI_JOB_STATUS: ${{ job.status }}
+          CI_STEPS_JSON: ${{ toJSON(steps) }}
+        run: python scripts/generate_context_bundle.py --ci-env --output-dir .ci-logs/ci-context
+
+      - name: Upload tested-source context
+        if: always() && hashFiles('.ci-logs/ci-context/manifest.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: tested-source-context
+          path: .ci-logs/ci-context
+          if-no-files-found: error
+
 
   actionlint:
     name: GitHub Actions syntax
