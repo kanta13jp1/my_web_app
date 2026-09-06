@@ -49,19 +49,20 @@ class _AeroLabSurfaceState extends State<AeroLabSurface> with RouteAware {
   Widget build(BuildContext context) => !_visible
       ? const SizedBox.expand()
       : HtmlElementView.fromTagName(
-        tagName: 'iframe',
-        onElementCreated: (element) {
-          final frame = element as web.HTMLIFrameElement;
-          _frame = frame;
-          frame
-            ..title = 'AERO LAB 教育用3Dエンジン実験室'
-            ..src = '/labs/aero-lab/index.html'
-            ..referrerPolicy = 'no-referrer'
-            ..allow = "display-capture 'self'; camera 'none'; microphone 'none'; "
-                "geolocation 'none'"
-            ..style.border = 'none'
-            ..style.width = '100%'
-            ..style.height = '100%';
-        },
-      );
+          tagName: 'iframe',
+          onElementCreated: (element) {
+            final frame = element as web.HTMLIFrameElement;
+            _frame = frame;
+            frame
+              ..title = 'AERO LAB 教育用3Dエンジン実験室'
+              ..src = '/labs/aero-lab/index.html'
+              ..referrerPolicy = 'no-referrer'
+              ..allow =
+                  "display-capture 'self'; camera 'none'; microphone 'none'; "
+                  "geolocation 'none'"
+              ..style.border = 'none'
+              ..style.width = '100%'
+              ..style.height = '100%';
+          },
+        );
 }

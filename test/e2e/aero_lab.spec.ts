@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const path = '/labs/aero-lab/index.html';
 
-test('engine controls, layout, reload and visible 3D render', async ({ page }, info) => {
+test('engine controls, layout and visible 3D render', async ({ page }, info) => {
   const errors: string[] = [];
   const external: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -32,11 +32,21 @@ test('engine controls, layout, reload and visible 3D render', async ({ page }, i
   await expect(page.locator('#flow')).not.toBeChecked();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath('aero-lab.png'), fullPage: true });
+  expect(errors).toEqual([]);
+  expect(external).toEqual([]);
+});
+
+test('reload releases the old scene and restores initial controls', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto(path);
+  await expect(page.locator('#scene-status')).toBeHidden();
+  await page.getByRole('button', { name: '60%', exact: true }).click();
+  await expect(page.locator('#power-value')).toHaveText('60');
   await page.reload();
   await expect(page.locator('#scene-status')).toBeHidden();
   await expect(page.locator('#power-value')).toHaveText('35');
   expect(errors).toEqual([]);
-  expect(external).toEqual([]);
 });
 
 test('missing module gives a readable error instead of an endless loader', async ({ page }) => {

@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/aero_lab_page.dart';
 
 void main() {
-  testWidgets('shows a usable non-web fallback at narrow width', (tester) async {
+  testWidgets('shows a usable non-web fallback at narrow width', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
