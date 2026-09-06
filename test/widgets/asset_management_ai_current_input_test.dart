@@ -123,7 +123,11 @@ class _ControlledAi extends AssetManagementAiSummaryService {
     return response.future;
   }
 
-  void complete(int index, String text) {
+  void complete(
+    int index,
+    String text, {
+    List<AssetManagementDeveloperRequest> proposals = const [],
+  }) {
     responses[index].complete(
       AssetManagementAiSummaryResult(
         status: AssetManagementAiSummaryStatus.aiGenerated,
@@ -132,6 +136,7 @@ class _ControlledAi extends AssetManagementAiSummaryService {
         errorMessage: null,
         generatedAt: DateTime(2026, 9, 6, 12),
         payload: buildPayload(requests[index]),
+        aiDeveloperRequests: proposals,
       ),
     );
   }
@@ -198,12 +203,26 @@ void main() {
     );
     await _pumpUntil(tester, () => ai.responses.isNotEmpty);
     expect(ai.requests.first.workbook.incomePlans.single.received, isFalse);
-    ai.complete(0, 'Old synthetic income is unreceived');
+    const oldProposalTitle = 'Synthetic obsolete receipt proposal';
+    ai.complete(
+      0,
+      'Old synthetic income is unreceived',
+      proposals: const <AssetManagementDeveloperRequest>[
+        AssetManagementDeveloperRequest(
+          title: oldProposalTitle,
+          description: 'Synthetic proposal for the previous receipt state.',
+          severity: AssetManagementInsightSeverity.warning,
+        ),
+      ],
+    );
     final oldText = find.text(
       'Old synthetic income is unreceived',
       findRichText: true,
     );
     await _pumpUntil(tester, () => oldText.evaluate().isNotEmpty);
+    final oldProposal = find.text(oldProposalTitle);
+    await _pumpUntil(tester, () => oldProposal.evaluate().isNotEmpty);
+    expect(oldProposal, findsOneWidget);
     final copy = find.text('分析結果をコピー');
     await tester.ensureVisible(copy);
     await tester.tap(copy);
@@ -216,6 +235,7 @@ void main() {
     await tester.tap(received);
     await tester.pump();
     expect(oldText, findsNothing);
+    expect(oldProposal, findsNothing);
     clipboardText = null;
     await tester.ensureVisible(copy);
     await tester.tap(copy);
@@ -236,6 +256,7 @@ void main() {
     );
     await _pumpUntil(tester, () => newText.evaluate().isNotEmpty);
     expect(oldText, findsNothing);
+    expect(oldProposal, findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });
