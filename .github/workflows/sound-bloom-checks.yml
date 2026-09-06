@@ -1,0 +1,40 @@
+name: SOUND BLOOM checks
+on:
+  pull_request:
+    paths:
+      - 'web/labs/sound-bloom/**'
+      - 'lib/pages/sound_bloom_page.dart'
+      - 'lib/ui/features/sound_bloom/**'
+      - 'test/sound_bloom/**'
+      - 'test/e2e/sound_bloom.spec.ts'
+      - 'playwright.sound-bloom.config.ts'
+      - '.github/workflows/sound-bloom-checks.yml'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: sound-bloom-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  garden:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: node --test test/sound_bloom/pattern.test.mjs
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config=playwright.sound-bloom.config.ts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: sound-bloom-evidence
+          path: |
+            sound-bloom-report/
+            test-results/
+          retention-days: 7
