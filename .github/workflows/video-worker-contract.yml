@@ -1,0 +1,26 @@
+name: Video Worker Contract
+
+on:
+  pull_request:
+    paths:
+      - 'services/video-inference-worker/**'
+      - '.github/workflows/video-worker-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  worker-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Install worker control-plane dependency
+        run: python -m pip install requests==2.32.5
+      - name: Verify worker contracts and diagnostic privacy
+        working-directory: services/video-inference-worker
+        run: python -m unittest -v test_worker.py
