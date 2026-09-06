@@ -19,6 +19,7 @@ from worker import (
     WorkerShutdown,
     build_wan_command,
     classify_inference_failure,
+    inference_failure_summary,
     safe_worker_error_detail,
     sha256_file,
     validate_job,
@@ -155,6 +156,42 @@ class WorkerContractTest(unittest.TestCase):
         self.assertNotIn("private customer prompt", str(memory_error))
         self.assertIsInstance(process_error, InferenceProcessFailed)
         self.assertFalse(process_error.retryable)
+
+    def test_diagnostic_preserves_structure_without_private_content(self) -> None:
+        import json
+
+        with tempfile.TemporaryDirectory() as root:
+            diagnostic = Path(root) / "diagnostic.log"
+            diagnostic.write_text(
+                'Namespace(prompt="private customer prompt")\n'
+                '  File "/opt/Wan2.2/generate.py", line 321, in generate\n'
+                '    secret = "Bearer private-token"\n'
+                '  File "/opt/customer-private-name.py", line 9, in run\n'
+                'RuntimeError: https://example.test/?token=private-token\n',
+                encoding="utf-8",
+            )
+            summary = inference_failure_summary(1, diagnostic)
+        self.assertEqual(summary["exception_type"], "RuntimeError")
+        self.assertEqual(summary["frames"], [{"file": "generate.py", "line": 321}])
+        self.assertEqual(summary["return_code"], 1)
+        self.assertNotIn("private", json.dumps(summary))
+        self.assertNotIn("token", json.dumps(summary))
+
+    def test_diagnostic_is_bounded_and_missing_evidence_is_explicit(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            diagnostic = Path(root) / "diagnostic.log"
+            missing = inference_failure_summary(-9, diagnostic)
+            diagnostic.write_text(
+                'RuntimeError: old failure\n' + 'x' * 70000 + '\n' +
+                '  File "/opt/Wan2.2/t5.py", line 12, in run\n' * 20 +
+                'PrivateCustomerError: not an allowed class\n',
+                encoding="utf-8",
+            )
+            summary = inference_failure_summary(2, diagnostic)
+        self.assertFalse(missing["diagnostic_available"])
+        self.assertTrue(summary["diagnostic_available"])
+        self.assertEqual(summary["exception_type"], "unknown")
+        self.assertEqual(len(summary["frames"]), 8)
 
     def test_sigkill_is_treated_as_memory_pressure(self) -> None:
         with tempfile.TemporaryDirectory() as root:

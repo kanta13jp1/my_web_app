@@ -3,6 +3,11 @@ from __future__ import annotations
 
 from pathlib import Path
 import unittest
+import os
+import shutil
+import subprocess
+import tempfile
+import textwrap
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -72,6 +77,62 @@ class CicdEfficiencyTest(unittest.TestCase):
             "Release tag $TAG points to $REF_SHA, expected $GITHUB_SHA",
             deploy,
         )
+
+    def deployment_checkout_script(self) -> str:
+        deploy = self.read(".github/workflows/deploy-prod.yml")
+        step = deploy.split("      - name: Checkout code\n", 1)[1].split(
+            "      - name: Collect pushed files\n", 1
+        )[0]
+        return textwrap.dedent(step.split("        run: |\n", 1)[1]).strip()
+
+    def test_deploy_checkout_uses_event_sha_not_moving_branch(self) -> None:
+        script = self.deployment_checkout_script()
+        self.assertIn('git fetch --tags --prune origin "$GITHUB_SHA"', script)
+        self.assertIn("git checkout --force --detach FETCH_HEAD", script)
+        self.assertIn('git rev-parse HEAD)', script)
+        self.assertNotIn("GITHUB_REF", script)
+
+    @unittest.skipUnless(shutil.which("bash"), "Bash integration runs on cloud CI")
+    def test_deploy_checkout_survives_branch_advance(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            checkout = root / "checkout"
+            source.mkdir()
+            checkout.mkdir()
+            env = dict(os.environ, GIT_CONFIG_NOSYSTEM="1",
+                       GIT_CONFIG_GLOBAL=os.devnull,
+                       GIT_AUTHOR_NAME="Fixture", GIT_AUTHOR_EMAIL="fixture@example.invalid",
+                       GIT_COMMITTER_NAME="Fixture", GIT_COMMITTER_EMAIL="fixture@example.invalid")
+            def git(*args):
+                return subprocess.check_output(
+                    ["git", "-C", str(source), *args], env=env, text=True,
+                    stderr=subprocess.STDOUT,
+                ).strip()
+            git("init", "--initial-branch=main")
+            git("commit", "--allow-empty", "-m", "Event revision")
+            event_sha = git("rev-parse", "HEAD")
+            git("tag", "v1.0.0")
+            git("commit", "--allow-empty", "-m", "Newer branch revision")
+            self.assertNotEqual(event_sha, git("rev-parse", "HEAD"))
+            script = self.deployment_checkout_script().replace(
+                '"https://github.com/${GITHUB_REPOSITORY}.git"', '"$FIXTURE_REMOTE"'
+            )
+            env.update(GITHUB_SHA=event_sha, GITHUB_REF="refs/heads/main",
+                       GITHUB_REPOSITORY="fixture/repo", FIXTURE_REMOTE=str(source))
+            result = subprocess.run(
+                ["bash", "-c", script], cwd=checkout, env=env, text=True,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout)
+            actual = subprocess.check_output(
+                ["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True
+            ).strip()
+            self.assertEqual(actual, event_sha)
+            tags = subprocess.check_output(
+                ["git", "-C", str(checkout), "tag", "--list"], text=True
+            )
+            self.assertIn("v1.0.0", tags)
 
     def test_minimal_gate_does_not_poll_ci(self) -> None:
         workflow = self.read(".github/workflows/minimal-e2e-gate.yml")

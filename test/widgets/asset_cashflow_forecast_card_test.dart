@@ -64,6 +64,8 @@ void main() {
       expect(forecast.worstBalance, -60570);
       expect(forecast.months.single.closingBalance, 360707);
       await _pump(tester, forecast);
+      expect(find.textContaining('登録データに基づく不足額の試算'), findsOneWidget);
+      expect(find.textContaining('明細と照合してから判断'), findsOneWidget);
       expect(find.text('● 月末残高'), findsOneWidget);
       expect(find.text('◆ 月内最低残高'), findsOneWidget);
       final details = find.byKey(
