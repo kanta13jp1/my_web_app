@@ -272,6 +272,12 @@ class AssetManagementPage extends StatefulWidget {
   final AssetWatchlistService watchlistService;
   final AssetLiabilityRepository? assetLiabilityRepository;
   final InvestmentAssetRepository? investmentAssetRepository;
+  final AssetManagementAiSummaryService? aiSummaryService;
+  final AssetManagementAiAnalysisHistoryService? aiAnalysisHistoryService;
+
+  @visibleForTesting
+  final DateTime? debugNow;
+
   final String? entryLabel;
   final String? entryDescription;
 
@@ -398,6 +404,9 @@ class AssetManagementPage extends StatefulWidget {
     this.watchlistService = const AssetWatchlistService(),
     this.assetLiabilityRepository,
     this.investmentAssetRepository,
+    this.aiSummaryService,
+    this.aiAnalysisHistoryService,
+    this.debugNow,
     this.entryLabel,
     this.entryDescription,
     this.debugInitialAssetData,
@@ -909,11 +918,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetLiabilityMonthlyReportService();
   final AssetManagementInsightService _assetManagementInsightService =
       const AssetManagementInsightService();
-  final AssetManagementAiSummaryService _assetManagementAiSummaryService =
-      AssetManagementAiSummaryService();
-  final AssetManagementAiAnalysisHistoryService
-      _assetManagementAiAnalysisHistoryService =
-      const AssetManagementAiAnalysisHistoryService();
+  late final AssetManagementAiSummaryService _assetManagementAiSummaryService;
+  late final AssetManagementAiAnalysisHistoryService
+      _assetManagementAiAnalysisHistoryService;
   final SalarySpendingBreakdownService _salarySpendingBreakdownService =
       const SalarySpendingBreakdownService();
   final DisposableBalanceService _disposableBalanceService =
@@ -1128,6 +1135,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void initState() {
     super.initState();
+    _assetManagementAiSummaryService =
+        widget.aiSummaryService ?? AssetManagementAiSummaryService();
+    _assetManagementAiAnalysisHistoryService =
+        widget.aiAnalysisHistoryService ??
+            const AssetManagementAiAnalysisHistoryService();
+    _now = widget.debugNow ?? _now;
     final debugCalendarNow = widget.debugCalendarNow;
     if (debugCalendarNow != null) {
       _calendarCycleAnchor = debugCalendarNow;
@@ -1222,7 +1235,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousNow = _now;
-      final nextNow = DateTime.now();
+      final nextNow = widget.debugNow ?? DateTime.now();
       final previousMonthKey = _assetLiabilityStateMonthKey(previousNow);
       final nextMonthKey = _assetLiabilityStateMonthKey(nextNow);
       // _now はこのページでは日付(M/d)までしか表示しない。毎秒 setState すると巨大な
@@ -27007,6 +27020,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         DataCell(Text(plan.destinationAccountName ?? '未設定')),
                         DataCell(
                           Checkbox(
+                            key: Key('asset_income_received_${plan.id}'),
                             value: plan.received,
                             onChanged: (value) =>
                                 _toggleIncomeReceived(plan.id, value ?? false),
