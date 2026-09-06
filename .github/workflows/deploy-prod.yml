@@ -98,8 +98,18 @@ jobs:
           set -euo pipefail
           git init .
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --tags --prune origin "+${GITHUB_REF}:refs/remotes/origin/checkout"
-          git checkout --force refs/remotes/origin/checkout
+          # Keep source, event change scope, release metadata, and tags on one SHA.
+          # A queued run must not silently build a newer moving branch head.
+          if [[ ! "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Deployment requires a full immutable event SHA."
+            exit 1
+          fi
+          git fetch --tags --prune origin "$GITHUB_SHA"
+          git checkout --force --detach FETCH_HEAD
+          if [ "$(git rev-parse HEAD)" != "$GITHUB_SHA" ]; then
+            echo "::error::Deployment checkout does not match the event SHA."
+            exit 1
+          fi
 
       - name: Collect pushed files
         if: github.event_name == 'push'

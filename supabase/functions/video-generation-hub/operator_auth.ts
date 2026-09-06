@@ -4,8 +4,10 @@ export type VideoOperatorResolution =
   | { kind: "error"; code: string; status: number };
 
 const SERVICE_ROLE_ACTIONS = new Set([
+  "capabilities",
   "authorization_status",
   "run_authorized_improvement",
+  "review_authorized_artifact",
   "status",
 ]);
 

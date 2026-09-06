@@ -44,6 +44,8 @@ const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
 };
 
 const Map<String, String> _consolidatedFeatureLabels = <String, String>{
+  '/sound-bloom': '音と光の庭 · SOUND BLOOM',
+  '/aero-lab': '3D実験室 · AERO LAB',
   '/ai-writing-assistant': 'AI文章・要約アシスタント',
   '/ai-university-toeic': 'AI大学 TOEIC対策',
   '/art-museums': '全国の美術館',
