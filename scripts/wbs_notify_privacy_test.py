@@ -25,7 +25,8 @@ class NotifyTest(unittest.TestCase):
 curl() {
   printf 'called' > "$CALL_MARKER"
   while [ "$#" -gt 0 ]; do
-    if [ "$1" = "-o" ]; then cp "$FIXTURE" "$2"; shift; fi
+    if [ "$1" = "-o" ]; then cp "$FIXTURE" "$2"; shift
+    elif [ "$1" = "-d" ]; then printf '%s' "$2" > "$REQUEST_FILE"; shift; fi
     shift
   done
   printf '%s' "$FAKE_STATUS"
@@ -37,11 +38,15 @@ curl() {
                 env={**os.environ, "SUPABASE_URL": "https://example.invalid",
                      "SUPABASE_ANON_KEY": key, "LIMIT": limit, "TMPDIR": directory,
                      "FIXTURE": str(fixture), "CALL_MARKER": str(root / "called"),
+                     "REQUEST_FILE": str(root / "request.json"),
                      "FAKE_STATUS": status, "FAKE_TRANSPORT": transport},
             )
             self.assertNotIn("private-response-canary", result.stdout + result.stderr)
             self.assertNotIn("synthetic-key", result.stdout + result.stderr)
             self.assertEqual(list(root.glob("tmp.*")), [])
+            if (root / "called").exists():
+                request = json.loads((root / "request.json").read_text(encoding="utf-8"))
+                self.assertEqual(request, {"action": "wbs.notify_user_tasks", "send_slack": True, "limit": int(limit)})
             return result, (root / "called").exists()
 
     def test_missing_key_fails_without_request(self):
