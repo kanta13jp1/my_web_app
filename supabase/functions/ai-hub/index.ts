@@ -2895,9 +2895,10 @@ async function runCompanyRuntimeWorker(
   const finish = asRecord(rawFinish) ?? {};
   const finalTaskStatus = asString(finish.task_status);
   const taskCancelled = finalTaskStatus === "cancelled";
+  const taskTimedOut = finish.timed_out === true;
 
   let persistedRoutingProfile = nextRoutingProfile;
-  if (!taskCancelled) {
+  if (!taskCancelled && !taskTimedOut) {
     try {
       persistedRoutingProfile = await persistCompanyRoutingOutcome(
         admin,
@@ -2969,6 +2970,7 @@ async function runCompanyRuntimeWorker(
     company_id: message.companyId,
     task_id: taskId,
     task_status: asString(finish.task_status),
+    timed_out: taskTimedOut,
     continue: shouldContinue,
   };
 }
