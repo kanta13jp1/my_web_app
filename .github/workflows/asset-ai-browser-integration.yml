@@ -8,6 +8,7 @@ on:
       - lib/services/asset_management_insight_service.dart
       - test/widgets/asset_management_ai_current_input_test.dart
       - integration_test/asset_management_ai_current_input_test.dart
+      - integration_test/asset_ai_current_input_scenarios.dart
       - test_driver/asset_ai_integration.dart
       - .github/workflows/asset-ai-browser-integration.yml
 
@@ -51,7 +52,7 @@ jobs:
           done
           curl --fail --silent http://localhost:4444/status
           set -o pipefail
-          flutter drive \
+          flutter drive --verbose \
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_management_ai_current_input_test.dart \
             -d web-server --browser-name=chrome --headless \
@@ -64,3 +65,4 @@ jobs:
           path: .ci-logs/asset-ai-*.log
           retention-days: 3
           if-no-files-found: ignore
+          include-hidden-files: true
