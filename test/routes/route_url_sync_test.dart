@@ -240,7 +240,11 @@ void main() {
   test('kAllAppRoutes matches the routes registered in main.dart', () {
     final registered = _registeredRoutes();
     final listed = kAllAppRoutes.toSet();
-    expect(kAllAppRoutes.length, listed.length, reason: 'Duplicate route names');
+    expect(
+      kAllAppRoutes.length,
+      listed.length,
+      reason: 'Duplicate route names',
+    );
 
     expect(
       registered.difference(listed).toList()..sort(),
