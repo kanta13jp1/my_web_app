@@ -219,6 +219,16 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     switch (action) {
+      case "capabilities":
+        return jsonResponse({
+          success: true,
+          scheduler_actions: [
+            "authorization_status",
+            "run_authorized_improvement",
+            "review_authorized_artifact",
+            "status",
+          ],
+        });
       case "catalog":
         return jsonResponse({ success: true, ...publicCatalog() });
       case "balance":
@@ -233,6 +243,8 @@ serve(async (req: Request) => {
         return await listJobs(admin, user.id);
       case "review_artifact":
         return await reviewArtifactResponse(admin, user.id, input);
+      case "review_authorized_artifact":
+        return await reviewAuthorizedArtifactResponse(admin, user.id, input);
       case "authorization_status":
         return await authorizationStatusResponse(admin, user.id);
       case "authorize_improvement":
@@ -662,6 +674,52 @@ async function listJobs(
   return jsonResponse({ success: true, jobs });
 }
 
+async function reviewAuthorizedArtifactResponse(
+  admin: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  const authorizationId = asString(body.authorization_id);
+  if (!isUuid(authorizationId)) {
+    return jsonResponse({ error: "invalid_authorization_id" }, 400);
+  }
+  const validation = validateArtifactReview(body);
+  if (!validation.ok) {
+    return jsonResponse({ error: validation.code }, 400);
+  }
+  const value = validation.value;
+  const { error } = await admin.rpc(
+    "video_record_authorized_artifact_review",
+    {
+      p_user_id: userId,
+      p_authorization_id: authorizationId,
+      p_artifact_id: value.artifactId,
+      p_quality_score: value.qualityScore,
+      p_prompt_alignment_score: value.promptAlignmentScore,
+      p_motion_quality_score: value.motionQualityScore,
+      p_commercial_value_score: value.commercialValueScore,
+      p_decision: value.decision,
+      p_strengths: value.strengths,
+      p_improvement_request: value.improvementRequest,
+      p_suggested_prompt: value.suggestedPrompt,
+      p_notes: value.notes,
+      p_rights_status: value.rightsStatus,
+      p_privacy_status: value.privacyStatus,
+    },
+  );
+  if (error) {
+    const known = knownAuthorizedReviewError(error.message);
+    if (known) return jsonResponse({ error: known.code }, known.status);
+    throw error;
+  }
+  const artifact = await loadArtifactById(admin, userId, value.artifactId);
+  if (!artifact) throw new Error("reviewed_artifact_missing");
+  return jsonResponse({
+    success: true,
+    artifact: publicArtifact(artifact),
+    review: publicReview(artifact.latest_review),
+  });
+}
 async function reviewArtifactResponse(
   admin: SupabaseClient,
   userId: string,
@@ -1072,6 +1130,21 @@ function safeErrorCode(error: unknown): string {
     : "internal_error";
 }
 
+function knownAuthorizedReviewError(
+  message: string,
+): { code: string; status: number } | null {
+  const mappings: readonly [string, number][] = [
+    ["video_authorized_review_artifact_already_reviewed", 409],
+    ["video_authorized_review_target_invalid", 409],
+    ["video_authorization_not_found", 404],
+    ["video_artifact_not_found", 404],
+    ["invalid_video_artifact_review", 400],
+  ];
+  for (const [code, status] of mappings) {
+    if (message.includes(code)) return { code, status };
+  }
+  return null;
+}
 function knownAuthorizationError(
   message: string,
 ): { code: string; status: number } | null {
