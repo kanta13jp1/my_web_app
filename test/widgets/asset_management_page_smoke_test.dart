@@ -201,6 +201,32 @@ void main() {
   });
 
   group('AssetManagementPage smoke', () {
+    testWidgets('mobile chat reserves space outside the scrolling content', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await _pumpAssetPage(tester);
+      final dock = find.byKey(const Key('asset_chat_docked_bar'));
+      expect(dock, findsOneWidget);
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.floatingActionButton, isNull);
+      expect(
+        tester.getRect(find.byWidget(scaffold.body!)).bottom,
+        lessThanOrEqualTo(tester.getRect(dock).top),
+      );
+      await tester.tap(find.byKey(const Key('asset_chat_open_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_panel')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byKey(const Key('asset_chat_close_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_open_button')), findsOneWidget);
+      await _unmount(tester);
+    });
+
     testWidgets('sticky asset chat entry opens and closes the panel', (
       tester,
     ) async {
@@ -467,6 +493,86 @@ void main() {
           findsOneWidget,
         );
 
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'cycle summary and salary breakdown exclude an unreceived income plan',
+      (tester) async {
+        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+          DateTime.now(),
+          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
+        );
+        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
+        final repo = _FakeDebtOverrideRepository(
+          const <String, int>{},
+          monthlyState: AssetLiabilityMonthlyState(
+            incomePlans: <AssetLiabilityIncomePlan>[
+              AssetLiabilityIncomePlan(
+                id: 'unreceived_salary',
+                date: cycleStart,
+                name: '給料予定',
+                amount: 450000,
+                destinationAccountId: null,
+                destinationAccountName: null,
+                received: false,
+              ),
+            ],
+          ),
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1': 'full',
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              assetLiabilityRepository: repo,
+              debugInitialRecentFlows: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'action_type': 'expense',
+                  'amount': 175110,
+                  'description': '使途不明金（残高差分から自動記録）',
+                  'occurred_at': cycleStart.toIso8601String(),
+                },
+              ],
+              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'pay_date': payDate,
+                  'amount': 421277,
+                  'description': '給料',
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        for (final key in <String>[
+          'asset_monthly_flow_priority_card',
+          'asset_salary_spending_breakdown_card',
+        ]) {
+          final card = find.byKey(Key(key));
+          expect(card, findsOneWidget);
+          expect(
+            find.descendant(of: card, matching: find.text('¥421,277')),
+            findsOneWidget,
+          );
+          expect(
+            find.descendant(of: card, matching: find.textContaining('871,277')),
+            findsNothing,
+          );
+          expect(
+            find.descendant(of: card, matching: find.text('+¥246,167')),
+            findsOneWidget,
+          );
+        }
+        expect(find.text('期間支出（未照合含む）'), findsOneWidget);
+        expect(find.textContaining('全額が消費や浪費とは限りません'), findsOneWidget);
+        expect(tester.takeException(), isNull);
         await _unmount(tester);
       },
     );
@@ -1401,7 +1507,7 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('回避ライン'), findsOneWidget);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
       expect(
         find.byKey(const Key('asset_shift_payment_mobit')),
         findsOneWidget,
@@ -1424,7 +1530,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('回避ライン'), findsNothing);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -1467,7 +1573,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('回避ライン'), findsNothing);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -2039,10 +2145,10 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('回避ライン'), findsOneWidget);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
       // ただし26日へ移せば次回支払は 7/26 = 次サイクル(給料日後)扱いになり、
       // 当サイクルの支払が消えるため事前判定が「回避できます」。
-      expect(find.textContaining('を26日へ(回避できます)'), findsOneWidget);
+      expect(find.textContaining('の設定を26日へ(試算上の不足なし)'), findsOneWidget);
 
       await _unmount(tester);
     });

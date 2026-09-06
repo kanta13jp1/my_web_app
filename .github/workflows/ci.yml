@@ -51,6 +51,8 @@ concurrency:
 jobs:
   lint-and-test:
     name: Lint, Format, and Test
+    outputs:
+      analyzer_evidence_uploaded: ${{ steps.upload_analyzer_evidence.outcome == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -142,6 +144,7 @@ jobs:
           python scripts/classify_ci_changes_test.py
           python scripts/cloud_ci_handoff_test.py
           python scripts/cloud_first_route_test.py
+          python -m unittest scripts/kg_index_common_test.py scripts/kg_index_workflow_test.py
           python scripts/generate_infrastructure_map_test.py
           python scripts/cicd_efficiency_test.py
           python scripts/pre_commit_quality_gate_test.py
@@ -149,7 +152,14 @@ jobs:
           python scripts/check_rootless_container_setup_test.py
           python scripts/check_rootless_container_setup.py
           python scripts/vscode_terminal_settings_test.py
+          python scripts/issue_dedupe_self_reference_test.py
           python scripts/ci_failure_digest_test.py
+          python scripts/ci_job_summary_test.py
+          python scripts/generate_context_bundle_test.py
+          python scripts/codex_backlog_selection_test.py
+          python scripts/network_restrictions_guard_test.py
+          python test/scripts/test_workflow_failure_cluster.py
+          python scripts/wbs_notify_privacy_test.py
           python scripts/test_paid_ai_policy.py
           python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
 
@@ -196,25 +206,41 @@ jobs:
             ${{ runner.os }}-pub-
 
       - name: Install dependencies
+        id: flutter_dependencies
         if: steps.changes.outputs.flutter == 'true'
         run: flutter pub get
 
       - name: Verify dependencies
+        id: flutter_dependencies_verify
         if: steps.changes.outputs.flutter == 'true'
         run: flutter pub get --dry-run
 
       - name: Analyze code
+        id: flutter_analyze
         if: steps.changes.outputs.flutter == 'true'
         run: python scripts/quality_gate.py --analyze-only --analyzer-artifact-dir .ci-logs/analyzer
         # プロジェクトルール「flutter analyze 常に0エラー」をCIで強制 (continue-on-error 削除)
 
+      - name: Verify deprecated API rejection
+        if: steps.changes.outputs.flutter == 'true'
+        run: python test/scripts/check_deprecated_api_gate.py
+
+      - name: Upload deprecated API gate evidence
+        if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/deprecated-api-gate/**/result.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: deprecated-api-gate-evidence
+          path: .ci-logs/deprecated-api-gate
+          if-no-files-found: error
+
       - name: Upload analyzer evidence
+        id: upload_analyzer_evidence
         if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/analyzer/result.json') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: analyzer-evidence
           path: .ci-logs/analyzer
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Setup Deno
         if: steps.changes.outputs.edge == 'true'
@@ -231,6 +257,7 @@ jobs:
           # 持続障害 (3 回 fail) は rerun に委ねる。
 
       - name: Check Edge Function imports
+        id: edge_imports
         if: steps.changes.outputs.edge == 'true'
         run: python scripts/check_edge_function_imports.py
 
@@ -283,6 +310,7 @@ jobs:
         # 74テスト安定稼働中 (2026-04-12 PR#317) — continue-on-error 廃止
 
       - name: Caption transcoder unit tests
+        id: caption_test
         if: steps.changes.outputs.caption == 'true'
         # services/caption-transcoder (Cloud Run ffmpeg 字幕焼き込み) の純関数
         # テスト。ubuntu-latest は node 20 プリインストールなので数秒で完走し、
@@ -290,6 +318,7 @@ jobs:
         run: node services/caption-transcoder/test.js
 
       - name: Check Edge Function deploy count (ハードキャップ50本以下)
+        id: edge_deploy_count
         if: steps.changes.outputs.edge == 'true'
         run: |
           # deploy-prod.yml のデプロイリストを抽出 (macro-hub体制 — Tier1/Tier2廃止)
@@ -333,6 +362,7 @@ jobs:
         continue-on-error: false  # 50本超過はCIブロック
 
       - name: Check SQL migration shell quoting artifacts
+        id: migration_quoting
         if: steps.changes.outputs.migration == 'true'
         run: |
           # bash quoting pattern '"'"' が SQL ファイルに混入すると SQLSTATE 42601 で deploy-prod が失敗する
@@ -446,6 +476,7 @@ jobs:
         continue-on-error: false
 
       - name: Check formatting
+        id: dart_format
         if: steps.changes.outputs.flutter == 'true'
         # #1372: treat Dart formatting as a required static-analysis gate.
         run: dart format --output=none --set-exit-if-changed .
@@ -465,6 +496,7 @@ jobs:
 
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
       - name: Build web (production)
+        id: web_build
         if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: >
           flutter build web --release --pwa-strategy=none
@@ -473,6 +505,7 @@ jobs:
           FLUTTER_WEB: true
 
       - name: Check build output
+        id: web_build_output
         if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: |
           if [ ! -d "build/web" ]; then
@@ -484,23 +517,25 @@ jobs:
 
       - name: Job Summary
         if: always()
-        run: |
-          FLUTTER_TEST="${{ steps.flutter_test.outcome }}"
-          FLUTTER_WEB_TEST="${{ steps.flutter_web_test.outcome }}"
-          DENO_TEST="${{ steps.deno_test.outcome }}"
-          {
-            echo "## CI Results — \`${GITHUB_REF_NAME}\` @ \`${GITHUB_SHA:0:7}\`"
-            echo ""
-            echo "| Scope | Required | Outcome |"
-            echo "| --- | --- | --- |"
-            echo "| Flutter analyze / format / VM tests | ${{ steps.changes.outputs.flutter }} | ${FLUTTER_TEST:-skipped} |"
-            echo "| Web import / production build | ${{ steps.changes.outputs.web }} | ${FLUTTER_WEB_TEST:-skipped} |"
-            echo "| Edge Function Deno checks | ${{ steps.changes.outputs.edge }} | ${DENO_TEST:-skipped} |"
-            echo "| Caption transcoder tests | ${{ steps.changes.outputs.caption }} | path-scoped |"
-            echo "| SQL migration checks | ${{ steps.changes.outputs.migration }} | path-scoped |"
-            echo ""
-            echo "**Actor**: ${{ github.actor }} | **Trigger**: ${{ github.event_name }}"
-          } >> $GITHUB_STEP_SUMMARY
+        env:
+          CI_STEPS_JSON: ${{ toJSON(steps) }}
+        run: python scripts/ci_job_summary.py
+
+      - name: Capture tested-source context
+        if: always() && hashFiles('scripts/generate_context_bundle.py') != ''
+        env:
+          CI_JOB_STATUS: ${{ job.status }}
+          CI_STEPS_JSON: ${{ toJSON(steps) }}
+        run: python scripts/generate_context_bundle.py --ci-env --output-dir .ci-logs/ci-context
+
+      - name: Upload tested-source context
+        if: always() && hashFiles('.ci-logs/ci-context/manifest.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: tested-source-context
+          path: .ci-logs/ci-context
+          if-no-files-found: error
+
 
   actionlint:
     name: GitHub Actions syntax
@@ -592,6 +627,7 @@ jobs:
 
     steps:
       - name: Download analyzer evidence
+        if: needs.lint-and-test.outputs.analyzer_evidence_uploaded == 'true'
         continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
@@ -621,3 +657,4 @@ jobs:
               repo: context.repo.repo,
               body
             });
+

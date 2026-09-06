@@ -21,6 +21,7 @@ class FirstUserGrowthAttribution {
   static const Set<String> supportedSources = <String>{
     'x',
     'zenn',
+    'reddit',
     'producthunt',
     'hackernews',
   };
@@ -128,6 +129,8 @@ class GrowthAcquisitionService {
   static const String touchProfile = 'touch_profile';
   static const String touchXFirstUserGrowth = 'touch_x_first_user_growth';
   static const String touchZennFirstUserGrowth = 'touch_zenn_first_user_growth';
+  static const String touchRedditFirstUserGrowth =
+      'touch_reddit_first_user_growth';
   static const String touchProductHuntFirstUserGrowth =
       'touch_producthunt_first_user_growth';
   static const String touchHackerNewsFirstUserGrowth =
@@ -158,6 +161,8 @@ class GrowthAcquisitionService {
       'signup_submit_x_first_user_growth';
   static const String signupSubmitZennFirstUserGrowth =
       'signup_submit_zenn_first_user_growth';
+  static const String signupSubmitRedditFirstUserGrowth =
+      'signup_submit_reddit_first_user_growth';
   static const String signupSubmitProductHuntFirstUserGrowth =
       'signup_submit_producthunt_first_user_growth';
   static const String signupSubmitHackerNewsFirstUserGrowth =
@@ -258,6 +263,8 @@ class GrowthAcquisitionService {
     switch (_lowerParam(uri.queryParameters, 'utm_source')) {
       case 'zenn':
         return touchZennFirstUserGrowth;
+      case 'reddit':
+        return touchRedditFirstUserGrowth;
       case 'producthunt':
         return touchProductHuntFirstUserGrowth;
       case 'hackernews':
@@ -292,6 +299,8 @@ class GrowthAcquisitionService {
         return signupSubmitXFirstUserGrowth;
       case touchZennFirstUserGrowth:
         return signupSubmitZennFirstUserGrowth;
+      case touchRedditFirstUserGrowth:
+        return signupSubmitRedditFirstUserGrowth;
       case touchProductHuntFirstUserGrowth:
         return signupSubmitProductHuntFirstUserGrowth;
       case touchHackerNewsFirstUserGrowth:

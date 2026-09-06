@@ -16,14 +16,14 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(11));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(13));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
       expect(catalog.verifiedBirthDates, 12);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(
         catalog.nextBatchNames,
-        <String>['渡正行', '足立暢', '泉舞', '川中子 輝昂', '磯遊晋介'],
+        <String>['渡正行', '足立暢', '泉舞', '沓名 裕城', '山田久太郎'],
       );
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
@@ -91,6 +91,18 @@ void main() {
       final hikaru = catalog.profilesBySeat[89]!;
       expect(hikaru.ageLabel(DateTime(2026, 8, 26)), '35歳（2026年8月26日時点）');
       expect(hikaru.companyRole, contains('2025年12月'));
+      final higuma = catalog.profilesBySeat[71]!;
+      expect(higuma.companyRole, contains('オルソ株式会社'));
+      expect(higuma.businessSummary, contains('体操'));
+      expect(higuma.reviewReflectionPercent, 67);
+      expect(higuma.reviewReflectionMode, 'profile_balanced');
+      expect(higuma.evidenceLinks, hasLength(1));
+      final ikawa = catalog.profilesBySeat[72]!;
+      expect(ikawa.companyRole, contains('元会長'));
+      expect(ikawa.reviewReflectionPercent, 58);
+      expect(ikawa.reviewReflectionMode, 'profile_balanced');
+      expect(ikawa.evidenceLinks, hasLength(2));
+      expect(ikawa.ageLabel(DateTime(2026, 9, 6)), '公開情報未確認');
       final watari = catalog.profilesBySeat[116]!;
       expect(watari.ageLabel(DateTime(2026, 8, 26)), '公開情報未確認');
       expect(watari.reviewReflectionMode, 'neutral_guarded');

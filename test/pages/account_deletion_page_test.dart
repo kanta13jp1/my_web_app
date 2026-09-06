@@ -46,7 +46,16 @@ void main() {
     await tester.tap(find.byKey(const Key('account-deletion-submit')));
     await tester.pumpAndSettle();
     expect(find.text('退会申請を送信しますか？'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const Key('account-deletion-final-confirm')),
+          )
+          .onPressed,
+      isNull,
+    );
 
+    await tester.pump(const Duration(seconds: 3));
     await tester.tap(find.text('退会申請を送信'));
     await tester.pumpAndSettle();
 
