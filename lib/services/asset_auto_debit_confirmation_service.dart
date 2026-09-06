@@ -27,6 +27,39 @@ class AssetAutoDebitConfirmation {
     this.sourceAccountCreditLimit,
   });
 
+  /// 振替元口座が与信枠 (クレジットカード、ショッピング枠、カードローン、またはマイナス残高の債務枠) か。
+  bool get isCreditLine {
+    if (sourceAccountKind != null) {
+      return _isCreditLineKind(sourceAccountKind!);
+    }
+    return (sourceAccountBalance ?? 0) < 0;
+  }
+
+  /// 与信枠で利用限度額を超過しているか。
+  bool get isCreditLimitExceeded {
+    if (!isCreditLine) return false;
+    final balance = sourceAccountBalance;
+    final limit = sourceAccountCreditLimit;
+    if (balance == null || limit == null || limit <= 0) return false;
+    return (-balance) + row.paymentAmount > limit;
+  }
+
+  /// 一括引落済み操作の対象に含められるか。
+  ///
+  /// - 残高不足・与信枠超過の警告が出ている行は対象外。
+  /// - 与信枠で限度額が特定できない (null/0) 行は「枠超過の有無が未検証」であるため、
+  ///   誤ってまとめて支払済みにしてしまうのを防ぎ、個別確認を促すため一括対象外とする。
+  /// - 振替元の口座が不明 (残高 null) の行も同様に除外。
+  bool get isEligibleForBulkConfirm {
+    if (sourceBalanceInsufficient) return false;
+    if (sourceAccountBalance == null) return false;
+    if (isCreditLine &&
+        (sourceAccountCreditLimit == null || sourceAccountCreditLimit! <= 0)) {
+      return false;
+    }
+    return true;
+  }
+
   /// 引落が失敗している可能性があるか (= 要確認の警告を出すか)。
   ///
   /// - 資産口座 (現金/預金など): 現在残高が支払額を下回るなら警告 (従来通り)。
@@ -43,6 +76,27 @@ class AssetAutoDebitConfirmation {
       creditLimit: sourceAccountCreditLimit,
       paymentAmount: row.paymentAmount,
     );
+  }
+
+  /// 警告文面を生成する。振替元が与信枠(限度額超過)か預金口座(残高不足)かで
+  /// 理由と確認事項を明確に区別する。
+  String? shortfallWarningMessage({
+    required String formattedSourceBalance,
+    String? formattedCreditLimit,
+  }) {
+    if (!sourceBalanceInsufficient) return null;
+    if (isCreditLine) {
+      if (formattedCreditLimit != null && formattedCreditLimit.isNotEmpty) {
+        return '振替元カードの利用枠見込み(残高 $formattedSourceBalance / 限度額 $formattedCreditLimit)'
+            'が利用限度額を超過しています。カード決済が承認されない可能性があるため、'
+            '限度額をご確認のうえ操作してください。';
+      }
+      return '振替元カードの利用枠見込み(残高 $formattedSourceBalance)'
+          'が利用限度額を超過しています。カード決済が承認されない可能性があるため、'
+          '限度額をご確認のうえ操作してください。';
+    }
+    return '振替元の残高見込み($formattedSourceBalance)が支払額を下回っています。'
+        '引落が失敗している可能性があるため、残高をご確認のうえ操作してください。';
   }
 }
 
