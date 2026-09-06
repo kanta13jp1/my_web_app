@@ -61,6 +61,11 @@ import {
   parseHedraAudioStartMs,
   withHedraAudioStartMs,
 } from "./hedra_audio_start.ts";
+import {
+  type HedraAudioInput,
+  parseHedraAudioInput,
+  withExclusiveHedraAudio,
+} from "./hedra_audio_input.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -395,6 +400,7 @@ serve(async (req) => {
       batchSize?: number;
       confirmBatchCost?: boolean;
       audioStartMs?: number;
+      audioInput?: unknown;
       falRequestId?: string;
       preferredModel?: string;
       creativePipeline?: string[];
@@ -433,6 +439,20 @@ serve(async (req) => {
     );
     const isHedraBatchStatusPoll = requestedHedraBatchGenerationId != null ||
       requestedHedraGenerationIds.length > 0;
+    const isHedraStatusPoll = isHedraBatchStatusPoll ||
+      firstNonEmptyString(body.hedraGenerationId) != null;
+    let hedraAudioInput: HedraAudioInput = { mode: "automatic" };
+    if (type === "presenter_video" && !isHedraStatusPoll) {
+      try {
+        hedraAudioInput = parseHedraAudioInput(body.audioInput);
+      } catch (error) {
+        return jsonRes({ error: String(error) }, 400);
+      }
+    } else if (type !== "presenter_video" && body.audioInput != null) {
+      return jsonRes({
+        error: "audioInput is supported only for presenter_video",
+      }, 400);
+    }
     if (
       hedraBatchSize > 1 && !isHedraBatchStatusPoll &&
       body.confirmBatchCost !== true
@@ -600,6 +620,7 @@ serve(async (req) => {
               requiresUploadedAudio: templateKey === "ai_secretary_site_tour",
               batchSize: hedraBatchSize,
               audioStartMs: hedraAudioStartMs,
+              audioInput: hedraAudioInput,
             });
           generatedVideoUrl = hedraVideo.videoUrl;
           generatedPreviewUrl = hedraVideo.previewUrl;
@@ -991,6 +1012,7 @@ async function createHedraPresenterVideo(params: {
   requiresUploadedAudio?: boolean;
   batchSize: number;
   audioStartMs: number;
+  audioInput: HedraAudioInput;
 }): Promise<HedraVideoResult> {
   const rawImageUrl = firstNonEmptyString(params.imageUrl);
   if (!rawImageUrl) {
@@ -1013,6 +1035,41 @@ async function createHedraPresenterVideo(params: {
   // 字幕 (index.ts の spokenForCaptions) は漢字表記のまま維持される。
   const ttsText = applyTtsReadings(spokenScript, params.lang)
     .slice(0, MAX_SPOKEN_CHARS);
+  if (params.audioInput.mode === "tts") {
+    const customTts = await createHedraTextToSpeechAudioGeneration(
+      {
+        apiKey: params.apiKey,
+        voice: params.audioInput.voice,
+        lang: params.lang,
+      },
+      {
+        text: params.audioInput.text,
+        stability: params.audioInput.stability,
+        speed: params.audioInput.speed,
+      },
+    );
+    return await createHedraVideoFromUploadedAudio(params, {
+      audioGeneration: customTts,
+      storedAudioUrl: null,
+      storedAudioPath: null,
+      audioProvider: "hedra_custom_tts",
+      imageUrl,
+      fallbackText: params.audioInput.text,
+    });
+  }
+  if (params.audioInput.mode === "file") {
+    const audioAssetId = await createHedraAudioAssetFromBytes(
+      params.apiKey,
+      params.audioInput.bytes,
+      params.audioInput.fileName,
+      params.audioInput.mimeType,
+    );
+    return await createHedraVideoFromAudioId(params, {
+      audioAssetId,
+      audioProvider: "user_audio_file",
+      imageUrl,
+    });
+  }
   let audioProvider = "hedra_tts";
   let storedAudioUrl: string | null = null;
   let storedAudioPath: string | null = null;
@@ -1156,6 +1213,54 @@ async function createHedraPresenterVideo(params: {
   }
 }
 
+async function createHedraVideoFromAudioId(
+  params: {
+    apiKey: string;
+    title?: string;
+    prompt: string;
+    batchSize: number;
+    audioStartMs: number;
+  },
+  media: {
+    audioAssetId: string;
+    audioProvider: string;
+    imageUrl: string;
+  },
+): Promise<HedraVideoResult> {
+  const body = withHedraAudioStartMs(
+    withHedraBatchSize(
+      withExclusiveHedraAudio({
+        type: "video",
+        ai_model_id: HEDRA_AVATAR_MODEL_ID,
+        start_keyframe_url: media.imageUrl,
+        generated_video_inputs: {
+          text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
+          aspect_ratio: "16:9",
+          resolution: "540p",
+          enhance_prompt: true,
+        },
+      }, { audioId: media.audioAssetId }),
+      params.batchSize,
+    ),
+    params.audioStartMs,
+  );
+  const payload = await hedraJsonRequest(
+    params.apiKey,
+    "/generations",
+    { method: "POST", body },
+  );
+  const video = await pollHedraGeneration(
+    params.apiKey,
+    normalizeHedraVideoResponse(payload),
+  );
+  return {
+    ...video,
+    storedAudioUrl: null,
+    storedAudioPath: null,
+    audioProvider: media.audioProvider,
+  };
+}
+
 async function createHedraVideoFromUploadedAudio(
   params: {
     apiKey: string;
@@ -1176,18 +1281,20 @@ async function createHedraVideoFromUploadedAudio(
   },
 ): Promise<HedraVideoResult> {
   const generationBody = withHedraAudioStartMs(
-    withHedraBatchSize({
-      type: "video",
-      ai_model_id: HEDRA_AVATAR_MODEL_ID,
-      start_keyframe_url: media.imageUrl,
-      audio_generation: media.audioGeneration,
-      generated_video_inputs: {
-        text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
-        aspect_ratio: "16:9",
-        resolution: "540p",
-        enhance_prompt: true,
-      },
-    }, params.batchSize),
+    withHedraBatchSize(
+      withExclusiveHedraAudio({
+        type: "video",
+        ai_model_id: HEDRA_AVATAR_MODEL_ID,
+        start_keyframe_url: media.imageUrl,
+        generated_video_inputs: {
+          text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
+          aspect_ratio: "16:9",
+          resolution: "540p",
+          enhance_prompt: true,
+        },
+      }, { audioGeneration: media.audioGeneration }),
+      params.batchSize,
+    ),
     params.audioStartMs,
   );
   let payload: unknown;
@@ -1224,18 +1331,22 @@ async function createHedraVideoFromUploadedAudio(
     }
     if (audioAssetId) {
       const assetBody = withHedraAudioStartMs(
-        withHedraBatchSize({
-          type: "video",
-          ai_model_id: HEDRA_AVATAR_MODEL_ID,
-          start_keyframe_url: media.imageUrl,
-          audio_id: audioAssetId,
-          generated_video_inputs: {
-            text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
-            aspect_ratio: "16:9",
-            resolution: "540p",
-            enhance_prompt: true,
-          },
-        }, params.batchSize),
+        withHedraBatchSize(
+          withExclusiveHedraAudio({
+            type: "video",
+            ai_model_id: HEDRA_AVATAR_MODEL_ID,
+            start_keyframe_url: media.imageUrl,
+            generated_video_inputs: {
+              text_prompt: `${
+                params.title ?? "Share update"
+              }\n${params.prompt}`,
+              aspect_ratio: "16:9",
+              resolution: "540p",
+              enhance_prompt: true,
+            },
+          }, { audioId: audioAssetId }),
+          params.batchSize,
+        ),
         params.audioStartMs,
       );
       try {
@@ -1288,7 +1399,9 @@ async function createHedraVideoFromUploadedAudio(
           );
         payload = await createHedraGenerationWithTtsModelFallback(
           params.apiKey,
-          { ...generationBody, audio_generation: fallbackAudioGeneration },
+          withExclusiveHedraAudio(generationBody, {
+            audioGeneration: fallbackAudioGeneration,
+          }),
           fallbackAudioGeneration["model_id"] != null,
         );
         const video = await pollHedraGeneration(
@@ -1492,7 +1605,7 @@ async function createHedraTextToSpeechAudioGeneration(
     voice: string;
     lang: "ja" | "en";
   },
-  options: { text: string },
+  options: { text: string; stability?: number; speed?: number },
 ): Promise<Record<string, unknown>> {
   const voiceId = await resolveHedraVoiceId(
     params.apiKey,
@@ -1506,6 +1619,8 @@ async function createHedraTextToSpeechAudioGeneration(
     modelId: ttsModelId,
     text: options.text,
     language: hedraLanguage,
+    stability: options.stability,
+    speed: options.speed,
   });
 }
 
@@ -1731,6 +1846,25 @@ async function createHedraAudioAssetFromUrl(
   console.log(
     `[vvag-asset] downloaded bytes=${bytes.byteLength}; creating Hedra asset`,
   );
+  return await createHedraAudioAssetFromBytes(
+    apiKey,
+    bytes,
+    name,
+    normalizedAudioContentType(download.headers.get("content-type")),
+  );
+}
+
+function normalizedAudioContentType(value: string | null): string {
+  const contentType = value?.split(";", 1)[0].trim().toLowerCase();
+  return contentType?.startsWith("audio/") ? contentType : "audio/mpeg";
+}
+
+async function createHedraAudioAssetFromBytes(
+  apiKey: string,
+  bytes: Uint8Array,
+  name: string,
+  mimeType: string,
+): Promise<string> {
   const created = await hedraJsonRequest(apiKey, "/assets", {
     method: "POST",
     body: { name, type: "audio" },
@@ -1748,7 +1882,7 @@ async function createHedraAudioAssetFromUrl(
   const form = new FormData();
   const buffer = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(buffer).set(bytes);
-  form.append("file", new Blob([buffer], { type: "audio/mpeg" }), name);
+  form.append("file", new Blob([buffer], { type: mimeType }), name);
   const uploaded = await fetch(
     `${HEDRA_API_BASE}/assets/${encodeURIComponent(assetId)}/upload`,
     { method: "POST", headers: { "X-API-Key": apiKey }, body: form },
