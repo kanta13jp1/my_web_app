@@ -1,0 +1,216 @@
+name: Evernote Migration Cloud Check
+
+on:
+  pull_request:
+    paths:
+      - 'lib/**/evernote*.dart'
+      - 'lib/**/enex*.dart'
+      - 'lib/pages/import_page.dart'
+      - 'lib/pages/note_editor_page.dart'
+      - 'lib/pages/note_list_page.dart'
+      - 'lib/widgets/markdown_preview.dart'
+      - 'test/**/evernote*.dart'
+      - 'test/**/enex*.dart'
+      - 'test/pages/import_page_test.dart'
+      - 'test/pages/note_editor_page_test.dart'
+      - 'test/pages/note_list_page_test.dart'
+      - 'test/widgets/markdown_preview_test.dart'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'docs/CLOUD_FIRST_DEVELOPMENT.md'
+      - 'docs/technical/EVERNOTE_*.md'
+      - '.github/workflows/evernote-migration-cloud-check.yml'
+  push:
+    branches:
+      - 'codex/evernote-*'
+    paths:
+      - 'lib/**/evernote*.dart'
+      - 'lib/**/enex*.dart'
+      - 'lib/pages/import_page.dart'
+      - 'lib/pages/note_editor_page.dart'
+      - 'lib/pages/note_list_page.dart'
+      - 'lib/widgets/markdown_preview.dart'
+      - 'test/**/evernote*.dart'
+      - 'test/**/enex*.dart'
+      - 'test/pages/import_page_test.dart'
+      - 'test/pages/note_editor_page_test.dart'
+      - 'test/pages/note_list_page_test.dart'
+      - 'test/widgets/markdown_preview_test.dart'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'docs/technical/EVERNOTE_*.md'
+      - '.github/workflows/evernote-migration-cloud-check.yml'
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact 40-character branch HEAD to validate
+        required: true
+        type: string
+      run_web_smoke:
+        description: Run the Chrome import smoke test in the cloud
+        required: false
+        default: false
+        type: boolean
+      run_release_build:
+        description: Build the release web bundle in the cloud
+        required: false
+        default: false
+        type: boolean
+
+permissions: {}
+
+concurrency:
+  group: evernote-cloud-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Format, analyze, and test on runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout immutable event revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify manual handoff SHA
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Expected $EXPECTED_HEAD_SHA but checked out $actual_head_sha."
+            exit 1
+          fi
+
+      - name: Reject personal Evernote archives in Git
+        shell: bash
+        run: |
+          set -euo pipefail
+          tracked_archives="$(git ls-files -- '*.enex' '*.enex.gz' '*.enex.zip')"
+          if [ -n "$tracked_archives" ]; then
+            echo "::error::Evernote archives must go directly to private Supabase Storage."
+            printf '%s\n' "$tracked_archives"
+            exit 1
+          fi
+
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Cache runner-side pub packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-evernote-pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-evernote-pub-
+
+      - name: Install dependencies on runner
+        run: flutter pub get
+
+      - name: Select scoped Dart files
+        id: targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs
+          {
+            find lib test -type f \( -iname '*evernote*.dart' -o -iname '*enex*.dart' \) -print
+            printf '%s\n' \
+              lib/pages/import_page.dart \
+              lib/pages/note_editor_page.dart \
+              lib/pages/note_list_page.dart \
+              lib/widgets/markdown_preview.dart \
+              test/pages/import_page_test.dart \
+              test/pages/note_editor_page_test.dart \
+              test/pages/note_list_page_test.dart \
+              test/widgets/markdown_preview_test.dart
+          } | while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              printf '%s\n' "$file"
+            fi
+          done | sort -u > .ci-logs/evernote-dart-files.txt
+
+          grep '^test/' .ci-logs/evernote-dart-files.txt             > .ci-logs/evernote-test-files.txt || true
+
+          if [ -s .ci-logs/evernote-dart-files.txt ]; then
+            echo 'has_dart=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'has_dart=false' >> "$GITHUB_OUTPUT"
+          fi
+          if [ -s .ci-logs/evernote-test-files.txt ]; then
+            echo 'has_tests=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'has_tests=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Format and capture review patch
+        id: formatting
+        if: steps.targets.outputs.has_dart == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t dart_files < .ci-logs/evernote-dart-files.txt
+          dart format "${dart_files[@]}"
+          if [ -f pubspec.lock ]; then
+            git add -N -- pubspec.lock
+          fi
+          git diff --binary -- pubspec.lock "${dart_files[@]}"             > .ci-logs/evernote-cloud-format.patch
+          if [ -s .ci-logs/evernote-cloud-format.patch ]; then
+            echo 'mismatch=true' >> "$GITHUB_OUTPUT"
+            echo "::warning::Formatting or pubspec.lock differs; download the patch artifact."
+          else
+            echo 'mismatch=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload one-day formatting patch
+        if: always() && hashFiles('.ci-logs/evernote-cloud-format.patch') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: evernote-cloud-format-patch
+          path: .ci-logs/evernote-cloud-format.patch
+          retention-days: 1
+          if-no-files-found: ignore
+
+      - name: Analyze project on runner
+        run: flutter analyze
+
+      - name: Run scoped migration and feature tests
+        if: steps.targets.outputs.has_tests == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t test_files < .ci-logs/evernote-test-files.txt
+          flutter test --concurrency=2 "${test_files[@]}"
+
+      - name: Run optional web import smoke
+        if: github.event_name == 'workflow_dispatch' && inputs.run_web_smoke
+        run: flutter test --platform chrome test/web_import_smoke_test.dart
+
+      - name: Run optional release web build
+        if: github.event_name == 'workflow_dispatch' && inputs.run_release_build
+        run: >-
+          flutter build web --release --pwa-strategy=none
+          --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
+        env:
+          FLUTTER_WEB: true
+
+      - name: Require checked-in formatting
+        if: steps.formatting.outputs.mismatch == 'true'
+        shell: bash
+        run: |
+          echo "::error::Apply and review the evernote-cloud-format-patch artifact."
+          exit 1
