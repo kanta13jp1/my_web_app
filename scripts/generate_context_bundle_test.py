@@ -1,5 +1,5 @@
 import unittest
-from generate_context_bundle import INPUTS, build_bundle
+from generate_context_bundle import INPUTS, build_bundle, render_coverage
 
 SHA = "a" * 40
 
@@ -42,6 +42,30 @@ class ContextBundleTest(unittest.TestCase):
         evidence = dict(id=1, head_sha=SHA, status="completed", conclusion="failure")
         _, _, metadata = build_bundle(self.contents, [], SHA, evidence)
         self.assertEqual(metadata["test_run"]["conclusion"], "failure")
+
+    def test_generated_coverage_preserves_manual_and_updates_once(self):
+        manual = "Manual mapping\\nPending: real browser verification\\n".replace("\\\\n", "\\n")
+        first = render_coverage(manual, SHA, None)
+        evidence = dict(id=42, conclusion="success", test_steps={"flutter_test": "skipped"})
+        second = render_coverage(first, SHA, evidence)
+        self.assertTrue(second.startswith(manual))
+        self.assertEqual(second.count("## Generated CI evidence"), 1)
+        self.assertIn("| flutter_test | skipped |", second)
+        self.assertIn("| deno_test | not reported |", second)
+        self.assertNotIn("Unverified:", second)
+        self.assertEqual(render_coverage(second, SHA, evidence), second)
+
+    def test_invalid_coverage_markers_fail(self):
+        for text in ("<!-- generated-ci-evidence:begin -->",
+                     "<!-- generated-ci-evidence:end --><!-- generated-ci-evidence:begin -->"):
+            with self.assertRaises(ValueError):
+                render_coverage(text, SHA, None)
+
+    def test_unknown_test_outcome_is_rejected(self):
+        with self.assertRaises(ValueError):
+            build_bundle(self.contents, [], SHA, dict(
+                id=42, head_sha=SHA, status="completed", conclusion="success",
+                test_steps={"flutter_test": "pretend-success"}))
 
     def test_inputs_are_not_mutated(self):
         before = dict(self.contents)
