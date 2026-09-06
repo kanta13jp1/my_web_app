@@ -69,7 +69,11 @@ def check_runtime_config(text: str) -> list[str]:
 
 def check_repository(root: Path = ROOT) -> list[str]:
     violations: list[str] = []
-    source_files = sorted((root / "lib").rglob("*.dart")) + [root / "web/index.html"]
+    source_files = sorted(
+        path
+        for directory in ("lib", "integration_test", "test_driver")
+        for path in (root / directory).rglob("*.dart")
+    ) + [root / "web/index.html"]
     for path in source_files:
         violations.extend(
             source_violations(path.relative_to(root).as_posix(), path.read_text(encoding="utf-8"))

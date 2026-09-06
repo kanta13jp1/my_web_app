@@ -98,27 +98,34 @@ void main() {
 
   testWidgets('結合テスト: 実機でSupabase APIを叩いて断捨離判定を行う',
       (WidgetTester tester) async {
-    // --- 2. 初期設定（Supabase初期化） ---
-    const supabaseUrl = 'https://smmkxxavexumewbfaqpy.supabase.co';
-    const supabaseKey =
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw';
-
-    try {
-      await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
-    } catch (_) {}
-
+    // Explicit, disposable local test configuration only. Never use live accounts.
+    const enabled = bool.fromEnvironment('RUN_LOCAL_DANSHARI_INTEGRATION');
+    const supabaseUrl = String.fromEnvironment('TEST_SUPABASE_URL');
+    const supabaseKey = String.fromEnvironment('TEST_SUPABASE_PUBLISHABLE_KEY');
+    const email = String.fromEnvironment('TEST_SUPABASE_EMAIL');
+    const password = String.fromEnvironment('TEST_SUPABASE_PASSWORD');
+    final uri = Uri.tryParse(supabaseUrl);
+    if (!enabled ||
+        uri == null ||
+        uri.scheme != 'http' ||
+        !const {'localhost', '127.0.0.1', '[::1]'}.contains(uri.host) ||
+        uri.userInfo.isNotEmpty ||
+        supabaseKey.isEmpty ||
+        !supabaseKey.startsWith('sb_publishable_') ||
+        email.isEmpty ||
+        password.isEmpty) {
+      fail('Explicit local-only integration test configuration is required.');
+    }
+    await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
+    addTearDown(() => Supabase.instance.dispose());
     final supabase = Supabase.instance.client;
-
-    // ★ ログイン処理を強化
     final authResponse = await supabase.auth.signInWithPassword(
-      email: 'kanta13jp@gmail.com',
-      password: 'P@ssw0rd01',
+      email: email,
+      password: password,
     );
-
     if (authResponse.session == null) {
       fail('Supabaseへのログインに失敗しました。ユーザーが正しく作成されているか確認してください。');
     }
-    debugPrint('Login Success! User ID: ${authResponse.user?.id}');
 
     final mockPicker = MockImagePicker();
 

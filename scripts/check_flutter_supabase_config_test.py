@@ -83,6 +83,20 @@ class CheckFlutterSupabaseConfigTest(unittest.TestCase):
 
             self.assertEqual(check_repository(root), [])
 
+            for directory in ("integration_test", "test_driver"):
+                with self.subTest(directory=directory):
+                    fixture = root / directory / "example_test.dart"
+                    fixture.parent.mkdir(parents=True, exist_ok=True)
+                    fixture.write_text(
+                        "const url = 'https://abcdefghijklmnopqrst.supabase.co';",
+                        encoding="utf-8",
+                    )
+                    self.assertIn(
+                        f"{directory}/example_test.dart: concrete Supabase project URL",
+                        check_repository(root),
+                    )
+                    fixture.unlink()
+            self.assertEqual(check_repository(root), [])
             broken = root / DEPLOY_WORKFLOWS[0]
             broken.write_text(
                 broken.read_text(encoding="utf-8").replace(
