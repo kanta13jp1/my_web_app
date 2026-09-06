@@ -1,8 +1,8 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   aiHubActionAccess,
-  authorizeAiHubAction,
   AUTHENTICATED_AI_HUB_ACTIONS,
+  authorizeAiHubAction,
   PUBLIC_AI_HUB_ACTIONS,
   resolveAuthenticatedUserId,
   SERVICE_ROLE_AI_HUB_ACTIONS,
@@ -11,9 +11,41 @@ import {
 Deno.test("aiHubActionAccess classifies registered actions correctly", () => {
   assertEquals(aiHubActionAccess("judgment.get"), "public");
   assertEquals(aiHubActionAccess("search.query"), "authenticated");
+  assertEquals(aiHubActionAccess("provider.generate"), "authenticated");
+  assertEquals(aiHubActionAccess("provider.embed"), "authenticated");
   assertEquals(aiHubActionAccess("observability.heatmap"), "service_role");
   assertEquals(aiHubActionAccess("unknown.random.action"), null);
 });
+
+Deno.test(
+  "server-managed provider actions reject anonymous callers and allow authenticated or service-role callers",
+  () => {
+    for (
+      const action of [
+        "provider.models",
+        "provider.embed",
+        "provider.generate",
+      ]
+    ) {
+      assertEquals(AUTHENTICATED_AI_HUB_ACTIONS.has(action), true);
+      assertEquals(
+        authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+        { allowed: false, status: 401, error: "Unauthorized" },
+      );
+      assertEquals(
+        authorizeAiHubAction(action, {
+          userId: "regular-user",
+          isServiceRole: false,
+        }),
+        { allowed: true },
+      );
+      assertEquals(
+        authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+        { allowed: true },
+      );
+    }
+  },
+);
 
 Deno.test("authorizeAiHubAction fails closed on unregistered actions", () => {
   const decision = authorizeAiHubAction("unknown.action", {
@@ -88,14 +120,34 @@ Deno.test("disjointness of action registry sets", () => {
   const srv = [...SERVICE_ROLE_AI_HUB_ACTIONS];
 
   for (const a of pub) {
-    assertEquals(AUTHENTICATED_AI_HUB_ACTIONS.has(a), false, `${a} is in both public and authenticated`);
-    assertEquals(SERVICE_ROLE_AI_HUB_ACTIONS.has(a), false, `${a} is in both public and service_role`);
+    assertEquals(
+      AUTHENTICATED_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both public and authenticated`,
+    );
+    assertEquals(
+      SERVICE_ROLE_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both public and service_role`,
+    );
   }
   for (const a of auth) {
-    assertEquals(SERVICE_ROLE_AI_HUB_ACTIONS.has(a), false, `${a} is in both authenticated and service_role`);
+    assertEquals(
+      SERVICE_ROLE_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both authenticated and service_role`,
+    );
   }
   for (const a of srv) {
-    assertEquals(PUBLIC_AI_HUB_ACTIONS.has(a), false, `${a} is in both service_role and public`);
-    assertEquals(AUTHENTICATED_AI_HUB_ACTIONS.has(a), false, `${a} is in both service_role and authenticated`);
+    assertEquals(
+      PUBLIC_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both service_role and public`,
+    );
+    assertEquals(
+      AUTHENTICATED_AI_HUB_ACTIONS.has(a),
+      false,
+      `${a} is in both service_role and authenticated`,
+    );
   }
 });

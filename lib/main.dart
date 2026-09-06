@@ -336,6 +336,7 @@ import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/landing_signup_completion_service.dart';
+import 'package:my_web_app/services/legacy_ai_credential_cleanup.dart';
 import 'package:my_web_app/services/notification_service.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/widgets/global_header_clock_bar.dart';
@@ -361,6 +362,19 @@ Future<void> main() async {
   WidgetsBinding.instance.ensureSemantics();
   GoogleFonts.config.allowRuntimeFetching = false;
   usePathUrlStrategy();
+
+  try {
+    await LegacyAiCredentialCleanup().run();
+  } catch (error, stackTrace) {
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'startup',
+        context: ErrorDescription('while deleting legacy AI credentials'),
+      ),
+    );
+  }
 
   final NotificationService notificationService = NotificationService();
   final supabaseConfig = SupabaseRuntimeConfig.fromCompileTimeEnvironment();

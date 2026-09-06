@@ -6797,6 +6797,78 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "provider.models": {
+        const models = Object.entries(PROVIDER_CONFIGS)
+          .filter(([, config]) => Boolean(Deno.env.get(config.envKey)))
+          .map(([provider, config]) => ({
+            provider,
+            displayName: config.displayName,
+            name: config.defaultModel,
+            supportedGenerationMethods: ["generateContent"],
+          }));
+        if (Deno.env.get("GEMINI_API_KEY")) {
+          models.push({
+            provider: "google",
+            displayName: "Google Gemini Embedding",
+            name: "gemini-embedding-001",
+            supportedGenerationMethods: ["embedContent"],
+          });
+        }
+        return json({ success: true, models });
+      }
+
+      case "provider.embed": {
+        const text = asString(body.text);
+        if (!text) {
+          return json({ error: "text required" }, 400);
+        }
+        if (text.length > 3500) {
+          return json({ error: "text exceeds 3500 characters" }, 400);
+        }
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "provider.embed",
+              provider: "google",
+            }),
+            409,
+          );
+        }
+        const apiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!apiKey) {
+          return json({ error: "Gemini embedding is not configured" }, 503);
+        }
+        const budget = await checkBudget("ef", "ai-hub");
+        if (!budget.ok) {
+          return json({
+            error: "AI budget limit reached",
+            code: "budget_limit_reached",
+          }, 429);
+        }
+        if (userId) {
+          const usage = await checkAndRecordAiUsage(
+            supabaseUsageStore(admin),
+            userId,
+          );
+          if (!usage.allowed) {
+            return json({
+              error: "Monthly AI query limit reached",
+              code: "free_limit_reached",
+              upgrade_url: "/billing",
+            }, 402);
+          }
+        }
+        const values = await embedTextWithGemini(text, apiKey);
+        return json({
+          success: true,
+          provider: "google",
+          model: "gemini-embedding-001",
+          embedding: { values },
+        });
+      }
+
+      case "provider.generate":
       case "provider.chat": {
         // 汎用プロバイダー呼び出し (AI大学150社の実装済みAIに統一インターフェースで話しかける)
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
