@@ -138,6 +138,7 @@ import 'package:my_web_app/pages/health_page.dart';
 import 'package:my_web_app/pages/medical_notes_page.dart';
 import 'package:my_web_app/pages/mental_check_page.dart';
 import 'package:my_web_app/pages/settings_page.dart';
+import 'package:my_web_app/pages/voice_ai_governance_page.dart';
 import 'package:my_web_app/pages/ai_form_assistant_page.dart';
 import 'package:my_web_app/pages/theme_selector_page.dart';
 import 'package:my_web_app/pages/ai_university_faculty_select_page.dart';
@@ -932,6 +933,11 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const AdminAnalyticsPage(),
         settings: settings,
       );
+    case '/admin/voice-ai-governance':
+      return MaterialPageRoute(
+        builder: (_) => const VoiceAiGovernancePage(adminMode: true),
+        settings: settings,
+      );
     case '/admin/artifact-publishing':
       return MaterialPageRoute(
         builder: (_) => const AdminArtifactPublishingPage(),
@@ -1054,6 +1060,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const EmbeddingLabPage());
     case '/settings':
       return MaterialPageRoute(builder: (_) => const SettingsPage());
+    case '/settings/voice-ai-governance':
+      return MaterialPageRoute(
+        builder: (_) => const VoiceAiGovernancePage(),
+        settings: settings,
+      );
     case '/settings/ai-form-assistant':
       return MaterialPageRoute(
         builder: (_) => supabase.auth.currentSession == null

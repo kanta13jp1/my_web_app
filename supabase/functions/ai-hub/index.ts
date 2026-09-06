@@ -149,6 +149,21 @@ import {
   WriterKnowledgeGraphError,
 } from "./writer_knowledge_graph.ts";
 import { createSupabaseWriterKnowledgeGraphStore } from "./writer_knowledge_graph_supabase.ts";
+import {
+  assertVoiceProviderPrivacy,
+  authenticateVoiceProxyRequest,
+  estimateVoiceSttSeconds,
+  handleCartesiaRealtimeWebSocket,
+  handleVoiceCartesiaSessionAction,
+  loadVoiceAiPolicy,
+  normalizeVoiceProvider,
+  policyPayload,
+  recordVoiceSttUsage,
+  reserveVoiceTtsUsage,
+  usagePayload,
+  type VoiceAiDb,
+  VoiceAiError,
+} from "./voice_ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -4326,6 +4341,21 @@ serve(async (req: Request) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const reqUrl = new URL(req.url);
+  if (
+    req.headers.get("upgrade")?.toLowerCase() === "websocket" &&
+    reqUrl.searchParams.get("action") === "voice.cartesia.websocket"
+  ) {
+    const userId = await authenticateVoiceProxyRequest(req);
+    if (!userId) return new Response("Unauthorized", { status: 401 });
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    return handleCartesiaRealtimeWebSocket(
+      req,
+      admin as unknown as VoiceAiDb,
+      userId,
+    );
+  }
+
   try {
     const requestUrl = new URL(req.url);
     if (
@@ -7701,7 +7731,7 @@ serve(async (req: Request) => {
         const { count: issuedToday, error: countError } = await admin
           .from("hub_data")
           .select("id", { count: "exact", head: true })
-          .eq("source", "cartesia_voice_token_issuance")
+          .eq("source", "cartesia_voice_proxy_issuance")
           .filter("metadata->>user_id", "eq", userId)
           .gte("created_at", issuedSince.toISOString());
         if (countError) {
@@ -7715,59 +7745,26 @@ serve(async (req: Request) => {
           }, 429);
         }
 
-        const apiVersion = "2026-03-01";
-        const maxSessionSeconds = 300;
-        const tokenResponse = await fetchWithProviderTimeout(
-          "https://api.cartesia.ai/access-token",
-          {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${cartesiaKey}`,
-              "Cartesia-Version": apiVersion,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              grants: { tts: true },
-              expires_in: maxSessionSeconds + 30,
-            }),
-          },
+        const session = await handleVoiceCartesiaSessionAction(
+          req,
+          admin as unknown as VoiceAiDb,
+          userId,
         );
-        if (!tokenResponse.ok) {
-          const providerError = (await tokenResponse.text()).slice(0, 500);
-          return json({
-            success: false,
-            available: false,
-            reason:
-              `Cartesia access token failed (${tokenResponse.status}): ${providerError}`,
-          }, 502);
-        }
-        const tokenPayload = await tokenResponse.json() as {
-          token?: string;
-        };
-        const accessToken = String(tokenPayload.token ?? "");
-        if (!accessToken) {
-          return json({
-            success: false,
-            available: false,
-            reason: "Cartesia access token response was empty",
-          }, 502);
+        if (session.success !== true) {
+          const privacyBlocked = session.reason ===
+            "voice_training_consent_or_cartesia_zdr_required";
+          return json(session, privacyBlocked ? 403 : 503);
         }
 
-        await addItem(admin, "cartesia_voice_token_issuance", userId, {
-          grants: ["tts"],
-          expires_in: maxSessionSeconds + 30,
-          model_id: "sonic-3-2026-01-12",
+        await addItem(admin, "cartesia_voice_proxy_issuance", userId, {
+          transport: "backend_proxy",
+          expires_in: Number(session.max_session_seconds ?? 300) + 30,
+          model_id: String(session.model_id ?? ""),
+          cartesia_zdr_enforced:
+            (session.policy as Record<string, unknown> | undefined)
+              ?.cartesia_zdr_enforced === true,
         });
-        return json({
-          success: true,
-          available: true,
-          access_token: accessToken,
-          websocket_url: "wss://api.cartesia.ai/tts/websocket",
-          api_version: apiVersion,
-          model_id: "sonic-3-2026-01-12",
-          voice_id: voiceId,
-          max_session_seconds: maxSessionSeconds,
-        });
+        return json(session);
       }
 
       case "voice.cartesia_session.finish": {
@@ -7850,7 +7847,19 @@ serve(async (req: Request) => {
       case "voice.tts": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const text = String(body.text ?? "").slice(0, 5000);
-        const voiceId = String(body.voice_id ?? "21m00Tcm4TlvDq8ikWAM");
+        if (!text.trim()) {
+          return json({ error: "text required" }, 400);
+        }
+        const requestedProvider = normalizeVoiceProvider(body.provider);
+        const provider = requestedProvider === "cartesia"
+          ? "cartesia"
+          : "elevenlabs";
+        const feature = String(body.feature ?? "voice_tts").slice(0, 80);
+        if (provider === "cartesia") {
+          return json({
+            error: "cartesia_realtime_requires_voice_session_start",
+          }, 400);
+        }
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
         if (!elevenKey) {
           return json({
@@ -7860,6 +7869,35 @@ serve(async (req: Request) => {
             reason: "ELEVENLABS_API_KEY not configured",
           });
         }
+        const { policy, usage } = await reserveVoiceTtsUsage(
+          admin as unknown as VoiceAiDb,
+          {
+            userId,
+            body,
+            provider,
+            feature,
+            text,
+            metadata: {
+              action: "voice.tts",
+              realtime_requested: body.realtime === true ||
+                body.streaming === true,
+            },
+          },
+        );
+        if (usage.blocked) {
+          return json({
+            success: false,
+            error: "voice_usage_limit_exceeded",
+            fallback: "webspeech",
+            text,
+            policy: policyPayload(policy, provider),
+            usage: usagePayload(usage),
+          }, 429);
+        }
+        const requestedVoiceId = String(body.voice_id ?? "").trim();
+        const voiceId = /^[A-Za-z0-9_-]{1,128}$/.test(requestedVoiceId)
+          ? requestedVoiceId
+          : "21m00Tcm4TlvDq8ikWAM";
         try {
           const ttsResp = await fetchWithProviderTimeout(
             `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
@@ -7888,6 +7926,8 @@ serve(async (req: Request) => {
                 fallback: "webspeech",
                 text,
                 reason: "elevenlabs_paid_plan_required",
+                policy: policyPayload(policy, provider),
+                usage: usagePayload(usage),
               });
             }
             const errorId = crypto.randomUUID();
@@ -7901,6 +7941,8 @@ serve(async (req: Request) => {
               error_id: errorId,
               fallback: "webspeech",
               text,
+              policy: policyPayload(policy, provider),
+              usage: usagePayload(usage),
             }, 502);
           }
           const audioBuffer = await ttsResp.arrayBuffer();
@@ -7914,6 +7956,8 @@ serve(async (req: Request) => {
             success: true,
             audio_base64: base64Audio,
             content_type: "audio/mpeg",
+            policy: policyPayload(policy, provider),
+            usage: usagePayload(usage),
           });
         } catch (error) {
           const errorId = crypto.randomUUID();
@@ -7926,6 +7970,8 @@ serve(async (req: Request) => {
             error_id: errorId,
             fallback: "webspeech",
             text,
+            policy: policyPayload(policy, provider),
+            usage: usagePayload(usage),
           }, 502);
         }
       }
@@ -8041,6 +8087,10 @@ serve(async (req: Request) => {
 
         const text = asString(body.text).replace(/\r\n/g, "\n");
         if (!text) return json({ error: "text required" }, 400);
+        assertVoiceProviderPrivacy(
+          await loadVoiceAiPolicy(admin as unknown as VoiceAiDb, userId),
+          "elevenlabs",
+        );
 
         let model: ReturnType<typeof resolveVoiceDubbingModel>;
         let language: string;
@@ -8382,7 +8432,10 @@ serve(async (req: Request) => {
       case "voice.stt": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const audioBase64 = String(body.audio_base64 ?? "");
-        const language = String(body.language ?? "ja");
+        const requestedLanguage = String(body.language ?? "ja").trim();
+        const language = /^[A-Za-z0-9-]{1,16}$/.test(requestedLanguage)
+          ? requestedLanguage
+          : "ja";
         const deepgramKey = Deno.env.get("DEEPGRAM_API_KEY") ?? "";
         if (!deepgramKey) {
           return json({ error: "DEEPGRAM_API_KEY not configured" }, 503);
@@ -8396,10 +8449,44 @@ serve(async (req: Request) => {
         } catch {
           return json({ error: "Invalid base64 audio data" }, 400);
         }
+        if (audioBytes.byteLength === 0) {
+          return json({ error: "audio_base64 required" }, 400);
+        }
+        const sttSeconds = estimateVoiceSttSeconds(
+          audioBytes.byteLength,
+          body.duration_seconds ?? body.durationSeconds,
+        );
+        const { policy, usage } = await recordVoiceSttUsage(
+          admin as unknown as VoiceAiDb,
+          {
+            userId,
+            body,
+            provider: "deepgram",
+            feature: String(body.feature ?? "voice_stt").slice(0, 80),
+            seconds: sttSeconds,
+            metadata: {
+              action: "voice.stt",
+              audio_bytes: audioBytes.byteLength,
+              language,
+            },
+          },
+        );
+        if (usage.blocked) {
+          return json({
+            success: false,
+            error: "voice_usage_limit_exceeded",
+            policy: policyPayload(policy, "deepgram"),
+            usage: usagePayload(usage),
+          }, 429);
+        }
         const audioBody = new ArrayBuffer(audioBytes.byteLength);
         new Uint8Array(audioBody).set(audioBytes);
+        const deepgramUrl = new URL("https://api.deepgram.com/v1/listen");
+        deepgramUrl.searchParams.set("language", language);
+        deepgramUrl.searchParams.set("model", "nova-2");
+        deepgramUrl.searchParams.set("punctuate", "true");
         const dgResp = await fetchWithProviderTimeout(
-          `https://api.deepgram.com/v1/listen?language=${language}&model=nova-2&punctuate=true`,
+          deepgramUrl.toString(),
           {
             method: "POST",
             headers: {
@@ -8411,7 +8498,11 @@ serve(async (req: Request) => {
         );
         if (!dgResp.ok) {
           const errText = await dgResp.text();
-          return json({ error: `Deepgram error: ${errText}` }, 502);
+          return json({
+            error: `Deepgram error: ${errText}`,
+            policy: policyPayload(policy, "deepgram"),
+            usage: usagePayload(usage),
+          }, 502);
         }
         const dgData = await dgResp.json() as Record<string, unknown>;
         const transcript =
@@ -8419,7 +8510,12 @@ serve(async (req: Request) => {
             Record<string, unknown>
           >)?.[0]?.alternatives as Array<{ transcript: string }>;
         const transcriptText = transcript?.[0]?.transcript ?? "";
-        return json({ success: true, transcript: transcriptText });
+        return json({
+          success: true,
+          transcript: transcriptText,
+          policy: policyPayload(policy, "deepgram"),
+          usage: usagePayload(usage),
+        });
       }
 
       case "home.recommend": {
@@ -8722,6 +8818,9 @@ serve(async (req: Request) => {
     }
     if (err instanceof WriterKnowledgeGraphError) {
       return json({ error: err.message, code: err.code }, err.status);
+    }
+    if (err instanceof VoiceAiError) {
+      return json({ error: err.message, ...err.payload }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
     return json({ error: message }, 500);
