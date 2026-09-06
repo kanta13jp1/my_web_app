@@ -659,7 +659,7 @@ Route<dynamic> generateAppRoute(
         settings: RouteSettings(name: settings.name),
       );
     case '/manual':
-    case '/manual' || '/user-manual':
+    case '/user-manual':
       return MaterialPageRoute(
         builder: (_) => const UserManualPage(),
         settings: settings,
