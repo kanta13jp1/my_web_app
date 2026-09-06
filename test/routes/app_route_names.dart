@@ -264,6 +264,7 @@ const List<String> kAllAppRoutes = <String>[
   '/price-tracker',
   '/prison-mode',
   '/privacy',
+  '/process-quality-dashboard',
   '/procrastination-reset',
   '/proactive-form-check',
   '/profile-settings',
