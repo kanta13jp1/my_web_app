@@ -1458,7 +1458,7 @@ class AssetManagementInsightPromptBuilder {
       report.developerRequests.map((item) => item.severity.name),
     );
     final workbook = report.workbook;
-    final completedOneShotCardNames = workbook.debtMasterRows
+    final completedOneShotCardNames = workbook.currentDebtRows
         .where(
           (row) => workbook.cardUsagePolicies[row.id]?.enforceOneShot == true,
         )
@@ -1661,11 +1661,12 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String _accountLines(AssetLiabilityWorkbook workbook) {
-    if (workbook.accounts.isEmpty) {
+    final currentAccounts = workbook.currentAccounts;
+    if (currentAccounts.isEmpty) {
       return '- 口座データはありません。\n';
     }
     final buffer = StringBuffer();
-    for (final account in workbook.accounts) {
+    for (final account in currentAccounts) {
       buffer.writeln(
         '- ${account.name} / 種別:${account.kind.name} / 残高:${_formatAmount(account.balance)} / '
         '支払日:${account.paymentDay?.toString() ?? '未設定'} / '
@@ -1703,11 +1704,12 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String _debtMasterLines(AssetLiabilityWorkbook workbook) {
-    if (workbook.debtMasterRows.isEmpty) {
+    final currentDebtRows = workbook.currentDebtRows;
+    if (currentDebtRows.isEmpty) {
       return '- 負債はありません。\n';
     }
     final buffer = StringBuffer();
-    for (final row in workbook.debtMasterRows) {
+    for (final row in currentDebtRows) {
       buffer.writeln(
         '- ${row.name} / 種別:${row.kind.name} / 残高:${_formatAmount(row.balance)} / '
         '負債割合:${_formatPercent(row.liabilityShare)} / '
