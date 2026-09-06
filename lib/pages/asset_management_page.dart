@@ -27141,14 +27141,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             dataRowMinHeight: 44,
             dataRowMaxHeight: 56,
             columns: const [
-              DataColumn(label: Text('支払日'), numeric: true),
-              DataColumn(label: Text('支払先')),
-              DataColumn(label: Text('支払原資口座')),
-              DataColumn(label: Text('支払予定額'), numeric: true),
-              DataColumn(label: Text('区分')),
-              DataColumn(label: Text('支払済み')),
-              DataColumn(label: Text('支払後手元'), numeric: true),
-              DataColumn(label: Text('危険度')),
+              DataColumn(
+                label: SizedBox(width: 80, child: Text('支払日')),
+                numeric: true,
+              ),
+              DataColumn(label: SizedBox(width: 80, child: Text('支払先'))),
+              DataColumn(label: SizedBox(width: 128, child: Text('支払原資口座'))),
+              DataColumn(
+                label: SizedBox(width: 112, child: Text('支払予定額')),
+                numeric: true,
+              ),
+              DataColumn(label: SizedBox(width: 64, child: Text('区分'))),
+              DataColumn(label: SizedBox(width: 96, child: Text('支払済み'))),
+              DataColumn(
+                label: SizedBox(width: 112, child: Text('支払後手元')),
+                numeric: true,
+              ),
+              DataColumn(label: SizedBox(width: 80, child: Text('危険度'))),
             ],
             rows: [
               for (final row in workbook.cashflowRows)
