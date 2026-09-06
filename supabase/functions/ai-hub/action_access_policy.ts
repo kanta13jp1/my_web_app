@@ -36,6 +36,7 @@ export const PUBLIC_AI_HUB_ACTIONS = new Set([
 ]);
 
 export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
+  "notes.classify",
   "search.query",
   "task.clarity.evaluate",
   "secretary.task",

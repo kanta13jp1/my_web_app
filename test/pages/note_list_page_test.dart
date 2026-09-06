@@ -227,6 +227,8 @@ Map<String, dynamic> _noteRow({
   required String title,
   required bool isFavorite,
   String captureStatus = 'organized',
+  String classificationStatus = 'classified',
+  String? classificationCategory,
   String userId = 'test-user-id',
   List<String> tags = const <String>[],
 }) {
@@ -248,6 +250,13 @@ Map<String, dynamic> _noteRow({
     'capture_source': captureStatus == 'inbox' ? 'quick_inbox' : 'editor',
     'inbox_saved_at':
         captureStatus == 'inbox' ? '2026-03-18T09:00:00.000Z' : null,
+    'classification_status': classificationStatus,
+    'classification_category': classificationCategory,
+    'classification_source':
+        classificationStatus == 'classified' ? 'heuristic_fallback' : null,
+    'classified_at': classificationStatus == 'classified'
+        ? '2026-03-18T09:00:01.000Z'
+        : null,
   };
 }
 
@@ -324,6 +333,7 @@ void main() {
           title: 'Captured thought',
           isFavorite: false,
           captureStatus: 'inbox',
+          classificationStatus: 'pending',
         ),
         _noteRow(
           id: 'organized-note',
@@ -341,6 +351,7 @@ void main() {
     expect(find.text('Inbox（未整理）'), findsOneWidget);
     expect(find.text('Captured thought'), findsOneWidget);
     expect(find.text('Organized note'), findsOneWidget);
+    expect(find.text('AI整理中'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('note_list_page_inbox_filter')));
     await tester.pumpAndSettle();
@@ -351,6 +362,33 @@ void main() {
       find.byKey(const Key('note_list_page_title')),
     );
     expect(title.data, contains('Inbox'));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('reflects completed AI category and generated tags', (
+    WidgetTester tester,
+  ) async {
+    final client = _FakeSupabaseClient(
+      noteRows: <Map<String, dynamic>>[
+        _noteRow(
+          id: 'classified-inbox-note',
+          title: '来週の会議',
+          isFavorite: false,
+          captureStatus: 'inbox',
+          classificationCategory: '仕事',
+          tags: const <String>['仕事', '予定'],
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: NoteListPage(supabaseClient: client)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI: 仕事'), findsOneWidget);
+    expect(find.text('仕事'), findsOneWidget);
+    expect(find.text('予定'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
