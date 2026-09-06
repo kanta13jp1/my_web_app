@@ -151,6 +151,7 @@ jobs:
           python scripts/check_rootless_container_setup_test.py
           python scripts/check_rootless_container_setup.py
           python scripts/vscode_terminal_settings_test.py
+          python scripts/issue_dedupe_self_reference_test.py
           python scripts/ci_failure_digest_test.py
           python scripts/ci_job_summary_test.py
           python scripts/generate_context_bundle_test.py
