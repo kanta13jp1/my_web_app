@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 const path = '/labs/aero-lab/index.html';
 
 test('engine controls, layout and visible 3D render', async ({ page }, info) => {
+  // Real software WebGL plus a full-page readback can exceed two minutes on
+  // shared runners. Keep all action/assertion deadlines and coverage unchanged.
+  test.setTimeout(240000);
   const errors: string[] = [];
   const external: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
