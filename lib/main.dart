@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
+import 'package:my_web_app/pages/sound_bloom_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:my_web_app/services/version_check_service.dart';
@@ -1380,6 +1381,11 @@ Route<dynamic> generateAppRoute(
       );
     case '/landing-ab-test':
       return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
+    case '/sound-bloom':
+      return MaterialPageRoute(
+        builder: (_) => const SoundBloomPage(),
+        settings: settings,
+      );
     case '/aero-lab':
       return MaterialPageRoute(
         builder: (_) => const AeroLabPage(),
