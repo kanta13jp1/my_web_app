@@ -7,13 +7,13 @@ on:
       - 'lib/pages/aero_lab_page.dart'
       - 'lib/ui/features/aero_lab/**'
       - 'test/aero_lab/**'
+      - 'test/e2e/aero_lab.spec.ts'
       - 'test/pages/aero_lab_page_test.dart'
       - 'playwright.aero-lab.config.ts'
       - '.github/workflows/aero-lab-checks.yml'
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: aero-lab-${{ github.ref }}
@@ -21,6 +21,8 @@ concurrency:
 
 jobs:
   static-experience:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -42,6 +44,8 @@ jobs:
             test-results/
           retention-days: 7
   flutter-entry:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

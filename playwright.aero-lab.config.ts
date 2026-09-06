@@ -1,9 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './test/aero_lab',
-  testMatch: '**/*.spec.ts',
-  timeout: 45000,
+  testDir: './test/e2e',
+  testMatch: 'aero_lab.spec.ts',
+  // Software WebGL on shared CI runners is substantially slower than a GPU.
+  timeout: 120000,
   workers: 1,
   retries: 0,
   reporter: [['list'], ['html', { outputFolder: 'aero-lab-report', open: 'never' }]],

@@ -6,6 +6,7 @@
 
 /* Native controls keep this static package independent of the former SSR stack. */
 [hidden]{display:none!important}
+.workbench{max-height:none}.instrument-panel>*{flex-shrink:0}
 @media(max-width:900px){.stage-strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
 :root{--font-geist-mono:Consolas;--font-geist-sans:Arial}
 input[type=range]{width:100%;accent-color:#78e3f5;cursor:pointer;min-height:24px}
