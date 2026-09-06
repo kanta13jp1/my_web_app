@@ -3,17 +3,38 @@ on:
   workflow_dispatch:
   push:
     branches: [codex/flow-city-prototype-20260906]
-    paths: ['web/labs/flow-city/**', '.github/workflows/flow-city-checks.yml']
+    paths: ['web/labs/flow-city/**', 'test/e2e/flow_city.spec.ts', '.github/workflows/flow-city-checks.yml']
 permissions:
   contents: read
 jobs:
   model:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
       - run: node --test web/labs/flow-city/model.test.mjs
       - run: node --check web/labs/flow-city/app.mjs
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Browser checks against candidate only
+        shell: bash
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory web &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8765/labs/flow-city/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/flow_city.spec.ts --workers=1 --retries=0
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: flow-city-browser-evidence
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
