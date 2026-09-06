@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef AiUniversityLearningOutcomeWriter = Future<void> Function(
-  Map<String, Object> row,
-);
+typedef AiUniversityLearningOutcomeWriter =
+    Future<void> Function(Map<String, Object> row);
 
 enum AiUniversityLearningOutcomeTask {
   latestInfo(
@@ -20,6 +19,11 @@ enum AiUniversityLearningOutcomeTask {
     taskVersion: '01ai_models_20260829_v1',
     provider: '01ai',
     category: 'models',
+  ),
+  yiIntroduction(
+    taskVersion: '01ai_introduction_20260903_v1',
+    provider: '01ai',
+    category: 'introduction',
   ),
   fireflyApi(
     taskVersion: 'adobe_firefly_api_20260831_v1',
@@ -59,10 +63,13 @@ class AiUniversityLearningOutcomeAnalytics {
     AiUniversityLearningOutcomeTask task =
         AiUniversityLearningOutcomeTask.latestInfo,
   }) {
+    final table = task == AiUniversityLearningOutcomeTask.yiIntroduction
+        ? 'ai_university_yi_intro_outcome_events'
+        : 'ai_university_learning_outcome_events';
     return AiUniversityLearningOutcomeAnalytics(
       task: task,
       writer: (row) async {
-        await client.from('ai_university_learning_outcome_events').insert(row);
+        await client.from(table).insert(row);
       },
     );
   }
@@ -92,12 +99,19 @@ class AiUniversityLearningOutcomeAnalytics {
     'usable_output',
     'workplace_applicable',
     'adoption_decision',
+    'first_attempt_correct_answers',
+    'next_official_page',
   };
   static const Set<String> allowedFireflyLearnerRoles = <String>{
     'developer',
     'operations',
     'creator',
     'product_owner',
+  };
+  static const Set<String> allowedYiIntroductionPages = <String>{
+    'yi_repository',
+    'worldwise_overview',
+    'truenorth_product',
   };
   static const Set<String> allowedFireflyLatestInfoFeatures = <String>{
     'central_workspace',
@@ -119,11 +133,11 @@ class AiUniversityLearningOutcomeAnalytics {
   final AiUniversityLearningOutcomeTask task;
 
   Future<bool> recordViewed() => _record(<String, Object>{
-        'event_name': 'task_viewed',
-        'task_version': task.taskVersion,
-        'provider': task.provider,
-        'category': task.category,
-      });
+    'event_name': 'task_viewed',
+    'task_version': task.taskVersion,
+    'provider': task.provider,
+    'category': task.category,
+  });
 
   Future<bool> recordCompleted({
     required int correctAnswers,
@@ -140,6 +154,39 @@ class AiUniversityLearningOutcomeAnalytics {
       'correct_answers': correctAnswers,
       'total_questions': 3,
       'self_rating': selfRating,
+    });
+  }
+
+  Future<bool> recordYiIntroductionCompleted({
+    required int correctAnswers,
+    required int firstAttemptCorrectAnswers,
+    required int selfRating,
+    required String nextOfficialPage,
+  }) {
+    if (task != AiUniversityLearningOutcomeTask.yiIntroduction) {
+      return Future.value(false);
+    }
+    if (correctAnswers < 0 || correctAnswers > 3) {
+      return Future.value(false);
+    }
+    if (firstAttemptCorrectAnswers < 0 || firstAttemptCorrectAnswers > 3) {
+      return Future.value(false);
+    }
+    if (selfRating < 1 || selfRating > 5) return Future.value(false);
+    if (!allowedYiIntroductionPages.contains(nextOfficialPage)) {
+      return Future.value(false);
+    }
+
+    return _record(<String, Object>{
+      'event_name': 'task_completed',
+      'task_version': task.taskVersion,
+      'provider': task.provider,
+      'category': task.category,
+      'correct_answers': correctAnswers,
+      'total_questions': 3,
+      'self_rating': selfRating,
+      'first_attempt_correct_answers': firstAttemptCorrectAnswers,
+      'next_official_page': nextOfficialPage,
     });
   }
 
