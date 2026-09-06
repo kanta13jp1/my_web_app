@@ -1,5 +1,5 @@
 import unittest
-from generate_context_bundle import INPUTS, build_bundle, render_coverage
+from generate_context_bundle import INPUTS, build_bundle, render_coverage, ci_job_evidence
 
 SHA = "a" * 40
 
@@ -66,6 +66,24 @@ class ContextBundleTest(unittest.TestCase):
             build_bundle(self.contents, [], SHA, dict(
                 id=42, head_sha=SHA, status="completed", conclusion="success",
                 test_steps={"flutter_test": "pretend-success"}))
+
+    def test_ci_snapshot_uses_checked_revision_and_real_step_outcomes(self):
+        evidence = ci_job_evidence(SHA, "123", "success", {
+            "flutter_test": {"outcome": "skipped"},
+            "deno_test": {"outcome": "success", "outputs": {"untrusted": "ignored"}},
+        })
+        _, bundle, metadata = build_bundle(self.contents, [], SHA, evidence)
+        self.assertEqual(metadata["test_run"]["head_sha"], SHA)
+        self.assertEqual(metadata["test_run"]["evidence_scope"], "ci_job_snapshot")
+        self.assertEqual(metadata["test_run"]["test_steps"],
+                         {"flutter_test": "skipped", "deno_test": "success"})
+        self.assertIn("not final workflow completion", bundle)
+        self.assertNotIn("untrusted", bundle)
+
+    def test_ci_snapshot_rejects_invalid_run_or_status(self):
+        for run_id, status in [("0", "success"), ("main", "success"), ("1", "queued")]:
+            with self.assertRaises(ValueError):
+                ci_job_evidence(SHA, run_id, status, {})
 
     def test_inputs_are_not_mutated(self):
         before = dict(self.contents)
