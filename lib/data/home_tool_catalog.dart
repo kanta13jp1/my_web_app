@@ -15,6 +15,7 @@ import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
 import '../pages/agent_board_page.dart';
 import '../pages/autonomous_ops_console_page.dart';
+import '../pages/micro_mentor_dashboard_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
 import '../ui/features/toeic/toeic_feature.dart';
@@ -881,6 +882,17 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'debug',
       ],
       onOpen: (context) => _pushPage(context, const AgentGpaDashboardPage()),
+      requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'micro-mentors',
+      sectionId: 'knowledge',
+      title: 'マイクロAIメンター',
+      subtitle: '領域別メンターの提案を比較する',
+      icon: Icons.psychology_alt_outlined,
+      color: const Color(0xFF00796B),
+      keywords: const <String>['AIメンター', 'ペルソナ', '提案', '予定'],
+      onOpen: (context) => _pushPage(context, MicroMentorDashboardPage()),
       requiresClearDeck: true,
     ),
     HomeToolEntry(

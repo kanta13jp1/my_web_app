@@ -19,6 +19,7 @@ import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/agent_board_page.dart';
 import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
+import 'package:my_web_app/pages/micro_mentor_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/agi_fireworks_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
@@ -572,6 +573,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const HomePage());
     case '/agents':
       return MaterialPageRoute(builder: (_) => AgentOrgPage());
+    case '/micro-mentors':
+      return MaterialPageRoute(
+        builder: (_) => MicroMentorDashboardPage(),
+        settings: const RouteSettings(name: '/micro-mentors'),
+      );
     // ホームカタログ (home_tool_catalog.dart) は `/autonomous-ops-console` で
     // 開くため、その URL でもリロード/共有が復元できるよう別名も登録する。
     case '/autonomous-ops':
