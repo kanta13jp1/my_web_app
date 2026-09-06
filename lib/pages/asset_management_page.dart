@@ -27003,7 +27003,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 dataRowMinHeight: 44,
                 dataRowMaxHeight: 56,
                 columns: const [
-                  DataColumn(label: Text('日付'), numeric: true),
+                  DataColumn(
+                    label: Text('日付'),
+                    numeric: true,
+                    columnWidth: MaxColumnWidth(
+                      FixedColumnWidth(72),
+                      IntrinsicColumnWidth(),
+                    ),
+                  ),
                   DataColumn(label: Text('名称')),
                   DataColumn(label: Text('金額'), numeric: true),
                   DataColumn(label: Text('入金先口座')),
