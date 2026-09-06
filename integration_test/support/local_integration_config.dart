@@ -16,6 +16,8 @@ void validateLocalIntegrationConfig({
       !publishableKey.startsWith('sb_publishable_') ||
       email.trim().isEmpty ||
       password.isEmpty) {
-    throw StateError('Explicit local-only integration configuration is required.');
+    throw StateError(
+      'Explicit local-only integration configuration is required.',
+    );
   }
 }

@@ -42,7 +42,7 @@ void main() {
     expect(() => validate(key: 'legacy-token'), throwsStateError);
   });
 
-  test('accepts explicitly configured loopback endpoints without networking', () {
+  test('accepts explicit loopback configuration without networking', () {
     for (final host in <String>['localhost', '127.0.0.1', '[::1]']) {
       expect(() => validate(url: 'http://$host:54321'), returnsNormally);
     }
