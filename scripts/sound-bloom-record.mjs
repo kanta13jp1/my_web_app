@@ -58,5 +58,9 @@ assert(probe.streams.some(s=>s.codec_name==='h264'&&s.width===1440&&s.height===1
 assert(probe.streams.some(s=>s.codec_name==='aac'));
 assert(Number(probe.format.duration)>30 && Number(probe.format.duration)<65);
 writeFileSync(`${out}/ffprobe.json`,JSON.stringify(probe,null,2));
-for(const second of [3,10,20,30]) execFileSync('ffmpeg',['-y','-ss',String(second),'-i',video,'-frames:v','1',`${out}/frame-${second}.jpg`]);
-execFileSync('ffmpeg',['-y','-i',video,'-vn','-ac','1','-ar','16000',`${out}/review-audio.wav`]);
+const finalVideo=`${out}/sound-bloom-x.mp4`;
+execFileSync('ffmpeg',['-y','-i',video,'-vf','crop=1320:936:60:136','-af','volume=6dB','-c:v','libx264','-crf','18','-preset','veryfast','-pix_fmt','yuv420p','-c:a','aac','-b:a','192k','-movflags','+faststart',finalVideo]);
+writeFileSync(`${out}/edit-proof.json`,JSON.stringify({source:video,output:finalVideo,crop:{width:1320,height:936,x:60,y:136},gainDb:6,speed:1,generatedFrames:false},null,2));
+writeFileSync(`${out}/final-ffprobe.json`,execFileSync('ffprobe',['-v','error','-show_streams','-show_format','-of','json',finalVideo]));
+for(const second of [3,10,20,30]) execFileSync('ffmpeg',['-y','-ss',String(second),'-i',finalVideo,'-frames:v','1',`${out}/frame-${second}.jpg`]);
+execFileSync('ffmpeg',['-y','-i',finalVideo,'-vn','-ac','1','-ar','16000',`${out}/review-audio.wav`]);
