@@ -516,6 +516,10 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     final master = _asMap(detail['runtime_master_control']);
     final tasks = _asMapList(detail['tasks']);
     final events = _asMapList(detail['runtime_events']);
+    final timeoutEvent = events.cast<Map<String, dynamic>?>().firstWhere(
+          (event) => event?['event_type'] == 'task_timed_out',
+          orElse: () => null,
+        );
     final passed = metadata['passed'] == true;
     final state = control['state']?.toString() ?? (passed ? 'idle' : 'blocked');
     final globalKill = master['kill_switch'] == true;
@@ -609,6 +613,28 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                   ),
                 ),
               ),
+            if (timeoutEvent != null) ...[
+              Container(
+                key: const Key('company-runtime-timeout-alert'),
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7F1D1D),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFF87171)),
+                ),
+                child: const Text(
+                  'Agent runtime timeout detected. The task was stopped after '
+                  'five minutes; review the live event before resuming.',
+                  style: TextStyle(
+                    color: Color(0xFFFEE2E2),
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
             if (currentTask != null) ...[
               Text(
                 'Now working: ${currentTask['title'] ?? '-'}',
