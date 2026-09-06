@@ -1,40 +1,34 @@
-name: SOUND BLOOM checks
+name: SOUND BLOOM production recording
 on:
-  pull_request:
-    paths:
-      - 'web/labs/sound-bloom/**'
-      - 'lib/pages/sound_bloom_page.dart'
-      - 'lib/ui/features/sound_bloom/**'
-      - 'test/sound_bloom/**'
-      - 'test/e2e/sound_bloom.spec.ts'
-      - 'playwright.sound-bloom.config.ts'
-      - '.github/workflows/sound-bloom-checks.yml'
   workflow_dispatch:
-permissions: {}
-concurrency:
-  group: sound-bloom-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 jobs:
-  garden:
-    permissions:
-      contents: read
+  record:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '22'
           cache: npm
-      - run: node --test test/sound_bloom/pattern.test.mjs
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --config=playwright.sound-bloom.config.ts
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg pulseaudio xvfb fonts-noto-cjk
+      - name: Record only the public site and its synthesized audio
+        run: |
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=bloom
+          pactl set-default-sink bloom
+          xvfb-run -a -s '-screen 0 1440x1080x24' node scripts/sound-bloom-record.mjs
+      - name: Measure non-silent audio
+        run: |
+          ffmpeg -i sound-bloom-recording/sound-bloom-production.mp4 -af volumedetect -vn -f null - 2> sound-bloom-recording/audio-volume.txt
+          python -c "import re; s=open('sound-bloom-recording/audio-volume.txt').read(); v=float(re.search(r'mean_volume: ([-\d.]+) dB',s)[1]); assert -65 < v < -3, v"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
-          name: sound-bloom-evidence
-          path: |
-            sound-bloom-report/
-            test-results/
-          retention-days: 7
+          name: sound-bloom-production-recording
+          path: sound-bloom-recording/
+          retention-days: 14
