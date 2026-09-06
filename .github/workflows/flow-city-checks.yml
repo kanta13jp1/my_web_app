@@ -1,0 +1,19 @@
+name: Flow City prototype checks
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/flow-city-prototype-20260906]
+    paths: ['web/labs/flow-city/**', '.github/workflows/flow-city-checks.yml']
+permissions:
+  contents: read
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test web/labs/flow-city/model.test.mjs
+      - run: node --check web/labs/flow-city/app.mjs
