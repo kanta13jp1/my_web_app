@@ -51,6 +51,8 @@ concurrency:
 jobs:
   lint-and-test:
     name: Lint, Format, and Test
+    outputs:
+      analyzer_evidence_uploaded: ${{ steps.upload_analyzer_evidence.outcome == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -213,12 +215,13 @@ jobs:
         # プロジェクトルール「flutter analyze 常に0エラー」をCIで強制 (continue-on-error 削除)
 
       - name: Upload analyzer evidence
+        id: upload_analyzer_evidence
         if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/analyzer/result.json') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: analyzer-evidence
           path: .ci-logs/analyzer
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Setup Deno
         if: steps.changes.outputs.edge == 'true'
@@ -589,6 +592,7 @@ jobs:
 
     steps:
       - name: Download analyzer evidence
+        if: needs.lint-and-test.outputs.analyzer_evidence_uploaded == 'true'
         continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:

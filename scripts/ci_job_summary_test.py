@@ -74,6 +74,20 @@ class CiJobSummaryTest(unittest.TestCase):
             self.assertTrue(result.startswith("Prior evidence\n"))
             self.assertIn("✅ success", result)
 
+    def test_analyzer_download_requires_actual_upload_not_job_success(self):
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        producer = workflow.split("  lint-and-test:\n", 1)[1].split("    steps:", 1)[0]
+        self.assertIn("analyzer_evidence_uploaded: ${{ steps.upload_analyzer_evidence.outcome == 'success' }}", producer)
+        upload = workflow.split("      - name: Upload analyzer evidence\n", 1)[1].split("      - name:", 1)[0]
+        self.assertIn("id: upload_analyzer_evidence", upload)
+        self.assertIn("if: always()", upload)
+        self.assertIn("if-no-files-found: error", upload)
+        download = workflow.split("      - name: Download analyzer evidence\n", 1)[1].split("      - name:", 1)[0]
+        self.assertIn("if: needs.lint-and-test.outputs.analyzer_evidence_uploaded == 'true'", download)
+        self.assertNotIn("needs.lint-and-test.result", download)
+        self.assertIn("continue-on-error: true", download)
+
     def test_actual_workflow_wires_every_reported_step_and_regression_suite(self):
         workflow = (Path(__file__).resolve().parents[1] /
                     ".github/workflows/ci.yml").read_text(encoding="utf-8")
