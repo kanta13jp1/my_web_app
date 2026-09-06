@@ -63,6 +63,9 @@ jobs:
           git diff --name-only \
             "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
             > .ci-logs/changed-files.txt
+          git diff --name-status \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
+            > .ci-logs/changed-files-status.txt
 
       - name: Skip if docs-only change
         id: docs_check
@@ -96,6 +99,10 @@ jobs:
         if: steps.docs_check.outputs.docs_only != 'true'
         run: python scripts/check_dependabot_pub_policy_test.py
 
+      - name: Test Design accessibility audit policy
+        if: steps.docs_check.outputs.docs_only != 'true'
+        run: python scripts/check_design_accessibility_audit_test.py
+
       - name: Guard Dependabot pub updates
         if: steps.docs_check.outputs.docs_only != 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
         run: |
@@ -115,6 +122,13 @@ jobs:
           python scripts/check_minimal_e2e_gate.py
           --event "$GITHUB_EVENT_PATH"
           --changed-files .ci-logs/changed-files.txt
+
+      - name: Check Design accessibility audit contract
+        if: steps.docs_check.outputs.docs_only != 'true'
+        run: >
+          python scripts/check_design_accessibility_audit.py
+          --event "$GITHUB_EVENT_PATH"
+          --changed-files-status .ci-logs/changed-files-status.txt
 
   public-e2e-stability:
     permissions:

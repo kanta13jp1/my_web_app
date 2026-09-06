@@ -236,6 +236,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/check_minimal_e2e_gate_test.py"],
         ),
         GateCommand(
+            "design accessibility audit gate tests",
+            [python, "scripts/check_design_accessibility_audit_test.py"],
+        ),
+        GateCommand(
             "dependabot pub policy tests",
             [python, "scripts/check_dependabot_pub_policy_test.py"],
         ),
