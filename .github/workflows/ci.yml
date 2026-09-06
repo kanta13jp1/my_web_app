@@ -209,6 +209,18 @@ jobs:
         run: python scripts/quality_gate.py --analyze-only --analyzer-artifact-dir .ci-logs/analyzer
         # プロジェクトルール「flutter analyze 常に0エラー」をCIで強制 (continue-on-error 削除)
 
+      - name: Verify deprecated API rejection
+        if: steps.changes.outputs.flutter == 'true'
+        run: python test/scripts/check_deprecated_api_gate.py
+
+      - name: Upload deprecated API gate evidence
+        if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/deprecated-api-gate/**/result.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: deprecated-api-gate-evidence
+          path: .ci-logs/deprecated-api-gate
+          if-no-files-found: error
+
       - name: Upload analyzer evidence
         if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/analyzer/result.json') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
