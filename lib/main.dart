@@ -706,8 +706,11 @@ Route<dynamic> generateAppRoute(
         settings: settings,
       );
     case '/philosophy':
+      final initialStep = uri.queryParameters['step'] == 'quick-inventory'
+          ? PhilosophyInitialStep.quickInventory
+          : PhilosophyInitialStep.overview;
       return MaterialPageRoute(
-        builder: (_) => const PhilosophyPage(),
+        builder: (_) => PhilosophyPage(initialStep: initialStep),
         settings: settings,
       );
     case '/privacy':
