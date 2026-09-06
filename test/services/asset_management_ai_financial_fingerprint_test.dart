@@ -35,8 +35,13 @@ void main() {
     );
   }
 
-  Map<String, dynamic> workbookPayload(AssetManagementInsightReport report) {
-    return service.buildPayload(report)['workbook'] as Map<String, dynamic>;
+  Map<String, dynamic> singleRow(
+    AssetManagementInsightReport report,
+    String field,
+  ) {
+    final workbook =
+        service.buildPayload(report)['workbook'] as Map<String, dynamic>;
+    return (workbook[field] as List<dynamic>).single as Map<String, dynamic>;
   }
 
   group('Issue 5201 current financial input cache contract', () {
@@ -56,34 +61,30 @@ void main() {
     test('receiving income invalidates the unreceived summary', () {
       final before = _report();
       final after = _report(received: true);
-      final oldPlans = workbookPayload(before)['income_plans'] as List<dynamic>;
-      final newPlans = workbookPayload(after)['income_plans'] as List<dynamic>;
-      expect(oldPlans.single['received'], isFalse);
-      expect(newPlans.single['received'], isTrue);
+      final oldPlans = singleRow(before, 'income_plans');
+      final newPlans = singleRow(after, 'income_plans');
+      expect(oldPlans['received'], isFalse);
+      expect(newPlans['received'], isTrue);
       expectInvalidated(before, after);
     });
 
     test('a corrected debt balance invalidates the old balance summary', () {
       final before = _report();
       final after = _report(debtBalance: -60000);
-      final oldRows =
-          workbookPayload(before)['debt_master_rows'] as List<dynamic>;
-      final newRows =
-          workbookPayload(after)['debt_master_rows'] as List<dynamic>;
-      expect(oldRows.single['balance'], -90000);
-      expect(newRows.single['balance'], -60000);
+      final oldRows = singleRow(before, 'debt_master_rows');
+      final newRows = singleRow(after, 'debt_master_rows');
+      expect(oldRows['balance'], -90000);
+      expect(newRows['balance'], -60000);
       expectInvalidated(before, after);
     });
 
     test('a contractual payment correction invalidates the old summary', () {
       final before = _report();
       final after = _report(monthlyPayment: 3000);
-      final oldRows =
-          workbookPayload(before)['debt_master_rows'] as List<dynamic>;
-      final newRows =
-          workbookPayload(after)['debt_master_rows'] as List<dynamic>;
-      expect(oldRows.single['scheduled_payment_amount'], 6000);
-      expect(newRows.single['scheduled_payment_amount'], 3000);
+      final oldRows = singleRow(before, 'debt_master_rows');
+      final newRows = singleRow(after, 'debt_master_rows');
+      expect(oldRows['scheduled_payment_amount'], 6000);
+      expect(newRows['scheduled_payment_amount'], 3000);
       expectInvalidated(before, after);
     });
   });
