@@ -59,7 +59,7 @@ curl() {
 
     def test_only_aggregate_success_output(self):
         result, called = self.run_step("Step 2 - Call wbs.notify_user_tasks",
-            json.dumps({"user_tasks_count": 3, "tasks": ["private-response-canary"]}))
+            json.dumps({"success": True, "user_tasks_count": 3, "slack_posted": True, "slack_error": None, "tasks": ["private-response-canary"]}))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(called)
         self.assertIn("Notified 3", result.stdout)
@@ -70,6 +70,24 @@ curl() {
             with self.subTest(payload=payload):
                 result, _ = self.run_step("Step 2 - Call wbs.notify_user_tasks", payload)
                 self.assertNotEqual(result.returncode, 0)
+
+    def test_http_success_does_not_imply_slack_delivery(self):
+        for extra in [
+            {"success": False, "slack_posted": True, "slack_error": None},
+            {"success": True, "slack_posted": False, "slack_error": None},
+            {"success": True, "slack_posted": True, "slack_error": "private-response-canary"},
+            {"success": True, "slack_posted": "true", "slack_error": None},
+            {"success": True},
+        ]:
+            with self.subTest(extra=extra):
+                result, _ = self.run_step("Step 2 - Call wbs.notify_user_tasks",
+                    json.dumps({"user_tasks_count": 3, **extra}))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertNotIn("Notified", result.stdout)
+        result, _ = self.run_step("Step 2 - Call wbs.notify_user_tasks",
+            json.dumps({"success": True, "user_tasks_count": 0, "slack_posted": False, "slack_error": None}))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("no Slack notification needed", result.stdout)
 
     def test_http_and_transport_failures(self):
         for status, transport in [("500", "0"), ("401", "0"), ("200", "28"), ("bad", "0")]:
