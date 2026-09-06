@@ -31,7 +31,10 @@ import {
   buildUpstreamErrorPayload,
   summarizePlatformFailures,
 } from "./upstream_error.ts";
-import { requiredAuthLevel } from "./action_auth.ts";
+import {
+  actionPolicy,
+  authorizeAction,
+} from "./action_auth.ts";
 import { summarizeStripeAccountReadiness } from "./stripe_account_readiness.ts";
 import {
   billingAllowedHosts,
@@ -1820,26 +1823,33 @@ serve(async (req: Request) => {
     >;
     const action = (body.action as string) ?? "";
 
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const policy = actionPolicy(action);
+    if (!policy) {
+      return json({ error: "UnknownAction" }, 400);
+    }
 
-    // 認可: action ごとの必要レベルは action_auth.ts (純ロジック) に集約
-    const authLevel = requiredAuthLevel(action);
     const serviceRoleRequest = isServiceRoleRequest(req);
     let userId: string | null = null;
-    if (authLevel === "service_role" && !serviceRoleRequest) {
-      return json({ error: "Unauthorized" }, 401);
-    }
-    if (authLevel === "user" && !serviceRoleRequest) {
+    if (policy.auth === "user" && !serviceRoleRequest) {
       userId = await getUserId(req);
-      if (!userId) return json({ error: "Unauthorized" }, 401);
     }
     if (
-      authLevel === "public" &&
+      policy.auth === "public" &&
       !serviceRoleRequest &&
       action === "billing.create_supporter_checkout_session"
     ) {
       userId = await getUserId(req);
     }
+
+    const authorization = authorizeAction(action, {
+      authenticatedUser: userId !== null,
+      serviceRoleRequest,
+    });
+    if (!authorization.allowed) {
+      return json({ error: authorization.error }, authorization.status);
+    }
+
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     switch (action) {
       case "billing.get_stripe_account_readiness": {
