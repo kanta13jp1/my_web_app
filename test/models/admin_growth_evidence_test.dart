@@ -117,4 +117,34 @@ void main() {
       expect(economics.missingInputs, contains('その他変動費'));
     });
   });
+
+  group('buildAdminDailyXPostDraft', () {
+    test('includes aggregate revenue progress and formats yen', () {
+      final draft = buildAdminDailyXPostDraft(
+        digest: {
+          'users': {'total': 61},
+          'featureRequests': {'newToday': 2, 'openCount': 140},
+        },
+        billing: const AdminPaidConversionMetrics(
+          paidCustomers: 2,
+          mrrYen: 3960,
+        ),
+      );
+
+      expect(draft, contains('総ユーザー61人、新規要望2件、未対応要望140件'));
+      expect(draft, contains('課金ユーザー2人、MRR ¥3,960'));
+      expect(draft, contains('active Pro/Teamの定価換算'));
+      expect(draft.runes.length, lessThanOrEqualTo(280));
+    });
+
+    test('keeps zero revenue explicit when digest fields are absent', () {
+      final draft = buildAdminDailyXPostDraft(
+        digest: const {},
+        billing: AdminPaidConversionMetrics.empty,
+      );
+
+      expect(draft, contains('総ユーザー0人、新規要望0件、未対応要望0件'));
+      expect(draft, contains('課金ユーザー0人、MRR ¥0'));
+    });
+  });
 }
