@@ -51,4 +51,6 @@ class VsCodeTerminalSettingsTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    from vscode_formatter_settings_test import FormatterSettingsTest
+
     unittest.main()

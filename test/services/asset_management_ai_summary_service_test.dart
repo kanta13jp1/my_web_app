@@ -253,6 +253,87 @@ void main() {
       },
     );
 
+    test('rejects an AI summary that contradicts totals, rates, or paid state',
+        () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'アコムカードローン': -500000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        annualRateOverrides: const <String, double>{
+          'acom_card_loan': 0.15,
+        },
+        paidAccountNames: const <String>{'acom_card_loan'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-700,000円。借入総額は800,000円。'
+                'アコムカードローンの年利は18.0%で、今月分をすぐに払うべきです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.fallback);
+      expect(result.usedExternalAi, isFalse);
+      expect(result.source, contains('grounding validation failed'));
+      expect(result.errorMessage, contains('純資産が確定値と不一致'));
+      expect(result.errorMessage, contains('アコムカードローンの年利が確定値と不一致'));
+      expect(result.errorMessage, contains('支払済みなのに督促'));
+    });
+
+    test('accepts an AI summary grounded in current totals and confirmed rate',
+        () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'アコムカードローン': -500000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        annualRateOverrides: const <String, double>{
+          'acom_card_loan': 0.15,
+        },
+        paidAccountNames: const <String>{'acom_card_loan'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-400,000円、負債合計は500,000円です。'
+                'アコムカードローンの年利は15.00%で、今月分は支払済みです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
     test('ai detailed payload includes exact account and debt values', () {
       final service = AssetManagementAiSummaryService(
         now: () => DateTime(2026, 5, 1, 12),

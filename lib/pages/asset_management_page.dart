@@ -1615,15 +1615,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }).toList();
   }
 
-  /// 給料サイクル [reference] (= `[salaryCycleStart, salaryCycleEndExclusive)`)
-  /// に受給した給与収入の合計 (円)。給与明細(payslips) / salary_incomes から集計する。
-  ///
-  /// 収支カード等は `wealth_struggles` の収入フロー(conquer)だけを収入とみなすため、
-  /// 給料を給与明細でのみ管理しているユーザーは収入が ¥0 = 常に赤字に見えてしまう。
-  /// このヘルパーで給与明細の給料をサイクル収入へ合算する。二重計上を避けるため、
-  /// [cycleFlows] 内の収入フロー(conquer)および payslips↔salary_incomes 間で
-  /// 同日同額の収入は 1 件に畳む(canonical な
-  /// [AssetSalarySpendingEntries] の dedup と同方針)。
+  /// 給与明細・受取済み計画のうち、収入フローにまだ含まれない金額。
+  /// 使いみちカードと同じ実績入力・重複排除を使う。
   int _cycleSalaryIncomeTotal(
     DateTime reference,
     List<Map<String, dynamic>> cycleFlows,
@@ -1637,58 +1630,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       reference,
       salaryDay: _salaryDay,
     );
-    String dayAmountKey(DateTime date, int amount) {
-      final y = date.year.toString().padLeft(4, '0');
-      final m = date.month.toString().padLeft(2, '0');
-      final d = date.day.toString().padLeft(2, '0');
-      return '$y-$m-$d:$amount';
-    }
-
-    // 既存の収入フロー(conquer)と同日同額の給料は二重計上になるため除外する。
-    final seen = <String>{};
-    for (final flow in cycleFlows) {
-      if ((flow['action_type']?.toString() ?? '') != 'conquer') {
-        continue;
-      }
-      final occurredAt = DateTime.tryParse(
-        flow['occurred_at']?.toString() ?? '',
-      )?.toLocal();
-      if (occurredAt == null) {
-        continue;
-      }
-      seen.add(
-        dayAmountKey(occurredAt, _numberFromDynamic(flow['amount']).round()),
-      );
-    }
-
-    var total = 0;
-    void addSalary(DateTime? payDate, int amount) {
-      if (payDate == null || amount <= 0) {
-        return;
-      }
-      if (payDate.isBefore(start) || !payDate.isBefore(endExclusive)) {
-        return;
-      }
-      // 既出 (conquer フロー or payslips↔salary_incomes 重複) は畳む。
-      if (!seen.add(dayAmountKey(payDate, amount))) {
-        return;
-      }
-      total += amount;
-    }
-
-    for (final row in _payslipSalaryIncomes) {
-      addSalary(
-        DateTime.tryParse(row['pay_date']?.toString() ?? ''),
-        _numberFromDynamic(row['amount']).round(),
-      );
-    }
-    for (final row in _payslipRows) {
-      addSalary(
-        DateTime.tryParse(row['pay_date']?.toString() ?? ''),
-        _numberFromDynamic(row['net_amount']).round(),
-      );
-    }
-    return total;
+    final entries = AssetSalarySpendingEntries.build(
+      cardStatementLines: const [],
+      recentFlows: cycleFlows,
+      monthlyIncomePlans: _monthlyIncomePlans,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      payslipRows: _payslipRows,
+      flowDisplayTitle: _flowDisplayTitle,
+    );
+    final incomeTotal = entries.incomes
+        .where((entry) =>
+            !entry.date.isBefore(start) && entry.date.isBefore(endExclusive))
+        .fold<double>(0, (sum, entry) => sum + entry.amount);
+    final recordedIncome = cycleFlows
+        .where((flow) => flow['action_type'] == 'conquer')
+        .fold<double>(
+            0, (sum, flow) => sum + _numberFromDynamic(flow['amount']));
+    return (incomeTotal - recordedIncome).round();
   }
 
   /// 給料日サイクルの期間ラベル (例: "5/25〜6/24")。
@@ -9534,7 +9492,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         background = okBg;
         foreground = okFg;
         icon = Icons.cloud_done;
-        text = 'サーバ同期済み';
+        text = 'サーバ保存済み（残高・明細との照合は別途必要）';
     }
     final tappable = summary.level != AssetSyncLevel.allSynced;
     return InkWell(
@@ -9713,7 +9671,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
       backgroundColor: const Color(0xFF64748B),
-      floatingActionButton: AssetChatWidget(service: _aiHubChatService),
+      floatingActionButton: MediaQuery.sizeOf(context).width < 600
+          ? null
+          : AssetChatWidget(service: _aiHubChatService),
+      bottomNavigationBar: MediaQuery.sizeOf(context).width < 600
+          ? SafeArea(
+              top: false,
+              child: Padding(
+                key: const Key('asset_chat_docked_bar'),
+                padding: const EdgeInsets.all(8),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  heightFactor: 1,
+                  child: AssetChatWidget(service: _aiHubChatService),
+                ),
+              ),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SingleChildScrollView(
         controller: _scrollController,
@@ -13920,7 +13894,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     final shiftedShortfall = shifted.firstShortfallDate;
     if (shiftedShortfall == null) {
-      return '(回避できます)';
+      return '(試算上の不足なし)';
     }
     final currentShortfall = calendar.firstShortfallDate;
     if (currentShortfall != null &&
@@ -16324,7 +16298,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ...shortfallDaySummary.events.where(
           (event) =>
               event.kind == AssetCalendarEventKind.debtPayment &&
-              event.sourceId != null,
+              event.sourceId != null &&
+              debtInputs.any(
+                (debt) =>
+                    debt.id == event.sourceId &&
+                    debt.paymentDay != _salaryDay + 1,
+              ),
         ),
     ];
     final shiftCandidates = <MapEntry<AssetCalendarEvent, String>>[
@@ -16378,11 +16357,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.calendar_month, color: Color(0xFF1D4ED8)),
-                const SizedBox(width: 8),
-                const Expanded(
+                Icon(Icons.calendar_month, color: Color(0xFF1D4ED8)),
+                SizedBox(width: 8),
+                Expanded(
                   child: Text(
                     'マネーカレンダー',
                     style: TextStyle(
@@ -16392,18 +16371,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                   ),
                 ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
                 IconButton(
                   key: const Key('asset_calendar_prev_month'),
                   tooltip: '前のサイクル',
                   icon: const Icon(Icons.chevron_left),
                   onPressed: () => _shiftCalendarCycle(-1),
                 ),
-                Text(
-                  '${DateFormat('yyyy/M/d').format(calendar.rangeStart)}'
-                  '〜${DateFormat('M/d').format(cycleLastDay)}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    height: 1.4,
+                Flexible(
+                  child: Text(
+                    '${DateFormat('yyyy/M/d').format(calendar.rangeStart)}'
+                    '〜${DateFormat('M/d').format(cycleLastDay)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -16601,6 +16587,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ],
               ),
+            if (!isPastCycle)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  '固定費予定は、この給与サイクル内の支払予定を集計しています。サブスク一覧の登録額合計とは対象期間が異なります。同じ請求を通常固定費・サブスク・返済へ重複登録しないよう明細で照合してください。',
+                  key: Key('asset_calendar_fixed_cost_scope'),
+                  style: TextStyle(fontSize: 11, height: 1.5),
+                ),
+              ),
             if (calendar.firstShortfallDate != null) ...[
               const SizedBox(height: 8),
               Container(
@@ -16647,7 +16642,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '回避ライン: ショート日までに ${_formatYen(calendar.shortfallRecoveryAmount)} の入金、またはサイクル内支払の同額圧縮で黒字化します。',
+                      '登録データに基づく不足額の試算: ${_formatYen(calendar.shortfallRecoveryAmount)}。残高・支払済み状態・支払日を明細と照合してから判断してください。入金や支出削減の時期によって結果は変わります。',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -16667,7 +16662,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '返済日の変更は「負債マスタ」の支払日設定から。給料日($_salaryDay日)以降へ動かすと次サイクル(給料日後)の支払いになり、ショートを避けやすくなります。',
+                      '以下はアプリ内の支払日設定です。契約上の返済期限は変わりません。明細に記載された支払日を確認し、設定が古い場合のみ修正してください。',
                       style: TextStyle(
                         fontSize: 10,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -16691,7 +16686,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               ),
                               icon: const Icon(Icons.schedule_send, size: 14),
                               label: Text(
-                                '${entry.key.label}を26日へ${entry.value}',
+                                '${entry.key.label}の設定を${_salaryDay + 1}日へ${entry.value}',
                                 style: const TextStyle(fontSize: 11),
                               ),
                             ),
@@ -16708,7 +16703,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                         icon: const Icon(Icons.double_arrow, size: 14),
                         label: Text(
-                          '$comboSuggestionLabelを26日へ(回避できます)',
+                          '$comboSuggestionLabelの設定を${_salaryDay + 1}日へ(試算上の不足なし)',
                           style: const TextStyle(fontSize: 11),
                         ),
                       ),
@@ -18145,7 +18140,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               runSpacing: 10,
               children: [
                 _buildFlowPriorityMetric(
-                  label: '期間支出',
+                  label: unknownSection == null ? '期間支出' : '期間支出（未照合含む）',
                   value: _formatYen(breakdown.totalExpense),
                   color: const Color(0xFFB91C1C),
                 ),
@@ -18157,7 +18152,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: const Color(0xFF0F766E),
                 ),
                 _buildFlowPriorityMetric(
-                  label: '残り目安',
+                  label: '収支差額',
                   value:
                       remaining == null ? '未計算' : _formatSignedYen(remaining),
                   color: remaining == null || remaining >= 0
@@ -18178,6 +18173,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     color: const Color(0xFFD97706),
                   ),
               ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '受取済みの収入を集計しています。収支差額は現在の現金残高や、今後の支払後に使える額ではありません。',
+              style: TextStyle(fontSize: 12, height: 1.5),
             ),
             const SizedBox(height: 16),
             if (breakdown.sections.isEmpty)
@@ -18260,7 +18260,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   border: Border.all(color: const Color(0xFFFBBF24)),
                 ),
                 child: Text(
-                  '残高差分から ${_formatYen(unknownSection.amount)} を使途不明金として自動記録しています。下の収支履歴で行をタップすると、家賃・返済・食費などへ後から分類できます。',
+                  '使途不明金 ${_formatYen(unknownSection.amount)} は内訳の照合が必要です。'
+                  '残高差分からの自動記録には、口座間移動・現金引出し・返済などが含まれる可能性があり、全額が消費や浪費とは限りません。'
+                  '収支履歴を明細と照合し、振替・返済・支出を確認してください。',
                   style: const TextStyle(
                     color: Color(0xFF92400E),
                     fontSize: 12,
@@ -18552,15 +18554,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   height: 1.5,
                 ),
               ),
-              const Spacer(),
-              Text(
-                source,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isDark
-                      ? const Color(0xFFB0B0B0)
-                      : const Color(0xFF64748B),
-                  height: 1.5,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  source,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark
+                        ? const Color(0xFFB0B0B0)
+                        : const Color(0xFF64748B),
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],
@@ -22108,6 +22113,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return switch (source) {
       'deterministic fallback / feature flag off' => 'ルールベース要約 / AI無効',
       'deterministic fallback / ai-hub failed' => 'ルールベース要約 / AI接続失敗',
+      'deterministic fallback / grounding validation failed' =>
+        'ルールベース要約 / AIデータ矛盾を検出',
       'deterministic fallback / waiting for ai-hub' => 'ルールベース要約 / AI応答待ち',
       _ => source
           .replaceAll('deterministic fallback', 'ルールベース要約')
@@ -22155,10 +22162,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryInFlightKey = key;
       _assetManagementAiSummaryRequestKey = key;
     });
-    // 保存済み分析の再利用判定。指紋は基準日単位で回転するため「同日最新の
-    // 1 行」だけ見れば足りる。再利用条件は (a) 指紋完全一致 (データ不変) か
-    // (b) 生成からクールダウン時間内 (引落済み等の編集毎に指紋が変わるため、
-    // 完全一致だけだと 1 セッションで何度も 1 分超のプレミアム生成が走る)。
+    // 保存済み分析は指紋が完全一致するときだけ再利用する。基準日が同じでも
+    // 支払済み・金利・残高・解約状態のどれかが変われば別の事実なので、生成時刻が
+    // 新しいことを理由に古い本文を現在キーへ付け替えてはならない。
     // 手動の「AI要約を更新」(force) は常に再生成する。
     if (!force) {
       AssetManagementAiAnalysisHistoryEntry? reusable;
@@ -22167,9 +22173,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           report.workbook.baseDate,
         );
         if (latest != null &&
-            (latest.requestFingerprint == key ||
-                DateTime.now().difference(latest.generatedAt) <
-                    _assetManagementAiSummaryAutoRefreshCooldown)) {
+            AssetManagementAiSummaryRefresh.canReusePersisted(
+              currentKey: key,
+              cachedKey: latest.requestFingerprint,
+            )) {
           reusable = latest;
         }
       } catch (_) {
@@ -22250,15 +22257,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
     }
-    // 生成試行を (成功/失敗を問わず) 記録する。失敗しても履歴には残らないため、
-    // この時刻が次回以降のクールダウン判定の唯一の手掛かりになる。
-    unawaited(_recordAssetManagementAiSummaryAttempt(report.workbook.baseDate));
     final result = await _assetManagementAiSummaryService.generateSummary(
       report: report,
       previousAnalyses: previousAnalyses,
       existingDeveloperIssuesByTitle: existingIssuesByTitle,
     );
     if (result.usedExternalAi) {
+      // 成功は失敗リトライのクールダウン対象にしない。データ指紋が変わったら
+      // 直ちに最新値で再生成できるよう、過去の失敗時刻も消す。
+      unawaited(_clearAssetManagementAiSummaryAttempt());
       try {
         await _assetManagementAiAnalysisHistoryService.saveResult(
           result: result,
@@ -22271,6 +22278,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       } catch (_) {
         // AI分析の表示を優先し、履歴保存失敗は次回の再試行に任せます。
       }
+    } else {
+      // AI接続失敗または整合性検証失敗だけを連続試行の抑止対象にする。
+      unawaited(
+        _recordAssetManagementAiSummaryAttempt(report.workbook.baseDate),
+      );
     }
     if (!mounted) {
       return;
@@ -22343,6 +22355,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return delta.isNegative ? Duration.zero : delta;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<void> _clearAssetManagementAiSummaryAttempt() async {
+    try {
+      final store = await SharedPreferences.getInstance();
+      await store.remove(_assetManagementAiSummaryLastAttemptPrefKey);
+    } catch (_) {
+      // best-effort の失敗クールダウン用途のため、削除失敗は致命ではない。
     }
   }
 
@@ -30909,13 +30930,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              height: 1.5,
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
           ),
         ],
