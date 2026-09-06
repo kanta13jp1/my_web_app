@@ -9,36 +9,37 @@ void main() {
 
   group('AssetAutoDebitConfirmationService', () {
     test(
-        'Issue #5216: does not trigger shortfall warning for credit card negative balances with unknown limit',
-        () {
-      expect(
-        autoDebitSourceInsufficient(
-          balance: -525792,
-          kind: AssetLiabilityAccountKind.creditCard,
-          creditLimit: null,
-          paymentAmount: 3000,
-        ),
-        isFalse,
-      );
-      expect(
-        autoDebitSourceInsufficient(
-          balance: -525792,
-          kind: null,
-          creditLimit: null,
-          paymentAmount: 3000,
-        ),
-        isFalse,
-      );
-      expect(
-        autoDebitSourceInsufficient(
-          balance: -525792,
-          kind: AssetLiabilityAccountKind.creditCard,
-          creditLimit: 600000,
-          paymentAmount: 80000,
-        ),
-        isTrue, // 525792 + 80000 = 605792 > 600000
-      );
-    });
+      'Issue #5216: does not trigger shortfall warning for credit card negative balances with unknown limit',
+      () {
+        expect(
+          autoDebitSourceInsufficient(
+            balance: -525792,
+            kind: AssetLiabilityAccountKind.creditCard,
+            creditLimit: null,
+            paymentAmount: 3000,
+          ),
+          isFalse,
+        );
+        expect(
+          autoDebitSourceInsufficient(
+            balance: -525792,
+            kind: null,
+            creditLimit: null,
+            paymentAmount: 3000,
+          ),
+          isFalse,
+        );
+        expect(
+          autoDebitSourceInsufficient(
+            balance: -525792,
+            kind: AssetLiabilityAccountKind.creditCard,
+            creditLimit: 600000,
+            paymentAmount: 80000,
+          ),
+          isTrue, // 525792 + 80000 = 605792 > 600000
+        );
+      },
+    );
 
     test('lists direct payments whose date has already passed this month', () {
       // 6/15 時点。ガス(12日)は過去、水道(22日)・家賃/KDDI(25日)は未来。
@@ -125,10 +126,7 @@ void main() {
         isTrue,
       );
 
-      expect(
-        ids,
-        isNot(contains(AssetLiabilityPlanningService.rentAccountId)),
-      );
+      expect(ids, isNot(contains(AssetLiabilityPlanningService.rentAccountId)));
       expect(ids, contains(AssetLiabilityPlanningService.gasBillAccountId));
     });
   });
@@ -165,60 +163,64 @@ void main() {
       expect(service.insufficientSourceCount(workbook), 1);
     });
 
-    test('flags later debit when earlier successful debit depletes the balance',
-        () {
-      // 6/26 時点、残高 5,000。ガス 4,500 (12日) は成功見込み → 残 500。
-      // 水道 2,400 (22日) は生残高 5,000 では足りて見えるが、見込み残 500 では
-      // 不足 → 警告。行単位の独立比較では取りこぼすケース。
-      final workbook = planning.buildWorkbook(
-        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 5000},
-        baseDate: DateTime(2026, 6, 26),
-        includeDefaultFixedPayments: true,
-      );
-      final details = service.pendingConfirmationDetails(workbook);
-      final gas = details.firstWhere(
-        (detail) =>
-            detail.row.accountId ==
-            AssetLiabilityPlanningService.gasBillAccountId,
-      );
-      final water = details.firstWhere(
-        (detail) =>
-            detail.row.accountId ==
-            AssetLiabilityPlanningService.waterBillAccountId,
-      );
+    test(
+      'flags later debit when earlier successful debit depletes the balance',
+      () {
+        // 6/26 時点、残高 5,000。ガス 4,500 (12日) は成功見込み → 残 500。
+        // 水道 2,400 (22日) は生残高 5,000 では足りて見えるが、見込み残 500 では
+        // 不足 → 警告。行単位の独立比較では取りこぼすケース。
+        final workbook = planning.buildWorkbook(
+          latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 5000},
+          baseDate: DateTime(2026, 6, 26),
+          includeDefaultFixedPayments: true,
+        );
+        final details = service.pendingConfirmationDetails(workbook);
+        final gas = details.firstWhere(
+          (detail) =>
+              detail.row.accountId ==
+              AssetLiabilityPlanningService.gasBillAccountId,
+        );
+        final water = details.firstWhere(
+          (detail) =>
+              detail.row.accountId ==
+              AssetLiabilityPlanningService.waterBillAccountId,
+        );
 
-      expect(gas.sourceAccountBalance, 5000);
-      expect(gas.sourceBalanceInsufficient, isFalse);
-      expect(water.sourceAccountBalance, 500);
-      expect(water.sourceBalanceInsufficient, isTrue);
-    });
+        expect(gas.sourceAccountBalance, 5000);
+        expect(gas.sourceBalanceInsufficient, isFalse);
+        expect(water.sourceAccountBalance, 500);
+        expect(water.sourceBalanceInsufficient, isTrue);
+      },
+    );
 
-    test('failed (insufficient) debit does not deplete the running balance',
-        () {
-      // 残高 3,000: ガス 4,500 (12日) は不足で弾かれる想定 → 残高は減らず、
-      // 水道 2,400 (22日) は 3,000 のまま判定 → 警告なし。
-      final workbook = planning.buildWorkbook(
-        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 3000},
-        baseDate: DateTime(2026, 6, 26),
-        includeDefaultFixedPayments: true,
-      );
-      final details = service.pendingConfirmationDetails(workbook);
-      final gas = details.firstWhere(
-        (detail) =>
-            detail.row.accountId ==
-            AssetLiabilityPlanningService.gasBillAccountId,
-      );
-      final water = details.firstWhere(
-        (detail) =>
-            detail.row.accountId ==
-            AssetLiabilityPlanningService.waterBillAccountId,
-      );
+    test(
+      'failed (insufficient) debit does not deplete the running balance',
+      () {
+        // 残高 3,000: ガス 4,500 (12日) は不足で弾かれる想定 → 残高は減らず、
+        // 水道 2,400 (22日) は 3,000 のまま判定 → 警告なし。
+        final workbook = planning.buildWorkbook(
+          latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 3000},
+          baseDate: DateTime(2026, 6, 26),
+          includeDefaultFixedPayments: true,
+        );
+        final details = service.pendingConfirmationDetails(workbook);
+        final gas = details.firstWhere(
+          (detail) =>
+              detail.row.accountId ==
+              AssetLiabilityPlanningService.gasBillAccountId,
+        );
+        final water = details.firstWhere(
+          (detail) =>
+              detail.row.accountId ==
+              AssetLiabilityPlanningService.waterBillAccountId,
+        );
 
-      expect(gas.sourceAccountBalance, 3000);
-      expect(gas.sourceBalanceInsufficient, isTrue);
-      expect(water.sourceAccountBalance, 3000);
-      expect(water.sourceBalanceInsufficient, isFalse);
-    });
+        expect(gas.sourceAccountBalance, 3000);
+        expect(gas.sourceBalanceInsufficient, isTrue);
+        expect(water.sourceAccountBalance, 3000);
+        expect(water.sourceBalanceInsufficient, isFalse);
+      },
+    );
 
     test('does not flag when source balance covers the amount', () {
       final workbook = planning.buildWorkbook(
@@ -300,43 +302,46 @@ void main() {
       expect(service.insufficientSourceCount(workbook), 0);
     });
 
-    test('flags only rows whose own source is short among multiple pending',
-        () {
-      // 6/25 時点でガス(12日/4,500/振替元=大塚) と 水道(22日/2,400/振替元=神田へ上書き)
-      // が確認待ち。大塚 3,000 < ガス 4,500 → ガスのみ警告。神田 50,000 >= 水道 2,400 →
-      // 水道は警告しない。各行が「自分の振替元の残高」で判定され、件数がフィルタ後の数
-      // (=1, リストの長さ 2 ではない) であることを担保する。
-      final workbook = planning.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          '三井住友銀行大塚支店': 3000,
-          '三井住友銀行神田支店': 50000,
-        },
-        baseDate: DateTime(2026, 6, 25),
-        includeDefaultFixedPayments: true,
-        paymentSourceAccountIds: const <String, String>{
-          // '三井住友銀行神田支店' の口座 ID (= 既定の大塚とは別口座)。
-          AssetLiabilityPlanningService.waterBillAccountId: 'smbc_kanda_branch',
-        },
-      );
-      final details = service.pendingConfirmationDetails(workbook);
-      final gas = details.firstWhere(
-        (detail) =>
-            detail.row.accountId ==
-            AssetLiabilityPlanningService.gasBillAccountId,
-      );
-      final water = details.firstWhere(
-        (detail) =>
-            detail.row.accountId ==
-            AssetLiabilityPlanningService.waterBillAccountId,
-      );
+    test(
+      'flags only rows whose own source is short among multiple pending',
+      () {
+        // 6/25 時点でガス(12日/4,500/振替元=大塚) と 水道(22日/2,400/振替元=神田へ上書き)
+        // が確認待ち。大塚 3,000 < ガス 4,500 → ガスのみ警告。神田 50,000 >= 水道 2,400 →
+        // 水道は警告しない。各行が「自分の振替元の残高」で判定され、件数がフィルタ後の数
+        // (=1, リストの長さ 2 ではない) であることを担保する。
+        final workbook = planning.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            '三井住友銀行大塚支店': 3000,
+            '三井住友銀行神田支店': 50000,
+          },
+          baseDate: DateTime(2026, 6, 25),
+          includeDefaultFixedPayments: true,
+          paymentSourceAccountIds: const <String, String>{
+            // '三井住友銀行神田支店' の口座 ID (= 既定の大塚とは別口座)。
+            AssetLiabilityPlanningService.waterBillAccountId:
+                'smbc_kanda_branch',
+          },
+        );
+        final details = service.pendingConfirmationDetails(workbook);
+        final gas = details.firstWhere(
+          (detail) =>
+              detail.row.accountId ==
+              AssetLiabilityPlanningService.gasBillAccountId,
+        );
+        final water = details.firstWhere(
+          (detail) =>
+              detail.row.accountId ==
+              AssetLiabilityPlanningService.waterBillAccountId,
+        );
 
-      expect(gas.sourceAccountBalance, 3000);
-      expect(gas.sourceBalanceInsufficient, isTrue);
-      // 水道は自分の振替元(神田 50,000)で判定される = 大塚の 3,000 を流用しない。
-      expect(water.sourceAccountBalance, 50000);
-      expect(water.sourceBalanceInsufficient, isFalse);
-      expect(service.insufficientSourceCount(workbook), 1);
-    });
+        expect(gas.sourceAccountBalance, 3000);
+        expect(gas.sourceBalanceInsufficient, isTrue);
+        // 水道は自分の振替元(神田 50,000)で判定される = 大塚の 3,000 を流用しない。
+        expect(water.sourceAccountBalance, 50000);
+        expect(water.sourceBalanceInsufficient, isFalse);
+        expect(service.insufficientSourceCount(workbook), 1);
+      },
+    );
   });
 
   group('autoDebitAlternateSourcePaidHint', () {
@@ -462,5 +467,140 @@ void main() {
         isFalse,
       );
     });
+  });
+
+  group('AssetAutoDebitConfirmation helper methods & copy', () {
+    final testRow = AssetLiabilityCashflowRow(
+      eventType: AssetLiabilityCashflowEventType.payment,
+      accountId: 'sub_test',
+      accountName: 'ChatGPT Plus',
+      paymentDay: 10,
+      paymentDate: DateTime.utc(2026, 6, 10),
+      paymentSourceAccountId: 'card_1',
+      paymentSourceAccountName: 'メインカード',
+      destinationAccountId: null,
+      destinationAccountName: null,
+      paymentMethod: AssetLiabilityPaymentMethod.direct,
+      paymentMethodLabel: '直接決済',
+      paymentMethodSettingSource:
+          AssetLiabilityPaymentMethodSettingSource.monthlyOverride,
+      billingAccountId: null,
+      billingAccountName: null,
+      includedInBillingAccount: false,
+      paymentAmount: 3000,
+      paymentAmountEstimated: false,
+      paid: false,
+      received: false,
+      overdue: true,
+      cashBeforePayment: 0,
+      cashAfterPayment: 0,
+      riskLevel: AssetLiabilityCashRiskLevel.normal,
+    );
+
+    test('isCreditLine identifies credit cards and negative balances', () {
+      final cardConfirmation = AssetAutoDebitConfirmation(
+        row: testRow,
+        sourceAccountBalance: -50000,
+        sourceAccountKind: AssetLiabilityAccountKind.creditCard,
+        sourceAccountCreditLimit: 100000,
+      );
+      expect(cardConfirmation.isCreditLine, isTrue);
+
+      final depositConfirmation = AssetAutoDebitConfirmation(
+        row: testRow,
+        sourceAccountBalance: 50000,
+        sourceAccountKind: AssetLiabilityAccountKind.deposit,
+      );
+      expect(depositConfirmation.isCreditLine, isFalse);
+
+      final unknownKindNegative = AssetAutoDebitConfirmation(
+        row: testRow,
+        sourceAccountBalance: -20000,
+        sourceAccountKind: null,
+      );
+      expect(unknownKindNegative.isCreditLine, isTrue);
+    });
+
+    test(
+      'isEligibleForBulkConfirm excludes unknown limit card and shortfalls',
+      () {
+        // 預金口座で残高十分: 一括OK
+        final depositSufficient = AssetAutoDebitConfirmation(
+          row: testRow,
+          sourceAccountBalance: 50000,
+          sourceAccountKind: AssetLiabilityAccountKind.deposit,
+        );
+        expect(depositSufficient.isEligibleForBulkConfirm, isTrue);
+
+        // 預金口座で残高不足: 一括NG
+        final depositShort = AssetAutoDebitConfirmation(
+          row: testRow,
+          sourceAccountBalance: 1000,
+          sourceAccountKind: AssetLiabilityAccountKind.deposit,
+        );
+        expect(depositShort.isEligibleForBulkConfirm, isFalse);
+
+        // クレジットカードで限度額不明: 警告は出ないが一括対象からは除外（個別確認必須）
+        final cardUnknownLimit = AssetAutoDebitConfirmation(
+          row: testRow,
+          sourceAccountBalance: -50000,
+          sourceAccountKind: AssetLiabilityAccountKind.creditCard,
+          sourceAccountCreditLimit: null,
+        );
+        expect(cardUnknownLimit.sourceBalanceInsufficient, isFalse);
+        expect(cardUnknownLimit.isEligibleForBulkConfirm, isFalse);
+
+        // クレジットカードで限度額既知かつ枠内: 一括OK
+        final cardWithinLimit = AssetAutoDebitConfirmation(
+          row: testRow,
+          sourceAccountBalance: -50000,
+          sourceAccountKind: AssetLiabilityAccountKind.creditCard,
+          sourceAccountCreditLimit: 100000,
+        );
+        expect(cardWithinLimit.sourceBalanceInsufficient, isFalse);
+        expect(cardWithinLimit.isEligibleForBulkConfirm, isTrue);
+
+        // クレジットカードで限度額超過: 一括NG
+        final cardOverLimit = AssetAutoDebitConfirmation(
+          row: testRow,
+          sourceAccountBalance: -98000,
+          sourceAccountKind: AssetLiabilityAccountKind.creditCard,
+          sourceAccountCreditLimit: 100000,
+        );
+        expect(cardOverLimit.sourceBalanceInsufficient, isTrue);
+        expect(cardOverLimit.isEligibleForBulkConfirm, isFalse);
+      },
+    );
+
+    test(
+      'shortfallWarningMessage distinguishes credit limit and deposit balance',
+      () {
+        final depositShort = AssetAutoDebitConfirmation(
+          row: testRow,
+          sourceAccountBalance: 1000,
+          sourceAccountKind: AssetLiabilityAccountKind.deposit,
+        );
+        final depositMsg = depositShort.shortfallWarningMessage(
+          formattedSourceBalance: '¥1,000',
+        );
+        expect(depositMsg, contains('振替元の残高見込み'));
+        expect(depositMsg, contains('引落が失敗している可能性があるため'));
+        expect(depositMsg, isNot(contains('限度額')));
+
+        final cardOver = AssetAutoDebitConfirmation(
+          row: testRow,
+          sourceAccountBalance: -98000,
+          sourceAccountKind: AssetLiabilityAccountKind.creditCard,
+          sourceAccountCreditLimit: 100000,
+        );
+        final cardMsg = cardOver.shortfallWarningMessage(
+          formattedSourceBalance: '-¥98,000',
+          formattedCreditLimit: '¥100,000',
+        );
+        expect(cardMsg, contains('振替元カードの利用枠見込み'));
+        expect(cardMsg, contains('利用限度額を超過しています'));
+        expect(cardMsg, contains('カード決済が承認されない可能性があるため'));
+      },
+    );
   });
 }
