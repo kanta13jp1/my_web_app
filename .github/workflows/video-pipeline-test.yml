@@ -68,3 +68,46 @@ jobs:
         env:
           PYTHONUTF8: '1'
         run: python -m unittest discover -s test/scripts -p "test_video_pipeline_secret_readiness.py"
+
+  private-inspection:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/private-video-installing-20260906'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520
+        with:
+          version: 2.84.2
+      - name: Install isolated audio inspection dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          pip install --quiet faster-whisper==1.2.1
+      - name: Fetch approved private input
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
+        run: |
+          mkdir -p /tmp/private-media-job
+          cd /tmp/private-media-job
+          supabase init
+          supabase link --project-ref "$PROJECT_REF"
+          supabase storage cp ss:///attachments/private-video-pipeline/installing-20260906-v1/input.m4a input.m4a --linked --experimental
+          supabase storage cp ss:///attachments/private-video-pipeline/installing-20260906-v1/inspect_audio.py inspect_audio.py --linked --experimental
+          echo '61cda803180278b5343fa61d784b17ca1b54bbe25444e4222e78d6b307962cb1  inspect_audio.py' | sha256sum --check
+      - name: Inspect audio without credentials or content logs
+        run: |
+          cd /tmp/private-media-job
+          python inspect_audio.py > inspection-runtime.log 2>&1 || { echo 'Private inspection failed; no audio content emitted.'; exit 1; }
+      - name: Preserve private result
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          cd /tmp/private-media-job
+          supabase storage cp inspection/inspection.json ss:///attachments/private-video-pipeline/installing-20260906-v1/inspection.json --linked --experimental --content-type application/json --cache-control no-store
+          echo 'Private inspection saved. No media artifacts published.'
