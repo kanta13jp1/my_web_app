@@ -27004,15 +27004,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 dataRowMaxHeight: 56,
                 columns: const [
                   DataColumn(
-                    label: Text('日付'),
+                    label: SizedBox(width: 64, child: Text('日付')),
                     numeric: true,
-                    columnWidth: MaxColumnWidth(
-                      FixedColumnWidth(72),
-                      IntrinsicColumnWidth(),
-                    ),
                   ),
                   DataColumn(label: Text('名称')),
-                  DataColumn(label: Text('金額'), numeric: true),
+                  DataColumn(
+                    label: SizedBox(width: 64, child: Text('金額')),
+                    numeric: true,
+                  ),
                   DataColumn(label: Text('入金先口座')),
                   DataColumn(label: Text('入金済み')),
                   DataColumn(label: Text('操作')),
