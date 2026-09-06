@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../pages/aero_lab_page.dart';
+import '../pages/sound_bloom_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -2354,6 +2355,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['ABテスト', 'ランディング', 'LP', 'CVR', 'コンバージョン'],
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'sound-bloom',
+      sectionId: 'growth',
+      title: '音と光の庭 · SOUND BLOOM',
+      subtitle: '光を植えて、音楽を育てる',
+      icon: Icons.music_note_outlined,
+      color: const Color(0xFF527D62),
+      keywords: const <String>['音楽', '作曲', 'SOUND BLOOM', '楽器', 'Astra'],
+      onOpen: (context) => _pushPage(context, const SoundBloomPage()),
     ),
     HomeToolEntry(
       id: 'aero-lab',
