@@ -47,6 +47,15 @@ class ProductionJourneyProbeTest(unittest.TestCase):
                 {
                     "routes": [
                         {
+                            "path": "/referral",
+                            "title": "友達紹介プログラム | 自分株式会社",
+                            "description": "承認済み紹介プログラムです。",
+                            "contract_markers": [
+                                "Pro月額1か月分",
+                                "登録だけでは特典を付与しません",
+                            ],
+                        },
+                        {
                             "path": "/subscription-billing",
                             "title": "プランと応援 | 自分株式会社",
                             "description": "承認済み料金プランです。",
@@ -82,6 +91,17 @@ class ProductionJourneyProbeTest(unittest.TestCase):
                 description=ROOT_DESCRIPTION,
                 path="/",
                 marker="登録前にAI提案を1件体験",
+            ),
+            encoding="utf-8",
+        )
+        referral = self.root / "referral"
+        referral.mkdir()
+        (referral / "index.html").write_text(
+            render_html(
+                title="友達紹介プログラム | 自分株式会社",
+                description="承認済み紹介プログラムです。",
+                path="/referral",
+                marker="Pro月額1か月分 登録だけでは特典を付与しません",
             ),
             encoding="utf-8",
         )
@@ -133,12 +153,13 @@ class ProductionJourneyProbeTest(unittest.TestCase):
     def test_local_build_accepts_unique_route_specific_responses(self) -> None:
         results = run_probe(config_path=self.config, root_dir=self.root)
 
-        self.assertEqual([item["status"] for item in results], [200] * 5)
-        self.assertEqual(len({item["sha256"] for item in results}), 5)
+        self.assertEqual([item["status"] for item in results], [200] * 6)
+        self.assertEqual(len({item["sha256"] for item in results}), 6)
         self.assertEqual(
             [item["canonical"] for item in results],
             [
                 f"{BASE}/",
+                f"{BASE}/referral",
                 f"{BASE}/subscription-billing",
                 f"{BASE}/privacy",
                 f"{BASE}/terms",
@@ -220,7 +241,7 @@ class ProductionJourneyProbeTest(unittest.TestCase):
             config_path=repo_root / "web" / "seo" / "public-routes.json",
             root_dir=output,
         )
-        self.assertEqual(len({item["sha256"] for item in results}), 5)
+        self.assertEqual(len({item["sha256"] for item in results}), 6)
 
 
 if __name__ == "__main__":
