@@ -187,7 +187,10 @@ void main() {
     await tester.pump();
     expect(clipboardText, isNotNull);
     expect(clipboardText, isNot(isEmpty));
-    expect(clipboardText, isNot(contains('Old synthetic income is unreceived')));
+    expect(
+      clipboardText,
+      isNot(contains('Old synthetic income is unreceived')),
+    );
     await _pumpUntil(tester, () => ai.responses.length == 2);
     expect(ai.requests.last.workbook.incomePlans.single.received, isTrue);
     expect(repository.state.incomePlans.single.received, isTrue);
@@ -198,6 +201,65 @@ void main() {
     );
     await _pumpUntil(tester, () => newText.evaluate().isNotEmpty);
     expect(oldText, findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+  testWidgets('a late old response stays hidden after a receipt edit',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _MonthlyRepository();
+    final ai = _ControlledAi();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          aiSummaryService: ai,
+          aiAnalysisHistoryService: _EmptyHistory(),
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{'bank': 30000},
+          },
+        ),
+      ),
+    );
+    await _pumpUntil(tester, () => ai.responses.isNotEmpty);
+    expect(ai.requests.first.workbook.incomePlans.single.received, isFalse);
+    final received = find.byKey(
+      const Key('asset_income_received_synthetic-income'),
+    );
+    await tester.ensureVisible(received);
+    await tester.tap(received);
+    await tester.pump();
+    await _pumpUntil(
+      tester,
+      () => repository.state.incomePlans.single.received,
+    );
+    ai.complete(0, 'Late obsolete income is unreceived');
+    final obsolete = find.text(
+      'Late obsolete income is unreceived',
+      findRichText: true,
+    );
+    // Check every frame while the new request is scheduled: old output must
+    // never flash as current merely because its request finished last.
+    for (var frame = 0; frame < 100 && ai.responses.length < 2; frame++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(obsolete, findsNothing);
+    }
+    expect(ai.responses, hasLength(2));
+    expect(ai.requests.last.workbook.incomePlans.single.received, isTrue);
+    ai.complete(1, 'Fresh synthetic income is received');
+    final fresh = find.text(
+      'Fresh synthetic income is received',
+      findRichText: true,
+    );
+    await _pumpUntil(tester, () => fresh.evaluate().isNotEmpty);
+    expect(obsolete, findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });
