@@ -214,7 +214,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
             icon: Icons.warning_amber,
             message:
                 '${shortfallDate.month}/${shortfallDate.day} 頃に残高が不足する見込みです。'
-                '回避には ${_yen(forecast.shortfallRecoveryAmount)} の追加資金が必要です。',
+                '登録データに基づく不足額の試算は ${_yen(forecast.shortfallRecoveryAmount)} です。残高・支払済み状態・支払日を明細と照合してから判断してください。',
           )
         else if (hasSafetyBreach)
           _buildAlert(

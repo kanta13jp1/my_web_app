@@ -19,6 +19,7 @@ const routeTargets: RouteTarget[] = [
   { name: 'auth', route: '/two-factor-auth', surface: 'auth route' },
   { name: 'notion-wbs', route: '/project-gantt', surface: 'Notion/WBS equivalent' },
   { name: 'agent-org', route: '/agents', surface: 'agent org equivalent' },
+  { name: 'tiger-reviewers', route: '/tiger-reviewers', surface: 'Tiger profiles' },
 ];
 
 const ignoredConsoleFragments = [
