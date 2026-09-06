@@ -18,7 +18,13 @@ class FirstUserGrowthAttribution {
     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   );
   static final RegExp _tokenPattern = RegExp(r'^[a-z0-9_-]{1,64}$');
-  static const Set<String> supportedSources = <String>{'x', 'zenn', 'reddit'};
+  static const Set<String> supportedSources = <String>{
+    'x',
+    'zenn',
+    'reddit',
+    'producthunt',
+    'hackernews',
+  };
 
   final String visitorId;
   final String utmSource;
@@ -125,6 +131,10 @@ class GrowthAcquisitionService {
   static const String touchZennFirstUserGrowth = 'touch_zenn_first_user_growth';
   static const String touchRedditFirstUserGrowth =
       'touch_reddit_first_user_growth';
+  static const String touchProductHuntFirstUserGrowth =
+      'touch_producthunt_first_user_growth';
+  static const String touchHackerNewsFirstUserGrowth =
+      'touch_hackernews_first_user_growth';
   static const String touchImport = 'touch_import';
   static const String touchPublicMemo = 'touch_public_memo';
   static const String touchReferral = 'touch_referral';
@@ -153,6 +163,10 @@ class GrowthAcquisitionService {
       'signup_submit_zenn_first_user_growth';
   static const String signupSubmitRedditFirstUserGrowth =
       'signup_submit_reddit_first_user_growth';
+  static const String signupSubmitProductHuntFirstUserGrowth =
+      'signup_submit_producthunt_first_user_growth';
+  static const String signupSubmitHackerNewsFirstUserGrowth =
+      'signup_submit_hackernews_first_user_growth';
   static const String signupSubmitImport = 'signup_submit_import';
   static const String signupSubmitPublicMemo = 'signup_submit_public_memo';
   static const String signupSubmitReferral = 'signup_submit_referral';
@@ -251,6 +265,10 @@ class GrowthAcquisitionService {
         return touchZennFirstUserGrowth;
       case 'reddit':
         return touchRedditFirstUserGrowth;
+      case 'producthunt':
+        return touchProductHuntFirstUserGrowth;
+      case 'hackernews':
+        return touchHackerNewsFirstUserGrowth;
     }
     switch (_lowerParam(uri.queryParameters, 'utm_medium')) {
       case 'profile':
@@ -283,6 +301,10 @@ class GrowthAcquisitionService {
         return signupSubmitZennFirstUserGrowth;
       case touchRedditFirstUserGrowth:
         return signupSubmitRedditFirstUserGrowth;
+      case touchProductHuntFirstUserGrowth:
+        return signupSubmitProductHuntFirstUserGrowth;
+      case touchHackerNewsFirstUserGrowth:
+        return signupSubmitHackerNewsFirstUserGrowth;
       case touchImport:
         return signupSubmitImport;
       case touchPublicMemo:
