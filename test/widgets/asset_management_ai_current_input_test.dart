@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
@@ -128,6 +129,23 @@ void main() {
     AssetRecurringTombstoneSyncService.resetSharedForTest();
     await tester.binding.setSurfaceSize(const Size(1600, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          clipboardText =
+              (call.arguments as Map<Object?, Object?>)['text']?.toString();
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
     final repository = _MonthlyRepository();
     final ai = _ControlledAi();
     await tester.pumpWidget(
@@ -151,6 +169,11 @@ void main() {
       findRichText: true,
     );
     await _pumpUntil(tester, () => oldText.evaluate().isNotEmpty);
+    final copy = find.text('分析結果をコピー');
+    await tester.ensureVisible(copy);
+    await tester.tap(copy);
+    await tester.pump();
+    expect(clipboardText, 'Old synthetic income is unreceived');
     final received = find.byKey(
       const Key('asset_income_received_synthetic-income'),
     );
@@ -158,6 +181,13 @@ void main() {
     await tester.tap(received);
     await tester.pump();
     expect(oldText, findsNothing);
+    clipboardText = null;
+    await tester.ensureVisible(copy);
+    await tester.tap(copy);
+    await tester.pump();
+    expect(clipboardText, isNotNull);
+    expect(clipboardText, isNot(isEmpty));
+    expect(clipboardText, isNot(contains('Old synthetic income is unreceived')));
     await _pumpUntil(tester, () => ai.responses.length == 2);
     expect(ai.requests.last.workbook.incomePlans.single.received, isTrue);
     expect(repository.state.incomePlans.single.received, isTrue);
