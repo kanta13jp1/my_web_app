@@ -1,0 +1,45 @@
+name: AI Context Snapshot
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/ai-context-snapshot.yml"
+      - "scripts/generate_context_bundle*.py"
+      - "README.md"
+      - "project_tree.txt"
+      - "TEST_COVERAGE.md"
+      - "pubspec.yaml"
+      - "USER_MANUAL.md"
+      - "DETAILED_DESIGN.md"
+
+concurrency:
+  group: ai-context-snapshot-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Verify bundle contracts
+        run: python scripts/generate_context_bundle_test.py
+      - name: Generate committed-source bundle
+        run: python scripts/generate_context_bundle.py --output-dir .ci-logs/ai-context
+      - name: Preserve revision-labelled evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ai-context-snapshot
+          path: .ci-logs/ai-context
+          if-no-files-found: error
+          retention-days: 30
