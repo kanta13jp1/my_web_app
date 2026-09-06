@@ -27007,14 +27007,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     label: SizedBox(width: 64, child: Text('日付')),
                     numeric: true,
                   ),
-                  DataColumn(label: Text('名称')),
+                  DataColumn(label: SizedBox(width: 64, child: Text('名称'))),
                   DataColumn(
                     label: SizedBox(width: 64, child: Text('金額')),
                     numeric: true,
                   ),
-                  DataColumn(label: Text('入金先口座')),
-                  DataColumn(label: Text('入金済み')),
-                  DataColumn(label: Text('操作')),
+                  DataColumn(
+                    label: SizedBox(width: 112, child: Text('入金先口座')),
+                  ),
+                  DataColumn(label: SizedBox(width: 96, child: Text('入金済み'))),
+                  DataColumn(label: SizedBox(width: 64, child: Text('操作'))),
                 ],
                 rows: [
                   for (final plan in plans)
