@@ -35,10 +35,10 @@ test('saved state restores, invalid input preserves the garden', async ({ page }
   const path = test.info().outputPath('sound-bloom.json'); await download.saveAs(path);
   await page.getByRole('button', { name: '種をすべて消す' }).click();
   await page.locator('#load').setInputFiles(path);
-  await expect(page.getByRole('status')).toContainText('復元しました');
+  await expect(page.locator('#status')).toContainText('復元しました');
   await expect(page.locator('#tempo-value')).toHaveText('112');
   const active = await page.locator('.seed[aria-pressed="true"]').count(); expect(active).toBeGreaterThan(0);
   await page.locator('#load').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"tempo":999}') });
-  await expect(page.getByRole('status')).toContainText('読み込めません');
+  await expect(page.locator('#status')).toContainText('読み込めません');
   await expect(page.locator('.seed[aria-pressed="true"]')).toHaveCount(active);
 });
