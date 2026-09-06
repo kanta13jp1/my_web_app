@@ -9,20 +9,21 @@ const out = 'sound-bloom-recording';
 mkdirSync(out, {recursive:true});
 const version = await (await fetch(new URL('/version.json', url))).json();
 assert.equal(version.commit, expected, 'Production changed; review before recording');
-const browser = await chromium.launch({headless:false, args:['--kiosk', '--window-size=1440,1080', '--window-position=0,0'], ignoreDefaultArgs:['--mute-audio']});
+const browser = await chromium.launch({headless:false, args:['--window-size=1440,1080', '--window-position=0,0','--disable-features=Translate,TranslateUI'], ignoreDefaultArgs:['--mute-audio']});
 let recorder;
 const events=[];
 const started=Date.now();
 const mark = (action)=>events.push({seconds:(Date.now()-started)/1000,action});
 const wait = ms=>new Promise(r=>setTimeout(r,ms));
 try {
-  const page=await browser.newPage({viewport:{width:1440,height:1080},deviceScaleFactor:1});
+  const page=await browser.newPage({viewport:{width:1440,height:1080},deviceScaleFactor:1,locale:'ja-JP'});
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url,{waitUntil:'networkidle'});
   await page.getByRole('button',{name:'▶ 音を咲かせる'}).waitFor();
   // Scroll the real page to fit the garden and primary controls; no DOM/style edits.
-  await page.locator('.garden').scrollIntoViewIfNeeded();
-  await page.mouse.wheel(0,180);
+  await page.keyboard.press('F11');
+  await wait(1000);
+  await page.locator('.garden').evaluate(el=>el.scrollIntoView({block:'start'}));
   await wait(1200);
   await page.screenshot({path:`${out}/before.png`});
   recorder=spawn('ffmpeg',['-y','-f','x11grab','-framerate','30','-video_size','1440x1080','-i',process.env.DISPLAY,
@@ -30,7 +31,7 @@ try {
     '-c:a','aac','-b:a','192k','-ar','48000','-ac','2','-movflags','+faststart',`${out}/sound-bloom-production.mp4`],
     {stdio:['pipe','ignore','inherit']});
   const recordingFinished = new Promise((resolve,reject)=>recorder.once('exit',code=>code===0?resolve():reject(new Error(`ffmpeg ${code}`))));
-  await wait(1200); mark('recording-start');
+  await wait(3000); mark('recording-start');
   await page.getByRole('button',{name:'▶ 音を咲かせる'}).click(); mark('play-dew');
   await wait(6000);
   await page.getByRole('button',{name:'雫 2番目の音',exact:true}).click(); mark('add-dew-2');
