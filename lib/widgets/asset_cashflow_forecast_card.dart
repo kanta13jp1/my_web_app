@@ -108,8 +108,51 @@ class AssetCashflowForecastCard extends StatelessWidget {
                   ),
                 ),
               ),
+              const Wrap(
+                spacing: 16,
+                runSpacing: 4,
+                children: [
+                  Text('● 月末残高', style: TextStyle(color: _accent)),
+                  Text('◆ 月内最低残高', style: TextStyle(color: _danger)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('現在', style: TextStyle(fontSize: 11)),
+                  Text(
+                    '${months.first.month.year}/${months.first.month.month}〜'
+                    '${months.last.month.year}/${months.last.month.month}',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                ],
+              ),
               const SizedBox(height: 10),
               _buildSummary(context),
+              ExpansionTile(
+                key: const Key('asset_cashflow_forecast_month_details'),
+                tilePadding: EdgeInsets.zero,
+                title: const Text('月別内訳（月末・月内最低）'),
+                children: [
+                  for (final month in months)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${month.month.year}/${month.month.month} '
+                          '月末 ${_yen(month.closingBalance)} / '
+                          '月内最低 ${_yen(month.worstBalance)}',
+                          style: TextStyle(
+                            color: month.isShortfall ? _danger : null,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ],
         ),
@@ -121,7 +164,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
   String _chartA11yValue() {
     final months = forecast.months;
     final last = months.isEmpty ? null : months.last;
-    final buffer = StringBuffer('今後${months.length}ヶ月の月末残高見込み。');
+    final buffer = StringBuffer('今後${months.length}ヶ月の月末残高と月内最低残高。');
     if (last != null) {
       buffer.write('${_monthLabel(last.month)}末は${_yen(last.closingBalance)}。');
     }
@@ -171,7 +214,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
             icon: Icons.warning_amber,
             message:
                 '${shortfallDate.month}/${shortfallDate.day} 頃に残高が不足する見込みです。'
-                '回避には ${_yen(forecast.shortfallRecoveryAmount)} の追加資金が必要です。',
+                '登録データに基づく不足額の試算は ${_yen(forecast.shortfallRecoveryAmount)} です。残高・支払済み状態・支払日を明細と照合してから判断してください。',
           )
         else if (hasSafetyBreach)
           _buildAlert(
@@ -286,13 +329,17 @@ class _ForecastChartPainter extends CustomPainter {
         .map((month) => month.closingBalance)
         .toList(growable: false);
     final series = <double>[forecast.startingBalance, ...closings];
+    final lows = <double>[
+      forecast.startingBalance,
+      ...forecast.months.map((month) => month.worstBalance),
+    ];
     if (series.length < 2) {
       return;
     }
 
     final reference = <double>[0, forecast.safetyMargin];
-    var minValue = [...series, ...reference].reduce(min);
-    var maxValue = [...series, ...reference].reduce(max);
+    var minValue = [...series, ...lows, ...reference].reduce(min);
+    var maxValue = [...series, ...lows, ...reference].reduce(max);
     if ((maxValue - minValue).abs() < 1) {
       maxValue += 1;
       minValue -= 1;
@@ -321,6 +368,15 @@ class _ForecastChartPainter extends CustomPainter {
       Offset(size.width - rightPad, zeroY),
       zeroPaint,
     );
+    final zeroLabel = TextPainter(
+      text: const TextSpan(
+        text: '0円',
+        style: TextStyle(color: Color(0xFF4B5563), fontSize: 10),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    zeroLabel.paint(canvas, Offset(leftPad, max(0, zeroY - 14)));
+    zeroLabel.dispose();
 
     // 安全線(0 と異なる場合のみ)。
     if (forecast.safetyMargin.abs() >= 1) {
@@ -348,13 +404,35 @@ class _ForecastChartPainter extends CustomPainter {
     }
     canvas.drawPath(path, linePaint);
 
-    // 各点(ショート月は赤)。
+    // 月内の谷も同じ縦軸に描く。月末に回復しても不足を隠さない。
+    final lowPath = Path()..moveTo(xFor(0), yFor(lows.first));
+    for (var i = 1; i < lows.length; i++) {
+      lowPath.lineTo(xFor(i), yFor(lows[i]));
+    }
+    canvas.drawPath(
+      lowPath,
+      Paint()
+        ..color = const Color(0xFFDC2626)
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke,
+    );
+    for (var i = 1; i < lows.length; i++) {
+      final x = xFor(i);
+      final y = yFor(lows[i]);
+      final diamond = Path()
+        ..moveTo(x, y - 4)
+        ..lineTo(x + 4, y)
+        ..lineTo(x, y + 4)
+        ..lineTo(x - 4, y)
+        ..close();
+      canvas.drawPath(diamond, Paint()..color = const Color(0xFFDC2626));
+    }
+
+    // 月末残高の点は凡例と同色。月内不足は赤い最低残高で表す。
     for (var i = 0; i < series.length; i++) {
       final value = series[i];
-      final isShortfall = i > 0 && forecast.months[i - 1].isShortfall;
       final pointPaint = Paint()
-        ..color =
-            isShortfall ? const Color(0xFFDC2626) : const Color(0xFF4F46E5)
+        ..color = const Color(0xFF4F46E5)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(xFor(i), yFor(value)), 3, pointPaint);
     }

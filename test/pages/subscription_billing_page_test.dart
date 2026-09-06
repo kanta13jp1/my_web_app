@@ -10,6 +10,42 @@ import 'package:my_web_app/services/paddle_invoice_access.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  testWidgets('shows the Team per-seat price before checkout and in the plan', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(
+            status: const BillingStatus(
+              tier: 'team',
+              status: 'active',
+              aiQueryCount: 0,
+              efCallCount: 0,
+            ),
+          ),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Team（1席あたり月額2,980円）'), findsOneWidget);
+    final offerPrice = find.text('1席あたり月額2,980円');
+    await tester.ensureVisible(offerPrice);
+    await tester.pumpAndSettle();
+    expect(offerPrice, findsOneWidget);
+    expect(find.text('月額2,980円'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows the free AI quota, remaining count, and progress', (
     tester,
   ) async {

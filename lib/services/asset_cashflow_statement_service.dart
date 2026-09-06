@@ -35,6 +35,20 @@ class AssetCashflowMonth {
   /// 当月キャッシュフロー。収入未追跡なら null。
   double? get cashflow => income == null ? null : income! - expense;
 
+  /// 実績CFが作れない月に限り、前月からの純資産差を参考値として返す。
+  ///
+  /// 評価損益、口座追加、負債の新規認識など非現金要因を含み得るため、
+  /// 実績CF・年初来累積・黒字/赤字集計には使用しない。
+  double? get estimatedCashflowFromNetWorth =>
+      cashflow == null ? netWorthDelta : null;
+
+  /// 月別表示で使う値。実績CFを優先し、なければ純資産差の推定値を返す。
+  double? get displayCashflow => cashflow ?? estimatedCashflowFromNetWorth;
+
+  /// 月別表示値が純資産差に基づく推定値か。
+  bool get usesNetWorthEstimate =>
+      cashflow == null && estimatedCashflowFromNetWorth != null;
+
   /// 黒字 (CF >= 0)。未追跡月は false。
   bool get isSurplus {
     final value = cashflow;
