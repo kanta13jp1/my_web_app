@@ -1956,7 +1956,8 @@ class AssetManagementInsightPromptBuilder {
         '判定保留（支払実績との照合が必要）',
       )
       ..writeln(
-          '- 未照合の残高差分推定合計: ${_formatAmount(discipline.totalNewBorrowing)}')
+        '- 未照合の残高差分推定合計: ${_formatAmount(discipline.totalNewBorrowing)}',
+      )
       ..writeln(
         '- リボ/分割で翌月へ繰り越す残高合計: '
         '${_formatAmount(discipline.totalCarriedOver)}',
