@@ -52,10 +52,11 @@ Run in Supabase or another private cloud worker:
 
 Do not start a local Flutter/Dart build, analysis, test, browser automation,
 server, media pipeline, or ENEX expansion when RAM usage is at least 85%, free
-physical memory is below 2 GiB, or free disk is below 30 GiB. Preserve the
+physical memory is below 4 GiB, or free disk is below 30 GiB. Preserve the
 current edit remotely and dispatch a cloud workflow. Resume resource-intensive
 local work only after two measurements, at least eight seconds apart, both show
-RAM below 85%, more than 2 GiB free memory, and no Dart/Flutter process.
+RAM below 85%, at least 4 GiB free memory, at least 30 GiB free disk,
+and no Dart/Flutter process.
 
 A request to continue does not bypass this resource gate.
 
@@ -66,6 +67,7 @@ A request to continue does not bypass this resource gate.
 | Profile | Cloud work |
 | --- | --- |
 | `workspace` | Validate cloud workspace descriptors without Flutter |
+| `format` | Format changed Dart files and preserve a one-day patch artifact |
 | `analyze` | Resolve dependencies and run static analysis |
 | `test` | Resolve dependencies and run tests |
 | `web-build` | Resolve dependencies and create a release web build |
