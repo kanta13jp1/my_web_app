@@ -15,6 +15,57 @@ from scripts import ci_failure_digest  # noqa: E402
 
 
 class WorkflowFailureClusterTest(unittest.TestCase):
+
+    def test_failed_step_wins_over_unrelated_summary_commands(self) -> None:
+        log = "error: invalid_override test/mocks.dart:1\necho deno lint summary\n"
+        self.assertEqual(
+            ci_failure_digest.classify_workflow_failure("CI", "Analyze code", log),
+            "flutter-analyze",
+        )
+        for step in ("Test CI scope classifier", "Check formatting"):
+            with self.subTest(step=step):
+                self.assertEqual(
+                    ci_failure_digest.classify_workflow_failure("CI", step, log),
+                    "generic-ci",
+                )
+
+    def test_signature_ignores_runner_commands_and_exit_wrappers(self) -> None:
+        log = (
+            "job\tstep\t2026-09-06T10:00:00.001Z \x1b[31m"
+            "AssertionError: fixture != Fixture Deploy\x1b[0m\n"
+            "job\tstep\t2026-09-06T10:00:00.002Z echo deno lint summary\n"
+            "job\tstep\t2026-09-06T10:00:00.003Z ##[start-action display=Cache Flutter SDK]\n"
+            "job\tstep\t2026-09-06T10:00:00.004Z ##[error]Process completed with exit code 1.\n"
+            "FAILED (failures=1)\n"
+        )
+        self.assertEqual(
+            ci_failure_digest.extract_error_signature(log),
+            "AssertionError: fixture != Fixture Deploy",
+        )
+
+    def test_unknown_noise_only_failure_remains_unknown(self) -> None:
+        log = "echo deno lint failed\nDENO_TEST=skipped\n##[group]Run flutter analyze\n"
+        self.assertEqual(
+            ci_failure_digest.classify_workflow_failure("CI", "", log), "generic-ci",
+        )
+        self.assertEqual(ci_failure_digest.extract_error_signature(log), "unknown-step")
+        self.assertEqual(ci_failure_digest.extract_error_signature("", "my step"), "my step")
+
+    def test_error_signature_prefers_concrete_error_to_failure_summary(self) -> None:
+        self.assertEqual(
+            ci_failure_digest.extract_error_signature(
+                "TypeError: invalid input\nTask failed\n"
+            ),
+            "TypeError: invalid input",
+        )
+
+    def test_cloud_recovery_does_not_require_heavy_local_commands(self) -> None:
+        for category in ("flutter-analyze", "flutter-build", "generic-ci"):
+            with self.subTest(category=category):
+                draft = "\n".join(ci_failure_digest.RECOVERY_DRAFTS[category])
+                self.assertNotIn("locally", draft)
+                self.assertTrue("cloud" in draft or "GitHub-hosted" in draft)
+
     def test_classifies_required_failure_families(self) -> None:
         cases = [
             (

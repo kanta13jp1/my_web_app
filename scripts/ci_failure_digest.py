@@ -121,7 +121,7 @@ RECOVERY_DRAFTS: dict[str, tuple[str, ...]] = {
     ),
     "supabase-push": (
         "- Inspect the Supabase CLI error and identify whether the failure is SQL, auth, or network related.",
-        "- Validate the newest migration locally, then retry `supabase db push` with the expected project credentials.",
+        "- Validate the newest migration with the approved cloud gate before any authorized retry of `supabase db push` with the expected project credentials.",
         "- If the remote state changed, record the recovery command in the issue before re-running CI.",
     ),
     "deno-lint": (
@@ -130,12 +130,12 @@ RECOVERY_DRAFTS: dict[str, tuple[str, ...]] = {
         "- Re-run the same workflow after the lint/test patch is pushed.",
     ),
     "flutter-analyze": (
-        "- Run `flutter pub get` and `flutter analyze` locally on a clean checkout.",
+        "- Run `flutter pub get` and `flutter analyze` on the exact-head GitHub-hosted runner; respect the cloud-first resource gate.",
         "- Fix the analyzer diagnostic at the referenced Dart file, keeping generated plugin files out of the patch.",
         "- Re-run the CI workflow after analyzer output is clean.",
     ),
     "flutter-build": (
-        "- Run the failing `flutter build` target locally with the same flavor or web flags.",
+        "- Run the failing `flutter build` target on the exact-head GitHub-hosted runner with the same flavor or web flags.",
         "- Check dependency resolution, asset declarations, and generated files before changing application code.",
         "- Re-run the build workflow and attach the successful run URL.",
     ),
@@ -146,7 +146,7 @@ RECOVERY_DRAFTS: dict[str, tuple[str, ...]] = {
     ),
     "generic-ci": (
         "- Inspect the failed step and the normalized error signature in this issue.",
-        "- Reproduce the command locally or with `gh run view --log` before editing code.",
+        "- Inspect the exact-head cloud gate or `gh run view --log` before editing code.",
         "- Push the smallest recovery patch and confirm a later successful workflow closes this issue.",
     ),
 }
@@ -212,11 +212,63 @@ def compact_line(line: str, max_chars: int = 180) -> str:
     return cleaned[: max_chars - 1].rstrip() + "..."
 
 
+def diagnostic_lines(log_text: str) -> list[str]:
+    """Remove runner framing and echoed commands before selecting evidence."""
+    lines = []
+    for raw in (log_text or "").splitlines():
+        line = strip_ansi(raw).lstrip("\ufeff")
+        line = re.sub(
+            r"^(?:[^\t]*\t[^\t]*\t)?"
+            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\s+",
+            "", line,
+        ).strip()
+        if not line or NOISE_LINE_RE.search(line):
+            continue
+        if re.match(
+            r"^(?:##\[(?:start-action|endgroup)|(?:echo|printf)\s|"
+            r"(?:shell|env):|[A-Z_][A-Z_0-9]*=|\|)", line,
+        ):
+            continue
+        if re.search(r"Process completed with exit code|^FAILED \(|^Error: Process", line):
+            continue
+        lines.append(line)
+    return lines
+
+
+def diagnostic_score(line: str) -> int:
+    if re.search(
+        r"\b\w*(?:Error|Exception)\s*:|\berror\s*[:•\[]|"
+        r"\bfatal\b|\bpanic\b|\bsqlstate\b|\bduplicate key\b",
+        line, re.IGNORECASE,
+    ):
+        return 2
+    if re.search(r"\bfailed\b|\bfailure\b|\bdenied\b", line, re.IGNORECASE):
+        return 1
+    return 0
+
+
 def classify_workflow_failure(workflow_name: str, failed_step: str, log_text: str) -> str:
-    haystack = "\n".join([workflow_name or "", failed_step or "", log_text or ""]).lower()
+    evidence = "\n".join(
+        line for line in diagnostic_lines(log_text) if diagnostic_score(line)
+    ).lower()
+    step = (failed_step or "").lower()
     for category, patterns in WORKFLOW_CATEGORY_PATTERNS:
-        if any(pattern in haystack for pattern in patterns):
+        if any(pattern in step for pattern in patterns):
+            if category == "supabase-push" and any(
+                pattern in evidence for pattern in WORKFLOW_CATEGORY_PATTERNS[0][1]
+            ):
+                return "migration-collision"
             return category
+    # Generic policy tests/formatters must not inherit unrelated job commands.
+    if "test ci scope classifier" in step or "check formatting" in step:
+        return "generic-ci"
+    for category, patterns in WORKFLOW_CATEGORY_PATTERNS:
+        if any(pattern in evidence for pattern in patterns):
+            return category
+    if not evidence:
+        for category, patterns in WORKFLOW_CATEGORY_PATTERNS:
+            if any(pattern in (workflow_name or "").lower() for pattern in patterns):
+                return category
     return "generic-ci"
 
 
@@ -235,23 +287,11 @@ def workflow_recovery_draft(
 
 
 def extract_error_signature(log_text: str, fallback: str = "unknown-step", max_chars: int = 180) -> str:
-    candidates: list[str] = []
-    for raw in (log_text or "").splitlines():
-        line = compact_line(raw, max_chars=max_chars)
-        if not line or NOISE_LINE_RE.search(line):
-            continue
-        if SIGNATURE_HINT_RE.search(line):
-            candidates.append(line)
+    lines = diagnostic_lines(log_text)
+    candidates = [(diagnostic_score(line), index, line) for index, line in enumerate(lines)]
+    candidates = [item for item in candidates if item[0] > 0]
     if candidates:
-        return candidates[-1]
-
-    tail = [
-        compact_line(line, max_chars=max_chars)
-        for line in (log_text or "").splitlines()[-20:]
-        if compact_line(line, max_chars=max_chars)
-    ]
-    if tail:
-        return tail[-1]
+        return compact_line(max(candidates)[2], max_chars=max_chars)
     return compact_line(fallback or "unknown-step", max_chars=max_chars)
 
 
