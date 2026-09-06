@@ -42,22 +42,22 @@ test('same inputs stay equal; signal candidate resets and runs visibly', async (
 test('storage failure is explained and comparison remains usable', async ({ page }) => {
   await page.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException('denied', 'SecurityError'); }; });
   await page.getByRole('button', { name: '設定を保存', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('保存できませんでした');
+  await expect(page.locator('#status')).toContainText('保存できませんでした');
   await page.getByRole('button', { name: '比較を開始', exact: true }).click();
   await expect.poll(async () => Number((await page.locator('#clock').innerText()).split(' / ')[0])).toBeGreaterThan(0);
 });
 
 test('empty restore, saved preset reload, and reset are recoverable', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: '保存を復元', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('保存された設定がありません');
+  await expect(page.locator('#status')).toContainText('保存された設定がありません');
   await page.getByRole('button', { name: '東行に合わせる' }).click();
   await page.getByRole('button', { name: '設定を保存', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('設定を保存しました');
+  await expect(page.locator('#status')).toContainText('設定を保存しました');
   await page.reload();
   await page.getByRole('button', { name: '保存を復元', exact: true }).click();
   await expect(page.locator('#green')).toHaveValue('26');
   await expect(page.locator('#offset')).toHaveValue('8');
-  await expect(page.getByRole('status')).toContainText('復元しました');
+  await expect(page.locator('#status')).toContainText('復元しました');
   await page.getByRole('button', { name: '最初から', exact: true }).click();
   await expect(page.locator('#clock')).toHaveText('0 / 720 tick');
   await expect(page.locator('#metricsA b')).toHaveText(['0', '0', '0']);
