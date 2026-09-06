@@ -62,6 +62,15 @@ class AssetManagementAiProposalExtraction {
   });
 }
 
+class _AssetManagementAiGroundingException implements Exception {
+  final String message;
+
+  const _AssetManagementAiGroundingException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class AssetManagementAiSummaryService {
   // GPT-5 の reasoning トークンや Gemini の thinking トークンも
   // この上限 (maxOutputTokens) を消費するため、本文 (約3,000-4,000トークン) に
@@ -164,6 +173,15 @@ class AssetManagementAiSummaryService {
       if (!_containsJapaneseText(response.text)) {
         throw const AiHubChatException('AI要約が日本語ではありませんでした');
       }
+      final groundingErrors = _validateGroundedResponse(
+        response.text,
+        report.workbook,
+      );
+      if (groundingErrors.isNotEmpty) {
+        throw _AssetManagementAiGroundingException(
+          'AI要約の確定データ検証に失敗しました: ${groundingErrors.join(' / ')}',
+        );
+      }
       final proposals = extractAiDeveloperProposals(response.text);
       // LLMの再掲禁止は確率的にしか守られないため、既知テンプレート・
       // 起票済みIssueと同名の提案は決定論的に除外する。
@@ -186,10 +204,13 @@ class AssetManagementAiSummaryService {
         aiDeveloperRequests: novelRequests,
       );
     } catch (error) {
+      final groundingFailure = error is _AssetManagementAiGroundingException;
       return AssetManagementAiSummaryResult(
         status: AssetManagementAiSummaryStatus.fallback,
         text: fallback,
-        source: 'deterministic fallback / ai-hub failed',
+        source: groundingFailure
+            ? 'deterministic fallback / grounding validation failed'
+            : 'deterministic fallback / ai-hub failed',
         errorMessage: error.toString(),
         generatedAt: _now(),
         payload: payload,
@@ -655,7 +676,7 @@ class AssetManagementAiSummaryService {
     AssetLiabilityWorkbook workbook,
   ) {
     final revolvingBillingAccountIds = <String>{
-      for (final row in workbook.debtMasterRows)
+      for (final row in workbook.currentDebtRows)
         if (row.isRevolving) row.id,
     };
     return <String, dynamic>{
@@ -703,10 +724,15 @@ class AssetManagementAiSummaryService {
             .map((row) => _debtRowToJson(row, workbook.baseDate))
             .toList(growable: false),
       },
-      'accounts': workbook.accounts.map(_accountToJson).toList(growable: false),
-      'debt_master_rows': workbook.debtMasterRows
+      // 現在残高の事実だけを渡す。固定費・サブスクの将来予定は
+      // cashflow_rows で別途渡し、現在負債への混入を防ぐ。
+      'accounts':
+          workbook.currentAccounts.map(_accountToJson).toList(growable: false),
+      'debt_master_rows': workbook.currentDebtRows
           .map((row) => _debtRowToJson(row, workbook.baseDate))
           .toList(growable: false),
+      'scheduled_expense_account_ids':
+          workbook.scheduledExpenseAccountIds.toList(growable: false)..sort(),
       // 返済優先順は `debt_master_rows` と同一の行を並べ替えただけなので、
       // 28 フィールドの再シリアライズはやめて「順序」だけを渡す。明細は
       // debt_master_rows を id で引けばよい (プロンプトの重複を削減)。
@@ -1334,6 +1360,104 @@ class AssetManagementAiSummaryService {
       }
     }
     return '$sign$buffer円';
+  }
+
+  List<String> _validateGroundedResponse(
+    String rawText,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final text = rawText.replaceAll(RegExp(r'[*_`#\\]'), '');
+    final errors = <String>[];
+
+    void validateAmount(
+      String label,
+      double expected, {
+      bool compareAbsolute = false,
+    }) {
+      String? line;
+      for (final candidate in text.split(RegExp(r'[\r\n]+'))) {
+        if (candidate.contains(label)) {
+          line = candidate;
+          break;
+        }
+      }
+      if (line == null) return;
+      final labelIndex = line.indexOf(label);
+      final valueText = line.substring(labelIndex + label.length);
+      final match = RegExp(r'[-−]?\s*[0-9][0-9,]*\s*円').firstMatch(valueText);
+      if (match == null) return;
+      final parsed = _parseYen(match.group(0)!);
+      if (parsed == null) return;
+      final actual = compareAbsolute ? parsed.abs() : parsed;
+      final target = compareAbsolute ? expected.abs() : expected;
+      if ((actual - target).abs() <= 1) return;
+      errors.add('$labelが確定値と不一致');
+    }
+
+    validateAmount('純資産', workbook.netWorth);
+    validateAmount('負債合計', workbook.liabilityTotal, compareAbsolute: true);
+    validateAmount('負債総額', workbook.liabilityTotal, compareAbsolute: true);
+    validateAmount('借入総額', workbook.liabilityTotal, compareAbsolute: true);
+    validateAmount('資産合計', workbook.positiveAssetTotal);
+    validateAmount('現金同等資産', workbook.cashLikeTotal);
+    validateAmount('今月支払予定合計', workbook.monthlyScheduledPaymentTotal);
+    validateAmount('今月未払い合計', workbook.monthlyUnpaidPaymentTotal);
+
+    for (final row in workbook.currentDebtRows.where(
+      (row) => row.annualRate > 0,
+    )) {
+      final pattern = RegExp(
+        '${RegExp.escape(row.name)}.{0,100}?(?:年利|金利)[^0-9]{0,12}'
+        r'([0-9]+(?:\.[0-9]+)?)\s*%',
+        dotAll: true,
+      );
+      for (final match in pattern.allMatches(text)) {
+        final actualPercent = double.tryParse(match.group(1)!);
+        final expectedPercent = row.annualRate * 100;
+        if (actualPercent != null &&
+            (actualPercent - expectedPercent).abs() > 0.011) {
+          errors.add('${row.name}の年利が確定値と不一致');
+          break;
+        }
+      }
+    }
+
+    const unpaidLanguage = <String>[
+      '未払い',
+      '期限超過',
+      '滞納',
+      '延滞',
+      '支払わないと',
+      'すぐに払',
+      '払うべき',
+    ];
+    for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
+      final start = text.indexOf(row.name);
+      if (start < 0) continue;
+      final end = start + 320 < text.length ? start + 320 : text.length;
+      final context = text.substring(start, end);
+      if (unpaidLanguage.any(context.contains)) {
+        errors.add('${row.name}を支払済みなのに督促');
+      }
+    }
+
+    for (final income in workbook.incomePlans.where((plan) => plan.received)) {
+      final start = text.indexOf(income.name);
+      if (start < 0) continue;
+      final end = start + 240 < text.length ? start + 240 : text.length;
+      final context = text.substring(start, end);
+      if (context.contains('未受取') || context.contains('未入金')) {
+        errors.add('${income.name}を受取済みなのに未受取扱い');
+      }
+    }
+
+    return errors.toSet().toList(growable: false);
+  }
+
+  double? _parseYen(String value) {
+    final normalized = value.replaceAll('−', '-').replaceAll(',', '');
+    final match = RegExp(r'-?[0-9]+').firstMatch(normalized);
+    return match == null ? null : double.tryParse(match.group(0)!);
   }
 
   bool _containsJapaneseText(String value) {
