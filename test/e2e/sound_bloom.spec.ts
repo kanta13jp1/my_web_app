@@ -1,5 +1,32 @@
 import { test, expect } from '@playwright/test';
 
+test('audio output is non-silent during playback and stops on request', async ({ page }) => {
+  // Observe the browser's output graph, not private application state.
+  await page.addInitScript(() => {
+    const original = AudioNode.prototype.connect;
+    AudioNode.prototype.connect = function (...args: Parameters<AudioNode['connect']>) {
+      const result = Reflect.apply(original, this, args);
+      if (args[0] instanceof AudioDestinationNode) {
+        const analyser = this.context.createAnalyser(); analyser.fftSize = 2048;
+        Reflect.apply(original, this, [analyser]);
+        (window as any).__soundProbe = { analyser, context: this.context };
+      }
+      return result;
+    } as AudioNode['connect'];
+  });
+  await page.goto('/labs/sound-bloom/index.html');
+  await page.getByRole('button', { name: '音を咲かせる' }).click();
+  await expect.poll(() => page.evaluate(() => {
+    const probe = (window as any).__soundProbe;
+    if (!probe) return 0;
+    const samples = new Float32Array(probe.analyser.fftSize);
+    probe.analyser.getFloatTimeDomainData(samples);
+    return Math.max(...samples.map(Math.abs));
+  })).toBeGreaterThan(.001);
+  await page.getByRole('button', { name: '演奏を止める' }).click();
+  await expect.poll(() => page.evaluate(() => (window as any).__soundProbe.context.state)).toBe('suspended');
+});
+
 test('editable garden, playback, undo, presets, and responsive layout', async ({ page }, info) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
