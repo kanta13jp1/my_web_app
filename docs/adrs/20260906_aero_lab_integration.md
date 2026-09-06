@@ -5,10 +5,11 @@ Status: implementation proposal, not released. 2026-09-06.
 ## Authority and scope
 
 The owner approved Codex continuing and explicitly authorized a dedicated branch,
-draft PR and cloud verification. This does NOT waive the mandatory Claude Code
-design review. That review has not been verified. The code on this draft branch
-is a provisional integration, not an approved design or release candidate. Keep
-the draft blocked for design review; no merge/deployment is authorized.
+draft PR and cloud verification. On 2026-09-06 the owner subsequently requested
+production deployment and explicitly permitted proceeding past the unverified
+Claude Code design-review gate for this integration. This is a task-specific
+owner exception, not a claim that Claude reviewed it or a repository-wide waiver.
+Merge and production deployment are authorized only after required checks pass.
 
 Preserve the original AERO LAB, integrate its five-stage procedural engine and
 controls in my_web_app, and verify a reviewable branch. No authentication,
