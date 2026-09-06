@@ -15,6 +15,7 @@ import {
 } from "./action_access_policy.ts";
 import {
   AI_CHARACTER_PREAMBLE,
+  buildAiSystemPrompt,
   prependCharacter,
 } from "../_shared/ai_character_preamble.ts";
 import {
@@ -7538,8 +7539,11 @@ serve(async (req: Request) => {
           }, 429);
         }
 
-        const responseFormat = asString(body.response_format) === "json"
+        const requestedResponseFormat = asString(body.response_format);
+        const responseFormat = requestedResponseFormat === "json"
           ? "json"
+          : requestedResponseFormat === "markdown"
+          ? "markdown"
           : "text";
         const contextPayload = body.context_data ?? body.context ?? null;
         const contextText = contextPayload == null
@@ -7560,14 +7564,21 @@ serve(async (req: Request) => {
           "\n# Output instructions",
           responseFormat === "json"
             ? "Return valid JSON only. Do not add markdown fences or commentary."
+            : responseFormat === "markdown"
+            ? "Respond in concise Japanese Markdown. Put code snippets in fenced code blocks and include the language tag."
             : "Respond in concise Japanese plain text.",
         );
         const finalMessages = [];
-        // [AI-CHARACTER-24] Prepend common character preamble to ensure
-        // consistent persona across all edge_llm.invoke callers.
-        const composedSystemPrompt = systemPrompt.length > 0
-          ? `${AI_CHARACTER_PREAMBLE}\n\n${systemPrompt}`
-          : AI_CHARACTER_PREAMBLE;
+        // Keep the stable character/application prefix before the request-time
+        // UTC context so prompt caches can still reuse the longest prefix.
+        const composedSystemPrompt = buildAiSystemPrompt({
+          applicationInstructions: systemPrompt,
+          outputFormat: responseFormat === "json"
+            ? "json"
+            : responseFormat === "markdown"
+            ? "markdown"
+            : "plain_text",
+        });
         finalMessages.push({
           role: "system",
           content: composedSystemPrompt,
