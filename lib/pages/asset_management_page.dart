@@ -21892,7 +21892,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final developerRequests = _combinedDeveloperRequests(report);
     _requestExistingDeveloperIssuesIfNeeded(developerRequests);
-    final result = _assetManagementAiSummaryResult ??
+    final currentResult = _assetManagementAiSummaryService.currentResultFor(
+      report: report,
+      result: _assetManagementAiSummaryResult,
+      resultKey: _assetManagementAiSummaryResultKey,
+    );
+    final result = currentResult ??
         (enabled
             ? _assetManagementAiSummaryService.buildWaitingForAiResult(report)
             : _assetManagementAiSummaryService.buildDisabledResult(report));
@@ -22000,7 +22005,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ],
                   ),
                 ),
-              if (_assetManagementAiSummaryReferencedHistory.isNotEmpty)
+              if (currentResult != null &&
+                  _assetManagementAiSummaryReferencedHistory.isNotEmpty)
                 _buildAssetLiabilitySyncChip(
                   label: '履歴参照',
                   value:
@@ -22560,7 +22566,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetManagementDeveloperRequest> _combinedDeveloperRequests(
     AssetManagementInsightReport report,
   ) {
-    final aiRequests = _assetManagementAiSummaryResult?.aiDeveloperRequests ??
+    final currentResult = _assetManagementAiSummaryService.currentResultFor(
+      report: report,
+      result: _assetManagementAiSummaryResult,
+      resultKey: _assetManagementAiSummaryResultKey,
+    );
+    final aiRequests = currentResult?.aiDeveloperRequests ??
         const <AssetManagementDeveloperRequest>[];
     if (aiRequests.isEmpty) {
       return report.developerRequests;

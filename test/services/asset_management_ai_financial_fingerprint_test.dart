@@ -18,6 +18,24 @@ void main() {
     final oldKey = service.buildRequestFingerprint(before);
     final currentKey = service.buildRequestFingerprint(after);
     expect(currentKey, isNot(oldKey));
+    final oldResult = service.buildWaitingForAiResult(before);
+    expect(
+      service.currentResultFor(
+        report: after,
+        result: oldResult,
+        resultKey: oldKey,
+      ),
+      isNull,
+    );
+    final newResult = service.buildWaitingForAiResult(after);
+    expect(
+      service.currentResultFor(
+        report: after,
+        result: newResult,
+        resultKey: currentKey,
+      ),
+      same(newResult),
+    );
     expect(
       AssetManagementAiSummaryRefresh.canReusePersisted(
         currentKey: currentKey,
