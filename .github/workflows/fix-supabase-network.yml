@@ -11,11 +11,11 @@ on:
         options:
           - check       # 現在の制限を確認するだけ
           - allow-all   # 制限を全解除 (0.0.0.0/0)
-  # WEB版からファイルコミットで自動トリガー (workflow_dispatch API 代替)
-  push:
-    branches: [main]
-    paths:
-      - 'docs/.supabase-network-allow'
+      confirm_allow_all:
+        description: 'Confirm removal of all database network restrictions'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: supabase-network-fix
@@ -25,6 +25,7 @@ permissions: {}
 
 jobs:
   manage-network:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     environment:
       name: platform-security-production
       deployment: false
@@ -37,17 +38,32 @@ jobs:
     steps:
       - name: Determine action
         id: action
+        shell: bash
         env:
-          ACTION_INPUT: ${{ github.event.inputs.action || 'check' }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          ACTION_INPUT: ${{ inputs.action || 'check' }}
+          CONFIRM_ALLOW_ALL: ${{ inputs.confirm_allow_all }}
         run: |
-          # push トリガー時は allow-all をデフォルト
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "action=allow-all" >> $GITHUB_OUTPUT
-            echo "🔧 push トリガー検出 — allow-all で実行"
-          else
-            echo "action=$ACTION_INPUT" >> $GITHUB_OUTPUT
-            echo "🔧 workflow_dispatch — action=$ACTION_INPUT"
+          set -euo pipefail
+          if [ "$EVENT_NAME" != "workflow_dispatch" ] || [ "$EVENT_REF" != "refs/heads/main" ]; then
+            echo "::error::Network management requires a manual main-branch dispatch."
+            exit 1
           fi
+          case "$ACTION_INPUT" in
+            check) ;;
+            allow-all)
+              if [ "$CONFIRM_ALLOW_ALL" != "true" ]; then
+                echo "::error::Explicit confirmation is required to remove all network restrictions."
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::Unsupported network management action."
+              exit 1
+              ;;
+          esac
+          echo "action=$ACTION_INPUT" >> "$GITHUB_OUTPUT"
 
       - name: Check current Network Restrictions
         id: check
@@ -74,7 +90,7 @@ jobs:
           echo "dbAllowedCidrs: ${DB_CIDRS:-（空 = 全許可）}"
 
       - name: Allow all IPs (制限解除)
-        if: steps.action.outputs.action == 'allow-all'
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirm_allow_all == true && steps.action.outputs.action == 'allow-all'
         run: |
           PROJECT_REF="smmkxxavexumewbfaqpy"
           API_URL="https://api.supabase.com/v1/projects/${PROJECT_REF}/network-restrictions"
@@ -102,7 +118,7 @@ jobs:
           fi
 
       - name: Verify after update
-        if: steps.action.outputs.action == 'allow-all'
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirm_allow_all == true && steps.action.outputs.action == 'allow-all'
         run: |
           PROJECT_REF="smmkxxavexumewbfaqpy"
           API_URL="https://api.supabase.com/v1/projects/${PROJECT_REF}/network-restrictions"

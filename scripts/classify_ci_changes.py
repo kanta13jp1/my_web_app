@@ -38,6 +38,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
     ),
     "caption": ("services/caption-transcoder/**",),
     "migration": ("supabase/migrations/**",),
+    "tiger": ("assets/data/tiger_*",),
 }
 
 IGNORED_PATTERNS: dict[str, tuple[str, ...]] = {
