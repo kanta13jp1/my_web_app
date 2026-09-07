@@ -10,12 +10,12 @@ void main() {
   }
 
   Widget subject(AiUniversityYiIntroductionTaskSubmit onSubmit) => MaterialApp(
-    home: Scaffold(
-      body: SingleChildScrollView(
-        child: AiUniversityYiIntroductionTaskCard(onSubmit: onSubmit),
-      ),
-    ),
-  );
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: AiUniversityYiIntroductionTaskCard(onSubmit: onSubmit),
+          ),
+        ),
+      );
 
   Future<void> completeTask(WidgetTester tester) async {
     await tapVisible(tester, find.byKey(const Key('yi-intro-q0-o1')));
@@ -104,8 +104,7 @@ void main() {
 
     expect(find.textContaining('結果を送信できませんでした'), findsOneWidget);
     expect(
-      tester
-          .widget<FilledButton>(find.byKey(const Key('yi-intro-submit')))
+      tester.widget<FilledButton>(find.byKey(const Key('yi-intro-submit')))
           .onPressed,
       isNotNull,
     );

@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef AiUniversityLearningOutcomeWriter =
-    Future<void> Function(Map<String, Object> row);
+typedef AiUniversityLearningOutcomeWriter = Future<void> Function(
+  Map<String, Object> row,
+);
 
 enum AiUniversityLearningOutcomeTask {
   latestInfo(
@@ -108,11 +109,6 @@ class AiUniversityLearningOutcomeAnalytics {
     'creator',
     'product_owner',
   };
-  static const Set<String> allowedYiIntroductionPages = <String>{
-    'yi_repository',
-    'worldwise_overview',
-    'truenorth_product',
-  };
   static const Set<String> allowedFireflyLatestInfoFeatures = <String>{
     'central_workspace',
     'interfaces_batch',
@@ -128,16 +124,21 @@ class AiUniversityLearningOutcomeAnalytics {
     'pilot',
     'defer',
   };
+  static const Set<String> allowedYiIntroductionPages = <String>{
+    'yi_repository',
+    'worldwise_overview',
+    'truenorth_product',
+  };
 
   final AiUniversityLearningOutcomeWriter? _writer;
   final AiUniversityLearningOutcomeTask task;
 
   Future<bool> recordViewed() => _record(<String, Object>{
-    'event_name': 'task_viewed',
-    'task_version': task.taskVersion,
-    'provider': task.provider,
-    'category': task.category,
-  });
+        'event_name': 'task_viewed',
+        'task_version': task.taskVersion,
+        'provider': task.provider,
+        'category': task.category,
+      });
 
   Future<bool> recordCompleted({
     required int correctAnswers,
@@ -169,7 +170,8 @@ class AiUniversityLearningOutcomeAnalytics {
     if (correctAnswers < 0 || correctAnswers > 3) {
       return Future.value(false);
     }
-    if (firstAttemptCorrectAnswers < 0 || firstAttemptCorrectAnswers > 3) {
+    if (firstAttemptCorrectAnswers < 0 ||
+        firstAttemptCorrectAnswers > 3) {
       return Future.value(false);
     }
     if (selfRating < 1 || selfRating > 5) return Future.value(false);

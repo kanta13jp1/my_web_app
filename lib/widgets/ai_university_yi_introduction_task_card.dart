@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
-typedef AiUniversityYiIntroductionTaskSubmit =
-    Future<bool> Function({
-      required int correctAnswers,
-      required int firstAttemptCorrectAnswers,
-      required int selfRating,
-      required String nextOfficialPage,
-    });
+typedef AiUniversityYiIntroductionTaskSubmit = Future<bool> Function({
+  required int correctAnswers,
+  required int firstAttemptCorrectAnswers,
+  required int selfRating,
+  required String nextOfficialPage,
+});
 
 class AiUniversityYiIntroductionTaskCard extends StatefulWidget {
-  const AiUniversityYiIntroductionTaskCard({super.key, required this.onSubmit});
+  const AiUniversityYiIntroductionTaskCard({
+    super.key,
+    required this.onSubmit,
+  });
 
   final AiUniversityYiIntroductionTaskSubmit onSubmit;
 
@@ -92,7 +94,8 @@ class _AiUniversityYiIntroductionTaskCardState
     ).fold<int>(0, (total, value) => total + value);
     final firstAttemptCorrectAnswers = List<int>.generate(
       _questions.length,
-      (index) => _firstAnswers[index] == _questions[index].correctIndex ? 1 : 0,
+      (index) =>
+          _firstAnswers[index] == _questions[index].correctIndex ? 1 : 0,
     ).fold<int>(0, (total, value) => total + value);
 
     setState(() => _submitting = true);
@@ -113,7 +116,9 @@ class _AiUniversityYiIntroductionTaskCardState
     });
     if (!accepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('結果を送信できませんでした。時間をおいて再試行してください。')),
+        const SnackBar(
+          content: Text('結果を送信できませんでした。時間をおいて再試行してください。'),
+        ),
       );
     }
   }
@@ -181,7 +186,8 @@ class _AiUniversityYiIntroductionTaskCardState
                         selected: _answers[questionIndex] == optionIndex,
                         onSelected: _submitted
                             ? null
-                            : (_) => _selectAnswer(questionIndex, optionIndex),
+                            : (_) =>
+                                _selectAnswer(questionIndex, optionIndex),
                       ),
                     ),
                   ),
