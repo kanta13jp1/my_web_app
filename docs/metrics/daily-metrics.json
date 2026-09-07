@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-09-06",
+    "date": "2026-09-07",
     "users": {
       "total": 61
     },
@@ -53,8 +53,18 @@
         "title": "AI大学 FinTech/Trading AI 掲載コンテンツの日本語化",
         "completed_at": "2026-06-21T00:00:00+00:00"
       }
-    ]
+    ],
+    "revenue": {
+      "mrrYen": 980,
+      "currency": "JPY",
+      "basis": "active_list_price"
+    },
+    "paid": {
+      "total": 1,
+      "pro": 1,
+      "team": 0
+    }
   },
-  "fetched_at": "2026-09-06T09:08:38+09:00",
-  "report_date": "2026-09-06"
+  "fetched_at": "2026-09-07T09:13:30+09:00",
+  "report_date": "2026-09-07"
 }
