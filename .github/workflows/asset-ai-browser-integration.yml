@@ -1,0 +1,68 @@
+name: Asset AI browser integration
+
+on:
+  pull_request:
+    paths:
+      - lib/pages/asset_management_page.dart
+      - lib/services/asset_management_ai_*.dart
+      - lib/services/asset_management_insight_service.dart
+      - test/widgets/asset_management_ai_current_input_test.dart
+      - integration_test/asset_management_ai_current_input_test.dart
+      - integration_test/asset_ai_current_input_scenarios.dart
+      - test_driver/asset_ai_integration.dart
+      - .github/workflows/asset-ai-browser-integration.yml
+
+permissions: {}
+
+concurrency:
+  group: asset-ai-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Resolve test dependencies
+        run: flutter pub get
+      - name: Verify runner browser tools
+        run: |
+          google-chrome --version
+          chromedriver --version
+      - name: Run synthetic page flows in Chrome
+        shell: bash
+        run: |
+          mkdir -p .ci-logs
+          chromedriver --port=4444 > .ci-logs/asset-ai-chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status
+          set -o pipefail
+          flutter drive --verbose \
+            --driver=test_driver/asset_ai_integration.dart \
+            --target=integration_test/asset_management_ai_current_input_test.dart \
+            -d web-server --browser-name=chrome --headless \
+            2>&1 | tee .ci-logs/asset-ai-browser.log
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: asset-ai-browser-${{ github.run_id }}
+          path: .ci-logs/asset-ai-*.log
+          retention-days: 3
+          if-no-files-found: ignore
+          include-hidden-files: true

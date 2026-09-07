@@ -275,6 +275,11 @@ class AssetManagementPage extends StatefulWidget {
   final AssetLiabilityRepository? assetLiabilityRepository;
   final InvestmentAssetRepository? investmentAssetRepository;
   final AssetAnomalyDetectionRepository? anomalyDetectionRepository;
+  final AssetManagementAiSummaryService? aiSummaryService;
+  final AssetManagementAiAnalysisHistoryService? aiAnalysisHistoryService;
+
+  @visibleForTesting
+  final DateTime? debugNow;
   final String? entryLabel;
   final String? entryDescription;
 
@@ -402,6 +407,9 @@ class AssetManagementPage extends StatefulWidget {
     this.assetLiabilityRepository,
     this.investmentAssetRepository,
     this.anomalyDetectionRepository,
+    this.aiSummaryService,
+    this.aiAnalysisHistoryService,
+    this.debugNow,
     this.entryLabel,
     this.entryDescription,
     this.debugInitialAssetData,
@@ -916,11 +924,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetLiabilityMonthlyReportService();
   final AssetManagementInsightService _assetManagementInsightService =
       const AssetManagementInsightService();
-  final AssetManagementAiSummaryService _assetManagementAiSummaryService =
-      AssetManagementAiSummaryService();
-  final AssetManagementAiAnalysisHistoryService
-      _assetManagementAiAnalysisHistoryService =
-      const AssetManagementAiAnalysisHistoryService();
+  late final AssetManagementAiSummaryService _assetManagementAiSummaryService;
+  late final AssetManagementAiAnalysisHistoryService
+      _assetManagementAiAnalysisHistoryService;
   final SalarySpendingBreakdownService _salarySpendingBreakdownService =
       const SalarySpendingBreakdownService();
   final DisposableBalanceService _disposableBalanceService =
@@ -1135,6 +1141,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void initState() {
     super.initState();
+    _assetManagementAiSummaryService =
+        widget.aiSummaryService ?? AssetManagementAiSummaryService();
+    _assetManagementAiAnalysisHistoryService =
+        widget.aiAnalysisHistoryService ??
+            const AssetManagementAiAnalysisHistoryService();
+    _now = widget.debugNow ?? _now;
     final debugCalendarNow = widget.debugCalendarNow;
     if (debugCalendarNow != null) {
       _calendarCycleAnchor = debugCalendarNow;
@@ -21948,6 +21960,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 12),
           _buildAssetManagementDeveloperRequestList(
             _combinedDeveloperRequests(report),
+            report,
           ),
         ],
       ),
@@ -21963,7 +21976,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final developerRequests = _combinedDeveloperRequests(report);
     _requestExistingDeveloperIssuesIfNeeded(developerRequests);
-    final result = _assetManagementAiSummaryResult ??
+    final currentResult = _assetManagementAiSummaryService.currentResultFor(
+      report: report,
+      result: _assetManagementAiSummaryResult,
+      resultKey: _assetManagementAiSummaryResultKey,
+    );
+    final result = currentResult ??
         (enabled
             ? _assetManagementAiSummaryService.buildWaitingForAiResult(report)
             : _assetManagementAiSummaryService.buildDisabledResult(report));
@@ -22071,7 +22089,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ],
                   ),
                 ),
-              if (_assetManagementAiSummaryReferencedHistory.isNotEmpty)
+              if (currentResult != null &&
+                  _assetManagementAiSummaryReferencedHistory.isNotEmpty)
                 _buildAssetLiabilitySyncChip(
                   label: '履歴参照',
                   value:
@@ -22631,7 +22650,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetManagementDeveloperRequest> _combinedDeveloperRequests(
     AssetManagementInsightReport report,
   ) {
-    final aiRequests = _assetManagementAiSummaryResult?.aiDeveloperRequests ??
+    final currentResult = _assetManagementAiSummaryService.currentResultFor(
+      report: report,
+      result: _assetManagementAiSummaryResult,
+      resultKey: _assetManagementAiSummaryResultKey,
+    );
+    final aiRequests = currentResult?.aiDeveloperRequests ??
         const <AssetManagementDeveloperRequest>[];
     if (aiRequests.isEmpty) {
       return report.developerRequests;
@@ -22645,8 +22669,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ];
   }
 
-  bool _isAiGeneratedDeveloperRequest(AssetManagementDeveloperRequest request) {
-    final aiRequests = _assetManagementAiSummaryResult?.aiDeveloperRequests ??
+  bool _isAiGeneratedDeveloperRequest(
+    AssetManagementDeveloperRequest request,
+    AssetManagementInsightReport report,
+  ) {
+    final currentResult = _assetManagementAiSummaryService.currentResultFor(
+      report: report,
+      result: _assetManagementAiSummaryResult,
+      resultKey: _assetManagementAiSummaryResultKey,
+    );
+    final aiRequests = currentResult?.aiDeveloperRequests ??
         const <AssetManagementDeveloperRequest>[];
     if (aiRequests.isEmpty) {
       return false;
@@ -24549,6 +24581,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetManagementDeveloperRequestList(
     List<AssetManagementDeveloperRequest> requests,
+    AssetManagementInsightReport report,
   ) {
     _requestExistingDeveloperIssuesIfNeeded(requests);
     final visibleRequests = _isCheckingExistingDeveloperRequestIssues
@@ -24611,7 +24644,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       height: 1.4,
                     ),
                   ),
-                  if (_isAiGeneratedDeveloperRequest(request)) ...[
+                  if (_isAiGeneratedDeveloperRequest(request, report)) ...[
                     const SizedBox(height: 4),
                     _buildTextStatusChip(
                       label: 'AI新規提案（未起票のみ登録可）',
@@ -27040,12 +27073,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 dataRowMinHeight: 44,
                 dataRowMaxHeight: 56,
                 columns: const [
-                  DataColumn(label: Text('日付'), numeric: true),
-                  DataColumn(label: Text('名称')),
-                  DataColumn(label: Text('金額'), numeric: true),
-                  DataColumn(label: Text('入金先口座')),
-                  DataColumn(label: Text('入金済み')),
-                  DataColumn(label: Text('操作')),
+                  DataColumn(
+                    label: SizedBox(width: 64, child: Text('日付')),
+                    numeric: true,
+                  ),
+                  DataColumn(label: SizedBox(width: 64, child: Text('名称'))),
+                  DataColumn(
+                    label: SizedBox(width: 64, child: Text('金額')),
+                    numeric: true,
+                  ),
+                  DataColumn(
+                    label: SizedBox(width: 112, child: Text('入金先口座')),
+                  ),
+                  DataColumn(label: SizedBox(width: 96, child: Text('入金済み'))),
+                  DataColumn(label: SizedBox(width: 64, child: Text('操作'))),
                 ],
                 rows: [
                   for (final plan in plans)
@@ -27057,6 +27098,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         DataCell(Text(plan.destinationAccountName ?? '未設定')),
                         DataCell(
                           Checkbox(
+                            key: Key('asset_income_received_${plan.id}'),
                             value: plan.received,
                             onChanged: (value) =>
                                 _toggleIncomeReceived(plan.id, value ?? false),
@@ -27169,14 +27211,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             dataRowMinHeight: 44,
             dataRowMaxHeight: 56,
             columns: const [
-              DataColumn(label: Text('支払日'), numeric: true),
-              DataColumn(label: Text('支払先')),
-              DataColumn(label: Text('支払原資口座')),
-              DataColumn(label: Text('支払予定額'), numeric: true),
-              DataColumn(label: Text('区分')),
-              DataColumn(label: Text('支払済み')),
-              DataColumn(label: Text('支払後手元'), numeric: true),
-              DataColumn(label: Text('危険度')),
+              DataColumn(
+                label: SizedBox(width: 80, child: Text('支払日')),
+                numeric: true,
+              ),
+              DataColumn(label: SizedBox(width: 80, child: Text('支払先'))),
+              DataColumn(label: SizedBox(width: 128, child: Text('支払原資口座'))),
+              DataColumn(
+                label: SizedBox(width: 112, child: Text('支払予定額')),
+                numeric: true,
+              ),
+              DataColumn(label: SizedBox(width: 64, child: Text('区分'))),
+              DataColumn(label: SizedBox(width: 96, child: Text('支払済み'))),
+              DataColumn(
+                label: SizedBox(width: 112, child: Text('支払後手元')),
+                numeric: true,
+              ),
+              DataColumn(label: SizedBox(width: 80, child: Text('危険度'))),
             ],
             rows: [
               for (final row in workbook.cashflowRows)
@@ -27381,12 +27432,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             dataRowMinHeight: 44,
             dataRowMaxHeight: 56,
             columns: const [
-              DataColumn(label: Text('口座')),
-              DataColumn(label: Text('現在残高'), numeric: true),
-              DataColumn(label: Text('今後の支払い'), numeric: true),
-              DataColumn(label: Text('今後の入金'), numeric: true),
-              DataColumn(label: Text('支払後残高'), numeric: true),
-              DataColumn(label: Text('判定')),
+              DataColumn(label: SizedBox(width: 64, child: Text('口座'))),
+              DataColumn(
+                label: SizedBox(width: 96, child: Text('現在残高')),
+                numeric: true,
+              ),
+              DataColumn(
+                label: SizedBox(width: 128, child: Text('今後の支払い')),
+                numeric: true,
+              ),
+              DataColumn(
+                label: SizedBox(width: 112, child: Text('今後の入金')),
+                numeric: true,
+              ),
+              DataColumn(
+                label: SizedBox(width: 112, child: Text('支払後残高')),
+                numeric: true,
+              ),
+              DataColumn(label: SizedBox(width: 64, child: Text('判定'))),
             ],
             rows: [
               for (final summary in summaries)
