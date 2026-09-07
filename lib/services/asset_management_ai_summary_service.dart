@@ -454,6 +454,19 @@ class AssetManagementAiSummaryService {
     };
   }
 
+  /// Only current-input results may be displayed, copied, or used for actions.
+  /// A late response for an older report remains historical, not current data.
+  AssetManagementAiSummaryResult? currentResultFor({
+    required AssetManagementInsightReport report,
+    required AssetManagementAiSummaryResult? result,
+    required String? resultKey,
+  }) {
+    if (result == null || resultKey != buildRequestFingerprint(report)) {
+      return null;
+    }
+    return result;
+  }
+
   String buildRequestFingerprint(AssetManagementInsightReport report) {
     final canonical = jsonEncode(_fingerprintValue(buildPayload(report)));
     return 'sha256:${sha256.convert(utf8.encode(canonical))}';
