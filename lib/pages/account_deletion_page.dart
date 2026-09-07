@@ -82,9 +82,8 @@ class _AccountDeletionPageState extends State<AccountDeletionPage> {
                             final accepted =
                                 await showGoogleOAuthDisclosureDialog(
                               context: context,
-                              purpose:
-                                  GoogleOAuthDisclosurePurpose
-                                      .accountDeletionReauthentication,
+                              purpose: GoogleOAuthDisclosurePurpose
+                                  .accountDeletionReauthentication,
                             );
                             if (!accepted) return;
                             await _viewModel.reauthenticateWithGoogle();
