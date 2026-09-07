@@ -170,8 +170,7 @@ class AiUniversityLearningOutcomeAnalytics {
     if (correctAnswers < 0 || correctAnswers > 3) {
       return Future.value(false);
     }
-    if (firstAttemptCorrectAnswers < 0 ||
-        firstAttemptCorrectAnswers > 3) {
+    if (firstAttemptCorrectAnswers < 0 || firstAttemptCorrectAnswers > 3) {
       return Future.value(false);
     }
     if (selfRating < 1 || selfRating > 5) return Future.value(false);

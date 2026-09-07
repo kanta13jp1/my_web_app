@@ -104,7 +104,8 @@ void main() {
 
     expect(find.textContaining('結果を送信できませんでした'), findsOneWidget);
     expect(
-      tester.widget<FilledButton>(find.byKey(const Key('yi-intro-submit')))
+      tester
+          .widget<FilledButton>(find.byKey(const Key('yi-intro-submit')))
           .onPressed,
       isNotNull,
     );

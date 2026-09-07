@@ -313,7 +313,8 @@ void main() {
     });
   });
 
-  test('01.AI Yi introduction task rejects unbounded metrics and non-allowlisted pages',
+  test(
+      '01.AI Yi introduction task rejects unbounded metrics and non-allowlisted pages',
       () async {
     var writes = 0;
     final analytics = AiUniversityLearningOutcomeAnalytics(

@@ -94,8 +94,7 @@ class _AiUniversityYiIntroductionTaskCardState
     ).fold<int>(0, (total, value) => total + value);
     final firstAttemptCorrectAnswers = List<int>.generate(
       _questions.length,
-      (index) =>
-          _firstAnswers[index] == _questions[index].correctIndex ? 1 : 0,
+      (index) => _firstAnswers[index] == _questions[index].correctIndex ? 1 : 0,
     ).fold<int>(0, (total, value) => total + value);
 
     setState(() => _submitting = true);
@@ -186,8 +185,7 @@ class _AiUniversityYiIntroductionTaskCardState
                         selected: _answers[questionIndex] == optionIndex,
                         onSelected: _submitted
                             ? null
-                            : (_) =>
-                                _selectAnswer(questionIndex, optionIndex),
+                            : (_) => _selectAnswer(questionIndex, optionIndex),
                       ),
                     ),
                   ),
