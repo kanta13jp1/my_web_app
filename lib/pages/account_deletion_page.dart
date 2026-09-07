@@ -5,6 +5,7 @@ import '../models/account_deletion_request.dart';
 import '../services/account_lifecycle_service.dart';
 import '../view_models/account_deletion_view_model.dart';
 import '../widgets/critical_action_dialog.dart';
+import '../widgets/google_oauth_disclosure_dialog.dart';
 
 class AccountDeletionPage extends StatefulWidget {
   const AccountDeletionPage({super.key, this.gateway});
@@ -77,8 +78,17 @@ class _AccountDeletionPageState extends State<AccountDeletionPage> {
                             );
                             _reauthenticationPasswordController.clear();
                           },
-                          onGoogleReauthenticate:
-                              _viewModel.reauthenticateWithGoogle,
+                          onGoogleReauthenticate: () async {
+                            final accepted =
+                                await showGoogleOAuthDisclosureDialog(
+                              context: context,
+                              purpose:
+                                  GoogleOAuthDisclosurePurpose
+                                      .accountDeletionReauthentication,
+                            );
+                            if (!accepted) return;
+                            await _viewModel.reauthenticateWithGoogle();
+                          },
                           onOpenBilling: () =>
                               Navigator.of(context).pushNamed('/billing'),
                         ),
