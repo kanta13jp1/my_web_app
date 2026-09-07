@@ -274,4 +274,90 @@ void main() {
     expect(await submit(adoptionDecision: 'maybe'), isFalse);
     expect(writes, 0);
   });
+
+  test('01.AI Yi introduction task records bounded learning outcome metrics',
+      () async {
+    final rows = <Map<String, Object>>[];
+    final analytics = AiUniversityLearningOutcomeAnalytics(
+      task: AiUniversityLearningOutcomeTask.yiIntroduction,
+      writer: (row) async => rows.add(row),
+    );
+
+    expect(await analytics.recordViewed(), isTrue);
+    expect(
+      await analytics.recordYiIntroductionCompleted(
+        correctAnswers: 3,
+        firstAttemptCorrectAnswers: 2,
+        selfRating: 4,
+        nextOfficialPage: 'yi_repository',
+      ),
+      isTrue,
+    );
+
+    expect(rows.first, <String, Object>{
+      'event_name': 'task_viewed',
+      'task_version': '01ai_introduction_20260903_v1',
+      'provider': '01ai',
+      'category': 'introduction',
+    });
+    expect(rows.last, <String, Object>{
+      'event_name': 'task_completed',
+      'task_version': '01ai_introduction_20260903_v1',
+      'provider': '01ai',
+      'category': 'introduction',
+      'correct_answers': 3,
+      'total_questions': 3,
+      'self_rating': 4,
+      'first_attempt_correct_answers': 2,
+      'next_official_page': 'yi_repository',
+    });
+  });
+
+  test(
+      '01.AI Yi introduction task rejects unbounded metrics and non-allowlisted pages',
+      () async {
+    var writes = 0;
+    final analytics = AiUniversityLearningOutcomeAnalytics(
+      task: AiUniversityLearningOutcomeTask.yiIntroduction,
+      writer: (_) async => writes += 1,
+    );
+
+    expect(
+      await analytics.recordYiIntroductionCompleted(
+        correctAnswers: -1,
+        firstAttemptCorrectAnswers: 2,
+        selfRating: 3,
+        nextOfficialPage: 'yi_repository',
+      ),
+      isFalse,
+    );
+    expect(
+      await analytics.recordYiIntroductionCompleted(
+        correctAnswers: 3,
+        firstAttemptCorrectAnswers: -1,
+        selfRating: 3,
+        nextOfficialPage: 'yi_repository',
+      ),
+      isFalse,
+    );
+    expect(
+      await analytics.recordYiIntroductionCompleted(
+        correctAnswers: 3,
+        firstAttemptCorrectAnswers: 2,
+        selfRating: 6,
+        nextOfficialPage: 'yi_repository',
+      ),
+      isFalse,
+    );
+    expect(
+      await analytics.recordYiIntroductionCompleted(
+        correctAnswers: 3,
+        firstAttemptCorrectAnswers: 2,
+        selfRating: 3,
+        nextOfficialPage: 'external_untrusted_page',
+      ),
+      isFalse,
+    );
+    expect(writes, 0);
+  });
 }
