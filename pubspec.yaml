@@ -16,7 +16,7 @@ dependencies:
     sdk: flutter
   # Keep generated Mockito signatures compatible with the current client API.
   supabase_flutter: 2.14.2
-  posthog_flutter: ^5.36.6
+  posthog_flutter: ^5.39.0
   crypto: ^3.0.7
   cupertino_icons: ^1.0.6
   web: ^1.1.0
@@ -60,7 +60,7 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   pdf: 3.12.0                      # PDF生成 (選挙KPIレポート出力)
   printing: 5.14.3                 # PDF印刷 (選挙KPIレポート出力)
-  sentry_flutter: ^9.28.0
+  sentry_flutter: ^9.29.0
   rrule: ^0.2.18
 
 dev_dependencies:
