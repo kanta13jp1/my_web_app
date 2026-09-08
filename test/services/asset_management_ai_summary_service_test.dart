@@ -334,6 +334,46 @@ void main() {
       expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
       expect(result.usedExternalAi, isTrue);
     });
+
+    test(
+        'does not falsely reject a paid debt when text mentions other unpaid debts in list or prose',
+        () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'ファミマカード': -50000,
+          'モビット': -200000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        paidAccountNames: const <String>{'famima_card'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-150,000円、負債合計は250,000円です。\n'
+                '- ファミマカード: 支払済み\n'
+                '- モビット: 未払いで、すぐに払うべきです。今月の未払い合計は200,000円です。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(result.errorMessage, isNull);
+    });
     test('ai detailed payload includes exact account and debt values', () {
       final service = AssetManagementAiSummaryService(
         now: () => DateTime(2026, 5, 1, 12),

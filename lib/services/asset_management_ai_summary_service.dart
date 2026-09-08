@@ -1445,22 +1445,43 @@ class AssetManagementAiSummaryService {
       '払うべき',
     ];
     for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
-      final start = text.indexOf(row.name);
-      if (start < 0) continue;
-      final end = start + 320 < text.length ? start + 320 : text.length;
-      final context = text.substring(start, end);
-      if (unpaidLanguage.any(context.contains)) {
-        errors.add('${row.name}を支払済みなのに督促');
+      final segments = text.split(RegExp(r'[\r\n。]+'));
+      for (final segment in segments) {
+        if (!segment.contains(row.name)) continue;
+        final isMarkedPaid = RegExp(
+          '${RegExp.escape(row.name)}[^。\\r\\n]{0,40}?(?:(?:支払|返済|引落|引き落とし|振込)?済|完済)',
+        ).hasMatch(segment);
+        final isUrgingPayment = RegExp(
+          '${RegExp.escape(row.name)}[^。\\r\\n]{0,40}?(?:未払い|期限超過|滞納|延滞|支払わないと|すぐに払|払うべき)',
+        ).hasMatch(segment);
+        final isUrgedBefore = RegExp(
+          '(?:未払い|期限超過|滞納|延滞)の?\\s*${RegExp.escape(row.name)}',
+        ).hasMatch(segment);
+
+        if ((isUrgingPayment || isUrgedBefore) && !isMarkedPaid) {
+          errors.add('${row.name}を支払済みなのに督促');
+          break;
+        }
       }
     }
 
     for (final income in workbook.incomePlans.where((plan) => plan.received)) {
-      final start = text.indexOf(income.name);
-      if (start < 0) continue;
-      final end = start + 240 < text.length ? start + 240 : text.length;
-      final context = text.substring(start, end);
-      if (context.contains('未受取') || context.contains('未入金')) {
-        errors.add('${income.name}を受取済みなのに未受取扱い');
+      final segments = text.split(RegExp(r'[\r\n。]+'));
+      for (final segment in segments) {
+        if (!segment.contains(income.name)) continue;
+        final isMarkedReceived = RegExp(
+          '${RegExp.escape(income.name)}[^。\\r\\n]{0,40}?(?:(?:受取|入金|着金)?済|受領済)',
+        ).hasMatch(segment);
+        final isMarkedUnreceived = RegExp(
+          '${RegExp.escape(income.name)}[^。\\r\\n]{0,40}?(?:未受取|未入金|未着金)',
+        ).hasMatch(segment) || RegExp(
+          '(?:未受取|未入金|未着金)の?\\s*${RegExp.escape(income.name)}',
+        ).hasMatch(segment);
+
+        if (isMarkedUnreceived && !isMarkedReceived) {
+          errors.add('${income.name}を受取済みなのに未受取扱い');
+          break;
+        }
       }
     }
 
