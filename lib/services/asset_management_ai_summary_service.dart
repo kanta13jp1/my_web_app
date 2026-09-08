@@ -1449,7 +1449,7 @@ class AssetManagementAiSummaryService {
       if (start < 0) continue;
       final end = start + 320 < text.length ? start + 320 : text.length;
       final context = text.substring(start, end);
-      if (unpaidLanguage.any(context.contains)) {
+      if (_containsUnnegatedKeyword(context, unpaidLanguage)) {
         errors.add('${row.name}を支払済みなのに督促');
       }
     }
@@ -1459,12 +1459,50 @@ class AssetManagementAiSummaryService {
       if (start < 0) continue;
       final end = start + 240 < text.length ? start + 240 : text.length;
       final context = text.substring(start, end);
-      if (context.contains('未受取') || context.contains('未入金')) {
+      if (_containsUnnegatedKeyword(context, const <String>['未受取', '未入金'])) {
         errors.add('${income.name}を受取済みなのに未受取扱い');
       }
     }
 
     return errors.toSet().toList(growable: false);
+  }
+
+  /// [keywords] のいずれかが [context] 内で「否定されずに」出現するかを返す。
+  /// AIはプロンプトの指示に従い「◯◯は期限超過ではありません」のように、支払済みの
+  /// 負債を安全に説明するため督促語彙を含む否定文を書くことがある。単純な部分文字列
+  /// 一致では、この正しい否定表現まで矛盾として誤検出してしまうため、各出現直後に
+  /// 打ち消しの語(「ではない」「していません」等)が続く場合はその出現を無視する。
+  static const List<String> _negationMarkers = <String>[
+    'ではない',
+    'ではありません',
+    'ではなく',
+    'じゃない',
+    'じゃありません',
+    'はない',
+    'はありません',
+    'していない',
+    'していません',
+    'は不要',
+    '不要です',
+  ];
+
+  bool _containsUnnegatedKeyword(String context, List<String> keywords) {
+    for (final keyword in keywords) {
+      var searchFrom = 0;
+      while (true) {
+        final index = context.indexOf(keyword, searchFrom);
+        if (index < 0) break;
+        final matchEnd = index + keyword.length;
+        final windowEnd =
+            matchEnd + 20 < context.length ? matchEnd + 20 : context.length;
+        final following = context.substring(matchEnd, windowEnd);
+        if (!_negationMarkers.any(following.contains)) {
+          return true;
+        }
+        searchFrom = matchEnd;
+      }
+    }
+    return false;
   }
 
   double? _parseYen(String value) {
