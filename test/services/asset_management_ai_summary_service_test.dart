@@ -376,6 +376,88 @@ void main() {
       expect(result.usedExternalAi, isTrue);
     });
 
+    test(
+        'accepts a paid debt list item even when followed by an unpaid debt '
+        'with urging keywords', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'ファミマカード': -10000,
+          'モビットカードローン': -300000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        annualRateOverrides: const <String, double>{
+          'famima_card': 0.15,
+          'mobit_card_loan': 0.18,
+        },
+        paidAccountNames: const <String>{'ファミマカード'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-210,000円、負債合計は310,000円です。\n'
+                '- ファミマカード: 支払済みです。\n'
+                '- モビットカードローン: 未払いで期限超過のため、すぐに払うべきです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    test(
+        'rejects an AI summary when a paid debt is directly urged as unpaid '
+        'in its segment', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'ファミマカード': -10000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        annualRateOverrides: const <String, double>{'famima_card': 0.15},
+        paidAccountNames: const <String>{'ファミマカード'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は90,000円、負債合計は10,000円です。\n'
+                '- ファミマカード: 未払いですぐに払うべきです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.fallback);
+      expect(result.usedExternalAi, isFalse);
+      expect(result.errorMessage, contains('ファミマカードを支払済みなのに督促'));
+    });
+
     test('ai detailed payload includes exact account and debt values', () {
       final service = AssetManagementAiSummaryService(
         now: () => DateTime(2026, 5, 1, 12),

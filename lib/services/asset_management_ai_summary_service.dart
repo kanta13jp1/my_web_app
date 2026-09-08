@@ -1444,23 +1444,37 @@ class AssetManagementAiSummaryService {
       'すぐに払',
       '払うべき',
     ];
+    // 文単位(句点/改行)で区切ってから判定する。320文字の生の前方窓だと、
+    // 支払済みの負債の直後に別の未払い負債が箇条書きで続くだけで
+    // 誤検出していたため、判定範囲をその負債自身の文に限定する。
+    final segments = text.split(RegExp(r'[\r\n。]+'));
     for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
-      final start = text.indexOf(row.name);
-      if (start < 0) continue;
-      final end = start + 320 < text.length ? start + 320 : text.length;
-      final context = text.substring(start, end);
-      if (_containsUnnegatedKeyword(context, unpaidLanguage)) {
-        errors.add('${row.name}を支払済みなのに督促');
+      for (final segment in segments) {
+        if (!segment.contains(row.name)) continue;
+        final isMarkedPaid = RegExp(
+          '${RegExp.escape(row.name)}[^。\\r\\n]{0,40}?'
+          '(?:(?:支払|支払い|返済|引落|引き落とし|振込)?済(?:み)?|完済)',
+        ).hasMatch(segment);
+        if (_containsUnnegatedKeyword(segment, unpaidLanguage) &&
+            !isMarkedPaid) {
+          errors.add('${row.name}を支払済みなのに督促');
+          break;
+        }
       }
     }
 
     for (final income in workbook.incomePlans.where((plan) => plan.received)) {
-      final start = text.indexOf(income.name);
-      if (start < 0) continue;
-      final end = start + 240 < text.length ? start + 240 : text.length;
-      final context = text.substring(start, end);
-      if (_containsUnnegatedKeyword(context, const <String>['未受取', '未入金'])) {
-        errors.add('${income.name}を受取済みなのに未受取扱い');
+      for (final segment in segments) {
+        if (!segment.contains(income.name)) continue;
+        final isMarkedReceived = RegExp(
+          '${RegExp.escape(income.name)}[^。\\r\\n]{0,40}?'
+          '(?:(?:受取|受け取り|入金)?済(?:み)?|受領済(?:み)?)',
+        ).hasMatch(segment);
+        if (_containsUnnegatedKeyword(segment, const <String>['未受取', '未入金']) &&
+            !isMarkedReceived) {
+          errors.add('${income.name}を受取済みなのに未受取扱い');
+          break;
+        }
       }
     }
 
@@ -1484,6 +1498,11 @@ class AssetManagementAiSummaryService {
     'していません',
     'は不要',
     '不要です',
+    '不要',
+    '必要はない',
+    '必要はありません',
+    '必要ありません',
+    '必要がない',
   ];
 
   bool _containsUnnegatedKeyword(String context, List<String> keywords) {
