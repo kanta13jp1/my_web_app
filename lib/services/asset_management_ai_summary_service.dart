@@ -103,13 +103,13 @@ class AssetManagementAiSummaryService {
         AssetManagementAiProviderUseCase.summary,
     DateTime Function()? now,
     String? provider,
-  }) : _aiEnabled = aiEnabled,
-       _chatService = chatService,
-       _promptBuilder = promptBuilder,
-       _providerRouter = providerRouter,
-       _useCase = useCase,
-       _now = now ?? DateTime.now,
-       _provider = provider;
+  })  : _aiEnabled = aiEnabled,
+        _chatService = chatService,
+        _promptBuilder = promptBuilder,
+        _providerRouter = providerRouter,
+        _useCase = useCase,
+        _now = now ?? DateTime.now,
+        _provider = provider;
 
   bool get aiEnabled => _aiEnabled;
 
@@ -154,22 +154,22 @@ class AssetManagementAiSummaryService {
       final response = route.routingEnabled
           ? await _sendRoutedSummary(prompt: prompt, route: route)
           : _provider == null || _provider == 'auto'
-          ? await _chatService.sendAutoChat(
-              message: prompt,
-              tier: 'performance',
-              maxTokens: _summaryMaxTokens,
-              traceId: 'asset-management-ai-summary',
-              providerChoiceReason: route.providerChoiceReason,
-              routingUseCase: route.useCase.id,
-            )
-          : await _chatService.sendProviderChat(
-              message: prompt,
-              provider: _provider,
-              maxTokens: _summaryMaxTokens,
-              traceId: 'asset-management-ai-summary',
-              providerChoiceReason: route.providerChoiceReason,
-              routingUseCase: route.useCase.id,
-            );
+              ? await _chatService.sendAutoChat(
+                  message: prompt,
+                  tier: 'performance',
+                  maxTokens: _summaryMaxTokens,
+                  traceId: 'asset-management-ai-summary',
+                  providerChoiceReason: route.providerChoiceReason,
+                  routingUseCase: route.useCase.id,
+                )
+              : await _chatService.sendProviderChat(
+                  message: prompt,
+                  provider: _provider,
+                  maxTokens: _summaryMaxTokens,
+                  traceId: 'asset-management-ai-summary',
+                  providerChoiceReason: route.providerChoiceReason,
+                  routingUseCase: route.useCase.id,
+                );
       if (!_containsJapaneseText(response.text)) {
         throw const AiHubChatException('AI要約が日本語ではありませんでした');
       }
@@ -327,28 +327,25 @@ class AssetManagementAiSummaryService {
         'by_severity': _countBy(
           report.developerRequests.map((request) => request.severity.name),
         ),
-        'note':
-            '定型生成の既知提案。already_issued=true は既にGitHub Issue起票済みで、'
+        'note': '定型生成の既知提案。already_issued=true は既にGitHub Issue起票済みで、'
             'AIはこれらを繰り返さず未起票の新規提案だけを返す。',
-        'items': report.developerRequests
-            .map((request) {
-              final existingIssue = _existingIssueSummary(
-                existingDeveloperIssuesByTitle[request.title],
-              );
-              if (existingIssue != null) {
-                // 起票済み提案は echo の材料にならないよう本文を渡さない。
-                return <String, dynamic>{
-                  'title': request.title,
-                  'already_issued': true,
-                  'existing_github_issue': existingIssue,
-                  'note': '起票済み。本文・JSONブロックとも再掲禁止。',
-                };
-              }
-              return _developerRequestToJson(request)
-                ..['already_issued'] = false
-                ..['existing_github_issue'] = null;
-            })
-            .toList(growable: false),
+        'items': report.developerRequests.map((request) {
+          final existingIssue = _existingIssueSummary(
+            existingDeveloperIssuesByTitle[request.title],
+          );
+          if (existingIssue != null) {
+            // 起票済み提案は echo の材料にならないよう本文を渡さない。
+            return <String, dynamic>{
+              'title': request.title,
+              'already_issued': true,
+              'existing_github_issue': existingIssue,
+              'note': '起票済み。本文・JSONブロックとも再掲禁止。',
+            };
+          }
+          return _developerRequestToJson(request)
+            ..['already_issued'] = false
+            ..['existing_github_issue'] = null;
+        }).toList(growable: false),
         'required_output_contract': const <String>[
           '現状の痛み',
           '根拠データ',
@@ -487,13 +484,12 @@ class AssetManagementAiSummaryService {
     final emergency = report.emergencyAdvices.isEmpty
         ? '緊急の生活費防衛アドバイスはありません。'
         : report.emergencyAdvices
-              .take(3)
-              .map(
-                (advice) =>
-                    '${advice.title}: ${advice.description} '
-                    '${advice.suggestedAction}',
-              )
-              .join(' ');
+            .take(3)
+            .map(
+              (advice) => '${advice.title}: ${advice.description} '
+                  '${advice.suggestedAction}',
+            )
+            .join(' ');
     final status = critical > 0 ? '緊急の資金繰り項目があります。' : '緊急度の高い資金繰り項目は検出されていません。';
     return [
       status,
@@ -561,9 +557,8 @@ class AssetManagementAiSummaryService {
         requests: const <AssetManagementDeveloperRequest>[],
       );
     }
-    final betweenFenceAndMarker = text
-        .substring(fenceStart + 3, markerIndex)
-        .trim();
+    final betweenFenceAndMarker =
+        text.substring(fenceStart + 3, markerIndex).trim();
     if (betweenFenceAndMarker.isNotEmpty && betweenFenceAndMarker != 'json') {
       // マーカーが本文中の言及で、機械可読ブロックではないケース。
       return AssetManagementAiProposalExtraction(
@@ -744,9 +739,8 @@ class AssetManagementAiSummaryService {
       },
       // 現在残高の事実だけを渡す。固定費・サブスクの将来予定は
       // cashflow_rows で別途渡し、現在負債への混入を防ぐ。
-      'accounts': workbook.currentAccounts
-          .map(_accountToJson)
-          .toList(growable: false),
+      'accounts':
+          workbook.currentAccounts.map(_accountToJson).toList(growable: false),
       'debt_master_rows': workbook.currentDebtRows
           .map((row) => _debtRowToJson(row, workbook.baseDate))
           .toList(growable: false),
@@ -761,12 +755,10 @@ class AssetManagementAiSummaryService {
       'payment_day_risks': workbook.paymentDayRisks
           .map(_paymentDayRiskToJson)
           .toList(growable: false),
-      'cashflow_rows': workbook.cashflowRows
-          .map(_cashflowRowToJson)
-          .toList(growable: false),
-      'income_plans': workbook.incomePlans
-          .map(_incomePlanToJson)
-          .toList(growable: false),
+      'cashflow_rows':
+          workbook.cashflowRows.map(_cashflowRowToJson).toList(growable: false),
+      'income_plans':
+          workbook.incomePlans.map(_incomePlanToJson).toList(growable: false),
       'transfer_tasks': workbook.transferTasks
           .map(_transferTaskToJson)
           .toList(growable: false),
@@ -787,16 +779,14 @@ class AssetManagementAiSummaryService {
             )
             .toList(growable: false),
         'missing_billing_account_items': workbook
-            .cardBillingReview
-            .missingBillingAccountItems
+            .cardBillingReview.missingBillingAccountItems
             .map(_cardReviewItemToJson)
             .toList(growable: false),
         'needs_review_items': workbook.cardBillingReview.needsReviewItems
             .map(_cardReviewItemToJson)
             .toList(growable: false),
         'double_counting_risk_items': workbook
-            .cardBillingReview
-            .doubleCountingRiskItems
+            .cardBillingReview.doubleCountingRiskItems
             .map(_cardReviewItemToJson)
             .toList(growable: false),
       },
@@ -805,8 +795,7 @@ class AssetManagementAiSummaryService {
             .map(_cardStatementReconciliationGroupToJson)
             .toList(growable: false),
         'unmatched_statement_lines': workbook
-            .cardStatementReconciliation
-            .unmatchedStatementLines
+            .cardStatementReconciliation.unmatchedStatementLines
             .map(_statementLineToJson)
             .toList(growable: false),
         'imported_line_count':
@@ -854,8 +843,7 @@ class AssetManagementAiSummaryService {
       'items': usefulAnalyses
           .map((entry) => entry.toPromptContextJson())
           .toList(growable: false),
-      'usage_rule':
-          'items は過去時点の数値スナップショット(metrics_snapshot)のみ。現在の事実ではない。'
+      'usage_rule': 'items は過去時点の数値スナップショット(metrics_snapshot)のみ。現在の事実ではない。'
           '現在値との差分でトレンド(改善点・悪化点)を述べるためだけに使い、履歴の金額・期限超過・未払いを現在として語らない。',
     };
   }
@@ -1097,8 +1085,7 @@ class AssetManagementAiSummaryService {
       // その月の請求額(リボ確定額)ではない。AI が請求額と比較して不一致と誤指摘
       // しないよう明示する。
       json['is_revolving_card'] = true;
-      json['note'] =
-          'このカードはリボ払い。下記内訳はリボ残高に含まれる紐づけ負債で、'
+      json['note'] = 'このカードはリボ払い。下記内訳はリボ残高に含まれる紐づけ負債で、'
           '今月の請求額(リボ確定額)ではない。請求額と比較して不一致と判断しないこと。';
     }
     return json;
@@ -1131,12 +1118,10 @@ class AssetManagementAiSummaryService {
         'statement_context': <String, dynamic>{
           'new_usage_this_month_total': group.statementLineTotal,
           'debts_routed_to_card_total': group.configuredDetailTotal,
-          'note':
-              '取込明細合計は新規利用額として25日の返済予定へ全額上乗せする。'
+          'note': '取込明細合計は新規利用額として25日の返済予定へ全額上乗せする。'
               '紐づけ負債合計は参考値で、既存残高の一括返済額ではない。',
         },
-        'reconciliation_note':
-            'リボ払いカード。25日の返済予定=最低返済額+当月新規利用額。'
+        'reconciliation_note': 'リボ払いカード。25日の返済予定=最低返済額+当月新規利用額。'
             '既存残高は一括返済せず最低返済額で圧縮し、新規利用分だけを同月に全額返す。',
         'configured_items': group.configuredItems
             .map(_cardReviewItemToJson)
@@ -1459,18 +1444,19 @@ class AssetManagementAiSummaryService {
       'すぐに払',
       '払うべき',
     ];
+    // 文単位(句点/改行)で区切ってから判定する。320文字の生の前方窓だと、
+    // 支払済みの負債の直後に別の未払い負債が箇条書きで続くだけで
+    // 誤検出していたため、判定範囲をその負債自身の文に限定する。
     final segments = text.split(RegExp(r'[\r\n。]+'));
     for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
       for (final segment in segments) {
         if (!segment.contains(row.name)) continue;
         final isMarkedPaid = RegExp(
-          '${RegExp.escape(row.name)}[^。\\r\\n]{0,40}?(?:(?:支払|支払い|返済|引落|引き落とし|振込)?済(?:み)?|完済)',
+          '${RegExp.escape(row.name)}[^。\\r\\n]{0,40}?'
+          '(?:(?:支払|支払い|返済|引落|引き落とし|振込)?済(?:み)?|完済)',
         ).hasMatch(segment);
-        final hasUnnegatedUrging = _containsUnnegatedKeyword(
-          segment,
-          unpaidLanguage,
-        );
-        if (hasUnnegatedUrging && !isMarkedPaid) {
+        if (_containsUnnegatedKeyword(segment, unpaidLanguage) &&
+            !isMarkedPaid) {
           errors.add('${row.name}を支払済みなのに督促');
           break;
         }
@@ -1481,13 +1467,11 @@ class AssetManagementAiSummaryService {
       for (final segment in segments) {
         if (!segment.contains(income.name)) continue;
         final isMarkedReceived = RegExp(
-          '${RegExp.escape(income.name)}[^。\\r\\n]{0,40}?(?:(?:受取|受け取り|入金)?済(?:み)?|受領済(?:み)?)',
+          '${RegExp.escape(income.name)}[^。\\r\\n]{0,40}?'
+          '(?:(?:受取|受け取り|入金)?済(?:み)?|受領済(?:み)?)',
         ).hasMatch(segment);
-        final hasUnnegatedUrging = _containsUnnegatedKeyword(
-          segment,
-          const <String>['未受取', '未入金'],
-        );
-        if (hasUnnegatedUrging && !isMarkedReceived) {
+        if (_containsUnnegatedKeyword(segment, const <String>['未受取', '未入金']) &&
+            !isMarkedReceived) {
           errors.add('${income.name}を受取済みなのに未受取扱い');
           break;
         }
@@ -1528,9 +1512,8 @@ class AssetManagementAiSummaryService {
         final index = context.indexOf(keyword, searchFrom);
         if (index < 0) break;
         final matchEnd = index + keyword.length;
-        final windowEnd = matchEnd + 20 < context.length
-            ? matchEnd + 20
-            : context.length;
+        final windowEnd =
+            matchEnd + 20 < context.length ? matchEnd + 20 : context.length;
         final following = context.substring(matchEnd, windowEnd);
         if (!_negationMarkers.any(following.contains)) {
           return true;
