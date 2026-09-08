@@ -1435,15 +1435,6 @@ class AssetManagementAiSummaryService {
       }
     }
 
-    const unpaidLanguage = <String>[
-      '未払い',
-      '期限超過',
-      '滞納',
-      '延滞',
-      '支払わないと',
-      'すぐに払',
-      '払うべき',
-    ];
     for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
       final segments = text.split(RegExp(r'[\r\n。]+'));
       for (final segment in segments) {
@@ -1457,8 +1448,11 @@ class AssetManagementAiSummaryService {
         final isUrgedBefore = RegExp(
           '(?:未払い|期限超過|滞納|延滞)の?\\s*${RegExp.escape(row.name)}',
         ).hasMatch(segment);
+        final isNegated = RegExp(
+          r'(?:未払い|期限超過|滞納|延滞)[^。\r\n]{0,20}?(?:ではない|ではありません|ではなく|じゃない|じゃありません|はない|はありません|していない|していません|は不要|不要です)',
+        ).hasMatch(segment);
 
-        if ((isUrgingPayment || isUrgedBefore) && !isMarkedPaid) {
+        if ((isUrgingPayment || isUrgedBefore) && !isMarkedPaid && !isNegated) {
           errors.add('${row.name}を支払済みなのに督促');
           break;
         }
@@ -1477,8 +1471,11 @@ class AssetManagementAiSummaryService {
         ).hasMatch(segment) || RegExp(
           '(?:未受取|未入金|未着金)の?\\s*${RegExp.escape(income.name)}',
         ).hasMatch(segment);
+        final isNegated = RegExp(
+          r'(?:未受取|未入金|未着金)[^。\r\n]{0,20}?(?:ではない|ではありません|ではなく|じゃない|じゃありません|はない|はありません|していない|していません)',
+        ).hasMatch(segment);
 
-        if (isMarkedUnreceived && !isMarkedReceived) {
+        if (isMarkedUnreceived && !isMarkedReceived && !isNegated) {
           errors.add('${income.name}を受取済みなのに未受取扱い');
           break;
         }
