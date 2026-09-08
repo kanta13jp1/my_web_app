@@ -68,8 +68,8 @@ void main() {
       );
       expect(
         capturedBody?['message'].toString().contains(
-              'GitHub Flavored Markdown',
-            ),
+          'GitHub Flavored Markdown',
+        ),
         true,
       );
       expect(
@@ -85,20 +85,20 @@ void main() {
       );
       expect(
         capturedBody?['message'].toString().contains(
-              '"external_ai_receives_exact_account_data":true',
-            ),
+          '"external_ai_receives_exact_account_data":true',
+        ),
         true,
       );
       expect(
         capturedBody?['message'].toString().contains(
-              '"must_respond_in_japanese":true',
-            ),
+          '"must_respond_in_japanese":true',
+        ),
         true,
       );
       expect(
         capturedBody?['message'].toString().contains(
-              '"external_ai_may_reference_exact_money_values":true',
-            ),
+          '"external_ai_may_reference_exact_money_values":true',
+        ),
         true,
       );
       expect(capturedBody?['message'].toString().contains('50,000'), true);
@@ -131,7 +131,8 @@ void main() {
         report: _report(),
         previousAnalyses: <AssetManagementAiAnalysisHistoryEntry>[
           _historyEntry(
-            summaryText: '前回は支払い確認と生活費確保を最優先にした分析です。'
+            summaryText:
+                '前回は支払い確認と生活費確保を最優先にした分析です。'
                 '本日使用可能額は-27337円で安全残高未満、横浜銀行が期限超過で未払いよ。',
           ),
         ],
@@ -253,90 +254,91 @@ void main() {
       },
     );
 
-    test('rejects an AI summary that contradicts totals, rates, or paid state',
-        () async {
-      const planner = AssetLiabilityPlanningService();
-      const insight = AssetManagementInsightService();
-      final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 100000,
-          'アコムカードローン': -500000,
-        },
-        baseDate: DateTime(2026, 9, 3),
-        annualRateOverrides: const <String, double>{
-          'acom_card_loan': 0.15,
-        },
-        paidAccountNames: const <String>{'acom_card_loan'},
-      );
-      final report = insight.buildReport(
-        workbook: workbook,
-        userProfile: _userProfile(),
-        minimumSafetyBalance: 10000,
-      );
-      final service = AssetManagementAiSummaryService(
-        aiEnabled: true,
-        chatService: AiHubChatService(
-          invoker: (body) async => <String, dynamic>{
-            'success': true,
-            'text': '純資産は-700,000円。借入総額は800,000円。'
-                'アコムカードローンの年利は18.0%で、今月分をすぐに払うべきです。',
-            'provider': 'openai',
+    test(
+      'rejects an AI summary that contradicts totals, rates, or paid state',
+      () async {
+        const planner = AssetLiabilityPlanningService();
+        const insight = AssetManagementInsightService();
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 100000,
+            'アコムカードローン': -500000,
           },
-        ),
-        now: () => DateTime(2026, 9, 3, 12),
-      );
+          baseDate: DateTime(2026, 9, 3),
+          annualRateOverrides: const <String, double>{'acom_card_loan': 0.15},
+          paidAccountNames: const <String>{'acom_card_loan'},
+        );
+        final report = insight.buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+          minimumSafetyBalance: 10000,
+        );
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async => <String, dynamic>{
+              'success': true,
+              'text':
+                  '純資産は-700,000円。借入総額は800,000円。'
+                  'アコムカードローンの年利は18.0%で、今月分をすぐに払うべきです。',
+              'provider': 'openai',
+            },
+          ),
+          now: () => DateTime(2026, 9, 3, 12),
+        );
 
-      final result = await service.generateSummary(report: report);
+        final result = await service.generateSummary(report: report);
 
-      expect(result.status, AssetManagementAiSummaryStatus.fallback);
-      expect(result.usedExternalAi, isFalse);
-      expect(result.source, contains('grounding validation failed'));
-      expect(result.errorMessage, contains('純資産が確定値と不一致'));
-      expect(result.errorMessage, contains('アコムカードローンの年利が確定値と不一致'));
-      expect(result.errorMessage, contains('支払済みなのに督促'));
-    });
-
-    test('accepts an AI summary grounded in current totals and confirmed rate',
-        () async {
-      const planner = AssetLiabilityPlanningService();
-      const insight = AssetManagementInsightService();
-      final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 100000,
-          'アコムカードローン': -500000,
-        },
-        baseDate: DateTime(2026, 9, 3),
-        annualRateOverrides: const <String, double>{
-          'acom_card_loan': 0.15,
-        },
-        paidAccountNames: const <String>{'acom_card_loan'},
-      );
-      final report = insight.buildReport(
-        workbook: workbook,
-        userProfile: _userProfile(),
-        minimumSafetyBalance: 10000,
-      );
-      final service = AssetManagementAiSummaryService(
-        aiEnabled: true,
-        chatService: AiHubChatService(
-          invoker: (body) async => <String, dynamic>{
-            'success': true,
-            'text': '純資産は-400,000円、負債合計は500,000円です。'
-                'アコムカードローンの年利は15.00%で、今月分は支払済みです。',
-            'provider': 'openai',
-          },
-        ),
-        now: () => DateTime(2026, 9, 3, 12),
-      );
-
-      final result = await service.generateSummary(report: report);
-
-      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
-      expect(result.usedExternalAi, isTrue);
-    });
+        expect(result.status, AssetManagementAiSummaryStatus.fallback);
+        expect(result.usedExternalAi, isFalse);
+        expect(result.source, contains('grounding validation failed'));
+        expect(result.errorMessage, contains('純資産が確定値と不一致'));
+        expect(result.errorMessage, contains('アコムカードローンの年利が確定値と不一致'));
+        expect(result.errorMessage, contains('支払済みなのに督促'));
+      },
+    );
 
     test(
-        'accepts an AI summary that explicitly denies overdue status for a '
+      'accepts an AI summary grounded in current totals and confirmed rate',
+      () async {
+        const planner = AssetLiabilityPlanningService();
+        const insight = AssetManagementInsightService();
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 100000,
+            'アコムカードローン': -500000,
+          },
+          baseDate: DateTime(2026, 9, 3),
+          annualRateOverrides: const <String, double>{'acom_card_loan': 0.15},
+          paidAccountNames: const <String>{'acom_card_loan'},
+        );
+        final report = insight.buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+          minimumSafetyBalance: 10000,
+        );
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async => <String, dynamic>{
+              'success': true,
+              'text':
+                  '純資産は-400,000円、負債合計は500,000円です。'
+                  'アコムカードローンの年利は15.00%で、今月分は支払済みです。',
+              'provider': 'openai',
+            },
+          ),
+          now: () => DateTime(2026, 9, 3, 12),
+        );
+
+        final result = await service.generateSummary(report: report);
+
+        expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+        expect(result.usedExternalAi, isTrue);
+      },
+    );
+
+    test('accepts an AI summary that explicitly denies overdue status for a '
         'paid debt', () async {
       const planner = AssetLiabilityPlanningService();
       const insight = AssetManagementInsightService();
@@ -346,9 +348,7 @@ void main() {
           'アコムカードローン': -500000,
         },
         baseDate: DateTime(2026, 9, 3),
-        annualRateOverrides: const <String, double>{
-          'acom_card_loan': 0.15,
-        },
+        annualRateOverrides: const <String, double>{'acom_card_loan': 0.15},
         paidAccountNames: const <String>{'acom_card_loan'},
       );
       final report = insight.buildReport(
@@ -361,7 +361,8 @@ void main() {
         chatService: AiHubChatService(
           invoker: (body) async => <String, dynamic>{
             'success': true,
-            'text': '純資産は-400,000円、負債合計は500,000円です。'
+            'text':
+                '純資産は-400,000円、負債合計は500,000円です。'
                 'アコムカードローンの年利は15.00%で、今月分は支払済みのため'
                 '期限超過ではありません。',
             'provider': 'openai',
@@ -375,6 +376,92 @@ void main() {
       expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
       expect(result.usedExternalAi, isTrue);
     });
+
+    test(
+      'accepts a paid debt list item even when followed by an unpaid debt with urging keywords',
+      () async {
+        const planner = AssetLiabilityPlanningService();
+        const insight = AssetManagementInsightService();
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 100000,
+            'ファミマカード': -10000,
+            'モビットカードローン': -300000,
+          },
+          baseDate: DateTime(2026, 9, 3),
+          annualRateOverrides: const <String, double>{
+            'famima_card': 0.15,
+            'mobit_card_loan': 0.18,
+          },
+          paidAccountNames: const <String>{'famima_card'},
+        );
+        final report = insight.buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+          minimumSafetyBalance: 10000,
+        );
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async => <String, dynamic>{
+              'success': true,
+              'text':
+                  '純資産は-210,000円、負債合計は310,000円です。\n'
+                  '- ファミマカード: 支払済みです。\n'
+                  '- モビットカードローン: 未払いで期限超過のため、すぐに払うべきです。',
+              'provider': 'openai',
+            },
+          ),
+          now: () => DateTime(2026, 9, 3, 12),
+        );
+
+        final result = await service.generateSummary(report: report);
+
+        expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+        expect(result.usedExternalAi, isTrue);
+      },
+    );
+
+    test(
+      'rejects an AI summary when a paid debt is directly urged as unpaid in its segment',
+      () async {
+        const planner = AssetLiabilityPlanningService();
+        const insight = AssetManagementInsightService();
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 100000,
+            'ファミマカード': -10000,
+          },
+          baseDate: DateTime(2026, 9, 3),
+          annualRateOverrides: const <String, double>{'famima_card': 0.15},
+          paidAccountNames: const <String>{'famima_card'},
+        );
+        final report = insight.buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+          minimumSafetyBalance: 10000,
+        );
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async => <String, dynamic>{
+              'success': true,
+              'text':
+                  '純資産は90,000円、負債合計は10,000円です。\n'
+                  '- ファミマカード: 未払いですぐに払うべきです。',
+              'provider': 'openai',
+            },
+          ),
+          now: () => DateTime(2026, 9, 3, 12),
+        );
+
+        final result = await service.generateSummary(report: report);
+
+        expect(result.status, AssetManagementAiSummaryStatus.fallback);
+        expect(result.usedExternalAi, isFalse);
+        expect(result.errorMessage, contains('ファミマカードを支払済みなのに督促'));
+      },
+    );
 
     test('ai detailed payload includes exact account and debt values', () {
       final service = AssetManagementAiSummaryService(
