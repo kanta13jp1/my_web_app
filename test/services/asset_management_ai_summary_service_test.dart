@@ -598,6 +598,86 @@ void main() {
       expect(result.errorMessage, contains('給料は未来の予定日なのに今日の着金確認を督促'));
     });
 
+    test(
+        'rejects an AI summary when a debt with zero scheduled payment or '
+        'past payment date is claimed to be neglected or ballooning interest', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'じぶんローン': -988878,
+        },
+        baseDate: DateTime(2026, 9, 9),
+        monthlyPaymentOverrides: const <String, double>{
+          'じぶんローン': 0,
+        },
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は100,000円です。\n'
+                '- じぶんローン: 今月支払予定額が0円になってるわね。これ、放置してるんじゃないかい？'
+                '利息が元金に上乗せされて雪だるま式に膨らむのよ！',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.fallback);
+      expect(result.usedExternalAi, isFalse);
+      expect(result.errorMessage, contains('じぶんローンは期日通過または予定額0円なのに放置・利息上乗せと批判'));
+    });
+
+    test(
+        'accepts an AI summary when a debt with zero scheduled payment '
+        'is acknowledged without false neglect accusations', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'じぶんローン': -988878,
+        },
+        baseDate: DateTime(2026, 9, 9),
+        monthlyPaymentOverrides: const <String, double>{
+          'じぶんローン': 0,
+        },
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は100,000円です。\n'
+                '- じぶんローン: 今月支払予定額は0円で、放置ではありません。8月27日に引落完了済みです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
     test('ai detailed payload includes exact account and debt values', () {
       final service = AssetManagementAiSummaryService(
         now: () => DateTime(2026, 5, 1, 12),
