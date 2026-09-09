@@ -10323,16 +10323,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     List<AssetLiabilityIncomePlan> plans, {
     bool forceSalaryReceived = false,
   }) {
-    final cycleAcknowledged = !_salaryResetPending;
-    final hasInflow = _hasSalaryInflowInCurrentCycle();
+    final shouldMarkSalaryReceived =
+        forceSalaryReceived || _hasSalaryInflowInCurrentCycle();
+
+    if (!shouldMarkSalaryReceived) {
+      return plans;
+    }
 
     return [
       for (final plan in plans)
-        if (_isSalaryIncomePlan(plan) &&
-            !plan.received &&
-            (forceSalaryReceived ||
-                hasInflow ||
-                (cycleAcknowledged && !plan.date.isAfter(_now))))
+        if (_isSalaryIncomePlan(plan) && !plan.received)
           AssetLiabilityIncomePlan(
             id: plan.id,
             date: plan.date,

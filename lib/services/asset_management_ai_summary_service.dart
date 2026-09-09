@@ -1471,7 +1471,7 @@ class AssetManagementAiSummaryService {
           '${RegExp.escape(income.name)}[^。\\r\\n]{0,40}?'
           '(?:(?:受取|受け取り|入金|着金)?済(?:み)?|受領済(?:み)?)',
         ).hasMatch(segment);
-        if (income.received) {
+        if (income.received || !income.date.isAfter(workbook.baseDate)) {
           if (_containsUnnegatedKeyword(segment, const <String>[
                 '未受取',
                 '未入金',
@@ -1483,7 +1483,11 @@ class AssetManagementAiSummaryService {
                 '着金の確認',
               ]) &&
               !isMarkedReceived) {
-            errors.add('${income.name}を受取済みなのに未受取扱い');
+            errors.add(
+              income.received
+                  ? '${income.name}を受取済みなのに未受取扱い'
+                  : '${income.name}は過去日付なのに未受取扱い',
+            );
             break;
           }
         } else if (isFuture) {
