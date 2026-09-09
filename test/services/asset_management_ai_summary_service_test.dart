@@ -296,6 +296,51 @@ void main() {
       expect(result.errorMessage, contains('支払済みなのに督促'));
     });
 
+    test(
+        'accepts an AI summary where multiple debts are listed and subsequent '
+        'debt has an annual interest rate without false rate attribution',
+        () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          '三井住友銀行大塚支店CL口座': -500000,
+          '横浜銀行': -300000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        annualRateOverrides: const <String, double>{
+          'smbc_cl': 0.10,
+          'yokohama': 0.146,
+        },
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-700,000円。負債総額は800,000円。\n'
+                '- 三井住友銀行大塚支店CL口座のカードを財布から抜きなさい。\n'
+                '- 横浜銀行の年利は14.6%です。\n'
+                '以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3つよ。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.ready);
+      expect(result.usedExternalAi, isTrue);
+      expect(result.errorMessage, isNull);
+    });
+
     test('accepts an AI summary grounded in current totals and confirmed rate',
         () async {
       const planner = AssetLiabilityPlanningService();

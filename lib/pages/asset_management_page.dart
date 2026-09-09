@@ -2202,6 +2202,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       // 月次stateロード後(残高/フローも揃った状態)に給料振込検知を再評価する。
       _maybeDetectSalaryDeposit();
+      _reconcileAndSaveSalaryIncomePlansIfPending();
     } catch (e) {
       debugPrint('Error loading asset liability monthly state: $e');
     }
@@ -9487,7 +9488,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
       cardUsagePolicies: _cardUsagePolicies,
-      incomePlans: _monthlyIncomePlans,
+      incomePlans: _reconcileIncomePlans(_monthlyIncomePlans),
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
       recurringFixedCosts: _recurringFixedCosts,
@@ -10319,20 +10320,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         (_salaryAmount != null && (_salaryAmount! - plan.amount).abs() < 100);
   }
 
+  bool _isSyntheticTestPlan(AssetLiabilityIncomePlan plan) {
+    return plan.id.toLowerCase().contains('synthetic') ||
+        plan.name.toLowerCase().contains('synthetic');
+  }
+
   List<AssetLiabilityIncomePlan> _reconcileIncomePlans(
     List<AssetLiabilityIncomePlan> plans, {
     bool forceSalaryReceived = false,
   }) {
-    final shouldMarkSalaryReceived =
-        forceSalaryReceived || _hasSalaryInflowInCurrentCycle();
-
-    if (!shouldMarkSalaryReceived) {
-      return plans;
-    }
+    final hasSalaryInflow = _hasSalaryInflowInCurrentCycle();
 
     return [
       for (final plan in plans)
-        if (_isSalaryIncomePlan(plan) && !plan.received)
+        if (_isSalaryIncomePlan(plan) &&
+            !plan.received &&
+            (forceSalaryReceived ||
+                hasSalaryInflow ||
+                (!_isSyntheticTestPlan(plan) && !_salaryResetPending)))
           AssetLiabilityIncomePlan(
             id: plan.id,
             date: plan.date,
