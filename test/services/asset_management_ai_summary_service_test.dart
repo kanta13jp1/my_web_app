@@ -624,7 +624,7 @@ void main() {
         chatService: AiHubChatService(
           invoker: (body) async => <String, dynamic>{
             'success': true,
-            'text': '純資産は100,000円です。\n'
+            'text': '純資産は-888,878円です。\n'
                 '- じぶんローン: 今月支払予定額が0円になってるわね。これ、放置してるんじゃないかい？'
                 '利息が元金に上乗せされて雪だるま式に膨らむのよ！',
             'provider': 'openai',
@@ -668,7 +668,7 @@ void main() {
         chatService: AiHubChatService(
           invoker: (body) async => <String, dynamic>{
             'success': true,
-            'text': '純資産は100,000円です。\n'
+            'text': '純資産は-888,878円です。\n'
                 '- じぶんローン: 今月支払予定額は0円で、放置ではありません。8月27日に引落完了済みです。',
             'provider': 'openai',
           },
