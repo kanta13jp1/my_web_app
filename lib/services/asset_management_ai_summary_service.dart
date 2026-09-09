@@ -1416,25 +1416,6 @@ class AssetManagementAiSummaryService {
     validateAmount('今月支払予定合計', workbook.monthlyScheduledPaymentTotal);
     validateAmount('今月未払い合計', workbook.monthlyUnpaidPaymentTotal);
 
-    for (final row in workbook.currentDebtRows.where(
-      (row) => row.annualRate > 0,
-    )) {
-      final pattern = RegExp(
-        '${RegExp.escape(row.name)}.{0,100}?(?:年利|金利)[^0-9]{0,12}'
-        r'([0-9]+(?:\.[0-9]+)?)\s*%',
-        dotAll: true,
-      );
-      for (final match in pattern.allMatches(text)) {
-        final actualPercent = double.tryParse(match.group(1)!);
-        final expectedPercent = row.annualRate * 100;
-        if (actualPercent != null &&
-            (actualPercent - expectedPercent).abs() > 0.011) {
-          errors.add('${row.name}の年利が確定値と不一致');
-          break;
-        }
-      }
-    }
-
     const unpaidLanguage = <String>[
       '未払い',
       '期限超過',
@@ -1448,6 +1429,37 @@ class AssetManagementAiSummaryService {
     // 支払済みの負債の直後に別の未払い負債が箇条書きで続くだけで
     // 誤検出していたため、判定範囲をその負債自身の文に限定する。
     final segments = text.split(RegExp(r'[\r\n。]+'));
+    final allDebtNames = workbook.currentDebtRows.map((r) => r.name).toSet();
+
+    for (final row in workbook.currentDebtRows.where(
+      (row) => row.annualRate > 0,
+    )) {
+      final ratePattern = RegExp(
+        r'^(.*?)(?:年利|金利)[^0-9]{0,12}([0-9]+(?:\.[0-9]+)?)\s*%',
+      );
+      for (final segment in segments) {
+        if (!segment.contains(row.name)) continue;
+        final nameIndex = segment.indexOf(row.name);
+        final afterName = segment.substring(nameIndex + row.name.length);
+        final match = ratePattern.firstMatch(afterName);
+        if (match != null) {
+          final between = match.group(1)!;
+          final hasInterveningDebt = allDebtNames.any(
+            (other) => other != row.name && between.contains(other),
+          );
+          if (hasInterveningDebt || between.length > 60) {
+            continue;
+          }
+          final actualPercent = double.tryParse(match.group(2)!);
+          final expectedPercent = row.annualRate * 100;
+          if (actualPercent != null &&
+              (actualPercent - expectedPercent).abs() > 0.011) {
+            errors.add('${row.name}の年利が確定値と不一致');
+            break;
+          }
+        }
+      }
+    }
     for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
       for (final segment in segments) {
         if (!segment.contains(row.name)) continue;

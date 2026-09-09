@@ -2202,6 +2202,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       // 月次stateロード後(残高/フローも揃った状態)に給料振込検知を再評価する。
       _maybeDetectSalaryDeposit();
+      _reconcileAndSaveSalaryIncomePlansIfPending();
     } catch (e) {
       debugPrint('Error loading asset liability monthly state: $e');
     }
@@ -9487,7 +9488,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
       cardUsagePolicies: _cardUsagePolicies,
-      incomePlans: _monthlyIncomePlans,
+      incomePlans: _reconcileIncomePlans(_monthlyIncomePlans),
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
       recurringFixedCosts: _recurringFixedCosts,
