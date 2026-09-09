@@ -600,7 +600,8 @@ void main() {
 
     test(
         'rejects an AI summary when a debt with zero scheduled payment or '
-        'past payment date is claimed to be neglected or ballooning interest', () async {
+        'past payment date is claimed to be neglected or ballooning '
+        'interest', () async {
       const planner = AssetLiabilityPlanningService();
       const insight = AssetManagementInsightService();
       final workbook = planner.buildWorkbook(
@@ -636,7 +637,10 @@ void main() {
 
       expect(result.status, AssetManagementAiSummaryStatus.fallback);
       expect(result.usedExternalAi, isFalse);
-      expect(result.errorMessage, contains('じぶんローンは期日通過または予定額0円なのに放置・利息上乗せと批判'));
+      expect(
+        result.errorMessage,
+        contains('じぶんローンは期日通過または予定額0円なのに放置・利息上乗せと批判'),
+      );
     });
 
     test(
