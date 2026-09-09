@@ -5401,7 +5401,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
       cardUsagePolicies: _cardUsagePolicies,
-      incomePlans: _monthlyIncomePlans,
+      incomePlans: _reconcileIncomePlans(_monthlyIncomePlans),
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
       salaryDay: _salaryDay,
@@ -7857,6 +7857,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         // フロー更新後に給料振込検知を再評価(サイクル窓の収入が増えた可能性)。
         _maybeDetectSalaryDeposit();
+        _reconcileAndSaveSalaryIncomePlansIfPending();
       }
     } catch (e) {
       debugPrint('Error fetching flows: $e');

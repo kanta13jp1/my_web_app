@@ -1471,7 +1471,7 @@ class AssetManagementAiSummaryService {
           '${RegExp.escape(income.name)}[^。\\r\\n]{0,40}?'
           '(?:(?:受取|受け取り|入金|着金)?済(?:み)?|受領済(?:み)?)',
         ).hasMatch(segment);
-        if (income.received) {
+        if (income.received || !income.date.isAfter(workbook.baseDate)) {
           if (_containsUnnegatedKeyword(segment, const <String>[
                 '未受取',
                 '未入金',
@@ -1483,7 +1483,11 @@ class AssetManagementAiSummaryService {
                 '着金の確認',
               ]) &&
               !isMarkedReceived) {
-            errors.add('${income.name}を受取済みなのに未受取扱い');
+            errors.add(
+              income.received
+                  ? '${income.name}を受取済みなのに未受取扱い'
+                  : '${income.name}は過去日付なのに未受取扱い',
+            );
             break;
           }
         } else if (isFuture) {
@@ -1496,6 +1500,33 @@ class AssetManagementAiSummaryService {
                 '必要ありません',
               ])) {
             errors.add('${income.name}は未来の予定日なのに今日の着金確認を督促');
+            break;
+          }
+        }
+      }
+    }
+
+    final bulletLines = text.split(RegExp(r'[\r\n]+'));
+    for (final row in workbook.currentDebtRows) {
+      final scheduledDate = _paymentDateFor(row, workbook.baseDate);
+      final isPastOrZero = row.scheduledPaymentAmount <= 0 ||
+          (scheduledDate != null &&
+              !scheduledDate.isAfter(workbook.baseDate) &&
+              row.scheduledPaymentAmount <= 0);
+      if (isPastOrZero) {
+        for (final line in bulletLines) {
+          if (!line.contains(row.name)) continue;
+          final afterName = line.substring(line.indexOf(row.name));
+          if (_containsUnnegatedKeyword(afterName, const <String>[
+            '放置',
+            '放置してる',
+            '放置している',
+            '寝かせておく',
+            '雪だるま式',
+            '利息が元金に上乗せ',
+            '利息が上乗せ',
+          ])) {
+            errors.add('${row.name}は期日通過または予定額0円なのに放置・利息上乗せと批判');
             break;
           }
         }
