@@ -835,8 +835,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <String, TextEditingController>{};
   final Map<String, TextEditingController> _revolvingMonthlyAmountControllers =
       <String, TextEditingController>{};
-  final Map<String, TextEditingController>
-      _revolvingNewUsageAmountControllers = <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingNewUsageAmountControllers =
+      <String, TextEditingController>{};
   final Map<String, TextEditingController> _revolvingCreditLimitControllers =
       <String, TextEditingController>{};
   final Set<String> _verifyingAnnualRateEvidenceAccountIds = <String>{};
