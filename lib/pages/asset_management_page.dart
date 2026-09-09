@@ -10320,24 +10320,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         (_salaryAmount != null && (_salaryAmount! - plan.amount).abs() < 100);
   }
 
-  bool _isSyntheticTestPlan(AssetLiabilityIncomePlan plan) {
-    return plan.id.toLowerCase().contains('synthetic') ||
-        plan.name.toLowerCase().contains('synthetic');
-  }
-
   List<AssetLiabilityIncomePlan> _reconcileIncomePlans(
     List<AssetLiabilityIncomePlan> plans, {
     bool forceSalaryReceived = false,
   }) {
-    final hasSalaryInflow = _hasSalaryInflowInCurrentCycle();
+    final shouldMarkSalaryReceived =
+        forceSalaryReceived || _hasSalaryInflowInCurrentCycle();
+
+    if (!shouldMarkSalaryReceived) {
+      return plans;
+    }
 
     return [
       for (final plan in plans)
-        if (_isSalaryIncomePlan(plan) &&
-            !plan.received &&
-            (forceSalaryReceived ||
-                hasSalaryInflow ||
-                (!_isSyntheticTestPlan(plan) && !_salaryResetPending)))
+        if (_isSalaryIncomePlan(plan) && !plan.received)
           AssetLiabilityIncomePlan(
             id: plan.id,
             date: plan.date,

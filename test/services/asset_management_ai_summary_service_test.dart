@@ -310,8 +310,10 @@ void main() {
         },
         baseDate: DateTime(2026, 9, 3),
         annualRateOverrides: const <String, double>{
-          'smbc_cl': 0.10,
-          'yokohama': 0.146,
+          'smbc_card_loan': 0.10,
+          'yokohama_bank': 0.146,
+          '三井住友銀行大塚支店CL口座': 0.10,
+          '横浜銀行': 0.146,
         },
       );
       final report = insight.buildReport(
