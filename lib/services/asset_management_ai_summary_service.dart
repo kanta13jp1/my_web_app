@@ -1506,6 +1506,7 @@ class AssetManagementAiSummaryService {
       }
     }
 
+    final bulletLines = text.split(RegExp(r'[\r\n]+'));
     for (final row in workbook.currentDebtRows) {
       final scheduledDate = _paymentDateFor(row, workbook.baseDate);
       final isPastOrZero = row.scheduledPaymentAmount <= 0 ||
@@ -1513,9 +1514,10 @@ class AssetManagementAiSummaryService {
               !scheduledDate.isAfter(workbook.baseDate) &&
               row.scheduledPaymentAmount <= 0);
       if (isPastOrZero) {
-        for (final segment in segments) {
-          if (!segment.contains(row.name)) continue;
-          if (_containsUnnegatedKeyword(segment, const <String>[
+        for (final line in bulletLines) {
+          if (!line.contains(row.name)) continue;
+          final afterName = line.substring(line.indexOf(row.name));
+          if (_containsUnnegatedKeyword(afterName, const <String>[
             '放置',
             '放置してる',
             '放置している',
