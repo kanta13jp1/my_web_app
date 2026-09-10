@@ -33575,3 +33575,12 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - 技術ブログ下書きパイプライン `docs/blog-drafts/` は既に 2026-03-27〜2030年分 (795ファイル) がキュー済みであることを確認し、本日の手動追加は見送った (既存自動化で十分供給されている)。
 - 2026-09-08 セッションで follow-up 切り出し済みの `/money-forward` ダミー実装 (`social-commerce-hub` EF の `mf.connect_url`/`mf.sync` が固定値を返すのみ) は、財務データ領域のため本セッションでは着手せず、別セッションでの人間レビュー前提の対応を維持する方針を継続した。
 - `fix/ci-clean-analyzer` ブランチ自体の整理 (rebase/マージ or 破棄の判断) は owner 確認が必要なため、次回セッションへの推奨事項として記録する。
+
+### daily-development セッション記録 (2026-09-10 その2 / Claude Code Win版)
+
+- 同日1回目実行時点でメインチェックアウトが既に origin/main から293コミット遅れ + foreign WIP を抱えたままだったため、同方針を継続し origin/main 起点の新規 worktree (`daily-dev-20260910`, 別インスタンス) から作業した。
+- 1回目セッションで「財務データ領域のため着手見送り」と記録した `/money-forward` ダミーOAuth画面に今回着手した。`mf.connect_url` が返す固定URL (`/oauth/moneyforward`) はアプリ内のどのルートにも対応せずフロントエンドも実際には使用しておらず、`mf.status` が参照する `access_token` もコード全体で一度も書き込まれない ([[feedback_server_action_without_execution_path]] 型の死んだ経路)。「接続済み」分岐 (口座・取引タブ、同期ボタン) は理論上も到達不能と確認した。
+- MoneyForward は個人向け公開OAuth APIを提供していないため実装不可能と判断し、フロントエンドのみを実際に動く CSV エクスポート→ `/import` 導線 (#5365 で整合済みの手順) へ誘導する画面に置換。バックエンド EF (`social-commerce-hub` の `mf.*`) は未着手のまま残し変更範囲をUIに限定。`flutter analyze` は当該ファイル0エラー。
+- ただし今回も「financial-data-adjacent な UX/製品判断は人間レビュー前提」という1回目セッションの方針を尊重し、main への直接pushはせず PR #5380 として提出した (実装は完了、マージ判断は owner に委ねる)。
+- `docs/blog-drafts/` は依然2030年まで795ファイルキュー済みを再確認し、新規ドラフト追加は今回も見送った。
+- 実データ・破壊的操作の変更はなし。NotebookLM (`jibun-master-brain`) への蓄積は認証状態次第で試行する。
