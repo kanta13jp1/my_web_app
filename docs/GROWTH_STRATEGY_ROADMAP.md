@@ -33567,3 +33567,11 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - 同runで Docker 29.7.2 / Supabase CLI 2.116.0 のrootless security option、daemon UID 1001、通常ユーザー所有socket、Docker API互換、DB ready、Auth gateway HTTP 200、volume permission error 0件を確認した。
 - Supabase検証はrepositoryの`config.toml`だけを一時projectへコピーし、既存application migration/seedのfrom-scratch driftをrootless runtime受け入れから分離した。停止はephemeral runner上で`--no-backup`を使用し、orphan container 0件とdaemon停止を確認した。
 - workflowはread-only権限、production secretなし、`pull_request_target`なし、privileged containerなしを維持した。ローカルのPodman/WSL2 machineは停止したままとし、重い再検証はクラウドへ限定する。
+
+### daily-development セッション記録 (2026-09-10 / Claude Code Win版)
+
+- メインの作業チェックアウト `fix/ci-clean-analyzer` が origin/main から276コミット遅れ・2コミット進み、かつ `.codex-staging-*` 等の他インスタンスWIPらしき未コミット変更(79ファイル相当)を抱えていたため、既定方針([[feedback_scheduled_task_codex_wip_observe_only]] 系)に従いそのブランチ上では一切 `git add`/`commit`/`checkout` を行わず、origin/main から独立した worktree (`daily-dev-20260910`) を作成して本セッションの成果物のみをそこから main へ直接 landing した。
+- 直近5件のマージ済み資産管理修正 (ユーザーマニュアル手順整合 #5365 / 支払元無効アラート誤検知抑制 #5218 / AI根拠確認の否定文脈誤検知修正 #5369 / 債務間根拠確認セグメント化 #5370 / 給料収入自動整合+未受領誤検知防止 #5371) を `development_achievements` に記録した (本コミットで追加した migration)。
+- 技術ブログ下書きパイプライン `docs/blog-drafts/` は既に 2026-03-27〜2030年分 (795ファイル) がキュー済みであることを確認し、本日の手動追加は見送った (既存自動化で十分供給されている)。
+- 2026-09-08 セッションで follow-up 切り出し済みの `/money-forward` ダミー実装 (`social-commerce-hub` EF の `mf.connect_url`/`mf.sync` が固定値を返すのみ) は、財務データ領域のため本セッションでは着手せず、別セッションでの人間レビュー前提の対応を維持する方針を継続した。
+- `fix/ci-clean-analyzer` ブランチ自体の整理 (rebase/マージ or 破棄の判断) は owner 確認が必要なため、次回セッションへの推奨事項として記録する。
