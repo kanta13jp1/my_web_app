@@ -1437,7 +1437,81 @@ void main() {
 
         expect(templates.single.id, 'salary');
         expect(
-            (await local.loadRecurringIncomeTemplates()).single.id, 'salary');
+          (await local.loadRecurringIncomeTemplates()).single.id,
+          'salary',
+        );
+      },
+    );
+
+    test(
+      'manual sync does not resurrect a recurring income template deleted '
+      'just before the remote delete could land',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        await local.saveRecurringIncomeTemplates(
+          <AssetLiabilityRecurringIncomeTemplate>[
+            _sampleRecurringIncomeTemplate(),
+          ],
+        );
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedRecurringIncomeTemplates(
+            <AssetLiabilityRecurringIncomeTemplate>[
+              _sampleRecurringIncomeTemplate(),
+            ],
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+
+        // Same race as the automatic-load bug above, but triggered by the
+        // user tapping "手動同期" (manual sync) instead of a page reload.
+        // Remote is left stale on purpose.
+        remote.failSaves = true;
+        await repository.saveRecurringIncomeTemplates(
+          const <AssetLiabilityRecurringIncomeTemplate>[],
+        );
+        remote.failSaves = false;
+
+        final result = await repository.syncMonth(month);
+
+        expect(result.status, AssetLiabilityManualSyncStatus.success);
+        expect(await local.loadRecurringIncomeTemplates(), isEmpty);
+        expect(remote.recurringIncomeTemplates, isEmpty);
+      },
+    );
+
+    test(
+      'manual sync still restores a recurring income template from remote '
+      'when it was never deleted locally',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedRecurringIncomeTemplates(
+            <AssetLiabilityRecurringIncomeTemplate>[
+              _sampleRecurringIncomeTemplate(),
+            ],
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+
+        final result = await repository.syncMonth(month);
+
+        expect(result.status, AssetLiabilityManualSyncStatus.success);
+        expect(
+          (await local.loadRecurringIncomeTemplates()).single.id,
+          'salary',
+        );
       },
     );
 
