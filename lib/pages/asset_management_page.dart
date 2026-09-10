@@ -8083,6 +8083,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ].join(':');
   }
 
+  /// その口座が負債マスタ（返済スケジュールを持つ債務）として管理されているか。
+  ///
+  /// FamiPay翌月払いのように、口座名はプリペイド系ブランドでも実体が与信取引の
+  /// ケースがある。負債マスタ側の分類を正としてこれを判定し、残高悪化を支出として
+  /// 自動記録しないようにする（借入であり、購入はカード明細から取り込まれるため）。
+  bool _isDebtMasterManagedAccount(String assetType) {
+    final target = assetType.trim();
+    if (target.isEmpty) {
+      return false;
+    }
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook == null) {
+      return false;
+    }
+    for (final row in workbook.debtMasterRows) {
+      if (row.name.trim() == target) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<bool> _autoRecordUnknownExpenseFromAssetDrop({
     required String assetType,
     required String dateKey,
@@ -8093,6 +8115,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (userId == null ||
         !AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
           assetType: assetType,
+          isManagedLiability: _isDebtMasterManagedAccount(assetType),
           previousAmount: previousAmount,
           currentAmount: currentAmount,
         )) {
