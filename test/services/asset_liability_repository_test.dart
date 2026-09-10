@@ -1437,7 +1437,9 @@ void main() {
 
         expect(templates.single.id, 'salary');
         expect(
-            (await local.loadRecurringIncomeTemplates()).single.id, 'salary');
+          (await local.loadRecurringIncomeTemplates()).single.id,
+          'salary',
+        );
       },
     );
 
