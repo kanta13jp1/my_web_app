@@ -33567,3 +33567,12 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - 同runで Docker 29.7.2 / Supabase CLI 2.116.0 のrootless security option、daemon UID 1001、通常ユーザー所有socket、Docker API互換、DB ready、Auth gateway HTTP 200、volume permission error 0件を確認した。
 - Supabase検証はrepositoryの`config.toml`だけを一時projectへコピーし、既存application migration/seedのfrom-scratch driftをrootless runtime受け入れから分離した。停止はephemeral runner上で`--no-backup`を使用し、orphan container 0件とdaemon停止を確認した。
 - workflowはread-only権限、production secretなし、`pull_request_target`なし、privileged containerなしを維持した。ローカルのPodman/WSL2 machineは停止したままとし、重い再検証はクラウドへ限定する。
+
+### daily-development セッション記録: ユーザーマニュアル×インポート実装のドリフト修正 (2026-09-08 JST)
+
+- `user_manual_page.dart` が謳う6つのインポート手順(Notion/Evernote/MoneyForward/X/GitHub/Markdown)を `import_page.dart` の実装(`sourceType` ごとの許可拡張子・列名マッチングロジック)と突き合わせたところ、4件が実行不可能だった。
+- Notion: マニュアルは「ダウンロードしたZIPをそのまま選択」と指示していたが、`notion` sourceTypeの許可拡張子は`csv`のみでZIPは選択ダイアログに表示されない。解凍後の.csvを選ぶ手順に修正。
+- MoneyForward: `moneyforward` という sourceType自体が存在しない。CSVをNotionカード経由で投げても列名マッチング(`title/name`・`content/text`等)がMoneyForwardの日本語ヘッダー(日付・内容・金額)を一つも拾わず**取り込み0件の無言失敗**になる。xlsx用の汎用パーサーは`内容`/`メモ`を列候補に含んでいたため、CSVをExcel変換してからxlsxカードでアップロードする実際に動く迂回路に手順を差し替えた。コード変更ゼロ。
+- X (Twitter) / GitHub: 公式エクスポート形式(ZIP内JS / .tar.gz)を受理するsourceTypeが存在しないため、直接インポート未対応である旨を明記し、テキストを手動で.mdへ変換してMarkdownインポートを使う代替手順に修正した。
+- 検証: 変更対象ファイルの`flutter analyze`(0件)、`dart format --set-exit-if-changed`(差分なし)、既存の`test/pages/user_manual_page_test.dart`(1件 pass)で確認。バックエンド・Edge Function・financial dataには一切触れていない。
+- 副産物として `/money-forward` (MoneyForwardPage) がホーム画面のどこからもリンクされておらず、かつ裏の `social-commerce-hub` Edge Function の `mf.connect_url`/`mf.sync` がハードコードされた固定レスポンス(`url: "/oauth/moneyforward"`、`synced: 0`)を返すダミー実装であることを発見した。実際のOAuth連携は一切実装されていないため、ボタンを押しても「認証URLを取得しました」という偽の成功表示が出るだけで何も起きない。財務データに関わる領域のため本セッションでは着手せず、別セッションでの人間レビュー付き対応を推奨する形でフォローアップを切り出した。
