@@ -2161,8 +2161,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _debtPaymentDayOverrides = Map<String, int>.from(
           debtPaymentDayOverrides,
         );
-        _monthlyIncomePlans = List<AssetLiabilityIncomePlan>.from(
+        final reconciledIncomePlans = _reconcileIncomePlans(
           incomePlansWithTemplates,
+        );
+        _monthlyIncomePlans = List<AssetLiabilityIncomePlan>.from(
+          reconciledIncomePlans,
         );
         _transferTasks = List<AssetLiabilityTransferTask>.from(
           state.transferTasks,
@@ -2182,6 +2185,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _loadedAssetLiabilityMonthKey = monthKey;
         _syncPaymentStateControllers();
       });
+      if (_hasAnySalaryIncomePlanReconciled(
+        incomePlansWithTemplates,
+        _monthlyIncomePlans,
+      )) {
+        unawaited(_saveAssetLiabilityMonthlyState());
+      }
       unawaited(_refreshSyncSources());
       // ローカル(_debtPaymentDayOverrides)反映後に呼ぶ。空でなくても union
       // マージ/バックフィルするため常に実行する。
@@ -2193,6 +2202,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       // 月次stateロード後(残高/フローも揃った状態)に給料振込検知を再評価する。
       _maybeDetectSalaryDeposit();
+      _reconcileAndSaveSalaryIncomePlansIfPending();
     } catch (e) {
       debugPrint('Error loading asset liability monthly state: $e');
     }
@@ -5392,7 +5402,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
       cardUsagePolicies: _cardUsagePolicies,
-      incomePlans: _monthlyIncomePlans,
+      incomePlans: _reconcileIncomePlans(_monthlyIncomePlans),
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
       salaryDay: _salaryDay,
@@ -7848,6 +7858,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         // フロー更新後に給料振込検知を再評価(サイクル窓の収入が増えた可能性)。
         _maybeDetectSalaryDeposit();
+        _reconcileAndSaveSalaryIncomePlansIfPending();
       }
     } catch (e) {
       debugPrint('Error fetching flows: $e');
@@ -9477,7 +9488,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
       cardUsagePolicies: _cardUsagePolicies,
-      incomePlans: _monthlyIncomePlans,
+      incomePlans: _reconcileIncomePlans(_monthlyIncomePlans),
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
       recurringFixedCosts: _recurringFixedCosts,
@@ -10091,6 +10102,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _salaryResetMarkerStore.save(merged),
         'salary reset marker restore save',
       );
+      _reconcileAndSaveSalaryIncomePlansIfPending();
     } catch (e) {
       debugPrint('salary reset marker mirror restore failed: $e');
     }
@@ -10165,6 +10177,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     _pendingSalaryResetAck = currentCycleKey;
+    _reconcileAndSaveSalaryIncomePlansIfPending(forceSalaryReceived: true);
     unawaited(
       _acknowledgeSalaryReset(currentCycleKey).whenComplete(() {
         _pendingSalaryResetAck = null;
@@ -10281,6 +10294,91 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return maxAmount > 0 ? maxAmount : null;
   }
 
+  bool _hasSalaryInflowInCurrentCycle() {
+    for (final flow in _flowsForCycle(_now)) {
+      if (_isIncomeActionType(flow['action_type']?.toString() ?? '')) {
+        final amount = ((flow['amount'] as num?)?.toDouble() ?? 0).abs();
+        final description = flow['description']?.toString() ?? '';
+        final title = flow['title']?.toString() ?? '';
+        if (amount >= 200000 ||
+            description.contains('給与') ||
+            description.contains('給料') ||
+            title.contains('給与') ||
+            title.contains('給料')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool _isSalaryIncomePlan(AssetLiabilityIncomePlan plan) {
+    final name = plan.name.toLowerCase();
+    return name.contains('給料') ||
+        name.contains('給与') ||
+        name.contains('salary') ||
+        (_salaryAmount != null && (_salaryAmount! - plan.amount).abs() < 100);
+  }
+
+  List<AssetLiabilityIncomePlan> _reconcileIncomePlans(
+    List<AssetLiabilityIncomePlan> plans, {
+    bool forceSalaryReceived = false,
+  }) {
+    final shouldMarkSalaryReceived =
+        forceSalaryReceived || _hasSalaryInflowInCurrentCycle();
+
+    if (!shouldMarkSalaryReceived) {
+      return plans;
+    }
+
+    return [
+      for (final plan in plans)
+        if (_isSalaryIncomePlan(plan) && !plan.received)
+          AssetLiabilityIncomePlan(
+            id: plan.id,
+            date: plan.date,
+            name: plan.name,
+            amount: plan.amount,
+            destinationAccountId: plan.destinationAccountId,
+            destinationAccountName: plan.destinationAccountName,
+            received: true,
+          )
+        else
+          plan,
+    ];
+  }
+
+  bool _hasAnySalaryIncomePlanReconciled(
+    List<AssetLiabilityIncomePlan> original,
+    List<AssetLiabilityIncomePlan> reconciled,
+  ) {
+    if (original.length != reconciled.length) return true;
+    for (var i = 0; i < original.length; i++) {
+      if (original[i].received != reconciled[i].received) return true;
+    }
+    return false;
+  }
+
+  void _reconcileAndSaveSalaryIncomePlansIfPending({
+    bool forceSalaryReceived = false,
+  }) {
+    if (_monthlyIncomePlans.isEmpty) return;
+    final reconciled = _reconcileIncomePlans(
+      _monthlyIncomePlans,
+      forceSalaryReceived: forceSalaryReceived,
+    );
+    if (_hasAnySalaryIncomePlanReconciled(_monthlyIncomePlans, reconciled)) {
+      if (mounted) {
+        setState(() {
+          _monthlyIncomePlans = reconciled;
+        });
+      } else {
+        _monthlyIncomePlans = reconciled;
+      }
+      unawaited(_saveAssetLiabilityMonthlyState());
+    }
+  }
+
   /// 手動で「給料を受け取った」=支払済みチェックを新サイクルへリセットする。
   Future<void> _confirmManualSalaryReset() async {
     final confirmed = await showDialog<bool>(
@@ -10306,6 +10404,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (confirmed != true || !mounted) {
       return;
     }
+    _reconcileAndSaveSalaryIncomePlansIfPending(forceSalaryReceived: true);
     await _acknowledgeSalaryReset(_currentSalaryCycleKey());
   }
 
