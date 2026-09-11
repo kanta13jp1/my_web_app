@@ -9,10 +9,15 @@ from pathlib import Path
 
 from check_design_accessibility_audit import (
     ChangedPath,
+    function_declared,
+    has_visual_parity,
     main,
     parse_changed_paths,
     passing_snippet,
     validate,
+    visual_fingerprint,
+    visual_parity_declarations,
+    visual_parity_section,
 )
 
 
@@ -29,6 +34,348 @@ GOOD_BODY = """
 - Deterministic-Evidence: tests=widget semantics pass; keyboard-contrast=pass; AT=not-run — release owner will run NVDA before merge.
 - Error-Microcopy-Review: reviewed — changed the decline error to explain that no charge occurred and how to retry.
 """
+
+
+# A small excerpt modeled on the real `lib/pages/asset_management_page.dart`
+# refactor (PR #5376) that motivated the Visual Parity Exemption: swapping
+# `TextFormField(initialValue: ...)` for a persistent `TextEditingController`
+# to fix a real-browser input-persistence bug, with zero intended visual
+# change. This is the primary case the exemption exists to unblock.
+OLD_ASSET_PAGE_SOURCE = """
+class _AssetManagementPageState extends State<AssetManagementPage> {
+  final Map<String, TextEditingController> _annualRateControllers =
+      <String, TextEditingController>{};
+
+  void dispose() {
+    _annualRateControllers.forEach((_, controller) => controller.dispose());
+    super.dispose();
+  }
+
+  void _syncPaymentStateControllers() {
+    _syncAnnualRateControllers();
+  }
+
+  Widget _buildRevolvingField({
+    required AssetLiabilityDebtRow row,
+    required String label,
+    required String hint,
+    required double value,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Row(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, height: 1.3)),
+        Expanded(
+          child: TextFormField(
+            key: ValueKey('revolving:${row.id}:$label'),
+            initialValue: value > 0 ? value.toStringAsFixed(0) : '',
+            keyboardType: TextInputType.number,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDebtCard(AssetLiabilityDebtRow row) {
+    return _buildRevolvingField(
+      row: row,
+      label: '最低返済額',
+      hint: '例: 10000',
+      value: 1000,
+      onChanged: (amount) => _updateRevolvingMonthlyAmount(row.id, amount),
+    );
+  }
+}
+"""
+
+NEW_ASSET_PAGE_SOURCE = """
+class _AssetManagementPageState extends State<AssetManagementPage> {
+  final Map<String, TextEditingController> _annualRateControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingMonthlyAmountControllers =
+      <String, TextEditingController>{};
+
+  void dispose() {
+    _annualRateControllers.forEach((_, controller) => controller.dispose());
+    _revolvingMonthlyAmountControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
+    super.dispose();
+  }
+
+  void _syncPaymentStateControllers() {
+    _syncAnnualRateControllers();
+    _syncRevolvingFieldControllers();
+  }
+
+  void _syncRevolvingFieldControllers() {
+    _revolvingMonthlyAmountControllers.forEach((id, controller) {
+      final amount = _revolvingConfigs[id]?.monthlyAmount ?? 0;
+      final text = amount > 0 ? amount.round().toString() : '';
+      if (controller.text != text) {
+        controller.text = text;
+      }
+    });
+  }
+
+  TextEditingController _revolvingMonthlyAmountControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingMonthlyAmountControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.monthlyAmount ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
+  }
+
+  Widget _buildRevolvingField({
+    required Key fieldKey,
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Row(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, height: 1.3)),
+        Expanded(
+          child: TextField(
+            key: fieldKey,
+            controller: controller,
+            keyboardType: TextInputType.number,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDebtCard(AssetLiabilityDebtRow row) {
+    return _buildRevolvingField(
+      fieldKey: ValueKey('revolving:${row.id}:最低返済額'),
+      label: '最低返済額',
+      hint: '例: 10000',
+      controller: _revolvingMonthlyAmountControllerFor(row),
+      onChanged: (amount) => _updateRevolvingMonthlyAmount(row.id, amount),
+    );
+  }
+}
+"""
+
+ASSET_PAGE_EXEMPT_FUNCTIONS = [
+    "_buildRevolvingField",
+    "_syncRevolvingFieldControllers",
+    "_revolvingMonthlyAmountControllerFor",
+    "_syncPaymentStateControllers",
+    "dispose",
+]
+
+
+class VisualFingerprintTest(unittest.TestCase):
+    def test_ignores_key_constructor_calls_and_arguments(self) -> None:
+        with_key = "Text('hi', key: ValueKey('unstable-${DateTime.now()}'))"
+        without_key = "Text('hi', key: someStableKey)"
+
+        self.assertEqual(visual_fingerprint(with_key), visual_fingerprint(without_key))
+
+    def test_ignores_empty_string_literals_regardless_of_position(self) -> None:
+        one_empty = "Text(value.isEmpty ? '' : value)"
+        no_empty_but_same_shape = "Text(value.isEmpty ? value : value)"
+
+        # Both have the same call:/non-empty-text: token sequence once the
+        # meaningless empty literal is dropped from the first.
+        self.assertEqual(
+            visual_fingerprint(one_empty), visual_fingerprint(no_empty_but_same_shape)
+        )
+
+    def test_ignores_function_type_syntax_and_plain_controller_classes(self) -> None:
+        source = (
+            "void sync(double Function(Config c) selector) {\n"
+            "  final controller = TextEditingController(text: 'x');\n"
+            "}"
+        )
+        fingerprint = visual_fingerprint(source)
+
+        self.assertNotIn("call:Function", fingerprint)
+        self.assertNotIn("call:TextEditingController", fingerprint)
+        self.assertIn("text:x", fingerprint)
+
+    def test_detects_real_widget_type_change(self) -> None:
+        old = "Widget build() => TextField(key: k);"
+        new = "Widget build() => CupertinoTextField(key: k);"
+
+        self.assertNotEqual(visual_fingerprint(old), visual_fingerprint(new))
+
+    def test_detects_changed_visible_text(self) -> None:
+        old = "Text('最低返済額')"
+        new = "Text('最低返済額改')"
+
+        self.assertNotEqual(visual_fingerprint(old), visual_fingerprint(new))
+
+
+class HasVisualParityTest(unittest.TestCase):
+    def test_accepts_textformfield_to_controller_refactor(self) -> None:
+        ok, reasons = has_visual_parity(
+            OLD_ASSET_PAGE_SOURCE, NEW_ASSET_PAGE_SOURCE, ASSET_PAGE_EXEMPT_FUNCTIONS
+        )
+
+        self.assertTrue(ok, reasons)
+
+    def test_rejects_changed_label_text_even_inside_declared_function(self) -> None:
+        tampered = NEW_ASSET_PAGE_SOURCE.replace(
+            "Text(label, style: const TextStyle(fontSize: 11, height: 1.3)),",
+            "Text('固定表示', style: const TextStyle(fontSize: 11, height: 1.3)),",
+        )
+        self.assertNotEqual(tampered, NEW_ASSET_PAGE_SOURCE)
+
+        ok, reasons = has_visual_parity(
+            OLD_ASSET_PAGE_SOURCE, tampered, ASSET_PAGE_EXEMPT_FUNCTIONS
+        )
+
+        self.assertFalse(ok, reasons)
+
+    def test_rejects_changed_hint_text_outside_declared_functions(self) -> None:
+        tampered = NEW_ASSET_PAGE_SOURCE.replace(
+            "hint: '例: 10000',", "hint: '例: 99999',"
+        )
+        self.assertNotEqual(tampered, NEW_ASSET_PAGE_SOURCE)
+
+        ok, reasons = has_visual_parity(
+            OLD_ASSET_PAGE_SOURCE, tampered, ASSET_PAGE_EXEMPT_FUNCTIONS
+        )
+
+        self.assertFalse(ok, reasons)
+
+    def test_rejects_unaliased_widget_type_swap(self) -> None:
+        tampered = NEW_ASSET_PAGE_SOURCE.replace(
+            "child: TextField(", "child: CupertinoTextField(", 1
+        )
+        self.assertNotEqual(tampered, NEW_ASSET_PAGE_SOURCE)
+
+        ok, reasons = has_visual_parity(
+            OLD_ASSET_PAGE_SOURCE, tampered, ASSET_PAGE_EXEMPT_FUNCTIONS
+        )
+
+        self.assertFalse(ok, reasons)
+
+    def test_fails_closed_for_new_file(self) -> None:
+        ok, reasons = has_visual_parity(
+            None, NEW_ASSET_PAGE_SOURCE, ASSET_PAGE_EXEMPT_FUNCTIONS
+        )
+
+        self.assertFalse(ok, reasons)
+
+    def test_fails_closed_without_declared_functions(self) -> None:
+        ok, reasons = has_visual_parity(OLD_ASSET_PAGE_SOURCE, NEW_ASSET_PAGE_SOURCE, [])
+
+        self.assertFalse(ok, reasons)
+
+    def test_fails_closed_for_a_declared_function_that_does_not_exist(self) -> None:
+        ok, reasons = has_visual_parity(
+            OLD_ASSET_PAGE_SOURCE,
+            NEW_ASSET_PAGE_SOURCE,
+            ASSET_PAGE_EXEMPT_FUNCTIONS + ["_thisFunctionDoesNotExist"],
+        )
+
+        self.assertFalse(ok)
+        self.assertTrue(any("_thisFunctionDoesNotExist" in reason for reason in reasons))
+
+    def test_function_declared_finds_multiline_named_parameter_signature(self) -> None:
+        self.assertTrue(function_declared(NEW_ASSET_PAGE_SOURCE, "_buildRevolvingField"))
+        self.assertFalse(function_declared(NEW_ASSET_PAGE_SOURCE, "_doesNotExist"))
+
+
+class VisualParitySectionTest(unittest.TestCase):
+    def test_parses_file_and_functions_declaration(self) -> None:
+        body = (
+            "## Visual Parity Exemption\n\n"
+            "- File: lib/pages/asset_management_page.dart; "
+            "Functions: _buildRevolvingField, dispose\n"
+        )
+
+        declarations = visual_parity_declarations(visual_parity_section(body))
+
+        self.assertEqual(
+            declarations,
+            {"lib/pages/asset_management_page.dart": ["_buildRevolvingField", "dispose"]},
+        )
+
+    def test_missing_section_is_empty(self) -> None:
+        self.assertEqual(visual_parity_section("## Some Other Section\n\nhello"), "")
+
+
+class ValidateWithVisualParityExemptionTest(unittest.TestCase):
+    EXEMPTION_BODY = (
+        "## Visual Parity Exemption\n\n"
+        "- File: lib/pages/asset_management_page.dart; Functions: "
+        + ", ".join(ASSET_PAGE_EXEMPT_FUNCTIONS)
+        + "\n"
+    )
+
+    def test_verified_exemption_skips_the_full_audit(self) -> None:
+        ok, messages, required, new_component, microcopy_required, paths = validate(
+            self.EXEMPTION_BODY,
+            [ChangedPath("M", "lib/pages/asset_management_page.dart")],
+            {
+                "lib/pages/asset_management_page.dart": (
+                    OLD_ASSET_PAGE_SOURCE,
+                    NEW_ASSET_PAGE_SOURCE,
+                )
+            },
+        )
+
+        self.assertTrue(ok, messages)
+        self.assertTrue(required)
+        self.assertFalse(new_component)
+        self.assertEqual(paths, ["lib/pages/asset_management_page.dart"])
+
+    def test_unverified_exemption_falls_back_to_requiring_full_audit(self) -> None:
+        tampered_new = NEW_ASSET_PAGE_SOURCE.replace(
+            "hint: '例: 10000',", "hint: '例: 99999',"
+        )
+        ok, messages, required, *_ = validate(
+            self.EXEMPTION_BODY,
+            [ChangedPath("M", "lib/pages/asset_management_page.dart")],
+            {"lib/pages/asset_management_page.dart": (OLD_ASSET_PAGE_SOURCE, tampered_new)},
+        )
+
+        self.assertFalse(ok)
+        self.assertTrue(required)
+        self.assertTrue(
+            any("Missing `## Design Accessibility Audit`" in message for message in messages)
+        )
+        self.assertTrue(any("did not verify" in message for message in messages))
+
+    def test_exemption_declared_but_no_file_contents_supplied_falls_back(self) -> None:
+        ok, messages, required, *_ = validate(
+            self.EXEMPTION_BODY,
+            [ChangedPath("M", "lib/pages/asset_management_page.dart")],
+            None,
+        )
+
+        self.assertFalse(ok)
+        self.assertTrue(required)
+        self.assertTrue(any("no base/head file content" in message for message in messages))
+
+    def test_exemption_not_covering_every_changed_file_falls_back(self) -> None:
+        ok, messages, required, *_ = validate(
+            self.EXEMPTION_BODY,
+            [
+                ChangedPath("M", "lib/pages/asset_management_page.dart"),
+                ChangedPath("M", "lib/pages/other_page.dart"),
+            ],
+            {
+                "lib/pages/asset_management_page.dart": (
+                    OLD_ASSET_PAGE_SOURCE,
+                    NEW_ASSET_PAGE_SOURCE,
+                ),
+                "lib/pages/other_page.dart": ("old", "new"),
+            },
+        )
+
+        self.assertFalse(ok)
+        self.assertTrue(required)
+        self.assertTrue(any("does not cover every changed" in message for message in messages))
 
 
 class DesignAccessibilityAuditGateTest(unittest.TestCase):
