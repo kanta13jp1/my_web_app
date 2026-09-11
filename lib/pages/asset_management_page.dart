@@ -833,6 +833,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <String, TextEditingController>{};
   final Map<String, TextEditingController> _annualRateControllers =
       <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingMonthlyAmountControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingNewUsageAmountControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingCreditLimitControllers =
+      <String, TextEditingController>{};
   final Set<String> _verifyingAnnualRateEvidenceAccountIds = <String>{};
   NoteImagePasteRegistration? _annualRateEvidencePasteRegistration;
   AssetLiabilityDebtRow? _annualRateEvidencePasteTargetRow;
@@ -1292,6 +1298,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       (_, controller) => controller.dispose(),
     );
     _annualRateControllers.forEach((_, controller) => controller.dispose());
+    _revolvingMonthlyAmountControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
+    _revolvingNewUsageAmountControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
+    _revolvingCreditLimitControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
     _cardStatementImportController.dispose();
     _assetCsvRestoreController.dispose();
     _repaymentSimulationExtraPaymentController.dispose();
@@ -3045,6 +3060,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _syncActualPaymentControllers();
     _syncPaymentDifferenceReasonControllers();
     _syncAnnualRateControllers();
+    _syncRevolvingFieldControllers();
+  }
+
+  void _syncRevolvingFieldControllers() {
+    void syncOne(
+      Map<String, TextEditingController> controllers,
+      double Function(AssetLiabilityRevolvingCreditConfig config) selector,
+    ) {
+      for (final entry in controllers.entries) {
+        final config = _revolvingConfigs[entry.key];
+        final amount = config == null ? 0.0 : selector(config);
+        final text = amount > 0 ? amount.round().toString() : '';
+        if (entry.value.text != text) {
+          entry.value.text = text;
+        }
+      }
+    }
+
+    syncOne(_revolvingMonthlyAmountControllers, (c) => c.monthlyAmount);
+    syncOne(_revolvingNewUsageAmountControllers, (c) => c.newUsageAmount);
+    syncOne(_revolvingCreditLimitControllers, (c) => c.creditLimit);
   }
 
   void _syncMonthlyPaymentControllers() {
@@ -3132,6 +3168,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             : '',
       ),
     );
+  }
+
+  TextEditingController _revolvingMonthlyAmountControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingMonthlyAmountControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.monthlyAmount ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
+  }
+
+  TextEditingController _revolvingNewUsageAmountControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingNewUsageAmountControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.newUsageAmount ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
+  }
+
+  TextEditingController _revolvingCreditLimitControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingCreditLimitControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.creditLimit ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
   }
 
   String _formatRateInput(double rate) {
@@ -29660,28 +29729,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (config != null) ...[
           const SizedBox(height: 6),
           _buildRevolvingField(
-            row: row,
+            fieldKey: ValueKey('revolving:${row.id}:最低返済額'),
             label: '最低返済額',
             hint: '例: 10000',
-            value: config.monthlyAmount,
+            controller: _revolvingMonthlyAmountControllerFor(row),
             onChanged: (amount) =>
                 _updateRevolvingMonthlyAmount(row.id, amount),
           ),
           const SizedBox(height: 6),
           _buildRevolvingField(
-            row: row,
+            fieldKey: ValueKey('revolving:${row.id}:新規利用額'),
             label: '新規利用額',
             hint: '明細未取込時のみ',
-            value: config.newUsageAmount,
+            controller: _revolvingNewUsageAmountControllerFor(row),
             onChanged: (amount) =>
                 _updateRevolvingNewUsageAmount(row.id, amount),
           ),
           const SizedBox(height: 6),
           _buildRevolvingField(
-            row: row,
+            fieldKey: ValueKey('revolving:${row.id}:利用限度額'),
             label: '利用限度額',
             hint: '与信枠確認用',
-            value: config.creditLimit,
+            controller: _revolvingCreditLimitControllerFor(row),
             onChanged: (amount) => _updateRevolvingCreditLimit(row.id, amount),
           ),
           const SizedBox(height: 6),
@@ -29708,10 +29777,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildRevolvingField({
-    required AssetLiabilityDebtRow row,
+    required Key fieldKey,
     required String label,
     required String hint,
-    required double value,
+    required TextEditingController controller,
     required ValueChanged<double> onChanged,
   }) {
     return Row(
@@ -29721,9 +29790,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           child: Text(label, style: const TextStyle(fontSize: 11, height: 1.3)),
         ),
         Expanded(
-          child: TextFormField(
-            key: ValueKey('revolving:${row.id}:$label'),
-            initialValue: value > 0 ? value.toStringAsFixed(0) : '',
+          child: TextField(
+            key: fieldKey,
+            controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
