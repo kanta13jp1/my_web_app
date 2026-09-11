@@ -135,8 +135,11 @@ void main() {
           viewRecorded.complete();
         }
       }
-      return http.Response('{"recorded":true}', 200,
-          headers: {'content-type': 'application/json'});
+      return http.Response(
+        '{"recorded":true}',
+        200,
+        headers: {'content-type': 'application/json'},
+      );
     }),
   );
   setUp(() {
@@ -165,8 +168,10 @@ void main() {
       await checkoutRecorded.future.timeout(const Duration(seconds: 5));
     });
     expect(gateway.lastVisitorId, visitor);
-    expect(requests.map((row) => row['stage']),
-        containsAll(['product_view', 'purchase_click', 'checkout_redirect']));
+    expect(
+      requests.map((row) => row['stage']),
+      containsAll(['product_view', 'purchase_click', 'checkout_redirect']),
+    );
     expect(requests.every((row) => row['visitor_id'] == visitor), isTrue);
   });
 
