@@ -146,8 +146,8 @@ void main() {
   testWidgets('default page records view and carries identity to checkout',
       (tester) async {
     final gateway = _FakeGateway(product: _product(), signedIn: true);
-    await _pump(tester, gateway);
     await tester.runAsync(() async {
+      await _pump(tester, gateway);
       await viewRecorded.future.timeout(const Duration(seconds: 5));
     });
     expect(requests.map((row) => row['stage']), contains('product_view'));
