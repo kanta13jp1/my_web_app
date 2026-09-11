@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -118,12 +119,17 @@ Future<void> _pump(
 
 void main() {
   final requests = <Map<String, dynamic>>[];
+  late Completer<void> viewRecorded;
   final client = SupabaseClient(
     'https://example.supabase.co',
     'test-anon-key',
     httpClient: MockClient((request) async {
       if (request.url.path.endsWith('/shop-funnel')) {
-        requests.add(jsonDecode(request.body) as Map<String, dynamic>);
+        final row = jsonDecode(request.body) as Map<String, dynamic>;
+        requests.add(row);
+        if (row['stage'] == 'product_view' && !viewRecorded.isCompleted) {
+          viewRecorded.complete();
+        }
       }
       return http.Response('{"recorded":true}', 200,
           headers: {'content-type': 'application/json'});
@@ -133,6 +139,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     supabaseClientForTesting = client;
     requests.clear();
+    viewRecorded = Completer<void>();
   });
   tearDownAll(() async => client.dispose());
 
@@ -140,6 +147,9 @@ void main() {
       (tester) async {
     final gateway = _FakeGateway(product: _product(), signedIn: true);
     await _pump(tester, gateway);
+    await tester.runAsync(() async {
+      await viewRecorded.future.timeout(const Duration(seconds: 5));
+    });
     expect(requests.map((row) => row['stage']), contains('product_view'));
     final visitor = requests.first['visitor_id'];
     expect(visitor, isNotEmpty);
