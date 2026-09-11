@@ -120,6 +120,7 @@ Future<void> _pump(
 void main() {
   final requests = <Map<String, dynamic>>[];
   late Completer<void> viewRecorded;
+  late Completer<void> checkoutRecorded;
   final client = SupabaseClient(
     'https://example.supabase.co',
     'test-anon-key',
@@ -127,6 +128,9 @@ void main() {
       if (request.url.path.endsWith('/shop-funnel')) {
         final row = jsonDecode(request.body) as Map<String, dynamic>;
         requests.add(row);
+        if (row['stage'] == 'checkout_redirect' && !checkoutRecorded.isCompleted) {
+          checkoutRecorded.complete();
+        }
         if (row['stage'] == 'product_view' && !viewRecorded.isCompleted) {
           viewRecorded.complete();
         }
@@ -140,6 +144,7 @@ void main() {
     supabaseClientForTesting = client;
     requests.clear();
     viewRecorded = Completer<void>();
+    checkoutRecorded = Completer<void>();
   });
   tearDownAll(() async => client.dispose());
 
@@ -154,8 +159,11 @@ void main() {
     final visitor = requests.first['visitor_id'];
     expect(visitor, isNotEmpty);
     await tester.ensureVisible(find.text('¥500 で購入'));
-    await tester.tap(find.text('¥500 で購入'));
-    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await tester.tap(find.text('¥500 で購入'));
+      await tester.pumpAndSettle();
+      await checkoutRecorded.future.timeout(const Duration(seconds: 5));
+    });
     expect(gateway.lastVisitorId, visitor);
     expect(requests.map((row) => row['stage']),
         containsAll(['product_view', 'purchase_click', 'checkout_redirect']));
