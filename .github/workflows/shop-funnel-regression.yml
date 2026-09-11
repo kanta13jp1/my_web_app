@@ -1,5 +1,12 @@
 name: Shop Funnel Regression
 on:
+  pull_request:
+    paths:
+      - 'lib/services/shop_funnel_service.dart'
+      - 'lib/pages/digital_product_store_pages.dart'
+      - 'test/pages/hexciv_shop_page_test.dart'
+      - 'test/services/shop_funnel*.dart'
+      - '.github/workflows/shop-funnel-regression.yml'
   workflow_dispatch:
 permissions:
   contents: read
