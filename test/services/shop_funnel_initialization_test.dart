@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('default telemetry tolerates an uninitialized application client', () async {
+  test('default telemetry tolerates an uninitialized application client',
+      () async {
     SharedPreferences.setMockInitialValues({});
     final service = ShopFunnelService();
     final visitor = await service.visitorId();
