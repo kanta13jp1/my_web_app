@@ -3281,11 +3281,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _annualRateOverrides.remove(row.id);
         _annualRateEvidences.remove(row.id);
       } else {
-        final currentEvidence = _annualRateEvidences[row.id];
-        if (currentEvidence == null ||
-            !currentEvidence.matchesAnnualRate(parsed)) {
-          _annualRateOverrides.remove(row.id);
-        }
+        // 証跡は任意。出資法の上限（年利20%）を超えない限り、手入力した年利を
+        // そのまま保存する。証跡の有無は verified 表示にのみ反映する。
+        _annualRateOverrides[row.id] = parsed;
       }
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -3469,11 +3467,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _annualRateEvidencePasteTargetRow = null;
       }
       _annualRateEvidences[row.id] = evidence;
-      if (evidence.matchesAnnualRate(rate)) {
-        _annualRateOverrides[row.id] = rate;
-      } else {
-        _annualRateOverrides.remove(row.id);
-      }
+      // 証跡が一致しなくても手入力した年利は破棄しない（証跡は任意のため）。
+      // 一致有無は verified 表示で区別する。
+      _annualRateOverrides[row.id] = rate;
     });
     unawaited(_saveAssetLiabilityMonthlyState());
     ScaffoldMessenger.of(context).showSnackBar(
@@ -8087,6 +8083,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ].join(':');
   }
 
+  /// その口座が負債マスタ（返済スケジュールを持つ債務）として管理されているか。
+  ///
+  /// FamiPay翌月払いのように、口座名はプリペイド系ブランドでも実体が与信取引の
+  /// ケースがある。負債マスタ側の分類を正としてこれを判定し、残高悪化を支出として
+  /// 自動記録しないようにする（借入であり、購入はカード明細から取り込まれるため）。
+  bool _isDebtMasterManagedAccount(String assetType) {
+    final target = assetType.trim();
+    if (target.isEmpty) {
+      return false;
+    }
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook == null) {
+      return false;
+    }
+    for (final row in workbook.debtMasterRows) {
+      if (row.name.trim() == target) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<bool> _autoRecordUnknownExpenseFromAssetDrop({
     required String assetType,
     required String dateKey,
@@ -8097,6 +8115,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (userId == null ||
         !AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
           assetType: assetType,
+          isManagedLiability: _isDebtMasterManagedAccount(assetType),
           previousAmount: previousAmount,
           currentAmount: currentAmount,
         )) {
@@ -29923,8 +29942,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             decoration: InputDecoration(
               isDense: true,
               hintText: _formatRateInput(row.annualRate),
-              helperText:
-                  hasOverride ? (verified ? 'AI確認済み' : '証跡確認が必要') : '年利変更は証跡必須',
+              helperText: hasOverride
+                  ? (verified ? 'AI証跡で確認済み' : '手入力を保存済み（証跡は任意）')
+                  : '契約書の年利を入力（証跡は任意）',
               suffixText: '%',
               suffixIcon: hasOverride
                   ? IconButton(
@@ -29984,8 +30004,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final verified = evidence?.matchesAnnualRate(requestedRate) ?? false;
     final color = verified
         ? const Color(0xFF0D9488)
+        // 証跡は任意のため、未提出をエラー色（赤）で示さない。
         : evidence == null
-            ? const Color(0xFFDC2626)
+            ? const Color(0xFF475569)
             : const Color(0xFFD97706);
     final label = verified
         ? 'AI証跡OK'
