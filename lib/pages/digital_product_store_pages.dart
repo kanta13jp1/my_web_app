@@ -373,6 +373,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   );
   late final ShopUrlLauncher _urlLauncher =
       widget.urlLauncher ?? _launchShopUrl;
+  late final ShopFunnelService _funnel = widget.funnel ?? ShopFunnelService();
   late final String _source = ShopFunnelService.sourceFromUri(Uri.base);
   late final String _campaign = ShopFunnelService.campaignFromUri(Uri.base);
   int _selectedProductScreenshotIndex = 0;
@@ -391,10 +392,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   }
 
   void _recordFunnel(String stage) {
-    final funnel = widget.funnel;
-    if (funnel == null) return;
     unawaited(
-      funnel.record(
+      _funnel.record(
         stage,
         productId: widget.productId,
         source: _source,
@@ -406,7 +405,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   Future<void> _startPurchase() async {
     _recordFunnel(ShopFunnelService.stagePurchaseClick);
     final start = await _viewModel.startCheckout(
-      visitorId: await widget.funnel?.visitorId(),
+      visitorId: await _funnel.visitorId(),
       source: _source,
     );
     if (start == null || start.alreadyPurchased) return;

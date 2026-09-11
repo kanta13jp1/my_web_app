@@ -18,9 +18,13 @@ import 'supabase_client_provider.dart';
 ///  * `purchase_complete` はここから送らない。金銭の絡む段だけは
 ///    クライアントの自己申告を信じず、webhook がサーバ側で記録する。
 class ShopFunnelService {
-  ShopFunnelService({SupabaseClient? client}) : _client = client ?? supabase;
+  ShopFunnelService({SupabaseClient? client}) : _clientOverride = client;
 
-  final SupabaseClient _client;
+  final SupabaseClient? _clientOverride;
+
+  // Resolve inside record's try/catch so telemetry cannot break the page
+  // when the application client has not initialized yet.
+  SupabaseClient get _client => _clientOverride ?? supabase;
 
   /// 訪問者IDの保存キー。個人とは結び付かない乱数を1つ持つだけ。
   static const String _visitorKey = 'shop.visitor_id';
