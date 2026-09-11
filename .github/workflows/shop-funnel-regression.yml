@@ -1,0 +1,17 @@
+name: Shop Funnel Regression
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Verify shop page and funnel regressions
+        run: flutter test --concurrency=1 test/pages/hexciv_shop_page_test.dart test/services/shop_funnel_service_test.dart test/services/shop_funnel_initialization_test.dart
