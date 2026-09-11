@@ -8,14 +8,20 @@ on:
       - 'test/services/shop_funnel*.dart'
       - '.github/workflows/shop-funnel-regression.yml'
   workflow_dispatch:
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: shop-funnel-regression-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   regression:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
