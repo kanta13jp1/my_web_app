@@ -128,7 +128,8 @@ void main() {
       if (request.url.path.endsWith('/shop-funnel')) {
         final row = jsonDecode(request.body) as Map<String, dynamic>;
         requests.add(row);
-        if (row['stage'] == 'checkout_redirect' && !checkoutRecorded.isCompleted) {
+        if (row['stage'] == 'checkout_redirect' &&
+            !checkoutRecorded.isCompleted) {
           checkoutRecorded.complete();
         }
         if (row['stage'] == 'product_view' && !viewRecorded.isCompleted) {
