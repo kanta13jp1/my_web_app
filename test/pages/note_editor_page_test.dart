@@ -19,6 +19,7 @@ class _RecordingSupabaseClient extends Fake implements SupabaseClient {
     this.updateGate,
     this.historyRows = const [],
     this.failVersionInsert = false,
+    this.versionInsertGate,
   });
 
   @override
@@ -27,6 +28,7 @@ class _RecordingSupabaseClient extends Fake implements SupabaseClient {
   final Map<String, dynamic> noteRow;
   final List<Map<String, dynamic>> historyRows;
   final bool failVersionInsert;
+  final Completer<void>? versionInsertGate;
   final versionInserts = <Map<String, dynamic>>[];
 
   /// true にすると `_loadNote` の select が失敗する (= サーバー基準値が無い状態)。
@@ -63,7 +65,9 @@ class _FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
     String columns = '*',
   ]) {
     return _FakeSelectBuilder(
-      rows: table == 'note_versions' ? client.historyRows : <Map<String, dynamic>>[client.noteRow],
+      rows: table == 'note_versions'
+          ? client.historyRows
+          : <Map<String, dynamic>>[client.noteRow],
       shouldFail: client.failSelect && table == 'notes',
     );
   }
@@ -94,8 +98,14 @@ class _FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
     bool defaultToNull = true,
   }) {
     if (table == 'note_versions' && values is Map) {
-      if (client.failVersionInsert) throw StateError('Synthetic backup failure');
+      if (client.failVersionInsert) {
+        throw StateError('Synthetic backup failure');
+      }
       client.versionInserts.add(Map<String, dynamic>.from(values));
+      return _FakeMutationBuilder(
+        idValue: client.noteRow['id'],
+        waitFor: client.versionInsertGate?.future,
+      );
     }
     if (table == 'notes' && values is Map) {
       client.inserts.add(Map<String, dynamic>.from(values));
@@ -678,19 +688,56 @@ void main() {
   });
 
   group('note history restore backup', () {
+    testWidgets('editing during the backup never overwrites the newer draft', (tester) async {
+      final gate = Completer<void>();
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(),
+        versionInsertGate: gate,
+        historyRows: [{
+          'id': '22222222-2222-4222-8222-222222222222',
+          'title': 'Historical title',
+          'content': 'Historical body',
+          'saved_at': '2026-01-01T00:00:00Z',
+          'source_system': 'native',
+          'source_verified_at': null,
+        }],
+      );
+      await _pumpPage(tester, client);
+      await tester.tap(find.byTooltip('バージョン履歴'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Historical title'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('このタイトル・本文を復元'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('復元'));
+      await tester.pump();
+      _contentController(tester).text = 'New edit while backup is pending';
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(_contentController(tester).text, 'New edit while backup is pending');
+      expect(find.text('保全中に編集内容またはログイン状態が変わったため、復元を中止しました。'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      expect(client.updates.every((row) => row['content'] != 'Historical body'), isTrue);
+    });
+
     for (final failBackup in [false, true]) {
-      testWidgets('history backup failure=$failBackup preserves current content', (tester) async {
+      testWidgets(
+          'history backup failure=$failBackup preserves current content',
+          (tester) async {
         final client = _RecordingSupabaseClient(
           noteRow: _noteRow(),
           failVersionInsert: failBackup,
-          historyRows: [{
-            'id': '22222222-2222-4222-8222-222222222222',
-            'title': 'Historical title',
-            'content': 'Historical body',
-            'saved_at': '2026-01-01T00:00:00Z',
-            'source_system': 'native',
-            'source_verified_at': null,
-          }],
+          historyRows: [
+            {
+              'id': '22222222-2222-4222-8222-222222222222',
+              'title': 'Historical title',
+              'content': 'Historical body',
+              'saved_at': '2026-01-01T00:00:00Z',
+              'source_system': 'native',
+              'source_verified_at': null,
+            }
+          ],
         );
         await _pumpPage(tester, client);
         final before = _contentController(tester).text;

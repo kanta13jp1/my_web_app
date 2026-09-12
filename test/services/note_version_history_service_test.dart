@@ -63,16 +63,18 @@ void main() {
   });
   tearDown(() async => delegate.dispose());
 
-  test('page loads metadata only, with owner/note and stable ordering', () async {
-    response = (_) async =>
-        http.Response(jsonEncode(List.generate(31, row)), 200);
+  test('page loads metadata only, with owner/note and stable ordering',
+      () async {
+    response =
+        (_) async => http.Response(jsonEncode(List.generate(31, row)), 200);
     final page = await repository.loadPage('42');
     expect(page.items, hasLength(30));
     expect(page.hasMore, isTrue);
     final query = requests.single.url.queryParameters;
     expect(query['user_id'], 'eq.$owner');
     expect(query['note_id'], 'eq.42');
-    expect(query['select'], SupabaseNoteVersionHistoryRepository.summaryColumns);
+    expect(
+        query['select'], SupabaseNoteVersionHistoryRepository.summaryColumns,);
     expect(query['select'], isNot(contains('content')));
     expect(query['order'], contains('saved_at.desc.nullslast'));
     expect(query['order'], contains('id.desc'));
@@ -121,7 +123,8 @@ void main() {
   test('signed-out requests fail before accessing history', () async {
     client.auth.ownerId = null;
     await expectLater(repository.loadPage('42'), throwsStateError);
-    await expectLater(repository.loadDetail('42', versionId(1)), throwsStateError);
+    await expectLater(
+        repository.loadDetail('42', versionId(1)), throwsStateError,);
     expect(requests, isEmpty);
   });
 
@@ -143,7 +146,8 @@ void main() {
     expect(requests.single.url.queryParameters['id'], 'eq.${versionId(1)}');
   });
 
-  test('Evernote attachment metadata is paged beyond the API default', () async {
+  test('Evernote attachment metadata is paged beyond the API default',
+      () async {
     response = (request) async {
       if (request.url.path.endsWith('/note_versions')) {
         return http.Response(
@@ -161,12 +165,14 @@ void main() {
       final remaining = 1001 - after;
       final count = remaining > 100 ? 100 : remaining;
       return http.Response(
-        jsonEncode(List.generate(count, (index) => {
-              'id': after + index + 1,
-              'file_name': 'synthetic.png',
-              'mime_type': 'image/png',
-              'file_size': 10,
-            })),
+        jsonEncode(List.generate(
+            count,
+            (index) => {
+                  'id': after + index + 1,
+                  'file_name': 'synthetic.png',
+                  'mime_type': 'image/png',
+                  'file_size': 10,
+                },),),
         200,
       );
     };
@@ -180,8 +186,10 @@ void main() {
       expect(request.url.queryParameters['note_id'], 'eq.42');
     }
     for (final request in requests.skip(1)) {
-      expect(request.url.queryParameters['note_version_id'], 'eq.${versionId(1)}');
-      expect(request.url.queryParameters['select'], isNot(contains('file_path')));
+      expect(
+          request.url.queryParameters['note_version_id'], 'eq.${versionId(1)}',);
+      expect(
+          request.url.queryParameters['select'], isNot(contains('file_path')),);
     }
   });
 

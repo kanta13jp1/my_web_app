@@ -10,8 +10,8 @@ class NoteVersionCursor {
     }
     if (savedAt != null &&
         (!RegExp(
-          r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$',
-        ).hasMatch(savedAt!) ||
+              r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$',
+            ).hasMatch(savedAt!) ||
             DateTime.tryParse(savedAt!) == null)) {
       throw const FormatException('Invalid history timestamp');
     }

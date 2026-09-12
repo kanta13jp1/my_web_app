@@ -163,10 +163,15 @@ class _NoteVersionHistorySheetState extends State<NoteVersionHistorySheet> {
       );
     }
     final summary = detail.summary;
-    return ListView(
+    return CustomScrollView(
       key: ValueKey('history-preview-${summary.id}'),
-      padding: const EdgeInsets.all(16),
-      children: [
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
         SelectableText(
           summary.displayTitle,
           style: Theme.of(context).textTheme.titleLarge,
@@ -193,16 +198,6 @@ class _NoteVersionHistorySheetState extends State<NoteVersionHistorySheet> {
         const SizedBox(height: 16),
         if (summary.isEvernote) ...[
           Text('履歴に保存された添付：${detail.attachments.length}件'),
-          ...detail.attachments.map(
-            (attachment) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.attach_file),
-              title: Text(attachment.fileName),
-              subtitle: Text(
-                '${attachment.mimeType} / ${attachment.fileSize} bytes',
-              ),
-            ),
-          ),
         ] else ...[
           const Text(
             'この履歴の復元対象はタイトルと本文です。'
@@ -218,6 +213,28 @@ class _NoteVersionHistorySheetState extends State<NoteVersionHistorySheet> {
             ),
           ),
         ],
+              ],
+            ),
+          ),
+        ),
+        if (summary.isEvernote)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList.builder(
+              itemCount: detail.attachments.length,
+              itemBuilder: (context, index) {
+                final attachment = detail.attachments[index];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.attach_file),
+                  title: Text(attachment.fileName),
+                  subtitle: Text(
+                    '${attachment.mimeType} / ${attachment.fileSize} bytes',
+                  ),
+                );
+              },
+            ),
+          ),
       ],
     );
   }

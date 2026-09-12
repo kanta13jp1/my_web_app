@@ -36,7 +36,8 @@ void main() {
 
   setUp(() {
     repository = _Repository();
-    controller = NoteVersionHistoryController(repository: repository, noteId: '42');
+    controller =
+        NoteVersionHistoryController(repository: repository, noteId: '42');
   });
   tearDown(() => controller.dispose());
 
@@ -61,16 +62,17 @@ void main() {
     expect(repository.details, isEmpty);
   });
 
-  test('failed later page keeps loaded items and retries same cursor', () async {
-    repository.nextPage = () async =>
-        NoteVersionPage(items: [summary(1)], hasMore: true);
+  test('failed later page keeps loaded items and retries same cursor',
+      () async {
+    repository.nextPage =
+        () async => NoteVersionPage(items: [summary(1)], hasMore: true);
     await controller.loadMore();
     repository.nextPage = () async => throw StateError('private error payload');
     await controller.loadMore();
     expect(controller.items.single.id, summary(1).id);
     expect(controller.pageError, isNot(contains('private error payload')));
-    repository.nextPage = () async =>
-        NoteVersionPage(items: [summary(2)], hasMore: false);
+    repository.nextPage =
+        () async => NoteVersionPage(items: [summary(2)], hasMore: false);
     await controller.loadMore();
     expect(repository.cursors[1]?.id, repository.cursors[2]?.id);
     expect(controller.pageError, isNull);
@@ -133,8 +135,8 @@ void main() {
 
   test('non-advancing page is an error rather than an infinite load loop',
       () async {
-    repository.nextPage = () async =>
-        NoteVersionPage(items: [summary(1)], hasMore: true);
+    repository.nextPage =
+        () async => NoteVersionPage(items: [summary(1)], hasMore: true);
     await controller.loadMore();
     await controller.loadMore();
     expect(controller.pageError, isNotNull);
@@ -142,7 +144,8 @@ void main() {
   });
 
   test('disposal ignores an outstanding request', () async {
-    final other = NoteVersionHistoryController(repository: repository, noteId: '42');
+    final other =
+        NoteVersionHistoryController(repository: repository, noteId: '42');
     final gate = Completer<NoteVersionPage>();
     repository.nextPage = () => gate.future;
     final pending = other.loadMore();

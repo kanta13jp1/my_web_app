@@ -1814,9 +1814,20 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       ),
     );
     if (confirmed != true || !mounted) return;
+    final backupTitle = _titleController.text;
+    final backupContent = _contentController.text;
+    final backupOwner = _supabase.auth.currentUser?.id;
     try {
       await _saveVersionSnapshot(requiredForRestore: true);
       if (!mounted) return;
+      if (_titleController.text != backupTitle ||
+          _contentController.text != backupContent ||
+          _supabase.auth.currentUser?.id != backupOwner) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('保全中に編集内容またはログイン状態が変わったため、復元を中止しました。')),
+        );
+        return;
+      }
       setState(() {
         _titleController.text = selected.summary.title;
         _contentController.text = selected.content;
