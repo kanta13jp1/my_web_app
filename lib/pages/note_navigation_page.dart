@@ -92,7 +92,8 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
                 ? null
                 : () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        settings: const RouteSettings(name: '/note-collections'),
+                        settings:
+                            const RouteSettings(name: '/note-collections'),
                         builder: (_) => const NoteCollectionsPage(),
                       ),
                     ),
@@ -419,8 +420,8 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
         );
         break;
       case NoteShortcutTargetType.tag:
-        location = NoteRouteParameters(tag: shortcut.targetTag)
-            .location('/note-list');
+        location =
+            NoteRouteParameters(tag: shortcut.targetTag).location('/note-list');
         target = NoteListPage(initialTag: shortcut.targetTag);
         break;
       case NoteShortcutTargetType.savedSearch:
@@ -432,8 +433,8 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
           }
         }
         if (search != null) {
-          location = NoteRouteParameters(query: search.query)
-              .location('/note-list');
+          location =
+              NoteRouteParameters(query: search.query).location('/note-list');
           target = NoteListPage(initialSearchQuery: search.query);
         }
         break;

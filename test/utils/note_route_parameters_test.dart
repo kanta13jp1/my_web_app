@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/utils/note_route_parameters.dart';
 
 void main() {
-  test('encoded search and hierarchical tag filters survive a URL round trip', () {
+  test('encoded search and hierarchical tag filters survive a URL round trip',
+      () {
     const query = 'tag:"仕事 & 個人" AND intitle:"a?b#c"';
     const state = NoteRouteParameters(
       query: query,
@@ -23,7 +24,8 @@ void main() {
     expect(restored.includeNestedTags, isTrue);
   });
 
-  test('note and Space links retain their target and empty links stay clean', () {
+  test('note and Space links retain their target and empty links stay clean',
+      () {
     expect(
       const NoteRouteParameters(noteId: 123).location('/note-editor'),
       '/note-editor?noteId=123',
