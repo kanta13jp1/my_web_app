@@ -20,21 +20,25 @@ void main() {
       httpClient: MockClient((request) async {
         requests.add(request);
         if (request.method == 'POST') {
-          if (stored != null)
+          if (stored != null) {
             return http.Response('{"code":"23505","message":"duplicate"}', 409);
+          }
           stored = Map<String, dynamic>.from(jsonDecode(request.body) as Map);
           return http.Response('', 201);
         }
         if (request.method == 'PATCH') {
           if (request.url.queryParameters['updated_at'] !=
               'eq.${stored!['updated_at']}') {
-            return http.Response('[]', 200,
-                headers: {'content-type': 'application/json'});
+            return http.Response(
+              '[]',
+              200,
+              headers: {'content-type': 'application/json'},
+            );
           }
           stored = Map<String, dynamic>.from(jsonDecode(request.body) as Map);
           return http.Response(
             jsonEncode([
-              {'pref_key': stored!['pref_key']}
+              {'pref_key': stored!['pref_key']},
             ]),
             200,
             headers: {'content-type': 'application/json'},
@@ -51,50 +55,67 @@ void main() {
     final client = MockSupabaseClient();
     final auth = MockGoTrueClient();
     when(client.auth).thenReturn(auth);
-    when(auth.currentUser).thenReturn(User(
+    when(auth.currentUser).thenReturn(
+      const User(
         id: 'user-a',
         appMetadata: {},
         userMetadata: {},
         aud: 'authenticated',
-        createdAt: '2026-01-01'));
+        createdAt: '2026-01-01',
+      ),
+    );
     when(client.from('asset_pref_mirror'))
         .thenAnswer((_) => transport.from('asset_pref_mirror'));
     final repository = SupabaseAssetInterestRepository(client, 'user-a');
     final record = AssetInterestMonth(
-        month: '2026-08',
-        amounts: {'A': 100},
-        complete: true,
-        evidence: 'statement');
+      month: '2026-08',
+      amounts: {'A': 100},
+      complete: true,
+      evidence: 'statement',
+    );
     await repository.save(record);
     final restored = (await repository.load()).single;
     expect(restored.toJson(), record.toJson());
     expect(restored.revision, isNotNull);
     await expectLater(
-        repository.save(record), throwsA(isA<PostgrestException>()));
+      repository.save(record),
+      throwsA(isA<PostgrestException>()),
+    );
     await expectLater(
-        repository.save(AssetInterestMonth(
-            month: record.month,
-            amounts: {'A': 1},
-            complete: true,
-            evidence: 'statement',
-            revision: 'stale')),
-        throwsStateError);
+      repository.save(
+        AssetInterestMonth(
+          month: record.month,
+          amounts: {'A': 1},
+          complete: true,
+          evidence: 'statement',
+          revision: 'stale',
+        ),
+      ),
+      throwsStateError,
+    );
     expect((await repository.load()).single.total, 100);
-    await repository.save(AssetInterestMonth(
+    await repository.save(
+      AssetInterestMonth(
         month: record.month,
         amounts: {'A': 80},
         complete: true,
         evidence: 'statement',
-        revision: restored.revision));
+        revision: restored.revision,
+      ),
+    );
     expect((await repository.load()).single.total, 80);
     for (final request in requests) {
       expect(request.url.path, '/rest/v1/asset_pref_mirror');
       expect(request.headers['authorization'], 'Bearer user-a-jwt');
-      if (request.method != 'POST')
+      if (request.method != 'POST') {
         expect(request.url.queryParameters['user_id'], 'eq.user-a');
-      if (request.method == 'GET')
-        expect(request.url.queryParameters['pref_key'],
-            r'like.interest\_paid\_v1\_%');
+      }
+      if (request.method == 'GET') {
+        expect(
+          request.url.queryParameters['pref_key'],
+          r'like.interest\_paid\_v1\_%',
+        );
+      }
     }
     when(auth.currentUser).thenReturn(null);
     final count = requests.length;
