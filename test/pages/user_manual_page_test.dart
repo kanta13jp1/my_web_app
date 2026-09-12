@@ -7,6 +7,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: UserManualPage()));
+    await tester.scrollUntilVisible(
+      find.textContaining('ZIP を解凍し、中の .csv'),
+      500,
+      maxScrolls: 30,
+    );
 
     expect(find.textContaining('ZIP を解凍し、中の .csv'), findsOneWidget);
     expect(find.textContaining('「Excel (XLSX)」を選び'), findsOneWidget);
