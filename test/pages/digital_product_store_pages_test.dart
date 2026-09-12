@@ -128,7 +128,7 @@ double _contrast(Color first, Color second) {
 }
 
 void _expectButtonContrast(WidgetTester tester, String label) {
-  final finder = find.widgetWithText(FilledButton, label);
+  final finder = _filledButtonWithText(label);
   final button = tester.widget<FilledButton>(finder);
   final states = <WidgetState>{
     if (button.onPressed == null) WidgetState.disabled,
@@ -140,6 +140,13 @@ void _expectButtonContrast(WidgetTester tester, String label) {
   expect(
     _contrast(text.text.style!.color!, background),
     greaterThanOrEqualTo(4.5),
+  );
+}
+
+Finder _filledButtonWithText(String label) {
+  return find.ancestor(
+    of: find.text(label),
+    matching: find.byWidgetPredicate((widget) => widget is FilledButton),
   );
 }
 
@@ -338,7 +345,7 @@ void main() {
       await tester.tap(find.text('¥800 で購入'));
       await tester.pumpAndSettle();
       final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, '手続き中…'),
+        _filledButtonWithText('手続き中…'),
       );
       expect(button.onPressed, isNull);
       _expectButtonContrast(tester, '手続き中…');
