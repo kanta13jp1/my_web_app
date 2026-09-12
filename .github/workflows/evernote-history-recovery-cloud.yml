@@ -1,0 +1,70 @@
+name: Evernote History Recovery Sandbox
+
+on:
+  push:
+    branches: ['codex/evernote-history-recovery-*']
+    paths:
+      - '.github/workflows/evernote-history-recovery-cloud.yml'
+      - 'scripts/ci/note_history_recovery_sandbox.mjs'
+      - 'docs/technical/NOTE_HISTORY_RECOVERY_CLOUD.md'
+  pull_request:
+    paths:
+      - '.github/workflows/evernote-history-recovery-cloud.yml'
+      - 'scripts/ci/note_history_recovery_sandbox.mjs'
+      - 'docs/technical/NOTE_HISTORY_RECOVERY_CLOUD.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: history-recovery-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  private-byte-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SUPABASE_ACCESS_TOKEN: ''
+      SUPABASE_DB_PASSWORD: ''
+      DO_NOT_TRACK: '1'
+    steps:
+      - name: Checkout immutable event revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Validate dependency-free sandbox script
+        run: node --check scripts/ci/note_history_recovery_sandbox.mjs
+
+      - name: Install verified pinned CLI on runner only
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool_dir="$RUNNER_TEMP/evernote-history-cli"
+          mkdir -p "$tool_dir"
+          curl --fail --location --retry 3 --retry-all-errors \
+            'https://github.com/supabase/cli/releases/download/v2.117.0/supabase_linux_amd64.tar.gz' \
+            --output "$tool_dir/supabase.tar.gz"
+          printf '%s  %s\n' \
+            '69c05f85b9e47ee706d30f1a6ca8a526b4e337bfd12c7ef1ef522d24e7280d24' \
+            "$tool_dir/supabase.tar.gz" | sha256sum --check --strict -
+          tar -xzf "$tool_dir/supabase.tar.gz" -C "$tool_dir" supabase
+          chmod +x "$tool_dir/supabase"
+          echo "$tool_dir" >> "$GITHUB_PATH"
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install --yes postgresql-client
+          fi
+
+      - name: Exercise real Auth and private Storage with synthetic bytes
+        run: node scripts/ci/note_history_recovery_sandbox.mjs
+
+      - name: Preserve non-sensitive one-day result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: note-history-recovery-result
+          path: .ci-logs/note-history-recovery-result.json
+          retention-days: 1
+          if-no-files-found: warn
