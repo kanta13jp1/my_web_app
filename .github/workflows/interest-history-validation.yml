@@ -1,6 +1,9 @@
 name: Interest History Validation
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/interest-history-validation.yml'
 permissions:
   contents: write
 jobs:
@@ -10,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
