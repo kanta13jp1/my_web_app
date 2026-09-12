@@ -7,6 +7,12 @@ on:
       - 'lib/**/enex*.dart'
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
+      - 'lib/services/note_version_history_service.dart'
+      - 'lib/controllers/note_version_history_controller.dart'
+      - 'lib/widgets/note_version_history_sheet.dart'
+      - 'test/services/note_version_history_service_test.dart'
+      - 'test/controllers/note_version_history_controller_test.dart'
+      - 'test/widgets/note_version_history_sheet_test.dart'
       - 'lib/pages/note_tasks_page.dart'
       - 'lib/pages/note_navigation_page.dart'
       - 'lib/pages/note_collections_page.dart'
@@ -54,6 +60,12 @@ on:
       - 'lib/**/enex*.dart'
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
+      - 'lib/services/note_version_history_service.dart'
+      - 'lib/controllers/note_version_history_controller.dart'
+      - 'lib/widgets/note_version_history_sheet.dart'
+      - 'test/services/note_version_history_service_test.dart'
+      - 'test/controllers/note_version_history_controller_test.dart'
+      - 'test/widgets/note_version_history_sheet_test.dart'
       - 'lib/pages/note_tasks_page.dart'
       - 'lib/pages/note_navigation_page.dart'
       - 'lib/pages/note_collections_page.dart'
@@ -184,6 +196,12 @@ jobs:
             printf '%s\n' \
               lib/pages/import_page.dart \
               lib/pages/note_editor_page.dart \
+              lib/services/note_version_history_service.dart \
+              lib/controllers/note_version_history_controller.dart \
+              lib/widgets/note_version_history_sheet.dart \
+              test/services/note_version_history_service_test.dart \
+              test/controllers/note_version_history_controller_test.dart \
+              test/widgets/note_version_history_sheet_test.dart \
               lib/pages/note_tasks_page.dart \
               lib/pages/note_navigation_page.dart \
               lib/pages/note_collections_page.dart \

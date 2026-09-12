@@ -17,12 +17,17 @@ class _RecordingSupabaseClient extends Fake implements SupabaseClient {
     required this.noteRow,
     this.failSelect = false,
     this.updateGate,
+    this.historyRows = const [],
+    this.failVersionInsert = false,
   });
 
   @override
   final _FakeGoTrueClient auth = _FakeGoTrueClient();
 
   final Map<String, dynamic> noteRow;
+  final List<Map<String, dynamic>> historyRows;
+  final bool failVersionInsert;
+  final versionInserts = <Map<String, dynamic>>[];
 
   /// true にすると `_loadNote` の select が失敗する (= サーバー基準値が無い状態)。
   final bool failSelect;
@@ -58,7 +63,7 @@ class _FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
     String columns = '*',
   ]) {
     return _FakeSelectBuilder(
-      rows: <Map<String, dynamic>>[client.noteRow],
+      rows: table == 'note_versions' ? client.historyRows : <Map<String, dynamic>>[client.noteRow],
       shouldFail: client.failSelect && table == 'notes',
     );
   }
@@ -88,6 +93,10 @@ class _FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
     Object values, {
     bool defaultToNull = true,
   }) {
+    if (table == 'note_versions' && values is Map) {
+      if (client.failVersionInsert) throw StateError('Synthetic backup failure');
+      client.versionInserts.add(Map<String, dynamic>.from(values));
+    }
     if (table == 'notes' && values is Map) {
       client.inserts.add(Map<String, dynamic>.from(values));
     }
@@ -115,6 +124,9 @@ class _FakeSelectBuilder extends Fake
 
   @override
   _FakeSelectBuilder eq(String column, Object value) => this;
+
+  @override
+  _FakeSelectBuilder limit(int count, {String? referencedTable}) => this;
 
   @override
   _FakeSelectBuilder order(
@@ -663,6 +675,47 @@ void main() {
         reason: 'サーバー基準値が無いまま自動保存すると既存メモを潰す',
       );
     });
+  });
+
+  group('note history restore backup', () {
+    for (final failBackup in [false, true]) {
+      testWidgets('history backup failure=$failBackup preserves current content', (tester) async {
+        final client = _RecordingSupabaseClient(
+          noteRow: _noteRow(),
+          failVersionInsert: failBackup,
+          historyRows: [{
+            'id': '22222222-2222-4222-8222-222222222222',
+            'title': 'Historical title',
+            'content': 'Historical body',
+            'saved_at': '2026-01-01T00:00:00Z',
+            'source_system': 'native',
+            'source_verified_at': null,
+          }],
+        );
+        await _pumpPage(tester, client);
+        final before = _contentController(tester).text;
+        await tester.tap(find.byTooltip('バージョン履歴'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Historical title'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('このタイトル・本文を復元'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('復元'));
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+        if (failBackup) {
+          expect(_contentController(tester).text, before);
+          expect(client.updates, isEmpty);
+          expect(find.text('現在の内容を履歴に保全できなかったため、復元を中止しました。'), findsOneWidget);
+        } else {
+          expect(client.versionInserts.single['content'], before);
+          expect(_contentController(tester).text, 'Historical body');
+          expect(client.updates.last['content'], 'Historical body');
+          expect(client.updates.last['tags'], ['Evernote']);
+        }
+      });
+    }
   });
 
   group('note editor slash command bar', () {
