@@ -340,7 +340,9 @@ test('checkout working, failure, retry and same-visitor redirect', async ({ page
     await expect(page.getByRole('button', { name: '手続き中…', exact: true })).toBeDisabled();
     await capture(page, info, 'checkout-working-disabled');
   } finally { fixture.releaseCheckout(); }
-  const failure = page.getByText('購入手続きを開始できませんでした', { exact: true });
+  // Flutter merges adjacent error title/body into one semantics text node.
+  // Assert the complete title prefix and recovery copy, not an exact leaf node.
+  const failure = page.getByText(/^購入手続きを開始できませんでした/);
   await expect(failure).toBeVisible();
   await expect(page.getByText(/先に「購入済み」で購入状況を確認/)).toBeVisible();
   await expect(page.getByText(/FunctionException|fixture_checkout_unavailable/)).toHaveCount(0);
