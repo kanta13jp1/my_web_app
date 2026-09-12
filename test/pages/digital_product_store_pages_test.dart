@@ -1,19 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/services/shop_service.dart';
+import 'package:my_web_app/theme/design_tokens.dart';
 
 class _FakeShopGateway implements ShopGateway {
   _FakeShopGateway({
     this.products = const [],
     this.purchases = const [],
     this.signedIn = false,
+    this.pendingProduct,
   });
 
   final List<ShopProduct> products;
   final List<ShopPurchase> purchases;
   final bool signedIn;
+  final Completer<ShopProduct?>? pendingProduct;
 
   int checkoutCalls = 0;
   int downloadCalls = 0;
@@ -29,6 +34,7 @@ class _FakeShopGateway implements ShopGateway {
 
   @override
   Future<ShopProduct?> fetchProduct(String productId) async {
+    if (pendingProduct != null) return pendingProduct!.future;
     for (final product in products) {
       if (product.id == productId) return product;
     }
@@ -146,6 +152,61 @@ void main() {
   });
 
   group('DigitalProductPage', () {
+    testWidgets('loading is announced and cleared on completion', (tester) async {
+      final semantics = tester.ensureSemantics();
+      addTearDown(semantics.dispose);
+      final pending = Completer<ShopProduct?>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DigitalProductPage(
+            productId: 'fixture',
+            service: _FakeShopGateway(pendingProduct: pending),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.bySemanticsLabel('商品情報を読み込み中'), findsOneWidget);
+      final loading = tester.widget<Semantics>(
+        find.byWidgetPredicate(
+          (widget) => widget is Semantics &&
+              widget.properties.label == '商品情報を読み込み中',
+        ),
+      );
+      expect(loading.properties.liveRegion, isTrue);
+      pending.complete(null);
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('商品情報を読み込み中'), findsNothing);
+    });
+
+    testWidgets('product title remains legible with a light app bar theme',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            appBarTheme: const AppBarTheme(
+              titleTextStyle: TextStyle(color: Colors.black),
+            ),
+          ),
+          home: DigitalProductPage(
+            productId: 'fixture',
+            service: _FakeShopGateway(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final titleText = tester.widget<RichText>(
+        find.descendant(
+          of: find.text('デジタル商品'),
+          matching: find.byType(RichText),
+        ),
+      );
+      expect(titleText.text.style!.color, DesignTokens.textPrimary);
+      final contrast = (DesignTokens.textPrimary.computeLuminance() + 0.05) /
+          (DesignTokens.surface1.computeLuminance() + 0.05);
+      expect(contrast, greaterThanOrEqualTo(4.5));
+    });
+
     testWidgets('ログイン済みなら商品別Checkoutへ進める', (tester) async {
       final product = _product(
         'template-pack',

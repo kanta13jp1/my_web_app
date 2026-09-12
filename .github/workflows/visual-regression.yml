@@ -16,6 +16,8 @@ on:
       - playwright.config.ts
       - scripts/flutter_spa_server.py
       - test/e2e/**
+      - test/e2e-fixtures/**
+      - playwright.hexciv-shop.config.ts
   workflow_dispatch:
     inputs:
       update_snapshots:
@@ -66,6 +68,19 @@ jobs:
           flutter pub get
           npm ci
           npx playwright install --with-deps chromium
+
+      - name: Validate product accessibility changes and fixture discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format --output=none --set-exit-if-changed \
+            lib/pages/digital_product_store_pages.dart test/pages/digital_product_store_pages_test.dart
+          flutter test --concurrency=1 test/pages/digital_product_store_pages_test.dart
+          E2E_BASE_URL=https://example.invalid npx playwright test --list > .ci-public-test-discovery.txt
+          if grep -q hexciv_shop_fixture .ci-public-test-discovery.txt; then
+            echo '::error::Isolated fixtures leaked into default E2E discovery'
+            exit 1
+          fi
 
       - name: Build isolated Flutter Web fixture
         shell: bash
@@ -120,7 +135,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npx playwright test test/e2e/hexciv_shop_fixture.spec.ts \
+          npx playwright test --config=playwright.hexciv-shop.config.ts \
             --project=chromium --project=mobile-chrome --retries=0
 
       - name: Stop short-lived SPA server

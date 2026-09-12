@@ -426,7 +426,10 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
       appBar: AppBar(
         backgroundColor: DesignTokens.surface1,
         foregroundColor: DesignTokens.textPrimary,
-        title: const Text('デジタル商品'),
+        title: const Text(
+          'デジタル商品',
+          style: TextStyle(color: DesignTokens.textPrimary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pushNamed('/shop'),
@@ -460,7 +463,13 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
     if (_viewModel.loading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 80),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(
+          child: Semantics(
+            label: '商品情報を読み込み中',
+            liveRegion: true,
+            child: CircularProgressIndicator(),
+          ),
+        ),
       );
     }
     if (_viewModel.loadError != null) {

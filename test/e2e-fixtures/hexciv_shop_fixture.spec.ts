@@ -36,6 +36,7 @@ type Options = {
   empty?: boolean;
   purchasable?: boolean;
   failProductOnce?: boolean;
+  productErrorStatus?: number;
   holdProduct?: boolean;
   holdCheckout?: boolean;
   telemetryFails?: boolean;
@@ -105,7 +106,7 @@ async function installFixture(page: Page, options: Options = {}) {
         productCalls++;
         if (options.holdProduct) await productBarrier.promise;
         if (options.failProductOnce && productCalls === 1) {
-          return reply(route, { message: 'fixture_product_unavailable', code: 'FIXTURE' }, 503);
+          return reply(route, { message: 'fixture_product_unavailable', code: 'FIXTURE' }, options.productErrorStatus ?? 400);
         }
         // maybeSingle() in PostgREST requests an array, then checks its size.
         return reply(route, options.empty ? [] : [{ ...product,
@@ -135,8 +136,8 @@ async function installFixture(page: Page, options: Options = {}) {
     }
     if (url.origin === appOrigin && request.method() === 'GET') {
       if (url.pathname === '/fixture-checkout') {
-        return route.fulfill({ contentType: 'text/html',
-          body: '<!doctype html><h1>Mock checkout destination — no payment</h1>' });
+        return route.fulfill({ contentType: 'text/html; charset=utf-8',
+          body: '<!doctype html><meta charset="utf-8"><h1>Mock checkout destination — no payment</h1>' });
       }
       return route.continue();
     }
@@ -194,7 +195,9 @@ test('loading, guest CTA and three real-game screenshots', async ({ page }, info
   const fixture = await installFixture(page, { holdProduct: true });
   await openShop(page);
   try {
-    await expect(page.getByRole('progressbar')).toBeVisible();
+    const loading = page.locator('[aria-label="商品情報を読み込み中"]');
+    await expect(loading).toBeVisible();
+    await expect(loading).toHaveAttribute('aria-live', 'polite');
     await capture(page, info, 'loading');
   } finally { fixture.releaseProduct(); }
   await expect(page.getByText(title, { exact: true })).toBeVisible();
@@ -226,6 +229,16 @@ test('product request error can recover with retry', async ({ page }, info) => {
   await expect(page.getByText(title, { exact: true })).toBeVisible();
   expect(fixture.productCalls()).toBe(2);
   await capture(page, info, 'product-recovered');
+  await evidence(page, info, fixture);
+});
+
+test('transient product failure recovers through client automatic retry', async ({ page }, info) => {
+  const fixture = await installFixture(page, { failProductOnce: true, productErrorStatus: 503 });
+  await openShop(page);
+  await expect(page.getByText(title, { exact: true })).toBeVisible({ timeout: 30_000 });
+  expect(fixture.productCalls()).toBe(2);
+  await expect(page.getByText('商品情報を読み込めませんでした', { exact: true })).toHaveCount(0);
+  await capture(page, info, 'transient-request-recovered');
   await evidence(page, info, fixture);
 });
 
