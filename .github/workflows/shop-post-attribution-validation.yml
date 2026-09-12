@@ -169,7 +169,10 @@ jobs:
         name: Verify mock generation in the disposable runner only
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
-          bash scripts/ci/shop_dependency_offline.sh timeout 10m dart run build_runner build --delete-conflicting-outputs 2>&1 | tee dependency-evidence/mock-generation.log
+          # build_runner >=2.14 defaults to AOT. The retained Dart 3.10 SDK
+          # rejects dart compile with build hooks; use the documented JIT mode.
+          # Generate every configured output, then analyze and test all of it.
+          bash scripts/ci/shop_dependency_offline.sh timeout 10m dart run build_runner build --force-jit --delete-conflicting-outputs 2>&1 | tee dependency-evidence/mock-generation.log
           git diff --stat > dependency-evidence/generated-diff-stat.txt
           git diff --binary > dependency-evidence/generated-suggestion.patch
           sha256sum --check dependency-evidence/before.sha256
