@@ -240,11 +240,10 @@ class ImportService {
         );
       },
     );
-    final commitBlockedReason =
-        summary.warnings.isNotEmpty || hasEmptyResource
-            ? 'Evernote commit remains paused because at least one attachment '
-                'could not be decoded without warnings.'
-            : null;
+    final commitBlockedReason = summary.warnings.isNotEmpty || hasEmptyResource
+        ? 'Evernote commit remains paused because at least one attachment '
+            'could not be decoded without warnings.'
+        : null;
 
     return ImportPreviewResult(
       sourceType: 'evernote',
