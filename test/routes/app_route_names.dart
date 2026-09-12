@@ -222,6 +222,7 @@ const List<String> kAllAppRoutes = <String>[
   '/memory-search',
   '/mental-check',
   '/mental-health-tracker',
+  '/micro-mentors',
   '/mind-map',
   '/mindless-task',
   '/mindmap',
