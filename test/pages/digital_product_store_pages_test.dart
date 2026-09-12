@@ -155,29 +155,32 @@ void main() {
     testWidgets('loading is announced and cleared on completion',
         (tester) async {
       final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
-      final pending = Completer<ShopProduct?>();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: DigitalProductPage(
-            productId: 'fixture',
-            service: _FakeShopGateway(pendingProduct: pending),
+      try {
+        final pending = Completer<ShopProduct?>();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: DigitalProductPage(
+              productId: 'fixture',
+              service: _FakeShopGateway(pendingProduct: pending),
+            ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      expect(find.bySemanticsLabel('商品情報を読み込み中'), findsOneWidget);
-      final loading = tester.widget<Semantics>(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is Semantics && widget.properties.label == '商品情報を読み込み中',
-        ),
-      );
-      expect(loading.properties.liveRegion, isTrue);
-      pending.complete(null);
-      await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel('商品情報を読み込み中'), findsNothing);
+        expect(find.bySemanticsLabel('商品情報を読み込み中'), findsOneWidget);
+        final loading = tester.widget<Semantics>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Semantics && widget.properties.label == '商品情報を読み込み中',
+          ),
+        );
+        expect(loading.properties.liveRegion, isTrue);
+        pending.complete(null);
+        await tester.pumpAndSettle();
+        expect(find.bySemanticsLabel('商品情報を読み込み中'), findsNothing);
+      } finally {
+        semantics.dispose();
+      }
     });
 
     testWidgets('product title remains legible with a light app bar theme',
