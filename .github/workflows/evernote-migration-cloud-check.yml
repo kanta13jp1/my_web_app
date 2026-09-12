@@ -226,7 +226,159 @@ jobs:
             fi
           done | sort -u > .ci-logs/evernote-dart-files.txt
 
-          grep '^test/' .ci-logs/evernote-dart-files.txt             > .ci-logs/evernote-test-files.txt || true
+          grep '^test/.*_test\.dart .ci-logs/evernote-dart-files.txt             > .ci-logs/evernote-test-files.txt || true
+
+          if [ -s .ci-logs/evernote-dart-files.txt ]; then
+            echo 'has_dart=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'has_dart=false' >> "$GITHUB_OUTPUT"
+          fi
+          if [ -s .ci-logs/evernote-test-files.txt ]; then
+            echo 'has_tests=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'has_tests=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Format and capture review patch
+        id: formatting
+        if: steps.targets.outputs.has_dart == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t dart_files < .ci-logs/evernote-dart-files.txt
+          dart format "${dart_files[@]}"
+          if [ -f pubspec.lock ]; then
+            git add -N -- pubspec.lock
+          fi
+          git diff --binary -- pubspec.lock "${dart_files[@]}"             > .ci-logs/evernote-cloud-format.patch
+          if [ -s .ci-logs/evernote-cloud-format.patch ]; then
+            echo 'mismatch=true' >> "$GITHUB_OUTPUT"
+            echo "::warning::Formatting or pubspec.lock differs; download the patch artifact."
+            patch_bytes="$(wc -c < .ci-logs/evernote-cloud-format.patch)"
+            if [ "$patch_bytes" -le 100000 ]; then
+              echo "::group::Cloud formatting patch"
+              cat .ci-logs/evernote-cloud-format.patch
+              echo "::endgroup::"
+            else
+              echo "::warning::Formatting patch is too large to print safely."
+            fi
+          else
+            echo 'mismatch=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload one-day formatting patch
+        if: always() && hashFiles('.ci-logs/evernote-cloud-format.patch') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: evernote-cloud-format-patch
+          path: .ci-logs/evernote-cloud-format.patch
+          retention-days: 1
+          if-no-files-found: ignore
+
+      - name: Analyze project on runner
+        run: flutter analyze
+
+      - name: Run scoped migration and feature tests
+        if: steps.targets.outputs.has_tests == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t test_files < .ci-logs/evernote-test-files.txt
+          flutter test --concurrency=2 "${test_files[@]}"
+
+      - name: Run optional web import smoke
+        if: github.event_name == 'workflow_dispatch' && inputs.run_web_smoke
+        run: flutter test --platform chrome test/web_import_smoke_test.dart
+
+      - name: Run optional release web build
+        if: github.event_name == 'workflow_dispatch' && inputs.run_release_build
+        run: >-
+          flutter build web --release --pwa-strategy=none
+          --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
+        env:
+          FLUTTER_WEB: true
+
+      - name: Require checked-in formatting
+        if: steps.formatting.outputs.mismatch == 'true'
+        shell: bash
+        run: |
+          echo "::error::Apply and review the evernote-cloud-format-patch artifact."
+          exit 1
+
+
+  hierarchy-db-contract:
+    name: Evernote hierarchy, navigation, nested-tag, history, and Task database contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - name: Checkout immutable event revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Apply hierarchy, navigation, nested-tag, history, and Task migrations to disposable Postgres
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install --yes postgresql-client
+          fi
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_collections_bootstrap.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831005351_add_evernote_note_collections.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831010954_add_evernote_note_history_gate.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831014500_add_evernote_note_tasks_gate.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831023000_add_note_task_assignees.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831031500_add_note_feature_notifications.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831040000_add_evernote_navigation_inventory.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831041000_add_evernote_nested_tags.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831050000_add_evernote_note_collection_management.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20260831060000_add_evernote_space_sharing.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_collections_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_collection_management_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_space_sharing_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_nested_tags_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_navigation_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_tasks_contract.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/evernote_note_history_contract.sql
+ .ci-logs/evernote-dart-files.txt             > .ci-logs/evernote-test-files.txt || true
 
           if [ -s .ci-logs/evernote-dart-files.txt ]; then
             echo 'has_dart=true' >> "$GITHUB_OUTPUT"
