@@ -1795,6 +1795,15 @@ void main() {
           home: AssetManagementPage(
             assetLiabilityRepository: _FakeDebtOverrideRepository(
               <String, int>{'mobit': now.day},
+              // Keep this sorting test independent of the calendar's fixed bills.
+              monthlyState: const AssetLiabilityMonthlyState(
+                paidAccountNames: <String>{
+                  AssetLiabilityPlanningService.kddiProviderAccountId,
+                  AssetLiabilityPlanningService.rentAccountId,
+                  AssetLiabilityPlanningService.waterBillAccountId,
+                  AssetLiabilityPlanningService.gasBillAccountId,
+                },
+              ),
             ),
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
@@ -1827,7 +1836,11 @@ void main() {
 
       expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
       expect(livingExpense, findsOneWidget);
-      expect(overdue, findsNothing);
+      expect(overdue, findsOneWidget);
+      expect(
+        tester.getTopLeft(livingExpense).dy,
+        lessThan(tester.getTopLeft(overdue).dy),
+      );
 
       await tester.tap(toggle);
       await tester.pump(const Duration(milliseconds: 100));
