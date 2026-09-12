@@ -33568,11 +33568,10 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - Supabase検証はrepositoryの`config.toml`だけを一時projectへコピーし、既存application migration/seedのfrom-scratch driftをrootless runtime受け入れから分離した。停止はephemeral runner上で`--no-backup`を使用し、orphan container 0件とdaemon停止を確認した。
 - workflowはread-only権限、production secretなし、`pull_request_target`なし、privileged containerなしを維持した。ローカルのPodman/WSL2 machineは停止したままとし、重い再検証はクラウドへ限定する。
 
-### daily-development セッション記録: ユーザーマニュアル×インポート実装のドリフト修正 (2026-09-08 JST)
+### daily-development セッション記録 (2026-09-10 / Claude Code Win版)
 
-- `user_manual_page.dart` が謳う6つのインポート手順(Notion/Evernote/MoneyForward/X/GitHub/Markdown)を `import_page.dart` の実装(`sourceType` ごとの許可拡張子・列名マッチングロジック)と突き合わせたところ、4件が実行不可能だった。
-- Notion: マニュアルは「ダウンロードしたZIPをそのまま選択」と指示していたが、`notion` sourceTypeの許可拡張子は`csv`のみでZIPは選択ダイアログに表示されない。解凍後の.csvを選ぶ手順に修正。
-- MoneyForward: `moneyforward` という sourceType自体が存在しない。CSVをNotionカード経由で投げても列名マッチング(`title/name`・`content/text`等)がMoneyForwardの日本語ヘッダー(日付・内容・金額)を一つも拾わず**取り込み0件の無言失敗**になる。xlsx用の汎用パーサーは`内容`/`メモ`を列候補に含んでいたため、CSVをExcel変換してからxlsxカードでアップロードする実際に動く迂回路に手順を差し替えた。コード変更ゼロ。
-- X (Twitter) / GitHub: 公式エクスポート形式(ZIP内JS / .tar.gz)を受理するsourceTypeが存在しないため、直接インポート未対応である旨を明記し、テキストを手動で.mdへ変換してMarkdownインポートを使う代替手順に修正した。
-- 検証: 変更対象ファイルの`flutter analyze`(0件)、`dart format --set-exit-if-changed`(差分なし)、既存の`test/pages/user_manual_page_test.dart`(1件 pass)で確認。バックエンド・Edge Function・financial dataには一切触れていない。
-- 副産物として `/money-forward` (MoneyForwardPage) がホーム画面のどこからもリンクされておらず、かつ裏の `social-commerce-hub` Edge Function の `mf.connect_url`/`mf.sync` がハードコードされた固定レスポンス(`url: "/oauth/moneyforward"`、`synced: 0`)を返すダミー実装であることを発見した。実際のOAuth連携は一切実装されていないため、ボタンを押しても「認証URLを取得しました」という偽の成功表示が出るだけで何も起きない。財務データに関わる領域のため本セッションでは着手せず、別セッションでの人間レビュー付き対応を推奨する形でフォローアップを切り出した。
+- メインの作業チェックアウト `fix/ci-clean-analyzer` が origin/main から276コミット遅れ・2コミット進み、かつ `.codex-staging-*` 等の他インスタンスWIPらしき未コミット変更(79ファイル相当)を抱えていたため、既定方針([[feedback_scheduled_task_codex_wip_observe_only]] 系)に従いそのブランチ上では一切 `git add`/`commit`/`checkout` を行わず、origin/main から独立した worktree (`daily-dev-20260910`) を作成して本セッションの成果物のみをそこから main へ直接 landing した。
+- 直近5件のマージ済み資産管理修正 (ユーザーマニュアル手順整合 #5365 / 支払元無効アラート誤検知抑制 #5218 / AI根拠確認の否定文脈誤検知修正 #5369 / 債務間根拠確認セグメント化 #5370 / 給料収入自動整合+未受領誤検知防止 #5371) を `development_achievements` に記録した (本コミットで追加した migration)。
+- 技術ブログ下書きパイプライン `docs/blog-drafts/` は既に 2026-03-27〜2030年分 (795ファイル) がキュー済みであることを確認し、本日の手動追加は見送った (既存自動化で十分供給されている)。
+- 2026-09-08 セッションで follow-up 切り出し済みの `/money-forward` ダミー実装 (`social-commerce-hub` EF の `mf.connect_url`/`mf.sync` が固定値を返すのみ) は、財務データ領域のため本セッションでは着手せず、別セッションでの人間レビュー前提の対応を維持する方針を継続した。
+- `fix/ci-clean-analyzer` ブランチ自体の整理 (rebase/マージ or 破棄の判断) は owner 確認が必要なため、次回セッションへの推奨事項として記録する。

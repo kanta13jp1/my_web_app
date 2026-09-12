@@ -137,6 +137,45 @@ Error-Microcopy-Review: not-applicable — <specific reason, at least one senten
 Design plugin is unavailable, the audit is blocked; a different tool or an
 unchecked PR box is not evidence that this Issue's acceptance condition passed.
 
+## Visual Parity Exemption (Non-Visual Refactors Only)
+
+A PR that touches a UI-surface file but changes no rendered output — e.g.
+swapping `TextFormField(initialValue: ...)` for a `TextField` bound to a
+persistent `TextEditingController` to fix a state-loss bug — can skip the
+full Design plugin audit above without a plugin review, but only if
+`scripts/check_design_accessibility_audit.py` can mechanically prove there
+is no visual change. This is **not** a self-declared bypass: the script
+independently tokenizes the base and head revisions of the changed file and
+requires their widget-call/visible-string-literal sequence ("visual
+fingerprint") to match exactly. Any parse ambiguity, any changed/added
+label, hint, error, or button text, and any widget-type change outside the
+reviewed `WIDGET_ALIASES` table fails the check closed — the full audit
+contract above is then required, and nothing about this exemption weakens
+it. `Key`/`ValueKey`/etc. arguments, empty string literals, and calls to a
+small reviewed list of non-widget SDK classes (e.g.
+`TextEditingController`, `FocusNode`) are excluded from the fingerprint
+because they cannot affect what is painted — see the code comments next to
+`_KEY_CONSTRUCTOR_NAMES` and `_NON_WIDGET_CALL_NAMES` for the exact,
+human-reviewed list.
+
+To use it, add this section to the PR body instead of the full evidence
+block, naming every function you touched or added in the file (existing or
+new — the script uses this list only to confirm the names are real; the
+actual pass/fail is the whole-file fingerprint comparison):
+
+```markdown
+## Visual Parity Exemption
+
+- File: lib/pages/asset_management_page.dart; Functions: _buildRevolvingField, _syncRevolvingFieldControllers
+```
+
+If the fingerprint check fails, the script reports why and falls back to
+requiring the full `## Design Accessibility Audit` contract — there is no
+partial credit. This exemption exists specifically for internal
+implementation changes (state management, controllers, refactors) with no
+user-visible effect; anything that changes what a user sees or reads still
+requires the full plugin review.
+
 ## CI Boundary
 
 `scripts/check_design_accessibility_audit.py` checks whether a UI change needs

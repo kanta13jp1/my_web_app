@@ -833,6 +833,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <String, TextEditingController>{};
   final Map<String, TextEditingController> _annualRateControllers =
       <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingMonthlyAmountControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingNewUsageAmountControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingCreditLimitControllers =
+      <String, TextEditingController>{};
   final Set<String> _verifyingAnnualRateEvidenceAccountIds = <String>{};
   NoteImagePasteRegistration? _annualRateEvidencePasteRegistration;
   AssetLiabilityDebtRow? _annualRateEvidencePasteTargetRow;
@@ -1292,6 +1298,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       (_, controller) => controller.dispose(),
     );
     _annualRateControllers.forEach((_, controller) => controller.dispose());
+    _revolvingMonthlyAmountControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
+    _revolvingNewUsageAmountControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
+    _revolvingCreditLimitControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
     _cardStatementImportController.dispose();
     _assetCsvRestoreController.dispose();
     _repaymentSimulationExtraPaymentController.dispose();
@@ -2161,8 +2176,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _debtPaymentDayOverrides = Map<String, int>.from(
           debtPaymentDayOverrides,
         );
-        _monthlyIncomePlans = List<AssetLiabilityIncomePlan>.from(
+        final reconciledIncomePlans = _reconcileIncomePlans(
           incomePlansWithTemplates,
+        );
+        _monthlyIncomePlans = List<AssetLiabilityIncomePlan>.from(
+          reconciledIncomePlans,
         );
         _transferTasks = List<AssetLiabilityTransferTask>.from(
           state.transferTasks,
@@ -2182,6 +2200,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _loadedAssetLiabilityMonthKey = monthKey;
         _syncPaymentStateControllers();
       });
+      if (_hasAnySalaryIncomePlanReconciled(
+        incomePlansWithTemplates,
+        _monthlyIncomePlans,
+      )) {
+        unawaited(_saveAssetLiabilityMonthlyState());
+      }
       unawaited(_refreshSyncSources());
       // ローカル(_debtPaymentDayOverrides)反映後に呼ぶ。空でなくても union
       // マージ/バックフィルするため常に実行する。
@@ -2193,6 +2217,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       // 月次stateロード後(残高/フローも揃った状態)に給料振込検知を再評価する。
       _maybeDetectSalaryDeposit();
+      _reconcileAndSaveSalaryIncomePlansIfPending();
     } catch (e) {
       debugPrint('Error loading asset liability monthly state: $e');
     }
@@ -3035,6 +3060,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _syncActualPaymentControllers();
     _syncPaymentDifferenceReasonControllers();
     _syncAnnualRateControllers();
+    _syncRevolvingFieldControllers();
+  }
+
+  void _syncRevolvingFieldControllers() {
+    void syncOne(
+      Map<String, TextEditingController> controllers,
+      double Function(AssetLiabilityRevolvingCreditConfig config) selector,
+    ) {
+      for (final entry in controllers.entries) {
+        final config = _revolvingConfigs[entry.key];
+        final amount = config == null ? 0.0 : selector(config);
+        final text = amount > 0 ? amount.round().toString() : '';
+        if (entry.value.text != text) {
+          entry.value.text = text;
+        }
+      }
+    }
+
+    syncOne(_revolvingMonthlyAmountControllers, (c) => c.monthlyAmount);
+    syncOne(_revolvingNewUsageAmountControllers, (c) => c.newUsageAmount);
+    syncOne(_revolvingCreditLimitControllers, (c) => c.creditLimit);
   }
 
   void _syncMonthlyPaymentControllers() {
@@ -3122,6 +3168,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             : '',
       ),
     );
+  }
+
+  TextEditingController _revolvingMonthlyAmountControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingMonthlyAmountControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.monthlyAmount ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
+  }
+
+  TextEditingController _revolvingNewUsageAmountControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingNewUsageAmountControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.newUsageAmount ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
+  }
+
+  TextEditingController _revolvingCreditLimitControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingCreditLimitControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.creditLimit ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
   }
 
   String _formatRateInput(double rate) {
@@ -3271,11 +3350,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _annualRateOverrides.remove(row.id);
         _annualRateEvidences.remove(row.id);
       } else {
-        final currentEvidence = _annualRateEvidences[row.id];
-        if (currentEvidence == null ||
-            !currentEvidence.matchesAnnualRate(parsed)) {
-          _annualRateOverrides.remove(row.id);
-        }
+        // 証跡は任意。出資法の上限（年利20%）を超えない限り、手入力した年利を
+        // そのまま保存する。証跡の有無は verified 表示にのみ反映する。
+        _annualRateOverrides[row.id] = parsed;
       }
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -3459,11 +3536,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _annualRateEvidencePasteTargetRow = null;
       }
       _annualRateEvidences[row.id] = evidence;
-      if (evidence.matchesAnnualRate(rate)) {
-        _annualRateOverrides[row.id] = rate;
-      } else {
-        _annualRateOverrides.remove(row.id);
-      }
+      // 証跡が一致しなくても手入力した年利は破棄しない（証跡は任意のため）。
+      // 一致有無は verified 表示で区別する。
+      _annualRateOverrides[row.id] = rate;
     });
     unawaited(_saveAssetLiabilityMonthlyState());
     ScaffoldMessenger.of(context).showSnackBar(
@@ -5392,7 +5467,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
       cardUsagePolicies: _cardUsagePolicies,
-      incomePlans: _monthlyIncomePlans,
+      incomePlans: _reconcileIncomePlans(_monthlyIncomePlans),
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
       salaryDay: _salaryDay,
@@ -7848,6 +7923,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         // フロー更新後に給料振込検知を再評価(サイクル窓の収入が増えた可能性)。
         _maybeDetectSalaryDeposit();
+        _reconcileAndSaveSalaryIncomePlansIfPending();
       }
     } catch (e) {
       debugPrint('Error fetching flows: $e');
@@ -8076,6 +8152,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ].join(':');
   }
 
+  /// その口座が負債マスタ（返済スケジュールを持つ債務）として管理されているか。
+  ///
+  /// FamiPay翌月払いのように、口座名はプリペイド系ブランドでも実体が与信取引の
+  /// ケースがある。負債マスタ側の分類を正としてこれを判定し、残高悪化を支出として
+  /// 自動記録しないようにする（借入であり、購入はカード明細から取り込まれるため）。
+  bool _isDebtMasterManagedAccount(String assetType) {
+    final target = assetType.trim();
+    if (target.isEmpty) {
+      return false;
+    }
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook == null) {
+      return false;
+    }
+    for (final row in workbook.debtMasterRows) {
+      if (row.name.trim() == target) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<bool> _autoRecordUnknownExpenseFromAssetDrop({
     required String assetType,
     required String dateKey,
@@ -8086,6 +8184,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (userId == null ||
         !AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
           assetType: assetType,
+          isManagedLiability: _isDebtMasterManagedAccount(assetType),
           previousAmount: previousAmount,
           currentAmount: currentAmount,
         )) {
@@ -9477,7 +9576,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardBillingAccountIds: _cardBillingAccountIds,
       revolvingConfigs: _revolvingConfigs,
       cardUsagePolicies: _cardUsagePolicies,
-      incomePlans: _monthlyIncomePlans,
+      incomePlans: _reconcileIncomePlans(_monthlyIncomePlans),
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
       recurringFixedCosts: _recurringFixedCosts,
@@ -10091,6 +10190,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _salaryResetMarkerStore.save(merged),
         'salary reset marker restore save',
       );
+      _reconcileAndSaveSalaryIncomePlansIfPending();
     } catch (e) {
       debugPrint('salary reset marker mirror restore failed: $e');
     }
@@ -10165,6 +10265,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     _pendingSalaryResetAck = currentCycleKey;
+    _reconcileAndSaveSalaryIncomePlansIfPending(forceSalaryReceived: true);
     unawaited(
       _acknowledgeSalaryReset(currentCycleKey).whenComplete(() {
         _pendingSalaryResetAck = null;
@@ -10281,6 +10382,91 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return maxAmount > 0 ? maxAmount : null;
   }
 
+  bool _hasSalaryInflowInCurrentCycle() {
+    for (final flow in _flowsForCycle(_now)) {
+      if (_isIncomeActionType(flow['action_type']?.toString() ?? '')) {
+        final amount = ((flow['amount'] as num?)?.toDouble() ?? 0).abs();
+        final description = flow['description']?.toString() ?? '';
+        final title = flow['title']?.toString() ?? '';
+        if (amount >= 200000 ||
+            description.contains('給与') ||
+            description.contains('給料') ||
+            title.contains('給与') ||
+            title.contains('給料')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool _isSalaryIncomePlan(AssetLiabilityIncomePlan plan) {
+    final name = plan.name.toLowerCase();
+    return name.contains('給料') ||
+        name.contains('給与') ||
+        name.contains('salary') ||
+        (_salaryAmount != null && (_salaryAmount! - plan.amount).abs() < 100);
+  }
+
+  List<AssetLiabilityIncomePlan> _reconcileIncomePlans(
+    List<AssetLiabilityIncomePlan> plans, {
+    bool forceSalaryReceived = false,
+  }) {
+    final shouldMarkSalaryReceived =
+        forceSalaryReceived || _hasSalaryInflowInCurrentCycle();
+
+    if (!shouldMarkSalaryReceived) {
+      return plans;
+    }
+
+    return [
+      for (final plan in plans)
+        if (_isSalaryIncomePlan(plan) && !plan.received)
+          AssetLiabilityIncomePlan(
+            id: plan.id,
+            date: plan.date,
+            name: plan.name,
+            amount: plan.amount,
+            destinationAccountId: plan.destinationAccountId,
+            destinationAccountName: plan.destinationAccountName,
+            received: true,
+          )
+        else
+          plan,
+    ];
+  }
+
+  bool _hasAnySalaryIncomePlanReconciled(
+    List<AssetLiabilityIncomePlan> original,
+    List<AssetLiabilityIncomePlan> reconciled,
+  ) {
+    if (original.length != reconciled.length) return true;
+    for (var i = 0; i < original.length; i++) {
+      if (original[i].received != reconciled[i].received) return true;
+    }
+    return false;
+  }
+
+  void _reconcileAndSaveSalaryIncomePlansIfPending({
+    bool forceSalaryReceived = false,
+  }) {
+    if (_monthlyIncomePlans.isEmpty) return;
+    final reconciled = _reconcileIncomePlans(
+      _monthlyIncomePlans,
+      forceSalaryReceived: forceSalaryReceived,
+    );
+    if (_hasAnySalaryIncomePlanReconciled(_monthlyIncomePlans, reconciled)) {
+      if (mounted) {
+        setState(() {
+          _monthlyIncomePlans = reconciled;
+        });
+      } else {
+        _monthlyIncomePlans = reconciled;
+      }
+      unawaited(_saveAssetLiabilityMonthlyState());
+    }
+  }
+
   /// 手動で「給料を受け取った」=支払済みチェックを新サイクルへリセットする。
   Future<void> _confirmManualSalaryReset() async {
     final confirmed = await showDialog<bool>(
@@ -10306,6 +10492,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (confirmed != true || !mounted) {
       return;
     }
+    _reconcileAndSaveSalaryIncomePlansIfPending(forceSalaryReceived: true);
     await _acknowledgeSalaryReset(_currentSalaryCycleKey());
   }
 
@@ -29542,28 +29729,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (config != null) ...[
           const SizedBox(height: 6),
           _buildRevolvingField(
-            row: row,
+            fieldKey: ValueKey('revolving:${row.id}:最低返済額'),
             label: '最低返済額',
             hint: '例: 10000',
-            value: config.monthlyAmount,
+            controller: _revolvingMonthlyAmountControllerFor(row),
             onChanged: (amount) =>
                 _updateRevolvingMonthlyAmount(row.id, amount),
           ),
           const SizedBox(height: 6),
           _buildRevolvingField(
-            row: row,
+            fieldKey: ValueKey('revolving:${row.id}:新規利用額'),
             label: '新規利用額',
             hint: '明細未取込時のみ',
-            value: config.newUsageAmount,
+            controller: _revolvingNewUsageAmountControllerFor(row),
             onChanged: (amount) =>
                 _updateRevolvingNewUsageAmount(row.id, amount),
           ),
           const SizedBox(height: 6),
           _buildRevolvingField(
-            row: row,
+            fieldKey: ValueKey('revolving:${row.id}:利用限度額'),
             label: '利用限度額',
             hint: '与信枠確認用',
-            value: config.creditLimit,
+            controller: _revolvingCreditLimitControllerFor(row),
             onChanged: (amount) => _updateRevolvingCreditLimit(row.id, amount),
           ),
           const SizedBox(height: 6),
@@ -29590,10 +29777,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildRevolvingField({
-    required AssetLiabilityDebtRow row,
+    required Key fieldKey,
     required String label,
     required String hint,
-    required double value,
+    required TextEditingController controller,
     required ValueChanged<double> onChanged,
   }) {
     return Row(
@@ -29603,9 +29790,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           child: Text(label, style: const TextStyle(fontSize: 11, height: 1.3)),
         ),
         Expanded(
-          child: TextFormField(
-            key: ValueKey('revolving:${row.id}:$label'),
-            initialValue: value > 0 ? value.toStringAsFixed(0) : '',
+          child: TextField(
+            key: fieldKey,
+            controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
@@ -29824,8 +30011,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             decoration: InputDecoration(
               isDense: true,
               hintText: _formatRateInput(row.annualRate),
-              helperText:
-                  hasOverride ? (verified ? 'AI確認済み' : '証跡確認が必要') : '年利変更は証跡必須',
+              helperText: hasOverride
+                  ? (verified ? 'AI証跡で確認済み' : '手入力を保存済み（証跡は任意）')
+                  : '契約書の年利を入力（証跡は任意）',
               suffixText: '%',
               suffixIcon: hasOverride
                   ? IconButton(
@@ -29885,8 +30073,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final verified = evidence?.matchesAnnualRate(requestedRate) ?? false;
     final color = verified
         ? const Color(0xFF0D9488)
+        // 証跡は任意のため、未提出をエラー色（赤）で示さない。
         : evidence == null
-            ? const Color(0xFFDC2626)
+            ? const Color(0xFF475569)
             : const Color(0xFFD97706);
     final label = verified
         ? 'AI証跡OK'
