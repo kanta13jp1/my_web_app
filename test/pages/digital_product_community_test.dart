@@ -236,16 +236,17 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        final scroll = find.descendant(
-          of: find.byKey(const ValueKey('product-detail-scroll')),
+        final scroll = find.ancestor(
+          of: find.text('更新情報と口コミを再読み込み'),
           matching: find.byType(Scrollable),
         );
+        expect(scroll, findsOneWidget);
         final position = tester.state<ScrollableState>(scroll).position;
         position.jumpTo(position.maxScrollExtent);
         await tester.pumpAndSettle();
-        final reload = find.widgetWithText(
-          TextButton,
-          '更新情報と口コミを再読み込み',
+        final reload = find.ancestor(
+          of: find.text('更新情報と口コミを再読み込み'),
+          matching: find.byWidgetPredicate((widget) => widget is TextButton),
         );
         final inbox = find.byKey(const Key('universal_inbox_capture_button'));
         expect(inbox, findsOneWidget);

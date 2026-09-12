@@ -653,9 +653,10 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
             ],
           ),
         const SizedBox(height: 24),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.end,
           children: [
             Text(
               '¥${product.priceJpy}',
@@ -665,7 +666,6 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: 8),
             const Text(
               '税込 / 買い切り',
               style: TextStyle(color: DesignTokens.textSecondary, fontSize: 13),
