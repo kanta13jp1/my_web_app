@@ -28,7 +28,7 @@ void main() {
     requests = [];
     responseStatus = 200;
     checkoutResponse = {
-      'checkout_url': 'https://checkout.example.invalid/test'
+      'checkout_url': 'https://checkout.example.invalid/test',
     };
     client = SupabaseClient(
       'https://example.supabase.co',
@@ -55,10 +55,13 @@ void main() {
     for (final stage in [
       'product_view',
       'purchase_click',
-      'checkout_redirect'
+      'checkout_redirect',
     ]) {
-      await funnel.record(stage,
-          productId: 'hexciv-win64', attribution: labels);
+      await funnel.record(
+        stage,
+        productId: 'hexciv-win64',
+        attribution: labels,
+      );
     }
     expect(requests, hasLength(3));
     for (var index = 0; index < requests.length; index++) {
@@ -80,8 +83,11 @@ void main() {
       productId: 'hexciv-win64',
       attribution: const ShopAttribution.unavailable(),
     );
-    await funnel.record('product_view',
-        productId: 'hexciv-win64', source: 'a/b');
+    await funnel.record(
+      'product_view',
+      productId: 'hexciv-win64',
+      source: 'a/b',
+    );
     await funnel.record(
       'purchase_complete',
       productId: 'hexciv-win64',

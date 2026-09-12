@@ -207,7 +207,8 @@ void main() {
       navigatorKey: navigatorKey,
     );
     unawaited(
-        navigatorKey.currentState!.pushNamed('/shop/product?product_id=other'));
+      navigatorKey.currentState!.pushNamed('/shop/product?product_id=other'),
+    );
     await tester.pumpAndSettle();
     adapter.events.add(AuthState(AuthChangeEvent.signedIn, _session));
     await tester.pumpAndSettle();

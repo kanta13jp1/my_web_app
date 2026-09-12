@@ -221,7 +221,8 @@ void main() {
       ),
     );
     await tester.runAsync(
-        () => viewRecorded.future.timeout(const Duration(seconds: 5)));
+      () => viewRecorded.future.timeout(const Duration(seconds: 5)),
+    );
     await tester.ensureVisible(find.text('¥500 で購入'));
     await tester.runAsync(() async {
       await tester.tap(find.text('¥500 で購入'));
