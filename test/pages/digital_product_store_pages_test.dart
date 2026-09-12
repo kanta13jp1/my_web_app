@@ -352,7 +352,8 @@ void main() {
       await tester.tap(find.text('手続き中…'));
       await tester.pump();
       expect(gateway.checkoutCalls, 1);
-      pending.complete(const CheckoutStart.redirect('https://checkout.example'));
+      pending
+          .complete(const CheckoutStart.redirect('https://checkout.example'));
       await tester.pumpAndSettle();
       expect(find.text('手続き中…'), findsNothing);
     });
