@@ -5,14 +5,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:my_web_app/models/shop_community.dart';
 import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/services/shop_service.dart';
+import 'package:my_web_app/services/universal_x_share_service.dart';
+import 'package:my_web_app/widgets/universal_ai_share_shell.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../support/fake_shop_community.dart';
 import '../widgets/shop_product_community_test.dart' show product, tapText;
+
+class _ReloadableCommunity extends FakeShopCommunity {
+  int reads = 0;
+
+  @override
+  Future<List<ShopProductRelease>> releases(String productId) {
+    reads++;
+    return super.releases(productId);
+  }
+}
 
 class _Store implements ShopGateway {
   int downloads = 0;
@@ -184,6 +197,79 @@ void main() {
   });
 
   for (final width in [1040.0, 360.0]) {
+    for (final textScale in [1.0, 2.0]) {
+      testWidgets('footer clears real overlay at $width with scale $textScale',
+          (tester) async {
+        tester.view.physicalSize = Size(width, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final previousPage = universalAiShareRouteObserver.currentPage.value;
+        universalAiShareRouteObserver.currentPage.value =
+            UniversalSharePageContext.fromRouteName('/shop/product');
+        addTearDown(() {
+          universalAiShareRouteObserver.currentPage.value = previousPage;
+        });
+        final community = _ReloadableCommunity();
+        addTearDown(community.sessions.close);
+        final navigatorKey = GlobalKey<NavigatorState>();
+        await tester.pumpWidget(
+          MaterialApp(
+            navigatorKey: navigatorKey,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(textScale),
+                padding: const EdgeInsets.only(bottom: 24),
+                viewPadding: const EdgeInsets.only(bottom: 24),
+              ),
+              child: UniversalAiShareShell(
+                navigatorKey: navigatorKey,
+                isLoggedInOverride: true,
+                child: child!,
+              ),
+            ),
+            home: DigitalProductPage(
+              productId: product.id,
+              service: _Store(),
+              communityRepository: community,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final scroll = find.descendant(
+          of: find.byKey(const ValueKey('product-detail-scroll')),
+          matching: find.byType(Scrollable),
+        );
+        final position = tester.state<ScrollableState>(scroll).position;
+        position.jumpTo(position.maxScrollExtent);
+        await tester.pumpAndSettle();
+        final reload = find.widgetWithText(
+          TextButton,
+          '更新情報と口コミを再読み込み',
+        );
+        final inbox = find.byKey(const Key('universal_inbox_capture_button'));
+        expect(inbox, findsOneWidget);
+        expect(reload.hitTestable(), findsOneWidget);
+        expect(
+          tester.getRect(reload).bottom,
+          lessThan(tester.getRect(inbox).top),
+        );
+        if (width >= kAiShareFabMinScreenWidth) {
+          final share = find.byTooltip('AIシェア');
+          expect(share, findsOneWidget);
+          expect(
+            tester.getRect(reload).bottom,
+            lessThan(tester.getRect(share).top),
+          );
+        }
+        final before = community.reads;
+        await tester.tap(reload);
+        await tester.pumpAndSettle();
+        expect(community.reads, before + 1);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
     testWidgets('version and section navigation preserve downloads at $width',
         (tester) async {
       tester.view.physicalSize = Size(width, 900);

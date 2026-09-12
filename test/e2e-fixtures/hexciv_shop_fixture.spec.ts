@@ -57,6 +57,7 @@ async function installFixture(page: Page, options: Options = {}) {
   const pageErrors: string[] = [];
   const assetResponses = new Set<string>();
   const productRequests: { kind: string; query: string }[] = [];
+  const communityRequests: string[] = [];
   const productBarrier = barrier();
   const checkoutBarrier = barrier();
   let productCalls = 0;
@@ -153,6 +154,7 @@ async function installFixture(page: Page, options: Options = {}) {
       }
       if (url.pathname === '/rest/v1/shop_product_releases') return reply(route, []);
       if (url.pathname === '/rest/v1/rpc/get_shop_product_reviews') {
+        communityRequests.push(url.pathname);
         return reply(route, { items: [], count: 0, average: null });
       }
       if (url.pathname === '/rest/v1/rpc/get_my_shop_product_review') {
@@ -193,7 +195,7 @@ async function installFixture(page: Page, options: Options = {}) {
     return route.abort('blockedbyclient');
   });
   return {
-    events, checkouts, blocked, pageErrors, assetResponses, productRequests,
+    events, checkouts, blocked, pageErrors, assetResponses, productRequests, communityRequests,
     releaseProduct: productBarrier.release,
     releaseCheckout: checkoutBarrier.release,
     failCheckout: (value: boolean) => { checkoutFails = value; },
@@ -242,6 +244,7 @@ async function evidence(page: Page, info: TestInfo, state: Awaited<ReturnType<ty
       events: state.events, checkouts: state.checkouts,
       blocked: state.blocked, pageErrors: state.pageErrors,
       productRequests: state.productRequests,
+      communityRequests: state.communityRequests,
       liveAnnouncements: await page.evaluate(() => (window as FixtureWindow).__hexcivLiveAnnouncements ?? []),
       screenshotAssetResponses: [...state.assetResponses],
     }, null, 2),
@@ -253,6 +256,34 @@ async function evidence(page: Page, info: TestInfo, state: Awaited<ReturnType<ty
 
 test.use({ serviceWorkers: 'block' });
 test.setTimeout(90_000);
+
+test('community footer is clear of real floating controls and responds to pointer input', async ({ page }, info) => {
+  const fixture = await installFixture(page, { signedIn: true, purchased: true });
+  await openShop(page);
+  await expect(page.getByText('配布版 vfixture', { exact: true })).toBeVisible();
+  const reload = page.getByRole('button', { name: '更新情報と口コミを再読み込み', exact: true });
+  await reload.scrollIntoViewIfNeeded();
+  const viewport = page.viewportSize()!;
+  // Move the painted Flutter scroll view, not only its semantics DOM.
+  await page.mouse.move(viewport.width / 2, viewport.height / 2);
+  await page.mouse.wheel(0, 20000);
+  await expect(reload).toBeInViewport();
+  await expect(reload).toBeEnabled();
+  await capture(page, info, 'owned-product-footer-clear');
+  const footer = (await reload.boundingBox())!;
+  const inbox = page.getByRole('button', { name: 'Inboxへメモ', exact: true });
+  await expect(inbox).toBeVisible();
+  const floating = (await inbox.boundingBox())!;
+  expect(footer.y + footer.height).toBeLessThan(floating.y);
+  const before = fixture.communityRequests.length;
+  // An actual pointer click must reach the page, never a forced semantic click.
+  await page.mouse.click(footer.x + footer.width / 2, footer.y + footer.height / 2);
+  await expect.poll(() => fixture.communityRequests.length).toBe(before + 1);
+  await expect(reload).toBeEnabled();
+  await expect(page.getByRole('button', { name: '口コミ・評価を書く', exact: true })).toBeEnabled();
+  expect(fixture.checkouts).toEqual([]);
+  await evidence(page, info, fixture);
+});
 
 test('loading, guest CTA and three real-game screenshots', async ({ page }, info) => {
   const fixture = await installFixture(page, { holdProduct: true });

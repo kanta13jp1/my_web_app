@@ -456,7 +456,18 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         builder: (context, _) {
           return Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              key: const ValueKey('product-detail-scroll'),
+              // Reserve space for the shared floating Inbox/AI controls so
+              // the final community action can scroll fully above them.
+              // Include enlarged text and the device's bottom safe area.
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                48 +
+                    MediaQuery.textScalerOf(context).scale(48) +
+                    MediaQuery.viewPaddingOf(context).bottom,
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1040),
                 child: _buildBody(),
