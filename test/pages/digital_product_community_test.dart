@@ -48,6 +48,23 @@ class _Store implements ShopGateway {
 }
 
 void main() {
+  // Create/dispose the SDK outside testWidgets' fake-async zone. The client's
+  // initialization and cleanup use real asynchronous work.
+  late Completer<void> attempted;
+  final telemetry = SupabaseClient(
+    'https://example.supabase.co',
+    'test-anon-key',
+    httpClient: MockClient((request) async {
+      expect(request.url.path, '/functions/v1/shop-funnel');
+      if (!attempted.isCompleted) attempted.complete();
+      return http.Response(
+        '{"error":"fixture-telemetry-outage"}',
+        503,
+        headers: {'content-type': 'application/json'},
+      );
+    }),
+  );
+  tearDownAll(telemetry.dispose);
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   testWidgets('telemetry outage preserves review saving and owned download',
@@ -56,21 +73,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final attempted = Completer<void>();
-    final telemetry = SupabaseClient(
-      'https://example.supabase.co',
-      'test-anon-key',
-      httpClient: MockClient((request) async {
-        expect(request.url.path, '/functions/v1/shop-funnel');
-        if (!attempted.isCompleted) attempted.complete();
-        return http.Response(
-          '{"error":"fixture-telemetry-outage"}',
-          503,
-          headers: {'content-type': 'application/json'},
-        );
-      }),
-    );
-    addTearDown(telemetry.dispose);
+    attempted = Completer<void>();
     final community = FakeShopCommunity();
     addTearDown(community.sessions.close);
     final store = _Store();
@@ -89,9 +92,13 @@ void main() {
         ),
       ),
     );
+    // Flush fetchProduct/visitorId continuations before waiting in real async.
+    await tester.pumpAndSettle();
     await tester.runAsync(() async {
       await attempted.future.timeout(const Duration(seconds: 5));
     });
+    expect(tester.takeException(), isNull);
+    expect(attempted.isCompleted, isTrue);
     await tester.pumpAndSettle();
     expect(find.text('配布版 v1.0'), findsOneWidget);
     await tapText(tester, '口コミ・評価を書く');
