@@ -15,6 +15,10 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import {
+  createSupabaseIntegrationRegistryStore,
+  handleIntegrationRegistryAction,
+} from "./integration_registry.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -414,6 +418,14 @@ serve(async (req) => {
     });
     const userId = await getUserId(req);
     if (!userId) return json({ error: "Unauthorized" }, 401);
+
+    const registryResponse = await handleIntegrationRegistryAction({
+      action,
+      body,
+      userId,
+      store: createSupabaseIntegrationRegistryStore(admin),
+    });
+    if (registryResponse) return registryResponse;
 
     switch (action) {
       // ── Leave Management ─────────────────────────────────────────────────────
