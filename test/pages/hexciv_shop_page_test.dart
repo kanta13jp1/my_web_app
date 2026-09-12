@@ -290,7 +290,8 @@ void main() {
         expect(find.bySemanticsLabel('ターン30のゲーム画面'), findsOneWidget);
         expect(find.byType(CircularProgressIndicator), findsNothing);
         expect(find.text('画像を読み込めませんでした'), findsNothing);
-        final renderedImages = tester.widgetList<RawImage>(find.byType(RawImage));
+        final renderedImages =
+            tester.widgetList<RawImage>(find.byType(RawImage));
         expect(renderedImages, hasLength(4));
         expect(renderedImages.every((image) => image.image != null), isTrue);
         expect(find.text('ゲーム画面'), findsOneWidget);
