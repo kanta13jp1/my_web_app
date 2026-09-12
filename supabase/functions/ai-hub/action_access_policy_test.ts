@@ -151,3 +151,30 @@ Deno.test("disjointness of action registry sets", () => {
     );
   }
 });
+
+Deno.test("service-role fallback never widens existing user action access", () => {
+  const machineActions = new Set([
+    "provider.models",
+    "provider.generate",
+    "provider.embed",
+  ]);
+  for (const action of AUTHENTICATED_AI_HUB_ACTIONS) {
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+      machineActions.has(action)
+        ? { allowed: true }
+        : { allowed: false, status: 401, error: "Unauthorized" },
+      action,
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-a", isServiceRole: false }),
+      { allowed: true },
+      action,
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+      action,
+    );
+  }
+});
