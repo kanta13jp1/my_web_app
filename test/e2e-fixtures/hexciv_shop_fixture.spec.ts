@@ -340,11 +340,11 @@ test('checkout working, failure, retry and same-visitor redirect', async ({ page
     await expect(page.getByRole('button', { name: '手続き中…', exact: true })).toBeDisabled();
     await capture(page, info, 'checkout-working-disabled');
   } finally { fixture.releaseCheckout(); }
-  // Flutter merges adjacent error title/body into one semantics text node.
-  // Assert the complete title prefix and recovery copy, not an exact leaf node.
-  const failure = page.getByText(/^購入手続きを開始できませんでした/);
+  // Flutter merges title/body and also creates a temporary announcement copy.
+  // Scope visual assertions to the page group, not the offscreen announcer.
+  const failure = page.getByRole('group').getByText(/^購入手続きを開始できませんでした/);
   await expect(failure).toBeVisible();
-  await expect(page.getByText(/先に「購入済み」で購入状況を確認/)).toBeVisible();
+  await expect(failure).toContainText('先に「購入済み」で購入状況を確認');
   await expect(page.getByText(/FunctionException|fixture_checkout_unavailable/)).toHaveCount(0);
   await capture(page, info, 'checkout-error');
   expect(fixture.events.filter((event) => event.stage === 'checkout_redirect')).toHaveLength(0);
@@ -388,8 +388,12 @@ test('success return waits for entitlement without offering duplicate purchase',
   fixture.setPurchased(true);
   await page.getByRole('button', { name: '再読み込み', exact: true }).click();
   const download = page.getByRole('button', { name: 'ダウンロード', exact: true });
-  await download.scrollIntoViewIfNeeded();
   await expect(download).toBeEnabled();
+  await expect(page.getByRole('img', { name: 'ターン30のゲーム画面', exact: true })).toBeVisible();
+  await download.focus();
+  await expect(download).toBeFocused();
+  await download.scrollIntoViewIfNeeded();
+  await expect(download).toBeInViewport();
   await expect(page.getByRole('button', { name: buyLabel, exact: true })).toHaveCount(0);
   await capture(page, info, 'entitlement-confirmed');
   expect(fixture.checkouts).toEqual([]);
