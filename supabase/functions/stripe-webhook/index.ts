@@ -15,6 +15,8 @@ import {
   subscriptionCurrentPeriodEnd,
 } from "./stripe_api_compat.ts";
 import { verifyStripeEvent } from "./stripe_signature.ts";
+import { shopAttributionFromMetadata } from "../_shared/shop_attribution.ts";
+import { writeShopPostFunnelEvent } from "../_shared/shop_post_funnel.ts";
 import {
   isExternalRevenueCandidate,
   normalizeSupporterBuyerContext,
@@ -400,12 +402,18 @@ async function recordPurchaseFunnelStage(
   const productId = asString(metadata.shop_product_id);
   if (!visitorId || !productId) return;
 
-  const source = asString(metadata.shop_source) || "direct";
+  const attribution = shopAttributionFromMetadata(metadata);
+  if (!attribution) {
+    console.warn("[stripe-webhook] invalid shop attribution; purchase retained");
+    return;
+  }
+  const { source, campaign, contentId } = attribution;
   const { error } = await admin.from("shop_funnel_events").upsert({
     visitor_id: visitorId,
     product_id: productId,
     stage: "purchase_complete",
     source,
+    campaign,
     auth_user_id: asString(metadata.user_id) || null,
   }, {
     onConflict: "visitor_id,product_id,source,stage",
@@ -413,6 +421,19 @@ async function recordPurchaseFunnelStage(
   });
   if (error) {
     console.error("[stripe-webhook] funnel record failed:", error.message);
+  }
+  const postRecorded = await writeShopPostFunnelEvent(
+    (row, options, signal) => admin.from("shop_post_funnel_events")
+      .upsert(row, options).abortSignal(signal),
+    {
+      visitorId,
+      productId,
+      stage: "purchase_complete",
+      attribution: { source, campaign, content_id: contentId },
+    },
+  );
+  if (!postRecorded) {
+    console.warn("[stripe-webhook] post attribution not recorded; purchase retained");
   }
 }
 

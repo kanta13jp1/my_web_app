@@ -1,0 +1,230 @@
+name: Shop Post Attribution Validation
+
+on:
+  # Allows the first approved verification push to run without first adding
+  # workflow_dispatch to main. Do not push this branch without user approval.
+  push:
+    branches: ['codex/hexciv-post-attribution-*']
+  pull_request:
+    paths:
+      - 'lib/models/shop_*.dart'
+      - 'lib/services/shop_*.dart'
+      - 'lib/view_models/shop_view_models.dart'
+      - 'lib/pages/digital_product_store_pages.dart'
+      - 'lib/pages/hexciv_shop_page.dart'
+      - 'lib/main.dart'
+      - 'lib/widgets/landing_page_content.dart'
+      - 'test/**/shop*.dart'
+      - 'test/pages/hexciv_shop_page_test.dart'
+      - 'test/pages/digital_product*.dart'
+      - 'test/**/landing*.dart'
+      - 'supabase/functions/_shared/shop_*.ts'
+      - 'supabase/functions/shop-checkout/**'
+      - 'supabase/functions/shop-funnel/**'
+      - 'supabase/functions/stripe-webhook/**'
+      - 'supabase/functions/deno.json'
+      - 'supabase/migrations/*shop*funnel*.sql'
+      - 'supabase/tests/shop_post_funnel_attribution.sql'
+      - 'scripts/ci/*shop_attribution*.py'
+      - '.github/workflows/shop-post-attribution-validation.yml'
+      - '.github/actions/setup-flutter-sdk/**'
+      - 'scripts/ci/install_deno_from_github.sh'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact 40-character pushed verification commit
+        type: string
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: shop-post-attribution-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  flutter:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OWNED_DART: >-
+        lib/models/shop_attribution.dart lib/models/shop_login_continuation.dart
+        lib/services/shop_funnel_service.dart lib/services/shop_service.dart
+        lib/view_models/shop_view_models.dart lib/pages/digital_product_store_pages.dart
+        lib/pages/hexciv_shop_page.dart lib/main.dart lib/widgets/landing_page_content.dart
+        test/models/shop_attribution_test.dart test/services/shop_attribution_transport_test.dart
+        test/pages/shop_login_continuation_test.dart test/pages/hexciv_shop_page_test.dart
+        test/pages/digital_product_store_pages_test.dart test/pages/digital_product_community_test.dart
+      FLUTTER_TESTS: >-
+        test/models/shop_attribution_test.dart test/services/shop_attribution_transport_test.dart
+        test/pages/shop_login_continuation_test.dart test/pages/hexciv_shop_page_test.dart
+        test/pages/digital_product_store_pages_test.dart test/pages/digital_product_community_test.dart
+        test/services/shop_funnel_service_test.dart test/services/shop_funnel_initialization_test.dart
+        test/services/shop_service_model_test.dart test/pages/landing_page_conversion_test.dart
+        test/pages/landing_page_structure_test.dart test/services/landing_page_adapter_test.dart
+        test/services/landing_oauth_callback_failure_test.dart
+        test/services/landing_signup_completion_service_test.dart
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify exact source and fixture-only environment
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          mkdir -p attribution-evidence
+          python scripts/ci/shop_attribution_preflight.py | tee attribution-evidence/source.json
+          python -B -m unittest discover -s scripts/ci -p 'test_shop_attribution_preflight.py' -v
+      - name: Check workflow security and injection rules
+        run: |
+          python scripts/check_github_actions_security_policy.py
+          python scripts/check_github_actions_script_injection.py
+          python scripts/check_github_actions_status_functions.py
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - id: deps
+        name: Install locked Flutter dependencies
+        run: |
+          flutter --version | tee attribution-evidence/flutter-version.log
+          flutter pub get
+          git diff --exit-code -- pubspec.lock
+      - name: Check committed Dart formatting without mutating tested code
+        run: dart format --output=none --set-exit-if-changed $OWNED_DART 2>&1 | tee attribution-evidence/format.log
+      - name: Analyze owned Dart files
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: flutter analyze $OWNED_DART 2>&1 | tee attribution-evidence/analyze.log
+      - name: Run attribution and existing shop/auth widget regressions
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: flutter test --concurrency=2 $FLUTTER_TESTS 2>&1 | tee attribution-evidence/tests.log
+      - name: Preserve format suggestion after all tests, without auto-committing
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: |
+          # Tests above run the exact committed source. Formatting suggestions
+          # do not convert a failing formatting gate into a passing result.
+          dart format $OWNED_DART
+          git diff --binary -- $OWNED_DART > attribution-evidence/format-suggestion.patch
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: shop-attribution-flutter-${{ github.run_id }}-${{ github.run_attempt }}
+          path: attribution-evidence/
+          retention-days: 3
+          if-no-files-found: ignore
+
+  edge:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OWNED_TS: >-
+        supabase/functions/_shared/shop_attribution.ts
+        supabase/functions/_shared/shop_attribution_test.ts
+        supabase/functions/_shared/shop_post_funnel.ts
+        supabase/functions/_shared/shop_post_funnel_test.ts
+        supabase/functions/shop-checkout/shop_urls.ts
+        supabase/functions/shop-checkout/shop_urls_attribution_test.ts
+        supabase/functions/shop-checkout/index.ts
+        supabase/functions/shop-funnel/index.ts
+        supabase/functions/stripe-webhook/index.ts
+      DENO_TESTS: >-
+        supabase/functions/_shared/shop_attribution_test.ts
+        supabase/functions/_shared/shop_post_funnel_test.ts
+        supabase/functions/shop-checkout/shop_urls_attribution_test.ts
+        supabase/functions/shop-checkout/shop_urls_test.ts
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify exact source and fixture-only environment
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          mkdir -p attribution-evidence
+          python scripts/ci/shop_attribution_preflight.py | tee attribution-evidence/source.json
+      - id: deno
+        name: Set up repository-pinned Deno
+        env:
+          DENO_VERSION: v2.9.1
+        run: bash scripts/ci/install_deno_from_github.sh
+      - name: Check committed TypeScript formatting
+        run: deno fmt --check $OWNED_TS 2>&1 | tee attribution-evidence/format.log
+      - name: Lint owned Edge Function files
+        if: ${{ !cancelled() && steps.deno.outcome == 'success' }}
+        run: deno lint --config supabase/functions/deno.json $OWNED_TS 2>&1 | tee attribution-evidence/lint.log
+      - name: Typecheck helpers and all three connected handlers without serving
+        if: ${{ !cancelled() && steps.deno.outcome == 'success' }}
+        run: deno check --config supabase/functions/deno.json $OWNED_TS 2>&1 | tee attribution-evidence/check.log
+      - name: Test helpers with runtime network, environment and filesystem denied
+        if: ${{ !cancelled() && steps.deno.outcome == 'success' }}
+        run: >-
+          deno test --config supabase/functions/deno.json
+          --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi
+          $DENO_TESTS 2>&1 | tee attribution-evidence/tests.log
+      - name: Preserve format suggestion after tests
+        if: ${{ !cancelled() && steps.deno.outcome == 'success' }}
+        run: |
+          deno fmt $OWNED_TS
+          git diff --binary -- $OWNED_TS > attribution-evidence/format-suggestion.patch
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: shop-attribution-edge-${{ github.run_id }}-${{ github.run_attempt }}
+          path: attribution-evidence/
+          retention-days: 3
+          if-no-files-found: ignore
+
+  database:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: hexciv_attribution_ci
+          POSTGRES_PASSWORD: ephemeral-attribution-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    env:
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: ephemeral-attribution-only
+      PGDATABASE: hexciv_attribution_ci
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify exact source and disposable database target
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          mkdir -p attribution-evidence
+          python scripts/ci/shop_attribution_preflight.py --database | tee attribution-evidence/source.json
+      - name: Apply only fixture dependencies and attribution migration, assert grants and RLS
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -f supabase/tests/shop_post_funnel_attribution.sql 2>&1 | tee attribution-evidence/database.log
+          grep -Fx 'SHOP POST ATTRIBUTION SQL OK' attribution-evidence/database.log
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: shop-attribution-database-${{ github.run_id }}-${{ github.run_attempt }}
+          path: attribution-evidence/
+          retention-days: 3
+          if-no-files-found: ignore

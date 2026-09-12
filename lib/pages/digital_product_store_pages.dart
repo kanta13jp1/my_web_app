@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/shop_attribution.dart';
+import '../models/shop_login_continuation.dart';
 import '../services/shop_funnel_service.dart';
 import '../services/shop_community_repository.dart';
 import '../services/shop_service.dart';
@@ -327,6 +329,7 @@ class DigitalProductPage extends StatefulWidget {
     this.funnel,
     this.urlLauncher,
     this.communityRepository,
+    this.entryUri,
   });
 
   final String productId;
@@ -335,6 +338,7 @@ class DigitalProductPage extends StatefulWidget {
   final ShopFunnelService? funnel;
   final ShopUrlLauncher? urlLauncher;
   final ShopCommunityRepository? communityRepository;
+  final Uri? entryUri;
 
   @override
   State<DigitalProductPage> createState() => _DigitalProductPageState();
@@ -383,8 +387,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   late final ShopUrlLauncher _urlLauncher =
       widget.urlLauncher ?? _launchShopUrl;
   late final ShopFunnelService _funnel = widget.funnel ?? ShopFunnelService();
-  late final String _source = ShopFunnelService.sourceFromUri(Uri.base);
-  late final String _campaign = ShopFunnelService.campaignFromUri(Uri.base);
+  late final ShopAttribution _attribution =
+      ShopAttribution.fromUri(widget.entryUri ?? Uri.base);
   int _selectedProductScreenshotIndex = 0;
 
   @override
@@ -405,8 +409,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
       _funnel.record(
         stage,
         productId: widget.productId,
-        source: _source,
-        campaign: _campaign,
+        attribution: _attribution,
       ),
     );
   }
@@ -414,8 +417,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   Future<void> _startPurchase() async {
     _recordFunnel(ShopFunnelService.stagePurchaseClick);
     final start = await _viewModel.startCheckout(
-      visitorId: await _funnel.visitorId(),
-      source: _source,
+      visitorId: _attribution.isValid ? await _funnel.visitorId() : null,
+      attribution: _attribution,
     );
     if (start == null || start.alreadyPurchased) return;
     _recordFunnel(ShopFunnelService.stageCheckoutRedirect);
@@ -897,7 +900,12 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
           _PrimaryShopButton(
             label: 'ログインして購入',
             icon: Icons.login,
-            onPressed: () => Navigator.of(context).pushNamed('/login'),
+            onPressed: () => Navigator.of(context).pushNamed(
+              ShopLoginContinuation.loginUri(
+                productId: widget.productId,
+                attribution: _attribution,
+              ).toString(),
+            ),
           ),
         ],
       );

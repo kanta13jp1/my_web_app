@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/shop_login_continuation.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/growth_mission_service.dart';
 import '../services/landing_conversion_analytics.dart';
@@ -38,6 +39,7 @@ class LandingPage extends StatefulWidget {
   final bool? analyticsEnabled;
   final bool? googleLoginEnabled;
   final Uri? landingUri;
+  final Uri? shopLoginUri;
   final bool showUnverifiedMarketingForQa;
 
   const LandingPage({
@@ -53,6 +55,7 @@ class LandingPage extends StatefulWidget {
     this.analyticsEnabled,
     this.googleLoginEnabled,
     this.landingUri,
+    this.shopLoginUri,
     this.showUnverifiedMarketingForQa = false,
   })  : adapter = adapter ?? const SupabaseLandingPageAdapter(),
         growthService = growthService ?? const GrowthMissionService(),
@@ -102,6 +105,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   final GlobalKey _trialResultKey = GlobalKey();
 
   StreamSubscription<AuthState>? _authSubscription;
+  bool _authSessionAvailable = false;
   Timer? _magicLinkCooldownTimer;
 
   bool _isLoading = false;
@@ -140,6 +144,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   bool _showMobileStickyCta = false;
 
   Uri? get _landingUri => widget.landingUri ?? (kIsWeb ? Uri.base : null);
+  // Routing context is separate from the original browser URI, whose fragment
+  // may contain an OAuth error that existing login handling must still display.
+  Uri? get _shopLoginUri => widget.shopLoginUri ?? _landingUri;
   GrowthAcquisitionService get _acquisitionService => widget.acquisitionService;
   bool get _googleLoginEnabled =>
       widget.googleLoginEnabled ?? _googleLoginFeatureEnabled;
@@ -172,6 +179,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   @override
   void initState() {
     super.initState();
+    if (ShopLoginContinuation.productUri(_shopLoginUri) != null) {
+      _isSignUp = false;
+    }
     _pageScrollController.addListener(_updateMobileStickyVisibility);
     _trialPromptFocusNode.addListener(_handleTrialPromptFocusChanged);
     _oauthCallbackFailure = LandingOAuthCallbackFailure.fromUri(_landingUri);
@@ -183,7 +193,16 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     }
     _authSubscription = widget.adapter.authStateChanges().listen((data) {
       if (!mounted) return;
-      if (data.event == AuthChangeEvent.signedIn && data.session != null) {
+      _authSessionAvailable = data.event != AuthChangeEvent.signedOut &&
+          data.session != null;
+      final isShopCallback = data.event == AuthChangeEvent.initialSession &&
+          ShopLoginContinuation.productUri(_shopLoginUri) != null;
+      if ((data.event == AuthChangeEvent.signedIn || isShopCallback) &&
+          data.session != null) {
+        if (isShopCallback) {
+          _goToAuthenticatedEntry();
+          return;
+        }
         unawaited(
           widget.signupCompletionService.completeIfPending(
             signupUserId: data.session?.user.id,
@@ -372,7 +391,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
   String? get _webRedirectUrl {
     if (!kIsWeb) return null;
-    return Uri.base.resolve('/').toString();
+    return (ShopLoginContinuation.callbackUri(
+              base: Uri.base,
+              loginLocation: _shopLoginUri,
+            ) ??
+            Uri.base.resolve('/'))
+        .toString();
   }
 
   bool get _isFirstUserGrowthTraffic {
@@ -393,7 +417,23 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   }
 
   void _goToAuthenticatedEntry() {
-    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    // A hidden landing route may also receive the auth event. It must not
+    // override the active product/login route's destination.
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+    final destination =
+        ShopLoginContinuation.productUri(_shopLoginUri)?.toString() ?? '/';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Auth can change again before this frame; a queued successful sign-in
+      // must not navigate after a later sign-out/cancellation.
+      if (!mounted ||
+          !_authSessionAvailable ||
+          !(ModalRoute.of(context)?.isCurrent ?? true)) return;
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        destination,
+        (route) => false,
+      );
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   Future<void> _bootstrapReferralInvite() async {

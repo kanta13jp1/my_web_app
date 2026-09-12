@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../models/shop_attribution.dart';
 import '../services/shop_service.dart';
 
 /// 公開カタログの取得と種別フィルターだけを担当する。
@@ -93,6 +94,7 @@ class ShopProductViewModel extends ChangeNotifier {
   Future<CheckoutStart?> startCheckout({
     String? visitorId,
     String? source,
+    ShopAttribution? attribution,
   }) async {
     _working = true;
     _actionError = null;
@@ -102,6 +104,7 @@ class ShopProductViewModel extends ChangeNotifier {
         productId,
         visitorId: visitorId,
         source: source,
+        attribution: attribution,
       );
       if (start.alreadyPurchased) _purchased = true;
       return start;

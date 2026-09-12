@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:my_web_app/models/shop_community.dart';
+import 'package:my_web_app/models/shop_attribution.dart';
 import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/services/shop_service.dart';
@@ -45,6 +46,7 @@ class _Store implements ShopGateway {
     String id, {
     String? visitorId,
     String? source,
+    ShopAttribution? attribution,
   }) async =>
       const CheckoutStart.alreadyPurchased();
   @override
@@ -84,6 +86,7 @@ class _ObservedFunnel extends ShopFunnelService {
     required String productId,
     String? source,
     String? campaign,
+    ShopAttribution? attribution,
   }) async {
     started = true;
     try {
@@ -92,6 +95,7 @@ class _ObservedFunnel extends ShopFunnelService {
         productId: productId,
         source: source,
         campaign: campaign,
+        attribution: attribution,
       );
     } finally {
       if (!completed.isCompleted) completed.complete();

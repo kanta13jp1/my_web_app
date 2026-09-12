@@ -16,6 +16,11 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { shopAttributionFromClient } from "../_shared/shop_attribution.ts";
+import {
+  ShopFunnelStage,
+  writeShopPostFunnelEvent,
+} from "../_shared/shop_post_funnel.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
@@ -83,6 +88,9 @@ serve(async (req) => {
     if (!CAMPAIGN_PATTERN.test(campaign)) {
       return json({ error: "invalid campaign" }, 400);
     }
+    if (!shopAttributionFromClient(payload)) {
+      return json({ error: "invalid attribution" }, 400);
+    }
 
     // ログイン済みなら紐付ける。未ログインでも記録は続ける (母数を欠かさない)。
     let authUserId: string | null = null;
@@ -120,7 +128,20 @@ serve(async (req) => {
       });
     if (error) throw new Error(error.message);
 
-    return json({ recorded: true });
+    // Preserve the legacy key/rows during rollout; new records keep posts
+    // separate. Failure here is a visible telemetry gap, not a purchase error.
+    const postRecorded = await writeShopPostFunnelEvent(
+      (row, options, signal) => admin.from("shop_post_funnel_events")
+        .upsert(row, options).abortSignal(signal),
+      {
+        visitorId,
+        productId,
+        stage: stage as ShopFunnelStage,
+        attribution: payload,
+      },
+    );
+    if (!postRecorded) console.warn("[shop-funnel] post attribution not recorded");
+    return json({ recorded: true, post_recorded: postRecorded });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[shop-funnel]", message);

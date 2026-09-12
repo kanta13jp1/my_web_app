@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/shop_attribution.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/services/shop_service.dart';
@@ -63,6 +64,7 @@ class _FakeShopGateway implements ShopGateway {
     String productId, {
     String? visitorId,
     String? source,
+    ShopAttribution? attribution,
   }) async {
     checkoutCalls++;
     if (checkoutError != null) throw checkoutError!;
