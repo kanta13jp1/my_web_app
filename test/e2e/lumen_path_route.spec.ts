@@ -11,6 +11,30 @@ test('integrated route supports solve, undo, three colors and reload', async ({ 
   page.on('response', response => {
     if (response.status() >= 400) errors.push(`HTTP ${response.status()}: ${response.url()}`);
   });
+  // The existing visual-test build points shared shell services at this
+  // deliberately isolated origin. Stub only observed shell endpoints; keep
+  // all request/console/error assertions, and never intercept Lumen assets.
+  await page.route('http://127.0.0.1:54321/**', async route => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    const method = request.method();
+    if (path === '/rest/v1/site_statistics' && method === 'GET') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    } else if (path === '/rest/v1/guest_presence' && method === 'POST') {
+      await route.fulfill({ status: 204, body: '' });
+    } else if (
+      (path === '/functions/v1/schedule-hub' || path === '/functions/v1/growth-hub') &&
+      method === 'POST'
+    ) {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ success: true, skipped: true, fixture: true }),
+      });
+    } else {
+      errors.push(`Unexpected fixture API: ${method} ${path}`);
+      await route.fulfill({ status: 501, body: 'Undefined test fixture' });
+    }
+  });
   const response = await page.goto('/lumen-path', { waitUntil: 'domcontentloaded' });
   expect(response?.ok()).toBe(true);
   expect(new URL(page.url()).pathname).toBe('/lumen-path');
@@ -35,6 +59,7 @@ test('integrated route supports solve, undo, three colors and reload', async ({ 
   }
   await expect(puzzle.locator('#lit')).toHaveText('3 / 3 LIGHTS');
   await expect(puzzle.locator('#status')).toContainText('3色すべて点灯');
+  await puzzle.locator('#board').screenshot({ path: info.outputPath('integrated-solved-board.png') });
   await puzzle.getByRole('button', { name: '最初から' }).scrollIntoViewIfNeeded();
   const frameBounds = await iframe.boundingBox();
   expect(frameBounds).not.toBeNull();
