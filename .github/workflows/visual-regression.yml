@@ -16,6 +16,8 @@ on:
       - playwright.config.ts
       - scripts/flutter_spa_server.py
       - test/e2e/**
+      - test/e2e-fixtures/**
+      - playwright.hexciv-shop.config.ts
   workflow_dispatch:
     inputs:
       update_snapshots:
@@ -67,6 +69,21 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
+      - name: Validate product accessibility changes and fixture discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format --output=none --set-exit-if-changed \
+            lib/pages/digital_product_store_pages.dart \
+            test/pages/digital_product_store_pages_test.dart test/pages/hexciv_shop_page_test.dart
+          flutter test --concurrency=1 \
+            test/pages/digital_product_store_pages_test.dart test/pages/hexciv_shop_page_test.dart
+          E2E_BASE_URL=https://example.invalid npx playwright test --list > .ci-public-test-discovery.txt
+          if grep -q hexciv_shop_fixture .ci-public-test-discovery.txt; then
+            echo '::error::Isolated fixtures leaked into default E2E discovery'
+            exit 1
+          fi
+
       - name: Build isolated Flutter Web fixture
         shell: bash
         run: |
@@ -113,6 +130,16 @@ jobs:
             --retries=0 \
             "${snapshot_args[@]}"
 
+      - name: Verify HexCiv product states and checkout fixture
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/hexciv-shop-results.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/hexciv-shop
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright test --config=playwright.hexciv-shop.config.ts \
+            --project=chromium --project=mobile-chrome --retries=0
+
       - name: Stop short-lived SPA server
         if: always()
         shell: bash
@@ -130,7 +157,8 @@ jobs:
             echo
             echo "- mode: \`${UPDATE_SNAPSHOTS}\` (true generates candidates; false compares)"
             echo '- source: exact PR/branch Flutter Web build served only on runner localhost'
-            echo '- surfaces: landing, privacy, terms'
+            echo '- baselines: landing, privacy, terms; additional HexCiv product state/checkout fixtures'
+            echo '- HexCiv: mocked HTTP/auth, no real checkout, webhook, or production P1 proof'
             echo '- viewports: desktop Chromium and mobile Chromium'
             echo '- threshold: maxDiffPixelRatio = 0.002'
             echo '- production smoke remains separate in `e2e-smoke.yml` / `minimal-e2e-gate.yml`'

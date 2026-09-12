@@ -1,10 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:my_web_app/pages/digital_product_store_pages.dart';
+import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/services/shop_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../support/fake_shop_community.dart';
-import '../widgets/shop_product_community_test.dart' show product;
+import '../widgets/shop_product_community_test.dart' show product, tapText;
 
 class _Store implements ShopGateway {
   int downloads = 0;
@@ -41,6 +48,69 @@ class _Store implements ShopGateway {
 }
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  testWidgets('telemetry outage preserves review saving and owned download',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final attempted = Completer<void>();
+    final telemetry = SupabaseClient(
+      'https://example.supabase.co',
+      'test-anon-key',
+      httpClient: MockClient((request) async {
+        expect(request.url.path, '/functions/v1/shop-funnel');
+        if (!attempted.isCompleted) attempted.complete();
+        return http.Response(
+          '{"error":"fixture-telemetry-outage"}',
+          503,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+    addTearDown(telemetry.dispose);
+    final community = FakeShopCommunity();
+    addTearDown(community.sessions.close);
+    final store = _Store();
+    Uri? downloaded;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DigitalProductPage(
+          productId: product.id,
+          service: store,
+          funnel: ShopFunnelService(client: telemetry),
+          communityRepository: community,
+          urlLauncher: (uri, external) async {
+            downloaded = uri;
+            return true;
+          },
+        ),
+      ),
+    );
+    await tester.runAsync(() async {
+      await attempted.future.timeout(const Duration(seconds: 5));
+    });
+    await tester.pumpAndSettle();
+    expect(find.text('配布版 v1.0'), findsOneWidget);
+    await tapText(tester, '口コミ・評価を書く');
+    await tester.tap(find.byKey(const ValueKey('review-star-4')));
+    await tester.enterText(
+      find.byKey(const ValueKey('review-body')),
+      '表示検証用の架空口コミ',
+    );
+    await tapText(tester, '公開して保存');
+    expect(community.saves, 1);
+    expect(community.saved?.rating, 4);
+    expect(community.saved?.body, '表示検証用の架空口コミ');
+    expect(find.text('表示検証用の架空口コミ'), findsOneWidget);
+    await tapText(tester, 'ダウンロード');
+    expect(store.downloads, 1);
+    expect(downloaded, Uri.parse('https://example.invalid/download'));
+    expect(tester.takeException(), isNull);
+  });
+
   for (final width in [1040.0, 360.0]) {
     testWidgets('version and section navigation preserve downloads at $width',
         (tester) async {
