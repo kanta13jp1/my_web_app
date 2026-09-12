@@ -2,26 +2,39 @@ name: Evernote integration baseline
 on:
   push:
     branches: ['codex/evernote-main-reconcile-20260912']
-    paths: ['.github/workflows/evernote-integration-preview.yml']
+    paths:
+      - '.github/workflows/evernote-integration-preview.yml'
+      - 'test/widgets/asset_management_page_smoke_test.dart'
 permissions:
   contents: read
 jobs:
-  baseline:
+  asset-fixture:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: 0ce23b63347064d19721edf6c04558cd58109656
           persist-credentials: false
-      - name: Verify immutable pre-integration baseline
-        run: test "$(git rev-parse HEAD)" = "0ce23b63347064d19721edf6c04558cd58109656"
+      - name: Verify event revision
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
       - name: Resolve dependencies on runner
         run: flutter pub get
-      - name: Check whether the asset-priority failure exists before integration
+      - name: Format fixture and show any changes
+        run: |
+          dart format test/widgets/asset_management_page_smoke_test.dart
+          git diff -- test/widgets/asset_management_page_smoke_test.dart
+      - name: Analyze the changed widget test
+        run: flutter analyze test/widgets/asset_management_page_smoke_test.dart
+      - name: Verify the whole asset smoke file and insight rules
         run: >-
-          flutter test test/widgets/asset_management_page_smoke_test.dart
-          --plain-name 'living expense priority toggle immediately reorders actions'
+          flutter test --concurrency=2
+          test/widgets/asset_management_page_smoke_test.dart
+          test/services/asset_management_insight_service_test.dart
+      - name: Require committed formatting
+        if: always()
+        run: git diff --exit-code -- test/widgets/asset_management_page_smoke_test.dart
