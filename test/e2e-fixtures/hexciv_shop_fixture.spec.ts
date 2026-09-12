@@ -54,6 +54,7 @@ async function installFixture(page: Page, options: Options = {}) {
   const blocked: string[] = [];
   const pageErrors: string[] = [];
   const assetResponses = new Set<string>();
+  const productRequests: { kind: string; query: string }[] = [];
   const productBarrier = barrier();
   const checkoutBarrier = barrier();
   let productCalls = 0;
@@ -103,6 +104,11 @@ async function installFixture(page: Page, options: Options = {}) {
     if (url.origin === apiOrigin) {
       if (request.method() === 'OPTIONS') return reply(route, {});
       if (url.pathname === '/rest/v1/shop_products') {
+        // Navigator's deep-link route stack can load /shop's catalog as well
+        // as /shop/hexciv. Only the id-filtered detail request owns these gates.
+        const isDetail = url.searchParams.get('id') === `eq.${productId}`;
+        productRequests.push({ kind: isDetail ? 'detail' : 'catalog', query: url.search });
+        if (!isDetail) return reply(route, options.empty ? [] : [product]);
         productCalls++;
         if (options.holdProduct) await productBarrier.promise;
         if (options.failProductOnce && productCalls === 1) {
@@ -151,7 +157,7 @@ async function installFixture(page: Page, options: Options = {}) {
     return route.abort('blockedbyclient');
   });
   return {
-    events, checkouts, blocked, pageErrors, assetResponses,
+    events, checkouts, blocked, pageErrors, assetResponses, productRequests,
     releaseProduct: productBarrier.release,
     releaseCheckout: checkoutBarrier.release,
     failCheckout: (value: boolean) => { checkoutFails = value; },
@@ -180,6 +186,7 @@ async function evidence(page: Page, info: TestInfo, state: Awaited<ReturnType<ty
       route: page.url(), project: info.project.name,
       events: state.events, checkouts: state.checkouts,
       blocked: state.blocked, pageErrors: state.pageErrors,
+      productRequests: state.productRequests,
       screenshotAssetResponses: [...state.assetResponses],
     }, null, 2),
   });
@@ -195,8 +202,11 @@ test('loading, guest CTA and three real-game screenshots', async ({ page }, info
   const fixture = await installFixture(page, { holdProduct: true });
   await openShop(page);
   try {
-    const loading = page.locator('[aria-label="商品情報を読み込み中"]');
+    // Flutter renders this live region as a group containing label text,
+    // not necessarily an aria-label attribute. Keep the live-region assertion.
+    const loading = page.getByRole('group').filter({ hasText: '商品情報を読み込み中' });
     await expect(loading).toBeVisible();
+    await expect(loading).toHaveText('商品情報を読み込み中');
     await expect(loading).toHaveAttribute('aria-live', 'polite');
     await capture(page, info, 'loading');
   } finally { fixture.releaseProduct(); }
