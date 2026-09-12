@@ -2,13 +2,13 @@ name: Shop Community Validation
 
 on:
   workflow_dispatch:
-  push:
-    branches: [codex/product-release-reviews-20260912]
   pull_request:
     paths:
       - 'lib/**/shop_community*.dart'
       - 'lib/widgets/shop_product_community.dart'
+      - 'lib/pages/digital_product_store_pages.dart'
       - 'test/**/shop*community*.dart'
+      - 'test/**/digital_product_community_test.dart'
       - 'supabase/**/shop_product_community.sql'
       - 'supabase/migrations/*shop_product_releases_reviews.sql'
       - '.github/workflows/shop-community-validation.yml'
@@ -77,7 +77,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
-          name: shop-community-format-${{ github.run_id }}
+          name: shop-community-evidence-${{ github.run_id }}
           path: |
             shop-community-format.patch
             build/shop-community-evidence/*.png
