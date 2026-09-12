@@ -284,43 +284,49 @@ void main() {
 
     testWidgets('実ゲーム画面3枚を購入ボタンより先に表示する', (tester) async {
       final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
-      await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
+      try {
+        await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
 
-      expect(find.bySemanticsLabel('ターン30のゲーム画面'), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-      expect(find.text('画像を読み込めませんでした'), findsNothing);
-      final renderedImages = tester.widgetList<RawImage>(find.byType(RawImage));
-      expect(renderedImages, hasLength(4));
-      expect(renderedImages.every((image) => image.image != null), isTrue);
-      expect(find.text('ゲーム画面'), findsOneWidget);
-      expect(find.text('ターン30'), findsOneWidget);
-      expect(find.text('ターン80'), findsOneWidget);
-      expect(find.text('ターン150'), findsOneWidget);
-      expect(
-        tester.getTopLeft(find.text('ゲーム画面')).dy,
-        lessThan(tester.getTopLeft(find.text('¥500 で購入')).dy),
-      );
+        expect(find.bySemanticsLabel('ターン30のゲーム画面'), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.text('画像を読み込めませんでした'), findsNothing);
+        final renderedImages = tester.widgetList<RawImage>(find.byType(RawImage));
+        expect(renderedImages, hasLength(4));
+        expect(renderedImages.every((image) => image.image != null), isTrue);
+        expect(find.text('ゲーム画面'), findsOneWidget);
+        expect(find.text('ターン30'), findsOneWidget);
+        expect(find.text('ターン80'), findsOneWidget);
+        expect(find.text('ターン150'), findsOneWidget);
+        expect(
+          tester.getTopLeft(find.text('ゲーム画面')).dy,
+          lessThan(tester.getTopLeft(find.text('¥500 で購入')).dy),
+        );
+      } finally {
+        semantics.dispose();
+      }
     });
 
     testWidgets('スクリーンショットのサムネイルで説明を切り替えられる', (tester) async {
       final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
-      await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
+      try {
+        await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
 
-      expect(find.textContaining('序盤。'), findsOneWidget);
-      expect(find.textContaining('終盤。'), findsNothing);
+        expect(find.textContaining('序盤。'), findsOneWidget);
+        expect(find.textContaining('終盤。'), findsNothing);
 
-      await tester.ensureVisible(find.text('ターン150'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('ターン150'));
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('ターン150'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('ターン150'));
+        await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('ターン150のゲーム画面'), findsOneWidget);
-      expect(find.bySemanticsLabel('ターン30のゲーム画面'), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-      expect(find.textContaining('終盤。'), findsOneWidget);
-      expect(find.textContaining('序盤。'), findsNothing);
+        expect(find.bySemanticsLabel('ターン150のゲーム画面'), findsOneWidget);
+        expect(find.bySemanticsLabel('ターン30のゲーム画面'), findsNothing);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.textContaining('終盤。'), findsOneWidget);
+        expect(find.textContaining('序盤。'), findsNothing);
+      } finally {
+        semantics.dispose();
+      }
     });
 
     testWidgets('非公開商品ではゲーム画面を表示しない', (tester) async {
