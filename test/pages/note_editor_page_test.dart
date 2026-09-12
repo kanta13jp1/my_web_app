@@ -718,12 +718,18 @@ void main() {
       expect(gate.isCompleted, isFalse);
       _contentController(tester).text = 'New edit while backup is pending';
       gate.complete();
-      await tester.pumpAndSettle();
+      // The request/Future chain can complete without scheduling a frame.
+      // Observe the operation's own result before waiting for global idleness.
+      final abortMessage =
+          find.text('保全中に編集内容またはログイン状態が変わったため、復元を中止しました。');
+      for (var frame = 0; frame < 10 && abortMessage.evaluate().isEmpty; frame++) {
+        await tester.pump(const Duration(milliseconds: 20));
+      }
       expect(
         _contentController(tester).text,
         'New edit while backup is pending',
       );
-      expect(find.text('保全中に編集内容またはログイン状態が変わったため、復元を中止しました。'), findsOneWidget);
+      expect(abortMessage, findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
       expect(
