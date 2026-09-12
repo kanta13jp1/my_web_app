@@ -308,7 +308,8 @@ class _FakeMaybeSingleBuilder extends Fake
     FutureOr<U> Function(Map<String, dynamic>? value) onValue, {
     Function? onError,
   }) {
-    return (waitFor ?? Future<void>.value()).then((_) => row)
+    return (waitFor ?? Future<void>.value())
+        .then((_) => row)
         .then(onValue, onError: onError);
   }
 
@@ -317,7 +318,8 @@ class _FakeMaybeSingleBuilder extends Fake
     Function onError, {
     bool Function(Object)? test,
   }) {
-    return (waitFor ?? Future<void>.value()).then((_) => row)
+    return (waitFor ?? Future<void>.value())
+        .then((_) => row)
         .catchError(onError, test: test);
   }
 }
@@ -412,8 +414,8 @@ void main() {
   });
 
   group('note editor autosave', () {
-
-    testWidgets('editing during initial insert creates one note then saves latest',
+    testWidgets(
+        'editing during initial insert creates one note then saves latest',
         (tester) async {
       final gate = Completer<void>();
       final client = _RecordingSupabaseClient(
@@ -820,9 +822,9 @@ void main() {
         await tester.pumpAndSettle();
         expect(client.versionInserts, isEmpty);
         expect(
-            _contentController(tester).text,
-            'Draft being saved before restore',
-          );
+          _contentController(tester).text,
+          'Draft being saved before restore',
+        );
         if (changeWhileWaiting) {
           _contentController(tester).text =
               'Newer draft while waiting for save';

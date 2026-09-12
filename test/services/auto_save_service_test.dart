@@ -5,15 +5,13 @@ import 'package:my_web_app/services/auto_save_service.dart';
 
 void main() {
   late AutoSaveService service;
-  var disposed = false;
-
-  setUp(() {
-    service = AutoSaveService();
-    disposed = false;
-  });
+  var disposed = true;
 
   tearDown(() {
-    if (!disposed) service.dispose();
+    if (!disposed) {
+      service.dispose();
+      disposed = true;
+    }
   });
 
   void disposeService() {
@@ -22,6 +20,9 @@ void main() {
   }
 
   testWidgets('debounce keeps only the latest requested save', (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final calls = <String>[];
     service.triggerAutoSave(() async => calls.add('old'));
     await tester.pump(const Duration(seconds: 1));
@@ -35,6 +36,9 @@ void main() {
 
   testWidgets('manual saves never overlap and cancel pending debounce',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final firstGate = Completer<void>();
     final secondGate = Completer<void>();
     final calls = <String>[];
@@ -63,6 +67,9 @@ void main() {
 
   testWidgets('old completion cannot mark newer debounced input saved',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final gate = Completer<void>();
     var latestCalls = 0;
     final first = service.saveImmediately(() => gate.future);
@@ -81,6 +88,9 @@ void main() {
 
   testWidgets('elapsed debounce queues behind an in-flight request',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final gate = Completer<void>();
     final calls = <String>[];
     final first = service.saveImmediately(() async {
@@ -100,6 +110,9 @@ void main() {
 
   testWidgets('superseded queued autosaves cannot run an old callback',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final gate = Completer<void>();
     final calls = <String>[];
     final hold = service.runExclusive(() => gate.future);
@@ -117,6 +130,9 @@ void main() {
 
   testWidgets('automatic failure retries the current draft once it can save',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     var attempts = 0;
     service.triggerAutoSave(() async {
       attempts++;
@@ -134,6 +150,9 @@ void main() {
 
   testWidgets('failure from older request does not retry over a newer edit',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final gate = Completer<void>();
     var oldCalls = 0;
     var latestCalls = 0;
@@ -154,6 +173,9 @@ void main() {
 
   testWidgets('queued manual snapshot cannot claim a newer draft was saved',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final gate = Completer<void>();
     final writes = <String>[];
     final hold = service.runExclusive(() => gate.future);
@@ -174,6 +196,9 @@ void main() {
 
   testWidgets('manual failure reaches caller and does not poison the lane',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     var attempts = 0;
     final failure = expectLater(
       service.saveImmediately(() async {
@@ -196,6 +221,9 @@ void main() {
 
   testWidgets('exclusive recovery holds later saves until it finishes',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final gate = Completer<void>();
     final calls = <String>[];
     final recovery = service.runExclusive(() async {
@@ -216,6 +244,9 @@ void main() {
 
   testWidgets('failed recovery releases the lane for the next save',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final failure = expectLater(
       service.runExclusive<void>(() async {
         throw StateError('backup failed');
@@ -232,6 +263,9 @@ void main() {
 
   testWidgets('final save runs last after disposal without queued UI callbacks',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final gate = Completer<void>();
     final calls = <String>[];
     var notifications = 0;
@@ -256,6 +290,9 @@ void main() {
 
   testWidgets('disposal suppresses debounce and late completion notifications',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final gate = Completer<void>();
     var queued = 0;
     var notifications = 0;
@@ -274,6 +311,9 @@ void main() {
 
   testWidgets('callback-reported unsaved state is not overwritten on return',
       (tester) async {
+    // Construct queue futures inside this test's virtual-time zone.
+    service = AutoSaveService();
+    disposed = false;
     final saving = service.saveImmediately(() async {
       service.markAsModified();
     });

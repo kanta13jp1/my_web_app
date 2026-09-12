@@ -64,3 +64,10 @@ included in the scoped workflow. Manual callbacks may capture immutable data
 before entering the queue, so their request generation is retained: completing
 an older queued snapshot cannot mark a newer draft saved. This is covered by a
 controlled queue regression without changing the spreadsheet implementation.
+
+The initial service-test fixture constructed its Future-backed queue in outer
+setUp, outside testWidgets' virtual-time zone. The first callbacks never ran in
+the pumped zone. Initialization now occurs inside each testWidgets callback;
+assertions are retained. The editor's initial-insert, both exit-flush cases and
+both prior-save/restore cases passed in the superseded run; only a complete
+green run of the corrected exact head can establish the new gate.
