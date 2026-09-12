@@ -9897,7 +9897,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 AssetInterestHistoryCard(
                   key: ValueKey('interest:${_supabase.auth.currentUser!.id}'),
                   repository: SupabaseAssetInterestRepository(
-                    _supabase, _supabase.auth.currentUser!.id,
+                    _supabase,
+                    _supabase.auth.currentUser!.id,
                   ),
                 ),
               const SizedBox(height: 16),
