@@ -176,7 +176,10 @@ void main() {
       await pumpCommunity(tester, repo);
       await tapText(tester, '口コミ・評価を書く');
       await tester.tap(find.byKey(const ValueKey('review-star-3')));
-      await tester.enterText(find.byKey(const ValueKey('review-body')), '消えない本文');
+      await tester.enterText(
+        find.byKey(const ValueKey('review-body')),
+        '消えない本文',
+      );
       await tapText(tester, '公開して保存');
       expect(find.text('消えない本文'), findsOneWidget);
       expect(find.text('選択中：星3 / 5'), findsOneWidget);
