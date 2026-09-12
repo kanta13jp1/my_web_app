@@ -1,3 +1,5 @@
+import 'package:my_web_app/widgets/asset_interest_history_card.dart';
+import 'package:my_web_app/services/asset_interest_repository.dart';
 import 'package:my_web_app/services/asset_pain_metric_service.dart';
 // ignore_for_file: require_trailing_commas
 
@@ -9891,6 +9893,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _sectionAnchor(AssetManagementSectionId.disposable),
               _buildDisposableBalanceCard(),
+              if (_supabase.auth.currentUser != null)
+                AssetInterestHistoryCard(
+                  key: ValueKey('interest:${_supabase.auth.currentUser!.id}'),
+                  repository: SupabaseAssetInterestRepository(
+                    _supabase,
+                    _supabase.auth.currentUser!.id,
+                  ),
+                ),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.quickActions)) ...[
