@@ -2226,7 +2226,8 @@ serve(async (req: Request) => {
           .from("hub_data")
           .update({ metadata: { ...body, user_id: userId! } })
           .eq("id", String(body.id))
-          .eq("source", "scheduled_task");
+          .eq("source", "scheduled_task")
+          .filter("metadata->>user_id", "eq", userId!);
         if (error) throw new Error(error.message);
         return json({ success: true });
       }
