@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -116,39 +117,53 @@ void main() {
     addTearDown(community.sessions.close);
     final store = _Store();
     Uri? downloaded;
-    // Await handling of the 503, not just dispatch. Report the completed
-    // stage if SDK/storage work stalls rather than guessing at pump timing.
-    await tester.runAsync(() async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: DigitalProductPage(
-            productId: product.id,
-            service: store,
-            funnel: funnel,
-            communityRepository: community,
-            urlLauncher: (uri, external) async {
-              downloaded = uri;
-              return true;
-            },
-          ),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DigitalProductPage(
+          productId: product.id,
+          service: store,
+          funnel: funnel,
+          communityRepository: community,
+          urlLauncher: (uri, external) async {
+            downloaded = uri;
+            return true;
+          },
         ),
-      );
-      await funnel.completed.future.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => throw StateError(
+      ),
+    );
+    // The SDK crosses native-isolate and fake-async continuations. Waiting
+    // only in runAsync starves the latter even after HTTP responds. Yield real
+    // work AND pump fake microtasks until the real service handles the 503.
+    final deadline = Stopwatch()..start();
+    while (!funnel.completed.isCompleted) {
+      if (deadline.elapsed >= const Duration(seconds: 5)) {
+        fail(
           'Telemetry stalled: started=${funnel.started}, '
           'visitorResolved=${funnel.visitorResolved}, '
           'visitorPresent=${funnel.visitor != null}, '
           'httpRequests=${requests.length}',
-        ),
+        );
+      }
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
       );
-    });
+      await tester.pump();
+    }
+    deadline.stop();
     expect(tester.takeException(), isNull);
     expect(funnel.started, isTrue);
     expect(funnel.visitorResolved, isTrue);
     expect(funnel.visitor, isNotNull);
     expect(requests, hasLength(1));
     expect(requests.single.url.path, '/functions/v1/shop-funnel');
+    expect(requests.single.method, 'POST');
+    expect(jsonDecode(requests.single.body), {
+      'visitor_id': funnel.visitor,
+      'product_id': product.id,
+      'stage': ShopFunnelService.stageProductView,
+      'source': 'direct',
+      'campaign': '',
+    });
     await tester.pumpAndSettle();
     expect(find.text('配布版 v1.0'), findsOneWidget);
     await tapText(tester, '口コミ・評価を書く');
