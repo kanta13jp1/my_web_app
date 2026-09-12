@@ -47,6 +47,7 @@ jobs:
           # workers. Wiring them from lib/ would expose a privileged API surface.
           declare -A UI_EXEMPTIONS=(
             [decision-events]="Internal decision log sink authenticated with SUPABASE_SERVICE_ROLE_KEY"
+            [video-commerce-hub]="Owner-authorized publication worker called by hourly automation or authenticated Video Studio"
             [video-worker-hub]="Dedicated video worker API authenticated with VIDEO_WORKER_TOKEN"
           )
           : > /tmp/ui_exempt_functions.txt

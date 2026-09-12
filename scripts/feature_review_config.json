@@ -69,7 +69,7 @@
       },
       {
         "slug": "user_manual",
-        "path": "/manual",
+        "path": "/user-manual",
         "source": "lib/pages/user_manual_page.dart",
         "priority": "low",
         "review_categories": ["outdated_docs"]

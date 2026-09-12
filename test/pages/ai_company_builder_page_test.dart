@@ -4,6 +4,9 @@ import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/services/ai_company_builder_service.dart';
 
 class _FakeCompanyBuilderService extends AiCompanyBuilderService {
+  _FakeCompanyBuilderService({this.includeTimeout = false});
+
+  final bool includeTimeout;
   final List<String> commands = <String>[];
   final List<String> researchUrls = <String>[];
 
@@ -56,6 +59,16 @@ class _FakeCompanyBuilderService extends AiCompanyBuilderService {
         'vault_notes': <Map<String, dynamic>>[],
         'audit_entries': <Map<String, dynamic>>[],
         'runtime_events': [
+          if (includeTimeout)
+            {
+              'event_type': 'task_timed_out',
+              'status': 'failed',
+              'occurred_at': '2026-09-03T00:00:00Z',
+              'payload': {
+                'title': 'Shape the MVP',
+                'timeout_seconds': 300,
+              },
+            },
           {
             'event_type': 'bootstrap_completed',
             'status': 'idle',
@@ -153,6 +166,21 @@ void main() {
 
     expect(find.text('Company Instances'), findsOneWidget);
     expect(find.text('Signal School'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('surfaces an agent timeout alert', (tester) async {
+    final service = _FakeCompanyBuilderService(includeTimeout: true);
+    await _pumpPage(tester, service, const Size(390, 844));
+
+    expect(
+      find.byKey(const Key('company-runtime-timeout-alert')),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('task was stopped after five minutes'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 

@@ -235,6 +235,41 @@ void main() {
     },
   );
 
+  test(
+    'authorization persists as pending when the first reservation lacks funds',
+    () async {
+      final gateway = _FakeVideoStudioGateway(
+        balance: _balance(100),
+        initialJobs: [
+          _job(
+            status: 'succeeded',
+            artifact: _artifact(latestReview: _review()),
+          ),
+        ],
+      );
+      final viewModel = VideoStudioViewModel(gateway: gateway);
+      addTearDown(viewModel.dispose);
+      await viewModel.load();
+      viewModel
+        ..setRightsConfirmed(true)
+        ..setAdultConfirmed(true)
+        ..setAuthorizationValidityHours(168)
+        ..setAuthorizationRegenerations(2);
+
+      expect(viewModel.canAuthorizeImprovement, isTrue);
+      expect(await viewModel.authorizeAndGenerateImprovement(), isTrue);
+
+      expect(viewModel.balance.availableCredits, 100);
+      expect(viewModel.authorizations.single.status, 'pending_funding');
+      expect(viewModel.authorizations.single.pendingReasons, [
+        'insufficient_credits',
+      ]);
+      expect(viewModel.activeJob, isNull);
+      expect(viewModel.hasAppliedImprovement, isTrue);
+      expect(viewModel.noticeMessage, contains('同じ承認IDで再開'));
+    },
+  );
+
   test('an active envelope is reused for the next improve review', () async {
     final gateway = _FakeVideoStudioGateway(
       balance: _balance(400),
@@ -360,6 +395,19 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
     authorizedSourceReviewId = sourceReviewId;
     authorizedValidityHours = validityHours;
     authorizedRegenerations = totalRegenerations;
+    if (balance.availableCredits < 300) {
+      return VideoAuthorizationCreateResult(
+        authorization: _authorization(
+          status: 'pending_funding',
+          reservedCredits: 0,
+          remainingCredits: 300 * totalRegenerations,
+          remainingRegenerations: totalRegenerations,
+          pendingReasons: const ['insufficient_credits'],
+        ),
+        job: null,
+        balance: balance,
+      );
+    }
     balance = _balance(balance.availableCredits - 300);
     return VideoAuthorizationCreateResult(
       authorization: _authorization(
@@ -507,6 +555,7 @@ VideoImprovementAuthorization _authorization({
   int reservedCredits = 300,
   int remainingCredits = 300,
   int remainingRegenerations = 1,
+  List<String> pendingReasons = const [],
 }) =>
     VideoImprovementAuthorization(
       id: _authorizationId,
@@ -522,4 +571,5 @@ VideoImprovementAuthorization _authorization({
       rootArtifactId: _artifactId,
       initialReviewId: _reviewId,
       allowCreditPurchase: false,
+      pendingReasons: pendingReasons,
     );

@@ -259,6 +259,36 @@ void main() {
     return adapter;
   }
 
+  testWidgets('landing form fields expose concise accessible names', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h04', LandingExperimentVariant.treatment),
+      );
+
+      expect(
+        tester
+            .getSemantics(
+              find.byKey(const Key('landing_trial_prompt_input')),
+            )
+            .label,
+        '例: 今日いちばん詰まっていることを簡単に書く',
+      );
+      final email = find.byKey(const Key('landing_auth_email'));
+      await Scrollable.ensureVisible(tester.element(email));
+      await tester.pump();
+      expect(
+        tester.getSemantics(email).label,
+        'メールアドレス',
+      );
+    } finally {
+      semantics.dispose();
+    }
+  });
+
   test('lp_qa query disables analytics only for explicit QA traffic', () {
     expect(
       LandingPage.analyticsEnabledForUri(

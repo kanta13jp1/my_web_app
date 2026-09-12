@@ -13,15 +13,16 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Plan only or apply one bounded safe batch
+        description: Plan, repair staged inventory gaps, or apply one safe batch
         required: true
         default: plan
         type: choice
         options:
           - plan
+          - repair_inventory
           - apply
       expected_plan_sha256:
-        description: Exact current plan digest; required for apply
+        description: Exact current plan digest; required for repair or apply
         required: false
         default: ""
         type: string
@@ -62,7 +63,7 @@ jobs:
 
   import:
     if: github.event_name != 'pull_request'
-    name: Plan or apply one safe WBS batch
+    name: Plan, repair inventory, or apply one safe WBS batch
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:

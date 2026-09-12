@@ -1,11 +1,12 @@
 # Design Tooling Setup
 
-このプロジェクトでは、デザイン作業を以下の 4 点セットで回します。
+このプロジェクトでは、デザイン作業を以下の 5 点セットで回します。
 
-1. `Figma MCP`
-2. `AIDesigner MCP`
-3. `.claude/agents/design-skills.md`
-4. `docs/DESIGN.md`
+1. `docs/DESIGN.md` と `lib/services/theme_service.dart`
+2. `Figma MCP`
+3. `AIDesigner MCP`
+4. Anthropic Designプラグインと `docs/DESIGN_ACCESSIBILITY_AUDIT.md`
+5. `.claude/agents/design-skills.md`
 
 モデル単体で UI を生成させるのではなく、既存デザインの読解、バリエーション生成、最終判断基準を分離して使う前提です。
 
@@ -51,18 +52,19 @@ npx -y @aidesigner/agent-skills doctor
 
 ### 既存画面を改善する時
 
-1. Figma MCP で元デザインを読む
-2. `docs/DESIGN.md` と `lib/services/theme_service.dart` で制約を確認する
+1. `docs/DESIGN.md` と `lib/services/theme_service.dart` で制約を確認する
+2. Figma MCP で元デザインを読む
 3. AIDesigner MCP で 2〜3 案出す
 4. `.claude/agents/design-skills.md` のルールで Flutter 実装に落とす
-5. `/design-review` 相当でズレを確認する
+5. `/design-review` でDesignプラグイン監査と実装差分を確認する
 
 ### 新規画面を作る時
 
 1. `docs/DESIGN.md` でトーンと禁止事項を確認する
-2. AIDesigner MCP で desktop / mobile の両案を出す
-3. 必要なら Figma MCP で既存近接画面の構造を読む
+2. Figma MCP で既存近接画面の構造を読む（存在する場合）
+3. AIDesigner MCP で desktop / mobile の両案を出す
 4. `/design-component` 相当で Flutter 実装に落とす
+5. `/design-review` でDesignプラグイン監査と実装差分を確認する
 
 ## 役割分担
 
@@ -113,6 +115,21 @@ docs/DESIGN.md と lib/services/theme_service.dart を前提に、
 この機能の desktop / mobile UI を AIDesigner MCP で提案してください。
 既存画面との整合も説明し、その後 Flutter 実装案まで出してください。
 ```
+
+---
+
+## Design プラグインによるアクセシビリティ・UX監査
+
+新規または大幅改修したUIは、実装・ブラウザQAに加えてAnthropic公式の
+DesignプラグインでWCAG 2.1 AAのデザイン監査を行う。チェックアウト、
+決済、認証、フォームのエラー状態はマイクロコピーもレビューし、修正後に
+再監査する。
+
+詳細な入力状態、プロンプト、pass定義、決定論的な補完検証、PR証跡形式は
+`docs/DESIGN_ACCESSIBILITY_AUDIT.md` を正本とする。PRの監査セクションは
+`scripts/check_design_accessibility_audit.py` が検証する。Figma MCPと
+AIDesigner MCPは設計探索・参照用であり、Designプラグインの監査証跡を
+代替しない。
 
 ---
 

@@ -32,32 +32,75 @@ jobs:
       LIMIT: ${{ github.event.inputs.limit || '20' }}
 
     steps:
-      - name: Notify Slack
+      - name: Step 1 - Secret presence check
+        id: precheck
+        shell: bash
         run: |
+          set -euo pipefail
           if [ -z "$TOOLS_HUB_URL" ]; then
-            TOOLS_HUB_URL="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub"
+            echo "::error::SUPABASE_TOOLS_HUB_URL is not configured; notification was not sent."
+            exit 1
           fi
-
           if [ -z "$SERVICE_ROLE_KEY" ]; then
-            echo "::warning::SUPABASE_SERVICE_ROLE_KEY is missing; skip WBS user task notify"
-            exit 0
+            echo "::error::SERVICE_ROLE_KEY is not configured; notification was not sent."
+            exit 1
           fi
 
-          HTTP_CODE=$(curl -s -o /tmp/notify_resp.json -w "%{http_code}" \
-            -X POST "$TOOLS_HUB_URL" \
+      - name: Step 2 - Call wbs.notify_user_tasks
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$LIMIT" =~ ^[0-9]+$ ]] || [ "${#LIMIT}" -gt 3 ] || (( 10#$LIMIT < 1 || 10#$LIMIT > 100 )); then
+            echo "::error::limit must be an integer from 1 to 100."
+            exit 1
+          fi
+          LIMIT=$((10#$LIMIT))
+          RESPONSE_FILE=$(mktemp)
+          trap 'rm -f "$RESPONSE_FILE"' EXIT
+          if ! HTTP_CODE=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" \
+            -X POST \
+            "$TOOLS_HUB_URL" \
+            -H "Authorization: Bearer ${SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
             -d "{\"action\":\"wbs.notify_user_tasks\",\"send_slack\":true,\"limit\":${LIMIT}}" \
-            --max-time 30)
-
-          echo "HTTP_CODE=$HTTP_CODE"
-          cat /tmp/notify_resp.json
-
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::warning::tools-hub returned HTTP $HTTP_CODE"
-            exit 0
+            --max-time 30); then
+            echo "::error::Notification transport failed; response omitted."
+            exit 1
           fi
-
-          COUNT=$(jq -r '.user_tasks_count // .count // 0' /tmp/notify_resp.json)
-          URGENT=$(jq -r '.urgent_count // 0' /tmp/notify_resp.json)
-          echo "WBS user tasks notified: count=${COUNT}, urgent=${URGENT}"
+          if [[ ! "$HTTP_CODE" =~ ^[0-9]{3}$ ]]; then
+            echo "::error::Invalid HTTP status; response omitted."
+            exit 1
+          fi
+          echo "HTTP status: $HTTP_CODE"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Notification failed; response omitted."
+            exit 1
+          fi
+          python3 - "$RESPONSE_FILE" <<'PY'
+          import json
+          import sys
+          try:
+              with open(sys.argv[1], encoding="utf-8") as response:
+                  raw = response.read(1048577)
+              if len(raw) > 1048576:
+                  raise ValueError("oversized")
+              payload = json.loads(raw)
+              count = payload.get("user_tasks_count") if isinstance(payload, dict) else None
+              if type(count) is not int or not 0 <= count <= 100:
+                  raise ValueError("invalid count")
+              if payload.get("success") is not True:
+                  raise ValueError("unsuccessful operation")
+              if payload.get("slack_error") is not None:
+                  raise ValueError("delivery error")
+              if type(payload.get("slack_posted")) is not bool:
+                  raise ValueError("missing delivery status")
+              if count > 0 and payload["slack_posted"] is not True:
+                  raise ValueError("not delivered")
+          except (OSError, ValueError):
+              print("::error::Invalid notification response; content omitted.")
+              sys.exit(1)
+          if count == 0:
+              print("No pending user tasks; no Slack notification needed.")
+          else:
+              print(f"Notified {count} user task(s) to Slack")
+          PY

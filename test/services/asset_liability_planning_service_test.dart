@@ -2107,6 +2107,60 @@ void main() {
       expect(row.paymentDay, isNull);
     });
 
+    test('scheduled expenses do not inflate current debt or net worth', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'モビット': -200000,
+        },
+        baseDate: DateTime(2026, 5, 12),
+        includeDefaultFixedPayments: true,
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'chatgpt_pro',
+            name: 'ChatGPT Pro',
+            amount: 30000,
+            paymentDay: 20,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+        ],
+      );
+
+      expect(workbook.positiveAssetTotal, 100000);
+      expect(workbook.liabilityTotal, -200000);
+      expect(workbook.netWorth, -100000);
+      expect(
+        workbook.currentAccounts.map((account) => account.name),
+        containsAll(<String>['bank', 'モビット']),
+      );
+      expect(workbook.currentAccounts, hasLength(2));
+      expect(
+        workbook.currentDebtRows.map((row) => row.name),
+        <String>['モビット'],
+      );
+      expect(
+        workbook.repaymentPriorityRows.map((row) => row.name),
+        <String>['モビット'],
+      );
+      expect(
+        workbook.scheduledExpenseAccountIds,
+        containsAll(<String>[
+          'rent',
+          'kddi_provider',
+          'gas_bill',
+          'custom_chatgptpro',
+        ]),
+      );
+      expect(
+        workbook.debtMasterRows.any((row) => row.name == 'ChatGPT Pro'),
+        isTrue,
+      );
+      expect(
+        workbook.cashflowRows.any((row) => row.accountName == 'ChatGPT Pro'),
+        isTrue,
+      );
+    });
+
     test('marks full-payment fixed costs on debt rows', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: const <String, double>{'cash': 50000, 'モビット': -100000},

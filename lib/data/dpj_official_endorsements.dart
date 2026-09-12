@@ -6,9 +6,9 @@ import '../models/election_intelligence.dart';
 
 const String dpjOfficialEndorsementSourceUrl =
     'https://new-kokumin.jp/local-election-list';
-const String dpjOfficialEndorsementSourceAsOf = '2026-08-19';
+const String dpjOfficialEndorsementSourceAsOf = '2026-09-11';
 const String dpjOfficialEndorsementSourceDocumentSha256 =
-    '65b1c5e5693f7103274ba13a7af6764bd00a1a6aa06d04204a12079ee8436cbd';
+    '71132f4ec453bf19a1a71e5850d370ea3065f401ce0b4df0b8cd2a2a29786dfb';
 const int dpjOfficialRecommendationEntryCount = 9;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
@@ -78,9 +78,9 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '東京',
-    totalCount: 36,
+    totalCount: 37,
     incumbentCount: 29,
-    newcomerCount: 5,
+    newcomerCount: 6,
     formerCount: 2,
   ),
   OfficialEndorsementPrefecture(
@@ -197,9 +197,9 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '香川',
-    totalCount: 1,
-    incumbentCount: 0,
-    newcomerCount: 1,
+    totalCount: 22,
+    incumbentCount: 12,
+    newcomerCount: 10,
     formerCount: 0,
   ),
   OfficialEndorsementPrefecture(
@@ -211,8 +211,8 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '高知',
-    totalCount: 3,
-    incumbentCount: 1,
+    totalCount: 2,
+    incumbentCount: 0,
     newcomerCount: 1,
     formerCount: 1,
   ),
@@ -254,8 +254,8 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   OfficialEndorsementPrefecture(
     prefecture: '宮崎',
     totalCount: 14,
-    incumbentCount: 0,
-    newcomerCount: 13,
+    incumbentCount: 1,
+    newcomerCount: 12,
     formerCount: 1,
   ),
   OfficialEndorsementPrefecture(
@@ -267,9 +267,9 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
 ];
 
-const int dpjOfficialEndorsementTotal = 265;
-const int dpjOfficialEndorsementIncumbentTotal = 115;
-const int dpjOfficialEndorsementNewcomerTotal = 140;
+const int dpjOfficialEndorsementTotal = 286;
+const int dpjOfficialEndorsementIncumbentTotal = 127;
+const int dpjOfficialEndorsementNewcomerTotal = 149;
 const int dpjOfficialEndorsementFormerTotal = 10;
 const int dpjOfficialEndorsementPrefectureCount = 36;
 

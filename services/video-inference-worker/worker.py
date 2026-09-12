@@ -369,6 +369,48 @@ def safe_worker_error_detail(error: WorkerError) -> str:
     return detail if SAFE_ERROR_DETAIL_RE.fullmatch(detail) else error.error_code
 
 
+def inference_failure_summary(return_code: int, diagnostic_path: Path) -> dict[str, Any]:
+    """Keep bounded structural evidence; never retain exception messages or code."""
+    summary: dict[str, Any] = {
+        "event": "video_inference_diagnostic",
+        "return_code": return_code,
+        "exception_type": "unknown",
+        "frames": [],
+    }
+    try:
+        with diagnostic_path.open("rb") as diagnostic:
+            diagnostic.seek(0, os.SEEK_END)
+            diagnostic.seek(max(0, diagnostic.tell() - 65536))
+            tail = diagnostic.read(65536).decode("utf-8", errors="replace")
+    except OSError:
+        summary["diagnostic_available"] = False
+        return summary
+    summary["diagnostic_available"] = True
+    exception_types = {
+        "RuntimeError", "ValueError", "TypeError", "AssertionError",
+        "ImportError", "ModuleNotFoundError", "FileNotFoundError",
+        "PermissionError", "OSError", "KeyError", "AttributeError",
+        "NotImplementedError", "MemoryError", "OutOfMemoryError",
+    }
+    # Only fixed, shipped source names are emitted, never arbitrary paths.
+    source_names = {
+        "run_wan.py", "generate.py", "textimage2video.py", "text2video.py",
+        "t5.py", "attention.py", "vae2_2.py", "model.py", "module.py",
+        "serialization.py",
+    }
+    for line in tail.splitlines():
+        exception = re.match(r"^(?:[a-zA-Z_][\w]*\.)*([A-Za-z]+Error):", line)
+        if exception and exception[1] in exception_types:
+            summary["exception_type"] = exception[1]
+        frame = re.match(r'^  File "(/(?:app|opt)/[^"\r\n]+)", line ([0-9]{1,7}),', line)
+        if frame:
+            name = frame[1].rsplit("/", 1)[-1]
+            if name in source_names:
+                summary["frames"].append({"file": name, "line": int(frame[2])})
+                summary["frames"] = summary["frames"][-8:]
+    return summary
+
+
 def generate_video(
     settings: Settings,
     api: WorkerApi,
@@ -449,6 +491,11 @@ def generate_video(
             time.sleep(2)
         if process.returncode != 0:
             diagnostic_file.flush()
+            summary = inference_failure_summary(process.returncode, diagnostic_path)
+            summary["job_id"] = job_id
+            # stdout is captured by the GCP worker service before raw diagnostics
+            # are removed. No prompt, exception message, source line or token.
+            print(json.dumps(summary, separators=(",", ":")), flush=True)
             failure = classify_inference_failure(
                 process.returncode,
                 diagnostic_path,

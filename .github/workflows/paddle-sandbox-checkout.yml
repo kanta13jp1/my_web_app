@@ -4,7 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       run_real_sandbox_e2e:
-        description: Run the real Paddle sandbox success/failure/cancel matrix
+        description: Run the basic sandbox cancel, declined-card, and success matrix
+        required: true
+        default: false
+        type: boolean
+      run_b2b_vat_e2e:
+        description: Also run B2B VAT (requires an Owner-authorized valid tax-ID scenario)
         required: true
         default: false
         type: boolean
@@ -19,15 +24,20 @@ on:
     paths:
       - '.github/workflows/paddle-sandbox-checkout.yml'
       - 'docs/PADDLE_SANDBOX_CHECKOUT_VERIFICATION.md'
+      - 'docs/PADDLE_B2B_VAT_INVOICE_VERIFICATION.md'
       - 'lib/pages/subscription_billing_page.dart'
       - 'lib/services/paddle_checkout.dart'
+      - 'lib/services/paddle_invoice_access.dart'
       - 'lib/services/paddle_js_checkout_gateway.dart'
       - 'lib/services/paddle_js_checkout_gateway_stub.dart'
       - 'lib/services/paddle_js_checkout_gateway_web.dart'
       - 'lib/ui/features/billing/**'
       - 'test/pages/subscription_billing_page_test.dart'
+      - 'scripts/paddle_sandbox_config.cjs'
+      - 'scripts/paddle_sandbox_config.test.cjs'
       - 'test/e2e/paddle_sandbox_checkout.spec.ts'
       - 'test/services/paddle_checkout_test.dart'
+      - 'test/services/paddle_invoice_access_test.dart'
       - 'test/services/paddle_sandbox_web_entrypoint_test.dart'
       - 'test/ui/features/billing/**'
       - 'web/index.html'
@@ -86,6 +96,7 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs
           npm ci
+          node --test scripts/paddle_sandbox_config.test.cjs
           npx playwright test \
             test/e2e/paddle_sandbox_checkout.spec.ts \
             --project=chromium \
@@ -106,15 +117,19 @@ jobs:
           dart format --output=none --set-exit-if-changed
           lib/pages/subscription_billing_page.dart
           lib/services/paddle_checkout.dart
+          lib/services/paddle_invoice_access.dart
           lib/services/paddle_js_checkout_gateway.dart
           lib/services/paddle_js_checkout_gateway_stub.dart
           lib/services/paddle_js_checkout_gateway_web.dart
           lib/ui/features/billing/view_models/paddle_sandbox_checkout_controller.dart
           lib/ui/features/billing/views/paddle_sandbox_checkout_card.dart
+          lib/ui/features/billing/views/paddle_sandbox_invoice_access_card.dart
           test/pages/subscription_billing_page_test.dart
           test/services/paddle_checkout_test.dart
+          test/services/paddle_invoice_access_test.dart
           test/services/paddle_sandbox_web_entrypoint_test.dart
           test/ui/features/billing/paddle_sandbox_checkout_card_test.dart
+          test/ui/features/billing/paddle_sandbox_invoice_access_card_test.dart
 
       - name: Analyze project
         shell: bash
@@ -129,8 +144,10 @@ jobs:
           set -euo pipefail
           flutter test --concurrency=1 \
             test/services/paddle_checkout_test.dart \
+            test/services/paddle_invoice_access_test.dart \
             test/services/paddle_sandbox_web_entrypoint_test.dart \
             test/ui/features/billing/paddle_sandbox_checkout_card_test.dart \
+            test/ui/features/billing/paddle_sandbox_invoice_access_card_test.dart \
             test/pages/subscription_billing_page_test.dart \
             2>&1 | tee .ci-logs/paddle-vm-tests.log
 
@@ -140,6 +157,7 @@ jobs:
           set -euo pipefail
           flutter test --platform chrome --concurrency=1 \
             test/ui/features/billing/paddle_sandbox_checkout_card_test.dart \
+            test/ui/features/billing/paddle_sandbox_invoice_access_card_test.dart \
             test/pages/subscription_billing_page_test.dart \
             2>&1 | tee .ci-logs/paddle-chrome-tests.log
 
@@ -151,6 +169,7 @@ jobs:
             --dart-define=PADDLE_SANDBOX_ENABLED=true \
             --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN=test_ci_compile_only \
             --dart-define=PADDLE_SANDBOX_PRICE_ID=pri_ci_compile_only \
+            --dart-define=PADDLE_SANDBOX_CUSTOMER_PORTAL_URL=https://sandbox-customer-portal.paddle.com/cpl_01abcdefghijklmnopqrstuvwx \
             2>&1 | tee .ci-logs/paddle-debug-web-build.log
           test -s build/web/main.dart.js
           test -s build/web/paddle_sandbox_bridge.js
@@ -163,6 +182,7 @@ jobs:
             --dart-define=PADDLE_SANDBOX_ENABLED=true \
             --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN=test_ci_compile_only \
             --dart-define=PADDLE_SANDBOX_PRICE_ID=pri_ci_compile_only \
+            --dart-define=PADDLE_SANDBOX_CUSTOMER_PORTAL_URL=https://sandbox-customer-portal.paddle.com/cpl_01abcdefghijklmnopqrstuvwx \
             2>&1 | tee .ci-logs/paddle-release-web-build.log
           test -s build/web/main.dart.js
           test -s build/web/paddle_sandbox_bridge.js
@@ -192,11 +212,11 @@ jobs:
           retention-days: 7
 
   real-sandbox-e2e:
-    name: Real Paddle sandbox success, failure, and cancel
+    name: Real Paddle sandbox checkout (optional B2B VAT)
     if: >-
       always() &&
       github.event_name == 'workflow_dispatch' &&
-      inputs.run_real_sandbox_e2e &&
+      (inputs.run_real_sandbox_e2e || inputs.run_b2b_vat_e2e) &&
       (needs.validate.result == 'success' || needs.validate.result == 'skipped')
     needs: validate
     runs-on: ubuntu-latest
@@ -206,7 +226,16 @@ jobs:
     env:
       PADDLE_SANDBOX_CLIENT_TOKEN: ${{ secrets.PADDLE_SANDBOX_CLIENT_TOKEN }}
       PADDLE_SANDBOX_PRICE_ID: ${{ vars.PADDLE_SANDBOX_PRICE_ID }}
-      PADDLE_SANDBOX_E2E: 'true'
+      PADDLE_SANDBOX_CUSTOMER_PORTAL_URL: ${{ vars.PADDLE_SANDBOX_CUSTOMER_PORTAL_URL }}
+      PADDLE_SANDBOX_B2B_EMAIL: ${{ inputs.run_b2b_vat_e2e && secrets.PADDLE_SANDBOX_B2B_EMAIL || '' }}
+      PADDLE_SANDBOX_B2B_TAX_IDENTIFIER: ${{ inputs.run_b2b_vat_e2e && secrets.PADDLE_SANDBOX_B2B_TAX_IDENTIFIER || '' }}
+      PADDLE_SANDBOX_B2B_COUNTRY_CODE: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_COUNTRY_CODE || '' }}
+      PADDLE_SANDBOX_B2B_COUNTRY_NAME: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_COUNTRY_NAME || '' }}
+      PADDLE_SANDBOX_B2B_POSTAL_CODE: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_POSTAL_CODE || '' }}
+      PADDLE_SANDBOX_B2B_BUSINESS_NAME: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_BUSINESS_NAME || '' }}
+      PADDLE_SANDBOX_B2B_EXPECTED_TAX: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_EXPECTED_TAX || '' }}
+      PADDLE_SANDBOX_E2E: ${{ inputs.run_real_sandbox_e2e }}
+      PADDLE_SANDBOX_B2B_VAT_E2E: ${{ inputs.run_b2b_vat_e2e }}
       E2E_BASE_URL: http://localhost:7357
       SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
       SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_ANON_KEY_DEV }}
@@ -217,35 +246,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate sandbox configuration
+      - name: Validate selected sandbox configuration before SDK setup
         shell: bash
-        run: |
-          set -euo pipefail
-          echo "::add-mask::$PADDLE_SANDBOX_CLIENT_TOKEN"
-          if [[ -z "$PADDLE_SANDBOX_CLIENT_TOKEN" ]]; then
-            echo '::error::Repository secret PADDLE_SANDBOX_CLIENT_TOKEN is missing.'
-            exit 1
-          fi
-          if [[ "$PADDLE_SANDBOX_CLIENT_TOKEN" != test_* ]]; then
-            echo '::error::PADDLE_SANDBOX_CLIENT_TOKEN must be a sandbox test_ token.'
-            exit 1
-          fi
-          if [[ -z "$PADDLE_SANDBOX_PRICE_ID" ]]; then
-            echo '::error::Repository variable PADDLE_SANDBOX_PRICE_ID is missing.'
-            exit 1
-          fi
-          if [[ "$PADDLE_SANDBOX_PRICE_ID" != pri_* ]]; then
-            echo '::error::PADDLE_SANDBOX_PRICE_ID must be a pri_ identifier.'
-            exit 1
-          fi
-          if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_PUBLISHABLE_KEY" ]]; then
-            echo '::error::The development Supabase URL and publishable key are required to start the Flutter app.'
-            exit 1
-          fi
-          if [[ "$SUPABASE_PUBLISHABLE_KEY" == sb_secret_* ]]; then
-            echo '::error::A Supabase secret key must never be compiled into Flutter Web.'
-            exit 1
-          fi
+        run: node scripts/paddle_sandbox_config.cjs
 
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter-sdk
@@ -278,6 +281,7 @@ jobs:
             --dart-define=PADDLE_SANDBOX_ENABLED=true \
             --dart-define=PADDLE_SANDBOX_CLIENT_TOKEN="$PADDLE_SANDBOX_CLIENT_TOKEN" \
             --dart-define=PADDLE_SANDBOX_PRICE_ID="$PADDLE_SANDBOX_PRICE_ID" \
+            --dart-define=PADDLE_SANDBOX_CUSTOMER_PORTAL_URL="$PADDLE_SANDBOX_CUSTOMER_PORTAL_URL" \
             2>&1 | tee .ci-logs/paddle-real-sandbox-build.log
 
       - name: Start short-lived Web server
@@ -302,7 +306,8 @@ jobs:
           echo '::error::The temporary Flutter Web server did not become ready.'
           exit 1
 
-      - name: Run real sandbox matrix without retries
+      - name: Run selected sandbox matrix without retries
+        id: sandbox_matrix
         shell: bash
         run: >-
           npx playwright test
@@ -320,14 +325,23 @@ jobs:
 
       - name: Write real sandbox summary
         if: always()
+        env:
+          MATRIX_OUTCOME: ${{ steps.sandbox_matrix.outcome }}
         shell: bash
         run: |
           {
             echo '## Real Paddle sandbox matrix'
             echo
-            echo '- The GitHub-hosted runner used a short-lived localhost debug build.'
-            echo '- Playwright ran success, declined-card, and customer-cancel scenarios serially with retries disabled.'
-            echo '- Review the uploaded report, sanitized event log, and post-checkout screenshots before closing #2845.'
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Playwright step outcome: $MATRIX_OUTCOME (skipped means no matrix ran)."
+            echo '- Selected basic cases: cancel, declined card, and success; serial execution with retries disabled.'
+            if [[ "$PADDLE_SANDBOX_B2B_VAT_E2E" == true ]]; then
+              echo '- B2B VAT: explicitly selected. Confirm its individual result in the report; selection is not proof of success.'
+            else
+              echo '- B2B VAT: SKIPPED (not selected). A green basic matrix does not verify VAT recalculation or reverse charge.'
+            fi
+            echo '- Inspect the uploaded report for passed, failed, and skipped cases, plus sanitized event logs and masked screenshots.'
+            echo '- This run does not change the not-planned disposition of #2846.'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload real sandbox evidence

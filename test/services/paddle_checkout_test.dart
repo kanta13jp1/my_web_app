@@ -44,6 +44,34 @@ void main() {
   });
 
   group('PaddleSandboxCheckoutController', () {
+    test('keeps only sanitized VAT recalculation evidence', () async {
+      final gateway = _FakePaddleCheckoutGateway();
+      final controller = PaddleSandboxCheckoutController(
+        config: _validConfig,
+        gateway: gateway,
+      );
+      addTearDown(controller.dispose);
+
+      await controller.openCheckout();
+      gateway.emit(
+        const PaddleCheckoutEvent(
+          name: 'checkout.updated',
+          checkoutId: 'che_test',
+          currencyCode: 'EUR',
+          subtotal: '1000',
+          tax: '0',
+          total: '1000',
+          hasBusiness: true,
+          hasTaxIdentifier: true,
+        ),
+      );
+
+      expect(controller.state.phase, PaddleCheckoutPhase.opened);
+      expect(controller.state.hasTaxIdentifier, isTrue);
+      expect(controller.state.tax, '0');
+      expect(controller.state.message, contains('VAT / Tax ID'));
+    });
+
     test(
       'maps loaded and completed events to a successful terminal state',
       () async {

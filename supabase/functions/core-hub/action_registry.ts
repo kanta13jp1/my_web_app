@@ -46,7 +46,7 @@ export const CORE_HUB_ACTION_REGISTRY = {
   "analytics.summary": { auth: "user" },
   "system.status": { auth: "user" },
   "system.proactive_diagnostics": { auth: "service_role" },
-  "page.share_generate": { auth: "anonymous" },
+  "page.share_generate": { auth: "user" },
   "design.screens.list": { auth: "user" },
   "design.audit.upsert": { auth: "service_role" },
   "design.rollout.upsert": { auth: "service_role" },

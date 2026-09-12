@@ -59,6 +59,52 @@ void main() {
   });
 
   group('AssetCashflowForecastInputs.fromAssetData', () {
+    test(
+        'Issue #5191: deduplicates duplicate salary in recurringIncomeTemplates and inflowRules on the same day',
+        () {
+      final inputs = AssetCashflowForecastInputs.fromAssetData(
+        accounts: const [],
+        debtRows: const [],
+        recurringIncomeTemplates: const [
+          AssetLiabilityRecurringIncomeTemplate(
+            id: 't_salary',
+            dayOfMonth: 25,
+            name: '給料',
+            amount: 421277,
+            destinationAccountId: null,
+            destinationAccountName: null,
+          ),
+        ],
+        inflowRules: const [
+          AssetExpectedInflowRule(
+            id: 'r_salary',
+            dayOfMonth: 25,
+            amount: 415547,
+            label: '給与振込',
+          ),
+          AssetExpectedInflowRule(
+            id: 'r_side',
+            dayOfMonth: 15,
+            amount: 50000,
+            label: '副業',
+          ),
+        ],
+        oneTimeInflows: const [],
+        subscriptions: const [],
+      );
+
+      expect(inputs.recurringIncome, hasLength(2));
+      final salaryEntry =
+          inputs.recurringIncome.firstWhere((e) => e.dayOfMonth == 25);
+      expect(salaryEntry.label, '給料');
+      expect(salaryEntry.amount, 421277);
+
+      final sideEntry =
+          inputs.recurringIncome.firstWhere((e) => e.dayOfMonth == 15);
+      expect(sideEntry.label, '副業');
+      expect(sideEntry.amount, 50000);
+    });
+
     test('sums only positive cash/deposit balances into startingBalance', () {
       final inputs = AssetCashflowForecastInputs.fromAssetData(
         accounts: [

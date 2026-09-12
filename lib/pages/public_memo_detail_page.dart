@@ -191,7 +191,9 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
         }
       });
     } catch (_) {
-      // Ignore network errors — reactions are non-critical
+      if (mounted) {
+        _showMessage('リアクションの送信に失敗しました。再試行してください。');
+      }
     } finally {
       if (mounted) {
         setState(() => _reactionsLoading = false);

@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "electionMode": "local",
   "sourceUrl": "https://new-kokumin.jp/local-election-list",
-  "sourceAsOf": "2026-08-19",
-  "sourceDocumentSha256": "65b1c5e5693f7103274ba13a7af6764bd00a1a6aa06d04204a12079ee8436cbd",
-  "candidateRowCount": 274,
+  "sourceAsOf": "2026-09-11",
+  "sourceDocumentSha256": "71132f4ec453bf19a1a71e5850d370ea3065f401ce0b4df0b8cd2a2a29786dfb",
+  "candidateRowCount": 295,
   "officialEndorsements": {
-    "totalCount": 265,
-    "incumbentCount": 115,
-    "newcomerCount": 140,
+    "totalCount": 286,
+    "incumbentCount": 127,
+    "newcomerCount": 149,
     "formerCount": 10,
     "prefectureCount": 36
   },
@@ -81,9 +81,9 @@
     },
     {
       "prefecture": "東京",
-      "totalCount": 36,
+      "totalCount": 37,
       "incumbentCount": 29,
-      "newcomerCount": 5,
+      "newcomerCount": 6,
       "formerCount": 2
     },
     {
@@ -200,9 +200,9 @@
     },
     {
       "prefecture": "香川",
-      "totalCount": 1,
-      "incumbentCount": 0,
-      "newcomerCount": 1,
+      "totalCount": 22,
+      "incumbentCount": 12,
+      "newcomerCount": 10,
       "formerCount": 0
     },
     {
@@ -214,8 +214,8 @@
     },
     {
       "prefecture": "高知",
-      "totalCount": 3,
-      "incumbentCount": 1,
+      "totalCount": 2,
+      "incumbentCount": 0,
       "newcomerCount": 1,
       "formerCount": 1
     },
@@ -257,8 +257,8 @@
     {
       "prefecture": "宮崎",
       "totalCount": 14,
-      "incumbentCount": 0,
-      "newcomerCount": 13,
+      "incumbentCount": 1,
+      "newcomerCount": 12,
       "formerCount": 1
     },
     {

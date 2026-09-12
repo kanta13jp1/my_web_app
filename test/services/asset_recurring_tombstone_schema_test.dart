@@ -90,8 +90,10 @@ void main() {
       'lib/pages/asset_management_page.dart',
     ).readAsStringSync();
     expect(
-      source,
-      contains(".rpc('apply_recurring_fixed_cost_tombstones', params:"),
+      RegExp(
+        r"\.rpc\(\s*'apply_recurring_fixed_cost_tombstones'\s*,\s*params\s*:",
+      ).hasMatch(source),
+      isTrue,
     );
 
     final method = source

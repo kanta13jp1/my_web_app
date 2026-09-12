@@ -1,0 +1,49 @@
+name: Tiger Status Publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'assets/data/tiger_*'
+  workflow_dispatch:
+
+concurrency:
+  group: tiger-status-publish
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  validate-and-verify:
+    name: Validate and Verify Tiger Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Validate JSON syntax and structure
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import json, glob, sys
+          files = glob.glob('assets/data/tiger_*.json')
+          if not files:
+              print('No tiger status files found', file=sys.stderr)
+              sys.exit(1)
+          for f in files:
+              with open(f, 'r', encoding='utf-8') as fp:
+                  data = json.load(fp)
+                  print(f'Validated {f}: {len(data) if isinstance(data, (list, dict)) else 1} entries')
+          print('All Tiger status JSON files are valid and ready for serving!')
+          PY

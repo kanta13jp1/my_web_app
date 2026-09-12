@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
+import 'package:my_web_app/services/philosophy_funnel_analytics.dart';
 import 'package:my_web_app/utils/route_document_title.dart';
 
 void main() {
@@ -64,4 +65,113 @@ void main() {
     expect(find.text('4週目｜配分を直す'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('philosophy CTA completes the measured quick inventory', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1000, 1600);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    final analytics = _RecordingPhilosophyAnalytics();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PhilosophyPage(analytics: analytics),
+        onGenerateRoute: (settings) {
+          final uri = Uri.parse(settings.name ?? '/philosophy');
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => PhilosophyPage(
+              analytics: analytics,
+              initialStep: uri.queryParameters['step'] == 'quick-inventory'
+                  ? PhilosophyInitialStep.quickInventory
+                  : PhilosophyInitialStep.overview,
+            ),
+          );
+        },
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('番外:'), findsNothing);
+    expect(
+      find.byKey(const Key('philosophy_ai_university_video_link')),
+      findsOneWidget,
+    );
+
+    final cta = find.byKey(const Key('philosophy_start_quick_inventory'));
+    await tester.scrollUntilVisible(
+      cta,
+      600,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(cta);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('philosophy_quick_inventory')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('philosophy_department_finance')),
+    );
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const Key('philosophy_action_start_one')),
+    );
+    await tester.pumpAndSettle();
+
+    final completeFirstAction =
+        find.byKey(const Key('philosophy_complete_first_action'));
+    await tester.scrollUntilVisible(
+      completeFirstAction,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(completeFirstAction);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('philosophy_first_action_completed')),
+      findsOneWidget,
+    );
+    final feedback = find.byKey(const Key('philosophy_feedback_helpful'));
+    await tester.scrollUntilVisible(
+      feedback,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(feedback);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('philosophy_submit_feedback')),
+    );
+    await tester.pump();
+
+    expect(
+      analytics.events.map((event) => event.stage),
+      containsAllInOrder(<PhilosophyFunnelStage>[
+        PhilosophyFunnelStage.pageView,
+        PhilosophyFunnelStage.ctaClick,
+        PhilosophyFunnelStage.pageView,
+        PhilosophyFunnelStage.quickInventoryView,
+        PhilosophyFunnelStage.firstActionComplete,
+        PhilosophyFunnelStage.feedback,
+      ]),
+    );
+    final completed = analytics.events.firstWhere(
+      (event) => event.stage == PhilosophyFunnelStage.firstActionComplete,
+    );
+    expect(completed.safeProperties['department_id'], 'finance');
+    expect(completed.safeProperties['action_id'], 'start_one');
+  });
+}
+
+class _RecordingPhilosophyAnalytics implements PhilosophyFunnelAnalytics {
+  final List<PhilosophyFunnelEvent> events = <PhilosophyFunnelEvent>[];
+
+  @override
+  Future<void> capture(PhilosophyFunnelEvent event) async {
+    events.add(event);
+  }
 }

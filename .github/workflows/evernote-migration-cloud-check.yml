@@ -28,6 +28,8 @@ on:
       - 'test/pages/note_collections_page_test.dart'
       - 'test/pages/space_sharing_page_test.dart'
       - 'test/services/note_collection_service_test.dart'
+      - 'test/services/business_csv_import_service_test.dart'
+      - 'test/services/business_csv_import_schema_test.dart'
       - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
@@ -67,6 +69,8 @@ on:
       - 'test/pages/note_collections_page_test.dart'
       - 'test/pages/space_sharing_page_test.dart'
       - 'test/services/note_collection_service_test.dart'
+      - 'test/services/business_csv_import_service_test.dart'
+      - 'test/services/business_csv_import_schema_test.dart'
       - 'test/widgets/note_tasks_panel_test.dart'
       - 'test/pages/note_list_page_test.dart'
       - 'test/widgets/markdown_preview_test.dart'
@@ -190,6 +194,8 @@ jobs:
               test/pages/space_sharing_page_test.dart \
               test/pages/note_tags_page_test.dart \
               test/services/note_collection_service_test.dart \
+              test/services/business_csv_import_service_test.dart \
+              test/services/business_csv_import_schema_test.dart \
               test/services/note_tag_hierarchy_service_test.dart \
               test/widgets/note_tasks_panel_test.dart \
               test/pages/note_list_page_test.dart \

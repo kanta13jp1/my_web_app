@@ -50,11 +50,21 @@
   function relayPaddleEvent(event) {
     if (!activeEventCallback || !event) return;
     const data = event.data || {};
+    const totals = data.totals || {};
+    const business = data.customer && data.customer.business;
+    const taxIdentifier = business &&
+      (business.tax_identifier || business.taxIdentifier);
     const payload = {
       name: optionalText(event.name) || '',
       checkoutId: optionalText(data.id),
       transactionId: optionalText(data.transaction_id),
       message: optionalText(data.detail) || optionalText(data.message),
+      currencyCode: optionalText(data.currency_code || data.currencyCode),
+      subtotal: optionalText(totals.subtotal),
+      tax: optionalText(totals.tax),
+      total: optionalText(totals.total),
+      hasBusiness: Boolean(business),
+      hasTaxIdentifier: Boolean(taxIdentifier),
     };
     sandboxEventLog.push({
       receivedAt: new Date().toISOString(),
@@ -101,6 +111,9 @@
 
     paddle.Checkout.open({
       items: [{ priceId: priceId, quantity: 1 }],
+      settings: {
+        showAddTaxId: true,
+      },
     });
   };
 

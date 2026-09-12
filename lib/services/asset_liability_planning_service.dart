@@ -260,6 +260,12 @@ class AssetLiabilityPlanningService {
       for (final injected in injectedFixedCosts)
         if (injected.isSubscription) injected.account.id,
     };
+    // 残高スナップショットに無く、資金繰りのためだけに注入した将来支出。
+    // 支払予定・カレンダーには残すが、現在負債・純資産へは混入させない。
+    final scheduledExpenseAccountIds = <String>{
+      for (final cost in applicableDefaultFixedCosts) cost.accountId,
+      for (final injected in injectedFixedCosts) injected.account.id,
+    };
     if (injectedFixedCosts.isNotEmpty) {
       accounts
         ..addAll(injectedFixedCosts.map((injected) => injected.account))
@@ -306,7 +312,10 @@ class AssetLiabilityPlanningService {
     );
     final liabilityTotal = accounts.fold<double>(
       0,
-      (sum, account) => account.balance < 0 ? sum + account.balance : sum,
+      (sum, account) => account.balance < 0 &&
+              !scheduledExpenseAccountIds.contains(account.id)
+          ? sum + account.balance
+          : sum,
     );
     final netWorth = positiveAssetTotal + liabilityTotal;
     final cashLikeTotal = accounts.fold<double>(
@@ -358,9 +367,10 @@ class AssetLiabilityPlanningService {
         .toList()
       ..sort((a, b) => b.balance.abs().compareTo(a.balance.abs()));
 
-    final repaymentPriorityRows = List<AssetLiabilityDebtRow>.from(
-      debtMasterRows,
-    )..sort(_compareDebtPriority);
+    final repaymentPriorityRows = debtMasterRows
+        .where((row) => !scheduledExpenseAccountIds.contains(row.id))
+        .toList()
+      ..sort(_compareDebtPriority);
 
     final directDebtRows = debtMasterRows
         .where((row) => row.isDirectCashflowTarget)
@@ -430,6 +440,7 @@ class AssetLiabilityPlanningService {
       (sum, plan) => plan.received ? sum : sum + plan.amount,
     );
     final topFourDebtTotal = debtMasterRows
+        .where((row) => !scheduledExpenseAccountIds.contains(row.id))
         .take(4)
         .fold<double>(0, (sum, row) => sum + row.balance.abs());
     final manualPaymentCount =
@@ -473,6 +484,7 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : topFourDebtTotal / liabilityTotal.abs(),
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
+      scheduledExpenseAccountIds: scheduledExpenseAccountIds,
       subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
       cardUsagePolicies: cardUsagePolicies,
     );
@@ -761,7 +773,10 @@ class AssetLiabilityPlanningService {
       annualRateOverrides: annualRateOverrides,
     );
     final interest = principal * annualRate / 12;
-    final minimumPayment = account.fullPaymentEstimate
+    final isBorrowing = account.kind == AssetLiabilityAccountKind.cardLoan ||
+        account.kind == AssetLiabilityAccountKind.shoppingDebt ||
+        account.kind == AssetLiabilityAccountKind.creditCard;
+    final minimumPayment = (!isBorrowing && account.fullPaymentEstimate)
         ? principal + interest
         : min(
             principal + interest,
@@ -801,7 +816,10 @@ class AssetLiabilityPlanningService {
     );
     final principalPayment = max(0.0, scheduledPayment - interest);
     final afterPayment = -max(0.0, principal + interest - scheduledPayment);
-    final rawPaymentSourceAccountId = paymentSourceAccountIds[account.id];
+    final rawPaymentSourceAccountId = _lookupPaymentSourceAccountId(
+      account: account,
+      paymentSourceAccountIds: paymentSourceAccountIds,
+    );
     // 振替元が自分自身を指す設定は不正 (ローンを自分自身からは返済できない) なので
     // 未設定扱いにする。これにより「支払原資口座の未設定」セクションに表示され、正しい
     // 口座 (例: じぶん銀行) へ修正できるようになり、見込み残高の自己宛て誤ルーティングも防ぐ。
@@ -1942,6 +1960,37 @@ class AssetLiabilityPlanningService {
       return jibunBankAccountId;
     }
     return sourceAccountId;
+  }
+
+  String? _lookupPaymentSourceAccountId({
+    required AssetLiabilityAccount account,
+    required Map<String, String> paymentSourceAccountIds,
+  }) {
+    if (paymentSourceAccountIds.isEmpty) return null;
+    final direct = paymentSourceAccountIds[account.id] ??
+        paymentSourceAccountIds[account.name.trim()] ??
+        paymentSourceAccountIds[account.name];
+    if (direct != null && direct.trim().isNotEmpty) return direct;
+
+    final normalizedTarget = _normalize(account.name);
+    final strippedTarget = normalizedTarget.replaceAll(
+      RegExp(r'[^a-zA-Z0-9぀-ゟ゠-ヿ一-龯]'),
+      '',
+    );
+    for (final entry in paymentSourceAccountIds.entries) {
+      final normKey = _normalize(entry.key);
+      final strippedKey = normKey.replaceAll(
+        RegExp(r'[^a-zA-Z0-9぀-ゟ゠-ヿ一-龯]'),
+        '',
+      );
+      if (normKey == normalizedTarget ||
+          (strippedKey.isNotEmpty && strippedKey == strippedTarget) ||
+          normKey.contains(normalizedTarget) ||
+          normalizedTarget.contains(normKey)) {
+        if (entry.value.trim().isNotEmpty) return entry.value;
+      }
+    }
+    return null;
   }
 
   String _accountIdForName(String name) {

@@ -25,6 +25,17 @@ class AssetManagementAiSummaryRefresh {
     return resultKey != currentKey;
   }
 
+  /// 保存済み本文を現在データへ再利用できるか。
+  ///
+  /// 同じ基準日・生成直後でも、支払済み・残高・金利・解約状態のいずれかで
+  /// 指紋が変わった本文は現在値として表示してはならない。
+  static bool canReusePersisted({
+    required String currentKey,
+    required String cachedKey,
+  }) {
+    return currentKey == cachedKey;
+  }
+
   /// 直近の生成「試行」(成功/失敗を問わず) からクールダウン時間内なので、
   /// 再生成を諦めて定型要約でしのぐべきか。
   ///

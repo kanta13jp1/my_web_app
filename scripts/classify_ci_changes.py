@@ -38,6 +38,12 @@ GROUPS: dict[str, tuple[str, ...]] = {
     ),
     "caption": ("services/caption-transcoder/**",),
     "migration": ("supabase/migrations/**",),
+    "tiger": ("assets/data/tiger_*",),
+}
+
+IGNORED_PATTERNS: dict[str, tuple[str, ...]] = {
+    "flutter": ("assets/data/tiger_*",),
+    "web": ("assets/data/tiger_*",),
 }
 
 
@@ -47,6 +53,10 @@ def classify(paths: list[str], force_all: bool = False) -> dict[str, bool]:
         group: force_all
         or any(
             fnmatch.fnmatchcase(path, pattern)
+            and not any(
+                fnmatch.fnmatchcase(path, ignored)
+                for ignored in IGNORED_PATTERNS.get(group, ())
+            )
             for path in normalized
             for pattern in patterns
         )

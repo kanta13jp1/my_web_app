@@ -382,6 +382,8 @@ class VideoImprovementAuthorization {
     required this.rootArtifactId,
     required this.initialReviewId,
     required this.allowCreditPurchase,
+    this.pendingReasons = const [],
+    this.lastReservationAttemptAt,
   });
 
   final String id;
@@ -397,11 +399,20 @@ class VideoImprovementAuthorization {
   final String rootArtifactId;
   final String initialReviewId;
   final bool allowCreditPurchase;
+  final List<String> pendingReasons;
+  final DateTime? lastReservationAttemptAt;
 
   bool get isActive =>
-      status == 'active' &&
+      const {
+        'active',
+        'pending_review',
+        'pending_funding',
+        'pending_execution',
+      }.contains(status) &&
       validUntil.isAfter(DateTime.now()) &&
       remainingRegenerations > 0;
+
+  bool get isPending => status.startsWith('pending_');
 
   factory VideoImprovementAuthorization.fromJson(Map<String, dynamic> json) {
     return VideoImprovementAuthorization(
@@ -419,6 +430,10 @@ class VideoImprovementAuthorization {
       rootArtifactId: _string(json['root_artifact_id']),
       initialReviewId: _string(json['initial_review_id']),
       allowCreditPurchase: json['allow_credit_purchase'] == true,
+      pendingReasons: _list(
+        json['pending_reasons'],
+      ).map(_string).where((value) => value.isNotEmpty).toList(growable: false),
+      lastReservationAttemptAt: _date(json['last_reservation_attempt_at']),
     );
   }
 }
@@ -431,7 +446,7 @@ class VideoAuthorizationCreateResult {
   });
 
   final VideoImprovementAuthorization authorization;
-  final VideoGenerationJob job;
+  final VideoGenerationJob? job;
   final VideoCreditBalance balance;
 }
 

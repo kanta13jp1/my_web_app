@@ -63,6 +63,7 @@
 | --- | --- |
 | `video-generation-hub` | 認証必須の自社 text-to-video API。前払いクレジットを原子的に予約して自社GPUキューへ登録し、完成動画の1時間限定URLだけを利用者へ返す。外部の動画生成APIは呼び出さない。 |
 | `video-worker-hub` | `VIDEO_WORKER_TOKEN` で認証した自社GPUワーカー専用API。ジョブの排他的リース、heartbeat、限定パスへの署名付きupload、出力検査、完了・再試行・失敗精算を担当する。service-role keyやモデル秘密情報をGPUホストへ渡さない。 |
+| `video-commerce-hub` | ownerが固定承認したexact artifact/reviewだけを非公開`product-downloads`へクラウド内複製し、Stripe Product/Priceを冪等作成、非公開商品検証後に`/shop`を有効化する。失敗時は販売停止へrollbackし、原本は変更しない。 |
 
 決済は `schedule-hub` の `billing.create_video_credit_checkout_session`、付与と全額返金時の回収は署名検証済み `stripe-webhook` が担当する。生成予約後は `VIDEO_WORKER_WAKE_TOKEN` で認証した自社Cloud Run controllerが固定のGCP GPU VMだけを起動し、起動不能なら未claimの予約を失敗確定してクレジットを即時返却する。Pro/Team の月額「無制限」には含めない。
 

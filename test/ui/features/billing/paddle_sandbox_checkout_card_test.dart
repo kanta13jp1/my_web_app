@@ -57,6 +57,34 @@ void main() {
     expect(retryButton.onPressed, isNotNull);
   });
 
+  testWidgets('shows sanitized VAT and tax total evidence', (tester) async {
+    final gateway = _FakePaddleCheckoutGateway();
+    await tester.pumpWidget(_testApp(gateway));
+
+    await tester.tap(find.byKey(const Key('paddle_sandbox_checkout_button')));
+    await tester.pump();
+    gateway.emit(
+      const PaddleCheckoutEvent(
+        name: 'checkout.updated',
+        currencyCode: 'EUR',
+        subtotal: '1000',
+        tax: '0',
+        total: '1000',
+        hasBusiness: true,
+        hasTaxIdentifier: true,
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const Key('paddle_sandbox_tax_evidence')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('VAT / Tax ID 適用済み'), findsOneWidget);
+    expect(find.text('税額: 0'), findsOneWidget);
+    expect(find.text('合計: 1000'), findsOneWidget);
+  });
+
   testWidgets('shows a neutral cancellation on a narrow viewport', (
     tester,
   ) async {

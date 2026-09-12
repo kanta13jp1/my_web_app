@@ -1,16 +1,15 @@
 {
-  "generated_at": "2026-08-30T00:34:59.363289+00:00",
+  "generated_at": "2026-09-12T00:30:15.041784+00:00",
   "tracked_count": 200,
-  "open_count": 1,
-  "closed_count": 199,
-  "recovered_count": 199,
-  "avg_recovery_hours": 33.97,
+  "open_count": 0,
+  "closed_count": 200,
+  "recovered_count": 200,
+  "avg_recovery_hours": 16.57,
   "categories": {
-    "deno-lint": 173,
-    "generic-ci": 13,
+    "deno-lint": 169,
+    "generic-ci": 10,
     "migration-collision": 2,
-    "notion-sync": 1,
-    "supabase-push": 1,
-    "unclassified": 10
+    "supabase-push": 3,
+    "unclassified": 16
   }
 }
