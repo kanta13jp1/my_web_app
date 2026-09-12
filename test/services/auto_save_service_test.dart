@@ -180,7 +180,8 @@ void main() {
     final writes = <String>[];
     final hold = service.runExclusive(() => gate.future);
     await tester.pump();
-    final manual = service.saveImmediately(() async => writes.add('captured-old'));
+    final manual =
+        service.saveImmediately(() async => writes.add('captured-old'));
     service.triggerAutoSave(() async => writes.add('latest-draft'));
     gate.complete();
     await tester.pump();

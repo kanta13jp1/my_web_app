@@ -118,9 +118,8 @@ class AutoSaveService extends ChangeNotifier {
           return;
         }
         final revision = requestedRevision ?? _revision;
-        _saveState = revision == _revision
-            ? SaveState.saving
-            : SaveState.modified;
+        _saveState =
+            revision == _revision ? SaveState.saving : SaveState.modified;
         notifyListeners();
         try {
           await saveCallback();
