@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/note_tag_hierarchy_service.dart';
+import '../utils/note_route_parameters.dart';
 import 'note_list_page.dart';
 
 class NoteTagsPage extends StatefulWidget {
@@ -292,6 +293,13 @@ class _NoteTagsPageState extends State<NoteTagsPage> {
   Future<void> _open(NoteTagRecord tag, bool nested) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: RouteSettings(
+          name: NoteRouteParameters(
+            tag: tag.name,
+            tagId: tag.id,
+            includeNestedTags: nested,
+          ).location('/note-list'),
+        ),
         builder: (_) => NoteListPage(
           initialTag: tag.name,
           initialTagId: tag.id,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/note_collection_service.dart';
+import '../utils/note_route_parameters.dart';
 import 'note_list_page.dart';
 import 'space_sharing_page.dart';
 
@@ -91,6 +92,7 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
             key: const Key('note_collections_space_sharing'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
+                settings: const RouteSettings(name: '/space-sharing'),
                 builder: (_) => const SpaceSharingPage(),
               ),
             ),
@@ -285,6 +287,10 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
                       ),
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
+                          settings: RouteSettings(
+                            name: NoteRouteParameters(spaceId: collection.id)
+                                .location('/space-sharing'),
+                          ),
                           builder: (_) => SpaceSharingPage(
                             initialSpaceId: collection.id,
                           ),
@@ -410,6 +416,10 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
   Future<void> _openCollection(NoteCollectionRecord collection) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: RouteSettings(
+          name: NoteRouteParameters(collectionId: collection.id)
+              .location('/note-list'),
+        ),
         builder: (_) => NoteListPage(initialCollectionId: collection.id),
       ),
     );

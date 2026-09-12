@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/note_navigation_service.dart';
+import '../utils/note_route_parameters.dart';
 import 'note_collections_page.dart';
 import 'note_editor_page.dart';
 import 'note_list_page.dart';
@@ -91,6 +92,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
                 ? null
                 : () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
+                        settings: const RouteSettings(name: '/note-collections'),
                         builder: (_) => const NoteCollectionsPage(),
                       ),
                     ),
@@ -103,6 +105,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
                 ? null
                 : () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
+                        settings: const RouteSettings(name: '/note-tags'),
                         builder: (_) => const NoteTagsPage(),
                       ),
                     ),
@@ -383,6 +386,10 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
   Future<void> _openSavedSearch(NoteSavedSearch savedSearch) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: RouteSettings(
+          name: NoteRouteParameters(query: savedSearch.query)
+              .location('/note-list'),
+        ),
         builder: (_) => NoteListPage(
           initialSearchQuery: savedSearch.query,
         ),
@@ -395,17 +402,25 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
     NoteNavigationSnapshot snapshot,
   ) async {
     Widget? target;
+    String? location;
     switch (shortcut.targetType) {
       case NoteShortcutTargetType.note:
+        location = NoteRouteParameters(noteId: shortcut.targetNoteId)
+            .location('/note-editor');
         target = NoteEditorPage(noteId: shortcut.targetNoteId.toString());
         break;
       case NoteShortcutTargetType.notebook:
       case NoteShortcutTargetType.stack:
+        location = NoteRouteParameters(
+          collectionId: shortcut.targetCollectionId,
+        ).location('/note-list');
         target = NoteListPage(
           initialCollectionId: shortcut.targetCollectionId,
         );
         break;
       case NoteShortcutTargetType.tag:
+        location = NoteRouteParameters(tag: shortcut.targetTag)
+            .location('/note-list');
         target = NoteListPage(initialTag: shortcut.targetTag);
         break;
       case NoteShortcutTargetType.savedSearch:
@@ -417,19 +432,24 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
           }
         }
         if (search != null) {
+          location = NoteRouteParameters(query: search.query)
+              .location('/note-list');
           target = NoteListPage(initialSearchQuery: search.query);
         }
         break;
     }
     final destination = target;
-    if (destination == null) {
+    if (destination == null || location == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('ショートカットの対応先を解決してください。')),
       );
       return;
     }
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => destination),
+      MaterialPageRoute<void>(
+        settings: RouteSettings(name: location),
+        builder: (_) => destination,
+      ),
     );
   }
 

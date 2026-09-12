@@ -26,7 +26,7 @@ void main() {
       expect(drafts.first.source, 'notion');
     });
 
-    test('parseEvernoteEnexText strips markup and extracts tags', () {
+    test('parseEvernoteEnexText preserves formatting and extracts tags', () {
       const enex = '''
 <?xml version="1.0" encoding="UTF-8"?>
 <en-export>
@@ -48,12 +48,16 @@ void main() {
 
       expect(drafts, hasLength(1));
       expect(drafts.first.title, 'Evernote memo');
-      expect(drafts.first.content, 'First line\nSecond line');
+      expect(drafts.first.content, 'First line\n\n**Second line**');
       expect(drafts.first.tags, <String>['archive', 'ideas']);
       expect(drafts.first.source, 'evernote');
       expect(drafts.first.sourceId, hasLength(64));
       expect(drafts.first.sourceContentSha256, hasLength(64));
       expect(drafts.first.sourceMetadata['enml'], contains('<en-note>'));
+      expect(
+        drafts.first.sourceMetadata['enml'],
+        contains('<b>Second line</b>'),
+      );
     });
 
     test('Evernote preview enables only the lossless commit path', () async {

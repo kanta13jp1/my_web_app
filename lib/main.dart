@@ -63,6 +63,10 @@ import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/competitor_browse_page.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
 import 'package:my_web_app/pages/note_navigation_page.dart';
+import 'package:my_web_app/pages/note_collections_page.dart';
+import 'package:my_web_app/pages/note_tags_page.dart';
+import 'package:my_web_app/pages/space_sharing_page.dart';
+import 'package:my_web_app/utils/note_route_parameters.dart';
 import 'package:my_web_app/pages/note_tasks_page.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
 import 'package:my_web_app/pages/legal_document_page.dart';
@@ -515,6 +519,7 @@ Route<dynamic> generateAppRoute(
 }) {
   final uri = Uri.parse(settings.name ?? '/');
   final routePath = normalizeRoutePath(uri.path);
+  final noteParameters = NoteRouteParameters.fromUri(uri);
   // 全ての named route 遷移を利用履歴に記録する単一チョークポイント。
   // 主要導線の直叩き pushNamed が記録されず、最近使った / よく使われる
   // 機能が「サイト案内AI」しか並ばなかった機能不全 (#3279) を解消する。
@@ -755,7 +760,12 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const MorningBriefingPage(),
       );
     case '/note-editor':
-      return MaterialPageRoute(builder: (_) => const NoteEditorPage());
+      return MaterialPageRoute(
+        builder: (_) => NoteEditorPage(
+          noteId: noteParameters.noteId?.toString(),
+        ),
+        settings: settings,
+      );
     case '/blog':
       return MaterialPageRoute(builder: (_) => const BlogPage());
     case '/blog/compose':
@@ -1197,7 +1207,30 @@ Route<dynamic> generateAppRoute(
     case '/notes':
       // Win版#110: feature_releases から「ノート」deep link
       return MaterialPageRoute(
-        builder: (_) => const NoteListPage(),
+        builder: (_) => NoteListPage(
+          initialSearchQuery: noteParameters.query,
+          initialTag: noteParameters.tag,
+          initialTagId: noteParameters.tagId,
+          initialCollectionId: noteParameters.collectionId,
+          includeNestedTags: noteParameters.includeNestedTags,
+        ),
+        settings: settings,
+      );
+    case '/note-collections':
+      return MaterialPageRoute(
+        builder: (_) => const NoteCollectionsPage(),
+        settings: settings,
+      );
+    case '/note-tags':
+      return MaterialPageRoute(
+        builder: (_) => const NoteTagsPage(),
+        settings: settings,
+      );
+    case '/space-sharing':
+      return MaterialPageRoute(
+        builder: (_) => SpaceSharingPage(
+          initialSpaceId: noteParameters.spaceId,
+        ),
         settings: settings,
       );
     case '/note-tasks':

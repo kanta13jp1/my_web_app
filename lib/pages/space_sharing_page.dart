@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/space_sharing_service.dart';
+import '../utils/note_route_parameters.dart';
 import 'note_editor_page.dart';
 
 class SpaceSharingPage extends StatefulWidget {
@@ -553,6 +554,9 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
       if (!mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
+          settings: RouteSettings(
+            name: NoteRouteParameters(noteId: noteId).location('/note-editor'),
+          ),
           builder: (_) => NoteEditorPage(noteId: noteId.toString()),
         ),
       );
@@ -570,6 +574,9 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
   Future<void> _openNote(int noteId) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: RouteSettings(
+          name: NoteRouteParameters(noteId: noteId).location('/note-editor'),
+        ),
         builder: (_) => NoteEditorPage(noteId: noteId.toString()),
       ),
     );

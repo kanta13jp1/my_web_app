@@ -18,6 +18,12 @@ on:
       - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
       - 'lib/main.dart'
+      - 'lib/utils/note_route_parameters.dart'
+      - 'test/utils/note_route_parameters_test.dart'
+      - 'test/routes/*.dart'
+      - 'lib/services/import_service.dart'
+      - 'test/services/import_service_test.dart'
+      - 'test/services/notification_service_web_guard_test.dart'
       - 'lib/widgets/markdown_preview.dart'
       - 'test/**/evernote*.dart'
       - 'test/**/enex*.dart'
@@ -59,6 +65,12 @@ on:
       - 'lib/widgets/note_tasks_panel.dart'
       - 'lib/pages/note_list_page.dart'
       - 'lib/main.dart'
+      - 'lib/utils/note_route_parameters.dart'
+      - 'test/utils/note_route_parameters_test.dart'
+      - 'test/routes/*.dart'
+      - 'lib/services/import_service.dart'
+      - 'test/services/import_service_test.dart'
+      - 'test/services/notification_service_web_guard_test.dart'
       - 'lib/widgets/markdown_preview.dart'
       - 'test/**/evernote*.dart'
       - 'test/**/enex*.dart'
@@ -185,6 +197,14 @@ jobs:
               lib/widgets/note_tasks_panel.dart \
               lib/pages/note_list_page.dart \
               lib/main.dart \
+              lib/utils/note_route_parameters.dart \
+              lib/services/import_service.dart \
+              test/utils/note_route_parameters_test.dart \
+              test/services/import_service_test.dart \
+              test/services/notification_service_web_guard_test.dart \
+              test/routes/app_route_names.dart \
+              test/routes/route_url_sync_test.dart \
+              test/routes/direct_path_routes_test.dart \
               lib/widgets/markdown_preview.dart \
               test/pages/import_page_test.dart \
               test/pages/note_editor_page_test.dart \
