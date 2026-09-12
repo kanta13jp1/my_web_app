@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-09-07",
+    "date": "2026-09-12",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-09-07T00:00:00Z",
+  "generatedAt": "2026-09-12T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -32,6 +32,175 @@
         "security"
       ],
       "changes": [
+        {
+          "category": "automation",
+          "id": "pr-5393",
+          "links": [
+            {
+              "title": "PR #5393",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5393"
+            }
+          ],
+          "mergedAt": "2026-09-12T03:04:40Z",
+          "summary": "#5393 ci: publish immutable Tiger status artifacts (#5159)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5392",
+          "links": [
+            {
+              "title": "PR #5392",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5392"
+            }
+          ],
+          "mergedAt": "2026-09-12T02:25:59Z",
+          "summary": "#5392 fix(ci): withhold unqualified route rankings (#5119)"
+        },
+        {
+          "category": "docs",
+          "id": "pr-5390",
+          "links": [
+            {
+              "title": "PR #5390",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5390"
+            }
+          ],
+          "mergedAt": "2026-09-12T01:58:03Z",
+          "summary": "#5390 docs: define museum retention experiment (#5096)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5376",
+          "links": [
+            {
+              "title": "PR #5376",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5376"
+            }
+          ],
+          "mergedAt": "2026-09-11T11:14:03Z",
+          "summary": "#5376 fix(asset): リボ払い設定の入力欄を永続的なControllerに変更（フリーズ・入力無反応の一因を修正）"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5379",
+          "links": [
+            {
+              "title": "PR #5379",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5379"
+            }
+          ],
+          "mergedAt": "2026-09-11T03:51:10Z",
+          "summary": "#5379 ci(design-audit): mechanically-verified visual parity exemption"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5383",
+          "links": [
+            {
+              "title": "PR #5383",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5383"
+            }
+          ],
+          "mergedAt": "2026-09-10T14:45:40Z",
+          "summary": "#5383 fix(asset): あと払い債務の増加が使途不明金として二重計上される問題を修正"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5381",
+          "links": [
+            {
+              "title": "PR #5381",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5381"
+            }
+          ],
+          "mergedAt": "2026-09-10T14:26:18Z",
+          "summary": "#5381 fix(asset): 年利の手入力が保存されない問題を修正（証跡を任意化）"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5377",
+          "links": [
+            {
+              "title": "PR #5377",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5377"
+            }
+          ],
+          "mergedAt": "2026-09-09T09:49:09Z",
+          "summary": "#5377 fix(asset-ai): fix debt rate grounding false rejection and auto-reconcile salary"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5375",
+          "links": [
+            {
+              "title": "PR #5375",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5375"
+            }
+          ],
+          "mergedAt": "2026-09-09T02:08:27Z",
+          "summary": "#5375 fix(asset): reconcile past salary and guard AI on past debt schedule"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5371",
+          "links": [
+            {
+              "title": "PR #5371",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5371"
+            }
+          ],
+          "mergedAt": "2026-09-08T23:43:17Z",
+          "summary": "#5371 fix(asset): auto-reconcile salary income plans and guard AI against false unreceived deposit check"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5370",
+          "links": [
+            {
+              "title": "PR #5370",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5370"
+            }
+          ],
+          "mergedAt": "2026-09-08T22:16:30Z",
+          "summary": "#5370 fix(asset): segment debts in grounding check to prevent cross-debt false positives"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5369",
+          "links": [
+            {
+              "title": "PR #5369",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5369"
+            }
+          ],
+          "mergedAt": "2026-09-08T21:36:54Z",
+          "summary": "#5369 fix(asset-ai): 支払済みの否定文を督促と誤検知しないよう grounding チェックを修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5363",
+          "links": [
+            {
+              "title": "PR #5363",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5363"
+            }
+          ],
+          "mergedAt": "2026-09-07T03:36:32Z",
+          "summary": "#5363 deps: bump the flutter-dependencies group with 12 updates"
+        },
         {
           "category": "feature",
           "id": "pr-5362",
@@ -72,32 +241,6 @@
           "summary": "#5360 ci: bump the github-actions group across 1 directory with 3 updates"
         },
         {
-          "category": "fix",
-          "id": "pr-5343",
-          "links": [
-            {
-              "title": "PR #5343",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5343"
-            }
-          ],
-          "mergedAt": "2026-09-07T02:46:00Z",
-          "summary": "#5343 fix(asset): qualify inferred AI discipline and payment claims"
-        },
-        {
-          "category": "security",
-          "id": "pr-5329",
-          "links": [
-            {
-              "title": "PR #5329",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5329"
-            }
-          ],
-          "mergedAt": "2026-09-07T02:04:33Z",
-          "summary": "#5329 feat(auth): disclose Google data use before OAuth (#4163)"
-        },
-        {
           "category": "feature",
           "id": "pr-5359",
           "links": [
@@ -122,19 +265,6 @@
           ],
           "mergedAt": "2026-09-06T18:51:29Z",
           "summary": "#5345 fix(security): isolate historical integration test credentials (#2859)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5342",
-          "links": [
-            {
-              "title": "PR #5342",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5342"
-            }
-          ],
-          "mergedAt": "2026-09-06T18:50:52Z",
-          "summary": "#5342 fix(ci): prevent self-referential duplicate issue closure"
         },
         {
           "category": "fix",
@@ -202,58 +332,6 @@
           "summary": "#5355 fix(security): require confirmed manual network changes (#3841)"
         },
         {
-          "category": "automation",
-          "id": "pr-5327",
-          "links": [
-            {
-              "title": "PR #5327",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5327"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:40:17Z",
-          "summary": "#5327 feat(ui): gate critical actions against confirmation spam"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5339",
-          "links": [
-            {
-              "title": "PR #5339",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5339"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:20:17Z",
-          "summary": "#5339 refactor(comparison): extract CTA panel and cover route behavior (#4728)"
-        },
-        {
-          "category": "security",
-          "id": "pr-5330",
-          "links": [
-            {
-              "title": "PR #5330",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5330"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:11:34Z",
-          "summary": "#5330 docs(auth): audit Google OAuth scopes (#4164)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5341",
-          "links": [
-            {
-              "title": "PR #5341",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5341"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:10:21Z",
-          "summary": "#5341 chore(editor): share formatter settings and regression contracts"
-        },
-        {
           "category": "docs",
           "id": "pr-5344",
           "links": [
@@ -307,19 +385,6 @@
         },
         {
           "category": "fix",
-          "id": "pr-5335",
-          "links": [
-            {
-              "title": "PR #5335",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5335"
-            }
-          ],
-          "mergedAt": "2026-09-06T15:44:31Z",
-          "summary": "#5335 fix(asset): restore missing monthly history on populated devices"
-        },
-        {
-          "category": "fix",
           "id": "pr-5354",
           "links": [
             {
@@ -356,74 +421,9 @@
           ],
           "mergedAt": "2026-09-06T15:26:18Z",
           "summary": "#5357 fix(video): preserve safe inference diagnostics and resume failed improvements"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5340",
-          "links": [
-            {
-              "title": "PR #5340",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5340"
-            }
-          ],
-          "mergedAt": "2026-09-06T08:02:19Z",
-          "summary": "#5340 feat: SOUND BLOOM interactive sound garden"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5338",
-          "links": [
-            {
-              "title": "PR #5338",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5338"
-            }
-          ],
-          "mergedAt": "2026-09-06T07:02:29Z",
-          "summary": "#5338 feat: integrate AERO LAB as a self-hosted 3D experiment"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5336",
-          "links": [
-            {
-              "title": "PR #5336",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5336"
-            }
-          ],
-          "mergedAt": "2026-09-05T23:47:37Z",
-          "summary": "#5336 feat(tiger): enrich official profile evidence in round 13"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5333",
-          "links": [
-            {
-              "title": "PR #5333",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5333"
-            }
-          ],
-          "mergedAt": "2026-09-05T13:08:54Z",
-          "summary": "#5333 fix(asset): separate reconciliation status and mobile chat controls"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5328",
-          "links": [
-            {
-              "title": "PR #5328",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5328"
-            }
-          ],
-          "mergedAt": "2026-09-05T09:47:34Z",
-          "summary": "#5328 fix(billing): Team料金の1席あたり表示を統一"
         }
       ],
-      "date": "2026-09-07",
+      "date": "2026-09-12",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,
