@@ -124,12 +124,21 @@ jobs:
           --changed-files .ci-logs/changed-files.txt
 
       - name: Check Design accessibility audit contract
+        id: design_audit
+        # Owner request 2026-09-12: report findings without blocking merge.
+        continue-on-error: true
         if: steps.docs_check.outputs.docs_only != 'true'
         run: >
           python scripts/check_design_accessibility_audit.py
           --event "$GITHUB_EVENT_PATH"
           --changed-files-status .ci-logs/changed-files-status.txt
           --base-ref "${{ github.event.pull_request.base.sha }}"
+
+      - name: Report advisory Design audit result
+        if: always() && steps.design_audit.outcome == 'failure'
+        run: |
+          echo "::warning::Design accessibility audit needs review (advisory only; not a merge gate)."
+          echo "Design accessibility audit: review needed. This advisory does not block merge; see the audit step log. No audit pass is claimed." >> "$GITHUB_STEP_SUMMARY"
 
   public-e2e-stability:
     permissions:
