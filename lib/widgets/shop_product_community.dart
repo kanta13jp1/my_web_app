@@ -389,18 +389,22 @@ class _ReviewEditorState extends State<_ReviewEditor> {
                           Wrap(
                             children: [
                               for (var value = 1; value <= 5; value++)
-                                IconButton(
-                                  key: ValueKey('review-star-$value'),
-                                  tooltip: '星$valueを選択',
-                                  isSelected: _rating == value,
-                                  onPressed: widget.model.working
-                                      ? null
-                                      : () => setState(() => _rating = value),
-                                  icon: Icon(
-                                    value <= _rating
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    color: DesignTokens.orange,
+                                SizedBox(
+                                  width: 40,
+                                  height: 48,
+                                  child: IconButton(
+                                    key: ValueKey('review-star-$value'),
+                                    tooltip: '星$valueを選択',
+                                    isSelected: _rating == value,
+                                    onPressed: widget.model.working
+                                        ? null
+                                        : () => setState(() => _rating = value),
+                                    icon: Icon(
+                                      value <= _rating
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      color: DesignTokens.orange,
+                                    ),
                                   ),
                                 ),
                             ],

@@ -64,16 +64,6 @@ jobs:
       - name: Format owned feature files and preserve any suggested patch
         run: |
           dart format $FEATURE_DART
-          # Temporary cloud-only mechanical repair. The diff is reviewed and
-          # committed by the lead; this runner has no repository write token.
-          cp pubspec.yaml /tmp/shop-community-pubspec.yaml
-          cp pubspec.lock /tmp/shop-community-pubspec.lock
-          dart fix --apply --code=require_trailing_commas,curly_braces_in_flow_control_structures,unnecessary_non_null_assertion
-          # dart fix also proposes pre-existing dependency metadata fixes.
-          # Keep the exact pre-fix dependency inputs; do not change dependencies.
-          cp /tmp/shop-community-pubspec.yaml pubspec.yaml
-          cp /tmp/shop-community-pubspec.lock pubspec.lock
-          dart format $FEATURE_DART
           python -c "import os,subprocess; allowed=set(os.environ['FEATURE_DART'].split())|{'pubspec.lock'}; changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()); assert changed <= allowed, changed-allowed"
           git diff --binary -- $FEATURE_DART > shop-community-format.patch
       - name: Analyze scoped feature

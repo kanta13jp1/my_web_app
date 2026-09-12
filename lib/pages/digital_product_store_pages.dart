@@ -608,13 +608,15 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
           Wrap(
             spacing: 12,
             children: [
-              TextButton.icon(
-                onPressed: () => _scrollTo(_historyKey),
+            TextButton.icon(
+              key: const ValueKey('product-release-history-link'),
+              onPressed: () => _scrollTo(_historyKey),
                 icon: const Icon(Icons.history),
                 label: const Text('更新情報'),
               ),
-              TextButton.icon(
-                onPressed: () => _scrollTo(_reviewsKey),
+            TextButton.icon(
+              key: const ValueKey('product-reviews-link'),
+              onPressed: () => _scrollTo(_reviewsKey),
                 icon: const Icon(Icons.star_outline),
                 label: const Text('口コミ・評価'),
               ),

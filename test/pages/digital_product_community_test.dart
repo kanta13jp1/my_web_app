@@ -11,7 +11,8 @@ class _Store implements ShopGateway {
   @override
   bool get isSignedIn => true;
   @override
-  Future<List<ShopProduct>> fetchProducts({ShopProductType? type}) async => [product];
+  Future<List<ShopProduct>> fetchProducts({ShopProductType? type}) async =>
+      [product];
   @override
   Future<ShopProduct?> fetchProduct(String id) async => product;
   @override
@@ -19,18 +20,30 @@ class _Store implements ShopGateway {
   @override
   Future<List<ShopPurchase>> fetchPurchases() async => [];
   @override
-  Future<CheckoutStart> startCheckout(String id, {String? visitorId, String? source}) async => const CheckoutStart.alreadyPurchased();
+  Future<CheckoutStart> startCheckout(
+    String id, {
+    String? visitorId,
+    String? source,
+  }) async =>
+      const CheckoutStart.alreadyPurchased();
   @override
   Future<DownloadTicket> requestDownloadUrl(String id) async {
     downloads++;
-    return const DownloadTicket(url: 'https://example.invalid/download', expiresInSeconds: 60,
-      version: '1.0', sha256: 'abc', fileSizeBytes: 1024, fileName: 'test.zip');
+    return const DownloadTicket(
+      url: 'https://example.invalid/download',
+      expiresInSeconds: 60,
+      version: '1.0',
+      sha256: 'abc',
+      fileSizeBytes: 1024,
+      fileName: 'test.zip',
+    );
   }
 }
 
 void main() {
   for (final width in [1040.0, 360.0]) {
-    testWidgets('version and section navigation preserve downloads at $width', (tester) async {
+    testWidgets('version and section navigation preserve downloads at $width',
+        (tester) async {
       tester.view.physicalSize = Size(width, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -39,13 +52,22 @@ void main() {
       addTearDown(community.sessions.close);
       final store = _Store();
       Uri? downloadUrl;
-      await tester.pumpWidget(MaterialApp(home: DigitalProductPage(
-        productId: product.id, service: store, communityRepository: community,
-        urlLauncher: (uri, external) async { downloadUrl = uri; return true; },
-      )));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DigitalProductPage(
+            productId: product.id,
+            service: store,
+            communityRepository: community,
+            urlLauncher: (uri, external) async {
+              downloadUrl = uri;
+              return true;
+            },
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(find.text('配布版 v1.0'), findsOneWidget);
-      final reviews = find.widgetWithText(TextButton, '口コミ・評価');
+      final reviews = find.byKey(const ValueKey('product-reviews-link'));
       await tester.ensureVisible(reviews);
       await tester.tap(reviews);
       await tester.pumpAndSettle();
