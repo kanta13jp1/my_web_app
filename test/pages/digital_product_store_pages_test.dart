@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/services/shop_service.dart';
 
@@ -103,6 +104,10 @@ Future<void> _pump(
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('DigitalProductStorePage', () {
     testWidgets('9種別を表示し、選択した種別だけに絞り込む', (tester) async {
       final image = _product('image-pack', '画像素材集', ShopProductType.image);
