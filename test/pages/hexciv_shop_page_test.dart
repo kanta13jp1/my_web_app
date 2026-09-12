@@ -114,6 +114,23 @@ Future<void> _pump(
       ),
     ),
   );
+  // Flush the gateway's completed futures to mount the gallery. Native image
+  // decoding needs real async work; pumping a virtual clock while its loading
+  // spinner is active cannot make the decoded frame available.
+  await tester.pump();
+  final imageElements = find.byType(Image).evaluate().toList();
+  await tester.runAsync(() async {
+    for (final element in imageElements) {
+      Object? imageError;
+      await precacheImage(
+        (element.widget as Image).image,
+        element,
+        onError: (error, stackTrace) => imageError = error,
+      ).timeout(const Duration(seconds: 5));
+      expect(imageError, isNull, reason: 'Real gallery asset must decode');
+    }
+  });
+  expect(tester.takeException(), isNull);
   await tester.pumpAndSettle();
 }
 
@@ -144,6 +161,9 @@ void main() {
     }),
   );
   setUp(() {
+    // Exercise cold asset loading in every case, independent of test order.
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
     SharedPreferences.setMockInitialValues({});
     supabaseClientForTesting = client;
     requests.clear();
@@ -155,8 +175,8 @@ void main() {
   testWidgets('default page records view and carries identity to checkout',
       (tester) async {
     final gateway = _FakeGateway(product: _product(), signedIn: true);
+    await _pump(tester, gateway);
     await tester.runAsync(() async {
-      await _pump(tester, gateway);
       await viewRecorded.future.timeout(const Duration(seconds: 5));
     });
     expect(requests.map((row) => row['stage']), contains('product_view'));
@@ -263,8 +283,16 @@ void main() {
     });
 
     testWidgets('実ゲーム画面3枚を購入ボタンより先に表示する', (tester) async {
+      final semantics = tester.ensureSemantics();
+      addTearDown(semantics.dispose);
       await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
 
+      expect(find.bySemanticsLabel('ターン30のゲーム画面'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('画像を読み込めませんでした'), findsNothing);
+      final renderedImages = tester.widgetList<RawImage>(find.byType(RawImage));
+      expect(renderedImages, hasLength(4));
+      expect(renderedImages.every((image) => image.image != null), isTrue);
       expect(find.text('ゲーム画面'), findsOneWidget);
       expect(find.text('ターン30'), findsOneWidget);
       expect(find.text('ターン80'), findsOneWidget);
@@ -276,6 +304,8 @@ void main() {
     });
 
     testWidgets('スクリーンショットのサムネイルで説明を切り替えられる', (tester) async {
+      final semantics = tester.ensureSemantics();
+      addTearDown(semantics.dispose);
       await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
 
       expect(find.textContaining('序盤。'), findsOneWidget);
@@ -286,6 +316,9 @@ void main() {
       await tester.tap(find.text('ターン150'));
       await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('ターン150のゲーム画面'), findsOneWidget);
+      expect(find.bySemanticsLabel('ターン30のゲーム画面'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.textContaining('終盤。'), findsOneWidget);
       expect(find.textContaining('序盤。'), findsNothing);
     });

@@ -74,8 +74,10 @@ jobs:
         run: |
           set -euo pipefail
           dart format --output=none --set-exit-if-changed \
-            lib/pages/digital_product_store_pages.dart test/pages/digital_product_store_pages_test.dart
-          flutter test --concurrency=1 test/pages/digital_product_store_pages_test.dart
+            lib/pages/digital_product_store_pages.dart \
+            test/pages/digital_product_store_pages_test.dart test/pages/hexciv_shop_page_test.dart
+          flutter test --concurrency=1 \
+            test/pages/digital_product_store_pages_test.dart test/pages/hexciv_shop_page_test.dart
           E2E_BASE_URL=https://example.invalid npx playwright test --list > .ci-public-test-discovery.txt
           if grep -q hexciv_shop_fixture .ci-public-test-discovery.txt; then
             echo '::error::Isolated fixtures leaked into default E2E discovery'
