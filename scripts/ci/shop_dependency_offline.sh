@@ -18,7 +18,10 @@ sudo -E unshare --net -- bash -c '
   fi
   task_uid="$1"
   task_gid="$2"
-  shift 2
+  task_path="$3"
+  shift 3
   echo "OFFLINE NAMESPACE: loopback only; unprivileged command follows"
-  exec setpriv --reuid="$task_uid" --regid="$task_gid" --init-groups "$@"
-' _ "$(id -u)" "$(id -g)" "$@"
+  # sudo secure_path discards the SDK entries even with -E. Restore the
+  # original caller PATH only after dropping root; retain namespace isolation.
+  exec setpriv --reuid="$task_uid" --regid="$task_gid" --init-groups env "PATH=$task_path" "$@"
+' _ "$(id -u)" "$(id -g)" "$PATH" "$@"
