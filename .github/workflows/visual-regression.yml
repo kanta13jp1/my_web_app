@@ -113,6 +113,16 @@ jobs:
             --retries=0 \
             "${snapshot_args[@]}"
 
+      - name: Verify HexCiv product states and checkout fixture
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/hexciv-shop-results.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/hexciv-shop
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright test test/e2e/hexciv_shop_fixture.spec.ts \
+            --project=chromium --project=mobile-chrome --retries=0
+
       - name: Stop short-lived SPA server
         if: always()
         shell: bash
@@ -130,7 +140,8 @@ jobs:
             echo
             echo "- mode: \`${UPDATE_SNAPSHOTS}\` (true generates candidates; false compares)"
             echo '- source: exact PR/branch Flutter Web build served only on runner localhost'
-            echo '- surfaces: landing, privacy, terms'
+            echo '- baselines: landing, privacy, terms; additional HexCiv product state/checkout fixtures'
+            echo '- HexCiv: mocked HTTP/auth, no real checkout, webhook, or production P1 proof'
             echo '- viewports: desktop Chromium and mobile Chromium'
             echo '- threshold: maxDiffPixelRatio = 0.002'
             echo '- production smoke remains separate in `e2e-smoke.yml` / `minimal-e2e-gate.yml`'
