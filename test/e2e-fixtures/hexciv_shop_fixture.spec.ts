@@ -271,10 +271,16 @@ test('community footer is clear of real floating controls and responds to pointe
   await expect(reload).toBeEnabled();
   await capture(page, info, 'owned-product-footer-clear');
   const footer = (await reload.boundingBox())!;
-  const inbox = page.getByRole('button', { name: 'Inboxへメモ', exact: true });
-  await expect(inbox).toBeVisible();
-  const floating = (await inbox.boundingBox())!;
-  expect(footer.y + footer.height).toBeLessThan(floating.y);
+  // The real engine's captured accessibility tree exposes these IconButtons
+  // without names (Tooltip is not a button name): Inbox, plus desktop settings.
+  // Enforce the observed count and compare ALL their bounds; never click them.
+  const floatingControls = page.getByRole('button', { name: '', exact: true });
+  await expect(floatingControls).toHaveCount(viewport.width >= 600 ? 2 : 1);
+  for (const control of await floatingControls.all()) {
+    await expect(control).toBeVisible();
+    const floating = (await control.boundingBox())!;
+    expect(footer.y + footer.height).toBeLessThan(floating.y);
+  }
   const before = fixture.communityRequests.length;
   // An actual pointer click must reach the page, never a forced semantic click.
   await page.mouse.click(footer.x + footer.width / 2, footer.y + footer.height / 2);
