@@ -18,8 +18,14 @@ test('integrated route supports solve, undo, three colors and reload', async ({ 
     const request = route.request();
     const path = new URL(request.url()).pathname;
     const method = request.method();
-    if (path === '/rest/v1/site_statistics' && method === 'GET') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    if (
+      ['/rest/v1/site_statistics', '/rest/v1/growth_metrics', '/rest/v1/public_memos'].includes(path) &&
+      method === 'GET'
+    ) {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        headers: { 'content-range': '*/0' }, body: '[]',
+      });
     } else if (path === '/rest/v1/guest_presence' && method === 'POST') {
       await route.fulfill({ status: 204, body: '' });
     } else if (
