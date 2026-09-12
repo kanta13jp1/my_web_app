@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/shop_funnel_service.dart';
+import '../services/shop_community_repository.dart';
 import '../services/shop_service.dart';
 import '../theme/design_tokens.dart';
 import '../view_models/shop_view_models.dart';
+import '../widgets/shop_product_community.dart';
 
 typedef ShopUrlLauncher = Future<bool> Function(Uri uri, bool external);
 
@@ -324,6 +326,7 @@ class DigitalProductPage extends StatefulWidget {
     this.service,
     this.funnel,
     this.urlLauncher,
+    this.communityRepository,
   });
 
   final String productId;
@@ -331,6 +334,7 @@ class DigitalProductPage extends StatefulWidget {
   final ShopGateway? service;
   final ShopFunnelService? funnel;
   final ShopUrlLauncher? urlLauncher;
+  final ShopCommunityRepository? communityRepository;
 
   @override
   State<DigitalProductPage> createState() => _DigitalProductPageState();
@@ -367,6 +371,11 @@ const _hexcivScreenshots = <_ProductScreenshot>[
 ];
 
 class _DigitalProductPageState extends State<DigitalProductPage> {
+  final _historyKey = GlobalKey();
+  final _reviewsKey = GlobalKey();
+  late final ShopCommunityRepository? _communityRepository =
+      widget.communityRepository ??
+      (widget.service == null ? SupabaseShopCommunityRepository() : null);
   late final ShopProductViewModel _viewModel = ShopProductViewModel(
     gateway: widget.service ?? ShopService(),
     productId: widget.productId,
@@ -539,6 +548,16 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         ],
         const SizedBox(height: 32),
         _specs(product),
+        if (_communityRepository != null) ...[
+          const SizedBox(height: 24),
+          ShopProductCommunity(
+            key: ValueKey('community-${product.id}'),
+            product: product,
+            repository: _communityRepository!,
+            historyKey: _historyKey,
+            reviewsKey: _reviewsKey,
+          ),
+        ],
       ],
     );
   }
@@ -558,6 +577,10 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
             _MetaChip(
               icon: Icons.file_present_outlined,
               label: product.formatLabel,
+            ),
+            _MetaChip(
+              icon: Icons.new_releases_outlined,
+              label: '配布版 ${product.version.isEmpty ? '未登録' : 'v${product.version}'}',
             ),
           ],
         ),
@@ -580,6 +603,19 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
             height: 1.7,
           ),
         ),
+        if (_communityRepository != null)
+          Wrap(spacing: 12, children: [
+            TextButton.icon(
+              onPressed: () => _scrollTo(_historyKey),
+              icon: const Icon(Icons.history),
+              label: const Text('更新情報'),
+            ),
+            TextButton.icon(
+              onPressed: () => _scrollTo(_reviewsKey),
+              icon: const Icon(Icons.star_outline),
+              label: const Text('口コミ・評価'),
+            ),
+          ]),
         const SizedBox(height: 24),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -666,6 +702,14 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         ),
       ],
     );
+  }
+
+  void _scrollTo(GlobalKey target) {
+    final targetContext = target.currentContext;
+    if (targetContext != null) {
+      unawaited(Scrollable.ensureVisible(targetContext,
+          duration: const Duration(milliseconds: 250)));
+    }
   }
 
   Widget _productScreenshotThumbnail(int index) {
