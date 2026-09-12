@@ -203,18 +203,25 @@ void main() {
     );
     expect(requests.every((row) => row['visitor_id'] == visitor), isTrue);
     expect(gateway.lastAttribution?.toRequest(), {
-      'source': 'direct', 'campaign': '', 'content_id': '',
+      'source': 'direct',
+      'campaign': '',
+      'content_id': '',
     });
   });
 
   testWidgets('explicit route labels reach view click and checkout unchanged',
       (tester) async {
     final gateway = _FakeGateway(product: _product(), signedIn: true);
-    await _pump(tester, gateway, entryUri: Uri.parse(
-      '/shop/hexciv?utm_source=X&utm_campaign=h4_h7_pitch'
-      '&utm_content=growth_game_t30_r1',
-    ),);
-    await tester.runAsync(() => viewRecorded.future.timeout(const Duration(seconds: 5)));
+    await _pump(
+      tester,
+      gateway,
+      entryUri: Uri.parse(
+        '/shop/hexciv?utm_source=X&utm_campaign=h4_h7_pitch'
+        '&utm_content=growth_game_t30_r1',
+      ),
+    );
+    await tester.runAsync(
+        () => viewRecorded.future.timeout(const Duration(seconds: 5)));
     await tester.ensureVisible(find.text('¥500 で購入'));
     await tester.runAsync(() async {
       await tester.tap(find.text('¥500 で購入'));
@@ -230,7 +237,8 @@ void main() {
       expect(row['visitor_id'], gateway.lastVisitorId);
     }
     expect(gateway.lastAttribution?.toRequest(), {
-      'source': 'x', 'campaign': 'h4_h7_pitch',
+      'source': 'x',
+      'campaign': 'h4_h7_pitch',
       'content_id': 'growth_game_t30_r1',
     });
   });
@@ -238,8 +246,11 @@ void main() {
   testWidgets('invalid entry labels do not block buying or emit direct events',
       (tester) async {
     final gateway = _FakeGateway(product: _product(), signedIn: true);
-    await _pump(tester, gateway,
-        entryUri: Uri.parse('/shop/hexciv?utm_content=invalid/post'),);
+    await _pump(
+      tester,
+      gateway,
+      entryUri: Uri.parse('/shop/hexciv?utm_content=invalid/post'),
+    );
     await tester.ensureVisible(find.text('¥500 で購入'));
     await tester.tap(find.text('¥500 で購入'));
     await tester.pumpAndSettle();
@@ -252,12 +263,16 @@ void main() {
   testWidgets('login CTA carries product and post without a purchase claim',
       (tester) async {
     String? destination;
-    await _pump(tester, _FakeGateway(product: _product()),
+    await _pump(
+      tester,
+      _FakeGateway(product: _product()),
       entryUri: Uri.parse('/shop/hexciv?utm_source=x&utm_content=post-a'),
       onGenerateRoute: (settings) {
         destination = settings.name;
-        return MaterialPageRoute<void>(settings: settings,
-            builder: (_) => const Scaffold(body: Text('Login destination')),);
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const Scaffold(body: Text('Login destination')),
+        );
       },
     );
     await tester.ensureVisible(find.text('ログインして購入'));
@@ -266,7 +281,9 @@ void main() {
     final location = Uri.parse(destination!);
     expect(location.path, '/login');
     expect(location.queryParameters, {
-      'shop_product': 'hexciv-win64', 'utm_source': 'x', 'utm_content': 'post-a',
+      'shop_product': 'hexciv-win64',
+      'utm_source': 'x',
+      'utm_content': 'post-a',
     });
   });
 

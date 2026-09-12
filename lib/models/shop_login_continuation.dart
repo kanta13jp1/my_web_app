@@ -3,7 +3,8 @@ import 'shop_attribution.dart';
 /// Product-only navigation. No arbitrary return URL, persistent cross-tab state,
 /// access token, claimed purchase result or visitor identity is copied.
 class ShopLoginContinuation {
-  static final _productIdPattern = RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$');
+  static final _productIdPattern =
+      RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$');
 
   static Uri loginUri({
     required String productId,

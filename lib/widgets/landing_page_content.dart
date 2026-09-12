@@ -193,8 +193,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     }
     _authSubscription = widget.adapter.authStateChanges().listen((data) {
       if (!mounted) return;
-      _authSessionAvailable = data.event != AuthChangeEvent.signedOut &&
-          data.session != null;
+      _authSessionAvailable =
+          data.event != AuthChangeEvent.signedOut && data.session != null;
       final isShopCallback = data.event == AuthChangeEvent.initialSession &&
           ShopLoginContinuation.productUri(_shopLoginUri) != null;
       if ((data.event == AuthChangeEvent.signedIn || isShopCallback) &&

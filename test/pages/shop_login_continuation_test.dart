@@ -39,7 +39,8 @@ class _Signup extends Fake implements LandingSignupCompletionService {
     String? signupEmail,
     DateTime? accountCreatedAt,
     SharedPreferences? preferences,
-  }) async => false;
+  }) async =>
+      false;
 }
 
 class _RouteObserver extends NavigatorObserver {
@@ -57,51 +58,67 @@ class _RouteObserver extends NavigatorObserver {
 final _session = Session(
   accessToken: 'synthetic-not-a-real-token',
   tokenType: 'bearer',
-  user: const User(id: 'synthetic-user', appMetadata: {}, userMetadata: {},
-      aud: 'authenticated', createdAt: '2026-09-12T00:00:00Z',),
+  user: const User(
+    id: 'synthetic-user',
+    appMetadata: {},
+    userMetadata: {},
+    aud: 'authenticated',
+    createdAt: '2026-09-12T00:00:00Z',
+  ),
 );
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  Future<void> pumpLogin(WidgetTester tester, _Adapter adapter,
-      Uri loginLocation, List<String> destinations,
-      {GlobalKey<NavigatorState>? navigatorKey,}) async {
+  Future<void> pumpLogin(
+    WidgetTester tester,
+    _Adapter adapter,
+    Uri loginLocation,
+    List<String> destinations, {
+    GlobalKey<NavigatorState>? navigatorKey,
+  }) async {
     tester.view.physicalSize = const Size(1200, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(adapter.events.close);
-    await tester.pumpWidget(MaterialApp(
-      navigatorKey: navigatorKey,
-      navigatorObservers: [_RouteObserver(destinations)],
-      home: LandingPage(
-        shopLoginUri: loginLocation,
-        landingUri: Uri.parse('/unrelated-browser-location'),
-        adapter: adapter,
-        growthService: _Growth(),
-        signupCompletionService: _Signup(),
-        analyticsEnabled: false,
-        experimentAssignment: LandingExperimentAssignment(
-          hypothesis: LandingConversionExperimentService.hypotheses.first,
-          variant: LandingExperimentVariant.control,
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorKey: navigatorKey,
+        navigatorObservers: [_RouteObserver(destinations)],
+        home: LandingPage(
+          shopLoginUri: loginLocation,
+          landingUri: Uri.parse('/unrelated-browser-location'),
+          adapter: adapter,
+          growthService: _Growth(),
+          signupCompletionService: _Signup(),
+          analyticsEnabled: false,
+          experimentAssignment: LandingExperimentAssignment(
+            hypothesis: LandingConversionExperimentService.hypotheses.first,
+            variant: LandingExperimentVariant.control,
+          ),
         ),
+        onGenerateRoute: (settings) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => const Scaffold(body: Text('Destination')),
+          );
+        },
       ),
-      onGenerateRoute: (settings) {
-        return MaterialPageRoute<void>(settings: settings,
-            builder: (_) => const Scaffold(body: Text('Destination')),);
-      },
-    ),);
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     destinations.clear();
   }
 
-  testWidgets('successful sign-in returns to the same product and post', (tester) async {
+  testWidgets('successful sign-in returns to the same product and post',
+      (tester) async {
     final adapter = _Adapter();
     final destinations = <String>[];
-    final login = ShopLoginContinuation.loginUri(productId: 'hexciv-win64',
-        attribution: ShopAttribution.parse(source: 'x', contentId: 'post-a'),);
+    final login = ShopLoginContinuation.loginUri(
+      productId: 'hexciv-win64',
+      attribution: ShopAttribution.parse(source: 'x', contentId: 'post-a'),
+    );
     await pumpLogin(tester, adapter, login, destinations);
     adapter.events.add(AuthState(AuthChangeEvent.signedIn, _session));
     await tester.pumpAndSettle();
@@ -110,21 +127,28 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('restored callback session also returns after app reinitializes', (tester) async {
+  testWidgets('restored callback session also returns after app reinitializes',
+      (tester) async {
     final adapter = _Adapter();
     final destinations = <String>[];
-    final login = Uri.parse('/login?shop_product=hexciv-win64&utm_campaign=launch');
+    final login =
+        Uri.parse('/login?shop_product=hexciv-win64&utm_campaign=launch');
     await pumpLogin(tester, adapter, login, destinations);
     adapter.events.add(AuthState(AuthChangeEvent.initialSession, _session));
     await tester.pumpAndSettle();
     expect(destinations, [ShopLoginContinuation.productUri(login).toString()]);
   });
 
-  testWidgets('canceled or signed-out auth cannot trigger a product return', (tester) async {
+  testWidgets('canceled or signed-out auth cannot trigger a product return',
+      (tester) async {
     final adapter = _Adapter();
     final destinations = <String>[];
-    await pumpLogin(tester, adapter,
-        Uri.parse('/login?shop_product=hexciv-win64'), destinations,);
+    await pumpLogin(
+      tester,
+      adapter,
+      Uri.parse('/login?shop_product=hexciv-win64'),
+      destinations,
+    );
     adapter.events.add(const AuthState(AuthChangeEvent.initialSession, null));
     adapter.events.add(const AuthState(AuthChangeEvent.signedOut, null));
     adapter.events.add(const AuthState(AuthChangeEvent.signedIn, null));
@@ -133,7 +157,8 @@ void main() {
     expect(find.byType(LandingPage), findsOneWidget);
   });
 
-  testWidgets('ordinary sign-in keeps the existing home destination', (tester) async {
+  testWidgets('ordinary sign-in keeps the existing home destination',
+      (tester) async {
     final adapter = _Adapter();
     final destinations = <String>[];
     await pumpLogin(tester, adapter, Uri.parse('/login'), destinations);
@@ -142,12 +167,17 @@ void main() {
     expect(destinations, ['/']);
   });
 
-  testWidgets('sign-out before the next frame cancels queued product navigation', (tester) async {
+  testWidgets(
+      'sign-out before the next frame cancels queued product navigation',
+      (tester) async {
     final adapter = _Adapter();
     final destinations = <String>[];
-    await pumpLogin(tester, adapter,
-        Uri.parse('/login?shop_product=hexciv-win64&utm_content=post-a'),
-        destinations,);
+    await pumpLogin(
+      tester,
+      adapter,
+      Uri.parse('/login?shop_product=hexciv-win64&utm_content=post-a'),
+      destinations,
+    );
     // Deliver both events before rendering: no real account/session mutation.
     adapter.events.add(AuthState(AuthChangeEvent.signedIn, _session));
     adapter.events.add(const AuthState(AuthChangeEvent.signedOut, null));
@@ -164,13 +194,20 @@ void main() {
     ]);
   });
 
-  testWidgets('hidden landing route cannot override the active page', (tester) async {
+  testWidgets('hidden landing route cannot override the active page',
+      (tester) async {
     final adapter = _Adapter();
     final destinations = <String>[];
     final navigatorKey = GlobalKey<NavigatorState>();
-    await pumpLogin(tester, adapter, Uri.parse('/login'), destinations,
-        navigatorKey: navigatorKey,);
-    unawaited(navigatorKey.currentState!.pushNamed('/shop/product?product_id=other'));
+    await pumpLogin(
+      tester,
+      adapter,
+      Uri.parse('/login'),
+      destinations,
+      navigatorKey: navigatorKey,
+    );
+    unawaited(
+        navigatorKey.currentState!.pushNamed('/shop/product?product_id=other'));
     await tester.pumpAndSettle();
     adapter.events.add(AuthState(AuthChangeEvent.signedIn, _session));
     await tester.pumpAndSettle();

@@ -14,7 +14,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const visitor = '12345678-1234-4123-8123-123456789abc';
   final labels = ShopAttribution.parse(
-    source: 'x', campaign: 'h4_h7_pitch', contentId: 'growth_game_t30_r1',
+    source: 'x',
+    campaign: 'h4_h7_pitch',
+    contentId: 'growth_game_t30_r1',
   );
   late SupabaseClient client;
   late List<http.Request> requests;
@@ -25,87 +27,130 @@ void main() {
     SharedPreferences.setMockInitialValues({'shop.visitor_id': visitor});
     requests = [];
     responseStatus = 200;
-    checkoutResponse = {'checkout_url': 'https://checkout.example.invalid/test'};
-    client = SupabaseClient('https://example.supabase.co', 'test-anon-key',
+    checkoutResponse = {
+      'checkout_url': 'https://checkout.example.invalid/test'
+    };
+    client = SupabaseClient(
+      'https://example.supabase.co',
+      'test-anon-key',
       httpClient: MockClient((request) async {
         requests.add(request);
-        return http.Response(jsonEncode(request.url.path.endsWith('/shop-checkout')
-            ? checkoutResponse : {'recorded': true, 'post_recorded': true},),
-          responseStatus, headers: {'content-type': 'application/json'},);
+        return http.Response(
+          jsonEncode(
+            request.url.path.endsWith('/shop-checkout')
+                ? checkoutResponse
+                : {'recorded': true, 'post_recorded': true},
+          ),
+          responseStatus,
+          headers: {'content-type': 'application/json'},
+        );
       }),
     );
   });
   tearDown(() async => client.dispose());
 
-  test('real funnel transport carries identical labels at all client stages', () async {
+  test('real funnel transport carries identical labels at all client stages',
+      () async {
     final funnel = ShopFunnelService(client: client);
-    for (final stage in ['product_view', 'purchase_click', 'checkout_redirect']) {
-      await funnel.record(stage, productId: 'hexciv-win64', attribution: labels);
+    for (final stage in [
+      'product_view',
+      'purchase_click',
+      'checkout_redirect'
+    ]) {
+      await funnel.record(stage,
+          productId: 'hexciv-win64', attribution: labels);
     }
     expect(requests, hasLength(3));
     for (var index = 0; index < requests.length; index++) {
       expect(requests[index].url.path, '/functions/v1/shop-funnel');
       expect(jsonDecode(requests[index].body), {
-        'visitor_id': visitor, 'product_id': 'hexciv-win64',
+        'visitor_id': visitor,
+        'product_id': 'hexciv-win64',
         'stage': ['product_view', 'purchase_click', 'checkout_redirect'][index],
         ...labels.toRequest(),
       });
     }
   });
 
-  test('unavailable attribution and client-paid claims emit no event', () async {
+  test('unavailable attribution and client-paid claims emit no event',
+      () async {
     final funnel = ShopFunnelService(client: client);
-    await funnel.record('product_view', productId: 'hexciv-win64',
-        attribution: const ShopAttribution.unavailable(),);
-    await funnel.record('product_view', productId: 'hexciv-win64', source: 'a/b');
-    await funnel.record('purchase_complete', productId: 'hexciv-win64',
-        attribution: labels,);
+    await funnel.record(
+      'product_view',
+      productId: 'hexciv-win64',
+      attribution: const ShopAttribution.unavailable(),
+    );
+    await funnel.record('product_view',
+        productId: 'hexciv-win64', source: 'a/b');
+    await funnel.record(
+      'purchase_complete',
+      productId: 'hexciv-win64',
+      attribution: labels,
+    );
     expect(requests, isEmpty);
   });
 
   test('telemetry HTTP failure does not throw to the caller', () async {
     responseStatus = 503;
     await ShopFunnelService(client: client).record(
-      'product_view', productId: 'hexciv-win64', attribution: labels,
+      'product_view',
+      productId: 'hexciv-win64',
+      attribution: labels,
     );
     expect(requests, hasLength(1));
   });
 
-  test('view model and real checkout transport preserve product visitor and tags', () async {
+  test(
+      'view model and real checkout transport preserve product visitor and tags',
+      () async {
     final model = ShopProductViewModel(
-      gateway: ShopService(client: client), productId: 'hexciv-win64',
+      gateway: ShopService(client: client),
+      productId: 'hexciv-win64',
     );
     addTearDown(model.dispose);
-    final start = await model.startCheckout(visitorId: visitor, attribution: labels);
+    final start =
+        await model.startCheckout(visitorId: visitor, attribution: labels);
     expect(start?.checkoutUrl, 'https://checkout.example.invalid/test');
     expect(requests.single.url.path, '/functions/v1/shop-checkout');
     expect(jsonDecode(requests.single.body), {
-      'product_id': 'hexciv-win64', 'visitor_id': visitor, ...labels.toRequest(),
+      'product_id': 'hexciv-win64',
+      'visitor_id': visitor,
+      ...labels.toRequest(),
     });
   });
 
   test('bad labels suppress identity but never block checkout', () async {
-    final start = await ShopService(client: client).startCheckout('hexciv-win64',
-      visitorId: visitor, attribution: const ShopAttribution.unavailable(),
+    final start = await ShopService(client: client).startCheckout(
+      'hexciv-win64',
+      visitorId: visitor,
+      attribution: const ShopAttribution.unavailable(),
     );
     expect(start.alreadyPurchased, isFalse);
     expect(jsonDecode(requests.single.body), {
-      'product_id': 'hexciv-win64', 'attribution_valid': false,
+      'product_id': 'hexciv-win64',
+      'attribution_valid': false,
     });
   });
 
   test('legacy checkout caller retains its existing request', () async {
-    await ShopService(client: client).startCheckout('hexciv-win64',
-        visitorId: visitor, source: 'x',);
+    await ShopService(client: client).startCheckout(
+      'hexciv-win64',
+      visitorId: visitor,
+      source: 'x',
+    );
     expect(jsonDecode(requests.single.body), {
-      'product_id': 'hexciv-win64', 'visitor_id': visitor, 'source': 'x',
+      'product_id': 'hexciv-win64',
+      'visitor_id': visitor,
+      'source': 'x',
     });
   });
 
-  test('already-purchased result still updates the view model without a URL', () async {
+  test('already-purchased result still updates the view model without a URL',
+      () async {
     checkoutResponse = {'already_purchased': true};
     final model = ShopProductViewModel(
-      gateway: ShopService(client: client), productId: 'hexciv-win64',
+      gateway: ShopService(client: client),
+      productId: 'hexciv-win64',
     );
     addTearDown(model.dispose);
     final start = await model.startCheckout(attribution: labels);
@@ -117,7 +162,8 @@ void main() {
   test('checkout failure remains visible and clears working state', () async {
     responseStatus = 503;
     final model = ShopProductViewModel(
-      gateway: ShopService(client: client), productId: 'hexciv-win64',
+      gateway: ShopService(client: client),
+      productId: 'hexciv-win64',
     );
     addTearDown(model.dispose);
     expect(await model.startCheckout(attribution: labels), isNull);
