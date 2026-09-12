@@ -461,13 +461,13 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
 
   Widget _buildBody() {
     if (_viewModel.loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 80),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 80),
         child: Center(
           child: Semantics(
             label: '商品情報を読み込み中',
             liveRegion: true,
-            child: CircularProgressIndicator(),
+            child: const CircularProgressIndicator(),
           ),
         ),
       );
