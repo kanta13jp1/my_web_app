@@ -30,6 +30,8 @@ const product = {
 };
 
 type Payload = Record<string, unknown>;
+type LiveAnnouncement = { message: string; assertiveness: string };
+type FixtureWindow = Window & { __hexcivLiveAnnouncements?: LiveAnnouncement[] };
 type Options = {
   signedIn?: boolean;
   purchased?: boolean;
@@ -60,6 +62,33 @@ async function installFixture(page: Page, options: Options = {}) {
   let productCalls = 0;
   let checkoutFails = false;
   let purchased = options.purchased ?? false;
+  // Flutter 3.38 LiveRegion announces via a separate flt-announcement-* node,
+  // removed after 300ms. Observe before boot, including open shadow DOM roots,
+  // so assertions verify actual polite announcements rather than DOM timing.
+  await page.addInitScript(() => {
+    const announcements: LiveAnnouncement[] = [];
+    (window as FixtureWindow).__hexcivLiveAnnouncements = announcements;
+    const observed = new WeakSet<Node>();
+    const scan = (root: Document | ShadowRoot) => {
+      if (!observed.has(root)) {
+        observed.add(root);
+        observer.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-live'] });
+      }
+      for (const node of root.querySelectorAll('[aria-live]')) {
+        const message = node.textContent?.trim() ?? '';
+        const assertiveness = node.getAttribute('aria-live') ?? '';
+        if (message === '商品情報を読み込み中' &&
+            !announcements.some((item) => item.message === message && item.assertiveness === assertiveness)) {
+          announcements.push({ message, assertiveness });
+        }
+      }
+      for (const node of root.querySelectorAll('*')) {
+        if (node.shadowRoot) scan(node.shadowRoot);
+      }
+    };
+    const observer = new MutationObserver(() => scan(document));
+    scan(document);
+  });
   page.on('pageerror', (error) => pageErrors.push(error.message));
   page.on('response', (response) => {
     if (response.ok() && /hexciv_turn(30|80|150)\.png/.test(response.url())) {
@@ -187,6 +216,7 @@ async function evidence(page: Page, info: TestInfo, state: Awaited<ReturnType<ty
       events: state.events, checkouts: state.checkouts,
       blocked: state.blocked, pageErrors: state.pageErrors,
       productRequests: state.productRequests,
+      liveAnnouncements: await page.evaluate(() => (window as FixtureWindow).__hexcivLiveAnnouncements ?? []),
       screenshotAssetResponses: [...state.assetResponses],
     }, null, 2),
   });
@@ -202,12 +232,12 @@ test('loading, guest CTA and three real-game screenshots', async ({ page }, info
   const fixture = await installFixture(page, { holdProduct: true });
   await openShop(page);
   try {
-    // Flutter renders this live region as a group containing label text,
-    // not necessarily an aria-label attribute. Keep the live-region assertion.
+    // The visible semantics label and the engine announcement are distinct.
     const loading = page.getByRole('group').filter({ hasText: '商品情報を読み込み中' });
     await expect(loading).toBeVisible();
     await expect(loading).toHaveText('商品情報を読み込み中');
-    await expect(loading).toHaveAttribute('aria-live', 'polite');
+    await expect.poll(() => page.evaluate(() => (window as FixtureWindow).__hexcivLiveAnnouncements ?? []))
+      .toContainEqual({ message: '商品情報を読み込み中', assertiveness: 'polite' });
     await capture(page, info, 'loading');
   } finally { fixture.releaseProduct(); }
   await expect(page.getByText(title, { exact: true })).toBeVisible();
