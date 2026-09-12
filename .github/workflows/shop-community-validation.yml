@@ -13,8 +13,7 @@ on:
       - 'supabase/migrations/*shop_product_releases_reviews.sql'
       - '.github/workflows/shop-community-validation.yml'
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: shop-community-${{ github.ref }}
@@ -22,6 +21,8 @@ concurrency:
 
 jobs:
   database:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
@@ -45,6 +46,8 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/shop_product_community.sql
 
   flutter:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -82,3 +85,4 @@ jobs:
             shop-community-format.patch
             build/shop-community-evidence/*.png
           retention-days: 3
+
