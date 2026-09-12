@@ -72,7 +72,8 @@ void main() {
     expect(await first, isTrue);
     expect(repository.saves, 1);
   });
-  test('failed reads are not reported as zero or successful permission', () async {
+  test('failed reads are not reported as zero or successful permission',
+      () async {
     repository.failRead = true;
     await model.load();
     expect(model.page, isNull);
@@ -91,7 +92,8 @@ void main() {
     expect(model.actionError, isNot(contains('private-internal')));
   });
   test('pagination uses a cursor and refresh returns to newest', () async {
-    repository.publicItems.addAll(List.generate(12, (i) => FakeShopCommunity.review('$i')));
+    repository.publicItems
+        .addAll(List.generate(12, (i) => FakeShopCommunity.review('$i')));
     await model.load();
     expect(model.page!.items.length, 10);
     await model.nextPage();
@@ -102,7 +104,8 @@ void main() {
     await model.load();
     expect(model.pageNumber, 1);
   });
-  test('session changes clear the previous account review immediately', () async {
+  test('session changes clear the previous account review immediately',
+      () async {
     repository.saved = FakeShopCommunity.review('own');
     await model.load();
     repository.signedIn = false;
@@ -113,14 +116,16 @@ void main() {
   });
   test('late loads after disposal cannot notify', () async {
     final delayed = FakeShopCommunity()..readGate = Completer<void>();
-    final other = ShopCommunityViewModel(productId: 'test', repository: delayed);
+    final other =
+        ShopCommunityViewModel(productId: 'test', repository: delayed);
     final pending = other.load();
     other.dispose();
     delayed.readGate!.complete();
     await pending;
     await delayed.sessions.close();
   });
-  test('an account change during save cannot claim success for the new account', () async {
+  test('an account change during save cannot claim success for the new account',
+      () async {
     await model.load();
     repository.writeGate = Completer<void>();
     final pending = model.save(4, 'previous account');
@@ -132,8 +137,12 @@ void main() {
     expect(model.actionError, isNull);
   });
   test('malformed aggregate is rejected rather than invented', () {
-    expect(() => ShopReviewPage.fromRow({'count': 3, 'average': null, 'items': []}), throwsFormatException);
-    final empty = ShopReviewPage.fromRow({'count': 0, 'average': null, 'items': []});
+    expect(
+      () => ShopReviewPage.fromRow({'count': 3, 'average': null, 'items': []}),
+      throwsFormatException,
+    );
+    final empty =
+        ShopReviewPage.fromRow({'count': 0, 'average': null, 'items': []});
     expect(empty.average, isNull);
   });
 }

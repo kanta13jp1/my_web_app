@@ -33,12 +33,18 @@ class FakeShopCommunity implements ShopCommunityRepository {
   Future<ShopReviewPage> reviews(String productId, {ShopReview? before}) async {
     await readGate?.future;
     if (failRead) throw StateError('private-internal-error');
-    final items = [if (saved != null && saved!.isVisible) saved!, ...publicItems];
-    final offset = before == null ? 0 : items.indexWhere((r) => r.id == before.id) + 1;
+    final items = [
+      if (saved != null && saved!.isVisible) saved!,
+      ...publicItems,
+    ];
+    final offset =
+        before == null ? 0 : items.indexWhere((r) => r.id == before.id) + 1;
     return ShopReviewPage(
       items: items.skip(offset).take(10).toList(),
       count: items.length,
-      average: items.isEmpty ? null : items.fold<int>(0, (s, r) => s + r.rating) / items.length,
+      average: items.isEmpty
+          ? null
+          : items.fold<int>(0, (s, r) => s + r.rating) / items.length,
       hasMore: items.length > offset + 10,
     );
   }
@@ -47,26 +53,42 @@ class FakeShopCommunity implements ShopCommunityRepository {
   Future<ShopReviewContext> ownReview(String productId) async {
     await readGate?.future;
     if (failRead) throw StateError('private-internal-error');
-    return ShopReviewContext(review: signedIn ? saved : null, canReview: signedIn && paid);
+    return ShopReviewContext(
+      review: signedIn ? saved : null,
+      canReview: signedIn && paid,
+    );
   }
 
   @override
   Future<void> saveReview(String productId, int rating, String body) async {
     saves++;
     await writeGate?.future;
-    if (failWrite || !signedIn || !paid) throw StateError('private-internal-error');
+    if (failWrite || !signedIn || !paid) {
+      throw StateError('private-internal-error');
+    }
     saved = review('own', rating: rating, body: body);
   }
 
   @override
   Future<void> deleteReview(String productId, String reviewId) async {
     deletes++;
-    if (failWrite || !signedIn || saved?.id != reviewId) throw StateError('private-internal-error');
+    if (failWrite || !signedIn || saved?.id != reviewId) {
+      throw StateError('private-internal-error');
+    }
     saved = null;
   }
 
-  static ShopReview review(String id, {int rating = 4, String body = '楽しく遊べました。'}) => ShopReview(
-    id: id, rating: rating, body: body, postedVersion: '1.0',
-    createdAt: DateTime.utc(2026, 9, 12), updatedAt: DateTime.utc(2026, 9, 12),
-  );
+  static ShopReview review(
+    String id, {
+    int rating = 4,
+    String body = '楽しく遊べました。',
+  }) =>
+      ShopReview(
+        id: id,
+        rating: rating,
+        body: body,
+        postedVersion: '1.0',
+        createdAt: DateTime.utc(2026, 9, 12),
+        updatedAt: DateTime.utc(2026, 9, 12),
+      );
 }

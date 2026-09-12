@@ -36,7 +36,8 @@ class ShopCommunityViewModel extends ChangeNotifier {
   ShopReviewContext own = const ShopReviewContext();
 
   bool get signedIn => repository.isSignedIn;
-  bool get canReview => signedIn && !loading && ownerError == null && own.canReview;
+  bool get canReview =>
+      signedIn && !loading && ownerError == null && own.canReview;
 
   void _notify() {
     if (!_disposed) notifyListeners();
@@ -89,7 +90,8 @@ class ShopCommunityViewModel extends ChangeNotifier {
     reviewError = null;
     _notify();
     try {
-      final value = await repository.reviews(productId, before: page!.items.last);
+      final value =
+          await repository.reviews(productId, before: page!.items.last);
       if (revision == _revision) {
         page = value;
         pageNumber++;
@@ -117,14 +119,19 @@ class ShopCommunityViewModel extends ChangeNotifier {
       _notify();
       return false;
     }
-    return _mutate(() => repository.saveReview(productId, rating, body.trim()),
-        '口コミ・評価を保存しました。');
+    return _mutate(
+      () => repository.saveReview(productId, rating, body.trim()),
+      '口コミ・評価を保存しました。',
+    );
   }
 
   Future<bool> delete() async {
     if (working || loading || !signedIn || own.review == null) return false;
     final id = own.review!.id;
-    return _mutate(() => repository.deleteReview(productId, id), '口コミ・評価を削除しました。');
+    return _mutate(
+      () => repository.deleteReview(productId, id),
+      '口コミ・評価を削除しました。',
+    );
   }
 
   Future<bool> _mutate(Future<void> Function() action, String success) async {

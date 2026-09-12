@@ -375,7 +375,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   final _reviewsKey = GlobalKey();
   late final ShopCommunityRepository? _communityRepository =
       widget.communityRepository ??
-      (widget.service == null ? SupabaseShopCommunityRepository() : null);
+          (widget.service == null ? SupabaseShopCommunityRepository() : null);
   late final ShopProductViewModel _viewModel = ShopProductViewModel(
     gateway: widget.service ?? ShopService(),
     productId: widget.productId,
@@ -553,7 +553,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
           ShopProductCommunity(
             key: ValueKey('community-${product.id}'),
             product: product,
-            repository: _communityRepository!,
+            repository: _communityRepository,
             historyKey: _historyKey,
             reviewsKey: _reviewsKey,
           ),
@@ -580,7 +580,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
             ),
             _MetaChip(
               icon: Icons.new_releases_outlined,
-              label: '配布版 ${product.version.isEmpty ? '未登録' : 'v${product.version}'}',
+              label:
+                  '配布版 ${product.version.isEmpty ? '未登録' : 'v${product.version}'}',
             ),
           ],
         ),
@@ -604,18 +605,21 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
           ),
         ),
         if (_communityRepository != null)
-          Wrap(spacing: 12, children: [
-            TextButton.icon(
-              onPressed: () => _scrollTo(_historyKey),
-              icon: const Icon(Icons.history),
-              label: const Text('更新情報'),
-            ),
-            TextButton.icon(
-              onPressed: () => _scrollTo(_reviewsKey),
-              icon: const Icon(Icons.star_outline),
-              label: const Text('口コミ・評価'),
-            ),
-          ]),
+          Wrap(
+            spacing: 12,
+            children: [
+              TextButton.icon(
+                onPressed: () => _scrollTo(_historyKey),
+                icon: const Icon(Icons.history),
+                label: const Text('更新情報'),
+              ),
+              TextButton.icon(
+                onPressed: () => _scrollTo(_reviewsKey),
+                icon: const Icon(Icons.star_outline),
+                label: const Text('口コミ・評価'),
+              ),
+            ],
+          ),
         const SizedBox(height: 24),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -707,8 +711,12 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   void _scrollTo(GlobalKey target) {
     final targetContext = target.currentContext;
     if (targetContext != null) {
-      unawaited(Scrollable.ensureVisible(targetContext,
-          duration: const Duration(milliseconds: 250)));
+      unawaited(
+        Scrollable.ensureVisible(
+          targetContext,
+          duration: const Duration(milliseconds: 250),
+        ),
+      );
     }
   }
 

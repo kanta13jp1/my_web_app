@@ -24,8 +24,7 @@ class SupabaseShopCommunityRepository implements ShopCommunityRepository {
   bool get isSignedIn => _client.auth.currentUser != null;
 
   @override
-  Stream<void> get sessionChanges =>
-      _client.auth.onAuthStateChange.map((_) {});
+  Stream<void> get sessionChanges => _client.auth.onAuthStateChange.map((_) {});
 
   @override
   Future<List<ShopProductRelease>> releases(String productId) async {
@@ -41,12 +40,15 @@ class SupabaseShopCommunityRepository implements ShopCommunityRepository {
 
   @override
   Future<ShopReviewPage> reviews(String productId, {ShopReview? before}) async {
-    final data = await _client.rpc('get_shop_product_reviews', params: {
-      'p_product_id': productId,
-      if (before != null)
-        'p_before_created_at': before.createdAt.toUtc().toIso8601String(),
-      if (before != null) 'p_before_id': before.id,
-    });
+    final data = await _client.rpc(
+      'get_shop_product_reviews',
+      params: {
+        'p_product_id': productId,
+        if (before != null)
+          'p_before_created_at': before.createdAt.toUtc().toIso8601String(),
+        if (before != null) 'p_before_id': before.id,
+      },
+    );
     return ShopReviewPage.fromRow(Map<String, dynamic>.from(data as Map));
   }
 
@@ -54,25 +56,33 @@ class SupabaseShopCommunityRepository implements ShopCommunityRepository {
   Future<ShopReviewContext> ownReview(String productId) async {
     if (!isSignedIn) return const ShopReviewContext();
     final data = Map<String, dynamic>.from(
-      await _client.rpc('get_my_shop_product_review', params: {
-        'p_product_id': productId,
-      }) as Map,
+      await _client.rpc(
+        'get_my_shop_product_review',
+        params: {
+          'p_product_id': productId,
+        },
+      ) as Map,
     );
     return ShopReviewContext(
       canReview: data['can_review'] == true,
       review: data['review'] == null
           ? null
-          : ShopReview.fromRow(Map<String, dynamic>.from(data['review'] as Map)),
+          : ShopReview.fromRow(
+              Map<String, dynamic>.from(data['review'] as Map),
+            ),
     );
   }
 
   @override
   Future<void> saveReview(String productId, int rating, String body) async {
-    await _client.rpc('save_shop_product_review', params: {
-      'p_product_id': productId,
-      'p_rating': rating,
-      'p_body': body,
-    });
+    await _client.rpc(
+      'save_shop_product_review',
+      params: {
+        'p_product_id': productId,
+        'p_rating': rating,
+        'p_body': body,
+      },
+    );
   }
 
   @override

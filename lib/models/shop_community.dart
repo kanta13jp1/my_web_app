@@ -39,7 +39,9 @@ class ShopReviewPage {
 
   factory ShopReviewPage.fromRow(Map<String, dynamic> row) {
     final items = (row['items'] as List)
-        .map((item) => ShopReview.fromRow(Map<String, dynamic>.from(item as Map)))
+        .map(
+          (item) => ShopReview.fromRow(Map<String, dynamic>.from(item as Map)),
+        )
         .toList(growable: false);
     final count = (row['count'] as num).toInt();
     final average = (row['average'] as num?)?.toDouble();

@@ -54,6 +54,7 @@ jobs:
         lib/pages/digital_product_store_pages.dart test/support/fake_shop_community.dart
         test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart
         test/services/shop_community_repository_test.dart
+        test/widgets/shop_community_visual_test.dart test/pages/digital_product_community_test.dart
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-flutter-sdk
@@ -65,21 +66,29 @@ jobs:
           dart format $FEATURE_DART
           # Temporary cloud-only mechanical repair. The diff is reviewed and
           # committed by the lead; this runner has no repository write token.
+          cp pubspec.yaml /tmp/shop-community-pubspec.yaml
+          cp pubspec.lock /tmp/shop-community-pubspec.lock
           dart fix --apply --code=require_trailing_commas,curly_braces_in_flow_control_structures,unnecessary_non_null_assertion
+          # dart fix also proposes pre-existing dependency metadata fixes.
+          # Keep the exact pre-fix dependency inputs; do not change dependencies.
+          cp /tmp/shop-community-pubspec.yaml pubspec.yaml
+          cp /tmp/shop-community-pubspec.lock pubspec.lock
           dart format $FEATURE_DART
-          python -c "import os,subprocess; allowed=set(os.environ['FEATURE_DART'].split()); changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()); assert changed <= allowed, changed-allowed"
-          git diff --binary > shop-community-format.patch
+          python -c "import os,subprocess; allowed=set(os.environ['FEATURE_DART'].split())|{'pubspec.lock'}; changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()); assert changed <= allowed, changed-allowed"
+          git diff --binary -- $FEATURE_DART > shop-community-format.patch
       - name: Analyze scoped feature
         run: flutter analyze $FEATURE_DART
       - name: Test community feature and existing store behavior
         if: success() || failure()
-        run: flutter test --concurrency=2 test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart test/services/shop_community_repository_test.dart test/pages/digital_product_store_pages_test.dart
+        run: flutter test --concurrency=2 test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart test/services/shop_community_repository_test.dart test/pages/digital_product_store_pages_test.dart test/pages/digital_product_community_test.dart test/widgets/shop_community_visual_test.dart
       - name: Require committed formatting
         if: success() || failure()
-        run: git diff --exit-code
+        run: git diff --exit-code -- $FEATURE_DART
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
           name: shop-community-format-${{ github.run_id }}
-          path: shop-community-format.patch
+          path: |
+            shop-community-format.patch
+            build/shop-community-evidence/*.png
           retention-days: 3
