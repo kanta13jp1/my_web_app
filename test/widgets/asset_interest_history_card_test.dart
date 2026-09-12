@@ -27,21 +27,30 @@ void main() {
       final repository = MemoryInterestRepository()
         ..rows = [
           AssetInterestMonth(
-              month: '2026-07',
-              amounts: {'A': 100},
-              complete: true,
-              evidence: 'statement'),
+            month: '2026-07',
+            amounts: {'A': 100},
+            complete: true,
+            evidence: 'statement',
+          ),
           AssetInterestMonth(
-              month: '2026-08',
-              amounts: {'A': 80},
-              complete: true,
-              evidence: 'statement'),
+            month: '2026-08',
+            amounts: {'A': 80},
+            complete: true,
+            evidence: 'statement',
+          ),
         ];
-      await tester.pumpWidget(MaterialApp(
+      await tester.pumpWidget(
+        MaterialApp(
           home: Scaffold(
-              body: SingleChildScrollView(
-                  child: AssetInterestHistoryCard(
-                      repository: repository, now: DateTime(2026, 9, 12))))));
+            body: SingleChildScrollView(
+              child: AssetInterestHistoryCard(
+                repository: repository,
+                now: DateTime(2026, 9, 12),
+              ),
+            ),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(find.textContaining('20円減少'), findsOneWidget);
       expect(find.text('未登録'), findsNWidgets(10));
@@ -51,11 +60,18 @@ void main() {
   testWidgets('record persists through reload and failed save keeps input',
       (tester) async {
     final repository = MemoryInterestRepository();
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
         home: Scaffold(
-            body: SingleChildScrollView(
-                child: AssetInterestHistoryCard(
-                    repository: repository, now: DateTime(2026, 9, 12))))));
+          body: SingleChildScrollView(
+            child: AssetInterestHistoryCard(
+              repository: repository,
+              now: DateTime(2026, 9, 12),
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('記録・修正').first);
     await tester.pumpAndSettle();

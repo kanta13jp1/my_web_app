@@ -31,9 +31,12 @@ class SupabaseAssetInterestRepository implements AssetInterestRepository {
         .limit(120);
     _checkUser();
     return rows
-        .map((row) => AssetInterestMonth.fromJson(
+        .map(
+          (row) => AssetInterestMonth.fromJson(
             Map<String, dynamic>.from(row['value'] as Map),
-            revision: row['updated_at'] as String))
+            revision: row['updated_at'] as String,
+          ),
+        )
         .toList();
   }
 
@@ -44,7 +47,7 @@ class SupabaseAssetInterestRepository implements AssetInterestRepository {
       'user_id': userId,
       'pref_key': '$prefix${month.month}',
       'value': month.toJson(),
-      'updated_at': DateTime.now().toUtc().toIso8601String()
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
     };
     if (month.revision == null) {
       // PK conflict is surfaced, never silently replace another device's month.
