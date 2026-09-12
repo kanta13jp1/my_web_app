@@ -7,6 +7,10 @@ on:
       - 'lib/**/enex*.dart'
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
+      - 'lib/services/auto_save_service.dart'
+      - 'test/services/auto_save_service_test.dart'
+      - 'lib/ui/features/spreadsheet/view_models/spreadsheet_view_model.dart'
+      - 'test/ui/features/spreadsheet/spreadsheet_view_model_test.dart'
       - 'lib/services/note_version_history_service.dart'
       - 'lib/controllers/note_version_history_controller.dart'
       - 'lib/widgets/note_version_history_sheet.dart'
@@ -60,6 +64,10 @@ on:
       - 'lib/**/enex*.dart'
       - 'lib/pages/import_page.dart'
       - 'lib/pages/note_editor_page.dart'
+      - 'lib/services/auto_save_service.dart'
+      - 'test/services/auto_save_service_test.dart'
+      - 'lib/ui/features/spreadsheet/view_models/spreadsheet_view_model.dart'
+      - 'test/ui/features/spreadsheet/spreadsheet_view_model_test.dart'
       - 'lib/services/note_version_history_service.dart'
       - 'lib/controllers/note_version_history_controller.dart'
       - 'lib/widgets/note_version_history_sheet.dart'
@@ -196,6 +204,10 @@ jobs:
             printf '%s\n' \
               lib/pages/import_page.dart \
               lib/pages/note_editor_page.dart \
+              lib/services/auto_save_service.dart \
+              test/services/auto_save_service_test.dart \
+              lib/ui/features/spreadsheet/view_models/spreadsheet_view_model.dart \
+              test/ui/features/spreadsheet/spreadsheet_view_model_test.dart \
               lib/services/note_version_history_service.dart \
               lib/controllers/note_version_history_controller.dart \
               lib/widgets/note_version_history_sheet.dart \
