@@ -16,7 +16,8 @@ user requested source-export inventory assistance; validation resumed afterward.
 - Read-only selectable Markdown preview avoids automatic remote image/link
   requests. Source tags, attachment metadata and verification status are shown.
 - Native title/body restoration aborts when its pre-restore snapshot fails or
-  when local text/account state changes while awaiting that snapshot.
+  when local text/account state changes while awaiting that snapshot. A modal
+  cancellation notice cannot be delayed behind unrelated queued snackbars.
 - Imported Evernote versions cannot use the legacy title/body-only restore path:
   it does not restore all attachment/tag evidence safely.
 
@@ -30,8 +31,12 @@ user requested source-export inventory assistance; validation resumed afterward.
   320/1280 widths and 2x text. One cloud formatter change remained.
 - The eight HTTP-fixture failures were traced to postgrest 2.7.1 dereferencing
   response.request in its response parser. Mock responses now retain the
-  originating request. The editor race test now waits for the confirmed pending
-  backup before introducing an edit; it still requires the abort message,
+  originating request. Subsequent runs passed those HTTP tests (186/187 total).
+- [Cancellation diagnostic](https://github.com/kanta13jp1/my_web_app/actions/runs/34673644913)
+  confirmed that the pre-restore snapshot completed and the draft was preserved,
+  but its cancellation snackbar was queued behind an earlier attachment error.
+  The result is now a dialog. The regression explicitly displays an unrelated
+  long-duration snackbar and still requires an immediate cancellation dialog,
   unchanged draft and no historical-body update.
 - The corrected revision must pass the exact-SHA cloud workflow before approval.
   PR evidence records the newest run; prior parent checks do not validate this

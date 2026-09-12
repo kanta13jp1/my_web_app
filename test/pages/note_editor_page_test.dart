@@ -210,12 +210,10 @@ class _FakeMutationBuilder extends Fake
     FutureOr<U> Function(dynamic value) onValue, {
     Function? onError,
   }) {
-    return (waitFor ?? Future<void>.value())
-        .then<dynamic>((_) {
-          onComplete?.call();
-          return null;
-        })
-        .then(onValue, onError: onError);
+    return (waitFor ?? Future<void>.value()).then<dynamic>((_) {
+      onComplete?.call();
+      return null;
+    }).then(onValue, onError: onError);
   }
 
   @override
@@ -712,6 +710,18 @@ void main() {
         ],
       );
       await _pumpPage(tester, client);
+      final messenger = ScaffoldMessenger.of(
+        tester.element(find.byType(NoteEditorPage)),
+      );
+      messenger.clearSnackBars();
+      await tester.pumpAndSettle();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('別の操作についての既存通知'),
+          duration: Duration(minutes: 1),
+        ),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('バージョン履歴'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Historical title'));
@@ -737,14 +747,10 @@ void main() {
         'New edit while backup is pending',
       );
       expect(client.versionCompletions, 1);
-      expect(
-        abortMessage,
-        findsOneWidget,
-        reason: tester
-            .widgetList<SnackBar>(find.byType(SnackBar, skipOffstage: false))
-            .map((bar) => (bar.content as Text).data)
-            .join(' | '),
-      );
+      expect(abortMessage, findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      await tester.tap(find.text('閉じる'));
+      await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
       expect(

@@ -1819,30 +1819,45 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final backupOwner = _supabase.auth.currentUser?.id;
     try {
       await _saveVersionSnapshot(requiredForRestore: true);
-      if (!mounted) return;
-      if (_titleController.text != backupTitle ||
-          _contentController.text != backupContent ||
-          _supabase.auth.currentUser?.id != backupOwner) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('保全中に編集内容またはログイン状態が変わったため、復元を中止しました。')),
-        );
-        return;
-      }
-      setState(() {
-        _titleController.text = selected.summary.title;
-        _contentController.text = selected.content;
-      });
-      _autoSaveService.markAsModified();
-      _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
     } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('現在の内容を履歴に保全できなかったため、復元を中止しました。'),
-          ),
-        );
-      }
+      await _showHistoryRestoreAborted(
+        '現在の内容を履歴に保全できなかったため、復元を中止しました。',
+      );
+      return;
     }
+    if (!mounted) return;
+    if (_titleController.text != backupTitle ||
+        _contentController.text != backupContent ||
+        _supabase.auth.currentUser?.id != backupOwner) {
+      await _showHistoryRestoreAborted(
+        '保全中に編集内容またはログイン状態が変わったため、復元を中止しました。',
+      );
+      return;
+    }
+    setState(() {
+      _titleController.text = selected.summary.title;
+      _contentController.text = selected.content;
+    });
+    _autoSaveService.markAsModified();
+    _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+  }
+
+  Future<void> _showHistoryRestoreAborted(String message) async {
+    if (!mounted) return;
+    // Restoration outcomes must not wait behind unrelated queued snackbars.
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('復元を中止しました'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('閉じる'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _applySnapshot(NoteSnapshot snapshot) {
