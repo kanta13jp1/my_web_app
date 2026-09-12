@@ -152,7 +152,8 @@ void main() {
   });
 
   group('DigitalProductPage', () {
-    testWidgets('loading is announced and cleared on completion', (tester) async {
+    testWidgets('loading is announced and cleared on completion',
+        (tester) async {
       final semantics = tester.ensureSemantics();
       addTearDown(semantics.dispose);
       final pending = Completer<ShopProduct?>();
@@ -169,8 +170,8 @@ void main() {
       expect(find.bySemanticsLabel('商品情報を読み込み中'), findsOneWidget);
       final loading = tester.widget<Semantics>(
         find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-              widget.properties.label == '商品情報を読み込み中',
+          (widget) =>
+              widget is Semantics && widget.properties.label == '商品情報を読み込み中',
         ),
       );
       expect(loading.properties.liveRegion, isTrue);
