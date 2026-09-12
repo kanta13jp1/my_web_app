@@ -36,6 +36,7 @@ class _RecordingSupabaseClient extends Fake implements SupabaseClient {
   final bool failSelect;
   final Completer<void>? updateGate;
   final List<Map<String, dynamic>> updates = <Map<String, dynamic>>[];
+  final completedUpdates = <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> inserts = <Map<String, dynamic>>[];
 
   @override
@@ -90,6 +91,9 @@ class _FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
     return _FakeMutationBuilder(
       idValue: client.noteRow['id'],
       waitFor: client.updateGate?.future,
+      onComplete: table == 'notes'
+          ? () => client.completedUpdates.add(Map<String, dynamic>.from(values))
+          : null,
     );
   }
 
@@ -557,6 +561,47 @@ void main() {
       expect(prefs.getString('note_editor_draft_429'), isNull);
     });
 
+
+    for (final returnToBaseline in [false, true]) {
+    testWidgets('closing sends final draft last; baseline=$returnToBaseline',
+        (tester) async {
+      final gate = Completer<void>();
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(),
+        updateGate: gate,
+      );
+      await _pumpPage(tester, client);
+      final finalContent = returnToBaseline
+          ? client.noteRow['content'] as String
+          : 'Final draft captured on exit';
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        'Earlier request still in flight',
+      );
+      await tester.pump(const Duration(seconds: 3));
+      expect(client.updates, hasLength(1));
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        finalContent,
+      );
+      await tester.pump(const Duration(seconds: 3));
+      expect(client.updates, hasLength(1));
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pump();
+      expect(client.updates, hasLength(1));
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(client.updates, hasLength(2));
+      expect(
+        client.completedUpdates.map((row) => row['content']).toList(),
+        ['Earlier request still in flight', finalContent],
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('note_editor_draft_429'), isNotNull);
+      expect(tester.takeException(), isNull);
+    });
+    }
+
     testWidgets('デバウンス中にエディタを閉じても編集がサーバーに送られる', (tester) async {
       final client = await _pumpEditor(tester);
 
@@ -692,6 +737,66 @@ void main() {
   });
 
   group('note history restore backup', () {
+
+    for (final changeWhileWaiting in [false, true]) {
+      testWidgets(
+          'restore waits for prior save; newer edit=$changeWhileWaiting',
+          (tester) async {
+        final gate = Completer<void>();
+        final client = _RecordingSupabaseClient(
+          noteRow: _noteRow(),
+          updateGate: gate,
+          historyRows: [
+            {
+              'id': '22222222-2222-4222-8222-222222222222',
+              'title': 'Historical title',
+              'content': 'Historical body',
+              'saved_at': '2026-01-01T00:00:00Z',
+              'source_system': 'native',
+              'source_verified_at': null,
+            }
+          ],
+        );
+        await _pumpPage(tester, client);
+        await tester.enterText(
+          find.byKey(const Key('note_editor_content_field')),
+          'Draft being saved before restore',
+        );
+        await tester.pump(const Duration(seconds: 3));
+        expect(client.updates, hasLength(1));
+        await tester.tap(find.byTooltip('バージョン履歴'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Historical title'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('このタイトル・本文を復元'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('復元'));
+        await tester.pumpAndSettle();
+        expect(client.versionInserts, isEmpty);
+        expect(_contentController(tester).text, 'Draft being saved before restore');
+        if (changeWhileWaiting) {
+          _contentController(tester).text = 'Newer draft while waiting for save';
+        }
+        gate.complete();
+        await tester.pumpAndSettle();
+        if (changeWhileWaiting) {
+          expect(client.versionInserts, isEmpty);
+          expect(_contentController(tester).text, 'Newer draft while waiting for save');
+          expect(find.text('復元を中止しました'), findsOneWidget);
+          await tester.tap(find.text('閉じる'));
+          await tester.pumpAndSettle();
+        } else {
+          expect(client.versionInserts.single['content'], 'Draft being saved before restore');
+          expect(_contentController(tester).text, 'Historical body');
+        }
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+        expect(
+          client.completedUpdates.last['content'],
+          changeWhileWaiting ? 'Newer draft while waiting for save' : 'Historical body',
+        );
+      });
+    }
     testWidgets('editing during the backup never overwrites the newer draft',
         (tester) async {
       final gate = Completer<void>();

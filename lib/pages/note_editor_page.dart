@@ -629,7 +629,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     return showAiFreeLimitUpgradeDialog(context, error);
   }
 
-  Future<int?> _ensureNoteIdForAttachmentFlow() async {
+  Future<int?> _ensureNoteIdForAttachmentFlow() =>
+      _autoSaveService.runExclusive(() async {
+    if (!mounted) return null;
     final existingNoteId = int.tryParse(_currentNoteId ?? '');
     if (existingNoteId != null) {
       return existingNoteId;
@@ -662,6 +664,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         .select('id')
         .maybeSingle();
 
+    if (!mounted) return null;
+    if (_supabase.auth.currentUser?.id != user.id) {
+      throw StateError('Session changed during attachment-note creation');
+    }
     final createdNoteId = inserted is Map && inserted['id'] != null
         ? int.tryParse(inserted['id'].toString())
         : null;
@@ -677,7 +683,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       setState(() {});
     }
     return createdNoteId;
-  }
+  });
 
   Future<void> _loadAttachments() async {
     final noteId = int.tryParse(_currentNoteId ?? '');
@@ -767,7 +773,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
       AttachmentCacheService.clearNoteCache(noteId);
       _insertContentAtCursor(_buildAttachmentMarkdown(attachment));
-      await _saveNoteWithoutClosing();
+      await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
       await _loadAttachments();
       _showMessage('$sourceLabelから ${attachment.fileName} を追加しました');
     } catch (e) {
@@ -1551,7 +1557,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (mounted) unawaited(_loadRelatedNotes());
   }
 
+  // Call only from the AutoSaveService lane, including attachment flows.
   Future<void> _saveNoteWithoutClosing() async {
+    if (!mounted) return;
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
     final reminderIso = _reminderDate?.toUtc().toIso8601String();
@@ -1607,6 +1615,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           .select('id')
           .maybeSingle();
 
+      if (!mounted) return;
+      if (_supabase.auth.currentUser?.id != user.id) {
+        throw StateError('Session changed during save');
+      }
       if (inserted is Map && inserted['id'] != null) {
         _currentNoteId = inserted['id'].toString();
         unawaited(_loadCommentCount());
@@ -1616,6 +1628,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       }
     }
 
+    if (!mounted) return;
+    if (_supabase.auth.currentUser?.id != user.id) {
+      throw StateError('Session changed during save');
+    }
     _markStatePersisted(
       title: title,
       content: content,
@@ -1650,8 +1666,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
 
     try {
-      await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
-      await _saveVersionSnapshot();
+      await _autoSaveService.saveImmediately(() async {
+        await _saveNoteWithoutClosing();
+        await _saveVersionSnapshot();
+      });
       unawaited(_indexAndRefreshRelatedNotes());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1668,6 +1686,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _saveVersionSnapshot({bool requiredForRestore = false}) async {
+    if (!mounted) {
+      if (requiredForRestore) throw StateError('The editor is closed');
+      return;
+    }
     final noteId = _currentNoteId;
     if (noteId == null) {
       if (requiredForRestore) throw StateError('Note is not saved');
@@ -1817,29 +1839,36 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final backupTitle = _titleController.text;
     final backupContent = _contentController.text;
     final backupOwner = _supabase.auth.currentUser?.id;
+    const changedMessage =
+        '保全中に編集内容またはログイン状態が変わったため、復元を中止しました。';
+    String? abortReason;
     try {
-      await _saveVersionSnapshot(requiredForRestore: true);
+      abortReason = await _autoSaveService.runExclusive<String?>(() async {
+        if (!mounted) return null;
+        bool draftChanged() =>
+            _titleController.text != backupTitle ||
+            _contentController.text != backupContent ||
+            _currentNoteId != noteId ||
+            _supabase.auth.currentUser?.id != backupOwner;
+        // A previous save may have held the lane while the user kept editing.
+        if (draftChanged()) return changedMessage;
+        await _saveVersionSnapshot(requiredForRestore: true);
+        if (!mounted) return null;
+        if (draftChanged()) return changedMessage;
+        setState(() {
+          _titleController.text = selected.summary.title;
+          _contentController.text = selected.content;
+        });
+        _autoSaveService.markAsModified();
+        _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+        return null;
+      });
     } catch (_) {
-      await _showHistoryRestoreAborted(
-        '現在の内容を履歴に保全できなかったため、復元を中止しました。',
-      );
-      return;
+      abortReason = '現在の内容を履歴に保全できなかったため、復元を中止しました。';
     }
-    if (!mounted) return;
-    if (_titleController.text != backupTitle ||
-        _contentController.text != backupContent ||
-        _supabase.auth.currentUser?.id != backupOwner) {
-      await _showHistoryRestoreAborted(
-        '保全中に編集内容またはログイン状態が変わったため、復元を中止しました。',
-      );
-      return;
+    if (mounted && abortReason != null) {
+      await _showHistoryRestoreAborted(abortReason);
     }
-    setState(() {
-      _titleController.text = selected.summary.title;
-      _contentController.text = selected.content;
-    });
-    _autoSaveService.markAsModified();
-    _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
   }
 
   Future<void> _showHistoryRestoreAborted(String message) async {
@@ -2527,7 +2556,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   /// デバウンス待ち (入力後 2 秒以内) にエディタを閉じると、`dispose()` で
   /// タイマーが破棄され未保存の編集がサーバーに届かない。破棄前に確定値を
-  /// 取り出して投げ切る (State には触れないので dispose 後も安全)。
+  /// 取り出し、先行保存の後に送る。最終コールバックは State に触れない。
   void _flushPendingSaveOnExit() {
     final noteId = _currentNoteId;
     if (noteId == null) return; // 新規メモはローカル下書きで復元される
@@ -2544,26 +2573,30 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       reminderIso: reminderIso,
       isFavorite: isFavorite,
       tags: tags,
-    )) {
+    ) && !_autoSaveService.hasPendingOperations) {
       return;
     }
 
+    final client = _supabase;
+    final owner = client.auth.currentUser?.id;
+    if (owner == null) return;
     unawaited(
-      _supabase
-          .from('notes')
-          .update({
-            'title': title,
-            'content': content,
-            'reminder_date': reminderIso,
-            'is_favorite': isFavorite,
-            'tags': tags,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', noteId)
-          .catchError((Object _) {
-            // 閉じた後なので UI 通知はできない。ローカル下書きが残るため
-            // 次回このメモを開いたときに復元される。
-          }),
+      _autoSaveService.saveOnExit(() async {
+        if (client.auth.currentUser?.id != owner) return;
+        await client
+            .from('notes')
+            .update({
+              'title': title,
+              'content': content,
+              'reminder_date': reminderIso,
+              'is_favorite': isFavorite,
+              'tags': tags,
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('id', noteId);
+      }).catchError((Object _) {
+        // Preserve the local draft if the final request fails after UI disposal.
+      }),
     );
   }
 
