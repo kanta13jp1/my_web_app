@@ -686,7 +686,12 @@ class _PlanGrid extends StatelessWidget {
         valueFraming ? 'AIの利用量を増やし、毎日の整理と振り返りを継続したい方向けです。' : 'AI利用量と優先機能が増えます。',
         recommended: true,
       ),
-      const _Plan('team', 'Team', '月額2,980円', '共有ワークスペースと監査ログを使うチーム向けです。'),
+      const _Plan(
+        'team',
+        'Team',
+        '1席あたり月額2,980円',
+        '共有ワークスペースと監査ログを使うチーム向けです。',
+      ),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -937,7 +942,7 @@ class _Plan {
 
 String _tierLabel(String tier) => switch (tier) {
       'pro' => 'Pro（月額980円）',
-      'team' => 'Team（月額2,980円）',
+      'team' => 'Team（1席あたり月額2,980円）',
       _ => 'Free（無料）',
     };
 

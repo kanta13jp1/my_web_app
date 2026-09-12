@@ -1,13 +1,13 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-09-03",
+    "date": "2026-09-12",
     "users": {
       "total": 61
     },
     "featureRequests": {
       "newToday": 0,
-      "openCount": 140,
+      "openCount": 144,
       "newTodayList": [],
       "topOpen": [
         {
@@ -53,8 +53,18 @@
         "title": "AI大学 FinTech/Trading AI 掲載コンテンツの日本語化",
         "completed_at": "2026-06-21T00:00:00+00:00"
       }
-    ]
+    ],
+    "revenue": {
+      "mrrYen": 980,
+      "currency": "JPY",
+      "basis": "active_list_price"
+    },
+    "paid": {
+      "total": 1,
+      "pro": 1,
+      "team": 0
+    }
   },
-  "fetched_at": "2026-09-03T09:31:43+09:00",
-  "report_date": "2026-09-03"
+  "fetched_at": "2026-09-12T09:30:00+09:00",
+  "report_date": "2026-09-12"
 }

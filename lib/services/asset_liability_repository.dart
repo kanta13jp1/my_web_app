@@ -882,7 +882,11 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     final remoteSnapshots = await _tryRemote(
       () => remote.loadMonthlySnapshots(userId: userId),
     );
-    if (remoteSnapshots == null || remoteSnapshots.isEmpty) {
+    // A failed read is not an empty server. Never backfill after a read error.
+    if (remoteSnapshots == null || _userIdOrNull() != userId) {
+      return local;
+    }
+    if (remoteSnapshots.isEmpty) {
       if (local.isNotEmpty && supabaseWritesEnabled) {
         for (final snapshot in local) {
           await _tryRemote(
@@ -894,14 +898,23 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return local;
     }
 
-    if (local.isEmpty) {
-      for (final snapshot in remoteSnapshots) {
+    // Reconcile by month, not by whether this device has *any* history.
+    // A partially populated phone must still restore the other months.
+    final merged = <String, AssetLiabilityMonthlySnapshot>{
+      for (final snapshot in local) snapshot.monthKey: snapshot,
+    };
+    for (final snapshot in remoteSnapshots) {
+      final cached = merged[snapshot.monthKey];
+      if (cached == null || snapshot.savedAt.isAfter(cached.savedAt)) {
+        merged[snapshot.monthKey] = snapshot;
         await localRepository.saveMonthlySnapshot(snapshot);
       }
-      return remoteSnapshots;
     }
-
-    return local;
+    // Keep unresolved local versions. Do not overwrite a remote month from
+    // a read path: concurrent edits require explicit conflict resolution.
+    final result = merged.values.toList()
+      ..sort((a, b) => b.monthKey.compareTo(a.monthKey));
+    return result;
   }
 
   @override

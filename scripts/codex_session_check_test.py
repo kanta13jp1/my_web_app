@@ -8,10 +8,12 @@ from unittest.mock import patch
 
 from codex_session_check import (
     CommandResult,
+    analyze_claude_remote_control,
     collect_remote_control_flags,
     context_injection_snapshot,
     is_remote_control_flag_path,
     notebooklm_snapshot,
+    remote_control_environment_audit,
     resource_budget_warnings,
 )
 
@@ -66,6 +68,46 @@ class ClaudeRemoteControlDetectionTest(unittest.TestCase):
                 ["settings", "remote_control", "always_enabled"]
             )
         )
+        self.assertTrue(is_remote_control_flag_path(["remoteControlAtStartup"]))
+
+    def test_environment_audit_redacts_blocker_values(self) -> None:
+        audit = remote_control_environment_audit(
+            {
+                "DO_NOT_TRACK": "1",
+                "CLAUDE_CODE_USE_BEDROCK": "true",
+                "ANTHROPIC_BASE_URL": "https://secret-gateway.example",
+            }
+        )
+
+        self.assertEqual(audit["feature_flag_blockers"], ["DO_NOT_TRACK"])
+        self.assertEqual(
+            audit["provider_blockers"],
+            ["ANTHROPIC_BASE_URL", "CLAUDE_CODE_USE_BEDROCK"],
+        )
+        self.assertTrue(audit["values_redacted"])
+        self.assertNotIn("secret-gateway", str(audit))
+
+    def test_analysis_requires_owner_review_even_when_autostart_is_enabled(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "settings.json"
+            path.write_text('{"remoteControlAtStartup":true}', encoding="utf-8")
+            with patch(
+                "codex_session_check.claude_code_version",
+                return_value="2.1.248",
+            ):
+                snapshot = analyze_claude_remote_control(
+                    Path(tmp),
+                    settings_path=path,
+                    environ={},
+                )
+
+        self.assertEqual(snapshot["all_sessions_status"], "enabled")
+        self.assertEqual(snapshot["flag_path"], "remoteControlAtStartup")
+        self.assertEqual(
+            snapshot["policy_decision"],
+            "owner-security-review-required",
+        )
+        self.assertIn("Zero Data Retention", snapshot["compliance_note"])
 
     def test_missing_settings_key_stays_unknown_by_absence(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

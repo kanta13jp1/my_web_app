@@ -74,6 +74,8 @@ jobs:
             TOTAL_USERS=$(jq -r '.digest.users.total // 0'                      /tmp/digest.json)
             NEW_TODAY=$(  jq -r '.digest.featureRequests.newToday // 0'         /tmp/digest.json)
             OPEN_COUNT=$( jq -r '.digest.featureRequests.openCount // 0'        /tmp/digest.json)
+            PAID_CUSTOMERS=$(jq -r '.digest.paid.total // 0'                    /tmp/digest.json)
+            MRR_YEN=$(       jq -r '.digest.revenue.mrrYen // 0'                /tmp/digest.json)
             # リスト系はファイル経由で渡す（改行対応）
             jq -r '.digest.featureRequests.newTodayList // [] | .[] | "- " + .title' \
               /tmp/digest.json > /tmp/new_today_list.txt 2>/dev/null || echo "(なし)" > /tmp/new_today_list.txt
@@ -94,6 +96,8 @@ jobs:
             TOTAL_USERS="取得失敗(HTTP $HTTP_CODE)"
             NEW_TODAY="0"
             OPEN_COUNT="0"
+            PAID_CUSTOMERS="0"
+            MRR_YEN="0"
             echo "(API接続失敗)" > /tmp/new_today_list.txt
             echo "(API接続失敗)" > /tmp/top_open.txt
             echo "(API接続失敗)" > /tmp/achievements.txt
@@ -103,7 +107,9 @@ jobs:
           echo "total_users=$TOTAL_USERS" >> $GITHUB_OUTPUT
           echo "new_today=$NEW_TODAY"     >> $GITHUB_OUTPUT
           echo "open_count=$OPEN_COUNT"   >> $GITHUB_OUTPUT
-          echo "📊 ユーザー: $TOTAL_USERS / 新規要望: $NEW_TODAY / 未対応: $OPEN_COUNT"
+          echo "paid_customers=$PAID_CUSTOMERS" >> $GITHUB_OUTPUT
+          echo "mrr_yen=$MRR_YEN"               >> $GITHUB_OUTPUT
+          echo "📊 ユーザー: $TOTAL_USERS / 新規要望: $NEW_TODAY / 未対応: $OPEN_COUNT / 課金: $PAID_CUSTOMERS / MRR: ¥$MRR_YEN"
 
       # ── Step 2: git log 直近24時間 ──────────────────────────────────────────
       - name: Step 2 - 直近24時間の開発実績
@@ -169,6 +175,8 @@ jobs:
             echo "- **総ユーザー数**: ${{ steps.digest.outputs.total_users }}人"
             echo "- **本日の新規機能リクエスト**: ${{ steps.digest.outputs.new_today }}件"
             echo "- **未対応機能リクエスト**: ${{ steps.digest.outputs.open_count }}件"
+            echo "- **課金ユーザー数**: ${{ steps.digest.outputs.paid_customers }}人"
+            echo "- **MRR**: ¥${{ steps.digest.outputs.mrr_yen }} (active Pro/Teamの定価換算)"
             echo "- **Supabase API応答**: HTTP ${{ steps.digest.outputs.http_code }}"
             echo ""
             echo "## 本日の新規機能リクエスト"
@@ -223,6 +231,11 @@ jobs:
         if: steps.gitlog.outputs.count != '0'
         id: xpost
         run: |
+          PAID_CUSTOMERS="${{ steps.digest.outputs.paid_customers }}"
+          MRR_YEN="${{ steps.digest.outputs.mrr_yen }}"
+          X_DRAFT=$(printf '今日の自分株式会社\n24hで%s件改善。課金ユーザー%s人、MRR ¥%s（active Pro/Teamの定価換算）。\n%s' \
+            "${{ steps.gitlog.outputs.count }}" "${PAID_CUSTOMERS:-0}" "${MRR_YEN:-0}" \
+            'https://my-web-app-b67f4.web.app/ #buildinpublic #FlutterWeb #Supabase')
           # JST の今日 0 時を UTC で表現 (repo 規約: 複数行 python3 -c 禁止)。
           TODAY_UTC=$(python3 -c "from datetime import datetime, timedelta, timezone; now_jst = datetime.now(timezone.utc) + timedelta(hours=9); start_jst = now_jst.replace(hour=0, minute=0, second=0, microsecond=0); print((start_jst - timedelta(hours=9)).strftime('%Y-%m-%dT%H:%M:%SZ'))")
           set +e
@@ -236,6 +249,12 @@ jobs:
           echo "本日(JST)の X 投稿ログ: ${COUNT} 件 (>= ${TODAY_UTC})"
           echo "" >> "${{ steps.report.outputs.filepath }}"
           echo "## X投稿" >> "${{ steps.report.outputs.filepath }}"
+          {
+            echo "### 収益進捗入り投稿草案 (確認後に投稿)"
+            echo '```text'
+            printf '%s\n' "$X_DRAFT"
+            echo '```'
+          } >> "${{ steps.report.outputs.filepath }}"
           if [ "$COUNT" = "0" ]; then
             echo "x_posted=false" >> $GITHUB_OUTPUT
             echo "::warning::本日まだ X 未投稿です — アプリの「AI生成して投稿」ワンボタンを実行してください (推奨: JST 07-09 / 20-22)。"
@@ -281,6 +300,7 @@ jobs:
           COMMITS="${{ steps.gitlog.outputs.count }}"
 
           SUMMARY="GitHub Actions: API=$API_STATUS, X投稿=$X_STATUS, コミット=${COMMITS}件"
+          SUMMARY="$SUMMARY, 課金=${{ steps.digest.outputs.paid_customers }}人, MRR=¥${{ steps.digest.outputs.mrr_yen }}"
 
           TASK_STATUS="success"
           if [ "$API_STATUS" = "false" ]; then
@@ -372,6 +392,8 @@ jobs:
         run: |
           USERS="${{ steps.digest.outputs.total_users }}"
           NEW_TODAY="${{ steps.digest.outputs.new_today }}"
+          PAID_CUSTOMERS="${{ steps.digest.outputs.paid_customers }}"
+          MRR_YEN="${{ steps.digest.outputs.mrr_yen }}"
           COMMITS="${{ steps.gitlog.outputs.count }}"
           API_OK="${{ steps.digest.outputs.api_ok }}"
           X_POSTED="${{ steps.xpost.outputs.x_posted }}"
@@ -397,6 +419,8 @@ jobs:
             echo "| Supabase API | $API_ICON HTTP ${{ steps.digest.outputs.http_code }} |"
             echo "| 総ユーザー | ${USERS}人 |"
             echo "| 新規リクエスト | ${NEW_TODAY}件 |"
+            echo "| 課金ユーザー | ${PAID_CUSTOMERS}人 |"
+            echo "| MRR (active定価換算) | ¥${MRR_YEN} |"
             echo "| 24h コミット | ${COMMITS}件 |"
             echo "| X投稿 | $X_ICON |"
             echo "| 競合監視 (7社) | $COMP_ICON |"

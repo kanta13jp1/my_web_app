@@ -23,7 +23,8 @@ class AssetSalarySpendingEntries {
   /// - カード明細 = すべて支出。billing 名/ID を「カード明細マーカー」に記録。
   /// - 収支履歴(recentFlows)= 振替は除外。支出はカード明細マーカーに含まれる
   ///   説明なら二重計上回避で除外。収入(conquer)は収入へ。
-  /// - 収入計画・給与明細 = 同日同額の重複を排除して収入へ。
+  /// - 受取済み収入計画・給与明細 = 同日同額の重複を排除して収入へ。
+  ///   未受取の計画は予測専用で、実績には含めない。
   static AssetSalarySpendingEntries build({
     required List<AssetLiabilityCardStatementLine> cardStatementLines,
     required List<Map<String, dynamic>> recentFlows,
@@ -125,6 +126,9 @@ class AssetSalarySpendingEntries {
     }
 
     for (final plan in monthlyIncomePlans) {
+      if (!plan.received) {
+        continue;
+      }
       addIncomeEntry(
         date: plan.date,
         amount: plan.amount,

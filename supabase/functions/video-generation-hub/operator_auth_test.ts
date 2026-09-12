@@ -7,8 +7,10 @@ const USER_ID = "11111111-1111-4111-8111-111111111111";
 Deno.test("service role may inspect and resume one explicit owner", () => {
   for (
     const action of [
+      "capabilities",
       "authorization_status",
       "run_authorized_improvement",
+      "review_authorized_artifact",
       "status",
     ]
   ) {

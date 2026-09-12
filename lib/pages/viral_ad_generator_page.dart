@@ -4,10 +4,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/kgi_csf_kpi.dart';
+import '../models/hedra_video_batch.dart';
 import '../services/heygen_multilingual_sns_service.dart';
 import '../services/viral_ad_legacy_history_service.dart';
 import '../services/x_post_attribution.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
+import '../widgets/hedra_batch_selector.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// バイラル広告ジェネレーターページ
@@ -45,6 +47,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   String _selectedTemplate = 'dark_war';
   String _selectedLang = 'ja';
   String _selectedOutputType = 'image';
+  int _hedraBatchSize = 1;
   bool _isPosting = false;
 
   @override
@@ -132,6 +135,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   }
 
   Future<void> _generateAd() async {
+    if (!await _confirmHedraBatchCost()) return;
+    final previousImageUrl = _generatedAd?['generatedImageUrl']?.toString();
     setState(() {
       _loading = true;
       _errorMessage = null;
@@ -144,18 +149,81 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           'template': _selectedTemplate,
           'lang': _selectedLang,
           'type': _selectedOutputType,
+          'batchSize':
+              _selectedOutputType == 'presenter_video' ? _hedraBatchSize : 1,
+          'confirmBatchCost':
+              _selectedOutputType == 'presenter_video' && _hedraBatchSize > 1,
+          if (previousImageUrl != null && previousImageUrl.isNotEmpty)
+            'generatedImageUrl': previousImageUrl,
         },
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
         setState(() => _generatedAd = data);
         _tabController.animateTo(0);
+        await _pollPendingHedraBatch(data);
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _errorMessage = '生成エラー: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<bool> _confirmHedraBatchCost() async {
+    if (_selectedOutputType != 'presenter_video' || _hedraBatchSize == 1) {
+      return true;
+    }
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text('$_hedraBatchSize件の動画を生成しますか？'),
+            content: Text(
+              'Hedraへ$_hedraBatchSize件を一括送信します。'
+              '1件生成と比べてクレジット消費と待ち時間が増えます。'
+              'この操作を続ける場合だけ「生成する」を選んでください。',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('キャンセル'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('生成する'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _pollPendingHedraBatch(Map<String, dynamic> initial) async {
+    var current = initial;
+    for (var attempt = 0; attempt < 6; attempt += 1) {
+      final batch = HedraVideoBatch.fromMap(current);
+      if (!batch.isBatch || !batch.isPending || batch.generationIds.isEmpty) {
+        return;
+      }
+      await Future<void>.delayed(const Duration(seconds: 6));
+      if (!mounted) return;
+      final response = await _supabase.functions.invoke(
+        'viral-video-ad-generator',
+        body: {
+          'template': current['template'] ?? _selectedTemplate,
+          'lang': current['lang'] ?? _selectedLang,
+          'type': 'presenter_video',
+          'batchSize': batch.requestedSize,
+          'hedraGenerationIds': batch.generationIds,
+          'hedraBatchGenerationId': batch.batchGenerationId,
+          if (current['generatedImageUrl'] != null)
+            'generatedImageUrl': current['generatedImageUrl'],
+        },
+      );
+      if (response.data is! Map) return;
+      current = Map<String, dynamic>.from(response.data as Map);
+      setState(() => _generatedAd = current);
     }
   }
 
@@ -365,6 +433,9 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   }
 
   Widget _buildGeneratorTab(bool isDark) {
+    final previousImageUrl = _generatedAd?['generatedImageUrl']?.toString();
+    final presenterNeedsImage = _selectedOutputType == 'presenter_video' &&
+        (previousImageUrl == null || previousImageUrl.isEmpty);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -452,11 +523,36 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               ),
             ],
           ),
+          if (_selectedOutputType == 'presenter_video') ...[
+            const SizedBox(height: 16),
+            HedraBatchSelector(
+              value: _hedraBatchSize,
+              enabled: !_loading,
+              onChanged: (value) => setState(() => _hedraBatchSize = value),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '複数生成では各動画を同じ batch_generation_id の履歴グループとして保存します。',
+              style: TextStyle(fontSize: 12, height: 1.5),
+            ),
+          ],
           const SizedBox(height: 16),
+
+          if (presenterNeedsImage) ...[
+            const Text(
+              'プレゼンター動画には開始画像が必要です。先に「画像広告」を1件生成してから動画を選んでください。',
+              style: TextStyle(
+                color: Color(0xFFF59E0B),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
 
           // 生成ボタン
           ElevatedButton.icon(
-            onPressed: _loading ? null : _generateAd,
+            onPressed: _loading || presenterNeedsImage ? null : _generateAd,
             icon: _loading
                 ? const SizedBox(
                     width: 16,
@@ -565,7 +661,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   Widget _buildGeneratedAdCard(Map<String, dynamic> ad, bool isDark) {
     final caption = ad['caption']?.toString() ?? '';
     final imageUrl = ad['generatedImageUrl']?.toString();
-    final videoUrl = ad['generatedVideoUrl']?.toString();
+    final hedraBatch = HedraVideoBatch.fromMap(ad);
+    final videoUrl = hedraBatch.videoUrls.isNotEmpty
+        ? hedraBatch.videoUrls.first
+        : ad['generatedVideoUrl']?.toString();
     final videoStatus = ad['videoStatus']?.toString();
     final videoReason = ad['videoReason']?.toString();
     final hasVideo = videoUrl != null && videoUrl.isNotEmpty;
@@ -624,7 +723,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 ),
               ],
             ),
-            if (hasVideo) ...[
+            if (hedraBatch.isBatch) ...[
+              const SizedBox(height: 12),
+              _buildHedraBatchResults(hedraBatch, isDark),
+            ] else if (hasVideo) ...[
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -806,6 +908,131 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHedraBatchResults(HedraVideoBatch batch, bool isDark) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.maxWidth >= 680
+            ? (constraints.maxWidth - 12) / 2
+            : constraints.maxWidth;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.video_collection_outlined),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Hedra バッチ ${batch.requestedSize}件'
+                    '${batch.isPending ? '（生成中）' : ''}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (batch.batchGenerationId != null) ...[
+              const SizedBox(height: 4),
+              SelectableText(
+                'グループID: ${batch.batchGenerationId}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (var index = 0; index < batch.variants.length; index += 1)
+                  SizedBox(
+                    width: cardWidth,
+                    child: _buildHedraVariantCard(
+                      batch.variants[index],
+                      index,
+                      isDark,
+                    ),
+                  ),
+              ],
+            ),
+            if (batch.videoUrls.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Text(
+                'X投稿では先頭の完成動画を使用します。各バリエーションは個別に開いて比較できます。',
+                style: TextStyle(fontSize: 12, height: 1.5),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHedraVariantCard(
+    HedraVideoVariant variant,
+    int index,
+    bool isDark,
+  ) {
+    final openUrl = variant.videoUrl ?? variant.previewUrl;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black26 : Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'バリエーション ${index + 1} / ${variant.status}',
+            style: const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
+          ),
+          if (variant.id != null)
+            Text(
+              'ID: ${variant.id}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          const SizedBox(height: 8),
+          if (openUrl != null)
+            OutlinedButton.icon(
+              onPressed: () async {
+                final uri = Uri.tryParse(openUrl);
+                if (uri != null) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('プレビューを開く'),
+            )
+          else
+            Row(
+              children: [
+                if (variant.isPending) ...[
+                  const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    variant.reason ?? '動画URLを待っています',
+                    style: const TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }
@@ -1330,7 +1557,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     final type = item['type']?.toString() ?? 'image';
     final postedAt = item['posted_at']?.toString();
     final tweetUrl = item['posted_tweet_url']?.toString();
-    final generatedVideoUrl = item['generated_video_url']?.toString();
+    final hedraBatch = HedraVideoBatch.fromMap(item);
+    final generatedVideoUrl = hedraBatch.videoUrls.isNotEmpty
+        ? hedraBatch.videoUrls.first
+        : item['generated_video_url']?.toString();
     final createdAt = item['created_at']?.toString() ?? '';
 
     return Card(
@@ -1349,7 +1579,9 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           ),
         ),
         title: Text(
-          '${_templateLabel(templateKey)}${type == 'presenter_video' ? ' / 動画' : ' / 画像'}',
+          '${_templateLabel(templateKey)}'
+          '${type == 'presenter_video' ? ' / 動画' : ' / 画像'}'
+          '${hedraBatch.isBatch ? ' / ${hedraBatch.requestedSize}件バッチ' : ''}',
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             height: 1.5,
@@ -1358,7 +1590,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         subtitle: Text(
           '${item['lang']?.toString().toUpperCase() ?? 'JA'}  |  '
           '${_shortDate(createdAt)}'
-          '${postedAt != null ? '  |  投稿: ${_shortDate(postedAt)}' : ''}',
+          '${postedAt != null ? '  |  投稿: ${_shortDate(postedAt)}' : ''}'
+          '${hedraBatch.batchGenerationId != null ? '  |  グループ: ${hedraBatch.batchGenerationId}' : ''}',
           style: const TextStyle(
             fontSize: 11,
             height: 1.5,

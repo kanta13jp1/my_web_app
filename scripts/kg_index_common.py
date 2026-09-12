@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from sync_memory_index import embed_rows
+
 
 ALLOWED_SOURCE_TYPES = {"issue", "wbs", "doc", "memory", "notebooklm"}
 DEFAULT_OUTPUT_DIR = Path("tmp/kg-indexer")
@@ -162,22 +164,28 @@ def upsert_supabase(
         f"{supabase_url.rstrip('/')}/rest/v1/kg_embeddings"
         "?on_conflict=source_type,source_id"
     )
-    data = json.dumps(payloads).encode("utf-8")
-    request = urllib.request.Request(
-        endpoint,
-        data=data,
-        method="POST",
-        headers={
-            "apikey": service_role_key,
-            "Authorization": f"Bearer {service_role_key}",
-            "Content-Type": "application/json",
-            "Prefer": "resolution=merge-duplicates",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        if response.status not in {200, 201, 204}:
-            raise RuntimeError(f"Supabase upsert failed: HTTP {response.status}")
-    return len(payloads)
+    applied = 0
+    for index in range(0, len(payloads), 25):
+        chunk = payloads[index : index + 25]
+        request = urllib.request.Request(
+            endpoint,
+            data=json.dumps(chunk).encode("utf-8"),
+            method="POST",
+            headers={
+                "apikey": service_role_key,
+                "Authorization": f"Bearer {service_role_key}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates",
+            },
+        )
+        with urllib.request.urlopen(request, timeout=60) as response:
+            if response.status not in {200, 201, 204}:
+                raise RuntimeError(
+                    f"Supabase upsert failed: HTTP {response.status}"
+                )
+        applied += len(chunk)
+        print(f"upserted {applied}/{len(payloads)}")
+    return applied
 
 
 def add_common_args(
@@ -189,16 +197,28 @@ def add_common_args(
     parser.add_argument("--audit-log", default=str(DEFAULT_OUTPUT_DIR / "pii-skips.jsonl"))
     parser.add_argument("--limit", type=int, default=500)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument(
+        "--with-embeddings",
+        action="store_true",
+        help="Generate Gemini retrieval-document embeddings before writing or applying.",
+    )
     parser.add_argument("--supabase-url", default=os.environ.get("SUPABASE_URL", ""))
     parser.add_argument(
         "--service-role-key",
         default=os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
         or os.environ.get("SERVICE_ROLE_KEY", ""),
     )
+    parser.add_argument("--gemini-api-key", default=os.environ.get("GEMINI_API_KEY", ""))
 
 
 def finish(records: Iterable[SourceRecord], args: argparse.Namespace) -> dict[str, Any]:
     payloads, skipped = filter_payloads(records)
+    embedding_status = "not_requested"
+    if args.with_embeddings:
+        if not args.gemini_api_key:
+            raise SystemExit("--with-embeddings requires GEMINI_API_KEY")
+        embed_rows(payloads, args.gemini_api_key)
+        embedding_status = "generated"
     written = write_jsonl(Path(args.output), payloads)
     skipped_count = write_jsonl(Path(args.audit_log), skipped)
     applied = 0
@@ -215,6 +235,7 @@ def finish(records: Iterable[SourceRecord], args: argparse.Namespace) -> dict[st
         "written": written,
         "skipped_pii": skipped_count,
         "applied": applied,
+        "embedding_status": embedding_status,
     }
     print(json.dumps(stats, ensure_ascii=False, sort_keys=True))
     return stats

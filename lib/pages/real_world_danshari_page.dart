@@ -355,6 +355,16 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             ),
           ),
         ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: const Key('photo-action-help-link'),
+            onPressed: () => Navigator.of(context).pushNamed('/user-manual'),
+            icon: const Icon(Icons.help_outline),
+            label: const Text('リアル断捨離の使い方を見る'),
+          ),
+        ),
       ],
     );
   }

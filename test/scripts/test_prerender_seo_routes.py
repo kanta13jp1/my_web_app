@@ -264,6 +264,33 @@ class PublicRouteTest(unittest.TestCase):
             out,
         )
 
+    def test_referral_route_has_static_meta_and_truthful_benefit_copy(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(
+            item for item in routes["routes"] if item["path"] == "/referral"
+        )
+
+        out = build_public_route_html(TEMPLATE, route, BASE)
+
+        self.assertIn(
+            '<link rel="canonical" href="https://my-web-app-b67f4.web.app/referral">',
+            out,
+        )
+        self.assertIn("<title>友達紹介プログラム | 自分株式会社</title>", out)
+        self.assertIn(
+            '<meta property="og:title" '
+            'content="友達紹介プログラム | 自分株式会社">',
+            out,
+        )
+        self.assertIn("Pro月額1か月分", out)
+        self.assertIn("登録だけでは特典を付与しません", out)
+        self.assertNotIn("<title>ホーム | 自分株式会社</title>", out)
+
     def test_philosophy_route_renders_original_guide_and_visible_faq(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         routes = json.loads(
@@ -453,6 +480,7 @@ class SitemapTest(unittest.TestCase):
         self.assertIn(f"<loc>{BASE}/vs-notion</loc>", doc)
         self.assertIn(f"<loc>{BASE}/competitors</loc>", doc)
         self.assertIn(f"<loc>{BASE}/shop</loc>", doc)
+        self.assertIn(f"<loc>{BASE}/referral</loc>", doc)
         self.assertIn("<lastmod>2026-07-09</lastmod>", doc)
         # doorway 化していた routeless URL は含まれない
         self.assertNotIn("/vs-yamato", doc)

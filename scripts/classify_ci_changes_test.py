@@ -46,9 +46,10 @@ class ClassifyCiChangesTest(unittest.TestCase):
         self.assertTrue(caption["caption"])
         self.assertFalse(caption["edge"])
 
-    def test_tiger_status_does_not_trigger_flutter_or_web(self) -> None:
+    def test_tiger_status_triggers_tiger_group_only(self) -> None:
         result = classify(["assets/data/tiger_remediation_status.json"])
 
+        self.assertTrue(result["tiger"])
         self.assertFalse(result["flutter"])
         self.assertFalse(result["web"])
         self.assertFalse(result["deployable"])

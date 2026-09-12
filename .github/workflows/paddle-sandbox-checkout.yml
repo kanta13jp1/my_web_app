@@ -4,7 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       run_real_sandbox_e2e:
-        description: Run the real Paddle sandbox checkout and B2B VAT matrix
+        description: Run the basic sandbox cancel, declined-card, and success matrix
+        required: true
+        default: false
+        type: boolean
+      run_b2b_vat_e2e:
+        description: Also run B2B VAT (requires an Owner-authorized valid tax-ID scenario)
         required: true
         default: false
         type: boolean
@@ -28,6 +33,8 @@ on:
       - 'lib/services/paddle_js_checkout_gateway_web.dart'
       - 'lib/ui/features/billing/**'
       - 'test/pages/subscription_billing_page_test.dart'
+      - 'scripts/paddle_sandbox_config.cjs'
+      - 'scripts/paddle_sandbox_config.test.cjs'
       - 'test/e2e/paddle_sandbox_checkout.spec.ts'
       - 'test/services/paddle_checkout_test.dart'
       - 'test/services/paddle_invoice_access_test.dart'
@@ -89,6 +96,7 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs
           npm ci
+          node --test scripts/paddle_sandbox_config.test.cjs
           npx playwright test \
             test/e2e/paddle_sandbox_checkout.spec.ts \
             --project=chromium \
@@ -204,11 +212,11 @@ jobs:
           retention-days: 7
 
   real-sandbox-e2e:
-    name: Real Paddle sandbox checkout and B2B VAT
+    name: Real Paddle sandbox checkout (optional B2B VAT)
     if: >-
       always() &&
       github.event_name == 'workflow_dispatch' &&
-      inputs.run_real_sandbox_e2e &&
+      (inputs.run_real_sandbox_e2e || inputs.run_b2b_vat_e2e) &&
       (needs.validate.result == 'success' || needs.validate.result == 'skipped')
     needs: validate
     runs-on: ubuntu-latest
@@ -219,14 +227,15 @@ jobs:
       PADDLE_SANDBOX_CLIENT_TOKEN: ${{ secrets.PADDLE_SANDBOX_CLIENT_TOKEN }}
       PADDLE_SANDBOX_PRICE_ID: ${{ vars.PADDLE_SANDBOX_PRICE_ID }}
       PADDLE_SANDBOX_CUSTOMER_PORTAL_URL: ${{ vars.PADDLE_SANDBOX_CUSTOMER_PORTAL_URL }}
-      PADDLE_SANDBOX_B2B_EMAIL: ${{ secrets.PADDLE_SANDBOX_B2B_EMAIL }}
-      PADDLE_SANDBOX_B2B_TAX_IDENTIFIER: ${{ secrets.PADDLE_SANDBOX_B2B_TAX_IDENTIFIER }}
-      PADDLE_SANDBOX_B2B_COUNTRY_CODE: ${{ vars.PADDLE_SANDBOX_B2B_COUNTRY_CODE }}
-      PADDLE_SANDBOX_B2B_COUNTRY_NAME: ${{ vars.PADDLE_SANDBOX_B2B_COUNTRY_NAME }}
-      PADDLE_SANDBOX_B2B_POSTAL_CODE: ${{ vars.PADDLE_SANDBOX_B2B_POSTAL_CODE }}
-      PADDLE_SANDBOX_B2B_BUSINESS_NAME: ${{ vars.PADDLE_SANDBOX_B2B_BUSINESS_NAME }}
-      PADDLE_SANDBOX_B2B_EXPECTED_TAX: ${{ vars.PADDLE_SANDBOX_B2B_EXPECTED_TAX }}
-      PADDLE_SANDBOX_E2E: 'true'
+      PADDLE_SANDBOX_B2B_EMAIL: ${{ inputs.run_b2b_vat_e2e && secrets.PADDLE_SANDBOX_B2B_EMAIL || '' }}
+      PADDLE_SANDBOX_B2B_TAX_IDENTIFIER: ${{ inputs.run_b2b_vat_e2e && secrets.PADDLE_SANDBOX_B2B_TAX_IDENTIFIER || '' }}
+      PADDLE_SANDBOX_B2B_COUNTRY_CODE: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_COUNTRY_CODE || '' }}
+      PADDLE_SANDBOX_B2B_COUNTRY_NAME: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_COUNTRY_NAME || '' }}
+      PADDLE_SANDBOX_B2B_POSTAL_CODE: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_POSTAL_CODE || '' }}
+      PADDLE_SANDBOX_B2B_BUSINESS_NAME: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_BUSINESS_NAME || '' }}
+      PADDLE_SANDBOX_B2B_EXPECTED_TAX: ${{ inputs.run_b2b_vat_e2e && vars.PADDLE_SANDBOX_B2B_EXPECTED_TAX || '' }}
+      PADDLE_SANDBOX_E2E: ${{ inputs.run_real_sandbox_e2e }}
+      PADDLE_SANDBOX_B2B_VAT_E2E: ${{ inputs.run_b2b_vat_e2e }}
       E2E_BASE_URL: http://localhost:7357
       SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
       SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_ANON_KEY_DEV }}
@@ -237,64 +246,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate sandbox configuration
+      - name: Validate selected sandbox configuration before SDK setup
         shell: bash
-        run: |
-          set -euo pipefail
-          echo "::add-mask::$PADDLE_SANDBOX_CLIENT_TOKEN"
-          echo "::add-mask::$PADDLE_SANDBOX_B2B_EMAIL"
-          echo "::add-mask::$PADDLE_SANDBOX_B2B_TAX_IDENTIFIER"
-          if [[ -z "$PADDLE_SANDBOX_CLIENT_TOKEN" ]]; then
-            echo '::error::Repository secret PADDLE_SANDBOX_CLIENT_TOKEN is missing.'
-            exit 1
-          fi
-          if [[ "$PADDLE_SANDBOX_CLIENT_TOKEN" != test_* ]]; then
-            echo '::error::PADDLE_SANDBOX_CLIENT_TOKEN must be a sandbox test_ token.'
-            exit 1
-          fi
-          if [[ -z "$PADDLE_SANDBOX_PRICE_ID" ]]; then
-            echo '::error::Repository variable PADDLE_SANDBOX_PRICE_ID is missing.'
-            exit 1
-          fi
-          if [[ "$PADDLE_SANDBOX_PRICE_ID" != pri_* ]]; then
-            echo '::error::PADDLE_SANDBOX_PRICE_ID must be a pri_ identifier.'
-            exit 1
-          fi
-          if [[ ! "$PADDLE_SANDBOX_CUSTOMER_PORTAL_URL" =~ ^https://sandbox-customer-portal\.paddle\.com/cpl_[a-z0-9]{10,}$ ]]; then
-            echo '::error::PADDLE_SANDBOX_CUSTOMER_PORTAL_URL must be a stable generic sandbox portal URL.'
-            exit 1
-          fi
-          required_b2b_values=(
-            PADDLE_SANDBOX_B2B_EMAIL
-            PADDLE_SANDBOX_B2B_TAX_IDENTIFIER
-            PADDLE_SANDBOX_B2B_COUNTRY_CODE
-            PADDLE_SANDBOX_B2B_COUNTRY_NAME
-            PADDLE_SANDBOX_B2B_POSTAL_CODE
-            PADDLE_SANDBOX_B2B_BUSINESS_NAME
-            PADDLE_SANDBOX_B2B_EXPECTED_TAX
-          )
-          for variable_name in "${required_b2b_values[@]}"; do
-            if [[ -z "${!variable_name}" ]]; then
-              echo "::error::${variable_name} is required for the B2B VAT scenario."
-              exit 1
-            fi
-          done
-          if [[ ! "$PADDLE_SANDBOX_B2B_COUNTRY_CODE" =~ ^[A-Z]{2}$ ]]; then
-            echo '::error::PADDLE_SANDBOX_B2B_COUNTRY_CODE must be a two-letter uppercase code.'
-            exit 1
-          fi
-          if [[ ! "$PADDLE_SANDBOX_B2B_EXPECTED_TAX" =~ ^[0-9]+$ ]]; then
-            echo '::error::PADDLE_SANDBOX_B2B_EXPECTED_TAX must be a Paddle minor-unit integer.'
-            exit 1
-          fi
-          if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_PUBLISHABLE_KEY" ]]; then
-            echo '::error::The development Supabase URL and publishable key are required to start the Flutter app.'
-            exit 1
-          fi
-          if [[ "$SUPABASE_PUBLISHABLE_KEY" == sb_secret_* ]]; then
-            echo '::error::A Supabase secret key must never be compiled into Flutter Web.'
-            exit 1
-          fi
+        run: node scripts/paddle_sandbox_config.cjs
 
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter-sdk
@@ -352,7 +306,8 @@ jobs:
           echo '::error::The temporary Flutter Web server did not become ready.'
           exit 1
 
-      - name: Run real sandbox matrix without retries
+      - name: Run selected sandbox matrix without retries
+        id: sandbox_matrix
         shell: bash
         run: >-
           npx playwright test
@@ -370,15 +325,23 @@ jobs:
 
       - name: Write real sandbox summary
         if: always()
+        env:
+          MATRIX_OUTCOME: ${{ steps.sandbox_matrix.outcome }}
         shell: bash
         run: |
           {
             echo '## Real Paddle sandbox matrix'
             echo
-            echo '- The GitHub-hosted runner used a short-lived localhost debug build.'
-            echo '- Playwright ran success, declined-card, customer-cancel, and B2B VAT recalculation scenarios serially with retries disabled.'
-            echo '- VAT evidence contains only tax-ID presence and financial totals; it never stores the tax identifier itself.'
-            echo '- Review the uploaded report, sanitized event log, and post-checkout screenshots before closing #2845 and #2846.'
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Playwright step outcome: $MATRIX_OUTCOME (skipped means no matrix ran)."
+            echo '- Selected basic cases: cancel, declined card, and success; serial execution with retries disabled.'
+            if [[ "$PADDLE_SANDBOX_B2B_VAT_E2E" == true ]]; then
+              echo '- B2B VAT: explicitly selected. Confirm its individual result in the report; selection is not proof of success.'
+            else
+              echo '- B2B VAT: SKIPPED (not selected). A green basic matrix does not verify VAT recalculation or reverse charge.'
+            fi
+            echo '- Inspect the uploaded report for passed, failed, and skipped cases, plus sanitized event logs and masked screenshots.'
+            echo '- This run does not change the not-planned disposition of #2846.'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload real sandbox evidence

@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:my_web_app/pages/aero_lab_page.dart';
+import 'package:my_web_app/pages/sound_bloom_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:my_web_app/services/version_check_service.dart';
 import 'package:my_web_app/widgets/update_banner.dart';
@@ -88,6 +91,7 @@ import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/eval_approval_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/price_tracker_page.dart';
+import 'package:my_web_app/pages/process_quality_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_observability_page.dart';
 import 'package:my_web_app/pages/ai_router_cost_dashboard_page.dart';
 import 'package:my_web_app/pages/task_budget_assistant_page.dart';
@@ -126,6 +130,7 @@ import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/corporate_bank_account_simulator_page.dart';
+import 'package:my_web_app/pages/corporate_site_readiness_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
 import 'package:my_web_app/pages/api_playground_page.dart';
 import 'package:my_web_app/pages/categories_page.dart';
@@ -674,7 +679,10 @@ Route<dynamic> generateAppRoute(
       );
     case '/manual':
     case '/user-manual':
-      return MaterialPageRoute(builder: (_) => const UserManualPage());
+      return MaterialPageRoute(
+        builder: (_) => const UserManualPage(),
+        settings: settings,
+      );
     case '/site-guide-ai':
       final argumentQuestion =
           settings.arguments is String ? settings.arguments as String : null;
@@ -713,8 +721,11 @@ Route<dynamic> generateAppRoute(
         settings: settings,
       );
     case '/philosophy':
+      final initialStep = uri.queryParameters['step'] == 'quick-inventory'
+          ? PhilosophyInitialStep.quickInventory
+          : PhilosophyInitialStep.overview;
       return MaterialPageRoute(
-        builder: (_) => const PhilosophyPage(),
+        builder: (_) => PhilosophyPage(initialStep: initialStep),
         settings: settings,
       );
     case '/privacy':
@@ -918,6 +929,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const PurchaseLogPage());
     case '/price-tracker':
       return MaterialPageRoute(builder: (_) => const PriceTrackerPage());
+    case '/process-quality-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const ProcessQualityDashboardPage(),
+      );
     case '/ai-observability':
       return MaterialPageRoute(
         builder: (_) => const AiObservabilityPage(),
@@ -1059,6 +1074,10 @@ Route<dynamic> generateAppRoute(
     case '/corporate-bank-account-cost':
       return MaterialPageRoute(
         builder: (_) => const CorporateBankAccountSimulatorPage(),
+      );
+    case '/corporate-site-readiness':
+      return MaterialPageRoute(
+        builder: (_) => const CorporateSiteReadinessPage(),
       );
     case '/ai-secretary':
       return MaterialPageRoute(builder: (_) => const AISecretaryPage());
@@ -1392,6 +1411,16 @@ Route<dynamic> generateAppRoute(
       );
     case '/landing-ab-test':
       return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
+    case '/sound-bloom':
+      return MaterialPageRoute(
+        builder: (_) => const SoundBloomPage(),
+        settings: settings,
+      );
+    case '/aero-lab':
+      return MaterialPageRoute(
+        builder: (_) => const AeroLabPage(),
+        settings: settings,
+      );
     case '/video-studio':
       return MaterialPageRoute(
         builder: (_) => VideoStudioFeature(initialUri: uri),

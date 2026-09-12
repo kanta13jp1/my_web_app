@@ -28,8 +28,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
@@ -44,13 +45,36 @@ jobs:
           if [ -z "$APPLY_INPUT" ]; then
             APPLY_INPUT="true"
           fi
-          if [ "$APPLY_INPUT" = "true" ] && [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-            echo "args=--apply" >> "$GITHUB_OUTPUT"
+          if [ "$APPLY_INPUT" = "true" ]; then
+            missing=()
+            [ -z "$SUPABASE_URL" ] && missing+=("SUPABASE_URL_PROD or SUPABASE_URL")
+            [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] && missing+=("SUPABASE_SERVICE_ROLE_KEY")
+            [ -z "$GEMINI_API_KEY" ] && missing+=("GEMINI_API_KEY")
+            if [ "${#missing[@]}" -gt 0 ]; then
+              echo "args=" >> "$GITHUB_OUTPUT"
+              echo "apply=false" >> "$GITHUB_OUTPUT"
+              echo "::error::Knowledge Graph production apply requested but required secrets are missing: ${missing[*]}"
+              exit 1
+            fi
+            echo "args=--apply --with-embeddings" >> "$GITHUB_OUTPUT"
             echo "apply=true" >> "$GITHUB_OUTPUT"
           else
             echo "args=" >> "$GITHUB_OUTPUT"
             echo "apply=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Test Knowledge Graph indexer contract
+        run: python -m unittest scripts/kg_index_common_test.py scripts/kg_index_workflow_test.py
+
+      - name: Pre-flight budget check
+        if: steps.mode.outputs.apply == 'true'
+        env:
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: >-
+          python scripts/check_budget.py
+          --scope gha
+          --scope-id kg-indexer-nightly
+          --limit "${TASK_BUDGET_USD:-20}"
 
       - name: Run indexers
         shell: bash

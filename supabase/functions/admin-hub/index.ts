@@ -2,8 +2,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
+  buildAiFeatureRoiDashboard,
   buildAiRouterCostDashboard,
   normalizeAiRoutingTask,
+  parseAiFeatureRoiParameterInput,
 } from "../_shared/ai_router_cost_optimization.ts";
 import {
   normalizeTaskBudgetDocuments,
@@ -333,6 +335,7 @@ serve(async (req: Request) => {
         if (quotaError) return json({ error: quotaError.message }, 500);
 
         let preferenceRows: Record<string, unknown>[] = [];
+        let roiParameterRows: Record<string, unknown>[] = [];
         if (userId) {
           const { data: prefs, error: prefError } = await admin
             .from("ai_task_routing_preferences")
@@ -340,14 +343,44 @@ serve(async (req: Request) => {
             .eq("user_id", userId);
           if (prefError) return json({ error: prefError.message }, 500);
           preferenceRows = (prefs ?? []) as Record<string, unknown>[];
+
+          const { data: roiParameters, error: roiParameterError } = await admin
+            .from("ai_feature_roi_parameters")
+            .select(
+              "feature_key, minutes_saved_per_success, hourly_value_usd, " +
+                "direct_cost_saving_usd_per_success, " +
+                "avoided_loss_usd_per_success, " +
+                "value_created_usd_per_success, updated_at",
+            )
+            .eq("user_id", userId);
+          if (roiParameterError) {
+            return json({ error: roiParameterError.message }, 500);
+          }
+          roiParameterRows = (roiParameters ?? []) as Record<
+            string,
+            unknown
+          >[];
         }
+
+        const { data: roiDailyRows, error: roiDailyError } = await admin
+          .from("ai_feature_usage_cost_daily")
+          .select(
+            "usage_date, feature_key, request_count, success_count, api_cost_usd",
+          )
+          .gte("usage_date", since.slice(0, 10))
+          .order("usage_date", { ascending: true });
+        if (roiDailyError) return json({ error: roiDailyError.message }, 500);
 
         const dashboard = buildAiRouterCostDashboard(
           (telemetryRows ?? []) as unknown as Record<string, unknown>[],
           (quotaRows ?? []) as unknown as Record<string, unknown>[],
           preferenceRows,
         );
-        return json({ success: true, days, ...dashboard });
+        const roi = buildAiFeatureRoiDashboard(
+          (roiDailyRows ?? []) as unknown as Record<string, unknown>[],
+          roiParameterRows,
+        );
+        return json({ success: true, days, ...dashboard, roi });
       }
 
       case "ai_router.preference.list": {
@@ -385,6 +418,42 @@ serve(async (req: Request) => {
           .single();
         if (error) return json({ error: error.message }, 500);
         return json({ success: true, preference: data });
+      }
+
+      case "ai_roi.parameter.set": {
+        if (!userId) return json({ error: "User auth required" }, 401);
+        let parameters;
+        try {
+          parameters = parseAiFeatureRoiParameterInput(body);
+        } catch (error) {
+          return json({
+            error: error instanceof Error ? error.message : "Invalid ROI input",
+          }, 400);
+        }
+        const { data, error } = await admin
+          .from("ai_feature_roi_parameters")
+          .upsert({
+            user_id: userId,
+            feature_key: parameters.feature_key,
+            minutes_saved_per_success: parameters.minutes_saved_per_success,
+            hourly_value_usd: parameters.hourly_value_usd,
+            direct_cost_saving_usd_per_success:
+              parameters.direct_cost_saving_usd_per_success,
+            avoided_loss_usd_per_success:
+              parameters.avoided_loss_usd_per_success,
+            value_created_usd_per_success:
+              parameters.value_created_usd_per_success,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "user_id,feature_key" })
+          .select(
+            "feature_key, minutes_saved_per_success, hourly_value_usd, " +
+              "direct_cost_saving_usd_per_success, " +
+              "avoided_loss_usd_per_success, " +
+              "value_created_usd_per_success, updated_at",
+          )
+          .single();
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, parameters: data });
       }
 
       case "task_budget_assistant.job.create": {

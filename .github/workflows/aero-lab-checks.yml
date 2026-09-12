@@ -1,0 +1,68 @@
+name: AERO LAB checks
+
+on:
+  pull_request:
+    paths:
+      - 'web/labs/aero-lab/**'
+      - 'lib/pages/aero_lab_page.dart'
+      - 'lib/ui/features/aero_lab/**'
+      - 'test/aero_lab/**'
+      - 'test/e2e/aero_lab.spec.ts'
+      - 'test/pages/aero_lab_page_test.dart'
+      - 'playwright.aero-lab.config.ts'
+      - '.github/workflows/aero-lab-checks.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: aero-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-experience:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: node --test test/aero_lab/model.test.mjs
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config=playwright.aero-lab.config.ts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: aero-lab-evidence
+          path: |
+            aero-lab-report/
+            test-results/
+          retention-days: 7
+  flutter-entry:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - run: flutter analyze lib/pages/aero_lab_page.dart lib/ui/features/aero_lab test/pages/aero_lab_page_test.dart
+      - run: flutter test test/pages/aero_lab_page_test.dart
+      - run: flutter build web --release --pwa-strategy=none
+      - name: Verify packaged static experiment
+        run: |
+          test -f build/web/labs/aero-lab/index.html
+          test -f build/web/labs/aero-lab/vendor/three.core.js
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: aero-lab-flutter-web
+          path: build/web
+          retention-days: 1

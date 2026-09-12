@@ -6,7 +6,8 @@ disposable Postgres container, applies a small migration/seed fixture, verifies
 the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
 Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
 state machine, Issue #1233 resource-optimizer tenant/analysis/quota contracts,
-Issue #4956 WBS administrator/review contracts, Issue #4927 recurring-cost
+Issue #4956 WBS administrator/review contracts, Issue #2921 agent module
+role/handoff contracts, Issue #4927 recurring-cost
 tombstone concurrency, Issue #2844 account-deletion retention contracts, checks
 the real Edge Function import policy, Issue #2668 note-comment authorization,
 and runs a Deno HTTP fixture against the container.
@@ -168,6 +169,14 @@ ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES = (
     / "migrations"
     / "20260828153722_repair_wbs_admin_review_contract.sql",
     ROOT / "supabase" / "tests" / "issue4956_wbs_admin_review_contract.sql",
+)
+ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES = (
+    ROOT / "supabase" / "tests" / "issue2921_agent_module_bootstrap.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260903093652_agent_module_role_handoffs.sql",
+    ROOT / "supabase" / "tests" / "issue2921_agent_module_handoff_contract.sql",
 )
 ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES = (
     ROOT / "supabase" / "migrations" / "20260612230000_asset_pref_mirror.sql",
@@ -562,6 +571,19 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "rejected OPEN Issues cannot become completed/100",
             "blank and NULL Issue sync states fail closed until explicitly CLOSED",
             "manual_override is accepted only as an explicit administrator write",
+            "migration applies twice in the disposable database",
+        ],
+        "issue_2921_agent_module_handoff_sql": [
+            path.relative_to(ROOT).as_posix()
+            for path in ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES
+        ],
+        "issue_2921_agent_module_handoff_checks": [
+            "front-office and management agents use independent trusted JWT identities",
+            "module-governed task reads and writes require the assigned module and agent",
+            "human owners retain legacy task mutations and organization-wide audit reads",
+            "direct assignment rewrites and cross-tenant access fail closed",
+            "request and acceptance RPCs atomically transfer work with append-only events",
+            "anon and authenticated clients have no direct handoff-table write privileges",
             "migration applies twice in the disposable database",
         ],
         "issue_4927_recurring_tombstone_sql": [
@@ -3293,6 +3315,26 @@ def run_smoke(args: argparse.Namespace) -> int:
             )
             apply_sql_fixture(
                 conn,
+                ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES[0],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES[1],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES[1],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES[2],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
                 ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES[0],
                 artifacts_dir,
             )
@@ -3349,6 +3391,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "issue_1233_resource_optimizer_contract": "passed",
             "issue_1233_ai_quota_concurrency": issue_1233_quota_concurrency,
             "issue_4956_wbs_admin_review_contract": "passed",
+            "issue_2921_agent_module_handoff_contract": "passed",
             "issue_4927_recurring_tombstone_contract": (
                 issue_4927_tombstone_concurrency
             ),

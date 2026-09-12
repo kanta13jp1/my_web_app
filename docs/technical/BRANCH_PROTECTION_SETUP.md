@@ -1,92 +1,66 @@
 # ブランチ保護設定ガイド
 
-GitHub の `main` / `staging` / `develop` ブランチに対するブランチ保護ルールの設定手順。
+対象要件: [#1284](https://github.com/kanta13jp1/my_web_app/issues/1284) と
+[#1286](https://github.com/kanta13jp1/my_web_app/issues/1286)。
+この文書は設定変更の承認ではない。以下の目標と観測値を混同しない。
 
----
+## 現在の観測値（2026-09-06、読み取り専用監査）
 
-## 保護対象ブランチ
+mainのAPI状態は承認要件未設定、admin強制・署名必須・リニア履歴が無効。
+rulesetsは空、CODEOWNERSは未配置、collaboratorはowner/admin 1名のみ。
+必須status checksはstrict=trueで、次の実際のcheck名を参照している。
 
-| ブランチ | 保護レベル | 用途 |
-| --- | --- | --- |
-| `main` | 高 (PR必須 + CI必須) | 本番環境 (Firebase Hosting prod) |
-| `staging` | 中 (PR必須) | ステージング環境 |
-| `develop` | 低 (CI推奨) | 開発用統合ブランチ |
+| Check名 | 意味 |
+| --- | --- |
+| Lint, Format, and Test | 変更範囲に応じたCI |
+| Security Check | セキュリティ方針検証 |
+| PR minimal E2E declaration | E2E宣言のゲート |
+| Public E2E stability smoke | 条件付きpublic E2E |
 
----
+これは監査時点の値であり、設定実施済みという宣言ではない。
+ジョブIDをcheck名として登録しない。存在を確認していないbuild-matrix等を
+必須化するとマージ待ちが解消しない。check成功やskipだけで未実行の
+Flutter解析・認証E2E・ビルドが通ったとは判断しない。
 
-## main ブランチの保護ルール設定手順
+## 要求される最終状態
 
-### GitHub リポジトリ設定
+- mainへの直接pushを拒否し、PR経由の統合を必須にする。
+- 独立レビュアーの承認を1件以上必須にする。重要ファイルとCODEOWNERS自身を
+  所有者に割り当て、Code Ownerの承認も必須にする。
+- 管理者や自動処理も要件を迂回できないようにする。
+- 検証済み署名を要求し、リニア履歴を強制する。
+- force-pushとブランチ削除を禁止し、必要な品質ゲートを維持する。
 
-1. リポジトリの **Settings** → **Branches** に移動
-2. **Add branch protection rule** をクリック
-3. **Branch name pattern**: `main` を入力
+個人プロジェクトだから承認0件でよい、署名は任意でよい、という旧案は
+これらのIssueを満たさない。main以外の維持対象ブランチはownerが先に確定する。
+staging/develop/masterの保護状態をmainから推測しない。
 
-### 有効にする設定
+## 有効化前の必須条件
 
-```
-✅ Require a pull request before merging
-   ✅ Require approvals: 0 (個人プロジェクトのため省略可)
-   ✅ Dismiss stale pull request approvals when new commits are pushed
+1. ownerが独立したwrite権限レビュアーまたは適切なチームを指定する。
+   PR作成者自身の承認を代替にしない。招待・権限付与は別途承認を得る。
+2. CODEOWNERSの対象・所有者・可視性と実効アクセスを確認する。
+3. 人間・bot・Actions・外部APIを含む全publisherを棚卸しする。
+   [署名付きリモートコミット手順](REMOTE_SIGNED_COMMITS.md)は候補の一つ。
+   一つの検証済みコミットだけで全経路の互換性を証明したとは扱わない。
+4. unsignedな既存PR、squash/rebaseの署名挙動、必須checkの実名と発火条件を検証する。
+   他者の履歴を書き換えて署名要件を満たしたことにしない。
+5. 非本番の検証対象で直接push拒否、未承認・未署名PR拒否、
+   承認済み署名付き変更の取り込み、リニア履歴を実証する。
+6. 現在の設定を保存し、復旧担当・復旧条件を記録する。
+   ownerの明示レビュー後に本番設定を適用し、API状態と拒否/成功例を再確認する。
 
-✅ Require status checks to pass before merging
-   ✅ Require branches to be up to date before merging
-   Status checks (必須):
-     - lint-and-test
-     - security-check
-     - build-matrix
+## 自動処理との関係
 
-✅ Require conversation resolution before merging
+workflow_dispatchは起動方法であり、ブランチ保護の例外や人手承認の代わりではない。
+生成物の更新も、適切な署名付きブランチ・PR・承認・CIの経路へ移す。
+自動処理を動かすためだけにadminやbotのバイパスを追加しない。
+既存publisherが対応できない場合は、設定を黙って弱めず未達条件として報告する。
 
-✅ Do not allow bypassing the above settings
-```
+## 公式資料と関連文書
 
-### 無効にする設定 (個人プロジェクト)
-
-```
-☐ Require signed commits      (GPG署名は任意)
-☐ Require linear history      (マージコミット許可)
-☐ Lock branch                 (メンテナンス時のみ有効化)
-```
-
----
-
-## staging ブランチの保護ルール
-
-```
-✅ Require a pull request before merging
-✅ Require status checks: lint-and-test
-☐ Require approvals
-```
-
----
-
-## CI チェック連携
-
-ブランチ保護で参照する status checks は `.github/workflows/ci.yml` が定義:
-
-| Status Check | ワークフロー | 内容 |
-| --- | --- | --- |
-| `lint-and-test` | `ci.yml` | flutter analyze + deno lint |
-| `security-check` | `ci.yml` | 認証ファイル検出・シークレットスキャン |
-| `build-matrix` | `ci.yml` | Flutter Web ビルド確認 |
-
-> **注意**: GitHub Actions の status check 名は `ci.yml` の `jobs.<job_id>.name` に対応する。
-> ワークフローを変更した場合はブランチ保護の status checks も更新すること。
-
----
-
-## Claude Code Schedule との関係
-
-`cs-check` Schedule タスクは毎時 :07 に PR レビューを実施する。
-ブランチ保護が有効なため、直接 push を行う Scheduleタスクは `main` ブランチへの bypass を
-リポジトリ設定の **Allow specified actors to bypass required pull requests** で許可する必要がある
-（または `workflow_dispatch` 経由のみ許可）。
-
----
-
-## 関連ドキュメント
-
+- [GitHub protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
+- [GitHub CODEOWNERS](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)
 - [CI/CD Setup Guide](../CICD_SETUP_GUIDE.md)
-- [CI/CD Pipeline Guide](./CI_CD_GUIDE.md)
-- [Deployment Guide](./DEPLOYMENT_GUIDE.md)
+- [CI/CD Pipeline Guide](CI_CD_GUIDE.md)
+- [Deployment Guide](DEPLOYMENT_GUIDE.md)
