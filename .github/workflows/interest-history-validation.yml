@@ -20,13 +20,14 @@ jobs:
       - run: flutter pub get
       - name: Format feature source
         run: |
-          dart format lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/widgets/asset_interest_history_card_test.dart
+          dart fix --apply --code=require_trailing_commas,curly_braces_in_flow_control_structures,unnecessary_non_null_assertion
+          dart format lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart
           if ! git diff --quiet; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/widgets/asset_interest_history_card_test.dart
+            git add lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart lib/pages/asset_management_page.dart
             git commit -m 'style: format monthly interest feature'
             git push origin HEAD
           fi
-      - run: flutter analyze lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/widgets/asset_interest_history_card_test.dart
-      - run: flutter test --concurrency=2 test/services/asset_interest_history_test.dart test/widgets/asset_interest_history_card_test.dart
+      - run: flutter analyze lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart
+      - run: flutter test --concurrency=2 test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart
