@@ -1,5 +1,13 @@
 import {test,expect} from '@playwright/test';
-test.beforeEach(async({page})=>{await page.goto('/labs/lumen-path/');});
+const failures = new WeakMap<object, string[]>();
+test.beforeEach(async({page})=>{
+  const errors:string[]=[];failures.set(page,errors);
+  page.on('pageerror',error=>errors.push(error.message));
+  page.on('requestfailed',request=>errors.push(`request failed: ${request.url()}`));
+  page.on('response',response=>{if(response.status()>=400)errors.push(`HTTP ${response.status()}: ${response.url()}`);});
+  await page.goto('/labs/lumen-path/');
+});
+test.afterEach(async({page})=>{expect(failures.get(page)).toEqual([]);});
 test('rotate, solve, undo and reset',async({page},info)=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await expect(page.locator('#next')).toBeDisabled();
@@ -31,6 +39,17 @@ test('three colors solve and reload returns a clean initial state',async({page},
   for(let i=1;i<=3;i++)await page.getByRole('button',{name:new RegExp(`鏡 ${i}、`)}).click();
   await expect(page.locator('#lit')).toHaveText('3 / 3 LIGHTS');
   await expect(page.locator('#status')).toContainText('3色すべて点灯');
+  const bounds=await page.locator('#board').boundingBox();
+  expect(bounds).not.toBeNull();
+  for(const source of await page.locator('.piece.source').all()){
+    const glyph=await source.boundingBox();expect(glyph).not.toBeNull();
+    expect(glyph!.x).toBeGreaterThanOrEqual(bounds!.x);
+    expect(glyph!.x+glyph!.width).toBeLessThanOrEqual(bounds!.x+bounds!.width);
+  }
+  if(!info.project.name.includes('mobile')){
+    const stage=await page.locator('.stage').boundingBox();
+    expect(stage!.y+stage!.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+  }
   await page.screenshot({path:info.outputPath('solved.png'),fullPage:true});
   await page.reload();await expect(page.locator('#moves')).toHaveText('0');
   await expect(page.locator('#title')).toHaveText('最初の反射');

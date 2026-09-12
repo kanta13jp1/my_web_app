@@ -7,12 +7,12 @@ function svg(tag,attrs){const e=document.createElementNS(NS,tag);for(const [k,v]
 function piece(x,y,classes,color,text,label,action){
   const e=document.createElement(action?'button':'span');e.className=`piece ${classes}`;
   // SVG uses preserveAspectRatio="none" so cells and HTML controls align at all sizes.
-  e.style.left=`${(x+1)/9*100}%`;e.style.top=`${(y+1)/9*100}%`;e.style.setProperty('--color',COLORS[color]||'#fff');e.textContent=text;
+  e.style.left=`${(x+1.6)/9.6*100}%`;e.style.top=`${(y+1)/9*100}%`;e.style.setProperty('--color',COLORS[color]||'#fff');e.textContent=text;
   e.setAttribute('aria-label',label);if(action)e.onclick=action;$('pieces').append(e);
 }
 function rotate(i){history.push([...state]);state[i]^=1;highlight=null;render();$('pieces').querySelectorAll('button')[i].focus({preventScroll:true});}
 function render(message){
-  const level=LEVELS[selected],result=trace(level,state);$('pieces').replaceChildren();$('rays').replaceChildren();$('rays').setAttribute('preserveAspectRatio','none');
+  const level=LEVELS[selected],result=trace(level,state);$('pieces').replaceChildren();$('rays').replaceChildren();$('rays').setAttribute('preserveAspectRatio','none');$('rays').setAttribute('viewBox','-1.6 -1 9.6 9');
   $('chapter').textContent=`ROOM 0${selected+1} / 03`;$('title').textContent=level.title;$('brief').textContent=level.brief;
   $('lit').textContent=`${result.lit.length} / ${level.targets.length} LIGHTS`;$('moves').textContent=history.length;
   $('undo').disabled=history.length===0;$('next').disabled=!result.solved||selected===LEVELS.length-1;$('hint').disabled=result.solved;
