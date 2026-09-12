@@ -394,6 +394,16 @@ test('success return waits for entitlement without offering duplicate purchase',
   await expect(download).toBeFocused();
   await download.scrollIntoViewIfNeeded();
   await expect(download).toBeInViewport();
+  // In the desktop CanvasKit capture, focusing/scrolling the semantic node can
+  // leave the painted page at the top after reload (run34667960081). Send real
+  // wheel input over the page, then retain the settled, unmasked pixels below.
+  // The mobile focus capture already shows the control; do not overscroll it.
+  const viewport = page.viewportSize();
+  if (viewport && viewport.width >= 800) {
+    await page.mouse.move(viewport.width / 2, viewport.height / 2);
+    await page.mouse.wheel(0, viewport.height * 0.75);
+  }
+  await expect(download).toBeInViewport();
   await expect(page.getByRole('button', { name: buyLabel, exact: true })).toHaveCount(0);
   await capture(page, info, 'entitlement-confirmed');
   expect(fixture.checkouts).toEqual([]);

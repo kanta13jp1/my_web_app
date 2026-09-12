@@ -24,9 +24,9 @@ class _FakeShopGateway implements ShopGateway {
   final bool signedIn;
   final Completer<ShopProduct?>? pendingProduct;
   final Completer<CheckoutStart>? pendingCheckout;
-  Object? productError;
-  Object? checkoutError;
-  Object? downloadError;
+  Error? productError;
+  Error? checkoutError;
+  Error? downloadError;
 
   int checkoutCalls = 0;
   int downloadCalls = 0;
