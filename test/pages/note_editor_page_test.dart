@@ -30,6 +30,7 @@ class _RecordingSupabaseClient extends Fake implements SupabaseClient {
   final bool failVersionInsert;
   final Completer<void>? versionInsertGate;
   final versionInserts = <Map<String, dynamic>>[];
+  int versionCompletions = 0;
 
   /// true にすると `_loadNote` の select が失敗する (= サーバー基準値が無い状態)。
   final bool failSelect;
@@ -105,6 +106,7 @@ class _FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
       return _FakeMutationBuilder(
         idValue: client.noteRow['id'],
         waitFor: client.versionInsertGate?.future,
+        onComplete: () => client.versionCompletions++,
       );
     }
     if (table == 'notes' && values is Map) {
@@ -182,10 +184,11 @@ class _FakeSelectBuilder extends Fake
 /// `.update(...)` / `.insert(...)` の戻り値。
 class _FakeMutationBuilder extends Fake
     implements PostgrestFilterBuilder<dynamic> {
-  _FakeMutationBuilder({required this.idValue, this.waitFor});
+  _FakeMutationBuilder({required this.idValue, this.waitFor, this.onComplete});
 
   final Object? idValue;
   final Future<void>? waitFor;
+  final void Function()? onComplete;
 
   @override
   _FakeMutationBuilder eq(String column, Object value) => this;
@@ -208,7 +211,10 @@ class _FakeMutationBuilder extends Fake
     Function? onError,
   }) {
     return (waitFor ?? Future<void>.value())
-        .then<dynamic>((_) => null)
+        .then<dynamic>((_) {
+          onComplete?.call();
+          return null;
+        })
         .then(onValue, onError: onError);
   }
 
@@ -720,16 +726,25 @@ void main() {
       gate.complete();
       // The request/Future chain can complete without scheduling a frame.
       // Observe the operation's own result before waiting for global idleness.
-      final abortMessage =
-          find.text('保全中に編集内容またはログイン状態が変わったため、復元を中止しました。');
-      for (var frame = 0; frame < 10 && abortMessage.evaluate().isEmpty; frame++) {
+      final abortMessage = find.text('保全中に編集内容またはログイン状態が変わったため、復元を中止しました。');
+      for (var frame = 0;
+          frame < 10 && abortMessage.evaluate().isEmpty;
+          frame++) {
         await tester.pump(const Duration(milliseconds: 20));
       }
       expect(
         _contentController(tester).text,
         'New edit while backup is pending',
       );
-      expect(abortMessage, findsOneWidget);
+      expect(client.versionCompletions, 1);
+      expect(
+        abortMessage,
+        findsOneWidget,
+        reason: tester
+            .widgetList<SnackBar>(find.byType(SnackBar, skipOffstage: false))
+            .map((bar) => (bar.content as Text).data)
+            .join(' | '),
+      );
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
       expect(
