@@ -74,7 +74,9 @@ void main() {
     expect(query['user_id'], 'eq.$owner');
     expect(query['note_id'], 'eq.42');
     expect(
-        query['select'], SupabaseNoteVersionHistoryRepository.summaryColumns,);
+      query['select'],
+      SupabaseNoteVersionHistoryRepository.summaryColumns,
+    );
     expect(query['select'], isNot(contains('content')));
     expect(query['order'], contains('saved_at.desc.nullslast'));
     expect(query['order'], contains('id.desc'));
@@ -124,7 +126,9 @@ void main() {
     client.auth.ownerId = null;
     await expectLater(repository.loadPage('42'), throwsStateError);
     await expectLater(
-        repository.loadDetail('42', versionId(1)), throwsStateError,);
+      repository.loadDetail('42', versionId(1)),
+      throwsStateError,
+    );
     expect(requests, isEmpty);
   });
 
@@ -165,14 +169,17 @@ void main() {
       final remaining = 1001 - after;
       final count = remaining > 100 ? 100 : remaining;
       return http.Response(
-        jsonEncode(List.generate(
+        jsonEncode(
+          List.generate(
             count,
             (index) => {
-                  'id': after + index + 1,
-                  'file_name': 'synthetic.png',
-                  'mime_type': 'image/png',
-                  'file_size': 10,
-                },),),
+              'id': after + index + 1,
+              'file_name': 'synthetic.png',
+              'mime_type': 'image/png',
+              'file_size': 10,
+            },
+          ),
+        ),
         200,
       );
     };
@@ -187,9 +194,13 @@ void main() {
     }
     for (final request in requests.skip(1)) {
       expect(
-          request.url.queryParameters['note_version_id'], 'eq.${versionId(1)}',);
+        request.url.queryParameters['note_version_id'],
+        'eq.${versionId(1)}',
+      );
       expect(
-          request.url.queryParameters['select'], isNot(contains('file_path')),);
+        request.url.queryParameters['select'],
+        isNot(contains('file_path')),
+      );
     }
   });
 

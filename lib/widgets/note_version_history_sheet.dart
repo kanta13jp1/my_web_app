@@ -14,7 +14,8 @@ class NoteVersionHistorySheet extends StatefulWidget {
   final String noteId;
 
   @override
-  State<NoteVersionHistorySheet> createState() => _NoteVersionHistorySheetState();
+  State<NoteVersionHistorySheet> createState() =>
+      _NoteVersionHistorySheetState();
 }
 
 class _NoteVersionHistorySheetState extends State<NoteVersionHistorySheet> {
@@ -172,47 +173,53 @@ class _NoteVersionHistorySheetState extends State<NoteVersionHistorySheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-        SelectableText(
-          summary.displayTitle,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        Text(_date(summary)),
-        if (summary.isEvernote) ...[
-          Text(summary.sourceVerified ? 'Evernote履歴：検証済み' : 'Evernote履歴：未検証'),
-          const Text(
-            '移行原本の読み取り専用プレビューです。'
-            '添付を含む安全な復元処理の検証が完了するまで、上書き復元はできません。',
-          ),
-          if (detail.tags.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: detail.tags.map((tag) => Chip(label: Text(tag))).toList(),
-            ),
-        ],
-        const SizedBox(height: 16),
-        const Text('保存されたMarkdown本文（読み取り専用）'),
-        const Text('外部画像・リンクは自動で読み込みません。'),
-        const SizedBox(height: 8),
-        SelectableText(detail.content.isEmpty ? '（本文なし）' : detail.content),
-        const SizedBox(height: 16),
-        if (summary.isEvernote) ...[
-          Text('履歴に保存された添付：${detail.attachments.length}件'),
-        ] else ...[
-          const Text(
-            'この履歴の復元対象はタイトルと本文です。'
-            'タグ・添付ファイル・タスク・リマインダーは復元対象ではありません。',
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton.icon(
-              onPressed: () => Navigator.pop(context, detail),
-              icon: const Icon(Icons.restore),
-              label: const Text('このタイトル・本文を復元'),
-            ),
-          ),
-        ],
+                SelectableText(
+                  summary.displayTitle,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                Text(_date(summary)),
+                if (summary.isEvernote) ...[
+                  Text(
+                    summary.sourceVerified ? 'Evernote履歴：検証済み' : 'Evernote履歴：未検証',
+                  ),
+                  const Text(
+                    '移行原本の読み取り専用プレビューです。'
+                    '添付を含む安全な復元処理の検証が完了するまで、上書き復元はできません。',
+                  ),
+                  if (detail.tags.isNotEmpty)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: detail.tags
+                          .map((tag) => Chip(label: Text(tag)))
+                          .toList(),
+                    ),
+                ],
+                const SizedBox(height: 16),
+                const Text('保存されたMarkdown本文（読み取り専用）'),
+                const Text('外部画像・リンクは自動で読み込みません。'),
+                const SizedBox(height: 8),
+                SelectableText(
+                  detail.content.isEmpty ? '（本文なし）' : detail.content,
+                ),
+                const SizedBox(height: 16),
+                if (summary.isEvernote) ...[
+                  Text('履歴に保存された添付：${detail.attachments.length}件'),
+                ] else ...[
+                  const Text(
+                    'この履歴の復元対象はタイトルと本文です。'
+                    'タグ・添付ファイル・タスク・リマインダーは復元対象ではありません。',
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.icon(
+                      onPressed: () => Navigator.pop(context, detail),
+                      icon: const Icon(Icons.restore),
+                      label: const Text('このタイトル・本文を復元'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

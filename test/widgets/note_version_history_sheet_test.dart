@@ -5,8 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/note_version_history_service.dart';
 import 'package:my_web_app/widgets/note_version_history_sheet.dart';
 
-NoteVersionSummary version(int index,
-        {bool evernote = false, bool verified = false,}) =>
+NoteVersionSummary version(
+  int index, {
+  bool evernote = false,
+  bool verified = false,
+}) =>
     NoteVersionSummary(
       cursor: NoteVersionCursor(
         id: '22222222-2222-4222-8222-${index.toString().padLeft(12, '0')}',
@@ -27,8 +30,10 @@ class _Repository implements NoteVersionHistoryRepository {
   Completer<NoteVersionPage>? pageGate;
 
   @override
-  Future<NoteVersionPage> loadPage(String noteId,
-      {NoteVersionCursor? before,}) async {
+  Future<NoteVersionPage> loadPage(
+    String noteId, {
+    NoteVersionCursor? before,
+  }) async {
     pageCalls++;
     if (pageGate != null) return pageGate!.future;
     if (failPage) throw StateError('private source must not be shown');
@@ -57,26 +62,30 @@ Future<void> _openSheet(
   _Repository repository, {
   double textScale = 1,
 }) async {
-  await tester.pumpWidget(MaterialApp(
-    builder: (context, child) => MediaQuery(
-      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
-      child: child!,
-    ),
-    home: Scaffold(
-      body: Builder(
+  await tester.pumpWidget(
+    MaterialApp(
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
+      home: Scaffold(
+        body: Builder(
           builder: (context) => TextButton(
-                onPressed: () => showModalBottomSheet<NoteVersionDetail>(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (_) => NoteVersionHistorySheet(
-                    repository: repository,
-                    noteId: '42',
-                  ),
-                ),
-                child: const Text('Open'),
-              ),),
+            onPressed: () => showModalBottomSheet<NoteVersionDetail>(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => NoteVersionHistorySheet(
+                repository: repository,
+                noteId: '42',
+              ),
+            ),
+            child: const Text('Open'),
+          ),
+        ),
+      ),
     ),
-  ),);
+  );
   await tester.tap(find.text('Open'));
   await tester.pumpAndSettle();
 }
@@ -97,8 +106,11 @@ void main() {
     );
     await tester.tap(find.text('さらに古い履歴を読み込む'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('History 30'), 300,
-        scrollable: scrollable,);
+    await tester.scrollUntilVisible(
+      find.text('History 30'),
+      300,
+      scrollable: scrollable,
+    );
     expect(repository.detailCalls, 0);
     await tester.tap(find.text('History 30'));
     await tester.pumpAndSettle();
@@ -145,9 +157,10 @@ void main() {
           tags: ['retained-tag'],
           attachments: [
             const NoteVersionAttachment(
-                fileName: 'original.pdf',
-                mimeType: 'application/pdf',
-                fileSize: 123,),
+              fileName: 'original.pdf',
+              mimeType: 'application/pdf',
+              fileSize: 123,
+            ),
           ],
         );
       await _openSheet(tester, repository);
@@ -158,8 +171,10 @@ void main() {
       expect(find.text('original.pdf'), findsOneWidget);
       expect(find.text('このタイトル・本文を復元'), findsNothing);
       expect(find.byType(Image), findsNothing);
-      expect(find.text(verified ? 'Evernote履歴：検証済み' : 'Evernote履歴：未検証'),
-          findsOneWidget,);
+      expect(
+        find.text(verified ? 'Evernote履歴：検証済み' : 'Evernote履歴：未検証'),
+        findsOneWidget,
+      );
       await tester.tap(find.byTooltip('履歴一覧に戻る'));
       await tester.pumpAndSettle();
       expect(find.text('履歴に保存された添付：1件'), findsNothing);
@@ -177,8 +192,9 @@ void main() {
       final repository = _Repository()
         ..items = [item]
         ..detail = NoteVersionDetail(
-            summary: item,
-            content: List.filled(50, 'Long historical body').join('\n'),);
+          summary: item,
+          content: List.filled(50, 'Long historical body').join('\n'),
+        );
       await _openSheet(tester, repository, textScale: 2);
       await tester.tap(find.text('History 1'));
       await tester.pumpAndSettle();

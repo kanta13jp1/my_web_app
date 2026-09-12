@@ -688,19 +688,22 @@ void main() {
   });
 
   group('note history restore backup', () {
-    testWidgets('editing during the backup never overwrites the newer draft', (tester) async {
+    testWidgets('editing during the backup never overwrites the newer draft',
+        (tester) async {
       final gate = Completer<void>();
       final client = _RecordingSupabaseClient(
         noteRow: _noteRow(),
         versionInsertGate: gate,
-        historyRows: [{
-          'id': '22222222-2222-4222-8222-222222222222',
-          'title': 'Historical title',
-          'content': 'Historical body',
-          'saved_at': '2026-01-01T00:00:00Z',
-          'source_system': 'native',
-          'source_verified_at': null,
-        }],
+        historyRows: [
+          {
+            'id': '22222222-2222-4222-8222-222222222222',
+            'title': 'Historical title',
+            'content': 'Historical body',
+            'saved_at': '2026-01-01T00:00:00Z',
+            'source_system': 'native',
+            'source_verified_at': null,
+          }
+        ],
       );
       await _pumpPage(tester, client);
       await tester.tap(find.byTooltip('バージョン履歴'));
@@ -714,11 +717,17 @@ void main() {
       _contentController(tester).text = 'New edit while backup is pending';
       gate.complete();
       await tester.pumpAndSettle();
-      expect(_contentController(tester).text, 'New edit while backup is pending');
+      expect(
+        _contentController(tester).text,
+        'New edit while backup is pending',
+      );
       expect(find.text('保全中に編集内容またはログイン状態が変わったため、復元を中止しました。'), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
-      expect(client.updates.every((row) => row['content'] != 'Historical body'), isTrue);
+      expect(
+        client.updates.every((row) => row['content'] != 'Historical body'),
+        isTrue,
+      );
     });
 
     for (final failBackup in [false, true]) {
