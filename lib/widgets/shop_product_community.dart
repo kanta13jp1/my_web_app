@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/shop_community.dart';
 import '../services/shop_community_repository.dart';
@@ -48,7 +49,14 @@ class _ShopProductCommunityState extends State<ShopProductCommunity> {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => _ReviewEditor(model: _model),
+      builder: (dialogContext) => CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            if (!_model.working) Navigator.of(dialogContext).pop();
+          },
+        },
+        child: _ReviewEditor(model: _model),
+      ),
     );
   }
 
@@ -404,6 +412,7 @@ class _ReviewEditorState extends State<_ReviewEditor> {
                                       value <= _rating
                                           ? Icons.star
                                           : Icons.star_border,
+                                      semanticLabel: '星$valueを選択',
                                       color: DesignTokens.orange,
                                     ),
                                   ),

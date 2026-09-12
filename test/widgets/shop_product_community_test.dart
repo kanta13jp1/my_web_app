@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -70,37 +72,48 @@ void main() {
       return a > b ? (a + 0.05) / (b + 0.05) : (b + 0.05) / (a + 0.05);
     }
 
-    expect(contrast(DesignTokens.textPrimary, DesignTokens.surface1),
-        greaterThanOrEqualTo(4.5));
-    expect(contrast(DesignTokens.textSecondary, DesignTokens.surface1),
-        greaterThanOrEqualTo(4.5));
-    expect(contrast(DesignTokens.background, DesignTokens.orange),
-        greaterThanOrEqualTo(4.5));
-    expect(contrast(DesignTokens.orange, DesignTokens.surface1),
-        greaterThanOrEqualTo(3));
+    expect(
+      contrast(DesignTokens.textPrimary, DesignTokens.surface1),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      contrast(DesignTokens.textSecondary, DesignTokens.surface1),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      contrast(DesignTokens.background, DesignTokens.orange),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      contrast(DesignTokens.orange, DesignTokens.surface1),
+      greaterThanOrEqualTo(3),
+    );
   });
   testWidgets('stars have 44px targets, labels and a live selection status',
       (tester) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-    await pumpCommunity(tester, FakeShopCommunity(), width: 360);
-    await tapText(tester, '口コミ・評価を書く');
-    final first = find.byKey(const ValueKey('review-star-1'));
-    for (var value = 1; value <= 5; value++) {
-      final star = find.byKey(ValueKey('review-star-$value'));
-      expect(tester.getSize(star).width, greaterThanOrEqualTo(44));
-      expect(tester.getSize(star).height, greaterThanOrEqualTo(44));
-      expect(tester.getTopLeft(star).dy, tester.getTopLeft(first).dy);
-      expect(find.bySemanticsLabel('星$valueを選択'), findsOneWidget);
+    try {
+      await pumpCommunity(tester, FakeShopCommunity(), width: 360);
+      await tapText(tester, '口コミ・評価を書く');
+      final first = find.byKey(const ValueKey('review-star-1'));
+      for (var value = 1; value <= 5; value++) {
+        final star = find.byKey(ValueKey('review-star-$value'));
+        expect(tester.getSize(star).width, greaterThanOrEqualTo(44));
+        expect(tester.getSize(star).height, greaterThanOrEqualTo(44));
+        expect(tester.getTopLeft(star).dy, tester.getTopLeft(first).dy);
+        expect(tester.getSemantics(star).label, contains('星$valueを選択'));
+      }
+      await tester.tap(find.byKey(const ValueKey('review-star-4')));
+      await tester.pumpAndSettle();
+      expect(find.text('選択中：星4 / 5'), findsOneWidget);
+      final status = tester.getSemantics(
+        find.byKey(const ValueKey('review-rating-status')),
+      );
+      expect(status.getSemanticsData().flagsCollection.isLiveRegion, isTrue);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
     }
-    await tester.tap(find.byKey(const ValueKey('review-star-4')));
-    await tester.pumpAndSettle();
-    expect(find.text('選択中：星4 / 5'), findsOneWidget);
-    final status = tester.getSemantics(
-      find.byKey(const ValueKey('review-rating-status')),
-    );
-    expect(status.getSemanticsData().flagsCollection.isLiveRegion, isTrue);
-    expect(tester.takeException(), isNull);
   });
   testWidgets('keyboard selects stars in order and Escape closes the editor',
       (tester) async {
@@ -133,28 +146,53 @@ void main() {
     expect(repo.saved?.rating, 5);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('Escape cannot dismiss an in-flight save', (tester) async {
+    final gate = Completer<void>();
+    final repo = FakeShopCommunity()..writeGate = gate;
+    try {
+      await pumpCommunity(tester, repo);
+      await tapText(tester, '口コミ・評価を書く');
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      await tapText(tester, '公開して保存');
+      expect(find.text('保存中…'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('review-body')), findsOneWidget);
+      expect(repo.saved, isNull);
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(repo.saved?.rating, 1);
+      expect(find.byKey(const ValueKey('review-body')), findsNothing);
+    } finally {
+      if (!gate.isCompleted) gate.complete();
+    }
+  });
   testWidgets('save error is announced and keeps input for recovery',
       (tester) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-    final repo = FakeShopCommunity()..failWrite = true;
-    await pumpCommunity(tester, repo);
-    await tapText(tester, '口コミ・評価を書く');
-    await tester.tap(find.byKey(const ValueKey('review-star-3')));
-    await tester.enterText(find.byKey(const ValueKey('review-body')), '消えない本文');
-    await tapText(tester, '公開して保存');
-    expect(find.text('消えない本文'), findsOneWidget);
-    expect(find.text('選択中：星3 / 5'), findsOneWidget);
-    expect(find.text('口コミ・評価を保存しました。'), findsNothing);
-    final error = tester.getSemantics(
-      find.byKey(const ValueKey('review-save-error')),
-    );
-    expect(error.getSemanticsData().flagsCollection.isLiveRegion, isTrue);
-    expect(error.label, contains('保存内容を確認できませんでした'));
-    expect(find.textContaining('private-internal'), findsNothing);
-    repo.failWrite = false;
-    await tapText(tester, '公開して保存');
-    expect(repo.saved?.body, '消えない本文');
+    try {
+      final repo = FakeShopCommunity()..failWrite = true;
+      await pumpCommunity(tester, repo);
+      await tapText(tester, '口コミ・評価を書く');
+      await tester.tap(find.byKey(const ValueKey('review-star-3')));
+      await tester.enterText(find.byKey(const ValueKey('review-body')), '消えない本文');
+      await tapText(tester, '公開して保存');
+      expect(find.text('消えない本文'), findsOneWidget);
+      expect(find.text('選択中：星3 / 5'), findsOneWidget);
+      expect(find.text('口コミ・評価を保存しました。'), findsNothing);
+      final error = tester.getSemantics(
+        find.byKey(const ValueKey('review-save-error')),
+      );
+      expect(error.getSemanticsData().flagsCollection.isLiveRegion, isTrue);
+      expect(error.label, contains('保存内容を確認できませんでした'));
+      expect(find.textContaining('private-internal'), findsNothing);
+      repo.failWrite = false;
+      await tapText(tester, '公開して保存');
+      expect(repo.saved?.body, '消えない本文');
+    } finally {
+      semantics.dispose();
+    }
   });
   testWidgets('shows application version, verified release and unknown date',
       (tester) async {
