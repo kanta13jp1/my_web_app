@@ -131,8 +131,9 @@ serve(async (req) => {
     // Preserve the legacy key/rows during rollout; new records keep posts
     // separate. Failure here is a visible telemetry gap, not a purchase error.
     const postRecorded = await writeShopPostFunnelEvent(
-      (row, options, signal) => admin.from("shop_post_funnel_events")
-        .upsert(row, options).abortSignal(signal),
+      (row, options, signal) =>
+        admin.from("shop_post_funnel_events")
+          .upsert(row, options).abortSignal(signal),
       {
         visitorId,
         productId,
@@ -140,7 +141,9 @@ serve(async (req) => {
         attribution: payload,
       },
     );
-    if (!postRecorded) console.warn("[shop-funnel] post attribution not recorded");
+    if (!postRecorded) {
+      console.warn("[shop-funnel] post attribution not recorded");
+    }
     return json({ recorded: true, post_recorded: postRecorded });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

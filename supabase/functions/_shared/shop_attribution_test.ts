@@ -38,7 +38,10 @@ Deno.test("shop campaign and post survive the metadata round trip", () => {
 
 Deno.test("different registered posts stay distinct", () => {
   const second = { ...first, content_id: "historical_ai_t80_r1" };
-  assertNotEquals(shopAttributionMetadata(first), shopAttributionMetadata(second));
+  assertNotEquals(
+    shopAttributionMetadata(first),
+    shopAttributionMetadata(second),
+  );
   assertEquals(shopAttributionQuery(second), {
     utm_source: "x",
     utm_campaign: "h4_h7_pitch",
@@ -61,7 +64,11 @@ Deno.test("old metadata never invents a campaign or post", () => {
 });
 
 Deno.test("ASCII tags have the same canonical form at each boundary", () => {
-  const mixed = { source: " X ", campaign: " Launch-1 ", content_id: " Post.1 " };
+  const mixed = {
+    source: " X ",
+    campaign: " Launch-1 ",
+    content_id: " Post.1 ",
+  };
   assertEquals(shopAttributionFromClient(mixed), {
     source: "x",
     campaign: "launch-1",
@@ -74,7 +81,9 @@ Deno.test("ASCII tags have the same canonical form at each boundary", () => {
 });
 
 Deno.test("invalid identifiers are rejected without substitution or truncation", () => {
-  for (const bad of ["a".repeat(65), "a/b", "post id", "日本語", "x@test.example"]) {
+  for (
+    const bad of ["a".repeat(65), "a/b", "post id", "日本語", "x@test.example"]
+  ) {
     for (const field of ["source", "campaign", "content_id"]) {
       const payload = { ...first, [field]: bad };
       assertEquals(shopAttributionFromClient(payload), null);
@@ -82,12 +91,18 @@ Deno.test("invalid identifiers are rejected without substitution or truncation",
       assertEquals(shopAttributionQuery(payload), null);
     }
   }
-  assertEquals(shopAttributionFromClient({ content_id: "a".repeat(64) })?.contentId.length, 64);
+  assertEquals(
+    shopAttributionFromClient({ content_id: "a".repeat(64) })?.contentId.length,
+    64,
+  );
 });
 
 Deno.test("non-string tags and non-object payloads cannot become identifiers", () => {
   for (const bad of [true, 1, [], {}]) {
-    assertEquals(shopAttributionFromClient({ ...first, content_id: bad }), null);
+    assertEquals(
+      shopAttributionFromClient({ ...first, content_id: bad }),
+      null,
+    );
     assertEquals(shopAttributionFromMetadata({ shop_content_id: bad }), null);
   }
   for (const bad of [null, undefined, "x", 1, []]) {
@@ -115,9 +130,12 @@ Deno.test("only shop tags are copied; callers retain payment and auth responsibi
 });
 
 Deno.test("unrelated metadata is not treated as shop attribution", () => {
-  assertEquals(shopAttributionFromMetadata({
-    utm_source: "another-source",
-    utm_campaign: "another-campaign",
-    utm_content: "another-post",
-  }), { source: "direct", campaign: "", contentId: "" });
+  assertEquals(
+    shopAttributionFromMetadata({
+      utm_source: "another-source",
+      utm_campaign: "another-campaign",
+      utm_content: "another-post",
+    }),
+    { source: "direct", campaign: "", contentId: "" },
+  );
 });

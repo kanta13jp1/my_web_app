@@ -93,12 +93,17 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - id: deps
-        name: Install locked Flutter dependencies
+        name: Resolve dependencies for the repository Flutter SDK
         run: |
           flutter --version | tee attribution-evidence/flutter-version.log
-          flutter pub get
-          git diff --exit-code -- pubspec.lock
+          flutter pub get 2>&1 | tee attribution-evidence/dependencies.log
+          cp pubspec.lock attribution-evidence/resolved-pubspec.lock
+      - name: Require committed dependency lock to remain unchanged
+        # Keep this a required failure. Independent code checks may still run
+        # so a pre-existing SDK/lock mismatch cannot conceal candidate bugs.
+        run: git diff --exit-code -- pubspec.lock 2>&1 | tee attribution-evidence/dependency-lock-drift.log
       - name: Check committed Dart formatting without mutating tested code
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: dart format --output=none --set-exit-if-changed $OWNED_DART 2>&1 | tee attribution-evidence/format.log
       - name: Analyze owned Dart files
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}

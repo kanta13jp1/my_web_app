@@ -404,7 +404,9 @@ async function recordPurchaseFunnelStage(
 
   const attribution = shopAttributionFromMetadata(metadata);
   if (!attribution) {
-    console.warn("[stripe-webhook] invalid shop attribution; purchase retained");
+    console.warn(
+      "[stripe-webhook] invalid shop attribution; purchase retained",
+    );
     return;
   }
   const { source, campaign, contentId } = attribution;
@@ -423,8 +425,9 @@ async function recordPurchaseFunnelStage(
     console.error("[stripe-webhook] funnel record failed:", error.message);
   }
   const postRecorded = await writeShopPostFunnelEvent(
-    (row, options, signal) => admin.from("shop_post_funnel_events")
-      .upsert(row, options).abortSignal(signal),
+    (row, options, signal) =>
+      admin.from("shop_post_funnel_events")
+        .upsert(row, options).abortSignal(signal),
     {
       visitorId,
       productId,
@@ -433,7 +436,9 @@ async function recordPurchaseFunnelStage(
     },
   );
   if (!postRecorded) {
-    console.warn("[stripe-webhook] post attribution not recorded; purchase retained");
+    console.warn(
+      "[stripe-webhook] post attribution not recorded; purchase retained",
+    );
   }
 }
 

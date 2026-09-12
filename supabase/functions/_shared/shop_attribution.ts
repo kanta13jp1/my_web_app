@@ -45,7 +45,10 @@ export function shopAttributionFromClient(
   if (!payload) return null;
   // A client may suppress invalid/ambiguous URL labels without echoing the raw
   // values. This flag controls telemetry only, never checkout eligibility.
-  if (payload.attribution_valid !== undefined && payload.attribution_valid !== true) {
+  if (
+    payload.attribution_valid !== undefined &&
+    payload.attribution_valid !== true
+  ) {
     return null;
   }
   return parse(payload.source, payload.campaign, payload.content_id);
