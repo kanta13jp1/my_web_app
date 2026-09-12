@@ -47,16 +47,53 @@ class _Store implements ShopGateway {
   }
 }
 
+// Observe the real service without replacing its storage or HTTP behavior.
+// Assertions belong outside record(), which intentionally catches all errors.
+class _ObservedFunnel extends ShopFunnelService {
+  _ObservedFunnel({required super.client});
+
+  bool started = false;
+  bool visitorResolved = false;
+  String? visitor;
+  final completed = Completer<void>();
+
+  @override
+  Future<String?> visitorId() async {
+    visitor = await super.visitorId();
+    visitorResolved = true;
+    return visitor;
+  }
+
+  @override
+  Future<void> record(
+    String stage, {
+    required String productId,
+    String? source,
+    String? campaign,
+  }) async {
+    started = true;
+    try {
+      await super.record(
+        stage,
+        productId: productId,
+        source: source,
+        campaign: campaign,
+      );
+    } finally {
+      if (!completed.isCompleted) completed.complete();
+    }
+  }
+}
+
 void main() {
   // Create/dispose the SDK outside testWidgets' fake-async zone. The client's
   // initialization and cleanup use real asynchronous work.
-  late Completer<void> attempted;
+  final requests = <http.Request>[];
   final telemetry = SupabaseClient(
     'https://example.supabase.co',
     'test-anon-key',
     httpClient: MockClient((request) async {
-      expect(request.url.path, '/functions/v1/shop-funnel');
-      if (!attempted.isCompleted) attempted.complete();
+      requests.add(request);
       return http.Response(
         '{"error":"fixture-telemetry-outage"}',
         503,
@@ -73,20 +110,21 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    attempted = Completer<void>();
+    requests.clear();
+    final funnel = _ObservedFunnel(client: telemetry);
     final community = FakeShopCommunity();
     addTearDown(community.sessions.close);
     final store = _Store();
     Uri? downloaded;
-    // Start the page's telemetry future in real async too. Waiting outside
-    // fake async cannot advance a future that was started inside that zone.
+    // Await handling of the 503, not just dispatch. Report the completed
+    // stage if SDK/storage work stalls rather than guessing at pump timing.
     await tester.runAsync(() async {
       await tester.pumpWidget(
         MaterialApp(
           home: DigitalProductPage(
             productId: product.id,
             service: store,
-            funnel: ShopFunnelService(client: telemetry),
+            funnel: funnel,
             communityRepository: community,
             urlLauncher: (uri, external) async {
               downloaded = uri;
@@ -95,10 +133,22 @@ void main() {
           ),
         ),
       );
-      await attempted.future.timeout(const Duration(seconds: 5));
+      await funnel.completed.future.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => throw StateError(
+          'Telemetry stalled: started=${funnel.started}, '
+          'visitorResolved=${funnel.visitorResolved}, '
+          'visitorPresent=${funnel.visitor != null}, '
+          'httpRequests=${requests.length}',
+        ),
+      );
     });
     expect(tester.takeException(), isNull);
-    expect(attempted.isCompleted, isTrue);
+    expect(funnel.started, isTrue);
+    expect(funnel.visitorResolved, isTrue);
+    expect(funnel.visitor, isNotNull);
+    expect(requests, hasLength(1));
+    expect(requests.single.url.path, '/functions/v1/shop-funnel');
     await tester.pumpAndSettle();
     expect(find.text('配布版 v1.0'), findsOneWidget);
     await tapText(tester, '口コミ・評価を書く');
