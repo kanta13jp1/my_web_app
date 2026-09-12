@@ -22,28 +22,41 @@ class SupabaseAssetInterestRepository implements AssetInterestRepository {
   @override
   Future<List<AssetInterestMonth>> load() async {
     _checkUser();
-    final rows = await client.from('asset_pref_mirror').select('value,updated_at')
-      .eq('user_id', userId).like('pref_key', r'interest\_paid\_v1\_%')
-      .order('pref_key', ascending: false).limit(120);
+    final rows = await client
+        .from('asset_pref_mirror')
+        .select('value,updated_at')
+        .eq('user_id', userId)
+        .like('pref_key', r'interest\_paid\_v1\_%')
+        .order('pref_key', ascending: false)
+        .limit(120);
     _checkUser();
-    return rows.map((row) => AssetInterestMonth.fromJson(
-      Map<String, dynamic>.from(row['value'] as Map),
-      revision: row['updated_at'] as String)).toList();
+    return rows
+        .map((row) => AssetInterestMonth.fromJson(
+            Map<String, dynamic>.from(row['value'] as Map),
+            revision: row['updated_at'] as String))
+        .toList();
   }
 
   @override
   Future<void> save(AssetInterestMonth month) async {
     _checkUser();
-    final payload = <String, dynamic>{'user_id': userId,
-      'pref_key': '$prefix${month.month}', 'value': month.toJson(),
-      'updated_at': DateTime.now().toUtc().toIso8601String()};
+    final payload = <String, dynamic>{
+      'user_id': userId,
+      'pref_key': '$prefix${month.month}',
+      'value': month.toJson(),
+      'updated_at': DateTime.now().toUtc().toIso8601String()
+    };
     if (month.revision == null) {
       // PK conflict is surfaced, never silently replace another device's month.
       await client.from('asset_pref_mirror').insert(payload);
     } else {
-      final rows = await client.from('asset_pref_mirror').update(payload)
-        .eq('user_id', userId).eq('pref_key', '$prefix${month.month}')
-        .eq('updated_at', month.revision!).select('pref_key');
+      final rows = await client
+          .from('asset_pref_mirror')
+          .update(payload)
+          .eq('user_id', userId)
+          .eq('pref_key', '$prefix${month.month}')
+          .eq('updated_at', month.revision!)
+          .select('pref_key');
       if (rows.length != 1) throw StateError('別端末の更新があります。再読み込みして照合してください');
     }
     _checkUser();
