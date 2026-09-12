@@ -4,10 +4,14 @@ on:
   pull_request:
     paths:
       - '.github/workflows/interest-history-validation.yml'
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: interest-history-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   validate:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
