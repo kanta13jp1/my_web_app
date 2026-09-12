@@ -24,7 +24,8 @@ void main() {
   });
 
   test('Lumen Path has a stable same-origin asset and feature label', () {
-    expect(kAllAppRoutes.where((route) => route == '/lumen-path'), hasLength(1));
+    expect(
+        kAllAppRoutes.where((route) => route == '/lumen-path'), hasLength(1));
     expect(LumenPathPage.assetPath, '/labs/lumen-path/index.html');
     expect(featureLabelForRoute('/lumen-path'), '光の道 · LUMEN PATH');
     expect(
