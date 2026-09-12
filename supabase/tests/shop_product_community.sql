@@ -107,8 +107,10 @@ select public.test_assert((public.get_shop_product_reviews('hexciv-win64')->>'av
 reset role;
 
 -- Only the server moderation role can hide a review.
+update public.shop_products set version='1.1' where id='hexciv-win64';
 update public.shop_product_reviews set is_visible = false
 where id in (select id from shop_review_private.owners where user_id = '00000000-0000-4000-8000-000000000001');
+select public.test_assert((select posted_version='1.0' from public.shop_product_reviews where not is_visible), 'moderation preserves author version');
 set role anon;
 select public.test_assert(public.get_shop_product_reviews('hexciv-win64')->>'count' = '1', 'hidden review excluded from count');
 select public.test_assert((public.get_shop_product_reviews('hexciv-win64')->>'average')::numeric = 5, 'hidden review excluded from average');
@@ -119,6 +121,7 @@ select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001'
 select public.test_assert(public.get_my_shop_product_review('hexciv-win64')->'review'->>'is_visible' = 'false', 'owner sees moderation state');
 select public.save_shop_product_review('hexciv-win64',2,'修正');
 select public.test_assert(public.get_my_shop_product_review('hexciv-win64')->'review'->>'is_visible' = 'false', 'edit cannot bypass moderation');
+select public.test_assert(public.get_my_shop_product_review('hexciv-win64')->'review'->>'posted_version' = '1.1', 'author edit stamps current distribution version');
 reset role;
 update public.shop_purchases set status = 'refunded' where user_id='00000000-0000-4000-8000-000000000001' and product_id='hexciv-win64';
 set role authenticated;

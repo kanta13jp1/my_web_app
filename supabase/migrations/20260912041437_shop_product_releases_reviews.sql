@@ -118,6 +118,13 @@ create function shop_review_private.stamp_review()
 returns trigger language plpgsql security invoker set search_path = '' as $$
 begin
   new.body := btrim(new.body);
+  if tg_op = 'UPDATE' then
+    if new.rating is not distinct from old.rating
+       and new.body is not distinct from old.body then
+      -- Moderation alone must not pretend the author posted on a newer version.
+      return new;
+    end if;
+  end if;
   new.updated_at := now();
   select coalesce(p.version, '') into new.posted_version
     from public.shop_products p where p.id = new.product_id;

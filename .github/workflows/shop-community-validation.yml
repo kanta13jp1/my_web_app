@@ -85,4 +85,3 @@ jobs:
             shop-community-format.patch
             build/shop-community-evidence/*.png
           retention-days: 3
-
