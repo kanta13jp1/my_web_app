@@ -390,10 +390,11 @@ class _ReviewEditorState extends State<_ReviewEditor> {
                             children: [
                               for (var value = 1; value <= 5; value++)
                                 SizedBox(
-                                  width: 40,
+                                  width: 44,
                                   height: 48,
                                   child: IconButton(
                                     key: ValueKey('review-star-$value'),
+                                    autofocus: value == 1,
                                     tooltip: '星$valueを選択',
                                     isSelected: _rating == value,
                                     onPressed: widget.model.working
@@ -408,6 +409,16 @@ class _ReviewEditorState extends State<_ReviewEditor> {
                                   ),
                                 ),
                             ],
+                          ),
+                          Semantics(
+                            key: const ValueKey('review-rating-status'),
+                            liveRegion: true,
+                            child: Text(
+                              _rating == 0 ? '評価は未選択です' : '選択中：星$_rating / 5',
+                              style: const TextStyle(
+                                color: DesignTokens.textPrimary,
+                              ),
+                            ),
                           ),
                           TextField(
                             key: const ValueKey('review-body'),
@@ -436,6 +447,7 @@ class _ReviewEditorState extends State<_ReviewEditor> {
                           ),
                           if (widget.model.actionError != null)
                             Semantics(
+                              key: const ValueKey('review-save-error'),
                               liveRegion: true,
                               child: Text(
                                 widget.model.actionError!,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/shop_community.dart';
 import 'package:my_web_app/services/shop_service.dart';
+import 'package:my_web_app/theme/design_tokens.dart';
 import 'package:my_web_app/widgets/shop_product_community.dart';
 
 import '../support/fake_shop_community.dart';
@@ -21,6 +23,7 @@ Future<void> pumpCommunity(
   WidgetTester tester,
   FakeShopCommunity repository, {
   double width = 1000,
+  double textScale = 1,
 }) async {
   tester.view.physicalSize = Size(width, 900);
   tester.view.devicePixelRatio = 1;
@@ -30,6 +33,12 @@ Future<void> pumpCommunity(
   await tester.pumpWidget(
     MaterialApp(
       theme: ThemeData.dark(),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: TextScaler.linear(textScale),
+        ),
+        child: child!,
+      ),
       home: Scaffold(
         body: SingleChildScrollView(
           child: Padding(
@@ -54,6 +63,99 @@ Future<void> tapText(WidgetTester tester, String text) async {
 }
 
 void main() {
+  test('community colors meet text and essential icon contrast thresholds', () {
+    double contrast(Color first, Color second) {
+      final a = first.computeLuminance();
+      final b = second.computeLuminance();
+      return a > b ? (a + 0.05) / (b + 0.05) : (b + 0.05) / (a + 0.05);
+    }
+
+    expect(contrast(DesignTokens.textPrimary, DesignTokens.surface1),
+        greaterThanOrEqualTo(4.5));
+    expect(contrast(DesignTokens.textSecondary, DesignTokens.surface1),
+        greaterThanOrEqualTo(4.5));
+    expect(contrast(DesignTokens.background, DesignTokens.orange),
+        greaterThanOrEqualTo(4.5));
+    expect(contrast(DesignTokens.orange, DesignTokens.surface1),
+        greaterThanOrEqualTo(3));
+  });
+  testWidgets('stars have 44px targets, labels and a live selection status',
+      (tester) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    await pumpCommunity(tester, FakeShopCommunity(), width: 360);
+    await tapText(tester, '口コミ・評価を書く');
+    final first = find.byKey(const ValueKey('review-star-1'));
+    for (var value = 1; value <= 5; value++) {
+      final star = find.byKey(ValueKey('review-star-$value'));
+      expect(tester.getSize(star).width, greaterThanOrEqualTo(44));
+      expect(tester.getSize(star).height, greaterThanOrEqualTo(44));
+      expect(tester.getTopLeft(star).dy, tester.getTopLeft(first).dy);
+      expect(find.bySemanticsLabel('星$valueを選択'), findsOneWidget);
+    }
+    await tester.tap(find.byKey(const ValueKey('review-star-4')));
+    await tester.pumpAndSettle();
+    expect(find.text('選択中：星4 / 5'), findsOneWidget);
+    final status = tester.getSemantics(
+      find.byKey(const ValueKey('review-rating-status')),
+    );
+    expect(status.getSemanticsData().flagsCollection.isLiveRegion, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('keyboard selects stars in order and Escape closes the editor',
+      (tester) async {
+    await pumpCommunity(tester, FakeShopCommunity());
+    await tapText(tester, '口コミ・評価を書く');
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.text('選択中：星1 / 5'), findsOneWidget);
+    for (var value = 2; value <= 5; value++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pumpAndSettle();
+      expect(find.text('選択中：星$value / 5'), findsOneWidget);
+    }
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('review-body')), findsNothing);
+  });
+  testWidgets('mobile editor preserves usable actions at 200 percent text',
+      (tester) async {
+    final repo = FakeShopCommunity();
+    await pumpCommunity(tester, repo, width: 360, textScale: 2);
+    await tapText(tester, '口コミ・評価を書く');
+    await tester.ensureVisible(find.byKey(const ValueKey('review-star-5')));
+    await tester.tap(find.byKey(const ValueKey('review-star-5')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('review-body')), '拡大して入力');
+    await tapText(tester, '公開して保存');
+    expect(repo.saved?.body, '拡大して入力');
+    expect(repo.saved?.rating, 5);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('save error is announced and keeps input for recovery',
+      (tester) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    final repo = FakeShopCommunity()..failWrite = true;
+    await pumpCommunity(tester, repo);
+    await tapText(tester, '口コミ・評価を書く');
+    await tester.tap(find.byKey(const ValueKey('review-star-3')));
+    await tester.enterText(find.byKey(const ValueKey('review-body')), '消えない本文');
+    await tapText(tester, '公開して保存');
+    expect(find.text('消えない本文'), findsOneWidget);
+    expect(find.text('選択中：星3 / 5'), findsOneWidget);
+    expect(find.text('口コミ・評価を保存しました。'), findsNothing);
+    final error = tester.getSemantics(
+      find.byKey(const ValueKey('review-save-error')),
+    );
+    expect(error.getSemanticsData().flagsCollection.isLiveRegion, isTrue);
+    expect(error.label, contains('保存内容を確認できませんでした'));
+    expect(find.textContaining('private-internal'), findsNothing);
+    repo.failWrite = false;
+    await tapText(tester, '公開して保存');
+    expect(repo.saved?.body, '消えない本文');
+  });
   testWidgets('shows application version, verified release and unknown date',
       (tester) async {
     final repo = FakeShopCommunity()
