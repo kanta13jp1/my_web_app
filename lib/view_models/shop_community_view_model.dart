@@ -8,7 +8,10 @@ import '../services/shop_community_repository.dart';
 class ShopCommunityViewModel extends ChangeNotifier {
   ShopCommunityViewModel({required this.productId, required this.repository}) {
     _sessionSubscription = repository.sessionChanges.listen((_) {
+      sessionRevision++;
       own = const ShopReviewContext();
+      notice = null;
+      actionError = null;
       unawaited(load());
     });
   }
@@ -22,6 +25,7 @@ class ShopCommunityViewModel extends ChangeNotifier {
   bool paging = false;
   bool working = false;
   int pageNumber = 1;
+  int sessionRevision = 0;
   String? releaseError;
   String? reviewError;
   String? ownerError;
@@ -124,18 +128,21 @@ class ShopCommunityViewModel extends ChangeNotifier {
   }
 
   Future<bool> _mutate(Future<void> Function() action, String success) async {
+    final startedSession = sessionRevision;
     working = true;
     actionError = null;
     notice = null;
     _notify();
     try {
       await action();
-      if (_disposed) return true;
+      if (_disposed || startedSession != sessionRevision) return false;
       notice = success;
       await load();
       return true;
     } catch (_) {
-      actionError = '保存内容を確認できませんでした。再読み込みしてからお試しください。';
+      if (startedSession == sessionRevision) {
+        actionError = '保存内容を確認できませんでした。再読み込みしてからお試しください。';
+      }
       return false;
     } finally {
       working = false;

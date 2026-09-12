@@ -94,4 +94,14 @@ void main() {
     expect(find.textContaining('投稿時の配布版 v1.0'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('account switching removes previous text from the open editor', (tester) async {
+    final repo = FakeShopCommunity()..saved = FakeShopCommunity.review('own', body: '前のアカウントの本文');
+    await pumpCommunity(tester, repo);
+    await tapText(tester, '自分の口コミを編集');
+    repo.signedIn = false;
+    repo.sessions.add(null);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('review-body')), findsNothing);
+    expect(find.text('ログイン状態が変わりました'), findsOneWidget);
+  });
 }

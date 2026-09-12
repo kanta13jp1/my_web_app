@@ -251,6 +251,7 @@ class _ReviewEditor extends StatefulWidget {
 }
 
 class _ReviewEditorState extends State<_ReviewEditor> {
+  late final int _sessionRevision = widget.model.sessionRevision;
   late int _rating = widget.model.own.review?.rating ?? 0;
   late final TextEditingController _body = TextEditingController(text: widget.model.own.review?.body ?? '');
   @override
@@ -262,7 +263,13 @@ class _ReviewEditorState extends State<_ReviewEditor> {
   @override
   Widget build(BuildContext context) => ListenableBuilder(
         listenable: widget.model,
-        builder: (context, _) => PopScope(
+        builder: (context, _) => _sessionRevision != widget.model.sessionRevision
+            ? AlertDialog(
+                title: const Text('ログイン状態が変わりました'),
+                content: const Text('現在のアカウントで開き直してください。送信中だった場合は、再読み込みして保存状況をご確認ください。'),
+                actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('閉じる'))],
+              )
+            : PopScope(
           canPop: !widget.model.working,
           child: AlertDialog(
             backgroundColor: DesignTokens.surface1,

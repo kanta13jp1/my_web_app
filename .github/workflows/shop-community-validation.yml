@@ -47,6 +47,13 @@ jobs:
   flutter:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      FEATURE_DART: >-
+        lib/models/shop_community.dart lib/services/shop_community_repository.dart
+        lib/view_models/shop_community_view_model.dart lib/widgets/shop_product_community.dart
+        lib/pages/digital_product_store_pages.dart test/support/fake_shop_community.dart
+        test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart
+        test/services/shop_community_repository_test.dart
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-flutter-sdk
@@ -55,13 +62,18 @@ jobs:
       - run: flutter pub get
       - name: Format owned feature files and preserve any suggested patch
         run: |
-          dart format lib/models/shop_community.dart lib/services/shop_community_repository.dart lib/view_models/shop_community_view_model.dart lib/widgets/shop_product_community.dart lib/pages/digital_product_store_pages.dart test/support/fake_shop_community.dart test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart
+          dart format $FEATURE_DART
+          # Temporary cloud-only mechanical repair. The diff is reviewed and
+          # committed by the lead; this runner has no repository write token.
+          dart fix --apply --code=require_trailing_commas,curly_braces_in_flow_control_structures,unnecessary_non_null_assertion
+          dart format $FEATURE_DART
+          python -c "import os,subprocess; allowed=set(os.environ['FEATURE_DART'].split()); changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()); assert changed <= allowed, changed-allowed"
           git diff --binary > shop-community-format.patch
       - name: Analyze scoped feature
-        run: flutter analyze lib/models/shop_community.dart lib/services/shop_community_repository.dart lib/view_models/shop_community_view_model.dart lib/widgets/shop_product_community.dart lib/pages/digital_product_store_pages.dart test/support/fake_shop_community.dart test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart
+        run: flutter analyze $FEATURE_DART
       - name: Test community feature and existing store behavior
         if: success() || failure()
-        run: flutter test --concurrency=2 test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart test/pages/digital_product_store_pages_test.dart
+        run: flutter test --concurrency=2 test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart test/services/shop_community_repository_test.dart test/pages/digital_product_store_pages_test.dart
       - name: Require committed formatting
         if: success() || failure()
         run: git diff --exit-code

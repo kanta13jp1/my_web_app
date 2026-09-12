@@ -91,7 +91,9 @@ select public.test_denied($q$update public.shop_product_reviews set is_visible =
 select public.test_denied($q$update public.shop_product_reviews set posted_version = '999'$q$, '42501');
 select public.test_denied($q$update public.shop_product_reviews set product_id = 'other'$q$, '42501');
 select public.test_denied($q$insert into shop_review_private.owners(product_id,user_id) values('other','00000000-0000-4000-8000-000000000002')$q$, '42501');
-select public.test_denied($q$insert into public.shop_product_reviews(id,product_id,rating,body) select id,'other',5,'forged product' from shop_review_private.owners where product_id='hexciv-win64'$q$, '23505');
+delete from public.shop_product_reviews;
+select public.test_denied($q$insert into public.shop_product_reviews(id,product_id,rating,body) select id,'other',5,'forged product' from shop_review_private.owners where product_id='hexciv-win64'$q$, '23503');
+select public.save_shop_product_review('hexciv-win64',3,'編集');
 
 -- A different paid buyer cannot change or delete user 1's visible review.
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',false);

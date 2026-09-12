@@ -120,6 +120,17 @@ void main() {
     await pending;
     await delayed.sessions.close();
   });
+  test('an account change during save cannot claim success for the new account', () async {
+    await model.load();
+    repository.writeGate = Completer<void>();
+    final pending = model.save(4, 'previous account');
+    repository.signedIn = false;
+    repository.sessions.add(null);
+    repository.writeGate!.complete();
+    expect(await pending, isFalse);
+    expect(model.notice, isNull);
+    expect(model.actionError, isNull);
+  });
   test('malformed aggregate is rejected rather than invented', () {
     expect(() => ShopReviewPage.fromRow({'count': 3, 'average': null, 'items': []}), throwsFormatException);
     final empty = ShopReviewPage.fromRow({'count': 0, 'average': null, 'items': []});
