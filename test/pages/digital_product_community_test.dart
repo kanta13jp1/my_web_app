@@ -180,6 +180,7 @@ void main() {
       'stage': ShopFunnelService.stageProductView,
       'source': 'direct',
       'campaign': '',
+      'content_id': '',
     });
     await tester.pumpAndSettle();
     expect(find.text('配布版 v1.0'), findsOneWidget);

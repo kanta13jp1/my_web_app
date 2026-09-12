@@ -427,7 +427,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       // must not navigate after a later sign-out/cancellation.
       if (!mounted ||
           !_authSessionAvailable ||
-          !(ModalRoute.of(context)?.isCurrent ?? true)) return;
+          !(ModalRoute.of(context)?.isCurrent ?? true)) {
+        return;
+      }
       Navigator.of(context).pushNamedAndRemoveUntil(
         destination,
         (route) => false,

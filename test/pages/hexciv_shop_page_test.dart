@@ -213,7 +213,7 @@ void main() {
     await _pump(tester, gateway, entryUri: Uri.parse(
       '/shop/hexciv?utm_source=X&utm_campaign=h4_h7_pitch'
       '&utm_content=growth_game_t30_r1',
-    ));
+    ),);
     await tester.runAsync(() => viewRecorded.future.timeout(const Duration(seconds: 5)));
     await tester.ensureVisible(find.text('¥500 で購入'));
     await tester.runAsync(() async {
@@ -239,7 +239,7 @@ void main() {
       (tester) async {
     final gateway = _FakeGateway(product: _product(), signedIn: true);
     await _pump(tester, gateway,
-        entryUri: Uri.parse('/shop/hexciv?utm_content=invalid/post'));
+        entryUri: Uri.parse('/shop/hexciv?utm_content=invalid/post'),);
     await tester.ensureVisible(find.text('¥500 で購入'));
     await tester.tap(find.text('¥500 で購入'));
     await tester.pumpAndSettle();
@@ -257,7 +257,7 @@ void main() {
       onGenerateRoute: (settings) {
         destination = settings.name;
         return MaterialPageRoute<void>(settings: settings,
-            builder: (_) => const Scaffold(body: Text('Login destination')));
+            builder: (_) => const Scaffold(body: Text('Login destination')),);
       },
     );
     await tester.ensureVisible(find.text('ログインして購入'));

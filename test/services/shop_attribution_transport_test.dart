@@ -30,8 +30,8 @@ void main() {
       httpClient: MockClient((request) async {
         requests.add(request);
         return http.Response(jsonEncode(request.url.path.endsWith('/shop-checkout')
-            ? checkoutResponse : {'recorded': true, 'post_recorded': true}),
-          responseStatus, headers: {'content-type': 'application/json'});
+            ? checkoutResponse : {'recorded': true, 'post_recorded': true},),
+          responseStatus, headers: {'content-type': 'application/json'},);
       }),
     );
   });
@@ -56,10 +56,10 @@ void main() {
   test('unavailable attribution and client-paid claims emit no event', () async {
     final funnel = ShopFunnelService(client: client);
     await funnel.record('product_view', productId: 'hexciv-win64',
-        attribution: const ShopAttribution.unavailable());
+        attribution: const ShopAttribution.unavailable(),);
     await funnel.record('product_view', productId: 'hexciv-win64', source: 'a/b');
     await funnel.record('purchase_complete', productId: 'hexciv-win64',
-        attribution: labels);
+        attribution: labels,);
     expect(requests, isEmpty);
   });
 
@@ -96,7 +96,7 @@ void main() {
 
   test('legacy checkout caller retains its existing request', () async {
     await ShopService(client: client).startCheckout('hexciv-win64',
-        visitorId: visitor, source: 'x');
+        visitorId: visitor, source: 'x',);
     expect(jsonDecode(requests.single.body), {
       'product_id': 'hexciv-win64', 'visitor_id': visitor, 'source': 'x',
     });
