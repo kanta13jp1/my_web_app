@@ -78,23 +78,23 @@ void main() {
     addTearDown(community.sessions.close);
     final store = _Store();
     Uri? downloaded;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: DigitalProductPage(
-          productId: product.id,
-          service: store,
-          funnel: ShopFunnelService(client: telemetry),
-          communityRepository: community,
-          urlLauncher: (uri, external) async {
-            downloaded = uri;
-            return true;
-          },
-        ),
-      ),
-    );
-    // Flush fetchProduct/visitorId continuations before waiting in real async.
-    await tester.pumpAndSettle();
+    // Start the page's telemetry future in real async too. Waiting outside
+    // fake async cannot advance a future that was started inside that zone.
     await tester.runAsync(() async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DigitalProductPage(
+            productId: product.id,
+            service: store,
+            funnel: ShopFunnelService(client: telemetry),
+            communityRepository: community,
+            urlLauncher: (uri, external) async {
+              downloaded = uri;
+              return true;
+            },
+          ),
+        ),
+      );
       await attempted.future.timeout(const Duration(seconds: 5));
     });
     expect(tester.takeException(), isNull);
