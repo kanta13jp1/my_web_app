@@ -713,7 +713,9 @@ void main() {
       await tester.tap(find.text('このタイトル・本文を復元'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('復元'));
-      await tester.pump();
+      await tester.pumpAndSettle();
+      expect(client.versionInserts, hasLength(1));
+      expect(gate.isCompleted, isFalse);
       _contentController(tester).text = 'New edit while backup is pending';
       gate.complete();
       await tester.pumpAndSettle();

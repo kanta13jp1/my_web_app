@@ -180,7 +180,9 @@ class _NoteVersionHistorySheetState extends State<NoteVersionHistorySheet> {
                 Text(_date(summary)),
                 if (summary.isEvernote) ...[
                   Text(
-                    summary.sourceVerified ? 'Evernote履歴：検証済み' : 'Evernote履歴：未検証',
+                    summary.sourceVerified
+                        ? 'Evernote履歴：検証済み'
+                        : 'Evernote履歴：未検証',
                   ),
                   const Text(
                     '移行原本の読み取り専用プレビューです。'

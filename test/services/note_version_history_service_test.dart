@@ -55,7 +55,13 @@ void main() {
       'synthetic-key',
       httpClient: MockClient((request) async {
         requests.add(request);
-        return response(request);
+        final result = await response(request);
+        return http.Response.bytes(
+          result.bodyBytes,
+          result.statusCode,
+          headers: result.headers,
+          request: request,
+        );
       }),
     );
     client = _Client(delegate);
