@@ -23242,6 +23242,67 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 「まず、これだけ」段階別トリアージカード。数字の洪水で混乱している
   /// 利用者向けに、今日 (最大3件)→今週→今月の順で絞って提示する。
   /// 背景が固定の淡ティールのため、文字色も固定の濃ティール系にする。
+  void _createTriageWithdrawalTask(AssetTriageStep step, double amount) {
+    if (step.withdrawalSourceAccountId == null) {
+      return;
+    }
+    final sourceId = step.withdrawalSourceAccountId!;
+    final sourceName = step.withdrawalSourceAccountName ?? '出金元口座';
+    final cashAccount = _assetWorkbook?.accounts.cast<AssetLiabilityAccount?>().firstWhere(
+      (a) => a?.kind == AssetLiabilityAccountKind.cash,
+      orElse: () => null,
+    );
+    final toId = cashAccount?.id ?? 'cash';
+    final toName = cashAccount?.name ?? '手元現金';
+    final today = _dateOnly(_effectiveAssetBaseDate);
+
+    final duplicate = _transferTasks.any(
+      (task) =>
+          !task.completed &&
+          !task.canceled &&
+          task.fromAccountId == sourceId &&
+          task.toAccountId == toId &&
+          task.amount == amount &&
+          task.dueDate != null &&
+          _dateOnly(task.dueDate!) == today,
+    );
+    if (duplicate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('本日分の出金・移動タスクは既に登録されています。')),
+      );
+      return;
+    }
+
+    final now = DateTime.now();
+    final nextTasks = List<AssetLiabilityTransferTask>.from(_transferTasks)
+      ..add(
+        AssetLiabilityTransferTask(
+          id: 'transfer_${now.microsecondsSinceEpoch}',
+          fromAccountId: sourceId,
+          fromAccountName: sourceName,
+          toAccountId: toId,
+          toAccountName: toName,
+          amount: amount,
+          dueDate: today,
+        ),
+      )
+      ..sort(_compareTransferTasksByDueDate);
+
+    setState(() {
+      _transferTasks = nextTasks;
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+
+    final yenText = amount >= 10000 && amount % 10000 == 0
+        ? '${(amount / 10000).round()}万円'
+        : '${amount.round()}円';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$yenTextの出金・移動タスクを登録しました。生活費は専用財布へ保管してください。'),
+      ),
+    );
+  }
+
   Widget _buildAssetTriageGuideCard(AssetTriagePlan plan) {
     var stepNumber = 0;
     Widget buildStage(String label, List<AssetTriageStep> steps) {
@@ -23280,6 +23341,43 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 height: 1.5,
               ),
             ),
+            if (step.kind == AssetTriageStepKind.secureLivingExpense &&
+                step.withdrawalTemplates.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final amount in step.withdrawalTemplates)
+                    OutlinedButton.icon(
+                      key: Key(
+                        'triage_withdrawal_template_${amount.round()}',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        foregroundColor: const Color(0xFF0F766E),
+                        side: const BorderSide(color: Color(0xFF0D9488)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                      ),
+                      icon: const Icon(Icons.payments_outlined, size: 14),
+                      label: Text(
+                        amount >= 10000 && amount % 10000 == 0
+                            ? '${(amount / 10000).round()}万円出金'
+                            : '${amount.round()}円出金',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      onPressed: () =>
+                          _createTriageWithdrawalTask(step, amount),
+                    ),
+                ],
+              ),
+            ],
           ],
         ],
       );
