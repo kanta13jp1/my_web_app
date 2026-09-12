@@ -7,6 +7,8 @@ on:
       - 'test/pages/hexciv_shop_page_test.dart'
       - 'test/pages/digital_product_store_pages_test.dart'
       - 'test/services/shop_funnel*.dart'
+      - 'test/services/asset_living_expense_fixture_test.dart'
+      - 'test/widgets/asset_management_page_smoke_test.dart'
       - '.github/workflows/shop-funnel-regression.yml'
   workflow_dispatch:
 permissions: {}
@@ -28,4 +30,4 @@ jobs:
           flutter-version: '3.38.x'
       - run: flutter pub get
       - name: Verify shop page and funnel regressions
-        run: flutter test --concurrency=1 test/pages/hexciv_shop_page_test.dart test/pages/digital_product_store_pages_test.dart test/services/shop_funnel_service_test.dart test/services/shop_funnel_initialization_test.dart
+        run: flutter test --concurrency=1 test/pages/hexciv_shop_page_test.dart test/pages/digital_product_store_pages_test.dart test/services/shop_funnel_service_test.dart test/services/shop_funnel_initialization_test.dart test/services/asset_living_expense_fixture_test.dart test/widgets/asset_management_page_smoke_test.dart
