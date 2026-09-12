@@ -9,12 +9,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/landing_page.dart';
 import '../services/business_csv_import_service.dart';
 import '../services/external_format_service.dart';
+import '../services/evernote_cloud_stage_service.dart';
 import '../services/evernote_migration_ledger_service.dart';
 import '../services/evernote_migration_commit_service.dart';
+import '../services/evernote_note_history_migration_service.dart';
 import '../services/gamification_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/import_service.dart';
 import '../utils/web_image_downloader.dart';
+import '../widgets/evernote_cloud_migration_controls.dart';
+import '../widgets/evernote_history_review_panel.dart';
 
 class ImportPage extends StatefulWidget {
   const ImportPage({super.key});
@@ -31,21 +35,35 @@ class _ImportPageState extends State<ImportPage> {
   late ImportService _importService;
   late EvernoteMigrationLedgerService _evernoteMigrationLedgerService;
   late EvernoteMigrationCommitService _evernoteMigrationCommitService;
+  late EvernoteNoteHistoryMigrationService _evernoteNoteHistoryMigrationService;
+  late EvernoteCloudStageService _evernoteCloudStageService;
   bool _migrationLedgerInitialized = false;
   bool _isMigrationLedgerLoading = false;
   String? _migrationLedgerError;
   List<EvernoteMigrationBatch> _evernoteMigrationBatches =
       const <EvernoteMigrationBatch>[];
+  List<EvernoteMigrationItem> _evernoteMigrationItems =
+      const <EvernoteMigrationItem>[];
+  int? _evernoteHistoryBusyItemId;
+  EvernoteCloudStageProgress? _evernoteHistoryStageProgress;
   ImportPreviewResult? _preview;
-  Uint8List? _selectedFileBytes;
   final BusinessCsvImportService _businessCsvService =
       const BusinessCsvImportService();
   BusinessCsvDryRunResult? _businessCsvPreview;
+  EvernoteCloudStageResult? _evernoteCloudStageResult;
+  EvernoteCloudStageProgress? _evernoteCloudStageProgress;
+  EvernoteMigrationTransferProgress? _evernoteTransferProgress;
   ImportExecutionResult? _lastImportResult;
   BusinessCsvCommitResult? _lastBusinessCsvCommitResult;
   String? _selectedSource;
   bool _rollbackOnBusinessCsvErrors = true;
   final TextEditingController _notionTokenController = TextEditingController();
+  final TextEditingController _evernoteNotebookNameController =
+      TextEditingController();
+  final TextEditingController _evernoteStackNameController =
+      TextEditingController();
+  final TextEditingController _evernoteSpaceNameController =
+      TextEditingController();
   final TextEditingController _externalFormatInputController =
       TextEditingController(
     text: ExternalFormatService.sampleText('ssim'),
@@ -62,6 +80,9 @@ class _ImportPageState extends State<ImportPage> {
   @override
   void dispose() {
     _notionTokenController.dispose();
+    _evernoteNotebookNameController.dispose();
+    _evernoteStackNameController.dispose();
+    _evernoteSpaceNameController.dispose();
     _externalFormatInputController.dispose();
     super.dispose();
   }
@@ -74,8 +95,16 @@ class _ImportPageState extends State<ImportPage> {
       listen: false,
     );
     _importService = ImportService(gamificationService);
+    _evernoteCloudStageService = EvernoteCloudStageService.supabase(
+      client: Supabase.instance.client,
+      importService: _importService,
+    );
     _evernoteMigrationCommitService =
         EvernoteMigrationCommitService.supabase(Supabase.instance.client);
+    _evernoteNoteHistoryMigrationService =
+        EvernoteNoteHistoryMigrationService.supabase(
+      Supabase.instance.client,
+    );
     if (!_migrationLedgerInitialized) {
       _migrationLedgerInitialized = true;
       _evernoteMigrationLedgerService = EvernoteMigrationLedgerService();
@@ -95,11 +124,19 @@ class _ImportPageState extends State<ImportPage> {
       });
     }
     try {
-      final batches = await _evernoteMigrationLedgerService.loadBatches(
+      final batchesFuture = _evernoteMigrationLedgerService.loadBatches(
         userId: user.id,
       );
+      final itemsFuture = _evernoteMigrationLedgerService.loadItems(
+        userId: user.id,
+      );
+      final batches = await batchesFuture;
+      final items = await itemsFuture;
       if (!mounted) return;
-      setState(() => _evernoteMigrationBatches = batches);
+      setState(() {
+        _evernoteMigrationBatches = batches;
+        _evernoteMigrationItems = items;
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() => _migrationLedgerError = error.toString());
@@ -127,15 +164,133 @@ class _ImportPageState extends State<ImportPage> {
     }
   }
 
+  Future<void> _reviewEvernoteHistoryInventory(
+    EvernoteMigrationItem item,
+    int sourceVersionCount,
+  ) async {
+    setState(() {
+      _evernoteHistoryBusyItemId = item.id;
+      _migrationLedgerError = null;
+    });
+    try {
+      await _evernoteNoteHistoryMigrationService.reviewInventory(
+        batchId: item.batchId,
+        sourceItemKey: item.sourceItemKey,
+        sourceVersionCount: sourceVersionCount,
+      );
+      await _loadEvernoteMigrationLedger();
+      if (!mounted) return;
+      _showMessage(
+        sourceVersionCount == 0
+            ? 'このノートはEvernote履歴なしとして確認しました。'
+            : 'Evernote履歴 $sourceVersionCount 件を移行対象として登録しました。',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _migrationLedgerError = error.toString());
+      _showMessage('履歴件数の登録に失敗しました: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _evernoteHistoryBusyItemId = null);
+      }
+    }
+  }
+
+  Future<void> _pickEvernoteHistoryRevision(
+    EvernoteMigrationItem item,
+  ) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      _showMessage('履歴を取り込む前にログインしてください。');
+      return;
+    }
+    if (item.sourceHistoryVersionCount <= 0) {
+      _showMessage('先にEvernote上の履歴件数を確認してください。');
+      return;
+    }
+
+    setState(() {
+      _evernoteHistoryBusyItemId = item.id;
+      _evernoteHistoryStageProgress = null;
+      _migrationLedgerError = null;
+    });
+    try {
+      final selection = await FilePicker.pickFiles(
+        withData: false,
+        withReadStream: true,
+        type: FileType.custom,
+        allowedExtensions: const <String>['enex', 'xml'],
+      );
+      if (selection == null || selection.files.isEmpty) return;
+      final file = selection.files.single;
+      final source = file.readStream;
+      if (source == null) {
+        throw StateError('選択した履歴ENEXのストリームを開けませんでした。');
+      }
+
+      final staged = await _evernoteCloudStageService.stage(
+        userId: user.id,
+        fileName: file.name,
+        source: source,
+        totalBytes: file.size,
+        historyRevision: true,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() => _evernoteHistoryStageProgress = progress);
+        },
+      );
+      final archiveHash = staged.preview.sourceExportSha256;
+      if (archiveHash == null) {
+        throw StateError('履歴ENEXのSHA-256を確認できませんでした。');
+      }
+      await _evernoteNoteHistoryMigrationService.migrateFromArchive(
+        userId: user.id,
+        batchId: item.batchId,
+        sourceItemKey: item.sourceItemKey,
+        archiveBytes: staged.totalBytes,
+        archiveSha256: archiveHash,
+      );
+      await _loadEvernoteMigrationLedger();
+      if (!mounted) return;
+      _showMessage(
+        '履歴ENEXをクラウド保管し、本文・日時・添付のハッシュを検証しました。',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _migrationLedgerError = error.toString());
+      _showMessage(
+        '履歴の取り込みに失敗しました。クラウド上の復旧用ENEXは保持されます: $error',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _evernoteHistoryBusyItemId = null);
+      }
+    }
+  }
+
   Future<void> _pickFile(String sourceType) async {
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    if (sourceType == 'evernote' && currentUser == null) {
+      _showMessage('Log in before selecting an ENEX batch for cloud staging.');
+      return;
+    }
     setState(() {
       _isLoading = true;
       _selectedSource = sourceType;
+      _preview = null;
+      _businessCsvPreview = null;
+      _lastBusinessCsvCommitResult = null;
+      _lastImportResult = null;
+      _evernoteCloudStageResult = null;
+      _evernoteCloudStageProgress = null;
+      _evernoteTransferProgress = null;
     });
 
     try {
+      final isEvernote = sourceType == 'evernote';
       final result = await FilePicker.pickFiles(
-        withData: true,
+        withData: !isEvernote,
+        withReadStream: isEvernote,
         type: FileType.custom,
         allowedExtensions: _extensionsFor(sourceType),
       );
@@ -145,6 +300,32 @@ class _ImportPageState extends State<ImportPage> {
       }
 
       final file = result.files.single;
+      if (isEvernote) {
+        final readStream = file.readStream;
+        if (readStream == null) {
+          throw StateError('The selected ENEX stream could not be opened.');
+        }
+        final staged = await _evernoteCloudStageService.stage(
+          userId: currentUser!.id,
+          fileName: file.name,
+          source: readStream,
+          totalBytes: file.size,
+          onProgress: (progress) {
+            if (!mounted) return;
+            setState(() => _evernoteCloudStageProgress = progress);
+          },
+        );
+        if (!mounted) return;
+        _setEvernoteSourceContextDefaults(file.name);
+        setState(() {
+          _preview = staged.preview;
+          _evernoteCloudStageResult = staged;
+        });
+        await _recordEvernotePreview(staged.preview);
+        unawaited(_acquisitionService.recordImportPreview(sourceType));
+        return;
+      }
+
       final bytes = file.bytes;
       if (bytes == null) {
         throw Exception('The selected file could not be read.');
@@ -172,27 +353,19 @@ class _ImportPageState extends State<ImportPage> {
         fileName: file.name,
         bytes: bytes,
       );
-
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _preview = preview;
-        _selectedFileBytes = bytes;
         _businessCsvPreview = null;
         _lastBusinessCsvCommitResult = null;
       });
       await _recordEvernotePreview(preview);
       unawaited(_acquisitionService.recordImportPreview(sourceType));
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       _showMessage('Import preview failed: $error');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -270,7 +443,6 @@ class _ImportPageState extends State<ImportPage> {
       if (!mounted) return;
       setState(() {
         _preview = preview;
-        _selectedFileBytes = null;
         _businessCsvPreview = null;
         _lastBusinessCsvCommitResult = null;
       });
@@ -286,26 +458,37 @@ class _ImportPageState extends State<ImportPage> {
   Future<void> _importPreview() async {
     final preview = _preview;
     final user = Supabase.instance.client.auth.currentUser;
-    if (preview == null) {
-      return;
-    }
+    if (preview == null) return;
     if (user == null) {
       _showMessage('Log in before importing notes.');
       return;
     }
 
-    setState(() => _isImporting = true);
+    setState(() {
+      _isImporting = true;
+      _evernoteTransferProgress = null;
+    });
     try {
       final ImportExecutionResult result;
       if (preview.sourceType == 'evernote') {
-        final bytes = _selectedFileBytes;
-        if (bytes == null) {
-          throw StateError('Select the ENEX file again before importing.');
+        final staged = _evernoteCloudStageResult;
+        if (staged == null) {
+          throw StateError('Select the ENEX batch again for cloud staging.');
         }
-        final evernoteResult = await _evernoteMigrationCommitService.commit(
+        final evernoteResult =
+            await _evernoteMigrationCommitService.commitFromArchive(
           userId: user.id,
-          exportBytes: bytes,
+          archiveBytes: staged.totalBytes,
           preview: preview,
+          sourceContext: EvernoteMigrationSourceContext(
+            notebookName: _evernoteNotebookNameController.text,
+            stackName: _evernoteStackNameController.text,
+            spaceName: _evernoteSpaceNameController.text,
+          ),
+          onTransferProgress: (progress) {
+            if (!mounted) return;
+            setState(() => _evernoteTransferProgress = progress);
+          },
         );
         result = ImportExecutionResult(
           insertedCount: evernoteResult.importedNoteCount,
@@ -318,29 +501,31 @@ class _ImportPageState extends State<ImportPage> {
           notes: preview.notes,
         );
       }
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       _showMessage(
-        'Imported ${result.insertedCount} notes via ${result.importModeLabel.toLowerCase()}.',
+        'Imported ${result.insertedCount} notes via '
+        '${result.importModeLabel.toLowerCase()}.',
       );
       setState(() {
         _preview = null;
-        _selectedFileBytes = null;
+        _evernoteCloudStageResult = null;
+        _evernoteCloudStageProgress = null;
+        _evernoteTransferProgress = null;
         _lastImportResult = result;
       });
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      _showMessage('Import failed: $error');
+      if (!mounted) return;
       if (preview.sourceType == 'evernote') {
+        _showMessage(
+          'Import failed, but the verified private cloud archive was kept. '
+          'You can retry without selecting the ENEX again: $error',
+        );
         unawaited(_loadEvernoteMigrationLedger());
+      } else {
+        _showMessage('Import failed: $error');
       }
     } finally {
-      if (mounted) {
-        setState(() => _isImporting = false);
-      }
+      if (mounted) setState(() => _isImporting = false);
     }
   }
 
@@ -413,6 +598,18 @@ class _ImportPageState extends State<ImportPage> {
       return;
     }
     _showMessage('CSV error list copied.');
+  }
+
+  void _setEvernoteSourceContextDefaults(String fileName) {
+    final normalized = fileName.replaceAll('\\', '/');
+    final leaf = normalized.split('/').last.trim();
+    final dotIndex = leaf.lastIndexOf('.');
+    final inferredNotebook =
+        (dotIndex > 0 ? leaf.substring(0, dotIndex) : leaf).trim();
+    _evernoteNotebookNameController.text =
+        inferredNotebook.isEmpty ? 'Evernote import' : inferredNotebook;
+    _evernoteStackNameController.clear();
+    _evernoteSpaceNameController.clear();
   }
 
   void _showMessage(String message) {
@@ -553,6 +750,17 @@ class _ImportPageState extends State<ImportPage> {
           const SizedBox(height: 20),
           _buildEvernoteMigrationProgressPanel(currentUser),
           const SizedBox(height: 20),
+          EvernoteHistoryReviewPanel(
+            items: _evernoteMigrationItems,
+            isLoading: _isMigrationLedgerLoading,
+            busyItemId: _evernoteHistoryBusyItemId,
+            error: _migrationLedgerError,
+            stageProgress: _evernoteHistoryStageProgress,
+            onRefresh: _loadEvernoteMigrationLedger,
+            onReviewInventory: _reviewEvernoteHistoryInventory,
+            onImportRevision: _pickEvernoteHistoryRevision,
+          ),
+          const SizedBox(height: 20),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -604,6 +812,12 @@ class _ImportPageState extends State<ImportPage> {
           _externalFormatPanel(),
           const SizedBox(height: 24),
           if (_isLoading) const LinearProgressIndicator(),
+          if (_evernoteCloudStageProgress != null) ...[
+            const SizedBox(height: 8),
+            EvernoteCloudStageStatus(
+              progress: _evernoteCloudStageProgress!,
+            ),
+          ],
           if (_lastImportResult != null) ...[
             _buildImportSuccessOnboarding(
               result: _lastImportResult!,
@@ -705,11 +919,31 @@ class _ImportPageState extends State<ImportPage> {
                         ),
                       ),
                     ],
+                    if (preview.sourceType == 'evernote') ...[
+                      const SizedBox(height: 16),
+                      EvernoteSourceContextFields(
+                        notebookController: _evernoteNotebookNameController,
+                        stackController: _evernoteStackNameController,
+                        spaceController: _evernoteSpaceNameController,
+                        onChanged: () => setState(() {}),
+                      ),
+                      if (_evernoteTransferProgress != null) ...[
+                        const SizedBox(height: 12),
+                        EvernoteCloudTransferStatus(
+                          progress: _evernoteTransferProgress!,
+                        ),
+                      ],
+                    ],
                     const SizedBox(height: 16),
                     FilledButton.icon(
                       onPressed: _isImporting ||
                               preview.notes.isEmpty ||
-                              !preview.canCommit
+                              !preview.canCommit ||
+                              (preview.sourceType == 'evernote' &&
+                                  (_evernoteCloudStageResult == null ||
+                                      _evernoteNotebookNameController.text
+                                          .trim()
+                                          .isEmpty))
                           ? null
                           : currentUser == null
                               ? _openLandingPage
@@ -1335,7 +1569,7 @@ class _ImportPageState extends State<ImportPage> {
             ],
             const SizedBox(height: 12),
             const Text(
-              'Evernote notes are deleted only after the matching imported batch passes note, attachment, metadata, and recovery checks.',
+              'Evernote notes are deleted only after the matching imported batch passes note, attachment, metadata, recovery, hierarchy, and note-history checks.',
               style: TextStyle(height: 1.5),
             ),
           ],

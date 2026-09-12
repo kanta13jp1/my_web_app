@@ -20,6 +20,7 @@ class NotificationService {
   static const int abstinenceReminderId = 1001;
   static const int abstinenceRecoveryReminderId = 1002;
   static const int _calendarReminderBaseId = 200000;
+  static const int _noteFeatureReminderBaseId = 1100000000;
   Future<void>? _initFuture;
   bool _initialized = false;
 
@@ -181,6 +182,73 @@ class NotificationService {
   }) async {
     await init();
     await flutterLocalNotificationsPlugin.cancel(id: id);
+  }
+
+  Future<void> scheduleNoteFeatureReminder({
+    required String sourceKey,
+    required String title,
+    required String body,
+    required DateTime notifyAt,
+  }) async {
+    if (!notificationSchedulingSupported) return;
+    final normalizedKey = sourceKey.trim();
+    if (normalizedKey.isEmpty) return;
+
+    await init();
+    final notificationId = noteFeatureReminderIdForSource(normalizedKey);
+    await flutterLocalNotificationsPlugin.cancel(id: notificationId);
+
+    final now = tz.TZDateTime.now(tz.local);
+    final scheduledDate = tz.TZDateTime.from(notifyAt, tz.local);
+    if (!scheduledDate.isAfter(now)) return;
+
+    const androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'note_feature_reminder_channel',
+      'Task and note reminders',
+      channelDescription: 'Reminders for Tasks and notes.',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+    );
+    const iosPlatformChannelSpecifics = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iosPlatformChannelSpecifics,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id: notificationId,
+      title: title,
+      body: body,
+      scheduledDate: scheduledDate,
+      notificationDetails: platformChannelSpecifics,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: 'note-feature:$normalizedKey',
+    );
+  }
+
+  Future<void> cancelNoteFeatureReminder({
+    required String sourceKey,
+  }) async {
+    if (!notificationSchedulingSupported) return;
+    final normalizedKey = sourceKey.trim();
+    if (normalizedKey.isEmpty) return;
+    await init();
+    await flutterLocalNotificationsPlugin.cancel(
+      id: noteFeatureReminderIdForSource(normalizedKey),
+    );
+  }
+
+  static int noteFeatureReminderIdForSource(String sourceKey) {
+    var hash = 0;
+    for (final unit in sourceKey.codeUnits) {
+      hash = ((hash * 31) + unit) & 0x3fffffff;
+    }
+    return _noteFeatureReminderBaseId + (hash % 800000000);
   }
 
   Future<void> scheduleCalendarEventReminder({

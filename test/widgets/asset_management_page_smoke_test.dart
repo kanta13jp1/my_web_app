@@ -1781,66 +1781,105 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('living expense priority toggle immediately reorders actions', (
-      tester,
-    ) async {
-      final now = DateTime.now();
-      final dateKey = DateFormat('yyyy-MM-dd').format(now);
-      SharedPreferences.setMockInitialValues(<String, Object>{});
-      await tester.binding.setSurfaceSize(const Size(1200, 3200));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    for (final now in <DateTime>[
+      DateTime(2026, 2, 1, 12),
+      DateTime(2026, 9, 12, 12),
+      DateTime(2026, 9, 25, 12),
+      DateTime(2026, 12, 31, 12),
+    ]) {
+      testWidgets(
+        'living expense priority toggle immediately reorders actions '
+        'on ${DateFormat('yyyy-MM-dd').format(now)}',
+        (tester) async {
+          final dateKey = DateFormat('yyyy-MM-dd').format(now);
+          SharedPreferences.setMockInitialValues(<String, Object>{});
+          await tester.binding.setSurfaceSize(const Size(1200, 3200));
+          addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: AssetManagementPage(
-            assetLiabilityRepository: _FakeDebtOverrideRepository(
-              <String, int>{'mobit': now.day},
+          // Test the toggle, not the clock-dependent top-eight cutoff.
+          // Settle unrelated built-in bills so both relevant actions remain
+          // visible in either order, including month/payday boundaries.
+          await tester.pumpWidget(
+            MaterialApp(
+              home: AssetManagementPage(
+                debugNow: now,
+                debugCalendarNow: now,
+                assetLiabilityRepository: _FakeDebtOverrideRepository(
+                  <String, int>{'mobit': now.day},
+                  monthlyState: const AssetLiabilityMonthlyState(
+                    paymentOverrides: <String, double>{'mobit': 10000},
+                    paidAccountNames: <String>{
+                      AssetLiabilityPlanningService.rentAccountName,
+                      AssetLiabilityPlanningService.kddiProviderAccountName,
+                      AssetLiabilityPlanningService.waterBillAccountName,
+                      AssetLiabilityPlanningService.gasBillAccountName,
+                    },
+                    paymentSourceAccountIds: <String, String>{
+                      'mobit': 'wallet_cash',
+                    },
+                  ),
+                ),
+                debugInitialAssetData: <String, Map<String, double>>{
+                  dateKey: const <String, double>{
+                    '財布(現金)': 1000,
+                    'モビット': -300000,
+                  },
+                },
+              ),
             ),
-            debugInitialAssetData: <String, Map<String, double>>{
-              dateKey: const <String, double>{
-                '財布(現金)': 1000,
-                'モビット': -300000,
-              },
-            },
-          ),
-        ),
+          );
+          await tester.pump(const Duration(milliseconds: 300));
+
+          final actionList = find.byKey(
+            const Key('asset_management_action_list'),
+          );
+          final toggle = find.byKey(
+            const Key('asset_living_expense_priority_toggle'),
+          );
+          final livingExpense = find.descendant(
+            of: actionList,
+            matching: find.text('本日の生活費が不足しています'),
+          );
+          final overdue = find.descendant(
+            of: actionList,
+            matching: find.text('モビットが期限超過です'),
+          );
+          expect(toggle, findsOneWidget);
+          expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+          expect(livingExpense, findsOneWidget);
+          expect(overdue, findsOneWidget);
+          expect(
+            tester.getTopLeft(overdue).dy,
+            lessThan(tester.getTopLeft(livingExpense).dy),
+          );
+
+          await tester.ensureVisible(toggle);
+          await tester.tap(toggle);
+          await tester.pump(const Duration(milliseconds: 100));
+
+          expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+          expect(livingExpense, findsOneWidget);
+          expect(overdue, findsOneWidget);
+          expect(
+            tester.getTopLeft(livingExpense).dy,
+            lessThan(tester.getTopLeft(overdue).dy),
+          );
+
+          await tester.tap(toggle);
+          await tester.pump(const Duration(milliseconds: 100));
+
+          expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+          expect(livingExpense, findsOneWidget);
+          expect(overdue, findsOneWidget);
+          expect(
+            tester.getTopLeft(overdue).dy,
+            lessThan(tester.getTopLeft(livingExpense).dy),
+          );
+
+          await _unmount(tester);
+        },
       );
-      await tester.pump(const Duration(milliseconds: 300));
-
-      final toggle = find.byKey(
-        const Key('asset_living_expense_priority_toggle'),
-      );
-      final livingExpense = find.text('本日の生活費が不足しています');
-      final overdue = find.text('モビットが期限超過です');
-      expect(toggle, findsOneWidget);
-      expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
-      expect(livingExpense, findsOneWidget);
-      expect(overdue, findsOneWidget);
-      expect(
-        tester.getTopLeft(overdue).dy,
-        lessThan(tester.getTopLeft(livingExpense).dy),
-      );
-
-      await tester.ensureVisible(toggle);
-      await tester.tap(toggle);
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
-      expect(livingExpense, findsOneWidget);
-      expect(overdue, findsNothing);
-
-      await tester.tap(toggle);
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
-      expect(overdue, findsOneWidget);
-      expect(
-        tester.getTopLeft(overdue).dy,
-        lessThan(tester.getTopLeft(livingExpense).dy),
-      );
-
-      await _unmount(tester);
-    });
+    }
 
     testWidgets('repayment shortfall shows a discipline violation', (
       tester,
