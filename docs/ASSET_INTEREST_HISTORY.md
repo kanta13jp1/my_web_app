@@ -18,4 +18,6 @@ No local-storage fallback, no changes to account balances or paid statuses, no a
 
 Synthetic model tests cover missing/current/partial/scope-change/zero/increase/decrease. Widget tests cover 320/1200 pixel widths and failed-save recovery. Mock HTTP repository tests cover owner/key scoping, round-trip restoration, duplicate/stale write rejection, and sign-out protection. These are not proof of a real authenticated production write; verify real statement records only with user-authorized evidence.
 
+Focused static analysis and all 8 tests passed in GitHub Actions run [34666525824](https://github.com/kanta13jp1/my_web_app/actions/runs/34666525824). The required Design-plugin accessibility audit is not available in this agent session; it has not been marked as passed. Merge and production deployment remain unperformed until genuine audit evidence and required CI are complete.
+
 This release covers interest history. It does not backfill past interest from net-worth differences, nor capture principal allocation history or claim a cash-availability improvement.
