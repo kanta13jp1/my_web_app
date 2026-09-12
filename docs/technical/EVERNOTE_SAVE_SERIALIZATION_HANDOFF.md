@@ -58,3 +58,9 @@ attachments. The common persistence path records its server baseline and retains
 newer input, rather than clearing the draft unconditionally. A controlled initial
 insert test checks one INSERT followed by the latest-content UPDATE. This does
 not replace end-to-end upload or private attachment access validation.
+
+AutoSaveService is also used by SpreadsheetViewModel. Its existing tests are
+included in the scoped workflow. Manual callbacks may capture immutable data
+before entering the queue, so their request generation is retained: completing
+an older queued snapshot cannot mark a newer draft saved. This is covered by a
+controlled queue regression without changing the spreadsheet implementation.

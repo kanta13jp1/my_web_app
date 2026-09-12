@@ -94,13 +94,14 @@ class AutoSaveService extends ChangeNotifier {
   /// 手動保存も先行リクエストの完了を待つ。失敗は呼び出し元へ伝える。
   Future<void> saveImmediately(Future<void> Function() saveCallback) async {
     if (!_active) throw StateError('The editor save lane is closed');
-    _revision++;
+    final revision = ++_revision;
     _lastSaveCallback = saveCallback;
     _cancelTimers();
     await _performSave(
       saveCallback,
       scheduleRetryOnError: false,
       rethrowOnError: true,
+      requestedRevision: revision,
     );
   }
 
@@ -109,14 +110,17 @@ class AutoSaveService extends ChangeNotifier {
     required bool scheduleRetryOnError,
     bool rethrowOnError = false,
     int? scheduledRevision,
+    int? requestedRevision,
   }) =>
       _enqueue(() async {
         if (!_active ||
             (scheduledRevision != null && scheduledRevision != _revision)) {
           return;
         }
-        final revision = _revision;
-        _saveState = SaveState.saving;
+        final revision = requestedRevision ?? _revision;
+        _saveState = revision == _revision
+            ? SaveState.saving
+            : SaveState.modified;
         notifyListeners();
         try {
           await saveCallback();

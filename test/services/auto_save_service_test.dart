@@ -152,6 +152,26 @@ void main() {
     expect(service.saveState, SaveState.saved);
   });
 
+  testWidgets('queued manual snapshot cannot claim a newer draft was saved',
+      (tester) async {
+    final gate = Completer<void>();
+    final writes = <String>[];
+    final hold = service.runExclusive(() => gate.future);
+    await tester.pump();
+    final manual = service.saveImmediately(() async => writes.add('captured-old'));
+    service.triggerAutoSave(() async => writes.add('latest-draft'));
+    gate.complete();
+    await tester.pump();
+    await hold;
+    await manual;
+    expect(writes, ['captured-old']);
+    expect(service.saveState, SaveState.modified);
+    expect(service.lastSavedTime, isNull);
+    await tester.pump(const Duration(seconds: 2));
+    expect(writes, ['captured-old', 'latest-draft']);
+    expect(service.saveState, SaveState.saved);
+  });
+
   testWidgets('manual failure reaches caller and does not poison the lane',
       (tester) async {
     var attempts = 0;
