@@ -202,8 +202,27 @@ async function openShop(page: Page, suffix = query) {
   await page.locator('#seo-shell').waitFor({ state: 'detached' });
 }
 
-async function capture(page: Page, info: TestInfo, name: string) {
-  await info.attach(name, { body: await page.screenshot({ animations: 'disabled' }),
+async function capture(page: Page, info: TestInfo, name: string, stable = true) {
+  // Flutter's semantic DOM may update before its canvas paint/scroll. Retain a
+  // capture only after three consecutive rendered frames agree (no masks).
+  let previous: Buffer | undefined;
+  let stableFrames = 0;
+  if (!stable) {
+    // The live Flutter loading spinner intentionally never becomes static.
+    await page.evaluate(() => new Promise<void>(resolve =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    await info.attach(name, { body: await page.screenshot(), contentType: 'image/png' });
+    return;
+  }
+  await expect.poll(async () => {
+    await page.evaluate(() => new Promise<void>(resolve =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    const current = await page.screenshot({ animations: 'disabled' });
+    stableFrames = previous?.equals(current) ? stableFrames + 1 : 0;
+    previous = current;
+    return stableFrames;
+  }, { timeout: 10_000, intervals: [100, 150, 250] }).toBeGreaterThanOrEqual(2);
+  await info.attach(name, { body: previous!,
     contentType: 'image/png' });
 }
 
@@ -238,9 +257,10 @@ test('loading, guest CTA and three real-game screenshots', async ({ page }, info
     await expect(loading).toHaveText('商品情報を読み込み中');
     await expect.poll(() => page.evaluate(() => (window as FixtureWindow).__hexcivLiveAnnouncements ?? []))
       .toContainEqual({ message: '商品情報を読み込み中', assertiveness: 'polite' });
-    await capture(page, info, 'loading');
+    await capture(page, info, 'loading', false);
   } finally { fixture.releaseProduct(); }
   await expect(page.getByText(title, { exact: true })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'ターン30のゲーム画面', exact: true })).toBeVisible();
   await capture(page, info, 'guest-product');
   for (const turn of [30, 80, 150]) {
     const thumbnail = page.getByRole('button', { name: new RegExp(`ターン${turn}のスクリーンショットを表示`) });
@@ -248,6 +268,7 @@ test('loading, guest CTA and three real-game screenshots', async ({ page }, info
     await thumbnail.click();
     const caption = page.getByText(new RegExp(turn === 30 ? '^序盤。' : turn === 80 ? '^中盤。' : '^終盤。'));
     await expect(caption).toBeVisible();
+    await expect(page.getByRole('img', { name: `ターン${turn}のゲーム画面`, exact: true })).toBeVisible();
     await capture(page, info, `gallery-turn${turn}`);
   }
   expect(fixture.assetResponses.size).toBe(3);
@@ -264,6 +285,8 @@ test('product request error can recover with retry', async ({ page }, info) => {
   const fixture = await installFixture(page, { failProductOnce: true });
   await openShop(page);
   await expect(page.getByText('商品情報を読み込めませんでした', { exact: true })).toBeVisible();
+  await expect(page.getByText(/通信状況を確認して「再試行」/)).toBeVisible();
+  await expect(page.getByText(/PostgrestException|fixture_product_unavailable/)).toHaveCount(0);
   await capture(page, info, 'product-request-error');
   await page.getByRole('button', { name: '再試行', exact: true }).click();
   await expect(page.getByText(title, { exact: true })).toBeVisible();
@@ -317,8 +340,10 @@ test('checkout working, failure, retry and same-visitor redirect', async ({ page
     await expect(page.getByRole('button', { name: '手続き中…', exact: true })).toBeDisabled();
     await capture(page, info, 'checkout-working-disabled');
   } finally { fixture.releaseCheckout(); }
-  const failure = page.getByText(/fixture_checkout_unavailable/);
+  const failure = page.getByText('購入手続きを開始できませんでした', { exact: true });
   await expect(failure).toBeVisible();
+  await expect(page.getByText(/先に「購入済み」で購入状況を確認/)).toBeVisible();
+  await expect(page.getByText(/FunctionException|fixture_checkout_unavailable/)).toHaveCount(0);
   await capture(page, info, 'checkout-error');
   expect(fixture.events.filter((event) => event.stage === 'checkout_redirect')).toHaveLength(0);
   fixture.failCheckout(false);
@@ -355,6 +380,7 @@ test('success return waits for entitlement without offering duplicate purchase',
   const pending = page.getByText('決済を確認しています', { exact: true });
   await pending.scrollIntoViewIfNeeded();
   await expect(pending).toBeVisible();
+  await expect(page.getByText(/お支払いは完了しています/)).toHaveCount(0);
   await expect(page.getByRole('button', { name: buyLabel, exact: true })).toHaveCount(0);
   await capture(page, info, 'entitlement-pending');
   fixture.setPurchased(true);

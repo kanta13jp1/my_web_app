@@ -13,12 +13,20 @@ class _FakeShopGateway implements ShopGateway {
     this.purchases = const [],
     this.signedIn = false,
     this.pendingProduct,
+    this.pendingCheckout,
+    this.productError,
+    this.checkoutError,
+    this.downloadError,
   });
 
   final List<ShopProduct> products;
   final List<ShopPurchase> purchases;
   final bool signedIn;
   final Completer<ShopProduct?>? pendingProduct;
+  final Completer<CheckoutStart>? pendingCheckout;
+  Object? productError;
+  Object? checkoutError;
+  Object? downloadError;
 
   int checkoutCalls = 0;
   int downloadCalls = 0;
@@ -34,6 +42,7 @@ class _FakeShopGateway implements ShopGateway {
 
   @override
   Future<ShopProduct?> fetchProduct(String productId) async {
+    if (productError != null) throw productError!;
     if (pendingProduct != null) return pendingProduct!.future;
     for (final product in products) {
       if (product.id == productId) return product;
@@ -56,12 +65,15 @@ class _FakeShopGateway implements ShopGateway {
     String? source,
   }) async {
     checkoutCalls++;
+    if (checkoutError != null) throw checkoutError!;
+    if (pendingCheckout != null) return pendingCheckout!.future;
     return const CheckoutStart.redirect('https://checkout.example/session');
   }
 
   @override
   Future<DownloadTicket> requestDownloadUrl(String productId) async {
     downloadCalls++;
+    if (downloadError != null) throw downloadError!;
     return const DownloadTicket(
       url: 'https://storage.example/signed',
       expiresInSeconds: 300,
@@ -107,6 +119,28 @@ Future<void> _pump(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(MaterialApp(home: child));
   await tester.pumpAndSettle();
+}
+
+double _contrast(Color first, Color second) {
+  final a = first.computeLuminance();
+  final b = second.computeLuminance();
+  return a > b ? (a + 0.05) / (b + 0.05) : (b + 0.05) / (a + 0.05);
+}
+
+void _expectButtonContrast(WidgetTester tester, String label) {
+  final finder = find.widgetWithText(FilledButton, label);
+  final button = tester.widget<FilledButton>(finder);
+  final states = <WidgetState>{
+    if (button.onPressed == null) WidgetState.disabled,
+  };
+  final background = button.style!.backgroundColor!.resolve(states)!;
+  final text = tester.widget<RichText>(
+    find.descendant(of: find.text(label), matching: find.byType(RichText)),
+  );
+  expect(
+    _contrast(text.text.style!.color!, background),
+    greaterThanOrEqualTo(4.5),
+  );
 }
 
 void main() {
@@ -175,6 +209,14 @@ void main() {
           ),
         );
         expect(loading.properties.liveRegion, isTrue);
+        final indicator = tester.widget<CircularProgressIndicator>(
+          find.byType(CircularProgressIndicator),
+        );
+        expect(indicator.color, DesignTokens.orange);
+        expect(
+          _contrast(indicator.color!, DesignTokens.background),
+          greaterThanOrEqualTo(3),
+        );
         pending.complete(null);
         await tester.pumpAndSettle();
         expect(find.bySemanticsLabel('商品情報を読み込み中'), findsNothing);
@@ -235,6 +277,7 @@ void main() {
       );
 
       expect(find.text('¥800 で購入'), findsOneWidget);
+      _expectButtonContrast(tester, '¥800 で購入');
       await tester.tap(find.text('¥800 で購入'));
       await tester.pumpAndSettle();
 
@@ -258,6 +301,138 @@ void main() {
       );
 
       expect(find.text('決済を確認しています'), findsOneWidget);
+      expect(find.textContaining('お支払いは完了しています'), findsNothing);
+      expect(find.text('¥800 で購入'), findsNothing);
+      expect(gateway.checkoutCalls, 0);
+    });
+
+    testWidgets('guest purchase action has readable text', (tester) async {
+      final product = _product('writing', '文章素材', ShopProductType.writing);
+      await _pump(
+        tester,
+        DigitalProductPage(
+          productId: product.id,
+          service: _FakeShopGateway(products: [product]),
+        ),
+      );
+      _expectButtonContrast(tester, 'ログインして購入');
+    });
+
+    testWidgets('working checkout remains readable and prevents another press',
+        (tester) async {
+      final product = _product('writing', '文章素材', ShopProductType.writing);
+      final pending = Completer<CheckoutStart>();
+      final gateway = _FakeShopGateway(
+        products: [product],
+        signedIn: true,
+        pendingCheckout: pending,
+      );
+      await _pump(
+        tester,
+        DigitalProductPage(
+          productId: product.id,
+          service: gateway,
+          urlLauncher: (_, __) async => true,
+        ),
+      );
+      await tester.tap(find.text('¥800 で購入'));
+      await tester.pumpAndSettle();
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, '手続き中…'),
+      );
+      expect(button.onPressed, isNull);
+      _expectButtonContrast(tester, '手続き中…');
+      await tester.tap(find.text('手続き中…'));
+      await tester.pump();
+      expect(gateway.checkoutCalls, 1);
+      pending.complete(const CheckoutStart.redirect('https://checkout.example'));
+      await tester.pumpAndSettle();
+      expect(find.text('手続き中…'), findsNothing);
+    });
+
+    testWidgets('product error hides internal details and retry recovers',
+        (tester) async {
+      final product = _product('writing', '文章素材', ShopProductType.writing);
+      final gateway = _FakeShopGateway(
+        products: [product],
+        productError: StateError('private_table token=fixture-secret'),
+      );
+      await _pump(
+        tester,
+        DigitalProductPage(productId: product.id, service: gateway),
+      );
+      expect(find.text('商品情報を読み込めませんでした'), findsOneWidget);
+      expect(find.textContaining('通信状況を確認して'), findsOneWidget);
+      expect(find.textContaining('private_table'), findsNothing);
+      expect(find.textContaining('fixture-secret'), findsNothing);
+      gateway.productError = null;
+      await tester.tap(find.text('再試行'));
+      await tester.pumpAndSettle();
+      expect(find.text(product.nameJa), findsOneWidget);
+      expect(find.text('商品情報を読み込めませんでした'), findsNothing);
+    });
+
+    testWidgets('checkout error gives safe recovery guidance and can retry',
+        (tester) async {
+      final product = _product('writing', '文章素材', ShopProductType.writing);
+      final gateway = _FakeShopGateway(
+        products: [product],
+        signedIn: true,
+        checkoutError: StateError('FunctionException fixture-secret'),
+      );
+      Uri? launched;
+      await _pump(
+        tester,
+        DigitalProductPage(
+          productId: product.id,
+          service: gateway,
+          urlLauncher: (uri, _) async {
+            launched = uri;
+            return true;
+          },
+        ),
+      );
+      await tester.tap(find.text('¥800 で購入'));
+      await tester.pumpAndSettle();
+      expect(find.text('購入手続きを開始できませんでした'), findsOneWidget);
+      expect(find.textContaining('先に「購入済み」'), findsOneWidget);
+      expect(find.textContaining('fixture-secret'), findsNothing);
+      expect(find.textContaining('FunctionException'), findsNothing);
+      expect(launched, isNull);
+      gateway.checkoutError = null;
+      await tester.ensureVisible(find.text('¥800 で購入'));
+      await tester.tap(find.text('¥800 で購入'));
+      await tester.pumpAndSettle();
+      expect(gateway.checkoutCalls, 2);
+      expect(launched, Uri.parse('https://checkout.example/session'));
+      expect(find.text('購入手続きを開始できませんでした'), findsNothing);
+    });
+
+    testWidgets('download error explains retry without offering repurchase',
+        (tester) async {
+      final product = _product('writing', '文章素材', ShopProductType.writing);
+      final gateway = _FakeShopGateway(
+        products: [product],
+        purchases: [
+          ShopPurchase(
+            id: 'fixture-purchase',
+            product: product,
+            purchasedAt: DateTime.utc(2026, 8, 20),
+          ),
+        ],
+        signedIn: true,
+        downloadError: StateError('signed_url fixture-secret'),
+      );
+      await _pump(
+        tester,
+        DigitalProductPage(productId: product.id, service: gateway),
+      );
+      _expectButtonContrast(tester, 'ダウンロード');
+      await tester.tap(find.text('ダウンロード'));
+      await tester.pumpAndSettle();
+      expect(find.text('ダウンロードを準備できませんでした'), findsOneWidget);
+      expect(find.textContaining('再購入は不要です'), findsOneWidget);
+      expect(find.textContaining('fixture-secret'), findsNothing);
       expect(find.text('¥800 で購入'), findsNothing);
       expect(gateway.checkoutCalls, 0);
     });
