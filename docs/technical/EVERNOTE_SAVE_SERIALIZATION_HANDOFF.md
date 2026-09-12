@@ -50,3 +50,11 @@ additionally required; no successful synthetic run opens that global gate.
 
 - [Dart Future.then](https://api.dart.dev/dart-async/Future/then.html)
 - [ChangeNotifier.dispose](https://api.flutter.dev/flutter/foundation/ChangeNotifier/dispose.html)
+
+## Review refinement
+
+New note creation also uses this lane, including the empty-note placeholder for
+attachments. The common persistence path records its server baseline and retains
+newer input, rather than clearing the draft unconditionally. A controlled initial
+insert test checks one INSERT followed by the latest-content UPDATE. This does
+not replace end-to-end upload or private attachment access validation.

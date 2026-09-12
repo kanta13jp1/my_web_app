@@ -223,7 +223,8 @@ void main() {
     });
     await tester.pump();
     final skipped = service.saveImmediately(() async => calls.add('queued-ui'));
-    final finalSave = service.saveOnExit(() async => calls.add('final-capture'));
+    final finalSave =
+        service.saveOnExit(() async => calls.add('final-capture'));
     final beforeDispose = notifications;
     disposeService();
     gate.complete();

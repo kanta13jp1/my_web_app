@@ -631,59 +631,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   Future<int?> _ensureNoteIdForAttachmentFlow() =>
       _autoSaveService.runExclusive(() async {
-    if (!mounted) return null;
-    final existingNoteId = int.tryParse(_currentNoteId ?? '');
-    if (existingNoteId != null) {
-      return existingNoteId;
-    }
-
-    if (_hasPersistableState) {
-      await _saveNoteWithoutClosing();
-      final savedNoteId = int.tryParse(_currentNoteId ?? '');
-      if (savedNoteId != null) {
-        return savedNoteId;
-      }
-    }
-
-    final user = _supabase.auth.currentUser;
-    if (user == null) {
-      throw Exception('Login is required.');
-    }
-
-    final dynamic inserted = await _supabase
-        .from('notes')
-        .insert({
-          'user_id': user.id,
-          'title': _titleController.text.trim(),
-          'content': _contentController.text.trim(),
-          'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-          'is_favorite': _isFavorite,
-          'is_archived': false,
-          'is_pinned': false,
-        })
-        .select('id')
-        .maybeSingle();
-
-    if (!mounted) return null;
-    if (_supabase.auth.currentUser?.id != user.id) {
-      throw StateError('Session changed during attachment-note creation');
-    }
-    final createdNoteId = inserted is Map && inserted['id'] != null
-        ? int.tryParse(inserted['id'].toString())
-        : null;
-    if (createdNoteId == null) {
-      return null;
-    }
-
-    _currentNoteId = createdNoteId.toString();
-    unawaited(_loadCommentCount());
-    _autoSaveService.markAsSaved();
-    await _clearDraftFromLocal();
-    if (mounted) {
-      setState(() {});
-    }
-    return createdNoteId;
-  });
+        if (!mounted) return null;
+        final existingNoteId = int.tryParse(_currentNoteId ?? '');
+        if (existingNoteId != null) return existingNoteId;
+        // Use the same persisted baseline/draft checks as regular note creation.
+        await _saveNoteWithoutClosing(allowEmpty: true);
+        return int.tryParse(_currentNoteId ?? '');
+      });
 
   Future<void> _loadAttachments() async {
     final noteId = int.tryParse(_currentNoteId ?? '');
@@ -1558,7 +1512,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   // Call only from the AutoSaveService lane, including attachment flows.
-  Future<void> _saveNoteWithoutClosing() async {
+  Future<void> _saveNoteWithoutClosing({bool allowEmpty = false}) async {
     if (!mounted) return;
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
@@ -1566,7 +1520,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final isFavorite = _isFavorite;
     final tags = NoteTagService.normalize(_tags);
 
-    if (!_hasPersistableState && _currentNoteId == null) {
+    if (!allowEmpty && !_hasPersistableState && _currentNoteId == null) {
       return;
     }
 
@@ -1839,8 +1793,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final backupTitle = _titleController.text;
     final backupContent = _contentController.text;
     final backupOwner = _supabase.auth.currentUser?.id;
-    const changedMessage =
-        '保全中に編集内容またはログイン状態が変わったため、復元を中止しました。';
+    const changedMessage = '保全中に編集内容またはログイン状態が変わったため、復元を中止しました。';
     String? abortReason;
     try {
       abortReason = await _autoSaveService.runExclusive<String?>(() async {
@@ -2568,12 +2521,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final isFavorite = _isFavorite;
     final tags = NoteTagService.normalize(_tags);
     if (_matchesPersistedState(
-      title: title,
-      content: content,
-      reminderIso: reminderIso,
-      isFavorite: isFavorite,
-      tags: tags,
-    ) && !_autoSaveService.hasPendingOperations) {
+          title: title,
+          content: content,
+          reminderIso: reminderIso,
+          isFavorite: isFavorite,
+          tags: tags,
+        ) &&
+        !_autoSaveService.hasPendingOperations) {
       return;
     }
 
@@ -2583,17 +2537,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     unawaited(
       _autoSaveService.saveOnExit(() async {
         if (client.auth.currentUser?.id != owner) return;
-        await client
-            .from('notes')
-            .update({
-              'title': title,
-              'content': content,
-              'reminder_date': reminderIso,
-              'is_favorite': isFavorite,
-              'tags': tags,
-              'updated_at': DateTime.now().toUtc().toIso8601String(),
-            })
-            .eq('id', noteId);
+        await client.from('notes').update({
+          'title': title,
+          'content': content,
+          'reminder_date': reminderIso,
+          'is_favorite': isFavorite,
+          'tags': tags,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', noteId);
       }).catchError((Object _) {
         // Preserve the local draft if the final request fails after UI disposal.
       }),
