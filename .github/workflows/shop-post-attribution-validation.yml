@@ -26,6 +26,7 @@ on:
       - 'supabase/migrations/*shop*funnel*.sql'
       - 'supabase/tests/shop_post_funnel_attribution.sql'
       - 'scripts/ci/*shop_attribution*.py'
+      - 'scripts/ci/shop_dependency_offline.sh'
       - '.github/workflows/shop-post-attribution-validation.yml'
       - '.github/actions/setup-flutter-sdk/**'
       - 'scripts/ci/install_deno_from_github.sh'
@@ -96,7 +97,7 @@ jobs:
         name: Resolve dependencies for the repository Flutter SDK
         run: |
           flutter --version | tee attribution-evidence/flutter-version.log
-          flutter pub get 2>&1 | tee attribution-evidence/dependencies.log
+          flutter pub get --enforce-lockfile 2>&1 | tee attribution-evidence/dependencies.log
           cp pubspec.lock attribution-evidence/resolved-pubspec.lock
       - name: Require committed dependency lock to remain unchanged
         # Keep this a required failure. Independent code checks may still run
@@ -125,6 +126,66 @@ jobs:
           path: attribution-evidence/
           retention-days: 3
           if-no-files-found: ignore
+
+  dependency-regression:
+    # Explicitly approved lock repair: do not update SDK, constraints, or main.
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify exact source and fixture-only environment
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          mkdir -p dependency-evidence
+          python scripts/ci/shop_attribution_preflight.py | tee dependency-evidence/source.json
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - id: deps
+        name: Enforce committed lock twice with the unchanged SDK
+        run: |
+          flutter --version --machine | tee dependency-evidence/flutter-version.json
+          python -c 'import json; v=json.load(open("dependency-evidence/flutter-version.json")); assert v["frameworkVersion"] == "3.38.10" and v["dartSdkVersion"].startswith("3.10.9"), v'
+          sha256sum pubspec.yaml pubspec.lock > dependency-evidence/before.sha256
+          flutter pub get --enforce-lockfile 2>&1 | tee dependency-evidence/dependencies-first.log
+          flutter pub get --enforce-lockfile 2>&1 | tee dependency-evidence/dependencies-second.log
+          sha256sum --check dependency-evidence/before.sha256
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+          flutter pub deps --json > dependency-evidence/dependency-graph.json
+          cp pubspec.lock dependency-evidence/resolved-pubspec.lock
+      - name: Analyze entire committed application offline
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: bash scripts/ci/shop_dependency_offline.sh timeout 10m flutter analyze --no-pub 2>&1 | tee dependency-evidence/analyze-committed.log
+      - name: Run entire committed Flutter test suite offline
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: bash scripts/ci/shop_dependency_offline.sh timeout 20m flutter test --no-pub --concurrency=2 2>&1 | tee dependency-evidence/tests-committed.log
+      - id: mocks
+        name: Verify mock generation in the disposable runner only
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: |
+          bash scripts/ci/shop_dependency_offline.sh timeout 10m dart run build_runner build --delete-conflicting-outputs 2>&1 | tee dependency-evidence/mock-generation.log
+          git diff --stat > dependency-evidence/generated-diff-stat.txt
+          git diff --binary > dependency-evidence/generated-suggestion.patch
+          sha256sum --check dependency-evidence/before.sha256
+      - name: Analyze regenerated mocks and application offline
+        if: ${{ !cancelled() && steps.mocks.outcome == 'success' }}
+        run: bash scripts/ci/shop_dependency_offline.sh timeout 10m flutter analyze --no-pub 2>&1 | tee dependency-evidence/analyze-regenerated.log
+      - name: Run Flutter regressions with regenerated mocks offline
+        if: ${{ !cancelled() && steps.mocks.outcome == 'success' }}
+        run: bash scripts/ci/shop_dependency_offline.sh timeout 20m flutter test --no-pub --concurrency=2 2>&1 | tee dependency-evidence/tests-regenerated.log
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: shop-dependency-regression-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dependency-evidence/
+          retention-days: 7
+          if-no-files-found: error
 
   edge:
     permissions:
