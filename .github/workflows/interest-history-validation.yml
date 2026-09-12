@@ -27,3 +27,5 @@ jobs:
           dart format --output=none --set-exit-if-changed lib/pages/asset_management_page.dart lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart
       - run: flutter analyze lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart
       - run: flutter test --concurrency=2 test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart
+      - name: Verify living expense priority regression
+        run: flutter test test/widgets/asset_management_page_smoke_test.dart --plain-name 'living expense priority toggle immediately reorders actions'
