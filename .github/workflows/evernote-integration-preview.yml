@@ -1,0 +1,70 @@
+name: Evernote main integration preview
+on:
+  push:
+    branches: ['codex/evernote-main-reconcile-20260912']
+    paths: ['.github/workflows/evernote-integration-preview.yml']
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Compute source merge without publishing or running application code
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Evernote integration preview"
+          git config user.email "integration-preview@users.noreply.github.com"
+          test "$(git rev-parse HEAD^)" = "0ce23b63347064d19721edf6c04558cd58109656"
+          source_sha=047c0ca6c9f0bf1ebfe1e966847c84a9362e5dc5
+          git cat-file -e "$source_sha^{commit}"
+          set +e
+          git merge --no-commit --no-ff "$source_sha"
+          merge_status=$?
+          set -e
+          if [ "$merge_status" -gt 1 ]; then exit "$merge_status"; fi
+          python - <<'PY'
+          import base64, json, pathlib, subprocess
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+          known = set()
+          for ref in ('HEAD', '047c0ca6c9f0bf1ebfe1e966847c84a9362e5dc5'):
+              for row in git('ls-tree', '-rz', ref).split(b'\0'):
+                  if row:
+                      known.add(row.split(b'\t')[0].split()[2].decode())
+          stages = {}
+          for row in git('ls-files', '--stage', '-z').split(b'\0'):
+              if row:
+                  meta, path = row.split(b'\t', 1)
+                  mode, sha, stage = meta.decode().split()
+                  stages.setdefault(path.decode(), []).append((mode, sha, stage))
+          paths = git('diff', '--name-only', '-z', 'HEAD').split(b'\0')
+          entries = []
+          total = 0
+          for raw in paths:
+              if not raw:
+                  continue
+              path = raw.decode()
+              info = stages.get(path, [])
+              conflict = any(stage != '0' for _, _, stage in info)
+              if not pathlib.Path(path).exists():
+                  entry = dict(path=path, sha=None, conflict=conflict)
+              elif conflict or not info or info[0][1] not in known:
+                  content = pathlib.Path(path).read_bytes()
+                  total += len(content)
+                  if total > 2000000:
+                      raise SystemExit('Source review output exceeded 2 MB')
+                  entry = dict(path=path, conflict=conflict, stages=info,
+                               base64=base64.b64encode(content).decode())
+              else:
+                  entry = dict(path=path, mode=info[0][0], sha=info[0][1],
+                               conflict=False)
+              entries.append(entry)
+          print('EVERNOTE_MERGE_PREVIEW_JSON=' + json.dumps(entries, separators=(',', ':')))
+          print('Conflicts:', [e['path'] for e in entries if e['conflict']])
+          PY
