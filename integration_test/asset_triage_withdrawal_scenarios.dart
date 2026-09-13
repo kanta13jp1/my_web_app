@@ -29,9 +29,10 @@ class _RecordingRepository extends SharedPreferencesAssetLiabilityRepository {
   @override
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async => current;
   @override
-  Future<void> saveMonth(
-      {required DateTime month,
-      required AssetLiabilityMonthlyState state,}) async {
+  Future<void> saveMonth({
+    required DateTime month,
+    required AssetLiabilityMonthlyState state,
+  }) async {
     final gate = saveGate;
     if (gate != null) await gate.future;
     if (failSave) throw StateError('synthetic storage failure');
@@ -39,19 +40,25 @@ class _RecordingRepository extends SharedPreferencesAssetLiabilityRepository {
   }
 }
 
-Future<void> _pump(WidgetTester tester, _RecordingRepository repository,
-    {double bank = 500000,}) async {
+Future<void> _pump(
+  WidgetTester tester,
+  _RecordingRepository repository, {
+  double bank = 500000,
+}) async {
   AssetSyncDirtyKeysStore.resetWriteLockForTest();
   AssetRecurringTombstoneSyncService.resetSharedForTest();
-  await tester.pumpWidget(MaterialApp(
+  await tester.pumpWidget(
+    MaterialApp(
       home: AssetManagementPage(
-    debugNow: _date,
-    debugCalendarNow: _date,
-    assetLiabilityRepository: repository,
-    debugInitialAssetData: <String, Map<String, double>>{
-      '2026-09-01': <String, double>{'財布(現金)': 1000, '三井住友銀行': bank},
-    },
-  ),),);
+        debugNow: _date,
+        debugCalendarNow: _date,
+        assetLiabilityRepository: repository,
+        debugInitialAssetData: <String, Map<String, double>>{
+          '2026-09-01': <String, double>{'財布(現金)': 1000, '三井住友銀行': bank},
+        },
+      ),
+    ),
+  );
   await tester.pump(const Duration(milliseconds: 300));
   await tester.pump(const Duration(milliseconds: 300));
 }
@@ -129,12 +136,16 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _RecordingRepository();
     await _pump(tester, repository, bank: 15000);
-    expect(find.byKey(const Key('triage_withdrawal_template_20000')),
-        findsNothing,);
+    expect(
+      find.byKey(const Key('triage_withdrawal_template_20000')),
+      findsNothing,
+    );
     await _tapAmount(tester, 10000);
     expect(repository.current.transferTasks, hasLength(1));
-    expect(find.byKey(const Key('triage_withdrawal_template_10000')),
-        findsNothing,);
+    expect(
+      find.byKey(const Key('triage_withdrawal_template_10000')),
+      findsNothing,
+    );
     expect(find.textContaining('¥5,000'), findsWidgets);
     expect(tester.takeException(), isNull);
     await _unmount(tester);
