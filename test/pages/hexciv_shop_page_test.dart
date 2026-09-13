@@ -1,3 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/hexciv_shop_page.dart';
@@ -111,6 +118,64 @@ Future<void> _pump(
 }
 
 void main() {
+  final requests = <Map<String, dynamic>>[];
+  late Completer<void> viewRecorded;
+  late Completer<void> checkoutRecorded;
+  final client = SupabaseClient(
+    'https://example.supabase.co',
+    'test-anon-key',
+    httpClient: MockClient((request) async {
+      if (request.url.path.endsWith('/shop-funnel')) {
+        final row = jsonDecode(request.body) as Map<String, dynamic>;
+        requests.add(row);
+        if (row['stage'] == 'checkout_redirect' &&
+            !checkoutRecorded.isCompleted) {
+          checkoutRecorded.complete();
+        }
+        if (row['stage'] == 'product_view' && !viewRecorded.isCompleted) {
+          viewRecorded.complete();
+        }
+      }
+      return http.Response(
+        '{"recorded":true}',
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    }),
+  );
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    supabaseClientForTesting = client;
+    requests.clear();
+    viewRecorded = Completer<void>();
+    checkoutRecorded = Completer<void>();
+  });
+  tearDownAll(() async => client.dispose());
+
+  testWidgets('default page records view and carries identity to checkout',
+      (tester) async {
+    final gateway = _FakeGateway(product: _product(), signedIn: true);
+    await tester.runAsync(() async {
+      await _pump(tester, gateway);
+      await viewRecorded.future.timeout(const Duration(seconds: 5));
+    });
+    expect(requests.map((row) => row['stage']), contains('product_view'));
+    final visitor = requests.first['visitor_id'];
+    expect(visitor, isNotEmpty);
+    await tester.ensureVisible(find.text('¥500 で購入'));
+    await tester.runAsync(() async {
+      await tester.tap(find.text('¥500 で購入'));
+      await tester.pumpAndSettle();
+      await checkoutRecorded.future.timeout(const Duration(seconds: 5));
+    });
+    expect(gateway.lastVisitorId, visitor);
+    expect(
+      requests.map((row) => row['stage']),
+      containsAll(['product_view', 'purchase_click', 'checkout_redirect']),
+    );
+    expect(requests.every((row) => row['visitor_id'] == visitor), isTrue);
+  });
+
   group('HexcivShopPage の状態別の描き分け', () {
     testWidgets('商品が取れないときは購入導線を出さず準備中と伝える', (tester) async {
       // RLS により is_active=false の商品は読めない。準備中と未存在は同じ扱い。

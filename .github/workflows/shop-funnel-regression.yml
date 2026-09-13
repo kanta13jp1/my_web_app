@@ -1,0 +1,33 @@
+name: Shop Funnel Regression
+on:
+  pull_request:
+    paths:
+      - 'lib/services/shop_funnel_service.dart'
+      - 'lib/pages/digital_product_store_pages.dart'
+      - 'test/pages/hexciv_shop_page_test.dart'
+      - 'test/pages/digital_product_store_pages_test.dart'
+      - 'test/services/shop_funnel*.dart'
+      - 'test/services/asset_living_expense_fixture_test.dart'
+      - 'test/widgets/asset_management_page_smoke_test.dart'
+      - '.github/workflows/shop-funnel-regression.yml'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: shop-funnel-regression-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Verify shop page and funnel regressions
+        run: flutter test --concurrency=1 test/pages/hexciv_shop_page_test.dart test/pages/digital_product_store_pages_test.dart test/services/shop_funnel_service_test.dart test/services/shop_funnel_initialization_test.dart test/services/asset_living_expense_fixture_test.dart test/widgets/asset_management_page_smoke_test.dart
