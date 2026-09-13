@@ -1792,12 +1792,26 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1200, 3200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
+      // Isolate the two actions under test from date-dependent default bills.
+      // The page only renders eight actions; unrelated bills must not decide
+      // whether either target action is present in this ordering test.
+      final defaultBills = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{},
+        baseDate: now,
+        includeDefaultFixedPayments: true,
+      );
+
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
             debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
               <String, int>{'mobit': now.day},
+              monthlyState: AssetLiabilityMonthlyState(
+                paidAccountNames: <String>{
+                  for (final row in defaultBills.cashflowRows) row.accountName,
+                },
+              ),
             ),
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
@@ -1830,7 +1844,11 @@ void main() {
 
       expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
       expect(livingExpense, findsOneWidget);
-      expect(overdue, findsNothing);
+      expect(overdue, findsOneWidget);
+      expect(
+        tester.getTopLeft(livingExpense).dy,
+        lessThan(tester.getTopLeft(overdue).dy),
+      );
 
       await tester.tap(toggle);
       await tester.pump(const Duration(milliseconds: 100));

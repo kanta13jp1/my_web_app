@@ -140,6 +140,14 @@ jobs:
           npx playwright test --config=playwright.hexciv-shop.config.ts \
             --project=chromium --project=mobile-chrome --retries=0
 
+      - name: Verify integrated Lumen Path route
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lumen-route-results.json
+        run: |
+          npx playwright test test/e2e/lumen_path_route.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Stop short-lived SPA server
         if: always()
         shell: bash

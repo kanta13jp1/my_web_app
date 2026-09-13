@@ -108,6 +108,14 @@ void main() {
       expect(capturedBody?['message'].toString().contains('年収'), true);
       expect(capturedBody?['provider_choice_reason'], contains('summary'));
       expect(capturedBody?['routing_use_case'], 'summary');
+      final prompt = capturedBody!['message'].toString();
+      expect(prompt, contains('確認済みの事実・予定・推定・未確認を区別'));
+      expect(prompt, contains('取引明細未照合なら新規借入・誓約違反を断定しない'));
+      expect(prompt, contains('未受取の入金予定は未入金の証拠ではありません'));
+      expect(prompt, contains('月が異なると確認できない限り先月と呼ばない'));
+      expect(prompt, contains('返済総額か追加額かを区別'));
+      expect(prompt, isNot(contains('断言口調にしてください')));
+      expect(prompt, isNot(contains('大きいほど厳しく叱り')));
     });
 
     test('includes previous persisted analyses in the AI prompt', () async {
