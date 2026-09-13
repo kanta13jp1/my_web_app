@@ -50,4 +50,31 @@ void main() {
     expect(commits, ['14.6']);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('focus loss flushes; a parent clear discards an old draft',
+      (tester) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    final commits = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+          body: DebouncedCommitTextField(
+        controller: controller,
+        onCommitted: commits.add,
+        decoration: const InputDecoration(),
+      )),
+    ));
+    await tester.enterText(find.byType(TextField), '14.6');
+    final field = tester.widget<TextField>(find.byType(TextField));
+    field.focusNode!.unfocus();
+    await tester.pump();
+    expect(commits, ['14.6']);
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(commits, ['14.6']);
+    await tester.enterText(find.byType(TextField), '15');
+    controller.clear();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(commits, ['14.6']);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }
