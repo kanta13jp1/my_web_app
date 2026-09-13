@@ -35,6 +35,46 @@ void main() {
       expect(result.text.contains('Dartルール'), true);
     });
 
+    for (final response in ['自己管理の甘さが原因です。', 'あんた、馬鹿じゃないの？']) {
+      test('rejects abusive response: $response', () async {
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (_) async => <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            },
+          ),
+        );
+        final result = await service.generateSummary(report: _report());
+        expect(result.status, AssetManagementAiSummaryStatus.fallback);
+        expect(result.text, isNot(contains(response)));
+        expect(result.errorMessage, contains('人格攻撃'));
+      });
+    }
+
+    test('fallback lists critical items even without emergency advice', () {
+      final source = _emergencyReport();
+      expect(source.criticalActions, isNotEmpty);
+      final report = AssetManagementInsightReport(
+        workbook: source.workbook,
+        actionItems: source.actionItems,
+        todayAvailable: source.todayAvailable,
+        weekAvailable: source.weekAvailable,
+        monthAvailable: source.monthAvailable,
+        movementSuggestions: source.movementSuggestions,
+        emergencyAdvices: const [],
+        developerRequests: const [],
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      expect(text, contains('優先確認:'));
+      expect(text, contains(source.criticalActions.first.title));
+      expect(text, contains('要確認項目の解消を意味するものではありません'));
+      expect(text, isNot(contains('緊急の生活費防衛アドバイスはありません')));
+    });
+
     test('calls ai-hub auto chat when feature flag is on', () async {
       Map<String, dynamic>? capturedBody;
       final service = AssetManagementAiSummaryService(
@@ -73,10 +113,10 @@ void main() {
         true,
       );
       expect(
-        capturedBody?['message'].toString().contains('8. 最後にズバッと総評'),
+        capturedBody?['message'].toString().contains('8. まとめ'),
         true,
       );
-      expect(capturedBody?['message'].toString().contains('細木数子'), true);
+      expect(capturedBody?['message'].toString().contains('細木数子'), false);
       expect(capturedBody?['message'].toString().contains('負債マスタ詳細'), true);
       expect(capturedBody?['message'].toString().contains('今月の支払いと利息'), true);
       expect(
@@ -108,6 +148,18 @@ void main() {
       expect(capturedBody?['message'].toString().contains('年収'), true);
       expect(capturedBody?['provider_choice_reason'], contains('summary'));
       expect(capturedBody?['routing_use_case'], 'summary');
+      final prompt = capturedBody!['message'].toString();
+      expect(prompt, contains('確認済みの事実・予定・推定・未確認を区別'));
+      expect(prompt, contains('取引明細未照合なら新規借入・誓約違反を断定しない'));
+      expect(prompt, contains('未受取の入金予定は未入金の証拠ではありません'));
+      expect(prompt, contains('月が異なると確認できない限り先月と呼ばない'));
+      expect(prompt, contains('返済総額か追加額かを区別'));
+      expect(prompt, isNot(contains('断言口調にしてください')));
+      expect(prompt, isNot(contains('大きいほど厳しく叱り')));
+      expect(prompt, isNot(contains('占いスタイル:')));
+      expect(prompt, isNot(contains('時々笑える毒舌')));
+      expect(prompt, isNot(contains('1. 宿命・本質')));
+      expect(service.buildPayload(_report())['response_policy_version'], 3);
     });
 
     test('includes previous persisted analyses in the AI prompt', () async {
@@ -296,6 +348,53 @@ void main() {
       expect(result.errorMessage, contains('支払済みなのに督促'));
     });
 
+    test(
+        'accepts an AI summary where multiple debts are listed and subsequent '
+        'debt has an annual interest rate without false rate attribution',
+        () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          '三井住友銀行大塚支店CL口座': -500000,
+          '横浜銀行': -300000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        annualRateOverrides: const <String, double>{
+          'smbc_card_loan': 0.10,
+          'yokohama_bank': 0.146,
+          '三井住友銀行大塚支店CL口座': 0.10,
+          '横浜銀行': 0.146,
+        },
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-700,000円。負債総額は800,000円。\n'
+                '- 三井住友銀行大塚支店CL口座のカードを財布から抜きなさい。\n'
+                '- 横浜銀行の年利は14.6%です。\n'
+                '以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3つよ。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(result.errorMessage, isNull);
+    });
+
     test('accepts an AI summary grounded in current totals and confirmed rate',
         () async {
       const planner = AssetLiabilityPlanningService();
@@ -334,6 +433,450 @@ void main() {
       expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
       expect(result.usedExternalAi, isTrue);
     });
+
+    test(
+        'accepts an AI summary that explicitly denies overdue status for a '
+        'paid debt', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'アコムカードローン': -500000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        annualRateOverrides: const <String, double>{
+          'acom_card_loan': 0.15,
+        },
+        paidAccountNames: const <String>{'acom_card_loan'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-400,000円、負債合計は500,000円です。'
+                'アコムカードローンの年利は15.00%で、今月分は支払済みのため'
+                '期限超過ではありません。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    test(
+        'accepts a paid debt list item even when followed by an unpaid debt '
+        'with urging keywords', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'ファミマカード': -10000,
+          'モビットカードローン': -300000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        annualRateOverrides: const <String, double>{
+          'famima_card': 0.15,
+          'mobit_card_loan': 0.18,
+        },
+        paidAccountNames: const <String>{'ファミマカード'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-210,000円、負債合計は310,000円です。\n'
+                '- ファミマカード: 支払済みです。\n'
+                '- モビットカードローン: 未払いで期限超過のため、すぐに払うべきです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    test(
+        'rejects an AI summary when a paid debt is directly urged as unpaid '
+        'in its segment', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'ファミマカード': -10000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        annualRateOverrides: const <String, double>{'famima_card': 0.15},
+        paidAccountNames: const <String>{'ファミマカード'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は90,000円、負債合計は10,000円です。\n'
+                '- ファミマカード: 未払いですぐに払うべきです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.fallback);
+      expect(result.usedExternalAi, isFalse);
+      expect(result.errorMessage, contains('ファミマカードを支払済みなのに督促'));
+    });
+
+    test(
+        'rejects an AI summary when a received salary is claimed to be '
+        'unreceived or urged for deposit check', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        incomePlans: [
+          AssetLiabilityIncomePlan(
+            id: 'salary_1',
+            date: DateTime(2026, 8, 25),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'bank',
+            destinationAccountName: 'bank',
+            received: true,
+          ),
+        ],
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は100,000円です。\n'
+                '- 給料: 未受取の給料450,000円が着金してるか確認すること。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.fallback);
+      expect(result.usedExternalAi, isFalse);
+      expect(result.errorMessage, contains('給料を受取済みなのに未受取扱い'));
+    });
+
+    test(
+        'accepts an AI summary when received salary is acknowledged as '
+        'received', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        incomePlans: [
+          AssetLiabilityIncomePlan(
+            id: 'salary_1',
+            date: DateTime(2026, 8, 25),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'bank',
+            destinationAccountName: 'bank',
+            received: true,
+          ),
+        ],
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は100,000円です。\n'
+                '- 給料: 450,000円は受取済みです。着金確認は不要です。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    test(
+        'rejects an AI summary when a future income plan is urged as today '
+        'deposit check', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        incomePlans: [
+          AssetLiabilityIncomePlan(
+            id: 'salary_future',
+            date: DateTime(2026, 9, 25),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'bank',
+            destinationAccountName: 'bank',
+            received: false,
+          ),
+        ],
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は100,000円です。\n'
+                '- 給料: 今日着金を確認してください。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.fallback);
+      expect(result.usedExternalAi, isFalse);
+      expect(result.errorMessage, contains('給料は未来の予定日なのに今日の着金確認を督促'));
+    });
+
+    test(
+        'rejects an AI summary when a debt with zero scheduled payment or '
+        'past payment date is claimed to be neglected or ballooning '
+        'interest', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'じぶんローン': -988878,
+        },
+        baseDate: DateTime(2026, 9, 9),
+        monthlyPaymentOverrides: const <String, double>{
+          'じぶんローン': 0,
+        },
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-888,878円です。\n'
+                '- じぶんローン: 今月支払予定額が0円になってるわね。これ、放置してるんじゃないかい？'
+                '利息が元金に上乗せされて雪だるま式に膨らむのよ！',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.fallback);
+      expect(result.usedExternalAi, isFalse);
+      expect(
+        result.errorMessage,
+        contains('じぶんローンは期日通過または予定額0円なのに放置・利息上乗せと批判'),
+      );
+    });
+
+    test(
+        'accepts an AI summary when a debt with zero scheduled payment '
+        'is acknowledged without false neglect accusations', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'じぶんローン': -988878,
+        },
+        baseDate: DateTime(2026, 9, 9),
+        monthlyPaymentOverrides: const <String, double>{
+          'じぶんローン': 0,
+        },
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-888,878円です。\n'
+                '- じぶんローン: 今月支払予定額は0円で、放置ではありません。8月27日に引落完了済みです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    test('accepts verification of a past unconfirmed income plan', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+        },
+        baseDate: DateTime(2026, 9, 9),
+        incomePlans: [
+          AssetLiabilityIncomePlan(
+            id: 'salary_past',
+            date: DateTime(2026, 8, 25),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'bank',
+            destinationAccountName: 'bank',
+            received: false,
+          ),
+        ],
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は100,000円です。\n'
+                '- 給料: 記録上は未受取です。未入金とは断定せず、予定と実績を照合して着金を確認してください。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(
+        result.errorMessage,
+        isNull,
+      );
+    });
+
+    test('accepts verification of a today unconfirmed income plan', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+        },
+        baseDate: DateTime(2026, 9, 9),
+        incomePlans: [
+          AssetLiabilityIncomePlan(
+            id: 'salary_past',
+            date: DateTime(2026, 9, 9),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'bank',
+            destinationAccountName: 'bank',
+            received: false,
+          ),
+        ],
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は100,000円です。\n'
+                '- 給料: 記録上は未受取です。未入金とは断定せず、予定と実績を照合して着金を確認してください。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(
+        result.errorMessage,
+        isNull,
+      );
+    });
+
     test('ai detailed payload includes exact account and debt values', () {
       final service = AssetManagementAiSummaryService(
         now: () => DateTime(2026, 5, 1, 12),
@@ -606,7 +1149,7 @@ void main() {
             '"source_references":["lib/pages/asset_management_page.dart"]}]',
         '```',
         '',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(
@@ -635,7 +1178,7 @@ void main() {
       );
       expect(result.text.contains('ai-new-proposals'), false);
       expect(result.text.contains('一括編集UIを追加'), false);
-      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+      expect(result.text.contains('## 8. まとめ'), true);
     });
 
     test('drops broken ai proposal block safely', () async {
@@ -645,7 +1188,7 @@ void main() {
         '```json ai-new-proposals',
         'これはJSONではありません',
         '```',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(
@@ -666,7 +1209,7 @@ void main() {
 
       expect(result.aiDeveloperRequests, isEmpty);
       expect(result.text.contains('ai-new-proposals'), false);
-      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+      expect(result.text.contains('## 8. まとめ'), true);
     });
 
     test('parses marker on the line after the fence', () async {
@@ -679,7 +1222,7 @@ void main() {
         '[{"title":"サンプル新規提案","description":"説明です。"}]',
         '```',
         '',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(
@@ -702,7 +1245,7 @@ void main() {
       expect(result.aiDeveloperRequests.single.title, 'サンプル新規提案');
       expect(result.text.contains('ai-new-proposals'), false);
       expect(result.text.contains('```json'), false);
-      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+      expect(result.text.contains('## 8. まとめ'), true);
     });
 
     test('filters proposals that repeat known template titles', () async {
@@ -716,7 +1259,7 @@ void main() {
         '[{"title":"$knownTitle","description":"既知提案の再掲です。"},'
             '{"title":"全く新しい改善提案","description":"新規の提案です。"}]',
         '```',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(
@@ -743,7 +1286,7 @@ void main() {
       final response = [
         '## 7. 開発者向け改善提案',
         '今回は ai-new-proposals に該当する新規提案はありません。',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(

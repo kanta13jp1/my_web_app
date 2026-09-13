@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../pages/aero_lab_page.dart';
 import '../pages/sound_bloom_page.dart';
+import '../pages/lumen_path_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -2356,6 +2357,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['ABテスト', 'ランディング', 'LP', 'CVR', 'コンバージョン'],
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'lumen-path',
+      sectionId: 'growth',
+      title: '光の道 · LUMEN PATH',
+      subtitle: '鏡を回して、3色の光をゴールへ導く',
+      icon: Icons.route_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['光', '鏡', 'パズル', 'LUMEN PATH', 'Astra'],
+      onOpen: (context) => _pushPage(context, const LumenPathPage()),
     ),
     HomeToolEntry(
       id: 'sound-bloom',

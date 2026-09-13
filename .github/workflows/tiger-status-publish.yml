@@ -45,5 +45,47 @@ jobs:
               with open(f, 'r', encoding='utf-8') as fp:
                   data = json.load(fp)
                   print(f'Validated {f}: {len(data) if isinstance(data, (list, dict)) else 1} entries')
-          print('All Tiger status JSON files are valid and ready for serving!')
+          print('All Tiger status JSON files are valid; artifact packaging follows (no site deployment).')
           PY
+
+      - name: Package immutable status artifact
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import hashlib, json, os, pathlib, shutil
+          from datetime import datetime, timezone
+          output = pathlib.Path('tiger-status-artifact')
+          output.mkdir()
+          entries = []
+          for source in sorted(pathlib.Path('assets/data').glob('tiger_*.json')):
+              if source.is_symlink() or not source.is_file():
+                  raise SystemExit(f'Unexpected status path: {source}')
+              raw = source.read_bytes()
+              json.loads(raw)
+              shutil.copyfile(source, output / source.name)
+              entries.append({'path': str(source), 'size': len(raw),
+                              'sha256': hashlib.sha256(raw).hexdigest()})
+          if not entries:
+              raise SystemExit('No status files to publish')
+          manifest = {'schemaVersion': 1, 'commit': os.environ['GITHUB_SHA'],
+                      'runId': os.environ['GITHUB_RUN_ID'],
+                      'packagedAt': datetime.now(timezone.utc).isoformat(),
+                      'publication': 'github_actions_artifact',
+                      'productionDeploymentVerified': False, 'files': entries}
+          (output / 'manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
+          PY
+
+      - name: Publish status artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: tiger-status-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tiger-status-artifact/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Describe publication boundary
+        shell: bash
+        run: |
+          echo '## Tiger status artifact' >> "$GITHUB_STEP_SUMMARY"
+          echo 'JSON and a per-file SHA256 manifest were published as a run artifact. No Flutter build, Firebase deployment, release tag or production notification was performed.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Artifact timestamp is packaging time, not source-data freshness or proof of live site delivery. Keep the previous successful artifact for recovery; this workflow does not modify the live site.' >> "$GITHUB_STEP_SUMMARY"

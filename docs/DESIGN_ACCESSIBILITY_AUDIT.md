@@ -3,10 +3,22 @@
 Issue: #1281
 Owner: Claude Code #1 for design judgment, Codex #1 for implementation and CI
 
+## Enforcement policy (2026-09-12)
+
+Design plugin review is recommended, not a required merge gate. Missing review,
+plugin unavailability, or reported findings do not by themselves block the PR.
+The CI audit still runs and preserves its real result; failures produce a visible
+warning and job summary, never a fabricated accessibility pass. A reviewer may
+still request remediation for a specific finding.
+
+This policy does not relax the minimal E2E contract, deterministic tests,
+security checks, or explicit human review for authentication/billing changes.
+The procedure and evidence template below apply when the optional audit is run.
+
 ## Purpose
 
-Every new or materially revised UI surface must be reviewed with Anthropic's
-Design plugin before the Pull Request is ready for review. The review covers:
+New or materially revised UI surfaces should be reviewed with Anthropic's
+Design plugin when available; this review is not required for PR readiness. The review covers:
 
 - design-level WCAG 2.1 AA risks;
 - checkout, payment, authentication, and form error-state microcopy;
@@ -36,7 +48,7 @@ UI files elsewhere under `lib/` when their names end in `_component.dart`,
 `_widget.dart`, plus app shell, route/navigation, feature, and development UI
 paths.
 
-A checkout/form microcopy review is mandatory when an affected path or declared
+A checkout/form microcopy review is recommended when an affected path or declared
 scope contains a checkout, payment, purchase, form, authentication, login,
 signup, registration, or contact surface marker. The PR must also classify the
 surface; generic route or shell filenames cannot silently declare a checkout
@@ -134,8 +146,48 @@ Error-Microcopy-Review: not-applicable — <specific reason, at least one senten
 ```
 
 `not-applicable` is not accepted for checkout/form-related UI paths. If the
-Design plugin is unavailable, the audit is blocked; a different tool or an
-unchecked PR box is not evidence that this Issue's acceptance condition passed.
+Design plugin is unavailable, record the audit as not run. This does not block
+the PR. A different tool or unchecked box must not be presented as a completed
+Design plugin audit.
+
+## Visual Parity Exemption (Non-Visual Refactors Only)
+
+A PR that touches a UI-surface file but changes no rendered output — e.g.
+swapping `TextFormField(initialValue: ...)` for a `TextField` bound to a
+persistent `TextEditingController` to fix a state-loss bug — can skip the
+full Design plugin audit above without a plugin review, but only if
+`scripts/check_design_accessibility_audit.py` can mechanically prove there
+is no visual change. This is **not** a self-declared bypass: the script
+independently tokenizes the base and head revisions of the changed file and
+requires their widget-call/visible-string-literal sequence ("visual
+fingerprint") to match exactly. Any parse ambiguity, any changed/added
+label, hint, error, or button text, and any widget-type change outside the
+reviewed `WIDGET_ALIASES` table fails the check closed — the full audit
+contract above remains recommended, and nothing about this exemption weakens
+it. `Key`/`ValueKey`/etc. arguments, empty string literals, and calls to a
+small reviewed list of non-widget SDK classes (e.g.
+`TextEditingController`, `FocusNode`) are excluded from the fingerprint
+because they cannot affect what is painted — see the code comments next to
+`_KEY_CONSTRUCTOR_NAMES` and `_NON_WIDGET_CALL_NAMES` for the exact,
+human-reviewed list.
+
+To use it, add this section to the PR body instead of the full evidence
+block, naming every function you touched or added in the file (existing or
+new — the script uses this list only to confirm the names are real; the
+actual pass/fail is the whole-file fingerprint comparison):
+
+```markdown
+## Visual Parity Exemption
+
+- File: lib/pages/asset_management_page.dart; Functions: _buildRevolvingField, _syncRevolvingFieldControllers
+```
+
+If the fingerprint check fails, the script reports why and falls back to
+reporting findings for the optional `## Design Accessibility Audit` contract — there is no
+partial credit. This exemption exists specifically for internal
+implementation changes (state management, controllers, refactors) with no
+user-visible effect; anything that changes what a user sees or reads still
+is eligible for the recommended full plugin review.
 
 ## CI Boundary
 
