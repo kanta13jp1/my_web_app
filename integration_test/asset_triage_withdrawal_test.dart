@@ -8,6 +8,14 @@ class _DiagnosticBinding extends IntegrationTestWidgetsFlutterBinding {
   void reportExceptionNoticed(FlutterErrorDetails exception) {
     final data = reportData ??= <String, dynamic>{};
     data.putIfAbsent('firstFrameworkError', () => exception.toString());
+    final errors = data.putIfAbsent(
+      'frameworkErrors',
+      () => <String>[],
+    ) as List<String>;
+    final message = exception.toString();
+    if (errors.length < 20 && !errors.contains(message)) {
+      errors.add(message);
+    }
     super.reportExceptionNoticed(exception);
   }
 }

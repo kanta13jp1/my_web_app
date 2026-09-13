@@ -27340,6 +27340,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _buildAssetSectionHeader({
+    required Widget title,
+    required Widget actions,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 600) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              title,
+              const SizedBox(height: 8),
+              actions,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: title),
+            const SizedBox(width: 8),
+            Flexible(flex: 4, child: actions),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildIncomePlanSection(AssetLiabilityWorkbook workbook) {
     final plans = workbook.incomePlans;
     final unassignedPlans = workbook.unassignedDestinationIncomePlans;
@@ -27354,17 +27381,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  '収入予定',
-                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
-                ),
-              ),
-              Expanded(
-                flex: 4,
-                child: Wrap(
+          _buildAssetSectionHeader(
+            title: const Text(
+              '収入予定',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+            actions: Wrap(
                   spacing: 4,
                   runSpacing: 4,
                   alignment: WrapAlignment.end,
@@ -27400,9 +27422,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       label: const Text('追加'),
                     ),
                   ],
-                ),
               ),
-            ],
           ),
           Text(
             '入金済み・支払済みにした項目は、現在の口座残高に反映済みとして扱います。まだ残高を更新していない場合はチェックしないでください。',
@@ -28299,15 +28319,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  '月次履歴（保存時点）',
-                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
-                ),
-              ),
-              Wrap(
+          _buildAssetSectionHeader(
+            title: const Text(
+              '月次履歴（保存時点）',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+            actions: Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 alignment: WrapAlignment.end,
@@ -28332,7 +28349,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ],
               ),
-            ],
           ),
           const SizedBox(height: 4),
           Text(
