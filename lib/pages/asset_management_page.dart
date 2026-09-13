@@ -797,6 +797,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   _DebtMasterReviewFilter _debtMasterReviewFilter = _DebtMasterReviewFilter.all;
   List<AssetLiabilityIncomePlan> _monthlyIncomePlans =
       <AssetLiabilityIncomePlan>[];
+  bool _isSavingTriageWithdrawal = false;
   List<AssetLiabilityTransferTask> _transferTasks =
       <AssetLiabilityTransferTask>[];
   List<AssetLiabilityRecurringIncomeTemplate> _recurringIncomeTemplates =
@@ -23255,7 +23256,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 背景が固定の淡ティールのため、文字色も固定の濃ティール系にする。
   Future<void> _createTriageWithdrawalTask(
       AssetTriageStep step, double amount) async {
-    if (step.withdrawalSourceAccountId == null) {
+    if (_isSavingTriageWithdrawal || step.withdrawalSourceAccountId == null) {
       return;
     }
     final sourceId = step.withdrawalSourceAccountId!;
@@ -23327,6 +23328,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ..sort(_compareTransferTasksByDueDate);
 
     setState(() {
+      _isSavingTriageWithdrawal = true;
       _transferTasks = nextTasks;
     });
     try {
@@ -23334,6 +23336,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
+        _isSavingTriageWithdrawal = false;
         _transferTasks =
             _transferTasks.where((task) => task.id != taskId).toList();
       });
@@ -23343,6 +23346,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     if (!mounted) return;
+    setState(() => _isSavingTriageWithdrawal = false);
 
     final yenText = amount >= 10000 && amount % 10000 == 0
         ? '${(amount / 10000).round()}万円'
@@ -23423,8 +23427,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      onPressed: () =>
-                          _createTriageWithdrawalTask(step, amount),
+                      onPressed: _isSavingTriageWithdrawal
+                          ? null
+                          : () => _createTriageWithdrawalTask(step, amount),
                     ),
                 ],
               ),

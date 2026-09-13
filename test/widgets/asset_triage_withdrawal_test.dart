@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
@@ -23,19 +25,22 @@ class _RecordingRepository extends SharedPreferencesAssetLiabilityRepository {
   }
   late AssetLiabilityMonthlyState current;
   bool failSave = false;
+  Completer<void>? saveGate;
   @override
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async => current;
   @override
   Future<void> saveMonth(
       {required DateTime month,
-      required AssetLiabilityMonthlyState state}) async {
+      required AssetLiabilityMonthlyState state,}) async {
+    final gate = saveGate;
+    if (gate != null) await gate.future;
     if (failSave) throw StateError('synthetic storage failure');
     current = state;
   }
 }
 
 Future<void> _pump(WidgetTester tester, _RecordingRepository repository,
-    {double bank = 500000}) async {
+    {double bank = 500000,}) async {
   AssetSyncDirtyKeysStore.resetWriteLockForTest();
   AssetRecurringTombstoneSyncService.resetSharedForTest();
   await tester.pumpWidget(MaterialApp(
@@ -46,7 +51,7 @@ Future<void> _pump(WidgetTester tester, _RecordingRepository repository,
     debugInitialAssetData: <String, Map<String, double>>{
       '2026-09-01': <String, double>{'財布(現金)': 1000, '三井住友銀行': bank},
     },
-  )));
+  ),),);
   await tester.pump(const Duration(milliseconds: 300));
   await tester.pump(const Duration(milliseconds: 300));
 }
@@ -85,7 +90,18 @@ void main() {
       final repository = _RecordingRepository();
       await _pump(tester, repository);
       expect(find.textContaining('生活費は専用財布へ'), findsWidgets);
+      repository.saveGate = Completer<void>();
       await _tapAmount(tester, amount);
+      expect(repository.current.transferTasks, isEmpty);
+      for (final pendingAmount in [10000, 20000]) {
+        final button = tester.widget<OutlinedButton>(
+          find.byKey(Key('triage_withdrawal_template_$pendingAmount')),
+        );
+        expect(button.onPressed, isNull);
+      }
+      repository.saveGate!.complete();
+      repository.saveGate = null;
+      await tester.pump(const Duration(milliseconds: 500));
       expect(repository.current.transferTasks, hasLength(1));
       final task = repository.current.transferTasks.single;
       expect(task.amount, amount.toDouble());
@@ -114,11 +130,11 @@ void main() {
     final repository = _RecordingRepository();
     await _pump(tester, repository, bank: 15000);
     expect(find.byKey(const Key('triage_withdrawal_template_20000')),
-        findsNothing);
+        findsNothing,);
     await _tapAmount(tester, 10000);
     expect(repository.current.transferTasks, hasLength(1));
     expect(find.byKey(const Key('triage_withdrawal_template_10000')),
-        findsNothing);
+        findsNothing,);
     expect(find.textContaining('¥5,000'), findsWidgets);
     expect(tester.takeException(), isNull);
     await _unmount(tester);
