@@ -139,7 +139,6 @@ void main() {
       expect(prompt, isNot(contains('時々笑える毒舌')));
       expect(prompt, isNot(contains('1. 宿命・本質')));
       expect(service.buildPayload(_report())['response_policy_version'], 2);
-
     });
 
     test('includes previous persisted analyses in the AI prompt', () async {
