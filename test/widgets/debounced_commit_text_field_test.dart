@@ -8,7 +8,8 @@ void main() {
     addTearDown(controller.dispose);
     final commits = <String>[];
     await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: DebouncedCommitTextField(
+      home: Scaffold(
+          body: DebouncedCommitTextField(
         controller: controller,
         onCommitted: commits.add,
         decoration: const InputDecoration(),
@@ -30,7 +31,8 @@ void main() {
     addTearDown(controller.dispose);
     final commits = <String>[];
     await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: DebouncedCommitTextField(
+      home: Scaffold(
+          body: DebouncedCommitTextField(
         controller: controller,
         onCommitted: commits.add,
         decoration: const InputDecoration(),
