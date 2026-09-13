@@ -930,15 +930,19 @@ void main() {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
           'bank': 100000,
-          'famima_card': -4500,
-          'mobit': -32000,
+          'ファミマカード': -4500,
+          'モビット': -32000,
         },
         baseDate: DateTime(2026, 9, 9),
         monthlyPaymentOverrides: const <String, double>{
-          'famima_card': 4500,
-          'mobit': 32000,
+          'ファミマカード': 4500,
+          'モビット': 32000,
         },
-        paidAccountNames: const <String>{'famima_card'},
+        paidAccountNames: const <String>{'ファミマカード'},
+      );
+      expect(
+        workbook.currentDebtRows.singleWhere((row) => row.name == 'ファミマカード').paid,
+        isTrue,
       );
       final report = insight.buildReport(
         workbook: workbook,
@@ -951,8 +955,8 @@ void main() {
           invoker: (body) async => <String, dynamic>{
             'success': true,
             'text': '純資産は63,500円です。\n'
-                '- 支払済みのfamima_card（4,500円）を除き、'
-                '未払いのmobit32,000円を優先して支払いましょう。',
+                '- 支払済みのファミマカード（4,500円）を除き、'
+                '未払いのモビット32,000円を優先して支払いましょう。',
             'provider': 'openai',
           },
         ),
@@ -968,32 +972,32 @@ void main() {
     for (final scenario in [
       (
         label: 'payment completion before debt name',
-        text: '支払完了のfamima_cardを除き、未払いのmobitを確認してください。',
+        text: '支払完了のファミマカードを除き、未払いのモビットを確認してください。',
         accepted: true,
       ),
       (
         label: 'settlement completion after debt name',
-        text: 'famima_cardは決済完了です。未払いのmobitを確認してください。',
+        text: 'ファミマカードは決済完了です。未払いのモビットを確認してください。',
         accepted: true,
       ),
       (
         label: 'paid marker of previous debt across a clause',
-        text: 'mobitは支払済み、famima_cardは未払いですぐに払ってください。',
+        text: 'モビットは支払済み、ファミマカードは未払いですぐに払ってください。',
         accepted: false,
       ),
       (
         label: 'paid marker of following debt',
-        text: 'famima_cardは未払いでmobitは支払済みです。',
+        text: 'ファミマカードは未払いでモビットは支払済みです。',
         accepted: false,
       ),
       (
         label: 'prefix marker crosses another debt name',
-        text: '支払済みのmobitとfamima_cardは未払いです。',
+        text: '支払済みのモビットとファミマカードは未払いです。',
         accepted: false,
       ),
       (
         label: 'nonpayment completion is not paid status',
-        text: 'famima_cardは登録完了ですが未払いです。',
+        text: 'ファミマカードは登録完了ですが未払いです。',
         accepted: false,
       ),
     ]) {
@@ -1003,17 +1007,21 @@ void main() {
         final workbook = planner.buildWorkbook(
           latestSnapshot: const <String, double>{
             'bank': 100000,
-            'famima_card': -4500,
-            'mobit': -32000,
+            'ファミマカード': -4500,
+            'モビット': -32000,
           },
           baseDate: DateTime(2026, 9, 9),
           monthlyPaymentOverrides: const <String, double>{
-            'famima_card': 4500,
-            'mobit': 32000,
+            'ファミマカード': 4500,
+            'モビット': 32000,
           },
-          paidAccountNames: const <String>{'famima_card'},
+          paidAccountNames: const <String>{'ファミマカード'},
         );
-        final report = insight.buildReport(
+        expect(
+        workbook.currentDebtRows.singleWhere((row) => row.name == 'ファミマカード').paid,
+        isTrue,
+      );
+      final report = insight.buildReport(
           workbook: workbook,
           userProfile: _userProfile(),
           minimumSafetyBalance: 10000,
