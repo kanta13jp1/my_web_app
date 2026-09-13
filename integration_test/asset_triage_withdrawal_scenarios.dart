@@ -87,7 +87,10 @@ Future<void> _captureEvidence(
       ? find.textContaining('三井住友銀行 -> 財布(現金)')
       : find.byKey(const Key('triage_withdrawal_template_10000'));
   expect(target, findsOneWidget);
-  await tester.ensureVisible(target);
+  await Scrollable.ensureVisible(
+    tester.element(target),
+    alignment: 0.5,
+  );
   await capture(tester, name);
 }
 

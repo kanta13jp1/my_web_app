@@ -84,7 +84,7 @@ jobs:
           curl --fail --silent http://localhost:4444/status
           set -o pipefail
           for viewport in desktop mobile; do
-            dimensions=1440x1000
+            dimensions=1440x1000@1
             mobile=false
             if [ "$viewport" = mobile ]; then
               dimensions=393x851@2.75

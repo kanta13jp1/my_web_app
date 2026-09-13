@@ -37,6 +37,7 @@ void main() {
           <String, Object?>{
             'width': viewport.width,
             'height': viewport.height,
+            'devicePixelRatio': mobile ? 2.75 : 1.0,
             'frame': frame,
             'settling': 'Flutter pump 500ms; injected date stays fixed',
           },
