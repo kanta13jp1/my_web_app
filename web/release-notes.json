@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-09-12",
+    "date": "2026-09-13",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-09-12T00:00:00Z",
+  "generatedAt": "2026-09-13T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -28,10 +28,152 @@
         "automation",
         "docs",
         "feature",
-        "fix",
-        "security"
+        "fix"
       ],
       "changes": [
+        {
+          "category": "fix",
+          "id": "pr-5417",
+          "links": [
+            {
+              "title": "PR #5417",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5417"
+            }
+          ],
+          "mergedAt": "2026-09-13T07:16:30Z",
+          "summary": "#5417 fix: route observability breaches to canonical alerts (#5102)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-5416",
+          "links": [
+            {
+              "title": "PR #5416",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5416"
+            }
+          ],
+          "mergedAt": "2026-09-13T06:43:22Z",
+          "summary": "#5416 ci: run Remote Control server plan regression tests"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5414",
+          "links": [
+            {
+              "title": "PR #5414",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5414"
+            }
+          ],
+          "mergedAt": "2026-09-13T06:37:57Z",
+          "summary": "#5414 fix(asset): remove contradictory advice persona and expire old summaries"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5412",
+          "links": [
+            {
+              "title": "PR #5412",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5412"
+            }
+          ],
+          "mergedAt": "2026-09-13T03:09:40Z",
+          "summary": "#5412 fix(asset): avoid full-page work for every rate keystroke"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5395",
+          "links": [
+            {
+              "title": "PR #5395",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5395"
+            }
+          ],
+          "mergedAt": "2026-09-13T02:50:19Z",
+          "summary": "#5395 feat: LUMEN PATH original mirror puzzle prototype"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5410",
+          "links": [
+            {
+              "title": "PR #5410",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5410"
+            }
+          ],
+          "mergedAt": "2026-09-13T02:28:17Z",
+          "summary": "#5410 fix(asset): correct 100x understatement of interest pain metrics"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5407",
+          "links": [
+            {
+              "title": "PR #5407",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5407"
+            }
+          ],
+          "mergedAt": "2026-09-13T02:28:13Z",
+          "summary": "#5407 fix(asset): distinguish evidence from inferred AI advice"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5400",
+          "links": [
+            {
+              "title": "PR #5400",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5400"
+            }
+          ],
+          "mergedAt": "2026-09-12T07:29:06Z",
+          "summary": "#5400 fix: serialize note saves and history recovery"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5401",
+          "links": [
+            {
+              "title": "PR #5401",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5401"
+            }
+          ],
+          "mergedAt": "2026-09-12T05:47:35Z",
+          "summary": "#5401 fix: use documented tool search setting (#1376)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5391",
+          "links": [
+            {
+              "title": "PR #5391",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5391"
+            }
+          ],
+          "mergedAt": "2026-09-12T05:27:10Z",
+          "summary": "#5391 feat(asset): 月別の支払利息実績をサーバ保存・可視化"
+        },
+        {
+          "category": "automation",
+          "id": "pr-5399",
+          "links": [
+            {
+              "title": "PR #5399",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5399"
+            }
+          ],
+          "mergedAt": "2026-09-12T05:09:31Z",
+          "summary": "#5399 ci: make Design accessibility audit advisory"
+        },
         {
           "category": "automation",
           "id": "pr-5393",
@@ -255,19 +397,6 @@
         },
         {
           "category": "fix",
-          "id": "pr-5345",
-          "links": [
-            {
-              "title": "PR #5345",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5345"
-            }
-          ],
-          "mergedAt": "2026-09-06T18:51:29Z",
-          "summary": "#5345 fix(security): isolate historical integration test credentials (#2859)"
-        },
-        {
-          "category": "fix",
           "id": "pr-5358",
           "links": [
             {
@@ -278,136 +407,6 @@
           ],
           "mergedAt": "2026-09-06T18:42:56Z",
           "summary": "#5358 fix(asset): distinguish credit limit warning copy and guard bulk confirmation (#5216)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5349",
-          "links": [
-            {
-              "title": "PR #5349",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5349"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:59:03Z",
-          "summary": "#5349 fix(ci): report actual outcomes for each check (#4273)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5352",
-          "links": [
-            {
-              "title": "PR #5352",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5352"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:56:58Z",
-          "summary": "#5352 feat(context): add revision-labelled six-file snapshot (#2759)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5348",
-          "links": [
-            {
-              "title": "PR #5348",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5348"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:54:23Z",
-          "summary": "#5348 fix(ci): show draft PR conflicts in backlog audit (#3448)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5355",
-          "links": [
-            {
-              "title": "PR #5355",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5355"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:52:49Z",
-          "summary": "#5355 fix(security): require confirmed manual network changes (#3841)"
-        },
-        {
-          "category": "docs",
-          "id": "pr-5344",
-          "links": [
-            {
-              "title": "PR #5344",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5344"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:01:39Z",
-          "summary": "#5344 docs: Firebase障害対応とAI支援ガイド (#1397)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5347",
-          "links": [
-            {
-              "title": "PR #5347",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5347"
-            }
-          ],
-          "mergedAt": "2026-09-06T16:00:29Z",
-          "summary": "#5347 fix(ci): classify actual failures instead of summary commands (#5346)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5350",
-          "links": [
-            {
-              "title": "PR #5350",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5350"
-            }
-          ],
-          "mergedAt": "2026-09-06T15:51:00Z",
-          "summary": "#5350 fix(deploy): pin checkout to event SHA (#2678 prerequisite)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5351",
-          "links": [
-            {
-              "title": "PR #5351",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5351"
-            }
-          ],
-          "mergedAt": "2026-09-06T15:50:40Z",
-          "summary": "#5351 test(ci): prove deprecated APIs fail the analyzer gate (#2816)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5354",
-          "links": [
-            {
-              "title": "PR #5354",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5354"
-            }
-          ],
-          "mergedAt": "2026-09-06T15:27:35Z",
-          "summary": "#5354 fix(ci): sanitize both WBS notification workflows (#3656)"
-        },
-        {
-          "category": "security",
-          "id": "pr-5356",
-          "links": [
-            {
-              "title": "PR #5356",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5356"
-            }
-          ],
-          "mergedAt": "2026-09-06T15:26:54Z",
-          "summary": "#5356 docs(security): align protection guide and prove signed publication (#1286)"
         },
         {
           "category": "fix",
@@ -423,7 +422,7 @@
           "summary": "#5357 fix(video): preserve safe inference diagnostics and resume failed improvements"
         }
       ],
-      "date": "2026-09-12",
+      "date": "2026-09-13",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,
