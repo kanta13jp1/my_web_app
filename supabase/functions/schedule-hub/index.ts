@@ -1812,7 +1812,16 @@ function dateFromMemoryPath(
   return fallbackString ? fallbackString.slice(0, 10) : null;
 }
 
-serve(async (req: Request) => {
+// Export the same handler used by the production server. Dependencies are
+// supplied only by trusted module callers, never by HTTP request data.
+export async function handleScheduleHubRequest(
+  req: Request,
+  dependencies = {
+    getUserId,
+    isServiceRoleRequest,
+    createAdmin: (): SupabaseClient => createClient(SUPABASE_URL, SERVICE_ROLE_KEY),
+  },
+): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -1829,17 +1838,17 @@ serve(async (req: Request) => {
       return json({ error: "UnknownAction" }, 400);
     }
 
-    const serviceRoleRequest = isServiceRoleRequest(req);
+    const serviceRoleRequest = dependencies.isServiceRoleRequest(req);
     let userId: string | null = null;
     if (policy.auth === "user" && !serviceRoleRequest) {
-      userId = await getUserId(req);
+      userId = await dependencies.getUserId(req);
     }
     if (
       policy.auth === "public" &&
       !serviceRoleRequest &&
       action === "billing.create_supporter_checkout_session"
     ) {
-      userId = await getUserId(req);
+      userId = await dependencies.getUserId(req);
     }
 
     const authorization = authorizeAction(action, {
@@ -1850,7 +1859,7 @@ serve(async (req: Request) => {
       return json({ error: authorization.error }, authorization.status);
     }
 
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const admin = dependencies.createAdmin();
 
     switch (action) {
       case "billing.get_stripe_account_readiness": {
@@ -2226,7 +2235,8 @@ serve(async (req: Request) => {
           .from("hub_data")
           .update({ metadata: { ...body, user_id: userId! } })
           .eq("id", String(body.id))
-          .eq("source", "scheduled_task");
+          .eq("source", "scheduled_task")
+          .filter("metadata->>user_id", "eq", userId!);
         if (error) throw new Error(error.message);
         return json({ success: true });
       }
@@ -4694,4 +4704,8 @@ serve(async (req: Request) => {
     }
     return json({ error: String(e) }, 500);
   }
-});
+}
+
+if (import.meta.main) {
+  serve((req) => handleScheduleHubRequest(req));
+}
