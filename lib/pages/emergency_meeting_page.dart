@@ -6,7 +6,6 @@ import 'package:my_web_app/services/ai_service.dart';
 import 'package:my_web_app/services/agent_org_service.dart';
 import 'package:my_web_app/services/emergency_meeting_pdca_service.dart';
 import 'package:my_web_app/services/notification_service.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -71,7 +70,6 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   bool _isLoading = false;
   String _loadingStatus = '';
 
-  String? _geminiApiKey;
   String _selectedModel = _boardMeetingSupportedModels.first;
   MeetingFocus _selectedFocus = MeetingFocus.balanced;
   List<String> _continuationPlan = <String>[];
@@ -263,7 +261,6 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     final normalizedModel = _normalizeBoardMeetingModel(savedModel);
     if (mounted) {
       setState(() {
-        _geminiApiKey = prefs.getString('gemini_api_key');
         _selectedModel = normalizedModel;
         _selectableModels = _defaultBoardMeetingModels();
       });
@@ -1281,41 +1278,31 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     );
   }
 
-  Future<List<Map<String, dynamic>>> fetchGeminiModels(String apiKey) async {
+  Future<List<Map<String, dynamic>>> fetchGeminiModels() async {
     try {
-      final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey',
+      final response = await _supabase.functions.invoke(
+        'ai-hub',
+        body: const {'action': 'provider.models'},
       );
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data =
-            json.decode(response.body) as Map<String, dynamic>;
-        final modelsRaw = data['models'];
-        if (modelsRaw is List) {
-          return modelsRaw
-              .whereType<Map>()
-              .map((m) => Map<String, dynamic>.from(m))
-              .where((m) {
-            final methods = m['supportedGenerationMethods'];
+      final data = Map<String, dynamic>.from(response.data as Map);
+      return (data['models'] as List<dynamic>? ?? const <dynamic>[])
+          .whereType<Map>()
+          .map((model) => Map<String, dynamic>.from(model))
+          .where((model) => model['provider'] == 'google')
+          .where((model) {
+            final methods = model['supportedGenerationMethods'];
             return methods is List && methods.contains('generateContent');
-          }).map<Map<String, dynamic>>((m) {
-            final methods = (m['supportedGenerationMethods'] as List)
-                .cast<Object>()
-                .map((v) => v.toString())
-                .toList();
-            return {
-              'name': (m['name'] ?? '').toString().replaceFirst(
-                    'models/',
-                    '',
-                  ),
-              'methods': methods,
-            };
-          }).where((m) {
-            final name = (m['name'] ?? '').toString();
-            return !name.contains('tts') && !name.contains('embedding');
-          }).toList();
-        }
-      }
+          })
+          .map<Map<String, dynamic>>(
+            (model) => <String, dynamic>{
+              'name': model['name']?.toString() ?? '',
+              'methods': List<String>.from(
+                model['supportedGenerationMethods'] as List,
+              ),
+            },
+          )
+          .where((model) => (model['name'] as String).isNotEmpty)
+          .toList();
     } catch (e) {
       debugPrint('Failed to fetch models: $e');
     }
@@ -1347,10 +1334,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   }
 
   Future<void> showSettingsDialog() async {
-    final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
     String tempSelectedModel = _selectedModel;
     bool isFetchingModels = false;
-    bool obscureApiKey = true;
     List<Map<String, dynamic>> currentSelectableModels =
         List.from(_selectableModels);
 
@@ -1372,44 +1357,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    controller: apiKeyController,
-                    decoration: InputDecoration(
-                      labelText: 'Gemini API Key',
-                      border: const OutlineInputBorder(),
-                      hintText: 'APIキーを入力してください',
-                      suffixIcon: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              obscureApiKey
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
-                            onPressed: () => setDialogState(
-                              () => obscureApiKey = !obscureApiKey,
-                            ),
-                            tooltip: obscureApiKey ? '表示' : '非表示',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.content_paste_rounded),
-                            onPressed: () async {
-                              final data = await Clipboard.getData(
-                                Clipboard.kTextPlain,
-                              );
-                              if (data?.text != null) {
-                                apiKeyController.text = data!.text!;
-                              }
-                            },
-                            tooltip: '貼り付け',
-                          ),
-                        ],
-                      ),
-                    ),
-                    obscureText: obscureApiKey,
-                    enableInteractiveSelection: true,
-                    keyboardType: TextInputType.visiblePassword,
+                  const Text(
+                    'AI認証情報はサーバーで管理されています。ここでは利用モデルのみ選択できます。',
                   ),
                   const SizedBox(height: 8),
                   if (isFetchingModels)
@@ -1419,17 +1368,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          if (apiKeyController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('APIキーを入力してください'),
-                              ),
-                            );
-                            return;
-                          }
                           setDialogState(() => isFetchingModels = true);
-                          final models =
-                              await fetchGeminiModels(apiKeyController.text);
+                          final models = await fetchGeminiModels();
                           setDialogState(() {
                             isFetchingModels = false;
                             if (models.isNotEmpty) {
@@ -1563,18 +1503,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     'gemini_model_emergency_meeting',
                     normalizedSelectedModel,
                   );
-                  if (apiKeyController.text.isNotEmpty) {
-                    await prefs.setString(
-                      'gemini_api_key',
-                      apiKeyController.text,
-                    );
-                  }
                   if (mounted) {
                     setState(() {
                       _selectedModel = normalizedSelectedModel;
-                      if (apiKeyController.text.isNotEmpty) {
-                        _geminiApiKey = apiKeyController.text;
-                      }
                       _selectableModels = _defaultBoardMeetingModels();
                     });
                   }
@@ -2191,14 +2122,6 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   // ... (initState and _fetchModels remain the same)
 
   Future<void> _conveneBoard() async {
-    if (_geminiApiKey == null || _geminiApiKey!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gemini APIキーを設定してください。')),
-      );
-      await showSettingsDialog();
-      if (_geminiApiKey == null || _geminiApiKey!.isEmpty) return;
-    }
-
     await _ensureSelectedModelIsAvailable();
 
     if (!mounted) return;
@@ -2347,7 +2270,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         startupContext: startupContext,
       );
 
-      final aiService = AIService(null, _geminiApiKey);
+      final aiService = AIService();
       String? responseText;
       try {
         responseText = await aiService.generateContent(
@@ -2360,10 +2283,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             err.contains('404') && err.contains(':generateContent');
         if (!hasModel404) rethrow;
 
-        final apiKey = _geminiApiKey?.trim();
-        final latestModels = (apiKey == null || apiKey.isEmpty)
-            ? const <Map<String, dynamic>>[]
-            : await fetchGeminiModels(apiKey);
+        final latestModels = await fetchGeminiModels();
         final candidateSource =
             latestModels.isNotEmpty ? latestModels : _selectableModels;
 
@@ -2501,7 +2421,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           _errorMessage = 'AI応答のJSON形式が崩れていました。再試行するか、別モデルに切り替えてください。';
         } else if (errString.contains('400') &&
             errString.contains('API key not valid')) {
-          _errorMessage = 'APIキーが無効です。設定を確認してください。';
+          _errorMessage = 'サーバーのAI認証設定を確認してください。';
         } else {
           _errorMessage = '会議エラー: $errString';
         }

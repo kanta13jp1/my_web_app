@@ -12,9 +12,41 @@ Deno.test("aiHubActionAccess classifies registered actions correctly", () => {
   assertEquals(aiHubActionAccess("judgment.get"), "public");
   assertEquals(aiHubActionAccess("search.query"), "authenticated");
   assertEquals(aiHubActionAccess("corporate_site.readiness"), "authenticated");
+  assertEquals(aiHubActionAccess("provider.generate"), "authenticated");
+  assertEquals(aiHubActionAccess("provider.embed"), "authenticated");
   assertEquals(aiHubActionAccess("observability.heatmap"), "service_role");
   assertEquals(aiHubActionAccess("unknown.random.action"), null);
 });
+
+Deno.test(
+  "server-managed provider actions reject anonymous callers and allow authenticated or service-role callers",
+  () => {
+    for (
+      const action of [
+        "provider.models",
+        "provider.embed",
+        "provider.generate",
+      ]
+    ) {
+      assertEquals(AUTHENTICATED_AI_HUB_ACTIONS.has(action), true);
+      assertEquals(
+        authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+        { allowed: false, status: 401, error: "Unauthorized" },
+      );
+      assertEquals(
+        authorizeAiHubAction(action, {
+          userId: "regular-user",
+          isServiceRole: false,
+        }),
+        { allowed: true },
+      );
+      assertEquals(
+        authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+        { allowed: true },
+      );
+    }
+  },
+);
 
 Deno.test("authorizeAiHubAction fails closed on unregistered actions", () => {
   const decision = authorizeAiHubAction("unknown.action", {
@@ -117,6 +149,33 @@ Deno.test("disjointness of action registry sets", () => {
       AUTHENTICATED_AI_HUB_ACTIONS.has(a),
       false,
       `${a} is in both service_role and authenticated`,
+    );
+  }
+});
+
+Deno.test("service-role fallback never widens existing user action access", () => {
+  const machineActions = new Set([
+    "provider.models",
+    "provider.generate",
+    "provider.embed",
+  ]);
+  for (const action of AUTHENTICATED_AI_HUB_ACTIONS) {
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+      machineActions.has(action)
+        ? { allowed: true }
+        : { allowed: false, status: 401, error: "Unauthorized" },
+      action,
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-a", isServiceRole: false }),
+      { allowed: true },
+      action,
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+      action,
     );
   }
 });

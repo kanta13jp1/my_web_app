@@ -1798,6 +1798,16 @@ void main() {
             debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
               <String, int>{'mobit': now.day},
+              // Keep unrelated built-in bills out of the eight-item preview.
+              // Their due dates otherwise change visibility with the real date.
+              monthlyState: const AssetLiabilityMonthlyState(
+                paidAccountNames: <String>{
+                  'kddi_provider',
+                  'rent',
+                  'water_bill',
+                  'gas_bill',
+                },
+              ),
             ),
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
@@ -1830,7 +1840,11 @@ void main() {
 
       expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
       expect(livingExpense, findsOneWidget);
-      expect(overdue, findsNothing);
+      expect(overdue, findsOneWidget);
+      expect(
+        tester.getTopLeft(livingExpense).dy,
+        lessThan(tester.getTopLeft(overdue).dy),
+      );
 
       await tester.tap(toggle);
       await tester.pump(const Duration(milliseconds: 100));

@@ -34,7 +34,6 @@ class _MindMapPageState extends State<MindMapPage> {
   bool _isLoading = false;
   bool _isDownloading = false;
   String? _errorMessage;
-  String? _geminiApiKey;
   String _selectedModel = 'gemini-2.5-flash';
 
   @override
@@ -69,7 +68,6 @@ class _MindMapPageState extends State<MindMapPage> {
     }
 
     setState(() {
-      _geminiApiKey = prefs.getString('gemini_api_key');
       _selectedModel = resolvedModel;
     });
   }
@@ -214,20 +212,13 @@ class _MindMapPageState extends State<MindMapPage> {
       return;
     }
 
-    if (_geminiApiKey == null || _geminiApiKey!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gemini APIキーが設定されていません。')),
-      );
-      return;
-    }
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final aiService = AIService(null, _geminiApiKey);
+      final aiService = AIService();
       final candidates = _modelCandidatesForMindMap();
       final outputLanguage = _preferredOutputLanguage(topic);
       String? responseText;
