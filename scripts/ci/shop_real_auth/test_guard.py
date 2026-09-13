@@ -1,9 +1,16 @@
 import unittest
 from pathlib import Path
+import tomllib
 from guard import APP, API, local_url, runtime
 
 
 class IsolationGuards(unittest.TestCase):
+    def test_email_login_provider_enabled_but_public_signup_disabled(self):
+        config = tomllib.loads(Path(__file__).with_name('config.toml').read_text(encoding='utf-8'))
+        self.assertFalse(config['auth']['enable_signup'])
+        self.assertTrue(config['auth']['email']['enable_signup'])
+        self.assertEqual(config['api']['schemas'], ['public'])
+
     def env(self):
         return dict(GITHUB_ACTIONS='true', RUNNER_ENVIRONMENT='github-hosted',
                     GITHUB_RUN_ID='1234', GITHUB_RUN_ATTEMPT='1', RUNNER_TEMP=str(Path('/tmp/runner').resolve()))

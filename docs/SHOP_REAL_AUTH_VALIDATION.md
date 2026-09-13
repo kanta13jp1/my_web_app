@@ -30,6 +30,11 @@ database, Stripe endpoint or real email is used. Password signup is disabled;
 the local Auth admin API creates four confirmed `example.test` users. Credentials
 and Auth sessions must never become artifacts. Self-hosted/local runs, nonloopback
 endpoints, conflicting hosted credentials and broad temporary paths fail closed.
+
+`auth.enable_signup=false` disables public registration. Keep
+`auth.email.enable_signup=true`: in pinned CLI 2.84.2 this maps to the email login
+provider switch, not just registration. The suite asserts public signup remains
+rejected and creates no extra Auth user. See the [pinned CLI configuration mapping](https://github.com/supabase/cli/blob/v2.84.2/internal/start/start.go#L544-L553).
 Do not run this workload on the resource-constrained developer PC.
 
 An isolated Docker bridge defaults published bindings to `127.0.0.1`; the lane

@@ -36,7 +36,9 @@ refresh_token_reuse_interval = 10
 enable_signup = false
 
 [auth.email]
-enable_signup = false
+# In CLI 2.84.2 this also enables the email LOGIN provider. New account
+# registration remains disabled by auth.enable_signup above.
+enable_signup = true
 enable_confirmations = false
 
 [analytics]

@@ -2,9 +2,8 @@
 // Runs the unchanged application, with one bridge to its REAL Auth signOut.
 import 'dart:js_interop';
 
+import 'package:my_web_app/main.dart' as application;
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../../lib/main.dart' as application;
 
 @JS('hexcivIsolatedSignOut')
 external set isolatedSignOut(JSFunction callback);

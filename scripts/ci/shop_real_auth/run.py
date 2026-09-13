@@ -107,7 +107,7 @@ def request(data, path, method='GET', body=None, token=None, headers=None, admin
 def ok(data, path, method='GET', body=None, **kwargs):
     status, payload = request(data, path, method, body, **kwargs)
     if not 200 <= status < 300:
-        code = payload.get('code', '') if isinstance(payload, dict) else ''
+        code = payload.get('error_code', payload.get('code', '')) if isinstance(payload, dict) else ''
         raise AssertionError(f'API {method} {path.split("?")[0]} failed: {status}/{code}')
     return payload
 
@@ -218,6 +218,11 @@ def prepare():
 
 def api_tests():
     _, data = state()
+    before_users = len(ok(data, '/auth/v1/admin/users', admin=True)['users'])
+    signup_status, _ = request(data, '/auth/v1/signup', 'POST',
+                               {'email': 'no-signup@example.test', 'password': 'NotARealUser123!'})
+    record('Public signup remains disabled', 400 <= signup_status < 500 and before_users == 4 and
+           len(ok(data, '/auth/v1/admin/users', admin=True)['users']) == before_users)
     tokens = {}
     for name, user in data['users'].items():
         session = ok(data, '/auth/v1/token?grant_type=password', 'POST',
@@ -345,7 +350,7 @@ if __name__ == '__main__':
         {'prepare': prepare, 'api': api_tests, 'stop': stop}[args.mode]()
         completed = True
     finally:
-        if checks:
+        if args.mode in ('prepare', 'api'):
             save_json(EVIDENCE / (args.mode + '-checks.json'),
                       {'checks': checks, 'completed': completed,
                        'all_passed': completed and all(c['passed'] for c in checks),
