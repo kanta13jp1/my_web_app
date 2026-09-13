@@ -7,14 +7,17 @@ void main() {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     final commits = <String>[];
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
           body: DebouncedCommitTextField(
-        controller: controller,
-        onCommitted: commits.add,
-        decoration: const InputDecoration(),
-      )),
-    ));
+            controller: controller,
+            onCommitted: commits.add,
+            decoration: const InputDecoration(),
+          ),
+        ),
+      ),
+    );
     await tester.enterText(find.byType(TextField), '1');
     await tester.pump(const Duration(milliseconds: 100));
     await tester.enterText(find.byType(TextField), '15');
@@ -30,14 +33,17 @@ void main() {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     final commits = <String>[];
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
           body: DebouncedCommitTextField(
-        controller: controller,
-        onCommitted: commits.add,
-        decoration: const InputDecoration(),
-      )),
-    ));
+            controller: controller,
+            onCommitted: commits.add,
+            decoration: const InputDecoration(),
+          ),
+        ),
+      ),
+    );
     await tester.enterText(find.byType(TextField), '14.6');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
@@ -56,14 +62,17 @@ void main() {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     final commits = <String>[];
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
           body: DebouncedCommitTextField(
-        controller: controller,
-        onCommitted: commits.add,
-        decoration: const InputDecoration(),
-      )),
-    ));
+            controller: controller,
+            onCommitted: commits.add,
+            decoration: const InputDecoration(),
+          ),
+        ),
+      ),
+    );
     await tester.enterText(find.byType(TextField), '14.6');
     final field = tester.widget<TextField>(find.byType(TextField));
     field.focusNode!.unfocus();
