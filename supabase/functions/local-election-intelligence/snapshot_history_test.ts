@@ -309,7 +309,7 @@ class MemoryStore implements LocalElectionHubStore {
   }
 }
 
-Deno.test("schedule quality enforces required sources but tolerates optional helpers", () => {
+Deno.test("schedule quality requires one healthy primary and tolerates optional helpers", () => {
   const allFailed = evaluateScheduleCollectionQuality([
     {
       url: "https://example.com/a",
@@ -352,30 +352,55 @@ Deno.test("schedule quality enforces required sources but tolerates optional hel
     "required_schedule_source_parser_empty:https://example.com/a",
   ]);
 
-  const requiredFailureWithOptionalSuccess = evaluateScheduleCollectionQuality([
-    {
-      url: "https://example.com/required-base",
-      requiredForPersistence: true,
-      fetchSucceeded: false,
-      parsedEntryCount: 0,
-    },
-    {
-      url: "https://example.com/required-official",
-      requiredForPersistence: true,
-      fetchSucceeded: true,
-      parsedEntryCount: 12,
-    },
-    {
-      url: "https://example.com/optional-year",
-      requiredForPersistence: false,
-      fetchSucceeded: true,
-      parsedEntryCount: 8,
-    },
-  ], 4);
-  assertEquals(requiredFailureWithOptionalSuccess.parsedSourceCount, 2);
-  assertEquals(requiredFailureWithOptionalSuccess.issues, [
+  const loneRequiredFailureWithOptionalSuccess =
+    evaluateScheduleCollectionQuality([
+      {
+        url: "https://example.com/required-base",
+        requiredForPersistence: true,
+        fetchSucceeded: false,
+        parsedEntryCount: 0,
+      },
+      {
+        url: "https://example.com/optional-year",
+        requiredForPersistence: false,
+        fetchSucceeded: true,
+        parsedEntryCount: 8,
+      },
+    ], 4);
+  assertEquals(loneRequiredFailureWithOptionalSuccess.parsedSourceCount, 1);
+  assertEquals(loneRequiredFailureWithOptionalSuccess.issues, [
     "required_schedule_source_fetch_failed:https://example.com/required-base",
   ]);
+
+  const redundantRequiredFailureWithHealthyPeer =
+    evaluateScheduleCollectionQuality([
+      {
+        url: "https://example.com/required-base",
+        requiredForPersistence: true,
+        fetchSucceeded: false,
+        parsedEntryCount: 0,
+      },
+      {
+        url: "https://example.com/required-official",
+        requiredForPersistence: true,
+        fetchSucceeded: true,
+        parsedEntryCount: 12,
+      },
+      {
+        url: "https://example.com/optional-year",
+        requiredForPersistence: false,
+        fetchSucceeded: true,
+        parsedEntryCount: 8,
+      },
+    ], 4);
+  assertEquals(redundantRequiredFailureWithHealthyPeer.parsedSourceCount, 2);
+  assertEquals(redundantRequiredFailureWithHealthyPeer.issues, []);
+  assertEquals(
+    redundantRequiredFailureWithHealthyPeer.failedRequiredSourceUrls,
+    [
+      "https://example.com/required-base",
+    ],
+  );
 
   const requiredParserEmptyWithOptionalSuccess =
     evaluateScheduleCollectionQuality([
@@ -399,9 +424,11 @@ Deno.test("schedule quality enforces required sources but tolerates optional hel
       },
     ], 4);
   assertEquals(requiredParserEmptyWithOptionalSuccess.parsedSourceCount, 2);
-  assertEquals(requiredParserEmptyWithOptionalSuccess.issues, [
-    "required_schedule_source_parser_empty:https://example.com/required-base",
-  ]);
+  assertEquals(requiredParserEmptyWithOptionalSuccess.issues, []);
+  assertEquals(
+    requiredParserEmptyWithOptionalSuccess.parserEmptyRequiredSourceUrls,
+    ["https://example.com/required-base"],
+  );
 
   const optionalFailureWithRequiredSourcesHealthy =
     evaluateScheduleCollectionQuality([

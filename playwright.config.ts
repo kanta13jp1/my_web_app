@@ -9,6 +9,12 @@ export default defineConfig({
   timeout: 30_000,
   expect: {
     timeout: 7_500,
+    toHaveScreenshot: {
+      animations: 'disabled',
+      caret: 'hide',
+      maxDiffPixelRatio: 0.002,
+      scale: 'css',
+    },
   },
   fullyParallel: false,
   workers: 1,

@@ -32,8 +32,7 @@ concurrency:
   group: minimal-e2e-gate-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   pr-e2e-declaration:
@@ -48,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -64,6 +63,9 @@ jobs:
           git diff --name-only \
             "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
             > .ci-logs/changed-files.txt
+          git diff --name-status \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
+            > .ci-logs/changed-files-status.txt
 
       - name: Skip if docs-only change
         id: docs_check
@@ -97,6 +99,12 @@ jobs:
         if: steps.docs_check.outputs.docs_only != 'true'
         run: python scripts/check_dependabot_pub_policy_test.py
 
+      - name: Test Design accessibility audit policy
+        if: steps.docs_check.outputs.docs_only != 'true'
+        run: |
+          python scripts/check_design_accessibility_audit_test.py
+          python scripts/check_design_audit_advisory_test.py
+
       - name: Guard Dependabot pub updates
         if: steps.docs_check.outputs.docs_only != 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
         run: |
@@ -117,7 +125,26 @@ jobs:
           --event "$GITHUB_EVENT_PATH"
           --changed-files .ci-logs/changed-files.txt
 
+      - name: Check Design accessibility audit contract
+        id: design_audit
+        continue-on-error: true
+        if: steps.docs_check.outputs.docs_only != 'true'
+        run: >
+          python scripts/check_design_accessibility_audit.py
+          --event "$GITHUB_EVENT_PATH"
+          --changed-files-status .ci-logs/changed-files-status.txt
+          --base-ref "${{ github.event.pull_request.base.sha }}"
+
+      - name: Report advisory Design audit findings
+        if: always() && steps.design_audit.outcome == 'failure'
+        run: |
+          echo "::warning::Design accessibility audit evidence is incomplete; advisory only, not a merge blocker. Review the audit log."
+          echo "### Design accessibility audit: advisory findings" >> "$GITHUB_STEP_SUMMARY"
+          echo "Audit evidence is missing, incomplete, or the audit could not run. This is not an accessibility pass. See the audit step log; other required gates remain enforced." >> "$GITHUB_STEP_SUMMARY"
+
   public-e2e-stability:
+    permissions:
+      contents: read
     name: Public E2E stability smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -127,12 +154,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "22"
           cache: npm
@@ -141,7 +168,7 @@ jobs:
         run: npm ci
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('package-lock.json') }}
@@ -182,7 +209,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: minimal-e2e-playwright-report
           path: |

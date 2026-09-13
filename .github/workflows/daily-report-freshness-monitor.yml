@@ -10,9 +10,7 @@ on:
         required: false
         default: ""
 
-permissions:
-  contents: read
-  issues: write
+permissions: {}
 
 concurrency:
   group: daily-report-freshness-monitor-${{ github.ref }}
@@ -20,19 +18,24 @@ concurrency:
 
 jobs:
   monitor:
+    permissions:
+      contents: read
+      issues: write
     name: Check daily-report freshness
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 50
 
       - name: Resolve target date
         id: target
+        env:
+          DATE_INPUT: ${{ inputs.date || '' }}
         run: |
-          DATE="${{ inputs.date }}"
+          DATE="$DATE_INPUT"
           if [ -z "$DATE" ]; then
             DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           fi

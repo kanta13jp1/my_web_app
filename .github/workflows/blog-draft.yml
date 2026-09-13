@@ -27,23 +27,35 @@ concurrency:
   group: blog-draft-${{ github.ref }}
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   generate:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
     name: Generate Blog Draft via Claude API
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 100
 
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
@@ -53,11 +65,12 @@ jobs:
       - name: Quota Guard — Anthropic circuit breaker check
         id: quota_check
         env:
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # ai_circuit_breakerはRLSでanon SELECTのみ許可されている。
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
         run: |
           RESPONSE=$(curl -s \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
             "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_circuit_breaker?provider=eq.anthropic&select=state,expires_at" \
             --max-time 5 2>/dev/null || echo "[]")
           STATE=$(echo "$RESPONSE" | jq -r '.[0].state // "closed"' 2>/dev/null || echo "closed")
@@ -77,12 +90,15 @@ jobs:
 
       - name: Determine target date and period
         id: period
+        env:
+          TARGET_DATE_INPUT: ${{ github.event.inputs.target_date }}
+          DAYS_INPUT: ${{ github.event.inputs.days || '1' }}
         run: |
-          TARGET_DATE="${{ github.event.inputs.target_date }}"
+          TARGET_DATE="$TARGET_DATE_INPUT"
           if [ -z "$TARGET_DATE" ]; then
             TARGET_DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           fi
-          DAYS="${{ github.event.inputs.days || '1' }}"
+          DAYS="$DAYS_INPUT"
           SINCE=$(date -d "$TARGET_DATE -$DAYS days" +%Y-%m-%d 2>/dev/null || date -v-${DAYS}d -j -f %Y-%m-%d "$TARGET_DATE" +%Y-%m-%d 2>/dev/null || echo "$TARGET_DATE")
           echo "target_date=$TARGET_DATE" >> $GITHUB_OUTPUT
           echo "since=$SINCE" >> $GITHUB_OUTPUT
@@ -141,9 +157,9 @@ jobs:
           echo "gitlog_b64=$(cat /tmp/gitlog.b64)" >> $GITHUB_OUTPUT
 
       - name: Generate draft (Claude → Gemini → template fallback)
-        if: steps.skip_check.outputs.skip == 'false' && steps.gitlog.outputs.has_log == 'true' && steps.quota_check.outputs.anthropic_available == 'true'
+        if: steps.skip_check.outputs.skip == 'false' && steps.gitlog.outputs.has_log == 'true'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && steps.quota_check.outputs.anthropic_available == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TARGET_DATE: ${{ steps.period.outputs.target_date }}
           GITLOG_B64: ${{ steps.gitlog.outputs.gitlog_b64 }}
@@ -156,7 +172,6 @@ jobs:
         if: |
           steps.skip_check.outputs.skip == 'false' &&
           steps.gitlog.outputs.has_log == 'true' &&
-          steps.quota_check.outputs.anthropic_available == 'true' &&
           github.event.inputs.dry_run != 'true'
         env:
           TRACE_ID: blog-draft-${{ github.run_id }}-${{ github.run_attempt }}
@@ -181,27 +196,41 @@ jobs:
             --source-ref "$GITHUB_SHA" \
             --report "tmp/blog-quality/${TRACE_ID}-en.json"
 
-      - name: Commit drafts
+      - name: Commit drafts via protected-branch PR
         if: |
           steps.skip_check.outputs.skip == 'false' &&
           steps.gitlog.outputs.has_log == 'true' &&
           github.event.inputs.dry_run != 'true'
         env:
-          BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
+          GH_TOKEN: ${{ secrets.BYPASS_RULES || github.token }}
+          PUSH_TOKEN: ${{ secrets.BYPASS_RULES || github.token }}
         run: |
           DRAFT_JA="${{ steps.period.outputs.draft_ja }}"
           DRAFT_EN="${{ steps.period.outputs.draft_en }}"
           TARGET_DATE="${{ steps.period.outputs.target_date }}"
-          git config user.name "kanta13jp1"
-          git config user.email "kanta13jp1@users.noreply.github.com"
+          BRANCH="blog-draft/${GITHUB_RUN_ID}-${TARGET_DATE}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$DRAFT_JA" "$DRAFT_EN" 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "ℹ️ No changes to commit"
           else
             git commit -m "自動: ブログドラフト $TARGET_DATE (日本語+英語)"
             git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
-            git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
-            git push origin HEAD:main
+            git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git"
+            git push origin "HEAD:refs/heads/$BRANCH"
+
+            PR_URL=$(gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "自動: ブログドラフト $TARGET_DATE (日本語+英語)" \
+              --body "Blog Draft workflow run ${GITHUB_RUN_ID} generated and validated these drafts. Merge this PR after the required checks pass.")
+            if [ -z "$PR_URL" ]; then
+              echo "::error::Draft branch was pushed, but PR creation returned no URL."
+              exit 1
+            fi
+            echo "Draft PR: $PR_URL"
+            echo "draft_pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Summary

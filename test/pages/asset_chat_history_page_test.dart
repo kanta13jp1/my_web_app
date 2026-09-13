@@ -157,6 +157,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('チャットを削除しますか？'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const Key('asset_chat_delete_confirm_button')),
+          )
+          .onPressed,
+      isNull,
+    );
+    await tester.enterText(
+      find.byKey(const Key('critical_action_confirmation_input')),
+      '削除する',
+    );
+    await tester.pump(const Duration(seconds: 3));
     await tester.tap(
       find.byKey(const Key('asset_chat_delete_confirm_button')),
     );

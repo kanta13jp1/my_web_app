@@ -46,6 +46,14 @@ class ClassifyCiChangesTest(unittest.TestCase):
         self.assertTrue(caption["caption"])
         self.assertFalse(caption["edge"])
 
+    def test_tiger_status_triggers_tiger_group_only(self) -> None:
+        result = classify(["assets/data/tiger_remediation_status.json"])
+
+        self.assertTrue(result["tiger"])
+        self.assertFalse(result["flutter"])
+        self.assertFalse(result["web"])
+        self.assertFalse(result["deployable"])
+
     def test_force_all_enables_every_group(self) -> None:
         self.assertTrue(all(classify([], force_all=True).values()))
 

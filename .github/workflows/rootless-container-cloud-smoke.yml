@@ -1,0 +1,149 @@
+name: Rootless Container Cloud Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Rootless smoke scope
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - devcontainer
+          - supabase
+  pull_request:
+    paths:
+      - ".devcontainer/**"
+      - ".vscode/extensions.json"
+      - ".vscode/settings.json"
+      - ".github/workflows/rootless-container-cloud-smoke.yml"
+      - "docs/ROOTLESS_CONTAINER_SETUP.md"
+      - "scripts/check_rootless_container_setup.py"
+      - "scripts/check_rootless_container_setup_test.py"
+      - "scripts/rootless_cloud_smoke.sh"
+      - "scripts/rootless_docker_supabase_smoke.sh"
+      - "supabase/config.toml"
+
+permissions: {}
+
+concurrency:
+  group: rootless-cloud-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  devcontainer:
+    name: Rootless Dev Container
+    if: >-
+      github.event_name != 'workflow_dispatch' ||
+      inputs.scope == 'all' ||
+      inputs.scope == 'devcontainer'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install rootless Podman dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes podman uidmap passt slirp4netns fuse-overlayfs
+          if ! grep -q "^${USER}:" /etc/subuid; then
+            sudo usermod --add-subuids 524288-589823 "${USER}"
+          fi
+          if ! grep -q "^${USER}:" /etc/subgid; then
+            sudo usermod --add-subgids 524288-589823 "${USER}"
+          fi
+          podman info
+
+      - name: Build and verify the Dev Container as rootless
+        shell: bash
+        run: bash scripts/rootless_cloud_smoke.sh devcontainer
+
+      - name: Upload rootless Dev Container evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: rootless-devcontainer-evidence
+          path: .ci-logs/rootless-cloud/devcontainer.txt
+          if-no-files-found: warn
+
+  supabase:
+    name: Rootless Docker Supabase Auth and DB
+    if: >-
+      github.event_name != 'workflow_dispatch' ||
+      inputs.scope == 'all' ||
+      inputs.scope == 'supabase'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      ROOTLESS_DOCKER_APT_VERSION: 5:29.7.2-1~ubuntu.24.04~noble
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install Rootless Docker dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ca-certificates curl gnupg
+          sudo install -m 0755 -d /etc/apt/keyrings
+          sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+            -o /etc/apt/keyrings/docker.asc
+          docker_key_fingerprint=$(gpg --show-keys --with-colons \
+            /etc/apt/keyrings/docker.asc \
+            | awk -F: '$1 == "fpr" && found == "" { found=$10 } END { print found }')
+          test "$docker_key_fingerprint" = "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
+          sudo chmod a+r /etc/apt/keyrings/docker.asc
+          architecture=$(dpkg --print-architecture)
+          codename=$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+          printf '%s\n' \
+            'Types: deb' \
+            'URIs: https://download.docker.com/linux/ubuntu' \
+            "Suites: ${codename}" \
+            'Components: stable' \
+            "Architectures: ${architecture}" \
+            'Signed-By: /etc/apt/keyrings/docker.asc' \
+            | sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            "docker-ce=${ROOTLESS_DOCKER_APT_VERSION}" \
+            "docker-ce-cli=${ROOTLESS_DOCKER_APT_VERSION}" \
+            "docker-ce-rootless-extras=${ROOTLESS_DOCKER_APT_VERSION}" \
+            uidmap dbus-user-session slirp4netns fuse-overlayfs
+          if ! grep -q "^${USER}:" /etc/subuid; then
+            sudo usermod --add-subuids 524288-589823 "${USER}"
+          fi
+          if ! grep -q "^${USER}:" /etc/subgid; then
+            sudo usermod --add-subgids 524288-589823 "${USER}"
+          fi
+          sudo systemctl disable --now docker.service docker.socket
+          sudo rm -f /var/run/docker.sock
+          command -v dockerd-rootless.sh
+          docker --version
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v2
+        with:
+          version: 2.116.0
+
+      - name: Run Supabase Auth and DB on Rootless Docker
+        shell: bash
+        run: bash scripts/rootless_docker_supabase_smoke.sh
+
+      - name: Upload rootless Supabase evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: rootless-supabase-evidence
+          path: .ci-logs/rootless-cloud/supabase-docker*.txt
+          if-no-files-found: warn

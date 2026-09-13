@@ -1,0 +1,10 @@
+{
+  "base": "c4047e7f1f03feb091144b3d305886d70a0b49fb",
+  "kind": "Original synthesized audio and Canvas application",
+  "sha256": {
+    "web/labs/sound-bloom/app.mjs": "c9c34178231793c31e8396fcbb4558398952209a032a9c90723b227961bf8966",
+    "web/labs/sound-bloom/index.html": "00db61324ef47e8dea10eea85735f304f3e6f303f0452059bf0e886e1aae4ea0",
+    "web/labs/sound-bloom/pattern.mjs": "4722038b255be1ae49dddfdf7ea5079e31f616cde035b7a6b1139725d2731191",
+    "web/labs/sound-bloom/style.css": "ef0c640049d99e5ada672fe862d54aba8a78f09a6c29ec26cac9f4cd0d60703b"
+  }
+}

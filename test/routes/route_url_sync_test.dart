@@ -131,6 +131,8 @@ void main() {
       '/local-election-schedule': 'ElectionVictoryPage',
       '/stats': 'RewardsPage',
       '/ai-summarizer': 'WritingCenterPage',
+      '/manual': 'UserManualPage',
+      '/user-manual': 'UserManualPage',
     };
     final cases = _routeCases();
 
@@ -144,6 +146,17 @@ void main() {
         reason: '${expected.key} が統合先 ${expected.value} を開いていない',
       );
     }
+  });
+
+  test('retired analytics route resolves to canonical non-admin home', () {
+    final routeCase = _routeCases().singleWhere(
+      (candidate) => candidate.labels.contains('/app-analytics-dashboard'),
+    );
+
+    expect(routeCase.body, contains("RouteSettings(name: '/')"));
+    expect(routeCase.body, contains('_AuthenticatedHomePage'));
+    expect(routeCase.body, contains('LandingPage'));
+    expect(routeCase.body, isNot(contains('AdminAnalyticsPage')));
   });
 
   // 直叩き Navigator.push は onGenerateRoute を通らないので wrapper の対象外。
@@ -227,6 +240,11 @@ void main() {
   test('kAllAppRoutes matches the routes registered in main.dart', () {
     final registered = _registeredRoutes();
     final listed = kAllAppRoutes.toSet();
+    expect(
+      kAllAppRoutes.length,
+      listed.length,
+      reason: 'Duplicate route names',
+    );
 
     expect(
       registered.difference(listed).toList()..sort(),
@@ -295,6 +313,8 @@ void main() {
 /// 引数が無いと画面を復元できないため、意図的に別 route へ落とすもの。
 /// URL は必ず変わるが、実際に表示する画面に合わせた URL を名乗る。
 const Map<String?, String> _intentionalFallbacks = <String?, String>{
+  // Retired analytics UI must not expose the unguarded admin analytics page.
+  '/app-analytics-dashboard': '/',
   // 出走表は race マップ全体が必要で URL からは復元できない。
   '/horse-racing/race': '/horse-racing/predictions',
   // `case` ラベルが定数なので識別子のまま照合する (= '/compatibility-result')。
@@ -314,10 +334,15 @@ String? _catalogRouteForId(String id) => switch (id) {
 
 Set<String> _registeredRoutes() {
   final body = _generateAppRouteBody();
-  return RegExp(r"^    case '([^']+)':", multiLine: true)
-      .allMatches(body)
-      .map((m) => m.group(1)!)
-      .toSet()
+  final routes = <String>{};
+  for (final match
+      in RegExp(r'^    case\s+([^:]+):', multiLine: true).allMatches(body)) {
+    final caseExpr = match.group(1)!;
+    for (final routeMatch in RegExp(r"'([^']+)'").allMatches(caseExpr)) {
+      routes.add(routeMatch.group(1)!);
+    }
+  }
+  return routes
     // 定数経由で宣言している route。
     ..add('/compatibility-result');
 }

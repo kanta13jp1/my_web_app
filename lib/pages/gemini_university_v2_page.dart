@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math' show Random;
 import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -11,9 +12,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web_api;
+
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
+import '../services/ai_university_agentless_lab_analytics.dart';
+import '../services/ai_university_agentverse_lab_analytics.dart';
 import '../services/ai_university_content_analytics.dart';
+import '../services/ai_university_fuyu_lab_analytics.dart';
+import '../services/ai_university_learning_outcome_analytics.dart';
 import '../services/ai_learner_profile_service.dart';
 import '../services/ai_university_rlhf_service.dart';
 import '../services/ai_university_video_lesson_service.dart';
@@ -21,11 +27,21 @@ import '../services/ai_university_x_post_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
+import '../widgets/ai_university_latest_info_task_card.dart';
+import '../widgets/ai_university_firefly_api_task_card.dart';
+import '../widgets/ai_university_firefly_latest_info_task_card.dart';
+import '../widgets/ai_university_fuyu_lab_task_card.dart';
+import '../widgets/ai_university_agentless_lab_task_card.dart';
+import '../widgets/ai_university_agentverse_lab_task_card.dart';
+import '../widgets/ai_university_llm_mechanics_task_card.dart';
+import '../widgets/ai_university_model_selection_task_card.dart';
+import '../widgets/ai_university_yi_introduction_task_card.dart';
 import '../widgets/ai_university_published_video_banner.dart';
 import '../widgets/ai_university_youtube_embed.dart';
 import '../widgets/ai_university_youtube_viewer_route.dart';
 import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
+
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -145,7 +161,9 @@ String humanizeProviderId(String id) {
   if (tokens.isEmpty) return id;
   return tokens.map((t) {
     final lower = t.toLowerCase();
-    if (_providerNameUpperTokens.contains(lower)) return lower.toUpperCase();
+    if (_providerNameUpperTokens.contains(lower)) {
+      return lower.toUpperCase();
+    }
     return t[0].toUpperCase() + t.substring(1);
   }).join(' ');
 }
@@ -823,7 +841,7 @@ final Map<String, _ProviderMeta> _providerMeta = {
     name: '01.AI (Yi)',
     emoji: '🀄',
     color: const Color(0xFF1A73E8),
-    officialUrl: 'https://www.01.ai',
+    officialUrl: 'https://platform.01.ai/docs',
   ),
   'coze': _ProviderMeta(
     name: 'Coze',
@@ -1986,12 +2004,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'arcee_ai': _Quiz(
     question: 'Arcee AI Trinity シリーズのライセンスと出身国は?',
-    options: [
-      'MIT / 中国',
-      'Apache 2.0 / 米国',
-      'GPL / 英国',
-      'Proprietary / カナダ',
-    ],
+    options: ['MIT / 中国', 'Apache 2.0 / 米国', 'GPL / 英国', 'Proprietary / カナダ'],
     correct: 1,
   ),
   'minimax': _Quiz(
@@ -2061,12 +2074,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'fish_audio': _Quiz(
     question: 'Fish Audio のオープンソース TTS モデル名は?',
-    options: [
-      'Whisper Voice',
-      'Fish Speech S1',
-      'Bark Tiny',
-      'XTTS-v3',
-    ],
+    options: ['Whisper Voice', 'Fish Speech S1', 'Bark Tiny', 'XTTS-v3'],
     correct: 1,
   ),
   'atlas_cloud': _Quiz(
@@ -2181,22 +2189,12 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'stepfun': _Quiz(
     question: 'Step 3.5 Flash の MoE アーキテクチャで、1トークンあたり何パラメータが活性化する？',
-    options: [
-      '196B（全体）',
-      '70B',
-      '11B',
-      '7B',
-    ],
+    options: ['196B（全体）', '70B', '11B', '7B'],
     correct: 2,
   ),
   'modular': _Quiz(
     question: 'Modular が 2026年2月に買収した AI serving ライブラリは？',
-    options: [
-      'vLLM',
-      'BentoML',
-      'Triton Inference Server',
-      'Ray Serve',
-    ],
+    options: ['vLLM', 'BentoML', 'Triton Inference Server', 'Ray Serve'],
     correct: 1,
   ),
   'radixark': _Quiz(
@@ -2211,12 +2209,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'baseten': _Quiz(
     question: 'Baseten の GPU 時間課金で最も安いインスタンスの開始価格は？',
-    options: [
-      '\$0.10/hr',
-      '\$0.63/hr',
-      '\$1.60/hr',
-      '\$3.20/hr',
-    ],
+    options: ['\$0.10/hr', '\$0.63/hr', '\$1.60/hr', '\$3.20/hr'],
     correct: 1,
   ),
   'baichuan': _Quiz(
@@ -2231,42 +2224,22 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'lepton': _Quiz(
     question: 'NVIDIA が 2025 年に買収した Lepton AI の独自推論エンジン名は？',
-    options: [
-      'Thunder',
-      'Tuna',
-      'Flash',
-      'Turbo',
-    ],
+    options: ['Thunder', 'Tuna', 'Flash', 'Turbo'],
     correct: 1,
   ),
   'krutrim': _Quiz(
     question: 'Krutrim AI がサポートするインド言語の生成対応言語数は？',
-    options: [
-      '5 言語',
-      '10 言語',
-      '15 言語',
-      '22+ 言語',
-    ],
+    options: ['5 言語', '10 言語', '15 言語', '22+ 言語'],
     correct: 1,
   ),
   'deepgram': _Quiz(
     question: 'Deepgram Nova-2 STT の料金は？',
-    options: [
-      r'$0.0012/min',
-      r'$0.0043/min',
-      r'$0.0120/min',
-      r'$0.0250/min',
-    ],
+    options: [r'$0.0012/min', r'$0.0043/min', r'$0.0120/min', r'$0.0250/min'],
     correct: 1,
   ),
   'did': _Quiz(
     question: 'D-ID Talks API の入力として正しい組み合わせは？',
-    options: [
-      'テキスト + テキスト',
-      '画像 + 音声',
-      '動画 + テキスト',
-      '音声 + 音声',
-    ],
+    options: ['テキスト + テキスト', '画像 + 音声', '動画 + テキスト', '音声 + 音声'],
     correct: 1,
   ),
   'cartesia': _Quiz(
@@ -2291,12 +2264,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'synthesia': _Quiz(
     question: 'Synthesia が対応している言語数は？',
-    options: [
-      '50 言語',
-      '80 言語',
-      '140 言語',
-      '200 言語',
-    ],
+    options: ['50 言語', '80 言語', '140 言語', '200 言語'],
     correct: 2,
   ),
   'play_ht': _Quiz(
@@ -2471,12 +2439,7 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'replit': _Quiz(
     question: 'Replit FY2025 の年間売上はいくらか？',
-    options: [
-      r'$24M',
-      r'$240M (FY2024 $10M から 24× 成長)',
-      r'$2.4B',
-      r'$40M',
-    ],
+    options: [r'$24M', r'$240M (FY2024 $10M から 24× 成長)', r'$2.4B', r'$40M'],
     correct: 1,
   ),
   'cursor': _Quiz(
@@ -3276,22 +3239,17 @@ Photoshop・Illustratorと深く統合。Creative Cloud 1億人ユーザー基�
 [公式サイト](https://firefly.adobe.com)
 ''',
   '01ai': '''
-## 01.AI (Yi)
-李開復 (Kai-Fu Lee) が率いる中国AIスタートアップ。
-Yi-LightningはGPT-4o同等の性能を激安で提供。OpenAI互換APIで移行が容易。
+## 01.AI (Yi) API
+01.AIが提供するYiシリーズ向けAPIです。
+公式ドキュメント確認日: 2026-08-26
 
-## 主要モデル
-- **Yi-Lightning**: GPT-4o同等・\$0.14/100万token (超低コスト)
-- **Yi-Large**: 高性能フラッグシップモデル
-- **Yi-34B/6B**: Apache 2.0ライセンスのオープンソースモデル
+## 利用前の確認
+- 公式ドキュメントはOpenAI SDKと互換性のある呼び出し形式を案内しています。全API・全バージョンの完全互換を保証する表現ではありません。
+- APIキーを作成し、認証後にモデル一覧（GET https://api.01.ai/v1/models）を取得して、利用可能なモデルIDを確認します。
+- Chat CompletionsのベースURLは https://api.01.ai/v1 です。
+- 仕様・モデル提供状況は変更される可能性があります。価格を含む最新情報は公式ドキュメントとアカウント画面で再確認してください。
 
-## 特徴
-- OpenAI API完全互換 (base_url変更のみで移行可)
-- Yi-34BはHugging Faceで公開・商用利用可
-- 中国語・英語の双語処理に強み
-- 元Google中国社長・李開復が2023年創業
-
-[公式サイト](https://www.01.ai)
+[公式ドキュメント](https://platform.01.ai/docs)
 ''',
   'coze': '''
 ## Coze (ByteDance)
@@ -3458,20 +3416,22 @@ Microsoft に主要チームが移籍後も Pi は独立サービスとして継
 ''',
   'adept': '''
 ## Adept AI
-ブラウザや業務SaaSを自然言語で実際に操作する実行型AI。Fuyu-8B のOSS公開でも知られる。
+コンピュータ上の画面を理解し、ブラウザや業務ソフトを操作するエージェント技術を開発してきた企業。以下は同社の日付付き公式発表に基づく歴史で、現行の提供状況とは分けて確認する必要がある。
 
-## 主要機能
-- **ACT-1 / ACT-2**: ブラウザ・業務SaaSの操作自動化
-- **Fuyu-8B**: 画像理解を含むマルチモーダルOSSモデル
-- **Adept Agent Platform**: エンタープライズ向け業務自動化基盤
+**公式情報確認日: 2026-08-26**
 
-## 特徴
-- クリック・入力・検索まで含めて「実際に操作するAI」
-- ブラウザと業務SaaSをまたぐ反復作業の自動化に強い
-- Amazon連携を含む企業向けエージェント展開
-- 「回答するAI」より「実行するAI」に重心がある
+## 日付付きタイムライン
+- **2022-09-14 — ACT-1**: ブラウザでクリック、入力、スクロールなどを行う「操作のためのTransformer」として発表された。
+- **2023-10-17 — Fuyu-8B**: デジタルエージェント向けの画像理解を想定したマルチモーダルモデルとして公開された。
+- **2024-06-28 — 戦略更新**: エージェントAIソリューションへ集中する方針を発表。AmazonはAdeptのエージェント技術、モデル群、一部データセットをライセンスし、共同創業者と一部メンバーがAmazon AGI組織へ参加した。
+- **2024-08-23 — AWL**: マルチモーダルなWeb操作を構成するAdept Workflow Languageを紹介した。
 
-[公式サイト](https://www.adept.ai/)
+## 学習時の確認ポイント
+- ACT-1とFuyu-8Bは過去の技術発表、2024年6月以降の記事は後続の戦略として読み分ける。
+- 現行の製品名、提供範囲、利用条件は変わり得るため、導入判断前に公式サイトで再確認する。
+- 2024年6月発表のAmazonとの関係は、「サービス連携」ではなく、技術ライセンスと人員の参加として記載されている。
+
+[公式サイト](https://www.adept.ai/) / [ACT-1](https://www.adept.ai/blog/act-1/) / [Fuyu-8B](https://www.adept.ai/blog/fuyu-8b/) / [2024年6月の戦略更新](https://www.adept.ai/blog/adept-update/) / [AWL](https://www.adept.ai/blog/adept-agents/)
 ''',
   'prover': '''
 ## Prover — 定理証明・形式検証特化型 AI
@@ -5700,10 +5660,28 @@ class AiUniversityPage extends StatefulWidget {
     super.key,
     this.initialProviderId,
     this.contentAnalytics,
+    this.learningOutcomeAnalytics,
+    this.modelSelectionLearningOutcomeAnalytics,
+    this.yiIntroductionLearningOutcomeAnalytics,
+    this.fireflyApiLearningOutcomeAnalytics,
+    this.fireflyLatestInfoLearningOutcomeAnalytics,
+    this.fuyuLabAnalytics,
+    this.agentlessLabAnalytics,
   });
 
   final String? initialProviderId;
   final AiUniversityContentAnalytics? contentAnalytics;
+  final AiUniversityLearningOutcomeAnalytics? learningOutcomeAnalytics;
+  final AiUniversityLearningOutcomeAnalytics?
+      modelSelectionLearningOutcomeAnalytics;
+  final AiUniversityLearningOutcomeAnalytics?
+      yiIntroductionLearningOutcomeAnalytics;
+  final AiUniversityLearningOutcomeAnalytics?
+      fireflyApiLearningOutcomeAnalytics;
+  final AiUniversityLearningOutcomeAnalytics?
+      fireflyLatestInfoLearningOutcomeAnalytics;
+  final AiUniversityFuyuLabAnalytics? fuyuLabAnalytics;
+  final AiUniversityAgentlessLabAnalytics? agentlessLabAnalytics;
 
   @override
   State<AiUniversityPage> createState() => _AiUniversityPageState();
@@ -5722,6 +5700,20 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   final _supabase = Supabase.instance.client;
   late final AiUniversityContentAnalytics _contentAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics _learningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _modelSelectionLearningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _yiIntroductionLearningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _fireflyApiLearningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _fireflyLatestInfoLearningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _llmMechanicsLearningOutcomeAnalytics;
+  late final AiUniversityFuyuLabAnalytics _fuyuLabAnalytics;
+  late final AiUniversityAgentlessLabAnalytics _agentlessLabAnalytics;
+  late final AiUniversityAgentVerseLabAnalytics _agentVerseLabAnalytics;
 
   List<String> _providers = [];
   Map<String, List<Map<String, dynamic>>> _content = {};
@@ -5729,6 +5721,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   String? _error;
   TabController? _tabController;
   final Set<String> _answeredQuizzes = {};
+  final Set<String> _viewedLearningOutcomeTasks = {};
   static const String _prefsKey = 'ai_univ_answered_quizzes';
   // 新ジャンル棚の折りたたみ状態 (画面占有を抑えるため / prefs 永続化)。
   static const String _genreShelfPrefsKey = 'ai_univ_genre_shelf_collapsed';
@@ -5759,6 +5752,44 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     super.initState();
     _contentAnalytics = widget.contentAnalytics ??
         AiUniversityContentAnalytics.supabase(_supabase);
+    _learningOutcomeAnalytics = widget.learningOutcomeAnalytics ??
+        AiUniversityLearningOutcomeAnalytics.supabase(_supabase);
+    _modelSelectionLearningOutcomeAnalytics =
+        widget.modelSelectionLearningOutcomeAnalytics ??
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.modelSelection,
+            );
+    _yiIntroductionLearningOutcomeAnalytics =
+        widget.yiIntroductionLearningOutcomeAnalytics ??
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.yiIntroduction,
+            );
+    _fireflyApiLearningOutcomeAnalytics =
+        widget.fireflyApiLearningOutcomeAnalytics ??
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.fireflyApi,
+            );
+    _fireflyLatestInfoLearningOutcomeAnalytics =
+        widget.fireflyLatestInfoLearningOutcomeAnalytics ??
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.fireflyLatestInfo,
+            );
+    _llmMechanicsLearningOutcomeAnalytics =
+        AiUniversityLearningOutcomeAnalytics.supabase(
+      _supabase,
+      task: AiUniversityLearningOutcomeTask.llmMechanics,
+    );
+    _fuyuLabAnalytics = widget.fuyuLabAnalytics ??
+        AiUniversityFuyuLabAnalytics.supabase(_supabase);
+    _agentlessLabAnalytics = widget.agentlessLabAnalytics ??
+        AiUniversityAgentlessLabAnalytics.supabase(_supabase);
+    _agentVerseLabAnalytics = AiUniversityAgentVerseLabAnalytics.supabase(
+      _supabase,
+    );
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
@@ -5988,14 +6019,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       final message = result.posted
           ? '$account にAI大学の学習ログを投稿しました'
           : 'X投稿文を作成しました。SupabaseのX API secret設定を確認してください';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AI X投稿に失敗しました: $error')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('AI X投稿に失敗しました: $error')));
     } finally {
       if (mounted) {
         setState(() => _xPostSubmitting = false);
@@ -6065,9 +6094,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.auto_awesome),
-                    label: Text(
-                      _xPostSubmitting ? 'AI生成・投稿中' : 'AI生成してXへ投稿',
-                    ),
+                    label: Text(_xPostSubmitting ? 'AI生成・投稿中' : 'AI生成してXへ投稿'),
                     onPressed: _xPostSubmitting
                         ? null
                         : () {
@@ -6105,13 +6132,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           // ヘッダー
           Row(
             children: [
-              const Text(
-                '🎓',
-                style: TextStyle(
-                  fontSize: 32,
-                  height: 1.5,
-                ),
-              ),
+              const Text('🎓', style: TextStyle(fontSize: 32, height: 1.5)),
               const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -6193,13 +6214,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             ),
             child: Row(
               children: [
-                const Text(
-                  '📊',
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
+                const Text('📊', style: TextStyle(fontSize: 14, height: 1.5)),
                 const SizedBox(width: 8),
                 Text(
                   'クイズ正解: $count / $total 問',
@@ -6251,9 +6266,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       a.click();
       a.remove();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('画像を保存しました')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('画像を保存しました')));
       }
     } catch (e) {
       if (mounted) {
@@ -6402,9 +6416,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final topics = <AiUniversityVideoLessonTopic>[];
     for (final rows in _content.values) {
       topics.addAll(
-        AiUniversityVideoLessonService.topicsFromRows(rows).where(
-          (topic) => topic.youtubeVideoId != null,
-        ),
+        AiUniversityVideoLessonService.topicsFromRows(rows)
+            .where((topic) => topic.youtubeVideoId != null),
       );
     }
     topics.sort((a, b) => a.title.compareTo(b.title));
@@ -6424,8 +6437,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         final windowHeight = MediaQuery.sizeOf(dialogContext).height;
         return Dialog(
           backgroundColor: const Color(0xFF1A1A1A),
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
@@ -6558,10 +6573,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   // 351 タブの到達性改善: 検索 + カテゴリ別一覧から選択したタブへジャンプする。
   void _showProviderSearch() {
-    final order = <String>[
-      ..._providerCategoryRules.map((e) => e.key),
-      'その他',
-    ];
+    final order = <String>[..._providerCategoryRules.map((e) => e.key), 'その他'];
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -6585,9 +6597,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               byCategory.putIfAbsent(cat, () => []).add(id);
             }
             final categories = byCategory.keys.toList()
-              ..sort(
-                (a, b) => order.indexOf(a).compareTo(order.indexOf(b)),
-              );
+              ..sort((a, b) => order.indexOf(a).compareTo(order.indexOf(b)));
             return DraggableScrollableSheet(
               expand: false,
               initialChildSize: 0.85,
@@ -6720,9 +6730,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     if (_answeredQuizzes.contains(providerId)) return;
     setState(() => _answeredQuizzes.add(providerId));
     _saveAnsweredQuizzes();
-    context
-        .read<GamificationService>()
-        .awardPoints(50, reason: 'AI大学クイズ正解: ${_meta(providerId).name}');
+    context.read<GamificationService>().awardPoints(
+          50,
+          reason: 'AI大学クイズ正解: ${_meta(providerId).name}',
+        );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('🎉 正解！ +50pt — ${_meta(providerId).name}'),
@@ -6801,14 +6812,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     Navigator.pushNamed(
       context,
       '/ai-university-video',
-      arguments: {
-        if (provider != null) 'provider': provider,
-      },
+      arguments: {if (provider != null) 'provider': provider},
     );
   }
 
   void _handleUniversityMenuAction(String action) {
     switch (action) {
+      case 'toeic':
+        Navigator.pushNamed(context, '/ai-university-toeic');
+        return;
       case 'reading':
         Navigator.pushNamed(context, '/english-reading-curriculum');
         return;
@@ -6895,10 +6907,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     style: TextStyle(color: Color(0xFFFFA07A), fontSize: 12),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
-                    Icons.expand_more,
-                    color: Color(0xFFFFA07A),
-                  ),
+                  const Icon(Icons.expand_more, color: Color(0xFFFFA07A)),
                 ],
               ),
             ),
@@ -6966,6 +6975,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               tooltip: 'その他',
               onSelected: _handleUniversityMenuAction,
               itemBuilder: (_) => [
+                _universityMenuItem('toeic', Icons.school_outlined, 'TOEIC対策'),
                 _universityMenuItem(
                   'reading',
                   Icons.menu_book_outlined,
@@ -6984,6 +6994,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               ],
             )
           else ...[
+            IconButton(
+              icon: const Icon(Icons.school_outlined),
+              tooltip: 'TOEIC対策',
+              onPressed: () => _handleUniversityMenuAction('toeic'),
+            ),
             IconButton(
               icon: const Icon(Icons.menu_book_outlined),
               tooltip: '英語速読カリキュラム',
@@ -7053,10 +7068,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   const Expanded(
                     child: Text(
                       'DBから取得できませんでした。フォールバック表示中。',
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 12, height: 1.5),
                     ),
                   ),
                   TextButton(
@@ -7212,9 +7224,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: genre.accentColor.withValues(alpha: 0.32),
-          ),
+          border: Border.all(color: genre.accentColor.withValues(alpha: 0.32)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -7388,8 +7398,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 ),
                 if (stats.dueToday > 0)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
@@ -7562,10 +7574,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 runSpacing: 8,
                 children: [
                   _buildRlhfMetricChip('シグナル', '${snapshot.totalSignals}'),
-                  _buildRlhfMetricChip(
-                    'このAI',
-                    providerSignals.toString(),
-                  ),
+                  _buildRlhfMetricChip('このAI', providerSignals.toString()),
                   _buildRlhfMetricChip(
                     '平均',
                     snapshot.averageRating.toStringAsFixed(1),
@@ -7786,9 +7795,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: m.color.withValues(alpha: 0.28),
-        ),
+        border: Border.all(color: m.color.withValues(alpha: 0.28)),
         boxShadow: [
           BoxShadow(
             color: m.color.withValues(alpha: 0.12),
@@ -7799,13 +7806,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       ),
       child: Row(
         children: [
-          Text(
-            m.emoji,
-            style: const TextStyle(
-              fontSize: 32,
-              height: 1.5,
-            ),
-          ),
+          Text(m.emoji, style: const TextStyle(fontSize: 32, height: 1.5)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -7908,29 +7909,20 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       fontStyle: FontStyle.italic,
       height: 1.5,
     ),
-    listBullet: const TextStyle(
-      color: Color(0xFFB0B0B0),
-      height: 1.5,
-    ),
+    listBullet: const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
     code: const TextStyle(
       color: Color(0xFF81C784),
       fontFamily: 'monospace',
       fontSize: 13,
       height: 1.5,
     ),
-    blockquote: const TextStyle(
-      color: Color(0xFFB0B0B0),
-      height: 1.5,
-    ),
+    blockquote: const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
     tableHead: const TextStyle(
       color: Color(0xFFE5E7EB),
       fontWeight: FontWeight.bold,
     ),
     tableBody: const TextStyle(color: Color(0xFFE5E7EB), height: 1.6),
-    tableBorder: TableBorder.all(
-      color: const Color(0xFF2A2A2A),
-      width: 1,
-    ),
+    tableBorder: TableBorder.all(color: const Color(0xFF2A2A2A), width: 1),
     tableCellsPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
     tableHeadAlign: TextAlign.start,
   );
@@ -7941,6 +7933,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     Color surface,
   ) {
     final category = row['category'] as String? ?? '';
+    final provider = row['provider'] as String? ?? '';
     final title = row['title'] as String? ?? '';
     final content = row['content'] as String? ?? '';
     final sourceUrl = row['source_url'] as String?;
@@ -7956,13 +7949,51 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       evidenceSourceUrl,
       evidenceVerifiedAt,
     ].any((value) => value != null && value.isNotEmpty);
-    final youtubeVideoId =
-        AiUniversityVideoLessonService.youtubeVideoIdFromUrl(sourceUrl);
+    final youtubeVideoId = AiUniversityVideoLessonService.youtubeVideoIdFromUrl(
+      sourceUrl,
+    );
+    final isLatestInfoTask = provider == '01ai' && category == 'news';
+    final isModelSelectionTask = provider == '01ai' && category == 'models';
+    final isYiIntroductionTask =
+        row['id']?.toString() == 'e1712bb5-2bca-4fc0-8347-0529513411d3';
+    final isFireflyApiTask = provider == 'adobe_firefly' && category == 'api';
+    final isFireflyLatestInfoTask =
+        provider == 'adobe_firefly' && category == 'news';
+    final isLlmMechanicsTask =
+        provider == 'academic' && category == 'llm_mechanics';
+    final isFuyuLab = provider == 'adept' && category == 'api';
+    final isAgentlessLab = provider == 'agentless' && category == 'overview';
+    final isAgentVerseLab = provider == 'agentverse' && category == 'overview';
+    final learningOutcomeAnalytics = isYiIntroductionTask
+        ? _yiIntroductionLearningOutcomeAnalytics
+        : isLlmMechanicsTask
+            ? _llmMechanicsLearningOutcomeAnalytics
+            : isFireflyLatestInfoTask
+                ? _fireflyLatestInfoLearningOutcomeAnalytics
+                : isFireflyApiTask
+                    ? _fireflyApiLearningOutcomeAnalytics
+                    : isModelSelectionTask
+                        ? _modelSelectionLearningOutcomeAnalytics
+                        : _learningOutcomeAnalytics;
+    final hasLearningOutcomeTask = isLatestInfoTask ||
+        isModelSelectionTask ||
+        isYiIntroductionTask ||
+        isFireflyApiTask ||
+        isFireflyLatestInfoTask ||
+        isLlmMechanicsTask;
+    final taskViewKey = row['id']?.toString() ?? '$provider:$category';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: surface,
       child: ExpansionTile(
+        onExpansionChanged: hasLearningOutcomeTask
+            ? (expanded) {
+                if (expanded && _viewedLearningOutcomeTasks.add(taskViewKey)) {
+                  learningOutcomeAnalytics.recordViewed().ignore();
+                }
+              }
+            : null,
         backgroundColor: surface,
         collapsedBackgroundColor: surface,
         title: Text(
@@ -8042,13 +8073,79 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         if (evidenceSourceUrl != null &&
                             evidenceSourceUrl.isNotEmpty)
                           TextButton.icon(
-                            icon:
-                                const Icon(Icons.fact_check_outlined, size: 14),
+                            icon: const Icon(
+                              Icons.fact_check_outlined,
+                              size: 14,
+                            ),
                             label: const Text('学習設計の根拠を開く'),
                             onPressed: () => _launchUrl(evidenceSourceUrl),
                           ),
                       ],
                     ),
+                  ),
+                ],
+                if (isLatestInfoTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityLatestInfoTaskCard(
+                    onSubmit: _learningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isYiIntroductionTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityYiIntroductionTaskCard(
+                    onSubmit: _yiIntroductionLearningOutcomeAnalytics
+                        .recordYiIntroductionCompleted,
+                  ),
+                ],
+                if (isModelSelectionTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityModelSelectionTaskCard(
+                    onSubmit:
+                        _modelSelectionLearningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isFireflyApiTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityFireflyApiTaskCard(
+                    onSubmit: _fireflyApiLearningOutcomeAnalytics
+                        .recordFireflyCompleted,
+                  ),
+                ],
+                if (isFireflyLatestInfoTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityFireflyLatestInfoTaskCard(
+                    onSubmit: _fireflyLatestInfoLearningOutcomeAnalytics
+                        .recordFireflyLatestInfoCompleted,
+                  ),
+                ],
+                if (isLlmMechanicsTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityLlmMechanicsTaskCard(
+                    onSubmit:
+                        _llmMechanicsLearningOutcomeAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isFuyuLab) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityFuyuLabTaskCard(
+                    onStart: _fuyuLabAnalytics.recordStarted,
+                    onSubmit: _fuyuLabAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isAgentlessLab) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityAgentlessLabTaskCard(
+                    onStart: _agentlessLabAnalytics.recordStarted,
+                    onSubmit: _agentlessLabAnalytics.recordCompleted,
+                  ),
+                ],
+                if (isAgentVerseLab) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityAgentVerseLabTaskCard(
+                    onStart: _agentVerseLabAnalytics.recordStarted,
+                    onImportChecked:
+                        _agentVerseLabAnalytics.recordImportChecked,
+                    onSubmit: _agentVerseLabAnalytics.recordCompleted,
                   ),
                 ],
                 if (youtubeVideoId != null) ...[
@@ -8118,8 +8215,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           children: [
             if (dueCards.isNotEmpty) ...[
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -8182,10 +8281,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             const SizedBox(height: 12),
             Text(
               quiz.question,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w500, height: 1.5),
             ),
             const SizedBox(height: 8),
             ...List.generate(quiz.options.length, (i) {
@@ -8292,10 +8388,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   SizedBox(width: 8),
                   Text(
                     '解説を生成中...',
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.5,
-                    ),
+                    style: TextStyle(fontSize: 12, height: 1.5),
                   ),
                 ],
               ),

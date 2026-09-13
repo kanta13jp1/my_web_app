@@ -26,6 +26,10 @@
 
 ### セットアップ手順
 
+Rootless Podman / Docker と Flutter Dev Container を利用する場合は、先に
+[`ROOTLESS_CONTAINER_SETUP.md`](./ROOTLESS_CONTAINER_SETUP.md) の安全ゲートと
+runtime 設定を完了してください。
+
 #### 1. リポジトリのクローン
 
 ```bash

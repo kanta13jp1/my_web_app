@@ -8,6 +8,7 @@
 | `video_artifacts` | Durable immutable original plus commercialization readiness | Owner select only |
 | `video_artifact_reviews` | Append-only owner evaluation and suggested next prompt | Owner select only |
 | `video_artifact_events` | Append-only capture, review, improvement, and product evidence | Owner select only |
+| `video_improvement_authorizations` | Expiry, credit/iteration ceilings, confirmations, and remaining recurring authority | Owner select only |
 
 Artifact, review, and event mutations use service-role RPCs behind the
 authenticated Edge Function. Never expose the service role to Flutter or the
@@ -38,12 +39,18 @@ For an improved generation:
 
 - `video_generation_jobs.parent_artifact_id` identifies the reviewed source.
 - `video_generation_jobs.applied_review_id` identifies the exact feedback.
+- `video_generation_jobs.authorization_id` identifies the bounded envelope
+  consumed for an authorized child job.
 - The resulting `video_artifacts.parent_artifact_id` carries the relationship
   into the new immutable artifact.
 - `video_artifact_events` records `improvement_applied` with the child job ID.
 
-The review action never reserves credits. Only the normal create action may
-reserve credits and wake the GPU worker.
+The review action never reserves credits. Manual create uses the normal
+reservation path. The authorization form uses
+`video_authorize_and_reserve_improvement`, which creates the envelope and first
+linked job atomically; later iterations use
+`video_reserve_authorized_improvement` for an exact unconsumed review in the
+same artifact lineage.
 
 ## Output provenance
 

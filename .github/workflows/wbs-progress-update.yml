@@ -39,8 +39,7 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: wbs-progress-${{ inputs.task_id }}
@@ -52,6 +51,11 @@ env:
 
 jobs:
   update:
+    environment:
+      name: wbs-automation-production
+      deployment: false
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

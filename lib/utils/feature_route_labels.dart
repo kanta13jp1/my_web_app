@@ -11,6 +11,8 @@ const Set<String> _nonFeatureRoutes = <String>{
   '/home',
   '/landing',
   '/maintenance',
+  // Retired compatibility URL. It resolves to the canonical home route.
+  '/app-analytics-dashboard',
 };
 
 /// 旧導線や重複実装から、利用者に見せる正規機能へ集約する対応表。
@@ -42,9 +44,15 @@ const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
 };
 
 const Map<String, String> _consolidatedFeatureLabels = <String, String>{
+  '/lumen-path': '光の道 · LUMEN PATH',
+  '/sound-bloom': '音と光の庭 · SOUND BLOOM',
+  '/aero-lab': '3D実験室 · AERO LAB',
   '/ai-writing-assistant': 'AI文章・要約アシスタント',
+  '/ai-university-toeic': 'AI大学 TOEIC対策',
+  '/art-museums': '全国の美術館',
   '/asset-management': '資産・家計管理',
   '/autonomous-ops-console': '自律オペレーションコンソール',
+  '/custom-task-list': 'AI カスタムタスクリスト',
   '/focus-timer': '集中タイマー',
   '/life-goals': '人生目標管理',
   '/live-captions': 'ライブ多言語字幕',
@@ -53,6 +61,7 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/mind-map': 'マインドマップ',
   '/one-in-two-out-assist': '1 In 2 Out UI整理アシスト',
   '/procrastination-reset': '先延ばしリセット',
+  '/proactive-form-check': '入力チェックアシスタント',
   '/referral': '友達招待・紹介プログラム',
   '/rewards': '実績・リワード',
   '/social-feed': 'MUSUBI ソーシャル',

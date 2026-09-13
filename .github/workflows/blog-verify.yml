@@ -23,21 +23,32 @@ concurrency:
   group: blog-verify
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   verify:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: write
+      issues: read
     name: Verify past posts
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
@@ -45,15 +56,20 @@ jobs:
         run: pip install requests
 
       - name: Verify past posts
+        if: steps.paid_ai_policy.outputs.enabled == 'true'
         env:
           # QIITA_ACCESS_TOKEN は渡さない (2026-07-12 アカウント利用停止 →
           # script 側の「not set → skipping Qiita」ガードで接触ゼロにする)
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           MAX_ARTICLES: ${{ github.event.inputs.max_articles || '5' }}
         run: python3 scripts/verify_past_posts.py
+
+      - name: Record owner-requested verification suspension
+        if: steps.paid_ai_policy.outputs.enabled != 'true'
+        run: echo "Claude-backed article verification is disabled by owner policy." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Commit correction proposals
         if: github.event.inputs.dry_run != 'true'

@@ -158,4 +158,40 @@ void main() {
       );
     });
   });
+
+  group('DisposableBalanceActionMergeService', () {
+    const service = DisposableBalanceActionMergeService();
+
+    test('keeps local data gaps and merges server recommendations by key', () {
+      final result = service.merge(
+        serverActions: const <Map<String, dynamic>>[
+          <String, dynamic>{
+            'action_key': 'add_recurring_expenses',
+            'title': 'stale fixed-cost action',
+          },
+          <String, dynamic>{
+            'action_key': 'cancel_duplicate_music',
+            'title': 'music saving',
+          },
+        ],
+        localActions: const <Map<String, dynamic>>[
+          <String, dynamic>{
+            'action_key': 'upload_current_payslip',
+            'title': 'current payslip missing',
+          },
+          <String, dynamic>{
+            'action_key': 'cancel_duplicate_music',
+            'title': 'local duplicate',
+          },
+        ],
+      );
+
+      expect(result.map((action) => action['action_key']), <String>[
+        'upload_current_payslip',
+        'cancel_duplicate_music',
+      ]);
+      expect(result.first['title'], 'current payslip missing');
+      expect(result.last['title'], 'music saving');
+    });
+  });
 }

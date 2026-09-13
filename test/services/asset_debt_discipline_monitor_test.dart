@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
-import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 
 void main() {
@@ -36,7 +35,7 @@ void main() {
       expect(report.zeroNewBorrowingAchieved, isFalse);
       expect(report.newBorrowingViolations.single.amount > 90000, isTrue);
       expect(
-        report.newBorrowingViolations.single.problem.contains('新規利用'),
+        report.newBorrowingViolations.single.problem.contains('新規借入'),
         isTrue,
       );
       expect(report.hasPriorMonthData, isTrue);
@@ -83,132 +82,125 @@ void main() {
     });
   });
 
-  group('AssetDebtDisciplineMonitor — 誓約② カードは必ず一括', () {
-    test('flags a credit card carrying a revolving balance', () {
-      // ファミペイ 残高10万、返済は最低額のみ → 繰越=リボ → 違反。
+  group('AssetDebtDisciplineMonitor — 誓約② 新規利用分は25日に全額返済', () {
+    test('does not flag an existing revolving balance paid at the minimum', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
           'bank': 500000,
           'ファミペイ': -100000,
         },
         baseDate: baseDate,
-      );
-
-      final report = monitor.evaluate(workbook: workbook);
-
-      expect(report.revolvingCardViolations, hasLength(1));
-      expect(report.lumpSumAchieved, isFalse);
-      expect(
-        report.revolvingCardViolations.single.severity,
-        AssetDebtTrendSeverity.critical,
-      );
-      expect(
-        report.revolvingCardViolations.single.action.contains('一括'),
-        isTrue,
-      );
-      // 前月データ未提供なので新規利用判定は走らない。
-      expect(report.hasPriorMonthData, isFalse);
-      expect(report.newBorrowingViolations, isEmpty);
-    });
-
-    test('revolving violation carries a concrete escape plan', () {
-      // 残高10万・返済1万 → 繰越9万でリボ違反。脱却プランを具体化する。
-      final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'ファミペイ': -100000,
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+          ),
         },
-        baseDate: baseDate,
-        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 10000},
-      );
-
-      final report = monitor.evaluate(workbook: workbook);
-
-      final violation = report.revolvingCardViolations.single;
-      expect(violation.hasEscapePlan, isTrue);
-      expect(
-        violation.escapeMonths,
-        AssetDebtDisciplineMonitor.escapeTargetMonths,
-      );
-      // 12ヶ月完済の月額は単純割 (100,000/12 ≒ 8,334円) より利息分だけ大きい。
-      expect(violation.escapeMonthlyPayment! >= 100000 / 12, isTrue);
-      expect(violation.action.contains('リボ状態から脱却'), isTrue);
-      // 月1万円は利息を上回る → 現状ペースの完済見込みも提示できる。
-      expect(violation.currentPlanPayoffMonths, isNotNull);
-      expect(violation.currentPlanTotalInterest, isNotNull);
-      expect(violation.action.contains('完済まで約'), isTrue);
-    });
-
-    test('revolving violation reports 50+ years when payoff exceeds the cap',
-        () {
-      // 月12,505円は初月利息 (100万×月利1.25% = 12,500円) を僅かに上回るが、
-      // 完済まで約630ヶ月 (>600ヶ月キャップ) かかる →
-      // 「利息に追いつかず」ではなく50年以上と説明する。
-      final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'ファミペイ': -1000000,
-        },
-        baseDate: baseDate,
-        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 12505},
-      );
-
-      final report = monitor.evaluate(workbook: workbook);
-
-      final violation = report.revolvingCardViolations.single;
-      expect(violation.currentPlanPayoffMonths, isNull);
-      expect(violation.action.contains('50年以上'), isTrue);
-      expect(violation.action.contains('利息に追いつかず'), isFalse);
-    });
-
-    test('revolving violation warns when payment never clears the balance', () {
-      // 月1,000円は初月利息 (年利15%なら1,250円) 以下 → 元金が減らない。
-      final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'ファミペイ': -100000,
-        },
-        baseDate: baseDate,
-        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 1000},
-      );
-
-      final report = monitor.evaluate(workbook: workbook);
-
-      final violation = report.revolvingCardViolations.single;
-      expect(violation.hasEscapePlan, isTrue);
-      expect(violation.currentPlanPayoffMonths, isNull);
-      expect(violation.currentPlanTotalInterest, isNull);
-      expect(violation.action.contains('完済の見込みが立ちません'), isTrue);
-    });
-
-    test('does NOT flag a credit card paid in full this month', () {
-      // 残高10万を全額返済 → 一括 → 違反なし。
-      final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'ファミペイ': -100000,
-        },
-        baseDate: baseDate,
-        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 100000},
       );
 
       final report = monitor.evaluate(workbook: workbook);
 
       expect(report.revolvingCardViolations, isEmpty);
-      expect(report.lumpSumAchieved, isTrue);
+      expect(report.newUsageRepaymentAchieved, isTrue);
+      expect(report.totalCarriedOver, greaterThan(0));
+    });
+
+    test('accepts minimum payment plus all imported new usage on the 25th', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -130000,
+        },
+        baseDate: baseDate,
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+          ),
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_1',
+            billingAccountId: 'famipay_card',
+            billingAccountName: 'ファミペイ',
+            postedAt: null,
+            description: '当月利用',
+            amount: 30000,
+          ),
+        ],
+      );
+
+      final row = workbook.debtMasterRows.singleWhere(
+        (row) => row.id == 'famipay_card',
+      );
+      final report = monitor.evaluate(workbook: workbook);
+
+      expect(row.scheduledPaymentAmount, 35000);
+      expect(row.paymentDay, 25);
+      expect(report.revolvingCardViolations, isEmpty);
+    });
+
+    test('flags an actual payment that does not cover all new usage', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -130000,
+        },
+        baseDate: baseDate,
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+            newUsageAmount: 30000,
+          ),
+        },
+        actualPaymentAmounts: const <String, double>{'famipay_card': 20000},
+        paidAccountNames: const <String>{'famipay_card'},
+      );
+
+      final report = monitor.evaluate(workbook: workbook);
+      final violation = report.revolvingCardViolations.single;
+
+      expect(violation.amount, 15000);
+      expect(violation.action, contains('不足15,000円'));
+      expect(violation.action, contains('既存残高130,000円の一括返済は求めません'));
+      expect(violation.problem, contains('返済日25日'));
+    });
+
+    test('flags even a one-yen repayment shortfall', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -130000,
+        },
+        baseDate: baseDate,
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+            newUsageAmount: 30000,
+          ),
+        },
+        actualPaymentAmounts: const <String, double>{'famipay_card': 34999},
+        paidAccountNames: const <String>{'famipay_card'},
+      );
+
+      final report = monitor.evaluate(workbook: workbook);
+
+      expect(report.revolvingCardViolations.single.amount, 1);
     });
   });
 
   group('AssetDebtDisciplineMonitor — 統合', () {
-    test('the FamiPay example violates BOTH pledges', () {
-      // 前月20万→今月30万(+10万)、返済3千 → 新規利用 約10万 かつ リボ繰越。
+    test('card usage covered on the 25th does not violate either pledge', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
           'bank': 500000,
           'ファミペイ': -300000,
         },
         baseDate: baseDate,
-        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 3000},
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 3000,
+            newUsageAmount: 100000,
+          ),
+        },
       );
       final id = debtId(workbook, 'ファミペイ');
 
@@ -217,13 +209,12 @@ void main() {
         priorBalancesByAccountId: <String, double>{id: 200000},
       );
 
-      expect(report.zeroNewBorrowingAchieved, isFalse);
-      expect(report.lumpSumAchieved, isFalse);
-      expect(report.isCompliant, isFalse);
-      expect(report.newBorrowingViolations, hasLength(1));
-      expect(report.revolvingCardViolations, hasLength(1));
-      expect(report.totalNewBorrowing > 90000, isTrue);
-      expect(report.totalCarriedOver > 200000, isTrue);
+      expect(report.zeroNewBorrowingAchieved, isTrue);
+      expect(report.newUsageRepaymentAchieved, isTrue);
+      expect(report.isCompliant, isTrue);
+      expect(report.newBorrowingViolations, isEmpty);
+      expect(report.revolvingCardViolations, isEmpty);
+      expect(report.totalCarriedOver, greaterThan(190000));
     });
 
     test('excludes full-payment fixed costs (rent/utility)', () {

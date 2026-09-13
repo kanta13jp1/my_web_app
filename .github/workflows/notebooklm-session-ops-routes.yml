@@ -11,17 +11,21 @@ on:
       - ".github/workflows/notebooklm-session-ops-routes.yml"
   workflow_dispatch:
 
+permissions: {}
+
 concurrency:
   group: notebooklm-session-ops-routes-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   validate:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Validate NotebookLM session-ops routes
         run: python scripts/check_notebooklm_session_ops_routes.py
