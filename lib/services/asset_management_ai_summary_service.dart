@@ -386,6 +386,8 @@ class AssetManagementAiSummaryService {
 
   Map<String, dynamic> buildPayload(AssetManagementInsightReport report) {
     return <String, dynamic>{
+      // Invalidate saved summaries when the response policy changes.
+      'response_policy_version': 2,
       'user_profile': _profileToDetailedJson(report.userProfile),
       'workbook': _workbookToDetailedJson(report.workbook),
       'available_money': <String, dynamic>{
@@ -528,7 +530,7 @@ class AssetManagementAiSummaryService {
       '証拠区分ルール: 残高差分からの新規借入は推定であり、取引明細未照合なら新規借入・誓約違反を断定しないでください。未受取の入金予定は未入金の証拠ではありません。予定と実績の対象期間・金額を照合するよう案内し、受取済みへの変更を断定的に要求しないでください。履歴は前回の記録として日付を示し、月が異なると確認できない限り先月と呼ばないでください。完済目標の月額は返済総額か追加額かを区別し、最低返済額への上乗せを勝手に解釈しないでください。',
       '履歴利用ルール: previous_ai_analyses がある場合は、各 metrics_snapshot（純資産・未払い合計・使用可能額）の数値と今回の現在値を比較し、「前回比 純資産○円」「未払い合計が△円減/増」のように差分（改善点・悪化点・据え置き点）を述べてください。過去の本文や言い回しを引用・再掲するのではなく、必ず今回の現在値を主語にして書いてください。',
       '日々の行動ルール: daily_todo がある場合は、金銭の負債と同じ熱量で「行動の借金」にも言及してください。carried_over（繰り越したタスク）は具体的なタイトルと経過日数を示し、実行可能な次の一歩を提案してください。繰り越しを人格や能力の問題と決めつけないでください。active_streak_days が続いていれば必ず褒め、recent_days のこなした実績を根拠に「この調子」と背中を押してください。today_pending が残っていれば寝る前にやり切るよう促してください。daily_todo が無い、または空のときは行動の借金には触れず、金銭面の助言に集中してください（存在しない実績を捏造しないこと）。',
-      '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. 最後にズバッと総評」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3つよ。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
+      '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. まとめ」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3点を確認しましょう。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
       '開発者向け改善提案の出力ルール: implementation_context を読んで現状の機能を実際にレビューしてから提案してください。developer_requests は定型生成の既知提案一覧で、already_issued が true のものは既にGitHub Issue起票済みです。本文の「7. 開発者向け改善提案」にも既知提案・起票済み提案やその言い換えを書かないでください。items の title と同一または類似のタイトルは本文にもJSONにも出力禁止です。まだ起票されていない新規の改善提案だけを最大3件返し、新規提案が1件も無い場合は本文には「新規提案なし（既知の提案はすべて起票済みです）」と1行だけ書いてください。各提案は「現状できること（機能レビュー）」「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
       '新規改善提案の機械可読出力ルール: 応答の最後にコードブロックを1つだけ出力してください。コードブロックの開始行は必ず「```json ai-new-proposals」の1行とし、ai-new-proposals を次の行に分けないでください。中身は本文の「7. 開発者向け改善提案」と同じ新規提案を {"title","description","evidence":[],"implementation_steps":[],"acceptance_criteria":[],"source_references":[]} の配列で返し、evidence・implementation_steps・acceptance_criteria・source_references も本文と同じ内容で必ず埋めてください。タイトルは既存Issueと区別できる具体的な日本語にしてください。新規提案がない場合は空配列 [] だけを出力してください。',
     ].join('\n');
@@ -1382,6 +1384,13 @@ class AssetManagementAiSummaryService {
   ) {
     final text = rawText.replaceAll(RegExp(r'[*_`#\\]'), '');
     final errors = <String>[];
+    // Defense in depth for representative abusive responses, not a complete
+    // semantic classifier. Keep financial validation below unchanged.
+    if (RegExp(
+      r'馬鹿|バカ|自己管理の甘さ|金銭感覚の麻痺|笑えないジョーク|鋼の星|孤高の職人',
+    ).hasMatch(text)) {
+      errors.add('人格攻撃・根拠のない人格評価を含むため表示を見送りました');
+    }
 
     void validateAmount(
       String label,
