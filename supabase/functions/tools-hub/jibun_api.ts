@@ -25,6 +25,7 @@ export const JIBUN_API_SCOPES = [
   "notes.write",
   "tasks.read",
   "achievements.read",
+  "integrations.read",
   "workers.invoke",
 ] as const;
 export type JibunApiScope = (typeof JIBUN_API_SCOPES)[number];
@@ -246,9 +247,71 @@ export function sanitizeSearchQuery(input: unknown): string {
     .slice(0, 100);
 }
 
+export function normalizeIntegrationRegistryKey(input: unknown): string {
+  return String(input ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 // x-forwarded-for の先頭ホップが有効な IP リテラルの時のみ返す。
 // inet カラムへ不正値を渡すと INSERT 全体が失敗し audit / rate limit が
 // 静かに壊れるため、パースできない値は null に落とす。
+export function buildLatestIntegrationRegistryReference(
+  rows: Record<string, unknown>[],
+): {
+  systems: Record<string, unknown>[];
+  interfaces: Record<string, unknown>[];
+  mappings: Record<string, unknown>[];
+} {
+  const definitions: Record<string, unknown>[] = rows.map(
+    (row): Record<string, unknown> => {
+      const metadata = row.metadata && typeof row.metadata === "object"
+        ? row.metadata as Record<string, unknown>
+        : {};
+      const publicMetadata = { ...metadata };
+      delete publicMetadata.user_id;
+      return {
+        ...publicMetadata,
+        id: row.id,
+        source: row.source,
+        created_at: row.created_at,
+      };
+    },
+  );
+
+  const latest = (
+    source: string,
+    keyField: string,
+  ): Record<string, unknown>[] => {
+    const byKey = new Map<string, Record<string, unknown>>();
+    for (const item of definitions) {
+      if (item.source !== source) continue;
+      const key = String(item[keyField] ?? "").trim();
+      if (key === "") continue;
+      const version = Number(item.version ?? 0);
+      const current = byKey.get(key);
+      if (!current || version > Number(current.version ?? 0)) {
+        byKey.set(key, item);
+      }
+    }
+    return [...byKey.values()].sort((a, b) =>
+      String(a[keyField]).localeCompare(String(b[keyField]))
+    );
+  };
+
+  return {
+    systems: latest("integration_registry_system", "system_key"),
+    interfaces: latest(
+      "integration_registry_interface",
+      "interface_key",
+    ),
+    mappings: latest("integration_registry_mapping", "mapping_key"),
+  };
+}
+
 export function parseInetOrNull(value: string): string | null {
   const token = value.trim();
   if (token === "") return null;
@@ -392,6 +455,9 @@ export interface JibunApiStore {
   ): Promise<NoteRow>;
   listUserTasks(limit: number): Promise<Record<string, unknown>[]>;
   listAchievements(limit: number): Promise<Record<string, unknown>[]>;
+  listIntegrationRegistry(
+    userId: string,
+  ): Promise<Record<string, unknown>[]>;
   // Notes CRUD
   updateNote(
     userId: string,
@@ -642,6 +708,21 @@ export function createSupabaseJibunApiStore(
         .select("title, description, completed_at")
         .order("completed_at", { ascending: false })
         .limit(limit);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as Record<string, unknown>[];
+    },
+    async listIntegrationRegistry(userId) {
+      const { data, error } = await admin
+        .from("hub_data")
+        .select("id, source, metadata, created_at")
+        .in("source", [
+          "integration_registry_system",
+          "integration_registry_interface",
+          "integration_registry_mapping",
+        ])
+        .filter("metadata->>user_id", "eq", userId)
+        .order("created_at", { ascending: false })
+        .limit(5_000);
       if (error) throw new Error(error.message);
       return (data ?? []) as Record<string, unknown>[];
     },
@@ -1578,6 +1659,37 @@ async function dispatchExternalApiAction(
         workerId: null,
       };
     }
+    case "api.integrations.snapshot": {
+      const denied = requireApiScope(ctx, "integrations.read");
+      if (denied) return { response: denied, workerId: null };
+      const rows = await store.listIntegrationRegistry(userId);
+      const reference = buildLatestIntegrationRegistryReference(rows);
+      const interfaceKey = normalizeIntegrationRegistryKey(body.interface_key);
+      const mappingKey = normalizeIntegrationRegistryKey(body.mapping_key);
+      const interfaces = interfaceKey === ""
+        ? reference.interfaces
+        : reference.interfaces.filter((item) =>
+          item.interface_key === interfaceKey
+        );
+      const mappings = mappingKey === ""
+        ? reference.mappings
+        : reference.mappings.filter((item) => item.mapping_key === mappingKey);
+      return {
+        response: json({
+          success: true,
+          systems: reference.systems,
+          interfaces,
+          mappings,
+          counts: {
+            systems: reference.systems.length,
+            interfaces: interfaces.length,
+            mappings: mappings.length,
+          },
+          trace_id: traceId,
+        }),
+        workerId: null,
+      };
+    }
     case "api.workers.list": {
       const denied = requireApiScope(ctx, "workers.invoke");
       if (denied) return { response: denied, workerId: null };
@@ -1717,6 +1829,7 @@ async function dispatchExternalApiAction(
             "api.notes.delete",
             "api.tasks.list",
             "api.achievements.list",
+            "api.integrations.snapshot",
             "api.workers.list",
             "api.workers.invoke",
           ],
