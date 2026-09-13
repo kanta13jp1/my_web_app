@@ -16,16 +16,20 @@ Future<void> main() async {
         return false;
       }
       await File('${output.path}/$name.png').writeAsBytes(bytes);
-      final browser = await driver.webDriver.logs.get('browser').map(
-        (entry) => <String, Object?>{
-          'level': entry.level,
-          'message': entry.message,
-          'timestamp': entry.timestamp.toIso8601String(),
-        },
-      ).toList();
+      final browser = await driver.webDriver.logs
+          .get('browser')
+          .map(
+            (entry) => <String, Object?>{
+              'level': entry.level,
+              'message': entry.message,
+              'timestamp': entry.timestamp.toIso8601String(),
+            },
+          )
+          .toList();
       final network = <Map<String, Object?>>[];
       await for (final entry in driver.webDriver.logs.get('performance')) {
-        final envelope = jsonDecode(entry.message ?? '{}') as Map<String, dynamic>;
+        final envelope =
+            jsonDecode(entry.message ?? '{}') as Map<String, dynamic>;
         final message = envelope['message'] as Map<String, dynamic>?;
         final method = message?['method'];
         final params = message?['params'] as Map<String, dynamic>?;
@@ -40,7 +44,8 @@ Future<void> main() async {
           final response = params?['response'] as Map<String, dynamic>?;
           final status = response?['status'] as num?;
           if (status != null && status >= 500) {
-            network.add(<String, Object?>{'kind': 'http_5xx', 'status': status});
+            network
+                .add(<String, Object?>{'kind': 'http_5xx', 'status': status});
           }
         }
       }

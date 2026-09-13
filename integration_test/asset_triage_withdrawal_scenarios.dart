@@ -109,7 +109,8 @@ void main({
   testWidgets(
       'triage amounts save once, recalculate and survive page recreation',
       (tester) async {
-    await tester.binding.setSurfaceSize(evidenceViewport ?? const Size(1200, 3200));
+    await tester.binding
+        .setSurfaceSize(evidenceViewport ?? const Size(1200, 3200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     for (final amount in [10000, 20000]) {
       final repository = _RecordingRepository();
@@ -137,7 +138,8 @@ void main({
       expect(task.completed, isFalse);
       final projected = amount == 10000 ? '¥490,000' : '¥480,000';
       expect(find.textContaining(projected), findsWidgets);
-      await _captureEvidence(tester, captureEvidence, 'saved-$amount', task: true);
+      await _captureEvidence(tester, captureEvidence, 'saved-$amount',
+          task: true);
       await _tapAmount(tester, amount);
       expect(repository.current.transferTasks, hasLength(1));
       await _unmount(tester);
@@ -152,7 +154,8 @@ void main({
 
   testWidgets('pending withdrawal removes unaffordable templates',
       (tester) async {
-    await tester.binding.setSurfaceSize(evidenceViewport ?? const Size(1200, 3200));
+    await tester.binding
+        .setSurfaceSize(evidenceViewport ?? const Size(1200, 3200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _RecordingRepository();
     await _pump(tester, repository, bank: 15000);
@@ -172,7 +175,8 @@ void main({
   });
 
   testWidgets('failed storage rolls back and allows retry', (tester) async {
-    await tester.binding.setSurfaceSize(evidenceViewport ?? const Size(390, 844));
+    await tester.binding
+        .setSurfaceSize(evidenceViewport ?? const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _RecordingRepository();
     await _pump(tester, repository);
