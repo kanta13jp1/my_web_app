@@ -26774,21 +26774,40 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(Icons.account_balance_outlined, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
-                  '予定 ${_formatManagementYen(row.scheduledPaymentAmount)}',
-                  style: const TextStyle(fontSize: 12, height: 1.5),
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildPaymentSourceDebtDropdown(row, workbook),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final summary = Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(Icons.account_balance_outlined, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
+                      '予定 ${_formatManagementYen(row.scheduledPaymentAmount)}',
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ),
+                ],
+              );
+              if (constraints.maxWidth < 600) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    summary,
+                    const SizedBox(height: 8),
+                    _buildPaymentSourceDebtDropdown(row, workbook),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: summary),
+                  const SizedBox(width: 8),
+                  _buildPaymentSourceDebtDropdown(row, workbook),
+                ],
+              );
+            },
           ),
           if (candidates.isNotEmpty) ...[
             const SizedBox(height: 6),
