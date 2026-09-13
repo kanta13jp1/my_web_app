@@ -67,8 +67,8 @@ void main() {
         emergencyAdvices: const [],
         developerRequests: const [],
       );
-      final text = AssetManagementAiSummaryService()
-          .buildDeterministicSummary(report);
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
       expect(text, contains('優先確認:'));
       expect(text, contains(source.criticalActions.first.title));
       expect(text, contains('要確認項目の解消を意味するものではありません'));
@@ -781,8 +781,7 @@ void main() {
       expect(result.usedExternalAi, isTrue);
     });
 
-    test(
-        'accepts verification of a past unconfirmed income plan', () async {
+    test('accepts verification of a past unconfirmed income plan', () async {
       const planner = AssetLiabilityPlanningService();
       const insight = AssetManagementInsightService();
       final workbook = planner.buildWorkbook(
@@ -830,8 +829,7 @@ void main() {
       );
     });
 
-    test(
-        'accepts verification of a today unconfirmed income plan', () async {
+    test('accepts verification of a today unconfirmed income plan', () async {
       const planner = AssetLiabilityPlanningService();
       const insight = AssetManagementInsightService();
       final workbook = planner.buildWorkbook(
