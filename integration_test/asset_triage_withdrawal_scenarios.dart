@@ -138,8 +138,12 @@ void main({
       expect(task.completed, isFalse);
       final projected = amount == 10000 ? '¥490,000' : '¥480,000';
       expect(find.textContaining(projected), findsWidgets);
-      await _captureEvidence(tester, captureEvidence, 'saved-$amount',
-          task: true);
+      await _captureEvidence(
+        tester,
+        captureEvidence,
+        'saved-$amount',
+        task: true,
+      );
       await _tapAmount(tester, amount);
       expect(repository.current.transferTasks, hasLength(1));
       await _unmount(tester);
