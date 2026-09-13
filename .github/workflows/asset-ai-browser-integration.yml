@@ -37,6 +37,12 @@ jobs:
           flutter-version: '3.38.x'
       - name: Resolve test dependencies
         run: flutter pub get
+      - name: Run triage withdrawal VM regression
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p .ci-logs
+          flutter test test/widgets/asset_triage_withdrawal_test.dart --reporter expanded 2>&1 | tee .ci-logs/asset-ai-triage-vm.log
       - name: Verify runner browser tools
         run: |
           google-chrome --version
