@@ -70,8 +70,7 @@ Future<void> main() async {
           final response = params?['response'] as Map<String, dynamic>?;
           final status = response?['status'] as num?;
           if (status != null && status >= 500) {
-            network
-                .add(<String, Object?>{
+            network.add(<String, Object?>{
               'kind': 'http_5xx',
               'status': status,
               'url': _requestLocation(response?['url']),
