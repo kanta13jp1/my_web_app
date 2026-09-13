@@ -727,7 +727,9 @@ void main() {
       },
     );
 
-    test('living expense step provides 10k and 20k templates when headroom >= 20k', () {
+    test(
+        'living expense step provides 10k and 20k templates when headroom >= 20k',
+        () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
           '財布(現金)': 2000,
@@ -750,7 +752,9 @@ void main() {
       expect(living.detail.contains('生活費は専用財布へ（食事を抜く判断はしないでください）'), isTrue);
     });
 
-    test('living expense step provides only 10k template when 10k <= headroom < 20k', () {
+    test(
+        'living expense step provides only 10k template when 10k <= headroom < 20k',
+        () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
           '財布(現金)': 2000,
@@ -772,7 +776,8 @@ void main() {
       expect(living.detail.contains('生活費は専用財布へ（食事を抜く判断はしないでください）'), isTrue);
     });
 
-    test('living expense step provides empty templates when headroom < 10k', () {
+    test('living expense step provides empty templates when headroom < 10k',
+        () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
           '財布(現金)': 2000,

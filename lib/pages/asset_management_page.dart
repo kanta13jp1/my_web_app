@@ -23259,10 +23259,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final sourceId = step.withdrawalSourceAccountId!;
     final sourceName = step.withdrawalSourceAccountName ?? '出金元口座';
-    final cashAccount = _buildCurrentAssetLiabilityWorkbook()?.accounts.cast<AssetLiabilityAccount?>().firstWhere(
-      (a) => a?.kind == AssetLiabilityAccountKind.cash,
-      orElse: () => null,
-    );
+    final cashAccount = _buildCurrentAssetLiabilityWorkbook()
+        ?.accounts
+        .cast<AssetLiabilityAccount?>()
+        .firstWhere(
+          (a) => a?.kind == AssetLiabilityAccountKind.cash,
+          orElse: () => null,
+        );
     final toId = cashAccount?.id ?? 'cash';
     final toName = cashAccount?.name ?? '手元現金';
     final today = DateTime(_now.year, _now.month, _now.day);
