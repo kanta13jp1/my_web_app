@@ -113,6 +113,14 @@ jobs:
             --retries=0 \
             "${snapshot_args[@]}"
 
+      - name: Verify integrated Lumen Path route
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lumen-route-results.json
+        run: |
+          npx playwright test test/e2e/lumen_path_route.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Stop short-lived SPA server
         if: always()
         shell: bash

@@ -20,10 +20,20 @@ artifacts.
 Run these when preparing a new Windows instance or recreating a broken local
 setup.
 
-1. Clone or fetch the repository.
-   `git clone https://github.com/kanta13jp1/my_web_app.git`
-2. Create an isolated worktree for the active instance.
-   `git worktree add C:\Users\kanta\GitHub\my_web_app_<name> -b codex1/<name> origin/main`
+1. Reuse an existing control-plane clone when available. For a new clone, avoid
+   downloading blobs until a task needs them.
+   `git clone --filter=blob:none --no-checkout https://github.com/kanta13jp1/my_web_app.git`
+2. Run `python scripts/cloud_first_route.py`. If GitHub/API operations can
+   complete the task, do not create another checkout. Otherwise create an
+   isolated sparse worktree and select only the task's read/write paths.
+
+   ```powershell
+   git worktree add --no-checkout -b codex/<name> C:\tmp\mwa-<name> origin/main
+   Set-Location C:\tmp\mwa-<name>
+   git sparse-checkout init --no-cone
+   git sparse-checkout set '/AGENTS.md' '/path/needed/by/task/'
+   git checkout
+   ```
 3. Confirm the fleet rule in the first session message.
    `Claude Code #1 + Codex #1 only; no old Codex #2/#3 lanes.`
 4. Verify repo-managed settings and hooks.
@@ -33,7 +43,7 @@ setup.
 6. Seed optional local markers for faster recovery.
    `memory/active-issue.txt` contains one issue number, for example `1564`.
    `memory/next-quality-gate.txt` contains the next command to run.
-7. Validate the worktree before edits.
+7. Validate the sparse worktree before edits.
    `git status --short --branch`
 8. On Windows desktop hosts, inspect local Claude hygiene Scheduled Tasks.
    `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install_claude_hygiene_tasks.ps1 -Status`

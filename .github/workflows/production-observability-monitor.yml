@@ -243,7 +243,11 @@ jobs:
           FORCED_ALERT: ${{ steps.evaluate.outputs.forced_alert }}
         run: |
           MARKER="[observability-dedupe:$DEDUPE_KEY]"
-          ISSUE=$(gh issue list --state open --search "$MARKER in:body" --json number --jq '.[0].number // empty')
+          set -euo pipefail
+          # Paginate the REST list: fuzzy search can return the dashboard and
+          # search indexing can lag behind newly created canonical alerts.
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" > open-issues.json
+          ISSUE=$(python -c 'import json, os; from scripts.production_observability_monitor import select_alert_issue; pages=json.load(open("open-issues.json")); print(select_alert_issue([i for page in pages for i in page], forced=os.environ["FORCED_ALERT"] == "true") or "")')
           { echo "$MARKER"; cat production-observability.md; } > issue-body.md
           if [ -n "$ISSUE" ]; then
             gh issue comment "$ISSUE" --body-file issue-body.md

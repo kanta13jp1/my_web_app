@@ -101,7 +101,9 @@ jobs:
 
       - name: Test Design accessibility audit policy
         if: steps.docs_check.outputs.docs_only != 'true'
-        run: python scripts/check_design_accessibility_audit_test.py
+        run: |
+          python scripts/check_design_accessibility_audit_test.py
+          python scripts/check_design_audit_advisory_test.py
 
       - name: Guard Dependabot pub updates
         if: steps.docs_check.outputs.docs_only != 'true' && github.event.pull_request.user.login == 'dependabot[bot]'
@@ -124,12 +126,21 @@ jobs:
           --changed-files .ci-logs/changed-files.txt
 
       - name: Check Design accessibility audit contract
+        id: design_audit
+        continue-on-error: true
         if: steps.docs_check.outputs.docs_only != 'true'
         run: >
           python scripts/check_design_accessibility_audit.py
           --event "$GITHUB_EVENT_PATH"
           --changed-files-status .ci-logs/changed-files-status.txt
           --base-ref "${{ github.event.pull_request.base.sha }}"
+
+      - name: Report advisory Design audit findings
+        if: always() && steps.design_audit.outcome == 'failure'
+        run: |
+          echo "::warning::Design accessibility audit evidence is incomplete; advisory only, not a merge blocker. Review the audit log."
+          echo "### Design accessibility audit: advisory findings" >> "$GITHUB_STEP_SUMMARY"
+          echo "Audit evidence is missing, incomplete, or the audit could not run. This is not an accessibility pass. See the audit step log; other required gates remain enforced." >> "$GITHUB_STEP_SUMMARY"
 
   public-e2e-stability:
     permissions:
