@@ -7,6 +7,9 @@ on:
       - lib/services/asset_management_ai_*.dart
       - lib/services/asset_management_insight_service.dart
       - test/widgets/asset_management_ai_current_input_test.dart
+      - test/widgets/asset_triage_withdrawal_test.dart
+      - integration_test/asset_triage_withdrawal_test.dart
+      - lib/services/asset_triage_guide_service.dart
       - integration_test/asset_management_ai_current_input_test.dart
       - integration_test/asset_ai_current_input_scenarios.dart
       - test_driver/asset_ai_integration.dart
@@ -57,6 +60,26 @@ jobs:
             --target=integration_test/asset_management_ai_current_input_test.dart \
             -d web-server --browser-name=chrome --headless \
             2>&1 | tee .ci-logs/asset-ai-browser.log
+      - name: Run triage withdrawal flows in Chrome
+        shell: bash
+        run: |
+          mkdir -p .ci-logs
+          chromedriver --port=4444 > .ci-logs/asset-ai-triage-chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status
+          set -o pipefail
+          flutter drive --verbose \
+            --driver=test_driver/asset_ai_integration.dart \
+            --target=integration_test/asset_triage_withdrawal_test.dart \
+            -d web-server --browser-name=chrome --headless \
+            2>&1 | tee .ci-logs/asset-ai-triage-browser.log
       - name: Preserve browser evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

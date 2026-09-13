@@ -23253,21 +23253,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 「まず、これだけ」段階別トリアージカード。数字の洪水で混乱している
   /// 利用者向けに、今日 (最大3件)→今週→今月の順で絞って提示する。
   /// 背景が固定の淡ティールのため、文字色も固定の濃ティール系にする。
-  void _createTriageWithdrawalTask(AssetTriageStep step, double amount) {
+  Future<void> _createTriageWithdrawalTask(AssetTriageStep step, double amount) async {
     if (step.withdrawalSourceAccountId == null) {
       return;
     }
     final sourceId = step.withdrawalSourceAccountId!;
     final sourceName = step.withdrawalSourceAccountName ?? '出金元口座';
-    final cashAccount = _buildCurrentAssetLiabilityWorkbook()
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    final cashAccount = workbook
         ?.accounts
         .cast<AssetLiabilityAccount?>()
         .firstWhere(
           (a) => a?.kind == AssetLiabilityAccountKind.cash,
           orElse: () => null,
         );
-    final toId = cashAccount?.id ?? 'cash';
-    final toName = cashAccount?.name ?? '手元現金';
+    if (cashAccount == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('手元現金の口座を登録してから出金タスクを作成してください。')),
+      );
+      return;
+    }
+    final toId = cashAccount.id;
+    final toName = cashAccount.name;
     final today = DateTime(_now.year, _now.month, _now.day);
 
     final duplicate = _transferTasks.any(
@@ -23287,11 +23294,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
 
+    // Recheck current funds at click time, including already planned transfers.
+    final source = workbook!.accounts.where((account) => account.id == sourceId);
+    final summaries = workbook.accountCashflowSummaries.where(
+      (summary) => summary.accountId == sourceId,
+    );
+    if (!amount.isFinite || amount <= 0 || source.isEmpty ||
+        summaries.isEmpty || amount > source.first.balance ||
+        amount > summaries.first.projectedBalance) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('出金元の余力が変わりました。金額と予定を確認してください。')),
+      );
+      return;
+    }
     final now = DateTime.now();
+    final taskId = 'transfer_${now.microsecondsSinceEpoch}';
     final nextTasks = List<AssetLiabilityTransferTask>.from(_transferTasks)
       ..add(
         AssetLiabilityTransferTask(
-          id: 'transfer_${now.microsecondsSinceEpoch}',
+          id: taskId,
           fromAccountId: sourceId,
           fromAccountName: sourceName,
           toAccountId: toId,
@@ -23305,7 +23326,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() {
       _transferTasks = nextTasks;
     });
-    unawaited(_saveAssetLiabilityMonthlyState());
+    try {
+      await _persistAssetLiabilityMonthlyState();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _transferTasks = _transferTasks.where((task) => task.id != taskId).toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('出金タスクを保存できませんでした。再度お試しください。')),
+      );
+      return;
+    }
+    if (!mounted) return;
 
     final yenText = amount >= 10000 && amount % 10000 == 0
         ? '${(amount / 10000).round()}万円'
