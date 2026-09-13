@@ -1254,7 +1254,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousNow = _now;
-      final nextNow = DateTime.now();
+      // Keep the injected clock stable across periodic date checks in tests.
+      final nextNow = widget.debugNow ?? DateTime.now();
       final previousMonthKey = _assetLiabilityStateMonthKey(previousNow);
       final nextMonthKey = _assetLiabilityStateMonthKey(nextNow);
       // _now はこのページでは日付(M/d)までしか表示しない。毎秒 setState すると巨大な
