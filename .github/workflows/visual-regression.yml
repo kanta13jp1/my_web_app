@@ -117,6 +117,8 @@ jobs:
           exit 1
 
       - name: Compare or generate reviewed baselines
+        env:
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/baselines
         shell: bash
         run: |
           set -euo pipefail
@@ -125,6 +127,7 @@ jobs:
             snapshot_args+=(--update-snapshots)
           fi
           npm run e2e:visual:regression -- \
+            --output=test-results/baselines \
             --project=chromium \
             --project=mobile-chrome \
             --retries=0 \
@@ -138,15 +141,30 @@ jobs:
         run: |
           set -euo pipefail
           npx playwright test --config=playwright.hexciv-shop.config.ts \
+            --output=test-results/hexciv-shop \
             --project=chromium --project=mobile-chrome --retries=0
 
       - name: Verify integrated Lumen Path route
         shell: bash
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lumen-route-results.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/lumen-route
         run: |
           npx playwright test test/e2e/lumen_path_route.spec.ts \
+            --output=test-results/lumen-route \
             --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify all three evidence reports survive
+        shell: bash
+        run: |
+          set -euo pipefail
+          for report in visual-regression hexciv-shop lumen-route; do
+            test -s "playwright-report/${report}-results.json"
+          done
+          for suite in baselines hexciv-shop lumen-route; do
+            test -s "playwright-report/${suite}/index.html"
+            test -d "test-results/${suite}"
+          done
 
       - name: Stop short-lived SPA server
         if: always()
