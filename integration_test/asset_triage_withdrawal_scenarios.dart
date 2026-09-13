@@ -76,7 +76,25 @@ Future<void> _tapAmount(WidgetTester tester, int amount) async {
   await tester.pump(const Duration(milliseconds: 500));
 }
 
-void main() {
+Future<void> _captureEvidence(
+  WidgetTester tester,
+  Future<void> Function(WidgetTester, String)? capture,
+  String name, {
+  bool task = false,
+}) async {
+  if (capture == null) return;
+  final target = task
+      ? find.textContaining('三井住友銀行 -> 財布(現金)')
+      : find.byKey(const Key('triage_withdrawal_template_10000'));
+  expect(target, findsOneWidget);
+  await tester.ensureVisible(target);
+  await capture(tester, name);
+}
+
+void main({
+  Size? evidenceViewport,
+  Future<void> Function(WidgetTester, String)? captureEvidence,
+}) {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -91,12 +109,13 @@ void main() {
   testWidgets(
       'triage amounts save once, recalculate and survive page recreation',
       (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 3200));
+    await tester.binding.setSurfaceSize(evidenceViewport ?? const Size(1200, 3200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     for (final amount in [10000, 20000]) {
       final repository = _RecordingRepository();
       await _pump(tester, repository);
       expect(find.textContaining('生活費は専用財布へ'), findsWidgets);
+      await _captureEvidence(tester, captureEvidence, 'before-$amount');
       repository.saveGate = Completer<void>();
       await _tapAmount(tester, amount);
       expect(repository.current.transferTasks, isEmpty);
@@ -118,6 +137,7 @@ void main() {
       expect(task.completed, isFalse);
       final projected = amount == 10000 ? '¥490,000' : '¥480,000';
       expect(find.textContaining(projected), findsWidgets);
+      await _captureEvidence(tester, captureEvidence, 'saved-$amount', task: true);
       await _tapAmount(tester, amount);
       expect(repository.current.transferTasks, hasLength(1));
       await _unmount(tester);
@@ -132,7 +152,7 @@ void main() {
 
   testWidgets('pending withdrawal removes unaffordable templates',
       (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 3200));
+    await tester.binding.setSurfaceSize(evidenceViewport ?? const Size(1200, 3200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _RecordingRepository();
     await _pump(tester, repository, bank: 15000);
@@ -152,7 +172,7 @@ void main() {
   });
 
   testWidgets('failed storage rolls back and allows retry', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
+    await tester.binding.setSurfaceSize(evidenceViewport ?? const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _RecordingRepository();
     await _pump(tester, repository);
@@ -160,9 +180,11 @@ void main() {
     await _tapAmount(tester, 10000);
     expect(repository.current.transferTasks, isEmpty);
     expect(find.textContaining('出金タスクを保存できませんでした'), findsOneWidget);
+    await _captureEvidence(tester, captureEvidence, 'save-failure');
     repository.failSave = false;
     await _tapAmount(tester, 10000);
     expect(repository.current.transferTasks, hasLength(1));
+    await _captureEvidence(tester, captureEvidence, 'recovered', task: true);
     expect(tester.takeException(), isNull);
     await _unmount(tester);
   });
