@@ -1784,7 +1784,9 @@ void main() {
     testWidgets('living expense priority toggle immediately reorders actions', (
       tester,
     ) async {
-      final now = DateTime.now();
+      // The action list displays only its first eight entries. Keep the
+      // fixture date stable so later overdue payments cannot displace it.
+      final now = DateTime(2026, 9, 1);
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await tester.binding.setSurfaceSize(const Size(1200, 3200));
@@ -1802,6 +1804,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
+            debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
               <String, int>{'mobit': now.day},
               monthlyState: AssetLiabilityMonthlyState(
