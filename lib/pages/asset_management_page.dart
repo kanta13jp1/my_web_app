@@ -27387,42 +27387,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
             ),
             actions: Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  alignment: WrapAlignment.end,
-                  children: [
-                    TextButton.icon(
-                      onPressed: () => unawaited(_showSalaryDayDialog()),
-                      icon: const Icon(Icons.event_available_outlined),
-                      label: Text('給料日 $_salaryDay日'),
-                    ),
-                    TextButton.icon(
-                      onPressed: () => unawaited(_showSalaryAmountDialog()),
-                      icon: const Icon(Icons.payments_outlined),
-                      label: Text(
-                        _salaryAmount == null
-                            ? '想定給料額'
-                            : '想定給料額 ¥${NumberFormat('#,###').format(_salaryAmount!.round())}',
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: _copyPreviousMonthSettings,
-                      icon: const Icon(Icons.copy_all_outlined),
-                      label: const Text('前サイクルコピー'),
-                    ),
-                    TextButton.icon(
-                      onPressed: () =>
-                          _showRecurringIncomeTemplateDialog(workbook),
-                      icon: const Icon(Icons.event_repeat_outlined),
-                      label: const Text('定期収入'),
-                    ),
-                    TextButton.icon(
-                      onPressed: () => _showIncomePlanDialog(workbook),
-                      icon: const Icon(Icons.add),
-                      label: const Text('追加'),
-                    ),
-                  ],
-              ),
+              spacing: 4,
+              runSpacing: 4,
+              alignment: WrapAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () => unawaited(_showSalaryDayDialog()),
+                  icon: const Icon(Icons.event_available_outlined),
+                  label: Text('給料日 $_salaryDay日'),
+                ),
+                TextButton.icon(
+                  onPressed: () => unawaited(_showSalaryAmountDialog()),
+                  icon: const Icon(Icons.payments_outlined),
+                  label: Text(
+                    _salaryAmount == null
+                        ? '想定給料額'
+                        : '想定給料額 ¥${NumberFormat('#,###').format(_salaryAmount!.round())}',
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _copyPreviousMonthSettings,
+                  icon: const Icon(Icons.copy_all_outlined),
+                  label: const Text('前サイクルコピー'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _showRecurringIncomeTemplateDialog(workbook),
+                  icon: const Icon(Icons.event_repeat_outlined),
+                  label: const Text('定期収入'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _showIncomePlanDialog(workbook),
+                  icon: const Icon(Icons.add),
+                  label: const Text('追加'),
+                ),
+              ],
+            ),
           ),
           Text(
             '入金済み・支払済みにした項目は、現在の口座残高に反映済みとして扱います。まだ残高を更新していない場合はチェックしないでください。',
@@ -28325,30 +28324,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
             ),
             actions: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.end,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _isSavingAssetLiabilitySnapshot
-                        ? null
-                        : () => _saveCurrentAssetLiabilitySnapshot(workbook),
-                    icon: _isSavingAssetLiabilitySnapshot
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save_outlined),
-                    label: const Text('スナップショット保存'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => _downloadAssetLiabilityCsvBundle(workbook),
-                    icon: const Icon(Icons.download_outlined),
-                    label: const Text('CSV出力'),
-                  ),
-                ],
-              ),
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.end,
+              children: [
+                FilledButton.icon(
+                  onPressed: _isSavingAssetLiabilitySnapshot
+                      ? null
+                      : () => _saveCurrentAssetLiabilitySnapshot(workbook),
+                  icon: _isSavingAssetLiabilitySnapshot
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: const Text('スナップショット保存'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _downloadAssetLiabilityCsvBundle(workbook),
+                  icon: const Icon(Icons.download_outlined),
+                  label: const Text('CSV出力'),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 4),
           Text(
