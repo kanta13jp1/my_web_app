@@ -1477,11 +1477,22 @@ class AssetManagementAiSummaryService {
       for (final segment in segments) {
         if (!segment.contains(row.name)) continue;
         final isMarkedPaid = RegExp(
-          '${RegExp.escape(row.name)}[^。\\r\\n]{0,40}?'
-          '(?:(?:支払|支払い|返済|引落|引き落とし|振込)?済(?:み)?|完済)',
+          '(?:${RegExp.escape(row.name)}[^。\\r\\n]{0,60}?'
+          '(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込)?'
+          '(?:済(?:み)?|完了|終了)|完済)'
+          '|'
+          '(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込)?'
+          '(?:済(?:み)?|完了|終了)|完済)[^。\\r\\n]{0,60}?'
+          '${RegExp.escape(row.name)})',
         ).hasMatch(segment);
-        if (_containsUnnegatedKeyword(segment, unpaidLanguage) &&
-            !isMarkedPaid) {
+        if (isMarkedPaid) continue;
+        final nameIndex = segment.indexOf(row.name);
+        final startIndex = nameIndex > 20 ? nameIndex - 20 : 0;
+        final endIndex = nameIndex + row.name.length + 40 < segment.length
+            ? nameIndex + row.name.length + 40
+            : segment.length;
+        final segmentAroundName = segment.substring(startIndex, endIndex);
+        if (_containsUnnegatedKeyword(segmentAroundName, unpaidLanguage)) {
           errors.add('${row.name}を支払済みなのに督促');
           break;
         }
