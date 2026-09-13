@@ -1,3 +1,5 @@
+import 'package:my_web_app/widgets/asset_interest_history_card.dart';
+import 'package:my_web_app/services/asset_interest_repository.dart';
 import 'package:my_web_app/services/asset_pain_metric_service.dart';
 // ignore_for_file: require_trailing_commas
 
@@ -8,6 +10,7 @@ import 'dart:math'; // ← ★この1行を追加してください！
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:my_web_app/widgets/debounced_commit_text_field.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -9891,6 +9894,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _sectionAnchor(AssetManagementSectionId.disposable),
               _buildDisposableBalanceCard(),
+              if (_supabase.auth.currentUser != null)
+                AssetInterestHistoryCard(
+                  key: ValueKey('interest:${_supabase.auth.currentUser!.id}'),
+                  repository: SupabaseAssetInterestRepository(
+                    _supabase,
+                    _supabase.auth.currentUser!.id,
+                  ),
+                ),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.quickActions)) ...[
@@ -30001,13 +30012,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
+          DebouncedCommitTextField(
+            key: ValueKey('annual-rate:${row.id}'),
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.,%]')),
             ],
-            onChanged: (value) => _updateAnnualRateOverride(row, value),
+            onCommitted: (value) => _updateAnnualRateOverride(row, value),
             decoration: InputDecoration(
               isDense: true,
               hintText: _formatRateInput(row.annualRate),

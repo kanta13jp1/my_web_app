@@ -85,5 +85,37 @@ class ProductionObservabilityMonitorTest(unittest.TestCase):
         self.assertEqual(first["alerts"][-1]["source"], "manual_validation")
 
 
+
+class AlertRoutingTest(unittest.TestCase):
+    def issue(self, number, **overrides):
+        value = {"number": number, "state": "open",
+                 "title": "[Alert][Observability] Production telemetry threshold breach",
+                 "body": "[observability-dedupe:a2126f97a0de97c3]"}
+        value.update(overrides)
+        return value
+
+    def test_dashboard_is_never_alert_destination(self):
+        dashboard = self.issue(5101, title="[Dashboard][Observability] Production telemetry",
+                               body="[observability-dashboard:v1]\n[observability-dedupe:0525f6bf8608751b]")
+        self.assertEqual(monitor.select_alert_issue([dashboard, self.issue(5102)]), 5102)
+
+    def test_oldest_canonical_survives_changed_fingerprint_and_order(self):
+        newer = self.issue(5402, body="[observability-dedupe:0525f6bf8608751b]")
+        self.assertEqual(monitor.select_alert_issue([newer, self.issue(5102)]), 5102)
+
+    def test_closed_pr_missing_marker_and_fuzzy_title_excluded(self):
+        invalid = [self.issue(1, state="closed"), self.issue(2, pull_request={}),
+                   self.issue(3, body=None), self.issue(4, title="unrelated"),
+                   self.issue(5, body="text [observability-dedupe:a2126f97a0de97c3]"),
+                   self.issue(6, body="[observability-dashboard:v1]\n[observability-dedupe:a2126f97a0de97c3]")]
+        self.assertIsNone(monitor.select_alert_issue(invalid))
+
+    def test_validation_and_production_are_separate(self):
+        validation = self.issue(5000, title="[Validation][Observability] Dedupe alert live proof")
+        issues = [validation, self.issue(5102)]
+        self.assertEqual(monitor.select_alert_issue(issues, forced=True), 5000)
+        self.assertEqual(monitor.select_alert_issue(issues), 5102)
+        self.assertIsNone(monitor.select_alert_issue([self.issue(5102)], forced=True))
+
 if __name__ == "__main__":
     unittest.main()

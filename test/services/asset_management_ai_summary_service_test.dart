@@ -35,6 +35,25 @@ void main() {
       expect(result.text.contains('Dartルール'), true);
     });
 
+    for (final response in ['自己管理の甘さが原因です。', 'あんた、馬鹿じゃないの？']) {
+      test('rejects abusive response: $response', () async {
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (_) async => <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            },
+          ),
+        );
+        final result = await service.generateSummary(report: _report());
+        expect(result.status, AssetManagementAiSummaryStatus.fallback);
+        expect(result.text, isNot(contains(response)));
+        expect(result.errorMessage, contains('人格攻撃'));
+      });
+    }
+
     test('calls ai-hub auto chat when feature flag is on', () async {
       Map<String, dynamic>? capturedBody;
       final service = AssetManagementAiSummaryService(
@@ -73,10 +92,10 @@ void main() {
         true,
       );
       expect(
-        capturedBody?['message'].toString().contains('8. 最後にズバッと総評'),
+        capturedBody?['message'].toString().contains('8. まとめ'),
         true,
       );
-      expect(capturedBody?['message'].toString().contains('細木数子'), true);
+      expect(capturedBody?['message'].toString().contains('細木数子'), false);
       expect(capturedBody?['message'].toString().contains('負債マスタ詳細'), true);
       expect(capturedBody?['message'].toString().contains('今月の支払いと利息'), true);
       expect(
@@ -108,6 +127,18 @@ void main() {
       expect(capturedBody?['message'].toString().contains('年収'), true);
       expect(capturedBody?['provider_choice_reason'], contains('summary'));
       expect(capturedBody?['routing_use_case'], 'summary');
+      final prompt = capturedBody!['message'].toString();
+      expect(prompt, contains('確認済みの事実・予定・推定・未確認を区別'));
+      expect(prompt, contains('取引明細未照合なら新規借入・誓約違反を断定しない'));
+      expect(prompt, contains('未受取の入金予定は未入金の証拠ではありません'));
+      expect(prompt, contains('月が異なると確認できない限り先月と呼ばない'));
+      expect(prompt, contains('返済総額か追加額かを区別'));
+      expect(prompt, isNot(contains('断言口調にしてください')));
+      expect(prompt, isNot(contains('大きいほど厳しく叱り')));
+      expect(prompt, isNot(contains('占いスタイル:')));
+      expect(prompt, isNot(contains('時々笑える毒舌')));
+      expect(prompt, isNot(contains('1. 宿命・本質')));
+      expect(service.buildPayload(_report())['response_policy_version'], 2);
     });
 
     test('includes previous persisted analyses in the AI prompt', () async {
@@ -1051,7 +1082,7 @@ void main() {
             '"source_references":["lib/pages/asset_management_page.dart"]}]',
         '```',
         '',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(
@@ -1080,7 +1111,7 @@ void main() {
       );
       expect(result.text.contains('ai-new-proposals'), false);
       expect(result.text.contains('一括編集UIを追加'), false);
-      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+      expect(result.text.contains('## 8. まとめ'), true);
     });
 
     test('drops broken ai proposal block safely', () async {
@@ -1090,7 +1121,7 @@ void main() {
         '```json ai-new-proposals',
         'これはJSONではありません',
         '```',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(
@@ -1111,7 +1142,7 @@ void main() {
 
       expect(result.aiDeveloperRequests, isEmpty);
       expect(result.text.contains('ai-new-proposals'), false);
-      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+      expect(result.text.contains('## 8. まとめ'), true);
     });
 
     test('parses marker on the line after the fence', () async {
@@ -1124,7 +1155,7 @@ void main() {
         '[{"title":"サンプル新規提案","description":"説明です。"}]',
         '```',
         '',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(
@@ -1147,7 +1178,7 @@ void main() {
       expect(result.aiDeveloperRequests.single.title, 'サンプル新規提案');
       expect(result.text.contains('ai-new-proposals'), false);
       expect(result.text.contains('```json'), false);
-      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+      expect(result.text.contains('## 8. まとめ'), true);
     });
 
     test('filters proposals that repeat known template titles', () async {
@@ -1161,7 +1192,7 @@ void main() {
         '[{"title":"$knownTitle","description":"既知提案の再掲です。"},'
             '{"title":"全く新しい改善提案","description":"新規の提案です。"}]',
         '```',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(
@@ -1188,7 +1219,7 @@ void main() {
       final response = [
         '## 7. 開発者向け改善提案',
         '今回は ai-new-proposals に該当する新規提案はありません。',
-        '## 8. 最後にズバッと総評',
+        '## 8. まとめ',
         '以上。',
       ].join('\n');
       final service = AssetManagementAiSummaryService(

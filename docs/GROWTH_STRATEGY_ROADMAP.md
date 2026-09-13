@@ -33575,3 +33575,8 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - 技術ブログ下書きパイプライン `docs/blog-drafts/` は既に 2026-03-27〜2030年分 (795ファイル) がキュー済みであることを確認し、本日の手動追加は見送った (既存自動化で十分供給されている)。
 - 2026-09-08 セッションで follow-up 切り出し済みの `/money-forward` ダミー実装 (`social-commerce-hub` EF の `mf.connect_url`/`mf.sync` が固定値を返すのみ) は、財務データ領域のため本セッションでは着手せず、別セッションでの人間レビュー前提の対応を維持する方針を継続した。
 - `fix/ci-clean-analyzer` ブランチ自体の整理 (rebase/マージ or 破棄の判断) は owner 確認が必要なため、次回セッションへの推奨事項として記録する。
+
+
+## 2026-09-12 Monthly paid-interest history (#5391)
+
+Implemented a server-first monthly paid-interest chart with explicit missing/partial states and same-scope reconciled comparisons. No production financial records were changed. Focused cloud validation is in progress; production release requires the Design accessibility audit and required CI. See [feature notes](ASSET_INTEREST_HISTORY.md).
