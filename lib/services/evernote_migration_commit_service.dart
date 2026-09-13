@@ -729,6 +729,10 @@ class EvernoteMigrationCommitService {
       }
     }
 
+    if (preview.commitBlockedReason != null) {
+      throw StateError(preview.commitBlockedReason!);
+    }
+    final expectedBySourceId = _previewNotesBySourceId(preview);
     final export = _parser.parseBytes(exportBytes);
     if (preview.sourceExportSha256?.toLowerCase() != export.exportSha256 ||
         preview.notes.length != export.notes.length ||
@@ -739,6 +743,18 @@ class EvernoteMigrationCommitService {
       throw StateError(
         'The ENEX parser reported warnings. Commit remains blocked.',
       );
+    }
+    // Reject ambiguity before ledger, Storage or note writes. This guard does
+    // not establish canonical identity for distinct GUID-less source notes.
+    final auditedSourceIds = <String>{};
+    for (final note in export.notes) {
+      if (!auditedSourceIds.add(note.sourceId)) {
+        throw StateError('The ENEX archive contains duplicate note ids.');
+      }
+      final expected = expectedBySourceId[note.sourceId];
+      if (expected == null || !_matchesPreview(note, expected)) {
+        throw StateError('The selected ENEX no longer matches its preview.');
+      }
     }
     if (export.notes.any(
       (note) => note.resources.any(
@@ -1050,17 +1066,7 @@ class EvernoteMigrationCommitService {
       }
     }
 
-    final expectedBySourceId = <String, ImportedNoteDraft>{};
-    for (final draft in preview.notes) {
-      final sourceId = draft.sourceId?.trim();
-      if (sourceId == null || sourceId.isEmpty) {
-        throw StateError('Every streamed Evernote preview note needs an id.');
-      }
-      if (expectedBySourceId.containsKey(sourceId)) {
-        throw StateError('The Evernote preview contains duplicate note ids.');
-      }
-      expectedBySourceId[sourceId] = draft;
-    }
+    final expectedBySourceId = _previewNotesBySourceId(preview);
 
     final archivePath = '$ownerId/evernote/$exportSha256/source.enex';
     var resourceBytes = 0;
@@ -1337,6 +1343,23 @@ class EvernoteMigrationCommitService {
       archiveSha256: exportSha256,
       noteIds: List<int>.unmodifiable(noteIds),
     );
+  }
+
+  Map<String, ImportedNoteDraft> _previewNotesBySourceId(
+    ImportPreviewResult preview,
+  ) {
+    final expectedBySourceId = <String, ImportedNoteDraft>{};
+    for (final draft in preview.notes) {
+      final sourceId = draft.sourceId?.trim();
+      if (sourceId == null || sourceId.isEmpty) {
+        throw StateError('Every Evernote preview note needs an id.');
+      }
+      if (expectedBySourceId.containsKey(sourceId)) {
+        throw StateError('The Evernote preview contains duplicate note ids.');
+      }
+      expectedBySourceId[sourceId] = draft;
+    }
+    return expectedBySourceId;
   }
 
   bool _matchesPreview(EvernoteEnexNote note, ImportedNoteDraft expected) {
