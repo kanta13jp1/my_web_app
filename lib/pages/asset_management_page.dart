@@ -1,3 +1,5 @@
+import 'package:my_web_app/widgets/asset_interest_history_card.dart';
+import 'package:my_web_app/services/asset_interest_repository.dart';
 import 'package:my_web_app/services/asset_pain_metric_service.dart';
 // ignore_for_file: require_trailing_commas
 
@@ -8,6 +10,7 @@ import 'dart:math'; // ← ★この1行を追加してください！
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:my_web_app/widgets/debounced_commit_text_field.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -833,6 +836,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <String, TextEditingController>{};
   final Map<String, TextEditingController> _annualRateControllers =
       <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingMonthlyAmountControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingNewUsageAmountControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _revolvingCreditLimitControllers =
+      <String, TextEditingController>{};
   final Set<String> _verifyingAnnualRateEvidenceAccountIds = <String>{};
   NoteImagePasteRegistration? _annualRateEvidencePasteRegistration;
   AssetLiabilityDebtRow? _annualRateEvidencePasteTargetRow;
@@ -1292,6 +1301,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       (_, controller) => controller.dispose(),
     );
     _annualRateControllers.forEach((_, controller) => controller.dispose());
+    _revolvingMonthlyAmountControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
+    _revolvingNewUsageAmountControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
+    _revolvingCreditLimitControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
     _cardStatementImportController.dispose();
     _assetCsvRestoreController.dispose();
     _repaymentSimulationExtraPaymentController.dispose();
@@ -3045,6 +3063,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _syncActualPaymentControllers();
     _syncPaymentDifferenceReasonControllers();
     _syncAnnualRateControllers();
+    _syncRevolvingFieldControllers();
+  }
+
+  void _syncRevolvingFieldControllers() {
+    void syncOne(
+      Map<String, TextEditingController> controllers,
+      double Function(AssetLiabilityRevolvingCreditConfig config) selector,
+    ) {
+      for (final entry in controllers.entries) {
+        final config = _revolvingConfigs[entry.key];
+        final amount = config == null ? 0.0 : selector(config);
+        final text = amount > 0 ? amount.round().toString() : '';
+        if (entry.value.text != text) {
+          entry.value.text = text;
+        }
+      }
+    }
+
+    syncOne(_revolvingMonthlyAmountControllers, (c) => c.monthlyAmount);
+    syncOne(_revolvingNewUsageAmountControllers, (c) => c.newUsageAmount);
+    syncOne(_revolvingCreditLimitControllers, (c) => c.creditLimit);
   }
 
   void _syncMonthlyPaymentControllers() {
@@ -3132,6 +3171,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             : '',
       ),
     );
+  }
+
+  TextEditingController _revolvingMonthlyAmountControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingMonthlyAmountControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.monthlyAmount ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
+  }
+
+  TextEditingController _revolvingNewUsageAmountControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingNewUsageAmountControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.newUsageAmount ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
+  }
+
+  TextEditingController _revolvingCreditLimitControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _revolvingCreditLimitControllers.putIfAbsent(row.id, () {
+      final amount = _revolvingConfigs[row.id]?.creditLimit ?? 0;
+      return TextEditingController(
+        text: amount > 0 ? amount.round().toString() : '',
+      );
+    });
   }
 
   String _formatRateInput(double rate) {
@@ -3281,11 +3353,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _annualRateOverrides.remove(row.id);
         _annualRateEvidences.remove(row.id);
       } else {
-        final currentEvidence = _annualRateEvidences[row.id];
-        if (currentEvidence == null ||
-            !currentEvidence.matchesAnnualRate(parsed)) {
-          _annualRateOverrides.remove(row.id);
-        }
+        // 証跡は任意。出資法の上限（年利20%）を超えない限り、手入力した年利を
+        // そのまま保存する。証跡の有無は verified 表示にのみ反映する。
+        _annualRateOverrides[row.id] = parsed;
       }
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -3469,11 +3539,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _annualRateEvidencePasteTargetRow = null;
       }
       _annualRateEvidences[row.id] = evidence;
-      if (evidence.matchesAnnualRate(rate)) {
-        _annualRateOverrides[row.id] = rate;
-      } else {
-        _annualRateOverrides.remove(row.id);
-      }
+      // 証跡が一致しなくても手入力した年利は破棄しない（証跡は任意のため）。
+      // 一致有無は verified 表示で区別する。
+      _annualRateOverrides[row.id] = rate;
     });
     unawaited(_saveAssetLiabilityMonthlyState());
     ScaffoldMessenger.of(context).showSnackBar(
@@ -8087,6 +8155,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ].join(':');
   }
 
+  /// その口座が負債マスタ（返済スケジュールを持つ債務）として管理されているか。
+  ///
+  /// FamiPay翌月払いのように、口座名はプリペイド系ブランドでも実体が与信取引の
+  /// ケースがある。負債マスタ側の分類を正としてこれを判定し、残高悪化を支出として
+  /// 自動記録しないようにする（借入であり、購入はカード明細から取り込まれるため）。
+  bool _isDebtMasterManagedAccount(String assetType) {
+    final target = assetType.trim();
+    if (target.isEmpty) {
+      return false;
+    }
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook == null) {
+      return false;
+    }
+    for (final row in workbook.debtMasterRows) {
+      if (row.name.trim() == target) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<bool> _autoRecordUnknownExpenseFromAssetDrop({
     required String assetType,
     required String dateKey,
@@ -8097,6 +8187,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (userId == null ||
         !AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
           assetType: assetType,
+          isManagedLiability: _isDebtMasterManagedAccount(assetType),
           previousAmount: previousAmount,
           currentAmount: currentAmount,
         )) {
@@ -9803,6 +9894,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _sectionAnchor(AssetManagementSectionId.disposable),
               _buildDisposableBalanceCard(),
+              if (_supabase.auth.currentUser != null)
+                AssetInterestHistoryCard(
+                  key: ValueKey('interest:${_supabase.auth.currentUser!.id}'),
+                  repository: SupabaseAssetInterestRepository(
+                    _supabase,
+                    _supabase.auth.currentUser!.id,
+                  ),
+                ),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.quickActions)) ...[
@@ -29641,28 +29740,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (config != null) ...[
           const SizedBox(height: 6),
           _buildRevolvingField(
-            row: row,
+            fieldKey: ValueKey('revolving:${row.id}:最低返済額'),
             label: '最低返済額',
             hint: '例: 10000',
-            value: config.monthlyAmount,
+            controller: _revolvingMonthlyAmountControllerFor(row),
             onChanged: (amount) =>
                 _updateRevolvingMonthlyAmount(row.id, amount),
           ),
           const SizedBox(height: 6),
           _buildRevolvingField(
-            row: row,
+            fieldKey: ValueKey('revolving:${row.id}:新規利用額'),
             label: '新規利用額',
             hint: '明細未取込時のみ',
-            value: config.newUsageAmount,
+            controller: _revolvingNewUsageAmountControllerFor(row),
             onChanged: (amount) =>
                 _updateRevolvingNewUsageAmount(row.id, amount),
           ),
           const SizedBox(height: 6),
           _buildRevolvingField(
-            row: row,
+            fieldKey: ValueKey('revolving:${row.id}:利用限度額'),
             label: '利用限度額',
             hint: '与信枠確認用',
-            value: config.creditLimit,
+            controller: _revolvingCreditLimitControllerFor(row),
             onChanged: (amount) => _updateRevolvingCreditLimit(row.id, amount),
           ),
           const SizedBox(height: 6),
@@ -29689,10 +29788,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildRevolvingField({
-    required AssetLiabilityDebtRow row,
+    required Key fieldKey,
     required String label,
     required String hint,
-    required double value,
+    required TextEditingController controller,
     required ValueChanged<double> onChanged,
   }) {
     return Row(
@@ -29702,9 +29801,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           child: Text(label, style: const TextStyle(fontSize: 11, height: 1.3)),
         ),
         Expanded(
-          child: TextFormField(
-            key: ValueKey('revolving:${row.id}:$label'),
-            initialValue: value > 0 ? value.toStringAsFixed(0) : '',
+          child: TextField(
+            key: fieldKey,
+            controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
@@ -29913,18 +30012,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
+          DebouncedCommitTextField(
+            key: ValueKey('annual-rate:${row.id}'),
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.,%]')),
             ],
-            onChanged: (value) => _updateAnnualRateOverride(row, value),
+            onCommitted: (value) => _updateAnnualRateOverride(row, value),
             decoration: InputDecoration(
               isDense: true,
               hintText: _formatRateInput(row.annualRate),
-              helperText:
-                  hasOverride ? (verified ? 'AI確認済み' : '証跡確認が必要') : '年利変更は証跡必須',
+              helperText: hasOverride
+                  ? (verified ? 'AI証跡で確認済み' : '手入力を保存済み（証跡は任意）')
+                  : '契約書の年利を入力（証跡は任意）',
               suffixText: '%',
               suffixIcon: hasOverride
                   ? IconButton(
@@ -29984,8 +30085,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final verified = evidence?.matchesAnnualRate(requestedRate) ?? false;
     final color = verified
         ? const Color(0xFF0D9488)
+        // 証跡は任意のため、未提出をエラー色（赤）で示さない。
         : evidence == null
-            ? const Color(0xFFDC2626)
+            ? const Color(0xFF475569)
             : const Color(0xFFD97706);
     final label = verified
         ? 'AI証跡OK'

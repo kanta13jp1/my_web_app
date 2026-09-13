@@ -3,6 +3,22 @@
 class AssetUnknownExpenseRuleService {
   const AssetUnknownExpenseRuleService._();
 
+  /// 与信（あと払い）取引を示す語。プリペイド系ブランドと同名でも、
+  /// これらが付く口座は残高悪化＝借入であり支出の自動記録対象にしない。
+  static const List<String> postPayKeywords = <String>[
+    '翌月払い',
+    '翌月ばらい',
+    'あと払い',
+    '後払い',
+    'あとばらい',
+    'スマート払い',
+    'リボ',
+    '分割払い',
+    'deferred',
+    'postpay',
+    'post pay',
+  ];
+
   /// 現金系タイプ。マイナス残高(立替・前借り等)でも減少分を支出として扱う。
   static bool isCashLikeType(String assetType) {
     final key = assetType.toLowerCase();
@@ -23,6 +39,13 @@ class AssetUnknownExpenseRuleService {
         key.contains('クレジット') ||
         key.contains('credit')) {
       return false;
+    }
+    // 同じブランド名でも「翌月払い」「あと払い」等は与信取引であり、
+    // 残高悪化=借入。カード明細側と二重計上になるため除外する。
+    for (final postPay in postPayKeywords) {
+      if (key.contains(postPay)) {
+        return false;
+      }
     }
     const keywords = <String>[
       'ファミペイ',
@@ -80,16 +103,27 @@ class AssetUnknownExpenseRuleService {
   /// 自動記録の条件:
   /// - 減少幅が 1 円以上
   /// - 投資系タイプは対象外
+  /// - 負債マスタで返済管理されている口座は対象外
   /// - 残高がマイナス圏 (previousAmount <= 0) のときは現金系・プリペイド系
   ///   (ファミペイ等の電子マネー残高) のみ対象。負の値で記録する負債系
   ///   タイプの残高悪化を使途不明金と誤認しないため。
+  ///
+  /// [isManagedLiability] は、その口座が負債マスタ（返済スケジュールを持つ
+  /// 債務）として管理されているかどうか。名前がプリペイド系ブランドでも、
+  /// 実体が与信取引（例: FamiPay翌月払い）の場合はこちらで除外する。
+  /// 残高悪化は借入であり、実際の購入はカード明細側から取り込まれるため、
+  /// 支出として自動記録すると二重計上になる。
   static bool shouldAutoRecordFromAssetDrop({
     required String assetType,
     required double previousAmount,
     required double currentAmount,
+    bool isManagedLiability = false,
   }) {
     final drop = previousAmount - currentAmount;
     if (drop < 1) {
+      return false;
+    }
+    if (isManagedLiability) {
       return false;
     }
     if (previousAmount <= 0 &&
