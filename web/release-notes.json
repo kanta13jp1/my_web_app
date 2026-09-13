@@ -33,6 +33,19 @@
       "changes": [
         {
           "category": "fix",
+          "id": "pr-5419",
+          "links": [
+            {
+              "title": "PR #5419",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5419"
+            }
+          ],
+          "mergedAt": "2026-09-13T09:32:12Z",
+          "summary": "#5419 fix(asset): align income grounding and actionable fallback summary"
+        },
+        {
+          "category": "fix",
           "id": "pr-5417",
           "links": [
             {
@@ -407,19 +420,6 @@
           ],
           "mergedAt": "2026-09-06T18:42:56Z",
           "summary": "#5358 fix(asset): distinguish credit limit warning copy and guard bulk confirmation (#5216)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5357",
-          "links": [
-            {
-              "title": "PR #5357",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5357"
-            }
-          ],
-          "mergedAt": "2026-09-06T15:26:18Z",
-          "summary": "#5357 fix(video): preserve safe inference diagnostics and resume failed improvements"
         }
       ],
       "date": "2026-09-13",
