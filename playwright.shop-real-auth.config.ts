@@ -19,6 +19,7 @@ export default defineConfig({
   outputDir: '.shop-real-auth-browser-temp',
   use: {
     baseURL: 'http://127.0.0.1:7357',
+    actionTimeout: 20_000,
     serviceWorkers: 'block',
     trace: 'off', video: 'off', screenshot: 'off',
   },

@@ -17,6 +17,7 @@ if (state.url !== api || state.project !== project) throw new Error('Unexpected 
 // service-role key in a browser. Only the real password login form signs in.
 const users: Record<string, { email: string; password: string }> = state.users;
 const product = '/shop/product?product_id=hexciv-win64&utm_source=isolated&utm_campaign=real-auth-test&utm_content=browser';
+const observations = new Map<Page, Awaited<ReturnType<typeof isolation>>>();
 
 async function isolation(page: Page) {
   const calls: { path: string; method: string; status: number }[] = [];
@@ -39,7 +40,9 @@ async function isolation(page: Page) {
     blocked.add(`${r.method()} ${u.origin}${u.pathname}`);
     return route.abort('blockedbyclient');
   });
-  return { calls, blocked, pageErrors };
+  const observed = { calls, blocked, pageErrors, phase: 'boot' };
+  observations.set(page, observed);
+  return observed;
 }
 
 async function boot(page: Page, path: string) {
@@ -71,13 +74,20 @@ async function login(page: Page, name: string) {
   // Form layout is allowed to show the password field without a toggle.
   await expect(page.getByRole('textbox', { name: 'メールアドレス', exact: true })).toBeVisible();
   if (await toggle.count()) await click(page, toggle);
+  // Password inputs have no implicit textbox role. Match their actual label,
+  // as recommended by Playwright, without changing the production widget.
   // Omit credential values and Playwright fill call logs even on failure.
+  let field = 'email';
   try {
-    await page.getByRole('textbox', { name: 'メールアドレス', exact: true }).fill(users[name].email);
-    await page.getByRole('textbox', { name: 'パスワード', exact: true }).fill(users[name].password);
+    observations.get(page)!.phase = 'email-input';
+    await page.getByLabel('メールアドレス', { exact: true }).fill(users[name].email, { timeout: 20_000 });
+    field = 'password';
+    observations.get(page)!.phase = 'password-input';
+    await page.getByLabel('パスワード', { exact: true }).fill(users[name].password, { timeout: 20_000 });
   } catch {
-    throw new Error('Could not fill the isolated real login form; credentials omitted');
+    throw new Error(`Could not fill isolated ${field} input; credentials omitted`);
   }
+  observations.get(page)!.phase = 'real-auth-submit';
   const authResponse = page.waitForResponse(r => new URL(r.url()).origin === api &&
     new URL(r.url()).pathname === '/auth/v1/token' && r.request().method() === 'POST');
   await click(page, page.getByRole('button', { name: 'メールでログイン', exact: true }));
@@ -88,6 +98,7 @@ async function login(page: Page, name: string) {
   expect(location.searchParams.get('utm_source')).toBe('isolated');
   expect(location.searchParams.get('utm_campaign')).toBe('real-auth-test');
   expect(location.searchParams.get('utm_content')).toBe('browser');
+  observations.get(page)!.phase = 'product-after-login';
 }
 
 async function capture(page: Page, info: TestInfo, name: string) {
@@ -99,14 +110,27 @@ async function capture(page: Page, info: TestInfo, name: string) {
 }
 
 async function summary(page: Page, info: TestInfo, observed: Awaited<ReturnType<typeof isolation>>) {
-  await info.attach('sanitized-api-observations', {
-    contentType: 'application/json',
-    body: JSON.stringify({ scope: 'Disposable actual Auth/REST; synthetic purchases; not production or payment proof',
-      route: page.url(), calls: observed.calls, blocked: [...observed.blocked], pageErrors: observed.pageErrors }),
-  });
   expect([...observed.blocked], 'No attempted hosted API or external checkout').toEqual([]);
   expect(observed.pageErrors).toEqual([]);
 }
+
+test.afterEach(async ({ page }, info) => {
+  const observed = observations.get(page);
+  if (!observed) return;
+  // Always retain value-free diagnostics, including on failure. Do not capture
+  // credentials, full DOM, login screenshots, input values, traces or headers.
+  const inputs = page.isClosed() ? [] : await page.locator('input,textarea').evaluateAll(nodes => nodes.map(n => ({
+    tag: n.tagName, type: n.getAttribute('type'), role: n.getAttribute('role'),
+    disabled: (n as HTMLInputElement).disabled,
+  }))).catch(() => []);
+  await info.attach('sanitized-api-observations', {
+    contentType: 'application/json',
+    body: JSON.stringify({ scope: 'Disposable actual Auth/REST; synthetic purchases; not production or payment proof',
+      route: page.url(), phase: observed.phase, inputs, calls: observed.calls,
+      blocked: [...observed.blocked], pageErrors: observed.pageErrors }),
+  });
+  observations.delete(page);
+});
 
 test('real purchaser login returns to product with attribution; review create/edit/delete persists', async ({ page }, info) => {
   const observed = await isolation(page);

@@ -102,6 +102,14 @@ Auth state, service key, password, build defines or frontend build is uploaded.
 The allowlist/secret scanner must succeed before upload; partial/failed suites
 remain failures, even when earlier individual checks passed.
 
+The browser suite locates email/password controls by their accessible labels.
+An obscured field is an HTML `input type=password`, which does not supply an
+implicit textbox role. Input operations have a 20-second bound; a failure records
+only the input phase and value-free element types, not typed credentials. Safe
+API path/method/status observations are attached on failure as well as success.
+See [Playwright label locators](https://playwright.dev/docs/locators#locate-by-label)
+and [the pinned Flutter input implementation](https://github.com/flutter/flutter/blob/3.38.10/engine/src/flutter/lib/web_ui/lib/src/engine/semantics/text_field.dart#L320-L328).
+
 Passing this lane does **not** prove production P1, sales, bank deposits, the
 hosted project's grants/exposed schemas/redirect allowlist, email delivery,
 OAuth/MFA, Stripe webhook processing or real customer entitlements. Synthetic
