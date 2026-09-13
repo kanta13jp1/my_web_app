@@ -54,6 +54,27 @@ void main() {
       });
     }
 
+    test('fallback lists critical items even without emergency advice', () {
+      final source = _emergencyReport();
+      expect(source.criticalActions, isNotEmpty);
+      final report = AssetManagementInsightReport(
+        workbook: source.workbook,
+        actionItems: source.actionItems,
+        todayAvailable: source.todayAvailable,
+        weekAvailable: source.weekAvailable,
+        monthAvailable: source.monthAvailable,
+        movementSuggestions: source.movementSuggestions,
+        emergencyAdvices: const [],
+        developerRequests: const [],
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      expect(text, contains('優先確認:'));
+      expect(text, contains(source.criticalActions.first.title));
+      expect(text, contains('要確認項目の解消を意味するものではありません'));
+      expect(text, isNot(contains('緊急の生活費防衛アドバイスはありません')));
+    });
+
     test('calls ai-hub auto chat when feature flag is on', () async {
       Map<String, dynamic>? capturedBody;
       final service = AssetManagementAiSummaryService(
@@ -138,7 +159,7 @@ void main() {
       expect(prompt, isNot(contains('占いスタイル:')));
       expect(prompt, isNot(contains('時々笑える毒舌')));
       expect(prompt, isNot(contains('1. 宿命・本質')));
-      expect(service.buildPayload(_report())['response_policy_version'], 2);
+      expect(service.buildPayload(_report())['response_policy_version'], 3);
     });
 
     test('includes previous persisted analyses in the AI prompt', () async {
@@ -760,9 +781,7 @@ void main() {
       expect(result.usedExternalAi, isTrue);
     });
 
-    test(
-        'rejects an AI summary when a past income plan is claimed to be '
-        'unreceived', () async {
+    test('accepts verification of a past unconfirmed income plan', () async {
       const planner = AssetLiabilityPlanningService();
       const insight = AssetManagementInsightService();
       final workbook = planner.buildWorkbook(
@@ -793,7 +812,7 @@ void main() {
           invoker: (body) async => <String, dynamic>{
             'success': true,
             'text': '純資産は100,000円です。\n'
-                '- 給料: 給料450,000円が未受取のままって、ありえないわよ。',
+                '- 給料: 記録上は未受取です。未入金とは断定せず、予定と実績を照合して着金を確認してください。',
             'provider': 'openai',
           },
         ),
@@ -802,11 +821,59 @@ void main() {
 
       final result = await service.generateSummary(report: report);
 
-      expect(result.status, AssetManagementAiSummaryStatus.fallback);
-      expect(result.usedExternalAi, isFalse);
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
       expect(
         result.errorMessage,
-        contains('給料は過去日付なのに未受取扱い'),
+        isNull,
+      );
+    });
+
+    test('accepts verification of a today unconfirmed income plan', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+        },
+        baseDate: DateTime(2026, 9, 9),
+        incomePlans: [
+          AssetLiabilityIncomePlan(
+            id: 'salary_past',
+            date: DateTime(2026, 9, 9),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'bank',
+            destinationAccountName: 'bank',
+            received: false,
+          ),
+        ],
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は100,000円です。\n'
+                '- 給料: 記録上は未受取です。未入金とは断定せず、予定と実績を照合して着金を確認してください。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(
+        result.errorMessage,
+        isNull,
       );
     });
 
