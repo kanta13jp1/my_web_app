@@ -1784,25 +1784,32 @@ void main() {
     testWidgets('living expense priority toggle immediately reorders actions', (
       tester,
     ) async {
-      final now = DateTime.now();
+      // The action list displays only its first eight entries. Keep the
+      // fixture date stable so later overdue payments cannot displace it.
+      final now = DateTime(2026, 9, 1);
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await tester.binding.setSurfaceSize(const Size(1200, 3200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
+      // Isolate the two actions under test from date-dependent default bills.
+      // The page only renders eight actions; unrelated bills must not decide
+      // whether either target action is present in this ordering test.
+      final defaultBills = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{},
+        baseDate: now,
+        includeDefaultFixedPayments: true,
+      );
+
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
+            debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
               <String, int>{'mobit': now.day},
-              // Keep unrelated built-in bills out of the eight-item preview.
-              // Their due dates otherwise change visibility with the real date.
-              monthlyState: const AssetLiabilityMonthlyState(
+              monthlyState: AssetLiabilityMonthlyState(
                 paidAccountNames: <String>{
-                  'kddi_provider',
-                  'rent',
-                  'water_bill',
-                  'gas_bill',
+                  for (final row in defaultBills.cashflowRows) row.accountName,
                 },
               ),
             ),
