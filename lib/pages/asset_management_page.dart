@@ -28924,20 +28924,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ? 'No due date'
           : DateFormat('M/d').format(task.dueDate!);
       final taskMuted = task.completed || task.canceled;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Checkbox(
+      final checkbox = Checkbox(
               value: task.completed,
               onChanged: task.canceled
                   ? null
                   : (value) =>
                       _toggleTransferTaskCompleted(task, value ?? false),
-            ),
-            Expanded(
-              child: Padding(
+            );
+      final details = Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -28979,9 +28973,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ],
                   ],
                 ),
-              ),
-            ),
-            TextButton.icon(
+              );
+      final actions = Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        alignment: WrapAlignment.end,
+        children: [
+          TextButton.icon(
               onPressed: () => unawaited(_showTransferTaskMemoDialog(task)),
               icon: const Icon(Icons.edit_note, size: 16),
               label: const Text('メモ'),
@@ -29003,7 +29001,36 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               icon: const Icon(Icons.delete_outline, size: 18),
               onPressed: isBuiltIn ? null : () => _deleteTransferTask(task.id),
             ),
-          ],
+        ],
+      );
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 600) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      checkbox,
+                      Expanded(child: details),
+                    ],
+                  ),
+                  actions,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                checkbox,
+                Expanded(child: details),
+                actions,
+              ],
+            );
+          },
         ),
       );
     }
