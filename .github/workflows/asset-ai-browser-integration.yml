@@ -9,6 +9,7 @@ on:
       - test/widgets/asset_management_ai_current_input_test.dart
       - test/widgets/asset_triage_withdrawal_test.dart
       - integration_test/asset_triage_withdrawal_test.dart
+      - integration_test/asset_triage_withdrawal_scenarios.dart
       - lib/services/asset_triage_guide_service.dart
       - integration_test/asset_management_ai_current_input_test.dart
       - integration_test/asset_ai_current_input_scenarios.dart
