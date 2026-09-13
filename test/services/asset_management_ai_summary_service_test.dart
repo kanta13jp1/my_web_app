@@ -941,7 +941,9 @@ void main() {
         paidAccountNames: const <String>{'ファミマカード'},
       );
       expect(
-        workbook.currentDebtRows.singleWhere((row) => row.name == 'ファミマカード').paid,
+        workbook.currentDebtRows
+            .singleWhere((row) => row.name == 'ファミマカード')
+            .paid,
         isTrue,
       );
       final report = insight.buildReport(
@@ -1018,10 +1020,12 @@ void main() {
           paidAccountNames: const <String>{'ファミマカード'},
         );
         expect(
-        workbook.currentDebtRows.singleWhere((row) => row.name == 'ファミマカード').paid,
-        isTrue,
-      );
-      final report = insight.buildReport(
+          workbook.currentDebtRows
+              .singleWhere((row) => row.name == 'ファミマカード')
+              .paid,
+          isTrue,
+        );
+        final report = insight.buildReport(
           workbook: workbook,
           userProfile: _userProfile(),
           minimumSafetyBalance: 10000,
