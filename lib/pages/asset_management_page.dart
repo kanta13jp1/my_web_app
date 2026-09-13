@@ -23253,20 +23253,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 「まず、これだけ」段階別トリアージカード。数字の洪水で混乱している
   /// 利用者向けに、今日 (最大3件)→今週→今月の順で絞って提示する。
   /// 背景が固定の淡ティールのため、文字色も固定の濃ティール系にする。
-  Future<void> _createTriageWithdrawalTask(AssetTriageStep step, double amount) async {
+  Future<void> _createTriageWithdrawalTask(
+      AssetTriageStep step, double amount) async {
     if (step.withdrawalSourceAccountId == null) {
       return;
     }
     final sourceId = step.withdrawalSourceAccountId!;
     final sourceName = step.withdrawalSourceAccountName ?? '出金元口座';
     final workbook = _buildCurrentAssetLiabilityWorkbook();
-    final cashAccount = workbook
-        ?.accounts
-        .cast<AssetLiabilityAccount?>()
-        .firstWhere(
-          (a) => a?.kind == AssetLiabilityAccountKind.cash,
-          orElse: () => null,
-        );
+    final cashAccount =
+        workbook?.accounts.cast<AssetLiabilityAccount?>().firstWhere(
+              (a) => a?.kind == AssetLiabilityAccountKind.cash,
+              orElse: () => null,
+            );
     if (cashAccount == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('手元現金の口座を登録してから出金タスクを作成してください。')),
@@ -23295,12 +23294,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     // Recheck current funds at click time, including already planned transfers.
-    final source = workbook!.accounts.where((account) => account.id == sourceId);
+    final source =
+        workbook!.accounts.where((account) => account.id == sourceId);
     final summaries = workbook.accountCashflowSummaries.where(
       (summary) => summary.accountId == sourceId,
     );
-    if (!amount.isFinite || amount <= 0 || source.isEmpty ||
-        summaries.isEmpty || amount > source.first.balance ||
+    if (!amount.isFinite ||
+        amount <= 0 ||
+        source.isEmpty ||
+        summaries.isEmpty ||
+        amount > source.first.balance ||
         amount > summaries.first.projectedBalance) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('出金元の余力が変わりました。金額と予定を確認してください。')),
@@ -23331,7 +23334,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _transferTasks = _transferTasks.where((task) => task.id != taskId).toList();
+        _transferTasks =
+            _transferTasks.where((task) => task.id != taskId).toList();
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('出金タスクを保存できませんでした。再度お試しください。')),

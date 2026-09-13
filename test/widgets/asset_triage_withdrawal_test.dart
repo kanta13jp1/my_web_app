@@ -14,7 +14,8 @@ final _date = DateTime(2026, 9, 1);
 class _RecordingRepository extends SharedPreferencesAssetLiabilityRepository {
   _RecordingRepository() {
     final defaults = const AssetLiabilityPlanningService().buildWorkbook(
-      latestSnapshot: const <String, double>{}, baseDate: _date,
+      latestSnapshot: const <String, double>{},
+      baseDate: _date,
     );
     current = AssetLiabilityMonthlyState(
       paidAccountNames: defaults.debtMasterRows.map((row) => row.id).toSet(),
@@ -25,7 +26,8 @@ class _RecordingRepository extends SharedPreferencesAssetLiabilityRepository {
   @override
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async => current;
   @override
-  Future<void> saveMonth({required DateTime month,
+  Future<void> saveMonth(
+      {required DateTime month,
       required AssetLiabilityMonthlyState state}) async {
     if (failSave) throw StateError('synthetic storage failure');
     current = state;
@@ -36,8 +38,10 @@ Future<void> _pump(WidgetTester tester, _RecordingRepository repository,
     {double bank = 500000}) async {
   AssetSyncDirtyKeysStore.resetWriteLockForTest();
   AssetRecurringTombstoneSyncService.resetSharedForTest();
-  await tester.pumpWidget(MaterialApp(home: AssetManagementPage(
-    debugNow: _date, debugCalendarNow: _date,
+  await tester.pumpWidget(MaterialApp(
+      home: AssetManagementPage(
+    debugNow: _date,
+    debugCalendarNow: _date,
     assetLiabilityRepository: repository,
     debugInitialAssetData: <String, Map<String, double>>{
       '2026-09-01': <String, double>{'財布(現金)': 1000, '三井住友銀行': bank},
@@ -65,13 +69,15 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await Supabase.initialize(
-      url: 'http://127.0.0.1:9999', publishableKey: 'test-publishable-key',
+      url: 'http://127.0.0.1:9999',
+      publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
   });
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
-  testWidgets('triage amounts save once, recalculate and survive page recreation',
+  testWidgets(
+      'triage amounts save once, recalculate and survive page recreation',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 3200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -101,15 +107,18 @@ void main() {
     }
   });
 
-  testWidgets('pending withdrawal removes unaffordable templates', (tester) async {
+  testWidgets('pending withdrawal removes unaffordable templates',
+      (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 3200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _RecordingRepository();
     await _pump(tester, repository, bank: 15000);
-    expect(find.byKey(const Key('triage_withdrawal_template_20000')), findsNothing);
+    expect(find.byKey(const Key('triage_withdrawal_template_20000')),
+        findsNothing);
     await _tapAmount(tester, 10000);
     expect(repository.current.transferTasks, hasLength(1));
-    expect(find.byKey(const Key('triage_withdrawal_template_10000')), findsNothing);
+    expect(find.byKey(const Key('triage_withdrawal_template_10000')),
+        findsNothing);
     expect(find.textContaining('¥5,000'), findsWidgets);
     expect(tester.takeException(), isNull);
     await _unmount(tester);
