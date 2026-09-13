@@ -1,3 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/hexciv_shop_page.dart';
@@ -107,10 +114,88 @@ Future<void> _pump(
       ),
     ),
   );
+  // Flush the gateway's completed futures to mount the gallery. Native image
+  // decoding needs real async work; pumping a virtual clock while its loading
+  // spinner is active cannot make the decoded frame available.
+  await tester.pump();
+  final imageElements = find.byType(Image).evaluate().toList();
+  await tester.runAsync(() async {
+    for (final element in imageElements) {
+      Object? imageError;
+      await precacheImage(
+        (element.widget as Image).image,
+        element,
+        onError: (error, stackTrace) => imageError = error,
+      ).timeout(const Duration(seconds: 5));
+      expect(imageError, isNull, reason: 'Real gallery asset must decode');
+    }
+  });
+  expect(tester.takeException(), isNull);
   await tester.pumpAndSettle();
 }
 
 void main() {
+  final requests = <Map<String, dynamic>>[];
+  late Completer<void> viewRecorded;
+  late Completer<void> checkoutRecorded;
+  final client = SupabaseClient(
+    'https://example.supabase.co',
+    'test-anon-key',
+    httpClient: MockClient((request) async {
+      if (request.url.path.endsWith('/shop-funnel')) {
+        final row = jsonDecode(request.body) as Map<String, dynamic>;
+        requests.add(row);
+        if (row['stage'] == 'checkout_redirect' &&
+            !checkoutRecorded.isCompleted) {
+          checkoutRecorded.complete();
+        }
+        if (row['stage'] == 'product_view' && !viewRecorded.isCompleted) {
+          viewRecorded.complete();
+        }
+      }
+      return http.Response(
+        '{"recorded":true}',
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    }),
+  );
+  setUp(() {
+    // Exercise cold asset loading in every case, independent of test order.
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+    SharedPreferences.setMockInitialValues({});
+    supabaseClientForTesting = client;
+    requests.clear();
+    viewRecorded = Completer<void>();
+    checkoutRecorded = Completer<void>();
+  });
+  tearDownAll(() async => client.dispose());
+
+  testWidgets('default page records view and carries identity to checkout',
+      (tester) async {
+    final gateway = _FakeGateway(product: _product(), signedIn: true);
+    await _pump(tester, gateway);
+    await tester.runAsync(() async {
+      await viewRecorded.future.timeout(const Duration(seconds: 5));
+    });
+    expect(requests.map((row) => row['stage']), contains('product_view'));
+    final visitor = requests.first['visitor_id'];
+    expect(visitor, isNotEmpty);
+    await tester.ensureVisible(find.text('¥500 で購入'));
+    await tester.runAsync(() async {
+      await tester.tap(find.text('¥500 で購入'));
+      await tester.pumpAndSettle();
+      await checkoutRecorded.future.timeout(const Duration(seconds: 5));
+    });
+    expect(gateway.lastVisitorId, visitor);
+    expect(
+      requests.map((row) => row['stage']),
+      containsAll(['product_view', 'purchase_click', 'checkout_redirect']),
+    );
+    expect(requests.every((row) => row['visitor_id'] == visitor), isTrue);
+  });
+
   group('HexcivShopPage の状態別の描き分け', () {
     testWidgets('商品が取れないときは購入導線を出さず準備中と伝える', (tester) async {
       // RLS により is_active=false の商品は読めない。準備中と未存在は同じ扱い。
@@ -198,31 +283,51 @@ void main() {
     });
 
     testWidgets('実ゲーム画面3枚を購入ボタンより先に表示する', (tester) async {
-      await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
+      final semantics = tester.ensureSemantics();
+      try {
+        await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
 
-      expect(find.text('ゲーム画面'), findsOneWidget);
-      expect(find.text('ターン30'), findsOneWidget);
-      expect(find.text('ターン80'), findsOneWidget);
-      expect(find.text('ターン150'), findsOneWidget);
-      expect(
-        tester.getTopLeft(find.text('ゲーム画面')).dy,
-        lessThan(tester.getTopLeft(find.text('¥500 で購入')).dy),
-      );
+        expect(find.bySemanticsLabel('ターン30のゲーム画面'), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.text('画像を読み込めませんでした'), findsNothing);
+        final renderedImages =
+            tester.widgetList<RawImage>(find.byType(RawImage));
+        expect(renderedImages, hasLength(4));
+        expect(renderedImages.every((image) => image.image != null), isTrue);
+        expect(find.text('ゲーム画面'), findsOneWidget);
+        expect(find.text('ターン30'), findsOneWidget);
+        expect(find.text('ターン80'), findsOneWidget);
+        expect(find.text('ターン150'), findsOneWidget);
+        expect(
+          tester.getTopLeft(find.text('ゲーム画面')).dy,
+          lessThan(tester.getTopLeft(find.text('¥500 で購入')).dy),
+        );
+      } finally {
+        semantics.dispose();
+      }
     });
 
     testWidgets('スクリーンショットのサムネイルで説明を切り替えられる', (tester) async {
-      await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
+      final semantics = tester.ensureSemantics();
+      try {
+        await _pump(tester, _FakeGateway(product: _product(), signedIn: true));
 
-      expect(find.textContaining('序盤。'), findsOneWidget);
-      expect(find.textContaining('終盤。'), findsNothing);
+        expect(find.textContaining('序盤。'), findsOneWidget);
+        expect(find.textContaining('終盤。'), findsNothing);
 
-      await tester.ensureVisible(find.text('ターン150'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('ターン150'));
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('ターン150'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('ターン150'));
+        await tester.pumpAndSettle();
 
-      expect(find.textContaining('終盤。'), findsOneWidget);
-      expect(find.textContaining('序盤。'), findsNothing);
+        expect(find.bySemanticsLabel('ターン150のゲーム画面'), findsOneWidget);
+        expect(find.bySemanticsLabel('ターン30のゲーム画面'), findsNothing);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.textContaining('終盤。'), findsOneWidget);
+        expect(find.textContaining('序盤。'), findsNothing);
+      } finally {
+        semantics.dispose();
+      }
     });
 
     testWidgets('非公開商品ではゲーム画面を表示しない', (tester) async {

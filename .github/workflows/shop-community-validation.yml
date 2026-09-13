@@ -1,0 +1,87 @@
+name: Shop Community Validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'lib/**/shop_community*.dart'
+      - 'lib/widgets/shop_product_community.dart'
+      - 'lib/pages/digital_product_store_pages.dart'
+      - 'test/**/shop*community*.dart'
+      - 'test/**/digital_product_community_test.dart'
+      - 'supabase/**/shop_product_community.sql'
+      - 'supabase/migrations/*shop_product_releases_reviews.sql'
+      - '.github/workflows/shop-community-validation.yml'
+
+permissions: {}
+
+concurrency:
+  group: shop-community-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  database:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: shop_community_test
+          POSTGRES_PASSWORD: ephemeral-test-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Test migration, grants, RLS, moderation and pagination
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGPASSWORD: ephemeral-test-only
+          PGDATABASE: shop_community_test
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/shop_product_community.sql
+
+  flutter:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FEATURE_DART: >-
+        lib/models/shop_community.dart lib/services/shop_community_repository.dart
+        lib/view_models/shop_community_view_model.dart lib/widgets/shop_product_community.dart
+        lib/pages/digital_product_store_pages.dart test/support/fake_shop_community.dart
+        test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart
+        test/services/shop_community_repository_test.dart
+        test/widgets/shop_community_visual_test.dart test/pages/digital_product_community_test.dart
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Format owned feature files and preserve any suggested patch
+        run: |
+          dart format $FEATURE_DART
+          python -c "import os,subprocess; allowed=set(os.environ['FEATURE_DART'].split())|{'pubspec.lock'}; changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()); assert changed <= allowed, changed-allowed"
+          git diff --binary -- $FEATURE_DART > shop-community-format.patch
+      - name: Analyze scoped feature
+        run: flutter analyze $FEATURE_DART
+      - name: Test community feature and existing store behavior
+        if: success() || failure()
+        run: flutter test --concurrency=2 test/view_models/shop_community_view_model_test.dart test/widgets/shop_product_community_test.dart test/services/shop_community_repository_test.dart test/pages/digital_product_store_pages_test.dart test/pages/digital_product_community_test.dart test/widgets/shop_community_visual_test.dart
+      - name: Require committed formatting
+        if: success() || failure()
+        run: git diff --exit-code -- $FEATURE_DART
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: shop-community-evidence-${{ github.run_id }}
+          path: |
+            shop-community-format.patch
+            build/shop-community-evidence/*.png
+          retention-days: 3

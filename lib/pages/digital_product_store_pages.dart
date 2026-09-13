@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/shop_funnel_service.dart';
+import '../services/shop_community_repository.dart';
 import '../services/shop_service.dart';
 import '../theme/design_tokens.dart';
 import '../view_models/shop_view_models.dart';
+import '../widgets/shop_product_community.dart';
 
 typedef ShopUrlLauncher = Future<bool> Function(Uri uri, bool external);
 
@@ -324,6 +326,7 @@ class DigitalProductPage extends StatefulWidget {
     this.service,
     this.funnel,
     this.urlLauncher,
+    this.communityRepository,
   });
 
   final String productId;
@@ -331,6 +334,7 @@ class DigitalProductPage extends StatefulWidget {
   final ShopGateway? service;
   final ShopFunnelService? funnel;
   final ShopUrlLauncher? urlLauncher;
+  final ShopCommunityRepository? communityRepository;
 
   @override
   State<DigitalProductPage> createState() => _DigitalProductPageState();
@@ -367,12 +371,18 @@ const _hexcivScreenshots = <_ProductScreenshot>[
 ];
 
 class _DigitalProductPageState extends State<DigitalProductPage> {
+  final _historyKey = GlobalKey();
+  final _reviewsKey = GlobalKey();
+  late final ShopCommunityRepository? _communityRepository =
+      widget.communityRepository ??
+          (widget.service == null ? SupabaseShopCommunityRepository() : null);
   late final ShopProductViewModel _viewModel = ShopProductViewModel(
     gateway: widget.service ?? ShopService(),
     productId: widget.productId,
   );
   late final ShopUrlLauncher _urlLauncher =
       widget.urlLauncher ?? _launchShopUrl;
+  late final ShopFunnelService _funnel = widget.funnel ?? ShopFunnelService();
   late final String _source = ShopFunnelService.sourceFromUri(Uri.base);
   late final String _campaign = ShopFunnelService.campaignFromUri(Uri.base);
   int _selectedProductScreenshotIndex = 0;
@@ -391,10 +401,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   }
 
   void _recordFunnel(String stage) {
-    final funnel = widget.funnel;
-    if (funnel == null) return;
     unawaited(
-      funnel.record(
+      _funnel.record(
         stage,
         productId: widget.productId,
         source: _source,
@@ -406,7 +414,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   Future<void> _startPurchase() async {
     _recordFunnel(ShopFunnelService.stagePurchaseClick);
     final start = await _viewModel.startCheckout(
-      visitorId: await widget.funnel?.visitorId(),
+      visitorId: await _funnel.visitorId(),
       source: _source,
     );
     if (start == null || start.alreadyPurchased) return;
@@ -427,7 +435,10 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
       appBar: AppBar(
         backgroundColor: DesignTokens.surface1,
         foregroundColor: DesignTokens.textPrimary,
-        title: const Text('デジタル商品'),
+        title: const Text(
+          'デジタル商品',
+          style: TextStyle(color: DesignTokens.textPrimary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pushNamed('/shop'),
@@ -445,7 +456,18 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         builder: (context, _) {
           return Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              key: const ValueKey('product-detail-scroll'),
+              // Reserve space for the shared floating Inbox/AI controls so
+              // the final community action can scroll fully above them.
+              // Include enlarged text and the device's bottom safe area.
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                48 +
+                    MediaQuery.textScalerOf(context).scale(48) +
+                    MediaQuery.viewPaddingOf(context).bottom,
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1040),
                 child: _buildBody(),
@@ -459,9 +481,15 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
 
   Widget _buildBody() {
     if (_viewModel.loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 80),
-        child: Center(child: CircularProgressIndicator()),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 80),
+        child: Center(
+          child: Semantics(
+            label: '商品情報を読み込み中',
+            liveRegion: true,
+            child: const CircularProgressIndicator(color: DesignTokens.orange),
+          ),
+        ),
       );
     }
     if (_viewModel.loadError != null) {
@@ -469,7 +497,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         icon: Icons.error_outline,
         color: DesignTokens.orange,
         title: '商品情報を読み込めませんでした',
-        body: _viewModel.loadError!,
+        body: '通信状況を確認して「再試行」を押してください。'
+            '解決しない場合は、時間をおいて再度お試しください。',
         action: TextButton(
           onPressed: _viewModel.load,
           child: const Text('再試行'),
@@ -530,15 +559,35 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         _actionArea(product),
         if (_viewModel.actionError != null) ...[
           const SizedBox(height: 16),
-          _ShopNotice(
-            icon: Icons.error_outline,
-            color: DesignTokens.orange,
-            title: 'エラー',
-            body: _viewModel.actionError!,
+          Semantics(
+            liveRegion: true,
+            child: _ShopNotice(
+              icon: Icons.error_outline,
+              color: DesignTokens.orange,
+              title: _viewModel.purchased
+                  ? 'ダウンロードを準備できませんでした'
+                  : '購入手続きを開始できませんでした',
+              body: _viewModel.purchased
+                  ? '通信状況を確認して、もう一度「ダウンロード」を押してください。'
+                      '再購入は不要です。解決しない場合は、時間をおいて再度お試しください。'
+                  : '通信状況を確認してください。決済画面で操作済みの場合は、'
+                      '先に「購入済み」で購入状況を確認してください。'
+                      '未購入の場合は、時間をおいて購入ボタンから再度お試しください。',
+            ),
           ),
         ],
         const SizedBox(height: 32),
         _specs(product),
+        if (_communityRepository != null) ...[
+          const SizedBox(height: 24),
+          ShopProductCommunity(
+            key: ValueKey('community-${product.id}'),
+            product: product,
+            repository: _communityRepository,
+            historyKey: _historyKey,
+            reviewsKey: _reviewsKey,
+          ),
+        ],
       ],
     );
   }
@@ -558,6 +607,11 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
             _MetaChip(
               icon: Icons.file_present_outlined,
               label: product.formatLabel,
+            ),
+            _MetaChip(
+              icon: Icons.new_releases_outlined,
+              label:
+                  '配布版 ${product.version.isEmpty ? '未登録' : 'v${product.version}'}',
             ),
           ],
         ),
@@ -580,10 +634,29 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
             height: 1.7,
           ),
         ),
+        if (_communityRepository != null)
+          Wrap(
+            spacing: 12,
+            children: [
+              TextButton.icon(
+                key: const ValueKey('product-release-history-link'),
+                onPressed: () => _scrollTo(_historyKey),
+                icon: const Icon(Icons.history),
+                label: const Text('更新情報'),
+              ),
+              TextButton.icon(
+                key: const ValueKey('product-reviews-link'),
+                onPressed: () => _scrollTo(_reviewsKey),
+                icon: const Icon(Icons.star_outline),
+                label: const Text('口コミ・評価'),
+              ),
+            ],
+          ),
         const SizedBox(height: 24),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.end,
           children: [
             Text(
               '¥${product.priceJpy}',
@@ -593,7 +666,6 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: 8),
             const Text(
               '税込 / 買い切り',
               style: TextStyle(color: DesignTokens.textSecondary, fontSize: 13),
@@ -626,7 +698,26 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
               color: DesignTokens.surface2,
               child: Image.asset(
                 selected.asset,
+                key: ValueKey(selected.asset),
                 fit: BoxFit.contain,
+                frameBuilder: (context, child, frame, synchronouslyLoaded) {
+                  if (frame == null) {
+                    return Center(
+                      child: Semantics(
+                        label: '${selected.labelJa}の画像を読み込み中',
+                        child: const CircularProgressIndicator(
+                          color: DesignTokens.orange,
+                        ),
+                      ),
+                    );
+                  }
+                  return Semantics(
+                    image: true,
+                    label: '${selected.labelJa}のゲーム画面',
+                    excludeSemantics: true,
+                    child: child,
+                  );
+                },
                 errorBuilder: (context, error, stackTrace) => const Center(
                   child: Text(
                     '画像を読み込めませんでした',
@@ -666,6 +757,18 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         ),
       ],
     );
+  }
+
+  void _scrollTo(GlobalKey target) {
+    final targetContext = target.currentContext;
+    if (targetContext != null) {
+      unawaited(
+        Scrollable.ensureVisible(
+          targetContext,
+          duration: const Duration(milliseconds: 250),
+        ),
+      );
+    }
   }
 
   Widget _productScreenshotThumbnail(int index) {
@@ -760,8 +863,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         icon: Icons.hourglass_top,
         color: DesignTokens.indigo,
         title: '決済を確認しています',
-        body: 'お支払いは完了しています。反映まで数秒かかることがあります。'
-            '購入ボタンは再表示せず、確認後にダウンロードへ切り替えます。',
+        body: '購入状況を確認しています。反映に時間がかかる場合は「再読み込み」を押してください。'
+            '購入ボタンは再表示せず、購入を確認後にダウンロードへ切り替えます。',
         action: TextButton(
           onPressed: _viewModel.load,
           child: const Text('再読み込み'),
@@ -1129,7 +1232,9 @@ class _PrimaryShopButton extends StatelessWidget {
         label: Text(label),
         style: FilledButton.styleFrom(
           backgroundColor: DesignTokens.orange,
-          foregroundColor: Colors.white,
+          foregroundColor: DesignTokens.background,
+          disabledBackgroundColor: DesignTokens.surface3,
+          disabledForegroundColor: DesignTokens.textSecondary,
           padding: const EdgeInsets.symmetric(vertical: 18),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
