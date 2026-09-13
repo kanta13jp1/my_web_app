@@ -28925,82 +28925,80 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           : DateFormat('M/d').format(task.dueDate!);
       final taskMuted = task.completed || task.canceled;
       final checkbox = Checkbox(
-              value: task.completed,
-              onChanged: task.canceled
-                  ? null
-                  : (value) =>
-                      _toggleTransferTaskCompleted(task, value ?? false),
-            );
+        value: task.completed,
+        onChanged: task.canceled
+            ? null
+            : (value) => _toggleTransferTaskCompleted(task, value ?? false),
+      );
       final details = Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${task.fromAccountName} -> ${task.toAccountName} / '
-                      '${_formatManagementYen(task.amount)} / $dueLabel',
-                      style: TextStyle(
-                        color: taskMuted
-                            ? Theme.of(context).colorScheme.onSurfaceVariant
-                            : null,
-                        fontSize: 12,
-                        height: 1.5,
-                        decoration:
-                            task.completed ? TextDecoration.lineThrough : null,
-                      ),
-                    ),
-                    if (task.completionMemo.trim().isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        '実行メモ: ${task.completionMemo.trim()}',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                    if (task.cancellationReason.trim().isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'キャンセル理由: ${task.cancellationReason.trim()}',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ],
+        padding: const EdgeInsets.only(top: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${task.fromAccountName} -> ${task.toAccountName} / '
+              '${_formatManagementYen(task.amount)} / $dueLabel',
+              style: TextStyle(
+                color: taskMuted
+                    ? Theme.of(context).colorScheme.onSurfaceVariant
+                    : null,
+                fontSize: 12,
+                height: 1.5,
+                decoration: task.completed ? TextDecoration.lineThrough : null,
+              ),
+            ),
+            if (task.completionMemo.trim().isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                '実行メモ: ${task.completionMemo.trim()}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.4,
                 ),
-              );
+              ),
+            ],
+            if (task.cancellationReason.trim().isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                'キャンセル理由: ${task.cancellationReason.trim()}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
       final actions = Wrap(
         spacing: 4,
         runSpacing: 4,
         alignment: WrapAlignment.end,
         children: [
           TextButton.icon(
-              onPressed: () => unawaited(_showTransferTaskMemoDialog(task)),
-              icon: const Icon(Icons.edit_note, size: 16),
-              label: const Text('メモ'),
+            onPressed: () => unawaited(_showTransferTaskMemoDialog(task)),
+            icon: const Icon(Icons.edit_note, size: 16),
+            label: const Text('メモ'),
+          ),
+          if (task.canceled)
+            TextButton.icon(
+              onPressed: () => _restoreCanceledTransferTask(task),
+              icon: const Icon(Icons.restore, size: 16),
+              label: const Text('再開'),
+            )
+          else if (!task.completed)
+            TextButton.icon(
+              onPressed: () => unawaited(_showTransferTaskCancelDialog(task)),
+              icon: const Icon(Icons.block, size: 16),
+              label: const Text('キャンセル'),
             ),
-            if (task.canceled)
-              TextButton.icon(
-                onPressed: () => _restoreCanceledTransferTask(task),
-                icon: const Icon(Icons.restore, size: 16),
-                label: const Text('再開'),
-              )
-            else if (!task.completed)
-              TextButton.icon(
-                onPressed: () => unawaited(_showTransferTaskCancelDialog(task)),
-                icon: const Icon(Icons.block, size: 16),
-                label: const Text('キャンセル'),
-              ),
-            IconButton(
-              tooltip: isBuiltIn ? '定例振替' : '振替タスクを削除',
-              icon: const Icon(Icons.delete_outline, size: 18),
-              onPressed: isBuiltIn ? null : () => _deleteTransferTask(task.id),
-            ),
+          IconButton(
+            tooltip: isBuiltIn ? '定例振替' : '振替タスクを削除',
+            icon: const Icon(Icons.delete_outline, size: 18),
+            onPressed: isBuiltIn ? null : () => _deleteTransferTask(task.id),
+          ),
         ],
       );
       return Padding(
