@@ -965,6 +965,87 @@ void main() {
       expect(result.usedExternalAi, isTrue);
     });
 
+    for (final scenario in [
+      (
+        label: 'payment completion before debt name',
+        text: '支払完了のfamima_cardを除き、未払いのmobitを確認してください。',
+        accepted: true,
+      ),
+      (
+        label: 'settlement completion after debt name',
+        text: 'famima_cardは決済完了です。未払いのmobitを確認してください。',
+        accepted: true,
+      ),
+      (
+        label: 'paid marker of previous debt across a clause',
+        text: 'mobitは支払済み、famima_cardは未払いですぐに払ってください。',
+        accepted: false,
+      ),
+      (
+        label: 'paid marker of following debt',
+        text: 'famima_cardは未払いでmobitは支払済みです。',
+        accepted: false,
+      ),
+      (
+        label: 'prefix marker crosses another debt name',
+        text: '支払済みのmobitとfamima_cardは未払いです。',
+        accepted: false,
+      ),
+      (
+        label: 'nonpayment completion is not paid status',
+        text: 'famima_cardは登録完了ですが未払いです。',
+        accepted: false,
+      ),
+    ]) {
+      test('paid grounding: ${scenario.label}', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'famima_card': -4500,
+          'mobit': -32000,
+        },
+        baseDate: DateTime(2026, 9, 9),
+        monthlyPaymentOverrides: const <String, double>{
+          'famima_card': 4500,
+          'mobit': 32000,
+        },
+        paidAccountNames: const <String>{'famima_card'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': scenario.text,
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(
+        result.status,
+        scenario.accepted
+            ? AssetManagementAiSummaryStatus.aiGenerated
+            : AssetManagementAiSummaryStatus.fallback,
+      );
+      expect(result.usedExternalAi, scenario.accepted);
+      if (!scenario.accepted) {
+        expect(result.errorMessage, contains('支払済みなのに督促'));
+      }
+    });
+
+    }
+
     test('ai detailed payload includes exact account and debt values', () {
       final service = AssetManagementAiSummaryService(
         now: () => DateTime(2026, 5, 1, 12),

@@ -1476,15 +1476,21 @@ class AssetManagementAiSummaryService {
     for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
       for (final segment in segments) {
         if (!segment.contains(row.name)) continue;
-        final isMarkedPaid = RegExp(
-          '(?:${RegExp.escape(row.name)}[^。\\r\\n]{0,60}?'
-          '(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込)?'
-          '(?:済(?:み)?|完了|終了)|完済)'
-          '|'
-          '(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込)?'
-          '(?:済(?:み)?|完了|終了)|完済)[^。\\r\\n]{0,60}?'
-          '${RegExp.escape(row.name)})',
-        ).hasMatch(segment);
+        // Attribute a paid marker only within the same clause, without
+        // crossing another debt name. Completion of an unrelated task is not
+        // evidence of payment.
+        const paidMarker = r'(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込)'
+            r'(?:済(?:み)?|完了|終了)|済(?:み)?|完済)';
+        final paidPattern = RegExp(
+          '${RegExp.escape(row.name)}([^。、;；\\r\\n]{0,60}?)($paidMarker)'
+          '|($paidMarker)([^。、;；\\r\\n]{0,60}?)${RegExp.escape(row.name)}',
+        );
+        final isMarkedPaid = paidPattern.allMatches(segment).any((match) {
+          final between = match.group(1) ?? match.group(4)!;
+          return !allDebtNames.any(
+            (other) => other != row.name && between.contains(other),
+          );
+        });
         if (isMarkedPaid) continue;
         final nameIndex = segment.indexOf(row.name);
         final startIndex = nameIndex > 20 ? nameIndex - 20 : 0;
