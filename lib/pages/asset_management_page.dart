@@ -23061,13 +23061,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final sourceId = step.withdrawalSourceAccountId!;
     final sourceName = step.withdrawalSourceAccountName ?? '出金元口座';
-    final cashAccount = _assetWorkbook?.accounts.cast<AssetLiabilityAccount?>().firstWhere(
+    final cashAccount = _buildCurrentAssetLiabilityWorkbook()?.accounts.cast<AssetLiabilityAccount?>().firstWhere(
       (a) => a?.kind == AssetLiabilityAccountKind.cash,
       orElse: () => null,
     );
     final toId = cashAccount?.id ?? 'cash';
     final toName = cashAccount?.name ?? '手元現金';
-    final today = _dateOnly(_effectiveAssetBaseDate);
+    final today = DateTime(_now.year, _now.month, _now.day);
 
     final duplicate = _transferTasks.any(
       (task) =>
@@ -23077,7 +23077,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           task.toAccountId == toId &&
           task.amount == amount &&
           task.dueDate != null &&
-          _dateOnly(task.dueDate!) == today,
+          _dateOnly(task.dueDate!) == _dateOnly(today),
     );
     if (duplicate) {
       ScaffoldMessenger.of(context).showSnackBar(
