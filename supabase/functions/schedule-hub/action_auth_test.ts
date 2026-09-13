@@ -94,6 +94,9 @@ Deno.test("owner credentials and shared system writes require service role", () 
 
 Deno.test("owner publish, update, delete, and Notion routes are protected", () => {
   const protectedActions: readonly ScheduleHubAction[] = [
+    "maintenance.create",
+    "maintenance.update",
+    "maintenance.delete",
     "x.post",
     "blog.publish",
     "blog.publish_post",
@@ -128,4 +131,11 @@ Deno.test("public actions remain a narrow explicit allowlist", () => {
     "maintenance.list_active",
   ]);
   assert(PUBLIC_ACTIONS.every((action) => actionPolicy(action) !== null));
+});
+Deno.test("manager update retains the authenticated owner filter", async () => {
+  const source = await Deno.readTextFile(new URL("./index.ts", import.meta.url));
+  const handler = source.split('case "manager.update": {')[1]
+    .split('case "manager.delete": {')[0];
+  assert(handler.includes('.filter("metadata->>user_id", "eq", userId!)'));
+  assert(handler.includes('.eq("source", "scheduled_task")'));
 });
