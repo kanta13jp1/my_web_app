@@ -179,7 +179,7 @@ def validate_cloud_workflow(
         "9DC858229FC7DD38854AE2D88D81803C0EBFCD88",
         "sudo systemctl disable --now docker.service docker.socket",
         "rootless_docker_supabase_smoke.sh",
-        "supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf",
+        "supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520",
         "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
     )
     for marker in workflow_markers:

@@ -245,6 +245,14 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/video-worker-hub/index.ts"
 
+[functions.video-commerce-hub]
+enabled = true
+# Browser preflight and service-role hourly automation have no user JWT. The
+# handler verifies either auth.getUser() or the exact service-role bearer and
+# then requires an owner user_id before any publication mutation.
+verify_jwt = false
+entrypoint = "./functions/video-commerce-hub/index.ts"
+
 [functions.account-lifecycle]
 enabled = true
 # Browser preflight has no JWT. User requests are verified again with

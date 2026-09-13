@@ -17,7 +17,7 @@ from typing import Any, Callable, Sequence
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 PROTECTED_BRANCHES = frozenset({"main", "master", "staging", "develop"})
 CLOUD_DEVELOPMENT_WORKFLOW = "cloud-development.yml"
-CLOUD_PROFILES = ("workspace", "analyze", "test", "web-build", "full")
+CLOUD_PROFILES = ("workspace", "format", "analyze", "test", "web-build", "full")
 
 
 @dataclass(frozen=True)

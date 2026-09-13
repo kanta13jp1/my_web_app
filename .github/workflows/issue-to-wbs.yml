@@ -175,7 +175,20 @@ jobs:
               issues = json.load(fh)
 
           groups = defaultdict(list)
+          by_number = defaultdict(list)
           for issue in issues:
+              number = issue.get("number")
+              if type(number) is not int or number <= 0:
+                  continue
+              by_number[number].append(issue)
+
+          for copies in by_number.values():
+              # Pagination can repeat records. Conflicting snapshots are unsafe
+              # to close automatically, so leave that Issue untouched.
+              signatures = {(item.get("state"), item.get("title")) for item in copies}
+              if len(signatures) != 1:
+                  continue
+              issue = copies[0]
               if str(issue.get("state", "")).upper() != "OPEN":
                   continue
               title = re.sub(r"^\s*\[Issue #\d+\]\s*", "", issue.get("title", ""))
@@ -189,11 +202,15 @@ jobs:
               items.sort(key=lambda item: int(item["number"]))
               keep = items[0]
               for duplicate in items[1:]:
+                  if duplicate["number"] == keep["number"]:
+                      continue
                   print(f"{duplicate['number']}\t{keep['number']}\t{duplicate['title']}")
           PY
 
           while IFS=$'\t' read -r duplicate keep title; do
             [ -n "$duplicate" ] || continue
+            [[ "$duplicate" =~ ^[1-9][0-9]*$ && "$keep" =~ ^[1-9][0-9]*$ ]] || continue
+            [ "$duplicate" != "$keep" ] || continue
             gh issue close "$duplicate" \
               --repo "$REPO" \
               --comment "Duplicate issue. Keeping #$keep as the canonical task; scheduled WBS sync closed this duplicate." \

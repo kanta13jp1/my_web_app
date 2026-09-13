@@ -30,46 +30,76 @@ jobs:
 
     env:
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
-      # Secret が未設定なら lib/main.dart にも入っている public anon key を fallback。
-      # ANON key は public 仕様 (Flutter Web bundle に同梱済 / RLS で保護)。
-      # 鍵をローテーションしたら secrets.SUPABASE_ANON_KEY の上書きが優先される。
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw' }}
+      # Require the configured key; never silently use a fixed fallback.
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       LIMIT: ${{ github.event.inputs.limit || '10' }}
 
     steps:
       - name: Step 1 - Secret presence check
         id: precheck
+        shell: bash
         run: |
-          # Defense-in-depth: env を埋める時点で fallback が効いているはずだが、
-          # 万一 fallback も空 (e.g. 将来 expr が壊れた場合) は skip して silent fail を防ぐ。
+          set -euo pipefail
           if [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "::warning::SUPABASE_ANON_KEY missing AND fallback empty — skip"
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "ANON key length: ${#SUPABASE_ANON_KEY}"
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "::error::SUPABASE_ANON_KEY is not configured; notification was not sent."
+            exit 1
           fi
 
       - name: Step 2 - Call wbs.notify_user_tasks
-        if: steps.precheck.outputs.skip != 'true'
+        shell: bash
         run: |
-          # soft-fail (set -e なし / HTTP code 取得)
-          HTTP_CODE=$(curl -s -o /tmp/notify.json -w "%{http_code}" \
+          set -euo pipefail
+          if [[ ! "$LIMIT" =~ ^[0-9]+$ ]] || [ "${#LIMIT}" -gt 3 ] || (( 10#$LIMIT < 1 || 10#$LIMIT > 100 )); then
+            echo "::error::limit must be an integer from 1 to 100."
+            exit 1
+          fi
+          LIMIT=$((10#$LIMIT))
+          RESPONSE_FILE=$(mktemp)
+          trap 'rm -f "$RESPONSE_FILE"' EXIT
+          if ! HTTP_CODE=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" \
             -X POST \
             "${SUPABASE_URL}/functions/v1/tools-hub" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
             -H "Content-Type: application/json" \
             -d "{\"action\":\"wbs.notify_user_tasks\",\"send_slack\":true,\"limit\":${LIMIT}}" \
-            --max-time 30)
-
-          echo "HTTP code: $HTTP_CODE"
-          BODY=$(head -c 800 /tmp/notify.json 2>/dev/null || echo "")
-          echo "Body: $BODY"
-
-          if [ "$HTTP_CODE" = "200" ]; then
-            COUNT=$(python3 -c 'import sys, json; print(json.load(open("/tmp/notify.json")).get("user_tasks_count", 0))' 2>/dev/null || echo "?")
-            echo "✅ Notified ${COUNT} user task(s) to Slack"
-          else
-            echo "::warning::HTTP ${HTTP_CODE} (not fatal)"
-            echo "::warning::Body: ${BODY}"
+            --max-time 30); then
+            echo "::error::Notification transport failed; response omitted."
+            exit 1
           fi
+          if [[ ! "$HTTP_CODE" =~ ^[0-9]{3}$ ]]; then
+            echo "::error::Invalid HTTP status; response omitted."
+            exit 1
+          fi
+          echo "HTTP status: $HTTP_CODE"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Notification failed; response omitted."
+            exit 1
+          fi
+          python3 - "$RESPONSE_FILE" <<'PY'
+          import json
+          import sys
+          try:
+              with open(sys.argv[1], encoding="utf-8") as response:
+                  raw = response.read(1048577)
+              if len(raw) > 1048576:
+                  raise ValueError("oversized")
+              payload = json.loads(raw)
+              count = payload.get("user_tasks_count") if isinstance(payload, dict) else None
+              if type(count) is not int or not 0 <= count <= 100:
+                  raise ValueError("invalid count")
+              if payload.get("success") is not True:
+                  raise ValueError("unsuccessful operation")
+              if payload.get("slack_error") is not None:
+                  raise ValueError("delivery error")
+              if type(payload.get("slack_posted")) is not bool:
+                  raise ValueError("missing delivery status")
+              if count > 0 and payload["slack_posted"] is not True:
+                  raise ValueError("not delivered")
+          except (OSError, ValueError):
+              print("::error::Invalid notification response; content omitted.")
+              sys.exit(1)
+          if count == 0:
+              print("No pending user tasks; no Slack notification needed.")
+          else:
+              print(f"Notified {count} user task(s) to Slack")
+          PY

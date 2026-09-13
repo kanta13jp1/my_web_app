@@ -21,6 +21,47 @@ class AuditError(RuntimeError):
     """Safe audit failure that never includes response data or credentials."""
 
 
+MIGRATION_ITEM_SOURCE_KINDS = frozenset(
+    {
+        "workspace",
+        "teamspace",
+        "page",
+        "database",
+        "data_source",
+        "view",
+        "block",
+        "comment",
+        "attachment",
+        "automation",
+        "form",
+        "user",
+    }
+)
+MIGRATION_ITEM_STATUSES = frozenset(
+    {
+        "inventoried",
+        "queued",
+        "exporting",
+        "imported",
+        "verifying",
+        "verified",
+        "ready_for_source_deletion",
+        "source_deleted",
+        "failed",
+        "skipped",
+    }
+)
+IMPORTED_OR_LATER_STATUSES = frozenset(
+    {
+        "imported",
+        "verifying",
+        "verified",
+        "ready_for_source_deletion",
+        "source_deleted",
+    }
+)
+
+
 def _integer(row: dict[str, Any], key: str) -> int:
     value = row.get(key, 0)
     if value is None:
@@ -111,6 +152,61 @@ def _exactly_one(
     return rows[0]
 
 
+def _migration_item_breakdown(
+    rows: list[dict[str, Any]],
+    *,
+    expected_total: int,
+    expected_imported: int,
+) -> dict[str, Any]:
+    if len(rows) != expected_total:
+        raise AuditError("migration item count does not match aggregate total")
+
+    status_counts = {status: 0 for status in sorted(MIGRATION_ITEM_STATUSES)}
+    source_counts: dict[str, dict[str, int]] = {}
+    for row in rows:
+        source_kind = str(row.get("source_kind") or "")
+        status = str(row.get("status") or "")
+        if source_kind not in MIGRATION_ITEM_SOURCE_KINDS:
+            raise AuditError("invalid migration item source kind")
+        if status not in MIGRATION_ITEM_STATUSES:
+            raise AuditError("invalid migration item status")
+
+        status_counts[status] += 1
+        counts = source_counts.setdefault(
+            source_kind,
+            {
+                "total": 0,
+                "imported_or_later": 0,
+                "remaining": 0,
+                "failed": 0,
+                "skipped": 0,
+            },
+        )
+        counts["total"] += 1
+        if status in IMPORTED_OR_LATER_STATUSES:
+            counts["imported_or_later"] += 1
+        else:
+            counts["remaining"] += 1
+        if status == "failed":
+            counts["failed"] += 1
+        if status == "skipped":
+            counts["skipped"] += 1
+
+    imported_or_later = sum(
+        counts["imported_or_later"] for counts in source_counts.values()
+    )
+    if imported_or_later != expected_imported:
+        raise AuditError("migration item count does not match imported aggregate")
+
+    return {
+        "status_counts": status_counts,
+        "by_source_kind": {
+            source_kind: source_counts[source_kind]
+            for source_kind in sorted(source_counts)
+        },
+    }
+
+
 def collect_audit(client: SupabaseAuditClient) -> dict[str, Any]:
     batches = client.rows(
         "notion_migration_batches",
@@ -184,6 +280,21 @@ def collect_audit(client: SupabaseAuditClient) -> dict[str, Any]:
         ),
         "notion_migration_wbs_stage_progress",
     )
+    total = _integer(progress, "total_items")
+    imported = _integer(progress, "imported_items")
+    migration_item_rows = client.all_rows(
+        "notion_migration_items",
+        [
+            ("select", "source_kind,status"),
+            ("batch_id", f"eq.{batch_id}"),
+            ("order", "source_kind.asc,status.asc"),
+        ],
+    )
+    item_breakdown = _migration_item_breakdown(
+        migration_item_rows,
+        expected_total=total,
+        expected_imported=imported,
+    )
     vault_rows = client.rows(
         "notion_migration_vault_manifests",
         [
@@ -224,8 +335,6 @@ def collect_audit(client: SupabaseAuditClient) -> dict[str, Any]:
     )
     wbs_import_plan = build_wbs_import_plan(staged_wbs_rows, site_wbs_rows)
 
-    total = _integer(progress, "total_items")
-    imported = _integer(progress, "imported_items")
     verified = _integer(progress, "verified_items")
     deletion_ready = _integer(progress, "deletion_ready_items")
     deleted = _integer(progress, "source_deleted_items")
@@ -281,6 +390,7 @@ def collect_audit(client: SupabaseAuditClient) -> dict[str, Any]:
             "source_deleted": deleted,
             "failed": _integer(progress, "failed_items"),
         },
+        "item_breakdown": item_breakdown,
         "capabilities": {
             "required": required,
             "verified": capability_verified,
@@ -341,6 +451,7 @@ def render_summary(report: dict[str, Any]) -> str:
         return "\n".join(lines) + "\n"
 
     items = report["items"]
+    item_breakdown = report["item_breakdown"]
     capabilities = report["capabilities"]
     wbs = report["wbs_stage"]
     wbs_plan = report["wbs_import_plan"]
@@ -361,6 +472,24 @@ def render_summary(report: dict[str, Any]) -> str:
                 + ("OPEN" if gates["subscription_cancellation_open"] else "CLOSED")
             ),
             "</pre>",
+            "",
+            "### Inventory composition",
+            "",
+            (
+                "| source kind | total | imported or later | remaining | "
+                "failed | skipped |"
+            ),
+            "| --- | ---: | ---: | ---: | ---: | ---: |",
+            *[
+                (
+                    f"| {source_kind} | {counts['total']} | "
+                    f"{counts['imported_or_later']} | {counts['remaining']} | "
+                    f"{counts['failed']} | {counts['skipped']} |"
+                )
+                for source_kind, counts in item_breakdown[
+                    "by_source_kind"
+                ].items()
+            ],
             "",
             "| Guard | Value |",
             "| --- | ---: |",

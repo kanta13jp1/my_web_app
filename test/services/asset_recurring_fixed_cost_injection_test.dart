@@ -18,7 +18,7 @@ void main() {
   }
 
   group('buildWorkbook recurringFixedCosts injection', () {
-    test('monthly fixed cost is counted as a full-payment direct liability',
+    test('monthly fixed cost stays scheduled without inflating current debt',
         () {
       final workbook = planning.buildWorkbook(
         latestSnapshot: const <String, double>{'みずほ銀行': 100000},
@@ -42,7 +42,8 @@ void main() {
       expect(row.fullPaymentEstimate, isTrue);
       // 金額を入力済み = 推定ではない → 請求確認待ちにならない。
       expect(row.paymentAmountEstimated, isFalse);
-      expect(workbook.liabilityTotal, -8000);
+      expect(workbook.liabilityTotal, 0);
+      expect(workbook.currentDebtRows, isEmpty);
       expect(
         workbook.hasBillingConfirmationPendingRows,
         isFalse,

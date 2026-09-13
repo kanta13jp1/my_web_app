@@ -15,6 +15,14 @@ import {
   notionSourceId,
 } from "./inventory_model.ts";
 import {
+  isCloudInventoryActionAllowed,
+  resolveCloudInventoryOwner,
+} from "./cloud_inventory_auth.ts";
+import {
+  type InventoryExpansionCandidate,
+  inventoryExpansionPlanSha256,
+} from "./inventory_expansion_plan.ts";
+import {
   prepareWbsStagingRows,
   reconcileWbsMirror,
   type WbsMirrorRecord,
@@ -24,7 +32,7 @@ import {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
+    "authorization, x-client-info, apikey, content-type, x-notion-migration-owner, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Max-Age": "86400",
 };
 
@@ -200,6 +208,7 @@ async function authenticatedAdmin(
   {
     admin: SupabaseClient;
     userId: string;
+    isAutomation: boolean;
   } | Response
 > {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -211,6 +220,20 @@ async function authenticatedAdmin(
     return json({ success: false, error: "Unauthorized" }, 401);
   }
 
+  const admin = createClient(supabaseUrl, serviceRoleKey);
+  const automationOwner = resolveCloudInventoryOwner({
+    authorization,
+    serviceRoleKey,
+    requestedOwner: req.headers.get("x-notion-migration-owner") ?? "",
+  });
+  if (automationOwner !== null) {
+    return {
+      admin,
+      userId: automationOwner,
+      isAutomation: true,
+    };
+  }
+
   const session = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authorization } },
   });
@@ -219,7 +242,6 @@ async function authenticatedAdmin(
     return json({ success: false, error: "Unauthorized" }, 401);
   }
 
-  const admin = createClient(supabaseUrl, serviceRoleKey);
   const { data: profile, error: profileError } = await admin
     .from("user_profiles")
     .select("is_admin, role")
@@ -231,7 +253,7 @@ async function authenticatedAdmin(
   if (profile?.is_admin !== true && profile?.role !== "admin") {
     return json({ success: false, error: "admin_required" }, 403);
   }
-  return { admin, userId: authData.user.id };
+  return { admin, userId: authData.user.id, isAutomation: false };
 }
 
 async function ownedBatch(
@@ -290,6 +312,53 @@ async function countRemaining(
     .filter("metadata->>inventory_expanded", "eq", "false");
   if (error) throw new Error(error.message);
   return count ?? 0;
+}
+
+async function inventoryExpansionCandidates(
+  admin: SupabaseClient,
+  batchId: string,
+  userId: string,
+  limit: number,
+): Promise<InventoryExpansionCandidate[]> {
+  const { data, error } = await admin
+    .from("notion_migration_items")
+    .select("id,source_id,source_kind,metadata,created_at")
+    .eq("batch_id", batchId)
+    .eq("user_id", userId)
+    .in("source_kind", ["page", "database", "data_source"])
+    .filter("metadata->>inventory_expanded", "eq", "false")
+    .order("created_at")
+    .order("source_id")
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as InventoryExpansionCandidate[];
+}
+
+async function planInventoryExpansion(
+  admin: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+) {
+  const batch = await ownedBatch(admin, userId, body.batch_id);
+  const limit = boundedInt(body.limit, 2, 1, 5);
+  const candidates = await inventoryExpansionCandidates(
+    admin,
+    batch.id,
+    userId,
+    limit,
+  );
+  const planSha256 = await inventoryExpansionPlanSha256(candidates);
+  const remaining = await countRemaining(admin, batch.id, userId);
+  return {
+    success: true,
+    batch_id: batch.id,
+    api_version: NOTION_MIGRATION_API_VERSION,
+    plan_sha256: planSha256,
+    selected: candidates.length,
+    remaining_to_expand: remaining,
+    safe_apply_gate_open: candidates.length > 0,
+    source_deletion_attempted: false,
+  };
 }
 
 async function startInventory(
@@ -530,25 +599,32 @@ async function expandInventory(
   admin: SupabaseClient,
   userId: string,
   body: Record<string, unknown>,
+  requirePlanDigest = false,
 ) {
   const batch = await ownedBatch(admin, userId, body.batch_id);
   const token = Deno.env.get("NOTION_API_TOKEN")?.trim() ?? "";
   if (!token) throw new Error("notion_not_configured");
   const limit = boundedInt(body.limit, 2, 1, 5);
-  const { data: candidates, error } = await admin
-    .from("notion_migration_items")
-    .select("id,source_id,source_kind,metadata")
-    .eq("batch_id", batch.id)
-    .eq("user_id", userId)
-    .in("source_kind", ["page", "database", "data_source"])
-    .filter("metadata->>inventory_expanded", "eq", "false")
-    .order("created_at")
-    .limit(limit);
-  if (error) throw new Error(error.message);
+  const candidates = await inventoryExpansionCandidates(
+    admin,
+    batch.id,
+    userId,
+    limit,
+  );
+  const planSha256 = await inventoryExpansionPlanSha256(candidates);
+  const expectedPlanSha256 = String(body.expected_plan_sha256 ?? "").trim();
+  if (requirePlanDigest || expectedPlanSha256 !== "") {
+    if (!/^[0-9a-f]{64}$/.test(expectedPlanSha256)) {
+      throw new Error("inventory_expand_plan_sha256_required");
+    }
+    if (expectedPlanSha256 !== planSha256) {
+      throw new Error("inventory_expand_plan_sha256_mismatch");
+    }
+  }
 
   const seenAt = new Date().toISOString();
   let discovered = 0;
-  for (const candidate of candidates ?? []) {
+  for (const candidate of candidates) {
     const metadata = asNotionRecord(candidate.metadata) ?? {};
     let result: {
       rows: NotionInventoryRow[];
@@ -612,10 +688,12 @@ async function expandInventory(
     success: true,
     batch_id: batch.id,
     api_version: NOTION_MIGRATION_API_VERSION,
-    expanded: candidates?.length ?? 0,
+    plan_sha256: planSha256,
+    expanded: candidates.length,
     discovered,
     remaining_to_expand: remaining,
     inventory_complete: remaining === 0,
+    source_deletion_attempted: false,
     limitation:
       "Block-level comments and objects not shared with the integration remain unverified until export/browser reconciliation.",
   };
@@ -913,10 +991,23 @@ serve(async (req: Request) => {
     const authorization = await authenticatedAdmin(req);
     if (authorization instanceof Response) return authorization;
     const body = await req.json().catch(() => ({})) as Record<string, unknown>;
+    const action = String(body.action ?? "");
+    if (
+      authorization.isAutomation && !isCloudInventoryActionAllowed(action)
+    ) {
+      return json({ success: false, error: "automation_action_not_allowed" }, 403);
+    }
     let result: Record<string, unknown>;
-    switch (String(body.action ?? "")) {
+    switch (action) {
       case "inventory.start":
         result = await startInventory(
+          authorization.admin,
+          authorization.userId,
+          body,
+        );
+        break;
+      case "inventory.plan_expand":
+        result = await planInventoryExpansion(
           authorization.admin,
           authorization.userId,
           body,
@@ -927,6 +1018,7 @@ serve(async (req: Request) => {
           authorization.admin,
           authorization.userId,
           body,
+          authorization.isAutomation,
         );
         break;
       case "reconcile.wbs":

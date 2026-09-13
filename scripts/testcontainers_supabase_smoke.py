@@ -6,7 +6,8 @@ disposable Postgres container, applies a small migration/seed fixture, verifies
 the Issue #2773 fail-closed RLS migration, Issue #2484 asset-chat isolation,
 Issue #4091 app-analytics write boundary, and Issue #1202 voice-dubbing quota
 state machine, Issue #1233 resource-optimizer tenant/analysis/quota contracts,
-Issue #4956 WBS administrator/review contracts, Issue #4927 recurring-cost
+Issue #4956 WBS administrator/review contracts, Issue #2921 agent module
+role/handoff contracts, Issue #4927 recurring-cost
 tombstone concurrency, Issue #2844 account-deletion retention contracts, checks
 the real Edge Function import policy, Issue #2668 note-comment authorization,
 and runs a Deno HTTP fixture against the container.
@@ -169,6 +170,14 @@ ISSUE_4956_WBS_ADMIN_REVIEW_SQL_FILES = (
     / "20260828153722_repair_wbs_admin_review_contract.sql",
     ROOT / "supabase" / "tests" / "issue4956_wbs_admin_review_contract.sql",
 )
+ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES = (
+    ROOT / "supabase" / "tests" / "issue2921_agent_module_bootstrap.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260903093652_agent_module_role_handoffs.sql",
+    ROOT / "supabase" / "tests" / "issue2921_agent_module_handoff_contract.sql",
+)
 ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES = (
     ROOT / "supabase" / "migrations" / "20260612230000_asset_pref_mirror.sql",
     ROOT
@@ -201,6 +210,29 @@ VIDEO_ARTIFACT_SQL_FILES = (
     ROOT / "supabase" / "migrations" / "20260822084126_add_video_artifact_review_loop.sql",
     ROOT / "supabase" / "tests" / "first_party_video_service_contract.sql",
     ROOT / "supabase" / "tests" / "video_artifact_review_loop_contract.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830053403_video_improvement_authorization_envelopes.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830123038_allow_authorized_video_retry_after_failure.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830123552_allow_authorized_video_retry_index.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830162041_persist_pending_video_improvement_authorizations.sql",
+    ROOT / "supabase" / "tests" / "video_improvement_authorization_contract.sql",
+    ROOT / "supabase" / "tests" / "video_publication_pre_migration.sql",
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260830151707_create_video_publication_authorizations.sql",
+    ROOT / "supabase" / "tests" / "video_publication_authorization_contract.sql",
 )
 EDGE_FIXTURE_ENV_ALLOW = (
     "DATABASE_URL",
@@ -541,6 +573,19 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "manual_override is accepted only as an explicit administrator write",
             "migration applies twice in the disposable database",
         ],
+        "issue_2921_agent_module_handoff_sql": [
+            path.relative_to(ROOT).as_posix()
+            for path in ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES
+        ],
+        "issue_2921_agent_module_handoff_checks": [
+            "front-office and management agents use independent trusted JWT identities",
+            "module-governed task reads and writes require the assigned module and agent",
+            "human owners retain legacy task mutations and organization-wide audit reads",
+            "direct assignment rewrites and cross-tenant access fail closed",
+            "request and acceptance RPCs atomically transfer work with append-only events",
+            "anon and authenticated clients have no direct handoff-table write privileges",
+            "migration applies twice in the disposable database",
+        ],
         "issue_4927_recurring_tombstone_sql": [
             path.relative_to(ROOT).as_posix()
             for path in ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES
@@ -579,6 +624,8 @@ def build_plan(sql_dir: Path, edge_fixture: Path, actual_edge_function: Path) ->
             "reviews advance rights/privacy readiness without auto-publishing",
             "next-generation jobs preserve source artifact and review lineage",
             "original provenance is immutable and lifecycle evidence is append-only",
+            "publication packets are immutable, owner-scoped and exact-source",
+            "shop activation follows inactive staging and supports rollback",
         ],
         "edge_db_fixture": edge_fixture.relative_to(ROOT).as_posix(),
         "actual_edge_checks": [
@@ -3268,6 +3315,26 @@ def run_smoke(args: argparse.Namespace) -> int:
             )
             apply_sql_fixture(
                 conn,
+                ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES[0],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES[1],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES[1],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
+                ISSUE_2921_AGENT_MODULE_HANDOFF_SQL_FILES[2],
+                artifacts_dir,
+            )
+            apply_sql_fixture(
+                conn,
                 ISSUE_4927_RECURRING_TOMBSTONE_SQL_FILES[0],
                 artifacts_dir,
             )
@@ -3324,6 +3391,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "issue_1233_resource_optimizer_contract": "passed",
             "issue_1233_ai_quota_concurrency": issue_1233_quota_concurrency,
             "issue_4956_wbs_admin_review_contract": "passed",
+            "issue_2921_agent_module_handoff_contract": "passed",
             "issue_4927_recurring_tombstone_contract": (
                 issue_4927_tombstone_concurrency
             ),

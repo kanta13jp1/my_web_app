@@ -127,6 +127,7 @@ jobs:
           BASE_SHA: ${{ steps.commits.outputs.base }}
           HEAD_SHA: ${{ steps.commits.outputs.head }}
         run: |
+          set -euo pipefail
           RANGE="${BASE_SHA}...${HEAD_SHA}"
 
           # These must match the extensions the repo actually uses. The list
@@ -134,13 +135,21 @@ jobs:
           # including all 117 workflows) and '*.py' (218), so workflow and
           # script changes were never reviewed — the job just reported
           # "Diff extracted: 0 lines" and passed.
+          # Never persist or send the raw diff. Stream the bounded input
+          # through the trusted-main redactor before any external AI provider
+          # can read it. Only pr_diff.txt is consumed by the review step.
           git diff "$RANGE" -- \
             '*.dart' '*.ts' '*.yml' '*.yaml' '*.sql' '*.json' '*.py' '*.ps1' \
-            | head -n 400 > pr_diff.txt
+            | sed -n '1,400p' \
+            | python scripts/security_review_input.py \
+                --redact-only \
+                --stdin \
+                --output pr_diff.txt \
+                --github-output "$GITHUB_OUTPUT"
 
           LINES=$(wc -l < pr_diff.txt | tr -d ' ')
           echo "lines=$LINES" >> $GITHUB_OUTPUT
-          echo "Diff extracted: ${LINES} lines"
+          echo "Diff extracted and sanitized: ${LINES} lines"
 
           # An allowlist drifts silently. If files changed but none matched,
           # say so and name the extensions, so the next drift is visible

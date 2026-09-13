@@ -5,9 +5,9 @@ import 'asset_debt_trend_analyzer.dart';
 
 /// 「借金しない宣言」モニターが監視する違反の種別。
 ///
-/// - [newBorrowing]: 今月、新規利用（追加借入）が発生した。誓約「追加の借金をしない」違反。
-/// - [revolvingCard]: クレジットカード等が当月全額返済されず繰越（リボ/分割）。
-///   誓約「カードは必ず一括返済」違反。
+/// - [newBorrowing]: カード以外で今月、新規借入が発生した。
+/// - [revolvingCard]: カードの新規利用分が最低返済額へ全額上乗せされていない、
+///   または返済日が給料日の25日でない。
 enum AssetDebtDisciplineViolationType { newBorrowing, revolvingCard }
 
 /// 1 件の規律違反。金額はすべて Dart 側で計算済みで、AI には説明のみを任せる。
@@ -18,7 +18,7 @@ class AssetDebtDisciplineViolation {
   final String accountName;
   final AssetLiabilityAccountKind kind;
 
-  /// newBorrowing: 今月の新規利用推定額 / revolvingCard: 翌月への繰越額。
+  /// newBorrowing: 今月の新規借入推定額 / revolvingCard: 新規利用分の返済不足額。
   final double amount;
 
   /// 現在の利用残高（正の値）。
@@ -46,8 +46,8 @@ class AssetDebtDisciplineViolation {
   /// [currentPlanPayoffMonths] が null のときは null。
   final double? currentPlanTotalInterest;
 
-  /// カード会社で「今後は一括（1回）払い」への変更を記録済みか。
-  /// true の場合も違反判定と返済月額目標は維持し、設定変更の再案内だけを抑止する。
+  /// カード会社で「今後の新規利用は1回払い」への変更を記録済みか。
+  /// この記録だけを返済実績とは見なさず、true でも不足判定と返済月額目標を維持する。
   final bool oneShotChangeCompleted;
 
   const AssetDebtDisciplineViolation({
@@ -113,13 +113,17 @@ class AssetDebtDisciplineReport {
   /// 誓約①「追加借入ゼロ」を達成しているか。
   bool get zeroNewBorrowingAchieved => newBorrowingViolations.isEmpty;
 
-  /// 誓約②「カードは全額一括」を達成しているか。
-  bool get lumpSumAchieved => revolvingCardViolations.isEmpty;
+  /// 誓約②「新規利用分は最低返済額へ上乗せし25日に全額返済」を達成しているか。
+  bool get newUsageRepaymentAchieved => revolvingCardViolations.isEmpty;
+
+  /// 旧UI・呼び出し元との互換用。意味は [newUsageRepaymentAchieved] と同じ。
+  bool get lumpSumAchieved => newUsageRepaymentAchieved;
 
   bool get hasViolations => allViolations.isNotEmpty;
 }
 
-/// 「追加の借金をしない／カードは必ず一括返済」という規律を月次で監視する。
+/// 「カード以外の追加借入をしない／カード新規利用分は25日に全額返済」という
+/// 規律を月次で監視する。
 ///
 /// 既存の [AssetDebtTrendAnalyzer] が「借金が複利で膨らんでいないか」を段階的な
 /// アドバイスで示すのに対し、本モニターは 2 つの誓約に対する **二値の遵守判定**を行う。
@@ -151,8 +155,11 @@ class AssetDebtDisciplineMonitor {
     };
   }
 
-  /// 「必ず一括返済」の対象となるカード系の負債種別か（クレカ・ショッピング枠）。
-  /// カードローン/キャッシングは借入金であり一括の対象ではない（追加借入のみ監視）。
+  /// 新規利用分の25日返済ルールを適用するカード系の負債種別か
+  /// （クレカ・ショッピング枠）。
+  ///
+  /// メソッド名は既存呼び出し元との互換のため維持している。カードローン/
+  /// キャッシングは借入金であり、このルールの対象外（追加借入のみ監視）。
   static bool isLumpSumCardKind(AssetLiabilityAccountKind kind) {
     return kind == AssetLiabilityAccountKind.creditCard ||
         kind == AssetLiabilityAccountKind.shoppingDebt;
@@ -182,15 +189,23 @@ class AssetDebtDisciplineMonitor {
       }
       monitoredCount++;
       final interest = max(0.0, row.monthlyInterestEstimate);
-      final payment = max(0.0, row.scheduledPaymentAmount);
+      final payment = max(
+        0.0,
+        row.paid
+            ? row.actualPaymentAmount ?? row.scheduledPaymentAmount
+            : row.scheduledPaymentAmount,
+      );
 
-      // 誓約①: 追加借入ゼロ。前月比＋返済−利息で「今月の新規利用」を推定。
+      // 前月比＋返済−利息で「今月の新規利用」を推定する。リボカードは明細から
+      // 算出済みの newUsageAmount を優先し、カード以外だけを誓約①で判定する。
       final prior = priorBalancesByAccountId[row.id];
+      double? inferredNewUsage;
       if (prior != null) {
         hasPrior = true;
-        final newUsage = (balance - prior) + payment - interest;
-        if (newUsage > newBorrowingThreshold) {
-          totalNew += newUsage;
+        inferredNewUsage = (balance - prior) + payment - interest;
+        if (!isLumpSumCardKind(row.kind) &&
+            inferredNewUsage > newBorrowingThreshold) {
+          totalNew += inferredNewUsage;
           newBorrowing.add(
             AssetDebtDisciplineViolation(
               type: AssetDebtDisciplineViolationType.newBorrowing,
@@ -198,27 +213,35 @@ class AssetDebtDisciplineMonitor {
               accountId: row.id,
               accountName: row.name,
               kind: row.kind,
-              amount: newUsage,
+              amount: inferredNewUsage,
               currentBalance: balance,
-              problem: '${row.name}で今月 約${_yen(newUsage)}の新規利用（追加借入）が発生しました。'
+              problem: '${row.name}で今月 約${_yen(inferredNewUsage)}の新規借入が発生しました。'
                   '「追加の借金をしない」誓約に反しています。',
-              action: '翌月はこのカード/ローンの新規利用を止め、支払いは手元現金またはデビットに切り替えてください。'
-                  'どうしても使う場合は、その場で残高を全額入金して借金を翌月へ持ち越さないでください。',
+              action: '翌月はこのローン・借入の新規利用を止め、既存の返済計画を優先してください。',
             ),
           );
         }
       }
 
-      // 誓約②: カードは必ず一括。当月に全額返済されず繰り越されるなら違反。
-      if (isLumpSumCardKind(row.kind)) {
-        final carriedOver = balance - payment;
-        final interestBearing = row.annualRate > 0;
-        if (carriedOver > _epsilon && interestBearing) {
+      // 誓約②: 既存残高は一括返済せず、新規利用分だけを最低返済額へ全額上乗せして
+      // 給料日の25日に返す。残高の繰越自体は違反にしない。
+      if (isLumpSumCardKind(row.kind) && row.isRevolving) {
+        final revolvingBilling = row.revolvingBilling;
+        final newUsage = max(
+          0.0,
+          revolvingBilling?.newUsageAmount ?? inferredNewUsage ?? 0,
+        );
+        final minimumPayment = max(
+          0.0,
+          revolvingBilling?.monthlyAmount ?? row.minimumPaymentEstimate,
+        );
+        final requiredPayment = minimumPayment + newUsage;
+        final shortfall = max(0.0, requiredPayment - payment);
+        final paydayAligned = row.paymentDay == 25;
+        totalCarried += max(0.0, balance - payment);
+        if (shortfall >= _epsilon || !paydayAligned) {
           final oneShotChangeCompleted =
               cardUsagePolicies[row.id]?.enforceOneShot == true;
-          totalCarried += carriedOver;
-          // 「いつまでに・いくら返せば脱却できるか」を Dart 側で確定させる。
-          // AI は説明のみ（calculation_owner: dart_service）。
           final monthlyRate = row.annualRate / 12;
           final escapePayment = AssetDebtTrendAnalyzer.paymentToClearIn(
             balance,
@@ -250,16 +273,15 @@ class AssetDebtDisciplineMonitor {
             // 利息は上回るがシミュレーション上限 (600ヶ月) 内に完済しない。
             currentPlanText = '現在の予定額 月${_yen(payment)}では完済まで50年以上かかる見込みです。';
           }
-          final action = oneShotChangeCompleted
-              ? '今後の利用分を一括（1回）払いにする設定変更は完了済みです。'
-                  '残高圧縮に集中し、月${_yen(escapePayment)}以上の返済を続ければ'
-                  '約$escapeTargetMonthsヶ月で完済できる目安です。'
-                  '$currentPlanText'
-              : 'リボ/分割の設定を解除し、残高${_yen(balance)}の一括返済が最優先です。'
-                  '一括が難しい場合も、月${_yen(escapePayment)}以上の返済を続ければ'
-                  '約$escapeTargetMonthsヶ月でリボ状態から脱却できます。'
-                  '$currentPlanText'
-                  '今後カードを使うときは必ず一括（1回払い）に設定し、残高を翌月へ繰り越さないでください。';
+          final shortageAction = shortfall >= _epsilon
+              ? '最低返済${_yen(minimumPayment)}へ新規利用${_yen(newUsage)}を全額上乗せし、'
+                  '不足${_yen(shortfall)}を追加してください。'
+              : '';
+          final paydayAction = paydayAligned ? '' : '返済日を給料日の毎月25日に変更してください。';
+          final action = '$shortageAction$paydayAction'
+              '既存残高${_yen(balance)}の一括返済は求めません。'
+              '無理のない範囲で残高圧縮を続ける場合、月${_yen(escapePayment)}なら'
+              '約$escapeTargetMonthsヶ月で完済できる目安です。$currentPlanText';
           revolving.add(
             AssetDebtDisciplineViolation(
               type: AssetDebtDisciplineViolationType.revolvingCard,
@@ -267,12 +289,12 @@ class AssetDebtDisciplineMonitor {
               accountId: row.id,
               accountName: row.name,
               kind: row.kind,
-              amount: carriedOver,
+              amount: shortfall,
               currentBalance: balance,
-              problem:
-                  '${row.name}は残高${_yen(balance)}に対し今月の返済予定が${_yen(payment)}で、'
-                  '${_yen(carriedOver)}が翌月へ繰り越され利息が発生します（＝リボ/分割の状態）。'
-                  '「カードは必ず一括返済」誓約に反しています。',
+              problem: '${row.name}は新規利用${_yen(newUsage)}に対する'
+                  '25日の返済ルールを満たしていません'
+                  '（必要${_yen(requiredPayment)} / 予定${_yen(payment)} / '
+                  '返済日${row.paymentDay?.toString() ?? '未設定'}日）。',
               action: action,
               escapeMonths: escapeTargetMonths,
               escapeMonthlyPayment: escapePayment,

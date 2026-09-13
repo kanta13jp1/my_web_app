@@ -263,7 +263,8 @@ class AssetManagementInsightReport {
   /// 月をまたいだ負債トレンド（リボ複利・残高増加・超長期完済）の指摘。
   final List<AssetDebtTrendInsight> debtTrendInsights;
 
-  /// 「借金しない宣言」モニターの月次評価（追加借入ゼロ／カード一括）。null=未評価。
+  /// 「借金しない宣言」モニターの月次評価
+  /// （カード以外の追加借入ゼロ／新規利用分の25日返済）。null=未評価。
   final AssetDebtDisciplineReport? disciplineReport;
 
   /// 「まず、これだけ」段階別トリアージ (今日3件まで/今週/今月/専門窓口)。null=未評価。
@@ -1457,7 +1458,7 @@ class AssetManagementInsightPromptBuilder {
       report.developerRequests.map((item) => item.severity.name),
     );
     final workbook = report.workbook;
-    final completedOneShotCardNames = workbook.debtMasterRows
+    final completedOneShotCardNames = workbook.currentDebtRows
         .where(
           (row) => workbook.cardUsagePolicies[row.id]?.enforceOneShot == true,
         )
@@ -1482,23 +1483,45 @@ class AssetManagementInsightPromptBuilder {
         '再計算する場合は「概算」と明記し、Dart計算値と矛盾する断定はしないでください。',
       )
       ..writeln(
-        'リボ払いカードの扱い: リボ払いカード(is_revolving が true / revolving_billing を持つカード)の請求額は'
-        '「リボ設定額＋利用限度額の超過分」で確定します。請求額と「カード請求内訳(紐づけ負債の合計)」'
-        '「取込明細合計(今月の新規利用)」は一致しないのが正常です。これらの差を「照合不一致」「ズレ」'
-        '「要修正」「今日中に直せ」等として指摘しないでください。リボ払いカードの照合は完了済みとして扱い、'
-        '明細の取り込みも催促しないでください。',
+        'リボ払いカードの扱い: 返済予定額は「既存残高への最低返済額＋当月の新規利用額」で、'
+        '返済日は毎月25日です。取込明細がある場合はその合計を新規利用額として全額上乗せします。'
+        '既存残高の一括返済は手元資金を圧迫するため要求・最優先化しないでください。',
       )
       ..writeln(
-        '一括払い化の実行記録: ${completedOneShotCardNames.isEmpty ? 'なし' : completedOneShotCardNames}。'
-        '変更完了済みのカードには、カード会社への電話、リボ/分割設定の解除、1回払いへの変更を二度と促さないでください。'
-        'そのカードは残高圧縮の計算済み月額目標だけを提示してください。',
+        '新規利用分を全額返済する設定記録: ${completedOneShotCardNames.isEmpty ? 'なし' : completedOneShotCardNames}。'
+        '記録済みカードには、残高一括返済やリボ/分割設定の即時解除を促さず、25日の返済予定と'
+        '既存残高を圧縮する最低返済額だけを提示してください。',
       )
       ..writeln(
-        '支払済みの扱い: 「支払済み:はい」または「期限超過:いいえ」の負債・支払いは、今月分の支払いが'
-        '完了済みです。これらを「未払い」「滞納」「期限超過」「延滞」「今すぐ払え」「期限を過ぎている」等として'
+        '支払済みの扱い: 「支払済み:はい」の負債・支払いだけが支払完了の記録です。'
+        '「期限超過:いいえ」は支払完了を意味しません。これらの支払済み記録を「未払い」「滞納」「期限超過」「延滞」「今すぐ払え」「期限を過ぎている」等として'
         '指摘・督促してはいけません。支払済みの負債は「今月の支払いと利息」での利息・元金の説明にのみ用い、'
         '未払い合計・期限超過・今日中に払うべき支払いの文脈からは必ず除外してください。'
         '「支払日別リスク」に載っていない負債は期限超過ではありません。',
+      )
+      ..writeln(
+        '受取済み収入の扱い: 「受取済み:はい」または received が true の給与・入金予定は'
+        '入金完了済みです。これらを「未受取」「期限超過」「未入金」として督促・指摘してはいけません。',
+      )
+      ..writeln(
+        '支払予定額0円・支払日通過済みの負債の扱い: 「今月支払予定額」が0円、または当サイクルの支払日（例: 毎月27日＝8月27日）が'
+        'すでに過去日となっている負債について、「0円になっていて放置している」「支払期日を過ぎて放置」「返済0円だと利息が雪だるま式に増える」'
+        'などと批判・督促してはいけません。当月分の約定引落が完了済みか、当サイクルの期日を通過して残予定額が0円となっている状態です。'
+        'これらを滞納・放置・未払い扱いせず、当月分支払い完了または次回サイクル向け確認として扱ってください。',
+      )
+      ..writeln(
+        '支払予定額の優先: 各負債の今月支払うべき額には、機械的な推定最低支払額ではなく'
+        '「今月支払予定額（約定返済額/手入力額）」を採用してください。',
+      )
+      ..writeln(
+        '解約済みサブスクの扱い: 金額が0円、または解約済み（disabled/canceled）のサブスクリプションは'
+        '「サブスク地獄」「無駄な固定費」「未払い支出」として言及してはいけません。'
+        '現在アクティブなサブスクリプションのみを固定費削減の対象として助言してください。',
+      )
+      ..writeln(
+        '金利・残高の正確性: 各負債の年利（年利15.00%等）や残高（-7,519,280円等）は、過去の記憶や'
+        '一般的な貸金金利（18.0%）で推測せず、必ず「総合サマリー」「負債マスタ詳細」に記載されている確定値を'
+        'そのまま引用してください。',
       )
       ..writeln(
         '残高と支払額の区別: 各負債の「残高」は総借入残高であり、今月の延滞額・今月や今日に'
@@ -1526,9 +1549,15 @@ class AssetManagementInsightPromptBuilder {
         '該当データが無い月だけ、そのカテゴリには触れなくて構いません。',
       )
       ..writeln(
-        '下記「借金しない宣言モニター」は本人の固い誓約です。違反（追加借入の発生・カードの非一括/リボ）があれば、'
-        'どの口座でいくらかを具体的に挙げ、「次はこうする」を断言してください。'
-        '逆に両誓約を守れている月は、必ず明確に褒めて継続を後押ししてください（締めの総評でも触れる）。',
+        '証拠の優先: 支払予定0円だけで返済なし・利息の元金組入れと断定しないでください。'
+        '残高差分は手数料・評価変動・訂正を含み得るため、新規借入や浪費の証拠ではありません。'
+        '引落確認待ちは未払い確定ではありません。支払実績と明細を照合する前に再支払いを指示しないでください。'
+        '生年月日・性格・運気を負債の原因として断定しないでください。',
+      )
+      ..writeln(
+        '下記「借金しない宣言モニター」は本人の固い誓約です。違反（カード以外の追加借入・新規利用分の25日返済不足）があれば、'
+        '取引証拠を先に確認してください。下記の残高差分推定だけでは違反・達成のどちらも断定できません。'
+        '照合未完了なら判定保留と伝えてください。',
       )
       ..writeln()
       ..writeln('## 総合サマリー')
@@ -1587,7 +1616,7 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('## 今月の問題点と翌月の改善（負債トレンド）')
       ..write(_debtTrendLines(report))
       ..writeln()
-      ..writeln('## 借金しない宣言モニター（追加借入ゼロ／カード一括）')
+      ..writeln('## 借金しない宣言モニター（カード以外の追加借入ゼロ／新規利用分の25日返済）')
       ..write(_disciplineLines(report))
       ..writeln()
       ..writeln('## 今日やることトリアージ（Dart計算・この順番のまま提示すること）')
@@ -1644,11 +1673,12 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String _accountLines(AssetLiabilityWorkbook workbook) {
-    if (workbook.accounts.isEmpty) {
+    final currentAccounts = workbook.currentAccounts;
+    if (currentAccounts.isEmpty) {
       return '- 口座データはありません。\n';
     }
     final buffer = StringBuffer();
-    for (final account in workbook.accounts) {
+    for (final account in currentAccounts) {
       buffer.writeln(
         '- ${account.name} / 種別:${account.kind.name} / 残高:${_formatAmount(account.balance)} / '
         '支払日:${account.paymentDay?.toString() ?? '未設定'} / '
@@ -1686,11 +1716,12 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String _debtMasterLines(AssetLiabilityWorkbook workbook) {
-    if (workbook.debtMasterRows.isEmpty) {
+    final currentDebtRows = workbook.currentDebtRows;
+    if (currentDebtRows.isEmpty) {
       return '- 負債はありません。\n';
     }
     final buffer = StringBuffer();
-    for (final row in workbook.debtMasterRows) {
+    for (final row in currentDebtRows) {
       buffer.writeln(
         '- ${row.name} / 種別:${row.kind.name} / 残高:${_formatAmount(row.balance)} / '
         '負債割合:${_formatPercent(row.liabilityShare)} / '
@@ -1844,16 +1875,15 @@ class AssetManagementInsightPromptBuilder {
     for (final group in reconciliation.groups) {
       final revolving = group.revolvingBilling;
       if (revolving != null) {
-        // リボ払いは請求額=設定額+限度超過分。明細合計との差は不一致ではない旨を明示する。
+        // リボ払いは最低返済額+新規利用額を25日に返す。既存残高は一括返済しない。
         buffer.writeln(
           '- 明細照合(リボ払い):${group.billingAccountName} / '
-          '請求額:${_formatAmount(revolving.billedAmount)}'
-          '(=リボ設定額${_formatAmount(revolving.monthlyAmount)}'
-          '+限度超過${_formatAmount(revolving.overLimitAmount)}) / '
-          'リボ残高:${_formatAmount(revolving.balance)} / '
-          '利用限度額:${_formatAmount(revolving.creditLimit)} / '
-          '取込明細合計(今月の新規利用):${_formatAmount(group.statementLineTotal)} / '
-          '注記:リボ払いのため請求額は明細合計と一致しないのが正常(不一致ではない)',
+          '25日返済:${_formatAmount(revolving.billedAmount)}'
+          '(=最低返済${_formatAmount(revolving.monthlyAmount)}'
+          '+新規利用分全額${_formatAmount(revolving.newUsageAmount)}) / '
+          '既存残高:${_formatAmount(revolving.existingBalanceAmount)} / '
+          '取込明細合計:${_formatAmount(group.statementLineTotal)} / '
+          '注記:既存残高の一括返済は要求せず、新規利用分だけを最低返済額へ上乗せ',
         );
         continue;
       }
@@ -1923,21 +1953,23 @@ class AssetManagementInsightPromptBuilder {
     }
     final buffer = StringBuffer()
       ..writeln(
-        '- 誓約①「追加の借金をしない」: '
-        '${discipline.zeroNewBorrowingAchieved ? '達成' : '違反あり'}'
+        '- 誓約①「カード以外の追加借入をしない」: '
+        '判定保留（取引証拠との照合が必要）'
         '${discipline.hasPriorMonthData ? '' : '（前月データ未蓄積のため判定保留）'}',
       )
       ..writeln(
-        '- 誓約②「カードは必ず一括返済」: '
-        '${discipline.lumpSumAchieved ? '達成' : '違反あり'}',
+        '- 誓約②「新規利用分は最低返済額へ上乗せし25日に全額返済」: '
+        '判定保留（支払実績との照合が必要）',
       )
-      ..writeln('- 今月の新規借入推定合計: ${_formatAmount(discipline.totalNewBorrowing)}')
+      ..writeln(
+        '- 未照合の残高差分推定合計: ${_formatAmount(discipline.totalNewBorrowing)}',
+      )
       ..writeln(
         '- リボ/分割で翌月へ繰り越す残高合計: '
         '${_formatAmount(discipline.totalCarriedOver)}',
       );
     if (discipline.isCompliant) {
-      buffer.writeln('- 今月は両誓約を守れています。AIはこの達成を必ず褒め、継続を後押ししてください。');
+      buffer.writeln('- 推定上の検出なし。これは両誓約の達成を証明するものではありません。');
       return buffer.toString();
     }
     for (final violation in discipline.allViolations) {
@@ -1948,16 +1980,15 @@ class AssetManagementInsightPromptBuilder {
           '金額:${_formatAmount(violation.amount)} / '
           '残高:${_formatAmount(violation.currentBalance)}',
         )
-        ..writeln('  - 問題点: ${violation.problem}')
-        ..writeln('  - 対応: ${violation.action}');
+        ..writeln('  - 対応: 明細・支払実績との照合が必要。違反として断定しない。');
     }
     return buffer.toString();
   }
 
   String _disciplineTypeLabel(AssetDebtDisciplineViolationType type) {
     return switch (type) {
-      AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
-      AssetDebtDisciplineViolationType.revolvingCard => 'カード非一括(リボ/分割)',
+      AssetDebtDisciplineViolationType.newBorrowing => '残高差分の要照合候補',
+      AssetDebtDisciplineViolationType.revolvingCard => '新規利用分の支払実績要照合',
     };
   }
 

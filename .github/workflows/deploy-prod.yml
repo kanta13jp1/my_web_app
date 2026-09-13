@@ -25,7 +25,17 @@ on:
       - 'scripts/pre_commit_quality_gate.py'
       - 'scripts/pre_commit_quality_gate_test.py'
       - 'scripts/check_ga_readiness_gate.py'
+      - 'assets/data/tiger_*'
   workflow_dispatch:
+    inputs:
+      deploy_scope:
+        description: "Deployment scope (use web_only for asset-only releases)"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - web_only
 
 concurrency:
   group: deploy-prod
@@ -88,8 +98,18 @@ jobs:
           set -euo pipefail
           git init .
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --tags --prune origin "+${GITHUB_REF}:refs/remotes/origin/checkout"
-          git checkout --force refs/remotes/origin/checkout
+          # Keep source, event change scope, release metadata, and tags on one SHA.
+          # A queued run must not silently build a newer moving branch head.
+          if [[ ! "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Deployment requires a full immutable event SHA."
+            exit 1
+          fi
+          git fetch --tags --prune origin "$GITHUB_SHA"
+          git checkout --force --detach FETCH_HEAD
+          if [ "$(git rev-parse HEAD)" != "$GITHUB_SHA" ]; then
+            echo "::error::Deployment checkout does not match the event SHA."
+            exit 1
+          fi
 
       - name: Collect pushed files
         if: github.event_name == 'push'
@@ -113,10 +133,14 @@ jobs:
         id: changes
         shell: bash
         env:
-          FORCE_ALL: ${{ github.event_name != 'push' }}
+          FORCE_ALL: ${{ github.event_name != 'push' && inputs.deploy_scope != 'web_only' }}
+          WEB_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_scope == 'web_only' }}
         run: |
           mkdir -p .deploy-logs
           touch .deploy-logs/changed-files.txt
+          if [ "$WEB_ONLY" = "true" ]; then
+            printf 'web/index.html\n' >> .deploy-logs/changed-files.txt
+          fi
           args=()
           if [ "$FORCE_ALL" = "true" ]; then
             args+=(--all)
@@ -130,7 +154,7 @@ jobs:
         id: db_edge_smoke
         shell: bash
         env:
-          FORCE_ALL: ${{ github.event_name != 'push' }}
+          FORCE_ALL: ${{ github.event_name != 'push' && inputs.deploy_scope != 'web_only' }}
         run: |
           if [ "$FORCE_ALL" = "true" ] || grep -Eq \
             '^(supabase/(migrations|functions)/|scripts/(testcontainers_supabase_smoke.py|requirements-testcontainers.txt)|test/fixtures/testcontainers/|test/scripts/test_testcontainers_supabase_smoke.py)' \
@@ -209,7 +233,7 @@ jobs:
 
       - name: Setup Python for DB and Edge smoke
         if: steps.db_edge_smoke.outputs.required == 'true'
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12.14"
 
@@ -642,6 +666,9 @@ jobs:
           # worker APIは用途を分けた専用tokenで認証する。
           deploy_function video-generation-hub --no-verify-jwt
           deploy_function video-worker-hub --no-verify-jwt
+          # 承認済みの exact artifact/review だけを、非公開配信・Stripe固定価格・
+          # /shop 検証・rollback の順に公開する。service role定期実行も関数内で再認証。
+          deploy_function video-commerce-hub --no-verify-jwt
           # 退会申請は user JWT、期限到来後の破壊的 worker は service_role を
           # 関数内で再検証する。scheduled workflow は owner/legal 承認後に
           # ACCOUNT_DELETION_AUTOMATION_ENABLED=true で有効化する。
@@ -662,7 +689,7 @@ jobs:
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 32 functions deployed (ハードキャップ50本に対し32本 — 余裕18本)
+          # Total: 33 functions deployed (ハードキャップ50本に対し33本 — 余裕17本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
@@ -862,7 +889,7 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.changes.outputs.web == 'true'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}

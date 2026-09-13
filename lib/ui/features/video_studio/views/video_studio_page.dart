@@ -409,6 +409,7 @@ class _ImprovementAuthorizationCard extends StatelessWidget {
           if (active != null) ...[
             Text(
               '承認ID ${active.id}\n'
+              '状態 ${_authorizationStatusLabel(active)}\n'
               '有効期限 ${_formatAuthorizationDate(active.validUntil)}\n'
               '残り ${active.remainingRegenerations}回・${active.remainingCredits} credits',
               key: const Key('video-authorization-status'),
@@ -442,7 +443,7 @@ class _ImprovementAuthorizationCard extends StatelessWidget {
             ),
           ] else if (viewModel.hasAppliedImprovement) ...[
             const Text(
-              '期限と反復上限を選ぶと、承認IDの保存と最初の生成予約を同時に行います。承認だけが未使用で残ることはありません。',
+              '期限と反復上限を選ぶと承認IDを保存します。残高・最新レビュー・生成枠が揃えば最初の300 creditsを同時予約し、揃わない場合は理由付きで保留して後から同じ承認IDで再開します。',
               style: _secondaryStyle,
             ),
             const SizedBox(height: DesignTokens.space12),
@@ -522,6 +523,19 @@ class _ImprovementAuthorizationCard extends StatelessWidget {
 String _formatAuthorizationDate(DateTime value) {
   final local = value.toLocal().toString();
   return local.length >= 16 ? local.substring(0, 16) : local;
+}
+
+String _authorizationStatusLabel(VideoImprovementAuthorization value) {
+  return switch (value.status) {
+    'active' => '実行可能',
+    'pending_review' => 'レビュー待ち',
+    'pending_funding' => '残高待ち',
+    'pending_execution' => '生成枠待ち',
+    'exhausted' => '上限到達',
+    'expired' => '期限切れ',
+    'revoked' => '停止済み',
+    _ => value.status,
+  };
 }
 
 class _BalanceAndPacks extends StatelessWidget {

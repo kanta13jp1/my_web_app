@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import '../pages/aero_lab_page.dart';
+import '../pages/sound_bloom_page.dart';
+import '../pages/lumen_path_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,6 +18,7 @@ import '../pages/agent_board_page.dart';
 import '../pages/autonomous_ops_console_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
+import '../ui/features/toeic/toeic_feature.dart';
 import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
@@ -59,6 +64,7 @@ import '../pages/payment_reminder_page.dart';
 import '../pages/prison_mode_page.dart';
 import '../pages/public_memo_directory_page.dart';
 import '../pages/purchase_log_page.dart';
+import '../pages/process_quality_dashboard_page.dart';
 import '../pages/reality_check_page.dart';
 import '../pages/real_world_danshari_page.dart';
 import '../pages/referral_page.dart';
@@ -841,6 +847,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       ],
       onOpen: (context) =>
           _pushPage(context, const EnglishReadingCurriculumPage()),
+    ),
+    HomeToolEntry(
+      id: 'ai-university-toeic',
+      sectionId: 'knowledge',
+      title: 'AI大学 TOEIC対策',
+      subtitle: '毎日5問のPart別ドリルで目標スコアへ',
+      icon: Icons.school_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>[
+        'TOEIC',
+        '英語',
+        '文法',
+        '語彙',
+        'Part 5',
+        'Part 6',
+        'Part 7',
+        'English',
+      ],
+      onOpen: (context) => _pushPage(context, const ToeicFeature()),
     ),
     HomeToolEntry(
       id: 'agent-gpa-dashboard',
@@ -2334,6 +2359,36 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
     ),
     HomeToolEntry(
+      id: 'lumen-path',
+      sectionId: 'growth',
+      title: '光の道 · LUMEN PATH',
+      subtitle: '鏡を回して、3色の光をゴールへ導く',
+      icon: Icons.route_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['光', '鏡', 'パズル', 'LUMEN PATH', 'Astra'],
+      onOpen: (context) => _pushPage(context, const LumenPathPage()),
+    ),
+    HomeToolEntry(
+      id: 'sound-bloom',
+      sectionId: 'growth',
+      title: '音と光の庭 · SOUND BLOOM',
+      subtitle: '光を植えて、音楽を育てる',
+      icon: Icons.music_note_outlined,
+      color: const Color(0xFF527D62),
+      keywords: const <String>['音楽', '作曲', 'SOUND BLOOM', '楽器', 'Astra'],
+      onOpen: (context) => _pushPage(context, const SoundBloomPage()),
+    ),
+    HomeToolEntry(
+      id: 'aero-lab',
+      sectionId: 'growth',
+      title: '3D実験室 · AERO LAB',
+      subtitle: 'エンジンを回して、開いて、空気の流れを学ぶ',
+      icon: Icons.science_outlined,
+      color: const Color(0xFF00838F),
+      keywords: const <String>['3D', 'AERO LAB', 'エンジン', '実験', 'Astra'],
+      onOpen: (context) => _pushPage(context, const AeroLabPage()),
+    ),
+    HomeToolEntry(
       id: 'video-studio',
       sectionId: 'growth',
       title: 'AI動画スタジオ',
@@ -2395,6 +2450,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['法人', 'エンタープライズ', '組織', 'enterprise', 'ビジネス'],
       onOpen: (context) => _pushPage(context, const EnterprisePage()),
+    ),
+    HomeToolEntry(
+      id: 'corporate-site-readiness',
+      sectionId: 'growth',
+      title: '法人口座サイト準備チェック',
+      subtitle: '会社情報の不足確認と事業計画・WBSからのHTML生成',
+      icon: Icons.domain_verification_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        '法人口座',
+        '銀行審査',
+        '会社概要',
+        'バーチャルオフィス',
+        '事業計画',
+        'WBS',
+        'コーポレートサイト',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/corporate-site-readiness'),
     ),
     HomeToolEntry(
       id: 'feature-flags',
@@ -2824,6 +2898,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'build',
       ],
       onOpen: (context) => Navigator.of(context).pushNamed('/release-notes'),
+    ),
+    HomeToolEntry(
+      id: 'process-quality-dashboard',
+      sectionId: 'ai',
+      title: 'プロセス品質ダッシュボード',
+      subtitle: '対象規模あたりのレビュー時間・指摘件数を比較し、閾値未達を確認',
+      icon: Icons.analytics_outlined,
+      color: const Color(0xFF0369A1),
+      keywords: const <String>[
+        'プロセス品質',
+        'レビュー密度',
+        '指摘密度',
+        '品質指標',
+        'ダッシュボード',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const ProcessQualityDashboardPage()),
     ),
     HomeToolEntry(
       id: 'tiger-reviewers',

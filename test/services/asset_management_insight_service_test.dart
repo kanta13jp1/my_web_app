@@ -10,6 +10,23 @@ void main() {
     const service = AssetManagementInsightService();
     const planner = AssetLiabilityPlanningService();
 
+    test('does not present inferred discipline results as facts', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000},
+        baseDate: DateTime(2026, 9, 6),
+      );
+      final report = service.buildReport(workbook: workbook);
+      final prompt = const AssetManagementInsightPromptBuilder()
+          .buildDetailedAdvicePrompt(report);
+
+      expect(prompt, contains('判定保留（取引証拠との照合が必要）'));
+      expect(prompt, isNot(contains('違反あり')));
+      expect(prompt, isNot(contains('今月は両誓約を守れています')));
+      expect(prompt, contains('「期限超過:いいえ」は支払完了を意味しません'));
+      expect(prompt, contains('引落確認待ちは未払い確定ではありません'));
+      expect(prompt, contains('支払予定0円だけで返済なし'));
+    });
+
     test('marks missing payment day as an action item', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
@@ -33,51 +50,43 @@ void main() {
       );
     });
 
-    test(
-      'honors a completed one-shot policy while retaining repayment target',
-      () {
-        final workbook = planner.buildWorkbook(
-          latestSnapshot: const <String, double>{
-            'bank': 500000,
-            'ファミペイ': -100000,
-          },
-          baseDate: DateTime(2026, 8, 29),
-          monthlyPaymentOverrides: const <String, double>{'ファミペイ': 5000},
-          cardUsagePolicies: <String, AssetCardUsagePolicy>{
-            'famipay_card': AssetCardUsagePolicy(
-              enforceOneShot: true,
-              changedAt: DateTime.utc(2026, 8, 29),
-              memo: '受付 ABC123',
-            ),
-          },
-        );
-
-        final report = service.buildReport(workbook: workbook);
-        final prompt = const AssetManagementInsightPromptBuilder()
-            .buildDetailedAdvicePrompt(report);
-
-        final violation =
-            report.disciplineReport!.revolvingCardViolations.single;
-        expect(violation.oneShotChangeCompleted, isTrue);
-        expect(violation.escapeMonthlyPayment, isNotNull);
-        expect(violation.action, isNot(contains('設定を解除')));
-        expect(
-          report.triagePlan!.weekSteps.any(
-            (step) => step.kind == AssetTriageStepKind.disableRevolving,
+    test('payday rule supersedes the legacy one-shot record', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: DateTime(2026, 8, 29),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+            newUsageAmount: 10000,
           ),
-          isFalse,
-        );
-        expect(
-          report.triagePlan!.monthSteps.any(
-            (step) => step.kind == AssetTriageStepKind.reviewRepaymentPace,
+        },
+        cardUsagePolicies: <String, AssetCardUsagePolicy>{
+          'famipay_card': AssetCardUsagePolicy(
+            enforceOneShot: true,
+            changedAt: DateTime.utc(2026, 8, 29),
+            memo: '受付 ABC123',
           ),
-          isTrue,
-        );
-        expect(prompt, contains('一括払い化の実行記録: ファミペイ'));
-        expect(prompt, contains('二度と促さないでください'));
-        expect(prompt, contains('月額目標だけを提示してください'));
-      },
-    );
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final prompt = const AssetManagementInsightPromptBuilder()
+          .buildDetailedAdvicePrompt(report);
+
+      expect(report.disciplineReport!.revolvingCardViolations, isEmpty);
+      expect(
+        report.triagePlan!.weekSteps.any(
+          (step) => step.kind == AssetTriageStepKind.disableRevolving,
+        ),
+        isFalse,
+      );
+      expect(prompt, contains('新規利用分を全額返済する設定記録: ファミペイ'));
+      expect(prompt, contains('残高一括返済やリボ/分割設定の即時解除を促さず'));
+      expect(prompt, contains('返済日は毎月25日'));
+    });
 
     test('clears missing payment day item once an override is entered', () {
       final workbook = planner.buildWorkbook(

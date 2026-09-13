@@ -16,14 +16,14 @@ void main() {
 
       expect(catalog.schemaVersion, 2);
       expect(catalog.profilesBySeat, hasLength(125));
-      expect(catalog.enrichmentRound, greaterThanOrEqualTo(8));
+      expect(catalog.enrichmentRound, greaterThanOrEqualTo(14));
       expect(catalog.averageProfileCompletenessPercent, greaterThan(0));
       expect(catalog.averageReviewReflectionPercent, greaterThan(0));
-      expect(catalog.verifiedBirthDates, 10);
+      expect(catalog.verifiedBirthDates, 12);
       expect(catalog.nextBatchNames, hasLength(5));
       expect(
         catalog.nextBatchNames,
-        <String>['渡正行', '足立暢', '泉舞', '六川正男', '岡田修一'],
+        <String>['沓名 裕城', '渡正行', '足立暢', '泉舞', '三崎優太（青汁王子）'],
       );
       expect(catalog.profilesBySeat.keys.toSet(), hasLength(125));
       expect(
@@ -47,6 +47,24 @@ void main() {
             .every((profile) => profile.birthDateSourceUrl?.hasScheme == true),
         isTrue,
       );
+      final yoshino = catalog.profilesBySeat[66]!;
+      expect(yoshino.companyRole, contains('2023年11月時点'));
+      expect(yoshino.profileCompletenessPercent, 56);
+      expect(yoshino.reviewReflectionPercent, 58);
+      expect(yoshino.reviewReflectionMode, 'profile_balanced');
+      expect(yoshino.evidenceLinks, hasLength(2));
+
+      final yamasawa = catalog.profilesBySeat[68]!;
+      expect(yamasawa.companyRole, '株式会社FIT PLACE 代表取締役');
+      expect(yamasawa.profileCompletenessPercent, 73);
+      expect(yamasawa.reviewReflectionPercent, 83);
+      expect(yamasawa.reviewReflectionMode, 'profile_guided');
+      expect(yamasawa.evidenceLinks, hasLength(3));
+
+      final adachi = catalog.profilesBySeat[97]!;
+      expect(adachi.businessSummary, contains('豚骨ラーメン店'));
+      expect(adachi.reviewReflectionMode, 'neutral_guarded');
+      expect(adachi.evidenceLinks, hasLength(2));
       for (final seat in <int>[117, 120, 121]) {
         final profile = catalog.profilesBySeat[seat]!;
         expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(62));
@@ -73,10 +91,64 @@ void main() {
       final hikaru = catalog.profilesBySeat[89]!;
       expect(hikaru.ageLabel(DateTime(2026, 8, 26)), '35歳（2026年8月26日時点）');
       expect(hikaru.companyRole, contains('2025年12月'));
+      final higuma = catalog.profilesBySeat[71]!;
+      expect(higuma.companyRole, contains('オルソ株式会社'));
+      expect(higuma.businessSummary, contains('体操'));
+      expect(higuma.reviewReflectionPercent, 67);
+      expect(higuma.reviewReflectionMode, 'profile_balanced');
+      expect(higuma.evidenceLinks, hasLength(1));
+      final ikawa = catalog.profilesBySeat[72]!;
+      expect(ikawa.companyRole, contains('元会長'));
+      expect(ikawa.reviewReflectionPercent, 58);
+      expect(ikawa.reviewReflectionMode, 'profile_balanced');
+      expect(ikawa.evidenceLinks, hasLength(2));
+      expect(ikawa.ageLabel(DateTime(2026, 9, 6)), '公開情報未確認');
+      final kutsuna = catalog.profilesBySeat[73]!;
+      expect(kutsuna.companyRole, contains('現職は未確認'));
+      expect(kutsuna.businessSummary, contains('2024年10月21日'));
+      expect(kutsuna.reviewReflectionMode, 'neutral_guarded');
+      expect(kutsuna.evidenceLinks, hasLength(2));
+      final yamada = catalog.profilesBySeat[74]!;
+      expect(yamada.businessSummary, contains('フランチャイズ'));
+      expect(yamada.reviewReflectionPercent, 67);
+      expect(yamada.reviewReflectionMode, 'profile_balanced');
+      expect(yamada.evidenceLinks, hasLength(2));
+      expect(yamada.ageLabel(DateTime(2026, 9, 7)), '公開情報未確認');
       final watari = catalog.profilesBySeat[116]!;
       expect(watari.ageLabel(DateTime(2026, 8, 26)), '公開情報未確認');
       expect(watari.reviewReflectionMode, 'neutral_guarded');
       expect(watari.evidenceLinks, hasLength(2));
+      final rokugawa = catalog.profilesBySeat[106]!;
+      expect(rokugawa.ageLabel(DateTime(2026, 9, 1)), '39歳（2026年9月1日時点）');
+      expect(rokugawa.companyRole, contains('代表取締役'));
+      expect(rokugawa.businessDomains, contains('不動産・建設・住宅'));
+      expect(rokugawa.profileCompletenessPercent, 91);
+      expect(rokugawa.reviewReflectionPercent, 88);
+      expect(rokugawa.reviewReflectionMode, 'profile_guided');
+      expect(rokugawa.evidenceLinks, hasLength(3));
+      final okada = catalog.profilesBySeat[107]!;
+      expect(okada.ageLabel(DateTime(2026, 9, 1)), '33歳（2026年9月1日時点）');
+      expect(okada.companyRole, contains('代表・創業者'));
+      expect(okada.profileCompletenessPercent, 85);
+      expect(okada.reviewReflectionPercent, 79);
+      expect(okada.reviewReflectionMode, 'profile_balanced');
+      expect(okada.evidenceLinks, hasLength(3));
+      final hiroyuki = catalog.profilesBySeat[108]!;
+      expect(hiroyuki.ageLabel(DateTime(2026, 9, 2)), '公開情報未確認');
+      expect(hiroyuki.companyRole, contains('4chan管理人'));
+      expect(hiroyuki.businessDomains, contains('IT・SaaS・プラットフォーム'));
+      expect(hiroyuki.profileCompletenessPercent, 58);
+      expect(hiroyuki.reviewReflectionPercent, 61);
+      expect(hiroyuki.reviewReflectionMode, 'profile_balanced');
+      expect(hiroyuki.evidenceLinks, hasLength(2));
+      final goto = catalog.profilesBySeat[110]!;
+      expect(goto.ageLabel(DateTime(2026, 9, 2)), '公開情報未確認');
+      expect(goto.companyRole, contains('事業再生版令和の虎 主宰'));
+      expect(goto.businessDomains, contains('M&A・事業再生'));
+      expect(goto.profileCompletenessPercent, 70);
+      expect(goto.reviewReflectionPercent, 79);
+      expect(goto.reviewReflectionMode, 'profile_balanced');
+      expect(goto.evidenceLinks, hasLength(2));
       for (final seat in <int>[92, 94, 95, 96]) {
         final profile = catalog.profilesBySeat[seat]!;
         expect(profile.profileCompletenessPercent, greaterThanOrEqualTo(65));

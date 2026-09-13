@@ -1545,21 +1545,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   String _buildDefaultXPostDraft() {
-    final digest = _automationDigest ?? <String, dynamic>{};
-    final users = digest['users'] is Map
-        ? Map<String, dynamic>.from(digest['users'] as Map)
-        : <String, dynamic>{};
-    final featureRequests = digest['featureRequests'] is Map
-        ? Map<String, dynamic>.from(digest['featureRequests'] as Map)
-        : <String, dynamic>{};
-    final totalUsers = _toInt(users['total']);
-    final newToday = _toInt(featureRequests['newToday']);
-    final openCount = _toInt(featureRequests['openCount']);
-
-    return '今日の自分株式会社\n'
-        '総ユーザー$totalUsers人、新規要望$newToday件、未対応要望$openCount件を確認。'
-        'CS自動化と改善を回し続けています。\n'
-        'https://my-web-app-b67f4.web.app/ #buildinpublic #FlutterWeb #Supabase';
+    return buildAdminDailyXPostDraft(
+      digest: _automationDigest ?? <String, dynamic>{},
+      billing: _paidConversionMetrics,
+    );
   }
 
   Future<void> _postXUpdate({

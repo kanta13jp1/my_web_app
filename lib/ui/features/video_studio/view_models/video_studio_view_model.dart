@@ -129,7 +129,6 @@ class VideoStudioViewModel extends ChangeNotifier {
       (_activeJob == null || _activeJob!.isTerminal) &&
       _rightsConfirmed &&
       _adultConfirmed &&
-      hasEnoughCredits &&
       matchingActiveAuthorization == null;
   bool get canRunAuthorizedImprovement =>
       _loadStatus == VideoStudioLoadStatus.ready &&
@@ -138,8 +137,7 @@ class VideoStudioViewModel extends ChangeNotifier {
       !_isAuthorizingImprovement &&
       (_activeJob == null || _activeJob!.isTerminal) &&
       _rightsConfirmed &&
-      _adultConfirmed &&
-      hasEnoughCredits;
+      _adultConfirmed;
 
   Future<void> load({Uri? currentUri}) async {
     _loadStatus = VideoStudioLoadStatus.loading;
@@ -258,15 +256,20 @@ class VideoStudioViewModel extends ChangeNotifier {
           (authorization) => authorization.id != result.authorization.id,
         ),
       ];
-      _activeJob = result.job;
       _balance = result.balance;
-      _replaceJob(result.job);
       _idempotencyKey = null;
-      _parentArtifactId = null;
-      _appliedReviewId = null;
-      _appliedImprovementTitle = null;
-      _noticeMessage = '継続承認 ${result.authorization.id} を保存し、最初の改善生成を開始しました。';
-      if (!result.job.isTerminal) _startPolling();
+      final job = result.job;
+      if (job != null) {
+        _activeJob = job;
+        _replaceJob(job);
+        _parentArtifactId = null;
+        _appliedReviewId = null;
+        _appliedImprovementTitle = null;
+        _noticeMessage = '継続承認 ${result.authorization.id} を保存し、最初の改善生成を開始しました。';
+        if (!job.isTerminal) _startPolling();
+      } else {
+        _noticeMessage = _pendingAuthorizationNotice(result.authorization);
+      }
       return true;
     } catch (error) {
       _errorMessage = _friendlyError(error);
@@ -300,15 +303,20 @@ class VideoStudioViewModel extends ChangeNotifier {
           (existing) => existing.id != result.authorization.id,
         ),
       ];
-      _activeJob = result.job;
       _balance = result.balance;
-      _replaceJob(result.job);
       _idempotencyKey = null;
-      _parentArtifactId = null;
-      _appliedReviewId = null;
-      _appliedImprovementTitle = null;
-      _noticeMessage = '継続承認 ${result.authorization.id} の残枠で改善生成を開始しました。';
-      if (!result.job.isTerminal) _startPolling();
+      final job = result.job;
+      if (job != null) {
+        _activeJob = job;
+        _replaceJob(job);
+        _parentArtifactId = null;
+        _appliedReviewId = null;
+        _appliedImprovementTitle = null;
+        _noticeMessage = '継続承認 ${result.authorization.id} の残枠で改善生成を開始しました。';
+        if (!job.isTerminal) _startPolling();
+      } else {
+        _noticeMessage = _pendingAuthorizationNotice(result.authorization);
+      }
       return true;
     } catch (error) {
       _errorMessage = _friendlyError(error);
@@ -593,6 +601,21 @@ class VideoStudioViewModel extends ChangeNotifier {
       'video_credit_checkout_unavailable' => '購入画面を開けませんでした。時間をおいて再度お試しください。',
       _ => '動画サービスに接続できませんでした。時間をおいて再度お試しください。',
     };
+  }
+
+  String _pendingAuthorizationNotice(
+    VideoImprovementAuthorization authorization,
+  ) {
+    final reasons = authorization.pendingReasons;
+    final details = <String>[
+      if (reasons.contains('review_consumed')) '指定レビューは使用済みです',
+      if (reasons.contains('review_not_latest')) '最新レビューの選択が必要です',
+      if (reasons.contains('review_not_improve')) '改善判定のレビューが必要です',
+      if (reasons.contains('insufficient_credits')) '300 credits以上の残高が必要です',
+      if (reasons.contains('active_generation')) '現在の生成完了を待っています',
+    ];
+    final suffix = details.isEmpty ? '実行条件の成立を待っています' : details.join('・');
+    return '継続承認 ${authorization.id} を保存しました。$suffix。条件成立後に同じ承認IDで再開します。';
   }
 
   @override

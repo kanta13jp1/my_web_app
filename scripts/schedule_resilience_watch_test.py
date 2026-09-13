@@ -143,6 +143,40 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         self.assertEqual(stalled["action"], "alert")
         self.assertEqual(stalled["reason"], "stale-success")
 
+    def test_cs_check_requires_two_missed_delivery_opportunities(self) -> None:
+        targets = {target.key: target for target in TARGETS}
+        cs_check = targets["cs-check"]
+
+        self.assertEqual(cs_check.max_age_hours, 6)
+        delayed = evaluate_target(
+            cs_check,
+            [
+                run(
+                    created_at=(NOW - timedelta(hours=4, minutes=30))
+                    .isoformat()
+                    .replace("+00:00", "Z")
+                )
+            ],
+            NOW,
+            max_attempts=2,
+        )
+        stalled = evaluate_target(
+            cs_check,
+            [
+                run(
+                    created_at=(NOW - timedelta(hours=6, minutes=1))
+                    .isoformat()
+                    .replace("+00:00", "Z")
+                )
+            ],
+            NOW,
+            max_attempts=2,
+        )
+
+        self.assertEqual(delayed["action"], "healthy")
+        self.assertEqual(stalled["action"], "alert")
+        self.assertEqual(stalled["reason"], "stale-success")
+
     def test_health_monitor_avoids_top_of_hour_congestion(self) -> None:
         workflow = (
             Path(__file__).resolve().parents[1] / ".github/workflows/health-monitor.yml"

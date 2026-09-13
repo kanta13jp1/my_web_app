@@ -7,6 +7,10 @@ import '../services/activation_revenue_experiment_service.dart';
 import '../services/activation_revenue_tracker.dart';
 import '../services/billing_service.dart';
 import '../services/growth_acquisition_service.dart';
+import '../services/paddle_checkout.dart';
+import '../services/paddle_invoice_access.dart';
+import '../ui/features/billing/views/paddle_sandbox_checkout_card.dart';
+import '../ui/features/billing/views/paddle_sandbox_invoice_access_card.dart';
 
 class SubscriptionBillingPage extends StatefulWidget {
   const SubscriptionBillingPage({
@@ -17,6 +21,10 @@ class SubscriptionBillingPage extends StatefulWidget {
     this.experimentService = const ActivationRevenueExperimentService(),
     this.tracker = const SupabaseActivationRevenueEventTracker(),
     this.assignment,
+    this.paddleSandboxConfig,
+    this.paddleCheckoutGateway,
+    this.paddleInvoiceAccessConfig,
+    this.paddleInvoicePortalLauncher,
   });
 
   final BillingGateway? service;
@@ -25,6 +33,10 @@ class SubscriptionBillingPage extends StatefulWidget {
   final ActivationRevenueExperimentService experimentService;
   final ActivationRevenueEventTracker tracker;
   final ActivationRevenueAssignment? assignment;
+  final PaddleSandboxConfig? paddleSandboxConfig;
+  final PaddleCheckoutGateway? paddleCheckoutGateway;
+  final PaddleInvoiceAccessConfig? paddleInvoiceAccessConfig;
+  final PaddleInvoicePortalLauncher? paddleInvoicePortalLauncher;
 
   @override
   State<SubscriptionBillingPage> createState() =>
@@ -162,6 +174,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     });
   }
 
+  Future<bool> _openPaddleInvoicePortal(Uri uri) {
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _openStripeSession(
     Future<dynamic> Function() createSession,
   ) async {
@@ -218,6 +234,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
         );
     final fromOnboarding = _sourceUri.queryParameters['entry'] == 'onboarding';
     final valueFraming = _enabled('a10');
+    final paddleSandboxConfig =
+        widget.paddleSandboxConfig ?? PaddleSandboxConfig.fromEnvironment();
+    final paddleInvoiceAccessConfig = widget.paddleInvoiceAccessConfig ??
+        PaddleInvoiceAccessConfig.fromEnvironment();
     return Scaffold(
       appBar: AppBar(
         title: const Text('プランと応援'),
@@ -274,6 +294,22 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                         },
                         onUpgrade: _openCheckout,
                       ),
+                      if (paddleSandboxConfig.shouldExpose) ...[
+                        const SizedBox(height: 16),
+                        PaddleSandboxCheckoutCard(
+                          config: paddleSandboxConfig,
+                          gateway: widget.paddleCheckoutGateway,
+                          onContinue: () {
+                            Navigator.of(context).pushReplacementNamed('/home');
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        PaddleSandboxInvoiceAccessCard(
+                          config: paddleInvoiceAccessConfig,
+                          launchPortal: widget.paddleInvoicePortalLauncher ??
+                              _openPaddleInvoicePortal,
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       _UsageCard(status: status),
                       const SizedBox(height: 16),
@@ -650,7 +686,12 @@ class _PlanGrid extends StatelessWidget {
         valueFraming ? 'AIの利用量を増やし、毎日の整理と振り返りを継続したい方向けです。' : 'AI利用量と優先機能が増えます。',
         recommended: true,
       ),
-      const _Plan('team', 'Team', '月額2,980円', '共有ワークスペースと監査ログを使うチーム向けです。'),
+      const _Plan(
+        'team',
+        'Team',
+        '1席あたり月額2,980円',
+        '共有ワークスペースと監査ログを使うチーム向けです。',
+      ),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -901,7 +942,7 @@ class _Plan {
 
 String _tierLabel(String tier) => switch (tier) {
       'pro' => 'Pro（月額980円）',
-      'team' => 'Team（月額2,980円）',
+      'team' => 'Team（1席あたり月額2,980円）',
       _ => 'Free（無料）',
     };
 

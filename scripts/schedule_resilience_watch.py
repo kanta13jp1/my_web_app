@@ -48,7 +48,9 @@ class WorkflowTarget:
 
 TARGETS = (
     WorkflowTarget("daily-report", "daily-report.yml", 30),
-    WorkflowTarget("cs-check", "cs-check.yml", 3),
+    # A two-hour GitHub schedule may be delayed or drop an individual run.
+    # Require two missed delivery opportunities before opening a high-priority alert.
+    WorkflowTarget("cs-check", "cs-check.yml", 6),
     WorkflowTarget("competitor-monitoring", "competitor-monitoring.yml", 30),
     # A two-hour GitHub schedule may be delayed or drop an individual run.
     # Require two missed delivery opportunities before opening a high-priority alert.
