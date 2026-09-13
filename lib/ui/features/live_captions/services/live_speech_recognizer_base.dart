@@ -26,3 +26,9 @@ class LiveSpeechRecognitionException implements Exception {
   @override
   String toString() => message;
 }
+
+/// Silence is recoverable through the recognition session's normal end event.
+/// Errors arriving after an explicit stop must not change the stopped UI.
+bool shouldReportLiveSpeechError(String code, {required bool isListening}) {
+  return isListening && code != 'no-speech';
+}

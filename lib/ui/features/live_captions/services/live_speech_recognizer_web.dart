@@ -66,6 +66,11 @@ class _WebLiveSpeechRecognizer implements LiveSpeechRecognizer {
 
     recognition.onerror = ((web.SpeechRecognitionErrorEvent event) {
       final code = event.error;
+      if (!shouldReportLiveSpeechError(code, isListening: _shouldListen)) {
+        // A no-speech session still ends: onend owns the single restart timer.
+        // Do not start here while the browser may still be disconnecting.
+        return;
+      }
       _shouldListen = false;
       _restartTimer?.cancel();
       _onError?.call(_friendlySpeechError(code));
