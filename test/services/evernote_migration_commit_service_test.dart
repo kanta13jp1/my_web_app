@@ -15,6 +15,136 @@ const _sourceContext = EvernoteMigrationSourceContext(
 
 void main() {
   group('EvernoteMigrationCommitService', () {
+    for (final streamed in <bool>[false, true]) {
+      final route = streamed ? 'streamed' : 'buffered';
+      group('$route positive controls', () {
+        test('keeps distinct GUIDs with identical title times and content',
+            () async {
+          final fixture = _distinctFixture(withGuids: true);
+          expect(
+            fixture.export.notes.first.markdownText,
+            fixture.export.notes.last.markdownText,
+          );
+          await _expectDistinctBatchCommitted(
+            streamed: streamed,
+            fixture: fixture,
+          );
+        });
+
+        test('keeps distinct GUID-less payloads with identical title and times',
+            () async {
+          final fixture = _distinctFixture(withGuids: false);
+          expect(
+            fixture.export.notes.first.markdownText,
+            isNot(fixture.export.notes.last.markdownText),
+          );
+          await _expectDistinctBatchCommitted(
+            streamed: streamed,
+            fixture: fixture,
+          );
+        });
+
+        test('matches a reordered preview by identity instead of position',
+            () async {
+          await _expectDistinctBatchCommitted(
+            streamed: streamed,
+            fixture: _distinctFixture(withGuids: true),
+            reversePreview: true,
+          );
+        });
+      });
+      group('$route preflight', () {
+        for (final withGuid in <bool>[false, true]) {
+          final identity = withGuid ? 'explicit GUID' : 'GUID-less payload';
+          test('rejects duplicate preview ids from $identity', () async {
+            final fixture = _duplicateFixture(withGuid: withGuid);
+            expect(fixture.export.notes, hasLength(2));
+            expect(
+              fixture.export.notes.map((note) => note.sourceId).toSet(),
+              hasLength(1),
+            );
+            await _expectPreflightRejected(
+              streamed: streamed,
+              fixture: fixture,
+              preview: fixture.preview,
+              message: 'preview contains duplicate note ids',
+            );
+          });
+        }
+
+        test('rejects duplicate archive ids hidden by unique preview ids',
+            () async {
+          final fixture = _duplicateFixture();
+          final notes = <ImportedNoteDraft>[
+            fixture.preview.notes.first,
+            ImportedNoteDraft.fromJson(<String, dynamic>{
+              ...fixture.preview.notes.last.toJson(),
+              'sourceId': 'synthetic-unmatched-second-note',
+            }),
+          ];
+          await _expectPreflightRejected(
+            streamed: streamed,
+            fixture: fixture,
+            preview: ImportPreviewResult.fromJson(<String, dynamic>{
+              ...fixture.preview.toJson(),
+              'notes': notes.map((note) => note.toJson()).toList(),
+            }),
+            message: 'archive contains duplicate note ids',
+          );
+        });
+
+        test('rejects a missing preview identity', () async {
+          final fixture = _fixture();
+          await _expectPreflightRejected(
+            streamed: streamed,
+            fixture: fixture,
+            preview: ImportPreviewResult.fromJson(<String, dynamic>{
+              ...fixture.preview.toJson(),
+              'notes': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  ...fixture.preview.notes.single.toJson(),
+                  'sourceId': null,
+                },
+              ],
+            }),
+            message: 'needs an id',
+          );
+        });
+
+        test('rejects a stale title despite matching archive hash and counts',
+            () async {
+          final fixture = _fixture();
+          await _expectPreflightRejected(
+            streamed: streamed,
+            fixture: fixture,
+            preview: ImportPreviewResult.fromJson(<String, dynamic>{
+              ...fixture.preview.toJson(),
+              'notes': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  ...fixture.preview.notes.single.toJson(),
+                  'title': 'Stale synthetic preview',
+                },
+              ],
+            }),
+            message: 'no longer matches',
+          );
+        });
+
+        test('honors an explicit blocked preview', () async {
+          final fixture = _fixture();
+          await _expectPreflightRejected(
+            streamed: streamed,
+            fixture: fixture,
+            preview: ImportPreviewResult.fromJson(<String, dynamic>{
+              ...fixture.preview.toJson(),
+              'commitBlockedReason': 'Synthetic pending integrity review',
+            }),
+            message: 'Synthetic pending integrity review',
+          );
+        });
+      });
+    }
+
     test('archives, atomically commits, and hash-verifies a batch', () async {
       final fixture = _fixture();
       final storage = _FakeStorageGateway();
@@ -416,26 +546,30 @@ _Fixture _fixture() {
     </resource>
   </note>
 </en-export>''';
+  return _fixtureFromEnex(enex);
+}
+
+_Fixture _fixtureFromEnex(String enex) {
   final bytes = Uint8List.fromList(utf8.encode(enex));
   final export = const EvernoteEnexParser().parseBytes(bytes);
-  final note = export.notes.single;
   final preview = ImportPreviewResult(
     sourceType: 'evernote',
     sourceLabel: 'Evernote',
     fileName: 'batch.enex',
     notes: <ImportedNoteDraft>[
-      ImportedNoteDraft(
-        title: note.title,
-        content: note.markdownText,
-        source: 'evernote',
-        tags: note.tags,
-        sourceId: note.sourceId,
-        sourceCreatedAt: note.createdAt,
-        sourceUpdatedAt: note.updatedAt,
-        sourceContentSha256: note.contentSha256,
-        sourceResourceCount: note.resources.length,
-        sourceMetadata: note.toImportMetadata(),
-      ),
+      for (final note in export.notes)
+        ImportedNoteDraft(
+          title: note.title,
+          content: note.markdownText,
+          source: 'evernote',
+          tags: note.tags,
+          sourceId: note.sourceId,
+          sourceCreatedAt: note.createdAt,
+          sourceUpdatedAt: note.updatedAt,
+          sourceContentSha256: note.contentSha256,
+          sourceResourceCount: note.resources.length,
+          sourceMetadata: note.toImportMetadata(),
+        ),
     ],
     previewMode: 'local-fallback',
     sourceExportSha256: export.exportSha256,
@@ -444,12 +578,206 @@ _Fixture _fixture() {
   return _Fixture(bytes: bytes, export: export, preview: preview);
 }
 
+_Fixture _duplicateFixture({bool withGuid = false}) {
+  var enex = utf8.decode(_fixture().bytes);
+  if (withGuid) {
+    enex = enex.replaceFirst(
+      '<note>',
+      '<note><guid>00000000-0000-4000-8000-000000000002</guid>',
+    );
+  }
+  final start = enex.indexOf('<note>');
+  final end = enex.indexOf('</note>') + '</note>'.length;
+  final duplicate = enex.substring(start, end);
+  return _fixtureFromEnex(
+    enex.replaceFirst('</en-export>', '$duplicate\n</en-export>'),
+  );
+}
+
+_Fixture _distinctFixture({required bool withGuids}) {
+  final enex = utf8.decode(_fixture().bytes);
+  final start = enex.indexOf('<note>');
+  final end = enex.indexOf('</note>') + '</note>'.length;
+  final template = enex.substring(start, end);
+  final first = withGuids
+      ? template.replaceFirst(
+          '<note>',
+          '<note><guid>00000000-0000-4000-8000-000000000003</guid>',
+        )
+      : template;
+  final second = withGuids
+      ? template.replaceFirst(
+          '<note>',
+          '<note><guid>00000000-0000-4000-8000-000000000004</guid>',
+        )
+      : template.replaceFirst(
+          '<en-note>Hello',
+          '<en-note>Different synthetic body',
+        );
+  return _fixtureFromEnex(enex.replaceRange(start, end, '$first\n$second'));
+}
+
+Future<void> _expectDistinctBatchCommitted({
+  required bool streamed,
+  required _Fixture fixture,
+  bool reversePreview = false,
+}) async {
+  expect(fixture.export.notes, hasLength(2));
+  expect(
+    fixture.export.notes.map((note) => note.sourceId).toSet(),
+    hasLength(2),
+  );
+  expect(fixture.export.notes.map((note) => note.title).toSet(), hasLength(1));
+  expect(
+    fixture.export.notes.map((note) => note.createdAt).toSet(),
+    hasLength(1),
+  );
+  expect(
+    fixture.export.notes.map((note) => note.updatedAt).toSet(),
+    hasLength(1),
+  );
+  final preview = reversePreview
+      ? ImportPreviewResult.fromJson(<String, dynamic>{
+          ...fixture.preview.toJson(),
+          'notes': fixture.preview.notes.reversed
+              .map((note) => note.toJson())
+              .toList(),
+        })
+      : fixture.preview;
+  final ledger = _FakeLedgerGateway();
+  final storage = _FakeStorageGateway();
+  final database = _FakeDatabaseGateway();
+  final service = EvernoteMigrationCommitService(
+    ledger: ledger,
+    storage: storage,
+    database: database,
+  );
+  if (streamed) {
+    final archivePath =
+        '$_userId/evernote/${fixture.export.exportSha256}/source.enex';
+    storage.objects['$evernoteArchiveBucket/$archivePath'] =
+        Uint8List.fromList(fixture.bytes);
+  }
+  Future<EvernoteMigrationCommitResult> commit() {
+    return streamed
+        ? service.commitFromArchive(
+            userId: _userId,
+            archiveBytes: fixture.bytes.length,
+            preview: preview,
+            sourceContext: _sourceContext,
+          )
+        : service.commit(
+            userId: _userId,
+            exportBytes: fixture.bytes,
+            preview: preview,
+            sourceContext: _sourceContext,
+          );
+  }
+
+  final expectedKeys = fixture.export.notes
+      .map((note) => 'id:${note.sourceId}')
+      .toList(growable: false);
+  final first = await commit();
+  expect(first.importedNoteCount, 2);
+  expect(first.verifiedNoteCount, 2);
+  expect(first.resourceCount, 2);
+  expect(first.noteIds, hasLength(2));
+  expect(first.noteIds.toSet(), hasLength(2));
+  expect(database.commitCalls, expectedKeys);
+  expect(database.snapshots, hasLength(2));
+  expect(database.verifyCalls, hasLength(2));
+  expect(storage.objects, hasLength(3));
+  for (var index = 0; index < first.noteIds.length; index += 1) {
+    final snapshot = database.snapshots[first.noteIds[index]]!;
+    final source = fixture.export.notes[index];
+    expect(snapshot.title, source.title);
+    expect(snapshot.createdAt, source.createdAt);
+    expect(snapshot.updatedAt, source.updatedAt);
+    expect(snapshot.tags, source.tags);
+    expect(snapshot.attachments, hasLength(source.resources.length));
+    expect(
+      snapshot.attachments.single.contentSha256,
+      source.resources.single.dataSha256,
+    );
+  }
+
+  // This checks stable service keys and Storage reuse against a gateway double,
+  // not durable database idempotency or real-source identity reconciliation.
+  storage.rejectDuplicateUploads = true;
+  final retried = await commit();
+  expect(retried.noteIds, first.noteIds);
+  expect(retried.importedNoteCount, 2);
+  expect(retried.verifiedNoteCount, 2);
+  expect(database.commitCalls, <String>[...expectedKeys, ...expectedKeys]);
+  expect(database.snapshots, hasLength(2));
+  expect(database.verifyCalls, hasLength(4));
+  expect(ledger.recordCalls, 2);
+  expect(storage.objects, hasLength(3));
+}
+
+Future<void> _expectPreflightRejected({
+  required bool streamed,
+  required _Fixture fixture,
+  required ImportPreviewResult preview,
+  required String message,
+}) async {
+  final ledger = _FakeLedgerGateway();
+  final storage = _FakeStorageGateway();
+  final database = _FakeDatabaseGateway();
+  final service = EvernoteMigrationCommitService(
+    ledger: ledger,
+    storage: storage,
+    database: database,
+  );
+  if (streamed) {
+    final archivePath =
+        '$_userId/evernote/${fixture.export.exportSha256}/source.enex';
+    storage.objects['$evernoteArchiveBucket/$archivePath'] =
+        Uint8List.fromList(fixture.bytes);
+  }
+  final initialObjects = Map<String, Uint8List>.from(storage.objects);
+  final progress = <EvernoteMigrationTransferProgress>[];
+  await expectLater(
+    streamed
+        ? service.commitFromArchive(
+            userId: _userId,
+            archiveBytes: fixture.bytes.length,
+            preview: preview,
+            sourceContext: _sourceContext,
+            onTransferProgress: progress.add,
+          )
+        : service.commit(
+            userId: _userId,
+            exportBytes: fixture.bytes,
+            preview: preview,
+            sourceContext: _sourceContext,
+            onTransferProgress: progress.add,
+          ),
+    throwsA(
+      isA<StateError>().having(
+        (error) => error.message,
+        'message',
+        contains(message),
+      ),
+    ),
+  );
+  expect(ledger.recordCalls, 0);
+  expect(storage.writeCalls, 0);
+  expect(storage.objects, initialObjects);
+  expect(database.commitCalls, isEmpty);
+  expect(database.verifyCalls, isEmpty);
+  expect(progress, isEmpty);
+}
+
 class _FakeLedgerGateway implements EvernoteMigrationLedgerGateway {
+  int recordCalls = 0;
+
   @override
   Future<EvernoteMigrationBatch> recordPreview({
     required String userId,
     required ImportPreviewResult preview,
   }) async {
+    recordCalls += 1;
     final now = DateTime.utc(2026, 8, 23);
     return EvernoteMigrationBatch(
       id: 41,
@@ -474,6 +802,7 @@ class _FakeStorageGateway implements EvernoteMigrationStorageGateway {
   final String? corruptDownloadsContaining;
   final Map<String, Uint8List> objects = <String, Uint8List>{};
   bool rejectDuplicateUploads = false;
+  int writeCalls = 0;
 
   @override
   Future<void> uploadBinary({
@@ -483,6 +812,7 @@ class _FakeStorageGateway implements EvernoteMigrationStorageGateway {
     required String contentType,
     void Function(int uploadedBytes, int totalBytes)? onProgress,
   }) async {
+    writeCalls += 1;
     onProgress?.call(0, bytes.length);
     final key = '$bucketId/$path';
     if (rejectDuplicateUploads && objects.containsKey(key)) {
@@ -546,6 +876,7 @@ class _FakeStorageGateway implements EvernoteMigrationStorageGateway {
     required String sourcePath,
     required String destinationPath,
   }) async {
+    writeCalls += 1;
     final source = objects['$bucketId/$sourcePath'];
     if (source == null) throw StateError('Object not found');
     final destinationKey = '$bucketId/$destinationPath';
@@ -576,6 +907,7 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
   final List<String> committedContents = <String>[];
   final List<Map<String, dynamic>> committedMetadata = <Map<String, dynamic>>[];
   final List<Map<String, bool>> verifyCalls = <Map<String, bool>>[];
+  final Map<String, int> _noteIdsBySourceKey = <String, int>{};
   final Map<int, EvernoteCommittedNoteSnapshot> snapshots =
       <int, EvernoteCommittedNoteSnapshot>{};
 
@@ -592,7 +924,10 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
     commitCalls.add(sourceItemKey);
     committedContents.add(content);
     committedMetadata.add(Map<String, dynamic>.from(sourceMetadata));
-    const noteId = 7001;
+    final noteId = _noteIdsBySourceKey.putIfAbsent(
+      '$batchId/$sourceItemKey',
+      () => 7001 + _noteIdsBySourceKey.length,
+    );
     final taskPayloads =
         (sourceMetadata['tasks'] as List<dynamic>? ?? const <dynamic>[])
             .map((value) => Map<String, dynamic>.from(value as Map))
