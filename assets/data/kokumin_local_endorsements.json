@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "electionMode": "local",
   "sourceUrl": "https://new-kokumin.jp/local-election-list",
-  "sourceAsOf": "2026-09-11",
-  "sourceDocumentSha256": "71132f4ec453bf19a1a71e5850d370ea3065f401ce0b4df0b8cd2a2a29786dfb",
-  "candidateRowCount": 295,
+  "sourceAsOf": "2026-09-14",
+  "sourceDocumentSha256": "2fe68167ddd46072cea1559a13da6fc2bb332527fa94e4333f888f9e407addf9",
+  "candidateRowCount": 288,
   "officialEndorsements": {
-    "totalCount": 286,
-    "incumbentCount": 127,
-    "newcomerCount": 149,
-    "formerCount": 10,
-    "prefectureCount": 36
+    "totalCount": 281,
+    "incumbentCount": 126,
+    "newcomerCount": 146,
+    "formerCount": 9,
+    "prefectureCount": 34
   },
   "recommendations": {
-    "totalCount": 9
+    "totalCount": 7
   },
   "prefectures": [
     {
@@ -164,13 +164,6 @@
       "formerCount": 0
     },
     {
-      "prefecture": "和歌山",
-      "totalCount": 1,
-      "incumbentCount": 0,
-      "newcomerCount": 1,
-      "formerCount": 0
-    },
-    {
       "prefecture": "鳥取",
       "totalCount": 1,
       "incumbentCount": 0,
@@ -259,13 +252,6 @@
       "totalCount": 14,
       "incumbentCount": 1,
       "newcomerCount": 12,
-      "formerCount": 1
-    },
-    {
-      "prefecture": "沖縄",
-      "totalCount": 4,
-      "incumbentCount": 1,
-      "newcomerCount": 2,
       "formerCount": 1
     }
   ]

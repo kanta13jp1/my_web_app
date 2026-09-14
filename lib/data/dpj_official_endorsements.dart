@@ -6,10 +6,10 @@ import '../models/election_intelligence.dart';
 
 const String dpjOfficialEndorsementSourceUrl =
     'https://new-kokumin.jp/local-election-list';
-const String dpjOfficialEndorsementSourceAsOf = '2026-09-11';
+const String dpjOfficialEndorsementSourceAsOf = '2026-09-14';
 const String dpjOfficialEndorsementSourceDocumentSha256 =
-    '71132f4ec453bf19a1a71e5850d370ea3065f401ce0b4df0b8cd2a2a29786dfb';
-const int dpjOfficialRecommendationEntryCount = 9;
+    '2fe68167ddd46072cea1559a13da6fc2bb332527fa94e4333f888f9e407addf9';
+const int dpjOfficialRecommendationEntryCount = 7;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     <OfficialEndorsementPrefecture>[
@@ -161,13 +161,6 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     formerCount: 0,
   ),
   OfficialEndorsementPrefecture(
-    prefecture: '和歌山',
-    totalCount: 1,
-    incumbentCount: 0,
-    newcomerCount: 1,
-    formerCount: 0,
-  ),
-  OfficialEndorsementPrefecture(
     prefecture: '鳥取',
     totalCount: 1,
     incumbentCount: 0,
@@ -258,20 +251,13 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     newcomerCount: 12,
     formerCount: 1,
   ),
-  OfficialEndorsementPrefecture(
-    prefecture: '沖縄',
-    totalCount: 4,
-    incumbentCount: 1,
-    newcomerCount: 2,
-    formerCount: 1,
-  ),
 ];
 
-const int dpjOfficialEndorsementTotal = 286;
-const int dpjOfficialEndorsementIncumbentTotal = 127;
-const int dpjOfficialEndorsementNewcomerTotal = 149;
-const int dpjOfficialEndorsementFormerTotal = 10;
-const int dpjOfficialEndorsementPrefectureCount = 36;
+const int dpjOfficialEndorsementTotal = 281;
+const int dpjOfficialEndorsementIncumbentTotal = 126;
+const int dpjOfficialEndorsementNewcomerTotal = 146;
+const int dpjOfficialEndorsementFormerTotal = 9;
+const int dpjOfficialEndorsementPrefectureCount = 34;
 
 OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
   String prefecture,
