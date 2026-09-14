@@ -661,6 +661,46 @@ void main() {
     });
 
     test(
+        'accepts AI summary acknowledging auPay card as paid alongside unpaid '
+        'subscription and monthly unpaid total', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 85266,
+          'auじぶん銀行': 16230,
+          'auPayカード': -505608,
+          'モビット': -1452644,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        paidAccountNames: const <String>{'auPayカード'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-1,856,756円、負債合計は1,958,252円です。\n'
+                'auPayカードは、今月分の引き落としが完了しています。\n'
+                '優先確認事項として@tamakiyuichiroさんのサブスクリプションが期限超過です。',
+            'provider': 'gemini',
+          },
+        ),
+        now: () => DateTime(2026, 9, 14, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    test(
         'rejects an AI summary when a paid debt is directly urged as unpaid '
         'in its segment', () async {
       const planner = AssetLiabilityPlanningService();
@@ -1143,6 +1183,21 @@ void main() {
         label: 'nonpayment completion is not paid status',
         text: 'ファミマカードは登録完了ですが未払いです。',
         accepted: false,
+      ),
+      (
+        label: 'paid marker with comma and following unpaid total',
+        text: 'ファミマカードは、すでに引き落とし完了しています。未払い合計は32,000円です。',
+        accepted: true,
+      ),
+      (
+        label: 'paid debt alongside other unpaid subscription',
+        text: 'ファミマカードは引落完了済みですが、未払いの@tamakiyuichiroさんのサブスクリプションが期限超過です。',
+        accepted: true,
+      ),
+      (
+        label: 'bank debit completed with unpaid total mention',
+        text: '今月未払い合計は32,000円で、ファミマカードは口座振替完了しています。',
+        accepted: true,
       ),
     ]) {
       test('paid grounding: ${scenario.label}', () async {
