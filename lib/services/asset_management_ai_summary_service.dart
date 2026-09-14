@@ -529,7 +529,7 @@ class AssetManagementAiSummaryService {
         '',
       ],
       '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。敬意のある具体的な説明にしてください。確認済みの事実・予定・推定・未確認を区別し、未確認事項は確認方法を示してください。生年月日・性格・運勢による財務判断や、趣味・人格への侮辱を禁止します。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
-      '現在データ優先ルール: 唯一の「現在の事実」は「AIに渡す詳細ペイロード」とアクションアイテムだけです。previous_ai_analyses（metrics_snapshot）は過去時点のスナップショットで、現在の事実ではありません。履歴に出てくる金額・使用可能額・未払い・期限超過を、現在のものとして断定・督促してはいけません。現在の使用可能額がプラスなら「不足」「マイナス」と言わず、現在のアクションアイテムや支払日別リスクに無い負債、または paid が true の負債を「期限超過」「未払い」と呼ばないでください。受取済み（received: true）の給与・収入を「未受取」「期限超過」「未着金」として扱ったり、今日着金しているか確認するよう督促してはいけません。また、予定日が今日より未来の収入について、今日入金・着金を確認するよう指示してはいけません。今月支払うべき額には推定最低支払額ではなく「今月支払予定額（scheduled_payment_amount）」を用い、解約済みサブスク（金額0円または非アクティブ）を「サブスク地獄」「未払支出」と言及してはいけません。負債の年利（annual_rate）や負債総額は、過去の記憶ではなく必ずペイロード内の確定値（annual_rate, balance）を採用してください。現在値と履歴が矛盾する場合は必ず現在値を採用してください。',
+      '現在データ優先ルール: 唯一の「現在の事実」は「AIに渡す詳細ペイロード」とアクションアイテムだけです。previous_ai_analyses（metrics_snapshot）は過去時点のスナップショットで、現在の事実ではありません。履歴に出てくる金額・使用可能額・未払い・期限超過を、現在のものとして断定・督促してはいけません。現在の使用可能額がプラスなら「不足」「マイナス」と言わず、現在のアクションアイテムや支払日別リスクに無い負債、または paid が true の負債を「期限超過」「未払い」と呼ばないでください。支払済み（paid: true）の負債（auPayカードなど）はすでに今月分の引き落とし・支払いが完了しています。支払済みの負債を「未払い」「期限超過」として扱ったり、支払うよう督促してはいけません。「auPayカードは今月分引落済みです」のように支払完了した事実としてのみ言及してください。受取済み（received: true）の給与・収入を「未受取」「期限超過」「未着金」として扱ったり、今日着金しているか確認するよう督促してはいけません。また、予定日が今日より未来の収入について、今日入金・着金を確認するよう指示してはいけません。今月支払うべき額には推定最低支払額ではなく「今月支払予定額（scheduled_payment_amount）」を用い、解約済みサブスク（金額0円または非アクティブ）を「サブスク地獄」「未払支出」と言及してはいけません。負債の年利（annual_rate）や負債総額は、過去の記憶ではなく必ずペイロード内の確定値（annual_rate, balance）を採用してください。現在値と履歴が矛盾する場合は必ず現在値を採用してください。',
       '証拠区分ルール: 残高差分からの新規借入は推定であり、取引明細未照合なら新規借入・誓約違反を断定しないでください。未受取の入金予定は未入金の証拠ではありません。予定日を過ぎても自動的に受取済みとはみなしません。received: false は受取状況の記録が未確認であることとして説明してください。予定と実績の対象期間・金額を照合するよう案内し、受取済みへの変更を断定的に要求しないでください。履歴は前回の記録として日付を示し、月が異なると確認できない限り先月と呼ばないでください。完済目標の月額は返済総額か追加額かを区別し、最低返済額への上乗せを勝手に解釈しないでください。',
       '履歴利用ルール: previous_ai_analyses がある場合は、各 metrics_snapshot（純資産・未払い合計・使用可能額）の数値と今回の現在値を比較し、「前回比 純資産○円」「未払い合計が△円減/増」のように差分（改善点・悪化点・据え置き点）を述べてください。過去の本文や言い回しを引用・再掲するのではなく、必ず今回の現在値を主語にして書いてください。',
       '日々の行動ルール: daily_todo がある場合は、金銭の負債と同じ熱量で「行動の借金」にも言及してください。carried_over（繰り越したタスク）は具体的なタイトルと経過日数を示し、実行可能な次の一歩を提案してください。繰り越しを人格や能力の問題と決めつけないでください。active_streak_days が続いていれば必ず褒め、recent_days のこなした実績を根拠に「この調子」と背中を押してください。today_pending が残っていれば寝る前にやり切るよう促してください。daily_todo が無い、または空のときは行動の借金には触れず、金銭面の助言に集中してください（存在しない実績を捏造しないこと）。',
@@ -1489,14 +1489,16 @@ class AssetManagementAiSummaryService {
     for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
       for (final segment in segments) {
         if (!segment.contains(row.name)) continue;
-        // Attribute a paid marker only within the same clause, without
-        // crossing another debt name. Completion of an unrelated task is not
-        // evidence of payment.
-        const paidMarker = r'(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込)'
-            r'(?:済(?:み)?|完了|終了)|済(?:み)?|完済)';
+        // Attribute a paid marker only within the same sentence/clause, without
+        // crossing another debt name. Postfix (row.name -> marker) may cross
+        // punctuation like commas or amounts within the clause. Prefix (marker -> row.name)
+        // must directly modify the debt without crossing clauses.
+        const paidMarker =
+            r'(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込|口座振替|振替|処理|確認|清算|精算)'
+            r'(?:済(?:み)?|完了|終了)|済(?:み)?|完済|引き落とされ(?:た|てい(?:る|ます)|ました)?|引落とされ(?:た|てい(?:る|ます)|ました)?)';
         final paidPattern = RegExp(
-          '${RegExp.escape(row.name)}([^。、;；\\r\\n]{0,60}?)($paidMarker)'
-          '|($paidMarker)([^。、;；\\r\\n]{0,60}?)${RegExp.escape(row.name)}',
+          '${RegExp.escape(row.name)}([^。;；\\r\\n]{0,60}?)($paidMarker)'
+          '|($paidMarker)(?:の|である)?([^。、;；\\r\\n]{0,20}?)${RegExp.escape(row.name)}',
         );
         final isMarkedPaid = paidPattern.allMatches(segment).any((match) {
           final between = match.group(1) ?? match.group(4)!;
@@ -1505,13 +1507,60 @@ class AssetManagementAiSummaryService {
           );
         });
         if (isMarkedPaid) continue;
-        final nameIndex = segment.indexOf(row.name);
-        final startIndex = nameIndex > 20 ? nameIndex - 20 : 0;
-        final endIndex = nameIndex + row.name.length + 40 < segment.length
-            ? nameIndex + row.name.length + 40
-            : segment.length;
-        final segmentAroundName = segment.substring(startIndex, endIndex);
-        if (_containsUnnegatedKeyword(segmentAroundName, unpaidLanguage)) {
+
+        // row.name 自体への督促・未払い判定。
+        // 「今月未払い合計」や別の未払い項目への言及ではなく、
+        // 当該の支払済み負債が未払い・督促対象として記述されているかを検証する。
+        var isUrged = false;
+        for (final keyword in unpaidLanguage) {
+          var searchFrom = 0;
+          while (true) {
+            final index = segment.indexOf(keyword, searchFrom);
+            if (index < 0) break;
+            final matchEnd = index + keyword.length;
+
+            // 「未払い合計」「未払い総額」などの全体メトリクス言及は個別督促から除外
+            final following5 = segment.substring(
+              matchEnd,
+              matchEnd + 5 < segment.length ? matchEnd + 5 : segment.length,
+            );
+            if (keyword == '未払い' &&
+                (following5.startsWith('合計') ||
+                    following5.startsWith('総額') ||
+                    following5.startsWith('額'))) {
+              searchFrom = matchEnd;
+              continue;
+            }
+
+            // キーワードと row.name の間に別の負債名がある場合はその負債への言及
+            final debtIndex = segment.indexOf(row.name);
+            final betweenDebtAndKeyword = index > debtIndex
+                ? segment.substring(debtIndex + row.name.length, index)
+                : segment.substring(matchEnd, debtIndex);
+            final hasOtherDebtBetween = allDebtNames.any(
+              (other) =>
+                  other != row.name && betweenDebtAndKeyword.contains(other),
+            );
+            if (hasOtherDebtBetween) {
+              searchFrom = matchEnd;
+              continue;
+            }
+
+            // 打ち消しチェック（「未払いではない」等）
+            final windowEnd =
+                matchEnd + 20 < segment.length ? matchEnd + 20 : segment.length;
+            final following = segment.substring(matchEnd, windowEnd);
+            if (!_negationMarkers.any(following.contains)) {
+              isUrged = true;
+              break;
+            }
+
+            searchFrom = matchEnd;
+          }
+          if (isUrged) break;
+        }
+
+        if (isUrged) {
           errors.add('${row.name}を支払済みなのに督促');
           break;
         }
