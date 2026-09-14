@@ -71,6 +71,7 @@ import 'package:my_web_app/services/asset_salary_amount_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_salary_deposit_detector.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
+import 'package:my_web_app/services/asset_salary_reconciliation_service.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/models/daily_todo.dart';
@@ -7703,6 +7704,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // テスト注入 (debugInitialPayslip*) がある場合はフェッチで上書きしない。
     if (widget.debugInitialPayslipSalaryIncomes != null ||
         widget.debugInitialPayslipRows != null) {
+      _reconcileAndSaveSalaryIncomePlansIfPending();
       return;
     }
     final userId = _supabase.auth.currentUser?.id;
@@ -7740,6 +7742,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isLoadingPayslipFinance = false;
         _payslipIngestionMessage = null;
       });
+      _reconcileAndSaveSalaryIncomePlansIfPending();
     } catch (e) {
       debugPrint('Error loading payslip finance data: $e');
       if (!mounted) return;
@@ -10408,6 +10411,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
       }
     }
+    final currentCycleKey = _currentSalaryCycleKey();
+    for (final row in _payslipRows) {
+      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final amount =
+          ((row['net_amount'] ?? row['amount']) as num?)?.toDouble() ?? 0;
+      if (payDate != null && amount > 0) {
+        final cycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+          AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+            payDate,
+            salaryDay: _salaryDay,
+          ),
+        );
+        if (cycleKey == currentCycleKey) {
+          return true;
+        }
+      }
+    }
+    for (final row in _payslipSalaryIncomes) {
+      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final amount = (row['amount'] as num?)?.toDouble() ?? 0;
+      if (payDate != null && amount > 0) {
+        final cycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+          AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+            payDate,
+            salaryDay: _salaryDay,
+          ),
+        );
+        if (cycleKey == currentCycleKey) {
+          return true;
+        }
+      }
+    }
     return false;
   }
 
@@ -10423,15 +10458,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     List<AssetLiabilityIncomePlan> plans, {
     bool forceSalaryReceived = false,
   }) {
+    final reconciledWithPayslips = AssetSalaryReconciliationService.reconcile(
+      monthlyIncomePlans: plans,
+      payslipRows: _payslipRows,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      salaryDay: _salaryDay,
+    );
+
     final shouldMarkSalaryReceived =
         forceSalaryReceived || _hasSalaryInflowInCurrentCycle();
 
     if (!shouldMarkSalaryReceived) {
-      return plans;
+      return reconciledWithPayslips;
     }
 
     return [
-      for (final plan in plans)
+      for (final plan in reconciledWithPayslips)
         if (_isSalaryIncomePlan(plan) && !plan.received)
           AssetLiabilityIncomePlan(
             id: plan.id,
@@ -10453,7 +10495,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     if (original.length != reconciled.length) return true;
     for (var i = 0; i < original.length; i++) {
-      if (original[i].received != reconciled[i].received) return true;
+      if (original[i].received != reconciled[i].received ||
+          original[i].amount != reconciled[i].amount ||
+          original[i].name != reconciled[i].name) {
+        return true;
+      }
     }
     return false;
   }
