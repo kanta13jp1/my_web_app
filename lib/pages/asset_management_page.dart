@@ -798,6 +798,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   _DebtMasterReviewFilter _debtMasterReviewFilter = _DebtMasterReviewFilter.all;
   List<AssetLiabilityIncomePlan> _monthlyIncomePlans =
       <AssetLiabilityIncomePlan>[];
+  bool _isSavingTriageWithdrawal = false;
   List<AssetLiabilityTransferTask> _transferTasks =
       <AssetLiabilityTransferTask>[];
   List<AssetLiabilityRecurringIncomeTemplate> _recurringIncomeTemplates =
@@ -1254,7 +1255,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousNow = _now;
-      final nextNow = DateTime.now();
+      // Keep the injected clock stable across periodic date checks in tests.
+      final nextNow = widget.debugNow ?? DateTime.now();
       final previousMonthKey = _assetLiabilityStateMonthKey(previousNow);
       final nextMonthKey = _assetLiabilityStateMonthKey(nextNow);
       // _now はこのページでは日付(M/d)までしか表示しない。毎秒 setState すると巨大な
@@ -23299,6 +23301,110 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 「まず、これだけ」段階別トリアージカード。数字の洪水で混乱している
   /// 利用者向けに、今日 (最大3件)→今週→今月の順で絞って提示する。
   /// 背景が固定の淡ティールのため、文字色も固定の濃ティール系にする。
+  Future<void> _createTriageWithdrawalTask(
+      AssetTriageStep step, double amount) async {
+    if (_isSavingTriageWithdrawal || step.withdrawalSourceAccountId == null) {
+      return;
+    }
+    final sourceId = step.withdrawalSourceAccountId!;
+    final sourceName = step.withdrawalSourceAccountName ?? '出金元口座';
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    final cashAccount =
+        workbook?.accounts.cast<AssetLiabilityAccount?>().firstWhere(
+              (a) => a?.kind == AssetLiabilityAccountKind.cash,
+              orElse: () => null,
+            );
+    if (cashAccount == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('手元現金の口座を登録してから出金タスクを作成してください。')),
+      );
+      return;
+    }
+    final toId = cashAccount.id;
+    final toName = cashAccount.name;
+    final today = DateTime(_now.year, _now.month, _now.day);
+
+    final duplicate = _transferTasks.any(
+      (task) =>
+          !task.completed &&
+          !task.canceled &&
+          task.fromAccountId == sourceId &&
+          task.toAccountId == toId &&
+          task.amount == amount &&
+          task.dueDate != null &&
+          _dateOnly(task.dueDate!) == _dateOnly(today),
+    );
+    if (duplicate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('本日分の出金・移動タスクは既に登録されています。')),
+      );
+      return;
+    }
+
+    // Recheck current funds at click time, including already planned transfers.
+    final source =
+        workbook!.accounts.where((account) => account.id == sourceId);
+    final summaries = workbook.accountCashflowSummaries.where(
+      (summary) => summary.accountId == sourceId,
+    );
+    if (!amount.isFinite ||
+        amount <= 0 ||
+        source.isEmpty ||
+        summaries.isEmpty ||
+        amount > source.first.balance ||
+        amount > summaries.first.projectedBalance) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('出金元の余力が変わりました。金額と予定を確認してください。')),
+      );
+      return;
+    }
+    final now = DateTime.now();
+    final taskId = 'transfer_${now.microsecondsSinceEpoch}';
+    final nextTasks = List<AssetLiabilityTransferTask>.from(_transferTasks)
+      ..add(
+        AssetLiabilityTransferTask(
+          id: taskId,
+          fromAccountId: sourceId,
+          fromAccountName: sourceName,
+          toAccountId: toId,
+          toAccountName: toName,
+          amount: amount,
+          dueDate: today,
+        ),
+      )
+      ..sort(_compareTransferTasksByDueDate);
+
+    setState(() {
+      _isSavingTriageWithdrawal = true;
+      _transferTasks = nextTasks;
+    });
+    try {
+      await _persistAssetLiabilityMonthlyState();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isSavingTriageWithdrawal = false;
+        _transferTasks =
+            _transferTasks.where((task) => task.id != taskId).toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('出金タスクを保存できませんでした。再度お試しください。')),
+      );
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _isSavingTriageWithdrawal = false);
+
+    final yenText = amount >= 10000 && amount % 10000 == 0
+        ? '${(amount / 10000).round()}万円'
+        : '${amount.round()}円';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$yenTextの出金・移動タスクを登録しました。生活費は専用財布へ保管してください。'),
+      ),
+    );
+  }
+
   Widget _buildAssetTriageGuideCard(AssetTriagePlan plan) {
     var stepNumber = 0;
     Widget buildStage(String label, List<AssetTriageStep> steps) {
@@ -23337,6 +23443,44 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 height: 1.5,
               ),
             ),
+            if (step.kind == AssetTriageStepKind.secureLivingExpense &&
+                step.withdrawalTemplates.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final amount in step.withdrawalTemplates)
+                    OutlinedButton.icon(
+                      key: Key(
+                        'triage_withdrawal_template_${amount.round()}',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        foregroundColor: const Color(0xFF0F766E),
+                        side: const BorderSide(color: Color(0xFF0D9488)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                      ),
+                      icon: const Icon(Icons.payments_outlined, size: 14),
+                      label: Text(
+                        amount >= 10000 && amount % 10000 == 0
+                            ? '${(amount / 10000).round()}万円出金'
+                            : '${amount.round()}円出金',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      onPressed: _isSavingTriageWithdrawal
+                          ? null
+                          : () => _createTriageWithdrawalTask(step, amount),
+                    ),
+                ],
+              ),
+            ],
           ],
         ],
       );
@@ -26676,21 +26820,40 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(Icons.account_balance_outlined, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
-                  '予定 ${_formatManagementYen(row.scheduledPaymentAmount)}',
-                  style: const TextStyle(fontSize: 12, height: 1.5),
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildPaymentSourceDebtDropdown(row, workbook),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final summary = Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(Icons.account_balance_outlined, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
+                      '予定 ${_formatManagementYen(row.scheduledPaymentAmount)}',
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ),
+                ],
+              );
+              if (constraints.maxWidth < 600) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    summary,
+                    const SizedBox(height: 8),
+                    _buildPaymentSourceDebtDropdown(row, workbook),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: summary),
+                  const SizedBox(width: 8),
+                  _buildPaymentSourceDebtDropdown(row, workbook),
+                ],
+              );
+            },
           ),
           if (candidates.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -27223,6 +27386,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _buildAssetSectionHeader({
+    required Widget title,
+    required Widget actions,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 600) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              title,
+              const SizedBox(height: 8),
+              actions,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: title),
+            const SizedBox(width: 8),
+            Flexible(flex: 4, child: actions),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildIncomePlanSection(AssetLiabilityWorkbook workbook) {
     final plans = workbook.incomePlans;
     final unassignedPlans = workbook.unassignedDestinationIncomePlans;
@@ -27237,52 +27427,47 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  '収入予定',
-                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+          _buildAssetSectionHeader(
+            title: const Text(
+              '収入予定',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+            actions: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              alignment: WrapAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () => unawaited(_showSalaryDayDialog()),
+                  icon: const Icon(Icons.event_available_outlined),
+                  label: Text('給料日 $_salaryDay日'),
                 ),
-              ),
-              Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                alignment: WrapAlignment.end,
-                children: [
-                  TextButton.icon(
-                    onPressed: () => unawaited(_showSalaryDayDialog()),
-                    icon: const Icon(Icons.event_available_outlined),
-                    label: Text('給料日 $_salaryDay日'),
+                TextButton.icon(
+                  onPressed: () => unawaited(_showSalaryAmountDialog()),
+                  icon: const Icon(Icons.payments_outlined),
+                  label: Text(
+                    _salaryAmount == null
+                        ? '想定給料額'
+                        : '想定給料額 ¥${NumberFormat('#,###').format(_salaryAmount!.round())}',
                   ),
-                  TextButton.icon(
-                    onPressed: () => unawaited(_showSalaryAmountDialog()),
-                    icon: const Icon(Icons.payments_outlined),
-                    label: Text(
-                      _salaryAmount == null
-                          ? '想定給料額'
-                          : '想定給料額 ¥${NumberFormat('#,###').format(_salaryAmount!.round())}',
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: _copyPreviousMonthSettings,
-                    icon: const Icon(Icons.copy_all_outlined),
-                    label: const Text('前サイクルコピー'),
-                  ),
-                  TextButton.icon(
-                    onPressed: () =>
-                        _showRecurringIncomeTemplateDialog(workbook),
-                    icon: const Icon(Icons.event_repeat_outlined),
-                    label: const Text('定期収入'),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => _showIncomePlanDialog(workbook),
-                    icon: const Icon(Icons.add),
-                    label: const Text('追加'),
-                  ),
-                ],
-              ),
-            ],
+                ),
+                TextButton.icon(
+                  onPressed: _copyPreviousMonthSettings,
+                  icon: const Icon(Icons.copy_all_outlined),
+                  label: const Text('前サイクルコピー'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _showRecurringIncomeTemplateDialog(workbook),
+                  icon: const Icon(Icons.event_repeat_outlined),
+                  label: const Text('定期収入'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _showIncomePlanDialog(workbook),
+                  icon: const Icon(Icons.add),
+                  label: const Text('追加'),
+                ),
+              ],
+            ),
           ),
           Text(
             '入金済み・支払済みにした項目は、現在の口座残高に反映済みとして扱います。まだ残高を更新していない場合はチェックしないでください。',
@@ -28179,40 +28364,36 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  '月次履歴（保存時点）',
-                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+          _buildAssetSectionHeader(
+            title: const Text(
+              '月次履歴（保存時点）',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+            actions: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.end,
+              children: [
+                FilledButton.icon(
+                  onPressed: _isSavingAssetLiabilitySnapshot
+                      ? null
+                      : () => _saveCurrentAssetLiabilitySnapshot(workbook),
+                  icon: _isSavingAssetLiabilitySnapshot
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: const Text('スナップショット保存'),
                 ),
-              ),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.end,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _isSavingAssetLiabilitySnapshot
-                        ? null
-                        : () => _saveCurrentAssetLiabilitySnapshot(workbook),
-                    icon: _isSavingAssetLiabilitySnapshot
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save_outlined),
-                    label: const Text('スナップショット保存'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => _downloadAssetLiabilityCsvBundle(workbook),
-                    icon: const Icon(Icons.download_outlined),
-                    label: const Text('CSV出力'),
-                  ),
-                ],
-              ),
-            ],
+                OutlinedButton.icon(
+                  onPressed: () => _downloadAssetLiabilityCsvBundle(workbook),
+                  icon: const Icon(Icons.download_outlined),
+                  label: const Text('CSV出力'),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -28789,86 +28970,111 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ? 'No due date'
           : DateFormat('M/d').format(task.dueDate!);
       final taskMuted = task.completed || task.canceled;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Row(
+      final checkbox = Checkbox(
+        value: task.completed,
+        onChanged: task.canceled
+            ? null
+            : (value) => _toggleTransferTaskCompleted(task, value ?? false),
+      );
+      final details = Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Checkbox(
-              value: task.completed,
-              onChanged: task.canceled
-                  ? null
-                  : (value) =>
-                      _toggleTransferTaskCompleted(task, value ?? false),
+            Text(
+              '${task.fromAccountName} -> ${task.toAccountName} / '
+              '${_formatManagementYen(task.amount)} / $dueLabel',
+              style: TextStyle(
+                color: taskMuted
+                    ? Theme.of(context).colorScheme.onSurfaceVariant
+                    : null,
+                fontSize: 12,
+                height: 1.5,
+                decoration: task.completed ? TextDecoration.lineThrough : null,
+              ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${task.fromAccountName} -> ${task.toAccountName} / '
-                      '${_formatManagementYen(task.amount)} / $dueLabel',
-                      style: TextStyle(
-                        color: taskMuted
-                            ? Theme.of(context).colorScheme.onSurfaceVariant
-                            : null,
-                        fontSize: 12,
-                        height: 1.5,
-                        decoration:
-                            task.completed ? TextDecoration.lineThrough : null,
-                      ),
-                    ),
-                    if (task.completionMemo.trim().isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        '実行メモ: ${task.completionMemo.trim()}',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                    if (task.cancellationReason.trim().isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'キャンセル理由: ${task.cancellationReason.trim()}',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ],
+            if (task.completionMemo.trim().isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                '実行メモ: ${task.completionMemo.trim()}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.4,
                 ),
               ),
-            ),
-            TextButton.icon(
-              onPressed: () => unawaited(_showTransferTaskMemoDialog(task)),
-              icon: const Icon(Icons.edit_note, size: 16),
-              label: const Text('メモ'),
-            ),
-            if (task.canceled)
-              TextButton.icon(
-                onPressed: () => _restoreCanceledTransferTask(task),
-                icon: const Icon(Icons.restore, size: 16),
-                label: const Text('再開'),
-              )
-            else if (!task.completed)
-              TextButton.icon(
-                onPressed: () => unawaited(_showTransferTaskCancelDialog(task)),
-                icon: const Icon(Icons.block, size: 16),
-                label: const Text('キャンセル'),
+            ],
+            if (task.cancellationReason.trim().isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                'キャンセル理由: ${task.cancellationReason.trim()}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
               ),
-            IconButton(
-              tooltip: isBuiltIn ? '定例振替' : '振替タスクを削除',
-              icon: const Icon(Icons.delete_outline, size: 18),
-              onPressed: isBuiltIn ? null : () => _deleteTransferTask(task.id),
-            ),
+            ],
           ],
+        ),
+      );
+      final actions = Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        alignment: WrapAlignment.end,
+        children: [
+          TextButton.icon(
+            onPressed: () => unawaited(_showTransferTaskMemoDialog(task)),
+            icon: const Icon(Icons.edit_note, size: 16),
+            label: const Text('メモ'),
+          ),
+          if (task.canceled)
+            TextButton.icon(
+              onPressed: () => _restoreCanceledTransferTask(task),
+              icon: const Icon(Icons.restore, size: 16),
+              label: const Text('再開'),
+            )
+          else if (!task.completed)
+            TextButton.icon(
+              onPressed: () => unawaited(_showTransferTaskCancelDialog(task)),
+              icon: const Icon(Icons.block, size: 16),
+              label: const Text('キャンセル'),
+            ),
+          IconButton(
+            tooltip: isBuiltIn ? '定例振替' : '振替タスクを削除',
+            icon: const Icon(Icons.delete_outline, size: 18),
+            onPressed: isBuiltIn ? null : () => _deleteTransferTask(task.id),
+          ),
+        ],
+      );
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 600) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      checkbox,
+                      Expanded(child: details),
+                    ],
+                  ),
+                  actions,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                checkbox,
+                Expanded(child: details),
+                actions,
+              ],
+            );
+          },
         ),
       );
     }
