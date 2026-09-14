@@ -115,12 +115,13 @@ void main() {
       expect(largest.name, 'アコムショッピング');
       expect(largest.kind, AssetLiabilityAccountKind.shoppingDebt);
       expect(largest.paymentDay, 8);
+      expect(largest.annualRate, 0.146);
       expect(largest.liabilityShare, closeTo(0.308, 0.001));
 
       final topPriority = workbook.repaymentPriorityRows.first;
       expect(topPriority.name, anyOf('アコムカードローン', 'モビット'));
-      expect(topPriority.annualRate, 0.18);
-      expect(topPriority.priorityLabel, '最優先');
+      expect(topPriority.annualRate, 0.15);
+      expect(topPriority.priorityLabel, '高');
     });
 
     test('prefers manually entered monthly payment over the estimate', () {
@@ -2431,6 +2432,30 @@ void main() {
         AssetLiabilityPlanningService.jibunBankAccountId,
       );
       expect(aupay.paymentSourceAccountName, 'じぶん銀行');
+    });
+
+    test('assigns confirmed contract rates for Acom debts by default', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'アコムカードローン': -500000,
+          'アコムショッピング': -2000000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+      );
+
+      final acomLoan = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'アコムカードローン',
+      );
+      expect(acomLoan.annualRate, 0.15);
+      expect(acomLoan.kind, AssetLiabilityAccountKind.cardLoan);
+      expect(acomLoan.paymentDay, 8);
+
+      final acomShopping = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'アコムショッピング',
+      );
+      expect(acomShopping.annualRate, 0.146);
+      expect(acomShopping.kind, AssetLiabilityAccountKind.shoppingDebt);
+      expect(acomShopping.paymentDay, 8);
     });
   });
 }
