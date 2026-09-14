@@ -571,13 +571,18 @@ class AssetLiabilityPlanningService {
         balance: balance,
         kind: AssetLiabilityAccountKind.shoppingDebt,
         paymentDay: 8,
-        annualRate: 0.15,
+        annualRate: 0.146,
         minimumPaymentRate: 0.03,
         minimumPaymentFloor: 3000,
       );
     }
     if (_containsAll(key, const <String>['アコム', 'ローン'])) {
-      return _consumerFinance(name: name, balance: balance, paymentDay: 8);
+      return _consumerFinance(
+        name: name,
+        balance: balance,
+        paymentDay: 8,
+        annualRate: 0.15,
+      );
     }
     if (_containsAny(key, const <String>['モビット', 'mobit'])) {
       return _consumerFinance(

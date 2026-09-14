@@ -606,6 +606,61 @@ void main() {
     });
 
     test(
+        'accepts AI summary with default Acom contract rates (shopping 14.6%, '
+        'card loan 15.0%) and rejects incorrect rates', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '銀行': 200000,
+          'アコムカードローン': -500000,
+          'アコムショッピング': -1000000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+
+      // 正しい利率（ショッピング14.6%, ローン15.0%）のAI要約は承認される
+      final validService = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-1,300,000円、負債合計は1,500,000円です。\n'
+                'アコムショッピングの金利は14.6%、アコムカードローンの金利は15.0%です。',
+            'provider': 'gemini',
+          },
+        ),
+        now: () => DateTime(2026, 9, 14, 12),
+      );
+      final validResult = await validService.generateSummary(report: report);
+      expect(validResult.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(validResult.usedExternalAi, isTrue);
+
+      // 誤った利率（ローンに18.0%など）のAI要約はリジェクトされる
+      final invalidService = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-1,300,000円、負債合計は1,500,000円です。\n'
+                'アコムカードローンの金利は18.0%です。',
+            'provider': 'gemini',
+          },
+        ),
+        now: () => DateTime(2026, 9, 14, 12),
+      );
+      final invalidResult =
+          await invalidService.generateSummary(report: report);
+      expect(invalidResult.status, AssetManagementAiSummaryStatus.fallback);
+      expect(invalidResult.errorMessage, contains('アコムカードローンの年利が確定値と不一致'));
+    });
+
+    test(
         'rejects an AI summary when a paid debt is directly urged as unpaid '
         'in its segment', () async {
       const planner = AssetLiabilityPlanningService();
