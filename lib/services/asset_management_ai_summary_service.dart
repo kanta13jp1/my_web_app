@@ -1588,9 +1588,7 @@ class AssetManagementAiSummaryService {
 
         if (isUrged) {
           errors.add(
-            row.paid
-                ? '${row.name}を支払済みなのに督促'
-                : '${row.name}は請求カードが支払済みなのに督促',
+            row.paid ? '${row.name}を支払済みなのに督促' : '${row.name}は請求カードが支払済みなのに督促',
           );
           break;
         }
