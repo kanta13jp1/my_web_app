@@ -41,7 +41,7 @@ dependencies:
   share_plus: ^12.0.1              # 共有（SNS/共有シート）
   path_provider: ^2.1.6            # 保存先パス取得
 
-  logger: ^2.0.2                   # ログ出力
+  logger: ^2.8.0                   # ログ出力
   timeago: ^3.7.0                  # 相対時刻表示（例: 3分前）
   fl_chart: ^1.0.0                 # グラフ描画
   package_info_plus: ^8.0.0        # アプリ情報（バージョン等）
@@ -60,7 +60,7 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   pdf: 3.12.0                      # PDF生成 (選挙KPIレポート出力)
   printing: 5.14.3                 # PDF印刷 (選挙KPIレポート出力)
-  sentry_flutter: ^9.29.0
+  sentry_flutter: ^9.30.0
   rrule: ^0.2.18
 
 dev_dependencies:
