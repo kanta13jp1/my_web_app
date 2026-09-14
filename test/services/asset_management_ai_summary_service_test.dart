@@ -877,6 +877,186 @@ void main() {
       );
     });
 
+    test(
+        'accepts an AI summary when an unreceived past income plan is '
+        'followed by actionable arrival check and update prompt', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 100000},
+        baseDate: DateTime(2026, 9, 9),
+        incomePlans: [
+          AssetLiabilityIncomePlan(
+            id: 'salary_past',
+            date: DateTime(2026, 8, 25),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'bank',
+            destinationAccountName: 'bank',
+            received: false,
+          ),
+        ],
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は100,000円です。\n'
+                '- 給料: 給料450,000円が未受取のままになっています。'
+                '着金を確認し、受取済みに更新してください。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    test(
+        'accepts an AI summary when a paid debt is preceded by paid '
+        'marker and other unpaid debts are mentioned', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'ファミマカード': -4500,
+          'モビット': -32000,
+        },
+        baseDate: DateTime(2026, 9, 9),
+        monthlyPaymentOverrides: const <String, double>{
+          'ファミマカード': 4500,
+          'モビット': 32000,
+        },
+        paidAccountNames: const <String>{'ファミマカード'},
+      );
+      expect(
+        workbook.currentDebtRows
+            .singleWhere((row) => row.name == 'ファミマカード')
+            .paid,
+        isTrue,
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は63,500円です。\n'
+                '- 支払済みのファミマカード（4,500円）を除き、'
+                '未払いのモビット32,000円を優先して支払いましょう。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 9, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    for (final scenario in [
+      (
+        label: 'payment completion before debt name',
+        text: '支払完了のファミマカードを除き、未払いのモビットを確認してください。',
+        accepted: true,
+      ),
+      (
+        label: 'settlement completion after debt name',
+        text: 'ファミマカードは決済完了です。未払いのモビットを確認してください。',
+        accepted: true,
+      ),
+      (
+        label: 'paid marker of previous debt across a clause',
+        text: 'モビットは支払済み、ファミマカードは未払いですぐに払ってください。',
+        accepted: false,
+      ),
+      (
+        label: 'paid marker of following debt',
+        text: 'ファミマカードは未払いでモビットは支払済みです。',
+        accepted: false,
+      ),
+      (
+        label: 'prefix marker crosses another debt name',
+        text: '支払済みのモビットとファミマカードは未払いです。',
+        accepted: false,
+      ),
+      (
+        label: 'nonpayment completion is not paid status',
+        text: 'ファミマカードは登録完了ですが未払いです。',
+        accepted: false,
+      ),
+    ]) {
+      test('paid grounding: ${scenario.label}', () async {
+        const planner = AssetLiabilityPlanningService();
+        const insight = AssetManagementInsightService();
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 100000,
+            'ファミマカード': -4500,
+            'モビット': -32000,
+          },
+          baseDate: DateTime(2026, 9, 9),
+          monthlyPaymentOverrides: const <String, double>{
+            'ファミマカード': 4500,
+            'モビット': 32000,
+          },
+          paidAccountNames: const <String>{'ファミマカード'},
+        );
+        expect(
+          workbook.currentDebtRows
+              .singleWhere((row) => row.name == 'ファミマカード')
+              .paid,
+          isTrue,
+        );
+        final report = insight.buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+          minimumSafetyBalance: 10000,
+        );
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async => <String, dynamic>{
+              'success': true,
+              'text': scenario.text,
+              'provider': 'openai',
+            },
+          ),
+          now: () => DateTime(2026, 9, 9, 12),
+        );
+
+        final result = await service.generateSummary(report: report);
+
+        expect(
+          result.status,
+          scenario.accepted
+              ? AssetManagementAiSummaryStatus.aiGenerated
+              : AssetManagementAiSummaryStatus.fallback,
+        );
+        expect(result.usedExternalAi, scenario.accepted);
+        if (!scenario.accepted) {
+          expect(result.errorMessage, contains('支払済みなのに督促'));
+        }
+      });
+    }
+
     test('ai detailed payload includes exact account and debt values', () {
       final service = AssetManagementAiSummaryService(
         now: () => DateTime(2026, 5, 1, 12),
