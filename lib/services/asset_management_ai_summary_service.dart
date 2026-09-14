@@ -1465,8 +1465,21 @@ class AssetManagementAiSummaryService {
           }
           final actualPercent = double.tryParse(match.group(2)!);
           final expectedPercent = row.annualRate * 100;
-          if (actualPercent != null &&
-              (actualPercent - expectedPercent).abs() > 0.011) {
+          final matchingAccount = workbook.accounts.firstWhere(
+            (a) => a.id == row.id || a.name == row.name,
+            orElse: () => const AssetLiabilityAccount(
+              id: '',
+              name: '',
+              kind: AssetLiabilityAccountKind.otherLiability,
+              balance: 0,
+            ),
+          );
+          final accountPercent = matchingAccount.annualRate * 100;
+          final matchesExpected = actualPercent != null &&
+              ((actualPercent - expectedPercent).abs() <= 0.011 ||
+                  (accountPercent > 0 &&
+                      (actualPercent - accountPercent).abs() <= 0.011));
+          if (!matchesExpected) {
             errors.add('${row.name}の年利が確定値と不一致');
             break;
           }
