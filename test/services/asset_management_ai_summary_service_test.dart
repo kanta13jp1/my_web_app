@@ -435,6 +435,93 @@ void main() {
     });
 
     test(
+        'accepts an AI summary mentioning account rate or overridden debt rate '
+        'without false positive rate mismatch (Mobit 15% vs 18% regression)',
+        () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'モビット': -1450000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{
+          'mobit': 0.15,
+        },
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-1,350,000円、負債合計は1,450,000円です。\n'
+                '- モビット: 残高-1,450,000円、年利は15.0%と記録されています。\n'
+                '以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3点を確認しましょう。',
+            'provider': 'google',
+          },
+        ),
+        now: () => DateTime(2026, 9, 14, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(result.errorMessage, isNull);
+    });
+
+    test(
+        'accepts an AI summary explaining rate discrepancy between account and debt '
+        'without false positive grounding rejection', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final baseWorkbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'モビット': -1452644,
+        },
+        baseDate: DateTime(2026, 9, 14),
+      );
+      final accounts = baseWorkbook.accounts.map((a) {
+        if (a.name == 'モビット') {
+          return a.copyWith(annualRate: 0.18);
+        }
+        return a;
+      }).toList();
+      final workbook = baseWorkbook.copyWith(accounts: accounts);
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-1,352,644円、負債合計は1,452,644円です。\n'
+                '- モビット: 残高-1,452,644円、年利は18.0%と記録されています。\n'
+                '以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3点を確認しましょう。',
+            'provider': 'google',
+          },
+        ),
+        now: () => DateTime(2026, 9, 14, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(result.errorMessage, isNull);
+    });
+
+    test(
         'accepts an AI summary that explicitly denies overdue status for a '
         'paid debt', () async {
       const planner = AssetLiabilityPlanningService();

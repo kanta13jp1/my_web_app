@@ -233,12 +233,15 @@ class AssetLiabilityPlanningService {
     final accounts = effectiveSnapshot.entries
         .where((entry) => entry.key.trim().isNotEmpty && entry.value != 0)
         .map(
-          (entry) => _applyPaymentDayOverride(
-            account: _classifyAccount(
-              name: entry.key.trim(),
-              balance: entry.value,
+          (entry) => _applyAnnualRateOverride(
+            account: _applyPaymentDayOverride(
+              account: _classifyAccount(
+                name: entry.key.trim(),
+                balance: entry.value,
+              ),
+              paymentDayOverrides: paymentDayOverrides,
             ),
-            paymentDayOverrides: paymentDayOverrides,
+            annualRateOverrides: annualRateOverrides,
           ),
         )
         .toList()
@@ -506,6 +509,23 @@ class AssetLiabilityPlanningService {
     return account.copyWith(paymentDay: override);
   }
 
+  AssetLiabilityAccount _applyAnnualRateOverride({
+    required AssetLiabilityAccount account,
+    required Map<String, double> annualRateOverrides,
+  }) {
+    if (!account.isLiability) {
+      return account;
+    }
+    final rate = _annualRateFor(
+      account: account,
+      annualRateOverrides: annualRateOverrides,
+    );
+    if (rate == account.annualRate) {
+      return account;
+    }
+    return account.copyWith(annualRate: rate);
+  }
+
   AssetLiabilityAccount _classifyAccount({
     required String name,
     required double balance,
@@ -560,7 +580,12 @@ class AssetLiabilityPlanningService {
       return _consumerFinance(name: name, balance: balance, paymentDay: 8);
     }
     if (_containsAny(key, const <String>['モビット', 'mobit'])) {
-      return _consumerFinance(name: name, balance: balance, paymentDay: 15);
+      return _consumerFinance(
+        name: name,
+        balance: balance,
+        paymentDay: 15,
+        annualRate: 0.15,
+      );
     }
     if (_containsAny(key, const <String>['じぶん', 'jibun'])) {
       return _bankLoan(name: name, balance: balance, paymentDay: 27);
@@ -669,13 +694,14 @@ class AssetLiabilityPlanningService {
     required String name,
     required double balance,
     required int? paymentDay,
+    double annualRate = 0.18,
   }) =>
       _liability(
         name: name,
         balance: balance,
         kind: AssetLiabilityAccountKind.cardLoan,
         paymentDay: paymentDay,
-        annualRate: 0.18,
+        annualRate: annualRate,
         minimumPaymentRate: 0.04,
         minimumPaymentFloor: 4000,
       );

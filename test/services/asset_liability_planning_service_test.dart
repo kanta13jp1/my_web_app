@@ -60,6 +60,32 @@ void main() {
       expect(workbook.cardUsagePolicies['famipay_card']!.memo, '受付 ABC123');
     });
 
+    test(
+        'reflects annualRateOverrides in both accounts list and debtMasterRows',
+        () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -1000000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{
+          'mobit': 0.15,
+        },
+      );
+
+      final account = workbook.accounts.firstWhere((a) => a.id == 'mobit');
+      expect(account.annualRate, 0.15);
+
+      final currentAccount =
+          workbook.currentAccounts.firstWhere((a) => a.id == 'mobit');
+      expect(currentAccount.annualRate, 0.15);
+
+      final debtRow =
+          workbook.debtMasterRows.firstWhere((r) => r.id == 'mobit');
+      expect(debtRow.annualRate, 0.15);
+    });
+
     test('groups liability balances by payment day', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -166,7 +192,7 @@ void main() {
         (row) => row.name == 'モビット',
       );
 
-      expect(mobit.annualRate, 0.18);
+      expect(mobit.annualRate, 0.15);
     });
 
     test('uses the estimated minimum payment when manual input is absent', () {
