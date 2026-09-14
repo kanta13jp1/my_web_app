@@ -260,5 +260,56 @@ void main() {
       expect(reconciled[1].amount, 421277);
       expect(reconciled[1].received, isTrue);
     });
+
+    test(
+        'does not inject past months confirmed payslips (e.g. May) when baseDate is in August/September cycle',
+        () {
+      // 計画には8月給与のみが存在する状態
+      final plans = <AssetLiabilityIncomePlan>[
+        AssetLiabilityIncomePlan(
+          id: 'plan-aug',
+          date: DateTime(2026, 8, 25),
+          name: '給料',
+          amount: 450000,
+          destinationAccountId: 'smbc',
+          destinationAccountName: '三井住友銀行大塚支店',
+          received: false,
+        ),
+      ];
+
+      // 給与明細テーブルには5月の古い明細と8月の確定明細の両方が存在
+      final payslipRows = [
+        {
+          'id': 'ps-may',
+          'pay_date': '2026-05-25',
+          'company_name': 'MightyLINK',
+          'net_amount': 452815,
+        },
+        {
+          'id': 'ps-aug',
+          'pay_date': '2026-08-25',
+          'company_name': 'マイティリンク',
+          'net_amount': 421277,
+        },
+      ];
+
+      final reconciled = AssetSalaryReconciliationService.reconcile(
+        monthlyIncomePlans: plans,
+        payslipRows: payslipRows,
+        payslipSalaryIncomes: const [],
+        salaryDay: 25,
+        baseDate: DateTime(2026, 8, 25), // 8月25日サイクル
+      );
+
+      // 5月の明細は注入されず、8月の1件のみとなること
+      expect(reconciled, hasLength(1));
+      expect(reconciled.single.date, DateTime(2026, 8, 25));
+      expect(reconciled.single.amount, 421277);
+      expect(reconciled.single.name, 'マイティリンク給与');
+      expect(
+        reconciled.any((p) => p.name.contains('MightyLINK')),
+        isFalse,
+      );
+    });
   });
 }

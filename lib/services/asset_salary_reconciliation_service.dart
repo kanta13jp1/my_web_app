@@ -27,6 +27,7 @@ class AssetSalaryReconciliationService {
     required List<Map<String, dynamic>> payslipRows,
     required List<Map<String, dynamic>> payslipSalaryIncomes,
     int salaryDay = 25,
+    DateTime? baseDate,
   }) {
     final confirmedPayslips = _extractConfirmedPayslips(
       payslipRows: payslipRows,
@@ -81,7 +82,25 @@ class AssetSalaryReconciliationService {
     }
 
     // 収入予定に給料エントリが全く存在しない給与明細があれば、受取済み収入として補完する。
+    // baseDate が指定されている場合は当給与サイクルの給与明細のみを対象とし、過去月・将来月の混入を防ぐ。
+    final targetCycleMonth = baseDate != null
+        ? AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+            baseDate,
+            salaryDay: salaryDay,
+          )
+        : null;
+
     for (final payslip in confirmedPayslips) {
+      if (targetCycleMonth != null) {
+        final payslipCycleMonth =
+            AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+          payslip.payDate,
+          salaryDay: salaryDay,
+        );
+        if (payslipCycleMonth != targetCycleMonth) {
+          continue;
+        }
+      }
       final dateKey = _dateKey(payslip.payDate);
       if (reconciledPayslipDates.contains(dateKey)) {
         continue;

@@ -570,7 +570,7 @@ class AssetLiabilityPlanningService {
         name: name,
         balance: balance,
         kind: AssetLiabilityAccountKind.shoppingDebt,
-        paymentDay: 8,
+        paymentDay: 26,
         annualRate: 0.146,
         minimumPaymentRate: 0.03,
         minimumPaymentFloor: 3000,

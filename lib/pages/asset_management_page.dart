@@ -10463,6 +10463,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       payslipRows: _payslipRows,
       payslipSalaryIncomes: _payslipSalaryIncomes,
       salaryDay: _salaryDay,
+      baseDate: _now,
     );
 
     final shouldMarkSalaryReceived =

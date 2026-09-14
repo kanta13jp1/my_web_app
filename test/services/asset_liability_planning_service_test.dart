@@ -96,13 +96,15 @@ void main() {
         for (final risk in workbook.paymentDayRisks) risk.paymentDay: risk,
       };
 
-      expect(riskByDay[8]?.balanceTotal.round(), -2933552);
+      expect(riskByDay[8]?.balanceTotal.round(), -699446);
       expect(riskByDay[10]?.balanceTotal.round(), -513770);
       expect(riskByDay.containsKey(11), isFalse);
       expect(riskByDay[15]?.balanceTotal.round(), -2195978);
+      expect(riskByDay[26]?.balanceTotal.round(), -2234106);
       expect(riskByDay[27]?.balanceTotal.round(), -1579266);
       expect(riskByDay[8]?.isPast, isTrue);
       expect(riskByDay[15]?.isUpcoming, isTrue);
+      expect(riskByDay[26]?.isUpcoming, isTrue);
     });
 
     test('builds debt master rows with type, rate, and priority signals', () {
@@ -114,7 +116,7 @@ void main() {
       final largest = workbook.debtMasterRows.first;
       expect(largest.name, 'アコムショッピング');
       expect(largest.kind, AssetLiabilityAccountKind.shoppingDebt);
-      expect(largest.paymentDay, 8);
+      expect(largest.paymentDay, 26);
       expect(largest.annualRate, 0.146);
       expect(largest.liabilityShare, closeTo(0.308, 0.001));
 
@@ -1393,7 +1395,7 @@ void main() {
         '$acomShoppingName\u6255\u3044',
       );
       expect(workbook.cashflowRows.map((row) => row.paymentDay).toList(), <int>[
-        8,
+        26,
         26,
       ]);
       // \u73fe\u91d1\u652f\u51fa\u306f\u30a2\u30b3\u30e0\u6700\u4f4e\u8fd4\u6e08 (68000) \u306e\u307f\u3002Anthropic \u306e 40000 \u306f\u4e8c\u91cd\u8a08\u4e0a\u3057\u306a\u3044\u3002
@@ -2455,7 +2457,7 @@ void main() {
       );
       expect(acomShopping.annualRate, 0.146);
       expect(acomShopping.kind, AssetLiabilityAccountKind.shoppingDebt);
-      expect(acomShopping.paymentDay, 8);
+      expect(acomShopping.paymentDay, 26);
     });
   });
 }

@@ -528,8 +528,8 @@ class AssetManagementAiSummaryService {
         jsonEncode(_previousAnalysesToJson(previousAnalyses)),
         '',
       ],
-      '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。敬意のある具体的な説明にしてください。確認済みの事実・予定・推定・未確認を区別し、未確認事項は確認方法を示してください。生年月日・性格・運勢による財務判断や、趣味・人格への侮辱を禁止します。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
-      '現在データ優先ルール: 唯一の「現在の事実」は「AIに渡す詳細ペイロード」とアクションアイテムだけです。previous_ai_analyses（metrics_snapshot）は過去時点のスナップショットで、現在の事実ではありません。履歴に出てくる金額・使用可能額・未払い・期限超過を、現在のものとして断定・督促してはいけません。現在の使用可能額がプラスなら「不足」「マイナス」と言わず、現在のアクションアイテムや支払日別リスクに無い負債、または paid が true の負債を「期限超過」「未払い」と呼ばないでください。支払済み（paid: true）の負債（auPayカードなど）はすでに今月分の引き落とし・支払いが完了しています。支払済みの負債を「未払い」「期限超過」として扱ったり、支払うよう督促してはいけません。「auPayカードは今月分引落済みです」のように支払完了した事実としてのみ言及してください。受取済み（received: true）の給与・収入を「未受取」「期限超過」「未着金」として扱ったり、今日着金しているか確認するよう督促してはいけません。また、予定日が今日より未来の収入について、今日入金・着金を確認するよう指示してはいけません。今月支払うべき額には推定最低支払額ではなく「今月支払予定額（scheduled_payment_amount）」を用い、解約済みサブスク（金額0円または非アクティブ）を「サブスク地獄」「未払支出」と言及してはいけません。負債の年利（annual_rate）や負債総額は、過去の記憶ではなく必ずペイロード内の確定値（annual_rate, balance）を採用してください。現在値と履歴が矛盾する場合は必ず現在値を採用してください。',
+      '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。今月未払い合計（monthly_unpaid_payment_total）に言及する際は、AIに渡す詳細ペイロードの unpaid_direct_payments を参照し、各項目の名称・支払日・金額の内訳を箇条書きで具体的に示してください（合計金額だけで終わらせず、何が未払いなのかを明示すること）。金額はDart計算値を正として扱い、追加計算は概算と明記してください。敬意のある具体的な説明にしてください。確認済みの事実・予定・推定・未確認を区別し、未確認事項は確認方法を示してください。生年月日・性格・運勢による財務判断や、趣味・人格への侮辱を禁止します。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
+      '現在データ優先ルール: 唯一の「現在の事実」は「AIに渡す詳細ペイロード」とアクションアイテムだけです。previous_ai_analyses（metrics_snapshot）は過去時点のスナップショットで、現在の事実ではありません。履歴に出てくる金額・使用可能額・未払い・期限超過を、現在のものとして断定・督促してはいけません。現在の使用可能額がプラスなら「不足」「マイナス」と言わず、現在のアクションアイテムや支払日別リスクに無い負債、または paid が true の負債を「期限超過」「未払い」と呼ばないでください。クレジットカードやショッピング枠等の請求に含まれる負債（included_in_billing_account: true、例: auなどauPayカード払いになっているもの）は、親カード（auPAYカード等）でまとめて支払われるため、個別の未払い負債として計上・督促・未払い一覧に記載しないでください。親カードが支払済み（paid: true）であれば、その含まれる負債も支払い処理済みとして扱い、「期限超過」「未払い」として扱ってはいけません。個別の未払い負債・未払い支出として言及するのは直接支払う対象（is_direct_cashflow_target: true かつ paid: false、unpaid_direct_payments に含まれるもの）のみとしてください。支払済み（paid: true）の負債（auPayカードなど）はすでに今月分の引き落とし・支払いが完了しています。支払済みの負債を「未払い」「期限超過」として扱ったり、支払うよう督促してはいけません。「auPayカードは今月分引落済みです」のように支払完了した事実としてのみ言及してください。受取済み（received: true）の給与・収入を「未受取」「期限超過」「未着金」として扱ったり、今日着金しているか確認するよう督促してはいけません。また、予定日が今日より未来の収入について、今日入金・着金を確認するよう指示してはいけません。今月支払うべき額には推定最低支払額ではなく「今月支払予定額（scheduled_payment_amount）」を用い、解約済みサブスク（金額0円または非アクティブ）を「サブスク地獄」「未払支出」と言及してはいけません。負債の年利（annual_rate）や負債総額は、過去の記憶ではなく必ずペイロード内の確定値（annual_rate, balance）を採用してください。現在値と履歴が矛盾する場合は必ず現在値を採用してください。',
       '証拠区分ルール: 残高差分からの新規借入は推定であり、取引明細未照合なら新規借入・誓約違反を断定しないでください。未受取の入金予定は未入金の証拠ではありません。予定日を過ぎても自動的に受取済みとはみなしません。received: false は受取状況の記録が未確認であることとして説明してください。予定と実績の対象期間・金額を照合するよう案内し、受取済みへの変更を断定的に要求しないでください。履歴は前回の記録として日付を示し、月が異なると確認できない限り先月と呼ばないでください。完済目標の月額は返済総額か追加額かを区別し、最低返済額への上乗せを勝手に解釈しないでください。',
       '履歴利用ルール: previous_ai_analyses がある場合は、各 metrics_snapshot（純資産・未払い合計・使用可能額）の数値と今回の現在値を比較し、「前回比 純資産○円」「未払い合計が△円減/増」のように差分（改善点・悪化点・据え置き点）を述べてください。過去の本文や言い回しを引用・再掲するのではなく、必ず今回の現在値を主語にして書いてください。',
       '日々の行動ルール: daily_todo がある場合は、金銭の負債と同じ熱量で「行動の借金」にも言及してください。carried_over（繰り越したタスク）は具体的なタイトルと経過日数を示し、実行可能な次の一歩を提案してください。繰り越しを人格や能力の問題と決めつけないでください。active_streak_days が続いていれば必ず褒め、recent_days のこなした実績を根拠に「この調子」と背中を押してください。today_pending が残っていれば寝る前にやり切るよう促してください。daily_todo が無い、または空のときは行動の借金には触れず、金銭面の助言に集中してください（存在しない実績を捏造しないこと）。',
@@ -763,6 +763,20 @@ class AssetManagementAiSummaryService {
           .toList(growable: false),
       'cashflow_rows':
           workbook.cashflowRows.map(_cashflowRowToJson).toList(growable: false),
+      'unpaid_direct_payments': workbook.cashflowRows
+          .where(
+            (row) => row.isPayment && row.isDirectCashflowTarget && !row.paid,
+          )
+          .map(
+            (row) => <String, dynamic>{
+              'name': row.accountName,
+              'amount': row.paymentAmount,
+              'payment_day': row.paymentDay,
+              'payment_date': row.paymentDate.toIso8601String(),
+              'source_account_name': row.paymentSourceAccountName,
+            },
+          )
+          .toList(growable: false),
       'income_plans':
           workbook.incomePlans.map(_incomePlanToJson).toList(growable: false),
       'transfer_tasks': workbook.transferTasks
@@ -1486,7 +1500,19 @@ class AssetManagementAiSummaryService {
         }
       }
     }
-    for (final row in workbook.currentDebtRows.where((row) => row.paid)) {
+    final effectivelyPaidRows = workbook.currentDebtRows.where((row) {
+      if (row.paid) return true;
+      if (row.includedInBillingAccount && row.billingAccountId != null) {
+        final host = workbook.currentDebtRows.firstWhere(
+          (r) =>
+              r.id == row.billingAccountId || r.name == row.billingAccountName,
+          orElse: () => row,
+        );
+        return host != row && host.paid;
+      }
+      return false;
+    });
+    for (final row in effectivelyPaidRows) {
       for (final segment in segments) {
         if (!segment.contains(row.name)) continue;
         // Attribute a paid marker only within the same sentence/clause, without
@@ -1561,7 +1587,11 @@ class AssetManagementAiSummaryService {
         }
 
         if (isUrged) {
-          errors.add('${row.name}を支払済みなのに督促');
+          errors.add(
+            row.paid
+                ? '${row.name}を支払済みなのに督促'
+                : '${row.name}は請求カードが支払済みなのに督促',
+          );
           break;
         }
       }
