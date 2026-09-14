@@ -4,6 +4,8 @@ import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_management_egress_policy.dart';
+import 'package:my_web_app/services/mirror_tombstone_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef AssetLiabilityUserIdProvider = String? Function();
@@ -531,6 +533,20 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     this.onSyncError,
   });
 
+  /// 削除済み「定期収入テンプレート」IDのトゥームストーン。
+  ///
+  /// [saveRecurringIncomeTemplates] が空リスト保存を fire-and-forget
+  /// (`unawaited`) で呼ばれた直後に [loadRecurringIncomeTemplates] が走ると、
+  /// ローカルの削除がリモートへまだ伝播していない状態で「ローカルが空 = 未同期
+  /// なのでリモートを信頼して復元する」分岐に入り、消したはずのテンプレートが
+  /// 復活してしまう(#毎日給料450,000円の重複予定が再発するバグ)。
+  /// [AssetExpectedInflowStore] と同じ [MirrorTombstoneStore] パターンで
+  /// 「一度消したID」を記憶し、リモート復元候補から除外する。
+  MirrorTombstoneStore get _recurringIncomeTemplateTombstones =>
+      const MirrorTombstoneStore(
+        storageKey: 'asset_recurring_income_template_deleted_ids_v1',
+      );
+
   @override
   bool get supabaseSyncEnabled => syncEnabled;
 
@@ -827,8 +843,31 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
 
     if (local.isEmpty) {
-      await localRepository.saveRecurringIncomeTemplates(remoteTemplates);
-      return remoteTemplates;
+      // ローカルが空でも「未同期の初回端末」と「全件を明示削除した直後」の
+      // 区別がつかない。後者をトゥームストーンで除外してから復元する
+      // (#part285と同じ対策。詳細は _recurringIncomeTemplateTombstones)。
+      final prefs = await SharedPreferences.getInstance();
+      final deletedIds = _recurringIncomeTemplateTombstones.activeIds(prefs);
+      final restorable = deletedIds.isEmpty
+          ? remoteTemplates
+          : remoteTemplates
+              .where((template) => !deletedIds.contains(template.id))
+              .toList(growable: false);
+      if (restorable.isEmpty) {
+        // 復元候補が全滅 = リモートの残存分はすべて削除済み。空状態が意図的
+        // だとリモートにも伝え、次回以降の復元試行そのものを止める。
+        if (supabaseWritesEnabled) {
+          await _tryRemote(
+            () => remote.saveRecurringIncomeTemplates(
+              userId: userId,
+              templates: const <AssetLiabilityRecurringIncomeTemplate>[],
+            ),
+          );
+        }
+        return local;
+      }
+      await localRepository.saveRecurringIncomeTemplates(restorable);
+      return restorable;
     }
 
     return local;
@@ -838,6 +877,16 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   Future<void> saveRecurringIncomeTemplates(
     List<AssetLiabilityRecurringIncomeTemplate> templates,
   ) async {
+    final previous = await localRepository.loadRecurringIncomeTemplates();
+    final keptIds = templates.map((template) => template.id).toSet();
+    final removedIds = previous
+        .map((template) => template.id)
+        .where((id) => !keptIds.contains(id));
+    final prefs = await SharedPreferences.getInstance();
+    for (final id in removedIds) {
+      await _recurringIncomeTemplateTombstones.addId(prefs, id);
+    }
+
     await localRepository.saveRecurringIncomeTemplates(templates);
     final remote = _remoteOrNull();
     final userId = _userIdOrNull();
