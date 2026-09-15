@@ -331,7 +331,9 @@ void main() {
       expect(decoded.map((c) => c.id), ['fc_denki']);
     });
 
-    test('normalizeCost migrates legacy Claude subscription to Claude Pro 3,000 yen', () {
+    test(
+        'normalizeCost migrates legacy Claude subscription to Claude Pro 3,000 yen',
+        () {
       const legacy = AssetRecurringFixedCost(
         id: 'card_statement_claude_ai_subscription',
         name: 'Claude AI SUBSCRIPTION',
@@ -355,13 +357,16 @@ void main() {
         paymentDay: 20,
         category: AssetRecurringFixedCostCategory.subscription,
       );
-      final chatGptNormalized = AssetRecurringFixedCostStore.normalizeCost(chatGpt);
+      final chatGptNormalized =
+          AssetRecurringFixedCostStore.normalizeCost(chatGpt);
       expect(chatGptNormalized.name, 'ChatGPT Pro 20s');
       expect(chatGptNormalized.amount, 30000);
     });
 
-    test('decodeMirrorValue automatically migrates legacy Claude subscription', () {
-      final decoded = AssetRecurringFixedCostStore.decodeMirrorValue(<String, dynamic>{
+    test('decodeMirrorValue automatically migrates legacy Claude subscription',
+        () {
+      final decoded =
+          AssetRecurringFixedCostStore.decodeMirrorValue(<String, dynamic>{
         'claude_sub': <String, dynamic>{
           'name': 'Claude AI SUBSCRIPTION',
           'amount': 36418,
