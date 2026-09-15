@@ -38,14 +38,34 @@ class AssetSalaryReconciliationService {
       return List<AssetLiabilityIncomePlan>.from(monthlyIncomePlans);
     }
 
+    final targetCycleMonth = baseDate != null
+        ? AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+            baseDate,
+            salaryDay: salaryDay,
+          )
+        : null;
+
     final result = <AssetLiabilityIncomePlan>[];
     final reconciledPayslipDates = <String>{};
 
     for (final plan in monthlyIncomePlans) {
+      if (targetCycleMonth != null && _isSalaryPlan(plan)) {
+        final planCycleMonth =
+            AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+          plan.date,
+          salaryDay: salaryDay,
+        );
+        if (planCycleMonth != targetCycleMonth) {
+          // 既存データ（永続化データ）に混入している過去月・将来月の給与プランを除外する。
+          continue;
+        }
+      }
+
       final matchingPayslip = _findMatchingPayslip(
         plan: plan,
         confirmedPayslips: confirmedPayslips,
         salaryDay: salaryDay,
+        targetCycleMonth: targetCycleMonth,
       );
 
       if (matchingPayslip == null) {
@@ -83,13 +103,6 @@ class AssetSalaryReconciliationService {
 
     // 収入予定に給料エントリが全く存在しない給与明細があれば、受取済み収入として補完する。
     // baseDate が指定されている場合は当給与サイクルの給与明細のみを対象とし、過去月・将来月の混入を防ぐ。
-    final targetCycleMonth = baseDate != null
-        ? AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
-            baseDate,
-            salaryDay: salaryDay,
-          )
-        : null;
-
     for (final payslip in confirmedPayslips) {
       if (targetCycleMonth != null) {
         final payslipCycleMonth =
@@ -169,14 +182,35 @@ class AssetSalaryReconciliationService {
     return list;
   }
 
+  static bool _isSalaryPlan(AssetLiabilityIncomePlan plan) {
+    if (plan.id.startsWith('payslip_')) return true;
+    final clean = _cleanLabel(plan.name);
+    return clean.contains('給料') ||
+        clean.contains('給与') ||
+        clean.contains('手当') ||
+        clean.contains('salary');
+  }
+
   static _ConfirmedSalaryPayslip? _findMatchingPayslip({
     required AssetLiabilityIncomePlan plan,
     required List<_ConfirmedSalaryPayslip> confirmedPayslips,
     required int salaryDay,
+    DateTime? targetCycleMonth,
   }) {
     final cleanPlanName = _cleanLabel(plan.name);
 
     for (final payslip in confirmedPayslips) {
+      if (targetCycleMonth != null) {
+        final payslipCycleMonth =
+            AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+          payslip.payDate,
+          salaryDay: salaryDay,
+        );
+        if (payslipCycleMonth != targetCycleMonth) {
+          continue;
+        }
+      }
+
       final sameDate = _dateKey(plan.date) == _dateKey(payslip.payDate);
       final sameCycle = AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
             plan.date,
