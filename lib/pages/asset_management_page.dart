@@ -11265,8 +11265,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         hasLocal: hasLocal,
         mirrorUpdatedAt: mirrorUpdatedAt,
       );
-      final merged = Map<String, AssetRecurringFixedCost>.from(localBefore);
-      var changed = false;
+      final normalizedLocal = <String, AssetRecurringFixedCost>{
+        for (final entry in localBefore.entries)
+          entry.key: AssetRecurringFixedCostStore.normalizeCost(entry.value),
+      };
+      final merged = Map<String, AssetRecurringFixedCost>.from(normalizedLocal);
+      var changed = localBefore.entries.any(
+        (entry) => normalizedLocal[entry.key] != entry.value,
+      );
       // 削除トゥームストーン済み id はローカルからも除く (clear 伝播 / 復活防止)。
       merged.removeWhere((key, _) {
         if (tombstoned.contains(key)) {
@@ -11310,12 +11316,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
       // ローカルにあってサーバに無い id は、マージ結果をサーバへバックフィルし、
-      // サーバを全端末の和集合に保つ。
+      // サーバを全端末の和集合に保つ。レガシー固定費の自動正規化が発生した場合もサーバへ同期する。
       final localHasExtra = localBefore.keys.any(
         (key) => !tombstoned.contains(key) && !serverConfigs.containsKey(key),
       );
       final serverHasTombstoned = serverConfigs.keys.any(tombstoned.contains);
-      if ((localHasExtra || serverHasTombstoned) && debugMirror == null) {
+      final hasNormalizedUpdate = localBefore.entries.any(
+            (entry) =>
+                AssetRecurringFixedCostStore.normalizeCost(entry.value) !=
+                entry.value,
+          ) ||
+          serverConfigs.values.any(
+            (cost) => AssetRecurringFixedCostStore.normalizeCost(cost) != cost,
+          );
+      if ((localHasExtra || serverHasTombstoned || hasNormalizedUpdate) &&
+          debugMirror == null) {
         unawaited(_mirrorRecurringFixedCosts());
       }
     } catch (e) {
