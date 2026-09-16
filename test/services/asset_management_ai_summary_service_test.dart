@@ -202,6 +202,10 @@ void main() {
       expect(message.contains('-7261960'), true);
       expect(message.contains('現在データ優先ルール'), true);
       expect(message.contains('履歴利用ルール'), true);
+      // 借入合計（専門窓口案内用・固定費除く）と負債総額（確定値）の混同を
+      // AIに言い換えさせないための明示ルールが含まれること。
+      expect(message.contains('借入合計'), true);
+      expect(message.contains('負債総額'), true);
     });
 
     test(
