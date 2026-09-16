@@ -1534,6 +1534,17 @@ class AssetManagementAiSummaryService {
         });
         if (isMarkedPaid) continue;
 
+        // いずれかの負債名が「〜のようなカードは」等、一般的な運用アドバイスの
+        // 例示として言及されているだけの場合は、当該負債への個別の督促・未払い
+        // 主張とはみなさない（本日時点の支払状況の断定ではないため）。row.name
+        // だけでなく全負債名を対象にするのは、子負債名（例: 'au'）が親カード名
+        // （例: 'auPayカード'）の部分文字列であるケースを取りこぼさないため。
+        final exemplarReferencePattern = RegExp(
+          '(?:${allDebtNames.map(RegExp.escape).join('|')})'
+          '(?:の(?:ような|ように)|など|等(?:の|は|が)?)',
+        );
+        if (exemplarReferencePattern.hasMatch(segment)) continue;
+
         // row.name 自体への督促・未払い判定。
         // 「今月未払い合計」や別の未払い項目への言及ではなく、
         // 当該の支払済み負債が未払い・督促対象として記述されているかを検証する。
