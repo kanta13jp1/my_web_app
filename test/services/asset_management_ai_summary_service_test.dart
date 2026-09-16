@@ -861,6 +861,46 @@ void main() {
     });
 
     test(
+        'accepts an AI summary that explains a paid debt was covered via a '
+        'different payment method using 完了/とはなりません phrasing', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'au': -27395,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        paidAccountNames: const <String>{'au'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は72,605円、負債合計は27,395円です。\n'
+                'なお、auの通信費27,395円はauPAYカード払いとして処理され、'
+                'auPAYカードの支払いは今月既に完了しておりますので、'
+                '個別の未払いとはなりません。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(result.errorMessage, isNull);
+    });
+
+    test(
         'rejects an AI summary when a received salary is claimed to be '
         'unreceived or urged for deposit check', () async {
       const planner = AssetLiabilityPlanningService();
