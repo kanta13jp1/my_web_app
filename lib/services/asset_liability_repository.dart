@@ -1135,10 +1135,29 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           skippedRemoteWrites += syncData.localTemplates.length;
         }
       } else if (syncData.remoteTemplates?.isNotEmpty ?? false) {
-        await localRepository.saveRecurringIncomeTemplates(
-          syncData.remoteTemplates!,
-        );
-        restored++;
+        // ローカルが空でも「未同期の初回端末」と「全件を明示削除した直後」の
+        // 区別がつかない。手動同期でも自動読み込みと同じくトゥームストーンで
+        // 除外してから復元する (loadRecurringIncomeTemplates と同じ対策)。
+        final prefs = await SharedPreferences.getInstance();
+        final deletedIds = _recurringIncomeTemplateTombstones.activeIds(prefs);
+        final restorableTemplates = deletedIds.isEmpty
+            ? syncData.remoteTemplates!
+            : syncData.remoteTemplates!
+                .where((template) => !deletedIds.contains(template.id))
+                .toList(growable: false);
+        if (restorableTemplates.isNotEmpty) {
+          await localRepository.saveRecurringIncomeTemplates(
+            restorableTemplates,
+          );
+          restored++;
+        } else if (writesEnabled) {
+          // 復元候補が全滅 = リモートの残存分はすべて削除済み。空状態を
+          // リモートにも伝え、次回以降の手動同期でも復元されないようにする。
+          await remote.saveRecurringIncomeTemplates(
+            userId: userId,
+            templates: const <AssetLiabilityRecurringIncomeTemplate>[],
+          );
+        }
       }
 
       if (syncData.localSnapshots.isNotEmpty) {
