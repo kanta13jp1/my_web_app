@@ -787,6 +787,85 @@ void main() {
     });
 
     test(
+        'accepts general revolving-payment advice about a paid card without '
+        'exemplar framing (no のような/のように)', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 85266,
+          'auPayカード': -505608,
+          'au': -27395,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        paidAccountNames: const <String>{'auPayカード'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は-447,737円、負債合計は533,003円です。\n'
+                'auPayカードは今月分引落完了済みです。\n'
+                'auPayカードの新規利用分は毎月25日に全額を上乗せして払うべきです。',
+            'provider': 'gemini',
+          },
+        ),
+        now: () => DateTime(2026, 9, 14, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    test(
+        'accepts an AI summary that urges payment of an unregistered '
+        'subscription funded via a card that is itself already paid this '
+        'month', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 85266,
+          'PayPayカード': -3000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        paidAccountNames: const <String>{'PayPayカード'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は82,266円、負債合計は3,000円です。\n'
+                'PayPayカードは今月分引落完了済みです。\n'
+                'PayPayカードで支払われる@tamakiyuichiroさんのサブスクリプション'
+                '（100円）が未払いのため、PayPayカードで早急に支払うべきです。',
+            'provider': 'gemini',
+          },
+        ),
+        now: () => DateTime(2026, 9, 14, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+    });
+
+    test(
         'accepts an AI summary explaining child debt (au) is included in paid auPay card',
         () async {
       const planner = AssetLiabilityPlanningService();

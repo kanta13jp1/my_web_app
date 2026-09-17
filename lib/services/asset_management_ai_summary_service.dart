@@ -1545,6 +1545,22 @@ class AssetManagementAiSummaryService {
         );
         if (exemplarReferencePattern.hasMatch(segment)) continue;
 
+        // 「新規利用分」（今後発生する利用分）への言及は、既存残高が今すぐ
+        // 未払いだという主張ではなく、今後の運用ルールの説明であるため除外。
+        final futureUsagePattern = RegExp(
+          '(?:${allDebtNames.map(RegExp.escape).join('|')})の?新規利用分',
+        );
+        if (futureUsagePattern.hasMatch(segment)) continue;
+
+        // 負債名の直後が助詞「で」（〜を使って、の意）の場合、その負債自体が
+        // 未払いだと主張しているのではなく、別の支払い（未登録のサブスク等）
+        // の決済手段として言及されているだけの可能性が高いため除外する。
+        // 「は/が/を」等、負債自体を主語・目的語とする助詞は対象外。
+        final instrumentalReferencePattern = RegExp(
+          '(?:${allDebtNames.map(RegExp.escape).join('|')})で',
+        );
+        if (instrumentalReferencePattern.hasMatch(segment)) continue;
+
         // row.name 自体への督促・未払い判定。
         // 「今月未払い合計」や別の未払い項目への言及ではなく、
         // 当該の支払済み負債が未払い・督促対象として記述されているかを検証する。
