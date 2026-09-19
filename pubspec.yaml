@@ -47,7 +47,6 @@ dependencies:
   package_info_plus: ^8.0.0        # アプリ情報（バージョン等）
   uuid: ^4.6.0                     # UUID生成
   image_picker: ^1.2.3
-  google_generative_ai: ^0.4.7
   confetti: ^0.8.0
   audioplayers: 6.7.1
   table_calendar: ^3.2.1

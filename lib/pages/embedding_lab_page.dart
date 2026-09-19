@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EmbeddingLabPage extends StatefulWidget {
   const EmbeddingLabPage({super.key});
@@ -12,8 +10,6 @@ class EmbeddingLabPage extends StatefulWidget {
 }
 
 class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
-  static const String _modelName = 'models/gemini-embedding-001';
-
   // Single embedding mode
   final TextEditingController _inputController = TextEditingController();
   String _singleResult = '';
@@ -26,13 +22,6 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
 
   bool _isLoading = false;
   int _tabIndex = 0; // 0=single, 1=similarity
-  String? _apiKey;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadApiKey();
-  }
 
   @override
   void dispose() {
@@ -42,47 +31,19 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
     super.dispose();
   }
 
-  Future<void> _loadApiKey() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    setState(() {
-      _apiKey = prefs.getString('gemini_api_key');
-    });
-  }
-
   Future<List<double>> _fetchEmbedding(String text) async {
-    final url = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/$_modelName:embedContent',
+    final response = await Supabase.instance.client.functions.invoke(
+      'ai-hub',
+      body: {'action': 'provider.embed', 'text': text},
     );
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': _apiKey!,
-      },
-      body: jsonEncode({
-        'content': {
-          'parts': [
-            {'text': text},
-          ],
-        },
-      }),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('API Error: ${response.statusCode}\n${response.body}');
-    }
-
-    final Map<String, dynamic> data =
-        jsonDecode(response.body) as Map<String, dynamic>;
+    final data = Map<String, dynamic>.from(response.data as Map);
     final embeddingData = data['embedding'];
-    if (embeddingData is Map<String, dynamic> &&
-        embeddingData['values'] is List) {
-      return (embeddingData['values'] as List)
+    if (embeddingData is Map && embeddingData['values'] is List) {
+      return (embeddingData['values'] as List<dynamic>)
           .map((v) => (v as num).toDouble())
           .toList();
     }
-    return [];
+    throw const FormatException('Embedding response does not contain values.');
   }
 
   double _cosineSimilarity(List<double> a, List<double> b) {
@@ -113,7 +74,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
   }
 
   Future<void> _generateSingleEmbedding() async {
-    if (_apiKey == null || _inputController.text.trim().isEmpty) return;
+    if (_inputController.text.trim().isEmpty) return;
     setState(() {
       _isLoading = true;
       _singleResult = '';
@@ -143,7 +104,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
   Future<void> _compareSimilarity() async {
     final textA = _textAController.text.trim();
     final textB = _textBController.text.trim();
-    if (_apiKey == null || textA.isEmpty || textB.isEmpty) return;
+    if (textA.isEmpty || textB.isEmpty) return;
 
     setState(() {
       _isLoading = true;
@@ -284,9 +245,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: (_isLoading || _apiKey == null)
-                ? null
-                : _generateSingleEmbedding,
+            onPressed: _isLoading ? null : _generateSingleEmbedding,
             icon: _isLoading
                 ? const SizedBox(
                     width: 18,
@@ -299,19 +258,14 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                 : const Icon(Icons.memory),
             label: const Text('Embedding を生成'),
           ),
-          if (_apiKey == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 6),
-              child: Text(
-                '※ 設定画面で Gemini API キーを設定してください',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 12,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              'APIキーはサーバー側のSecretで管理されます。',
+              style: TextStyle(fontSize: 12, height: 1.5),
+              textAlign: TextAlign.center,
             ),
+          ),
           const SizedBox(height: 16),
           Expanded(
             child: Container(
@@ -394,8 +348,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed:
-                (_isLoading || _apiKey == null) ? null : _compareSimilarity,
+            onPressed: _isLoading ? null : _compareSimilarity,
             icon: _isLoading
                 ? const SizedBox(
                     width: 18,
@@ -411,19 +364,14 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
               backgroundColor: const Color(0xFF3D5AFE),
             ),
           ),
-          if (_apiKey == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 6),
-              child: Text(
-                '※ 設定画面で Gemini API キーを設定してください',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 12,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              'APIキーはサーバー側のSecretで管理されます。',
+              style: TextStyle(fontSize: 12, height: 1.5),
+              textAlign: TextAlign.center,
             ),
+          ),
           const SizedBox(height: 24),
           if (score != null) ...[
             Card(
