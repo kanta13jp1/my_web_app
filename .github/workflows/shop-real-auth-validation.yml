@@ -1,0 +1,108 @@
+name: Shop Real Auth Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/shop-real-auth-validation.yml
+      - scripts/ci/shop_real_auth/**
+      - playwright.shop-real-auth.config.ts
+      - test/e2e-real-auth/**
+      - lib/**
+      - supabase/migrations/**
+      - pubspec.lock
+      - package-lock.json
+  workflow_dispatch:
+
+permissions: {}
+concurrency:
+  group: shop-real-auth-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  isolated:
+    name: Actual Auth and RLS plus production product widgets
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    env:
+      E2E_BASE_URL: http://127.0.0.1:7357
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Validate fail-closed execution guards
+        run: python3 -B -m unittest discover -s scripts/ci/shop_real_auth -p test_guard.py
+      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+        with:
+          version: 2.84.2
+      - name: Create unique local Auth, PostgREST and PostgreSQL 17
+        run: python3 -B scripts/ci/shop_real_auth/run.py prepare
+      - name: Verify actual JWT and database access contracts
+        run: python3 -B scripts/ci/shop_real_auth/run.py api
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked app and browser dependencies
+        run: |
+          set -euo pipefail
+          flutter pub get
+          git diff --exit-code -- pubspec.lock
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Build unchanged application with isolated public key only
+        run: |
+          set -euo pipefail
+          dart format --output=none --set-exit-if-changed test/e2e-real-auth/app.dart
+          flutter build web --target=test/e2e-real-auth/app.dart --release --pwa-strategy=none \
+            --dart-define-from-file="$RUNNER_TEMP/hexciv-auth-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/web-defines.json"
+      - name: Serve real app only on runner loopback
+        run: |
+          set -euo pipefail
+          python3 scripts/flutter_spa_server.py --directory build/web --port 7357 > "$RUNNER_TEMP/shop-auth-server.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/shop-auth-server.pid"
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7357/shop/product?product_id=hexciv-win64 --output /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Real login, attribution continuation and purchaser review lifecycle
+        run: npx playwright test --config=playwright.shop-real-auth.config.ts
+      - name: Check evidence contains no credentials or session recordings
+        if: always()
+        id: evidence_guard
+        run: python3 -B scripts/ci/shop_real_auth/verify_evidence.py
+      - name: Stop owned server and isolated stack
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/shop-auth-server.pid" ]]; then
+            kill "$(cat "$RUNNER_TEMP/shop-auth-server.pid")" 2>/dev/null || true
+          fi
+          python3 -B scripts/ci/shop_real_auth/run.py stop
+      - name: Retain sanitized evidence only
+        if: always() && steps.evidence_guard.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: shop-real-auth-${{ github.run_id }}-${{ github.run_attempt }}
+          path: shop-real-auth-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Describe exact evidence limits
+        if: always()
+        run: |
+          {
+            echo '## Shop real Auth lane'
+            echo '- Actual temporary Auth JWTs + PostgREST/RLS + unchanged main.dart product/login/review widgets.'
+            echo '- Synthetic users/purchases only. No hosted project, actual email, Stripe, production migration or deployment.'
+            echo '- Browser requests may read renderer/font CDNs; other external browser traffic is blocked.'
+            echo '- Existing mocked HTTP, SQL, webhook and regression suites remain separate and unchanged.'
+            echo '- Test-only entrypoint exposes real signOut to interrupt an open editor; no token/event mocking.'
+            echo '- Not production P1, sales, OAuth/email-delivery, queued-login race, or webhook proof.'
+            echo "- Exact source: $GITHUB_SHA; run: $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          } >> "$GITHUB_STEP_SUMMARY"
