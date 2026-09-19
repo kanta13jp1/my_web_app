@@ -115,4 +115,41 @@ void main() {
     expect(roundTrip.goals.single.targetValue, 700);
     expect(roundTrip.officialEndorsements.recommendationCount, 9);
   });
+
+  test('official endorsement prefecture defaults the assembly breakdown to '
+      'zero when the source snapshot predates it', () {
+    final prefecture = OfficialEndorsementPrefecture.fromJson(
+      <String, dynamic>{
+        'prefecture': '東京',
+        'totalCount': 38,
+        'incumbentCount': 29,
+        'newcomerCount': 7,
+        'formerCount': 2,
+      },
+    );
+
+    expect(prefecture.prefecturalCount, 0);
+    expect(prefecture.municipalCount, 0);
+    expect(prefecture.hasAssemblyBreakdown, isFalse);
+    expect(prefecture.assemblyBreakdownLabel, isEmpty);
+  });
+
+  test('official endorsement prefecture surfaces the assembly breakdown', () {
+    final prefecture = OfficialEndorsementPrefecture.fromJson(
+      <String, dynamic>{
+        'prefecture': '埼玉',
+        'totalCount': 5,
+        'incumbentCount': 2,
+        'newcomerCount': 2,
+        'formerCount': 1,
+        'prefecturalCount': 1,
+        'municipalCount': 4,
+      },
+    );
+
+    expect(prefecture.hasAssemblyBreakdown, isTrue);
+    expect(prefecture.assemblyBreakdownLabel, '都道府県議1 / 市区町村議4');
+    expect(prefecture.toJson()['prefecturalCount'], 1);
+    expect(prefecture.toJson()['municipalCount'], 4);
+  });
 }
