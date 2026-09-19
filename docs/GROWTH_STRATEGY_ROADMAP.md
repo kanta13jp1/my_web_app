@@ -33580,3 +33580,10 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 ## 2026-09-12 Monthly paid-interest history (#5391)
 
 Implemented a server-first monthly paid-interest chart with explicit missing/partial states and same-scope reconciled comparisons. No production financial records were changed. Focused cloud validation is in progress; production release requires the Design accessibility audit and required CI. See [feature notes](ASSET_INTEREST_HISTORY.md).
+
+### daily-development セッション記録 (2026-09-16 / Claude Code Win版)
+
+- メインの作業チェックアウト `fix/ci-clean-analyzer` が origin/main から414コミット遅れ・未コミット変更86件 (09-08:276/79件→09-10:276/79件→今回:414/86件と悪化継続) の状態が3回連続で観測されたため、既定方針 (`feedback_scheduled_task_stale_branch_origin_main_authoritative` / `feedback_scheduled_task_worktree_landing_from_origin_main`) に従いそのブランチには一切触れず、origin/main から独立した worktree (`daily-dev-20260915` / ブランチ `daily-dev-20260915`) を作成して本セッションの成果物のみをそこから main へ直接 landing した。ブランチ自体の整理判断は今回も owner 待ちとして持ち越す。
+- 2026-09-08 に follow-up 切り出し済みだった `/money-forward` ページの偽OAuth実装 ([lib/pages/money_forward_page.dart](../lib/pages/money_forward_page.dart)) を修正。`mf.connect_url` は固定URL `/oauth/moneyforward` を返すだけで実際のOAuthコールバックはリポジトリ内に存在せず、`connected` は恒久的に false のままなのに「認証URLを取得しました。ブラウザで連携を完了してください」と成功したかのようなSnackBarを表示していた。ボタンを既存で実際に動く CSVインポート画面 (`/import`) への誘導に差し替え、成功を装う表示を「自動連携は準備中です」という正直な案内に変更した。バックエンドの実OAuth連携自体 (MoneyForward側API提携が必要) は財務データ領域のため今回も着手せず、人間レビュー前提の別対応として維持する。
+- 修正内容を `development_achievements` に記録した (本コミットで追加した migration `20260916161516_seed_achievements_daily_dev_20260916.sql`)。
+- 技術ブログ下書きパイプライン `docs/blog-drafts/` は前回確認時点で2030年分までキュー済みのため、本日も手動追加は見送った。

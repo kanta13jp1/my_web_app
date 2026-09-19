@@ -538,7 +538,7 @@ void main() {
     });
 
     test('protects high-interest loans as a distinct week step', () {
-      // モビット (年18% cardLoan) は高金利ローンとして最低額死守ステップに出る。
+      // モビット (年15% cardLoan) は高金利ローンとして最低額死守ステップに出る。
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
           'bank': 500000,
@@ -556,7 +556,7 @@ void main() {
         (step) => step.kind == AssetTriageStepKind.protectHighInterestLoan,
       );
       expect(loan.detail.contains('モビット'), isTrue);
-      expect(loan.detail.contains('18%'), isTrue);
+      expect(loan.detail.contains('15%'), isTrue);
       expect(loan.detail.contains('最低'), isTrue);
     });
 
