@@ -80,6 +80,32 @@ void main() {
       expect(report.isCompliant, isTrue);
       expect(report.zeroNewBorrowingAchieved, isTrue);
     });
+
+    test(
+      'does NOT flag unpaid loan rows as new borrowing when balance has not increased (e.g. 72,314 yen false positive bug)',
+      () {
+        // モビット 残高1,450,000円 (前月と同じ)、未返済、返済予定額40,000円、利息約18,000円
+        // 従前のバグでは (balance - prior) + payment - interest = 0 + 40000 - 18000 = 22,000円 が新規借入と誤検知されていた。
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 500000,
+            'モビット': -1450000,
+          },
+          baseDate: baseDate,
+          monthlyPaymentOverrides: const <String, double>{'モビット': 40000},
+        );
+        final id = debtId(workbook, 'モビット');
+
+        final report = monitor.evaluate(
+          workbook: workbook,
+          priorBalancesByAccountId: <String, double>{id: 1450000},
+        );
+
+        expect(report.newBorrowingViolations, isEmpty);
+        expect(report.zeroNewBorrowingAchieved, isTrue);
+        expect(report.totalNewBorrowing, 0.0);
+      },
+    );
   });
 
   group('AssetDebtDisciplineMonitor — 誓約② 新規利用分は25日に全額返済', () {

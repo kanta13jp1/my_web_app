@@ -1276,8 +1276,13 @@ class AssetLiabilityPlanningService {
       // リボ払いカードは最低返済額へ新規利用額を全額上乗せする。明細がある場合は
       // その合計が上乗せ額の正となるため、一括払い前提の不一致アラートは抑止し、
       // 内訳は revolvingBilling で説明する。
+      // また、アコムショッピング等のショッピング債務 (shoppingDebt) はリボ契約であり、
+      // 個別内訳と請求額の一致を前提とする一括払い照合の不一致アラートからは除外する。
       final revolvingBilling = billingRow?.revolvingBilling;
-      final isRevolving = revolvingBilling != null;
+      final isShoppingDebt =
+          billingRow?.kind == AssetLiabilityAccountKind.shoppingDebt ||
+          billingRow?.id == acomShoppingAccountId;
+      final isRevolving = revolvingBilling != null || isShoppingDebt;
       final alerts = <String>[];
       // アラートは「何がずれているか」しか伝えないため、対応する修正
       // アクション（何をすれば解消するか＋差分金額）を同時に算出する。
