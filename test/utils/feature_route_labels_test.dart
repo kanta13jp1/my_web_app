@@ -15,6 +15,7 @@ void main() {
         '入力チェックアシスタント',
       );
       expect(featureLabelForRoute('/custom-task-list'), 'AI カスタムタスクリスト');
+      expect(featureLabelForRoute('/live-captions'), 'ライブ多言語字幕');
     });
 
     test('未知ルートは slug を Title Case に整形してフォールバックする', () {
