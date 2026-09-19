@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-09-13",
+    "date": "2026-09-19",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-09-13T00:00:00Z",
+  "generatedAt": "2026-09-19T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -31,6 +31,162 @@
         "fix"
       ],
       "changes": [
+        {
+          "category": "fix",
+          "id": "pr-5385",
+          "links": [
+            {
+              "title": "PR #5385",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5385"
+            }
+          ],
+          "mergedAt": "2026-09-16T18:09:38Z",
+          "summary": "#5385 fix(asset-liability): exclude tombstoned recurring income templates from manual sync restore"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5435",
+          "links": [
+            {
+              "title": "PR #5435",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5435"
+            }
+          ],
+          "mergedAt": "2026-09-16T17:44:15Z",
+          "summary": "#5435 fix(asset-ai): exclude future-usage and instrumental mentions of paid debts from urging detection"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5434",
+          "links": [
+            {
+              "title": "PR #5434",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5434"
+            }
+          ],
+          "mergedAt": "2026-09-16T17:00:53Z",
+          "summary": "#5434 fix(asset-ai): exclude exemplar mentions of paid debts from urging detection"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5433",
+          "links": [
+            {
+              "title": "PR #5433",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5433"
+            }
+          ],
+          "mergedAt": "2026-09-15T12:29:57Z",
+          "summary": "#5433 fix(asset): migrate legacy Claude subscription to Claude Pro 3000 yen and sync mirror"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5432",
+          "links": [
+            {
+              "title": "PR #5432",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5432"
+            }
+          ],
+          "mergedAt": "2026-09-15T07:06:42Z",
+          "summary": "#5432 fix(asset): purge out-of-cycle legacy salary plans from monthly income plans"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5431",
+          "links": [
+            {
+              "title": "PR #5431",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5431"
+            }
+          ],
+          "mergedAt": "2026-09-14T18:01:53Z",
+          "summary": "#5431 fix(asset): provide unpaid breakdown, scope salary payslips, align acom shopping day to 26th, and exclude card-billed au"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5430",
+          "links": [
+            {
+              "title": "PR #5430",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5430"
+            }
+          ],
+          "mergedAt": "2026-09-14T15:36:55Z",
+          "summary": "#5430 fix(asset): resolve false positive paid debt urging grounding rejection for auPay card"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5429",
+          "links": [
+            {
+              "title": "PR #5429",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5429"
+            }
+          ],
+          "mergedAt": "2026-09-14T11:19:54Z",
+          "summary": "#5429 fix(asset): align acom default annual rates to 15% for card loan and 14.6% for shopping"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5428",
+          "links": [
+            {
+              "title": "PR #5428",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5428"
+            }
+          ],
+          "mergedAt": "2026-09-14T07:14:30Z",
+          "summary": "#5428 fix(asset): align mobit default annual rate to 15% and resolve ai summary rate grounding discrepancy"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5427",
+          "links": [
+            {
+              "title": "PR #5427",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5427"
+            }
+          ],
+          "mergedAt": "2026-09-14T02:13:42Z",
+          "summary": "#5427 fix(asset): reconcile income plans with confirmed salary payslips and eliminate ghost plans"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5384",
+          "links": [
+            {
+              "title": "PR #5384",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5384"
+            }
+          ],
+          "mergedAt": "2026-09-14T01:46:01Z",
+          "summary": "#5384 fix(asset-liability): stop deleted recurring income templates from resurrecting"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5378",
+          "links": [
+            {
+              "title": "PR #5378",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5378"
+            }
+          ],
+          "mergedAt": "2026-09-14T00:20:51Z",
+          "summary": "#5378 fix(asset-ai): eliminate false rejection for paid debts and past unreceived salary triage"
+        },
         {
           "category": "fix",
           "id": "pr-5419",
@@ -227,19 +383,6 @@
           "summary": "#5390 docs: define museum retention experiment (#5096)"
         },
         {
-          "category": "fix",
-          "id": "pr-5376",
-          "links": [
-            {
-              "title": "PR #5376",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5376"
-            }
-          ],
-          "mergedAt": "2026-09-11T11:14:03Z",
-          "summary": "#5376 fix(asset): リボ払い設定の入力欄を永続的なControllerに変更（フリーズ・入力無反応の一因を修正）"
-        },
-        {
           "category": "feature",
           "id": "pr-5379",
           "links": [
@@ -277,152 +420,9 @@
           ],
           "mergedAt": "2026-09-10T14:26:18Z",
           "summary": "#5381 fix(asset): 年利の手入力が保存されない問題を修正（証跡を任意化）"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5377",
-          "links": [
-            {
-              "title": "PR #5377",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5377"
-            }
-          ],
-          "mergedAt": "2026-09-09T09:49:09Z",
-          "summary": "#5377 fix(asset-ai): fix debt rate grounding false rejection and auto-reconcile salary"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5375",
-          "links": [
-            {
-              "title": "PR #5375",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5375"
-            }
-          ],
-          "mergedAt": "2026-09-09T02:08:27Z",
-          "summary": "#5375 fix(asset): reconcile past salary and guard AI on past debt schedule"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5371",
-          "links": [
-            {
-              "title": "PR #5371",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5371"
-            }
-          ],
-          "mergedAt": "2026-09-08T23:43:17Z",
-          "summary": "#5371 fix(asset): auto-reconcile salary income plans and guard AI against false unreceived deposit check"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5370",
-          "links": [
-            {
-              "title": "PR #5370",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5370"
-            }
-          ],
-          "mergedAt": "2026-09-08T22:16:30Z",
-          "summary": "#5370 fix(asset): segment debts in grounding check to prevent cross-debt false positives"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5369",
-          "links": [
-            {
-              "title": "PR #5369",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5369"
-            }
-          ],
-          "mergedAt": "2026-09-08T21:36:54Z",
-          "summary": "#5369 fix(asset-ai): 支払済みの否定文を督促と誤検知しないよう grounding チェックを修正"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5363",
-          "links": [
-            {
-              "title": "PR #5363",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5363"
-            }
-          ],
-          "mergedAt": "2026-09-07T03:36:32Z",
-          "summary": "#5363 deps: bump the flutter-dependencies group with 12 updates"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5362",
-          "links": [
-            {
-              "title": "PR #5362",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5362"
-            }
-          ],
-          "mergedAt": "2026-09-07T02:51:19Z",
-          "summary": "#5362 deps: bump the python-dependencies group with 8 updates"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5361",
-          "links": [
-            {
-              "title": "PR #5361",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5361"
-            }
-          ],
-          "mergedAt": "2026-09-07T02:46:44Z",
-          "summary": "#5361 deps: bump lefthook from 2.1.10 to 2.1.12 in the npm-dev-dependencies group"
-        },
-        {
-          "category": "automation",
-          "id": "pr-5360",
-          "links": [
-            {
-              "title": "PR #5360",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5360"
-            }
-          ],
-          "mergedAt": "2026-09-07T02:46:36Z",
-          "summary": "#5360 ci: bump the github-actions group across 1 directory with 3 updates"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5359",
-          "links": [
-            {
-              "title": "PR #5359",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5359"
-            }
-          ],
-          "mergedAt": "2026-09-06T23:59:06Z",
-          "summary": "#5359 feat(tiger): verify historical roles and enrich round 14"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5358",
-          "links": [
-            {
-              "title": "PR #5358",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5358"
-            }
-          ],
-          "mergedAt": "2026-09-06T18:42:56Z",
-          "summary": "#5358 fix(asset): distinguish credit limit warning copy and guard bulk confirmation (#5216)"
         }
       ],
-      "date": "2026-09-13",
+      "date": "2026-09-19",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,
