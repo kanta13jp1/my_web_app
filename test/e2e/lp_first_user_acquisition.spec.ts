@@ -159,21 +159,29 @@ test.describe('LP first-user acquisition', () => {
     await expect(trialResultCard).toBeVisible();
     if (testInfo.project.name === 'mobile-chrome') {
       await expect(
-        page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+        trialResultCard.getByRole('textbox', {
+          name: 'メールアドレス',
+          exact: true,
+        }),
       ).toHaveCount(0);
-      await page.getByRole('button', { name: /この提案を保存/ }).click();
+      await trialResultCard
+        .getByRole('button', { name: /この提案を保存/ })
+        .click();
     }
     await expect(
-      page.getByRole('button', {
+      trialResultCard.getByRole('button', {
         name: 'Googleで無料登録して引き継ぐ',
         exact: true,
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+      trialResultCard.getByRole('textbox', {
+        name: 'メールアドレス',
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', {
+      trialResultCard.getByRole('button', {
         name: '無料登録して提案を引き継ぐ',
         exact: true,
       }),
@@ -254,7 +262,7 @@ test.describe('LP first-user acquisition', () => {
     expect(browserIssues).toEqual([]);
   });
 
-  test('H03 control keeps recoverable authentication before the lower trial', async ({
+  test('H03 control keeps recovery and the no-signup trial available', async ({
     page,
   }) => {
     await openLanding(page, controlPath);
@@ -277,10 +285,10 @@ test.describe('LP first-user acquisition', () => {
     await expect(lowerTrial).toBeVisible();
     await expect(
       page.getByRole('textbox', {
-      name: '例: 今日いちばん詰まっていることを簡単に書く',
-      exact: true,
-    }),
-    ).toHaveCount(0);
+        name: '例: 今日いちばん詰まっていることを簡単に書く',
+        exact: true,
+      }),
+    ).toBeVisible();
 
     const authBox = await googleAction.boundingBox();
     const trialBox = await lowerTrial.boundingBox();
@@ -313,7 +321,7 @@ async function completeGuidedTrial(page: Page) {
     await expect(quickAnswer).toBeVisible();
     await quickAnswer.click();
     const next = page.getByRole('button', {
-      name: step === 4 ? '送る内容を確認' : '次の質問へ',
+      name: step === 4 ? '内容を確認' : '次の質問へ',
       exact: true,
     });
     await expect(next).toBeEnabled();
