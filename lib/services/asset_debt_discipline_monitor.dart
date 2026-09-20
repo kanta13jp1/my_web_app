@@ -199,16 +199,14 @@ class AssetDebtDisciplineMonitor {
       // 前月比＋返済−利息で「今月の新規利用」を推定する。リボカードは明細から
       // 算出済みの newUsageAmount を優先し、カード以外だけを誓約①で判定する。
       // 【重要】返済日到来前の元金返済見込み額を誤検知しないよう、
-      // 実際に前月比で残高が増加している場合のみ、かつ未返済分は加算しない。
+      // 未返済の予定額は加算しない。返済済みなら残高不変でも再借入が相殺され得る。
       final prior = priorBalancesByAccountId[row.id];
       double? inferredNewUsage;
       if (prior != null) {
         hasPrior = true;
         final balanceDiff = balance - prior;
         final effectivePayment = row.paid ? payment : 0;
-        inferredNewUsage = balanceDiff <= newBorrowingThreshold
-            ? 0
-            : max(0, balanceDiff + effectivePayment - interest);
+        inferredNewUsage = max(0, balanceDiff + effectivePayment - interest);
         if (!isLumpSumCardKind(row.kind) &&
             inferredNewUsage > newBorrowingThreshold) {
           totalNew += inferredNewUsage;

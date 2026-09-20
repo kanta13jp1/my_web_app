@@ -1548,18 +1548,15 @@ class AssetManagementInsightPromptBuilder {
         '該当データが無い月だけ、そのカテゴリには触れなくて構いません。',
       )
       ..writeln(
-        'カード明細照合の扱い: カード明細のテキスト取込は、ユーザーが任意で行う補助機能です。'
-        '設定内訳と請求額の差分があること、または明細取込が未実施であることを、事実と相違する「未確認事項」として'
-        '利用者に督促・不安視させないでください。'
-        '特にアコムショッピングは定額リボ/分割契約であり、個別サブスク等の内訳合計と請求額が一致しないのはリボ弁済金が含まれるため正常です。'
-        'これを「カード明細の取り込みが未実施」「差分がある」として未確認事項に挙げないでください。'
-        'ファミペイ等の日常利用カードについても、明細未取込を不備や問題点として責めず、確認済みの請求予定額を尊重してください。',
+        '証拠の優先: 支払予定0円だけで返済なし・利息の元金組入れと断定しないでください。'
+        '残高差分は手数料・評価変動・訂正を含み得るため、新規借入や浪費の証拠ではありません。'
+        '引落確認待ちは未払い確定ではありません。支払実績と明細を照合する前に再支払いを指示しないでください。'
+        '生年月日・性格・運気を負債の原因として断定しないでください。',
       )
       ..writeln(
-        '借金しない宣言モニターの扱い: 本人はカードを財布から抜き、借入を停止しています。'
-        '新規借入推定が0円（または閾値以下）であれば「追加借入ゼロ」は確実に達成されています。'
-        '返済日前の残高不変状態を新規借入の疑いとして扱ったり、達成を「判定保留」「取引証拠の確認が必要」などと疑わないでください。'
-        '規律が守られていることを明確に認め、前向きに評価してください。',
+        '下記「借金しない宣言モニター」は本人の固い誓約です。違反（カード以外の追加借入・新規利用分の25日返済不足）があれば、'
+        '取引証拠を先に確認してください。下記の残高差分推定だけでは違反・達成のどちらも断定できません。'
+        '照合未完了なら判定保留と伝えてください。',
       )
       ..writeln()
       ..writeln('## 総合サマリー')
@@ -1956,20 +1953,22 @@ class AssetManagementInsightPromptBuilder {
     final buffer = StringBuffer()
       ..writeln(
         '- 誓約①「カード以外の追加借入をしない」: '
-        '${discipline.zeroNewBorrowingAchieved ? '達成（追加借入ゼロ）' : '違反あり'}'
+        '判定保留（取引証拠との照合が必要）'
         '${discipline.hasPriorMonthData ? '' : '（前月データ未蓄積のため判定保留）'}',
       )
       ..writeln(
         '- 誓約②「新規利用分は最低返済額へ上乗せし25日に全額返済」: '
-        '${discipline.newUsageRepaymentAchieved ? '達成' : '違反あり'}',
+        '判定保留（支払実績との照合が必要）',
       )
-      ..writeln('- 新規借入推定合計: ${_formatAmount(discipline.totalNewBorrowing)}')
+      ..writeln(
+        '- 未照合の残高差分推定合計: ${_formatAmount(discipline.totalNewBorrowing)}',
+      )
       ..writeln(
         '- リボ/分割で翌月へ繰り越す残高合計: '
         '${_formatAmount(discipline.totalCarriedOver)}',
       );
     if (discipline.isCompliant) {
-      buffer.writeln('- 今月は両誓約を守れています。AIはこの達成を明確に評価・後押ししてください。');
+      buffer.writeln('- 推定上の検出なし。これは両誓約の達成を証明するものではありません。');
       return buffer.toString();
     }
     for (final violation in discipline.allViolations) {
@@ -1980,16 +1979,15 @@ class AssetManagementInsightPromptBuilder {
           '金額:${_formatAmount(violation.amount)} / '
           '残高:${_formatAmount(violation.currentBalance)}',
         )
-        ..writeln('  - 問題点: ${violation.problem}')
-        ..writeln('  - 対応: ${violation.action}');
+        ..writeln('  - 対応: 明細・支払実績との照合が必要。違反として断定しない。');
     }
     return buffer.toString();
   }
 
   String _disciplineTypeLabel(AssetDebtDisciplineViolationType type) {
     return switch (type) {
-      AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
-      AssetDebtDisciplineViolationType.revolvingCard => '新規利用分の25日返済不足',
+      AssetDebtDisciplineViolationType.newBorrowing => '残高差分の要照合候補',
+      AssetDebtDisciplineViolationType.revolvingCard => '新規利用分の支払実績要照合',
     };
   }
 

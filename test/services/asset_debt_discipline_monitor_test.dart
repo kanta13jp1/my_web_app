@@ -99,6 +99,33 @@ void main() {
     );
   });
 
+  for (final currentBalance in [200000.0, 190000.0]) {
+    test('detects borrowing offset by a paid loan at $currentBalance', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'bank': 500000,
+          'モビット': -currentBalance,
+        },
+        baseDate: baseDate,
+        monthlyPaymentOverrides: const <String, double>{'モビット': 50000},
+        paidAccountNames: const <String>{'モビット'},
+        actualPaymentAmounts: const <String, double>{'モビット': 40000},
+      );
+      final row = workbook.debtMasterRows.firstWhere((r) => r.name == 'モビット');
+      expect(row.paid, isTrue);
+      final report = monitor.evaluate(
+        workbook: workbook,
+        priorBalancesByAccountId: <String, double>{row.id: 200000},
+      );
+      expect(report.newBorrowingViolations, hasLength(1));
+      expect(
+        report.totalNewBorrowing,
+        closeTo(currentBalance - 200000 + 40000 - row.monthlyInterestEstimate,
+            0.01),
+      );
+    });
+  }
+
   group('AssetDebtDisciplineMonitor — 誓約② 新規利用分は25日に全額返済', () {
     test('does not flag an existing revolving balance paid at the minimum', () {
       final workbook = planner.buildWorkbook(
