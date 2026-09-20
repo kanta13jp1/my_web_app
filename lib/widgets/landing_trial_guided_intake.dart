@@ -141,8 +141,8 @@ class _LandingTrialGuidedIntakeState extends State<LandingTrialGuidedIntake> {
                     onChanged: (_) => setState(() {}),
                     textInputAction:
                         _step == landingTrialDeepDiveQuestions.length - 1
-                        ? TextInputAction.done
-                        : TextInputAction.next,
+                            ? TextInputAction.done
+                            : TextInputAction.next,
                     onSubmitted: (_) => _goNext(),
                     decoration: InputDecoration(
                       hintText: landingTrialDeepDiveQuestions[_step].hint,
@@ -180,14 +180,14 @@ class _LandingTrialGuidedIntakeState extends State<LandingTrialGuidedIntake> {
                           key: const Key('landing_trial_guided_next'),
                           onPressed:
                               _answerControllers[_step].text.trim().isEmpty
-                              ? null
-                              : _goNext,
+                                  ? null
+                                  : _goNext,
                           icon: const Icon(Icons.arrow_forward, size: 18),
                           label: Text(
                             _step == landingTrialDeepDiveQuestions.length - 1
                                 ? widget.compact
-                                      ? '内容を確認'
-                                      : '送る内容を確認'
+                                    ? '内容を確認'
+                                    : '送る内容を確認'
                                 : '次の質問へ',
                           ),
                         ),

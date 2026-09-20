@@ -22,10 +22,10 @@ class HomeBillingNudge extends StatelessWidget {
     final usageLabel = isLoading
         ? '今月のAI使用量を確認中'
         : isUnlimited
-        ? '今月 無制限'
-        : status == null
-        ? '使用量を取得できませんでした'
-        : '今月 ${status.aiQueryCount}/${BillingStatus.freeAiQueryLimit}';
+            ? '今月 無制限'
+            : status == null
+                ? '使用量を取得できませんでした'
+                : '今月 ${status.aiQueryCount}/${BillingStatus.freeAiQueryLimit}';
 
     final usage = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,8 +84,9 @@ class HomeBillingNudge extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth < 520) {
-              final compactUsageLabel =
-                  !isLoading && status != null && !isUnlimited
+              final compactUsageLabel = !isLoading &&
+                      status != null &&
+                      !isUnlimited
                   ? '今月 ${status.aiQueryCount}/${BillingStatus.freeAiQueryLimit}（残り${status.remainingAiQueries}回）'
                   : usageLabel;
               return Row(
@@ -101,13 +102,17 @@ class HomeBillingNudge extends StatelessWidget {
                       children: [
                         Text(
                           'AI利用',
-                          style: Theme.of(context).textTheme.labelMedium
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelMedium
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         Text(
                           compactUsageLabel,
                           key: const Key('home_ai_usage_label'),
-                          style: Theme.of(context).textTheme.bodySmall
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                       ],
