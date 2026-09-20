@@ -26,14 +26,14 @@ void main() {
     expect(kochi.formerCount, 1);
   });
 
-  test('神奈川の最新公認掲載は39件で現職・新人の内訳を持つ', () {
+  test('神奈川の最新公認掲載は38件で現職・新人の内訳を持つ', () {
     final endorsement = dpjOfficialEndorsementFor('神奈川');
     expect(endorsement, isNotNull);
-    expect(endorsement!.totalCount, 39);
+    expect(endorsement!.totalCount, 38);
     expect(endorsement.incumbentCount, 11);
-    expect(endorsement.newcomerCount, 28);
+    expect(endorsement.newcomerCount, 27);
     expect(endorsement.formerCount, 0);
-    expect(endorsement.breakdownLabel, '現職11 / 新人28');
+    expect(endorsement.breakdownLabel, '現職11 / 新人27');
   });
 
   test('公認掲載の全国集計は現元新の内訳と一致する', () {
