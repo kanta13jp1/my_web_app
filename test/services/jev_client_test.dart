@@ -166,9 +166,13 @@ void main() {
       );
 
       expect(
-          decision.primaryExternalCandidate?.providerId, 'google_flash_lite');
+        decision.primaryExternalCandidate?.providerId,
+        'google_flash_lite',
+      );
       expect(
-          decision.primaryExternalCandidate?.modelId, 'gemini-2.5-flash-lite');
+        decision.primaryExternalCandidate?.modelId,
+        'gemini-2.5-flash-lite',
+      );
       expect(decision.jevClassification?.isHighConfidence, isTrue);
       expect(decision.reason, contains('jev classified as lightweight'));
     });
