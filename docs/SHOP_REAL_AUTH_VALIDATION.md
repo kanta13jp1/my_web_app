@@ -107,6 +107,12 @@ An obscured field is an HTML `input type=password`, which does not supply an
 implicit textbox role. Input operations have a 20-second bound; a failure records
 only the input phase and value-free element types, not typed credentials. Safe
 API path/method/status observations are attached on failure as well as success.
+The 2026-09-21 diagnostic pass also records password-label/type match counts,
+element types, static-label match flags, visibility/style/bounds, focus, and
+disabled/read-only state. It never records input values or arbitrary label text.
+Input exceptions retain only a closed category (non-unique locator/timeout/other),
+not the original error or credential-bearing call log. Diagnostics do not change
+the acceptance criteria or the normal input method.
 See [Playwright label locators](https://playwright.dev/docs/locators#locate-by-label)
 and [the pinned Flutter input implementation](https://github.com/flutter/flutter/blob/3.38.10/engine/src/flutter/lib/web_ui/lib/src/engine/semantics/text_field.dart#L320-L328).
 

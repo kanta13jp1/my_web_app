@@ -40,7 +40,8 @@ async function isolation(page: Page) {
     blocked.add(`${r.method()} ${u.origin}${u.pathname}`);
     return route.abort('blockedbyclient');
   });
-  const observed = { calls, blocked, pageErrors, phase: 'boot' };
+  const observed = { calls, blocked, pageErrors, phase: 'boot',
+    inputDiagnostics: [] as unknown[], inputFailure: 'none' };
   observations.set(page, observed);
   return observed;
 }
@@ -83,8 +84,14 @@ async function login(page: Page, name: string) {
     await page.getByLabel('メールアドレス', { exact: true }).fill(users[name].email, { timeout: 20_000 });
     field = 'password';
     observations.get(page)!.phase = 'password-input';
+    await passwordDiagnostics(page, 'before-password-fill');
     await page.getByLabel('パスワード', { exact: true }).fill(users[name].password, { timeout: 20_000 });
-  } catch {
+  } catch (error) {
+    // Classify only; never persist the error/call log, which may contain a value.
+    const message = error instanceof Error ? error.message : '';
+    observations.get(page)!.inputFailure = message.includes('strict mode violation') ? 'non-unique-locator' :
+      message.includes('Timeout') || message.includes('timeout') ? 'timeout' : 'other';
+    await passwordDiagnostics(page, 'input-failed');
     throw new Error(`Could not fill isolated ${field} input; credentials omitted`);
   }
   observations.get(page)!.phase = 'real-auth-submit';
@@ -99,6 +106,33 @@ async function login(page: Page, name: string) {
   expect(location.searchParams.get('utm_campaign')).toBe('real-auth-test');
   expect(location.searchParams.get('utm_content')).toBe('browser');
   observations.get(page)!.phase = 'product-after-login';
+}
+
+async function passwordDiagnostics(page: Page, stage: string) {
+  // Closed schema with no input values, raw DOM, error text, credentials or ids.
+  // Label text is represented only as known static token matches/length.
+  const inspect = (nodes: Element[]) => nodes.slice(0, 8).map(n => {
+    const el = n as HTMLInputElement;
+    const rect = n.getBoundingClientRect();
+    const css = getComputedStyle(n);
+    const label = n.getAttribute('aria-label') ?? '';
+    return { tag: n.tagName, type: n.getAttribute('type'), role: n.getAttribute('role'),
+      labelLength: label.length, exactPasswordLabel: label === 'パスワード',
+      includesPasswordLabel: label.includes('パスワード'),
+      includesShowLabel: label.includes('表示'), includesPasteLabel: label.includes('貼り付け'),
+      hasLabelledBy: n.hasAttribute('aria-labelledby'),
+      disabled: el.disabled === true, readOnly: el.readOnly === true,
+      focused: n === document.activeElement, connected: n.isConnected,
+      display: css.display, visibility: css.visibility, opacity: css.opacity,
+      pointerEvents: css.pointerEvents,
+      rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height } };
+  });
+  const passwordLabel = page.getByLabel('パスワード', { exact: true });
+  const typed = page.locator('input[type="password"]');
+  const snapshot = { stage, labelCount: await passwordLabel.count(), typedCount: await typed.count(),
+    labelNodes: await passwordLabel.evaluateAll(inspect),
+    typedNodes: await typed.evaluateAll(inspect) };
+  observations.get(page)!.inputDiagnostics.push(snapshot);
 }
 
 async function capture(page: Page, info: TestInfo, name: string) {
@@ -126,7 +160,8 @@ test.afterEach(async ({ page }, info) => {
   await info.attach('sanitized-api-observations', {
     contentType: 'application/json',
     body: JSON.stringify({ scope: 'Disposable actual Auth/REST; synthetic purchases; not production or payment proof',
-      route: page.url(), phase: observed.phase, inputs, calls: observed.calls,
+      route: page.url(), phase: observed.phase, inputs, inputDiagnostics: observed.inputDiagnostics,
+      inputFailure: observed.inputFailure, calls: observed.calls,
       blocked: [...observed.blocked], pageErrors: observed.pageErrors }),
   });
   observations.delete(page);
