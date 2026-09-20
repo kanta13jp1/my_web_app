@@ -120,9 +120,9 @@ test.describe('LP first-user acquisition', () => {
     expect(viewport).not.toBeNull();
     if (testInfo.project.name === 'mobile-chrome') {
       await expect(trialAction).toHaveCount(0);
-      await expect(
-        page.getByRole('button', { name: /この提案を保存/ }),
-      ).toBeVisible();
+      await expect(trialResultCard).toHaveAccessibleName(
+        /この提案を保存 必要なときだけ無料登録（カード不要）/,
+      );
       const resultBox = await trialResultCard.boundingBox();
       expect(resultBox).not.toBeNull();
       expect(resultBox!.y).toBeGreaterThanOrEqual(0);
@@ -164,9 +164,20 @@ test.describe('LP first-user acquisition', () => {
           exact: true,
         }),
       ).toHaveCount(0);
-      await trialResultCard
-        .getByRole('button', { name: /この提案を保存/ })
-        .click();
+      await expect(trialResultCard).toHaveAccessibleName(
+        /この提案を保存 必要なときだけ無料登録（カード不要）/,
+      );
+      const resultBox = await trialResultCard.boundingBox();
+      expect(resultBox).not.toBeNull();
+      await trialResultCard.click({
+        position: {
+          x: resultBox!.width / 2,
+          y: resultBox!.height * 0.72,
+        },
+      });
+      await expect(
+        page.getByText('この提案を登録後に引き継ぐ', { exact: true }),
+      ).toBeVisible();
     }
     await expect(
       trialResultCard.getByRole('button', {
@@ -327,9 +338,11 @@ async function completeGuidedTrial(page: Page) {
     await expect(next).toBeEnabled();
     await next.click();
   }
-  await expect(
-    page.getByText('AIに送る内容を確認', { exact: true }),
-  ).toBeVisible();
+  const reviewSummary = page.getByRole('textbox', {
+    name: /登録なしで試す AIに送る内容を確認.*5つの回答/,
+  });
+  await expect(reviewSummary).toBeVisible();
+  await expect(reviewSummary).toBeDisabled();
   const submit = page.getByRole('button', {
     name: /^(?:この内容で)?AIに提案してもらう$/,
     exact: true,
