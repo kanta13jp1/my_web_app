@@ -120,8 +120,10 @@ void main() {
       expect(report.newBorrowingViolations, hasLength(1));
       expect(
         report.totalNewBorrowing,
-        closeTo(currentBalance - 200000 + 40000 - row.monthlyInterestEstimate,
-            0.01),
+        closeTo(
+          currentBalance - 200000 + 40000 - row.monthlyInterestEstimate,
+          0.01,
+        ),
       );
     });
   }
