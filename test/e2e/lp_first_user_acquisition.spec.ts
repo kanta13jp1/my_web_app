@@ -176,9 +176,9 @@ test.describe('LP first-user acquisition', () => {
         resultBox!.x + resultBox!.width / 2,
         resultBox!.y + resultBox!.height * 0.72,
       );
-      await expect(
-        page.getByText('この提案を登録後に引き継ぐ', { exact: true }),
-      ).toBeVisible();
+      await expect(trialResultCard).toHaveAccessibleName(
+        /この提案を登録後に引き継ぐ.*パスワード・カード入力はありません。/,
+      );
     }
     await expect(
       trialResultCard.getByRole('button', {
