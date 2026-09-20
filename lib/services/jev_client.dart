@@ -82,6 +82,8 @@ class JevClassificationResult {
 /// Fail-Open（障害時継続）設計となっている。
 class JevClient {
   static const String defaultEndpoint = 'https://api.typesafe.ai/v1/classify';
+  static const String defaultLocalJevEndpoint =
+      'http://127.0.0.1:8080/v1/systemone';
   static const Duration defaultTimeout = Duration(milliseconds: 800);
 
   final String? apiKey;
@@ -92,14 +94,35 @@ class JevClient {
 
   JevClient({
     this.apiKey,
-    this.endpoint = defaultEndpoint,
+    String? endpoint,
     this.timeout = defaultTimeout,
     http.Client? httpClient,
-  })  : _client = httpClient ?? http.Client(),
+  })  : endpoint = endpoint ?? _resolveEndpoint(),
+        _client = httpClient ?? http.Client(),
         _shouldCloseClient = httpClient == null;
 
-  /// API キーが設定されているかどうか
-  bool get isConfigured => apiKey != null && apiKey!.trim().isNotEmpty;
+  static String _resolveEndpoint() {
+    const configuredEndpoint = String.fromEnvironment('JEV_ENDPOINT');
+    if (configuredEndpoint.isNotEmpty) {
+      return configuredEndpoint;
+    }
+    const useLocalJev = bool.fromEnvironment(
+      'USE_LOCAL_JEV',
+      defaultValue: false,
+    );
+    if (useLocalJev) {
+      return defaultLocalJevEndpoint;
+    }
+    return defaultEndpoint;
+  }
+
+  /// ローカルサーバー（LocalJev / 127.0.0.1 / localhost）を指しているかどうか
+  bool get isLocalMode =>
+      endpoint.contains('127.0.0.1') || endpoint.contains('localhost');
+
+  /// API キーが設定されているか、または認証不要なローカルモードであるか
+  bool get isConfigured =>
+      isLocalMode || (apiKey != null && apiKey!.trim().isNotEmpty);
 
   /// プロンプトと選択肢を渡して分類（スコアリング）を実行する。
   ///
@@ -123,16 +146,16 @@ class JevClient {
         'choices': choices.map((c) => c.toJson()).toList(growable: false),
       });
 
+      final headers = <String, String>{'Content-Type': 'application/json'};
+      if (apiKey != null && apiKey!.trim().isNotEmpty) {
+        headers['Authorization'] = 'Bearer ${apiKey!.trim()}';
+        headers['x-api-key'] = apiKey!.trim();
+      } else if (isLocalMode) {
+        headers['x-api-key'] = 'localjev';
+      }
+
       final response = await _client
-          .post(
-            Uri.parse(endpoint),
-            headers: <String, String>{
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ${apiKey!.trim()}',
-              'x-api-key': apiKey!.trim(),
-            },
-            body: payload,
-          )
+          .post(Uri.parse(endpoint), headers: headers, body: payload)
           .timeout(timeout);
 
       stopwatch.stop();
@@ -155,7 +178,9 @@ class JevClient {
           decoded['choice_id'] as String? ??
           '';
       final confidence = (decoded['confidence'] as num?)?.toDouble() ?? 0.0;
-      final rawScores = decoded['scores'] as Map<String, dynamic>? ?? {};
+      final rawScores = decoded['scores'] as Map<String, dynamic>? ??
+          decoded['probabilities'] as Map<String, dynamic>? ??
+          {};
 
       final scores = <String, double>{};
       for (final entry in rawScores.entries) {
