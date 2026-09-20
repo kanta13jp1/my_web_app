@@ -137,7 +137,10 @@ test.describe('LP first-user acquisition', () => {
       ).toBeLessThan(viewport!.height * 0.7);
     }
     await expect(
-      page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+      trialResultCard.getByRole('textbox', {
+        name: 'メールアドレス',
+        exact: true,
+      }),
     ).toHaveCount(0);
   });
 
@@ -169,12 +172,10 @@ test.describe('LP first-user acquisition', () => {
       );
       const resultBox = await trialResultCard.boundingBox();
       expect(resultBox).not.toBeNull();
-      await trialResultCard.click({
-        position: {
-          x: resultBox!.width / 2,
-          y: resultBox!.height * 0.72,
-        },
-      });
+      await page.mouse.click(
+        resultBox!.x + resultBox!.width / 2,
+        resultBox!.y + resultBox!.height * 0.72,
+      );
       await expect(
         page.getByText('この提案を登録後に引き継ぐ', { exact: true }),
       ).toBeVisible();
