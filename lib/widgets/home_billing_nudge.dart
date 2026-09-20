@@ -22,10 +22,10 @@ class HomeBillingNudge extends StatelessWidget {
     final usageLabel = isLoading
         ? '今月のAI使用量を確認中'
         : isUnlimited
-            ? '今月 無制限'
-            : status == null
-                ? '使用量を取得できませんでした'
-                : '今月 ${status.aiQueryCount}/${BillingStatus.freeAiQueryLimit}';
+        ? '今月 無制限'
+        : status == null
+        ? '使用量を取得できませんでした'
+        : '今月 ${status.aiQueryCount}/${BillingStatus.freeAiQueryLimit}';
 
     final usage = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,12 +84,47 @@ class HomeBillingNudge extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth < 520) {
+              final compactUsageLabel =
+                  !isLoading && status != null && !isUnlimited
+                  ? '今月 ${status.aiQueryCount}/${BillingStatus.freeAiQueryLimit}（残り${status.remainingAiQueries}回）'
+                  : usageLabel;
               return Row(
+                key: const Key('home_billing_compact'),
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(child: usage),
-                  const SizedBox(width: 12),
-                  billingChip,
+                  Icon(Icons.auto_awesome, size: 20, color: scheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'AI利用',
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          compactUsageLabel,
+                          key: const Key('home_ai_usage_label'),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    key: const Key('home_billing_upgrade_chip'),
+                    onPressed: onOpenBilling,
+                    icon: Icon(
+                      isUnlimited
+                          ? Icons.manage_accounts_outlined
+                          : Icons.upgrade,
+                      size: 17,
+                    ),
+                    label: Text(isUnlimited ? 'プラン' : '追加'),
+                  ),
                 ],
               );
             }

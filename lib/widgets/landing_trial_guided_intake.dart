@@ -104,6 +104,12 @@ class _LandingTrialGuidedIntakeState extends State<LandingTrialGuidedIntake> {
                       TextButton(
                         key: const Key('landing_trial_guided_cancel'),
                         onPressed: widget.onCancel,
+                        style: widget.compact
+                            ? TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                minimumSize: const Size(48, 40),
+                              )
+                            : null,
                         child: const Text('中止'),
                       ),
                     ],
@@ -127,14 +133,21 @@ class _LandingTrialGuidedIntakeState extends State<LandingTrialGuidedIntake> {
                     key: const Key('landing_trial_guided_answer'),
                     controller: _answerControllers[_step],
                     maxLength: 60,
-                    minLines: 2,
-                    maxLines: 3,
+                    minLines: widget.compact ? 1 : 2,
+                    maxLines: widget.compact ? 2 : 3,
+                    scrollPadding: EdgeInsets.only(
+                      bottom: widget.compact ? 280 : 120,
+                    ),
                     onChanged: (_) => setState(() {}),
-                    textInputAction: TextInputAction.done,
+                    textInputAction:
+                        _step == landingTrialDeepDiveQuestions.length - 1
+                        ? TextInputAction.done
+                        : TextInputAction.next,
                     onSubmitted: (_) => _goNext(),
                     decoration: InputDecoration(
                       hintText: landingTrialDeepDiveQuestions[_step].hint,
                       border: const OutlineInputBorder(),
+                      isDense: widget.compact,
                     ),
                   ),
                   Align(
@@ -144,7 +157,9 @@ class _LandingTrialGuidedIntakeState extends State<LandingTrialGuidedIntake> {
                       onPressed: _useQuickAnswer,
                       icon: const Icon(Icons.auto_awesome, size: 17),
                       label: Text(
-                        '迷ったら「${landingTrialDeepDiveQuestions[_step].quickAnswer}」',
+                        widget.compact
+                            ? '迷ったら: ${landingTrialDeepDiveQuestions[_step].quickAnswer}'
+                            : '迷ったら「${landingTrialDeepDiveQuestions[_step].quickAnswer}」',
                       ),
                     ),
                   ),
@@ -165,12 +180,14 @@ class _LandingTrialGuidedIntakeState extends State<LandingTrialGuidedIntake> {
                           key: const Key('landing_trial_guided_next'),
                           onPressed:
                               _answerControllers[_step].text.trim().isEmpty
-                                  ? null
-                                  : _goNext,
+                              ? null
+                              : _goNext,
                           icon: const Icon(Icons.arrow_forward, size: 18),
                           label: Text(
                             _step == landingTrialDeepDiveQuestions.length - 1
-                                ? '送る内容を確認'
+                                ? widget.compact
+                                      ? '内容を確認'
+                                      : '送る内容を確認'
                                 : '次の質問へ',
                           ),
                         ),
@@ -206,9 +223,9 @@ class _LandingTrialGuidedIntakeState extends State<LandingTrialGuidedIntake> {
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: widget.compact ? 8 : 12),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(widget.compact ? 10 : 12),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
@@ -219,31 +236,51 @@ class _LandingTrialGuidedIntakeState extends State<LandingTrialGuidedIntake> {
           child: SelectableText(
             prompt,
             key: const Key('landing_trial_generated_prompt'),
-            style: const TextStyle(fontSize: 12, height: 1.55),
+            style: TextStyle(
+              fontSize: widget.compact ? 13 : 12,
+              height: widget.compact ? 1.45 : 1.55,
+            ),
           ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                key: const Key('landing_trial_guided_review_back'),
-                onPressed: _goBack,
-                child: const Text('回答を直す'),
-              ),
+        if (widget.compact) ...[
+          FilledButton.icon(
+            key: const Key('landing_trial_guided_submit'),
+            onPressed: () => widget.onSubmit(prompt),
+            icon: const Icon(Icons.auto_awesome, size: 18),
+            label: const Text('AIに提案してもらう'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              flex: 2,
-              child: FilledButton.icon(
-                key: const Key('landing_trial_guided_submit'),
-                onPressed: () => widget.onSubmit(prompt),
-                icon: const Icon(Icons.auto_awesome, size: 18),
-                label: const Text('この内容でAIに提案してもらう'),
+          ),
+          const SizedBox(height: 4),
+          TextButton(
+            key: const Key('landing_trial_guided_review_back'),
+            onPressed: _goBack,
+            child: const Text('回答を直す'),
+          ),
+        ] else
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('landing_trial_guided_review_back'),
+                  onPressed: _goBack,
+                  child: const Text('回答を直す'),
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: FilledButton.icon(
+                  key: const Key('landing_trial_guided_submit'),
+                  onPressed: () => widget.onSubmit(prompt),
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('この内容でAIに提案してもらう'),
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }
