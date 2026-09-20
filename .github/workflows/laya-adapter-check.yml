@@ -11,10 +11,14 @@ on:
       - 'scripts/laya_system_one_server.py'
       - 'scripts/test_laya_system_one_server.py'
       - '.github/workflows/laya-adapter-check.yml'
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: laya-adapter-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   contract:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
