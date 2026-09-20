@@ -11,7 +11,10 @@ test.describe('LP first-user acquisition', () => {
   }) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialInput = page.getByRole('textbox', {
+      name: '例: 今日いちばん詰まっていることを簡単に書く',
+      exact: true,
+    });
     const trialAction = page.getByRole('button', {
       name: '今やる1件を試す',
       exact: true,
@@ -42,7 +45,10 @@ test.describe('LP first-user acquisition', () => {
   }) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialInput = page.getByRole('textbox', {
+      name: '例: 今日いちばん詰まっていることを簡単に書く',
+      exact: true,
+    });
     const sampleAction = page.getByRole('button', {
       name: 'この入力例でAIに提案させる',
       exact: true,
@@ -88,7 +94,10 @@ test.describe('LP first-user acquisition', () => {
   }, testInfo) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialInput = page.getByRole('textbox', {
+      name: '例: 今日いちばん詰まっていることを簡単に書く',
+      exact: true,
+    });
     const trialAction = page.getByRole('button', {
       name: '今やる1件を試す',
       exact: true,
@@ -104,7 +113,7 @@ test.describe('LP first-user acquisition', () => {
     await completeGuidedTrial(page);
 
     const trialResultCard = page.getByRole('group', {
-      name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+      name: /登録なしで試す.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
     const viewport = page.viewportSize();
@@ -145,7 +154,7 @@ test.describe('LP first-user acquisition', () => {
       .click();
 
     const trialResultCard = page.getByRole('group', {
-      name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+      name: /登録なしで試す.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
     if (testInfo.project.name === 'mobile-chrome') {
@@ -267,7 +276,10 @@ test.describe('LP first-user acquisition', () => {
     await expect(magicLinkAction).toBeVisible();
     await expect(lowerTrial).toBeVisible();
     await expect(
-      page.getByRole('textbox', { name: /登録なしで試す/ }),
+      page.getByRole('textbox', {
+      name: '例: 今日いちばん詰まっていることを簡単に書く',
+      exact: true,
+    }),
     ).toHaveCount(0);
 
     const authBox = await googleAction.boundingBox();
@@ -293,8 +305,8 @@ test.describe('LP first-user acquisition', () => {
 async function completeGuidedTrial(page: Page) {
   for (let step = 0; step < 5; step += 1) {
     await expect(
-      page.getByRole('group', {
-        name: new RegExp(`登録なしで試す:.*質問 ${step + 1} / 5`),
+      page.getByRole('textbox', {
+        name: new RegExp(`登録なしで試す.*質問 ${step + 1} / 5`),
       }),
     ).toBeVisible();
     const quickAnswer = page.getByRole('button', { name: /迷ったら/ });
@@ -308,12 +320,10 @@ async function completeGuidedTrial(page: Page) {
     await next.click();
   }
   await expect(
-    page.getByRole('group', {
-      name: /登録なしで試す:.*AIに送る内容を確認/,
-    }),
+    page.getByText('AIに送る内容を確認', { exact: true }),
   ).toBeVisible();
   const submit = page.getByRole('button', {
-    name: 'この内容でAIに提案してもらう',
+    name: /^(?:この内容で)?AIに提案してもらう$/,
     exact: true,
   });
   await expect(submit).toBeVisible();
