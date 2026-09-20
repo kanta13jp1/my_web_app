@@ -150,30 +150,33 @@ class JevClient {
     final stopwatch = Stopwatch()..start();
 
     try {
-      final payload = jsonEncode(_usesSystemOne
-          ? <String, dynamic>{
-              'model': 'jev-latest',
-              'state': input,
-              'questions': <String, dynamic>{
-                'classification': <String, dynamic>{
-                  'type': 'choice',
-                  'instructions': context != null && context.trim().isNotEmpty
-                      ? context
-                      : 'Classify the state using the supplied choices.',
-                  'criteria': <String, String>{
-                    for (final choice in choices)
-                      choice.id: choice.description.isEmpty
-                          ? choice.label
-                          : '${choice.label}: ${choice.description}',
+      final payload = jsonEncode(
+        _usesSystemOne
+            ? <String, dynamic>{
+                'model': 'jev-latest',
+                'state': input,
+                'questions': <String, dynamic>{
+                  'classification': <String, dynamic>{
+                    'type': 'choice',
+                    'instructions': context != null && context.trim().isNotEmpty
+                        ? context
+                        : 'Classify the state using the supplied choices.',
+                    'criteria': <String, String>{
+                      for (final choice in choices)
+                        choice.id: choice.description.isEmpty
+                            ? choice.label
+                            : '${choice.label}: ${choice.description}',
+                    },
                   },
                 },
+              }
+            : <String, dynamic>{
+                'input': input,
+                if (context != null && context.isNotEmpty) 'context': context,
+                'choices':
+                    choices.map((c) => c.toJson()).toList(growable: false),
               },
-            }
-          : <String, dynamic>{
-              'input': input,
-              if (context != null && context.isNotEmpty) 'context': context,
-              'choices': choices.map((c) => c.toJson()).toList(growable: false),
-            });
+      );
 
       final headers = <String, String>{'Content-Type': 'application/json'};
       if (apiKey != null && apiKey!.trim().isNotEmpty) {

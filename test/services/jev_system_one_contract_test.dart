@@ -33,7 +33,7 @@ void main() {
       });
       return http.Response(
         jsonEncode({
-          'answers': {'classification': answer()}
+          'answers': {'classification': answer()},
         }),
         200,
       );
@@ -61,24 +61,26 @@ void main() {
     {...answer(), 'confidence': 1.5},
     {
       ...answer(),
-      'probabilities': {'food': 0.75}
+      'probabilities': {'food': 0.75},
     },
     {
       ...answer(),
-      'probabilities': {'food': 0.75, 'unknown': 0.25}
+      'probabilities': {'food': 0.75, 'unknown': 0.25},
     },
     {
       ...answer(),
-      'probabilities': {'food': 0.1, 'travel': 0.1}
+      'probabilities': {'food': 0.1, 'travel': 0.1},
     },
   ]) {
     test('rejects invalid answer ${jsonEncode(invalid)}', () async {
-      final transport = MockClient((_) async => http.Response(
-            jsonEncode({
-              'answers': {'classification': invalid}
-            }),
-            200,
-          ));
+      final transport = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'answers': {'classification': invalid},
+          }),
+          200,
+        ),
+      );
       addTearDown(transport.close);
       final client = JevClient(
         endpoint: JevClient.defaultLocalJevEndpoint,
@@ -105,10 +107,11 @@ void main() {
     final transport = MockClient((_) async {
       await Future<void>.delayed(const Duration(milliseconds: 30));
       return http.Response(
-          jsonEncode({
-            'answers': {'classification': answer()}
-          }),
-          200);
+        jsonEncode({
+          'answers': {'classification': answer()},
+        }),
+        200,
+      );
     });
     addTearDown(transport.close);
     final client = JevClient(
