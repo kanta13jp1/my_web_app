@@ -33,19 +33,26 @@ void main() {
         expect(request.headers['x-api-key'], 'ts_live_mock_key');
 
         final body = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(body['input'], 'Format summary as bullets');
-        expect((body['choices'] as List).length, 3);
+        expect(body['state'], 'Format summary as bullets');
+        expect(body['model'], 'jev-latest');
+        final question = (body['questions'] as Map)['classification'] as Map;
+        expect((question['criteria'] as Map).length, 3);
 
         return http.Response(
           jsonEncode({
-            'best_choice_id': 'lightweight',
-            'confidence': 0.98,
-            'scores': {
-              'lightweight': 0.98,
-              'performance': 0.015,
-              'premium': 0.005,
+            'answers': {
+              'classification': {
+                'type': 'choice',
+                'choice': 'lightweight',
+                'confidence': 0.98,
+                'probabilities': {
+                  'lightweight': 0.98,
+                  'performance': 0.015,
+                  'premium': 0.005,
+                },
+                'latency_ms': 310,
+              },
             },
-            'latency_ms': 310,
           }),
           200,
           headers: {'content-type': 'application/json'},
@@ -77,14 +84,19 @@ void main() {
         final mockHttp = MockClient((request) async {
           return http.Response(
             jsonEncode({
-              'best_choice_id': 'premium',
-              'confidence': 0.38,
-              'scores': {
-                'lightweight': 0.30,
-                'performance': 0.32,
-                'premium': 0.38,
+              'answers': {
+                'classification': {
+                  'type': 'choice',
+                  'choice': 'premium',
+                  'confidence': 0.38,
+                  'probabilities': {
+                    'lightweight': 0.30,
+                    'performance': 0.32,
+                    'premium': 0.38,
+                  },
+                  'latency_ms': 420,
+                },
               },
-              'latency_ms': 420,
             }),
             200,
             headers: {'content-type': 'application/json'},
@@ -137,12 +149,17 @@ void main() {
         final mockHttp = MockClient((request) async {
           return http.Response(
             jsonEncode({
-              'best_choice_id': 'lightweight',
-              'confidence': 0.97,
-              'scores': {
-                'lightweight': 0.97,
-                'performance': 0.02,
-                'premium': 0.01,
+              'answers': {
+                'classification': {
+                  'type': 'choice',
+                  'choice': 'lightweight',
+                  'confidence': 0.97,
+                  'probabilities': {
+                    'lightweight': 0.97,
+                    'performance': 0.02,
+                    'premium': 0.01,
+                  },
+                },
               },
             }),
             200,
@@ -181,12 +198,17 @@ void main() {
         final mockHttp = MockClient((request) async {
           return http.Response(
             jsonEncode({
-              'best_choice_id': 'lightweight',
-              'confidence': 0.35,
-              'scores': {
-                'lightweight': 0.35,
-                'performance': 0.33,
-                'premium': 0.32,
+              'answers': {
+                'classification': {
+                  'type': 'choice',
+                  'choice': 'lightweight',
+                  'confidence': 0.35,
+                  'probabilities': {
+                    'lightweight': 0.35,
+                    'performance': 0.33,
+                    'premium': 0.32,
+                  },
+                },
               },
             }),
             200,

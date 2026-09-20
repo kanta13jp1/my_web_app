@@ -81,7 +81,7 @@ class JevClassificationResult {
 /// APIキー未設定やネットワーク不達、タイムアウト時は安全に null を返す
 /// Fail-Open（障害時継続）設計となっている。
 class JevClient {
-  static const String defaultEndpoint = 'https://api.typesafe.ai/v1/classify';
+  static const String defaultEndpoint = 'https://api.typesafe.ai/v1/systemone';
   static const String defaultLocalJevEndpoint =
       'http://127.0.0.1:8080/v1/systemone';
   static const Duration defaultTimeout = Duration(milliseconds: 800);
