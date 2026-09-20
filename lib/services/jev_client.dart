@@ -75,13 +75,13 @@ class JevClassificationResult {
 
 /// TypeSafe AI の判定特化型モデル「Jev」のクライアント。
 ///
-/// テキスト生成を行わず、最大256個の選択肢に対する確率分布を
-/// 約500ms（極低遅延）かつ低コスト（$0.0001/回）で判定する。
+/// /v1/systemone では型付き質問と回答を使用する。
+/// 推論速度・料金・選択肢上限は接続先とモデルに依存する。
 ///
 /// APIキー未設定やネットワーク不達、タイムアウト時は安全に null を返す
 /// Fail-Open（障害時継続）設計となっている。
 class JevClient {
-  static const String defaultEndpoint = 'https://api.typesafe.ai/v1/classify';
+  static const String defaultEndpoint = 'https://api.typesafe.ai/v1/systemone';
   static const String defaultLocalJevEndpoint =
       'http://127.0.0.1:8080/v1/systemone';
   static const Duration defaultTimeout = Duration(milliseconds: 800);
@@ -117,8 +117,14 @@ class JevClient {
   }
 
   /// ローカルサーバー（LocalJev / 127.0.0.1 / localhost）を指しているかどうか
-  bool get isLocalMode =>
-      endpoint.contains('127.0.0.1') || endpoint.contains('localhost');
+  bool get isLocalMode {
+    final host = Uri.tryParse(endpoint)?.host;
+    return host == '127.0.0.1' || host == 'localhost' || host == '::1';
+  }
+
+  bool get _usesSystemOne =>
+      Uri.tryParse(endpoint)?.path.replaceFirst(RegExp(r'/+$'), '') ==
+      '/v1/systemone';
 
   /// API キーが設定されているか、または認証不要なローカルモードであるか
   bool get isConfigured =>
@@ -133,18 +139,44 @@ class JevClient {
     required List<JevChoice> choices,
     String? context,
   }) async {
-    if (!isConfigured || choices.isEmpty) {
+    if (!isConfigured ||
+        choices.isEmpty ||
+        choices.any((choice) => choice.id.trim().isEmpty) ||
+        choices.map((choice) => choice.id).toSet().length != choices.length ||
+        (_usesSystemOne && choices.length < 2)) {
       return null;
     }
 
     final stopwatch = Stopwatch()..start();
 
     try {
-      final payload = jsonEncode(<String, dynamic>{
-        'input': input,
-        if (context != null && context.isNotEmpty) 'context': context,
-        'choices': choices.map((c) => c.toJson()).toList(growable: false),
-      });
+      final payload = jsonEncode(
+        _usesSystemOne
+            ? <String, dynamic>{
+                'model': 'jev-latest',
+                'state': input,
+                'questions': <String, dynamic>{
+                  'classification': <String, dynamic>{
+                    'type': 'choice',
+                    'instructions': context != null && context.trim().isNotEmpty
+                        ? context
+                        : 'Classify the state using the supplied choices.',
+                    'criteria': <String, String>{
+                      for (final choice in choices)
+                        choice.id: choice.description.isEmpty
+                            ? choice.label
+                            : '${choice.label}: ${choice.description}',
+                    },
+                  },
+                },
+              }
+            : <String, dynamic>{
+                'input': input,
+                if (context != null && context.isNotEmpty) 'context': context,
+                'choices':
+                    choices.map((c) => c.toJson()).toList(growable: false),
+              },
+      );
 
       final headers = <String, String>{'Content-Type': 'application/json'};
       if (apiKey != null && apiKey!.trim().isNotEmpty) {
@@ -162,7 +194,7 @@ class JevClient {
 
       if (response.statusCode != 200) {
         debugPrint(
-          'JevClient: classification failed with status ${response.statusCode}: ${response.body}',
+          'JevClient: classification failed with status ${response.statusCode}',
         );
         return null;
       }
@@ -172,21 +204,55 @@ class JevClient {
         return null;
       }
 
-      final dynamic rawBestChoice = decoded['best_choice'];
-      final bestChoiceId = decoded['best_choice_id'] as String? ??
-          (rawBestChoice is Map ? rawBestChoice['id'] as String? : null) ??
-          decoded['choice_id'] as String? ??
-          '';
-      final confidence = (decoded['confidence'] as num?)?.toDouble() ?? 0.0;
-      final rawScores = decoded['scores'] as Map<String, dynamic>? ??
-          decoded['probabilities'] as Map<String, dynamic>? ??
-          {};
-
+      Map<String, dynamic> answer = decoded;
+      if (_usesSystemOne) {
+        final answers = decoded['answers'];
+        final classification =
+            answers is Map ? answers['classification'] : null;
+        if (classification is! Map<String, dynamic> ||
+            classification['type'] != 'choice') {
+          return null;
+        }
+        answer = classification;
+      }
+      final dynamic rawBestChoice = answer['best_choice'];
+      final bestChoiceId = _usesSystemOne
+          ? answer['choice'] as String? ?? ''
+          : answer['best_choice_id'] as String? ??
+              (rawBestChoice is Map ? rawBestChoice['id'] as String? : null) ??
+              answer['choice_id'] as String? ??
+              '';
+      final confidence = (answer['confidence'] as num?)?.toDouble();
+      final rawScores = (_usesSystemOne
+          ? answer['probabilities']
+          : answer['scores'] ?? answer['probabilities']);
+      final validIds = choices.map((choice) => choice.id).toSet();
+      if (!validIds.contains(bestChoiceId) ||
+          confidence == null ||
+          !confidence.isFinite ||
+          confidence < 0 ||
+          confidence > 1 ||
+          rawScores is! Map<String, dynamic>) {
+        return null;
+      }
       final scores = <String, double>{};
       for (final entry in rawScores.entries) {
-        if (entry.value is num) {
-          scores[entry.key] = (entry.value as num).toDouble();
+        final value = entry.value;
+        if (!validIds.contains(entry.key) ||
+            value is! num ||
+            !value.isFinite ||
+            value < 0 ||
+            value > 1) {
+          return null;
         }
+        scores[entry.key] = value.toDouble();
+      }
+      if (_usesSystemOne &&
+          (scores.length != validIds.length ||
+              (scores.values.fold<double>(0, (sum, value) => sum + value) - 1)
+                      .abs() >
+                  0.01)) {
+        return null;
       }
 
       JevChoice? bestChoice;
