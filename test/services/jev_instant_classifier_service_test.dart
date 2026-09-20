@@ -89,20 +89,29 @@ void main() {
         final mockClient = MockClient((request) async {
           expect(request.url.toString(), JevClient.defaultEndpoint);
           final body = jsonDecode(request.body) as Map<String, dynamic>;
-          expect(body['input'], '成城石井の高級チーズ');
+          expect(body['state'], '成城石井の高級チーズ');
+          final criteria =
+              (body['questions'] as Map)['classification']['criteria'] as Map;
+          expect(criteria, contains('food'));
 
           return http.Response(
             jsonEncode(<String, dynamic>{
-              'best_choice_id': 'food',
-              'best_choice': <String, dynamic>{
-                'id': 'food',
-                'label': '食費・食材',
-              },
-              'confidence': 0.94,
-              'scores': <String, dynamic>{
-                'food': 0.94,
-                'dining_out': 0.04,
-                'other': 0.02,
+              'answers': {
+                'classification': {
+                  'type': 'choice',
+                  'choice': 'food',
+                  'best_choice': <String, dynamic>{
+                    'id': 'food',
+                    'label': '食費・食材',
+                  },
+                  'confidence': 0.94,
+                  'probabilities': <String, dynamic>{
+                    for (final id in criteria.keys) id as String: 0.0,
+                    'food': 0.94,
+                    'dining_out': 0.04,
+                    'other': 0.02,
+                  },
+                },
               },
             }),
             200,
