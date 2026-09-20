@@ -97,7 +97,7 @@ def parse_frontmatter(skill_file: Path) -> tuple[dict[str, str], str]:
         if key in metadata:
             raise ValueError(f"line {line_number}: duplicate key {key}")
         raw_value = raw_value.strip()
-        if raw_value in {"|", ">"}:
+        if raw_value in {"|", ">", "|-", ">-", "|+", ">+"}:
             block_key = key
         else:
             metadata[key] = _unquote_yaml_scalar(raw_value)

@@ -15,12 +15,13 @@ Read [references/ai-university-embedding.md](references/ai-university-embedding.
 
 ## Preflight
 
-Set the skill and output paths, then check dependencies:
+From the chosen repository checkout, derive the skill path and select a job directory outside Git, then check dependencies:
 
 ```powershell
-$skillDir = "C:\Users\kanta\GitHub\my_web_app\.agents\skills\youtube-video-pipeline"
-$jobDir = "C:\Users\kanta\Videos\youtube-video-pipeline\<job-name>"
-$appRepo = "C:\Users\kanta\GitHub\my_web_app"
+$appRepo = (git rev-parse --show-toplevel).Trim()
+if ($LASTEXITCODE -ne 0) { throw "Run from the chosen repository checkout." }
+$skillDir = Join-Path $appRepo ".agents/skills/youtube-video-pipeline"
+$jobDir = Join-Path ([Environment]::GetFolderPath("UserProfile")) "Videos/youtube-video-pipeline/<job-name>"
 python "$skillDir\scripts\media_pipeline.py" check
 ```
 

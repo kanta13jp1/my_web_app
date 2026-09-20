@@ -138,6 +138,16 @@ class ValidateAgentSkillsTest(unittest.TestCase):
         self.assertFalse(report.ok)
         self.assertTrue(any("missing link target" in error for error in report.errors))
 
+    def test_frontmatter_accepts_yaml_chomping_indicators(self) -> None:
+        skill_file = self.write_skill("alpha") / "SKILL.md"
+        for indicator in (">-", ">+", "|-", "|+"):
+            with self.subTest(indicator=indicator):
+                skill_file.write_text(
+                    f"---\nname: alpha\ndescription: {indicator}\n  A multiline\n  description.\n---\n# Body\n",
+                    encoding="utf-8",
+                )
+                self.assertEqual(validate_agent_skills.validate_frontmatter("alpha", skill_file), [])
+
     def test_nonzero_smoke_fails(self) -> None:
         self.write_skill("alpha")
         (self.root / "scripts" / "smoke.py").write_text(

@@ -2,6 +2,41 @@
   "schema_version": 1,
   "skills": [
     {
+      "name": "digital-product-publishing-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", "scripts/artifact_intake.py", "--help"]}]
+    },
+    {
+      "name": "github-issue-completion-forecast",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", ".agents/skills/github-issue-completion-forecast/scripts/issue_completion_forecast.py", "--help"]}]
+    },
+    {
+      "name": "life-foundations-improvement-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["git", "--version"]}]
+    },
+    {
+      "name": "local-election-candidate-release",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", "scripts/check_minimal_e2e_gate.py", "--help"]}]
+    },
+    {
+      "name": "site-feature-consolidation-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", "scripts/codex_session_check.py", "--help"]}]
+    },
+    {
+      "name": "site-trust-improvement-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", "scripts/cloud_first_route.py", "--help"]}]
+    },
+    {
+      "name": "video-artifact-improvement-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["git", "--version"]}]
+    },
+    {
       "name": "ai-university-add-provider",
       "grade": "B",
       "cli_smoke": [

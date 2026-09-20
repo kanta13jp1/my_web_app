@@ -78,3 +78,13 @@ The canonical set contains 15 skills:
 The five wiki slash-command wrappers and ten other unsafe, duplicated, or superseded candidates remain absent. Future candidates must pass the skill-creator validator, relative-link checks, command smoke tests, and package-specific tests before adoption. `test/scripts/test_agent_skill_cli_contract.py` locks the active Wiki examples to the local script help contract and rejects the retired lint and NotebookLM command forms.
 
 The tracked `.claude/skills/ui-design/SKILL.md` and `.claude/commands/design-review.md` copies are also removed. Design entry points contain workflow only and defer all tokens and review criteria to `docs/DESIGN.md`.
+
+## Completion and upstream integration (2026-09-21)
+
+The August 23 rescue commit `6f7a0d8b6` had already preserved the remaining remote-branch deletion removal, eleven B-skill UTF-8 metadata conversions, and metadata CI validation. The clean rescue branch was rebased onto `origin/main` at `1d8e5a8c8c9c4c84d403164e95bc39293d7817cd`; the original history remains on `codex/skill-curation-pre-integration-20260921`.
+
+The interrupted follow-up is now implemented: offline MUSUBI checkpoint/preflight and YouTube media/release/content tests; checkout-relative YouTube examples; and dependency-free YouTube CLI help. CI runs these tests together with the Wiki CLI, design SSOT, validator, and worktree-state contracts. Frontmatter validation accepts YAML block chomping indicators used by an upstream skill.
+
+Seven skills added independently to `origin/main` since the original audit are retained without a workflow rewrite and classified A in the manifest. The integrated set is therefore 22 skills (A: 11, B: 11); this does not reopen the original 29-candidate adoption decisions. The upstream Design Accessibility Audit remains linked from the SSOT and thin design entrypoints.
+
+The durable handoff is [the company Vault decision record](../../memory/vault/decision_20260921_skill_curation_completion.md). No main merge, production release, or remote branch deletion is part of this completion.

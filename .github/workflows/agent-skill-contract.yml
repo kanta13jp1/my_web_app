@@ -6,6 +6,9 @@ on:
       - ".agents/skills/**"
       - "scripts/validate_agent_skills.py"
       - "scripts/ai_tool_watch.py"
+      - "scripts/artifact_intake.py"
+      - "scripts/check_minimal_e2e_gate.py"
+      - "scripts/cloud_first_route.py"
       - "scripts/check_migration_timestamps.py"
       - "scripts/codex_session_check.py"
       - "scripts/knowledge_vault_lint.py"
@@ -14,6 +17,14 @@ on:
       - "scripts/wiki_*.py"
       - "test/scripts/test_validate_agent_skills.py"
       - "test/scripts/test_agent_skill_cli_contract.py"
+      - "test/scripts/test_design_ssot_contract.py"
+      - "test/scripts/test_musubi_skill_scripts.py"
+      - "test/scripts/test_youtube_skill_scripts.py"
+      - "docs/DESIGN.md"
+      - "docs/DESIGN_TOOLING_SETUP.md"
+      - ".claude/commands/*design*.md"
+      - ".claude/agents/design-skills.md"
+      - ".claude/skills/ui-design/**"
       - ".github/workflows/agent-skill-contract.yml"
   push:
     branches: [main]
@@ -21,6 +32,9 @@ on:
       - ".agents/skills/**"
       - "scripts/validate_agent_skills.py"
       - "scripts/ai_tool_watch.py"
+      - "scripts/artifact_intake.py"
+      - "scripts/check_minimal_e2e_gate.py"
+      - "scripts/cloud_first_route.py"
       - "scripts/check_migration_timestamps.py"
       - "scripts/codex_session_check.py"
       - "scripts/knowledge_vault_lint.py"
@@ -29,6 +43,14 @@ on:
       - "scripts/wiki_*.py"
       - "test/scripts/test_validate_agent_skills.py"
       - "test/scripts/test_agent_skill_cli_contract.py"
+      - "test/scripts/test_design_ssot_contract.py"
+      - "test/scripts/test_musubi_skill_scripts.py"
+      - "test/scripts/test_youtube_skill_scripts.py"
+      - "docs/DESIGN.md"
+      - "docs/DESIGN_TOOLING_SETUP.md"
+      - ".claude/commands/*design*.md"
+      - ".claude/agents/design-skills.md"
+      - ".claude/skills/ui-design/**"
       - ".github/workflows/agent-skill-contract.yml"
   workflow_dispatch:
 
@@ -58,6 +80,14 @@ jobs:
 
       - name: Test validator
         run: python test/scripts/test_validate_agent_skills.py
+
+      - name: Test skill behavior and documentation contracts
+        run: |
+          python test/scripts/test_agent_skill_cli_contract.py
+          python test/scripts/test_design_ssot_contract.py
+          python test/scripts/test_musubi_skill_scripts.py
+          python test/scripts/test_youtube_skill_scripts.py
+          python .agents/skills/github-backlog-worktree-drain/scripts/test_worktree_state.py
 
       - name: Validate A/B skill contracts
         run: python scripts/validate_agent_skills.py
