@@ -140,10 +140,10 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: MediaQuery(
-          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-          child: const Scaffold(
+          data: MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: Scaffold(
             body: SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.all(24),
