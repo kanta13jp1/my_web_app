@@ -149,7 +149,9 @@ class JevClient {
         return null;
       }
 
+      final dynamic rawBestChoice = decoded['best_choice'];
       final bestChoiceId = decoded['best_choice_id'] as String? ??
+          (rawBestChoice is Map ? rawBestChoice['id'] as String? : null) ??
           decoded['choice_id'] as String? ??
           '';
       final confidence = (decoded['confidence'] as num?)?.toDouble() ?? 0.0;
