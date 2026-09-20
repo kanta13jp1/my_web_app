@@ -5,29 +5,24 @@ import 'package:http/testing.dart';
 import 'package:my_web_app/services/asset_management_ai_provider_router.dart';
 import 'package:my_web_app/services/jev_client.dart';
 
+const _testChoices = [
+  JevChoice(id: 'lightweight', label: 'Lightweight'),
+  JevChoice(id: 'performance', label: 'Performance'),
+  JevChoice(id: 'premium', label: 'Premium'),
+];
+
 void main() {
   group('JevClient', () {
-    const choices = [
-      JevChoice(id: 'lightweight', label: 'Lightweight'),
-      JevChoice(id: 'performance', label: 'Performance'),
-      JevChoice(id: 'premium', label: 'Premium'),
-    ];
-
     test('returns null when API key is not configured (fail-open)', () async {
       final client = JevClient(apiKey: null);
-      final result = await client.classify(
-        input: 'Hello',
-        choices: choices,
-      );
+      final result =
+          await client.classify(input: 'Hello', choices: _testChoices);
       expect(result, isNull);
     });
 
     test('returns null when empty choices provided', () async {
       final client = JevClient(apiKey: 'ts_live_mock_key');
-      final result = await client.classify(
-        input: 'Hello',
-        choices: const [],
-      );
+      final result = await client.classify(input: 'Hello', choices: const []);
       expect(result, isNull);
     });
 
@@ -64,7 +59,7 @@ void main() {
 
       final result = await client.classify(
         input: 'Format summary as bullets',
-        choices: choices,
+        choices: _testChoices,
       );
 
       expect(result, isNotNull);
@@ -76,145 +71,147 @@ void main() {
       expect(result.scores['lightweight'], 0.98);
     });
 
-    test('identifies low-confidence response as fallback recommended',
-        () async {
-      final mockHttp = MockClient((request) async {
-        return http.Response(
-          jsonEncode({
-            'best_choice_id': 'premium',
-            'confidence': 0.38,
-            'scores': {
-              'lightweight': 0.30,
-              'performance': 0.32,
-              'premium': 0.38,
-            },
-            'latency_ms': 420,
-          }),
-          200,
-          headers: {'content-type': 'application/json'},
+    test(
+      'identifies low-confidence response as fallback recommended',
+      () async {
+        final mockHttp = MockClient((request) async {
+          return http.Response(
+            jsonEncode({
+              'best_choice_id': 'premium',
+              'confidence': 0.38,
+              'scores': {
+                'lightweight': 0.30,
+                'performance': 0.32,
+                'premium': 0.38,
+              },
+              'latency_ms': 420,
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        });
+
+        final client = JevClient(
+          apiKey: 'ts_live_mock_key',
+          httpClient: mockHttp,
         );
-      });
 
-      final client = JevClient(
-        apiKey: 'ts_live_mock_key',
-        httpClient: mockHttp,
-      );
+        final result = await client.classify(
+          input: 'Ambiguous question about portfolio risk and tax strategy',
+          choices: _testChoices,
+        );
 
-      final result = await client.classify(
-        input: 'Ambiguous question about portfolio risk and tax strategy',
-        choices: choices,
-      );
+        expect(result, isNotNull);
+        expect(result!.confidence, 0.38);
+        expect(result.isHighConfidence, isFalse);
+        expect(result.shouldFallbackToHeavyLlm, isTrue);
+      },
+    );
 
-      expect(result, isNotNull);
-      expect(result!.confidence, 0.38);
-      expect(result.isHighConfidence, isFalse);
-      expect(result.shouldFallbackToHeavyLlm, isTrue);
-    });
+    test(
+      'handles HTTP 500 error gracefully by returning null (fail-open)',
+      () async {
+        final mockHttp = MockClient((request) async {
+          return http.Response('Internal Server Error', 500);
+        });
 
-    test('handles HTTP 500 error gracefully by returning null (fail-open)',
-        () async {
-      final mockHttp = MockClient((request) async {
-        return http.Response('Internal Server Error', 500);
-      });
+        final client = JevClient(
+          apiKey: 'ts_live_mock_key',
+          httpClient: mockHttp,
+        );
 
-      final client = JevClient(
-        apiKey: 'ts_live_mock_key',
-        httpClient: mockHttp,
-      );
+        final result = await client.classify(
+          input: 'Test input',
+          choices: _testChoices,
+        );
 
-      final result = await client.classify(
-        input: 'Test input',
-        choices: choices,
-      );
-
-      expect(result, isNull);
-    });
+        expect(result, isNull);
+      },
+    );
   });
 
   group('AssetManagementAiProviderRouter with Jev', () {
-    test('routes to lightweight model first when Jev decides lightweight',
-        () async {
-      final mockHttp = MockClient((request) async {
-        return http.Response(
-          jsonEncode({
-            'best_choice_id': 'lightweight',
-            'confidence': 0.97,
-            'scores': {
-              'lightweight': 0.97,
-              'performance': 0.02,
-              'premium': 0.01,
-            },
-          }),
-          200,
+    test(
+      'routes to lightweight model first when Jev decides lightweight',
+      () async {
+        final mockHttp = MockClient((request) async {
+          return http.Response(
+            jsonEncode({
+              'best_choice_id': 'lightweight',
+              'confidence': 0.97,
+              'scores': {
+                'lightweight': 0.97,
+                'performance': 0.02,
+                'premium': 0.01,
+              },
+            }),
+            200,
+          );
+        });
+
+        final jevClient = JevClient(apiKey: 'test-key', httpClient: mockHttp);
+
+        final router = AssetManagementAiProviderRouter(
+          routingEnabled: true,
+          jevEnabled: true,
+          jevClient: jevClient,
         );
-      });
 
-      final jevClient = JevClient(
-        apiKey: 'test-key',
-        httpClient: mockHttp,
-      );
-
-      final router = AssetManagementAiProviderRouter(
-        routingEnabled: true,
-        jevEnabled: true,
-        jevClient: jevClient,
-      );
-
-      final decision = await router.routeForWithJev(
-        useCase: AssetManagementAiProviderUseCase.summary,
-        prompt: 'Give me a brief single-sentence summary of my balance.',
-      );
-
-      expect(
-        decision.primaryExternalCandidate?.providerId,
-        'google_flash_lite',
-      );
-      expect(
-        decision.primaryExternalCandidate?.modelId,
-        'gemini-2.5-flash-lite',
-      );
-      expect(decision.jevClassification?.isHighConfidence, isTrue);
-      expect(decision.reason, contains('jev classified as lightweight'));
-    });
-
-    test('falls back to default chain when Jev confidence is low (<= 0.40)',
-        () async {
-      final mockHttp = MockClient((request) async {
-        return http.Response(
-          jsonEncode({
-            'best_choice_id': 'lightweight',
-            'confidence': 0.35,
-            'scores': {
-              'lightweight': 0.35,
-              'performance': 0.33,
-              'premium': 0.32,
-            },
-          }),
-          200,
+        final decision = await router.routeForWithJev(
+          useCase: AssetManagementAiProviderUseCase.summary,
+          prompt: 'Give me a brief single-sentence summary of my balance.',
         );
-      });
 
-      final jevClient = JevClient(
-        apiKey: 'test-key',
-        httpClient: mockHttp,
-      );
+        expect(
+          decision.primaryExternalCandidate?.providerId,
+          'google_flash_lite',
+        );
+        expect(
+          decision.primaryExternalCandidate?.modelId,
+          'gemini-2.5-flash-lite',
+        );
+        expect(decision.jevClassification?.isHighConfidence, isTrue);
+        expect(decision.reason, contains('jev classified as lightweight'));
+      },
+    );
 
-      final router = AssetManagementAiProviderRouter(
-        routingEnabled: true,
-        jevEnabled: true,
-        jevClient: jevClient,
-      );
+    test(
+      'falls back to default chain when Jev confidence is low (<= 0.40)',
+      () async {
+        final mockHttp = MockClient((request) async {
+          return http.Response(
+            jsonEncode({
+              'best_choice_id': 'lightweight',
+              'confidence': 0.35,
+              'scores': {
+                'lightweight': 0.35,
+                'performance': 0.33,
+                'premium': 0.32,
+              },
+            }),
+            200,
+          );
+        });
 
-      final decision = await router.routeForWithJev(
-        useCase: AssetManagementAiProviderUseCase.riskExplanation,
-        prompt: 'Explain the multi-variable tail risk of my options hedge.',
-      );
+        final jevClient = JevClient(apiKey: 'test-key', httpClient: mockHttp);
 
-      // 低確信度の場合はデフォルトチェーンの先頭（Claude Opus 4.7）に安全フォールバック
-      expect(decision.primaryExternalCandidate?.providerId, 'anthropic');
-      expect(decision.primaryExternalCandidate?.modelId, 'claude-opus-4-7');
-      expect(decision.reason, contains('jev fallback'));
-    });
+        final router = AssetManagementAiProviderRouter(
+          routingEnabled: true,
+          jevEnabled: true,
+          jevClient: jevClient,
+        );
+
+        final decision = await router.routeForWithJev(
+          useCase: AssetManagementAiProviderUseCase.riskExplanation,
+          prompt: 'Explain the multi-variable tail risk of my options hedge.',
+        );
+
+        // 低確信度の場合はデフォルトチェーンの先頭（Claude Opus 4.7）に安全フォールバック
+        expect(decision.primaryExternalCandidate?.providerId, 'anthropic');
+        expect(decision.primaryExternalCandidate?.modelId, 'claude-opus-4-7');
+        expect(decision.reason, contains('jev fallback'));
+      },
+    );
 
     test('falls back safely when Jev is disabled or offline', () async {
       const router = AssetManagementAiProviderRouter(
@@ -229,6 +226,67 @@ void main() {
 
       expect(decision.primaryExternalCandidate?.providerId, 'anthropic');
       expect(decision.jevClassification, isNull);
+    });
+
+    group('LocalJev (GitHub Next) compatibility', () {
+      test('identifies local mode correctly for 127.0.0.1 and localhost', () {
+        final localClient = JevClient(
+          endpoint: JevClient.defaultLocalJevEndpoint,
+        );
+        expect(localClient.isLocalMode, isTrue);
+        expect(localClient.isConfigured, isTrue); // APIキーなしでも許可
+
+        final remoteClient = JevClient(
+          apiKey: null,
+          endpoint: 'https://api.typesafe.ai/v1/classify',
+        );
+        expect(remoteClient.isLocalMode, isFalse);
+        expect(remoteClient.isConfigured, isFalse);
+      });
+
+      test(
+        'successfully calls LocalJev endpoint with probabilities format',
+        () async {
+          final mockHttp = MockClient((request) async {
+            expect(request.url.toString(), JevClient.defaultLocalJevEndpoint);
+            expect(request.headers['Authorization'], isNull);
+            expect(request.headers['x-api-key'], 'localjev');
+
+            return http.Response(
+              jsonEncode(<String, dynamic>{
+                'best_choice': <String, dynamic>{
+                  'id': 'lightweight',
+                  'label': 'Lightweight',
+                },
+                'confidence': 0.91,
+                'probabilities': <String, dynamic>{
+                  'lightweight': 0.91,
+                  'performance': 0.06,
+                  'premium': 0.03,
+                },
+              }),
+              200,
+              headers: {'content-type': 'application/json'},
+            );
+          });
+
+          final client = JevClient(
+            endpoint: JevClient.defaultLocalJevEndpoint,
+            httpClient: mockHttp,
+          );
+
+          final result = await client.classify(
+            input: 'Quick classification on local machine',
+            choices: _testChoices,
+          );
+
+          expect(result, isNotNull);
+          expect(result!.bestChoiceId, 'lightweight');
+          expect(result.confidence, 0.91);
+          expect(result.scores['lightweight'], 0.91);
+          expect(result.isHighConfidence, isFalse); // 0.96未満
+        },
+      );
     });
   });
 }
