@@ -103,6 +103,13 @@ The allowlist/secret scanner must succeed before upload; partial/failed suites
 remain failures, even when earlier individual checks passed.
 
 The browser suite locates email/password controls by their accessible labels.
+In the 2026-09-21 diagnostic run, all4 real-browser cases exposed one visible,
+enabled, editable password INPUT whose181-character composite accessible label
+contained, but did not equal, the widget's Japanese label. Exact-label lookup
+therefore matched zero controls. Password lookup now intersects a contains-label
+match with `input[type=password]` and asserts exactly one visible/editable match
+before normal `fill`. This is a locator repair, not a relaxed authentication or
+review expectation; email lookup and all4 acceptance scenarios are unchanged.
 An obscured field is an HTML `input type=password`, which does not supply an
 implicit textbox role. Input operations have a 20-second bound; a failure records
 only the input phase and value-free element types, not typed credentials. Safe

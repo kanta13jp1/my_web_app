@@ -75,8 +75,9 @@ async function login(page: Page, name: string) {
   // Form layout is allowed to show the password field without a toggle.
   await expect(page.getByRole('textbox', { name: 'メールアドレス', exact: true })).toBeVisible();
   if (await toggle.count()) await click(page, toggle);
-  // Password inputs have no implicit textbox role. Match their actual label,
-  // as recommended by Playwright, without changing the production widget.
+  // Flutter's observed password INPUT has a composite accessible label (181
+  // characters), not the exact widget label. Keep the label contract and narrow
+  // to the actual password control; never fall back to an arbitrary text input.
   // Omit credential values and Playwright fill call logs even on failure.
   let field = 'email';
   try {
@@ -85,7 +86,12 @@ async function login(page: Page, name: string) {
     field = 'password';
     observations.get(page)!.phase = 'password-input';
     await passwordDiagnostics(page, 'before-password-fill');
-    await page.getByLabel('パスワード', { exact: true }).fill(users[name].password, { timeout: 20_000 });
+    const password = page.getByLabel('パスワード', { exact: false })
+      .and(page.locator('input[type="password"]'));
+    await expect(password).toHaveCount(1);
+    await expect(password).toBeVisible();
+    await expect(password).toBeEditable();
+    await password.fill(users[name].password, { timeout: 20_000 });
   } catch (error) {
     // Classify only; never persist the error/call log, which may contain a value.
     const message = error instanceof Error ? error.message : '';
