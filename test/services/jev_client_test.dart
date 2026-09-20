@@ -165,14 +165,15 @@ void main() {
         prompt: 'Give me a brief single-sentence summary of my balance.',
       );
 
-      expect(decision.primaryExternalCandidate?.providerId, 'google_flash_lite');
-      expect(decision.primaryExternalCandidate?.modelId, 'gemini-2.5-flash-lite');
+      expect(
+          decision.primaryExternalCandidate?.providerId, 'google_flash_lite');
+      expect(
+          decision.primaryExternalCandidate?.modelId, 'gemini-2.5-flash-lite');
       expect(decision.jevClassification?.isHighConfidence, isTrue);
       expect(decision.reason, contains('jev classified as lightweight'));
     });
 
-    test(
-        'falls back to default chain when Jev confidence is low (<= 0.40)',
+    test('falls back to default chain when Jev confidence is low (<= 0.40)',
         () async {
       final mockHttp = MockClient((request) async {
         return http.Response(
