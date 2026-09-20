@@ -16,10 +16,7 @@ void main() {
     test('flags new borrowing on a loan that grew beyond interest', () {
       // モビット 前月10万→今月20万、返済5千。利息3千 → 新規利用 約10.2万。
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'モビット': -200000,
-        },
+        latestSnapshot: const <String, double>{'bank': 500000, 'モビット': -200000},
         baseDate: baseDate,
         monthlyPaymentOverrides: const <String, double>{'モビット': 5000},
       );
@@ -44,10 +41,7 @@ void main() {
     test('does NOT flag interest-only growth as new borrowing', () {
       // 残高がほぼ利息分だけ増えた（新規利用なし）→ 違反にしない。
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'モビット': -200500,
-        },
+        latestSnapshot: const <String, double>{'bank': 500000, 'モビット': -200500},
         baseDate: baseDate,
         monthlyPaymentOverrides: const <String, double>{'モビット': 2000},
       );
@@ -63,10 +57,7 @@ void main() {
 
     test('does NOT flag a loan being paid down with no new usage', () {
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'モビット': -150000,
-        },
+        latestSnapshot: const <String, double>{'bank': 500000, 'モビット': -150000},
         baseDate: baseDate,
         monthlyPaymentOverrides: const <String, double>{'モビット': 50000},
       );
@@ -245,10 +236,7 @@ void main() {
 
     test('excludes full-payment fixed costs (rent/utility)', () {
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          '家賃': -80000,
-        },
+        latestSnapshot: const <String, double>{'bank': 500000, '家賃': -80000},
         baseDate: baseDate,
       );
       final id = debtId(workbook, '家賃');
