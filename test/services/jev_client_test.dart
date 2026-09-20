@@ -254,15 +254,17 @@ void main() {
 
             return http.Response(
               jsonEncode(<String, dynamic>{
-                'best_choice': <String, dynamic>{
-                  'id': 'lightweight',
-                  'label': 'Lightweight',
-                },
-                'confidence': 0.91,
-                'probabilities': <String, dynamic>{
-                  'lightweight': 0.91,
-                  'performance': 0.06,
-                  'premium': 0.03,
+                'answers': <String, dynamic>{
+                  'classification': <String, dynamic>{
+                    'type': 'choice',
+                    'choice': 'lightweight',
+                    'confidence': 0.91,
+                    'probabilities': <String, dynamic>{
+                      'lightweight': 0.91,
+                      'performance': 0.06,
+                      'premium': 0.03,
+                    },
+                  },
                 },
               }),
               200,
