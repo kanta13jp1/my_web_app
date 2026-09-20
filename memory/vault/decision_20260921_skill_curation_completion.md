@@ -17,6 +17,7 @@ The interrupted follow-up was completed in `C:/Users/kanta/GitHub/my_web_app_ski
 - Retained seven newer upstream skills in the A/B manifest (22 total: A 11, B 11) and preserved the upstream accessibility-audit requirement while resolving design SSOT conflicts.
 - Validation: 32 lightweight Python tests pass; all 22 metadata/frontmatter contracts, 17 relative links, and 27 CLI smoke commands pass; `git diff --check` passes. No OAuth, uploads, media rendering, Flutter/Dart, or production actions ran.
 - Cloud-first routing was mandatory (2.08 GiB free disk, 90% memory). The draft PR and its Agent Skill Contract check are the review/cloud-validation handoff; main is not merged. Local Git hooks reported missing `lefthook`, so only the explicitly reported checks are claimed.
+- The first standard CI run exposed repository workflow-policy drift in the new contract workflow: workflow permissions were not deny-by-default and external actions used moving tags. The workflow now declares `permissions: {}` globally, grants only job-level `contents: read`, and pins checkout/setup-python to the repository-approved full commit SHAs; the 146-workflow security-policy check passes locally.
 
 Implementation was completed by one bounded routed Codex worker, with no additional child workers or worktrees. Its validation impact is the offline contract coverage; cleanup impact is limited to temporary test directories automatically removed by the tests. No user files, branches, or tabs were deleted.
 
