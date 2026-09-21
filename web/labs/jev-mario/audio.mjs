@@ -4,7 +4,7 @@ export const scores={
  underground:[48,60,0,51,63,0,53,65,0,51,63,0,46,58,0,48,60,0,55,67,0,53,65,0,51,63,0,46,58,0,48,0],
  star:[84,79,88,84,91,88,86,83,89,86,93,89,88,84,91,88,86,81,89,86,88,83,91,88,84,79,88,84,83,79,86,83]
 };
-export const effects={flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
+export const effects={skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
 export class GameAudio{
  constructor(factory=()=>new(globalThis.AudioContext||globalThis.webkitAudioContext)()){
   this.factory=factory;this.enabled=false;this.volume=.25;this.nodes=new Set();this.music=new Set();this.beat=0;this.next=0;this.track='';this.musicUntil=0;
@@ -19,13 +19,13 @@ export class GameAudio{
   return {stream:destination.stream,release:()=>{this.master.disconnect(destination);destination.stream.getTracks().forEach(t=>t.stop());}};
  }
  setVolume(v){this.volume=Math.max(0,Math.min(1,Number(v)||0));if(this.master)this.master.gain.value=this.volume;}
- tone(note,time,duration,type='square',gain=.09,music=false,slide=0){
+ tone(note,time,duration,type='square',gain=.09,music=false,slide=0,duty=.25){
   if(!note||!this.enabled||this.context?.state!=='running'||this.nodes.size>=48)return;
   const osc=this.context.createOscillator(),env=this.context.createGain();osc.type=type;
   // Band-limited 25% pulse gives a second NES-like voice, with square fallback.
   if(type==='square'&&this.context.createPeriodicWave&&osc.setPeriodicWave){
-    if(!this.pulse){const real=new Float32Array(33),imag=new Float32Array(33);for(let n=1;n<33;n++){real[n]=2*Math.sin(2*Math.PI*n*.25)/(Math.PI*n);imag[n]=2*(1-Math.cos(2*Math.PI*n*.25))/(Math.PI*n);}this.pulse=this.context.createPeriodicWave(real,imag);}
-    osc.setPeriodicWave(this.pulse);
+    this.pulses??=new Map();if(!this.pulses.has(duty)){const real=new Float32Array(33),imag=new Float32Array(33);for(let n=1;n<33;n++){real[n]=2*Math.sin(2*Math.PI*n*duty)/(Math.PI*n);imag[n]=2*(1-Math.cos(2*Math.PI*n*duty))/(Math.PI*n);}this.pulses.set(duty,this.context.createPeriodicWave(real,imag));}
+    osc.setPeriodicWave(this.pulses.get(duty));
   }
   osc.frequency.value=440*2**((note-69)/12);
   if(slide&&osc.frequency.exponentialRampToValueAtTime){osc.frequency.setValueAtTime(osc.frequency.value,time);osc.frequency.exponentialRampToValueAtTime(440*2**((note+slide-69)/12),time+duration);}
@@ -50,7 +50,7 @@ export class GameAudio{
   const step=(track==='star'?.095:track==='underground'?.18:.145)*(hurry?.78:1),melody=scores[track];
   while(this.next<now+.08){const n=melody[this.beat%melody.length],root=[48,45,53,43][Math.floor(this.beat/16)%4];
    this.tone(n,this.next,step*.8,'square',.045,true);
-   if(track==='overworld'&&this.beat%4===2)this.tone(n?n-12:0,this.next,step*.65,'square',.025,true);
+   if(track==='overworld'&&this.beat%4===2)this.tone(n?n-12:0,this.next,step*.65,'square',.025,true,0,.5);
    if(this.beat%2===0)this.tone(track==='underground'?36:root+(this.beat%4===2?7:0),this.next,step*1.6,'triangle',.10,true);
    // Short low pulse supplies a bounded percussion voice.
    if(track==='overworld'&&this.beat%2===1)this.noise(this.next,.035,.012,true);
@@ -59,6 +59,7 @@ export class GameAudio{
   }
  }
  effect(name){if(!this.enabled||!this.context)return;const notes=effects[name];if(!notes)return;
+  if(name==='skid'){this.noise(this.context.currentTime,.055,.035);this.tone(79,this.context.currentTime,.075,'square',.035,false,-12);return;}
   if(name==='break'){this.noise(this.context.currentTime,.075,.065);}
   const terminal=name==='death'||name==='clear'||name==='flag',step=terminal?.13:name==='life'?.10:name==='appear'?.045:name==='pipe'?.075:.055;
   if(terminal||name==='hurry'){this.stopMusic();this.musicUntil=this.context.currentTime+notes.length*step+.08;}

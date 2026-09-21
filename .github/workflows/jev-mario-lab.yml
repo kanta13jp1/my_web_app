@@ -38,13 +38,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - run: node --test test/web/jev_mario_course.test.mjs test/web/jev_mario_reaction.test.mjs test/web/jev_mario_recording.test.mjs test/web/jev_mario_audio.test.mjs test/web/jev_mario_core.test.mjs test/web/jev_mario_world11.test.mjs test/web/jev_mario_hosting.test.mjs
+      - run: node --test test/web/jev_mario_prediction.test.mjs test/web/jev_mario_course.test.mjs test/web/jev_mario_reaction.test.mjs test/web/jev_mario_recording.test.mjs test/web/jev_mario_audio.test.mjs test/web/jev_mario_core.test.mjs test/web/jev_mario_world11.test.mjs test/web/jev_mario_hosting.test.mjs
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: jev-reaction-comparison
           path: |
             test-results/jev-reaction-comparison.json
             test-results/jev-course*.json
+            test-results/jev-prediction*.json
           retention-days: 7
       - run: bash scripts/ci/install_deno_from_github.sh
       - run: |

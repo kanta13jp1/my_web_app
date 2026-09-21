@@ -54,3 +54,8 @@ test('pulse voice is cached and new item/life sounds release bounded nodes',asyn
  const a=new GameAudio(()=>c);await a.enable(true);a.effect('appear');a.effect('life');assert.equal(waves,1);assert.ok(applied>=10);
  a.stop();assert.equal(a.nodes.size,0);assert.ok(c.oscillators.every(o=>o.stopped));
 });
+
+test('lead and accompaniment cache distinct pulse duties and skid remains bounded',async()=>{
+ const c=context();let waves=0;c.createPeriodicWave=()=>{waves++;return {};};const old=c.createOscillator.bind(c);c.createOscillator=()=>Object.assign(old(),{setPeriodicWave(){}});
+ const a=new GameAudio(()=>c);await a.enable(true);a.tone(60,1,.1,'square',.02,true,0,.25);a.tone(67,1,.1,'square',.02,true,0,.5);a.tone(69,1,.1,'square',.02,true,0,.5);assert.equal(waves,2);a.effect('skid');a.stop();assert.equal(a.nodes.size,0);
+});
