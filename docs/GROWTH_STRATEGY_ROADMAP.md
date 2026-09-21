@@ -33620,3 +33620,11 @@ Added independent pixel-art poses for walking/running, facing, jumping/falling a
 
 - Issue #5486: local canvas recording with optional game audio, 60-second/32MiB bounds, replay and timestamped WebM/MP4 download selected by browser capability. No external media upload or new API call.
 - Verify actual encoded audio/video playback and download, repeat/mute, unsupported capability, and mode-change cleanup in cloud tests before production release.
+
+
+### 2026-09-21 Jev Mario deployment cache correction (#5488)
+
+- Reported outer build 5591 still exported independent-world11-v1; live lab HTML/modules used max-age=3600.
+- Revalidate all /labs/jev-mario assets and migrate iframe/HTML/module URLs together so fresh old browser caches cannot mix releases. JSON includes lab_revision for diagnosis.
+- Keep query revision as a one-time migration; subsequent stable URLs must revalidate on navigation. Existing open pages must reload.
+- Validation: hosting dependency-graph/cache contract and existing cloud game/recording browser suite. No new Jev API experiment or latency improvement is claimed.
