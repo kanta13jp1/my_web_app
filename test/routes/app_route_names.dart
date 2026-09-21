@@ -18,6 +18,7 @@ const List<String> kAllAppRoutes = <String>[
   '/admin/blog/new',
   '/admin/maintenance',
   '/lumen-path',
+  '/jev-mario-lab',
   '/sound-bloom',
   '/aero-lab',
   '/affiliate-marketing',
