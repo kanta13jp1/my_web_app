@@ -1,3 +1,4 @@
+import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
@@ -229,6 +230,7 @@ import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
+import 'package:my_web_app/ui/features/palm_reading/palm_reading_feature.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
 import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
@@ -535,6 +537,11 @@ Route<dynamic> generateAppRoute(
         builder: (_) => LandingPage(
           signupCompletionService: signupCompletionService,
         ),
+      );
+    case '/jev-mario-lab':
+      return MaterialPageRoute(
+        builder: (_) => const JevMarioLabPage(),
+        settings: settings,
       );
     case '/agi-fireworks':
       return MaterialPageRoute(
@@ -1018,6 +1025,8 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => PersonalityTestResultPage(testId: resultTestId),
       );
+    case '/palm-reading':
+      return MaterialPageRoute(builder: (_) => const PalmReadingPage());
     case '/iq-test':
       return MaterialPageRoute(builder: (_) => const IqTestPage());
     // 出題中のテストは testId と seed が無いと復元できない (再開もできない)。
