@@ -4,15 +4,18 @@
 create function public.reserve_jev_mario_call(p_user_id uuid)
 returns boolean language plpgsql security invoker set search_path = '' as $$
 declare
-  epoch_seconds bigint := extract(epoch from clock_timestamp())::bigint;
+  epoch_seconds bigint;
   scopes text[] := array['mario:global:day', 'mario:' || p_user_id::text || ':day', 'mario:' || p_user_id::text || ':minute'];
-  buckets bigint[] := array[epoch_seconds / 86400, epoch_seconds / 86400, epoch_seconds / 60];
+  buckets bigint[];
   limits integer[] := array[3000, 1000, 300];
   previous public.jev_expense_quota%rowtype;
   i integer;
 begin
   if p_user_id is null then return false; end if;
   perform pg_catalog.pg_advisory_xact_lock(20260921, 5466);
+  -- Sample the bucket after lock acquisition so queued callers cannot restore an old bucket.
+  epoch_seconds := floor(extract(epoch from clock_timestamp()))::bigint;
+  buckets := array[epoch_seconds / 86400, epoch_seconds / 86400, epoch_seconds / 60];
   for i in 1..3 loop
     select * into previous from public.jev_expense_quota where scope = scopes[i];
     if found and previous.bucket = buckets[i] and previous.used >= limits[i] then
