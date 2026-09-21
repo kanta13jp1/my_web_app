@@ -2135,8 +2135,8 @@ class AssetLiabilityPlanningService {
     })>[];
     for (final cost in recurringFixedCosts) {
       if (cost.amount <= 0 ||
-          !cost.appliesToMonth(
-            _cycleTargetMonth(baseDate, salaryDay, cost.paymentDay),
+          !cost.appliesToDate(
+            _resolveCyclePaymentDate(baseDate, salaryDay, cost.paymentDay),
           )) {
         continue;
       }

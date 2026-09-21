@@ -523,6 +523,22 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   final AssetLiabilitySyncErrorHandler? onSyncError;
   final Map<String, Future<AssetLiabilityMonthlyState>> _inFlightMonthLoads =
       <String, Future<AssetLiabilityMonthlyState>>{};
+  final Map<String, Future<void>> _monthOperations = {};
+
+  // A slow read/repair must not overwrite a save, and saves must reach the
+  // server in invocation order. Failures must not poison the next operation.
+  Future<T> _enqueueMonth<T>(String key, Future<T> Function() operation) {
+    final previous = _monthOperations[key] ?? Future<void>.value();
+    final result = previous.then((_) => operation());
+    final tail = result.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    _monthOperations[key] = tail;
+    tail.then((_) {
+      if (identical(_monthOperations[key], tail)) {
+        _monthOperations.remove(key);
+      }
+    });
+    return result;
+  }
 
   FeatureFlaggedAssetLiabilityRepository({
     required this.localRepository,
@@ -562,7 +578,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
 
     late final Future<AssetLiabilityMonthlyState> load;
-    load = _loadMonthOnce(month).whenComplete(() {
+    load = _enqueueMonth(monthKey, () => _loadMonthOnce(month)).whenComplete(() {
       if (identical(_inFlightMonthLoads[monthKey], load)) {
         _inFlightMonthLoads.remove(monthKey);
       }
@@ -582,8 +598,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     final remoteState = await _tryRemote(
       () => remote.loadMonth(userId: userId, month: month),
     );
-    if (remoteState == null || remoteState.isEmpty) {
-      if (!local.isEmpty && supabaseWritesEnabled) {
+    if (remoteState == null ||
+        (remoteState.isEmpty && remoteState.updatedAt == null)) {
+      if ((!local.isEmpty || local.updatedAt != null) && supabaseWritesEnabled) {
         await _tryRemote(
           () => remote.saveMonth(userId: userId, month: month, state: local),
         );
@@ -591,7 +608,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return local;
     }
 
-    if (local.isEmpty) {
+    if (local.isEmpty && local.updatedAt == null) {
       await localRepository.saveMonth(month: month, state: remoteState);
       return remoteState;
     }
@@ -635,6 +652,16 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
 
   @override
   Future<void> saveMonth({
+    required DateTime month,
+    required AssetLiabilityMonthlyState state,
+  }) {
+    final key = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    // Reads requested after this save must not reuse a pre-save snapshot.
+    _inFlightMonthLoads.remove(key);
+    return _enqueueMonth(key, () => _saveMonthOnce(month: month, state: state));
+  }
+
+  Future<void> _saveMonthOnce({
     required DateTime month,
     required AssetLiabilityMonthlyState state,
   }) async {

@@ -435,6 +435,10 @@ class AssetRecurringFixedCost {
   /// レート未取得時でも前回値で計上でき、レート更新時に自動で追随する。
   final double? usdAmount;
 
+  /// Inclusive first date with no further scheduled charges. This is not a
+  /// cancellation request or a statement that earlier bills have been paid.
+  final DateTime? billingStoppedFrom;
+
   const AssetRecurringFixedCost({
     required this.id,
     required this.name,
@@ -448,10 +452,29 @@ class AssetRecurringFixedCost {
     this.billingGateway = AssetSubscriptionBillingGateway.direct,
     this.currency = AssetRecurringFixedCostCurrency.jpy,
     this.usdAmount,
+    this.billingStoppedFrom,
   });
 
   /// ドル建てか。
   bool get isUsd => currency == AssetRecurringFixedCostCurrency.usd;
+
+  bool appliesToDate(DateTime paymentDate) {
+    final stop = billingStoppedFrom;
+    final date = DateTime(paymentDate.year, paymentDate.month, paymentDate.day);
+    return appliesToMonth(date.month) &&
+        (stop == null || date.isBefore(DateTime(stop.year, stop.month, stop.day)));
+  }
+
+  static String formatBillingDate(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
+  static DateTime? parseBillingDate(String value) {
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) return null;
+    final date = DateTime.tryParse(value);
+    return date != null && formatBillingDate(date) == value ? date : null;
+  }
 
   /// 指定レート (1 USD = [usdJpyRate] 円) で円換算した月額を返す。
   /// ドル建てかつ原資・レートが有効なときのみ再計算し、それ以外は現行の
@@ -489,6 +512,8 @@ class AssetRecurringFixedCost {
     AssetRecurringFixedCostCurrency? currency,
     double? usdAmount,
     bool clearUsdAmount = false,
+    DateTime? billingStoppedFrom,
+    bool clearBillingStoppedFrom = false,
   }) {
     return AssetRecurringFixedCost(
       id: id ?? this.id,
@@ -505,6 +530,9 @@ class AssetRecurringFixedCost {
       billingGateway: billingGateway ?? this.billingGateway,
       currency: currency ?? this.currency,
       usdAmount: clearUsdAmount ? null : (usdAmount ?? this.usdAmount),
+      billingStoppedFrom: clearBillingStoppedFrom
+          ? null
+          : (billingStoppedFrom ?? this.billingStoppedFrom),
     );
   }
 
@@ -529,6 +557,8 @@ class AssetRecurringFixedCost {
       if (currency != AssetRecurringFixedCostCurrency.jpy)
         'currency': currency.name,
       if (usdAmount != null) 'usdAmount': usdAmount,
+      if (billingStoppedFrom != null)
+        'billingStoppedFrom': formatBillingDate(billingStoppedFrom!),
     };
   }
 
@@ -599,6 +629,8 @@ class AssetRecurringFixedCost {
       billingGateway: billingGateway,
       currency: currency,
       usdAmount: usdAmount != null && usdAmount > 0 ? usdAmount : null,
+      billingStoppedFrom:
+          parseBillingDate(json['billingStoppedFrom']?.toString() ?? ''),
     );
   }
 }

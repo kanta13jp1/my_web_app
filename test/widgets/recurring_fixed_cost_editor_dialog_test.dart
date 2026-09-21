@@ -4,6 +4,33 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 
 void main() {
+  testWidgets('editing preserves or explicitly clears the billing stop date', (tester) async {
+    final existing = AssetRecurringFixedCost(id: 'example', name: 'Example',
+      amount: 100, paymentDay: 10, billingStoppedFrom: DateTime(2026, 6, 10));
+    AssetRecurringFixedCost? saved;
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: Builder(
+      builder: (context) => TextButton(onPressed: () async {
+        saved = await showRecurringFixedCostEditor(context, existing: existing);
+      }, child: const Text('open')),
+    ))));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(saved!.billingStoppedFrom, existing.billingStoppedFrom);
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final field = find.byKey(const Key('billing-stopped-from'));
+    await tester.ensureVisible(field);
+    await tester.enterText(field, '2026-02-30');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(find.text('有効な日付を YYYY-MM-DD で入力してください'), findsOneWidget);
+    await tester.enterText(field, '');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(saved!.billingStoppedFrom, isNull);
+  });
   group('recurringFixedCostSourceOptions', () {
     AssetLiabilityAccount acct(
       String id,
