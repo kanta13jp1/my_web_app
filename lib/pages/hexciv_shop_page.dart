@@ -15,12 +15,14 @@ class HexcivShopPage extends StatelessWidget {
     this.service,
     this.funnel,
     this.urlLauncher,
+    this.entryUri,
   });
 
   final String? purchaseResult;
   final ShopGateway? service;
   final ShopFunnelService? funnel;
   final ShopUrlLauncher? urlLauncher;
+  final Uri? entryUri;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +32,7 @@ class HexcivShopPage extends StatelessWidget {
       service: service,
       funnel: funnel,
       urlLauncher: urlLauncher,
+      entryUri: entryUri,
     );
   }
 }

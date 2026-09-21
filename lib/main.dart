@@ -536,7 +536,9 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => LandingPage(
           signupCompletionService: signupCompletionService,
+          shopLoginUri: uri,
         ),
+        settings: settings,
       );
     case '/jev-mario-lab':
       return MaterialPageRoute(
@@ -558,6 +560,7 @@ Route<dynamic> generateAppRoute(
         builder: (_) => DigitalProductPage(
           productId: uri.queryParameters['product_id'] ?? '',
           purchaseResult: uri.queryParameters['purchase'],
+          entryUri: uri,
           funnel: ShopFunnelService(),
         ),
         settings: settings,
@@ -572,6 +575,7 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => HexcivShopPage(
           purchaseResult: uri.queryParameters['purchase'],
+          entryUri: uri,
           // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
           // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
           funnel: ShopFunnelService(),
