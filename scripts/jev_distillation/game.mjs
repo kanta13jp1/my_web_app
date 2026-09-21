@@ -1,6 +1,7 @@
 // Frozen recreation, not Nintendo ROM/gameplay. No network or renderer is used.
 import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
+import {predict as infer} from './predict.mjs';
 export const {World11}=await import(pathToFileURL(resolve('out/lightgbm/frozen/world11.mjs')));
 export const {hazards,prediction}=await import(pathToFileURL(resolve('out/lightgbm/frozen/reaction.mjs')));
 export const ACTIONS=['noop','right','right_jump','right_run','right_run_jump','jump','left'];
@@ -29,9 +30,6 @@ export function init(x=32,seed=0,perturb=false){
  if(perturb)for(const e of g.enemies)e.x+=(random()-.5)*8;
  return g;
 }
-function tree(node,x){if('leaf_value'in node)return node.leaf_value;return tree(x[node.split_feature]<=node.threshold?node.left_child:node.right_child,x);}
 export function predict(model,x){
- const raw=model.map(m=>m.tree_info.reduce((sum,t)=>sum+tree(t.tree_structure,x),0));
- const clipped=raw.map(v=>Math.max(0,v)),sum=clipped.reduce((a,b)=>a+b,0);
- return {raw,probabilities:sum?clipped.map(v=>v/sum):ACTIONS.map(()=>1/ACTIONS.length),action:ACTIONS[raw.indexOf(Math.max(...raw))]};
+ const result=infer(model,x);return {...result,action:ACTIONS[result.index]};
 }

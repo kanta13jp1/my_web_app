@@ -7,12 +7,17 @@ import lightgbm as lgb
 OUT=Path('out/lightgbm'); DATA=Path('scripts/jev_distillation/teacher.json')
 ACTIONS=['noop','right','right_jump','right_run','right_run_jump','jump','left']
 data=json.loads(DATA.read_text());rows=[r for r in data['rows'] if r.get('teacher',{}).get('ok')]
+assert data['source']=='d224c892c1f16895f24978358717717f96bad657' and data['feature_version']==1
+candidates=json.loads((OUT/'candidates.json').read_text())
+assert [{k:r[k] for k in ['id','features','state','split','group','rule_action']} for r in data['rows']]==[{k:r[k] for k in ['id','features','state','split','group','rule_action']} for r in candidates['rows']]
+assert len({tuple(r['features']) for r in rows})==len(rows)
 assert rows and len({r['id'] for r in rows})==len(rows)
 groups={s:{r['group'] for r in rows if r['split']==s} for s in ['train','validation','test']}
 assert not (groups['train']&groups['validation'] or groups['train']&groups['test'] or groups['validation']&groups['test'])
 report={'source':data['source'],'dataset_sha256':hashlib.sha256(DATA.read_bytes()).hexdigest(),'lightgbm':lgb.__version__,'python':platform.python_version(),'rows':len(rows),'excluded_failed':len(data['rows'])-len(rows),'groups':{s:sorted(g) for s,g in groups.items()},'models':{}}
 X=np.array([r['features'] for r in rows],dtype=float)
 assert np.isfinite(X).all()
+assert X.shape[1]==145
 train=np.array([r['split']=='train' for r in rows]);valid=np.array([r['split']=='validation' for r in rows]);test=np.array([r['split']=='test' for r in rows])
 assert min(sum(train),sum(valid),sum(test))>0
 for kind in ['jev','rule']:

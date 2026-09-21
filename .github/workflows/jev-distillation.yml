@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
       - name: Materialize frozen game
@@ -33,12 +33,15 @@ jobs:
             python -m pip install lightgbm==4.6.0 numpy==2.2.6 scipy==1.15.3
             python scripts/jev_distillation/train.py
             node scripts/jev_distillation/evaluate.mjs
+            python -m pip install playwright==1.55.0
+            python -m playwright install --with-deps chromium
+            python scripts/jev_distillation/browser.py
           else
             echo 'Collection phase only; teacher labels have not yet been collected.'
           fi
       - name: Preserve numeric experiment evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: jev-lightgbm-${{ github.run_id }}
           path: out/lightgbm/
