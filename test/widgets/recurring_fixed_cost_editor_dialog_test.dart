@@ -7,22 +7,28 @@ void main() {
   testWidgets('editing preserves or explicitly clears the billing stop date',
       (tester) async {
     final existing = AssetRecurringFixedCost(
-        id: 'example',
-        name: 'Example',
-        amount: 100,
-        paymentDay: 10,
-        billingStoppedFrom: DateTime(2026, 6, 10),);
+      id: 'example',
+      name: 'Example',
+      amount: 100,
+      paymentDay: 10,
+      billingStoppedFrom: DateTime(2026, 6, 10),
+    );
     AssetRecurringFixedCost? saved;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
         home: Scaffold(
-            body: Builder(
-      builder: (context) => TextButton(
-          onPressed: () async {
-            saved =
-                await showRecurringFixedCostEditor(context, existing: existing);
-          },
-          child: const Text('open'),),
-    ),),),);
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                saved = await showRecurringFixedCostEditor(context,
+                    existing: existing);
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('保存'));

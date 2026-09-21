@@ -9843,156 +9843,170 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             )
           : SingleChildScrollView(
-        controller: _scrollController,
-        padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if ((widget.entryLabel?.trim().isNotEmpty ?? false) ||
-                (widget.entryDescription?.trim().isNotEmpty ?? false)) ...[
-              _buildUnifiedEntryBanner(),
-              const SizedBox(height: 16),
-            ],
-            _buildSyncStatusBanner(),
-            _buildUnsyncedBadgeRow(),
-            _buildAccountShortfallAlertBanner(assetLiabilityWorkbook),
-            _buildPaymentSourceMissingBanner(assetLiabilityWorkbook),
-            _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
-            _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
-            const SizedBox(height: 12),
-            _buildDisplayModeSwitcher(),
-            const SizedBox(height: 12),
-            if (_isSectionShown(AssetManagementSectionId.monthlyFlow)) ...[
-              _sectionAnchor(AssetManagementSectionId.monthlyFlow),
-              _buildMonthlyFlowFirstCard(),
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.calendar)) ...[
-              _sectionAnchor(AssetManagementSectionId.calendar),
-              KeyedSubtree(
-                key: _keyCalendar,
-                child: _buildAssetCalendarCard(assetLiabilityWorkbook),
+              controller: _scrollController,
+              padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if ((widget.entryLabel?.trim().isNotEmpty ?? false) ||
+                      (widget.entryDescription?.trim().isNotEmpty ??
+                          false)) ...[
+                    _buildUnifiedEntryBanner(),
+                    const SizedBox(height: 16),
+                  ],
+                  _buildSyncStatusBanner(),
+                  _buildUnsyncedBadgeRow(),
+                  _buildAccountShortfallAlertBanner(assetLiabilityWorkbook),
+                  _buildPaymentSourceMissingBanner(assetLiabilityWorkbook),
+                  _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
+                  _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
+                  const SizedBox(height: 12),
+                  _buildDisplayModeSwitcher(),
+                  const SizedBox(height: 12),
+                  if (_isSectionShown(
+                      AssetManagementSectionId.monthlyFlow)) ...[
+                    _sectionAnchor(AssetManagementSectionId.monthlyFlow),
+                    _buildMonthlyFlowFirstCard(),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(AssetManagementSectionId.calendar)) ...[
+                    _sectionAnchor(AssetManagementSectionId.calendar),
+                    KeyedSubtree(
+                      key: _keyCalendar,
+                      child: _buildAssetCalendarCard(assetLiabilityWorkbook),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildCashflowForecastCard(assetLiabilityWorkbook),
+                  ],
+                  if (_isSectionShown(
+                      AssetManagementSectionId.monthlyDashboard)) ...[
+                    _sectionAnchor(AssetManagementSectionId.monthlyDashboard),
+                    _buildMonthlyDashboardGrid(assetLiabilityWorkbook),
+                  ],
+                  // 提案カード(定期取引/定期収入の自動検出)は給与内訳に相乗りせず専用
+                  // セクションへ。salaryBreakdown を隠しても提案だけ独立表示できる。
+                  if (_isSectionShown(AssetManagementSectionId.proposals)) ...[
+                    _sectionAnchor(AssetManagementSectionId.proposals),
+                    _buildRecurringTransactionSuggestionCard(
+                        assetLiabilityWorkbook),
+                    const SizedBox(height: 16),
+                    _buildRecurringIncomeSuggestionCard(assetLiabilityWorkbook),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(
+                      AssetManagementSectionId.salaryBreakdown)) ...[
+                    _sectionAnchor(AssetManagementSectionId.salaryBreakdown),
+                    _buildSalarySpendingBreakdownCard(),
+                    const SizedBox(height: 16),
+                    _buildCategoryBudgetCard(),
+                  ],
+                  if (_isSectionShown(
+                    AssetManagementSectionId.recurringFixedCost,
+                  )) ...[
+                    _sectionAnchor(AssetManagementSectionId.recurringFixedCost),
+                    _buildRecurringFixedCostCard(assetLiabilityWorkbook),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(
+                    AssetManagementSectionId.subscriptionFixedCost,
+                  )) ...[
+                    _sectionAnchor(
+                        AssetManagementSectionId.subscriptionFixedCost),
+                    SubscriptionDuplicateAlertCard(
+                      groups: _detectSubscriptionDuplicates(),
+                      onIgnore: _ignoreDuplicateGroup,
+                    ),
+                    _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(
+                    AssetManagementSectionId.subscriptionAudit,
+                  )) ...[
+                    _sectionAnchor(AssetManagementSectionId.subscriptionAudit),
+                    _buildSubscriptionAuditCard(assetLiabilityWorkbook),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
+                    _sectionAnchor(AssetManagementSectionId.disposable),
+                    _buildDisposableBalanceCard(),
+                    if (_supabase.auth.currentUser != null)
+                      AssetInterestHistoryCard(
+                        key: ValueKey(
+                            'interest:${_supabase.auth.currentUser!.id}'),
+                        repository: SupabaseAssetInterestRepository(
+                          _supabase,
+                          _supabase.auth.currentUser!.id,
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(
+                      AssetManagementSectionId.quickActions)) ...[
+                    _sectionAnchor(AssetManagementSectionId.quickActions),
+                    _buildMonthlyFlowPrimaryActionBar(),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(AssetManagementSectionId.wasteAi)) ...[
+                    _sectionAnchor(AssetManagementSectionId.wasteAi),
+                    _buildWasteTrainingAiCard(),
+                    const SizedBox(height: 24),
+                  ],
+                  if (_isSectionShown(AssetManagementSectionId.deadlines)) ...[
+                    _sectionAnchor(AssetManagementSectionId.deadlines),
+                    _buildDeadlineChecklistCard(), // 締切チェックリスト
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(AssetManagementSectionId.threeMonth)) ...[
+                    _sectionAnchor(AssetManagementSectionId.threeMonth),
+                    _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(
+                      AssetManagementSectionId.debtPlanner)) ...[
+                    _sectionAnchor(AssetManagementSectionId.debtPlanner),
+                    _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(
+                      AssetManagementSectionId.workbookBoard)) ...[
+                    _sectionAnchor(AssetManagementSectionId.workbookBoard),
+                    _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isSectionShown(
+                      AssetManagementSectionId.assetLiability)) ...[
+                    _sectionAnchor(AssetManagementSectionId.assetLiability),
+                    Container(
+                      key: _keyStock,
+                      child: _buildAssetLiabilityCard(),
+                    ), // ①②資産負債
+                    const SizedBox(height: 24),
+                  ],
+                  if (_isSectionShown(AssetManagementSectionId.flow)) ...[
+                    _sectionAnchor(AssetManagementSectionId.flow),
+                    Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
+                    const SizedBox(height: 24),
+                  ],
+                  if (_isSectionShown(
+                      AssetManagementSectionId.subscriptions)) ...[
+                    _sectionAnchor(AssetManagementSectionId.subscriptions),
+                    Container(
+                        key: _keySubs, child: _buildSubscriptionCard()), // ③固定費
+                    const SizedBox(height: 24),
+                  ],
+                  if (_isSectionShown(AssetManagementSectionId.mustTasks)) ...[
+                    _sectionAnchor(AssetManagementSectionId.mustTasks),
+                    Container(
+                        key: _keyMust, child: _buildMustTasksCard()), // ⑤必須タスク
+                    const SizedBox(height: 24),
+                  ],
+                  if (_isSectionShown(AssetManagementSectionId.chart)) ...[
+                    _sectionAnchor(AssetManagementSectionId.chart),
+                    _buildChartCard(), // グラフ
+                  ],
+                ],
               ),
-              const SizedBox(height: 16),
-              _buildCashflowForecastCard(assetLiabilityWorkbook),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.monthlyDashboard)) ...[
-              _sectionAnchor(AssetManagementSectionId.monthlyDashboard),
-              _buildMonthlyDashboardGrid(assetLiabilityWorkbook),
-            ],
-            // 提案カード(定期取引/定期収入の自動検出)は給与内訳に相乗りせず専用
-            // セクションへ。salaryBreakdown を隠しても提案だけ独立表示できる。
-            if (_isSectionShown(AssetManagementSectionId.proposals)) ...[
-              _sectionAnchor(AssetManagementSectionId.proposals),
-              _buildRecurringTransactionSuggestionCard(assetLiabilityWorkbook),
-              const SizedBox(height: 16),
-              _buildRecurringIncomeSuggestionCard(assetLiabilityWorkbook),
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.salaryBreakdown)) ...[
-              _sectionAnchor(AssetManagementSectionId.salaryBreakdown),
-              _buildSalarySpendingBreakdownCard(),
-              const SizedBox(height: 16),
-              _buildCategoryBudgetCard(),
-            ],
-            if (_isSectionShown(
-              AssetManagementSectionId.recurringFixedCost,
-            )) ...[
-              _sectionAnchor(AssetManagementSectionId.recurringFixedCost),
-              _buildRecurringFixedCostCard(assetLiabilityWorkbook),
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(
-              AssetManagementSectionId.subscriptionFixedCost,
-            )) ...[
-              _sectionAnchor(AssetManagementSectionId.subscriptionFixedCost),
-              SubscriptionDuplicateAlertCard(
-                groups: _detectSubscriptionDuplicates(),
-                onIgnore: _ignoreDuplicateGroup,
-              ),
-              _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(
-              AssetManagementSectionId.subscriptionAudit,
-            )) ...[
-              _sectionAnchor(AssetManagementSectionId.subscriptionAudit),
-              _buildSubscriptionAuditCard(assetLiabilityWorkbook),
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
-              _sectionAnchor(AssetManagementSectionId.disposable),
-              _buildDisposableBalanceCard(),
-              if (_supabase.auth.currentUser != null)
-                AssetInterestHistoryCard(
-                  key: ValueKey('interest:${_supabase.auth.currentUser!.id}'),
-                  repository: SupabaseAssetInterestRepository(
-                    _supabase,
-                    _supabase.auth.currentUser!.id,
-                  ),
-                ),
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.quickActions)) ...[
-              _sectionAnchor(AssetManagementSectionId.quickActions),
-              _buildMonthlyFlowPrimaryActionBar(),
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.wasteAi)) ...[
-              _sectionAnchor(AssetManagementSectionId.wasteAi),
-              _buildWasteTrainingAiCard(),
-              const SizedBox(height: 24),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.deadlines)) ...[
-              _sectionAnchor(AssetManagementSectionId.deadlines),
-              _buildDeadlineChecklistCard(), // 締切チェックリスト
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.threeMonth)) ...[
-              _sectionAnchor(AssetManagementSectionId.threeMonth),
-              _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.debtPlanner)) ...[
-              _sectionAnchor(AssetManagementSectionId.debtPlanner),
-              _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.workbookBoard)) ...[
-              _sectionAnchor(AssetManagementSectionId.workbookBoard),
-              _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
-              const SizedBox(height: 16),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.assetLiability)) ...[
-              _sectionAnchor(AssetManagementSectionId.assetLiability),
-              Container(
-                key: _keyStock,
-                child: _buildAssetLiabilityCard(),
-              ), // ①②資産負債
-              const SizedBox(height: 24),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.flow)) ...[
-              _sectionAnchor(AssetManagementSectionId.flow),
-              Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
-              const SizedBox(height: 24),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.subscriptions)) ...[
-              _sectionAnchor(AssetManagementSectionId.subscriptions),
-              Container(key: _keySubs, child: _buildSubscriptionCard()), // ③固定費
-              const SizedBox(height: 24),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.mustTasks)) ...[
-              _sectionAnchor(AssetManagementSectionId.mustTasks),
-              Container(key: _keyMust, child: _buildMustTasksCard()), // ⑤必須タスク
-              const SizedBox(height: 24),
-            ],
-            if (_isSectionShown(AssetManagementSectionId.chart)) ...[
-              _sectionAnchor(AssetManagementSectionId.chart),
-              _buildChartCard(), // グラフ
-            ],
-          ],
-        ),
-      ),
+            ),
     );
   }
 

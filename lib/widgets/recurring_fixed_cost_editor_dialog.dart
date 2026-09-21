@@ -161,7 +161,8 @@ class _RecurringFixedCostEditorDialogState
       text: initial?.billingStoppedFrom == null
           ? ''
           : AssetRecurringFixedCost.formatBillingDate(
-              initial!.billingStoppedFrom!,),
+              initial!.billingStoppedFrom!,
+            ),
     );
     // 渡された候補に無い振替元IDは保持しない (古い参照を残さない)。
     final ids = widget.sourceAccounts.map((option) => option.id).toSet();
