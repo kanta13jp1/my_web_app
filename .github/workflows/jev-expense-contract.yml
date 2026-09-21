@@ -8,10 +8,14 @@ on:
       - 'lib/widgets/expense_classification_review.dart'
       - '.github/workflows/jev-expense-contract.yml'
   workflow_dispatch:
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: jev-expense-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   quota:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
@@ -62,6 +66,8 @@ jobs:
       - name: Typecheck and test provider contract
         run: deno test --config supabase/functions/deno.json supabase/functions/ai-hub/jev_expense_test.ts
   browser:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
