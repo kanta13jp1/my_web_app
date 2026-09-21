@@ -80,6 +80,8 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "asset.monthly_report.generate",
   "asset_liability.monthly_report.generate",
   "asset_subscription.analyze_statement",
+  "palm_reading.analyze",
+  "palm_reading.delete",
   "asset.chat",
   "ai_hub.asset_chat",
   "department_finance_summary",
