@@ -38,6 +38,7 @@ concurrency:
 
 jobs:
   smoke:
+    if: github.event_name != 'workflow_dispatch'
     name: scripts/video smoke test
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -69,7 +70,7 @@ jobs:
           PYTHONUTF8: '1'
         run: python -m unittest discover -s test/scripts -p "test_video_pipeline_secret_readiness.py"
 
-  private-inspection:
+  private-render:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/private-video-installing-20260906'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -82,12 +83,12 @@ jobs:
       - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520
         with:
           version: 2.84.2
-      - name: Install isolated audio inspection dependencies
+      - name: Install cloud rendering dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
-          pip install --quiet faster-whisper==1.2.1
-      - name: Fetch approved private input
+          sudo apt-get install -y -qq ffmpeg fonts-noto-cjk
+          pip install --quiet Pillow==11.3.0
+      - name: Fetch approved private inputs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
@@ -98,16 +99,28 @@ jobs:
           supabase init
           supabase link --project-ref "$PROJECT_REF"
           supabase storage cp ss:///attachments/private-video-pipeline/installing-20260906-v1/input.m4a input.m4a --linked --experimental
-          supabase storage cp ss:///attachments/private-video-pipeline/installing-20260906-v1/inspect_audio.py inspect_audio.py --linked --experimental
-          echo '61cda803180278b5343fa61d784b17ca1b54bbe25444e4222e78d6b307962cb1  inspect_audio.py' | sha256sum --check
-      - name: Inspect audio without credentials or content logs
+          supabase storage cp ss:///attachments/private-video-pipeline/installing-20260921-v1/render_lesson.py render_lesson.py --linked --experimental
+          supabase storage cp ss:///attachments/private-video-pipeline/installing-20260921-v1/narration.txt narration.txt --linked --experimental
+          echo 'e535e020e075584c45ac7f2d1445efbb83cbda393eade514030f95458d61f64c  render_lesson.py' | sha256sum --check
+          echo '1bfbdec0a37a6c3a6e339a498ae2e6a2f46c9d7b04b0ab2c474a4171530a6a8f  narration.txt' | sha256sum --check
+      - name: Render and validate without publishing media
         run: |
           cd /tmp/private-media-job
-          python inspect_audio.py > inspection-runtime.log 2>&1 || { echo 'Private inspection failed; no audio content emitted.'; exit 1; }
-      - name: Preserve private result
+          python render_lesson.py > render-runtime.log 2>&1 || { echo 'Private render failed; details kept in private log.'; exit 1; }
+      - name: Preserve all results in private storage
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           cd /tmp/private-media-job
-          supabase storage cp inspection/inspection.json ss:///attachments/private-video-pipeline/installing-20260906-v1/inspection.json --linked --experimental --content-type application/json --cache-control no-store
-          echo 'Private inspection saved. No media artifacts published.'
+          supabase storage cp render-v1.zip ss:///attachments/private-video-pipeline/installing-20260921-v1/render-v1.zip --linked --experimental --content-type application/zip --cache-control no-store
+          supabase storage cp render-v1/manifest.json ss:///attachments/private-video-pipeline/installing-20260921-v1/manifest.json --linked --experimental --content-type application/json --cache-control no-store
+          echo 'Private render preserved. No public artifacts or YouTube operations.'
+      - name: Preserve private diagnostic log
+        if: always()
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          cd /tmp/private-media-job
+          if test -f render-runtime.log; then
+            supabase storage cp render-runtime.log ss:///attachments/private-video-pipeline/installing-20260921-v1/render-runtime-${{ github.run_id }}.log --linked --experimental --content-type text/plain --cache-control no-store
+          fi
