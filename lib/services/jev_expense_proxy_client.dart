@@ -10,7 +10,9 @@ class JevExpenseProxyClient extends JevClient {
 
   static JevClient forCurrentSession() {
     final direct = JevClient();
-    if (direct.isLocalMode) return direct;
+    if (direct.isLocalMode) {
+      return direct;
+    }
     direct.dispose();
     return JevExpenseProxyClient(
       signedIn: () {
@@ -24,7 +26,9 @@ class JevExpenseProxyClient extends JevClient {
       invoke: (body) async {
         final client = Supabase.instance.client;
         final userId = client.auth.currentUser?.id;
-        if (userId == null) return null;
+        if (userId == null) {
+          return null;
+        }
         final response = await client.functions.invoke(
           'ai-hub',
           body: body,
@@ -46,8 +50,9 @@ class JevExpenseProxyClient extends JevClient {
     required List<JevChoice> choices,
     String? context,
   }) async {
-    if (!isConfigured || input.trim().isEmpty || input.length > 500)
+    if (!isConfigured || input.trim().isEmpty || input.length > 500) {
       return null;
+    }
     final clock = Stopwatch()..start();
     try {
       final dynamic response = await invoke({
@@ -55,10 +60,14 @@ class JevExpenseProxyClient extends JevClient {
         'memo': input.trim(),
         'consent': true,
       }).timeout(const Duration(seconds: 8));
-      if (!isConfigured || response is! Map) return null;
+      if (!isConfigured || response is! Map) {
+        return null;
+      }
       final dynamic answers = response['answers'];
       final dynamic answer = answers is Map ? answers['classification'] : null;
-      if (answer is! Map || answer['type'] != 'choice') return null;
+      if (answer is! Map || answer['type'] != 'choice') {
+        return null;
+      }
       final dynamic id = answer['choice'];
       final dynamic confidence = answer['confidence'];
       final dynamic probabilities = answer['probabilities'];
@@ -69,7 +78,9 @@ class JevExpenseProxyClient extends JevClient {
           confidence < 0 ||
           confidence > 1 ||
           probabilities is! Map ||
-          probabilities.length != ids.length) return null;
+          probabilities.length != ids.length) {
+        return null;
+      }
       final scores = <String, double>{};
       for (final entry in probabilities.entries) {
         final dynamic value = entry.value;
@@ -77,7 +88,9 @@ class JevExpenseProxyClient extends JevClient {
             value is! num ||
             !value.isFinite ||
             value < 0 ||
-            value > 1) return null;
+            value > 1) {
+          return null;
+        }
         scores[entry.key as String] = value.toDouble();
       }
       if ((scores.values.fold<double>(0, (sum, n) => sum + n) - 1).abs() >

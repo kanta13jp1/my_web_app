@@ -42,13 +42,16 @@ void main() {
       (tester) async {
     var calls = 0;
     final client = JevExpenseProxyClient(
-        signedIn: () => true,
-        invoke: (body) async {
-          calls++;
-          expect(body['memo'], 'スタバ');
-          if (calls == 1) throw Exception('quota_exceeded');
-          return jsonDecode(answer('food').body);
-        });
+      signedIn: () => true,
+      invoke: (body) async {
+        calls++;
+        expect(body['memo'], 'スタバ');
+        if (calls == 1) {
+          throw Exception('quota_exceeded');
+        }
+        return jsonDecode(answer('food').body);
+      },
+    );
     addTearDown(client.dispose);
     await tester.pumpWidget(host('スタバ', client: client));
     expect(calls, 0);
