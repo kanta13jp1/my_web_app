@@ -1126,9 +1126,11 @@ serve(async (req) => {
 
       // ── Wiki / Knowledge Base ─────────────────────────────────────────────────
       case "wiki.list": {
-        const { data } = await admin.from("hub_data")
+        const { data, error } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "wiki_page")
+            .filter("metadata->>user_id", "eq", userId)
           .order("created_at", { ascending: false }).limit(50);
+        if (error) throw new Error(error.message);
         return json({ success: true, pages: data ?? [] });
       }
       case "wiki.create": {
@@ -1142,7 +1144,7 @@ serve(async (req) => {
         return json({ success: true, page: item });
       }
       case "wiki.update": {
-        const { error } = await admin.from("hub_data")
+        const { data, error } = await admin.from("hub_data")
           .update({
             metadata: {
               ...body,
@@ -1150,17 +1152,22 @@ serve(async (req) => {
               updated_at: new Date().toISOString(),
             },
           })
-          .eq("id", String(body.id ?? "")).eq("source", "wiki_page");
+          .eq("id", String(body.id ?? "")).eq("source", "wiki_page")
+            .filter("metadata->>user_id", "eq", userId)
+            .select("id").maybeSingle();
         if (error) throw new Error(error.message);
+        if (!data) return json({ error: "Not found" }, 404);
         return json({ success: true });
       }
       case "kb.search": {
         const query = String(body.query ?? "");
-        const { data } = await admin.from("hub_data")
+        const { data, error } = await admin.from("hub_data")
           .select("id, metadata, created_at")
           .eq("source", "wiki_page")
+          .filter("metadata->>user_id", "eq", userId)
           .ilike("metadata->>title", `%${query}%`)
           .limit(20);
+        if (error) throw new Error(error.message);
         return json({ success: true, results: data ?? [] });
       }
 
