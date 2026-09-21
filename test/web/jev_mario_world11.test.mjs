@@ -65,3 +65,15 @@ test('snapshot owns its data and skidding differs from walking',()=>{
  g.input={left:true};g.step();assert.equal(playerPose(g),'skid');const snap=g.snapshot();g.p.x+=50;g.input.left=false;
  assert.notEqual(snap.player.x,g.p.x);assert.equal(snap.input.left,true);
 });
+
+test('controlled identical jump demonstrates delay effect independently of Jev',()=>{
+ const results=[];
+ for(const delay of [0,50,200,1000]){
+  const g=new World11();g.cells=new Map();g.contents=new Map();for(let x=0;x<80;x++)for(let y=13;y<15;y++)g.cells.set(`${x},${y}`,'ground');
+  Object.assign(g.p,{x:160,y:192,vx:1.5});g.enemies=[{x:184,y:192,w:14,h:16,vx:-.5,vy:0,kind:'goomba',dead:0}];
+  for(let frame=0;frame<40&&g.phase==='playing';frame++){g.input={right:true,jump:frame>=Math.round(delay*60/1000)};g.step();}
+  results.push({delay_ms:delay,phase:g.phase,x:Number(g.p.x.toFixed(2)),frames:g.frames});
+ }
+ console.log('CONTROLLED_LATENCY_EXPERIMENT '+JSON.stringify(results));
+ assert.equal(results[0].phase,'playing');assert.equal(results[3].phase,'dead');
+});

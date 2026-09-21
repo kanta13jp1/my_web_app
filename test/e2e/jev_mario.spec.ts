@@ -179,3 +179,14 @@ test('audio opt-in, waveform and stop lifecycle', async ({page},info)=>{
   expect(signal).toBe(true);
   await screenshot(page,info.outputPath('world11-audio.png'));
 });
+
+test('loss presentation and retry remain usable with sound enabled',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#sound').check();await lab.locator('#play-local').click();
+ await lab.locator('#screen').focus();await page.keyboard.down('ArrowRight');
+ await expect(lab.locator('#posture')).toContainText('ミス',{timeout:10000});await page.keyboard.up('ArrowRight');
+ await page.waitForTimeout(500);await screenshot(page,info.outputPath('world11-death-motion.png'));
+ await page.waitForTimeout(2600);await screenshot(page,info.outputPath('world11-try-again.png'));
+ await lab.locator('#restart-local').click();await expect(lab.locator('#posture')).toContainText('待機');
+ await lab.locator('#play-local').click();await expect(lab.locator('#status')).toContainText('手動プレイ中');await lab.locator('#stop').click();
+});
