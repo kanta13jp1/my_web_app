@@ -25,6 +25,10 @@ on:
       - 'scripts/pre_commit_quality_gate.py'
       - 'scripts/pre_commit_quality_gate_test.py'
       - 'scripts/check_ga_readiness_gate.py'
+      - 'playwright.config.ts'
+      - 'scripts/summarize_playwright_results.mjs'
+      - 'scripts/summarize_playwright_results_test.mjs'
+      - 'scripts/playwright_report_persistence_test.mjs'
       - 'assets/data/tiger_*'
   workflow_dispatch:
     inputs:
