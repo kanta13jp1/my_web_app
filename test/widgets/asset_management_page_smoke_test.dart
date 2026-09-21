@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -30,6 +31,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 支払日上書きだけ差し替え可能なテスト用 repo (#part295 fake repo 足場)。
 /// 他のロード/保存は SharedPreferences 実装に委譲(テストでは空)。
+class _DelayedMonthlyRepository extends SharedPreferencesAssetLiabilityRepository {
+  final loaded = Completer<AssetLiabilityMonthlyState>();
+  int saves = 0;
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) => loaded.future;
+
+  @override
+  Future<void> saveMonth({
+    required DateTime month,
+    required AssetLiabilityMonthlyState state,
+  }) async {
+    saves++;
+    await super.saveMonth(month: month, state: state);
+  }
+}
+
 class _FakeDebtOverrideRepository
     extends SharedPreferencesAssetLiabilityRepository {
   _FakeDebtOverrideRepository(
@@ -128,6 +146,21 @@ void main() {
     // (= 将来ログイン状態の編集 smoke が write 経路を踏んでも orphan-hang しない)。
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
     AssetRecurringTombstoneSyncService.resetSharedForTest();
+  });
+
+  testWidgets('monthly editor waits for initial state and does not save empty defaults', (tester) async {
+    final repository = _DelayedMonthlyRepository();
+    await tester.pumpWidget(MaterialApp(
+      home: AssetManagementPage(assetLiabilityRepository: repository),
+    ),);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('月次の支払状態を読み込み中です。編集は読込後に行えます。'), findsOneWidget);
+    expect(repository.saves, 0);
+    repository.loaded.complete(const AssetLiabilityMonthlyState());
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('月次の支払状態を読み込み中です。編集は読込後に行えます。'), findsNothing);
+    await _unmount(tester);
   });
 
   test('Obsidian解約候補は全変更前に現在のサブスクへ再照合する', () {

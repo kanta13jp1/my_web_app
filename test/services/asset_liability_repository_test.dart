@@ -25,11 +25,11 @@ void main() {
         month: month,
         state: AssetLiabilityMonthlyState(
             paidAccountNames: const {'example'},
-            updatedAt: DateTime(2026, 1, 1)));
+            updatedAt: DateTime(2026, 1, 1),),);
     await remote.started.future;
     final second = repository.saveMonth(
         month: month,
-        state: AssetLiabilityMonthlyState(updatedAt: DateTime(2026, 1, 2)));
+        state: AssetLiabilityMonthlyState(updatedAt: DateTime(2026, 1, 2)),);
     final reload = repository.loadMonth(month);
     remote.release.complete();
     await Future.wait([first, second]);
@@ -45,7 +45,7 @@ void main() {
       final remote = _RecordingAssetLiabilityRemoteStore();
       final month = DateTime(2026, 1);
       final old = AssetLiabilityMonthlyState(
-          paidAccountNames: const {'example'}, updatedAt: DateTime(2026, 1, 1));
+          paidAccountNames: const {'example'}, updatedAt: DateTime(2026, 1, 1),);
       final cleared =
           AssetLiabilityMonthlyState(updatedAt: DateTime(2026, 1, 2));
       await local.saveMonth(month: month, state: newerIsRemote ? old : cleared);
@@ -2138,7 +2138,7 @@ class _DelayedMonthlyStore extends _RecordingAssetLiabilityRemoteStore {
   Future<void> saveMonth(
       {required String userId,
       required DateTime month,
-      required AssetLiabilityMonthlyState state}) async {
+      required AssetLiabilityMonthlyState state,}) async {
     if (!started.isCompleted) {
       started.complete();
       await release.future;

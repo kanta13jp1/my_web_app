@@ -11,7 +11,7 @@ void main() {
         name: 'Example',
         amount: 100,
         paymentDay: 10,
-        billingStoppedFrom: DateTime(2026, 6, 10));
+        billingStoppedFrom: DateTime(2026, 6, 10),);
     AssetRecurringFixedCost? saved;
     await tester.pumpWidget(MaterialApp(
         home: Scaffold(
@@ -21,8 +21,8 @@ void main() {
             saved =
                 await showRecurringFixedCostEditor(context, existing: existing);
           },
-          child: const Text('open')),
-    ))));
+          child: const Text('open'),),
+    ),),),);
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('保存'));

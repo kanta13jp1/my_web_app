@@ -57,7 +57,7 @@ class RecurringFixedCostCard extends StatelessWidget {
     }
     if (cost.billingStoppedFrom != null) {
       buffer.write(
-          ' / ${AssetRecurringFixedCost.formatBillingDate(cost.billingStoppedFrom!)}以降は請求なし');
+          ' / ${AssetRecurringFixedCost.formatBillingDate(cost.billingStoppedFrom!)}以降は請求なし',);
     }
     return buffer.toString();
   }

@@ -811,6 +811,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isRefreshingMonthlyReports = false;
   String? _monthlyReportMessage;
   String? _loadedAssetLiabilityMonthKey;
+  int _monthlyStateEditRevision = 0;
   // 同一サイクル月の月次stateロードが並行して複数走らないよう束ねる in-flight
   // ガード。起動時は eager ロードと給料日/リセットマーカーのミラー復元が相次いで
   // _loadAssetLiabilityMonthlyState を呼び、同じ月を 2-3 回フル取得 (各 7 往復)
@@ -2085,6 +2086,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       final targetMonth = _assetLiabilityStateMonth(_now);
       final monthKey = _assetLiabilityStateMonthKey(_now);
+      final editRevision = _monthlyStateEditRevision;
       final state = await _assetLiabilityRepository.loadMonth(targetMonth);
       final defaultPaymentSettings =
           await _assetLiabilityRepository.loadDefaultPaymentSettings();
@@ -2128,6 +2130,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final generatedTemplatePlans =
           incomePlansWithTemplates.length != state.incomePlans.length;
       if (!mounted) return;
+      // A delayed load belongs to the month/revision at which it started.
+      // Never replace edits made while its auxiliary requests were in flight.
+      if (monthKey != _assetLiabilityStateMonthKey(_now) ||
+          editRevision != _monthlyStateEditRevision) {
+        return;
+      }
       setState(() {
         _monthlyPaymentOverrides = Map<String, double>.from(
           state.paymentOverrides,
@@ -2274,6 +2282,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _persistAssetLiabilityMonthlyState() async {
+    if (_loadedAssetLiabilityMonthKey != _assetLiabilityStateMonthKey(_now)) {
+      throw StateError('Monthly state must finish loading before saving');
+    }
+    _monthlyStateEditRevision++;
     await _assetLiabilityRepository.saveMonth(
       month: _assetLiabilityStateMonth(_now),
       state: _currentAssetLiabilityMonthlyState(),
@@ -9817,7 +9829,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: SingleChildScrollView(
+      body: _loadedAssetLiabilityMonthKey != _assetLiabilityStateMonthKey(_now)
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('月次の支払状態を読み込み中です。編集は読込後に行えます。'),
+                  TextButton(
+                    onPressed: _loadAssetLiabilityBootState,
+                    child: const Text('再読込'),
+                  ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
         controller: _scrollController,
         padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
         child: Column(
