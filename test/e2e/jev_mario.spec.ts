@@ -108,8 +108,8 @@ test('late response after stop cannot resume controls; missing/invalid ROM expla
 test('game scripts and styles load with their actual MIME types', async ({ page }) => {
   const failures: string[] = [];
   page.on('pageerror', error => failures.push(error.message));
-  const scripts = page.waitForResponse(response => response.url().endsWith('/labs/jev-mario/lab.mjs'));
-  const styles = page.waitForResponse(response => response.url().endsWith('/labs/jev-mario/style.css'));
+  const scripts = page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/labs/jev-mario/lab.mjs'));
+  const styles = page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/labs/jev-mario/style.css'));
   await page.goto('/test/e2e/jev_mario_harness.html');
   const script = await scripts;
   const style = await styles;
@@ -235,4 +235,20 @@ test('mode change finalizes recording and fixture disables capture',async({page}
  await lab.locator('#mode').selectOption('fixture');await expect(lab.locator('#record-result')).toBeVisible();
  await expect(lab.locator('#record-start')).toBeDisabled();await expect(lab.locator('#record-stop')).toBeDisabled();
  await lab.locator('#mode').selectOption('recreation');await expect(lab.locator('#record-start')).toBeEnabled();
+});
+
+
+test('local assistance is opt-in, exports attribution and can return to Jev-only',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html?slow');const lab=page.frameLocator('iframe');
+ await expect(lab.locator('#status')).toContainText('準備完了');
+ await expect(lab.locator('#controller')).toHaveValue('jev_only');
+ await lab.locator('#controller').selectOption('jev_plus_local');await lab.locator('#consent').check();await lab.locator('#start').click();
+ await expect(lab.locator('#assist-status')).toContainText('ローカル補助:',{timeout:12000});
+ await lab.locator('#stop').click();const download=page.waitForEvent('download');await lab.locator('#export').click();
+ const stream=await (await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();
+ const data=JSON.parse(raw);expect(data.controller).toBe('jev_plus_local');expect(data.local_interventions.length).toBeGreaterThan(0);
+ expect(data.samples[0].observation.context.hazards).toBeDefined();
+ await screenshot(page,info.outputPath('local-reaction-comparison.png'));
+ await lab.locator('#controller').selectOption('jev_only');await expect(lab.locator('#status')).toContainText('操作方式');
+ await lab.locator('#restart-local').click();await lab.locator('#play-local').click();await expect(lab.locator('#status')).toContainText('手動');
 });

@@ -38,3 +38,11 @@ test('room/star themes switch, hurry speeds sequence, terminal stingers stop mus
  const count=c.oscillators.length;a.tick();assert.equal(c.oscillators.length,count);
  a.stop();a.tick('overworld',{hurry:true});assert.ok(a.next-c.currentTime<.145);
 });
+
+
+test('pulse voice is cached and new item/life sounds release bounded nodes',async()=>{
+ const c=context();let waves=0,applied=0;c.createPeriodicWave=(real,imag)=>{waves++;assert.equal(real.length,33);assert.equal(imag.length,33);return {};};
+ const factory=c.createOscillator.bind(c);c.createOscillator=()=>{const o=factory();o.setPeriodicWave=()=>applied++;return o;};
+ const a=new GameAudio(()=>c);await a.enable(true);a.effect('appear');a.effect('life');assert.equal(waves,1);assert.ok(applied>=10);
+ a.stop();assert.equal(a.nodes.size,0);assert.ok(c.oscillators.every(o=>o.stopped));
+});
