@@ -1,3 +1,4 @@
+import { classifyJevExpense, JevExpenseError } from "./jev_expense.ts";
 // ai-hub — AI・エージェント・AI大学統合EF
 // Merges (16 EFs): daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
 //   ai-summarizer, agent-hub, virtual-organization, my-ai-agent,
@@ -6575,6 +6576,39 @@ serve(async (req: Request) => {
           },
         });
         return json({ success: true, ...result });
+      }
+
+      case "expense.jev_suggest": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, {
+            action, provider: "typesafe",
+          }), 409);
+        }
+        // Re-read the authenticated account; anonymous sessions must not spend.
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          const result = await classifyJevExpense({
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            body,
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "",
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_expense_call", {
+                p_user_id: id,
+              });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          });
+          return json(result);
+        } catch (error) {
+          if (error instanceof JevExpenseError) {
+            return json({ error: error.code }, error.status);
+          }
+          return json({ error: "provider_unavailable" }, 503);
+        }
       }
 
       case "expense.classify":
