@@ -49,3 +49,7 @@ Required before claiming end-to-end production use: cloud Flutter analysis/build
 - Current API shape follows existing validated Jev expense integration: `/v1/systemone`, `model/state/questions`, choice `criteria`, answer `answers.controller`.
 
 Self-review: native labels, keyboard focus rings, 44px buttons, live status/error text, responsive single column under 700px, explicit sending consent and actionable errors. No generated imagery. Optional Anthropic Design plugin review not run. Screen-reader and live authenticated Flutter iframe integration still require verification.
+
+## Direct navigation and iframe assets
+
+The public Flutter route is `/jev-mario-lab`. The isolated game document is `/labs/jev-mario/index.html`; never place a static directory index at the Flutter route, because Firebase serves that file before the SPA rewrite. The iframe must remain inside the app for its authenticated message bridge. Verify direct navigation and refresh as well as in-app navigation after release.

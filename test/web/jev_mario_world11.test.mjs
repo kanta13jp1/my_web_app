@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {World11,level} from '../../web/jev-mario-lab/world11.mjs';
+import {World11,level} from '../../web/labs/jev-mario/world11.mjs';
 test('1-1 landmarks',()=>{const {cells}=level();assert.equal(cells.get('28,11'),'pipe-top');assert.equal(cells.get('57,9'),'pipe-top');for(const x of[69,70,86,87,88,153,154])assert.equal(cells.get(`${x},13`),undefined);assert.equal(cells.get('189,5'),'stone');assert.equal(cells.get('198,12'),'stone');});
 test('variable jump and run acceleration',()=>{function jump(hold){const g=new World11();g.input={jump:true};let top=192;for(let n=0;n<60;n++){g.input.jump=n<hold;g.step();top=Math.min(top,g.p.y);}return top;}assert.ok(jump(25)<jump(3)-15);const g=new World11();g.input={right:true,run:true};for(let n=0;n<20;n++)g.step();assert.ok(g.p.vx>2);assert.ok(g.p.x>55);});
 test('question block, growth and brick breaking',()=>{const g=new World11();g.hitBlock(21,9);assert.equal(g.tile(21,9),'used');assert.equal(g.items[0].kind,'mushroom');Object.assign(g.p,{x:336,y:128});g.step();assert.equal(g.power,1);assert.equal(g.p.h,28);g.hitBlock(20,9);assert.equal(g.tile(20,9),undefined);g.hitBlock(16,9);assert.equal(g.coins,1);});

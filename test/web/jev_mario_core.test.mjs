@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { DecisionLoop, readState, summarize, validateRom } from '../../web/jev-mario-lab/core.mjs';
+import { DecisionLoop, readState, summarize, validateRom } from '../../web/labs/jev-mario/core.mjs';
 const require = createRequire(import.meta.url);
-const jsnes = require('../../web/jev-mario-lab/vendor/jsnes.min.js');
+const jsnes = require('../../web/labs/jev-mario/vendor/jsnes.min.js');
 const flush = () => new Promise(r => setImmediate(r));
 const reply = { choice: 'right', confidence: .8, upstream_http_ms: 23 };
 test('median/p95 preserve first sample; failed values excluded', () => {
