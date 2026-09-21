@@ -256,6 +256,7 @@ const List<String> kAllAppRoutes = <String>[
   '/personal-dashboard',
   '/personality-test',
   '/personality-test-result',
+  '/palm-reading',
   '/pet-care',
   '/philosophy',
   '/photo-gallery',
