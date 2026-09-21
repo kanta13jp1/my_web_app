@@ -12,6 +12,8 @@ Deno.test("aiHubActionAccess classifies registered actions correctly", () => {
   assertEquals(aiHubActionAccess("judgment.get"), "public");
   assertEquals(aiHubActionAccess("search.query"), "authenticated");
   assertEquals(aiHubActionAccess("corporate_site.readiness"), "authenticated");
+  assertEquals(aiHubActionAccess("palm_reading.analyze"), "authenticated");
+  assertEquals(aiHubActionAccess("palm_reading.delete"), "authenticated");
   assertEquals(aiHubActionAccess("observability.heatmap"), "service_role");
   assertEquals(aiHubActionAccess("unknown.random.action"), null);
 });
