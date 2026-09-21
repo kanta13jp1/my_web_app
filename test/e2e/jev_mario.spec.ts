@@ -108,8 +108,8 @@ test('late response after stop cannot resume controls; missing/invalid ROM expla
 test('game scripts and styles load with their actual MIME types', async ({ page }) => {
   const failures: string[] = [];
   page.on('pageerror', error => failures.push(error.message));
-  const scripts = page.waitForResponse(response => response.url().endsWith('/labs/jev-mario/lab.mjs'));
-  const styles = page.waitForResponse(response => response.url().endsWith('/labs/jev-mario/style.css'));
+  const scripts = page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/labs/jev-mario/lab.mjs'));
+  const styles = page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/labs/jev-mario/style.css'));
   await page.goto('/test/e2e/jev_mario_harness.html');
   const script = await scripts;
   const style = await styles;
