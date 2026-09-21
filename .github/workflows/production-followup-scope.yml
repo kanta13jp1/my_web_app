@@ -9,6 +9,10 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: production-followup-scope-${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}
+  cancel-in-progress: false
+
 jobs:
   scope:
     runs-on: ubuntu-latest
@@ -56,4 +60,3 @@ jobs:
             } catch (error) {
               core.warning('No reliable no-op evidence; retain validation: ' + error.message);
             }
-

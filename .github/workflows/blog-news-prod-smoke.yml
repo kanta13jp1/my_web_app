@@ -19,6 +19,7 @@ permissions: {}
 
 jobs:
   deployment-scope:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
     permissions:
       actions: read
     uses: ./.github/workflows/production-followup-scope.yml
@@ -64,4 +65,3 @@ jobs:
           name: blog-news-prod-smoke-report
           path: tmp/blog-news-prod-smoke/report.json
           if-no-files-found: ignore
-

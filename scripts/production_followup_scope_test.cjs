@@ -49,6 +49,18 @@ test('producer requires every explicit false and successful push',()=>{
 test('all four consumers fail closed on unavailable gate outputs',()=>{
   for(const file of ['minimal-e2e-gate.yml','blog-news-prod-smoke.yml','release-readiness.yml','ga-readiness-gate.yml']) {
     assert.ok(read(file).includes('uses: ./.github/workflows/production-followup-scope.yml'));
+    assert.ok(read(file).includes("if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'"));
     assert.ok(read(file).includes("always() && needs.deployment-scope.outputs.skip != 'true'"));
   }
+});
+test('skipped or unavailable gate output retains consumer validation',()=> {
+  for (const skip of [undefined, '', 'false']) assert.notEqual(skip, 'true');
+  for (const file of ['minimal-e2e-gate.yml','blog-news-prod-smoke.yml','release-readiness.yml','ga-readiness-gate.yml']) {
+    const consumers = read(file).split('needs: deployment-scope').slice(1);
+    for (const consumer of consumers) assert.ok(consumer.includes("always() && needs.deployment-scope.outputs.skip != 'true'"));
+  }
+});
+test('reusable gate concurrency isolates caller, run and attempt',()=> {
+  const text=read('production-followup-scope.yml');
+  for(const token of ['github.workflow','github.run_id','github.run_attempt','cancel-in-progress: false']) assert.ok(text.includes(token));
 });

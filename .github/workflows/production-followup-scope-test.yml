@@ -10,6 +10,9 @@ on:
       - .github/workflows/ga-readiness-gate.yml
       - scripts/production_followup_scope_test.cjs
 permissions: {}
+concurrency:
+  group: production-followup-scope-test-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
