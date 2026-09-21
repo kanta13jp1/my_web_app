@@ -4,13 +4,13 @@ export const scores={
  underground:[48,60,0,51,63,0,53,65,0,51,63,0,46,58,0,48,60,0,55,67,0,53,65,0,51,63,0,46,58,0,48,0],
  star:[84,79,88,84,91,88,86,83,89,86,93,89,88,84,91,88,86,81,89,86,88,83,91,88,84,79,88,84,83,79,86,83]
 };
-export const effects={skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
+export const effects={impact:[42,30],skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
 export class GameAudio{
  constructor(factory=()=>new(globalThis.AudioContext||globalThis.webkitAudioContext)()){
   this.factory=factory;this.enabled=false;this.volume=.25;this.nodes=new Set();this.music=new Set();this.beat=0;this.next=0;this.track='';this.musicUntil=0;
  }
  async enable(value){this.enabled=!!value;if(!value){this.stop();return true;}try{
-  if(!this.context){this.context=this.factory();this.master=this.context.createGain();this.master.connect(this.context.destination);}
+  if(!this.context){this.context=this.factory();this.master=this.context.createGain();this.master.connect(this.context.destination);this.musicGain=this.context.createGain();this.musicGain.gain.value=1;this.musicGain.connect(this.master);}
   this.master.gain.value=this.volume;await this.context.resume();return this.context.state==='running';
  }catch{this.enabled=false;this.stop();return false;}}
  captureOutput(){
@@ -30,14 +30,14 @@ export class GameAudio{
   osc.frequency.value=440*2**((note-69)/12);
   if(slide&&osc.frequency.exponentialRampToValueAtTime){osc.frequency.setValueAtTime(osc.frequency.value,time);osc.frequency.exponentialRampToValueAtTime(440*2**((note+slide-69)/12),time+duration);}
   env.gain.setValueAtTime(0,time);env.gain.linearRampToValueAtTime(gain,time+.004);env.gain.exponentialRampToValueAtTime(.0001,time+duration);
-  osc.connect(env);env.connect(this.master);this.nodes.add(osc);if(music)this.music.add(osc);
+  osc.connect(env);env.connect(music?this.musicGain:this.master);this.nodes.add(osc);if(music)this.music.add(osc);
   osc.onended=()=>{osc.disconnect();env.disconnect();this.nodes.delete(osc);this.music.delete(osc);};osc.start(time);osc.stop(time+duration+.01);
  }
  noise(time,duration=.04,gain=.025,music=false){
   if(!this.enabled||this.context?.state!=='running'||!this.context.createBuffer||!this.context.createBufferSource||this.nodes.size>=48)return;
   if(!this.noiseBuffer){const n=Math.ceil(this.context.sampleRate*.08);this.noiseBuffer=this.context.createBuffer(1,n,this.context.sampleRate);const data=this.noiseBuffer.getChannelData(0);let state=1;for(let i=0;i<n;i++){state=(state>>1)|(((state^(state>>1))&1)<<14);data[i]=(state&1)?1:-1;}}
   const source=this.context.createBufferSource(),env=this.context.createGain();source.buffer=this.noiseBuffer;
-  env.gain.setValueAtTime(gain,time);env.gain.exponentialRampToValueAtTime(.0001,time+duration);source.connect(env);env.connect(this.master);
+  env.gain.setValueAtTime(gain,time);env.gain.exponentialRampToValueAtTime(.0001,time+duration);source.connect(env);env.connect(music?this.musicGain:this.master);
   this.nodes.add(source);if(music)this.music.add(source);source.onended=()=>{source.disconnect();env.disconnect();this.nodes.delete(source);this.music.delete(source);};source.start(time);source.stop(time+duration);
  }
  stopMusic(){for(const o of this.music){try{o.stop();}catch{}o.disconnect();this.nodes.delete(o);}this.music.clear();}
@@ -59,6 +59,10 @@ export class GameAudio{
   }
  }
  effect(name){if(!this.enabled||!this.context)return;const notes=effects[name];if(!notes)return;
+  // Briefly duck only music; effects and captured master output remain audible.
+  const now=this.context.currentTime,param=this.musicGain?.gain;
+  if(param?.cancelScheduledValues){param.cancelScheduledValues(now);param.setValueAtTime(.35,now);param.linearRampToValueAtTime(1,now+.18);}
+  if(name==='impact'){this.noise(now,.055,.04);this.tone(42,now,.07,'triangle',.08,false,-12);return;}
   if(name==='skid'){this.noise(this.context.currentTime,.055,.035);this.tone(79,this.context.currentTime,.075,'square',.035,false,-12);return;}
   if(name==='break'){this.noise(this.context.currentTime,.075,.065);}
   const terminal=name==='death'||name==='clear'||name==='flag',step=terminal?.13:name==='life'?.10:name==='appear'?.045:name==='pipe'?.075:.055;
@@ -69,5 +73,5 @@ export class GameAudio{
   if(name==='fire'){this.tone(70,this.context.currentTime,.09,'square',.06,false,-30);return;}
   notes.forEach((n,i)=>this.tone(n,this.context.currentTime+i*step,step*.95,name==='bump'||name==='stomp'?'triangle':'square',.09));
  }
- stop(){for(const o of this.nodes){try{o.stop();}catch{}o.disconnect();}this.nodes.clear();this.music.clear();this.beat=0;this.next=0;this.track='';this.musicUntil=0;}
+ stop(){for(const o of this.nodes){try{o.stop();}catch{}o.disconnect();}this.nodes.clear();this.music.clear();this.beat=0;this.next=0;this.track='';this.musicUntil=0;if(this.musicGain){this.musicGain.gain.cancelScheduledValues?.(this.context.currentTime);this.musicGain.gain.value=1;}}
 }

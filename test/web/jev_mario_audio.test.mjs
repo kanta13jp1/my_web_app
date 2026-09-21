@@ -59,3 +59,8 @@ test('lead and accompaniment cache distinct pulse duties and skid remains bounde
  const c=context();let waves=0;c.createPeriodicWave=()=>{waves++;return {};};const old=c.createOscillator.bind(c);c.createOscillator=()=>Object.assign(old(),{setPeriodicWave(){}});
  const a=new GameAudio(()=>c);await a.enable(true);a.tone(60,1,.1,'square',.02,true,0,.25);a.tone(67,1,.1,'square',.02,true,0,.5);a.tone(69,1,.1,'square',.02,true,0,.5);assert.equal(waves,2);a.effect('skid');a.stop();assert.equal(a.nodes.size,0);
 });
+
+test('effects duck music only and disabling audio restores its level',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);const values=[];a.musicGain.gain.cancelScheduledValues=t=>values.push(['cancel',t]);a.musicGain.gain.setValueAtTime=(v,t)=>values.push(['set',v,t]);a.musicGain.gain.linearRampToValueAtTime=(v,t)=>values.push(['ramp',v,t]);
+ a.effect('coin');assert.ok(values.some(v=>v[0]==='set'&&v[1]===.35));assert.ok(values.some(v=>v[0]==='ramp'&&v[1]===1));assert.equal(a.master.gain.value,.25);a.effect('impact');await a.enable(false);assert.equal(a.musicGain.gain.value,1);assert.equal(a.nodes.size,0);
+});
