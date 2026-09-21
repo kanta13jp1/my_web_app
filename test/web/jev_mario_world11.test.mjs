@@ -90,3 +90,14 @@ test('flag descent starts at contact height and tally awards remaining time once
 test('fireball follows remembered facing after directional input is released',()=>{
  const g=new World11();g.enemies=[];g.power=2;g.p.facing=-1;g.input={run:true};g.step();assert.equal(g.shots.length,1);assert.ok(g.shots[0].vx<0);assert.ok(g.shots[0].x<g.p.x);
 });
+
+test('held jump changes stomp bounce, both award a floating score once',()=>{
+ const heights=[];
+ for(const jump of [false,true]){const g=new World11();Object.assign(g.p,{x:100,y:175,vx:0,vy:2,grounded:false});g.input={jump};g.wasJump=jump;g.enemies=[{x:100,y:192,w:14,h:16,vx:0,vy:0,kind:'goomba',dead:0}];g.step();assert.equal(g.enemies[0].dead,1);assert.equal(g.score,100);assert.equal(g.p.grounded,false);assert.ok(g.effects.some(f=>f.kind==='score'&&f.value==='100'));heights.push(g.p.vy);g.step();assert.equal(g.score,100);}
+ assert.ok(heights[1]<heights[0]);
+});
+test('a fireball defeats at most one overlapping enemy, and wall impact expires',()=>{
+ const g=new World11();g.enemies=[0,1].map(()=>({x:104,y:192,w:14,h:16,vx:0,vy:0,kind:'goomba',dead:0}));g.shots=[{x:100,y:193,w:4,h:4,vx:3.5,vy:0}];g.step();assert.equal(g.enemies.filter(e=>e.dead).length,1);assert.equal(g.score,100);assert.equal(g.shots.length,0);assert.ok(g.drainSounds().includes('kick'));
+ g.enemies=[];g.shots=[{x:444,y:180,w:4,h:4,vx:3.5,vy:0}];g.camera=300;g.p.x=330;g.step();assert.ok(g.drainSounds().includes('impact'));assert.ok(g.effects.some(f=>f.kind==='burst'));
+ for(let i=0;i<50;i++)g.step();assert.ok(!g.effects.some(f=>f.kind==='burst'||f.kind==='score'));
+});
