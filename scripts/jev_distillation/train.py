@@ -35,7 +35,8 @@ for kind in ['jev','rule']:
   matrix=np.zeros((7,7),dtype=int)
   for t,p in zip(truth[mask],choices[mask]):matrix[t,p]+=1
   per={a:{'support':int(matrix[i].sum()),'recall':float(matrix[i,i]/matrix[i].sum()) if matrix[i].sum() else None} for i,a in enumerate(ACTIONS)}
-  metrics[name]={'n':int(sum(mask)),'teacher_agreement':float(np.mean(truth[mask]==choices[mask])),'majority_train_baseline':float(np.mean(truth[mask]==np.bincount(truth[train],minlength=7).argmax())),'probability_mae':float(np.mean(np.abs(Y[mask]-prob[mask]))),'confusion_matrix':matrix.tolist(),'per_action':per}
+  metrics[name]={'n':int(sum(mask)),'teacher_distribution_argmax_agreement':float(np.mean(truth[mask]==choices[mask])),'majority_train_baseline':float(np.mean(truth[mask]==np.bincount(truth[train],minlength=7).argmax())),'probability_mae':float(np.mean(np.abs(Y[mask]-prob[mask]))),'confusion_matrix':matrix.tolist(),'per_action':per}
+  if kind=='jev':metrics[name]['provider_choice_agreement']=float(np.mean(np.array([ACTIONS.index(r['teacher']['choice']) for r in rows])[mask]==choices[mask]))
  report['models'][kind]={'rounds':rounds,'metrics':metrics,'labels':{a:int(sum(truth==i)) for i,a in enumerate(ACTIONS)}}
  (OUT/(kind+'-model.json')).write_text(json.dumps(models))
  (OUT/(kind+'-parity.json')).write_text(json.dumps([{'features':x.tolist(),'raw':p.tolist()} for x,p in zip(X,raw)]))

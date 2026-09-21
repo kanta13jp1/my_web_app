@@ -5,13 +5,14 @@ on:
       - 'scripts/jev_distillation/**'
       - '.github/workflows/jev-distillation.yml'
   workflow_dispatch:
-permissions:
-  contents: read
+permissions: {}
 concurrency:
   group: jev-distillation-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   experiment:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
