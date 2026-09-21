@@ -1,4 +1,23 @@
 import { test, expect, type Page } from '@playwright/test';
+test('keyboard and touch crouch recover; walk and jump poses render',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#play-local').click();
+ await page.keyboard.down('ArrowDown');await expect(lab.locator('#posture')).toContainText('しゃがみ');
+ await screenshot(page,info.outputPath('world11-crouch.png'));
+ await page.keyboard.up('ArrowDown');await expect(lab.locator('#posture')).toContainText('待機');
+ await lab.locator('#screen').focus();await page.keyboard.down('ArrowRight');
+ await expect(lab.locator('#posture')).toContainText('歩く');
+ await page.keyboard.down('Space');await expect(lab.locator('#posture')).toContainText('上昇');
+ await screenshot(page,info.outputPath('world11-jump.png'));
+ await page.keyboard.up('Space');await page.keyboard.up('ArrowRight');
+ await lab.locator('#restart-local').click();await lab.locator('#play-local').click();
+ const down=lab.getByRole('button',{name:'しゃがむ・土管に入る'});
+ const box=await down.boundingBox();expect(box).not.toBeNull();
+ await page.mouse.move(box!.x+box!.width/2,box!.y+box!.height/2);await page.mouse.down();
+ await expect(lab.locator('#posture')).toContainText('しゃがみ');
+ await page.mouse.up();await expect(lab.locator('#posture')).toContainText('待機');
+ await lab.locator('#stop').click();
+});
 test('ROM-free 1-1 manual play, pause and restart need no API', async ({page},info)=>{
   const errors: string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');

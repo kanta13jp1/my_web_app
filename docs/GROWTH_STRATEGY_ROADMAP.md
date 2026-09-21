@@ -33602,3 +33602,8 @@ Added read-only category suggestions beneath the asset-management expense memo. 
 ## 2026-09-21 Jev Mario latency experiment (#5466)
 
 PR #5467 adds a local-ROM SMB1 controller and a ROM-free synthetic-state API benchmark at `/jev-mario-lab`. Browser RTT and upstream HTTP time are separate from pure inference. Server-only credentials, verified-account allowlist, atomic request caps, stop/late-response guards and JSON export are included. Cloud contract and browser fixture tests validate the implementation; actual SMB1 gameplay is unverified because the user has no ROM. Production activation and auth/quota migration remain pending explicit owner review. See [operation guide](JEV_MARIO_LAB.md).
+
+
+### 2026-09-21 Jev Mario motion and crouching (#5482)
+
+Added independent pixel-art poses for walking/running, facing, jumping/falling and crouching. Crouch collision height preserves feet and checks standing headroom. Cloud engine and desktop/mobile UI checks accompany PR #5483. This is a manual-play/visual improvement, not evidence of improved Jev control quality.
