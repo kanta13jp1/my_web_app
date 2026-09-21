@@ -69,6 +69,8 @@ test('fixed-state benchmark produces labelled measurements and export', async ({
   const stream = await result.createReadStream(); let raw = '';
   for await (const chunk of stream!) raw += chunk.toString();
   expect(JSON.parse(raw).max_age_ms).toBe(1500);
+  expect(JSON.parse(raw).samples[0].observation.state.player).toBeDefined();
+  expect(JSON.parse(raw).samples[0].arrival.state.player).toBeDefined();
   await screenshot(page, info.outputPath('fixture-measurement.png'));
   expect(errors).toEqual([]);
 });
@@ -89,7 +91,8 @@ test('late response after stop cannot resume controls; missing/invalid ROM expla
   await lab.locator('#mode').selectOption('fixture');
   expect(await lab.locator('body').evaluate(() => innerWidth)).toBe(page.viewportSize()!.width);
   await lab.locator('#consent').check(); await lab.locator('#start').click(); await lab.locator('#stop').click();
-  await expect(lab.locator('#counts')).toHaveText('0 / 1 / 0');
+  await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');
+  await expect(lab.locator('#sample-detail')).toContainText('キャンセル 1件');
   await page.waitForTimeout(1200); // Deliberately cover the late-response boundary.
   await expect(lab.locator('#action')).toHaveText('操作: noop');
   await lab.locator('#mode').selectOption('game'); await lab.locator('#start').click();

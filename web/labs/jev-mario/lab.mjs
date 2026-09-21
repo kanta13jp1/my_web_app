@@ -3,6 +3,7 @@ import { World11, drawWorld, playerPose } from './world11.mjs';
 import { BUTTONS, DecisionLoop, fixture, readState, summarize, validateRom } from './core.mjs';
 const $ = id => document.getElementById(id);
 let connected = false, pendingBridge = null, seq = 0, samples = [], nes = null, romBytes = null;
+let presentationBudget=0;
 let gameRunning = false, lastFrame = 0, frameBudget = 0, lastResponse = 0, frameCount = 0, metadata = {};
 const origin = location.origin;
 const canvas = $('screen'), context = canvas.getContext('2d'), pixels = context.createImageData(256, 240);
@@ -22,7 +23,7 @@ $('sound').onchange = () => { if ($('sound').checked) void unlockAudio(); else {
 $('volume').oninput = () => { audio.setVolume(Number($('volume').value)/100); $('volume-value').textContent=$('volume').value+'%'; };
 
 drawWorld(context, world);
-function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
+function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':pose==='climb'?'旗を降りる':pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
 showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
@@ -43,7 +44,8 @@ function metric(id, values) {
 }
 function update() {
   const ok = samples.filter(s => s.ok);
-  $('counts').textContent = `${ok.length} / ${samples.length - ok.length} / ${ok.filter(s => s.stale).length}`;
+  $('counts').textContent = `${ok.length} / ${samples.filter(s=>!s.ok&&!s.cancelled).length} / ${ok.filter(s => s.stale).length}`;
+  $ ('sample-detail').textContent=`操作適用 ${ok.filter(s=>s.applied).length}件 / 停止時キャンセル ${samples.filter(s=>s.cancelled).length}件`;
   const stale = ok.filter(s => s.stale).length;
   $('response-warning').textContent = stale ? `${stale}件の応答は有効期限（${metadata.max_age_ms} ms）を超えたため操作に適用していません。停止後に有効期限を変更して再測定できます。` : '';
   metric('rtt', ok.map(s => s.rtt_ms)); metric('upstream', ok.map(s => s.upstream_http_ms));
@@ -67,7 +69,7 @@ window.addEventListener('message', e => {
   const p = pendingBridge; pendingBridge = null; clearTimeout(p.timer);
   if (e.data.error) p.reject(new Error(e.data.error)); else p.resolve(e.data.result);
 });
-const loop = new DecisionLoop({ request, state, apply: controls,
+const loop = new DecisionLoop({ request, state, observe:()=>isRecreation()?world.snapshot():null, apply: controls,
   record: s => { samples.push({ index: samples.length + 1, ...s }); lastResponse = s.rtt_ms;
     if (!s.ok) $('last-error').textContent = s.error; update(); },
   done: reason => { audio.stop(); gameRunning = false; status(reason); },
@@ -108,7 +110,7 @@ $('start').onclick = () => {
   if (isRom() && (!nes || nes.cpu.mem[0x770] !== 1 || nes.cpu.mem[0x75f] !== 0 || nes.cpu.mem[0x75c] !== 0 || nes.cpu.mem[0xe] !== 8)) return status('対応ROMを読み込み、手動で1-1の操作可能な場面まで進めてください');
   samples = []; lastResponse = 0; update(); metadata = { started_at: new Date().toISOString(), mode: $('mode').value,
     cadence_ms: Number($('cadence').value), max_calls: Number($('count').value), max_duration_ms: 60000, max_age_ms: Number($('max-age').value),
-    emulator: isRecreation() ? 'independent-world11-v1' : 'jsnes@2.1.0', timing: 'browser RTT includes proxy/auth/quota; upstream HTTP is not pure inference', user_agent: navigator.userAgent };
+    emulator: isRecreation() ? 'independent-world11-v2' : 'jsnes@2.1.0', timing: 'browser RTT includes proxy/auth/quota; upstream HTTP is not pure inference', user_agent: navigator.userAgent };
   gameRunning = isGame(); status(isGame() ? 'Jev操作を計測中。通信待ち中もゲームは進みます。' : '固定状態でAPI往復を測定中（実プレイではありません）');
   if (isRecreation()) void unlockAudio();
   loop.start({ count: metadata.max_calls, cadence: metadata.cadence_ms, maxAge: metadata.max_age_ms });
@@ -117,7 +119,7 @@ $('stop').onclick = () => stop();
 $('max-age').onchange = () => stop('応答の有効期限を変更しました。測定を再開してください。');
 $('consent').onchange = () => { if (!$('consent').checked) stop('送信同意を解除しました'); };
 $('export').onclick = () => {
-  const data = { ...metadata, samples, counts: { attempts: samples.length, failures: samples.filter(s => !s.ok).length },
+  const data = { ...metadata, samples, counts: { attempts: samples.length, failures: samples.filter(s => !s.ok&&!s.cancelled).length, cancelled: samples.filter(s=>s.cancelled).length, applied: samples.filter(s=>s.applied).length, stale: samples.filter(s=>s.stale).length },
     browser_rtt: summarize(samples.filter(s => s.ok).map(s => s.rtt_ms)) };
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
   const a = document.createElement('a'); a.href = url; a.download = 'jev-mario-measurement.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -145,10 +147,10 @@ function frame(now) {
         if(isRecreation()) for(const sound of world.drainSounds()) audio.effect(sound);
         if (isRom() && loop.active && ([6, 11].includes(nes.cpu.mem[0xe]) || nes.cpu.mem[0xb5] >= 2 || nes.cpu.mem[0x770] === 2 || nes.cpu.mem[0x1d] === 3)) stop('死亡またはコース終了で停止しました');
       }
-      if(gameRunning && isRecreation()) audio.tick(world.room);
+      if(gameRunning && isRecreation()) audio.tick(world.room,{star:world.star>0,hurry:world.time<=100});
       const s = isRecreation() ? world.telemetry() : readState(nes.cpu.mem); if(isRecreation()) {drawWorld(context,world);showPose();} $('progress').textContent = `World ${s.world}-${s.stage} · x=${Math.round(s.player.x)} · ${frameCount} frames${isRecreation() ? ' · 再現ゲーム · '+world.phase : ''}`;
     } catch { stop('エミュレーターを継続できません。対応ROMを確認してください。'); }
-  } else frameBudget = 0;
+  } else {frameBudget=0;if(!document.hidden&&isRecreation()&&world.phase!=='playing'&&world.presentation<180){presentationBudget+=delta;while(presentationBudget>=1000/60){world.presentationStep();presentationBudget-=1000/60;}drawWorld(context,world);showPose();}}
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
