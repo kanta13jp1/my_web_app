@@ -73,7 +73,8 @@ export async function decideMario(o: {
     if (!r.ok) throw new MarioError(502, 'provider_unavailable');
     const data = await r.json();
     return { ...marioAnswer(data?.answers?.controller),
-      upstream_http_ms: Math.max(0, now() - started), model: 'jev-latest' };
+      upstream_http_ms: Math.max(0, now() - started),
+      model: typeof data.model === 'string' && data.model.length < 100 ? data.model : 'jev-latest' };
   } catch (e) {
     if (e instanceof MarioError) throw e;
     throw new MarioError(502, 'provider_unavailable');

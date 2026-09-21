@@ -5,8 +5,8 @@ const answer = () => ({ type: 'choice', choice: 'right', confidence: .9,
   probabilities: Object.fromEntries(Object.keys(MARIO_ACTIONS).map(k => [k, k === 'right' ? 1 : 0])) });
 function options() {
   return { userId: 'u', anonymous: false, allowedUsers: ['u'], apiKey: 'test-only',
-    body: { consent: true, state: state() }, reserve: async () => true,
-    fetcher: (async () => new Response(JSON.stringify({ answers: { controller: answer() } }))) as typeof fetch };
+    body: { consent: true, state: state() }, reserve: () => Promise.resolve(true),
+    fetcher: (() => Promise.resolve(new Response(JSON.stringify({ answers: { controller: answer() } })))) as typeof fetch };
 }
 async function rejects(o: Parameters<typeof decideMario>[0], status: number) {
   try { await decideMario(o); throw new Error('expected rejection'); } catch(e) { assert(e instanceof MarioError && e.status === status); }
@@ -17,7 +17,7 @@ Deno.test('auth, allowlist, consent and quota fail before provider calls', async
   await rejects({ ...o, anonymous: true }, 401);
   await rejects({ ...o, allowedUsers: [] }, 403);
   await rejects({ ...o, body: { ...o.body, consent: false } }, 400);
-  await rejects({ ...o, reserve: async () => false }, 429);
+  await rejects({ ...o, reserve: () => Promise.resolve(false) }, 429);
   await rejects({ ...o, reserve: () => Promise.reject('db') }, 503);
   assert(calls === 0);
 });
@@ -29,13 +29,13 @@ Deno.test('bounded schema strips arbitrary prompts and rejects non-finite values
 Deno.test('fixed upstream contract and clock excludes reservation time', async () => {
   let clock = 0;
   const result = await decideMario({ ...options(), now: () => clock,
-    reserve: async () => { clock += 90; return true; },
-    fetcher: (async (url, init) => {
+    reserve: () => { clock += 90; return Promise.resolve(true); },
+    fetcher: ((url, init) => {
       assert(url === 'https://api.typesafe.ai/v1/systemone');
       const body = JSON.parse(String(init?.body));
       assert(body.questions.controller.type === 'choice' && Object.keys(body.questions.controller.criteria).length === 7);
       assert(init?.redirect === 'error'); clock += 123;
-      return new Response(JSON.stringify({ answers: { controller: answer() } }));
+      return Promise.resolve(new Response(JSON.stringify({ answers: { controller: answer() } })));
     }) as typeof fetch,
   });
   assert(result.upstream_http_ms === 123 && result.choice === 'right');
@@ -44,5 +44,5 @@ Deno.test('upstream failures, invented actions, NaN, missing scores and invalid 
   for (const invalid of [{ ...answer(), choice: 'delete' }, { ...answer(), confidence: NaN }, { ...answer(), probabilities: {} }, { ...answer(), probabilities: { ...answer().probabilities, jump: 1 } }]) {
     let failed = false; try { marioAnswer(invalid); } catch { failed = true; } assert(failed);
   }
-  await rejects({ ...options(), fetcher: (async () => new Response('secret should not escape', { status: 500 })) as typeof fetch }, 502);
+  await rejects({ ...options(), fetcher: (() => Promise.resolve(new Response('secret should not escape', { status: 500 }))) as typeof fetch }, 502);
 });

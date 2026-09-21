@@ -70,11 +70,14 @@ class _JevMarioViewState extends State<JevMarioView> {
         fail('my_web_appへログインしてから再試行してください。');
         return;
       }
-      final response = await client.functions.invoke('ai-hub', body: {
-        'action': 'mario.jev_decide',
-        'state': data['state'],
-        'consent': true,
-      });
+      final response = await client.functions.invoke(
+        'ai-hub',
+        body: {
+          'action': 'mario.jev_decide',
+          'state': data['state'],
+          'consent': true,
+        },
+      );
       if (!mounted || client.auth.currentUser?.id != user.id) {
         fail('ログイン状態が変わりました。測定を再開してください。');
         return;
