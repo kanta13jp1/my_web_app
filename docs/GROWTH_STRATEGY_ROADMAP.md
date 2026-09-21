@@ -33587,3 +33587,18 @@ Implemented a server-first monthly paid-interest chart with explicit missing/par
 - 2026-09-08 に follow-up 切り出し済みだった `/money-forward` ページの偽OAuth実装 ([lib/pages/money_forward_page.dart](../lib/pages/money_forward_page.dart)) を修正。`mf.connect_url` は固定URL `/oauth/moneyforward` を返すだけで実際のOAuthコールバックはリポジトリ内に存在せず、`connected` は恒久的に false のままなのに「認証URLを取得しました。ブラウザで連携を完了してください」と成功したかのようなSnackBarを表示していた。ボタンを既存で実際に動く CSVインポート画面 (`/import`) への誘導に差し替え、成功を装う表示を「自動連携は準備中です」という正直な案内に変更した。バックエンドの実OAuth連携自体 (MoneyForward側API提携が必要) は財務データ領域のため今回も着手せず、人間レビュー前提の別対応として維持する。
 - 修正内容を `development_achievements` に記録した (本コミットで追加した migration `20260916161516_seed_achievements_daily_dev_20260916.sql`)。
 - 技術ブログ下書きパイプライン `docs/blog-drafts/` は前回確認時点で2030年分までキュー済みのため、本日も手動追加は見送った。
+
+
+## 2026-09-21 Expense classification review (#5452)
+
+Added read-only category suggestions beneath the asset-management expense memo. Local rules run without sending data; configured AI requires an explicit action. Every candidate is labelled for human review; fixed rule scores are not accuracy. No booking or financial data mutation is added. Cloud widget tests cover fallback, recovery, stale responses and narrow text-scaled layout. See [operation guide](EXPENSE_CLASSIFICATION_REVIEW.md).
+
+
+### 2026-09-21 Jev分類候補のサーバー接続（#5459）
+
+認証済みユーザーの明示操作に限定し、TypeSafeキーをサーバーSecretへ分離。固定カテゴリ・500文字制限・原子的な分/日/全体上限で利用を制御。分類候補の参考表示に限定し、自動記帳は追加しない。CIと本番確認はPRへ記録する。
+
+
+## 2026-09-21 Jev Mario latency experiment (#5466)
+
+PR #5467 adds a local-ROM SMB1 controller and a ROM-free synthetic-state API benchmark at `/jev-mario-lab`. Browser RTT and upstream HTTP time are separate from pure inference. Server-only credentials, verified-account allowlist, atomic request caps, stop/late-response guards and JSON export are included. Cloud contract and browser fixture tests validate the implementation; actual SMB1 gameplay is unverified because the user has no ROM. Production activation and auth/quota migration remain pending explicit owner review. See [operation guide](JEV_MARIO_LAB.md).
