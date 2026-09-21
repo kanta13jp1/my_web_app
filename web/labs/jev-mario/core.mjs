@@ -39,8 +39,8 @@ export function validateRom(bytes) {
     bytes.length !== 16 + 32768 + 8192) throw new Error('対応するiNES形式のSMB1 ROM（Mapper 0、32KB PRG / 8KB CHR）を選んでください。');
 }
 export class DecisionLoop {
-  constructor({ request, state, apply, record, done, clock = () => performance.now(), schedule = (fn, ms) => setTimeout(fn, ms), cancel = id => clearTimeout(id) }) {
-    Object.assign(this, { request, state, apply, record, done, clock, schedule, cancel });
+  constructor({ request, state, observe = () => null, apply, record, done, clock = () => performance.now(), schedule = (fn, ms) => setTimeout(fn, ms), cancel = id => clearTimeout(id) }) {
+    Object.assign(this, { request, state, observe, apply, record, done, clock, schedule, cancel });
     this.generation = 0; this.active = false; this.pending = false;
   }
   start({ count = 20, duration = 60000, cadence = 200, maxAge = 750 } = {}) {
@@ -53,7 +53,7 @@ export class DecisionLoop {
   stop(reason = '停止') {
     const wasActive = this.active;
     if (wasActive && this.pending) this.record({ ok: false, cancelled: true,
-      rtt_ms: this.clock() - this.requestStarted, error: '停止時に応答待ち。サーバー側で課金済みの可能性があります。' });
+      observation: this.observation, arrival: this.observe(), rtt_ms: this.clock() - this.requestStarted, error: '停止時に応答待ち。サーバー側で課金済みの可能性があります。' });
     this.active = false; this.generation++; this.cancel(this.timer); this.cancel(this.expiry);
     this.apply('noop'); if (wasActive) this.done(reason);
   }
@@ -61,18 +61,20 @@ export class DecisionLoop {
     if (!this.active || this.generation !== generation) return;
     const started = this.clock(); this.requestStarted = started; this.pending = true; this.attempts++;
     try {
-      const answer = await this.request(this.state());
+      const sent=this.state();this.observation=structuredClone({state:sent,context:this.observe()});
+      const answer = await this.request(sent);
       const rtt = this.clock() - started;
       if (!this.active || this.generation !== generation) return;
       if (!ACTIONS.includes(answer.choice) || !Number.isFinite(answer.upstream_http_ms) || answer.upstream_http_ms < 0 ||
           !Number.isFinite(answer.confidence) || answer.confidence < 0 || answer.confidence > 1) throw new Error('Jev応答の形式が不正です');
       const stale = rtt > this.maxAge;
+      const arrival=structuredClone({state:this.state(),context:this.observe()});
       this.apply(stale ? 'noop' : answer.choice);
       this.record({ ok: true, rtt_ms: rtt, observation_to_input_ms: this.clock() - started,
-        ...answer, stale, applied: !stale });
+        ...answer, observation:this.observation,arrival,stale, applied: !stale });
     } catch (error) {
       if (this.active && this.generation === generation) {
-        this.record({ ok: false, rtt_ms: this.clock() - started, error: String(error.message ?? error) });
+        this.record({ ok: false, observation:this.observation,arrival:this.observe(),rtt_ms: this.clock() - started, error: String(error.message ?? error) });
         this.pending = false;
         this.stop(String(error.message ?? error));
       }

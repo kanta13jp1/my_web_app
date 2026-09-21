@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; media-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Jev Mario Lab</title><link rel="stylesheet" href="style.css?v=revalidate-1"></head>
+<body><main>
+<header><p class="eyebrow">REAL-TIME DECISION LAB</p><h1>Jev × Mario</h1><p>操作を選ぶ速さを、あなたの回線で測る。</p></header>
+<section aria-labelledby="setup"><h2 id="setup">1. 測定モード</h2>
+<label for="mode">モード</label><select id="mode"><option value="recreation">1-1 再現ゲーム（ROM不要）</option><option value="fixture">固定状態のAPI測定（ROM不要）</option><option value="game">初代マリオの実ゲーム操作（ROM必要）</option></select>
+<p id="mode-note">初代1-1を参考に一から実装した再現ゲームです。原作ROMの実行や完全一致ではありません。手動プレイはAPI不要です。</p><div id="recreation-controls"><fieldset><legend>BGM・効果音</legend><label class="consent"><input type="checkbox" id="sound"> 音声をONにする</label><label for="volume">音量 <output id="volume-value" for="volume">25%</output></label><input id="volume" type="range" min="0" max="100" value="25"><p id="audio-status" role="status">ミュート</p><p>地上・地下・無敵・残り時間に合わせたオリジナル8bit風BGMと操作に同期する合成効果音です。停止・画面を離れると音も止まります。</p></fieldset><div class="buttons"><button id="play-local">手動で遊ぶ（API不要）</button><button id="restart-local">1-1を最初から</button></div><p>← →: 移動 ／ Space・X: ジャンプ（長押しで高く）／ Z: ダッシュ ／ ↓: しゃがむ・土管（離すと立つ）。スマートフォンは画面下の操作ボタンを使えます。</p></div>
+<div id="rom-controls" hidden><label for="rom">手元のSMB1 .nes ファイル</label><input id="rom" type="file" accept=".nes"><p>ROMはこのブラウザ内だけで処理します。ゲーム本体の同梱・アップロードはしません。SMB1の標準NROM版に対応。別ゲーム・改造版のRAM解析は対応外です。</p>
+<div class="buttons"><button id="manual">手動プレイ開始</button><button id="reset">ROMをリセット</button></div><p>Enter: START ／ ← →: 移動 ／ X: ジャンプ ／ Z: ダッシュ。手動で1-1に入り、Jev測定を開始してください。音声は無効です。</p></div>
+<div class="grid"><div><label for="count">API呼び出し上限</label><select id="count"><option>20</option><option>100</option><option>300</option></select></div><div><label for="cadence">判断間隔（最短）</label><select id="cadence"><option value="200">200 ms</option><option value="500">500 ms</option><option value="1000">1,000 ms</option></select></div></div>
+<p>1回の測定は最大60秒。リクエストは同時に1件のみ。API利用量を消費します。実ゲームは通信中も進み、設定した応答の有効期限を超えた応答は操作へ適用しません。</p>
+<label for="max-age">応答の有効期限</label><select id="max-age"><option value="750">750 ms（厳格）</option><option value="1500" selected>1,500 ms</option><option value="3000">3,000 ms</option></select><p>通信往復が有効期限を超えると、成功した応答も操作には使いません。期限を延ばすと適用しやすくなりますが、古い状態への判断でミスが増える場合があります。通信待ち中もゲームは進み、測定時間は補正しません。</p>
+<label class="consent"><input id="consent" type="checkbox"> ゲームの数値状態をTypeSafe AIへ送り、APIを呼び出して測定する</label>
+<div class="buttons"><button id="start" class="primary">Jev測定を開始</button><button id="stop">停止・全ボタン解放</button><button id="export">結果JSONを保存</button></div>
+<p id="status" role="status" aria-live="polite">アプリとの接続を確認しています…</p></section>
+<div class="grid results"><section><h2>2. ゲームと操作</h2><canvas tabindex="0" aria-label="1-1ゲーム画面。矢印で移動、スペースでジャンプ、下矢印でしゃがむ" id="screen" width="256" height="240"></canvas><p id="posture">姿勢: 待機 ／ 右向き</p><p id="action">操作: —</p><div id="touch-controls" class="buttons" aria-label="ゲーム操作"><button data-key="left" aria-label="左へ">←</button><button data-key="right" aria-label="右へ">→</button><button data-key="down" aria-label="しゃがむ・土管に入る">↓</button><button data-key="run">ダッシュ</button><button data-key="jump">ジャンプ</button></div><p id="progress">ROM未読込</p>
+<fieldset id="recording-controls"><legend>プレイ動画</legend>
+<p>ゲーム画面を最大60秒録画できます。録画開始時に音声ONならBGM・効果音も収録します（ROMモードは無音）。動画は端末内で作成し、アップロードしません。</p>
+<div class="buttons"><button id="record-start">録画開始</button><button id="record-stop" disabled>録画停止</button></div>
+<p id="record-status" role="status">手動プレイ・Jev操作の前または途中で録画を開始できます。</p>
+<div id="record-result" hidden><video id="record-preview" controls playsinline preload="metadata" aria-label="録画したプレイ動画"></video><p><a id="record-download">動画をダウンロード</a></p><p>ページを閉じる前にダウンロードしてください。次の録画が完了すると、この動画は置き換わります。</p></div>
+</fieldset><details><summary>送信する状態を見る</summary><pre id="state"></pre></details></section>
+<section><h2>3. 今回の計測</h2><dl><dt>成功 / 失敗 / 古い応答</dt><dd id="counts">0 / 0 / 0</dd><dt>ブラウザ往復 — 中央値 / p95</dt><dd id="rtt">—</dd><dt>Jev HTTP往復 — 中央値 / p95</dt><dd id="upstream">—</dd><dt>状態取得→操作 — 中央値 / p95</dt><dd id="age">—</dd></dl><p id="sample-detail" aria-live="polite">操作適用 0件 / 停止時キャンセル 0件</p>
+<p>ブラウザ往復には認証・利用枠確認・中継・通信を含みます。Jev HTTP往復にもネットワークと応答の読み取りを含み、モデルだけの推論時間ではありません。初回も集計に含め、JSONで各回を確認できます。</p><p id="response-warning" role="status" aria-live="polite"></p><p id="last-error" role="alert"></p></section></div>
+<footer><a href="https://github.com/fhshaik/typesafe-mario" target="_blank" rel="noopener">着想: TypeSafe Mario</a> · <a href="https://github.com/bfirsh/jsnes/tree/v2.1.0" target="_blank" rel="noopener">JSNES 2.1.0</a> · <a href="vendor/LICENSE.txt">Apache-2.0 license</a><p>非公式の検証ツールです。クリアや特定の応答速度は保証しません。</p></footer>
+</main><script src="vendor/jsnes.min.js?v=revalidate-1"></script><script type="module" src="lab.mjs?v=revalidate-1"></script></body></html>

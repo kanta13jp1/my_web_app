@@ -33602,3 +33602,29 @@ Added read-only category suggestions beneath the asset-management expense memo. 
 ## 2026-09-21 Jev Mario latency experiment (#5466)
 
 PR #5467 adds a local-ROM SMB1 controller and a ROM-free synthetic-state API benchmark at `/jev-mario-lab`. Browser RTT and upstream HTTP time are separate from pure inference. Server-only credentials, verified-account allowlist, atomic request caps, stop/late-response guards and JSON export are included. Cloud contract and browser fixture tests validate the implementation; actual SMB1 gameplay is unverified because the user has no ROM. Production activation and auth/quota migration remain pending explicit owner review. See [operation guide](JEV_MARIO_LAB.md).
+
+
+### 2026-09-21 Jev Mario motion and crouching (#5482)
+
+Added independent pixel-art poses for walking/running, facing, jumping/falling and crouching. Crouch collision height preserves feet and checks standing headroom. Cloud engine and desktop/mobile UI checks accompany PR #5483. This is a manual-play/visual improvement, not evidence of improved Jev control quality.
+
+
+### 2026-09-21: Mario presentation and diagnostic snapshots (#5484)
+
+- Add skidding, death/flag/castle sequences, block/enemy feedback and original contextual chiptunes.
+- Export immutable observation/arrival snapshots and separate cancellation counts to distinguish Jev decisions from latency.
+- Validate cloud engine/audio/browser contracts before production; no claim of ROM fidelity, article latency reproduction or AI completion.
+
+
+## Jev Mario gameplay recording — 2026-09-21
+
+- Issue #5486: local canvas recording with optional game audio, 60-second/32MiB bounds, replay and timestamped WebM/MP4 download selected by browser capability. No external media upload or new API call.
+- Verify actual encoded audio/video playback and download, repeat/mute, unsupported capability, and mode-change cleanup in cloud tests before production release.
+
+
+### 2026-09-21 Jev Mario deployment cache correction (#5488)
+
+- Reported outer build 5591 still exported independent-world11-v1; live lab HTML/modules used max-age=3600.
+- Revalidate all /labs/jev-mario assets and migrate iframe/HTML/module URLs together so fresh old browser caches cannot mix releases. JSON includes lab_revision for diagnosis.
+- Keep query revision as a one-time migration; subsequent stable URLs must revalidate on navigation. Existing open pages must reload.
+- Validation: hosting dependency-graph/cache contract and existing cloud game/recording browser suite. No new Jev API experiment or latency improvement is claimed.
