@@ -14,7 +14,7 @@ on:
   workflow_call:
 permissions: {}
 concurrency:
-  group: jev-mario-${{ github.ref }}
+  group: jev-mario-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   contract:
