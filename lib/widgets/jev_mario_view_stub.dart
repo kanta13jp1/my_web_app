@@ -5,6 +5,6 @@ class JevMarioView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Center(
-    child: Text('Jev Mario LabはWebブラウザでご利用ください。'),
-  );
+        child: Text('Jev Mario LabはWebブラウザでご利用ください。'),
+      );
 }

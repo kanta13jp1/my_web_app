@@ -48,15 +48,18 @@ class _JevMarioViewState extends State<JevMarioView> {
 
   void _send(Map<String, dynamic> body) {
     if (!mounted) return;
-    _frame.contentWindow?.postMessage(body.jsify(), web.window.location.origin.toJS);
+    _frame.contentWindow
+        ?.postMessage(body.jsify(), web.window.location.origin.toJS);
   }
 
   Future<void> _request(Map<dynamic, dynamic> data) async {
     final id = data['id'];
     if (id is! num || !id.isFinite || data['consent'] != true) return;
     void fail(String message) => _send({
-      'type': 'jev-mario-response', 'id': id, 'error': message,
-    });
+          'type': 'jev-mario-response',
+          'id': id,
+          'error': message,
+        });
     if (_pending) return fail('前のリクエストが終了するまでお待ちください。');
     if (jsonEncode(data).length > 6000) return fail('ゲーム状態が大きすぎます。');
     _pending = true;
@@ -68,7 +71,9 @@ class _JevMarioViewState extends State<JevMarioView> {
         return;
       }
       final response = await client.functions.invoke('ai-hub', body: {
-        'action': 'mario.jev_decide', 'state': data['state'], 'consent': true,
+        'action': 'mario.jev_decide',
+        'state': data['state'],
+        'consent': true,
       });
       if (!mounted || client.auth.currentUser?.id != user.id) {
         fail('ログイン状態が変わりました。測定を再開してください。');
