@@ -26,7 +26,7 @@ export function level() {
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 export class World11 {
   constructor(){this.reset();}
-  reset(){Object.assign(this,level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.room='overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;
+  reset(){Object.assign(this,level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.room='overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;
     this.enemies=[22,40,51,53,80,82,97,98,107,114,116,124,126,128,130,174,176].map((x,i)=>({x:x*16,y:x===80||x===82?64:192,w:14,h:16,vx:-.5,vy:0,kind:i===8?'koopa':'goomba',dead:0}));}
   buttons(action){this.input={right:action.startsWith('right'),left:action==='left',jump:action.includes('jump'),run:action.includes('run')};}
   tile(x,y){return this.cells.get(`${x},${y}`);}
