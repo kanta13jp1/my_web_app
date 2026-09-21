@@ -5,6 +5,7 @@ import unittest
 
 from scripts.notion_migration_cloud_audit import (
     AuditError,
+    _wbs_resolution_plan,
     collect_audit,
     render_summary,
 )
@@ -191,7 +192,11 @@ class NotionMigrationCloudAuditTest(unittest.TestCase):
         self.assertIn("棚卸し 10", summary)
         self.assertIn("4705", summary)
         self.assertEqual(report["wbs_import_plan"]["decisions"]["unchanged"], 1)
+        self.assertEqual(report["wbs_resolution_plan"]["automatic"]["total"], 1)
+        self.assertEqual(report["wbs_resolution_plan"]["human_review"]["total"], 0)
+        self.assertFalse(report["wbs_resolution_plan"]["writes_authorized"])
         self.assertIn("WBS cloud import plan", summary)
+        self.assertIn("WBS resolution lanes", summary)
         self.assertNotIn("private-batch-id", summary)
         self.assertNotIn("must-not-leak", summary)
         self.assertNotIn("aggregate-only source", summary)
@@ -213,6 +218,50 @@ class NotionMigrationCloudAuditTest(unittest.TestCase):
         ]
         self.assertEqual(len(item_calls), 1)
         self.assertIn(("select", "source_kind,status"), item_calls[0])
+
+    def test_resolution_plan_separates_automatic_and_human_lanes(self) -> None:
+        resolution = _wbs_resolution_plan(
+            {
+                "safe_logical_groups": 3,
+                "blocked_logical_groups": 2,
+                "decisions": {
+                    "insert": 0,
+                    "update_from_notion": 0,
+                    "unchanged": 2,
+                    "site_newer_preserved": 1,
+                    "manual_timestamp_conflict": 0,
+                    "identity_collision": 0,
+                    "invalid_fields": 0,
+                    "conflicting_duplicate": 1,
+                    "title_group_content_conflict": 1,
+                },
+            }
+        )
+
+        self.assertEqual(resolution["automatic"]["total"], 3)
+        self.assertEqual(resolution["human_review"]["total"], 2)
+        self.assertEqual(
+            resolution["automatic"]["by_decision"]["site_newer_preserved"],
+            1,
+        )
+        self.assertEqual(
+            resolution["human_review"]["by_decision"]["conflicting_duplicate"],
+            1,
+        )
+        self.assertFalse(resolution["writes_authorized"])
+
+    def test_resolution_plan_rejects_inconsistent_counts(self) -> None:
+        with self.assertRaisesRegex(
+            AuditError,
+            "WBS automatic decision count mismatch",
+        ):
+            _wbs_resolution_plan(
+                {
+                    "safe_logical_groups": 2,
+                    "blocked_logical_groups": 0,
+                    "decisions": {"unchanged": 1},
+                }
+            )
 
     def test_unknown_item_enum_is_rejected_without_echoing_value(self) -> None:
         responses = fixture(total=1, imported=0, verified=0)
