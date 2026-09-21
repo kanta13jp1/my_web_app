@@ -1,11 +1,19 @@
 # Jev Mario Lab
 
+## ROM-free World 1-1 reconstruction (#5468)
+
+The default mode is an independently authored browser reconstruction. Manual play needs neither a ROM nor an API call. Arrows move, Space/X jumps (hold for height), Z runs/fires after a flower, Down enters the fourth pipe. Touch buttons also support movement, jump and run. Restart restores the level. Consent and the Jev start button use the existing authenticated decision loop.
+
+Includes the opening blocks, pipes, pits, platforms, staircases, flag/castle, enemies, stomping, power-ups, hidden life and underground coins. Pixel graphics are drawn in code. No ROM, sprite sheet, original program or sound recording is included. Physics, art, timings and placements are approximate; sound and the original death/flag cutscenes are not reproduced.
+
+Exports identify `independent-world11-v1` separately from JSNES and fixed-state measurements. Browser tests use a simulated Jev bridge. Level sequence reference: https://www.mariowiki.com/World_1-1_%28Super_Mario_Bros.%29
+
 Route: `/jev-mario-lab` (home tool catalog: **Jev Mario Lab**).
 
 ## Use
 
-1. Sign in to my_web_app and open Jev Mario Lab. The server must enable your account first.
-2. Without a ROM, select **固定状態のAPI測定**. This sends a synthetic numeric game state to the real Jev API. It is not a Mario play test.
+1. Sign in to my_web_app and open Jev Mario Lab. In the default reconstruction mode, press the local play button for manual play. Manual play makes no Jev requests; server allowlisting is needed only for Jev measurement.
+2. Keep reconstruction mode for live gameplay decisions, or select **固定状態のAPI測定** to send a synthetic numeric state. Fixed-state mode is not a gameplay test.
 3. Choose 20/100/300 maximum calls and 200/500/1000 ms minimum cadence. Check consent and start. Every run stops within 60 seconds; failures stop instead of silently substituting rules. A stopped in-flight request may still consume server/API usage.
 4. With your own usable original SMB1 iNES ROM (NROM, 32KB PRG, 8KB CHR), select game mode and load it locally. No ROM is provided, fetched or uploaded. Start manually with Enter and reach an active World 1-1 scene; then start Jev. X jumps, Z runs, arrows move in manual mode. ROM layout validation does not prove game identity; hacks and other games are unsupported.
 5. Stop or switch away to release controls. Save JSON for individual observations. No measurements/ROMs are persisted remotely by this feature; exports stay under your control.
@@ -31,7 +39,7 @@ The RPC reuses the private quota table under separate `mario:` scopes and a sepa
 
 Cloud workflow `Jev Mario lab` runs pure controller/measurement tests, a synthetic non-Nintendo test ROM on JSNES, server auth/schema/provider tests, concurrent SQL quota tests and desktop/mobile Playwright with a simulated message bridge. Browser screenshots are explicitly **fixture evidence**, not live Jev/SMB1 evidence.
 
-Required before claiming end-to-end production use: cloud Flutter analysis/build, owner review/activation, signed-in live API benchmark, and an SMB1 ROM gameplay run supplied by the user. At implementation time the user has no ROM, so real SMB1 state parsing and performance remain unverified. The source demonstration's completion/latency numbers are not results for this app.
+Required before claiming end-to-end production use: cloud Flutter analysis/build, owner review/activation, signed-in live API benchmark, and a live recreation gameplay run. Original-ROM compatibility additionally requires an SMB1 ROM gameplay run supplied by the user. At implementation time the user has no ROM, so real SMB1 state parsing and performance remain unverified. The source demonstration's completion/latency numbers are not results for this app.
 
 ## Sources and licenses
 
