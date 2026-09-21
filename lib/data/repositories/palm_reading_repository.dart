@@ -9,9 +9,11 @@ import '../../services/offline_secure_mode_settings_service.dart';
 import '../models/palm_reading_image.dart';
 
 typedef PalmReadingActionInvoker = Future<Map<String, dynamic>> Function(
-    Map<String, dynamic> body);
+  Map<String, dynamic> body,
+);
 typedef PalmReadingHistoryLoader = Future<List<Map<String, dynamic>>> Function(
-    int limit);
+  int limit,
+);
 typedef PalmReadingImageSigner = Future<String?> Function(String imagePath);
 
 abstract interface class PalmReadingRepository {
