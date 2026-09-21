@@ -1,7 +1,7 @@
 // Local canvas capture only: no camera, microphone, display capture or upload.
 export class GameRecording {
   constructor({ canvas, changed = () => {}, ready = () => {}, failed = () => {},
-    Recorder = globalThis.MediaRecorder, schedule = setTimeout, cancel = clearTimeout,
+    Recorder = globalThis.MediaRecorder, schedule = (fn, ms) => setTimeout(fn, ms), cancel = id => clearTimeout(id),
     maxMs = 60000, maxBytes = 32 * 1024 * 1024 }) {
     Object.assign(this, { canvas, changed, ready, failed, Recorder, schedule, cancel, maxMs, maxBytes });
     this.active = false; this.finishing = false;
@@ -9,7 +9,7 @@ export class GameRecording {
   get supported() { return !!this.Recorder && typeof this.canvas.captureStream === 'function'; }
   start(audio = null) {
     if (this.active || this.finishing) { audio?.release(); return false; }
-    let video;
+    let video, recorder;
     try {
       if (!this.supported) throw new Error('このブラウザは録画に対応していません。');
       video = this.canvas.captureStream(30);
@@ -18,7 +18,7 @@ export class GameRecording {
       const types = tracks.length ? ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'] : ['video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
       const mimeType = types.find(t => this.Recorder.isTypeSupported(t));
       if (!mimeType) throw new Error('保存できる動画形式がありません。別のブラウザをお試しください。');
-      const recorder = new this.Recorder(video, { mimeType, videoBitsPerSecond: 1500000 });
+      recorder = new this.Recorder(video, { mimeType, videoBitsPerSecond: 1500000 });
       const chunks = []; let bytes = 0, error = null;
       this.recorder = recorder; this.active = true; this.reason = '録画を停止しました';
       recorder.ondataavailable = e => {
@@ -41,6 +41,8 @@ export class GameRecording {
       this.timer = this.schedule(() => this.stop('60秒の上限で録画を停止しました'), this.maxMs);
       this.changed(); return true;
     } catch (e) {
+      if(recorder){recorder.ondataavailable=null;recorder.onstop=null;recorder.onerror=null;if(recorder.state!=='inactive')try{recorder.stop();}catch{}}
+      this.cancel(this.timer);
       video?.getTracks().forEach(t => t.stop()); audio?.release();
       this.active = false; this.finishing = false; this.recorder = null;
       this.failed(e.message || '録画を開始できませんでした'); this.changed(); return false;
