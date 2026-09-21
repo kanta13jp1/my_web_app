@@ -4,7 +4,7 @@ test('ROM-free 1-1 manual play, pause and restart need no API', async ({page},in
   await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
   await expect(lab.locator('#mode')).toHaveValue('recreation');
   await lab.locator('#play-local').click();
-  await page.keyboard.down('ArrowRight');await page.waitForTimeout(450);await page.keyboard.down('Space');await page.waitForTimeout(250);await page.keyboard.up('Space');await page.keyboard.up('ArrowRight');
+  await page.keyboard.down('ArrowRight');await page.waitForTimeout(1750);await page.keyboard.down('Space');await page.waitForTimeout(250);await page.keyboard.up('Space');await page.keyboard.up('ArrowRight');
   await expect(lab.locator('#progress')).not.toContainText('x=32 ');
   await lab.locator('#stop').click();const stopped=await lab.locator('#progress').textContent();await page.waitForTimeout(250);await expect(lab.locator('#progress')).toHaveText(stopped!);
   await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');

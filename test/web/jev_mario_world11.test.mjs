@@ -28,3 +28,5 @@ test('look-ahead controller traverses overworld',()=>{
  }
  assert.equal(g.phase,'won',`phase=${g.phase},x=${g.p.x},y=${g.p.y}`);
 });
+
+test('restart restores consumed blocks and room state',()=>{const g=new World11();for(let i=0;i<10;i++)g.hitBlock(94,9);g.saved={};g.reset();assert.equal(g.saved,null);assert.equal(g.coins,0);g.hitBlock(94,9);assert.equal(g.tile(94,9),'brick');assert.equal(g.multi,1);});
