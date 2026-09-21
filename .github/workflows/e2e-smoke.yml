@@ -44,20 +44,24 @@ jobs:
         run: npm run e2e:smoke -- --project=chromium --workers=1
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/public-smoke-results.json
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results/public-smoke.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/html/public-smoke
+          PLAYWRIGHT_TEST_OUTPUT_DIR: test-results/public-smoke
 
       - name: Run visual evidence smoke tests
         run: npm run e2e:visual -- --project=chromium --project=mobile-chrome --workers=1
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-evidence-results.json
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results/visual-evidence.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/html/visual-evidence
+          PLAYWRIGHT_TEST_OUTPUT_DIR: test-results/visual-evidence
 
       - name: Summarize Playwright evidence
         if: always()
         run: |
           node scripts/summarize_playwright_results.mjs \
-            playwright-report/public-smoke-results.json \
-            playwright-report/visual-evidence-results.json \
+            playwright-report/results/public-smoke.json \
+            playwright-report/results/visual-evidence.json \
             --out playwright-report/issue-summary.md
 
       - name: Upload Playwright report
