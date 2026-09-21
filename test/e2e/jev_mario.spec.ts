@@ -116,3 +116,33 @@ test('one-second responses move the game; strict limit explains discarded contro
   await lab.locator('#stop').click();
   await screenshot(page, info.outputPath('response-age-warning.png'));
 });
+
+
+test('audio opt-in, waveform and stop lifecycle', async ({page},info)=>{
+  await page.addInitScript(() => {
+    const Native = window.AudioContext;
+    (window as any).__audioContexts=[];
+    window.AudioContext=class extends Native {
+      constructor(){super();(window as any).__audioContexts.push(this);}
+    };
+  });
+  await page.goto('/test/e2e/jev_mario_harness.html');
+  const lab=page.frameLocator('iframe');
+  await expect(lab.locator('#sound')).not.toBeChecked();
+  await lab.locator('#sound').check();await expect(lab.locator('#audio-status')).toContainText('音声ON');
+  await lab.locator('#play-local').click();
+  await lab.locator('#volume').fill('40');await expect(lab.locator('#volume-value')).toHaveText('40%');
+  await lab.locator('#stop').click();await lab.locator('#sound').uncheck();
+  await expect(lab.locator('#audio-status')).toHaveText('ミュート');
+  const signal=await lab.locator('body').evaluate(async()=>{
+    const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs');
+    const c=new OfflineAudioContext(1,44100,44100);
+    // Offline contexts cannot resume: inject their rendering nodes behind a running facade.
+    const a=new GameAudio(()=>({state:'running',currentTime:0,destination:c.destination,
+      createGain:()=>c.createGain(),createOscillator:()=>c.createOscillator(),resume:async()=>{}}));
+    await a.enable(true);a.tick();a.effect('coin');
+    const buffer=await c.startRendering();return buffer.getChannelData(0).some(x=>Math.abs(x)>.001);
+  });
+  expect(signal).toBe(true);
+  await screenshot(page,info.outputPath('world11-audio.png'));
+});
