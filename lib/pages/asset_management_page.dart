@@ -1,3 +1,4 @@
+import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:my_web_app/widgets/asset_interest_history_card.dart';
 import 'package:my_web_app/services/asset_interest_repository.dart';
 import 'package:my_web_app/services/asset_pain_metric_service.dart';
@@ -32159,6 +32160,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             if (_isExpenseFlowSelected) ...[
+              const SizedBox(height: 8),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _flowMemoController,
+                builder: (context, value, child) =>
+                    ExpenseClassificationReview(memo: value.text),
+              ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String?>(
                 initialValue: _selectedWasteCategory,
