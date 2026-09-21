@@ -20,8 +20,10 @@ void main() {
           body: Builder(
             builder: (context) => TextButton(
               onPressed: () async {
-                saved = await showRecurringFixedCostEditor(context,
-                    existing: existing);
+                saved = await showRecurringFixedCostEditor(
+                  context,
+                  existing: existing,
+                );
               },
               child: const Text('open'),
             ),
