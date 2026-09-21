@@ -24,7 +24,7 @@ class _JevMarioViewState extends State<JevMarioView> {
     super.initState();
     _viewId = 'jev-mario-${identityHashCode(this)}';
     _frame = web.HTMLIFrameElement()
-      ..src = '/jev-mario-lab/index.html'
+      ..src = '/labs/jev-mario/index.html'
       ..title = 'Jev Mario応答速度検証'
       ..style.width = '100%'
       ..style.height = '100%'
