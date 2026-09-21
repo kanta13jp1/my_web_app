@@ -45,7 +45,11 @@ test('fixed-state benchmark produces labelled measurements and export', async ({
   await expect(lab.locator('#age')).toHaveText('—');
   await expect(lab.locator('#mode-note')).toContainText('実ゲームのプレイ結果ではありません');
   const download = page.waitForEvent('download'); await lab.locator('#export').click();
-  expect((await download).suggestedFilename()).toBe('jev-mario-measurement.json');
+  const result = await download;
+  expect(result.suggestedFilename()).toBe('jev-mario-measurement.json');
+  const stream = await result.createReadStream(); let raw = '';
+  for await (const chunk of stream!) raw += chunk.toString();
+  expect(JSON.parse(raw).max_age_ms).toBe(1500);
   await screenshot(page, info.outputPath('fixture-measurement.png'));
   expect(errors).toEqual([]);
 });
@@ -93,4 +97,22 @@ test('game scripts and styles load with their actual MIME types', async ({ page 
   expect(style.headers()['content-type']).toContain('text/css');
   await expect(page.frameLocator('iframe').getByRole('button', { name: '手動で遊ぶ（API不要）' })).toBeVisible();
   expect(failures).toEqual([]);
+});
+
+
+test('one-second responses move the game; strict limit explains discarded controls', async ({ page }, info) => {
+  await page.goto('/test/e2e/jev_mario_harness.html?latency');
+  const lab = page.frameLocator('iframe');
+  await expect(lab.locator('#status')).toContainText('準備完了');
+  await expect(lab.locator('#max-age')).toHaveValue('1500');
+  await lab.locator('#consent').check(); await lab.locator('#start').click();
+  await expect(lab.locator('#action')).toHaveText('操作: right');
+  await expect(lab.locator('#progress')).not.toContainText('x=32 ');
+  await lab.locator('#stop').click(); await page.waitForTimeout(1100);
+  await lab.locator('#restart-local').click();
+  await lab.locator('#max-age').selectOption('750'); await lab.locator('#start').click();
+  await expect(lab.locator('#response-warning')).toContainText('有効期限（750 ms）');
+  await expect(lab.locator('#action')).toHaveText('操作: noop');
+  await lab.locator('#stop').click();
+  await screenshot(page, info.outputPath('response-age-warning.png'));
 });
