@@ -124,6 +124,11 @@ test('audio opt-in, waveform and stop lifecycle', async ({page},info)=>{
     (window as any).__audioContexts=[];
     window.AudioContext=class extends Native {
       constructor(){super();(window as any).__audioContexts.push(this);}
+      createOscillator(){
+        const o=super.createOscillator();const start=o.start.bind(o),stop=o.stop.bind(o);
+        o.start=(when)=>{(window as any).__lastAudioStart=performance.now();start(when);};
+        o.stop=(when)=>{if(when===undefined)(window as any).__audioStopped=true;stop(when);};return o;
+      }
     };
   });
   await page.goto('/test/e2e/jev_mario_harness.html');
@@ -132,7 +137,13 @@ test('audio opt-in, waveform and stop lifecycle', async ({page},info)=>{
   await lab.locator('#sound').check();await expect(lab.locator('#audio-status')).toContainText('音声ON');
   await lab.locator('#play-local').click();
   await lab.locator('#volume').fill('40');await expect(lab.locator('#volume-value')).toHaveText('40%');
-  await lab.locator('#stop').click();await lab.locator('#sound').uncheck();
+  await expect.poll(()=>lab.locator('body').evaluate(()=>Number((window as any).__lastAudioStart)||0)).toBeGreaterThan(0);
+  await lab.locator('#stop').click();
+  expect(await lab.locator('body').evaluate(()=>(window as any).__audioStopped)).toBe(true);
+  const stopped=await lab.locator('body').evaluate(()=>(window as any).__lastAudioStart);
+  await page.waitForTimeout(250);
+  expect(await lab.locator('body').evaluate(()=>(window as any).__lastAudioStart)).toBe(stopped);
+  await lab.locator('#sound').uncheck();
   await expect(lab.locator('#audio-status')).toHaveText('ミュート');
   const signal=await lab.locator('body').evaluate(async()=>{
     const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs');
