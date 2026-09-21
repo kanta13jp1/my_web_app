@@ -27,11 +27,17 @@ concurrency:
 permissions: {}
 
 jobs:
+  deployment-scope:
+    permissions:
+      actions: read
+    uses: ./.github/workflows/production-followup-scope.yml
+
   ga-readiness:
+    needs: deployment-scope
     permissions:
       contents: read
     name: GA readiness gate
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: always() && needs.deployment-scope.outputs.skip != 'true' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
@@ -77,3 +83,4 @@ jobs:
           name: ga-readiness-gate
           path: .ga-readiness/
           if-no-files-found: ignore
+

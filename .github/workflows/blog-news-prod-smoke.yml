@@ -18,14 +18,20 @@ concurrency:
 permissions: {}
 
 jobs:
+  deployment-scope:
+    permissions:
+      actions: read
+    uses: ./.github/workflows/production-followup-scope.yml
+
   smoke:
+    needs: deployment-scope
     environment:
       name: content-automation-production
       deployment: false
     permissions:
       contents: read
     name: Blog/news production smoke
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: always() && needs.deployment-scope.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -58,3 +64,4 @@ jobs:
           name: blog-news-prod-smoke-report
           path: tmp/blog-news-prod-smoke/report.json
           if-no-files-found: ignore
+

@@ -40,14 +40,20 @@ env:
   LANDING_GOOGLE_LOGIN_ENABLED: "true"
 
 jobs:
+  deployment-scope:
+    permissions:
+      actions: read
+    uses: ./.github/workflows/production-followup-scope.yml
+
   readiness:
+    needs: deployment-scope
     environment:
       name: observability-production
       deployment: false
     permissions:
       contents: read
     name: Alpha release readiness
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: always() && needs.deployment-scope.outputs.skip != 'true' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
@@ -145,3 +151,4 @@ jobs:
           name: release-readiness-runtime-smoke
           path: .release-readiness/
           if-no-files-found: ignore
+

@@ -35,6 +35,11 @@ concurrency:
 permissions: {}
 
 jobs:
+  deployment-scope:
+    permissions:
+      actions: read
+    uses: ./.github/workflows/production-followup-scope.yml
+
   pr-e2e-declaration:
     name: PR minimal E2E declaration
     runs-on: ubuntu-latest
@@ -143,6 +148,8 @@ jobs:
           echo "Audit evidence is missing, incomplete, or the audit could not run. This is not an accessibility pass. See the audit step log; other required gates remain enforced." >> "$GITHUB_STEP_SUMMARY"
 
   playwright-evidence-contract:
+    needs: deployment-scope
+    if: always() && needs.deployment-scope.outputs.skip != 'true'
     name: Playwright evidence contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -168,14 +175,16 @@ jobs:
         run: node --test scripts/summarize_playwright_results_test.mjs scripts/playwright_report_persistence_test.mjs
 
   public-e2e-stability:
+    needs: deployment-scope
     permissions:
       contents: read
     name: Public E2E stability smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+      always() && needs.deployment-scope.outputs.skip != 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'))
 
     steps:
       - name: Checkout code
@@ -247,3 +256,4 @@ jobs:
             playwright-report/
             test-results/
           if-no-files-found: ignore
+
