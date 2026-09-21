@@ -53,3 +53,11 @@ Self-review: native labels, keyboard focus rings, 44px buttons, live status/erro
 ## Direct navigation and iframe assets
 
 The public Flutter route is `/jev-mario-lab`. The isolated game document is `/labs/jev-mario/index.html`; never place a static directory index at the Flutter route, because Firebase serves that file before the SPA rewrite. The iframe must remain inside the app for its authenticated message bridge. Verify direct navigation and refresh as well as in-app navigation after release.
+
+## Response age and network failures
+
+Choose a response age limit of 750, 1,500 (default), or 3,000 ms before starting. A reply slower than that remains a successful API timing sample but is discarded for gameplay, with an explanation beside the metrics. Exported JSON includes `max_age_ms`. A larger limit allows older decisions; it does not reduce latency or pause the game. Changing the limit stops the run. A 502 stops measurement and releases controls; it may be a provider/network failure or invalid response, so it is not treated as a successful decision or automatically retried.
+
+## BGM・効果音
+
+ROM不要の再現ゲームで「音声をONにする」を選び、手動またはJev操作を開始します。音量は0〜100%（初期25%）、チェック解除でミュートできます。オリジナルの合成BGMとジャンプ・コイン・ブロック・アイテム・踏みつけ・ダメージ・土管・ミス・クリアSEをブラウザ内で生成します。地下ではBGMの音域が変わります。原作の音源は同梱していません。停止・モード変更・画面離脱で停止し、固定状態測定とROMモードは無音です。

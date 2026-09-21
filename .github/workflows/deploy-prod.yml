@@ -941,6 +941,18 @@ jobs:
             -d "{\"action\":\"notification.broadcast_release\",\"version\":\"${{ steps.version.outputs.version }}\",\"commit\":\"${{ github.sha }}\",\"releaseUrl\":\"https://github.com/kanta13jp1/my_web_app/releases/tag/${{ steps.version.outputs.tag }}\"}" \
             || true
 
+      # Positive evidence only; missing/unknown classifier outputs never suppress gates.
+      - name: Confirmed production no-op
+        if: >-
+          success() &&
+          github.event_name == 'push' &&
+          steps.changes.outputs.deployable == 'false' &&
+          steps.changes.outputs.web == 'false' &&
+          steps.changes.outputs.edge == 'false' &&
+          steps.changes.outputs.migration == 'false' &&
+          steps.db_edge_smoke.outputs.required == 'false'
+        run: echo "No production deployment or DB/Edge smoke was required for this exact run."
+
       - name: Job Summary
         if: always()
         run: |
@@ -1039,3 +1051,4 @@ jobs:
               commit_sha: context.sha,
               body: 'Production deployment completed.\n\n- **Web**: ${{ needs.deploy.outputs.web }}\n- **Edge Functions**: ${{ needs.deploy.outputs.edge }}\n- **Migrations**: ${{ needs.deploy.outputs.migration }}\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
             })
+
