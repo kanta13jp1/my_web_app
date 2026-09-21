@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
-from classify_ci_changes import classify
+from classify_ci_changes import SKILL_CONTRACT_TESTS, classify
 
 
 class ClassifyCiChangesTest(unittest.TestCase):
@@ -53,6 +54,29 @@ class ClassifyCiChangesTest(unittest.TestCase):
         self.assertFalse(result["flutter"])
         self.assertFalse(result["web"])
         self.assertFalse(result["deployable"])
+
+    def test_skill_python_suites_do_not_start_flutter(self) -> None:
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/agent-skill-contract.yml").read_text(encoding="utf-8")
+        pr_paths = workflow.split("  pull_request:", 1)[1].split("  push:", 1)[0]
+        for path in SKILL_CONTRACT_TESTS:
+            with self.subTest(path=path):
+                self.assertFalse(classify([path])["flutter"])
+                self.assertFalse(classify([path])["deployable"])
+                self.assertIn('"' + path + '"', pr_paths)
+                self.assertIn("python " + path, workflow)
+
+    def test_mixed_app_or_dart_changes_still_require_flutter(self) -> None:
+        for path in ["lib/main.dart", "test/scripts/tool_test.dart",
+                     "test/services/example_test.dart", "pubspec.lock"]:
+            with self.subTest(path=path):
+                self.assertTrue(classify([*SKILL_CONTRACT_TESTS, path])["flutter"])
+
+    def test_unknown_python_tests_remain_conservative(self) -> None:
+        self.assertTrue(classify(["test/scripts/new_tool_test.py"])["flutter"])
+
+    def test_manual_gate_still_includes_all_toolchains(self) -> None:
+        self.assertTrue(all(classify(list(SKILL_CONTRACT_TESTS), force_all=True).values()))
 
     def test_force_all_enables_every_group(self) -> None:
         self.assertTrue(all(classify([], force_all=True).values()))
