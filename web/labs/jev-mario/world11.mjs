@@ -37,14 +37,17 @@ export class World11 {
     }
     p.y=top;p.h=height;return true;
   }
+  collectCoin(){this.sound('coin');this.coins++;this.score+=200;if(this.coins>=100){this.coins-=100;this.lives++;this.sound('life');}}
   drainSounds(){return this.sounds.splice(0);}
   buttons(action){this.input={right:action.startsWith('right'),left:action==='left',jump:action.includes('jump'),run:action.includes('run')};}
   tile(x,y){return this.cells.get(`${x},${y}`);}
   solid(x,y){const t=this.tile(x,y);return !!t&&t!=='hidden';}
   hitBlock(x,y){const key=`${x},${y}`,t=this.cells.get(key);if(!t||t==='used'||t.includes('pipe')||t==='stone'||t==='ground')return;
-    this.sound('bump');const item=this.contents.get(key);this.effects.push({x:x*16,y:y*16,life:12,kind:'bump'});
-    if(item){if(item==='coin'||item==='multi'){this.sound('coin');this.coins++;this.score+=200;this.effects.push({x:x*16+5,y:y*16-16,life:25,kind:'coin'});}
-      else this.items.push({x:x*16,y:y*16-16,w:14,h:16,vx:item==='star'?1.3:1,vy:0,kind:item==='mushroom'&&this.power?'flower':item});
+    this.sound('bump');
+    for(const e of this.enemies)if(!e.dead&&e.x+e.w>x*16&&e.x<(x+1)*16&&Math.abs(e.y+e.h-y*16)<2){e.dead=1;this.score+=100;this.sound('stomp');this.effects.push({x:e.x,y:e.y,kind:'debris',life:25,vx:1,vy:-3});}
+    const item=this.contents.get(key);this.effects.push({x:x*16,y:y*16,life:12,kind:'bump'});
+    if(item){if(item==='coin'||item==='multi'){this.collectCoin();this.effects.push({x:x*16+5,y:y*16-16,life:25,kind:'coin'});}
+      else {this.sound('appear');this.items.push({x:x*16,y:y*16-16,w:14,h:16,vx:item==='star'?1.3:1,vy:0,kind:item==='mushroom'&&this.power?'flower':item});}
       if(item==='multi'){const n=(this.multi??0)+1;this.multi=n;if(n>=10){this.contents.delete(key);this.cells.set(key,'used');}}
       else{this.contents.delete(key);this.cells.set(key,'used');}
     }else if(t==='brick'&&this.power){this.sound('break');this.cells.delete(key);this.score+=50;for(let i=0;i<4;i++)this.effects.push({x:x*16+(i%2)*8,y:y*16,life:25,kind:'debris',vx:i<2?-1:1,vy:-3-i%2});}
@@ -100,7 +103,7 @@ export class World11 {
     if(k.down)this.enterRoom();
     if(this.power===2&&k.run&&!this.wasFire&&this.shots.length<2){this.sound('fire');this.shots.push({x:p.x+12,y:p.y+10,w:4,h:4,vx:k.left?-3.5:3.5,vy:1});}this.wasFire=!!k.run;
     if(this.room==='underground'){
-      for(const [key,item]of this.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);if(overlap(p,{x:x*16,y:y*16,w:12,h:16})){this.contents.delete(key);this.sound('coin');this.coins++;this.score+=200;}}
+      for(const [key,item]of this.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);if(overlap(p,{x:x*16,y:y*16,w:12,h:16})){this.contents.delete(key);this.collectCoin();}}
       if(p.x>=12*16&&p.y+p.h<=160&&k.right)this.exitRoom();
     }else this.camera=Math.max(this.camera,Math.min(this.width-256,p.x-96));
     for(const e of this.enemies){if(e.dead||e.x>this.camera+280||e.x<this.camera-32)continue;
@@ -113,7 +116,7 @@ export class World11 {
       if(e.kind==='shell'&&e.vx)for(const other of this.enemies)if(other!==e&&!other.dead&&overlap(e,other)){other.dead=1;this.score+=100;}
     }
     for(const item of this.items){if(item.taken)continue;const speed=item.vx;if(item.kind!=='flower'){item.vy=Math.min(6,item.vy+.3);this.move(item);if(!item.vx)item.vx=-speed;if(item.kind==='star'&&item.grounded)item.vy=-4;}
-      if(overlap(p,item)){this.sound('item');item.taken=true;this.score+=1000;if(item.kind==='star')this.star=600;else if(item.kind==='life')this.lives++;else{this.power=item.kind==='flower'?2:1;if(p.h===16){p.y-=12;p.h=28;}}}}
+      if(overlap(p,item)){this.sound(item.kind==='life'?'life':'item');item.taken=true;this.score+=1000;if(item.kind==='star')this.star=600;else if(item.kind==='life')this.lives++;else{this.power=item.kind==='flower'?2:1;if(p.h===16){p.y-=12;p.h=28;}}}}
     for(const shot of this.shots){shot.vy+=.35;this.move(shot);if(shot.grounded)shot.vy=-2.8;if(!shot.vx||shot.x<this.camera||shot.x>this.camera+256)shot.dead=true;for(const e of this.enemies)if(!e.dead&&overlap(shot,e)){e.dead=1;shot.dead=true;this.score+=100;}}
     this.shots=this.shots.filter(s=>!s.dead);
     for(const fx of this.effects){fx.life--;if(fx.kind==='coin')fx.y-=1;if(fx.kind==='debris'){fx.x+=fx.vx;fx.y+=fx.vy;fx.vy+=.25;}}this.effects=this.effects.filter(f=>f.life>0);
@@ -173,6 +176,6 @@ export function drawWorld(ctx,g){const cam=g.camera,underground=g.room==='underg
   for(const i of g.items)if(!i.taken){ctx.fillStyle=i.kind==='star'?'#ffd040':i.kind==='life'?'#00a800':'#f83800';ctx.fillRect(i.x-cam,i.y+2,14,8);ctx.fillStyle='#ffe0b0';ctx.fillRect(i.x-cam+4,i.y+10,6,6);ctx.fillRect(i.x-cam+2,i.y+3,3,3);ctx.fillRect(i.x-cam+9,i.y+3,3,3);}
   for(const f of [...g.effects,...g.shots]){if(f.kind==='bump')continue;ctx.fillStyle=f.kind==='debris'||f.kind==='squash'?'#b85020':'#ffd040';ctx.fillRect(f.x-cam,f.y,f.kind==='squash'?14:5,f.kind==='squash'?4:7);}
   if(!g.invincible||g.frames%6<3){const palette={R:g.power===2?'#fff':'#f83800',H:'#803000',S:'#ffbc80',B:g.star&&g.frames%12<6?'#00d8f8':'#b85000',Y:'#ffc000'};drawPlayer(ctx,g,palette);}
-  ctx.fillStyle='#fff';ctx.font='8px monospace';ctx.fillText('MARIO',16,15);ctx.fillText(String(g.score).padStart(6,'0'),16,25);ctx.fillText(`COIN ${String(g.coins).padStart(2,'0')}`,82,25);ctx.fillText('WORLD',144,15);ctx.fillText('1-1',150,25);ctx.fillText('TIME',208,15);ctx.fillText(String(g.time),216,25);
+  ctx.fillStyle='#fff';ctx.font='8px monospace';ctx.fillText('MARIO',16,15);ctx.fillText(String(g.score).padStart(6,'0'),16,25);ctx.fillText(`COIN ${String(g.coins).padStart(2,'0')}`,82,25);ctx.fillText('x'+g.lives,112,15);ctx.fillText('WORLD',144,15);ctx.fillText('1-1',150,25);ctx.fillText('TIME',208,15);ctx.fillText(String(g.time),216,25);
   if(g.phase!=='playing'&&g.presentation>=180){ctx.fillStyle='#101020dd';ctx.fillRect(20,86,216,52);ctx.fillStyle='#fff';ctx.font='bold 14px monospace';ctx.fillText(g.phase==='won'?'WORLD 1-1 CLEAR!':'TRY AGAIN',g.phase==='won'?38:88,108);ctx.font='8px monospace';ctx.fillText('RESTART TO PLAY AGAIN',47,126);}
 }

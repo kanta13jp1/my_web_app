@@ -1,3 +1,4 @@
+import { ReactionAssist, hazards } from './reaction.mjs?v=revalidate-1';
 import { GameRecording } from './recording.mjs?v=revalidate-1';
 import { GameAudio } from './audio.mjs?v=revalidate-1';
 import { World11, drawWorld, playerPose } from './world11.mjs?v=revalidate-1';
@@ -14,6 +15,8 @@ const isRecreation = () => $('mode').value === 'recreation';
 const isGame = () => isRom() || isRecreation();
 const world = new World11();
 const audio = new GameAudio();
+const assist=new ReactionAssist();let proposedAction='noop',interventions=[],lastIntervention='';
+const assistanceEnabled=()=>isRecreation()&&metadata.controller==='jev_plus_local';
 async function unlockAudio() {
   if (!$('sound').checked || !isRecreation()) return;
   const ok = await audio.enable(true);
@@ -64,7 +67,7 @@ function showPose(){const pose=playerPose(world);$('posture').textContent='姿�
 showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
-  world.buttons(action);
+  proposedAction=action;world.buttons(action);
   if (nes) {
     for (let i = 0; i < 8; i++) nes.buttonUp(1, i);
     for (const b of BUTTONS[action] ?? []) nes.buttonDown(1, b);
@@ -106,7 +109,7 @@ window.addEventListener('message', e => {
   const p = pendingBridge; pendingBridge = null; clearTimeout(p.timer);
   if (e.data.error) p.reject(new Error(e.data.error)); else p.resolve(e.data.result);
 });
-const loop = new DecisionLoop({ request, state, observe:()=>isRecreation()?world.snapshot():null, apply: controls,
+const loop = new DecisionLoop({ request, state, observe:()=>isRecreation()?{...world.snapshot(),hazards:hazards(world)}:null, apply: controls,
   record: s => { samples.push({ index: samples.length + 1, ...s }); lastResponse = s.rtt_ms;
     if (!s.ok) $('last-error').textContent = s.error; update(); },
   done: reason => { audio.stop(); gameRunning = false; status(reason); },
@@ -145,18 +148,19 @@ $('start').onclick = () => {
   if (loop.active || loop.pending || pendingBridge) return status('現在の測定を停止し、応答が終了するまでお待ちください');
   if (isRecreation() && world.phase !== 'playing') return status('1-1を最初からやり直してください');
   if (isRom() && (!nes || nes.cpu.mem[0x770] !== 1 || nes.cpu.mem[0x75f] !== 0 || nes.cpu.mem[0x75c] !== 0 || nes.cpu.mem[0xe] !== 8)) return status('対応ROMを読み込み、手動で1-1の操作可能な場面まで進めてください');
-  samples = []; lastResponse = 0; update(); metadata = { lab_revision: 'revalidate-1', started_at: new Date().toISOString(), mode: $('mode').value,
+  samples = []; lastResponse = 0; interventions=[];lastIntervention='';assist.reset();update(); metadata = { lab_revision: 'reaction-1', controller:isRecreation()?$('controller').value:'jev_only', started_at: new Date().toISOString(), mode: $('mode').value,
     cadence_ms: Number($('cadence').value), max_calls: Number($('count').value), max_duration_ms: 60000, max_age_ms: Number($('max-age').value),
-    emulator: isRecreation() ? 'independent-world11-v2' : 'jsnes@2.1.0', timing: 'browser RTT includes proxy/auth/quota; upstream HTTP is not pure inference', user_agent: navigator.userAgent };
+    emulator: isRecreation() ? 'independent-world11-v3' : 'jsnes@2.1.0', timing: 'browser RTT includes proxy/auth/quota; upstream HTTP is not pure inference', user_agent: navigator.userAgent };
   gameRunning = isGame(); status(isGame() ? 'Jev操作を計測中。通信待ち中もゲームは進みます。' : '固定状態でAPI往復を測定中（実プレイではありません）');
   if (isRecreation()) void unlockAudio();
   loop.start({ count: metadata.max_calls, cadence: metadata.cadence_ms, maxAge: metadata.max_age_ms });
 };
 $('stop').onclick = () => {stop();stopRecording();};
+$('controller').onchange=()=>{stop('操作方式を変更しました。測定を再開してください。');assist.reset();};
 $('max-age').onchange = () => stop('応答の有効期限を変更しました。測定を再開してください。');
 $('consent').onchange = () => { if (!$('consent').checked) stop('送信同意を解除しました'); };
 $('export').onclick = () => {
-  const data = { ...metadata, samples, counts: { attempts: samples.length, failures: samples.filter(s => !s.ok&&!s.cancelled).length, cancelled: samples.filter(s=>s.cancelled).length, applied: samples.filter(s=>s.applied).length, stale: samples.filter(s=>s.stale).length },
+  const data = { ...metadata, samples, local_interventions:interventions, counts: { attempts: samples.length, failures: samples.filter(s => !s.ok&&!s.cancelled).length, cancelled: samples.filter(s=>s.cancelled).length, applied: samples.filter(s=>s.applied).length, stale: samples.filter(s=>s.stale).length },
     browser_rtt: summarize(samples.filter(s => s.ok).map(s => s.rtt_ms)) };
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
   const a = document.createElement('a'); a.href = url; a.download = 'jev-mario-measurement.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -179,7 +183,18 @@ function frame(now) {
     frameBudget += delta;
     try {
       while (frameBudget >= 1000 / 60 && gameRunning) {
-        if(isRecreation()) world.step(); else nes.frame(); frameCount++; frameBudget -= 1000 / 60;
+        if(isRecreation()) {
+          if(loop.active&&assistanceEnabled()){
+            const decision=assist.decide(world,proposedAction);world.buttons(decision.action);
+            const key=decision.reason+':'+decision.action;
+            if(key!==lastIntervention){
+              if(decision.reason&&interventions.length<600)interventions.push({frame:world.frames,proposed:proposedAction,...decision});
+              lastIntervention=key;
+              $('assist-status').textContent=decision.reason?'ローカル補助: '+decision.reason+' → '+decision.action:'Jevの操作を適用中';
+            }
+          }
+          world.step();
+        } else nes.frame(); frameCount++; frameBudget -= 1000 / 60;
         if(isRecreation() && world.phase !== 'playing') stop(world.phase === 'won' ? '1-1クリア！' : 'ミス！「1-1を最初から」で再挑戦できます');
         if(isRecreation()) for(const sound of world.drainSounds()) audio.effect(sound);
         if (isRom() && loop.active && ([6, 11].includes(nes.cpu.mem[0xe]) || nes.cpu.mem[0xb5] >= 2 || nes.cpu.mem[0x770] === 2 || nes.cpu.mem[0x1d] === 3)) stop('死亡またはコース終了で停止しました');
