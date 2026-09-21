@@ -27,4 +27,17 @@ for(const controller of ['local_rule','jev_student','rule_student']){
  while(g.phase==='playing'&&g.frames<7200){g.buttons(controller==='local_rule'?rule(g):predict(models[controller==='jev_student'?'jev':'rule'],features(g)).action);g.step();g.drainSounds();maxX=Math.max(maxX,g.p.x);}
  result.every_frame_sensitivity.push({controller,action_hold_frames:1,phase:g.phase,clear:g.phase==='won',frames:g.frames,max_x:maxX});
 }
+// Post-diagnosis ablation, NOT pure student inference or an unseen final test.
+// Releasing held jump for one frame on landing only changes button edge handling.
+result.jump_edge_ablation=[];
+for(let seed=0;seed<21;seed++){
+ const g=init(32,seed,seed>0);let raw='noop',maxX=g.p.x,releases=0;
+ while(g.phase==='playing'&&g.frames<7200){
+  if(g.frames%6===0)raw=predict(models.jev,features(g)).action;
+  let effective=raw;
+  if(g.p.grounded&&g.wasJump&&raw.includes('jump')){effective=raw==='jump'?'noop':raw.replace('_jump','');releases++;}
+  g.buttons(effective);g.step();g.drainSounds();maxX=Math.max(maxX,g.p.x);
+ }
+ result.jump_edge_ablation.push({controller:'jev_student_plus_jump_edge_release',seed,condition:seed===0?'canonical':'enemy positions perturbed +/-4px',phase:g.phase,clear:g.phase==='won',frames:g.frames,max_x:maxX,releases});
+}
 fs.writeFileSync('out/lightgbm/gameplay.json',JSON.stringify(result,null,2));console.log(JSON.stringify({summary:result.summary,timings:result.timings,parity},null,2));
