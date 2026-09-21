@@ -530,7 +530,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   Future<T> _enqueueMonth<T>(String key, Future<T> Function() operation) {
     final previous = _monthOperations[key] ?? Future<void>.value();
     final result = previous.then((_) => operation());
-    final tail = result.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    final tail =
+        result.then<void>((_) {}, onError: (Object _, StackTrace __) {});
     _monthOperations[key] = tail;
     tail.then((_) {
       if (identical(_monthOperations[key], tail)) {
@@ -578,7 +579,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
 
     late final Future<AssetLiabilityMonthlyState> load;
-    load = _enqueueMonth(monthKey, () => _loadMonthOnce(month)).whenComplete(() {
+    load =
+        _enqueueMonth(monthKey, () => _loadMonthOnce(month)).whenComplete(() {
       if (identical(_inFlightMonthLoads[monthKey], load)) {
         _inFlightMonthLoads.remove(monthKey);
       }
@@ -600,7 +602,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     );
     if (remoteState == null ||
         (remoteState.isEmpty && remoteState.updatedAt == null)) {
-      if ((!local.isEmpty || local.updatedAt != null) && supabaseWritesEnabled) {
+      if ((!local.isEmpty || local.updatedAt != null) &&
+          supabaseWritesEnabled) {
         await _tryRemote(
           () => remote.saveMonth(userId: userId, month: month, state: local),
         );

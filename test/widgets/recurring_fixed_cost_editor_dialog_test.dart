@@ -4,14 +4,24 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 
 void main() {
-  testWidgets('editing preserves or explicitly clears the billing stop date', (tester) async {
-    final existing = AssetRecurringFixedCost(id: 'example', name: 'Example',
-      amount: 100, paymentDay: 10, billingStoppedFrom: DateTime(2026, 6, 10));
+  testWidgets('editing preserves or explicitly clears the billing stop date',
+      (tester) async {
+    final existing = AssetRecurringFixedCost(
+        id: 'example',
+        name: 'Example',
+        amount: 100,
+        paymentDay: 10,
+        billingStoppedFrom: DateTime(2026, 6, 10));
     AssetRecurringFixedCost? saved;
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: Builder(
-      builder: (context) => TextButton(onPressed: () async {
-        saved = await showRecurringFixedCostEditor(context, existing: existing);
-      }, child: const Text('open')),
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: Builder(
+      builder: (context) => TextButton(
+          onPressed: () async {
+            saved =
+                await showRecurringFixedCostEditor(context, existing: existing);
+          },
+          child: const Text('open')),
     ))));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();

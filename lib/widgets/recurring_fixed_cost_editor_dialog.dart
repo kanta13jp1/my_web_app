@@ -160,7 +160,8 @@ class _RecurringFixedCostEditorDialogState
     _stopDateController = TextEditingController(
       text: initial?.billingStoppedFrom == null
           ? ''
-          : AssetRecurringFixedCost.formatBillingDate(initial!.billingStoppedFrom!),
+          : AssetRecurringFixedCost.formatBillingDate(
+              initial!.billingStoppedFrom!),
     );
     // 渡された候補に無い振替元IDは保持しない (古い参照を残さない)。
     final ids = widget.sourceAccounts.map((option) => option.id).toSet();
@@ -485,12 +486,14 @@ class _RecurringFixedCostEditorDialogState
                 decoration: const InputDecoration(
                   labelText: 'この日以降は請求なし (任意)',
                   hintText: 'YYYY-MM-DD',
-                  helperText: '過去の記録は残ります。契約の解約手続きは行いません。\n再開する場合は日付を空欄にしてください。',
+                  helperText:
+                      '過去の記録は残ります。契約の解約手続きは行いません。\n再開する場合は日付を空欄にしてください。',
                   helperMaxLines: 3,
                 ),
                 validator: (value) {
                   final text = (value ?? '').trim();
-                  return text.isEmpty || AssetRecurringFixedCost.parseBillingDate(text) != null
+                  return text.isEmpty ||
+                          AssetRecurringFixedCost.parseBillingDate(text) != null
                       ? null
                       : '有効な日付を YYYY-MM-DD で入力してください';
                 },

@@ -66,8 +66,8 @@ class AssetManagementFixedCostSummaryService {
 
     for (final cost in recurringFixedCosts) {
       final lastDay = DateTime(target.year, target.month + 1, 0).day;
-      final dueDate = DateTime(target.year, target.month,
-          cost.paymentDay.clamp(1, lastDay).toInt());
+      final dueDate = DateTime(
+          target.year, target.month, cost.paymentDay.clamp(1, lastDay).toInt());
       if (!cost.appliesToDate(dueDate)) {
         continue;
       }

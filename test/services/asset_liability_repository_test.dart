@@ -9,20 +9,27 @@ import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  test('monthly writes and reloads remain ordered when the network is slow', () async {
+  test('monthly writes and reloads remain ordered when the network is slow',
+      () async {
     final local = _FakeAssetLiabilityRepository();
     final remote = _DelayedMonthlyStore();
     final repository = FeatureFlaggedAssetLiabilityRepository(
-      localRepository: local, remoteStore: remote, syncEnabled: true,
-      remoteWritesEnabled: true, userIdProvider: () => 'test-user',
+      localRepository: local,
+      remoteStore: remote,
+      syncEnabled: true,
+      remoteWritesEnabled: true,
+      userIdProvider: () => 'test-user',
     );
     final month = DateTime(2026, 1);
-    final first = repository.saveMonth(month: month,
-      state: AssetLiabilityMonthlyState(paidAccountNames: const {'example'},
-        updatedAt: DateTime(2026, 1, 1)));
+    final first = repository.saveMonth(
+        month: month,
+        state: AssetLiabilityMonthlyState(
+            paidAccountNames: const {'example'},
+            updatedAt: DateTime(2026, 1, 1)));
     await remote.started.future;
-    final second = repository.saveMonth(month: month,
-      state: AssetLiabilityMonthlyState(updatedAt: DateTime(2026, 1, 2)));
+    final second = repository.saveMonth(
+        month: month,
+        state: AssetLiabilityMonthlyState(updatedAt: DateTime(2026, 1, 2)));
     final reload = repository.loadMonth(month);
     remote.release.complete();
     await Future.wait([first, second]);
@@ -31,18 +38,24 @@ void main() {
   });
 
   for (final newerIsRemote in [true, false]) {
-    test('timestamped empty state is an intentional clear (remote=$newerIsRemote)', () async {
+    test(
+        'timestamped empty state is an intentional clear (remote=$newerIsRemote)',
+        () async {
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
       final month = DateTime(2026, 1);
-      final old = AssetLiabilityMonthlyState(paidAccountNames: const {'example'},
-          updatedAt: DateTime(2026, 1, 1));
-      final cleared = AssetLiabilityMonthlyState(updatedAt: DateTime(2026, 1, 2));
+      final old = AssetLiabilityMonthlyState(
+          paidAccountNames: const {'example'}, updatedAt: DateTime(2026, 1, 1));
+      final cleared =
+          AssetLiabilityMonthlyState(updatedAt: DateTime(2026, 1, 2));
       await local.saveMonth(month: month, state: newerIsRemote ? old : cleared);
       remote.seedMonth(month, newerIsRemote ? cleared : old);
       final repository = FeatureFlaggedAssetLiabilityRepository(
-        localRepository: local, remoteStore: remote, syncEnabled: true,
-        remoteWritesEnabled: true, userIdProvider: () => 'test-user',
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'test-user',
       );
       expect((await repository.loadMonth(month)).paidAccountNames, isEmpty);
       expect((await local.loadMonth(month)).paidAccountNames, isEmpty);
@@ -2122,8 +2135,10 @@ class _DelayedMonthlyStore extends _RecordingAssetLiabilityRemoteStore {
   final release = Completer<void>();
 
   @override
-  Future<void> saveMonth({required String userId, required DateTime month,
-    required AssetLiabilityMonthlyState state}) async {
+  Future<void> saveMonth(
+      {required String userId,
+      required DateTime month,
+      required AssetLiabilityMonthlyState state}) async {
     if (!started.isCompleted) {
       started.complete();
       await release.future;

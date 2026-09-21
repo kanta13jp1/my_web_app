@@ -462,7 +462,8 @@ class AssetRecurringFixedCost {
     final stop = billingStoppedFrom;
     final date = DateTime(paymentDate.year, paymentDate.month, paymentDate.day);
     return appliesToMonth(date.month) &&
-        (stop == null || date.isBefore(DateTime(stop.year, stop.month, stop.day)));
+        (stop == null ||
+            date.isBefore(DateTime(stop.year, stop.month, stop.day)));
   }
 
   static String formatBillingDate(DateTime date) =>
