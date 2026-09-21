@@ -1,3 +1,4 @@
+import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
@@ -536,6 +537,11 @@ Route<dynamic> generateAppRoute(
         builder: (_) => LandingPage(
           signupCompletionService: signupCompletionService,
         ),
+      );
+    case '/jev-mario-lab':
+      return MaterialPageRoute(
+        builder: (_) => const JevMarioLabPage(),
+        settings: settings,
       );
     case '/agi-fireworks':
       return MaterialPageRoute(

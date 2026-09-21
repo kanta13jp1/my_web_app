@@ -1,3 +1,4 @@
+import { decideMario, MarioError } from "./jev_mario.ts";
 import { classifyJevExpense, JevExpenseError } from "./jev_expense.ts";
 // ai-hub — AI・エージェント・AI大学統合EF
 // Merges (16 EFs): daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
@@ -6797,6 +6798,31 @@ serve(async (req: Request) => {
           },
         });
         return json({ success: true, ...result });
+      }
+
+      case "mario.jev_decide": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, { action, provider: "typesafe" }), 409);
+        }
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          return json(await decideMario({
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            allowedUsers: (Deno.env.get("JEV_MARIO_USER_IDS") ?? "").split(",").map(s => s.trim()).filter(Boolean),
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "", body,
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_mario_call", { p_user_id: id });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          }));
+        } catch (error) {
+          if (error instanceof MarioError) return json({ error: error.code }, error.status);
+          return json({ error: "provider_unavailable" }, 503);
+        }
       }
 
       case "expense.jev_suggest": {
