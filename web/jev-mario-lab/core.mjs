@@ -39,7 +39,7 @@ export function validateRom(bytes) {
     bytes.length !== 16 + 32768 + 8192) throw new Error('対応するiNES形式のSMB1 ROM（Mapper 0、32KB PRG / 8KB CHR）を選んでください。');
 }
 export class DecisionLoop {
-  constructor({ request, state, apply, record, done, clock = () => performance.now(), schedule = setTimeout, cancel = clearTimeout }) {
+  constructor({ request, state, apply, record, done, clock = () => performance.now(), schedule = (fn, ms) => setTimeout(fn, ms), cancel = id => clearTimeout(id) }) {
     Object.assign(this, { request, state, apply, record, done, clock, schedule, cancel });
     this.generation = 0; this.active = false; this.pending = false;
   }
