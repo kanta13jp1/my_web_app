@@ -69,6 +69,8 @@ test('fixed-state benchmark produces labelled measurements and export', async ({
   const stream = await result.createReadStream(); let raw = '';
   for await (const chunk of stream!) raw += chunk.toString();
   expect(JSON.parse(raw).max_age_ms).toBe(1500);
+  expect(JSON.parse(raw).samples[0].observation.state.player).toBeDefined();
+  expect(JSON.parse(raw).samples[0].arrival.state.player).toBeDefined();
   await screenshot(page, info.outputPath('fixture-measurement.png'));
   expect(errors).toEqual([]);
 });
@@ -89,7 +91,8 @@ test('late response after stop cannot resume controls; missing/invalid ROM expla
   await lab.locator('#mode').selectOption('fixture');
   expect(await lab.locator('body').evaluate(() => innerWidth)).toBe(page.viewportSize()!.width);
   await lab.locator('#consent').check(); await lab.locator('#start').click(); await lab.locator('#stop').click();
-  await expect(lab.locator('#counts')).toHaveText('0 / 1 / 0');
+  await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');
+  await expect(lab.locator('#sample-detail')).toContainText('キャンセル 1件');
   await page.waitForTimeout(1200); // Deliberately cover the late-response boundary.
   await expect(lab.locator('#action')).toHaveText('操作: noop');
   await lab.locator('#mode').selectOption('game'); await lab.locator('#start').click();
@@ -175,4 +178,15 @@ test('audio opt-in, waveform and stop lifecycle', async ({page},info)=>{
   });
   expect(signal).toBe(true);
   await screenshot(page,info.outputPath('world11-audio.png'));
+});
+
+test('loss presentation and retry remain usable with sound enabled',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#sound').check();await lab.locator('#play-local').click();
+ await lab.locator('#screen').focus();await page.keyboard.down('ArrowRight');
+ await expect(lab.locator('#posture')).toContainText('ミス',{timeout:10000});await page.keyboard.up('ArrowRight');
+ await page.waitForTimeout(500);await screenshot(page,info.outputPath('world11-death-motion.png'));
+ await page.waitForTimeout(2600);await screenshot(page,info.outputPath('world11-try-again.png'));
+ await lab.locator('#restart-local').click();await expect(lab.locator('#posture')).toContainText('待機');
+ await lab.locator('#play-local').click();await expect(lab.locator('#status')).toContainText('手動プレイ中');await lab.locator('#stop').click();
 });

@@ -29,3 +29,12 @@ test('world emits one jump per liftoff, coin once, and terminal events once',()=
   w.p.x=198*16;w.step();assert.ok(w.drainSounds().includes('clear'));
   for(const name of ['jump','coin','bump','break','item','stomp','hurt','pipe','death','clear'])assert.ok(effects[name].length);
 });
+
+test('room/star themes switch, hurry speeds sequence, terminal stingers stop music',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick();assert.equal(a.track,'overworld');
+ c.currentTime+=1;a.tick('underground');assert.equal(a.track,'underground');
+ c.currentTime+=1;a.tick('overworld',{star:true});assert.equal(a.track,'star');
+ const old=[...a.music];a.effect('death');assert.equal(a.music.size,0);assert.ok(old.every(o=>o.stopped));
+ const count=c.oscillators.length;a.tick();assert.equal(c.oscillators.length,count);
+ a.stop();a.tick('overworld',{hurry:true});assert.ok(a.next-c.currentTime<.145);
+});

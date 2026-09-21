@@ -33607,3 +33607,10 @@ PR #5467 adds a local-ROM SMB1 controller and a ROM-free synthetic-state API ben
 ### 2026-09-21 Jev Mario motion and crouching (#5482)
 
 Added independent pixel-art poses for walking/running, facing, jumping/falling and crouching. Crouch collision height preserves feet and checks standing headroom. Cloud engine and desktop/mobile UI checks accompany PR #5483. This is a manual-play/visual improvement, not evidence of improved Jev control quality.
+
+
+### 2026-09-21: Mario presentation and diagnostic snapshots (#5484)
+
+- Add skidding, death/flag/castle sequences, block/enemy feedback and original contextual chiptunes.
+- Export immutable observation/arrival snapshots and separate cancellation counts to distinguish Jev decisions from latency.
+- Validate cloud engine/audio/browser contracts before production; no claim of ROM fidelity, article latency reproduction or AI completion.
