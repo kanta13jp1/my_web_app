@@ -74,6 +74,8 @@ related: ["[[OBSIDIAN_INGEST_PIPELINE]]"]
 
 [集計修正PR #5470](https://github.com/kanta13jp1/my_web_app/pull/5470) は 07:47:41 UTCに `605ac61d0743bb983928403b902ec6f0bbbf300a` としてマージされた。除外追補の準備中に別の操作でマージされたため、除外変更は独立した後続PRにする。[自動deploy run 35574651872](https://github.com/kanta13jp1/my_web_app/actions/runs/35574651872) は起動したが `deployable=false`、web/edge/migration全てfalseで、Flutter build・Firebase・DB migration・Edge Function・version/tag/release更新は全てskipped。実際のアプリやバックエンドの再公開はない。マージ後mainの [Minimal E2E run 35574701484](https://github.com/kanta13jp1/my_web_app/actions/runs/35574701484) は自動起動済みのため、重複する手動実行は追加しない。
 
+同マージ後runはSHA `605ac61d0743bb983928403b902ec6f0bbbf300a` をcheckoutしたことをログで確認し、回帰11/11・公開スモーク15/15・PC/モバイル画面証拠12/12、集計 `Total 27 / Passed 27 / Failed 0 / Flaky 0 / Evidence errors 0` で成功した。両JSONを読み取った集計とartifact `10627089605` (`minimal-e2e-playwright-report`) を保存済み。除外追補は [PR #5471](https://github.com/kanta13jp1/my_web_app/pull/5471) で検証する。
+
 ### 実際に確認できた範囲
 
 | 対象 | 証拠・環境 | 限界 |
