@@ -33614,3 +33614,9 @@ Added independent pixel-art poses for walking/running, facing, jumping/falling a
 - Add skidding, death/flag/castle sequences, block/enemy feedback and original contextual chiptunes.
 - Export immutable observation/arrival snapshots and separate cancellation counts to distinguish Jev decisions from latency.
 - Validate cloud engine/audio/browser contracts before production; no claim of ROM fidelity, article latency reproduction or AI completion.
+
+
+## Jev Mario gameplay recording — 2026-09-21
+
+- Issue #5486: local canvas recording with optional game audio, 60-second/32MiB bounds, replay and timestamped WebM/MP4 download selected by browser capability. No external media upload or new API call.
+- Verify actual encoded audio/video playback and download, repeat/mute, unsupported capability, and mode-change cleanup in cloud tests before production release.
