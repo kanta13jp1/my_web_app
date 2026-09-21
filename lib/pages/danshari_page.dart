@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../main.dart'; // supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/note.dart';
+import '../services/supabase_client_provider.dart';
 
 class DanshariPage extends StatefulWidget {
-  const DanshariPage({super.key});
+  const DanshariPage({super.key, this.supabaseClient});
+
+  final SupabaseClient? supabaseClient;
 
   @override
   State<DanshariPage> createState() => _DanshariPageState();
@@ -13,7 +17,10 @@ class DanshariPage extends StatefulWidget {
 class _DanshariPageState extends State<DanshariPage> {
   List<Note> _staleNotes = [];
   bool _isLoading = true;
+  bool _requiresSignIn = false;
   int _currentIndex = 0;
+
+  SupabaseClient get _supabaseClient => widget.supabaseClient ?? supabase;
 
   @override
   void initState() {
@@ -26,14 +33,22 @@ class _DanshariPageState extends State<DanshariPage> {
   // CSOが30日以上更新のない「陳腐化案件」を抽出する
   Future<void> _fetchStaleNotes() async {
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      final userId = _supabaseClient.auth.currentUser?.id;
+      if (userId == null) {
+        if (mounted) {
+          setState(() {
+            _requiresSignIn = true;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
 
       // 30日前の日付
       final threshold =
           DateTime.now().subtract(const Duration(days: 30)).toIso8601String();
 
-      final response = await supabase
+      final response = await _supabaseClient
           .from('notes')
           .select()
           .eq('user_id', userId)
@@ -65,12 +80,12 @@ class _DanshariPageState extends State<DanshariPage> {
     try {
       if (keep) {
         // 維持: updated_at を更新して、当分出てこないようにする
-        await supabase.from('notes').update({
+        await _supabaseClient.from('notes').update({
           'updated_at': DateTime.now().toIso8601String(),
         }).eq('id', note.id);
       } else {
         // 断捨離: アーカイブする
-        await supabase.from('notes').update({
+        await _supabaseClient.from('notes').update({
           'is_archived': true,
           'archived_at': DateTime.now().toIso8601String(),
         }).eq('id', note.id);
@@ -104,12 +119,53 @@ class _DanshariPageState extends State<DanshariPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _staleNotes.isEmpty
-              ? _buildCompletionView()
-              : _buildQuestView(),
+          : _requiresSignIn
+              ? _buildSignInView()
+              : _staleNotes.isEmpty
+                  ? _buildCompletionView()
+                  : _buildQuestView(),
     );
   }
 
+  Widget _buildSignInView() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 64,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'ログインが必要です',
+                style: Theme.of(context).textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '保存したメモの断捨離を始めるにはログインしてください。',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                key: const Key('danshari-sign-in-button'),
+                onPressed: () => Navigator.of(context).pushNamed('/login'),
+                icon: const Icon(Icons.login),
+                label: const Text('ログイン'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
   Widget _buildCompletionView() {
     return Center(
       child: Column(
