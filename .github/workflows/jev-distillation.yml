@@ -1,0 +1,46 @@
+name: Jev LightGBM experiment
+on:
+  pull_request:
+    paths:
+      - 'scripts/jev_distillation/**'
+      - '.github/workflows/jev-distillation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: jev-distillation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Materialize frozen game
+        run: |
+          mkdir -p out/lightgbm/frozen
+          git show d224c892c1f16895f24978358717717f96bad657:web/labs/jev-mario/world11.mjs > out/lightgbm/frozen/world11.mjs
+          git show d224c892c1f16895f24978358717717f96bad657:web/labs/jev-mario/reaction.mjs > out/lightgbm/frozen/reaction.mjs
+          node --version
+      - name: Collect checkpoint-grouped states
+        run: node scripts/jev_distillation/collect.mjs
+      - name: Fit and evaluate isolated models
+        shell: bash
+        run: |
+          if [ -f scripts/jev_distillation/teacher.json ]; then
+            python -m pip install lightgbm==4.6.0 numpy==2.2.6 scipy==1.15.3
+            python scripts/jev_distillation/train.py
+            node scripts/jev_distillation/evaluate.mjs
+          else
+            echo 'Collection phase only; teacher labels have not yet been collected.'
+          fi
+      - name: Preserve numeric experiment evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: jev-lightgbm-${{ github.run_id }}
+          path: out/lightgbm/
+          retention-days: 14
+          if-no-files-found: error
