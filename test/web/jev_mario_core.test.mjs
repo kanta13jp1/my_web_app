@@ -57,3 +57,12 @@ test('configured response age accepts 1s decisions but still rejects expired rep
   loop.start({ count: 1, maxAge: 1500 }); await flush();
   assert.equal(records[1].stale, true); assert(!actions.includes('right'));
 });
+
+test('records immutable observation and arrival including held buttons',async()=>{
+ let now=0;const obj={player:{x:32}},records=[];const loop=new DecisionLoop({
+ state:()=>obj,observe:()=>({held:'right'}),request:async()=>{obj.player.x=120;now=1000;return reply;},
+ apply:()=>{},record:r=>records.push(r),done:()=>{},clock:()=>now});
+ loop.start({count:1,maxAge:1500});await flush();
+ assert.equal(records[0].observation.state.player.x,32);assert.equal(records[0].arrival.state.player.x,120);
+ assert.equal(records[0].arrival.context.held,'right');obj.player.x=200;assert.equal(records[0].arrival.state.player.x,120);
+});

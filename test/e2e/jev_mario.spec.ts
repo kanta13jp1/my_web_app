@@ -1,4 +1,23 @@
 import { test, expect, type Page } from '@playwright/test';
+test('keyboard and touch crouch recover; walk and jump poses render',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#play-local').click();
+ await page.keyboard.down('ArrowDown');await expect(lab.locator('#posture')).toContainText('しゃがみ');
+ await screenshot(page,info.outputPath('world11-crouch.png'));
+ await page.keyboard.up('ArrowDown');await expect(lab.locator('#posture')).toContainText('待機');
+ await lab.locator('#screen').focus();await page.keyboard.down('ArrowRight');
+ await expect(lab.locator('#posture')).toContainText('歩く');
+ await page.keyboard.down('Space');await expect(lab.locator('#posture')).toContainText('上昇');
+ await screenshot(page,info.outputPath('world11-jump.png'));
+ await page.keyboard.up('Space');await page.keyboard.up('ArrowRight');
+ await lab.locator('#restart-local').click();await lab.locator('#play-local').click();
+ const down=lab.getByRole('button',{name:'しゃがむ・土管に入る'});
+ const box=await down.boundingBox();expect(box).not.toBeNull();
+ await page.mouse.move(box!.x+box!.width/2,box!.y+box!.height/2);await page.mouse.down();
+ await expect(lab.locator('#posture')).toContainText('しゃがみ');
+ await page.mouse.up();await expect(lab.locator('#posture')).toContainText('待機');
+ await lab.locator('#stop').click();
+});
 test('ROM-free 1-1 manual play, pause and restart need no API', async ({page},info)=>{
   const errors: string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
@@ -50,6 +69,8 @@ test('fixed-state benchmark produces labelled measurements and export', async ({
   const stream = await result.createReadStream(); let raw = '';
   for await (const chunk of stream!) raw += chunk.toString();
   expect(JSON.parse(raw).max_age_ms).toBe(1500);
+  expect(JSON.parse(raw).samples[0].observation.state.player).toBeDefined();
+  expect(JSON.parse(raw).samples[0].arrival.state.player).toBeDefined();
   await screenshot(page, info.outputPath('fixture-measurement.png'));
   expect(errors).toEqual([]);
 });
@@ -70,7 +91,8 @@ test('late response after stop cannot resume controls; missing/invalid ROM expla
   await lab.locator('#mode').selectOption('fixture');
   expect(await lab.locator('body').evaluate(() => innerWidth)).toBe(page.viewportSize()!.width);
   await lab.locator('#consent').check(); await lab.locator('#start').click(); await lab.locator('#stop').click();
-  await expect(lab.locator('#counts')).toHaveText('0 / 1 / 0');
+  await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');
+  await expect(lab.locator('#sample-detail')).toContainText('キャンセル 1件');
   await page.waitForTimeout(1200); // Deliberately cover the late-response boundary.
   await expect(lab.locator('#action')).toHaveText('操作: noop');
   await lab.locator('#mode').selectOption('game'); await lab.locator('#start').click();
@@ -156,4 +178,61 @@ test('audio opt-in, waveform and stop lifecycle', async ({page},info)=>{
   });
   expect(signal).toBe(true);
   await screenshot(page,info.outputPath('world11-audio.png'));
+});
+
+test('loss presentation and retry remain usable with sound enabled',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#sound').check();await lab.locator('#play-local').click();
+ await lab.locator('#screen').focus();await page.keyboard.down('ArrowRight');
+ await expect(lab.locator('#posture')).toContainText('ミス',{timeout:10000});await page.keyboard.up('ArrowRight');
+ await page.waitForTimeout(500);await screenshot(page,info.outputPath('world11-death-motion.png'));
+ await page.waitForTimeout(2600);await screenshot(page,info.outputPath('world11-try-again.png'));
+ await lab.locator('#restart-local').click();await expect(lab.locator('#posture')).toContainText('待機');
+ await lab.locator('#play-local').click();await expect(lab.locator('#status')).toContainText('手動プレイ中');await lab.locator('#stop').click();
+});
+
+
+test('record gameplay with audio, preview and download; record again silently',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#sound').check();await lab.locator('#record-start').click();
+ await expect(lab.locator('#record-status')).toContainText('ゲーム音あり');
+ await lab.locator('#play-local').click();await page.keyboard.down('Space');
+ await page.waitForTimeout(1800);await page.keyboard.up('Space');await lab.locator('#record-stop').click();
+ await expect(lab.locator('#record-result')).toBeVisible();await lab.locator('#stop').click();
+ const video=lab.locator('#record-preview');
+ await expect.poll(()=>video.evaluate((v:HTMLVideoElement)=>v.readyState)).toBeGreaterThanOrEqual(2);
+ expect(await video.evaluate((v:HTMLVideoElement)=>[v.videoWidth,v.videoHeight])).toEqual([256,240]);
+ await video.evaluate((v:HTMLVideoElement)=>v.play());
+ await expect.poll(()=>video.evaluate((v:HTMLVideoElement)=>v.currentTime)).toBeGreaterThan(0);
+ // A decoded audio track verifies that game sound reached the encoded recording.
+ const audioTracks=await video.evaluate((v:HTMLVideoElement)=>{
+  const stream=(v as HTMLVideoElement & {captureStream():MediaStream}).captureStream();
+  const count=stream.getAudioTracks().length;stream.getTracks().forEach(t=>t.stop());return count;
+ });expect(audioTracks).toBe(1);
+ await video.evaluate((v:HTMLVideoElement)=>v.pause());
+ const downloadPromise=page.waitForEvent('download');await lab.locator('#record-download').click();
+ const download=await downloadPromise;expect(download.suggestedFilename()).toMatch(/^jev-mario-.*\.webm$/);
+ await download.saveAs(info.outputPath('gameplay-audio.webm'));
+ const stream=await download.createReadStream();let bytes=0;for await(const chunk of stream!)bytes+=chunk.length;expect(bytes).toBeGreaterThan(1000);
+ await screenshot(page,info.outputPath('recording-ready.png'));
+ await lab.locator('#sound').uncheck();await lab.locator('#record-start').click();
+ await expect(lab.locator('#record-status')).toContainText('音声なし');
+ await lab.locator('#play-local').click();await page.waitForTimeout(1200);await lab.locator('#record-stop').click();
+ await expect(lab.locator('#record-status')).toContainText('ダウンロード');
+ await expect(lab.locator('#record-start')).toBeEnabled();await lab.locator('#stop').click();
+});
+
+test('recording unsupported leaves manual gameplay usable',async({page})=>{
+ await page.addInitScript(()=>{Object.defineProperty(window,'MediaRecorder',{value:undefined});});
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await expect(lab.locator('#record-start')).toBeDisabled();await expect(lab.locator('#record-status')).toContainText('対応していません');
+ await lab.locator('#play-local').click();await expect(lab.locator('#status')).toContainText('手動プレイ中');await lab.locator('#stop').click();
+});
+
+test('mode change finalizes recording and fixture disables capture',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#play-local').click();await lab.locator('#record-start').click();await page.waitForTimeout(1200);
+ await lab.locator('#mode').selectOption('fixture');await expect(lab.locator('#record-result')).toBeVisible();
+ await expect(lab.locator('#record-start')).toBeDisabled();await expect(lab.locator('#record-stop')).toBeDisabled();
+ await lab.locator('#mode').selectOption('recreation');await expect(lab.locator('#record-start')).toBeEnabled();
 });

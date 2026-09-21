@@ -1,6 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {World11,level} from '../../web/labs/jev-mario/world11.mjs';
+import {World11,level,playerPose,drawWorld} from '../../web/labs/jev-mario/world11.mjs';
+
+test('crouching anchors feet, stops acceleration and waits for headroom',()=>{
+ const g=new World11();g.enemies=[];g.input={down:true,right:true};g.step();
+ assert.equal(g.p.h,12);assert.equal(g.p.y+g.p.h,208);assert.equal(g.p.vx,0);
+ assert.equal(playerPose(g),'crouch');g.input={};g.step();assert.equal(g.p.h,16);
+ g.power=1;g.step();assert.equal(g.p.h,28);g.input={down:true};g.step();
+ assert.equal(g.p.h,16);assert.equal(g.p.y+g.p.h,208);
+ g.cells.set('2,11','brick');g.input={};g.step();assert.equal(g.p.h,16);assert.equal(playerPose(g),'crouch');
+ g.cells.delete('2,11');g.step();assert.equal(g.p.h,28);assert.equal(g.p.y+g.p.h,208);
+ g.reset();assert.equal(playerPose(g),'idle');
+});
+test('walk and airborne artwork change and facing follows input',()=>{
+ const g=new World11();g.enemies=[];g.input={right:true};const seen=new Set();
+ for(let i=0;i<30;i++){g.step();seen.add(playerPose(g));}
+ assert.ok(['walk0','walk1','walk2'].every(p=>seen.has(p)));
+ g.input={left:true};g.step();assert.equal(g.p.facing,-1);
+ g.input={jump:true};g.step();assert.equal(playerPose(g),'jump');
+ g.input={};for(let i=0;i<8;i++)g.step();assert.equal(playerPose(g),'fall');
+ const pixels=[];const ctx=new Proxy({fillRect(...args){pixels.push([this.fillStyle,...args]);}},{get(o,k){return k in o?o[k]:()=>{};}});
+ g.reset();drawWorld(ctx,g);const standing=JSON.stringify(pixels);pixels.length=0;
+ g.input={down:true};g.step();drawWorld(ctx,g);assert.notEqual(JSON.stringify(pixels),standing);
+});
 test('1-1 landmarks',()=>{const {cells}=level();assert.equal(cells.get('28,11'),'pipe-top');assert.equal(cells.get('57,9'),'pipe-top');for(const x of[69,70,86,87,88,153,154])assert.equal(cells.get(`${x},13`),undefined);assert.equal(cells.get('189,5'),'stone');assert.equal(cells.get('198,12'),'stone');});
 test('variable jump and run acceleration',()=>{function jump(hold){const g=new World11();g.input={jump:true};let top=192;for(let n=0;n<60;n++){g.input.jump=n<hold;g.step();top=Math.min(top,g.p.y);}return top;}assert.ok(jump(25)<jump(3)-15);const g=new World11();g.input={right:true,run:true};for(let n=0;n<20;n++)g.step();assert.ok(g.p.vx>2);assert.ok(g.p.x>55);});
 test('question block, growth and brick breaking',()=>{const g=new World11();g.hitBlock(21,9);assert.equal(g.tile(21,9),'used');assert.equal(g.items[0].kind,'mushroom');Object.assign(g.p,{x:336,y:128});g.step();assert.equal(g.power,1);assert.equal(g.p.h,28);g.hitBlock(20,9);assert.equal(g.tile(20,9),undefined);g.hitBlock(16,9);assert.equal(g.coins,1);});
@@ -30,3 +52,28 @@ test('look-ahead controller traverses overworld',()=>{
 });
 
 test('restart restores consumed blocks and room state',()=>{const g=new World11();for(let i=0;i<10;i++)g.hitBlock(94,9);g.saved={};g.reset();assert.equal(g.saved,null);assert.equal(g.coins,0);g.hitBlock(94,9);assert.equal(g.tile(94,9),'brick');assert.equal(g.multi,1);});
+
+test('terminal presentation advances independently without restarting gameplay',()=>{
+ const g=new World11();g.die();const x=g.p.x,y=g.p.y;for(let i=0;i<40;i++)g.presentationStep();
+ assert.equal(g.phase,'dead');assert.equal(g.p.x,x);assert.ok(g.p.y<y);assert.equal(playerPose(g),'dead');
+ for(let i=0;i<300;i++)g.presentationStep();assert.equal(g.presentation,180);g.step();assert.equal(g.frames,0);
+ g.reset();g.p.x=198*16;g.step();const score=g.score;for(let i=0;i<180;i++)g.presentationStep();
+ assert.equal(g.phase,'won');assert.ok(g.score>score);assert.equal(g.time,0);
+});
+test('snapshot owns its data and skidding differs from walking',()=>{
+ const g=new World11();g.enemies=[];g.input={right:true};for(let i=0;i<20;i++)g.step();
+ g.input={left:true};g.step();assert.equal(playerPose(g),'skid');const snap=g.snapshot();g.p.x+=50;g.input.left=false;
+ assert.notEqual(snap.player.x,g.p.x);assert.equal(snap.input.left,true);
+});
+
+test('controlled identical jump demonstrates delay effect independently of Jev',()=>{
+ const results=[];
+ for(const delay of [0,50,200,1000]){
+  const g=new World11();g.cells=new Map();g.contents=new Map();for(let x=0;x<80;x++)for(let y=13;y<15;y++)g.cells.set(`${x},${y}`,'ground');
+  Object.assign(g.p,{x:160,y:192,vx:1.5});g.enemies=[{x:184,y:192,w:14,h:16,vx:-.5,vy:0,kind:'goomba',dead:0}];
+  for(let frame=0;frame<40&&g.phase==='playing';frame++){g.input={right:true,jump:frame>=Math.round(delay*60/1000)};g.step();}
+  results.push({delay_ms:delay,phase:g.phase,x:Number(g.p.x.toFixed(2)),frames:g.frames});
+ }
+ console.log('CONTROLLED_LATENCY_EXPERIMENT '+JSON.stringify(results));
+ assert.equal(results[0].phase,'playing');assert.equal(results[3].phase,'dead');
+});
