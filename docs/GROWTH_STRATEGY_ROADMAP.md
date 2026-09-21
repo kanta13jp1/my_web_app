@@ -33592,3 +33592,13 @@ Implemented a server-first monthly paid-interest chart with explicit missing/par
 ## 2026-09-21 Expense classification review (#5452)
 
 Added read-only category suggestions beneath the asset-management expense memo. Local rules run without sending data; configured AI requires an explicit action. Every candidate is labelled for human review; fixed rule scores are not accuracy. No booking or financial data mutation is added. Cloud widget tests cover fallback, recovery, stale responses and narrow text-scaled layout. See [operation guide](EXPENSE_CLASSIFICATION_REVIEW.md).
+
+
+### 2026-09-21 Jev分類候補のサーバー接続（#5459）
+
+認証済みユーザーの明示操作に限定し、TypeSafeキーをサーバーSecretへ分離。固定カテゴリ・500文字制限・原子的な分/日/全体上限で利用を制御。分類候補の参考表示に限定し、自動記帳は追加しない。CIと本番確認はPRへ記録する。
+
+
+## 2026-09-21 Jev Mario latency experiment (#5466)
+
+PR #5467 adds a local-ROM SMB1 controller and a ROM-free synthetic-state API benchmark at `/jev-mario-lab`. Browser RTT and upstream HTTP time are separate from pure inference. Server-only credentials, verified-account allowlist, atomic request caps, stop/late-response guards and JSON export are included. Cloud contract and browser fixture tests validate the implementation; actual SMB1 gameplay is unverified because the user has no ROM. Production activation and auth/quota migration remain pending explicit owner review. See [operation guide](JEV_MARIO_LAB.md).
