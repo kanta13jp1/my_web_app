@@ -44,3 +44,16 @@ test('stale replies release buttons, cap completes and failure stops', async () 
   loop.request = async () => { throw new Error('quota'); };
   loop.start(); await flush(); assert.equal(loop.active, false); assert.equal(records.length, 2);
 });
+
+
+test('configured response age accepts 1s decisions but still rejects expired replies', async () => {
+  let now = 0, delay = 1000; const actions = [], records = [];
+  const loop = new DecisionLoop({ request: async () => { now += delay; return reply; }, state: () => ({}),
+    apply: a => actions.push(a), record: r => records.push(r), done: () => {}, clock: () => now });
+  loop.start({ count: 1, maxAge: 1500 }); await flush();
+  assert.equal(records[0].applied, true); assert.equal(records[0].rtt_ms, 1000);
+  assert(actions.includes('right'));
+  actions.length = 0; delay = 1501;
+  loop.start({ count: 1, maxAge: 1500 }); await flush();
+  assert.equal(records[1].stale, true); assert(!actions.includes('right'));
+});
