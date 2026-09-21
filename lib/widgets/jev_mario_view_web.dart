@@ -88,10 +88,15 @@ class _JevMarioViewState extends State<JevMarioView> {
       }
       _send({'type': 'jev-mario-response', 'id': id, 'result': response.data});
     } on FunctionException catch (e) {
+      final invalidAnswer = e.details is Map &&
+          (e.details as Map)['error'] == 'invalid_provider_response';
       final message = switch (e.status) {
         401 => 'ログインが必要です。アプリへ戻ってログインしてください。',
         403 => 'このアカウントでは検証機能が未有効です。管理者の設定が必要です。',
         429 => 'API利用上限に達しました。時間をおいて再試行してください。',
+        502 => invalidAnswer
+            ? 'Jevの回答形式を検証できず停止しました（502）。停止後に再試行してください。'
+            : 'Jev側の通信に失敗しました（502）。停止後に再試行してください。',
         503 => '検証サーバーが未設定または利用できません。管理者に確認してください。',
         _ => 'Jev応答を取得できませんでした。停止後に再試行してください。',
       };
