@@ -1,6 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {World11,level} from '../../web/labs/jev-mario/world11.mjs';
+import {World11,level,playerPose,drawWorld} from '../../web/labs/jev-mario/world11.mjs';
+
+test('crouching anchors feet, stops acceleration and waits for headroom',()=>{
+ const g=new World11();g.enemies=[];g.input={down:true,right:true};g.step();
+ assert.equal(g.p.h,12);assert.equal(g.p.y+g.p.h,208);assert.equal(g.p.vx,0);
+ assert.equal(playerPose(g),'crouch');g.input={};g.step();assert.equal(g.p.h,16);
+ g.power=1;g.step();assert.equal(g.p.h,28);g.input={down:true};g.step();
+ assert.equal(g.p.h,16);assert.equal(g.p.y+g.p.h,208);
+ g.cells.set('2,11','brick');g.input={};g.step();assert.equal(g.p.h,16);assert.equal(playerPose(g),'crouch');
+ g.cells.delete('2,11');g.step();assert.equal(g.p.h,28);assert.equal(g.p.y+g.p.h,208);
+ g.reset();assert.equal(playerPose(g),'idle');
+});
+test('walk and airborne artwork change and facing follows input',()=>{
+ const g=new World11();g.enemies=[];g.input={right:true};const seen=new Set();
+ for(let i=0;i<30;i++){g.step();seen.add(playerPose(g));}
+ assert.ok(['walk0','walk1','walk2'].every(p=>seen.has(p)));
+ g.input={left:true};g.step();assert.equal(g.p.facing,-1);
+ g.input={jump:true};g.step();assert.equal(playerPose(g),'jump');
+ g.input={};for(let i=0;i<8;i++)g.step();assert.equal(playerPose(g),'fall');
+ const pixels=[];const ctx=new Proxy({fillRect(...args){pixels.push([this.fillStyle,...args]);}},{get(o,k){return k in o?o[k]:()=>{};}});
+ g.reset();drawWorld(ctx,g);const standing=JSON.stringify(pixels);pixels.length=0;
+ g.input={down:true};g.step();drawWorld(ctx,g);assert.notEqual(JSON.stringify(pixels),standing);
+});
 test('1-1 landmarks',()=>{const {cells}=level();assert.equal(cells.get('28,11'),'pipe-top');assert.equal(cells.get('57,9'),'pipe-top');for(const x of[69,70,86,87,88,153,154])assert.equal(cells.get(`${x},13`),undefined);assert.equal(cells.get('189,5'),'stone');assert.equal(cells.get('198,12'),'stone');});
 test('variable jump and run acceleration',()=>{function jump(hold){const g=new World11();g.input={jump:true};let top=192;for(let n=0;n<60;n++){g.input.jump=n<hold;g.step();top=Math.min(top,g.p.y);}return top;}assert.ok(jump(25)<jump(3)-15);const g=new World11();g.input={right:true,run:true};for(let n=0;n<20;n++)g.step();assert.ok(g.p.vx>2);assert.ok(g.p.x>55);});
 test('question block, growth and brick breaking',()=>{const g=new World11();g.hitBlock(21,9);assert.equal(g.tile(21,9),'used');assert.equal(g.items[0].kind,'mushroom');Object.assign(g.p,{x:336,y:128});g.step();assert.equal(g.power,1);assert.equal(g.p.h,28);g.hitBlock(20,9);assert.equal(g.tile(20,9),undefined);g.hitBlock(16,9);assert.equal(g.coins,1);});

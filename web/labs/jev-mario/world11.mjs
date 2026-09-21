@@ -29,6 +29,14 @@ export class World11 {
   reset(){this.sounds=[];Object.assign(this,level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.room='overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;
     this.enemies=[22,40,51,53,80,82,97,98,107,114,116,124,126,128,130,174,176].map((x,i)=>({x:x*16,y:x===80||x===82?64:192,w:14,h:16,vx:-.5,vy:0,kind:i===8?'koopa':'goomba',dead:0}));}
   sound(name){if(this.sounds.length<32)this.sounds.push(name);}
+  resizePlayer(height){
+    const p=this.p,top=p.y+p.h-height;
+    if(height>p.h){
+      for(let y=Math.floor(top/16);y<=Math.floor((p.y+p.h-.01)/16);y++)
+        for(let x=Math.floor(p.x/16);x<=Math.floor((p.x+p.w-.01)/16);x++)if(this.solid(x,y))return false;
+    }
+    p.y=top;p.h=height;return true;
+  }
   drainSounds(){return this.sounds.splice(0);}
   buttons(action){this.input={right:action.startsWith('right'),left:action==='left',jump:action.includes('jump'),run:action.includes('run')};}
   tile(x,y){return this.cells.get(`${x},${y}`);}
@@ -60,12 +68,18 @@ export class World11 {
   exitRoom(){this.sound('pipe');Object.assign(this,this.saved);this.saved=null;this.room='overworld';this.p.x=164*16;this.p.y=176-this.p.h;this.p.vx=0;this.p.vy=0;this.camera=this.p.x-96;this.items=[];}
   step(){if(this.phase!=='playing')return;const p=this.p,k=this.input;this.frames++;this.time=Math.max(0,400-Math.floor(this.frames/24));if(!this.time){this.die();return;}
     this.invincible=Math.max(0,this.invincible-1);this.star=Math.max(0,this.star-1);
-    const dir=(k.right?1:0)-(k.left?1:0),max=k.run?2.6:1.55;
+    const standing=this.power?28:16;
+    if(k.down&&p.grounded)this.resizePlayer(this.power?16:12);
+    else this.resizePlayer(standing);
+    p.crouching=p.h<standing;
+    const intended=(k.right?1:0)-(k.left?1:0);
+    if(intended)p.facing=intended;
+    const dir=p.crouching?0:intended,max=k.run?2.6:1.55;
     p.vx=dir?Math.max(-max,Math.min(max,p.vx+dir*.13)):Math.abs(p.vx)<.08?0:p.vx-Math.sign(p.vx)*.08;
-    if(k.jump&&!this.wasJump&&p.grounded){this.sound('jump');p.vy=Math.abs(p.vx)>1.6?-5.7:-5.2;p.grounded=false;}
+    if(k.jump&&!this.wasJump&&p.grounded&&!p.crouching){this.sound('jump');p.vy=Math.abs(p.vx)>1.6?-5.7:-5.2;p.grounded=false;}
     this.wasJump=!!k.jump;if(!k.jump&&p.vy<-2.5)p.vy=-2.5;
     p.vy=Math.min(6,p.vy+(k.jump&&p.vy<0?.18:.38));const beforeY=p.y;this.move(p,true);
-    p.x=Math.max(this.camera,p.x);if(p.y>250)this.die();
+    p.x=Math.max(this.camera,p.x);p.stride=(p.stride??0)+(p.grounded?Math.abs(p.vx):0);if(p.y>250)this.die();
     if(k.down)this.enterRoom();
     if(this.power===2&&k.run&&!this.wasFire&&this.shots.length<2)this.shots.push({x:p.x+12,y:p.y+10,w:4,h:4,vx:k.left?-3.5:3.5,vy:1});this.wasFire=!!k.run;
     if(this.room==='underground'){
@@ -92,6 +106,30 @@ export class World11 {
     return{player:{x:p.x,y:p.y+p.h-16,vx:p.vx,vy:p.vy,grounded:p.grounded},tiles,enemies:this.enemies.filter(e=>!e.dead&&Math.abs(e.x-p.x)<256).slice(0,5).map(e=>({dx:e.x-p.x,y:e.y,type:e.kind==='goomba'?6:0})),world:1,stage:1,previous_response_ms:Math.min(10000,previous)};}
 }
 const playerPixels=['....RRRRR...','...RRRRRRRR.','...HHHSSBS..','..HSHSSSBSSS','..HSHHSSSBSS','..HHSSSSBBB.','....SSSSSS..','...RBRRRB...','..RRBRRRBRR.','.RRRBBBBBRRR','.SSRBYBYBRSS','.SSBBBBBBBSS','...BBB.BBB..','..BBB...BBB.','.HHH.....HHH','HHHH.....HHHH'];
+const poses={
+  idle:playerPixels,
+  walk0:[...playerPixels.slice(0,7),'...RBRRRB...','..RRBRRRBRR.','.SSRBBBBBRRR','.SSBBYBYBRSS','...BBBBBB.SS','..BBBB.BB...','.BBB...BBB..','HHHH....HH..','........HHHH'],
+  walk1:[...playerPixels.slice(0,7),'...RBRRRB...','...RBRRRBR..','..RRBBBBBRR.','..SRBYBYBRS.','..SSBBBBBSS.','....BBBB...','....BBBB...','...HHHH....','...HHHHH...'],
+  walk2:[...playerPixels.slice(0,7),'...RBRRRB...','..RRBRRRBRR.','.RRRBBBBBSS.','.SSRBYBYBSS.','.SS.BBBBB...','....BB.BBBB.','...BBB...BBB','..HH....HHHH','HHHH........'],
+  jump:[...playerPixels.slice(0,7),'SS.RBRRRB.SS','SSRRBRRRBRSS','.RRRBBBBBRR.','...BBYBYB...','...BBBBBB...','..BBB..BBBB.','.BBB.....BB.','HHHH.....HHH','............'],
+  fall:[...playerPixels.slice(0,7),'...RBRRRB...','SSRRBRRRBRSS','SSRRBBBBBRSS','...BBYBYB...','...BBBBBB...','....BB.BB...','....BB.BB...','...HHH.HHH..','..HHHH.HHHH.'],
+  crouch:[...playerPixels.slice(0,7),'..RRBRRRBRR.','.SSRBYBYBRSS','.SSBBBBBBBSS','..BBBBBBBBB.','.HHHH...HHHH'],
+};
+export function playerPose(g){
+  if(g.p.crouching)return 'crouch';
+  if(!g.p.grounded)return g.p.vy<0?'jump':'fall';
+  if(Math.abs(g.p.vx)<.1)return 'idle';
+  return `walk${Math.floor((g.p.stride??0)/5)%3}`;
+}
+function drawPlayer(ctx,g,palette){
+  const rows=poses[playerPose(g)],width=Math.max(...rows.map(r=>r.length));
+  // Integer row boundaries keep enlarged poses crisp and anchor both feet.
+  for(let j=0;j<rows.length;j++)for(let i=0;i<rows[j].length;i++)if(palette[rows[j][i]]){
+    const top=Math.floor(j*g.p.h/rows.length),bottom=Math.floor((j+1)*g.p.h/rows.length);
+    ctx.fillStyle=palette[rows[j][i]];
+    ctx.fillRect(Math.round(g.p.x-g.camera+((g.p.facing??1)<0?width-1-i:i)),Math.round(g.p.y)+top,1,bottom-top);
+  }
+}
 function sprite(ctx,rows,x,y,palette,sx=1,sy=1){for(let j=0;j<rows.length;j++)for(let i=0;i<rows[j].length;i++)if(palette[rows[j][i]]){ctx.fillStyle=palette[rows[j][i]];ctx.fillRect(Math.round(x+i*sx),Math.round(y+j*sy),sx,sy);}}
 export function drawWorld(ctx,g){const cam=g.camera,underground=g.room==='underground';ctx.imageSmoothingEnabled=false;ctx.fillStyle=underground?'#101020':'#5c94fc';ctx.fillRect(0,0,256,240);
   if(!underground){
@@ -111,7 +149,7 @@ export function drawWorld(ctx,g){const cam=g.camera,underground=g.room==='underg
   for(const e of g.enemies){if(e.dead||e.x<cam-16||e.x>cam+256)continue;const x=Math.round(e.x-cam),y=Math.round(e.y);ctx.fillStyle=e.kind==='goomba'?'#a84800':'#00a800';ctx.fillRect(x+2,y+2,10,10);ctx.fillRect(x,y+6,14,6);ctx.fillStyle='#ffe0b0';ctx.fillRect(x+3,y+10,8,4);ctx.fillStyle='#101020';ctx.fillRect(x+3,y+5,2,3);ctx.fillRect(x+9,y+5,2,3);ctx.fillRect(x+(g.frames%16<8?0:2),y+14,5,2);ctx.fillRect(x+9,y+14,5,2);}
   for(const i of g.items)if(!i.taken){ctx.fillStyle=i.kind==='star'?'#ffd040':i.kind==='life'?'#00a800':'#f83800';ctx.fillRect(i.x-cam,i.y+2,14,8);ctx.fillStyle='#ffe0b0';ctx.fillRect(i.x-cam+4,i.y+10,6,6);ctx.fillRect(i.x-cam+2,i.y+3,3,3);ctx.fillRect(i.x-cam+9,i.y+3,3,3);}
   for(const f of [...g.effects,...g.shots]){ctx.fillStyle=f.kind==='debris'?'#b85020':'#ffd040';ctx.fillRect(f.x-cam,f.y,5,7);}
-  if(!g.invincible||g.frames%6<3){const palette={R:g.power===2?'#fff':'#f83800',H:'#803000',S:'#ffbc80',B:g.star&&g.frames%12<6?'#00d8f8':'#b85000',Y:'#ffc000'};sprite(ctx,playerPixels,g.p.x-cam,g.p.y,palette,1,g.p.h/16);}
+  if(!g.invincible||g.frames%6<3){const palette={R:g.power===2?'#fff':'#f83800',H:'#803000',S:'#ffbc80',B:g.star&&g.frames%12<6?'#00d8f8':'#b85000',Y:'#ffc000'};drawPlayer(ctx,g,palette);}
   ctx.fillStyle='#fff';ctx.font='8px monospace';ctx.fillText('MARIO',16,15);ctx.fillText(String(g.score).padStart(6,'0'),16,25);ctx.fillText(`COIN ${String(g.coins).padStart(2,'0')}`,82,25);ctx.fillText('WORLD',144,15);ctx.fillText('1-1',150,25);ctx.fillText('TIME',208,15);ctx.fillText(String(g.time),216,25);
   if(g.phase!=='playing'){ctx.fillStyle='#101020dd';ctx.fillRect(20,86,216,52);ctx.fillStyle='#fff';ctx.font='bold 14px monospace';ctx.fillText(g.phase==='won'?'WORLD 1-1 CLEAR!':'TRY AGAIN',g.phase==='won'?38:88,108);ctx.font='8px monospace';ctx.fillText('RESTART TO PLAY AGAIN',47,126);}
 }

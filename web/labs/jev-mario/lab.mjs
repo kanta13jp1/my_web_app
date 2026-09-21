@@ -1,5 +1,5 @@
 import { GameAudio } from './audio.mjs';
-import { World11, drawWorld } from './world11.mjs';
+import { World11, drawWorld, playerPose } from './world11.mjs';
 import { BUTTONS, DecisionLoop, fixture, readState, summarize, validateRom } from './core.mjs';
 const $ = id => document.getElementById(id);
 let connected = false, pendingBridge = null, seq = 0, samples = [], nes = null, romBytes = null;
@@ -22,6 +22,8 @@ $('sound').onchange = () => { if ($('sound').checked) void unlockAudio(); else {
 $('volume').oninput = () => { audio.setVolume(Number($('volume').value)/100); $('volume-value').textContent=$('volume').value+'%'; };
 
 drawWorld(context, world);
+function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
+showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
   world.buttons(action);
@@ -73,7 +75,7 @@ const loop = new DecisionLoop({ request, state, apply: controls,
 parent.postMessage({ type: 'jev-mario-hello' }, origin);
 setTimeout(() => { if (!connected) status('my_web_appの「Jev Mario Lab」から開いてください。このページ単独ではAPIを呼び出せません。'); }, 3000);
 $('mode').addEventListener('change', () => { stop('モードを変更しました'); $('rom-controls').hidden = !isRom(); $('recreation-controls').hidden = !isRecreation(); $('touch-controls').hidden = !isRecreation();
-  if (isRecreation()) drawWorld(context,world); else context.clearRect(0,0,256,240);
+  if (isRecreation()) {drawWorld(context,world);showPose();} else context.clearRect(0,0,256,240);
   $('mode-note').textContent = isRecreation() ? '初代1-1を参考に一から実装した再現ゲームです。原作ROMの実行や完全一致ではありません。手動プレイはAPI不要です。' : isRom() ? '手元のROMで手動プレイを開始し、1-1の操作可能な場面から測定します。' : '合成したゲーム状態を繰り返し送ります。実ゲームのプレイ結果ではありません。';
   samples = []; update(); $('state').textContent = ''; });
 $('rom').addEventListener('change', async e => {
@@ -96,7 +98,7 @@ $('rom').addEventListener('change', async e => {
 $('manual').onclick = () => { stop(); if (!nes) return status('先にROMを選んでください'); gameRunning = true; status('手動操作中。EnterでSTART、Xでジャンプ、Zでダッシュ。'); };
 $('reset').onclick = () => { stop(); if (nes && romBytes) { nes.loadROM(romBytes); frameCount = 0; status('リセットしました'); } };
 $('play-local').onclick = () => { stop(); if(world.phase !== 'playing') world.reset(); gameRunning=true; void unlockAudio(); canvas.focus(); status('手動プレイ中（API呼び出しなし）'); };
-$('restart-local').onclick = () => { stop(); world.reset(); drawWorld(context,world); $('progress').textContent='1-1をリセットしました'; };
+$('restart-local').onclick = () => { stop(); world.reset(); {drawWorld(context,world);showPose();} $('progress').textContent='1-1をリセットしました'; };
 $('start').onclick = () => {
   $('last-error').textContent = '';
   if (!$('consent').checked) return status('ゲーム状態の送信に同意してください');
@@ -144,7 +146,7 @@ function frame(now) {
         if (isRom() && loop.active && ([6, 11].includes(nes.cpu.mem[0xe]) || nes.cpu.mem[0xb5] >= 2 || nes.cpu.mem[0x770] === 2 || nes.cpu.mem[0x1d] === 3)) stop('死亡またはコース終了で停止しました');
       }
       if(gameRunning && isRecreation()) audio.tick(world.room);
-      const s = isRecreation() ? world.telemetry() : readState(nes.cpu.mem); if(isRecreation()) drawWorld(context,world); $('progress').textContent = `World ${s.world}-${s.stage} · x=${Math.round(s.player.x)} · ${frameCount} frames${isRecreation() ? ' · 再現ゲーム · '+world.phase : ''}`;
+      const s = isRecreation() ? world.telemetry() : readState(nes.cpu.mem); if(isRecreation()) {drawWorld(context,world);showPose();} $('progress').textContent = `World ${s.world}-${s.stage} · x=${Math.round(s.player.x)} · ${frameCount} frames${isRecreation() ? ' · 再現ゲーム · '+world.phase : ''}`;
     } catch { stop('エミュレーターを継続できません。対応ROMを確認してください。'); }
   } else frameBudget = 0;
   requestAnimationFrame(frame);
