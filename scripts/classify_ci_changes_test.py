@@ -2,12 +2,50 @@
 from __future__ import annotations
 
 import unittest
+from fnmatch import fnmatchcase
 from pathlib import Path
 
+from check_cicd_path_filters import _extract_paths_ignore
 from classify_ci_changes import SKILL_CONTRACT_TESTS, classify
 
 
 class ClassifyCiChangesTest(unittest.TestCase):
+    def test_playwright_evidence_repair_does_not_deploy_application(self) -> None:
+        evidence_paths = [
+            "playwright.config.ts",
+            "scripts/summarize_playwright_results.mjs",
+            "scripts/summarize_playwright_results_test.mjs",
+            "scripts/playwright_report_persistence_test.mjs",
+        ]
+        changed_paths = [
+            *evidence_paths,
+            ".github/workflows/minimal-e2e-gate.yml",
+            ".github/workflows/e2e-smoke.yml",
+            ".github/workflows/deploy-prod.yml",
+            "scripts/classify_ci_changes_test.py",
+            "memory/vault/2026-09-21-palm-reading-integration-audit.md",
+        ]
+        result = classify(changed_paths)
+        self.assertFalse(result["deployable"])
+        root = Path(__file__).resolve().parents[1]
+        workflow = (root / ".github/workflows/deploy-prod.yml").read_text(
+            encoding="utf-8"
+        )
+        ignores = _extract_paths_ignore(workflow)
+        for path in changed_paths:
+            with self.subTest(path=path):
+                self.assertTrue(any(fnmatchcase(path, pattern) for pattern in ignores))
+        for path in evidence_paths:
+            self.assertIn(path, ignores, "CI evidence exceptions must be explicit")
+        for path in [
+            "scripts/render_web_supabase_config.py", "web/index.html",
+            "supabase/functions/ai-hub/index.ts",
+            "supabase/migrations/20260921041500_create_palm_reading_history.sql",
+        ]:
+            with self.subTest(runtime_path=path):
+                self.assertFalse(any(fnmatchcase(path, pattern) for pattern in ignores))
+        self.assertTrue(classify([*changed_paths, "web/index.html"])["deployable"])
+
     def test_migration_does_not_start_flutter_deno_or_web(self) -> None:
         result = classify(["supabase/migrations/20260814000000_seed.sql"])
 
