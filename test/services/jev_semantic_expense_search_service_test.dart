@@ -99,11 +99,16 @@ void main() {
         if (input.contains('魚金')) {
           return http.Response(
             jsonEncode(<String, dynamic>{
-              'best_choice_id': 'match',
-              'confidence': 0.95,
-              'scores': <String, dynamic>{
-                'match': 0.95,
-                'not_match': 0.05,
+              'answers': {
+                'classification': {
+                  'type': 'choice',
+                  'choice': 'match',
+                  'confidence': 0.95,
+                  'probabilities': <String, dynamic>{
+                    'match': 0.95,
+                    'not_match': 0.05,
+                  },
+                },
               },
             }),
             200,
@@ -111,11 +116,16 @@ void main() {
         } else {
           return http.Response(
             jsonEncode(<String, dynamic>{
-              'best_choice_id': 'not_match',
-              'confidence': 0.88,
-              'scores': <String, dynamic>{
-                'match': 0.12,
-                'not_match': 0.88,
+              'answers': {
+                'classification': {
+                  'type': 'choice',
+                  'choice': 'not_match',
+                  'confidence': 0.88,
+                  'probabilities': <String, dynamic>{
+                    'match': 0.12,
+                    'not_match': 0.88,
+                  },
+                },
               },
             }),
             200,
@@ -158,11 +168,16 @@ void main() {
           // カード関連 -> match
           return http.Response(
             jsonEncode(<String, dynamic>{
-              'best_choice_id': 'match',
-              'confidence': 0.92,
-              'scores': <String, dynamic>{
-                'match': 0.92,
-                'not_match': 0.08,
+              'answers': {
+                'classification': {
+                  'type': 'choice',
+                  'choice': 'match',
+                  'confidence': 0.92,
+                  'probabilities': <String, dynamic>{
+                    'match': 0.92,
+                    'not_match': 0.08,
+                  },
+                },
               },
             }),
             200,
@@ -171,11 +186,16 @@ void main() {
           // 手続き完了命題 -> match (除外対象)
           return http.Response(
             jsonEncode(<String, dynamic>{
-              'best_choice_id': 'match',
-              'confidence': 0.90,
-              'scores': <String, dynamic>{
-                'match': 0.90,
-                'not_match': 0.10,
+              'answers': {
+                'classification': {
+                  'type': 'choice',
+                  'choice': 'match',
+                  'confidence': 0.90,
+                  'probabilities': <String, dynamic>{
+                    'match': 0.90,
+                    'not_match': 0.10,
+                  },
+                },
               },
             }),
             200,
@@ -183,11 +203,16 @@ void main() {
         } else {
           return http.Response(
             jsonEncode(<String, dynamic>{
-              'best_choice_id': 'not_match',
-              'confidence': 0.85,
-              'scores': <String, dynamic>{
-                'match': 0.15,
-                'not_match': 0.85,
+              'answers': {
+                'classification': {
+                  'type': 'choice',
+                  'choice': 'not_match',
+                  'confidence': 0.85,
+                  'probabilities': <String, dynamic>{
+                    'match': 0.15,
+                    'not_match': 0.85,
+                  },
+                },
               },
             }),
             200,

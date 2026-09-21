@@ -6027,64 +6027,64 @@ abstinence_slip_details: $slipDetailsText
         const GaReadinessGatePanel(),
       ],
       const SizedBox(height: 16),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_recent'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_recent'),
         storageKey: 'home_tier_recent',
         title: '最近使った機能',
         icon: Icons.history,
-        iconColor: Color(0xFFFF6B35),
-        initiallyExpanded: true,
-        child: RecentFeaturesList(),
+        iconColor: const Color(0xFFFF6B35),
+        initiallyExpanded: !isCompact,
+        child: const RecentFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_popular'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_popular'),
         storageKey: 'home_tier_popular',
         title: 'よく使われる機能（ユーザー全体）',
         icon: Icons.trending_up,
-        iconColor: Color(0xFF0D9488),
-        initiallyExpanded: true,
-        child: PopularFeaturesList(),
+        iconColor: const Color(0xFF0D9488),
+        initiallyExpanded: !isCompact,
+        child: const PopularFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_system'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_system'),
         storageKey: 'home_tier_system',
         title: 'システム固定機能',
         icon: Icons.lock_outline,
-        iconColor: Color(0xFF6366F1),
-        initiallyExpanded: true,
-        child: SystemFixedFeaturesList(),
+        iconColor: const Color(0xFF6366F1),
+        initiallyExpanded: !isCompact,
+        child: const SystemFixedFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_pinned'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_pinned'),
         storageKey: 'home_tier_pinned',
         title: 'お気に入り（ピン止め）',
         icon: Icons.push_pin_outlined,
-        iconColor: Color(0xFF6366F1),
-        initiallyExpanded: true,
-        child: UserPinnedFeaturesList(),
+        iconColor: const Color(0xFF6366F1),
+        initiallyExpanded: !isCompact,
+        child: const UserPinnedFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_new'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_new'),
         storageKey: 'home_tier_new',
         title: '最近追加された機能',
         icon: Icons.new_releases_outlined,
-        iconColor: Color(0xFFFF6B35),
-        initiallyExpanded: true,
-        child: NewFeaturesList(),
+        iconColor: const Color(0xFFFF6B35),
+        initiallyExpanded: !isCompact,
+        child: const NewFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_recommend'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_recommend'),
         storageKey: 'home_tier_recommend',
         title: 'AIおすすめ機能',
         icon: Icons.auto_awesome,
-        iconColor: Color(0xFF6366F1),
-        initiallyExpanded: true,
-        child: AiRecommendedFeaturesList(),
+        iconColor: const Color(0xFF6366F1),
+        initiallyExpanded: !isCompact,
+        child: const AiRecommendedFeaturesList(),
       ),
     ];
   }
@@ -6994,6 +6994,75 @@ abstinence_slip_details: $slipDetailsText
     final outlineColor =
         isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFDDE8E4);
     const quickQuestions = <String>['まず何から使えばいい？', '資産管理はどこ？', 'AI大学の始め方は？'];
+
+    if (isCompact) {
+      return Card(
+        key: const Key('home_mobile_site_guide_compact'),
+        elevation: 0,
+        color: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: outlineColor),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4F46E5).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.support_agent_outlined,
+                  color: Color(0xFF4F46E5),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '使い方をAIに聞く',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: titleColor,
+                        height: 1.35,
+                      ),
+                    ),
+                    Text(
+                      '迷った場所から案内します',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: bodyColor,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () => _runTrackedAction(
+                  'site-guide-ai',
+                  () => _openSiteGuideAi(),
+                ),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(64, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                ),
+                child: const Text('聞く'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Card(
       elevation: 0,
