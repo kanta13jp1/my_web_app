@@ -13,6 +13,11 @@ export class GameAudio{
   if(!this.context){this.context=this.factory();this.master=this.context.createGain();this.master.connect(this.context.destination);}
   this.master.gain.value=this.volume;await this.context.resume();return this.context.state==='running';
  }catch{this.enabled=false;this.stop();return false;}}
+ captureOutput(){
+  if(!this.enabled||!this.context||!this.master)return null;
+  const destination=this.context.createMediaStreamDestination();this.master.connect(destination);
+  return {stream:destination.stream,release:()=>{this.master.disconnect(destination);destination.stream.getTracks().forEach(t=>t.stop());}};
+ }
  setVolume(v){this.volume=Math.max(0,Math.min(1,Number(v)||0));if(this.master)this.master.gain.value=this.volume;}
  tone(note,time,duration,type='square',gain=.09,music=false,slide=0){
   if(!note||!this.enabled||this.context?.state!=='running'||this.nodes.size>=48)return;

@@ -1,3 +1,4 @@
+import { GameRecording } from './recording.mjs';
 import { GameAudio } from './audio.mjs';
 import { World11, drawWorld, playerPose } from './world11.mjs';
 import { BUTTONS, DecisionLoop, fixture, readState, summarize, validateRom } from './core.mjs';
@@ -21,6 +22,42 @@ async function unlockAudio() {
 }
 $('sound').onchange = () => { if ($('sound').checked) void unlockAudio(); else { audio.enable(false); $('audio-status').textContent='ミュート'; } };
 $('volume').oninput = () => { audio.setVolume(Number($('volume').value)/100); $('volume-value').textContent=$('volume').value+'%'; };
+
+let recordUrl = null, recordStarting = false, recordEpoch = 0;
+const recording = new GameRecording({ canvas,
+  changed: () => { $('record-start').disabled = !recording.supported || recording.active || recordStarting || !isGame(); $('record-stop').disabled = !recording.active || recording.finishing; if(recording.finishing)$('record-status').textContent='動画を作成しています…'; },
+  failed: message => { $('record-status').textContent=message; },
+  ready: (blob,extension,reason) => {
+    const old=recordUrl;recordUrl=URL.createObjectURL(blob);
+    $('record-preview').src=recordUrl;$('record-preview').load();
+    $('record-download').href=recordUrl;$('record-download').download='jev-mario-'+new Date().toISOString().replace(/[:.]/g,'-')+'.'+extension;
+    $('record-result').hidden=false;
+    $('record-status').textContent=reason+'。再生確認してダウンロードできます。';
+    if(old)URL.revokeObjectURL(old);
+  }
+});
+recording.changed();
+if(!recording.supported)$('record-status').textContent='このブラウザは録画に対応していません。Chrome / Edgeなどの対応ブラウザでお試しください。';
+function stopRecording(reason){recordEpoch++;recording.stop(reason);}
+$('record-start').onclick=async()=>{
+  if(recordStarting||recording.active||!isGame())return;
+  recordStarting=true;const epoch=++recordEpoch;recording.changed();
+  try{
+    if(isRecreation())await unlockAudio();
+    if(epoch!==recordEpoch)return;
+    const output=isRecreation()?audio.captureOutput():null;
+    if(recording.start(output)){
+      $('record-status').textContent='● 録画中（最大60秒）'+(output?'・ゲーム音あり':'・音声なし');
+      canvas.focus();
+    }
+  }catch{ $('record-status').textContent='録画を開始できませんでした。再試行してください。'; }
+  finally{recordStarting=false;recording.changed();}
+};
+$('record-stop').onclick=()=>stopRecording();
+for(const id of ['mode','restart-local','reset','rom'])$(id).addEventListener(id==='mode'||id==='rom'?'change':'click',()=>{stopRecording('ゲームを変更したため録画を停止しました');recording.changed();});
+window.addEventListener('blur',()=>stopRecording('画面から離れたため録画を停止しました'));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopRecording('バックグラウンドになったため録画を停止しました');});
+window.addEventListener('pagehide',()=>{stopRecording();if(recordUrl)URL.revokeObjectURL(recordUrl);});
 
 drawWorld(context, world);
 function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':pose==='climb'?'旗を降りる':pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
@@ -115,7 +152,7 @@ $('start').onclick = () => {
   if (isRecreation()) void unlockAudio();
   loop.start({ count: metadata.max_calls, cadence: metadata.cadence_ms, maxAge: metadata.max_age_ms });
 };
-$('stop').onclick = () => stop();
+$('stop').onclick = () => {stop();stopRecording();};
 $('max-age').onchange = () => stop('応答の有効期限を変更しました。測定を再開してください。');
 $('consent').onchange = () => { if (!$('consent').checked) stop('送信同意を解除しました'); };
 $('export').onclick = () => {
@@ -151,6 +188,7 @@ function frame(now) {
       const s = isRecreation() ? world.telemetry() : readState(nes.cpu.mem); if(isRecreation()) {drawWorld(context,world);showPose();} $('progress').textContent = `World ${s.world}-${s.stage} · x=${Math.round(s.player.x)} · ${frameCount} frames${isRecreation() ? ' · 再現ゲーム · '+world.phase : ''}`;
     } catch { stop('エミュレーターを継続できません。対応ROMを確認してください。'); }
   } else {frameBudget=0;if(!document.hidden&&isRecreation()&&world.phase!=='playing'&&world.presentation<180){presentationBudget+=delta;while(presentationBudget>=1000/60){world.presentationStep();presentationBudget-=1000/60;}drawWorld(context,world);showPose();}}
+  if(isRecreation()&&world.phase!=='playing'&&world.presentation>=180)recording.stop('ゲーム終了で録画を停止しました');
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
