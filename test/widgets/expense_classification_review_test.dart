@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:my_web_app/services/jev_client.dart';
+import 'package:my_web_app/services/jev_expense_proxy_client.dart';
 import 'package:my_web_app/services/jev_instant_classifier_service.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
 
@@ -36,6 +37,34 @@ Widget host(String memo, {JevClient? client}) => MaterialApp(
     );
 
 void main() {
+  testWidgets(
+      'Cloud candidates require explicit action and recover after quota failure',
+      (tester) async {
+    var calls = 0;
+    final client = JevExpenseProxyClient(
+        signedIn: () => true,
+        invoke: (body) async {
+          calls++;
+          expect(body['memo'], 'スタバ');
+          if (calls == 1) throw Exception('quota_exceeded');
+          return jsonDecode(answer('food').body);
+        });
+    addTearDown(client.dispose);
+    await tester.pumpWidget(host('スタバ', client: client));
+    expect(calls, 0);
+    expect(find.textContaining('TypeSafe AIへ送信'), findsOneWidget);
+    await tester.tap(find.text('AIにも候補を聞く'));
+    await tester.pumpAndSettle();
+    expect(find.text('端末内ルール'), findsOneWidget);
+    expect(find.textContaining('取得できなかった'), findsOneWidget);
+    await tester.tap(find.text('AIにも候補を聞く'));
+    await tester.pumpAndSettle();
+    expect(find.text('AI候補'), findsOneWidget);
+    expect(find.text('候補：食費・食材'), findsOneWidget);
+    expect(find.text('要確認'), findsOneWidget);
+    expect(find.textContaining('自動で変更しません'), findsOneWidget);
+  });
+
   testWidgets('Rule candidates are read-only and never claim accuracy', (
     tester,
   ) async {

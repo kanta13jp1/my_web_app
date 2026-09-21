@@ -61,3 +61,36 @@ jobs:
         run: bash scripts/ci/install_deno_from_github.sh
       - name: Typecheck and test provider contract
         run: deno test --config supabase/functions/deno.json supabase/functions/ai-hub/jev_expense_test.ts
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Verify explicit cloud suggestions in Chrome
+        run: |
+          mkdir -p .ci-logs
+          chromedriver --port=4444 > .ci-logs/jev-chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
+            sleep 1
+          done
+          set -o pipefail
+          flutter drive --driver=test_driver/asset_ai_integration.dart \
+            --target=integration_test/jev_expense_review_test.dart \
+            -d web-server --browser-name=chrome --headless 2>&1 | tee .ci-logs/jev-browser.log
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: jev-browser-${{ github.run_id }}
+          path: .ci-logs/jev-*.log
+          retention-days: 3
+          include-hidden-files: true
