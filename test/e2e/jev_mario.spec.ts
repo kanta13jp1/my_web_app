@@ -77,3 +77,20 @@ test('late response after stop cannot resume controls; missing/invalid ROM expla
   const overflow = await lab.locator('body').evaluate(el => el.scrollWidth > innerWidth);
   expect(overflow).toBe(false);
 });
+
+
+test('game scripts and styles load with their actual MIME types', async ({ page }) => {
+  const failures: string[] = [];
+  page.on('pageerror', error => failures.push(error.message));
+  const scripts = page.waitForResponse(response => response.url().endsWith('/labs/jev-mario/lab.mjs'));
+  const styles = page.waitForResponse(response => response.url().endsWith('/labs/jev-mario/style.css'));
+  await page.goto('/test/e2e/jev_mario_harness.html');
+  const script = await scripts;
+  const style = await styles;
+  expect(script.status()).toBe(200);
+  expect(script.headers()['content-type']).toMatch(/javascript/);
+  expect(style.status()).toBe(200);
+  expect(style.headers()['content-type']).toContain('text/css');
+  await expect(page.frameLocator('iframe').getByRole('button', { name: '手動で遊ぶ（API不要）' })).toBeVisible();
+  expect(failures).toEqual([]);
+});
