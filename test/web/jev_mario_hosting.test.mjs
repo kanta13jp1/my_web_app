@@ -19,7 +19,8 @@ test('direct app navigation cannot be shadowed by a static directory index', () 
 test('isolated game HTML resolves every local script and stylesheet to a real asset', () => {
   const doc = new URL('web/labs/jev-mario/index.html', root);
   const html = readFileSync(doc, 'utf8');
-  const refs = [...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(m => m[1]);
+  const refs = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
+    .map(m => m[1]).filter(ref => !/^https?:/.test(ref));
   assert.ok(refs.includes('lab.mjs'));
   assert.ok(refs.includes('style.css'));
   for (const ref of refs) {
