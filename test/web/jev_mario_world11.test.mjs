@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {mkdirSync,writeFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {World11,level,playerPose,drawWorld} from '../../web/labs/jev-mario/world11.mjs';
 
@@ -48,6 +49,7 @@ test('look-ahead controller traverses overworld',()=>{
   assert.ok(beam.length,`no path at x=${g.p.x},y=${g.p.y}`);
   g.input={right:true,run:true,jump:beam[0].first};for(let k=0;k<8;k++)g.step();
  }
+ mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-course-planner.json',JSON.stringify({controller:'deterministic_lookahead_not_Jev',phase:g.phase,x:g.p.x,frames:g.frames,score:g.score,coins:g.coins},null,2));
  assert.equal(g.phase,'won',`phase=${g.phase},x=${g.p.x},y=${g.p.y}`);
 });
 
@@ -76,4 +78,15 @@ test('controlled identical jump demonstrates delay effect independently of Jev',
  }
  console.log('CONTROLLED_LATENCY_EXPERIMENT '+JSON.stringify(results));
  assert.equal(results[0].phase,'playing');assert.equal(results[3].phase,'dead');
+});
+
+test('flag descent starts at contact height and tally awards remaining time once',()=>{
+ const g=new World11();g.enemies=[];Object.assign(g.p,{x:198*16,y:120,vy:0});g.step();const y=g.p.y,score=g.score,time=g.time;
+ assert.equal(g.phase,'won');assert.deepEqual(g.drainSounds(),['flag']);g.presentationStep();assert.ok(g.p.y>=y&&g.p.y<=y+3);
+ const sounds=[];for(let i=0;i<200;i++){g.presentationStep();sounds.push(...g.drainSounds());}
+ assert.equal(g.time,0);assert.equal(g.score,score+time*50);assert.equal(sounds.filter(s=>s==='clear').length,1);assert.ok(sounds.includes('tally'));
+ const end=g.score;for(let i=0;i<200;i++)g.presentationStep();assert.equal(g.score,end);
+});
+test('fireball follows remembered facing after directional input is released',()=>{
+ const g=new World11();g.enemies=[];g.power=2;g.p.facing=-1;g.input={run:true};g.step();assert.equal(g.shots.length,1);assert.ok(g.shots[0].vx<0);assert.ok(g.shots[0].x<g.p.x);
 });
