@@ -136,7 +136,7 @@ test('audio opt-in, waveform and stop lifecycle', async ({page},info)=>{
   await expect(lab.locator('#sound')).not.toBeChecked();
   await lab.locator('#sound').check();await expect(lab.locator('#audio-status')).toContainText('音声ON');
   await lab.locator('#play-local').click();
-  await lab.locator('#volume').fill('40');await expect(lab.locator('#volume-value')).toHaveText('40%');
+  await lab.locator('#volume').focus();await lab.locator('#volume').press('End');await expect(lab.locator('#volume-value')).toHaveText('100%');
   await expect.poll(()=>lab.locator('body').evaluate(()=>Number((window as any).__lastAudioStart)||0)).toBeGreaterThan(0);
   await lab.locator('#stop').click();
   expect(await lab.locator('body').evaluate(()=>(window as any).__audioStopped)).toBe(true);
