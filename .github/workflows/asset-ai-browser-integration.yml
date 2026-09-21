@@ -7,9 +7,14 @@ on:
       - lib/services/asset_management_ai_*.dart
       - lib/services/asset_management_insight_service.dart
       - test/widgets/asset_management_ai_current_input_test.dart
+      - test/widgets/asset_triage_withdrawal_test.dart
+      - integration_test/asset_triage_withdrawal_test.dart
+      - integration_test/asset_triage_withdrawal_scenarios.dart
+      - lib/services/asset_triage_guide_service.dart
       - integration_test/asset_management_ai_current_input_test.dart
       - integration_test/asset_ai_current_input_scenarios.dart
       - test_driver/asset_ai_integration.dart
+      - test_driver/asset_triage_visual.dart
       - .github/workflows/asset-ai-browser-integration.yml
 
 permissions: {}
@@ -33,6 +38,12 @@ jobs:
           flutter-version: '3.38.x'
       - name: Resolve test dependencies
         run: flutter pub get
+      - name: Run triage withdrawal VM regression
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p .ci-logs
+          flutter test test/widgets/asset_triage_withdrawal_test.dart --reporter expanded 2>&1 | tee .ci-logs/asset-ai-triage-vm.log
       - name: Verify runner browser tools
         run: |
           google-chrome --version
@@ -57,12 +68,44 @@ jobs:
             --target=integration_test/asset_management_ai_current_input_test.dart \
             -d web-server --browser-name=chrome --headless \
             2>&1 | tee .ci-logs/asset-ai-browser.log
+      - name: Run triage withdrawal flows in Chrome
+        shell: bash
+        run: |
+          mkdir -p .ci-logs
+          chromedriver --port=4444 > .ci-logs/asset-ai-triage-chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status
+          set -o pipefail
+          for viewport in desktop mobile; do
+            dimensions=1440x1000@1
+            mobile=false
+            if [ "$viewport" = mobile ]; then
+              dimensions=393x851@2.75
+              mobile=true
+            fi
+            flutter drive --verbose \
+              --driver=test_driver/asset_triage_visual.dart \
+              --target=integration_test/asset_triage_withdrawal_test.dart \
+              --dart-define="TRIAGE_MOBILE=$mobile" \
+              --browser-dimension="$dimensions" \
+              -d web-server --browser-name=chrome --headless \
+              2>&1 | tee ".ci-logs/asset-ai-triage-$viewport-browser.log"
+          done
       - name: Preserve browser evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: asset-ai-browser-${{ github.run_id }}
-          path: .ci-logs/asset-ai-*.log
+          path: |
+            .ci-logs/asset-ai-*.log
+            .ci-logs/asset-triage-visual/**
           retention-days: 3
           if-no-files-found: ignore
           include-hidden-files: true
