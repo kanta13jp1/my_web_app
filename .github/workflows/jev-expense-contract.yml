@@ -13,6 +13,10 @@ concurrency:
   group: jev-expense-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  mario-lab:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/jev-mario-lab.yml
   quota:
     permissions:
       contents: read

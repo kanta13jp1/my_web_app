@@ -11,6 +11,7 @@ on:
       - 'test/**/jev_mario*'
       - '.github/workflows/jev-mario-lab.yml'
   workflow_dispatch:
+  workflow_call:
 permissions: {}
 concurrency:
   group: jev-mario-${{ github.ref }}
