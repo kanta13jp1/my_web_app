@@ -68,6 +68,14 @@ related: ["[[OBSIDIAN_INGEST_PIPELINE]]"]
 
 新しいクラウド回帰テストは実Playwright reporterをブラウザーなしで連続2回動かし、両方のJSON、HTML、添付が残ることと、失敗集計が終了コード1を返すことを検証する。実写真や外部AI呼び出しは不要。
 
+マージ前の対象SHA `90b821ef7b69030b17d43ea2010fbe7dcbcf5baa` で [回帰11件](https://github.com/kanta13jp1/my_web_app/actions/runs/35574185922) が成功し、[修正版の公開スモーク](https://github.com/kanta13jp1/my_web_app/actions/runs/35574267750) は `Total 27 / Passed 27 / Failed 0 / Evidence errors 0`。artifact `10626634215` に両JSONを保存した。これは修正ブランチでの確認であり、マージ後mainでの検証とは区別する。
+
+本番デプロイのpush除外にはCI用スクリプトとPlaywright設定が未登録だったため、対象4ファイルのみ `deploy-prod.yml` へ明示追加した。既存の分類テストで、この修正一式が非デプロイ対象になること、およびアプリ・Edge・migrationや別スクリプトを広く除外しないことを検証する。
+
+[集計修正PR #5470](https://github.com/kanta13jp1/my_web_app/pull/5470) は 07:47:41 UTCに `605ac61d0743bb983928403b902ec6f0bbbf300a` としてマージされた。除外追補の準備中に別の操作でマージされたため、除外変更は独立した後続PRにする。[自動deploy run 35574651872](https://github.com/kanta13jp1/my_web_app/actions/runs/35574651872) は起動したが `deployable=false`、web/edge/migration全てfalseで、Flutter build・Firebase・DB migration・Edge Function・version/tag/release更新は全てskipped。実際のアプリやバックエンドの再公開はない。マージ後mainの [Minimal E2E run 35574701484](https://github.com/kanta13jp1/my_web_app/actions/runs/35574701484) は自動起動済みのため、重複する手動実行は追加しない。
+
+同マージ後runはSHA `605ac61d0743bb983928403b902ec6f0bbbf300a` をcheckoutしたことをログで確認し、回帰11/11・公開スモーク15/15・PC/モバイル画面証拠12/12、集計 `Total 27 / Passed 27 / Failed 0 / Flaky 0 / Evidence errors 0` で成功した。両JSONを読み取った集計とartifact `10627089605` (`minimal-e2e-playwright-report`) を保存済み。除外追補は [PR #5471](https://github.com/kanta13jp1/my_web_app/pull/5471) で検証する。
+
 ### 実際に確認できた範囲
 
 | 対象 | 証拠・環境 | 限界 |
