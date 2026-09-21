@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/jev_client.dart';
+import '../services/jev_expense_proxy_client.dart';
 import '../services/jev_instant_classifier_service.dart';
 
 /// Read-only suggestions: deliberately has no persistence or selection callback.
@@ -37,7 +38,7 @@ class _ExpenseClassificationReviewState
   }
 
   void _configureClient() {
-    _client = widget.client ?? JevClient();
+    _client = widget.client ?? JevExpenseProxyClient.forCurrentSession();
     _classifier = JevInstantClassifierService(client: _client);
   }
 
@@ -166,6 +167,9 @@ class _ExpenseClassificationReviewState
           const SizedBox(height: 8),
           const Text('候補は参考表示です。記録・金額・カテゴリを自動で変更しません。'),
           if (_classifier.isAvailable && !empty) ...[
+            if (_client is JevExpenseProxyClient)
+              const Text('アプリのサーバーを経由してTypeSafe AIへ送信します。'
+                  '500文字まで、1分3回・1日20回（全体200回）までです。'),
             const SizedBox(height: 8),
             Text(
               'ボタンを押した場合のみ、この内容を'
@@ -174,7 +178,7 @@ class _ExpenseClassificationReviewState
             ),
             const SizedBox(height: 4),
             OutlinedButton.icon(
-              onPressed: _busy ? null : _askAi,
+              onPressed: _busy || widget.memo.length > 500 ? null : _askAi,
               icon: const Icon(Icons.auto_awesome_outlined, size: 18),
               label: Text(_busy ? 'AIに確認中…' : 'AIにも候補を聞く'),
             ),
