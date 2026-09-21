@@ -166,6 +166,7 @@ class _DanshariPageState extends State<DanshariPage> {
       ),
     );
   }
+
   Widget _buildCompletionView() {
     return Center(
       child: Column(
