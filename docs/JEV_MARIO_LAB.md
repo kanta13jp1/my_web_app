@@ -1,5 +1,13 @@
 # Jev Mario Lab
 
+## ROM-free World 1-1 reconstruction (#5468)
+
+The default mode is an independently authored browser reconstruction. Manual play needs neither a ROM nor an API call. Arrows move, Space/X jumps (hold for height), Z runs/fires after a flower, Down enters the fourth pipe. Touch buttons also support movement, jump and run. Restart restores the level. Consent and the Jev start button use the existing authenticated decision loop.
+
+Includes the opening blocks, pipes, pits, platforms, staircases, flag/castle, enemies, stomping, power-ups, hidden life and underground coins. Pixel graphics are drawn in code. No ROM, sprite sheet, original program or sound recording is included. Physics, art, timings and placements are approximate; sound and the original death/flag cutscenes are not reproduced.
+
+Exports identify `independent-world11-v1` separately from JSNES and fixed-state measurements. Browser tests use a simulated Jev bridge. Level sequence reference: https://www.mariowiki.com/World_1-1_%28Super_Mario_Bros.%29
+
 Route: `/jev-mario-lab` (home tool catalog: **Jev Mario Lab**).
 
 ## Use
