@@ -61,3 +61,12 @@ Choose a response age limit of 750, 1,500 (default), or 3,000 ms before starting
 ## BGM・効果音
 
 ROM不要の再現ゲームで「音声をONにする」を選び、手動またはJev操作を開始します。音量は0〜100%（初期25%）、チェック解除でミュートできます。オリジナルの合成BGMとジャンプ・コイン・ブロック・アイテム・踏みつけ・ダメージ・土管・ミス・クリアSEをブラウザ内で生成します。地下ではBGMの音域が変わります。原作の音源は同梱していません。停止・モード変更・画面離脱で停止し、固定状態測定とROMモードは無音です。
+
+
+## Prediction input comparison (2026-09-22)
+
+The recreation exposes an opt-in `prediction_v1` input profile. Baseline remains the default. Select the input profile before starting, reset to the same initial state, and keep controller/cadence/recording settings equal. The exported metadata records `input_profile`; each provider reply echoes the sanitized profile. Prediction includes bounded constant-velocity estimates at 60 simulation Hz, previous browser RTT (1000ms initially), current jump/run state, nearby enemy speed/gap, time to contact and projected gap. It does not compensate latency, simulate terrain, or establish improved Jev performance. Auth, allowlist, explicit consent and quota are unchanged. ROM/fixture modes keep baseline.
+
+The supplied course-1 run is Jev-only: `right`, `right`, `right_run`, three applied answers, zero stale/failures and one pending cancellation. At the third arrival (frame178), gap119.02px; collision at frame218/x308.26 while the next reply was pending. Tests replay this state separately from live API evaluation.
+
+Local assistance now preserves running intent through jump/landing release. Item emergence lasts16 simulation frames before movement/collection, reversal produces one skid sound per braking episode, and the original soundtrack has distinct25%/50% pulse voices. This is an independent reconstruction, not an original ROM or sampled soundtrack.
