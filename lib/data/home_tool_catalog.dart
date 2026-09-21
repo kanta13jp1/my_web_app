@@ -3006,6 +3006,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const EdgeLlmPlaygroundPage()),
     ),
     HomeToolEntry(
+      id: 'jev-mario-lab',
+      sectionId: 'ai',
+      title: 'Jev Mario Lab',
+      subtitle: 'マリオの操作とJevの応答速度を測定（ROMなしのAPI測定にも対応）',
+      icon: Icons.sports_esports_outlined,
+      color: const Color(0xFF168A75),
+      keywords: const <String>['Jev', 'Mario', 'マリオ', '応答速度', 'ベンチマーク'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/jev-mario-lab'),
+    ),
+    HomeToolEntry(
       id: 'agi-fireworks',
       sectionId: 'ai',
       title: 'AGI Fireworks',

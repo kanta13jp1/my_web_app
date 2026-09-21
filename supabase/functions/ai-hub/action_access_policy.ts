@@ -88,6 +88,7 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "ai_hub.department_finance_summary",
   "payslip.parse",
   "parse-payslip",
+  "mario.jev_decide",
   "expense.jev_suggest",
   "expense.classify",
   "classify-expense",
