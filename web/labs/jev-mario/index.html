@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; media-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>Jev Mario Lab</title><link rel="stylesheet" href="style.css"></head>
+<title>Jev Mario Lab</title><link rel="stylesheet" href="style.css?v=revalidate-1"></head>
 <body><main>
 <header><p class="eyebrow">REAL-TIME DECISION LAB</p><h1>Jev × Mario</h1><p>操作を選ぶ速さを、あなたの回線で測る。</p></header>
 <section aria-labelledby="setup"><h2 id="setup">1. 測定モード</h2>
@@ -25,4 +25,4 @@
 <section><h2>3. 今回の計測</h2><dl><dt>成功 / 失敗 / 古い応答</dt><dd id="counts">0 / 0 / 0</dd><dt>ブラウザ往復 — 中央値 / p95</dt><dd id="rtt">—</dd><dt>Jev HTTP往復 — 中央値 / p95</dt><dd id="upstream">—</dd><dt>状態取得→操作 — 中央値 / p95</dt><dd id="age">—</dd></dl><p id="sample-detail" aria-live="polite">操作適用 0件 / 停止時キャンセル 0件</p>
 <p>ブラウザ往復には認証・利用枠確認・中継・通信を含みます。Jev HTTP往復にもネットワークと応答の読み取りを含み、モデルだけの推論時間ではありません。初回も集計に含め、JSONで各回を確認できます。</p><p id="response-warning" role="status" aria-live="polite"></p><p id="last-error" role="alert"></p></section></div>
 <footer><a href="https://github.com/fhshaik/typesafe-mario" target="_blank" rel="noopener">着想: TypeSafe Mario</a> · <a href="https://github.com/bfirsh/jsnes/tree/v2.1.0" target="_blank" rel="noopener">JSNES 2.1.0</a> · <a href="vendor/LICENSE.txt">Apache-2.0 license</a><p>非公式の検証ツールです。クリアや特定の応答速度は保証しません。</p></footer>
-</main><script src="vendor/jsnes.min.js"></script><script type="module" src="lab.mjs"></script></body></html>
+</main><script src="vendor/jsnes.min.js?v=revalidate-1"></script><script type="module" src="lab.mjs?v=revalidate-1"></script></body></html>
