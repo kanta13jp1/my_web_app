@@ -11,7 +11,8 @@ window.addEventListener('message', e => {
   if (e.data?.type === 'jev-mario-request') {
     calls++;
     const error = new URL(location.href).searchParams.has('error') && calls === 1;
-    const delay = new URL(location.href).searchParams.has('slow') ? 1000 : 10;
+    const params = new URL(location.href).searchParams;
+    const delay = params.has('slow') ? 1000 : params.has('latency') ? 1000 : 10;
     setTimeout(() => frame.contentWindow.postMessage({type:'jev-mario-response',id:e.data.id,
       ...(error ? {error:'API利用上限に達しました。時間をおいて再試行してください。'} :
         {result:{choice:'right',confidence:.9,probabilities:{right:1},upstream_http_ms:5,model:'test-fixture'}})
