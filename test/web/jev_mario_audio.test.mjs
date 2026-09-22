@@ -64,3 +64,10 @@ test('effects duck music only and disabling audio restores its level',async()=>{
  const c=context(),a=new GameAudio(()=>c);await a.enable(true);const values=[];a.musicGain.gain.cancelScheduledValues=t=>values.push(['cancel',t]);a.musicGain.gain.setValueAtTime=(v,t)=>values.push(['set',v,t]);a.musicGain.gain.linearRampToValueAtTime=(v,t)=>values.push(['ramp',v,t]);
  a.effect('coin');assert.ok(values.some(v=>v[0]==='set'&&v[1]===.35));assert.ok(values.some(v=>v[0]==='ramp'&&v[1]===1));assert.equal(a.master.gain.value,.25);a.effect('impact');await a.enable(false);assert.equal(a.musicGain.gain.value,1);assert.equal(a.nodes.size,0);
 });
+
+test('late animation frames resume music without replaying a burst of overdue beats',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick();const beat=a.beat;
+ c.currentTime=a.next+.20;a.tick();assert.equal(a.beat,beat+1);
+ const fresh=c.oscillators.filter(o=>!o.stopped);assert.ok(fresh.every(o=>o.started<=a.next));
+ a.stop();assert.equal(a.nodes.size,0);
+});

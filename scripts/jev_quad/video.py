@@ -19,7 +19,7 @@ try:
     const names=['cloud_jev','localjev','lightgbm','laya'];
     const titles=['Cloud Jev API','LocalJev / Qwen 0.5B','Jev-distilled LightGBM','Laya / English 421M CPU'];
     const runs=await Promise.all(names.map(n=>fetch(`/out/quad/${n}-${mode}.json`).then(r=>r.json())));
-    const lanes=runs.map(run=>({run,game:new World11(),index:0,action:'noop',accepted:0,overrides:0,fallback:0,shield:0,parity:false}));
+    const lanes=runs.map(run=>({run,game:new World11(run.stage??1),index:0,action:'noop',accepted:0,overrides:0,fallback:0,shield:0,parity:false}));
     const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=1240;document.body.replaceChildren(canvas);
     const ctx=canvas.getContext('2d');
     const audio=new GameAudio();await audio.enable(true);const capture=audio.captureOutput();
@@ -34,7 +34,7 @@ try:
      ctx.fillText('Independent CPUs; no inference pause. Audio: LightGBM. Shield shown below.',20,80);
      for(let i=0;i<4;i++){
       const l=lanes[i],g=l.game,r=l.run,x=(i%2)*512,y=100+Math.floor(i/2)*560;
-      while(l.index<r.trace.length&&r.trace[l.index].frame===g.frames){const d=r.trace[l.index++];l.action=d.effective;if(d.source==='survival-shield')l.shield++;else if(d.raw===null)l.fallback++;else if(d.accepted)l.accepted++;else l.overrides++;}
+      while(l.index<r.trace.length&&r.trace[l.index].frame===g.frames){const d=r.trace[l.index++];l.action=d.effective;if(d.applyShield)l.shield++;if(d.source==='survival-shield')l.shield++;else if(d.raw===null)l.fallback++;else if(d.accepted)l.accepted++;else l.overrides++;}
       if(g.frames<r.frames&&g.phase==='playing'){
        const a=mode==='assisted'&&g.p.grounded&&g.wasJump&&l.action.includes('jump')?(l.action==='jump'?'noop':l.action.replace('_jump','')):l.action;
        g.buttons(a);g.step();
