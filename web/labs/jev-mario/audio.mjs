@@ -44,7 +44,7 @@ export class GameAudio{
  tick(room='overworld',{star=false,hurry=false}={}){
   if(!this.enabled||this.context?.state!=='running')return;
   const now=this.context.currentTime;if(now<this.musicUntil)return;
-  const track=star?'star':room==='underground'?'underground':'overworld';
+  const track=star?'star':(room==='underground'||room==='stage-underground')?'underground':'overworld';
   if(track!==this.track){this.stopMusic();this.track=track;this.beat=0;this.next=now;}
   // Do not bunch late beats together after a stalled browser frame.
   if(this.next<now)this.next=now;

@@ -23,11 +23,29 @@ export function level() {
   for(let y=5;y<13;y++) set(189,y,'stone');set(198,12,'stone');for(let y=9;y<13;y++)set(152,y,'stone');
   return {cells,contents,width:212*16};
 }
+
+// Independently laid out underground course, inspired by the early console era.
+export function undergroundLevel(){
+ const cells=new Map(),contents=new Map(),set=(x,y,t='brick',item)=>{cells.set(`${x},${y}`,t);if(item)contents.set(`${x},${y}`,item);};
+ for(let x=0;x<212;x++){
+  if(!((x>=70&&x<=71)||(x>=112&&x<=113)||(x>=150&&x<=151)))for(let y=13;y<15;y++)set(x,y,'ground');
+  if(x<185)for(let y=2;y<4;y++)set(x,y);
+ }
+ for(const [x,h]of [[27,2],[44,3],[88,2],[132,3],[176,2]])for(let c=0;c<2;c++)for(let y=13-h;y<13;y++)set(x+c,y,y===13-h?'pipe-top':'pipe');
+ for(const start of [12,35,58,78,100,122,142,160]){
+  for(let x=start;x<start+5;x++)set(x,8,x===start+2?'question':'brick',x===start+2?(start===12?'mushroom':'coin'):null);
+  for(let x=start;x<start+5;x++)contents.set(`${x},11`,'loose');
+ }
+ for(let k=0;k<4;k++)for(let y=12-k;y<13;y++)set(184+k,y,'stone');
+ // Exit tunnel opens at ground level; reaching it ends this stage.
+ for(let x=198;x<200;x++)for(let y=10;y<13;y++)set(x,y,'pipe');
+ return {cells,contents,width:212*16};
+}
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 export class World11 {
-  constructor(){this.reset();}
-  reset(){this.sounds=[];Object.assign(this,level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.presentation=0;this.flagStartY=0;this.wasSkidding=false;this.hurry=false;this.room='overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;
-    this.enemies=[22,40,51,53,80,82,97,98,107,114,116,124,126,128,130,174,176].map((x,i)=>({x:x*16,y:x===80||x===82?64:192,w:14,h:16,vx:-.5,vy:0,kind:i===8?'koopa':'goomba',dead:0}));}
+  constructor(stage=1){this.stage=stage===2?2:1;this.reset();}
+  reset(){this.sounds=[];Object.assign(this,this.stage===2?undergroundLevel():level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.presentation=0;this.flagStartY=0;this.wasSkidding=false;this.hurry=false;this.room=this.stage===2?'stage-underground':'overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;
+    this.enemies=(this.stage===2?[22,38,53,64,82,96,107,126,140,158,172]:[22,40,51,53,80,82,97,98,107,114,116,124,126,128,130,174,176]).map((x,i)=>({x:x*16,y:this.stage!==2&&(x===80||x===82)?64:192,w:14,h:16,vx:-.5,vy:0,kind:i===8?'koopa':'goomba',dead:0}));}
   sound(name){if(this.sounds.length<32)this.sounds.push(name);}
   resizePlayer(height){
     const p=this.p,top=p.y+p.h-height;
@@ -70,19 +88,20 @@ export class World11 {
     if(this.phase==='dead'){
       const t=Math.max(0,this.presentation-22);this.p.y=this.deathY-4.6*t+.095*t*t;
     }else{
-      if(this.presentation<60)this.p.y=Math.min(192,this.flagStartY+this.presentation*2.7);
+      if(this.stage===2){this.p.x=Math.min(198*16,this.p.x+1.2);this.p.stride=(this.p.stride??0)+1.2;}
+      else if(this.presentation<60)this.p.y=Math.min(192,this.flagStartY+this.presentation*2.7);
       else{this.p.y=208-this.p.h;this.p.x=Math.min(202*16+32,this.p.x+1.2);this.p.facing=1;this.p.stride=(this.p.stride??0)+1.2;}
       if(this.presentation===61)this.sound('clear');
       if(this.presentation>60&&this.time>0){if(this.presentation%4===0)this.sound('tally');const n=Math.min(6,this.time);this.time-=n;this.score+=n*50;}
     }
   }
   snapshot(){
-    return {frame:this.frames,phase:this.phase,room:this.room,time:this.time,
+    return {stage:this.stage,frame:this.frames,phase:this.phase,room:this.room,time:this.time,
       player:{...this.p},input:{...this.input},jump_was_pressed:this.wasJump,
       enemies:this.enemies.filter(e=>!e.dead&&Math.abs(e.x-this.p.x)<256).slice(0,5).map(e=>({x:e.x,y:e.y,w:e.w,h:e.h,vx:e.vx,vy:e.vy,kind:e.kind,edge_gap:e.x-(this.p.x+this.p.w)}))};
   }
   hurt(){if(this.invincible||this.star)return;if(this.power){this.sound('hurt');this.power=0;this.p.y+=this.p.h-16;this.p.h=16;this.invincible=120;}else this.die();}
-  enterRoom(){const p=this.p;if(this.room==='overworld'&&p.grounded&&p.x>57*16-2&&p.x<58*16+2&&p.y+p.h===144){this.saved={cells:this.cells,contents:this.contents,enemies:this.enemies};this.cells=new Map();this.contents=new Map();this.enemies=[];this.sound('pipe');this.room='underground';this.camera=0;p.x=32;p.y=32;
+  enterRoom(){const p=this.p;if(this.stage!==2&&this.room==='overworld'&&p.grounded&&p.x>57*16-2&&p.x<58*16+2&&p.y+p.h===144){this.saved={cells:this.cells,contents:this.contents,enemies:this.enemies};this.cells=new Map();this.contents=new Map();this.enemies=[];this.sound('pipe');this.room='underground';this.camera=0;p.x=32;p.y=32;
       for(let x=0;x<16;x++){this.cells.set(`${x},13`,'brick');this.cells.set(`${x},14`,'brick');if(x<13)this.cells.set(`${x},1`,'brick');}
       for(let x=4;x<11;x++)for(let y=7;y<10;y++)if(!(y===7&&(x===4||x===10)))this.contents.set(`${x},${y}`,'loose');
       for(let y=10;y<13;y++)for(let x=13;x<16;x++)this.cells.set(`${x},${y}`,'pipe');this.items=[];
@@ -107,9 +126,10 @@ export class World11 {
     p.x=Math.max(this.camera,p.x);p.stride=(p.stride??0)+(p.grounded?Math.abs(p.vx):0);if(p.y>250)this.die();
     if(k.down)this.enterRoom();
     if(this.power===2&&k.run&&!this.wasFire&&this.shots.length<2){this.sound('fire');const facing=p.facing??1;this.shots.push({x:facing<0?p.x-4:p.x+p.w,y:p.y+10,w:4,h:4,vx:facing*3.5,vy:1});}this.wasFire=!!k.run;
-    if(this.room==='underground'){
+    if(this.room==='underground'||this.stage===2){
       for(const [key,item]of this.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);if(overlap(p,{x:x*16,y:y*16,w:12,h:16})){this.contents.delete(key);this.collectCoin();}}
-      if(p.x>=12*16&&p.y+p.h<=160&&k.right)this.exitRoom();
+      if(this.room==='underground'&&p.x>=12*16&&p.y+p.h<=160&&k.right)this.exitRoom();
+      if(this.stage===2)this.camera=Math.max(this.camera,Math.min(this.width-256,p.x-96));
     }else this.camera=Math.max(this.camera,Math.min(this.width-256,p.x-96));
     for(const e of this.enemies){if(e.dead||e.x>this.camera+280||e.x<this.camera-32)continue;
       const speed=e.vx;e.vy=Math.min(6,e.vy+.38);this.move(e);if(e.vx===0)e.vx=-speed;
@@ -125,10 +145,10 @@ export class World11 {
     for(const shot of this.shots){shot.vy+=.35;this.move(shot);if(shot.grounded)shot.vy=-2.8;if(!shot.vx){shot.dead=true;this.sound('impact');this.effects.push({kind:'burst',x:shot.x,y:shot.y,life:10});}if(shot.x<this.camera||shot.x>this.camera+256)shot.dead=true;if(!shot.dead)for(const e of this.enemies)if(!e.dead&&overlap(shot,e)){this.defeat(e);shot.dead=true;this.effects.push({kind:'burst',x:shot.x,y:shot.y,life:10});break;}}
     this.shots=this.shots.filter(s=>!s.dead);
     for(const fx of this.effects){fx.life--;if(fx.kind==='coin')fx.y-=1;if(fx.kind==='score')fx.y-=.35;if(fx.kind==='debris'){fx.x+=fx.vx;fx.y+=fx.vy;fx.vy+=.25;}}this.effects=this.effects.filter(f=>f.life>0);
-    if(this.room==='overworld'&&p.x>=198*16&&this.phase==='playing'){this.sound('flag');this.phase='won';this.presentation=0;this.flagStartY=p.y;this.score+=Math.max(100,5000-Math.floor(p.y)*20);this.input={};}
+    if((this.stage===2?p.x>=196*16:this.room==='overworld'&&p.x>=198*16)&&this.phase==='playing'){this.sound(this.stage===2?'pipe':'flag');this.phase='won';this.presentation=0;this.flagStartY=p.y;this.score+=Math.max(100,5000-Math.floor(p.y)*20);this.input={};}
   }
   telemetry(previous=0){const p=this.p,tiles=[];for(let row=0;row<13;row++)for(let col=-2;col<=6;col++)tiles.push(this.solid(Math.floor(p.x/16)+col,row+2)?84:0);
-    return{player:{x:p.x,y:p.y+p.h-16,vx:p.vx,vy:p.vy,grounded:p.grounded},tiles,enemies:this.enemies.filter(e=>!e.dead&&Math.abs(e.x-p.x)<256).slice(0,5).map(e=>({dx:e.x-p.x,y:e.y,type:e.kind==='goomba'?6:0})),world:1,stage:1,previous_response_ms:Math.min(10000,previous)};}
+    return{player:{x:p.x,y:p.y+p.h-16,vx:p.vx,vy:p.vy,grounded:p.grounded},tiles,enemies:this.enemies.filter(e=>!e.dead&&Math.abs(e.x-p.x)<256).slice(0,5).map(e=>({dx:e.x-p.x,y:e.y,type:e.kind==='goomba'?6:0})),world:1,stage:this.stage,previous_response_ms:Math.min(10000,previous)};}
 }
 const playerPixels=['....RRRRR...','...RRRRRRRR.','...HHHSSBS..','..HSHSSSBSSS','..HSHHSSSBSS','..HHSSSSBBB.','....SSSSSS..','...RBRRRB...','..RRBRRRBRR.','.RRRBBBBBRRR','.SSRBYBYBRSS','.SSBBBBBBBSS','...BBB.BBB..','..BBB...BBB.','.HHH.....HHH','HHHH.....HHHH'];
 const poses={
@@ -145,6 +165,7 @@ const poses={
 };
 export function playerPose(g){
   if(g.phase==='dead')return 'dead';
+  if(g.phase==='won'&&g.stage===2)return `walk${Math.floor((g.p.stride??0)/5)%3}`;
   if(g.phase==='won')return g.presentation<60?'climb':`walk${Math.floor((g.p.stride??0)/5)%3}`;
   if(g.p.crouching)return 'crouch';
   if(g.p.grounded&&Math.abs(g.p.vx)>.4&&((g.input.left&&g.p.vx>0)||(g.input.right&&g.p.vx<0)))return 'skid';
@@ -168,7 +189,7 @@ function drawCoin(ctx,x,y,frame){
   ctx.fillStyle='#ffd040';ctx.fillRect(left,y+2,width,8);
   if(width>2){ctx.fillStyle='#fff0a0';ctx.fillRect(left+1,y+3,1,5);ctx.fillStyle='#b87800';ctx.fillRect(left+width-2,y+3,1,5);}
 }
-export function drawWorld(ctx,g){const cam=g.camera,underground=g.room==='underground';ctx.imageSmoothingEnabled=false;ctx.fillStyle=underground?'#101020':'#5c94fc';ctx.fillRect(0,0,256,240);
+export function drawWorld(ctx,g){const cam=g.camera,underground=g.room==='underground'||g.stage===2;ctx.imageSmoothingEnabled=false;ctx.fillStyle=underground?'#101020':'#5c94fc';ctx.fillRect(0,0,256,240);
   if(!underground){
     for(let start=0;start<g.width;start+=768){for(const [x,y,w]of[[130,42,30],[315,26,44],[530,42,30]]){const px=x+start-cam*.6;ctx.fillStyle='#fff';ctx.fillRect(px,y,w,12);ctx.fillRect(px+6,y-6,w-12,6);ctx.fillStyle='#cbdcff';ctx.fillRect(px+2,y+10,w-4,2);}
       for(const [x,h]of[[0,32],[256,16],[576,32]]){const px=x+start-cam;ctx.fillStyle='#00a800';ctx.beginPath();ctx.moveTo(px,208);ctx.lineTo(px+h,208-h);ctx.lineTo(px+h*2,208);ctx.fill();ctx.fillStyle='#005800';ctx.fillRect(px+h,202-h,2,4);}
@@ -199,6 +220,6 @@ export function drawWorld(ctx,g){const cam=g.camera,underground=g.room==='underg
   }
   for(const f of [...g.effects,...g.shots]){if(f.kind==='bump')continue;if(f.kind==='coin'){drawCoin(ctx,f.x-cam,f.y,g.frames);continue;}if(f.kind==='score'){ctx.fillStyle='#fff';ctx.font='8px monospace';ctx.fillText(f.value,f.x-cam,f.y);continue;}if(f.kind==='burst'){ctx.fillStyle=f.life%2?'#fff':'#ffb030';ctx.fillRect(f.x-cam-2,f.y+2,8,2);ctx.fillRect(f.x-cam+1,f.y-1,2,8);continue;}ctx.fillStyle=f.kind==='debris'||f.kind==='squash'?'#b85020':'#ffd040';ctx.fillRect(f.x-cam,f.y,f.kind==='squash'?14:5,f.kind==='squash'?4:7);}
   if(!g.invincible||g.frames%6<3){const palette={R:g.power===2?'#fff':'#f83800',H:'#803000',S:'#ffbc80',B:g.star&&g.frames%12<6?'#00d8f8':'#b85000',Y:'#ffc000'};drawPlayer(ctx,g,palette);}
-  ctx.fillStyle='#fff';ctx.font='8px monospace';ctx.fillText('MARIO',16,15);ctx.fillText(String(g.score).padStart(6,'0'),16,25);ctx.fillText(`COIN ${String(g.coins).padStart(2,'0')}`,82,25);ctx.fillText('x'+g.lives,112,15);ctx.fillText('WORLD',144,15);ctx.fillText('1-1',150,25);ctx.fillText('TIME',208,15);ctx.fillText(String(g.time),216,25);
-  if(g.phase!=='playing'&&g.presentation>=180){ctx.fillStyle='#101020dd';ctx.fillRect(20,86,216,52);ctx.fillStyle='#fff';ctx.font='bold 14px monospace';ctx.fillText(g.phase==='won'?'WORLD 1-1 CLEAR!':'TRY AGAIN',g.phase==='won'?38:88,108);ctx.font='8px monospace';ctx.fillText('RESTART TO PLAY AGAIN',47,126);}
+  ctx.fillStyle='#fff';ctx.font='8px monospace';ctx.fillText('MARIO',16,15);ctx.fillText(String(g.score).padStart(6,'0'),16,25);ctx.fillText(`COIN ${String(g.coins).padStart(2,'0')}`,82,25);ctx.fillText('x'+g.lives,112,15);ctx.fillText('WORLD',144,15);ctx.fillText(`1-${g.stage??1}`,150,25);ctx.fillText('TIME',208,15);ctx.fillText(String(g.time),216,25);
+  if(g.phase!=='playing'&&g.presentation>=180){ctx.fillStyle='#101020dd';ctx.fillRect(20,86,216,52);ctx.fillStyle='#fff';ctx.font='bold 14px monospace';ctx.fillText(g.phase==='won'?`WORLD 1-${g.stage??1} CLEAR!`:'TRY AGAIN',g.phase==='won'?38:88,108);ctx.font='8px monospace';ctx.fillText('RESTART TO PLAY AGAIN',47,126);}
 }
