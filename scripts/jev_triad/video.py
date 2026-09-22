@@ -22,7 +22,7 @@ try:
     for(let frame=0;frame<expected.frames+200;frame++){
       if(trace[index]?.frame===game.frames)action=trace[index++].effective;
       const edge=game.p.grounded&&game.wasJump&&action.includes('jump')?(action==='jump'?'noop':action.replace('_jump','')):action;
-      game.buttons(edge);game.step();for(const name of game.drainSounds())audio.effect(name);
+      game.buttons(edge);if(game.phase==='playing')game.step();else game.presentationStep();for(const name of game.drainSounds())audio.effect(name);
       if(game.phase==='playing')audio.tick(game.room,{star:game.star>0,hurry:game.time<100});
       ctx.fillStyle='#101827';ctx.fillRect(0,0,512,520);ctx.fillStyle='#fff';ctx.font='14px monospace';ctx.fillText('LightGBM + search | ACTION TRACE REPLAY',8,17);ctx.fillText('Recorded controls; not live API / inference',8,35);
       ctx.save();ctx.translate(0,40);ctx.scale(2,2);drawWorld(ctx,game);ctx.restore();
@@ -34,5 +34,5 @@ try:
   }''')
   assert result['phase']=='won' and result['expectedClear']
   Path('out/triad/lightgbm-clear-replay.webm').write_bytes(base64.b64decode(result.pop('data')))
-  Path('out/triad/video.json').write_text(json.dumps(result,indent=2));page.screenshot(path='out/triad/clear-replay.png');browser.close()
+  Path('out/triad/video.json').write_text(json.dumps(result,indent=2));page.locator('canvas').screenshot(path='out/triad/clear-replay.png');browser.close()
 finally:server.shutdown()

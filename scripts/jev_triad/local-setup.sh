@@ -5,7 +5,8 @@ cd /tmp/jev-backend
 curl -fsSL https://github.com/ggml-org/llama.cpp/releases/download/b6000/llama-b6000-bin-ubuntu-x64.zip -o llama.zip
 echo '66244356dd242ae3a2510929ec4a840db65a3f9e7ad712918dbf02a266badfa5  llama.zip' | sha256sum -c
 unzip -q llama.zip
-curl -fsSL https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf -o model.gguf
+curl -fsSL https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_k_m.gguf -o model.gguf
+echo '74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db  model.gguf' | sha256sum -c
 sha256sum model.gguf > model.sha256
 server=$(find . -type f -name llama-server | head -1)
 chmod +x "$server"
