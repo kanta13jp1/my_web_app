@@ -10,7 +10,7 @@ void main() {
         'pages': [
           {
             'id': 'real',
-            'metadata': {'id': 'old', 'title': 'Title'}
+            'metadata': {'id': 'old', 'title': 'Title'},
           },
         ],
         'next_offset': 51,
@@ -65,7 +65,7 @@ void main() {
         'success': true,
         'page': {
           'id': 'page-75',
-          'metadata': {'content': 'a\n\n b'}
+          'metadata': {'content': 'a\n\n b'},
         },
       };
     });

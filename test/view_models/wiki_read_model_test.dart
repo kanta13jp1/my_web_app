@@ -24,9 +24,9 @@ void main() {
         return {
           'success': true,
           'pages': [
-            {'id': 'p-50'}
+            {'id': 'p-50'},
           ],
-          'next_offset': null
+          'next_offset': null,
         };
       }),
     );
@@ -46,18 +46,18 @@ void main() {
     final a = Completer<dynamic>();
     final b = Completer<dynamic>();
     final model = WikiReadModel(
-        WikiRepository((body) => body['id'] == 'a' ? a.future : b.future));
+        WikiRepository((body) => body['id'] == 'a' ? a.future : b.future),);
     addTearDown(model.dispose);
     final first = model.select('a');
     final second = model.select('b');
     b.complete({
       'success': true,
-      'page': {'id': 'b'}
+      'page': {'id': 'b'},
     });
     await second;
     a.complete({
       'success': true,
-      'page': {'id': 'a'}
+      'page': {'id': 'a'},
     });
     await first;
     expect(model.selectedId, 'b');
@@ -87,9 +87,9 @@ void main() {
         return {
           'success': true,
           'pages': [
-            {'id': 'a'}
+            {'id': 'a'},
           ],
-          'next_offset': null
+          'next_offset': null,
         };
       }),
     );
@@ -110,7 +110,7 @@ void main() {
         if (++requests == 1) throw StateError('offline');
         return {
           'success': true,
-          'page': {'id': 'a'}
+          'page': {'id': 'a'},
         };
       }),
     );
