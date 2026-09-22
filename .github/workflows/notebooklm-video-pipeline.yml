@@ -54,8 +54,7 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
   group: notebooklm-video-pipeline
@@ -63,6 +62,8 @@ concurrency:
 
 jobs:
   pipeline:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -75,9 +76,14 @@ jobs:
       HAS_ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY != '' }}
       HAS_YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON != '' }}
       HAS_YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON != '' }}
+      PIPELINE_NOTEBOOK_ID: ${{ inputs.notebook_id }}
+      PIPELINE_ARTIFACT_ID: ${{ inputs.artifact_id }}
+      PIPELINE_TITLE: ${{ inputs.title }}
+      PIPELINE_SERIES_NUMBER: ${{ inputs.series_number }}
+      PIPELINE_SLUG: ${{ inputs.slug }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.GITHUB_PAT || github.token }}
           fetch-depth: 100  # Step 0 dedup needs ≥1h of history (default depth=1 hides past bot commits)
@@ -91,7 +97,7 @@ jobs:
 
       - name: Upload video pipeline secret readiness report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: video-pipeline-secret-readiness-report
           path: tmp/video-pipeline-secret-readiness/report.json
@@ -99,7 +105,7 @@ jobs:
           retention-days: 30
 
       - name: Setup Python 3.12
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
@@ -175,34 +181,34 @@ jobs:
 
       - name: Step 1 — Download video from NotebookLM
         run: |
-          notebooklm use ${{ inputs.notebook_id }}
-          notebooklm download video -a ${{ inputs.artifact_id }} \
-            videos/${{ inputs.slug }}.mp4
-          ls -lh videos/${{ inputs.slug }}.mp4
+          notebooklm use "$PIPELINE_NOTEBOOK_ID"
+          notebooklm download video -a "$PIPELINE_ARTIFACT_ID" \
+            "videos/$PIPELINE_SLUG.mp4"
+          ls -lh "videos/$PIPELINE_SLUG.mp4"
           ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 \
-            videos/${{ inputs.slug }}.mp4 | tee /tmp/duration.txt
+            "videos/$PIPELINE_SLUG.mp4" | tee /tmp/duration.txt
 
       - name: Step 2 — Transcribe via ElevenLabs Scribe
         run: |
           python scripts/video/transcribe.py \
-            videos/${{ inputs.slug }}.mp4
+            "videos/$PIPELINE_SLUG.mp4"
 
       - name: Step 3 — Build SRT (custom splitter)
         env:
           ASR_CORRECTIONS: ${{ inputs.asr_corrections_json }}
         run: |
           python scripts/video/build_srt.py \
-            videos/edit/transcripts/${{ inputs.slug }}.json \
+            "videos/edit/transcripts/$PIPELINE_SLUG.json" \
             videos/master.srt
 
       - name: Step 3b - Build Shorts package manifest (optional)
         if: ${{ inputs.generate_shorts_package }}
         run: |
           python scripts/video/build_shorts_package.py \
-            videos/edit/transcripts/${{ inputs.slug }}.json \
-            --source-video videos/${{ inputs.slug }}.mp4 \
-            --source-url "notebooklm://${{ inputs.notebook_id }}/${{ inputs.artifact_id }}" \
-            --title "${{ inputs.title }}" \
+            "videos/edit/transcripts/$PIPELINE_SLUG.json" \
+            --source-video "videos/$PIPELINE_SLUG.mp4" \
+            --source-url "notebooklm://$PIPELINE_NOTEBOOK_ID/$PIPELINE_ARTIFACT_ID" \
+            --title "$PIPELINE_TITLE" \
             --output-dir videos/shorts \
             --count 3
 
@@ -232,7 +238,7 @@ jobs:
           FADE_OUT=$(python -c "print(round(${MAIN_DUR} - 0.05, 2))")
           ffmpeg -y \
             -i videos/intro.mp4 \
-            -i videos/${{ inputs.slug }}.mp4 \
+            -i "videos/$PIPELINE_SLUG.mp4" \
             -i videos/outro.mp4 \
             -filter_complex "[1:a]aresample=44100,afade=t=in:st=0:d=0.05,afade=t=out:st=${FADE_OUT}:d=0.05[a1];[0:v:0][0:a:0][1:v:0][a1][2:v:0][2:a:0]concat=n=3:v=1:a=1[v][a];[v]eq=saturation=1.15:contrast=1.05:gamma=0.95[vout]" \
             -map "[vout]" -map "[a]" -c:v libx264 -preset fast -crf 22 \
@@ -255,8 +261,8 @@ jobs:
           python scripts/video/add_provenance.py \
             --input videos/output_D.mp4 \
             --output videos/output_D_provenanced.mp4 \
-            --title "${{ inputs.title }}" \
-            --series-number "${{ inputs.series_number }}" \
+            --title "$PIPELINE_TITLE" \
+            --series-number "$PIPELINE_SERIES_NUMBER" \
             --source-file videos/master.srt \
             --model "NotebookLM Deep Research + Claude Code Win版"
 
@@ -265,7 +271,7 @@ jobs:
         run: |
           OUT=$(python scripts/upload_youtube.py upload \
             --file videos/output_D_provenanced.mp4 \
-            --title "${{ inputs.title }} — 自分株式会社 AI大学解説 #${{ inputs.series_number }}" \
+            --title "$PIPELINE_TITLE — 自分株式会社 AI大学解説 #$PIPELINE_SERIES_NUMBER" \
             --description "NotebookLM Deep Research + 自分株式会社 AI大学 編集スタジオで生成。詳細は https://my-web-app-b67f4.web.app/ai-university" \
             --privacy unlisted)
           echo "$OUT"
@@ -286,8 +292,8 @@ jobs:
             exit 1
           fi
 
-          LABEL="番外: ${{ inputs.title }} (D variant)"
-          DESCRIPTION="NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。AI大学シリーズ #${{ inputs.series_number }}。"
+          LABEL="番外: $PIPELINE_TITLE (D variant)"
+          DESCRIPTION="NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。AI大学シリーズ #$PIPELINE_SERIES_NUMBER。"
 
           python scripts/embed_video_in_philosophy.py \
             --video-id "$VIDEO_ID" \
@@ -299,8 +305,8 @@ jobs:
           git config user.email 'notebooklm-video-pipeline[bot]@users.noreply.github.com'
           git add lib/pages/philosophy_page.dart
           git commit \
-            -m "feat(philosophy): embed video #${{ inputs.series_number }} (NotebookLM auto pipeline)" \
-            -m "VIDEO_ID=$VIDEO_ID  DURATION=$VIDEO_DURATION  TITLE=${{ inputs.title }}"
+            -m "feat(philosophy): embed video #$PIPELINE_SERIES_NUMBER (NotebookLM auto pipeline)" \
+            -m "VIDEO_ID=$VIDEO_ID  DURATION=$VIDEO_DURATION  TITLE=$PIPELINE_TITLE"
           git push origin HEAD:main
 
       - name: Notify Slack on success
@@ -315,32 +321,27 @@ jobs:
             echo "::warning::SLACK_WEBHOOK_URL not set — skipping Slack notify"
             exit 0
           fi
-          cat <<EOF > payload.json
-          {
-            "text": "🎬 NotebookLM video pipeline complete: ${{ inputs.title }}",
-            "blocks": [
-              {
-                "type": "header",
-                "text": { "type": "plain_text", "text": "🎬 動画パイプライン完了 #${{ inputs.series_number }}", "emoji": true }
-              },
-              {
-                "type": "section",
-                "fields": [
-                  { "type": "mrkdwn", "text": "*Title:*\n${{ inputs.title }}" },
-                  { "type": "mrkdwn", "text": "*Duration:*\n$VIDEO_DURATION" },
-                  { "type": "mrkdwn", "text": "*Video:*\nhttps://youtu.be/$VIDEO_ID" },
-                  { "type": "mrkdwn", "text": "*Series:*\n#${{ inputs.series_number }}" }
-                ]
-              },
-              {
-                "type": "context",
-                "elements": [
-                  { "type": "mrkdwn", "text": "🤖 Auto-pipeline run: <$RUN_URL|view logs>  /  Step 8 embedded into philosophy_page.dart on main" }
-                ]
-              }
-            ]
-          }
-          EOF
+          jq -n \
+            --arg title "$PIPELINE_TITLE" \
+            --arg series "$PIPELINE_SERIES_NUMBER" \
+            --arg duration "$VIDEO_DURATION" \
+            --arg video_id "$VIDEO_ID" \
+            --arg run_url "$RUN_URL" \
+            '{
+              text: ("🎬 NotebookLM video pipeline complete: " + $title),
+              blocks: [
+                {type: "header", text: {type: "plain_text", text: ("🎬 動画パイプライン完了 #" + $series), emoji: true}},
+                {type: "section", fields: [
+                  {type: "mrkdwn", text: ("*Title:*\n" + $title)},
+                  {type: "mrkdwn", text: ("*Duration:*\n" + $duration)},
+                  {type: "mrkdwn", text: ("*Video:*\nhttps://youtu.be/" + $video_id)},
+                  {type: "mrkdwn", text: ("*Series:*\n#" + $series)}
+                ]},
+                {type: "context", elements: [
+                  {type: "mrkdwn", text: ("🤖 Auto-pipeline run: <" + $run_url + "|view logs>  /  Step 8 embedded into philosophy_page.dart on main")}
+                ]}
+              ]
+            }' > payload.json
           curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
       - name: Notify Slack on failure
@@ -353,32 +354,28 @@ jobs:
             echo "::warning::SLACK_WEBHOOK_URL not set — skipping Slack notify"
             exit 0
           fi
-          cat <<EOF > payload.json
-          {
-            "text": "❌ NotebookLM video pipeline FAILED: ${{ inputs.title }}",
-            "blocks": [
-              {
-                "type": "header",
-                "text": { "type": "plain_text", "text": "❌ 動画パイプライン失敗 #${{ inputs.series_number }}", "emoji": true }
-              },
-              {
-                "type": "section",
-                "fields": [
-                  { "type": "mrkdwn", "text": "*Title:*\n${{ inputs.title }}" },
-                  { "type": "mrkdwn", "text": "*Slug:*\n${{ inputs.slug }}" },
-                  { "type": "mrkdwn", "text": "*Notebook:*\n${{ inputs.notebook_id }}" },
-                  { "type": "mrkdwn", "text": "*Artifact:*\n${{ inputs.artifact_id }}" }
-                ]
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  { "type": "button", "text": { "type": "plain_text", "text": "View failed run" }, "url": "$RUN_URL", "style": "danger" }
-                ]
-              }
-            ]
-          }
-          EOF
+          jq -n \
+            --arg title "$PIPELINE_TITLE" \
+            --arg series "$PIPELINE_SERIES_NUMBER" \
+            --arg slug "$PIPELINE_SLUG" \
+            --arg notebook_id "$PIPELINE_NOTEBOOK_ID" \
+            --arg artifact_id "$PIPELINE_ARTIFACT_ID" \
+            --arg run_url "$RUN_URL" \
+            '{
+              text: ("❌ NotebookLM video pipeline FAILED: " + $title),
+              blocks: [
+                {type: "header", text: {type: "plain_text", text: ("❌ 動画パイプライン失敗 #" + $series), emoji: true}},
+                {type: "section", fields: [
+                  {type: "mrkdwn", text: ("*Title:*\n" + $title)},
+                  {type: "mrkdwn", text: ("*Slug:*\n" + $slug)},
+                  {type: "mrkdwn", text: ("*Notebook:*\n" + $notebook_id)},
+                  {type: "mrkdwn", text: ("*Artifact:*\n" + $artifact_id)}
+                ]},
+                {type: "actions", elements: [
+                  {type: "button", text: {type: "plain_text", text: "View failed run"}, url: $run_url, style: "danger"}
+                ]}
+              ]
+            }' > payload.json
           curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
 # 残スコープ (Win版#132 part 38+ / cross-instance-pr 検討):

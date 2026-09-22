@@ -322,6 +322,7 @@ Map<String, dynamic> _noteRow({
     'content': content,
     'reminder_date': null,
     'is_favorite': false,
+    'tags': <String>['Evernote'],
     'created_at': '2026-07-19T09:00:00.000Z',
     'updated_at': '2026-07-19T09:00:00.000Z',
   };
@@ -403,6 +404,24 @@ void main() {
 
       expect(client.updates, hasLength(1));
       expect(client.updates.single['content'], '編集後の本文');
+    });
+
+    testWidgets('読み込んだタグを追加して自動保存できる', (tester) async {
+      final client = await _pumpEditor(tester);
+
+      await tester.tap(find.byKey(const Key('note_editor_tags_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Evernote'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('note_tags_input')),
+        '移行済み',
+      );
+      await tester.tap(find.byKey(const Key('note_tags_add_button')));
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(client.updates, hasLength(1));
+      expect(client.updates.single['tags'], <String>['Evernote', '移行済み']);
     });
 
     testWidgets('autosave does not embed while manual save indexes once', (

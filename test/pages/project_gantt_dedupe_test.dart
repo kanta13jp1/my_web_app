@@ -192,4 +192,85 @@ void main() {
 
     expect(tasks.map((task) => task.id), ['issue-1', 'issue-2']);
   });
+
+  test('WBS task owner drag rules allow assignment and unassignment', () {
+    final unassigned = _task(
+      id: 'unassigned',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'unassigned',
+    );
+    final codexOwned = _task(
+      id: 'codex-owned',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'codex',
+    );
+
+    expect(canMoveWbsTaskToOwner(unassigned, 'codex'), isTrue);
+    expect(canMoveWbsTaskToOwner(codexOwned, 'unassigned'), isTrue);
+    expect(canMoveWbsTaskToOwner(codexOwned, 'codex'), isFalse);
+  });
+
+  test('blank owner is treated as unassigned for assignment board', () {
+    final task = _task(
+      id: 'blank-owner',
+      title: '[Issue #2912] Drag assignment',
+      instance: 'claude',
+    );
+
+    expect(task.activeInstanceKey, 'claude');
+    expect(task.activeOwnerKey, 'claude');
+    expect(task.assignmentOwnerKey, 'unassigned');
+    expect(task.matchesActiveInstanceFilter('unassigned'), isTrue);
+    expect(canMoveWbsTaskToOwner(task, 'codex'), isTrue);
+  });
+
+  test('assignment board filtering ignores owner instance filter', () {
+    final codexTask = _task(
+      id: 'codex',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'codex',
+      createdAt: DateTime.utc(2026, 6, 10),
+    );
+    final userTask = _task(
+      id: 'user',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'user',
+      createdAt: DateTime.utc(2026, 6, 10),
+    );
+
+    final tasks = filterWbsTasksForAssignmentBoard(
+      [codexTask, userTask],
+      hideCompleted: false,
+    );
+
+    expect(tasks.map((task) => task.id), ['codex', 'user']);
+  });
+
+  test('completed WBS task owner drag is rejected', () {
+    final completed = _task(
+      id: 'completed',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'codex',
+      status: 'completed',
+      progress: 100,
+    );
+
+    expect(canMoveWbsTaskToOwner(completed, 'user'), isFalse);
+    expect(canMoveWbsTaskToOwner(completed, 'unassigned'), isFalse);
+  });
+
+  test('WBS owner reassignment stores normalized owner key', () {
+    final task = _task(
+      id: 'schedule',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'schedule',
+    );
+
+    final reassigned = reassignWbsTaskOwner(task, 'github-actions');
+    final unassigned = reassignWbsTaskOwner(task, 'none');
+
+    expect(reassigned.ownerInstance, 'automation');
+    expect(unassigned.ownerInstance, 'unassigned');
+    expect(unassigned.activeOwnerLabel, 'Unassigned');
+  });
 }

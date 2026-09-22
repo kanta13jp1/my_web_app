@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:my_web_app/models/micro_survey.dart';
+import 'package:my_web_app/services/micro_survey_repository.dart';
+import 'package:my_web_app/widgets/micro_survey_bottom_sheet.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
@@ -118,6 +121,15 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('チームを作成しました')),
         );
+        await presentMicroSurveyIfEligible(
+          context: context,
+          repository: SupabaseMicroSurveyRepository(_supabase),
+          surveyContext: const MicroSurveyContext(
+            trigger: MicroSurveyTrigger.resourceCreated,
+            route: '/team-workspace',
+            resourceType: 'team',
+          ),
+        );
       }
       // ignore: avoid_catches_without_on_clauses
     } catch (e) {
@@ -131,8 +143,7 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
   }
 
   Future<void> _joinByInviteCode() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    if (_supabase.auth.currentUser == null) return;
 
     String code = '';
     final result = await showDialog<bool>(
@@ -145,10 +156,11 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
 
     setState(() => _isLoading = true);
     try {
-      final teams = await _supabase
-          .from('teams')
-          .select('id, name')
-          .eq('invite_code', code.trim());
+      final response = await _supabase.rpc(
+        'join_team_with_invite_code',
+        params: {'p_invite_code': code.trim()},
+      );
+      final teams = response as List<dynamic>;
       if (teams.isEmpty) {
         if (mounted) {
           setState(() => _isLoading = false);
@@ -158,16 +170,11 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
         }
         return;
       }
-      final teamId = teams.first['id'] as String;
-      await _supabase.from('team_memberships').insert({
-        'team_id': teamId,
-        'user_id': userId,
-        'role': 'member',
-      });
+      final team = teams.first as Map<String, dynamic>;
       await _loadTeams();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('「${teams.first['name']}」に参加しました')),
+          SnackBar(content: Text('「${team['team_name']}」に参加しました')),
         );
       }
       // ignore: avoid_catches_without_on_clauses
@@ -742,14 +749,14 @@ class _JoinTeamDialogState extends State<_JoinTeamDialog> {
           TextField(
             controller: _codeController,
             decoration: const InputDecoration(
-              labelText: '招待コード (8文字)',
+              labelText: '招待コード (8文字または32文字)',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.vpn_key_outlined),
             ),
             autofocus: true,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9A-Z]')),
-              LengthLimitingTextInputFormatter(8),
+              LengthLimitingTextInputFormatter(32),
             ],
           ),
         ],

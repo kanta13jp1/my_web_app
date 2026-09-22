@@ -7,22 +7,28 @@ on:
     paths:
       - ".github/workflows/testcontainers-integration.yml"
       - "scripts/testcontainers_supabase_smoke.py"
+      - "scripts/account_deletion_rollout.py"
+      - "scripts/account_deletion_rollout_test.py"
+      - "scripts/requirements-testcontainers.txt"
       - "test/fixtures/testcontainers/**"
       - "test/scripts/test_testcontainers_supabase_smoke.py"
       - "docs/testing/testcontainers_supabase_smoke.md"
       - "supabase/functions/**"
       - "supabase/migrations/**"
+      - "supabase/tests/**"
+      - ".github/workflows/account-deletion-retention.yml"
   workflow_dispatch:
 
 concurrency:
   group: testcontainers-integration-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   smoke:
+    permissions:
+      contents: read
     name: DB + Edge smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -31,12 +37,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.12"
+          python-version: "3.12.14"
 
       - name: Setup Deno
         shell: bash
@@ -48,12 +54,13 @@ jobs:
         run: docker version
 
       - name: Install smoke dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install "testcontainers[postgres]>=4.8,<5" "psycopg[binary]>=3.2,<4"
+        run: python -m pip install --requirement scripts/requirements-testcontainers.txt
 
       - name: Unit-test smoke helpers
         run: python test/scripts/test_testcontainers_supabase_smoke.py
+
+      - name: Unit-test account deletion rollout policy
+        run: python scripts/account_deletion_rollout_test.py
 
       - name: Print smoke plan
         run: python scripts/testcontainers_supabase_smoke.py --plan
@@ -63,7 +70,7 @@ jobs:
 
       - name: Upload smoke artifacts
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: testcontainers-smoke-logs
           path: .testcontainers-logs/

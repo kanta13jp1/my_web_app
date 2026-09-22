@@ -18,7 +18,13 @@ class FirstUserGrowthAttribution {
     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   );
   static final RegExp _tokenPattern = RegExp(r'^[a-z0-9_-]{1,64}$');
-  static const Set<String> supportedSources = <String>{'x', 'zenn'};
+  static const Set<String> supportedSources = <String>{
+    'x',
+    'zenn',
+    'reddit',
+    'producthunt',
+    'hackernews',
+  };
 
   final String visitorId;
   final String utmSource;
@@ -123,6 +129,12 @@ class GrowthAcquisitionService {
   static const String touchProfile = 'touch_profile';
   static const String touchXFirstUserGrowth = 'touch_x_first_user_growth';
   static const String touchZennFirstUserGrowth = 'touch_zenn_first_user_growth';
+  static const String touchRedditFirstUserGrowth =
+      'touch_reddit_first_user_growth';
+  static const String touchProductHuntFirstUserGrowth =
+      'touch_producthunt_first_user_growth';
+  static const String touchHackerNewsFirstUserGrowth =
+      'touch_hackernews_first_user_growth';
   static const String touchImport = 'touch_import';
   static const String touchPublicMemo = 'touch_public_memo';
   static const String touchReferral = 'touch_referral';
@@ -149,6 +161,12 @@ class GrowthAcquisitionService {
       'signup_submit_x_first_user_growth';
   static const String signupSubmitZennFirstUserGrowth =
       'signup_submit_zenn_first_user_growth';
+  static const String signupSubmitRedditFirstUserGrowth =
+      'signup_submit_reddit_first_user_growth';
+  static const String signupSubmitProductHuntFirstUserGrowth =
+      'signup_submit_producthunt_first_user_growth';
+  static const String signupSubmitHackerNewsFirstUserGrowth =
+      'signup_submit_hackernews_first_user_growth';
   static const String signupSubmitImport = 'signup_submit_import';
   static const String signupSubmitPublicMemo = 'signup_submit_public_memo';
   static const String signupSubmitReferral = 'signup_submit_referral';
@@ -242,8 +260,15 @@ class GrowthAcquisitionService {
     if (!isFirstUserGrowthUri(uri)) {
       return null;
     }
-    if (_lowerParam(uri.queryParameters, 'utm_source') == 'zenn') {
-      return touchZennFirstUserGrowth;
+    switch (_lowerParam(uri.queryParameters, 'utm_source')) {
+      case 'zenn':
+        return touchZennFirstUserGrowth;
+      case 'reddit':
+        return touchRedditFirstUserGrowth;
+      case 'producthunt':
+        return touchProductHuntFirstUserGrowth;
+      case 'hackernews':
+        return touchHackerNewsFirstUserGrowth;
     }
     switch (_lowerParam(uri.queryParameters, 'utm_medium')) {
       case 'profile':
@@ -274,6 +299,12 @@ class GrowthAcquisitionService {
         return signupSubmitXFirstUserGrowth;
       case touchZennFirstUserGrowth:
         return signupSubmitZennFirstUserGrowth;
+      case touchRedditFirstUserGrowth:
+        return signupSubmitRedditFirstUserGrowth;
+      case touchProductHuntFirstUserGrowth:
+        return signupSubmitProductHuntFirstUserGrowth;
+      case touchHackerNewsFirstUserGrowth:
+        return signupSubmitHackerNewsFirstUserGrowth;
       case touchImport:
         return signupSubmitImport;
       case touchPublicMemo:
@@ -539,54 +570,7 @@ class GrowthAcquisitionService {
         'Growth acquisition signal returned an unexpected payload: $payload',
       );
     } catch (error, stackTrace) {
-      debugPrint('Growth acquisition signal fallback activated: $error');
-      debugPrintStack(stackTrace: stackTrace);
-    }
-
-    await _recordSignalFallback(signalKey: signalKey, dateKey: dateKey);
-  }
-
-  Future<void> _recordSignalFallback({
-    required String signalKey,
-    required String dateKey,
-  }) async {
-    final client = _client;
-    if (client == null) {
-      return;
-    }
-
-    try {
-      final existing = await client
-          .from('app_analytics')
-          .select(
-            'date, landing_views, conversions, share_count, source_details',
-          )
-          .eq('date', dateKey)
-          .maybeSingle();
-
-      if (existing == null) {
-        await client.from('app_analytics').upsert(<String, dynamic>{
-          'date': dateKey,
-          'landing_views': 0,
-          'conversions': 0,
-          'share_count': 0,
-          'source_details': <String, int>{signalKey: 1},
-        });
-        return;
-      }
-
-      final row = _asMap(existing);
-      final sourceDetails = _normalizeSourceDetails(row['source_details'])
-        ..update(signalKey, (count) => count + 1, ifAbsent: () => 1);
-
-      await client
-          .from('app_analytics')
-          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
-        'date',
-        dateKey,
-      );
-    } catch (error, stackTrace) {
-      debugPrint('Growth acquisition fallback failed: $error');
+      debugPrint('Growth acquisition signal failed: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
   }
@@ -599,34 +583,6 @@ class GrowthAcquisitionService {
       return Map<String, dynamic>.from(value);
     }
     return <String, dynamic>{};
-  }
-
-  Map<String, int> _normalizeSourceDetails(dynamic raw) {
-    if (raw is! Map) {
-      return <String, int>{};
-    }
-
-    final result = <String, int>{};
-    raw.forEach((key, value) {
-      final count = _toInt(value);
-      if (count > 0) {
-        result[key.toString()] = count;
-      }
-    });
-    return result;
-  }
-
-  int _toInt(dynamic value) {
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
-    return 0;
   }
 
   String _formatDate(DateTime date) {

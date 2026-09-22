@@ -287,6 +287,13 @@ void main() {
     expect(draft.metadata['missingPrefectureCount'], greaterThanOrEqualTo(1));
   });
 
+  test('generated memo source key keeps the synthetic draft identity', () {
+    expect(
+      LocalElectionShareService.generatedMemoSourceKey(90000007002027),
+      'local-election:90000007002027',
+    );
+  });
+
   LocalElectionRealitySnapshot buildSnapshotWithCdpFallbackAlert() {
     return LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
       'fetchedAt': '2026-03-28T09:00:00.000Z',

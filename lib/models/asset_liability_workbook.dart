@@ -206,7 +206,10 @@ class AssetLiabilityAccount {
   bool get isLiability => balance < 0;
   double get liabilityBalance => isLiability ? balance.abs() : 0;
 
-  AssetLiabilityAccount copyWith({int? paymentDay}) {
+  AssetLiabilityAccount copyWith({
+    int? paymentDay,
+    double? annualRate,
+  }) {
     return AssetLiabilityAccount(
       id: id,
       name: name,
@@ -220,7 +223,7 @@ class AssetLiabilityAccount {
       billingAccountId: billingAccountId,
       billingAccountName: billingAccountName,
       includedInBillingAccount: includedInBillingAccount,
-      annualRate: annualRate,
+      annualRate: annualRate ?? this.annualRate,
       minimumPaymentRate: minimumPaymentRate,
       minimumPaymentFloor: minimumPaymentFloor,
       fullPaymentEstimate: fullPaymentEstimate,
@@ -230,23 +233,33 @@ class AssetLiabilityAccount {
 
 /// リボ払いカードの設定。
 ///
-/// 請求額 = [monthlyAmount] + max(0, リボ残高 − [creditLimit])。
-/// auPAY カードの「あらかじめリボ」などで、毎月の請求額が利用明細合計ではなく
-/// 設定額 + 限度額超過分で決まるカードを表す。
+/// 返済予定額 = [monthlyAmount] + 当月の新規利用額。
+/// 既存のリボ残高は一括返済の対象にせず、最低返済額で計画的に圧縮する。
+/// 新規利用額だけは同月に全額上乗せし、残高を増やさない運用を表す。
 class AssetLiabilityRevolvingCreditConfig {
   /// リボ設定額 (毎月固定で請求される最低額)。
   final double monthlyAmount;
 
-  /// 利用限度額。これを超えたリボ残高は当月に一括で上乗せ請求される。
+  /// 明細を未取り込みのときに使う当月新規利用額の手入力値。
+  final double newUsageAmount;
+
+  /// リボ返済日。給料日に合わせて毎月25日を既定とする。
+  final int paymentDay;
+
+  /// 利用限度額。現行の返済額計算では使用せず、与信枠不足の確認だけに使う。
   final double creditLimit;
 
   const AssetLiabilityRevolvingCreditConfig({
     required this.monthlyAmount,
-    required this.creditLimit,
+    this.newUsageAmount = 0,
+    this.paymentDay = 25,
+    this.creditLimit = 0,
   });
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'monthlyAmount': monthlyAmount,
+        'newUsageAmount': newUsageAmount,
+        'paymentDay': paymentDay,
         'creditLimit': creditLimit,
       };
 
@@ -255,7 +268,66 @@ class AssetLiabilityRevolvingCreditConfig {
   ) {
     return AssetLiabilityRevolvingCreditConfig(
       monthlyAmount: (json['monthlyAmount'] as num?)?.toDouble() ?? 0,
+      newUsageAmount: (json['newUsageAmount'] as num?)?.toDouble() ??
+          (json['new_usage_amount'] as num?)?.toDouble() ??
+          0,
+      paymentDay: (json['paymentDay'] as num?)?.toInt() ??
+          (json['payment_day'] as num?)?.toInt() ??
+          25,
       creditLimit: (json['creditLimit'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+/// カード会社へ連絡して「今後は一括（1回）払い」に変更した実行記録。
+///
+/// [enforceOneShot] が true のカードは、残高が残っていても設定変更を促す
+/// 助言を繰り返さない。返済額や完済目標の計算自体は止めず、残高圧縮の
+/// 月額目標は引き続き提示する。
+class AssetCardUsagePolicy {
+  /// 今後の利用分を一括（1回）払いにする設定変更が完了しているか。
+  final bool enforceOneShot;
+
+  /// 設定変更を完了として記録した日時（UTC 保存を推奨）。
+  final DateTime? changedAt;
+
+  /// 受付番号、連絡日、担当窓口などの監査メモ。
+  final String memo;
+
+  const AssetCardUsagePolicy({
+    required this.enforceOneShot,
+    this.changedAt,
+    this.memo = '',
+  });
+
+  AssetCardUsagePolicy copyWith({
+    bool? enforceOneShot,
+    DateTime? changedAt,
+    String? memo,
+  }) {
+    return AssetCardUsagePolicy(
+      enforceOneShot: enforceOneShot ?? this.enforceOneShot,
+      changedAt: changedAt ?? this.changedAt,
+      memo: memo ?? this.memo,
+    );
+  }
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'enforce_one_shot': enforceOneShot,
+        if (changedAt != null)
+          'changed_at': changedAt!.toUtc().toIso8601String(),
+        if (memo.trim().isNotEmpty) 'memo': memo.trim(),
+      };
+
+  factory AssetCardUsagePolicy.fromJson(Map<String, dynamic> json) {
+    final changedAtRaw = json['changed_at'] ?? json['changedAt'];
+    return AssetCardUsagePolicy(
+      enforceOneShot:
+          json['enforce_one_shot'] == true || json['enforceOneShot'] == true,
+      changedAt: changedAtRaw == null
+          ? null
+          : DateTime.tryParse(changedAtRaw.toString())?.toUtc(),
+      memo: json['memo']?.toString().trim() ?? '',
     );
   }
 }
@@ -284,12 +356,7 @@ enum AssetRecurringFixedCostCategory {
 }
 
 /// サブスク棚卸しでユーザーが付けた判断。
-enum AssetSubscriptionReviewDecision {
-  unreviewed,
-  keep,
-  hold,
-  cancelCandidate,
-}
+enum AssetSubscriptionReviewDecision { unreviewed, keep, hold, cancelCandidate }
 
 /// 定期固定費の入力通貨。既定は円 (jpy)。ドル建て (usd) の場合は毎月の為替で
 /// 円換算額が変動するため、原資の USD 額を保持し、最新レートで円へ materialize する。
@@ -541,27 +608,39 @@ class AssetLiabilityRevolvingCreditBilling {
   /// リボ残高 (= 当月時点の負債残高)。
   final double balance;
 
-  /// 利用限度額。
+  /// 利用限度額。返済額計算では使用せず、与信枠不足の確認だけに使う。
   final double creditLimit;
 
-  /// リボ設定額。
+  /// 既存残高へ充当する当月の最低返済額。
   final double monthlyAmount;
 
-  /// 限度額超過分 = max(0, [balance] − [creditLimit])。
+  /// 当月中に全額返済する新規利用額。
+  final double newUsageAmount;
+
+  /// 新規利用分を除いた既存リボ残高。
+  final double existingBalanceAmount;
+
+  /// 返済日。給料日に合わせて毎月25日。
+  final int paymentDay;
+
+  /// 旧計算とのAPI互換用。現行ルールでは常に0。
   final double overLimitAmount;
 
-  /// 今月請求額 = [monthlyAmount] + [overLimitAmount]。
+  /// 今月返済予定額 = [monthlyAmount] + [newUsageAmount]。
   final double billedAmount;
 
   const AssetLiabilityRevolvingCreditBilling({
     required this.balance,
     required this.creditLimit,
     required this.monthlyAmount,
+    required this.newUsageAmount,
+    required this.existingBalanceAmount,
+    required this.paymentDay,
     required this.overLimitAmount,
     required this.billedAmount,
   });
 
-  /// 限度額を超過しているか (= 設定額に上乗せ請求が発生しているか)。
+  /// 旧限度額超過ルールが有効か。現行ルールでは常に false。
   bool get isOverLimit => overLimitAmount > 0;
 }
 
@@ -594,10 +673,15 @@ class AssetLiabilityDebtRow {
   final bool billingConfirmed;
   final bool paid;
 
+  /// 今月の支払いを期限管理・行動対象として扱うか。
+  ///
+  /// 支払予定額が 0 円の月と支払済みの行は確認対象に留め、延滞として扱わない。
+  final bool requiresAction;
+
   /// 家賃・通信費など毎月全額を支払う固定費型の負債。利率の概念を持たない。
   final bool fullPaymentEstimate;
 
-  /// リボ払いカードの場合の今月請求内訳 (= 設定額 + 限度額超過分)。
+  /// リボ払いカードの場合の今月返済内訳 (= 最低返済額 + 新規利用額)。
   /// null なら通常の負債 (請求額は手入力 or 推定)。
   final AssetLiabilityRevolvingCreditBilling? revolvingBilling;
 
@@ -629,11 +713,12 @@ class AssetLiabilityDebtRow {
     required this.paymentAmountEstimated,
     required this.billingConfirmed,
     required this.paid,
+    required this.requiresAction,
     this.fullPaymentEstimate = false,
     this.revolvingBilling,
   });
 
-  /// リボ払いカードか (= 請求額が設定額 + 限度額超過分で決まるか)。
+  /// リボ払いカードか (= 最低返済額 + 新規利用額を25日に返すか)。
   bool get isRevolving => revolvingBilling != null;
 
   bool get isDirectCashflowTarget =>
@@ -662,6 +747,7 @@ class AssetLiabilityPaymentDayRisk {
   final double interestEstimateTotal;
   final int manualPaymentCount;
   final int estimatedPaymentCount;
+  final bool requiresAction;
   final bool isPast;
   final bool isToday;
 
@@ -676,6 +762,7 @@ class AssetLiabilityPaymentDayRisk {
     required this.interestEstimateTotal,
     required this.manualPaymentCount,
     required this.estimatedPaymentCount,
+    required this.requiresAction,
     required this.isPast,
     required this.isToday,
   });
@@ -1339,12 +1426,23 @@ class AssetLiabilityWorkbook {
   final int manualPaymentCount;
   final int estimatedPaymentCount;
 
+  /// 残高スナップショットには存在せず、当月の資金繰り計画だけに注入された
+  /// 固定費・サブスクの口座 ID。これらは支払予定には含めるが、現在負債・
+  /// 純資産・負債件数には含めない。
+  final Set<String> scheduledExpenseAccountIds;
+
   /// サブスク区分 (AssetRecurringFixedCostCategory.subscription) として登録された
   /// 定期固定費の口座 ID 集合。資金繰り上は utility 負債として計上され
   /// fullPaymentEstimate=true になるため、家賃・光熱費などの「生命線」と
   /// 区別できない。トリアージで「生命線を優先確保」から除外するために保持する
   /// (サブスクは解約候補であって優先支払い対象ではない)。
   final Set<String> subscriptionFixedCostAccountIds;
+
+  /// カードIDごとの「今後は一括（1回）払い」実行記録。
+  ///
+  /// 規律違反や残高圧縮額の算出は維持し、設定変更を促す助言だけをカード単位で
+  /// 抑止するために insight 層へ渡す。
+  final Map<String, AssetCardUsagePolicy> cardUsagePolicies;
 
   const AssetLiabilityWorkbook({
     required this.baseDate,
@@ -1376,8 +1474,24 @@ class AssetLiabilityWorkbook {
     required this.topFourDebtShare,
     required this.manualPaymentCount,
     required this.estimatedPaymentCount,
+    this.scheduledExpenseAccountIds = const <String>{},
     this.subscriptionFixedCostAccountIds = const <String>{},
+    this.cardUsagePolicies = const <String, AssetCardUsagePolicy>{},
   });
+
+  /// 直接観測した残高だけで構成する現在口座一覧。
+  List<AssetLiabilityAccount> get currentAccounts => accounts
+      .where(
+        (account) =>
+            account.balance >= 0 ||
+            !scheduledExpenseAccountIds.contains(account.id),
+      )
+      .toList(growable: false);
+
+  /// 直接観測した残高だけで構成する現在負債一覧。
+  List<AssetLiabilityDebtRow> get currentDebtRows => debtMasterRows
+      .where((row) => !scheduledExpenseAccountIds.contains(row.id))
+      .toList(growable: false);
 
   List<AssetLiabilityCashflowRow> get overdueCashflowRows {
     return cashflowRows.where((row) => row.overdue).toList();
@@ -1485,11 +1599,15 @@ class AssetLiabilityWorkbook {
   /// 照合は生の ID で行う (per-account 集計も生 ID の一致で突き合わせるため)。
   /// 空白混じりの ID は実際にどの口座とも一致せず引かれないので、拾うのが正しい。
   List<AssetLiabilityDebtRow> get paymentSourceInvalidRows {
-    final cashLikeIds = <String>{
-      for (final account in accounts)
-        if (account.kind == AssetLiabilityAccountKind.cash ||
-            account.kind == AssetLiabilityAccountKind.deposit)
-          account.id,
+    final validSourceIdentifiers = <String>{
+      for (final account in accounts) ...[
+        account.id,
+        account.name,
+      ],
+      for (final debt in debtMasterRows) ...[
+        debt.id,
+        debt.name,
+      ],
     };
     return debtMasterRows
         .where(
@@ -1499,7 +1617,7 @@ class AssetLiabilityWorkbook {
               !row.paid &&
               row.paymentSourceAccountId != null &&
               row.paymentSourceAccountId!.trim().isNotEmpty &&
-              !cashLikeIds.contains(row.paymentSourceAccountId),
+              !validSourceIdentifiers.contains(row.paymentSourceAccountId),
         )
         .toList();
   }
@@ -1532,5 +1650,89 @@ class AssetLiabilityWorkbook {
                   .clamp(0, row.scheduledPaymentAmount)
                   .toDouble(),
         );
+  }
+
+  AssetLiabilityWorkbook copyWith({
+    DateTime? baseDate,
+    List<AssetLiabilityAccount>? accounts,
+    List<AssetLiabilityDebtRow>? debtMasterRows,
+    List<AssetLiabilityDebtRow>? repaymentPriorityRows,
+    List<AssetLiabilityPaymentDayRisk>? paymentDayRisks,
+    List<AssetLiabilityCashflowRow>? cashflowRows,
+    List<AssetLiabilityIncomePlan>? incomePlans,
+    List<AssetLiabilityTransferTask>? transferTasks,
+    List<AssetLiabilityAccountCashflowSummary>? accountCashflowSummaries,
+    List<AssetLiabilityTransferSuggestion>? transferSuggestions,
+    AssetLiabilityCardBillingReviewData? cardBillingReview,
+    AssetLiabilityCardStatementReconciliationData? cardStatementReconciliation,
+    double? cashLikeTotal,
+    double? securitiesTotal,
+    double? positiveAssetTotal,
+    double? liabilityTotal,
+    double? netWorth,
+    double? monthlyMinimumPaymentEstimateTotal,
+    double? monthlyScheduledPaymentTotal,
+    double? monthlyActualPaymentTotal,
+    double? monthlyPaymentDifferenceTotal,
+    double? monthlyUnpaidPaymentTotal,
+    double? monthlyUnreceivedIncomeTotal,
+    double? cashAfterMinimumPayments,
+    double? cashAfterScheduledPayments,
+    double? debtToAssetRatio,
+    double? topFourDebtShare,
+    int? manualPaymentCount,
+    int? estimatedPaymentCount,
+    Set<String>? scheduledExpenseAccountIds,
+    Set<String>? subscriptionFixedCostAccountIds,
+    Map<String, AssetCardUsagePolicy>? cardUsagePolicies,
+  }) {
+    return AssetLiabilityWorkbook(
+      baseDate: baseDate ?? this.baseDate,
+      accounts: accounts ?? this.accounts,
+      debtMasterRows: debtMasterRows ?? this.debtMasterRows,
+      repaymentPriorityRows:
+          repaymentPriorityRows ?? this.repaymentPriorityRows,
+      paymentDayRisks: paymentDayRisks ?? this.paymentDayRisks,
+      cashflowRows: cashflowRows ?? this.cashflowRows,
+      incomePlans: incomePlans ?? this.incomePlans,
+      transferTasks: transferTasks ?? this.transferTasks,
+      accountCashflowSummaries:
+          accountCashflowSummaries ?? this.accountCashflowSummaries,
+      transferSuggestions: transferSuggestions ?? this.transferSuggestions,
+      cardBillingReview: cardBillingReview ?? this.cardBillingReview,
+      cardStatementReconciliation:
+          cardStatementReconciliation ?? this.cardStatementReconciliation,
+      cashLikeTotal: cashLikeTotal ?? this.cashLikeTotal,
+      securitiesTotal: securitiesTotal ?? this.securitiesTotal,
+      positiveAssetTotal: positiveAssetTotal ?? this.positiveAssetTotal,
+      liabilityTotal: liabilityTotal ?? this.liabilityTotal,
+      netWorth: netWorth ?? this.netWorth,
+      monthlyMinimumPaymentEstimateTotal: monthlyMinimumPaymentEstimateTotal ??
+          this.monthlyMinimumPaymentEstimateTotal,
+      monthlyScheduledPaymentTotal:
+          monthlyScheduledPaymentTotal ?? this.monthlyScheduledPaymentTotal,
+      monthlyActualPaymentTotal:
+          monthlyActualPaymentTotal ?? this.monthlyActualPaymentTotal,
+      monthlyPaymentDifferenceTotal:
+          monthlyPaymentDifferenceTotal ?? this.monthlyPaymentDifferenceTotal,
+      monthlyUnpaidPaymentTotal:
+          monthlyUnpaidPaymentTotal ?? this.monthlyUnpaidPaymentTotal,
+      monthlyUnreceivedIncomeTotal:
+          monthlyUnreceivedIncomeTotal ?? this.monthlyUnreceivedIncomeTotal,
+      cashAfterMinimumPayments:
+          cashAfterMinimumPayments ?? this.cashAfterMinimumPayments,
+      cashAfterScheduledPayments:
+          cashAfterScheduledPayments ?? this.cashAfterScheduledPayments,
+      debtToAssetRatio: debtToAssetRatio ?? this.debtToAssetRatio,
+      topFourDebtShare: topFourDebtShare ?? this.topFourDebtShare,
+      manualPaymentCount: manualPaymentCount ?? this.manualPaymentCount,
+      estimatedPaymentCount:
+          estimatedPaymentCount ?? this.estimatedPaymentCount,
+      scheduledExpenseAccountIds:
+          scheduledExpenseAccountIds ?? this.scheduledExpenseAccountIds,
+      subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds ??
+          this.subscriptionFixedCostAccountIds,
+      cardUsagePolicies: cardUsagePolicies ?? this.cardUsagePolicies,
+    );
   }
 }

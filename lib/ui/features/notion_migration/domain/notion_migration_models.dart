@@ -1,3 +1,7 @@
+import 'notion_vault_manifest_models.dart';
+
+export 'notion_vault_manifest_models.dart';
+
 enum NotionMigrationBatchStatus {
   inventory,
   migrating,
@@ -179,6 +183,7 @@ class NotionMigrationSnapshot {
     this.capabilities = const <NotionCapability>[],
     this.wbsReconciliation,
     this.wbsStageSummary,
+    this.vaultManifestSummary,
   });
 
   final NotionMigrationBatch? batch;
@@ -187,6 +192,7 @@ class NotionMigrationSnapshot {
   final List<NotionCapability> capabilities;
   final NotionWbsReconciliation? wbsReconciliation;
   final NotionWbsStageSummary? wbsStageSummary;
+  final NotionVaultManifestStageSummary? vaultManifestSummary;
 }
 
 class NotionInventoryActionResult {

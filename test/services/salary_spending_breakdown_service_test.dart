@@ -3,6 +3,19 @@ import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 
 void main() {
   group('SalarySpendingBreakdownService', () {
+    test(
+        'Issue #5194: correctly categorizes bank transfer and debt keywords into 借入返済, 住居, and 通信',
+        () {
+      const service = SalarySpendingBreakdownService();
+      expect(service.categorize('PEエスエムビーシーエム'), '借入返済');
+      expect(service.categorize('モビット口振'), '借入返済');
+      expect(service.categorize('CL口座振込'), '借入返済');
+      expect(service.categorize('ペイペイカード'), '借入返済');
+      expect(service.categorize('PayPayカード利用代金'), '借入返済');
+      expect(service.categorize('大東建託家賃'), '住居');
+      expect(service.categorize('ahamo月額料'), '通信');
+    });
+
     const service = SalarySpendingBreakdownService();
 
     test('uses the 25th as the salary-cycle boundary before payday', () {

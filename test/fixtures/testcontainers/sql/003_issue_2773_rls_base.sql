@@ -56,6 +56,11 @@ create table viral_ad_generations (
   created_at timestamptz not null default now()
 );
 
+create table ai_university_content (
+  id uuid primary key default gen_random_uuid(),
+  title text not null
+);
+
 grant all privileges on table
   public.ab_experiments,
   public.ab_assignments,

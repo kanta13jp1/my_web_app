@@ -10,6 +10,8 @@ on:
   schedule:
     - cron: '35 22 * * 1'
 
+permissions: {}
+
 concurrency:
   group: e2e-smoke-${{ github.ref }}
   cancel-in-progress: false
@@ -24,10 +26,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '22'
           cache: npm
@@ -42,25 +44,29 @@ jobs:
         run: npm run e2e:smoke -- --project=chromium --workers=1
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/public-smoke-results.json
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results/public-smoke.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/html/public-smoke
+          PLAYWRIGHT_TEST_OUTPUT_DIR: test-results/public-smoke
 
       - name: Run visual evidence smoke tests
         run: npm run e2e:visual -- --project=chromium --project=mobile-chrome --workers=1
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-evidence-results.json
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results/visual-evidence.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/html/visual-evidence
+          PLAYWRIGHT_TEST_OUTPUT_DIR: test-results/visual-evidence
 
       - name: Summarize Playwright evidence
         if: always()
         run: |
           node scripts/summarize_playwright_results.mjs \
-            playwright-report/public-smoke-results.json \
-            playwright-report/visual-evidence-results.json \
+            playwright-report/results/public-smoke.json \
+            playwright-report/results/visual-evidence.json \
             --out playwright-report/issue-summary.md
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-report
           path: |

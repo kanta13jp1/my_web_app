@@ -3,11 +3,29 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_triage_guide_service.dart';
 
 void main() {
   group('AssetManagementInsightService', () {
     const service = AssetManagementInsightService();
     const planner = AssetLiabilityPlanningService();
+
+    test('does not present inferred discipline results as facts', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000},
+        baseDate: DateTime(2026, 9, 6),
+      );
+      final report = service.buildReport(workbook: workbook);
+      final prompt = const AssetManagementInsightPromptBuilder()
+          .buildDetailedAdvicePrompt(report);
+
+      expect(prompt, contains('判定保留（取引証拠との照合が必要）'));
+      expect(prompt, isNot(contains('違反あり')));
+      expect(prompt, isNot(contains('今月は両誓約を守れています')));
+      expect(prompt, contains('「期限超過:いいえ」は支払完了を意味しません'));
+      expect(prompt, contains('引落確認待ちは未払い確定ではありません'));
+      expect(prompt, contains('支払予定0円だけで返済なし'));
+    });
 
     test('marks missing payment day as an action item', () {
       final workbook = planner.buildWorkbook(
@@ -30,6 +48,44 @@ void main() {
         ),
         true,
       );
+    });
+
+    test('payday rule supersedes the legacy one-shot record', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: DateTime(2026, 8, 29),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+            newUsageAmount: 10000,
+          ),
+        },
+        cardUsagePolicies: <String, AssetCardUsagePolicy>{
+          'famipay_card': AssetCardUsagePolicy(
+            enforceOneShot: true,
+            changedAt: DateTime.utc(2026, 8, 29),
+            memo: '受付 ABC123',
+          ),
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final prompt = const AssetManagementInsightPromptBuilder()
+          .buildDetailedAdvicePrompt(report);
+
+      expect(report.disciplineReport!.revolvingCardViolations, isEmpty);
+      expect(
+        report.triagePlan!.weekSteps.any(
+          (step) => step.kind == AssetTriageStepKind.disableRevolving,
+        ),
+        isFalse,
+      );
+      expect(prompt, contains('新規利用分を全額返済する設定記録: ファミペイ'));
+      expect(prompt, contains('残高一括返済やリボ/分割設定の即時解除を促さず'));
+      expect(prompt, contains('返済日は毎月25日'));
     });
 
     test('clears missing payment day item once an override is entered', () {
@@ -466,6 +522,91 @@ void main() {
       );
     });
 
+    test('living expense priority mode follows emergency advice order', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          'アコムカードローン': -100000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        includeDefaultFixedPayments: true,
+      );
+
+      final defaultReport = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+      final explicitOffReport = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+        livingExpensePriorityMode: false,
+      );
+      final priorityReport = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+        livingExpensePriorityMode: true,
+      );
+
+      expect(
+        explicitOffReport.actionItems.map((item) => item.title),
+        defaultReport.actionItems.map((item) => item.title),
+      );
+
+      int indexOf(
+        AssetManagementInsightReport report,
+        bool Function(AssetManagementInsightActionItem item) predicate,
+      ) =>
+          report.actionItems.indexWhere(predicate);
+
+      final defaultLivingExpense = indexOf(
+        defaultReport,
+        (item) =>
+            item.type ==
+            AssetManagementInsightActionType.emergencyLivingExpense,
+      );
+      final defaultContact = indexOf(
+        defaultReport,
+        (item) =>
+            item.type == AssetManagementInsightActionType.overduePayment &&
+            item.relatedAccountId == 'acom_card_loan',
+      );
+      expect(defaultContact, lessThan(defaultLivingExpense));
+
+      final livingExpense = indexOf(
+        priorityReport,
+        (item) =>
+            item.type ==
+            AssetManagementInsightActionType.emergencyLivingExpense,
+      );
+      final lifeline = indexOf(
+        priorityReport,
+        (item) =>
+            item.relatedAccountId ==
+            AssetLiabilityPlanningService.rentAccountId,
+      );
+      final contact = indexOf(
+        priorityReport,
+        (item) =>
+            item.type == AssetManagementInsightActionType.overduePayment &&
+            item.relatedAccountId == 'acom_card_loan',
+      );
+      final highInterest = indexOf(
+        priorityReport,
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+
+      expect(livingExpense, greaterThanOrEqualTo(0));
+      expect(lifeline, greaterThanOrEqualTo(0));
+      expect(contact, greaterThanOrEqualTo(0));
+      expect(highInterest, greaterThanOrEqualTo(0));
+      expect(livingExpense, lessThan(contact));
+      expect(lifeline, lessThan(contact));
+      expect(contact, lessThan(highInterest));
+    });
+
     test('flags account shortfall with matched transfer suggestion', () {
       // 全体では黒字(三井住友 500000)でも、支払原資に割り当てた現金だけが
       // 不足するケース。口座別見込みの先読み警告と移動提案の紐付けを検証する。
@@ -696,6 +837,35 @@ void main() {
       );
     });
 
+    test('keeps zero-yen unpaid debt in review-only prompt data', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'じぶん銀行カードローン': -100000,
+        },
+        baseDate: DateTime(2026, 5, 29),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0,
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final prompt = const AssetManagementInsightPromptBuilder()
+          .buildDetailedAdvicePrompt(report);
+
+      expect(
+        report.actionItems.where(
+          (item) =>
+              item.type == AssetManagementInsightActionType.overduePayment,
+        ),
+        isEmpty,
+      );
+      expect(prompt, contains('対象:じぶん銀行カードローン'));
+      expect(prompt, contains('区分:確認のみ'));
+      expect(prompt, contains('状態:確認のみ'));
+      expect(prompt, contains('要対応:いいえ'));
+    });
+
     test('builds prompt with deterministic calculated values', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
@@ -727,6 +897,8 @@ void main() {
       expect(prompt.contains('負債マスタ詳細'), true);
       expect(prompt.contains('現実装コンテキスト'), true);
       expect(prompt.contains('asset_management_page.dart'), true);
+      expect(prompt.contains('Claude（Claude AI SUBSCRIPTION）の扱い'), true);
+      expect(prompt.contains('Claude Pro'), true);
       expect(prompt.contains('開発者向け改善提案候補'), true);
       expect(prompt.contains('受け入れ条件'), true);
       expect(prompt.contains(report.actionItems.first.title), true);
@@ -818,6 +990,7 @@ AssetLiabilityDebtRow _debtRow({
     paymentAmountEstimated: false,
     billingConfirmed: true,
     paid: false,
+    requiresAction: true,
   );
 }
 

@@ -1,13 +1,32 @@
 # Goal And Wrap-Up Workflow
 
-Last updated: 2026-05-16
+Last updated: 2026-08-26
 
 ## Goal
 
 Keep long-running WBS work resumable across Codex sessions without relying on
-memory alone. Prefer `/goal` when the active Codex runtime exposes it. When it
-is not available in the non-interactive shell, mirror the same state through
-GitHub Issue, WBS task, branch, PR body, and this wrap-up template.
+memory alone. Prefer a persisted goal when the active Codex app or CLI runtime
+exposes it. The UI, model tools, or app-server API may expose that capability
+even when a non-interactive shell does not expose a literal `/goal` command.
+Always mirror the durable state through the GitHub Issue, WBS task, branch, PR
+body, and this wrap-up template.
+
+## Runtime Contract
+
+- A goal stores the objective and continuation status. It does not replace the
+  Issue acceptance criteria, branch/PR checkpoint, or deterministic validation.
+- Pause or clear a goal only after recording the next action and any recovery
+  state in GitHub or the wrap-up template.
+- Runtime continuation does not broaden the user's permissions. Production
+  writes, deploys, merges, messages, and other external changes retain their
+  normal approval and safety gates.
+- Use Thread Automations only when an explicit schedule is required. Do not
+  convert a goal into an unattended dependency-update-to-merge loop.
+- Select only a model and effort level that the current runtime exposes. Apply
+  the configured adaptive router instead of permanently assigning work to the
+  historical GPT-5.5 or Codex #2 labels.
+- Any subagent fan-out remains bounded by
+  `docs/SUBAGENT_ORCHESTRATION_POLICY.md`, including its resource-pressure gate.
 
 ## Session Start
 
@@ -115,5 +134,6 @@ Next actions:
 
 ## Linked Issue
 
-This workflow satisfies the docs portion of #2523. Future work can add a UI or
-CLI helper after the `/goal` command is proven interactively.
+This workflow satisfies #2523 and the persisted-goal adoption portion of #1860.
+The current Codex runtime has proven persisted objective/status recovery; no
+repository-specific UI or CLI wrapper is required.

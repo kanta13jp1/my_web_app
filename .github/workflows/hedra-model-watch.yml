@@ -1,0 +1,138 @@
+name: Hedra Model Catalog Watch
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/hedra-model-watch.yml
+      - scripts/hedra_model_watch.py
+      - test/scripts/test_hedra_model_watch.py
+      - docs/hedra-model-watch/**
+  schedule:
+    - cron: "35 20 * * 1" # Tuesday 05:35 JST; one API request per week
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: hedra-model-watch
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test watcher fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Run dependency-free watcher tests
+        run: |
+          python -m py_compile \
+            scripts/hedra_model_watch.py \
+            test/scripts/test_hedra_model_watch.py
+          python test/scripts/test_hedra_model_watch.py
+
+  watch:
+    if: github.event_name != 'pull_request'
+    needs: test
+    name: Diff the official Hedra model catalog
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      HEDRA_API_KEY: ${{ secrets.HEDRA_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 20
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Fetch and diff model catalog
+        id: watch
+        run: |
+          python scripts/hedra_model_watch.py \
+            --snapshot docs/hedra-model-watch/models.json \
+            --report docs/hedra-model-watch/latest-report.md \
+            --json-report docs/hedra-model-watch/latest-report.json
+
+      - name: Retain validation inputs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: hedra-model-catalog-${{ github.run_id }}
+          path: |
+            docs/hedra-model-watch/models.json
+            docs/hedra-model-watch/latest-report.md
+            docs/hedra-model-watch/latest-report.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Commit updated snapshot and report
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- docs/hedra-model-watch)" ]; then
+            echo "No Hedra model watch changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/hedra-model-watch
+          git commit -m "chore: update Hedra model catalog snapshot"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Create a deduplicated change issue
+        if: steps.watch.outputs.changed == 'true'
+        env:
+          EVENT_KEY: ${{ steps.watch.outputs.event_key }}
+          MODEL_DIGEST: ${{ steps.watch.outputs.digest }}
+          ADDED_COUNT: ${{ steps.watch.outputs.added_count }}
+          REMOVED_COUNT: ${{ steps.watch.outputs.removed_count }}
+          MODIFIED_COUNT: ${{ steps.watch.outputs.modified_count }}
+        run: |
+          set -euo pipefail
+          marker="<!-- hedra-model-watch:${EVENT_KEY} -->"
+          existing=$(gh api -X GET search/issues \
+            -f q="repo:${GITHUB_REPOSITORY} is:issue ${EVENT_KEY} in:body" \
+            --jq '.items[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Issue #${existing} already records this catalog event."
+            exit 0
+          fi
+
+          report_date=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
+          issue_body="${RUNNER_TEMP}/hedra-model-watch-issue.md"
+          cp docs/hedra-model-watch/latest-report.md "$issue_body"
+          {
+            echo
+            echo "$marker"
+            echo
+            echo "- Digest: \`${MODEL_DIGEST}\`"
+            echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- Source Issue: #2855"
+          } >> "$issue_body"
+          gh issue create \
+            --title "[hedra-model-watch] ${report_date} catalog change (+${ADDED_COUNT}/-${REMOVED_COUNT}/~${MODIFIED_COUNT})" \
+            --body-file "$issue_body" \
+            --label automation \
+            --label priority:medium \
+            --label 追加要望

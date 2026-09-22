@@ -1,0 +1,234 @@
+name: Supabase Backup and Restore Drill
+
+on:
+  schedule:
+    # Monday 02:23 JST. Offset from other hourly/daily production jobs.
+    - cron: "23 17 * * 0"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: supabase-backup-restore
+  cancel-in-progress: false
+
+jobs:
+  backup-restore:
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+    name: Encrypted backup and isolated restore
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
+      DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
+      BACKUP_PASSPHRASE: ${{ secrets.SUPABASE_BACKUP_PASSPHRASE }}
+      BACKUP_ROOT: /tmp/supabase-backup
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
+        with:
+          # Keep the ephemeral Auth/Storage schemas aligned with production.
+          # Older 2.84.2 lacked auth.custom_oauth_providers.custom_claims_allowlist.
+          version: 2.115.0
+
+      - name: Validate protected inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in SUPABASE_ACCESS_TOKEN PROJECT_REF DB_PASSWORD BACKUP_PASSPHRASE; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required repository secret is missing: ${name}"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          if [ "${#BACKUP_PASSPHRASE}" -lt 32 ]; then
+            echo "::error::SUPABASE_BACKUP_PASSPHRASE must contain at least 32 characters."
+            exit 1
+          fi
+
+      - name: Create production logical backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          plain_dir="$BACKUP_ROOT/plain"
+          mkdir -p "$plain_dir"
+
+          supabase link --project-ref "$PROJECT_REF" --password "$DB_PASSWORD"
+          supabase db dump --linked --password "$DB_PASSWORD" \
+            --file "$plain_dir/roles.sql" --role-only
+          supabase db dump --linked --password "$DB_PASSWORD" \
+            --file "$plain_dir/schema.sql"
+          supabase db dump --linked --password "$DB_PASSWORD" \
+            --file "$plain_dir/data.sql" --data-only --use-copy \
+            --exclude "storage.buckets_vectors" \
+            --exclude "storage.vector_indexes"
+
+          python scripts/supabase_backup_verify.py manifest \
+            --input-dir "$plain_dir" \
+            --output "$plain_dir/manifest.json" \
+            --project-ref "$PROJECT_REF"
+
+      - name: Encrypt backup and remove plaintext source
+        id: bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends p7zip-full
+
+          plain_dir="$BACKUP_ROOT/plain"
+          bundle_dir="$BACKUP_ROOT/bundle"
+          mkdir -p "$bundle_dir"
+          archive="$bundle_dir/supabase-production-$(date -u +%Y%m%dT%H%M%SZ).7z"
+
+          pushd "$plain_dir" >/dev/null
+          7z a -bd -bb0 -t7z -mx=9 -mhe=on \
+            "-p${BACKUP_PASSPHRASE}" "$archive" ./* >/dev/null
+          popd >/dev/null
+          test -s "$archive"
+
+          find "$plain_dir" -type f -delete
+          rmdir "$plain_dir"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+
+      - name: Decrypt and restore into an isolated Supabase target
+        shell: bash
+        env:
+          ARCHIVE: ${{ steps.bundle.outputs.archive }}
+        run: |
+          set -euo pipefail
+          restore_input="$BACKUP_ROOT/restore-input"
+          restore_target="$BACKUP_ROOT/restore-target"
+          assertions="$BACKUP_ROOT/restore-assertions.sql"
+          pgmq_bootstrap="$BACKUP_ROOT/pgmq-bootstrap.sql"
+          pgmq_finalize="$BACKUP_ROOT/pgmq-finalize.sql"
+
+          cleanup() {
+            supabase stop --workdir "$restore_target" --no-backup >/dev/null 2>&1 || true
+            if [ -d "$restore_input" ]; then
+              find "$restore_input" -type f -delete
+              find "$restore_input" -depth -type d -empty -delete
+            fi
+          }
+          trap cleanup EXIT
+
+          mkdir -p "$restore_input" "$restore_target"
+          7z x -bd -bb0 -y "-o${restore_input}" \
+            "-p${BACKUP_PASSPHRASE}" "$ARCHIVE" >/dev/null
+          python scripts/supabase_backup_verify.py verify \
+            --input-dir "$restore_input" \
+            --manifest "$restore_input/manifest.json"
+          python scripts/supabase_backup_verify.py assertions \
+            --data-sql "$restore_input/data.sql" \
+            --output "$assertions" \
+            --schema public
+          python scripts/supabase_backup_verify.py pgmq-restore \
+            --data-sql "$restore_input/data.sql" \
+            --bootstrap-output "$pgmq_bootstrap" \
+            --finalize-output "$pgmq_finalize"
+
+          supabase init --workdir "$restore_target"
+          sed -i 's/major_version = [0-9][0-9]*/major_version = 17/' \
+            "$restore_target/supabase/config.toml"
+          supabase start --workdir "$restore_target" --exclude \
+            gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+          db_container="$(docker ps --filter 'name=supabase_db_' --format '{{.Names}}' | head -n 1)"
+          if [ -z "$db_container" ]; then
+            echo "::error::Isolated Supabase database container was not found."
+            exit 1
+          fi
+
+          echo "45969060b55102f56af317b0d7981434be58927de1ff76e1e1789139a3f2defc  scripts/sql/supabase_storage_v1_71_0_0062.sql" \
+            | sha256sum --check
+          docker cp scripts/sql/supabase_storage_v1_71_0_0062.sql \
+            "$db_container:/tmp/storage-compat.sql"
+          docker cp "$restore_input/roles.sql" "$db_container:/tmp/roles.sql"
+          docker cp "$restore_input/schema.sql" "$db_container:/tmp/schema.sql"
+          docker cp "$restore_input/data.sql" "$db_container:/tmp/data.sql"
+          docker cp "$assertions" "$db_container:/tmp/restore-assertions.sql"
+          docker cp "$pgmq_bootstrap" "$db_container:/tmp/pgmq-bootstrap.sql"
+          docker cp "$pgmq_finalize" "$db_container:/tmp/pgmq-finalize.sql"
+          docker exec "$db_container" sh -c '
+            export PGPASSWORD="$POSTGRES_PASSWORD"
+            exec psql \
+              --host 127.0.0.1 \
+              --username supabase_storage_admin \
+              --dbname postgres \
+              --single-transaction \
+              --variable ON_ERROR_STOP=1 \
+              --file /tmp/storage-compat.sql
+          '
+          docker exec "$db_container" psql \
+            --username postgres \
+            --dbname postgres \
+            --single-transaction \
+            --variable ON_ERROR_STOP=1 \
+            --file /tmp/roles.sql \
+            --file /tmp/schema.sql \
+            --file /tmp/pgmq-bootstrap.sql \
+            --command 'SET session_replication_role = replica' \
+            --file /tmp/data.sql
+          docker exec "$db_container" psql \
+            --username postgres \
+            --dbname postgres \
+            --variable ON_ERROR_STOP=1 \
+            --file /tmp/restore-assertions.sql \
+            --file /tmp/pgmq-finalize.sql
+
+          python scripts/supabase_backup_verify.py evidence \
+            --manifest "$restore_input/manifest.json" \
+            --archive "$ARCHIVE" \
+            --assertions "$assertions" \
+            --pgmq-bootstrap "$pgmq_bootstrap" \
+            --pgmq-finalize "$pgmq_finalize" \
+            --output "$BACKUP_ROOT/bundle/restore-evidence.json" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT"
+
+      - name: Publish restore evidence
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ["BACKUP_ROOT"]) / "bundle" / "restore-evidence.json"
+          evidence = json.loads(path.read_text(encoding="utf-8"))
+          print("## Supabase backup and restore drill")
+          print()
+          print(f"- Result: **{evidence['result']}**")
+          print(f"- Source project: `{evidence['source_project_ref']}`")
+          print(f"- Backup generated: `{evidence['backup_generated_at_utc']}`")
+          print(f"- Restore target: `{evidence['restore_target']}`")
+          print(f"- Public tables checked: `{evidence['public_table_assertions']}`")
+          print(f"- PGMQ tables checked: `{evidence['pgmq_table_assertions']}`")
+          print(f"- PGMQ queues recreated: `{evidence['pgmq_queues_recreated']}`")
+          print("- Uploaded database bundle: encrypted; no plaintext data artifact")
+          PY
+
+      - name: Upload encrypted backup and evidence
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: supabase-production-backup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ env.BACKUP_ROOT }}/bundle/*.7z
+            ${{ env.BACKUP_ROOT }}/bundle/restore-evidence.json
+          if-no-files-found: error
+          retention-days: 35
+          compression-level: 0

@@ -1,3 +1,5 @@
+import { decideMario, MarioError } from "./jev_mario.ts";
+import { classifyJevExpense, JevExpenseError } from "./jev_expense.ts";
 // ai-hub — AI・エージェント・AI大学統合EF
 // Merges (16 EFs): daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
 //   ai-summarizer, agent-hub, virtual-organization, my-ai-agent,
@@ -10,7 +12,12 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { checkAndRecordAiUsage, supabaseUsageStore } from "./usage_gate.ts";
 import {
+  authorizeAiHubAction,
+  resolveAuthenticatedUserId,
+} from "./action_access_policy.ts";
+import {
   AI_CHARACTER_PREAMBLE,
+  buildAiSystemPrompt,
   prependCharacter,
 } from "../_shared/ai_character_preamble.ts";
 import {
@@ -22,7 +29,11 @@ import {
   type AgentToolPolicyDecision,
   evaluateAgentToolPolicy,
 } from "../_shared/agent_tool_policy.ts";
-import { selectEffort } from "../_shared/effort_router.ts";
+import {
+  selectClaudeModelForEffort,
+  selectEffort,
+} from "../_shared/effort_router.ts";
+import { requestTraceId } from "../_shared/trace_context.ts";
 import {
   calculateApiCost,
   checkBudget,
@@ -95,6 +106,17 @@ import {
 } from "./market_price.ts";
 import { applyProviderGenerationOptions } from "./provider_generation_options.ts";
 import {
+  concatenateAudio,
+  normalizeVoiceId,
+  normalizeVoiceLanguage,
+  normalizeVoiceSettings,
+  resolveVoiceDubbingModel,
+  safeAudioFileName,
+  splitVoiceText,
+  VOICE_DUBBING_BUCKET,
+  voiceCharacterLimit,
+} from "./voice_dubbing.ts";
+import {
   buildCompanyRuntimePrompt,
   nextCompanyRuntimeRoutingProfile,
   parseCompanyRuntimeQueueMessages,
@@ -112,6 +134,12 @@ import {
   sha256Hex,
 } from "./company_research.ts";
 import {
+  CORPORATE_SITE_READINESS_DISCLAIMER,
+  generateCorporateSiteHtml,
+  reviewCorporateSiteDocument,
+  validateCorporateSiteProfile,
+} from "./corporate_site_readiness.ts";
+import {
   assertA2AVersion,
   buildCompanyAgentCard,
   COMPANY_A2A_CONTENT_TYPE,
@@ -127,11 +155,23 @@ import {
   buildSubscriptionStatementPrompt,
   parseSubscriptionStatementResponse,
 } from "./subscription_statement_scan.ts";
+import {
+  buildPalmReadingPrompt,
+  decodePalmImageBase64,
+  normalizePalmHandSide,
+  parsePalmReadingResponse,
+} from "./palm_reading.ts";
+import {
+  createWriterKnowledgeGraphGateway,
+  handleWriterKnowledgeGraphAction,
+  WriterKnowledgeGraphError,
+} from "./writer_knowledge_graph.ts";
+import { createSupabaseWriterKnowledgeGraphStore } from "./writer_knowledge_graph_supabase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, a2a-version, a2a-extensions",
+    "authorization, x-client-info, apikey, content-type, a2a-version, a2a-extensions, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Expose-Headers": "A2A-Version, WWW-Authenticate",
   "Access-Control-Max-Age": "86400",
 };
@@ -669,8 +709,35 @@ function effortToTier(effort: "low" | "medium" | "high" | "xhigh"): Tier {
   }
 }
 
+function routedClaudeModel(effort: "low" | "medium" | "high" | "xhigh") {
+  return selectClaudeModelForEffort(effort, {
+    haikuModel: Deno.env.get("CLAUDE_ROUTER_HAIKU_MODEL"),
+    sonnetModel: Deno.env.get("CLAUDE_ROUTER_SONNET_MODEL"),
+  });
+}
+
 function estimateTokensFromChars(chars: number): number {
   return Math.max(1, Math.ceil(Math.max(0, chars) / 4));
+}
+
+function providerUsageTokens(data: unknown): {
+  inputTokens?: number;
+  outputTokens?: number;
+} {
+  const input = pick(data, "usage", "input_tokens") ??
+    pick(data, "usage", "prompt_tokens") ??
+    pick(data, "usageMetadata", "promptTokenCount");
+  const output = pick(data, "usage", "output_tokens") ??
+    pick(data, "usage", "completion_tokens") ??
+    pick(data, "usageMetadata", "candidatesTokenCount");
+  const normalize = (value: unknown): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) && value >= 0
+      ? Math.round(value)
+      : undefined;
+  return {
+    inputTokens: normalize(input),
+    outputTokens: normalize(output),
+  };
 }
 
 function normalizeMaxTokens(value: unknown): number | undefined {
@@ -719,6 +786,8 @@ async function callSingleProvider(
     ok: boolean;
     text?: string;
     modelUsed?: string;
+    inputTokens?: number;
+    outputTokens?: number;
     error?: string;
     isRetriable: boolean;
   }
@@ -809,7 +878,15 @@ async function callSingleProvider(
       (typeof (data as Record<string, unknown>)?.model === "string"
         ? (data as Record<string, unknown>).model
         : model ?? cfg.defaultModel) as string;
-    return { ok: true, text: content, modelUsed, isRetriable: false };
+    const usage = providerUsageTokens(data);
+    return {
+      ok: true,
+      text: content,
+      modelUsed,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      isRetriable: false,
+    };
   } catch (e) {
     return { ok: false, error: String(e), isRetriable: true };
   }
@@ -2826,9 +2903,10 @@ async function runCompanyRuntimeWorker(
   const finish = asRecord(rawFinish) ?? {};
   const finalTaskStatus = asString(finish.task_status);
   const taskCancelled = finalTaskStatus === "cancelled";
+  const taskTimedOut = finish.timed_out === true;
 
   let persistedRoutingProfile = nextRoutingProfile;
-  if (!taskCancelled) {
+  if (!taskCancelled && !taskTimedOut) {
     try {
       persistedRoutingProfile = await persistCompanyRoutingOutcome(
         admin,
@@ -2900,6 +2978,7 @@ async function runCompanyRuntimeWorker(
     company_id: message.companyId,
     task_id: taskId,
     task_status: asString(finish.task_status),
+    timed_out: taskTimedOut,
     continue: shouldContinue,
   };
 }
@@ -4208,6 +4287,97 @@ async function callManusTask(
   };
 }
 
+type VoiceUsagePayload = {
+  tier: string;
+  used: number;
+  limit: number;
+  remaining: number;
+  generation_count: number;
+  generation_limit: number;
+  period_start?: string;
+};
+
+async function getVoiceUsage(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<VoiceUsagePayload> {
+  const { error: reconciliationError } = await admin.rpc(
+    "reconcile_voice_dubbing_quota",
+    { p_user_id: userId },
+  );
+  if (reconciliationError) throw new Error(reconciliationError.message);
+  const periodStart = new Date(
+    Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1),
+  ).toISOString().slice(0, 10);
+  const [{ data: subscription, error: subscriptionError }, {
+    data: counter,
+    error: counterError,
+  }] = await Promise.all([
+    admin.from("billing_subscriptions").select("tier,status").eq(
+      "user_id",
+      userId,
+    ).maybeSingle(),
+    admin.from("billing_usage_counters").select(
+      "voice_character_count,voice_generation_count",
+    ).eq("user_id", userId).eq("period_start", periodStart).maybeSingle(),
+  ]);
+  if (subscriptionError) throw new Error(subscriptionError.message);
+  if (counterError) throw new Error(counterError.message);
+
+  const subscriptionRecord = subscription as Record<string, unknown> | null;
+  const status = asString(subscriptionRecord?.status);
+  const tier = status === "active" || status === "trialing"
+    ? asString(subscriptionRecord?.tier) || "free"
+    : "free";
+  const rawUsed = (counter as Record<string, unknown> | null)
+    ?.voice_character_count;
+  const used = typeof rawUsed === "number"
+    ? rawUsed
+    : Number(rawUsed ?? 0) || 0;
+  const limit = voiceCharacterLimit(tier);
+  const rawGenerationCount = (counter as Record<string, unknown> | null)
+    ?.voice_generation_count;
+  const generationCount = typeof rawGenerationCount === "number"
+    ? rawGenerationCount
+    : Number(rawGenerationCount ?? 0) || 0;
+  const generationLimit = tier === "team" ? 3000 : tier === "pro" ? 1000 : 100;
+  return {
+    tier,
+    used,
+    limit,
+    remaining: Math.max(limit - used, 0),
+    generation_count: generationCount,
+    generation_limit: generationLimit,
+  };
+}
+
+function normalizeVoiceUsagePayload(value: unknown): VoiceUsagePayload & {
+  allowed: boolean;
+  reason?: string;
+} {
+  const raw = asRecord(value) ?? {};
+  const tier = asString(raw.tier) || "free";
+  const limit = Number(raw.limit ?? voiceCharacterLimit(tier));
+  const used = Number(raw.used ?? 0);
+  const remaining = Number(raw.remaining ?? Math.max(limit - used, 0));
+  const generationCount = Number(raw.generation_count ?? 0);
+  const generationLimit = Number(
+    raw.generation_limit ??
+      (tier === "team" ? 3000 : tier === "pro" ? 1000 : 100),
+  );
+  return {
+    allowed: raw.allowed === true,
+    tier,
+    limit: Number.isFinite(limit) ? limit : voiceCharacterLimit(tier),
+    used: Number.isFinite(used) ? used : 0,
+    remaining: Number.isFinite(remaining) ? remaining : 0,
+    generation_count: Number.isFinite(generationCount) ? generationCount : 0,
+    generation_limit: Number.isFinite(generationLimit) ? generationLimit : 100,
+    period_start: asString(raw.period_start) || undefined,
+    reason: asString(raw.reason) || undefined,
+  };
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -4254,76 +4424,66 @@ serve(async (req: Request) => {
       body.action ?? requestUrl.searchParams.get("action") ?? "",
     );
 
-    // Actions that require authentication
-    const authRequired = [
-      "search.query",
-      "task.clarity.evaluate",
-      "secretary.task",
-      "secretary.history",
-      "summarize.text",
-      "agent.list",
-      "agent.create",
-      "agent.run",
-      "agent.tool_policy.evaluate",
-      "org.get",
-      "my_agent.chat",
-      "my_agent.history",
-      "challenges.list",
-      "trigger.analyze",
-      "analyze.reality",
-      "company_builder.list",
-      "company_builder.get",
-      "company_builder.bootstrap",
-      "company_builder.research.add",
-      "company_builder.start",
-      "company_builder.pause",
-      "company_builder.resume",
-      "company_builder.stop",
-      "company_builder.global_kill_switch",
-      // AI大学 v2 (P1〜P4)
-      "quiz.fsrs_next",
-      "quiz.fsrs_grade",
-      "quiz.fsrs_stats",
-      "university.rlhf_signal",
-      "university.rlhf_snapshot",
-      "user_data.finetune_readiness",
-      "learner.update_profile",
-      "quiz.evaluate",
-      "quiz.explain",
-      "kpi.monthly_summary",
-      "asset.market_price.fetch",
-      "asset.investment.market_price.fetch",
-      "ai_hub.fetch_market_price",
-      "asset.monthly_report.generate",
-      "asset_liability.monthly_report.generate",
-      "asset_subscription.analyze_statement",
-      "asset.chat",
-      "ai_hub.asset_chat",
-      "department_finance_summary",
-      "ai_hub.department_finance_summary",
-      "payslip.parse",
-      "parse-payslip",
-      "expense.classify",
-      "classify-expense",
-      "expense.weekly_coaching.generate",
-      "asset.disposable_balance.compute",
-      "compute-disposable-balance",
-      "asset.anomaly.detect",
-      "detect-anomalies",
-      "voice.tts",
-      "voice.stt",
-      "voice.cartesia_session.start",
-      "voice.cartesia_session.finish",
-      // 英語速読カリキュラム (実力測定 / AI 生成は要認証 / 教材閲覧は公開)
-      "english_reading.submit_attempt",
-      "english_reading.ability",
-      "english_reading.generate_lesson",
-    ];
-    if (authRequired.includes(action) && !userId) {
-      return json({ error: "Unauthorized" }, 401);
+    const authorization = authorizeAiHubAction(action, {
+      userId,
+      isServiceRole: isServiceRoleRequest(req),
+    });
+    if (!authorization.allowed) {
+      return json({ error: authorization.error }, authorization.status);
     }
 
     switch (action) {
+      case "knowledge_graph.status":
+      case "knowledge_graph.upload":
+      case "knowledge_graph.query":
+      case "knowledge_graph.delete_document": {
+        if (
+          ["knowledge_graph.upload", "knowledge_graph.query"].includes(action)
+        ) {
+          const offlinePolicy = parseOfflineSecureModePolicy(body);
+          if (shouldBlockExternalProviderCall(offlinePolicy)) {
+            return json(
+              buildOfflineBlockedResponseBody(offlinePolicy, {
+                action,
+                provider: "writer",
+              }),
+              409,
+            );
+          }
+        }
+        const writerApiKey = Deno.env.get("WRITER_API_KEY") ?? "";
+        if (action === "knowledge_graph.query" && writerApiKey) {
+          const usage = await checkAndRecordAiUsage(
+            supabaseUsageStore(admin),
+            userId ?? "",
+          );
+          if (!usage.allowed) {
+            return json({
+              error: "Monthly AI query limit reached.",
+              code: "usage_limit_reached",
+            }, 402);
+          }
+          const budget = await checkBudget("ef", "ai-hub");
+          if (!budget.ok) {
+            return json({
+              error: "AI budget limit reached.",
+              code: "budget_limit_reached",
+            }, 429);
+          }
+        }
+        const result = await handleWriterKnowledgeGraphAction({
+          action,
+          body,
+          userId: userId ?? "",
+          configured: writerApiKey.length > 0,
+          store: createSupabaseWriterKnowledgeGraphStore(admin),
+          gateway: writerApiKey
+            ? createWriterKnowledgeGraphGateway(writerApiKey)
+            : null,
+        });
+        return json(result);
+      }
+
       case "judgment.get": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {
@@ -5051,6 +5211,82 @@ serve(async (req: Request) => {
           });
         } catch {
           return json({ success: true, text });
+        }
+      }
+
+      case "corporate_site.readiness": {
+        const mode = asString(body.mode).toLowerCase();
+        if (mode !== "review" && mode !== "generate") {
+          return json({ error: "mode must be review or generate" }, 400);
+        }
+        const profile = {
+          companyName: asString(body.company_name),
+          representativeName: asString(body.representative_name),
+          registeredAddress: asString(body.registered_address),
+          businessPlanSummary: asString(body.business_plan_summary),
+          virtualOffice: body.virtual_office === true,
+        };
+
+        try {
+          validateCorporateSiteProfile(profile);
+          if (mode === "generate") {
+            const rawMilestones = Array.isArray(body.wbs_milestones)
+              ? body.wbs_milestones
+              : asString(body.wbs_milestones).split(/\r?\n/);
+            const html = generateCorporateSiteHtml({
+              ...profile,
+              contact: asString(body.contact),
+              wbsMilestones: rawMilestones.map(asString).filter(Boolean),
+            });
+            return json({
+              success: true,
+              mode,
+              html,
+              disclaimer: CORPORATE_SITE_READINESS_DISCLAIMER,
+            });
+          }
+
+          const sourceUrl = asString(body.url);
+          if (!sourceUrl) return json({ error: "url required" }, 400);
+          const document = await fetchPublicResearchDocument(sourceUrl);
+          const result = reviewCorporateSiteDocument(
+            document.markdown,
+            profile,
+          );
+          return json({
+            success: true,
+            mode,
+            source: {
+              canonical_url: document.canonicalUrl,
+              title: document.title,
+              http_status: document.httpStatus,
+            },
+            result: {
+              ready_for_document_review: result.readyForDocumentReview,
+              score: result.score,
+              checks: result.checks,
+              missing_required_items: result.missingRequiredItems,
+              manual_review_items: result.manualReviewItems,
+              disclaimer: result.disclaimer,
+            },
+          });
+        } catch (error) {
+          const message = error instanceof Error
+            ? error.message
+            : String(error);
+          const normalized = message.toLowerCase();
+          const invalidInput = normalized.includes("required") ||
+            normalized.includes("characters or fewer") ||
+            normalized.includes("source url") ||
+            normalized.includes("private") ||
+            normalized.includes("local network") ||
+            normalized.includes("not allowed") ||
+            normalized.includes("only http");
+          return json({
+            success: false,
+            status: invalidInput ? "invalid_request" : "site_fetch_failed",
+            message,
+          }, invalidInput ? 400 : 422);
         }
       }
 
@@ -6319,6 +6555,221 @@ serve(async (req: Request) => {
         });
       }
 
+      case "palm_reading.analyze": {
+        const handSide = normalizePalmHandSide(
+          body.hand_side ?? body.handSide,
+        );
+        if (!handSide) {
+          return json({ error: "hand_side must be left or right" }, 400);
+        }
+        const requestId = asString(body.request_id ?? body.requestId);
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(requestId)
+        ) {
+          return json({ error: "valid request_id required" }, 400);
+        }
+        const parsedImage = parseInlineImage(body);
+        if (parsedImage.error) {
+          return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        }
+        const image = parsedImage.image;
+        if (!image) {
+          return json({ error: "imageBase64 required" }, 400);
+        }
+        if (
+          !["image/png", "image/jpeg", "image/webp"].includes(image.mimeType)
+        ) {
+          return json({ error: "PNG, JPEG, or WebP image required" }, 400);
+        }
+
+        const { data: existing, error: existingError } = await admin
+          .from("palm_readings")
+          .select(
+            "id,request_id,hand_side,image_path,image_mime_type,analysis,comparison,provider,model,schema_version,quality_score,created_at",
+          )
+          .eq("user_id", userId!)
+          .eq("request_id", requestId)
+          .maybeSingle();
+        if (existingError) throw new Error(existingError.message);
+        if (existing) {
+          return json({
+            success: true,
+            idempotent_replay: true,
+            image_persisted: true,
+            reading: existing,
+          });
+        }
+
+        const imageBytes = decodePalmImageBase64(
+          image.base64,
+          image.mimeType,
+        );
+        if (!imageBytes) {
+          return json({
+            error: "imageBase64 is invalid or does not match mimeType",
+          }, 400);
+        }
+
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "palm_reading.analyze",
+              provider: "google",
+            }),
+            409,
+          );
+        }
+
+        const { data: previousRows, error: previousError } = await admin
+          .from("palm_readings")
+          .select("id,analysis,created_at")
+          .eq("user_id", userId!)
+          .eq("hand_side", handSide)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(1);
+        if (previousError) throw new Error(previousError.message);
+        const previous = previousRows?.[0] as
+          | Record<string, unknown>
+          | undefined;
+
+        const usage = await checkAndRecordAiUsage(
+          supabaseUsageStore(admin),
+          userId!,
+        );
+        if (!usage.allowed) {
+          return json({
+            success: false,
+            status: "freeLimitReached",
+            error: "usageLimitReached",
+            message: "AIの無料利用上限に達しました。",
+          }, 402);
+        }
+        const budget = await checkBudget("ef", "ai-hub");
+        if (!budget.ok) {
+          return json({
+            success: false,
+            status: "budgetExceeded",
+            error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+            message:
+              "AIの予算上限に達しました。時間をおいて再試行してください。",
+          }, 429);
+        }
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({
+            success: false,
+            status: "apiKeyRequired",
+            secret_needed: "GEMINI_API_KEY",
+            message: "Supabase Secret GEMINI_API_KEY is required.",
+          });
+        }
+
+        const raw = await callGemini(
+          buildPalmReadingPrompt(handSide, previous?.analysis),
+          geminiKey,
+          image,
+        );
+        const payload = parsePalmReadingResponse(raw, Boolean(previous));
+        if (!payload) {
+          return json({
+            success: false,
+            status: "invalidAiResponse",
+            message: "AI鑑定結果を安全な形式に整えられませんでした。",
+          }, 502);
+        }
+        if (!payload.analysis.photo_quality.is_usable) {
+          return json({
+            success: false,
+            status: "imageNeedsRetake",
+            message: payload.analysis.photo_quality.feedback,
+            photo_quality: payload.analysis.photo_quality,
+          });
+        }
+
+        const readingId = crypto.randomUUID();
+        const extension = image.mimeType === "image/png"
+          ? "png"
+          : image.mimeType === "image/webp"
+          ? "webp"
+          : "jpg";
+        const imagePath = `${userId}/${readingId}.${extension}`;
+        const { error: uploadError } = await admin.storage
+          .from("palm-readings")
+          .upload(imagePath, imageBytes, {
+            contentType: image.mimeType,
+            upsert: false,
+          });
+        if (uploadError) throw new Error(uploadError.message);
+
+        const { data: reading, error: insertError } = await admin
+          .from("palm_readings")
+          .insert({
+            id: readingId,
+            request_id: requestId,
+            user_id: userId!,
+            hand_side: handSide,
+            image_path: imagePath,
+            image_mime_type: image.mimeType,
+            analysis: payload.analysis,
+            comparison: payload.comparison,
+            provider: "google",
+            model: "gemini-2.5-flash",
+            schema_version: 1,
+            quality_score: payload.analysis.photo_quality.score,
+          })
+          .select(
+            "id,request_id,hand_side,image_path,image_mime_type,analysis,comparison,provider,model,schema_version,quality_score,created_at",
+          )
+          .single();
+        if (insertError) {
+          await admin.storage.from("palm-readings").remove([imagePath]);
+          throw new Error(insertError.message);
+        }
+
+        return json({
+          success: true,
+          idempotent_replay: false,
+          image_persisted: true,
+          reading,
+        });
+      }
+
+      case "palm_reading.delete": {
+        const readingId = asString(body.reading_id ?? body.readingId);
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(readingId)
+        ) {
+          return json({ error: "valid reading_id required" }, 400);
+        }
+        const { data: ownedReading, error: lookupError } = await admin
+          .from("palm_readings")
+          .select("id,image_path")
+          .eq("id", readingId)
+          .eq("user_id", userId!)
+          .maybeSingle();
+        if (lookupError) throw new Error(lookupError.message);
+        if (!ownedReading) return json({ error: "reading not found" }, 404);
+
+        const imagePath = asString(ownedReading.image_path);
+        if (imagePath) {
+          const { error: removeError } = await admin.storage
+            .from("palm-readings")
+            .remove([imagePath]);
+          if (removeError) throw new Error(removeError.message);
+        }
+        const { error: deleteError } = await admin
+          .from("palm_readings")
+          .delete()
+          .eq("id", readingId)
+          .eq("user_id", userId!);
+        if (deleteError) throw new Error(deleteError.message);
+        return json({ success: true, deleted_id: readingId });
+      }
+
       case "payslip.parse":
       case "parse-payslip": {
         if (!isPayslipIngestionAction(action)) {
@@ -6347,6 +6798,64 @@ serve(async (req: Request) => {
           },
         });
         return json({ success: true, ...result });
+      }
+
+      case "mario.jev_decide": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, { action, provider: "typesafe" }), 409);
+        }
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          return json(await decideMario({
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            allowedUsers: (Deno.env.get("JEV_MARIO_USER_IDS") ?? "").split(",").map(s => s.trim()).filter(Boolean),
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "", body,
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_mario_call", { p_user_id: id });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          }));
+        } catch (error) {
+          if (error instanceof MarioError) return json({ error: error.code }, error.status);
+          return json({ error: "provider_unavailable" }, 503);
+        }
+      }
+
+      case "expense.jev_suggest": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, {
+            action, provider: "typesafe",
+          }), 409);
+        }
+        // Re-read the authenticated account; anonymous sessions must not spend.
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          const result = await classifyJevExpense({
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            body,
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "",
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_expense_call", {
+                p_user_id: id,
+              });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          });
+          return json(result);
+        } catch (error) {
+          if (error instanceof JevExpenseError) {
+            return json({ error: error.code }, error.status);
+          }
+          return json({ error: "provider_unavailable" }, 503);
+        }
       }
 
       case "expense.classify":
@@ -6508,7 +7017,7 @@ serve(async (req: Request) => {
             409,
           );
         }
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
@@ -6602,7 +7111,7 @@ serve(async (req: Request) => {
           SUPABASE_ANON_KEY,
           { global: { headers: { Authorization: authorization } } },
         );
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
@@ -6717,7 +7226,7 @@ serve(async (req: Request) => {
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
         const requestStartedAt = performance.now();
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
@@ -6988,6 +7497,7 @@ serve(async (req: Request) => {
 
       case "provider.chat_auto": {
         const effortSelection = await selectEffort("provider.chat_auto", body);
+        const claudeRoute = routedClaudeModel(effortSelection.effort);
         const internalUsageUserId = isServiceRoleRequest(req)
           ? nullableUuid(body.internal_user_id)
           : null;
@@ -7049,7 +7559,7 @@ serve(async (req: Request) => {
 
         // Win版#131 part 4: Observability — trace_id / session_id / latency 計測
         const requestStartedAt = performance.now();
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
@@ -7068,6 +7578,8 @@ serve(async (req: Request) => {
         let usedProvider: string | undefined;
         let usedTier: Tier | undefined;
         let usedModel: string | undefined;
+        let usedInputTokens: number | undefined;
+        let usedOutputTokens: number | undefined;
 
         // リクエスト全体の時間予算。実障害(2026-07-06): 予算なしで遅延プロバイダを
         // 順に待つと edge の wall-clock を超え、gateway 502 でクライアントに
@@ -7090,7 +7602,10 @@ serve(async (req: Request) => {
             const result = await callSingleProvider(
               manualPreference.provider,
               finalMessages,
-              manualPreference.model ?? undefined,
+              manualPreference.model ??
+                (manualPreference.provider === "anthropic"
+                  ? claudeRoute.model
+                  : undefined),
               undefined,
               {
                 maxTokens: requestedMaxTokens,
@@ -7106,6 +7621,8 @@ serve(async (req: Request) => {
               usedProvider = manualPreference.provider;
               usedTier = providerTier(manualPreference.provider) ?? routedTier;
               usedModel = result.modelUsed;
+              usedInputTokens = result.inputTokens;
+              usedOutputTokens = result.outputTokens;
             } else {
               const attemptMs = Math.round(
                 performance.now() - attemptStartedAt,
@@ -7141,7 +7658,7 @@ serve(async (req: Request) => {
               const result = await callSingleProvider(
                 pid,
                 finalMessages,
-                undefined,
+                pid === "anthropic" ? claudeRoute.model : undefined,
                 undefined,
                 {
                   maxTokens: requestedMaxTokens,
@@ -7157,6 +7674,8 @@ serve(async (req: Request) => {
                 usedProvider = pid;
                 usedTier = tier;
                 usedModel = result.modelUsed;
+                usedInputTokens = result.inputTokens;
+                usedOutputTokens = result.outputTokens;
                 break outerLoop;
               }
               const attemptMs = Math.round(
@@ -7196,6 +7715,8 @@ serve(async (req: Request) => {
                   : "")).slice(0, 500),
               action: "provider.chat_auto",
               status_code: 503,
+              routing_effort: effortSelection.effort,
+              routing_source: effortSelection.source,
               provider_choice_reason: providerChoiceReason,
               routing_use_case: routingUseCase,
             });
@@ -7221,10 +7742,14 @@ serve(async (req: Request) => {
             .map((m) => typeof m.content === "string" ? m.content.length : 0)
             .reduce((a, b) => a + b, 0);
           const outputChars = resultText?.length ?? 0;
+          const inputTokens = usedInputTokens ??
+            estimateTokensFromChars(inputChars);
+          const outputTokens = usedOutputTokens ??
+            estimateTokensFromChars(outputChars);
           const estimatedCost = calculateApiCost(
             usedModel ?? usedProvider,
-            estimateTokensFromChars(inputChars),
-            estimateTokensFromChars(outputChars),
+            inputTokens,
+            outputTokens,
           );
           await admin.from("ai_hub_chat_logs").insert({
             provider: usedProvider,
@@ -7237,8 +7762,12 @@ serve(async (req: Request) => {
             session_id: sessionId,
             input_chars: inputChars,
             output_chars: outputChars,
+            input_tokens: inputTokens,
+            output_tokens: outputTokens,
             action: "provider.chat_auto",
             status_code: 200,
+            routing_effort: effortSelection.effort,
+            routing_source: effortSelection.source,
             provider_choice_reason: providerChoiceReason,
             routing_use_case: routingUseCase,
           });
@@ -7252,6 +7781,7 @@ serve(async (req: Request) => {
           model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
           effort: effortSelection.effort,
           effort_source: effortSelection.source,
+          claude_route: usedProvider === "anthropic" ? claudeRoute : null,
           status: "implemented",
           text: resultText,
           provider_choice_reason: providerChoiceReason,
@@ -7261,6 +7791,7 @@ serve(async (req: Request) => {
 
       case "edge_llm.invoke": {
         const effortSelection = await selectEffort("edge_llm.invoke", body);
+        const claudeRoute = routedClaudeModel(effortSelection.effort);
         const offlinePolicy = parseOfflineSecureModePolicy(body);
         const requestedTier = normalizeProviderTier(body.tier);
         const providerId = asString(body.provider) || undefined;
@@ -7291,8 +7822,11 @@ serve(async (req: Request) => {
           }, 429);
         }
 
-        const responseFormat = asString(body.response_format) === "json"
+        const requestedResponseFormat = asString(body.response_format);
+        const responseFormat = requestedResponseFormat === "json"
           ? "json"
+          : requestedResponseFormat === "markdown"
+          ? "markdown"
           : "text";
         const contextPayload = body.context_data ?? body.context ?? null;
         const contextText = contextPayload == null
@@ -7313,14 +7847,21 @@ serve(async (req: Request) => {
           "\n# Output instructions",
           responseFormat === "json"
             ? "Return valid JSON only. Do not add markdown fences or commentary."
+            : responseFormat === "markdown"
+            ? "Respond in concise Japanese Markdown. Put code snippets in fenced code blocks and include the language tag."
             : "Respond in concise Japanese plain text.",
         );
         const finalMessages = [];
-        // [AI-CHARACTER-24] Prepend common character preamble to ensure
-        // consistent persona across all edge_llm.invoke callers.
-        const composedSystemPrompt = systemPrompt.length > 0
-          ? `${AI_CHARACTER_PREAMBLE}\n\n${systemPrompt}`
-          : AI_CHARACTER_PREAMBLE;
+        // Keep the stable character/application prefix before the request-time
+        // UTC context so prompt caches can still reuse the longest prefix.
+        const composedSystemPrompt = buildAiSystemPrompt({
+          applicationInstructions: systemPrompt,
+          outputFormat: responseFormat === "json"
+            ? "json"
+            : responseFormat === "markdown"
+            ? "markdown"
+            : "plain_text",
+        });
         finalMessages.push({
           role: "system",
           content: composedSystemPrompt,
@@ -7331,7 +7872,7 @@ serve(async (req: Request) => {
         });
 
         const requestStartedAt = performance.now();
-        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
@@ -7345,6 +7886,8 @@ serve(async (req: Request) => {
         let usedProvider: string | undefined;
         let usedTier: Tier | undefined;
         let usedModel: string | undefined;
+        let usedInputTokens: number | undefined;
+        let usedOutputTokens: number | undefined;
         let failureDetail: string | undefined;
 
         if (providerId) {
@@ -7368,7 +7911,8 @@ serve(async (req: Request) => {
           const result = await callSingleProvider(
             providerId,
             finalMessages,
-            explicitModel,
+            explicitModel ??
+              (providerId === "anthropic" ? claudeRoute.model : undefined),
           );
           if (result.ok && result.text) {
             resultText = result.text;
@@ -7376,6 +7920,8 @@ serve(async (req: Request) => {
             usedTier = providerTier(providerId) ?? requestedTier ??
               "performance";
             usedModel = result.modelUsed;
+            usedInputTokens = result.inputTokens;
+            usedOutputTokens = result.outputTokens;
           } else if (result.isRetriable) {
             // Quota/rate-limit: try fallback chain (anthropic → google → openai)
             const fallbackChain = ["anthropic", "google", "openai"].filter(
@@ -7385,7 +7931,7 @@ serve(async (req: Request) => {
               const fbResult = await callSingleProvider(
                 fbPid,
                 finalMessages,
-                undefined,
+                fbPid === "anthropic" ? claudeRoute.model : undefined,
               );
               if (fbResult.ok && fbResult.text) {
                 console.warn(
@@ -7395,6 +7941,8 @@ serve(async (req: Request) => {
                 usedProvider = fbPid;
                 usedTier = providerTier(fbPid) ?? "performance";
                 usedModel = fbResult.modelUsed;
+                usedInputTokens = fbResult.inputTokens;
+                usedOutputTokens = fbResult.outputTokens;
                 break;
               }
             }
@@ -7422,13 +7970,18 @@ serve(async (req: Request) => {
             const result = await callSingleProvider(
               manualPreference.provider,
               finalMessages,
-              manualPreference.model ?? undefined,
+              manualPreference.model ??
+                (manualPreference.provider === "anthropic"
+                  ? claudeRoute.model
+                  : undefined),
             );
             if (result.ok && result.text) {
               resultText = result.text;
               usedProvider = manualPreference.provider;
               usedTier = providerTier(manualPreference.provider) ?? routedTier;
               usedModel = result.modelUsed;
+              usedInputTokens = result.inputTokens;
+              usedOutputTokens = result.outputTokens;
             } else {
               failureDetail = `manual preference failed: ${
                 result.error ?? manualPreference.provider
@@ -7447,13 +8000,16 @@ serve(async (req: Request) => {
                 const result = await callSingleProvider(
                   pid,
                   finalMessages,
-                  explicitModel,
+                  explicitModel ??
+                    (pid === "anthropic" ? claudeRoute.model : undefined),
                 );
                 if (result.ok && result.text) {
                   resultText = result.text;
                   usedProvider = pid;
                   usedTier = tier;
                   usedModel = result.modelUsed;
+                  usedInputTokens = result.inputTokens;
+                  usedOutputTokens = result.outputTokens;
                   break outerLoop;
                 }
               }
@@ -7483,6 +8039,8 @@ serve(async (req: Request) => {
               error_message: failureDetail ?? "edge_llm.invoke failed",
               action: "edge_llm.invoke",
               status_code: 502,
+              routing_effort: effortSelection.effort,
+              routing_source: effortSelection.source,
               routing_use_case: routingUseCase,
             });
           } catch {
@@ -7498,10 +8056,14 @@ serve(async (req: Request) => {
         }
 
         const outputChars = resultText.length;
+        const inputTokens = usedInputTokens ??
+          estimateTokensFromChars(inputChars);
+        const outputTokens = usedOutputTokens ??
+          estimateTokensFromChars(outputChars);
         const estimatedCost = calculateApiCost(
           usedModel ?? usedProvider,
-          estimateTokensFromChars(inputChars),
-          estimateTokensFromChars(outputChars),
+          inputTokens,
+          outputTokens,
         );
         let parsedJson: unknown = null;
         let parseError: string | undefined;
@@ -7526,8 +8088,12 @@ serve(async (req: Request) => {
             session_id: sessionId,
             input_chars: inputChars,
             output_chars: outputChars,
+            input_tokens: inputTokens,
+            output_tokens: outputTokens,
             action: "edge_llm.invoke",
             status_code: 200,
+            routing_effort: effortSelection.effort,
+            routing_source: effortSelection.source,
             routing_use_case: routingUseCase,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
@@ -7543,6 +8109,7 @@ serve(async (req: Request) => {
           model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
           effort: effortSelection.effort,
           effort_source: effortSelection.source,
+          claude_route: usedProvider === "anthropic" ? claudeRoute : null,
           text: resultText,
           response_format: responseFormat,
           parsed_json: parsedJson,
@@ -7757,53 +8324,523 @@ serve(async (req: Request) => {
             reason: "ELEVENLABS_API_KEY not configured",
           });
         }
-        const ttsResp = await fetchWithProviderTimeout(
-          `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-          {
-            method: "POST",
-            headers: {
-              "xi-api-key": elevenKey,
-              "Content-Type": "application/json",
+        try {
+          const ttsResp = await fetchWithProviderTimeout(
+            `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+            {
+              method: "POST",
+              headers: {
+                "xi-api-key": elevenKey,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                text,
+                model_id: "eleven_multilingual_v2",
+                voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+              }),
             },
-            body: JSON.stringify({
-              text,
-              model_id: "eleven_multilingual_v2",
-              voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-            }),
-          },
-        );
-        if (!ttsResp.ok) {
-          const errText = await ttsResp.text();
-          // Free-tier / paid-plan-required → フォールバックで Web Speech API 利用を UI に通知
-          if (
-            errText.includes("paid_plan_required") ||
-            errText.includes("payment_required")
-          ) {
+          );
+          if (!ttsResp.ok) {
+            const errText = await ttsResp.text();
+            // Free-tier / paid-plan-required → フォールバックで Web Speech API 利用を UI に通知
+            if (
+              errText.includes("paid_plan_required") ||
+              errText.includes("payment_required")
+            ) {
+              return json({
+                success: false,
+                fallback: "webspeech",
+                text,
+                reason: "elevenlabs_paid_plan_required",
+              });
+            }
+            const errorId = crypto.randomUUID();
+            console.error("voice.tts provider failure", {
+              errorId,
+              status: ttsResp.status,
+              detail: errText.slice(0, 500),
+            });
             return json({
-              success: false,
+              error: "elevenlabs_tts_unavailable",
+              error_id: errorId,
               fallback: "webspeech",
               text,
-              reason: "elevenlabs_paid_plan_required",
-            });
+            }, 502);
           }
+          const audioBuffer = await ttsResp.arrayBuffer();
+          const bytes = new Uint8Array(audioBuffer);
+          let binary = "";
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64Audio = btoa(binary);
           return json({
-            error: `ElevenLabs error: ${errText}`,
+            success: true,
+            audio_base64: base64Audio,
+            content_type: "audio/mpeg",
+          });
+        } catch (error) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.tts unavailable", {
+            errorId,
+            detail: String(error).slice(0, 500),
+          });
+          return json({
+            error: "elevenlabs_tts_unavailable",
+            error_id: errorId,
             fallback: "webspeech",
             text,
           }, 502);
         }
-        const audioBuffer = await ttsResp.arrayBuffer();
-        const bytes = new Uint8Array(audioBuffer);
-        let binary = "";
-        for (let i = 0; i < bytes.byteLength; i++) {
-          binary += String.fromCharCode(bytes[i]);
+      }
+
+      case "voice.catalog": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
+        if (!elevenKey) {
+          return json({ error: "ELEVENLABS_API_KEY not configured" }, 503);
         }
-        const base64Audio = btoa(binary);
-        return json({
-          success: true,
-          audio_base64: base64Audio,
-          content_type: "audio/mpeg",
+        const search = asString(body.search).slice(0, 80);
+        const requestedPage = Number(asString(body.page_token) || "0");
+        const page = Number.isInteger(requestedPage) && requestedPage >= 0
+          ? Math.min(requestedPage, 100)
+          : 0;
+        const params = new URLSearchParams({
+          page_size: "100",
+          page: String(page),
+          sort: "trending",
         });
+        if (search) params.set("search", search);
+        try {
+          const response = await fetchWithProviderTimeout(
+            `https://api.elevenlabs.io/v1/shared-voices?${params}`,
+            { headers: { "xi-api-key": elevenKey } },
+          );
+          const rawText = await response.text();
+          if (!response.ok) {
+            const errorId = crypto.randomUUID();
+            console.error("voice.catalog provider failure", {
+              errorId,
+              status: response.status,
+              detail: rawText.slice(0, 500),
+            });
+            return json({
+              error: "voice_catalog_unavailable",
+              error_id: errorId,
+            }, 502);
+          }
+          const payload = JSON.parse(rawText) as Record<string, unknown>;
+          const voices = Array.isArray(payload.voices)
+            ? payload.voices.flatMap((item) => {
+              const voice = asRecord(item);
+              const id = asString(voice?.voice_id);
+              if (!voice || !id) return [];
+              const labels = {
+                language: asString(voice.language),
+                accent: asString(voice.accent),
+                gender: asString(voice.gender),
+                age: asString(voice.age),
+                style: asString(voice.descriptive),
+                use_case: asString(voice.use_case),
+              };
+              return [{
+                id,
+                name: asString(voice.name) || "Voice",
+                category: asString(voice.category),
+                description: asString(voice.description),
+                preview_url: asString(voice.preview_url),
+                public_owner_id: asString(voice.public_owner_id),
+                labels,
+              }];
+            })
+            : [];
+          return json({
+            success: true,
+            voices,
+            has_more: payload.has_more === true,
+            next_page_token: payload.has_more === true
+              ? String(page + 1)
+              : null,
+            total_count: Number(payload.total_count ?? voices.length),
+          });
+        } catch (error) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.catalog unavailable", {
+            errorId,
+            detail: String(error).slice(0, 500),
+          });
+          return json({
+            error: "voice_catalog_unavailable",
+            error_id: errorId,
+          }, 502);
+        }
+      }
+
+      case "voice.usage": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        try {
+          return json({
+            success: true,
+            usage: await getVoiceUsage(admin, userId),
+          });
+        } catch (error) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.usage unavailable", {
+            errorId,
+            detail: String(error).slice(0, 500),
+          });
+          return json({
+            error: "voice_usage_unavailable",
+            error_id: errorId,
+          }, 503);
+        }
+      }
+
+      case "voice.dubbing.generate": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
+        if (!elevenKey) {
+          return json({ error: "ELEVENLABS_API_KEY not configured" }, 503);
+        }
+
+        const text = asString(body.text).replace(/\r\n/g, "\n");
+        if (!text) return json({ error: "text required" }, 400);
+
+        let model: ReturnType<typeof resolveVoiceDubbingModel>;
+        let language: string;
+        let voiceId: string;
+        try {
+          model = resolveVoiceDubbingModel(body.model_id);
+          language = normalizeVoiceLanguage(body.language, model);
+          voiceId = normalizeVoiceId(body.voice_id);
+        } catch (error) {
+          return json({ error: String(error).replace("Error: ", "") }, 400);
+        }
+        if (text.length > model.totalLimit) {
+          return json({
+            error: "text_too_long",
+            model_id: model.id,
+            max_characters: model.totalLimit,
+          }, 400);
+        }
+
+        const settings = normalizeVoiceSettings(body.voice_settings);
+        const chunks = splitVoiceText(text, model.chunkLimit);
+        const reservedCharacters = chunks.reduce(
+          (total, chunk) => total + chunk.length,
+          0,
+        );
+        const requestId = asString(body.idempotency_key).toLowerCase();
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+            .test(
+              requestId,
+            )
+        ) {
+          return json({ error: "invalid_idempotency_key" }, 400);
+        }
+        const fileName = safeAudioFileName(body.file_name);
+        const requestHash = await sha256Hex(JSON.stringify({
+          text,
+          fileName,
+          modelId: model.id,
+          language,
+          voiceId,
+          settings,
+        }));
+
+        const { data: claimData, error: claimError } = await admin.rpc(
+          "claim_voice_character_quota",
+          {
+            p_user_id: userId,
+            p_request_id: requestId,
+            p_request_hash: requestHash,
+            p_characters: reservedCharacters,
+          },
+        );
+        if (claimError) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.dubbing quota claim failed", {
+            errorId,
+            detail: claimError.message.slice(0, 500),
+          });
+          return json({
+            error: "voice_quota_unavailable",
+            error_id: errorId,
+          }, 503);
+        }
+        const claim = asRecord(claimData) ?? {};
+        if (claim.replayed === true) {
+          const replay = asRecord(claim.result) ?? {};
+          const replayPath = asString(replay.storage_path);
+          if (!replayPath.startsWith(`${userId}/`)) {
+            return json({ error: "voice_replay_unavailable" }, 503);
+          }
+          const { data: signed, error: signedError } = await admin.storage
+            .from(VOICE_DUBBING_BUCKET)
+            .createSignedUrl(replayPath, 3600);
+          if (signedError || !signed?.signedUrl) {
+            return json({ error: "voice_replay_unavailable" }, 503);
+          }
+          let replayUsage: VoiceUsagePayload;
+          try {
+            replayUsage = await getVoiceUsage(admin, userId);
+          } catch (error) {
+            const errorId = crypto.randomUUID();
+            console.error("voice.dubbing replay usage unavailable", {
+              errorId,
+              requestId,
+              detail: String(error).slice(0, 500),
+            });
+            return json({
+              error: "voice_usage_unavailable",
+              error_id: errorId,
+            }, 503);
+          }
+          return json({
+            ...replay,
+            success: true,
+            replayed: true,
+            audio_url: signed.signedUrl,
+            expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+            usage: replayUsage,
+          });
+        }
+        const usage = normalizeVoiceUsagePayload(claimData);
+        if (!usage.allowed) {
+          const conflict = usage.reason === "request_in_progress" ||
+            usage.reason === "idempotency_conflict" ||
+            usage.reason === "retry_with_new_request_id";
+          return json(
+            { success: false, error: usage.reason, usage },
+            conflict ? 409 : 429,
+          );
+        }
+
+        let uploadedPath: string | null = null;
+        let billedCharacters = 0;
+        let startedCharacters = 0;
+        let providerCallAmbiguous = false;
+        let completionUncertain = false;
+        try {
+          const audioChunks: Uint8Array[] = [];
+          const requestIds: string[] = [];
+          for (const chunk of chunks) {
+            const requestBody: Record<string, unknown> = {
+              text: chunk,
+              model_id: model.id,
+              language_code: language,
+              voice_settings: model.id === "eleven_v3"
+                ? {
+                  stability: settings.stability,
+                  style: settings.style,
+                  speed: settings.speed,
+                }
+                : settings,
+            };
+            if (model.requestStitching && requestIds.length > 0) {
+              requestBody.previous_request_ids = requestIds.slice(-3);
+            }
+            const { error: startError } = await admin.rpc(
+              "start_voice_dubbing_chunk",
+              {
+                p_user_id: userId,
+                p_request_id: requestId,
+                p_characters: chunk.length,
+              },
+            );
+            if (startError) {
+              throw new Error("voice_job_chunk_start_failed");
+            }
+            startedCharacters += chunk.length;
+            let response: Response;
+            try {
+              response = await fetchWithProviderTimeout(
+                `https://api.elevenlabs.io/v1/text-to-speech/${
+                  encodeURIComponent(voiceId)
+                }?output_format=mp3_44100_128`,
+                {
+                  method: "POST",
+                  headers: {
+                    "xi-api-key": elevenKey,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(requestBody),
+                },
+              );
+            } catch (error) {
+              providerCallAmbiguous = true;
+              throw error;
+            }
+            if (!response.ok) {
+              providerCallAmbiguous = false;
+              const providerDetail = (await response.text()).slice(0, 500);
+              console.error("voice.dubbing provider failure", {
+                requestId,
+                status: response.status,
+                detail: providerDetail,
+              });
+              throw new Error("elevenlabs_generation_failed");
+            }
+            providerCallAmbiguous = true;
+            const audioBuffer = await response.arrayBuffer();
+            billedCharacters += chunk.length;
+            providerCallAmbiguous = false;
+            const providerRequestId = response.headers.get("request-id");
+            if (providerRequestId) requestIds.push(providerRequestId);
+            audioChunks.push(new Uint8Array(audioBuffer));
+          }
+
+          uploadedPath = `${userId}/${
+            new Date().toISOString().slice(0, 7)
+          }/${crypto.randomUUID()}-${fileName}`;
+          const combinedAudio = concatenateAudio(audioChunks);
+          const { error: uploadError } = await admin.storage
+            .from(VOICE_DUBBING_BUCKET)
+            .upload(uploadedPath, combinedAudio, {
+              contentType: "audio/mpeg",
+              cacheControl: "3600",
+              upsert: false,
+            });
+          if (uploadError) {
+            throw new Error(`Audio upload failed: ${uploadError.message}`);
+          }
+
+          const { data: signed, error: signedError } = await admin.storage
+            .from(VOICE_DUBBING_BUCKET)
+            .createSignedUrl(uploadedPath, 3600);
+          if (signedError || !signed?.signedUrl) {
+            throw new Error(
+              `Audio signing failed: ${signedError?.message ?? "no URL"}`,
+            );
+          }
+          const storedResult = {
+            success: true,
+            storage_path: uploadedPath,
+            file_name: fileName,
+            content_type: "audio/mpeg",
+            character_count: text.length,
+            chunk_count: chunks.length,
+            model_id: model.id,
+            language,
+          };
+          const { data: finishData, error: finishError } = await admin.rpc(
+            "finish_voice_dubbing_job",
+            {
+              p_user_id: userId,
+              p_request_id: requestId,
+              p_status: "completed",
+              p_billed_characters: billedCharacters,
+              p_result: storedResult,
+              p_error_code: null,
+            },
+          );
+          const finish = asRecord(finishData);
+          if (finishError || asString(finish?.status) !== "completed") {
+            const { data: persistedJob, error: persistedJobError } = await admin
+              .from("voice_dubbing_jobs")
+              .select("status,result")
+              .eq("user_id", userId)
+              .eq("request_id", requestId)
+              .maybeSingle();
+            const persisted = asRecord(persistedJob);
+            const persistedResult = asRecord(persisted?.result);
+            const completionPersisted =
+              asString(persisted?.status) === "completed" &&
+              asString(persistedResult?.storage_path) === uploadedPath;
+            if (!completionPersisted) {
+              if (finishError || persistedJobError) {
+                completionUncertain = true;
+              }
+              throw new Error("voice_job_completion_failed");
+            }
+          }
+          return json({
+            ...storedResult,
+            audio_url: signed.signedUrl,
+            expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+            usage,
+          });
+        } catch (error) {
+          const errorId = crypto.randomUUID();
+          if (completionUncertain) {
+            console.error("voice.dubbing completion state uncertain", {
+              errorId,
+              requestId,
+              billedCharacters,
+              uploadedPath,
+              detail: String(error).slice(0, 700),
+            });
+            return json({
+              error: "voice_completion_pending",
+              error_id: errorId,
+              billed_characters: billedCharacters,
+            }, 503);
+          }
+          const accountedCharacters = providerCallAmbiguous
+            ? Math.max(billedCharacters, startedCharacters)
+            : billedCharacters;
+          const { data: failureFinishData, error: finishError } = await admin
+            .rpc(
+              "finish_voice_dubbing_job",
+              {
+                p_user_id: userId,
+                p_request_id: requestId,
+                p_status: "failed",
+                p_billed_characters: accountedCharacters,
+                p_result: null,
+                p_error_code: "voice_generation_failed",
+              },
+            );
+          const failureFinish = asRecord(failureFinishData);
+          const failureStatus = asString(failureFinish?.status);
+          const finalizedAsFailure = failureStatus === "failed" ||
+            failureStatus === "expired";
+          if (finishError || !finalizedAsFailure) {
+            console.error("voice.dubbing failure state uncertain", {
+              errorId,
+              requestId,
+              failureStatus,
+              uploadedPath,
+              detail: String(error).slice(0, 700),
+              reconciliationError: finishError?.message.slice(0, 500),
+            });
+            return json({
+              error: finishError || failureStatus === "completed"
+                ? "voice_completion_pending"
+                : "voice_quota_reconciliation_required",
+              error_id: errorId,
+              billed_characters: accountedCharacters,
+            }, 503);
+          }
+          if (uploadedPath) {
+            const { error: removeError } = await admin.storage
+              .from(VOICE_DUBBING_BUCKET).remove([
+                uploadedPath,
+              ]);
+            if (removeError) {
+              console.error("voice.dubbing cleanup failed", {
+                requestId,
+                detail: removeError.message.slice(0, 500),
+              });
+            }
+          }
+          console.error("voice.dubbing generation failed", {
+            errorId,
+            requestId,
+            billedCharacters,
+            startedCharacters,
+            accountedCharacters,
+            providerCallAmbiguous,
+            detail: String(error).slice(0, 700),
+            reconciliationError: finishError?.message.slice(0, 500),
+          });
+          return json({
+            error: "voice_generation_failed",
+            error_id: errorId,
+            billed_characters: accountedCharacters,
+          }, 502);
+        }
       }
 
       case "voice.stt": {
@@ -7853,11 +8890,19 @@ serve(async (req: Request) => {
         // Windows版#94: home_tier AI おすすめ機能 (VSCode#98)
         // 現状はヒューリスティックで user_feature_usage を集計し、
         // 直近未使用のシステム固定機能を返す (Gemini 推論は次段階)
-        const userId = String(body.user_id ?? "");
-        if (!userId) return json({ error: "user_id required" }, 400);
+        const recommendationScope = resolveAuthenticatedUserId(
+          userId!,
+          body.user_id,
+        );
+        if ("error" in recommendationScope) {
+          return json(
+            { error: recommendationScope.error },
+            recommendationScope.status,
+          );
+        }
         const { data: usage } = await admin.from("user_feature_usage")
           .select("feature_route, tapped_at")
-          .eq("user_id", userId)
+          .eq("user_id", recommendationScope.userId)
           .order("tapped_at", { ascending: false })
           .limit(30);
         const recent = new Set(
@@ -8138,6 +9183,9 @@ serve(async (req: Request) => {
     }
     if (err instanceof MarketPriceActionError) {
       return json({ error: err.message }, err.status);
+    }
+    if (err instanceof WriterKnowledgeGraphError) {
+      return json({ error: err.message, code: err.code }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
     return json({ error: message }, 500);

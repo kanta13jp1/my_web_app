@@ -22,23 +22,34 @@ concurrency:
   group: weekly-sns-draft-${{ github.ref }}
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   generate:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: write
+      issues: read
     name: Generate Weekly SNS Draft via AI API
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
@@ -47,9 +58,11 @@ jobs:
 
       - name: Determine target week
         id: period
+        env:
+          TARGET_DATE_INPUT: ${{ github.event.inputs.target_date }}
         run: |
           # target_date = 週末 (日曜) の日付 (空の場合は直近日曜)
-          TARGET_DATE="${{ github.event.inputs.target_date }}"
+          TARGET_DATE="$TARGET_DATE_INPUT"
           if [ -z "$TARGET_DATE" ]; then
             # 直近の日曜日を計算
             DOW=$(date -u +%u)  # 1=Mon ... 7=Sun
@@ -126,7 +139,7 @@ jobs:
       - name: Generate weekly SNS draft
         if: steps.skip_check.outputs.skip == 'false'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TARGET_DATE: ${{ steps.period.outputs.target_date }}
           WEEK_START: ${{ steps.period.outputs.week_start }}

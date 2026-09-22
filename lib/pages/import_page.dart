@@ -7,12 +7,14 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../pages/landing_page.dart';
+import '../services/business_csv_import_service.dart';
 import '../services/external_format_service.dart';
 import '../services/evernote_migration_ledger_service.dart';
 import '../services/evernote_migration_commit_service.dart';
 import '../services/gamification_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/import_service.dart';
+import '../utils/web_image_downloader.dart';
 
 class ImportPage extends StatefulWidget {
   const ImportPage({super.key});
@@ -36,8 +38,13 @@ class _ImportPageState extends State<ImportPage> {
       const <EvernoteMigrationBatch>[];
   ImportPreviewResult? _preview;
   Uint8List? _selectedFileBytes;
+  final BusinessCsvImportService _businessCsvService =
+      const BusinessCsvImportService();
+  BusinessCsvDryRunResult? _businessCsvPreview;
   ImportExecutionResult? _lastImportResult;
+  BusinessCsvCommitResult? _lastBusinessCsvCommitResult;
   String? _selectedSource;
+  bool _rollbackOnBusinessCsvErrors = true;
   final TextEditingController _notionTokenController = TextEditingController();
   final TextEditingController _externalFormatInputController =
       TextEditingController(
@@ -143,6 +150,23 @@ class _ImportPageState extends State<ImportPage> {
         throw Exception('The selected file could not be read.');
       }
 
+      if (sourceType == 'business_csv') {
+        final preview = await _businessCsvService.previewCsvBytes(
+          fileName: file.name,
+          bytes: bytes,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _preview = null;
+          _businessCsvPreview = preview;
+          _lastImportResult = null;
+          _lastBusinessCsvCommitResult = null;
+        });
+        return;
+      }
+
       final preview = await _importService.buildPreview(
         sourceType: sourceType,
         fileName: file.name,
@@ -155,6 +179,8 @@ class _ImportPageState extends State<ImportPage> {
       setState(() {
         _preview = preview;
         _selectedFileBytes = bytes;
+        _businessCsvPreview = null;
+        _lastBusinessCsvCommitResult = null;
       });
       await _recordEvernotePreview(preview);
       unawaited(_acquisitionService.recordImportPreview(sourceType));
@@ -245,6 +271,8 @@ class _ImportPageState extends State<ImportPage> {
       setState(() {
         _preview = preview;
         _selectedFileBytes = null;
+        _businessCsvPreview = null;
+        _lastBusinessCsvCommitResult = null;
       });
       unawaited(_acquisitionService.recordImportPreview('notion_api'));
     } catch (error) {
@@ -316,6 +344,77 @@ class _ImportPageState extends State<ImportPage> {
     }
   }
 
+  Future<void> _commitBusinessCsvPreview() async {
+    final preview = _businessCsvPreview;
+    final user = Supabase.instance.client.auth.currentUser;
+    if (preview == null) {
+      return;
+    }
+    if (user == null) {
+      _showMessage('Log in before importing business CSV rows.');
+      return;
+    }
+    if (preview.validRows.isEmpty) {
+      _showMessage('No valid CSV rows are ready to commit.');
+      return;
+    }
+
+    setState(() => _isImporting = true);
+    try {
+      final result = await _businessCsvService.commitRows(
+        fileName: preview.fileName,
+        rows: preview.rows.isEmpty ? preview.validRows : preview.rows,
+        mode: _rollbackOnBusinessCsvErrors
+            ? BusinessCsvCommitMode.allOrRollback
+            : BusinessCsvCommitMode.validRowsOnly,
+      );
+      if (!mounted) {
+        return;
+      }
+      final message = result.rolledBack
+          ? 'CSV commit rolled back because ${result.dryRun.errorCount} rows still have errors.'
+          : 'Imported ${result.insertedCount} valid CSV rows.';
+      _showMessage(message);
+      setState(() {
+        _lastBusinessCsvCommitResult = result;
+        _businessCsvPreview = result.rolledBack ? result.dryRun : null;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage('Business CSV commit failed: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _isImporting = false);
+      }
+    }
+  }
+
+  void _downloadBusinessCsvErrors() {
+    final preview = _businessCsvPreview;
+    if (preview == null || preview.errorRows.isEmpty) {
+      return;
+    }
+    final baseName = preview.fileName.trim().isEmpty
+        ? 'business-csv-errors'
+        : preview.fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
+    downloadCsvFile(preview.errorCsv, '$baseName-errors.csv');
+    _showMessage('CSV error list saved.');
+  }
+
+  Future<void> _copyBusinessCsvErrors() async {
+    final preview = _businessCsvPreview;
+    if (preview == null || preview.errorRows.isEmpty) {
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: preview.errorCsv));
+    if (!mounted) {
+      return;
+    }
+    _showMessage('CSV error list copied.');
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -347,6 +446,8 @@ class _ImportPageState extends State<ImportPage> {
         return const <String>['xlsx'];
       case 'docx':
         return const <String>['docx'];
+      case 'business_csv':
+        return const <String>['csv'];
       default:
         return const <String>[];
     }
@@ -425,6 +526,7 @@ class _ImportPageState extends State<ImportPage> {
   @override
   Widget build(BuildContext context) {
     final preview = _preview;
+    final businessCsvPreview = _businessCsvPreview;
     final currentUser = Supabase.instance.client.auth.currentUser;
 
     return Scaffold(
@@ -489,6 +591,13 @@ class _ImportPageState extends State<ImportPage> {
                 subtitle: 'Word文書の段落を1つのノートとして取り込みます。',
                 icon: Icons.article_outlined,
               ),
+              _sourceCard(
+                sourceType: 'business_csv',
+                title: 'Business CSV',
+                subtitle:
+                    'Dry-run rows, export only errors, then commit valid rows or roll back the batch.',
+                icon: Icons.rule_folder_outlined,
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -500,6 +609,17 @@ class _ImportPageState extends State<ImportPage> {
               result: _lastImportResult!,
               currentUser: currentUser,
               sourceType: _selectedSource,
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (_lastBusinessCsvCommitResult != null) ...[
+            _buildBusinessCsvCommitResultCard(_lastBusinessCsvCommitResult!),
+            const SizedBox(height: 16),
+          ],
+          if (businessCsvPreview != null) ...[
+            _buildBusinessCsvPreviewCard(
+              preview: businessCsvPreview,
+              currentUser: currentUser,
             ),
             const SizedBox(height: 16),
           ],
@@ -680,6 +800,221 @@ class _ImportPageState extends State<ImportPage> {
               ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildBusinessCsvPreviewCard({
+    required BusinessCsvDryRunResult preview,
+    required User? currentUser,
+  }) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text(
+                  'Business CSV dry-run',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+                Chip(
+                  avatar: Icon(
+                    preview.usedServerDryRun
+                        ? Icons.storage_outlined
+                        : Icons.computer,
+                    size: 18,
+                  ),
+                  label: Text(
+                    preview.usedServerDryRun ? 'DB dry-run' : 'Local dry-run',
+                  ),
+                ),
+                Chip(label: Text('${preview.validCount} valid')),
+                Chip(
+                  label: Text('${preview.errorCount} errors'),
+                  backgroundColor: preview.hasErrors
+                      ? Theme.of(context).colorScheme.errorContainer
+                      : null,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('File: ${preview.fileName}'),
+            if (preview.warnings.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              ...preview.warnings.map(
+                (warning) => Text(
+                  '- $warning',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Rollback whole batch when any row has errors'),
+              value: _rollbackOnBusinessCsvErrors,
+              onChanged: (value) {
+                setState(() => _rollbackOnBusinessCsvErrors = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                FilledButton.icon(
+                  onPressed: _isImporting || preview.validRows.isEmpty
+                      ? null
+                      : currentUser == null
+                          ? _openLandingPage
+                          : _commitBusinessCsvPreview,
+                  icon: Icon(
+                    currentUser == null
+                        ? Icons.login
+                        : Icons.download_done_outlined,
+                  ),
+                  label: Text(
+                    _isImporting
+                        ? 'Committing...'
+                        : currentUser == null
+                            ? 'Open sign-up to commit'
+                            : 'Commit CSV rows',
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: preview.errorRows.isEmpty
+                      ? null
+                      : _downloadBusinessCsvErrors,
+                  icon: const Icon(Icons.file_download_outlined),
+                  label: const Text('Save error CSV'),
+                ),
+                OutlinedButton.icon(
+                  onPressed:
+                      preview.errorRows.isEmpty ? null : _copyBusinessCsvErrors,
+                  icon: const Icon(Icons.copy_outlined),
+                  label: const Text('Copy error CSV'),
+                ),
+              ],
+            ),
+            if (preview.errorRows.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Rows needing correction',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('Row')),
+                    DataColumn(label: Text('Title')),
+                    DataColumn(label: Text('Reason')),
+                  ],
+                  rows: preview.errorRows.take(8).map((row) {
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(row.rowNumber.toString())),
+                        DataCell(Text(row.title.isEmpty ? '-' : row.title)),
+                        DataCell(Text(row.reasonText)),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+              if (preview.errorRows.length > 8)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '${preview.errorRows.length - 8} more error rows are included in the CSV.',
+                  ),
+                ),
+            ],
+            if (preview.validRows.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Valid rows',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('Row')),
+                    DataColumn(label: Text('Title')),
+                    DataColumn(label: Text('Tags')),
+                  ],
+                  rows: preview.validRows.take(6).map((row) {
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(row.rowNumber.toString())),
+                        DataCell(Text(row.title)),
+                        DataCell(Text(row.tags.join(', '))),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBusinessCsvCommitResultCard(BusinessCsvCommitResult result) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      color: result.rolledBack
+          ? colorScheme.errorContainer
+          : colorScheme.primaryContainer,
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(
+              result.rolledBack
+                  ? Icons.assignment_return_outlined
+                  : Icons.check_circle_outline,
+              color:
+                  result.rolledBack ? colorScheme.error : colorScheme.primary,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                result.rolledBack
+                    ? 'CSV commit rolled back. ${result.dryRun.errorCount} rows need correction.'
+                    : 'Imported ${result.insertedCount} business CSV rows.',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: result.rolledBack
+                      ? colorScheme.onErrorContainer
+                      : colorScheme.onPrimaryContainer,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

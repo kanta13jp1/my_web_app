@@ -96,8 +96,8 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
 
 /// R33: AI シェア FAB は Navigator の Overlay に載るため、ページの AppBar より
 /// 前面に出る。top 配置で `top: 20` のままだと標準 AppBar (kToolbarHeight=56) の
-/// actions を覆ってしまい、例えば /admin の「データをリセット」「データを更新」
-/// ボタンが押せなくなる (実機 build 4873/4877 で発生)。ツールバー高さぶん下げて
+/// actions を覆ってしまい、例えば /admin の「データを更新」ボタンが押せなくなる
+/// (実機 build 4873/4877 で発生)。ツールバー高さぶん下げて
 /// アプリの chrome を塞がないようにする。bottom 配置は元から干渉しない。
 const double kAiShareFabTopOffset = kToolbarHeight + 20;
 const double kAiShareFabDefaultBottomOffset = 20;

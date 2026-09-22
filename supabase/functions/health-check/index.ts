@@ -6,11 +6,12 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requestTraceId } from "../_shared/trace_context.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Max-Age": "86400",
 };
 
@@ -26,6 +27,7 @@ type CheckResult = {
 type HealthResponse = {
   status: "healthy" | "degraded" | "unhealthy";
   checks: Record<string, CheckResult>;
+  trace_id: string;
   timestamp: string;
 };
 
@@ -34,6 +36,7 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const traceId = requestTraceId(req);
   const checks: Record<string, CheckResult> = {};
   let failCount = 0;
 
@@ -86,6 +89,23 @@ serve(async (req) => {
       detail: cbError ? cbError.message : "ai_circuit_breaker reachable",
     };
     if (!checks["ai_circuit_breaker"].ok) failCount++;
+
+    // Check 5: session hygiene cleanup visibility (#2910)
+    const { data: hygieneData, error: hygieneError } = await admin.rpc(
+      "get_session_hygiene_health",
+    );
+    const hygieneStatus = typeof hygieneData === "object" &&
+        hygieneData !== null &&
+        "status" in hygieneData
+      ? String((hygieneData as { status?: unknown }).status)
+      : "unknown";
+    checks["session_hygiene"] = {
+      ok: !hygieneError && hygieneStatus === "healthy",
+      detail: hygieneError
+        ? hygieneError.message
+        : `session hygiene ${hygieneStatus}`,
+    };
+    if (!checks["session_hygiene"].ok) failCount++;
   }
 
   const status: HealthResponse["status"] = failCount === 0
@@ -97,11 +117,23 @@ serve(async (req) => {
   const body: HealthResponse = {
     status,
     checks,
+    trace_id: traceId,
     timestamp: new Date().toISOString(),
   };
 
+  console.log(JSON.stringify({
+    event: "health_check.completed",
+    trace_id: traceId,
+    status,
+    failure_count: failCount,
+  }));
+
   return new Response(JSON.stringify(body, null, 2), {
     status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+      "X-Trace-Id": traceId,
+    },
   });
 });

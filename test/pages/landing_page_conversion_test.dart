@@ -31,6 +31,7 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   Exception? magicLinkError;
   Completer<String>? trialResponse;
   Exception? trialError;
+  Exception? socialProofError;
   String? lastTrialPrompt;
   LandingSocialProofStats socialProofStats = const LandingSocialProofStats(
     totalUsers: 38,
@@ -48,6 +49,7 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   @override
   Future<LandingSocialProofStats> loadSocialProofStats() async {
     socialProofLoads += 1;
+    if (socialProofError != null) throw socialProofError!;
     return socialProofStats;
   }
 
@@ -225,12 +227,13 @@ void main() {
     LandingConversionExperimentService? conversionExperimentService,
     LandingConversionAnalytics? conversionAnalytics,
     GrowthAcquisitionService? acquisitionService,
+    _LandingAdapter? landingAdapter,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
-    final adapter = _LandingAdapter();
+    final adapter = landingAdapter ?? _LandingAdapter();
     await tester.pumpWidget(
       MaterialApp(
         routes: {'/privacy': (_) => const Scaffold(body: Text('privacy'))},
@@ -255,6 +258,36 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
     return adapter;
   }
+
+  testWidgets('landing form fields expose concise accessible names', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h04', LandingExperimentVariant.treatment),
+      );
+
+      expect(
+        tester
+            .getSemantics(
+              find.byKey(const Key('landing_trial_prompt_input')),
+            )
+            .label,
+        '例: 今日いちばん詰まっていることを簡単に書く',
+      );
+      final email = find.byKey(const Key('landing_auth_email'));
+      await Scrollable.ensureVisible(tester.element(email));
+      await tester.pump();
+      expect(
+        tester.getSemantics(email).label,
+        'メールアドレス',
+      );
+    } finally {
+      semantics.dispose();
+    }
+  });
 
   test('lp_qa query disables analytics only for explicit QA traffic', () {
     expect(
@@ -907,6 +940,37 @@ void main() {
     expect(find.text('公開メモ数'), findsOneWidget);
   });
 
+  testWidgets('social proof failure is disclosed and retry recovers', (
+    tester,
+  ) async {
+    final adapter = _LandingAdapter()
+      ..socialProofError = Exception('aggregate unavailable');
+    await pumpLanding(
+      tester,
+      assignment: _assignment('h07', LandingExperimentVariant.treatment),
+      landingAdapter: adapter,
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.socialProofLoads, 1);
+    expect(
+      find.byKey(const Key('landing_social_proof_error')),
+      findsOneWidget,
+    );
+    expect(find.text('最新の利用状況を取得できませんでした。'), findsOneWidget);
+
+    adapter.socialProofError = null;
+    final retry = find.byKey(const Key('landing_social_proof_retry'));
+    await tester.ensureVisible(retry);
+    await tester.tap(retry);
+    await tester.pumpAndSettle();
+
+    expect(adapter.socialProofLoads, 2);
+    expect(find.byKey(const Key('landing_social_proof_error')), findsNothing);
+    expect(find.text('38'), findsOneWidget);
+    expect(find.text('12'), findsOneWidget);
+  });
+
   testWidgets(
     'public social proof preloads under a deep link while LP analytics stay gated',
     (tester) async {
@@ -1226,6 +1290,13 @@ void main() {
           await tester.pump();
           await tester.tap(trialButton);
           await tester.pump();
+          if (size.width < 480) {
+            expect(
+              promptInput,
+              findsNothing,
+              reason: 'mobile should show only the active guided step',
+            );
+          }
           await _completeGuidedTrialWithQuickAnswers(tester);
 
           final resultAction = find.byKey(
@@ -1246,6 +1317,25 @@ void main() {
           final email = find.byKey(const Key('landing_h04_inline_email'));
           if (useInstantPreview) {
             expect(email, findsNothing);
+          } else if (size.width < 480) {
+            expect(email, findsNothing);
+            expect(
+              find.byKey(const Key('landing_h04_inline_save_expansion')),
+              findsOneWidget,
+            );
+            expect(
+              find.byKey(const Key('landing_trial_restart')),
+              findsOneWidget,
+            );
+            await tester.tap(
+              find.byKey(const Key('landing_h04_inline_save_expansion')),
+            );
+            await tester.pumpAndSettle();
+            expect(email, findsOneWidget);
+            expect(
+              tester.widget<TextField>(email).focusNode?.hasFocus,
+              isFalse,
+            );
           } else {
             expect(
               tester.widget<TextField>(email).focusNode?.hasFocus,
@@ -1602,6 +1692,11 @@ void main() {
     );
     expect(tester.takeException(), isNull);
 
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -600),
+    );
+    await tester.pump();
     await tester.tap(
       find.byKey(const Key('landing_h09_mobile_sticky_cta')),
     );
@@ -1949,6 +2044,10 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
+    await tester.tap(
+      find.byKey(const Key('landing_h04_inline_save_expansion')),
+    );
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('landing_h04_inline_email')),
       'mobile-first-user@example.com',

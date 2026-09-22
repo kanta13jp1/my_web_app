@@ -11,6 +11,8 @@ import {
   validateImprovementLink,
 } from "./artifact_review.ts";
 import type { VideoImprovementLink } from "./artifact_review.ts";
+import { validateImprovementAuthorization } from "./authorization.ts";
+import { resolveVideoOperator } from "./operator_auth.ts";
 import { loadWorkerWakeConfiguration, wakeVideoWorker } from "./worker_wake.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -46,6 +48,36 @@ type JobRow = {
   completed_at: string | null;
   parent_artifact_id: string | null;
   applied_review_id: string | null;
+  authorization_id: string | null;
+};
+
+type AuthorizationRow = {
+  id: string;
+  user_id: string;
+  environment: string;
+  authorization_scope: string;
+  status: string;
+  pending_reasons: string[];
+  last_reservation_attempt_at: string | null;
+  valid_from: string;
+  valid_until: string;
+  per_run_credit_limit: number;
+  total_credit_limit: number;
+  reserved_credits: number;
+  consumed_credits: number;
+  per_run_regeneration_limit: number;
+  total_regeneration_limit: number;
+  consumed_regenerations: number;
+  allow_credit_purchase: boolean;
+  max_spend_jpy_per_run: number;
+  max_spend_jpy_total: number;
+  consumed_spend_jpy: number;
+  root_artifact_id: string;
+  initial_review_id: string;
+  source_selection_rule: string;
+  created_at: string;
+  updated_at: string;
+  revoked_at: string | null;
 };
 
 type ArtifactRow = {
@@ -105,6 +137,7 @@ const JOB_SELECT = [
   "completed_at",
   "parent_artifact_id",
   "applied_review_id",
+  "authorization_id",
 ].join(",");
 
 const ARTIFACT_SELECT = [
@@ -158,11 +191,6 @@ serve(async (req: Request) => {
       return jsonResponse({ error: "request_too_large" }, 413);
     }
 
-    const user = await authenticatedUser(req);
-    if (!user || user.isAnonymous) {
-      return jsonResponse({ error: "authentication_required" }, 401);
-    }
-
     const rawBody = await req.text();
     if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
       return jsonResponse({ error: "request_too_large" }, 413);
@@ -173,9 +201,34 @@ serve(async (req: Request) => {
     }
     const input = body;
     const action = asString(input.action);
+    const operator = resolveVideoOperator({
+      authorization: req.headers.get("Authorization") ?? "",
+      serviceRoleKey: SERVICE_ROLE_KEY,
+      action,
+      requestedUserId: asString(input.user_id),
+    });
+    if (operator.kind === "error") {
+      return jsonResponse({ error: operator.code }, operator.status);
+    }
+    const user = operator.kind === "service_role"
+      ? { id: operator.userId, isAnonymous: false }
+      : await authenticatedUser(req);
+    if (!user || user.isAnonymous) {
+      return jsonResponse({ error: "authentication_required" }, 401);
+    }
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     switch (action) {
+      case "capabilities":
+        return jsonResponse({
+          success: true,
+          scheduler_actions: [
+            "authorization_status",
+            "run_authorized_improvement",
+            "review_authorized_artifact",
+            "status",
+          ],
+        });
       case "catalog":
         return jsonResponse({ success: true, ...publicCatalog() });
       case "balance":
@@ -190,6 +243,16 @@ serve(async (req: Request) => {
         return await listJobs(admin, user.id);
       case "review_artifact":
         return await reviewArtifactResponse(admin, user.id, input);
+      case "review_authorized_artifact":
+        return await reviewAuthorizedArtifactResponse(admin, user.id, input);
+      case "authorization_status":
+        return await authorizationStatusResponse(admin, user.id);
+      case "authorize_improvement":
+        return await authorizeImprovementResponse(admin, user.id, input);
+      case "run_authorized_improvement":
+        return await runAuthorizedImprovementResponse(admin, user.id, input);
+      case "revoke_authorization":
+        return await revokeAuthorizationResponse(admin, user.id, input);
       default:
         return jsonResponse({ error: "unknown_action" }, 400);
     }
@@ -217,6 +280,207 @@ function quoteResponse(body: Record<string, unknown>): Response {
       required_credits: result.value.requiredCredits,
     },
   });
+}
+
+async function authorizationStatusResponse(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<Response> {
+  const { data, error } = await admin
+    .from("video_improvement_authorizations")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(10);
+  if (error) throw error;
+  return jsonResponse({
+    success: true,
+    authorizations: ((data ?? []) as unknown as AuthorizationRow[]).map(
+      publicAuthorization,
+    ),
+  });
+}
+
+async function authorizeImprovementResponse(
+  admin: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  const validation = validateImprovementAuthorization(body);
+  if (!validation.ok) {
+    return jsonResponse({ error: validation.code }, 400);
+  }
+  const idempotencyKey = asString(body.idempotency_key);
+  if (!/^[a-z0-9_-]{8,128}$/i.test(idempotencyKey)) {
+    return jsonResponse({ error: "invalid_idempotency_key" }, 400);
+  }
+  const value = validation.value;
+  const validUntil = new Date(
+    Date.now() + value.validityHours * 60 * 60 * 1000,
+  ).toISOString();
+  const { data: reservation, error: reserveError } = await admin.rpc(
+    "video_authorize_and_reserve_improvement",
+    {
+      p_user_id: userId,
+      p_idempotency_key: idempotencyKey,
+      p_source_artifact_id: value.sourceArtifactId,
+      p_source_review_id: value.sourceReviewId,
+      p_valid_until: validUntil,
+      p_total_regenerations: value.totalRegenerations,
+      p_rights_confirmed: true,
+      p_adult_confirmed: true,
+      p_terms_confirmed: true,
+      p_prohibited_content_confirmed: true,
+    },
+  );
+  if (reserveError) {
+    const known = knownAuthorizationError(reserveError.message);
+    if (known) return jsonResponse({ error: known.code }, known.status);
+    throw reserveError;
+  }
+
+  return await authorizedReservationResponse(admin, userId, reservation);
+}
+
+async function revokeAuthorizationResponse(
+  admin: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  const authorizationId = asString(body.authorization_id);
+  if (!isUuid(authorizationId)) {
+    return jsonResponse({ error: "invalid_authorization_id" }, 400);
+  }
+  const { data, error } = await admin
+    .from("video_improvement_authorizations")
+    .update({
+      status: "revoked",
+      pending_reasons: [],
+      revoked_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", authorizationId)
+    .eq("user_id", userId)
+    .in("status", [
+      "active",
+      "pending_review",
+      "pending_funding",
+      "pending_execution",
+    ])
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return jsonResponse({ error: "authorization_not_found" }, 404);
+  return jsonResponse({
+    success: true,
+    authorization: publicAuthorization(data as unknown as AuthorizationRow),
+  });
+}
+
+async function runAuthorizedImprovementResponse(
+  admin: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  const authorizationId = asString(body.authorization_id);
+  const sourceArtifactId = asString(body.source_artifact_id);
+  const sourceReviewId = asString(body.source_review_id);
+  const idempotencyKey = asString(body.idempotency_key);
+  if (
+    !isUuid(authorizationId) ||
+    !isUuid(sourceArtifactId) ||
+    !isUuid(sourceReviewId) ||
+    !/^[a-z0-9_-]{8,128}$/i.test(idempotencyKey)
+  ) {
+    return jsonResponse({ error: "invalid_authorized_improvement" }, 400);
+  }
+  const { data: reservation, error: reserveError } = await admin.rpc(
+    "video_reserve_authorized_improvement",
+    {
+      p_user_id: userId,
+      p_authorization_id: authorizationId,
+      p_source_artifact_id: sourceArtifactId,
+      p_source_review_id: sourceReviewId,
+      p_idempotency_key: idempotencyKey,
+    },
+  );
+  if (reserveError) {
+    const known = knownAuthorizationError(reserveError.message);
+    if (known) return jsonResponse({ error: known.code }, known.status);
+    throw reserveError;
+  }
+  return await authorizedReservationResponse(
+    admin,
+    userId,
+    reservation,
+  );
+}
+
+async function authorizedReservationResponse(
+  admin: SupabaseClient,
+  userId: string,
+  reservation: unknown,
+): Promise<Response> {
+  const reservationRecord = asRecord(reservation);
+  const jobId = asString(reservationRecord.job_id);
+  const authorizationId = asString(reservationRecord.authorization_id);
+  if (!authorizationId) {
+    throw new Error("authorization_reservation_incomplete");
+  }
+  if (!jobId) {
+    const authorization = await loadOwnedAuthorization(
+      admin,
+      userId,
+      authorizationId,
+    );
+    return jsonResponse({
+      success: true,
+      pending: true,
+      idempotent_replay: reservationRecord.idempotent_replay === true,
+      pending_reasons: publicPendingReasons(
+        reservationRecord.pending_reasons,
+        authorization.pending_reasons,
+      ),
+      authorization: publicAuthorization(authorization),
+      job: null,
+      balance: publicBalance(reservation),
+    }, 202);
+  }
+  let job = await loadOwnedJob(admin, userId, jobId);
+  if (!isTerminal(job.status)) {
+    const wakeConfiguration = loadWorkerWakeConfiguration();
+    try {
+      if (!wakeConfiguration) throw new Error("worker_wake_unconfigured");
+      await wakeVideoWorker(jobId, wakeConfiguration);
+    } catch (error) {
+      console.error(
+        "[video-generation-hub] authorized worker wake failed",
+        safeErrorCode(error),
+      );
+      const cancelled = await cancelUnclaimedJob(admin, userId, jobId);
+      if (cancelled) {
+        return jsonResponse({ error: "generation_queue_unavailable" }, 503);
+      }
+      job = await loadOwnedJob(admin, userId, jobId);
+    }
+  }
+  const authorization = await loadOwnedAuthorization(
+    admin,
+    userId,
+    authorizationId,
+  );
+  return jsonResponse({
+    success: true,
+    idempotent_replay: reservationRecord.idempotent_replay === true,
+    authorization: publicAuthorization(authorization),
+    job: await publicJob(
+      admin,
+      job,
+      false,
+      await loadArtifactForJob(admin, userId, job.id),
+    ),
+    balance: publicBalance(reservation),
+  }, isTerminal(job.status) ? 200 : 202);
 }
 
 async function balanceResponse(
@@ -410,6 +674,52 @@ async function listJobs(
   return jsonResponse({ success: true, jobs });
 }
 
+async function reviewAuthorizedArtifactResponse(
+  admin: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  const authorizationId = asString(body.authorization_id);
+  if (!isUuid(authorizationId)) {
+    return jsonResponse({ error: "invalid_authorization_id" }, 400);
+  }
+  const validation = validateArtifactReview(body);
+  if (!validation.ok) {
+    return jsonResponse({ error: validation.code }, 400);
+  }
+  const value = validation.value;
+  const { error } = await admin.rpc(
+    "video_record_authorized_artifact_review",
+    {
+      p_user_id: userId,
+      p_authorization_id: authorizationId,
+      p_artifact_id: value.artifactId,
+      p_quality_score: value.qualityScore,
+      p_prompt_alignment_score: value.promptAlignmentScore,
+      p_motion_quality_score: value.motionQualityScore,
+      p_commercial_value_score: value.commercialValueScore,
+      p_decision: value.decision,
+      p_strengths: value.strengths,
+      p_improvement_request: value.improvementRequest,
+      p_suggested_prompt: value.suggestedPrompt,
+      p_notes: value.notes,
+      p_rights_status: value.rightsStatus,
+      p_privacy_status: value.privacyStatus,
+    },
+  );
+  if (error) {
+    const known = knownAuthorizedReviewError(error.message);
+    if (known) return jsonResponse({ error: known.code }, known.status);
+    throw error;
+  }
+  const artifact = await loadArtifactById(admin, userId, value.artifactId);
+  if (!artifact) throw new Error("reviewed_artifact_missing");
+  return jsonResponse({
+    success: true,
+    artifact: publicArtifact(artifact),
+    review: publicReview(artifact.latest_review),
+  });
+}
 async function reviewArtifactResponse(
   admin: SupabaseClient,
   userId: string,
@@ -458,6 +768,22 @@ async function loadOwnedJob(
   const row = await loadOwnedJobOrNull(admin, userId, jobId);
   if (!row) throw new Error("job_not_found");
   return row;
+}
+
+async function loadOwnedAuthorization(
+  admin: SupabaseClient,
+  userId: string,
+  authorizationId: string,
+): Promise<AuthorizationRow> {
+  const { data, error } = await admin
+    .from("video_improvement_authorizations")
+    .select("*")
+    .eq("id", authorizationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("authorization_not_found");
+  return data as unknown as AuthorizationRow;
 }
 
 async function loadOwnedJobOrNull(
@@ -514,8 +840,76 @@ async function publicJob(
     completed_at: job.completed_at,
     parent_artifact_id: job.parent_artifact_id,
     applied_review_id: job.applied_review_id,
+    authorization_id: job.authorization_id,
     artifact: artifact ? publicArtifact(artifact) : null,
   };
+}
+
+function publicAuthorization(authorization: AuthorizationRow) {
+  const expired = [
+    "active",
+    "pending_review",
+    "pending_funding",
+    "pending_execution",
+  ].includes(authorization.status) &&
+    Date.parse(authorization.valid_until) <= Date.now();
+  const status = expired ? "expired" : authorization.status;
+  const remainingCredits = Math.max(
+    0,
+    authorization.total_credit_limit - authorization.consumed_credits -
+      authorization.reserved_credits,
+  );
+  const remainingRegenerations = Math.max(
+    0,
+    authorization.total_regeneration_limit -
+      authorization.consumed_regenerations,
+  );
+  return {
+    id: authorization.id,
+    environment: authorization.environment,
+    scope: authorization.authorization_scope,
+    status,
+    pending_reasons: expired ? [] : authorization.pending_reasons ?? [],
+    last_reservation_attempt_at: authorization.last_reservation_attempt_at,
+    valid_from: authorization.valid_from,
+    valid_until: authorization.valid_until,
+    per_run_credit_limit: authorization.per_run_credit_limit,
+    total_credit_limit: authorization.total_credit_limit,
+    reserved_credits: authorization.reserved_credits,
+    consumed_credits: authorization.consumed_credits,
+    remaining_credits: remainingCredits,
+    per_run_regeneration_limit: authorization.per_run_regeneration_limit,
+    total_regeneration_limit: authorization.total_regeneration_limit,
+    consumed_regenerations: authorization.consumed_regenerations,
+    remaining_regenerations: remainingRegenerations,
+    allow_credit_purchase: authorization.allow_credit_purchase,
+    max_spend_jpy_per_run: authorization.max_spend_jpy_per_run,
+    max_spend_jpy_total: authorization.max_spend_jpy_total,
+    consumed_spend_jpy: authorization.consumed_spend_jpy,
+    root_artifact_id: authorization.root_artifact_id,
+    initial_review_id: authorization.initial_review_id,
+    source_selection_rule: authorization.source_selection_rule,
+    created_at: authorization.created_at,
+    updated_at: authorization.updated_at,
+    revoked_at: authorization.revoked_at,
+  };
+}
+
+function publicPendingReasons(
+  rpcValue: unknown,
+  storedValue: readonly string[],
+): string[] {
+  const allowed = new Set([
+    "review_not_latest",
+    "review_not_improve",
+    "review_consumed",
+    "insufficient_credits",
+    "active_generation",
+  ]);
+  const values = Array.isArray(rpcValue) ? rpcValue : storedValue;
+  return values.filter((value): value is string =>
+    typeof value === "string" && allowed.has(value)
+  );
 }
 
 function publicArtifact(artifact: ArtifactWithReview) {
@@ -734,6 +1128,46 @@ function safeErrorCode(error: unknown): string {
   return /^[a-z0-9_]+$/i.test(raw)
     ? raw.toLowerCase().slice(0, 120)
     : "internal_error";
+}
+
+function knownAuthorizedReviewError(
+  message: string,
+): { code: string; status: number } | null {
+  const mappings: readonly [string, number][] = [
+    ["video_authorized_review_artifact_already_reviewed", 409],
+    ["video_authorized_review_target_invalid", 409],
+    ["video_authorization_not_found", 404],
+    ["video_artifact_not_found", 404],
+    ["invalid_video_artifact_review", 400],
+  ];
+  for (const [code, status] of mappings) {
+    if (message.includes(code)) return { code, status };
+  }
+  return null;
+}
+function knownAuthorizationError(
+  message: string,
+): { code: string; status: number } | null {
+  const mappings: readonly [string, number][] = [
+    ["insufficient_video_credits", 402],
+    ["video_generation_already_active", 409],
+    ["improvement_review_already_consumed", 409],
+    ["improvement_review_is_not_latest", 409],
+    ["artifact_clearance_blocked", 409],
+    ["video_authorization_inactive", 409],
+    ["video_authorization_exhausted", 409],
+    ["authorization_source_mismatch", 409],
+    ["video_artifact_not_found", 404],
+    ["improvement_review_not_found", 404],
+    ["invalid_authorization_expiry", 400],
+    ["invalid_authorization_iterations", 400],
+    ["authorization_confirmations_required", 400],
+    ["authorization_idempotency_conflict", 409],
+  ];
+  for (const [code, status] of mappings) {
+    if (message.includes(code)) return { code, status };
+  }
+  return null;
 }
 
 if (VIDEO_MODELS.length === 0) throw new Error("video_catalog_empty");

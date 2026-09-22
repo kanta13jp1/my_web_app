@@ -20,6 +20,7 @@ void main() {
       'capture_status': 'inbox',
       'capture_source': 'quick_inbox',
       'inbox_saved_at': now.toIso8601String(),
+      'tags': <String>['Evernote', '移行済み'],
     };
 
     test('Note can be created from JSON', () {
@@ -36,6 +37,7 @@ void main() {
       expect(note.isInbox, isTrue);
       expect(note.captureSource, 'quick_inbox');
       expect(note.inboxSavedAt, isNotNull);
+      expect(note.tags, <String>['Evernote', '移行済み']);
     });
 
     test('Note can be converted to JSON', () {
@@ -51,6 +53,7 @@ void main() {
       expect(json['capture_status'], sampleJson['capture_status']);
       expect(json['capture_source'], sampleJson['capture_source']);
       expect(json['inbox_saved_at'], sampleJson['inbox_saved_at']);
+      expect(json['tags'], sampleJson['tags']);
     });
 
     test('isOverdue getter works correctly', () {
@@ -183,6 +186,7 @@ void main() {
       expect(note.captureSource, 'editor');
       expect(note.inboxSavedAt, isNull);
       expect(note.isInbox, isFalse);
+      expect(note.tags, isEmpty);
     });
   });
 }

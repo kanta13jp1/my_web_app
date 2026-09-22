@@ -41,6 +41,10 @@ PUBLIC_ROUTES: list[tuple[str, str, str]] = [
     ("/ai-image-generator", "0.5", "weekly"),
     ("/public-guitar-gallery", "0.5", "weekly"),
     ("/philosophy", "0.5", "monthly"),
+    ("/subscription-billing", "0.5", "monthly"),
+    ("/privacy", "0.4", "monthly"),
+    ("/terms", "0.4", "monthly"),
+    ("/tokusho", "0.4", "monthly"),
     ("/ai-dev-principles", "0.5", "monthly"),
     ("/referral", "0.4", "monthly"),
 ]

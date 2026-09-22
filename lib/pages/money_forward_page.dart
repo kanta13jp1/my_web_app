@@ -5,7 +5,8 @@ import 'asset_management_page.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// MoneyForward 連携ページ
-/// moneyforward-sync Edge Function と連携して家計簿・資産データを取り込む
+/// 自動 OAuth 連携は未提供のため、CSVエクスポートのインポート画面へ誘導する。
+/// 状態確認 (mf.status) は social-commerce-hub Edge Function 経由。
 class MoneyForwardPage extends StatefulWidget {
   const MoneyForwardPage({super.key});
 
@@ -118,30 +119,18 @@ class _MoneyForwardPageState extends State<MoneyForwardPage>
     }
   }
 
-  Future<void> _connect() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      await _supabase.functions.invoke(
-        'social-commerce-hub',
-        body: {'action': 'mf.connect_url'},
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'MoneyForward認証URLを取得しました。ブラウザで連携を完了してください。',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = '接続URLの取得に失敗しました: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  /// MoneyForward の自動 OAuth 連携は未提供（要 API 提携）。
+  /// 現状唯一の実データ取り込み経路である CSV インポートへ誘導する。
+  Future<void> _goToCsvImport() async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          '自動連携は準備中です。MoneyForward の明細CSVをエクスポートしてインポート画面から取り込んでください。',
+        ),
+      ),
+    );
+    await Navigator.of(context).pushNamed('/import');
   }
 
   String _formatAmount(dynamic amount) {
@@ -228,7 +217,7 @@ class _MoneyForwardPageState extends State<MoneyForwardPage>
             : _DisconnectedView(
                 isLoading: _isLoading,
                 errorMessage: _errorMessage,
-                onConnect: _connect,
+                onConnect: _goToCsvImport,
               ),
       ),
     );
@@ -289,7 +278,7 @@ class _DisconnectedView extends StatelessWidget {
         const SizedBox(height: 24),
         const Center(
           child: Text(
-            'MoneyForward と連携する',
+            'MoneyForward のデータを取り込む',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -300,7 +289,7 @@ class _DisconnectedView extends StatelessWidget {
         const SizedBox(height: 12),
         const Center(
           child: Text(
-            '銀行・証券・クレジットカードの残高・取引を\n自動取り込みして資産を一元管理',
+            '自動連携（OAuth）は準備中です。\n現在は明細CSVをエクスポートしてインポートできます',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.black54,
@@ -312,8 +301,8 @@ class _DisconnectedView extends StatelessWidget {
         const SizedBox(height: 32),
         ElevatedButton.icon(
           onPressed: isLoading ? null : onConnect,
-          icon: const Icon(Icons.link),
-          label: const Text('MoneyForward に接続する'),
+          icon: const Icon(Icons.upload_file_outlined),
+          label: const Text('CSVをインポートする'),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF00B900),
             foregroundColor: Colors.white,
@@ -335,13 +324,13 @@ class _DisconnectedView extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.verified_outlined,
+                      Icons.info_outline,
                       color: Color(0xFF16A34A),
                       size: 18,
                     ),
                     SizedBox(width: 8),
                     Text(
-                      '連携できるもの',
+                      'CSVエクスポートの手順',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF16A34A),
@@ -351,11 +340,10 @@ class _DisconnectedView extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 8),
-                _BulletItem(text: '銀行口座・残高（三菱UFJ・三井住友・ゆうちょ等）'),
-                _BulletItem(text: '証券・投資信託・株式ポートフォリオ'),
-                _BulletItem(text: 'クレジットカード利用明細'),
-                _BulletItem(text: '電子マネー・ポイント残高'),
-                _BulletItem(text: '年金・保険積立金'),
+                _BulletItem(text: 'MoneyForward ME にログイン（moneyforward.com）'),
+                _BulletItem(text: '「家計簿」→「明細」タブ →「エクスポート」→「CSVダウンロード」'),
+                _BulletItem(text: '期間を指定してダウンロードした CSV をこの後の画面で選択'),
+                _BulletItem(text: '詳しい手順はユーザーマニュアルの「外部アプリからのデータ移行」も参照'),
               ],
             ),
           ),

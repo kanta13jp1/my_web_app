@@ -27,39 +27,45 @@ concurrency:
   group: horse-racing-update
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   horse-racing-update:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: read
     name: 競馬情報更新 (出走表+AI予想+結果)
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
 
       - name: 対象日付を設定
         id: date
+        env:
+          INPUT_DATE: ${{ inputs.date }}
         run: |
-          if [ -n "${{ inputs.date }}" ]; then
-            echo "TARGET_DATE=${{ inputs.date }}" >> "$GITHUB_ENV"
+          if [ -n "$INPUT_DATE" ]; then
+            echo "TARGET_DATE=$INPUT_DATE" >> "$GITHUB_ENV"
           else
             echo "TARGET_DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)" >> "$GITHUB_ENV"
           fi
 
       - name: 競馬情報更新 (all mode)
         env:
+          MODE: ${{ inputs.mode || 'all' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL_PROD }}/functions/v1/tools-hub
         run: |
-          MODE="${{ inputs.mode }}"
           # 専用ステップがある mode は skip (二重実行 + 504 timeout 防止)
           # history/evaluate/backfill/stats/dqs_recalc は各専用ステップで処理
           SKIP_MODES="history evaluate backfill stats dqs_recalc"
@@ -73,10 +79,10 @@ jobs:
 
       - name: 前走情報取得 (JST 9時台 or history/all モード時のみ)
         env:
+          MODE: ${{ inputs.mode || 'all' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          MODE="${{ inputs.mode }}"
           HOUR=$(TZ=Asia/Tokyo date +%H)
           if [ "$HOUR" = "09" ] || [ "$MODE" = "history" ] || [ "$MODE" = "all" ]; then
             echo "前走情報取得を実行 (時刻: ${HOUR}時, モード: ${MODE:-all})"
@@ -87,11 +93,11 @@ jobs:
 
       - name: 精度再評価バッチ (JST 17〜23時台 or evaluate/all モード時のみ)
         env:
+          MODE: ${{ inputs.mode || 'all' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL_PROD }}/functions/v1/tools-hub
         run: |
-          MODE="${{ inputs.mode }}"
           HOUR=$(TZ=Asia/Tokyo date +%H)
           # JST 17:00〜23:00 に実行 — 結果は通常17時以降に確定するため即時評価
           # evaluate は冪等なので同一レースの二重実行はスキップされる
@@ -104,15 +110,15 @@ jobs:
 
       - name: 過去学習データbackfill (日曜JST 23時台 or backfill モード時のみ)
         env:
+          MODE: ${{ inputs.mode || 'all' }}
+          DAYS: ${{ inputs.days || '21' }}
+          FORCE: ${{ inputs.force || 'false' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL_PROD }}/functions/v1/tools-hub
         run: |
-          MODE="${{ inputs.mode }}"
           HOUR=$(TZ=Asia/Tokyo date +%H)
           DOW=$(TZ=Asia/Tokyo date +%u)
-          DAYS="${{ inputs.days || '21' }}"
-          FORCE="${{ inputs.force || 'false' }}"
           if [ "$MODE" = "backfill" ] || ([ "$DOW" = "7" ] && [ "$HOUR" = "23" ]); then
             echo "過去学習データbackfillを実行 (DOW=${DOW}, 時刻=${HOUR}時, days=${DAYS}, force=${FORCE})"
             FORCE_FLAG=""
@@ -124,12 +130,12 @@ jobs:
 
       - name: 学習統計レポート (JST 0時台 or stats/all モード時のみ)
         env:
+          MODE: ${{ inputs.mode || 'all' }}
+          STAT_DAYS: ${{ inputs.days || '7' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          MODE="${{ inputs.mode }}"
           HOUR=$(TZ=Asia/Tokyo date +%H)
-          STAT_DAYS="${{ inputs.days || '7' }}"
           if [ "$MODE" = "stats" ] || [ "$MODE" = "all" ] || [ "${MODE}" = "" ] && [ "$HOUR" = "00" ]; then
             echo "学習統計レポートを出力 (時刻: ${HOUR}時, モード: ${MODE:-all}, days=${STAT_DAYS})"
             python scripts/fetch_horse_racing.py --mode stats --days "$STAT_DAYS"
@@ -139,10 +145,10 @@ jobs:
 
       - name: データ品質スコア再計算 (日曜JST 1時台 or dqs_recalc モード時のみ)
         env:
+          MODE: ${{ inputs.mode || 'all' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          MODE="${{ inputs.mode }}"
           HOUR=$(TZ=Asia/Tokyo date +%H)
           DOW=$(TZ=Asia/Tokyo date +%u)
           if [ "$MODE" = "dqs_recalc" ] || ([ "$DOW" = "7" ] && [ "$HOUR" = "01" ]); then
@@ -153,8 +159,10 @@ jobs:
           fi
 
       - name: 完了サマリー
+        env:
+          SUMMARY_MODE: ${{ inputs.mode || 'all' }}
         run: |
           echo "### 競馬情報更新完了" >> "$GITHUB_STEP_SUMMARY"
           echo "- 対象日: $TARGET_DATE" >> "$GITHUB_STEP_SUMMARY"
-          echo "- モード: ${{ inputs.mode || 'all' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- モード: $SUMMARY_MODE" >> "$GITHUB_STEP_SUMMARY"
           echo "- 実行時刻: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M JST')" >> "$GITHUB_STEP_SUMMARY"

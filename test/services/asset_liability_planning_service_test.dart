@@ -38,6 +38,54 @@ void main() {
       expect(workbook.topFourDebtShare, closeTo(0.7556, 0.001));
     });
 
+    test('carries card usage policies into the workbook for insights', () {
+      final changedAt = DateTime.utc(2026, 8, 29, 6, 18);
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: DateTime(2026, 8, 29),
+        cardUsagePolicies: <String, AssetCardUsagePolicy>{
+          'famipay_card': AssetCardUsagePolicy(
+            enforceOneShot: true,
+            changedAt: changedAt,
+            memo: '受付 ABC123',
+          ),
+        },
+      );
+
+      expect(workbook.cardUsagePolicies['famipay_card']!.enforceOneShot, true);
+      expect(workbook.cardUsagePolicies['famipay_card']!.changedAt, changedAt);
+      expect(workbook.cardUsagePolicies['famipay_card']!.memo, '受付 ABC123');
+    });
+
+    test(
+        'reflects annualRateOverrides in both accounts list and debtMasterRows',
+        () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -1000000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{
+          'mobit': 0.15,
+        },
+      );
+
+      final account = workbook.accounts.firstWhere((a) => a.id == 'mobit');
+      expect(account.annualRate, 0.15);
+
+      final currentAccount =
+          workbook.currentAccounts.firstWhere((a) => a.id == 'mobit');
+      expect(currentAccount.annualRate, 0.15);
+
+      final debtRow =
+          workbook.debtMasterRows.firstWhere((r) => r.id == 'mobit');
+      expect(debtRow.annualRate, 0.15);
+    });
+
     test('groups liability balances by payment day', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -48,13 +96,15 @@ void main() {
         for (final risk in workbook.paymentDayRisks) risk.paymentDay: risk,
       };
 
-      expect(riskByDay[8]?.balanceTotal.round(), -2933552);
+      expect(riskByDay[8]?.balanceTotal.round(), -699446);
       expect(riskByDay[10]?.balanceTotal.round(), -513770);
       expect(riskByDay.containsKey(11), isFalse);
       expect(riskByDay[15]?.balanceTotal.round(), -2195978);
+      expect(riskByDay[26]?.balanceTotal.round(), -2234106);
       expect(riskByDay[27]?.balanceTotal.round(), -1579266);
       expect(riskByDay[8]?.isPast, isTrue);
       expect(riskByDay[15]?.isUpcoming, isTrue);
+      expect(riskByDay[26]?.isUpcoming, isTrue);
     });
 
     test('builds debt master rows with type, rate, and priority signals', () {
@@ -66,13 +116,14 @@ void main() {
       final largest = workbook.debtMasterRows.first;
       expect(largest.name, 'アコムショッピング');
       expect(largest.kind, AssetLiabilityAccountKind.shoppingDebt);
-      expect(largest.paymentDay, 8);
+      expect(largest.paymentDay, 26);
+      expect(largest.annualRate, 0.146);
       expect(largest.liabilityShare, closeTo(0.308, 0.001));
 
       final topPriority = workbook.repaymentPriorityRows.first;
       expect(topPriority.name, anyOf('アコムカードローン', 'モビット'));
-      expect(topPriority.annualRate, 0.18);
-      expect(topPriority.priorityLabel, '最優先');
+      expect(topPriority.annualRate, 0.15);
+      expect(topPriority.priorityLabel, '高');
     });
 
     test('prefers manually entered monthly payment over the estimate', () {
@@ -144,7 +195,7 @@ void main() {
         (row) => row.name == 'モビット',
       );
 
-      expect(mobit.annualRate, 0.18);
+      expect(mobit.annualRate, 0.15);
     });
 
     test('uses the estimated minimum payment when manual input is absent', () {
@@ -263,6 +314,62 @@ void main() {
       expect(payPay.manualPaymentAmount, 0);
       expect(payPay.scheduledPaymentAmount, 0);
       expect(payPay.paymentAmountEstimated, isFalse);
+      expect(payPay.requiresAction, isFalse);
+    });
+
+    test('separates zero-yen payments into review-only day groups', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布': 50000,
+          'じぶん銀行カードローン': -100000,
+          'PayPayカード': -10000,
+        },
+        baseDate: DateTime(2026, 5, 29),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0,
+          'paypay_card': 5000,
+        },
+      );
+
+      final jibun = workbook.debtMasterRows.firstWhere(
+        (row) =>
+            row.id == AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+      );
+      final payPay = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'paypay_card',
+      );
+      expect(jibun.minimumPaymentEstimate, greaterThan(0));
+      expect(jibun.scheduledPaymentAmount, 0);
+      expect(jibun.paid, isFalse);
+      expect(jibun.requiresAction, isFalse);
+      expect(payPay.requiresAction, isTrue);
+
+      final day27 = workbook.paymentDayRisks
+          .where((risk) => risk.paymentDay == 27)
+          .toList(growable: false);
+      expect(day27, hasLength(2));
+      final actionRisk = day27.singleWhere((risk) => risk.requiresAction);
+      final reviewOnlyRisk = day27.singleWhere((risk) => !risk.requiresAction);
+      expect(actionRisk.accountNames, <String>['PayPayカード']);
+      expect(reviewOnlyRisk.accountNames, <String>['じぶん銀行カードローン']);
+      expect(reviewOnlyRisk.scheduledPaymentTotal, 0);
+
+      final jibunCashflow = workbook.cashflowRows.firstWhere(
+        (row) =>
+            row.accountId ==
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+      );
+      final payPayCashflow = workbook.cashflowRows.firstWhere(
+        (row) => row.accountId == 'paypay_card',
+      );
+      expect(jibunCashflow.overdue, isFalse);
+      expect(payPayCashflow.overdue, isTrue);
+      expect(
+        workbook.overdueCashflowRows.map((row) => row.accountId),
+        isNot(
+          contains(AssetLiabilityPlanningService.jibunBankCardLoanAccountId),
+        ),
+      );
     });
 
     test('manual zero yen does not trigger card billing review alert', () {
@@ -273,8 +380,9 @@ void main() {
       );
 
       expect(
-        workbook.cardBillingReview.needsReviewItems
-            .where((item) => item.accountId == 'paypay_card'),
+        workbook.cardBillingReview.needsReviewItems.where(
+          (item) => item.accountId == 'paypay_card',
+        ),
         isEmpty,
       );
     });
@@ -361,10 +469,7 @@ void main() {
 
     test('drops payment day risk entirely when every debt is paid', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          '財布': 50000,
-          'モビット': -20000,
-        },
+        latestSnapshot: <String, double>{'財布': 50000, 'モビット': -20000},
         baseDate: DateTime(2026, 5, 20),
         paidAccountNames: const <String>{'モビット'},
       );
@@ -829,16 +934,14 @@ void main() {
       expect(workbook.cardBillingReview.hasDoubleCountingRisk, isFalse);
     });
 
-    test('リボ払いカードは請求額を式から算出し不一致アラートを抑止する', () {
+    test('リボ払いカードは最低返済額へ明細の新規利用を上乗せし25日に返す', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          'cash': 50000,
-          'auPayカード': -530163,
-        },
+        latestSnapshot: <String, double>{'cash': 50000, 'auPayカード': -530163},
         baseDate: DateTime(2026, 6, 1),
         revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
           'aupay_card': AssetLiabilityRevolvingCreditConfig(
             monthlyAmount: 10000,
+            newUsageAmount: 99999,
             creditLimit: 500000,
           ),
         },
@@ -865,18 +968,20 @@ void main() {
       final debtRow = workbook.debtMasterRows.firstWhere(
         (row) => row.id == 'aupay_card',
       );
-      // 請求額 = 設定額10000 + max(0, 530163 − 500000) = 40163。
-      expect(debtRow.scheduledPaymentAmount, 40163);
+      // 手入力99999より取込明細を優先し、最低返済10000 + (8066 + 15116) = 33182。
+      expect(debtRow.scheduledPaymentAmount, 33182);
       expect(debtRow.isRevolving, isTrue);
-      expect(debtRow.revolvingBilling!.overLimitAmount, 30163);
+      expect(debtRow.revolvingBilling!.newUsageAmount, 23182);
+      expect(debtRow.revolvingBilling!.existingBalanceAmount, 506981);
+      expect(debtRow.revolvingBilling!.overLimitAmount, 0);
+      expect(debtRow.paymentDay, 25);
       expect(debtRow.paymentAmountEstimated, isFalse);
 
       final group = workbook.cardStatementReconciliation.groups.singleWhere(
         (group) => group.billingAccountId == 'aupay_card',
       );
       expect(group.isRevolving, isTrue);
-      expect(group.billedAmount, 40163);
-      // 明細合計(新規利用) 8066 + 15116 = 23182 は請求額と一致しないが正常。
+      expect(group.billedAmount, 33182);
       expect(group.statementLineTotal, 23182);
       expect(
         group.alerts,
@@ -886,7 +991,7 @@ void main() {
           ),
         ),
       );
-      expect(group.revolvingBilling!.billedAmount, 40163);
+      expect(group.revolvingBilling!.billedAmount, 33182);
     });
 
     test('リボ払いカードは明細未取込でも催促アラートを出さない', () {
@@ -1043,9 +1148,7 @@ void main() {
           group.fixActions.map((action) => action.kind).toList(growable: false);
       expect(
         kinds,
-        contains(
-          AssetLiabilityCardStatementFixActionKind.assignBillingAccount,
-        ),
+        contains(AssetLiabilityCardStatementFixActionKind.assignBillingAccount),
       );
       // 請求額がプレースホルダ0のため、取り込み・内訳修正は提案しない。
       expect(
@@ -1292,7 +1395,7 @@ void main() {
         '$acomShoppingName\u6255\u3044',
       );
       expect(workbook.cashflowRows.map((row) => row.paymentDay).toList(), <int>[
-        8,
+        26,
         26,
       ]);
       // \u73fe\u91d1\u652f\u51fa\u306f\u30a2\u30b3\u30e0\u6700\u4f4e\u8fd4\u6e08 (68000) \u306e\u307f\u3002Anthropic \u306e 40000 \u306f\u4e8c\u91cd\u8a08\u4e0a\u3057\u306a\u3044\u3002
@@ -2033,6 +2136,60 @@ void main() {
       expect(row.paymentDay, isNull);
     });
 
+    test('scheduled expenses do not inflate current debt or net worth', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'モビット': -200000,
+        },
+        baseDate: DateTime(2026, 5, 12),
+        includeDefaultFixedPayments: true,
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'chatgpt_pro',
+            name: 'ChatGPT Pro',
+            amount: 30000,
+            paymentDay: 20,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+        ],
+      );
+
+      expect(workbook.positiveAssetTotal, 100000);
+      expect(workbook.liabilityTotal, -200000);
+      expect(workbook.netWorth, -100000);
+      expect(
+        workbook.currentAccounts.map((account) => account.name),
+        containsAll(<String>['bank', 'モビット']),
+      );
+      expect(workbook.currentAccounts, hasLength(2));
+      expect(
+        workbook.currentDebtRows.map((row) => row.name),
+        <String>['モビット'],
+      );
+      expect(
+        workbook.repaymentPriorityRows.map((row) => row.name),
+        <String>['モビット'],
+      );
+      expect(
+        workbook.scheduledExpenseAccountIds,
+        containsAll(<String>[
+          'rent',
+          'kddi_provider',
+          'gas_bill',
+          'custom_chatgptpro',
+        ]),
+      );
+      expect(
+        workbook.debtMasterRows.any((row) => row.name == 'ChatGPT Pro'),
+        isTrue,
+      );
+      expect(
+        workbook.cashflowRows.any((row) => row.accountName == 'ChatGPT Pro'),
+        isTrue,
+      );
+    });
+
     test('marks full-payment fixed costs on debt rows', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: const <String, double>{'cash': 50000, 'モビット': -100000},
@@ -2223,10 +2380,7 @@ void main() {
       );
       expect(deposit.id, AssetLiabilityPlanningService.jibunBankAccountId);
       expect(deposit.kind, AssetLiabilityAccountKind.deposit);
-      expect(
-        loan.id,
-        AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
-      );
+      expect(loan.id, AssetLiabilityPlanningService.jibunBankCardLoanAccountId);
       expect(loan.kind, AssetLiabilityAccountKind.cardLoan);
       expect(deposit.id, isNot(loan.id));
     });
@@ -2253,9 +2407,7 @@ void main() {
       );
       expect(aupay.paymentSourceAccountName, 'じぶん銀行');
       expect(
-        workbook.paymentSourceMissingRows.any(
-          (row) => row.name == 'auPayカード',
-        ),
+        workbook.paymentSourceMissingRows.any((row) => row.name == 'auPayカード'),
         isFalse,
       );
     });
@@ -2282,6 +2434,30 @@ void main() {
         AssetLiabilityPlanningService.jibunBankAccountId,
       );
       expect(aupay.paymentSourceAccountName, 'じぶん銀行');
+    });
+
+    test('assigns confirmed contract rates for Acom debts by default', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'アコムカードローン': -500000,
+          'アコムショッピング': -2000000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+      );
+
+      final acomLoan = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'アコムカードローン',
+      );
+      expect(acomLoan.annualRate, 0.15);
+      expect(acomLoan.kind, AssetLiabilityAccountKind.cardLoan);
+      expect(acomLoan.paymentDay, 8);
+
+      final acomShopping = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'アコムショッピング',
+      );
+      expect(acomShopping.annualRate, 0.146);
+      expect(acomShopping.kind, AssetLiabilityAccountKind.shoppingDebt);
+      expect(acomShopping.paymentDay, 26);
     });
   });
 }

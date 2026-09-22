@@ -20,19 +20,22 @@ concurrency:
   group: public-memo-smoke
   cancel-in-progress: true  # 2026-07-13 ci-audit: schedule+手動重複実行防止
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   smoke:
+    permissions:
+      contents: read
     name: Anonymous GET smoke
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Smoke memo.public.view / memo.public.list (no auth headers)
+        env:
+          MEMO_ID_INPUT: ${{ github.event.inputs.memo_id || '44' }}
         run: |
           BASE="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub"
-          MEMO_ID="${{ github.event.inputs.memo_id || '44' }}"
+          MEMO_ID="$MEMO_ID_INPUT"
           FAIL=0
 
           check() {
@@ -112,9 +115,11 @@ jobs:
       # どの形が 401 になるか特定する診断ステップ (失敗しても job は落とさない)。
       - name: Diagnose external-AI request variants (informational)
         if: always()
+        env:
+          MEMO_ID_INPUT: ${{ github.event.inputs.memo_id || '44' }}
         run: |
           BASE="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub"
-          MEMO_ID="${{ github.event.inputs.memo_id || '44' }}"
+          MEMO_ID="$MEMO_ID_INPUT"
           URL="$BASE?action=memo.public.view&id=$MEMO_ID"
 
           probe() {

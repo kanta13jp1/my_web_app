@@ -1,0 +1,219 @@
+name: High-risk Dual Security Review
+
+on:
+  # GitHub runs pull_request_target in the default-branch context. Keep the
+  # automatic credential-bearing path on main only; PR-head files are data.
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, edited]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Pull request number"
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: dual-security-review-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Independent Claude and Codex review
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: high-risk-security-review
+      deployment: false
+    permissions:
+      contents: read
+      id-token: write
+      issues: read
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+    steps:
+      - name: Validate PR number
+        run: |
+          if ! [[ "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::PR number must be a positive integer"
+            exit 1
+          fi
+
+      - name: Checkout trusted default-branch SHA read-only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
+
+      - name: Resolve immutable review inputs
+        id: refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" > /tmp/pr.json
+          base_ref=$(jq -r '.base.ref' /tmp/pr.json)
+          base=$(jq -r '.base.sha' /tmp/pr.json)
+          head=$(jq -r '.head.sha' /tmp/pr.json)
+          if [ "$GITHUB_REF" != "refs/heads/main" ] || [ "$base_ref" != "main" ]; then
+            echo "::error::Only pull requests targeting main may use this credential-bearing workflow"
+            exit 1
+          fi
+          test "$base" != null && test "$head" != null
+          trusted=$(git rev-parse HEAD)
+          if [ "$trusted" != "$GITHUB_SHA" ]; then
+            echo "::error::Trusted checkout does not match the workflow SHA"
+            exit 1
+          fi
+          git cat-file -e "${base}^{commit}" || git fetch --no-tags origin "$base"
+          git fetch --no-tags origin \
+            "+refs/pull/${PR_NUMBER}/head:refs/remotes/pull/${PR_NUMBER}/head"
+          fetched_head=$(git rev-parse "refs/remotes/pull/${PR_NUMBER}/head")
+          if [ "$fetched_head" != "$head" ]; then
+            echo "::error::Fetched PR head does not match the GitHub API head SHA"
+            exit 1
+          fi
+          git diff --name-only "$base...$head" > /tmp/changed-files.txt
+          # Bound disk, prompt, and cost exposure before any API credential is
+          # made available. SIGPIPE (141) is expected when head reaches the cap.
+          set +o pipefail
+          git diff --no-ext-diff --unified=40 "$base...$head" \
+            | head -c 240000 > /tmp/review.diff
+          diff_status=${PIPESTATUS[0]}
+          set -o pipefail
+          if [ "$diff_status" -ne 0 ] && [ "$diff_status" -ne 141 ]; then
+            echo "::error::Unable to produce the bounded review diff"
+            exit "$diff_status"
+          fi
+          git show "$trusted:scripts/check_high_risk_ultrareview_gate.py" > /tmp/check_high_risk_ultrareview_gate.py
+          git show "$trusted:scripts/security_review_input.py" > /tmp/security_review_input.py
+          git show "$trusted:scripts/run_dual_security_review.py" > /tmp/run_dual_security_review.py
+
+      - name: Classify and redact untrusted diff
+        id: classify
+        run: |
+          PYTHONPATH=/tmp python /tmp/security_review_input.py \
+            --event /tmp/pr.json \
+            --changed-files /tmp/changed-files.txt \
+            --diff /tmp/review.diff \
+            --output /tmp/security-review-input.txt \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Authorize credential-bearing review
+        id: authorize
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          authorized=false
+          association=$(jq -r '.author_association // ""' /tmp/pr.json)
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            authorized=true
+          else
+            case "$association" in
+              OWNER|MEMBER|COLLABORATOR) authorized=true ;;
+            esac
+          fi
+          echo "authorized=$authorized" >> "$GITHUB_OUTPUT"
+          if [ "$authorized" != "true" ]; then
+            echo "::notice::External contributors require a maintainer workflow_dispatch run"
+          fi
+
+      - name: Setup fixed Python runtime
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized == 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install hash-locked OpenAI SDK dependency set
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized == 'true'
+        run: >-
+          python -m pip install --disable-pip-version-check --no-cache-dir
+          --only-binary=:all: --require-hashes
+          -r scripts/requirements-high-risk-security-review.txt
+
+      - name: Record maintainer-approval requirement
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized != 'true'
+        run: |
+          printf '%s\n' \
+            '## High-risk dual security review' \
+            '' \
+            '**UNAVAILABLE — external contributor review requires explicit maintainer approval.**' \
+            '' \
+            '- Claude evidence: `UNAVAILABLE — not counted as a review.`' \
+            '- Codex evidence: `UNAVAILABLE — not counted as a review.`' \
+            '- Recovery: a maintainer must inspect the immutable diff and run this workflow with `workflow_dispatch`.' \
+            > /tmp/dual-security-review.md
+
+      - name: Record owner-requested paid-review suspension
+        if: steps.paid_ai_policy.outputs.enabled != 'true' && steps.classify.outputs.high_risk == 'true'
+        run: |
+          printf '%s\n' \
+            '## High-risk dual security review' \
+            '' \
+            '**OWNER POLICY EXCEPTION — paid Claude/Codex review is suspended until open Issues reach zero.**' \
+            '' \
+            '- Claude evidence: `NOT RUN — owner-requested billing suspension.`' \
+            '- Codex evidence: `NOT RUN — owner-requested billing suspension.`' \
+            '- This is not a dual-model review and must not be represented as one.' \
+            '- Reactivation requires zero open Issues and a manual owner opt-in.' \
+            > /tmp/dual-security-review.md
+
+      - name: Run independent reviews and persist evidence
+        id: dual
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && steps.authorize.outputs.authorized == 'true'
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
+          OPENAI_WIF_AUDIENCE: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && vars.OPENAI_WIF_AUDIENCE || '' }}
+          OPENAI_IDENTITY_PROVIDER_ID: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && vars.OPENAI_IDENTITY_PROVIDER_ID || '' }}
+          OPENAI_SERVICE_ACCOUNT_ID: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && vars.OPENAI_SERVICE_ACCOUNT_ID || '' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DECISION_EVENTS_URL: https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/decision-events
+          CLAUDE_SECURITY_MODEL: ${{ vars.CLAUDE_SECURITY_MODEL || 'claude-opus-4-7' }}
+          CODEX_SECURITY_MODEL: ${{ vars.CODEX_SECURITY_MODEL || 'gpt-5.3-codex' }}
+        run: |
+          python /tmp/run_dual_security_review.py \
+            --input /tmp/security-review-input.txt \
+            --report /tmp/dual-security-review.md \
+            --repo "$GITHUB_REPOSITORY" \
+            --pr-number "$PR_NUMBER" \
+            --run-id "$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+
+      - name: Publish explicit review or exception evidence
+        if: steps.classify.outputs.high_risk == 'true' && always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -s /tmp/dual-security-review.md ]; then
+            printf '%s\n' '## High-risk dual security review' '' '**UNAVAILABLE — review evidence generation failed; this is not a dual review.**' > /tmp/dual-security-review.md
+          fi
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/dual-security-review.md
+          cat /tmp/dual-security-review.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce fail-closed dual-review result
+        if: steps.paid_ai_policy.outputs.enabled == 'true' && steps.classify.outputs.high_risk == 'true' && always()
+        run: |
+          if [ "${{ steps.authorize.outputs.authorized }}" != "true" ]; then
+            echo "::error::External contributors require an explicit maintainer workflow_dispatch run."
+            exit 1
+          fi
+          if [ "${{ steps.dual.outcome }}" != "success" ]; then
+            echo "::error::Both independent reviews and hash-linked evidence are required. Fallbacks do not count."
+            exit 1
+          fi
+
+      - name: Low-risk summary
+        if: steps.classify.outputs.high_risk != 'true'
+        run: echo "No high-risk trigger; dual-model review was not requested." >> "$GITHUB_STEP_SUMMARY"

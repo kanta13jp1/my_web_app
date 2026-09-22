@@ -25,18 +25,23 @@ name: Health Monitor (統合ヘルスモニター)
 
 on:
   schedule:
-    - cron: "0 */2 * * *"  # 毎2時間 (2026-06-15 ci-audit: 毎時→2時間, 360runs/月削減 / cs-check 7*/2 の直前に実行)
+    # #4935: avoid GitHub Actions' top-of-hour congestion while still preceding cs-check at :07.
+    - cron: "3 */2 * * *"
   workflow_dispatch:
 
 concurrency:
   group: health-monitor
   cancel-in-progress: true  # 2026-06-13 ci-audit: 毎30分モニタリングのキュー積み防止
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   monitor:
+    environment:
+      name: observability-production
+      deployment: false
+    permissions:
+      contents: write
     name: Health Monitor
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -47,7 +52,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}

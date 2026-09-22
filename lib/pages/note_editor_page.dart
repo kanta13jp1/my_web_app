@@ -15,6 +15,7 @@ import '../services/auto_save_service.dart';
 import '../services/note_comments_service.dart';
 import '../services/note_prompt_library_service.dart';
 import '../services/note_semantic_search_service.dart';
+import '../services/note_tag_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
 import '../utils/note_image_clipboard.dart';
@@ -25,6 +26,7 @@ import '../widgets/markdown_preview.dart';
 import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
+import '../widgets/note_tags_field.dart';
 import '../widgets/related_notes_strip.dart';
 
 class NoteEditorPage extends StatefulWidget {
@@ -153,6 +155,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   String? _currentNoteId;
   DateTime? _reminderDate;
   bool _isFavorite = false;
+  List<String> _tags = const <String>[];
   bool _isLoading = false;
   bool _isLoadingAttachments = false;
   bool _isUploadingAttachment = false;
@@ -164,6 +167,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   String? _persistedContent;
   String? _persistedReminderIso;
   bool? _persistedIsFavorite;
+  List<String>? _persistedTags;
   DateTime? _serverUpdatedAt;
   bool _showMarkdownPreview = false;
   bool? _isSlashCommandBarExpanded;
@@ -285,7 +289,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       _titleController.text.trim().isNotEmpty ||
       _contentController.text.trim().isNotEmpty ||
       _reminderDate != null ||
-      _isFavorite;
+      _isFavorite ||
+      _tags.isNotEmpty;
 
   bool _boolFromValue(dynamic value) => value == true;
 
@@ -302,6 +307,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       'content': content,
       'reminder_date': _reminderDate?.toIso8601String(),
       'is_favorite': _isFavorite,
+      'tags': _tags,
       // サーバーの updated_at と比較するため UTC で保存する。
       'saved_at': DateTime.now().toUtc().toIso8601String(),
     };
@@ -317,6 +323,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     String content;
     DateTime? reminderDate;
     bool isFavorite;
+    List<String> tags;
     DateTime? draftSavedAt;
     try {
       final decoded = jsonDecode(raw);
@@ -327,6 +334,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ? null
           : DateTime.tryParse(decoded['reminder_date'].toString())?.toLocal();
       isFavorite = _boolFromValue(decoded['is_favorite']);
+      tags = NoteTagService.normalize(decoded['tags']);
       draftSavedAt = decoded['saved_at'] == null
           ? null
           : DateTime.tryParse(decoded['saved_at'].toString())?.toUtc();
@@ -336,14 +344,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (title.isEmpty &&
         content.isEmpty &&
         reminderDate == null &&
-        !isFavorite) {
+        !isFavorite &&
+        tags.isEmpty) {
       return;
     }
 
     final hasChanges = _titleController.text != title ||
         _contentController.text != content ||
         _reminderDate?.toIso8601String() != reminderDate?.toIso8601String() ||
-        _isFavorite != isFavorite;
+        _isFavorite != isFavorite ||
+        !NoteTagService.equals(_tags, tags);
     if (!hasChanges) return;
 
     // 下書きより後にサーバー側が更新されている場合 (= 別端末での編集) は
@@ -388,6 +398,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _contentController.text = content;
     _reminderDate = reminderDate;
     _isFavorite = isFavorite;
+    _tags = tags;
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -421,11 +432,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required String content,
     required String? reminderIso,
     required bool isFavorite,
+    required List<String> tags,
   }) {
     _persistedTitle = title;
     _persistedContent = content;
     _persistedReminderIso = reminderIso;
     _persistedIsFavorite = isFavorite;
+    _persistedTags = NoteTagService.normalize(tags);
   }
 
   /// サーバー側の内容を一度でも取得できているか。取得できていない状態で
@@ -439,11 +452,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required String content,
     required String? reminderIso,
     required bool isFavorite,
+    required List<String> tags,
   }) {
     return _persistedTitle == title &&
         _persistedContent == content &&
         _persistedReminderIso == reminderIso &&
-        _persistedIsFavorite == isFavorite;
+        _persistedIsFavorite == isFavorite &&
+        NoteTagService.equals(_persistedTags, tags);
   }
 
   void _detachTextListeners() {
@@ -467,7 +482,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final hasAnyInput = _titleController.text.trim().isNotEmpty ||
         _contentController.text.trim().isNotEmpty ||
         _reminderDate != null ||
-        _isFavorite;
+        _isFavorite ||
+        _tags.isNotEmpty;
     // ローカル下書きを復元した直後は、画面上の内容がサーバーより新しい。
     // 従来はここで無条件に markAsSaved していたため「保存済み」と表示され
     // つつサーバーには届かず、次に何か入力するまで反映されなかった。
@@ -477,6 +493,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           content: _contentController.text.trim(),
           reminderIso: _reminderDate?.toUtc().toIso8601String(),
           isFavorite: _isFavorite,
+          tags: _tags,
         );
 
     if (matchesServer || (_currentNoteId == null && !hasAnyInput)) {
@@ -517,6 +534,61 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _autoSaveService.markAsModified();
     _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
     _persistDraftToLocal();
+  }
+
+  void _handleTagsChanged(List<String> tags) {
+    final normalized = NoteTagService.normalize(tags);
+    if (NoteTagService.equals(_tags, normalized)) return;
+    setState(() {
+      _tags = normalized;
+    });
+    _autoSaveService.markAsModified();
+    _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+    _persistDraftToLocal();
+  }
+
+  Future<void> _showTagsEditor() async {
+    var workingTags = List<String>.from(_tags);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  20,
+                  20,
+                  20 + MediaQuery.viewInsetsOf(context).bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'タグを編集',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    NoteTagsField(
+                      tags: workingTags,
+                      onChanged: (tags) {
+                        setSheetState(() {
+                          workingTags = tags;
+                        });
+                        _handleTagsChanged(tags);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showMessage(String message) {
@@ -1347,7 +1419,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     try {
       final data = await _supabase
           .from('notes')
-          .select('title, content, reminder_date, is_favorite, updated_at')
+          .select(
+            'title, content, reminder_date, is_favorite, tags, updated_at',
+          )
           .eq('id', id)
           .single();
       _serverUpdatedAt = data['updated_at'] == null
@@ -1364,12 +1438,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   data['reminder_date'].toString(),
                 )?.toLocal();
           _isFavorite = _boolFromValue(data['is_favorite']);
+          _tags = NoteTagService.normalize(data['tags']);
         });
         _markStatePersisted(
           title: _titleController.text.trim(),
           content: _contentController.text.trim(),
           reminderIso: _reminderDate?.toUtc().toIso8601String(),
           isFavorite: _isFavorite,
+          tags: _tags,
         );
         _syncObservedText();
       }
@@ -1456,6 +1532,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final content = _contentController.text.trim();
     final reminderIso = _reminderDate?.toUtc().toIso8601String();
     final isFavorite = _isFavorite;
+    final tags = NoteTagService.normalize(_tags);
 
     if (!_hasPersistableState && _currentNoteId == null) {
       return;
@@ -1475,6 +1552,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         content: content,
         reminderIso: reminderIso,
         isFavorite: isFavorite,
+        tags: tags,
       )) {
         _autoSaveService.markAsSaved();
         return;
@@ -1484,6 +1562,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         'content': content,
         'reminder_date': reminderIso,
         'is_favorite': isFavorite,
+        'tags': tags,
         // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
         // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
         'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -1497,6 +1576,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'content': content,
             'reminder_date': reminderIso,
             'is_favorite': isFavorite,
+            'tags': tags,
             'is_archived': false,
             'is_pinned': false,
           })
@@ -1517,6 +1597,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       content: content,
       reminderIso: reminderIso,
       isFavorite: isFavorite,
+      tags: tags,
     );
 
     final currentMatchesSavedRequest = _matchesPersistedState(
@@ -1524,6 +1605,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       content: _contentController.text.trim(),
       reminderIso: _reminderDate?.toUtc().toIso8601String(),
       isFavorite: _isFavorite,
+      tags: _tags,
     );
     if (currentMatchesSavedRequest) {
       _autoSaveService.markAsSaved();
@@ -2353,6 +2435,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     ),
                     label: Text(previewLabel),
                   ),
+                  OutlinedButton.icon(
+                    key: const Key('note_editor_tags_button'),
+                    onPressed: _showTagsEditor,
+                    icon: const Icon(Icons.sell_outlined),
+                    label: Text(isNarrow ? 'タグ' : 'タグ (${_tags.length})'),
+                  ),
                 ],
               ),
               if (!isNarrow) ...[
@@ -2471,11 +2559,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final content = _contentController.text.trim();
     final reminderIso = _reminderDate?.toUtc().toIso8601String();
     final isFavorite = _isFavorite;
+    final tags = NoteTagService.normalize(_tags);
     if (_matchesPersistedState(
       title: title,
       content: content,
       reminderIso: reminderIso,
       isFavorite: isFavorite,
+      tags: tags,
     )) {
       return;
     }
@@ -2488,6 +2578,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'content': content,
             'reminder_date': reminderIso,
             'is_favorite': isFavorite,
+            'tags': tags,
             'updated_at': DateTime.now().toUtc().toIso8601String(),
           })
           .eq('id', noteId)

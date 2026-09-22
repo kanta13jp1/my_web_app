@@ -6,6 +6,8 @@ import '../routes/app_route_names.dart';
 
 const _migrationPath =
     'supabase/migrations/20260823032746_create_notion_migration_control_plane.sql';
+const _retiredAnalyticsRouteMigrationPath =
+    'supabase/migrations/20260826233134_remove_retired_app_analytics_route.sql';
 
 void main() {
   late String sql;
@@ -164,6 +166,43 @@ void main() {
         reason: '$route must be registered before it can be parity evidence',
       );
     }
+  });
+
+  test('removes the retired analytics route from parity evidence', () {
+    final retirementSql = File(
+      _retiredAnalyticsRouteMigrationPath,
+    ).readAsStringSync().replaceAll('\r\n', '\n').toLowerCase();
+
+    expect(
+      retirementSql,
+      contains(
+        'new.site_routes := array_remove(\n'
+        '    new.site_routes,\n'
+        "    '/app-analytics-dashboard'\n"
+        '  );',
+      ),
+    );
+    expect(
+      retirementSql,
+      contains(
+        'before insert or update of site_routes\n'
+        '  on public.notion_migration_capabilities',
+      ),
+    );
+    expect(
+      retirementSql,
+      contains(
+        'revoke execute on function\n'
+        '  public.notion_migration_strip_retired_site_routes()\n'
+        '  from public, anon, authenticated;',
+      ),
+    );
+    expect(
+      retirementSql,
+      contains(
+        "set site_routes = array_remove(site_routes, '/app-analytics-dashboard')",
+      ),
+    );
   });
 
   test('keeps lossless WBS staging owner-readable and service-write-only', () {

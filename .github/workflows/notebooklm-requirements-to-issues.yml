@@ -31,9 +31,7 @@ on:
         default: "3"
         type: string
 
-permissions:
-  contents: write
-  issues: write
+permissions: {}
 
 concurrency:
   group: notebooklm-requirements-to-issues
@@ -41,6 +39,9 @@ concurrency:
 
 jobs:
   extract-and-issue:
+    permissions:
+      contents: write
+      issues: write
     name: Extract NotebookLM requirements and open Issues
     runs-on: ubuntu-latest
     timeout-minutes: 180
@@ -52,13 +53,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 20
           token: ${{ secrets.BYPASS_RULES || github.token }}
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -68,7 +69,7 @@ jobs:
         run: echo "period=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pip (notebooklm-py)
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-notebooklm-py-${{ steps.pip_cache_period.outputs.period }}
@@ -128,15 +129,21 @@ jobs:
       - name: Extract requirements and create Issues
         if: steps.restore_auth.outputs.auth_ready == 'true' && steps.capture_notebooklm_list.outputs.list_ready == 'true'
         shell: bash
+        env:
+          START_INDEX_INPUT: ${{ inputs.start_index || '1' }}
+          LIMIT_INPUT: ${{ inputs.limit || '0' }}
+          MAX_CREATED_ISSUES_INPUT: ${{ inputs.max_created_issues || '9' }}
+          REQUIREMENTS_PER_NOTEBOOK_INPUT: ${{ inputs.requirements_per_notebook || '3' }}
+          CREATE_ISSUES_INPUT: ${{ inputs.create_issues }}
         run: |
           set -euo pipefail
           CREATE_ISSUES="true"
-          START_INDEX="${{ inputs.start_index || '1' }}"
-          LIMIT="${{ inputs.limit || '0' }}"
-          MAX_CREATED_ISSUES="${{ inputs.max_created_issues || '9' }}"
-          REQUIREMENTS_PER_NOTEBOOK="${{ inputs.requirements_per_notebook || '3' }}"
+          START_INDEX="$START_INDEX_INPUT"
+          LIMIT="$LIMIT_INPUT"
+          MAX_CREATED_ISSUES="$MAX_CREATED_ISSUES_INPUT"
+          REQUIREMENTS_PER_NOTEBOOK="$REQUIREMENTS_PER_NOTEBOOK_INPUT"
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            CREATE_ISSUES="${{ inputs.create_issues }}"
+            CREATE_ISSUES="$CREATE_ISSUES_INPUT"
           fi
           CREATE_ARGS=()
           if [ "${CREATE_ISSUES}" = "true" ]; then
@@ -169,7 +176,7 @@ jobs:
 
       - name: Upload requirement reports
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: notebooklm-requirements-report
           path: docs/notebooklm-requirements

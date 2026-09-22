@@ -1,6 +1,6 @@
 # Asset Management WBS Plan
 
-Last updated: 2026-05-19 00:57 JST
+Last updated: 2026-08-29 JST
 
 ## Current WBS Snapshot
 
@@ -158,6 +158,23 @@ Current open pinned work starts here:
   WBS Auto Reschedule, as was done in this session.
 
 ## Safety Notes
+
+### Living Expense Priority Mode (#4999)
+
+- The `生活費優先モード` toggle is shown above the asset-management action
+  list and defaults to OFF so the existing severity/date/title order remains
+  unchanged.
+- ON applies the deterministic emergency-advice order immediately:
+  1. minimum living expenses and lifelines (food, housing, and utilities),
+  2. contact for overdue payments,
+  3. high-interest card loans (annual rate of 10% or more),
+  4. all remaining actions.
+- Subscription fixed costs are not treated as housing or utilities, even though
+  they share the `fullPaymentEstimate` representation. Within each priority
+  group, the existing severity/date/title order is preserved.
+- Switching OFF rebuilds the report with the original order. The mode changes
+  presentation order only; it does not change balances, payment amounts, due
+  dates, AI calculations, or persisted financial data.
 
 - Money calculations stay in Dart service/repository code.
 - AI can summarize or explain already-calculated values, but must not be the

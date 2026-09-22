@@ -41,7 +41,32 @@ class AssetRecurringFixedCostStore {
       await store.remove(prefsKey);
       return;
     }
-    await store.setString(prefsKey, jsonEncode(encodeMirrorValue(costs)));
+    final normalized = costs.map(normalizeCost).toList();
+    await store.setString(prefsKey, jsonEncode(encodeMirrorValue(normalized)));
+  }
+
+  /// レガシーな定期固定費・サブスクリプションの自動移行・正規化を行う。
+  /// - Claude: 旧契約（36,418円等）は一旦解約され、現在は「Claude Pro (3,000円)」に変更済み。
+  static AssetRecurringFixedCost normalizeCost(AssetRecurringFixedCost cost) {
+    final nameLower = cost.name.toLowerCase();
+    final idLower = cost.id.toLowerCase();
+    final isClaude = nameLower.contains('claude') || idLower.contains('claude');
+    if (isClaude && cost.amount > 5000) {
+      return cost.copyWith(
+        name: 'Claude Pro',
+        amount: 3000,
+        currency: AssetRecurringFixedCostCurrency.jpy,
+        clearUsdAmount: true,
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+    }
+    return cost;
+  }
+
+  static List<AssetRecurringFixedCost> normalizeCosts(
+    Iterable<AssetRecurringFixedCost> costs,
+  ) {
+    return costs.map(normalizeCost).toList();
   }
 
   /// リストを `asset_pref_mirror.value` (jsonb) 形 `{id: {...}}` へ変換する。
@@ -50,7 +75,7 @@ class AssetRecurringFixedCostStore {
     List<AssetRecurringFixedCost> costs,
   ) {
     return <String, dynamic>{
-      for (final cost in costs) cost.id: cost.toJson(),
+      for (final cost in costs) cost.id: normalizeCost(cost).toJson(),
     };
   }
 
@@ -69,7 +94,7 @@ class AssetRecurringFixedCostStore {
           Map<String, dynamic>.from(raw),
         );
         if (cost != null) {
-          result.add(cost);
+          result.add(normalizeCost(cost));
         }
       }
     });
