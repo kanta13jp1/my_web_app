@@ -90,9 +90,9 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
       final data = response.data;
       if (data is Map<String, dynamic> && data['pages'] is List) {
         final allPages = (data['pages'] as List)
-              .cast<Map<String, dynamic>>()
-              .map(normalizeWikiPageResponse)
-              .toList();
+            .cast<Map<String, dynamic>>()
+            .map(normalizeWikiPageResponse)
+            .toList();
         final page = allPages.where((p) {
           return p['id']?.toString() == pageId;
         }).firstOrNull;
