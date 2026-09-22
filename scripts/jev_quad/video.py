@@ -19,7 +19,7 @@ try:
     const names=['cloud_jev','localjev','lightgbm','laya'];
     const titles=['Cloud Jev API','LocalJev / Qwen 0.5B','Jev-distilled LightGBM','Laya / English 421M CPU'];
     const runs=await Promise.all(names.map(n=>fetch(`/out/quad/${n}-${mode}.json`).then(r=>r.json())));
-    const lanes=runs.map(run=>({run,game:new World11(),index:0,action:'noop',accepted:0,overrides:0,fallback:0,shield:0,parity:false}));
+    const lanes=runs.map(run=>({run,game:new World11(run.stage??1),index:0,action:'noop',accepted:0,overrides:0,fallback:0,shield:0,parity:false}));
     const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=1240;document.body.replaceChildren(canvas);
     const ctx=canvas.getContext('2d');
     const audio=new GameAudio();await audio.enable(true);const capture=audio.captureOutput();
