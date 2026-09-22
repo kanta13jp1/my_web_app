@@ -20,3 +20,5 @@ Laya: official English421M CPU, source573e5b62696ba441230cd6be71d593331b5d23af, 
 LocalJev is pinned githubnext/localjev with Qwen2.5-0.5B Q4_K_M, not Jev weights. Its raw trial stayed at x32. Errors and uniform responses remain in JSON; assisted clear is largely search control. Cloud latency is from a cloud runner, not a Japanese browser/proxy. LightGBM is the frozen166-Jev-label student, not newly trained on successful search trajectories.
 
 Video uses only the LightGBM lane audio to avoid four overlapping soundtracks. All four terminal states must match their real-run phase/x before the video artifact is accepted. No outcome is fabricated for a failed model.
+
+Video rendering-only run: https://github.com/kanta13jp1/my_web_app/actions/runs/35680117830 . H.264/AAC and WebM artifacts; both assisted and raw videos passed all terminal parity assertions. SHA256 manifests are retained. Additional Jev editorial triage chose keep with confidence0.17; it is not a quality pass or fact verification. Manual comparison against JSON was performed.
