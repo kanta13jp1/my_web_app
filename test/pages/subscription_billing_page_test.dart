@@ -5,9 +5,47 @@ import 'package:my_web_app/services/activation_revenue_experiment_service.dart';
 import 'package:my_web_app/services/activation_revenue_tracker.dart';
 import 'package:my_web_app/services/billing_service.dart';
 import 'package:my_web_app/services/growth_acquisition_service.dart';
+import 'package:my_web_app/services/paddle_checkout.dart';
+import 'package:my_web_app/services/paddle_invoice_access.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  testWidgets('shows the Team per-seat price before checkout and in the plan', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(
+            status: const BillingStatus(
+              tier: 'team',
+              status: 'active',
+              aiQueryCount: 0,
+              efCallCount: 0,
+            ),
+          ),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Team（1席あたり月額2,980円）'), findsOneWidget);
+    final offerPrice = find.text('1席あたり月額2,980円');
+    await tester.ensureVisible(offerPrice);
+    await tester.pumpAndSettle();
+    expect(offerPrice, findsOneWidget);
+    expect(find.text('月額2,980円'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows the free AI quota, remaining count, and progress', (
     tester,
   ) async {
@@ -215,16 +253,14 @@ void main() {
     tester,
   ) async {
     const secret = 'internal-token=do-not-render';
+    final billing = _FakeBillingGateway(
+      fetchStatusError: BillingServiceException(secret, statusCode: 503),
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: SubscriptionBillingPage(
-          service: _FakeBillingGateway(
-            fetchStatusError: BillingServiceException(
-              secret,
-              statusCode: 503,
-            ),
-          ),
+          service: billing,
           tracker: const NoopActivationRevenueEventTracker(),
           assignment: _treatment,
           initialUri: Uri.parse('https://example.com/subscription-billing'),
@@ -233,25 +269,29 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('プラン情報を読み込めませんでした。時間をおいて再度お試しください。'),
-      findsOneWidget,
-    );
+    expect(find.text('プラン情報を読み込めませんでした。時間をおいて再度お試しください。'), findsOneWidget);
+    expect(find.textContaining(secret), findsNothing);
+    final retryButton = find.byKey(const Key('billing_error_retry_button'));
+    expect(retryButton, findsOneWidget);
+
+    await tester.ensureVisible(retryButton);
+    await tester.tap(retryButton);
+    await tester.pumpAndSettle();
+
+    expect(billing.fetchStatusCount, 2);
     expect(find.textContaining(secret), findsNothing);
   });
 
   testWidgets('does not expose checkout exception details', (tester) async {
     const secret = 'stripe-secret=do-not-render';
+    final billing = _FakeBillingGateway(
+      checkoutError: BillingServiceException(secret, statusCode: 500),
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: SubscriptionBillingPage(
-          service: _FakeBillingGateway(
-            checkoutError: BillingServiceException(
-              secret,
-              statusCode: 500,
-            ),
-          ),
+          service: billing,
           acquisitionService: _RecordingAcquisitionService(),
           tracker: const NoopActivationRevenueEventTracker(),
           assignment: _treatment,
@@ -266,10 +306,16 @@ void main() {
     await tester.tap(checkoutButton);
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('決済画面を準備できませんでした。時間をおいて再度お試しください。'),
-      findsOneWidget,
-    );
+    expect(find.text('決済画面を準備できませんでした。時間をおいて再度お試しください。'), findsOneWidget);
+    expect(find.textContaining(secret), findsNothing);
+    final retryButton = find.byKey(const Key('billing_error_retry_button'));
+    expect(retryButton, findsOneWidget);
+
+    await tester.ensureVisible(retryButton);
+    await tester.tap(retryButton);
+    await tester.pumpAndSettle();
+
+    expect(billing.checkoutAttemptCount, 2);
     expect(find.textContaining(secret), findsNothing);
   });
 
@@ -339,6 +385,65 @@ void main() {
       containsPair('utm_content', 'outcome_first_a'),
     );
   });
+
+  testWidgets('keeps the Paddle sandbox card hidden by default', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('paddle_sandbox_checkout_card')), findsNothing);
+  });
+
+  testWidgets('shows the Paddle sandbox card only when explicitly enabled', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+          paddleSandboxConfig: const PaddleSandboxConfig(
+            enabled: true,
+            clientSideToken: 'test_client_token',
+            priceId: 'pri_sandbox_price',
+            releaseMode: false,
+          ),
+          paddleCheckoutGateway: _FakePaddleCheckoutGateway(),
+          paddleInvoiceAccessConfig: const PaddleInvoiceAccessConfig(
+            enabled: true,
+            customerPortalUrl:
+                'https://sandbox-customer-portal.paddle.com/cpl_sandboxtest123',
+            releaseMode: false,
+          ),
+          paddleInvoicePortalLauncher: (_) async => true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('paddle_sandbox_checkout_card')),
+      findsOneWidget,
+    );
+    expect(find.text('SANDBOX ONLY'), findsNWidgets(2));
+    expect(
+      find.byKey(const Key('paddle_sandbox_invoice_access_card')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('発行元は'), findsOneWidget);
+  });
 }
 
 final _treatment = ActivationRevenueAssignment(
@@ -362,6 +467,7 @@ class _FakeBillingGateway implements BillingGateway {
   final Exception? fetchStatusError;
   final Exception? checkoutError;
   int fetchStatusCount = 0;
+  int checkoutAttemptCount = 0;
   BillingSupporterAttribution? supporterAttribution;
   String? checkoutReturnUrl;
 
@@ -379,6 +485,7 @@ class _FakeBillingGateway implements BillingGateway {
     required String returnUrl,
     BillingCheckoutAttribution attribution = const BillingCheckoutAttribution(),
   }) async {
+    checkoutAttemptCount += 1;
     checkoutReturnUrl = returnUrl;
     final error = checkoutError;
     if (error != null) throw error;
@@ -445,4 +552,15 @@ class _RecordingAcquisitionService extends GrowthAcquisitionService {
       capturedAt: DateTime.utc(2026, 7, 24),
     );
   }
+}
+
+class _FakePaddleCheckoutGateway implements PaddleCheckoutGateway {
+  @override
+  Future<void> openCheckout({
+    required PaddleSandboxConfig config,
+    required void Function(PaddleCheckoutEvent event) onEvent,
+  }) async {}
+
+  @override
+  void dispose() {}
 }

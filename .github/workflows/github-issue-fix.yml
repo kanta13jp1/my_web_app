@@ -24,6 +24,9 @@ permissions: {}
 
 jobs:
   orchestrate:
+    environment:
+      name: wbs-automation-production
+      deployment: false
     permissions:
       contents: write
       pull-requests: write

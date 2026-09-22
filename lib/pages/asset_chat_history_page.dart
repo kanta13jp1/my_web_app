@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/asset_chat.dart';
 import '../services/asset_chat_history_repository.dart';
 import '../view_models/asset_chat_history_view_model.dart';
+import '../widgets/critical_action_dialog.dart';
 
 class AssetChatHistoryPage extends StatefulWidget {
   final AssetChatHistoryRepository? repository;
@@ -61,30 +62,16 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
   }
 
   Future<void> _confirmDelete(AssetChatThreadSummary thread) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showCriticalActionDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('チャットを削除しますか？'),
-        content: Text(
-          '「${thread.title}」のメッセージをすべて削除します。この操作は元に戻せません。',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            key: const Key('asset_chat_delete_confirm_button'),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('削除する'),
-          ),
-        ],
-      ),
+      title: 'チャットを削除しますか？',
+      impact: '「${thread.title}」のメッセージをすべて削除します。'
+          'この操作は元に戻せません。',
+      actionLabel: '削除する',
+      confirmationPhrase: '削除する',
+      confirmButtonKey: const Key('asset_chat_delete_confirm_button'),
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
     final deleted = await _viewModel.deleteThread(thread);
     if (!mounted) return;
     if (deleted && _showMobileDetail) {

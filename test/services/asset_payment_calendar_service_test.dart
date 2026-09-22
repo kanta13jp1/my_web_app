@@ -5,6 +5,49 @@ import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 
 void main() {
   group('AssetPaymentCalendarService', () {
+    test(
+        'Issue #5190: handles paid debt without adding to scheduled outflow and labels (支払済)',
+        () {
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 8),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            id: 'acom',
+            name: 'アコム',
+            balance: -100000,
+            paymentDay: 26,
+            scheduledPaymentAmount: 10000,
+            paid: true,
+          ),
+          AssetCalendarDebtInput(
+            id: 'mobit',
+            name: 'モビット',
+            balance: -50000,
+            paymentDay: 26,
+            scheduledPaymentAmount: 5000,
+            paid: false,
+          ),
+        ],
+      );
+
+      final day26 = calendar.dayFor(DateTime(2026, 8, 26));
+      expect(day26, isNotNull);
+      expect(day26!.events, hasLength(2));
+      final acomEvent = day26.events.firstWhere((e) => e.sourceId == 'acom');
+      expect(acomEvent.label, 'アコム (支払済)');
+      expect(acomEvent.isPaid, isTrue);
+      expect(acomEvent.amount, isNull);
+
+      final mobitEvent = day26.events.firstWhere((e) => e.sourceId == 'mobit');
+      expect(mobitEvent.label, 'モビット 返済');
+      expect(mobitEvent.isPaid, isFalse);
+      expect(mobitEvent.amount, 5000);
+
+      expect(calendar.scheduledDebtPaymentTotal, 5000);
+    });
+
     test('maps utility workbook rows to fixed-cost calendar inputs', () {
       final workbook = const AssetLiabilityPlanningService().buildWorkbook(
         latestSnapshot: const <String, double>{'現金': 100000},

@@ -1,4 +1,9 @@
+import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'dart:async';
+
+import 'package:my_web_app/pages/aero_lab_page.dart';
+import 'package:my_web_app/pages/sound_bloom_page.dart';
+import 'package:my_web_app/pages/lumen_path_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:my_web_app/services/version_check_service.dart';
@@ -89,6 +94,7 @@ import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/eval_approval_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/price_tracker_page.dart';
+import 'package:my_web_app/pages/process_quality_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_observability_page.dart';
 import 'package:my_web_app/pages/ai_router_cost_dashboard_page.dart';
 import 'package:my_web_app/pages/task_budget_assistant_page.dart';
@@ -127,6 +133,7 @@ import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/corporate_bank_account_simulator_page.dart';
+import 'package:my_web_app/pages/corporate_site_readiness_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
 import 'package:my_web_app/pages/api_playground_page.dart';
 import 'package:my_web_app/pages/categories_page.dart';
@@ -224,6 +231,7 @@ import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
+import 'package:my_web_app/ui/features/palm_reading/palm_reading_feature.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
 import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
@@ -249,6 +257,7 @@ import 'package:my_web_app/pages/crm_sales_pipeline_page.dart';
 import 'package:my_web_app/pages/horse_racing_predictor_page.dart';
 import 'package:my_web_app/pages/horse_provider_leaderboard_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_page.dart';
+import 'package:my_web_app/pages/art_museum_directory_page.dart';
 import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
 import 'package:my_web_app/pages/meal_log_page.dart';
@@ -316,6 +325,7 @@ import 'package:my_web_app/pages/ai_university_streaks_page.dart';
 import 'package:my_web_app/pages/english_reading_curriculum_page.dart';
 import 'package:my_web_app/pages/english_reading_practice_page.dart';
 import 'package:my_web_app/pages/english_reading_dashboard_page.dart';
+import 'package:my_web_app/ui/features/toeic/toeic_feature.dart';
 import 'package:my_web_app/pages/ai_workflow_automation_page.dart';
 import 'package:my_web_app/pages/ab_testing_manager_page.dart';
 import 'package:my_web_app/pages/habit_tracker_page.dart';
@@ -343,6 +353,7 @@ import 'utils/error_reporter.dart';
 
 import 'services/supabase_client_provider.dart';
 import 'services/supabase_runtime_config.dart';
+import 'services/supabase_trace_context.dart';
 
 export 'services/supabase_client_provider.dart';
 
@@ -366,6 +377,9 @@ Future<void> main() async {
   await Supabase.initialize(
     url: supabaseConfig.url,
     publishableKey: supabaseConfig.publishableKey,
+    // Keep trace IDs in Supabase logs even when the Sentry transaction is not
+    // exported. The wrapper adds identifiers only; payloads are never copied.
+    httpClient: SupabaseTracingHttpClient(),
   );
 
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
@@ -525,6 +539,11 @@ Route<dynamic> generateAppRoute(
           signupCompletionService: signupCompletionService,
         ),
       );
+    case '/jev-mario-lab':
+      return MaterialPageRoute(
+        builder: (_) => const JevMarioLabPage(),
+        settings: settings,
+      );
     case '/agi-fireworks':
       return MaterialPageRoute(
         builder: (_) => const AgiFireworksPage(),
@@ -609,6 +628,11 @@ Route<dynamic> generateAppRoute(
           initialCategory: args?['category'] as String?,
         ),
       );
+    case '/ai-university-toeic':
+      return MaterialPageRoute(
+        builder: (_) => const ToeicFeature(),
+        settings: settings,
+      );
     case '/ai-university':
     case '/gemini-university':
       final args = settings.arguments as Map<String, dynamic>?;
@@ -653,8 +677,12 @@ Route<dynamic> generateAppRoute(
         builder: (_) => PublicMemoDetailPage(memoId: memoId),
         settings: RouteSettings(name: settings.name),
       );
+    case '/manual':
     case '/user-manual':
-      return MaterialPageRoute(builder: (_) => const UserManualPage());
+      return MaterialPageRoute(
+        builder: (_) => const UserManualPage(),
+        settings: settings,
+      );
     case '/site-guide-ai':
       final argumentQuestion =
           settings.arguments is String ? settings.arguments as String : null;
@@ -693,8 +721,11 @@ Route<dynamic> generateAppRoute(
         settings: settings,
       );
     case '/philosophy':
+      final initialStep = uri.queryParameters['step'] == 'quick-inventory'
+          ? PhilosophyInitialStep.quickInventory
+          : PhilosophyInitialStep.overview;
       return MaterialPageRoute(
-        builder: (_) => const PhilosophyPage(),
+        builder: (_) => PhilosophyPage(initialStep: initialStep),
         settings: settings,
       );
     case '/privacy':
@@ -898,6 +929,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const PurchaseLogPage());
     case '/price-tracker':
       return MaterialPageRoute(builder: (_) => const PriceTrackerPage());
+    case '/process-quality-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const ProcessQualityDashboardPage(),
+      );
     case '/ai-observability':
       return MaterialPageRoute(
         builder: (_) => const AiObservabilityPage(),
@@ -921,8 +956,10 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const EdgeFunctionStatusPage(),
       );
     case '/admin':
+    case '/admin/analytics':
       return MaterialPageRoute(
         builder: (_) => const AdminAnalyticsPage(),
+        settings: settings,
       );
     case '/admin/artifact-publishing':
       return MaterialPageRoute(
@@ -994,6 +1031,8 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => PersonalityTestResultPage(testId: resultTestId),
       );
+    case '/palm-reading':
+      return MaterialPageRoute(builder: (_) => const PalmReadingPage());
     case '/iq-test':
       return MaterialPageRoute(builder: (_) => const IqTestPage());
     // 出題中のテストは testId と seed が無いと復元できない (再開もできない)。
@@ -1037,6 +1076,10 @@ Route<dynamic> generateAppRoute(
     case '/corporate-bank-account-cost':
       return MaterialPageRoute(
         builder: (_) => const CorporateBankAccountSimulatorPage(),
+      );
+    case '/corporate-site-readiness':
+      return MaterialPageRoute(
+        builder: (_) => const CorporateSiteReadinessPage(),
       );
     case '/ai-secretary':
       return MaterialPageRoute(builder: (_) => const AISecretaryPage());
@@ -1370,6 +1413,21 @@ Route<dynamic> generateAppRoute(
       );
     case '/landing-ab-test':
       return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
+    case '/lumen-path':
+      return MaterialPageRoute(
+        builder: (_) => const LumenPathPage(),
+        settings: settings,
+      );
+    case '/sound-bloom':
+      return MaterialPageRoute(
+        builder: (_) => const SoundBloomPage(),
+        settings: settings,
+      );
+    case '/aero-lab':
+      return MaterialPageRoute(
+        builder: (_) => const AeroLabPage(),
+        settings: settings,
+      );
     case '/video-studio':
       return MaterialPageRoute(
         builder: (_) => VideoStudioFeature(initialUri: uri),
@@ -1472,6 +1530,11 @@ Route<dynamic> generateAppRoute(
     case '/travel-planner':
       return MaterialPageRoute(
         builder: (_) => const TravelItineraryPage(),
+      );
+    case '/art-museums':
+      return MaterialPageRoute(
+        builder: (_) => const ArtMuseumDirectoryPage(),
+        settings: settings,
       );
     case '/virtual-whiteboard':
       return MaterialPageRoute(

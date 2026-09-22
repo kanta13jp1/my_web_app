@@ -62,6 +62,15 @@ class AssetManagementAiProposalExtraction {
   });
 }
 
+class _AssetManagementAiGroundingException implements Exception {
+  final String message;
+
+  const _AssetManagementAiGroundingException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class AssetManagementAiSummaryService {
   // GPT-5 の reasoning トークンや Gemini の thinking トークンも
   // この上限 (maxOutputTokens) を消費するため、本文 (約3,000-4,000トークン) に
@@ -164,6 +173,15 @@ class AssetManagementAiSummaryService {
       if (!_containsJapaneseText(response.text)) {
         throw const AiHubChatException('AI要約が日本語ではありませんでした');
       }
+      final groundingErrors = _validateGroundedResponse(
+        response.text,
+        report.workbook,
+      );
+      if (groundingErrors.isNotEmpty) {
+        throw _AssetManagementAiGroundingException(
+          'AI要約の確定データ検証に失敗しました: ${groundingErrors.join(' / ')}',
+        );
+      }
       final proposals = extractAiDeveloperProposals(response.text);
       // LLMの再掲禁止は確率的にしか守られないため、既知テンプレート・
       // 起票済みIssueと同名の提案は決定論的に除外する。
@@ -186,10 +204,13 @@ class AssetManagementAiSummaryService {
         aiDeveloperRequests: novelRequests,
       );
     } catch (error) {
+      final groundingFailure = error is _AssetManagementAiGroundingException;
       return AssetManagementAiSummaryResult(
         status: AssetManagementAiSummaryStatus.fallback,
         text: fallback,
-        source: 'deterministic fallback / ai-hub failed',
+        source: groundingFailure
+            ? 'deterministic fallback / grounding validation failed'
+            : 'deterministic fallback / ai-hub failed',
         errorMessage: error.toString(),
         generatedAt: _now(),
         payload: payload,
@@ -365,6 +386,8 @@ class AssetManagementAiSummaryService {
 
   Map<String, dynamic> buildPayload(AssetManagementInsightReport report) {
     return <String, dynamic>{
+      // Invalidate saved summaries when the response policy changes.
+      'response_policy_version': 3,
       'user_profile': _profileToDetailedJson(report.userProfile),
       'workbook': _workbookToDetailedJson(report.workbook),
       'available_money': <String, dynamic>{
@@ -433,6 +456,19 @@ class AssetManagementAiSummaryService {
     };
   }
 
+  /// Only current-input results may be displayed, copied, or used for actions.
+  /// A late response for an older report remains historical, not current data.
+  AssetManagementAiSummaryResult? currentResultFor({
+    required AssetManagementInsightReport report,
+    required AssetManagementAiSummaryResult? result,
+    required String? resultKey,
+  }) {
+    if (result == null || resultKey != buildRequestFingerprint(report)) {
+      return null;
+    }
+    return result;
+  }
+
   String buildRequestFingerprint(AssetManagementInsightReport report) {
     final canonical = jsonEncode(_fingerprintValue(buildPayload(report)));
     return 'sha256:${sha256.convert(utf8.encode(canonical))}';
@@ -448,7 +484,7 @@ class AssetManagementAiSummaryService {
         ? '現時点で口座移動・出金提案はありません。'
         : '口座移動・出金提案を${report.movementSuggestions.length}件確認してください。';
     final emergency = report.emergencyAdvices.isEmpty
-        ? '緊急の生活費防衛アドバイスはありません。'
+        ? '生活費防衛の追加提案は生成されていません。要確認項目の解消を意味するものではありません。'
         : report.emergencyAdvices
             .take(3)
             .map(
@@ -461,6 +497,9 @@ class AssetManagementAiSummaryService {
       status,
       '要対応: $actionCount件、緊急: $critical件。',
       '使用可能額: 本日 $today、今週 $week、今月 $month。',
+      if (critical > 0)
+        '優先確認: ${report.criticalActions.take(3).map((item) => item.title).join('、')}。',
+      if (critical > 3) 'ほか${critical - 3}件は下の要対応項目を確認してください。',
       emergency,
       movement,
       '金額はDartルールで計算済みです。AIは要約のみを行います。',
@@ -489,11 +528,12 @@ class AssetManagementAiSummaryService {
         jsonEncode(_previousAnalysesToJson(previousAnalyses)),
         '',
       ],
-      '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。細木数子を彷彿とさせる、厳しめで愛情のある断言口調にしてください。曖昧にせず、今日・今週・今月にやることを具体的に言い切ってください。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
-      '現在データ優先ルール: 唯一の「現在の事実」は「AIに渡す詳細ペイロード」とアクションアイテムだけです。previous_ai_analyses（metrics_snapshot）は過去時点のスナップショットで、現在の事実ではありません。履歴に出てくる金額・使用可能額・未払い・期限超過を、現在のものとして断定・督促してはいけません。現在の使用可能額がプラスなら「不足」「マイナス」と言わず、現在のアクションアイテムや支払日別リスクに無い負債を「期限超過」「未払い」と呼ばないでください。現在値と履歴が矛盾する場合は必ず現在値を採用してください。',
+      '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。今月未払い合計（monthly_unpaid_payment_total）に言及する際は、AIに渡す詳細ペイロードの unpaid_direct_payments を参照し、各項目の名称・支払日・金額の内訳を箇条書きで具体的に示してください（合計金額だけで終わらせず、何が未払いなのかを明示すること）。金額はDart計算値を正として扱い、追加計算は概算と明記してください。敬意のある具体的な説明にしてください。確認済みの事実・予定・推定・未確認を区別し、未確認事項は確認方法を示してください。生年月日・性格・運勢による財務判断や、趣味・人格への侮辱を禁止します。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
+      '現在データ優先ルール: 唯一の「現在の事実」は「AIに渡す詳細ペイロード」とアクションアイテムだけです。previous_ai_analyses（metrics_snapshot）は過去時点のスナップショットで、現在の事実ではありません。履歴に出てくる金額・使用可能額・未払い・期限超過を、現在のものとして断定・督促してはいけません。現在の使用可能額がプラスなら「不足」「マイナス」と言わず、現在のアクションアイテムや支払日別リスクに無い負債、または paid が true の負債を「期限超過」「未払い」と呼ばないでください。クレジットカードやショッピング枠等の請求に含まれる負債（included_in_billing_account: true、例: auなどauPayカード払いになっているもの）は、親カード（auPAYカード等）でまとめて支払われるため、個別の未払い負債として計上・督促・未払い一覧に記載しないでください。親カードが支払済み（paid: true）であれば、その含まれる負債も支払い処理済みとして扱い、「期限超過」「未払い」として扱ってはいけません。個別の未払い負債・未払い支出として言及するのは直接支払う対象（is_direct_cashflow_target: true かつ paid: false、unpaid_direct_payments に含まれるもの）のみとしてください。支払済み（paid: true）の負債（auPayカードなど）はすでに今月分の引き落とし・支払いが完了しています。支払済みの負債を「未払い」「期限超過」として扱ったり、支払うよう督促してはいけません。「auPayカードは今月分引落済みです」のように支払完了した事実としてのみ言及してください。受取済み（received: true）の給与・収入を「未受取」「期限超過」「未着金」として扱ったり、今日着金しているか確認するよう督促してはいけません。また、予定日が今日より未来の収入について、今日入金・着金を確認するよう指示してはいけません。今月支払うべき額には推定最低支払額ではなく「今月支払予定額（scheduled_payment_amount）」を用い、解約済みサブスク（金額0円または非アクティブ）を「サブスク地獄」「未払支出」と言及してはいけません。Claude（Claude AI SUBSCRIPTION）は一度解約され、現在は月額3,000円の「Claude Pro」に変更済みです。過去の明細履歴にある旧金額（36,418円など）での言及や過大なサブスク負担としての批判は行わず、月額3,000円のProプランとして扱ってください。負債の年利（annual_rate）や負債総額は、過去の記憶ではなく必ずペイロード内の確定値（annual_rate, balance）を採用してください。現在値と履歴が矛盾する場合は必ず現在値を採用してください。',
+      '証拠区分ルール: 残高差分からの新規借入は推定であり、取引明細未照合なら新規借入・誓約違反を断定しないでください。未受取の入金予定は未入金の証拠ではありません。予定日を過ぎても自動的に受取済みとはみなしません。received: false は受取状況の記録が未確認であることとして説明してください。予定と実績の対象期間・金額を照合するよう案内し、受取済みへの変更を断定的に要求しないでください。履歴は前回の記録として日付を示し、月が異なると確認できない限り先月と呼ばないでください。完済目標の月額は返済総額か追加額かを区別し、最低返済額への上乗せを勝手に解釈しないでください。',
       '履歴利用ルール: previous_ai_analyses がある場合は、各 metrics_snapshot（純資産・未払い合計・使用可能額）の数値と今回の現在値を比較し、「前回比 純資産○円」「未払い合計が△円減/増」のように差分（改善点・悪化点・据え置き点）を述べてください。過去の本文や言い回しを引用・再掲するのではなく、必ず今回の現在値を主語にして書いてください。',
-      '日々の行動ルール: daily_todo がある場合は、金銭の負債と同じ熱量で「行動の借金」にも言及してください。carried_over（やらずに繰り越したタスク）は max_carry_over_days が大きいほど厳しく叱り、具体的なタイトルを挙げて「今日こそ片づけなさい」と言い切ってください。active_streak_days が続いていれば必ず褒め、recent_days のこなした実績を根拠に「この調子」と背中を押してください。today_pending が残っていれば寝る前にやり切るよう促してください。daily_todo が無い、または空のときは行動の借金には触れず、金銭面の助言に集中してください（存在しない実績を捏造しないこと）。',
-      '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. 最後にズバッと総評」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3つよ。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
+      '日々の行動ルール: daily_todo がある場合は、金銭の負債と同じ熱量で「行動の借金」にも言及してください。carried_over（繰り越したタスク）は具体的なタイトルと経過日数を示し、実行可能な次の一歩を提案してください。繰り越しを人格や能力の問題と決めつけないでください。active_streak_days が続いていれば必ず褒め、recent_days のこなした実績を根拠に「この調子」と背中を押してください。today_pending が残っていれば寝る前にやり切るよう促してください。daily_todo が無い、または空のときは行動の借金には触れず、金銭面の助言に集中してください（存在しない実績を捏造しないこと）。',
+      '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. まとめ」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3点を確認しましょう。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
       '開発者向け改善提案の出力ルール: implementation_context を読んで現状の機能を実際にレビューしてから提案してください。developer_requests は定型生成の既知提案一覧で、already_issued が true のものは既にGitHub Issue起票済みです。本文の「7. 開発者向け改善提案」にも既知提案・起票済み提案やその言い換えを書かないでください。items の title と同一または類似のタイトルは本文にもJSONにも出力禁止です。まだ起票されていない新規の改善提案だけを最大3件返し、新規提案が1件も無い場合は本文には「新規提案なし（既知の提案はすべて起票済みです）」と1行だけ書いてください。各提案は「現状できること（機能レビュー）」「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
       '新規改善提案の機械可読出力ルール: 応答の最後にコードブロックを1つだけ出力してください。コードブロックの開始行は必ず「```json ai-new-proposals」の1行とし、ai-new-proposals を次の行に分けないでください。中身は本文の「7. 開発者向け改善提案」と同じ新規提案を {"title","description","evidence":[],"implementation_steps":[],"acceptance_criteria":[],"source_references":[]} の配列で返し、evidence・implementation_steps・acceptance_criteria・source_references も本文と同じ内容で必ず埋めてください。タイトルは既存Issueと区別できる具体的な日本語にしてください。新規提案がない場合は空配列 [] だけを出力してください。',
     ].join('\n');
@@ -655,7 +695,7 @@ class AssetManagementAiSummaryService {
     AssetLiabilityWorkbook workbook,
   ) {
     final revolvingBillingAccountIds = <String>{
-      for (final row in workbook.debtMasterRows)
+      for (final row in workbook.currentDebtRows)
         if (row.isRevolving) row.id,
     };
     return <String, dynamic>{
@@ -703,10 +743,15 @@ class AssetManagementAiSummaryService {
             .map((row) => _debtRowToJson(row, workbook.baseDate))
             .toList(growable: false),
       },
-      'accounts': workbook.accounts.map(_accountToJson).toList(growable: false),
-      'debt_master_rows': workbook.debtMasterRows
+      // 現在残高の事実だけを渡す。固定費・サブスクの将来予定は
+      // cashflow_rows で別途渡し、現在負債への混入を防ぐ。
+      'accounts':
+          workbook.currentAccounts.map(_accountToJson).toList(growable: false),
+      'debt_master_rows': workbook.currentDebtRows
           .map((row) => _debtRowToJson(row, workbook.baseDate))
           .toList(growable: false),
+      'scheduled_expense_account_ids':
+          workbook.scheduledExpenseAccountIds.toList(growable: false)..sort(),
       // 返済優先順は `debt_master_rows` と同一の行を並べ替えただけなので、
       // 28 フィールドの再シリアライズはやめて「順序」だけを渡す。明細は
       // debt_master_rows を id で引けばよい (プロンプトの重複を削減)。
@@ -718,6 +763,20 @@ class AssetManagementAiSummaryService {
           .toList(growable: false),
       'cashflow_rows':
           workbook.cashflowRows.map(_cashflowRowToJson).toList(growable: false),
+      'unpaid_direct_payments': workbook.cashflowRows
+          .where(
+            (row) => row.isPayment && row.isDirectCashflowTarget && !row.paid,
+          )
+          .map(
+            (row) => <String, dynamic>{
+              'name': row.accountName,
+              'amount': row.paymentAmount,
+              'payment_day': row.paymentDay,
+              'payment_date': row.paymentDate.toIso8601String(),
+              'source_account_name': row.paymentSourceAccountName,
+            },
+          )
+          .toList(growable: false),
       'income_plans':
           workbook.incomePlans.map(_incomePlanToJson).toList(growable: false),
       'transfer_tasks': workbook.transferTasks
@@ -1057,10 +1116,8 @@ class AssetManagementAiSummaryService {
   ) {
     final revolving = group.revolvingBilling;
     if (revolving != null) {
-      // リボ払い: 請求額は revolving_billing.billed_amount で確定する。設定内訳合計や
-      // 取込明細合計は請求額と比較しても無意味なため top-level の比較対象から外し、
-      // 「請求額の構成要素ではない参考値」として明示ラベル付きで渡す。
-      // (生の合計を請求額の隣に置くと AI が自前で差を取り「不一致」と誤指摘するため)
+      // リボ払い: 25日の返済予定は最低返済額 + 当月新規利用額。
+      // 既存残高は一括返済せず、最低返済額で圧縮する。
       return <String, dynamic>{
         'billing_account_id': group.billingAccountId,
         'billing_account_name': group.billingAccountName,
@@ -1072,21 +1129,20 @@ class AssetManagementAiSummaryService {
         'reconciliation_status': 'ok_revolving_no_action_needed',
         'revolving_billing': <String, dynamic>{
           'monthly_amount': revolving.monthlyAmount,
-          'credit_limit': revolving.creditLimit,
+          'new_usage_amount': revolving.newUsageAmount,
+          'existing_balance_amount': revolving.existingBalanceAmount,
+          'payment_day': revolving.paymentDay,
           'balance': revolving.balance,
-          'over_limit_amount': revolving.overLimitAmount,
           'billed_amount': revolving.billedAmount,
         },
-        'reference_only_not_billed': <String, dynamic>{
+        'statement_context': <String, dynamic>{
           'new_usage_this_month_total': group.statementLineTotal,
           'debts_routed_to_card_total': group.configuredDetailTotal,
-          'note': 'これらは請求額の構成要素ではない参考値。リボ払いの請求額は '
-              'revolving_billing.billed_amount のみで確定する。これらとの差を'
-              '「不一致」「ズレ」として判断・指摘しないこと。',
+          'note': '取込明細合計は新規利用額として25日の返済予定へ全額上乗せする。'
+              '紐づけ負債合計は参考値で、既存残高の一括返済額ではない。',
         },
-        'reconciliation_note': 'リボ払いカード。請求額=リボ設定額+max(0,リボ残高-利用限度額)で確定する。'
-            '取込明細(今月の新規利用)はリボ残高へ積み増される参考値、設定内訳は紐づけ管理用の参考値で、'
-            'いずれも請求額とは一致しないのが正常。不一致・要修正として扱わず、照合は完了とみなすこと。',
+        'reconciliation_note': 'リボ払いカード。25日の返済予定=最低返済額+当月新規利用額。'
+            '既存残高は一括返済せず最低返済額で圧縮し、新規利用分だけを同月に全額返す。',
         'configured_items': group.configuredItems
             .map(_cardReviewItemToJson)
             .toList(growable: false),
@@ -1337,6 +1393,351 @@ class AssetManagementAiSummaryService {
       }
     }
     return '$sign$buffer円';
+  }
+
+  List<String> _validateGroundedResponse(
+    String rawText,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final text = rawText.replaceAll(RegExp(r'[*_`#\\]'), '');
+    final errors = <String>[];
+    // Defense in depth for representative abusive responses, not a complete
+    // semantic classifier. Keep financial validation below unchanged.
+    if (RegExp(
+      r'馬鹿|バカ|自己管理の甘さ|金銭感覚の麻痺|笑えないジョーク|鋼の星|孤高の職人',
+    ).hasMatch(text)) {
+      errors.add('人格攻撃・根拠のない人格評価を含むため表示を見送りました');
+    }
+
+    void validateAmount(
+      String label,
+      double expected, {
+      bool compareAbsolute = false,
+    }) {
+      String? line;
+      for (final candidate in text.split(RegExp(r'[\r\n]+'))) {
+        if (candidate.contains(label)) {
+          line = candidate;
+          break;
+        }
+      }
+      if (line == null) return;
+      final labelIndex = line.indexOf(label);
+      final valueText = line.substring(labelIndex + label.length);
+      final match = RegExp(r'[-−]?\s*[0-9][0-9,]*\s*円').firstMatch(valueText);
+      if (match == null) return;
+      final parsed = _parseYen(match.group(0)!);
+      if (parsed == null) return;
+      final actual = compareAbsolute ? parsed.abs() : parsed;
+      final target = compareAbsolute ? expected.abs() : expected;
+      if ((actual - target).abs() <= 1) return;
+      errors.add('$labelが確定値と不一致');
+    }
+
+    validateAmount('純資産', workbook.netWorth);
+    validateAmount('負債合計', workbook.liabilityTotal, compareAbsolute: true);
+    validateAmount('負債総額', workbook.liabilityTotal, compareAbsolute: true);
+    validateAmount('借入総額', workbook.liabilityTotal, compareAbsolute: true);
+    validateAmount('資産合計', workbook.positiveAssetTotal);
+    validateAmount('現金同等資産', workbook.cashLikeTotal);
+    validateAmount('今月支払予定合計', workbook.monthlyScheduledPaymentTotal);
+    validateAmount('今月未払い合計', workbook.monthlyUnpaidPaymentTotal);
+
+    const unpaidLanguage = <String>[
+      '未払い',
+      '期限超過',
+      '滞納',
+      '延滞',
+      '支払わないと',
+      'すぐに払',
+      '払うべき',
+    ];
+    // 文単位(句点/改行)で区切ってから判定する。320文字の生の前方窓だと、
+    // 支払済みの負債の直後に別の未払い負債が箇条書きで続くだけで
+    // 誤検出していたため、判定範囲をその負債自身の文に限定する。
+    final segments = text.split(RegExp(r'[\r\n。]+'));
+    final allDebtNames = workbook.currentDebtRows.map((r) => r.name).toSet();
+
+    for (final row in workbook.currentDebtRows.where(
+      (row) => row.annualRate > 0,
+    )) {
+      final ratePattern = RegExp(
+        r'^(.*?)(?:年利|金利)[^0-9]{0,12}([0-9]+(?:\.[0-9]+)?)\s*%',
+      );
+      for (final segment in segments) {
+        if (!segment.contains(row.name)) continue;
+        final nameIndex = segment.indexOf(row.name);
+        final afterName = segment.substring(nameIndex + row.name.length);
+        final match = ratePattern.firstMatch(afterName);
+        if (match != null) {
+          final between = match.group(1)!;
+          final hasInterveningDebt = allDebtNames.any(
+            (other) => other != row.name && between.contains(other),
+          );
+          if (hasInterveningDebt || between.length > 60) {
+            continue;
+          }
+          final actualPercent = double.tryParse(match.group(2)!);
+          final expectedPercent = row.annualRate * 100;
+          final matchingAccount = workbook.accounts.firstWhere(
+            (a) => a.id == row.id || a.name == row.name,
+            orElse: () => const AssetLiabilityAccount(
+              id: '',
+              name: '',
+              kind: AssetLiabilityAccountKind.otherLiability,
+              balance: 0,
+            ),
+          );
+          final accountPercent = matchingAccount.annualRate * 100;
+          final matchesExpected = actualPercent != null &&
+              ((actualPercent - expectedPercent).abs() <= 0.011 ||
+                  (accountPercent > 0 &&
+                      (actualPercent - accountPercent).abs() <= 0.011));
+          if (!matchesExpected) {
+            errors.add('${row.name}の年利が確定値と不一致');
+            break;
+          }
+        }
+      }
+    }
+    final effectivelyPaidRows = workbook.currentDebtRows.where((row) {
+      if (row.paid) return true;
+      if (row.includedInBillingAccount && row.billingAccountId != null) {
+        final host = workbook.currentDebtRows.firstWhere(
+          (r) =>
+              r.id == row.billingAccountId || r.name == row.billingAccountName,
+          orElse: () => row,
+        );
+        return host != row && host.paid;
+      }
+      return false;
+    });
+    for (final row in effectivelyPaidRows) {
+      for (final segment in segments) {
+        if (!segment.contains(row.name)) continue;
+        // Attribute a paid marker only within the same sentence/clause, without
+        // crossing another debt name. Postfix (row.name -> marker) may cross
+        // punctuation like commas or amounts within the clause. Prefix (marker -> row.name)
+        // must directly modify the debt without crossing clauses.
+        const paidMarker =
+            r'(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込|口座振替|振替|処理|確認|清算|精算)'
+            r'(?:済(?:み)?|完了|終了)|済(?:み)?|完済|引き落とされ(?:た|てい(?:る|ます)|ました)?|引落とされ(?:た|てい(?:る|ます)|ました)?)';
+        final paidPattern = RegExp(
+          '${RegExp.escape(row.name)}([^。;；\\r\\n]{0,60}?)($paidMarker)'
+          '|($paidMarker)(?:の|である)?([^。、;；\\r\\n]{0,20}?)${RegExp.escape(row.name)}',
+        );
+        final isMarkedPaid = paidPattern.allMatches(segment).any((match) {
+          final between = match.group(1) ?? match.group(4)!;
+          return !allDebtNames.any(
+            (other) => other != row.name && between.contains(other),
+          );
+        });
+        if (isMarkedPaid) continue;
+
+        // いずれかの負債名が「〜のようなカードは」等、一般的な運用アドバイスの
+        // 例示として言及されているだけの場合は、当該負債への個別の督促・未払い
+        // 主張とはみなさない（本日時点の支払状況の断定ではないため）。row.name
+        // だけでなく全負債名を対象にするのは、子負債名（例: 'au'）が親カード名
+        // （例: 'auPayカード'）の部分文字列であるケースを取りこぼさないため。
+        final exemplarReferencePattern = RegExp(
+          '(?:${allDebtNames.map(RegExp.escape).join('|')})'
+          '(?:の(?:ような|ように)|など|等(?:の|は|が)?)',
+        );
+        if (exemplarReferencePattern.hasMatch(segment)) continue;
+
+        // 「新規利用分」（今後発生する利用分）への言及は、既存残高が今すぐ
+        // 未払いだという主張ではなく、今後の運用ルールの説明であるため除外。
+        final futureUsagePattern = RegExp(
+          '(?:${allDebtNames.map(RegExp.escape).join('|')})の?新規利用分',
+        );
+        if (futureUsagePattern.hasMatch(segment)) continue;
+
+        // 負債名の直後が助詞「で」（〜を使って、の意）の場合、その負債自体が
+        // 未払いだと主張しているのではなく、別の支払い（未登録のサブスク等）
+        // の決済手段として言及されているだけの可能性が高いため除外する。
+        // 「は/が/を」等、負債自体を主語・目的語とする助詞は対象外。
+        final instrumentalReferencePattern = RegExp(
+          '(?:${allDebtNames.map(RegExp.escape).join('|')})で',
+        );
+        if (instrumentalReferencePattern.hasMatch(segment)) continue;
+
+        // row.name 自体への督促・未払い判定。
+        // 「今月未払い合計」や別の未払い項目への言及ではなく、
+        // 当該の支払済み負債が未払い・督促対象として記述されているかを検証する。
+        var isUrged = false;
+        for (final keyword in unpaidLanguage) {
+          var searchFrom = 0;
+          while (true) {
+            final index = segment.indexOf(keyword, searchFrom);
+            if (index < 0) break;
+            final matchEnd = index + keyword.length;
+
+            // 「未払い合計」「未払い総額」などの全体メトリクス言及は個別督促から除外
+            final following5 = segment.substring(
+              matchEnd,
+              matchEnd + 5 < segment.length ? matchEnd + 5 : segment.length,
+            );
+            if (keyword == '未払い' &&
+                (following5.startsWith('合計') ||
+                    following5.startsWith('総額') ||
+                    following5.startsWith('額'))) {
+              searchFrom = matchEnd;
+              continue;
+            }
+
+            // キーワードと row.name の間に別の負債名がある場合はその負債への言及
+            final debtIndex = segment.indexOf(row.name);
+            final betweenDebtAndKeyword = index > debtIndex
+                ? segment.substring(debtIndex + row.name.length, index)
+                : segment.substring(matchEnd, debtIndex);
+            final hasOtherDebtBetween = allDebtNames.any(
+              (other) =>
+                  other != row.name && betweenDebtAndKeyword.contains(other),
+            );
+            if (hasOtherDebtBetween) {
+              searchFrom = matchEnd;
+              continue;
+            }
+
+            // 打ち消しチェック（「未払いではない」等）
+            final windowEnd =
+                matchEnd + 20 < segment.length ? matchEnd + 20 : segment.length;
+            final following = segment.substring(matchEnd, windowEnd);
+            if (!_negationMarkers.any(following.contains)) {
+              isUrged = true;
+              break;
+            }
+
+            searchFrom = matchEnd;
+          }
+          if (isUrged) break;
+        }
+
+        if (isUrged) {
+          errors.add(
+            row.paid ? '${row.name}を支払済みなのに督促' : '${row.name}は請求カードが支払済みなのに督促',
+          );
+          break;
+        }
+      }
+    }
+
+    for (final income in workbook.incomePlans) {
+      final isFuture = income.date.isAfter(workbook.baseDate);
+      for (final segment in segments) {
+        if (!segment.contains(income.name)) continue;
+        final isMarkedReceived = RegExp(
+          '${RegExp.escape(income.name)}[^。\\r\\n]{0,40}?'
+          '(?:(?:受取|受け取り|入金|着金)?済(?:み)?|受領済(?:み)?)',
+        ).hasMatch(segment);
+        // A past due date does not prove receipt. Only the recorded status does.
+        if (income.received) {
+          if (_containsUnnegatedKeyword(segment, const <String>[
+                '未受取',
+                '未入金',
+                '未着金',
+                'まだ入っていない',
+                '入っていない',
+                '着金してるか確認',
+                '着金を確認',
+                '着金の確認',
+              ]) &&
+              !isMarkedReceived) {
+            errors.add('${income.name}を受取済みなのに未受取扱い');
+            break;
+          }
+        } else if (isFuture) {
+          if (RegExp(r'(?:今日|本日).*(?:着金|入金).*(?:確認|チェック)').hasMatch(segment) &&
+              !_containsUnnegatedKeyword(segment, const <String>[
+                '不要',
+                '不要です',
+                '必要はない',
+                '必要はありません',
+                '必要ありません',
+              ])) {
+            errors.add('${income.name}は未来の予定日なのに今日の着金確認を督促');
+            break;
+          }
+        }
+      }
+    }
+
+    final bulletLines = text.split(RegExp(r'[\r\n]+'));
+    for (final row in workbook.currentDebtRows) {
+      final scheduledDate = _paymentDateFor(row, workbook.baseDate);
+      final isPastOrZero = row.scheduledPaymentAmount <= 0 ||
+          (scheduledDate != null &&
+              !scheduledDate.isAfter(workbook.baseDate) &&
+              row.scheduledPaymentAmount <= 0);
+      if (isPastOrZero) {
+        for (final line in bulletLines) {
+          if (!line.contains(row.name)) continue;
+          final afterName = line.substring(line.indexOf(row.name));
+          if (_containsUnnegatedKeyword(afterName, const <String>[
+            '放置',
+            '放置してる',
+            '放置している',
+            '寝かせておく',
+            '雪だるま式',
+            '利息が元金に上乗せ',
+            '利息が上乗せ',
+          ])) {
+            errors.add('${row.name}は期日通過または予定額0円なのに放置・利息上乗せと批判');
+            break;
+          }
+        }
+      }
+    }
+    return errors.toSet().toList(growable: false);
+  }
+
+  /// [keywords] のいずれかが [context] 内で「否定されずに」出現するかを返す。
+  /// AIはプロンプトの指示に従い「◯◯は期限超過ではありません」のように、支払済みの
+  /// 負債を安全に説明するため督促語彙を含む否定文を書くことがある。単純な部分文字列
+  /// 一致では、この正しい否定表現まで矛盾として誤検出してしまうため、各出現直後に
+  /// 打ち消しの語(「ではない」「していません」等)が続く場合はその出現を無視する。
+  static const List<String> _negationMarkers = <String>[
+    'ではない',
+    'ではありません',
+    'ではなく',
+    'じゃない',
+    'じゃありません',
+    'はない',
+    'はありません',
+    'していない',
+    'していません',
+    'は不要',
+    '不要です',
+    '不要',
+    '必要はない',
+    '必要はありません',
+    '必要ありません',
+    '必要がない',
+  ];
+
+  bool _containsUnnegatedKeyword(String context, List<String> keywords) {
+    for (final keyword in keywords) {
+      var searchFrom = 0;
+      while (true) {
+        final index = context.indexOf(keyword, searchFrom);
+        if (index < 0) break;
+        final matchEnd = index + keyword.length;
+        final windowEnd =
+            matchEnd + 20 < context.length ? matchEnd + 20 : context.length;
+        final following = context.substring(matchEnd, windowEnd);
+        if (!_negationMarkers.any(following.contains)) {
+          return true;
+        }
+        searchFrom = matchEnd;
+      }
+    }
+    return false;
+  }
+
+  double? _parseYen(String value) {
+    final normalized = value.replaceAll('−', '-').replaceAll(',', '');
+    final match = RegExp(r'-?[0-9]+').firstMatch(normalized);
+    return match == null ? null : double.tryParse(match.group(0)!);
   }
 
   bool _containsJapaneseText(String value) {

@@ -13,6 +13,9 @@ permissions: {}
 
 jobs:
   report:
+    environment:
+      name: analytics-production
+      deployment: false
     permissions:
       contents: read
     name: Build aggregate LP experiment report

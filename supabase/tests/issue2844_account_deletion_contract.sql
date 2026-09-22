@@ -408,6 +408,8 @@ begin
   foreach v_function in array array[
     'public.has_recent_account_deletion_session(uuid,uuid)'::regprocedure::oid,
     'public.claim_due_account_deletion()'::regprocedure::oid,
+    'public.preflight_due_account_deletion(bigint)'::regprocedure::oid,
+    'public.claim_due_account_deletion_by_id(bigint)'::regprocedure::oid,
     'public.fail_account_deletion(bigint,text,bigint,integer,integer,boolean,boolean)'::regprocedure::oid,
     'public.complete_account_deletion(bigint,integer,boolean)'::regprocedure::oid,
     'public.defer_account_deletion_finalization(bigint,integer,boolean)'::regprocedure::oid,

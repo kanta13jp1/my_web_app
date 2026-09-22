@@ -37,6 +37,9 @@ permissions: {}
 
 jobs:
   monitor:
+    environment:
+      name: observability-production
+      deployment: false
     permissions:
       contents: write
     name: Health Monitor

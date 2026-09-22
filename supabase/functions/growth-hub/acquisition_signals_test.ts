@@ -14,13 +14,17 @@ Deno.test("billing funnel acquisition signals are supported", () => {
   }
 });
 
-Deno.test("first-user campaign signals support X and Zenn attribution", () => {
+Deno.test("first-user campaign signals support approved launch channels", () => {
   for (
     const signal of [
       "touch_x_first_user_growth",
       "signup_submit_x_first_user_growth",
       "touch_zenn_first_user_growth",
       "signup_submit_zenn_first_user_growth",
+      "touch_producthunt_first_user_growth",
+      "signup_submit_producthunt_first_user_growth",
+      "touch_hackernews_first_user_growth",
+      "signup_submit_hackernews_first_user_growth",
     ]
   ) {
     assertEquals(isSupportedAcquisitionSignal(signal), true);

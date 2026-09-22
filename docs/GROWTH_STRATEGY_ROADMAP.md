@@ -33538,3 +33538,112 @@ watcher が名指しできるのはスナップショット時点で**生存し�
 - Issue #4834 の主要ページ分割を継続し、Agent Tool Guardの空状態、実行概要、ブロック理由、直近実行一覧を `admin_analytics_page.dart` から専用Widgetへ抽出した。ログ取得と集計は親ページに残した。
 - 元のKPIピル表示、色、文言、最大12件、新鮮度による年表示の切り替えを維持し、`admin_analytics_page.dart` を6,791行から6,540行へ縮小した。
 - Flutter 3.38.10 で専用Widgetテスト3件、変更対象の静的解析、フォーマット検査が成功した。全体buildとブラウザ自動化は空きRAM保護のため起動せず、PR CIでの検証に回す。
+
+### 虎レビュー改善記録: 登録ファネルカードの段階分割 (2026-08-30 JST)
+
+- Issue #4834 の主要ページ分割を継続し、今日・過去30日で共用する登録ファネルの表示責務を `admin_analytics_page.dart` から専用Widgetへ抽出した。目標差分、必要送信数、ボトルネックの算出は親ページに残した。
+- 6段階の件数、4つの転換率、目標未達時だけ表示するボトルネックと必要送信数、分母0時の `--` 表示を維持し、`admin_analytics_page.dart` を6,540行から6,362行へ縮小した。
+- Flutter 3.38.10 で専用Widgetテスト3件、変更対象の静的解析、フォーマット検査が成功した。全体buildとブラウザ自動化は空きRAM保護のため起動せず、PR CIでの検証に回す。
+
+### 開発基盤セッション記録: Rootless Podman Dev Container準備 (2026-08-29 JST)
+
+- Issue #2842 向けに、Container Tools と Dev Containers のPodman設定、非root Flutter 3.38.10 Dev Container、Windows/WSL2・Linuxのrunbook、静的回帰テストを追加した。
+- Flutter containerは`keep-id`、capability全削除、`no-new-privileges`、sudo拒否、非特権port 8080を固定し、Supabaseはhost側rootless runtimeから起動してruntime socketをDev Containerへ渡さない。
+- 公式一次情報で、Container ToolsのPodman provider IDとDev Containersの`dev.containers.dockerPath`が別設定であること、Windows Podman machineがrootless既定かつRAM 6 GBを要することを確認した。
+- ローカルはRAM使用93.8%、空き0.97 GB、C:空き9.95 GBで安全ゲート未達だったため、Podman導入・machine作成・image取得・Supabase/Flutter live smokeは実行していない。Issueは実機検証完了までOPENを維持する。
+- 静的contract 7件、repository checker、既存VS Code settings 4件、PowerShell parser、setup dry-run、diff checkは成功した。コンテナbuildとAuth/DB/volume/port smokeは安全なhostでの後続検証へ残す。
+
+### 開発基盤セッション記録: Rootless検証のクラウド移行 (2026-08-30 JST)
+
+- Owner特例でWindowsへPodman 5.8.3とrootless WSL2 machineを導入し、rootless UID mapping、Docker API互換、`keep-id` volume write、port 80拒否、IPv4明示時の8080応答を実測した。
+- Supabase最小構成はDB healthy到達後のschema初期化中にhost RAMが99.9%へ達しexit 137となった。`supabase stop`でvolume backupを保持し、Podman machineとuser-mode networkを停止した。image/volumeのpruneやrootful切替は行っていない。
+- 重いimage取得・Dev Container build・Supabase Auth/DB smokeを2つのGitHub-hosted runnerへ分離するcloud-first workflowを追加した。production secretを使わず、workflow/job権限はread-only、証跡はartifactへ保存する。
+- repository contractを8件へ拡張し、`pull_request_target`、secret参照、privileged container、不完全cleanupを拒否する。ローカル実機はVS Code統合の診断用途へ縮小し、標準の再現可能な証明はクラウドへ移した。
+
+### 開発基盤セッション記録: Rootlessコンテナ受け入れ完了 (2026-08-30 JST)
+
+- Issue #2842 の標準経路を、Flutter Dev Container は rootless Podman、Supabase Auth/DB は Rootless Docker とするクラウド分離構成へ固定した。
+- GitHub Actions run 33298773318 で Podman 5.8.4 / Flutter 3.38.10 の非root build、`keep-id` volume write、sudo拒否、capability削除、`no-new-privileges` が成功した。
+- 同runで Docker 29.7.2 / Supabase CLI 2.116.0 のrootless security option、daemon UID 1001、通常ユーザー所有socket、Docker API互換、DB ready、Auth gateway HTTP 200、volume permission error 0件を確認した。
+- Supabase検証はrepositoryの`config.toml`だけを一時projectへコピーし、既存application migration/seedのfrom-scratch driftをrootless runtime受け入れから分離した。停止はephemeral runner上で`--no-backup`を使用し、orphan container 0件とdaemon停止を確認した。
+- workflowはread-only権限、production secretなし、`pull_request_target`なし、privileged containerなしを維持した。ローカルのPodman/WSL2 machineは停止したままとし、重い再検証はクラウドへ限定する。
+
+### daily-development セッション記録 (2026-09-10 / Claude Code Win版)
+
+- メインの作業チェックアウト `fix/ci-clean-analyzer` が origin/main から276コミット遅れ・2コミット進み、かつ `.codex-staging-*` 等の他インスタンスWIPらしき未コミット変更(79ファイル相当)を抱えていたため、既定方針([[feedback_scheduled_task_codex_wip_observe_only]] 系)に従いそのブランチ上では一切 `git add`/`commit`/`checkout` を行わず、origin/main から独立した worktree (`daily-dev-20260910`) を作成して本セッションの成果物のみをそこから main へ直接 landing した。
+- 直近5件のマージ済み資産管理修正 (ユーザーマニュアル手順整合 #5365 / 支払元無効アラート誤検知抑制 #5218 / AI根拠確認の否定文脈誤検知修正 #5369 / 債務間根拠確認セグメント化 #5370 / 給料収入自動整合+未受領誤検知防止 #5371) を `development_achievements` に記録した (本コミットで追加した migration)。
+- 技術ブログ下書きパイプライン `docs/blog-drafts/` は既に 2026-03-27〜2030年分 (795ファイル) がキュー済みであることを確認し、本日の手動追加は見送った (既存自動化で十分供給されている)。
+- 2026-09-08 セッションで follow-up 切り出し済みの `/money-forward` ダミー実装 (`social-commerce-hub` EF の `mf.connect_url`/`mf.sync` が固定値を返すのみ) は、財務データ領域のため本セッションでは着手せず、別セッションでの人間レビュー前提の対応を維持する方針を継続した。
+- `fix/ci-clean-analyzer` ブランチ自体の整理 (rebase/マージ or 破棄の判断) は owner 確認が必要なため、次回セッションへの推奨事項として記録する。
+
+
+## 2026-09-12 Monthly paid-interest history (#5391)
+
+Implemented a server-first monthly paid-interest chart with explicit missing/partial states and same-scope reconciled comparisons. No production financial records were changed. Focused cloud validation is in progress; production release requires the Design accessibility audit and required CI. See [feature notes](ASSET_INTEREST_HISTORY.md).
+
+### daily-development セッション記録 (2026-09-16 / Claude Code Win版)
+
+- メインの作業チェックアウト `fix/ci-clean-analyzer` が origin/main から414コミット遅れ・未コミット変更86件 (09-08:276/79件→09-10:276/79件→今回:414/86件と悪化継続) の状態が3回連続で観測されたため、既定方針 (`feedback_scheduled_task_stale_branch_origin_main_authoritative` / `feedback_scheduled_task_worktree_landing_from_origin_main`) に従いそのブランチには一切触れず、origin/main から独立した worktree (`daily-dev-20260915` / ブランチ `daily-dev-20260915`) を作成して本セッションの成果物のみをそこから main へ直接 landing した。ブランチ自体の整理判断は今回も owner 待ちとして持ち越す。
+- 2026-09-08 に follow-up 切り出し済みだった `/money-forward` ページの偽OAuth実装 ([lib/pages/money_forward_page.dart](../lib/pages/money_forward_page.dart)) を修正。`mf.connect_url` は固定URL `/oauth/moneyforward` を返すだけで実際のOAuthコールバックはリポジトリ内に存在せず、`connected` は恒久的に false のままなのに「認証URLを取得しました。ブラウザで連携を完了してください」と成功したかのようなSnackBarを表示していた。ボタンを既存で実際に動く CSVインポート画面 (`/import`) への誘導に差し替え、成功を装う表示を「自動連携は準備中です」という正直な案内に変更した。バックエンドの実OAuth連携自体 (MoneyForward側API提携が必要) は財務データ領域のため今回も着手せず、人間レビュー前提の別対応として維持する。
+- 修正内容を `development_achievements` に記録した (本コミットで追加した migration `20260916161516_seed_achievements_daily_dev_20260916.sql`)。
+- 技術ブログ下書きパイプライン `docs/blog-drafts/` は前回確認時点で2030年分までキュー済みのため、本日も手動追加は見送った。
+
+
+## 2026-09-21 Expense classification review (#5452)
+
+Added read-only category suggestions beneath the asset-management expense memo. Local rules run without sending data; configured AI requires an explicit action. Every candidate is labelled for human review; fixed rule scores are not accuracy. No booking or financial data mutation is added. Cloud widget tests cover fallback, recovery, stale responses and narrow text-scaled layout. See [operation guide](EXPENSE_CLASSIFICATION_REVIEW.md).
+
+
+### 2026-09-21 Jev分類候補のサーバー接続（#5459）
+
+認証済みユーザーの明示操作に限定し、TypeSafeキーをサーバーSecretへ分離。固定カテゴリ・500文字制限・原子的な分/日/全体上限で利用を制御。分類候補の参考表示に限定し、自動記帳は追加しない。CIと本番確認はPRへ記録する。
+
+
+## 2026-09-21 Jev Mario latency experiment (#5466)
+
+PR #5467 adds a local-ROM SMB1 controller and a ROM-free synthetic-state API benchmark at `/jev-mario-lab`. Browser RTT and upstream HTTP time are separate from pure inference. Server-only credentials, verified-account allowlist, atomic request caps, stop/late-response guards and JSON export are included. Cloud contract and browser fixture tests validate the implementation; actual SMB1 gameplay is unverified because the user has no ROM. Production activation and auth/quota migration remain pending explicit owner review. See [operation guide](JEV_MARIO_LAB.md).
+
+
+### 2026-09-21 Jev Mario motion and crouching (#5482)
+
+Added independent pixel-art poses for walking/running, facing, jumping/falling and crouching. Crouch collision height preserves feet and checks standing headroom. Cloud engine and desktop/mobile UI checks accompany PR #5483. This is a manual-play/visual improvement, not evidence of improved Jev control quality.
+
+
+### 2026-09-21: Mario presentation and diagnostic snapshots (#5484)
+
+- Add skidding, death/flag/castle sequences, block/enemy feedback and original contextual chiptunes.
+- Export immutable observation/arrival snapshots and separate cancellation counts to distinguish Jev decisions from latency.
+- Validate cloud engine/audio/browser contracts before production; no claim of ROM fidelity, article latency reproduction or AI completion.
+
+
+## Jev Mario gameplay recording — 2026-09-21
+
+- Issue #5486: local canvas recording with optional game audio, 60-second/32MiB bounds, replay and timestamped WebM/MP4 download selected by browser capability. No external media upload or new API call.
+- Verify actual encoded audio/video playback and download, repeat/mute, unsupported capability, and mode-change cleanup in cloud tests before production release.
+
+
+### 2026-09-21 Jev Mario deployment cache correction (#5488)
+
+- Reported outer build 5591 still exported independent-world11-v1; live lab HTML/modules used max-age=3600.
+- Revalidate all /labs/jev-mario assets and migrate iframe/HTML/module URLs together so fresh old browser caches cannot mix releases. JSON includes lab_revision for diagnosis.
+- Keep query revision as a one-time migration; subsequent stable URLs must revalidate on navigation. Existing open pages must reload.
+- Validation: hosting dependency-graph/cache contract and existing cloud game/recording browser suite. No new Jev API experiment or latency improvement is claimed.
+
+
+### 2026-09-22 Jev Mario measured collision comparison (#5490)
+
+- Add explicit Jev-only/default versus Jev plus local reaction rules, logging interventions separately from raw API timings. Recreate the supplied near-enemy state in deterministic cloud tests without additional model calls.
+- Improve block/enemy reactions, 100-coin lives, item emergence/life effects and synthesized 25% pulse audio. These are independent approximations, not cycle-accurate NES emulation.
+- Validate UI mode change/recovery/export, sound, game and recording regressions in cloud CI; report source claims and our measurements separately in the requested article.
+
+
+### 2026-09-22 Jev Mario course verification
+
+- Compare deterministic full-course lookahead, held-right and local assistance without labelling rules as Jev performance. Save bounded experiment artifacts.
+- Refine flag descent, left-facing fire, differentiated enemies/items and original noise/percussion/flag/tally effects. Cloud tests and production verification required.
+
+
+### 2026-09-22 Jev入力予測と走行ジャンプの比較
+
+- Issue #5495: 最新のJev単独ログ（右→右→ダッシュ、frame218/x308.26で死亡）を再現。予測値を追加する入力を明示選択し、基準入力とJSONで区別。認証・同意・利用枠は維持。
+- 回避補助はダッシュを保持し、アイテム出現動作とブレーキSEを改善。API性能とシミュレーションは区別してクラウドで検証。

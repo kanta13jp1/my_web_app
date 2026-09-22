@@ -27,6 +27,9 @@ concurrency:
 
 jobs:
   smoke:
+    environment:
+      name: observability-production
+      deployment: false
     permissions:
       contents: read
     name: MCP facade smoke

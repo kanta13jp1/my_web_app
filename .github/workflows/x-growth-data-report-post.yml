@@ -30,6 +30,9 @@ permissions: {}
 
 jobs:
   post:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: read
     runs-on: ubuntu-latest

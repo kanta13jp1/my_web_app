@@ -115,6 +115,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   bool _showAllUniqueFeatures = false;
   bool _showTrialAnswerPreview = true;
   bool _showGuidedTrialIntake = false;
+  bool _showCompactTrialSaveForm = false;
   bool _socialProofLoadFailed = false;
   int _magicLinkCooldownSeconds = 0;
   int _achievementCount = 0;
@@ -762,6 +763,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialErrorTitle = null;
       _trialErrorMessage = null;
       _showSaveCtaPrompt = false;
+      _showCompactTrialSaveForm = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final guidedContext = _guidedTrialKey.currentContext;
@@ -808,6 +810,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialErrorMessage = null;
       _showSaveCtaPrompt = false;
       _trialUsesInstantPreview = false;
+      _showCompactTrialSaveForm = false;
     });
     try {
       final result = await widget.adapter.improveTrialPrompt(prompt: input);
@@ -1076,11 +1079,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       setState(() {
         _showSaveCtaPrompt = true;
         _isSignUp = true;
+        _showCompactTrialSaveForm = true;
       });
       _scrollToTrialMagicLink();
       return;
     }
     _showSignupAndScroll();
+  }
+
+  void _showCompactTrialSaveOptions() {
+    setState(() => _showCompactTrialSaveForm = true);
+    _scrollToTrialMagicLink(requestFocus: false);
   }
 
   Uri _resolveInboxUri(String email) {
@@ -1229,11 +1238,40 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       _trialErrorMessage = null;
       _showSaveCtaPrompt = false;
       _trialUsesInstantPreview = false;
+      _showCompactTrialSaveForm = false;
       _showGuidedTrialIntake = false;
       _lastGeneratedTrialPrompt = null;
       if (shouldRestorePreview) {
         _showTrialAnswerPreview = true;
       }
+    });
+  }
+
+  void _restartTrial() {
+    setState(() {
+      _trialAction = null;
+      _trialReason = null;
+      _trialErrorTitle = null;
+      _trialErrorMessage = null;
+      _showSaveCtaPrompt = false;
+      _trialUsesInstantPreview = false;
+      _showCompactTrialSaveForm = false;
+      _showGuidedTrialIntake = false;
+      _lastGeneratedTrialPrompt = null;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _trialPromptFocusNode.requestFocus();
+      final inputContext = _trialPromptFocusNode.context;
+      if (inputContext == null) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          inputContext,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOut,
+          alignment: 0.22,
+        ),
+      );
     });
   }
 
@@ -2230,11 +2268,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
   Future<void> _shareOnX() async {
     const siteUrl = 'https://my-web-app-b67f4.web.app/';
     final userCount = _totalUsers > 10 ? '登録者$_totalUsers人突破！' : '';
-    final text = 'スマホでギター録音＋21のSaaSを1アプリに統合。'
+    final text = 'AI生活経営アシスタントで、今日の最優先1件に集中する。'
         '自分株式会社 $userCount\n'
         '無料コアから使えます。Proで支援できます👇\n'
         '$siteUrl\n'
-        '#FlutterWeb #buildinpublic #自分株式会社 #ギター録音';
+        '#FlutterWeb #自分株式会社 #AIアシスタント #生活経営';
     final uri = Uri.https('x.com', '/intent/tweet', {'text': text});
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
@@ -3345,7 +3383,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         Icons.lock_clock,
         '0xFF0F172A',
         'プリズンモード',
-        'スマホ依存・SNS中毒を断ち切る超高集中モード。指定時間内はSNS/動画を完全シャットアウトし、思考妨害をゼロに。刑務所級の集中力を自分で設計できる唯一のツール。',
+        'スマホ依存・SNS中毒を断ち切る超高集中モード。指定時間内はSNS/動画を完全シャットアウトし、思考妨害をゼロに。集中環境を自分で設計できるツール。',
       ),
       (
         Icons.hub,
@@ -3423,7 +3461,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         Icons.balance,
         '0xFF4338CA',
         '現実確認チェック',
-        '自分の目標・計画・実績を客観的にスコアリングし「見栄・感情・バイアス」を排除した現実ベースの意思決定を支援。唯一無二のAI自己客観化機能。',
+        '自分の目標・計画・実績を客観的にスコアリングし「見栄・感情・バイアス」を排除した現実ベースの意思決定を支援。AIによる自己客観化機能。',
       ),
       (
         Icons.compare_arrows,
@@ -4136,6 +4174,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     bool firstUserGrowthMode = false,
   }) {
     final compactHero = heroMode && MediaQuery.sizeOf(context).width < 480;
+    final compactFocusedStage = compactHero &&
+        (_showGuidedTrialIntake || _isTrialLoading || _trialAction != null);
     return KeyedSubtree(
       key: const Key('landing_trial_section'),
       child: Theme(
@@ -4182,155 +4222,183 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  firstUserGrowthMode
-                      ? 'Xから来た方へ: まず1タップで結果を見る'
-                      : heroMode
-                          ? '登録なしで試す: いま詰まっていることは？'
-                          : 'AIに「今日やる1件」を聞く',
+                  compactFocusedStage
+                      ? '登録なしで試す'
+                      : firstUserGrowthMode
+                          ? 'Xから来た方へ: まず1タップで結果を見る'
+                          : heroMode
+                              ? '登録なしで試す: いま詰まっていることは？'
+                              : 'AIに「今日やる1件」を聞く',
                   style: TextStyle(
                     fontSize: compactHero ? 16 : 18,
                     fontWeight: FontWeight.w800,
                     height: compactHero ? 1.3 : 1.4,
                   ),
                 ),
-                SizedBox(height: compactHero ? 4 : 6),
-                Text(
-                  firstUserGrowthMode
-                      ? '入力・登録・カードは不要です。下のボタンだけで「今やる1件」を確認し、役立った時だけ保存できます。'
-                      : compactHero
-                          ? '登録不要。1行書いて5問に答えると、AIが「今やる1件」を返します。'
-                          : heroMode
-                              ? '登録はまだ不要です。5つの短い質問で状況を整理してから、AIが「今やる1件」を返します。'
-                              : '5つの短い質問で状況を整理し、AIへの送信内容を確認してから「今やる1件」を受け取れます。',
-                  style: TextStyle(
-                    color: heroMode
-                        ? const Color(0xFFBCC6CE)
-                        : const Color(0xFF64748B),
-                    fontSize: compactHero ? 12 : 14,
-                    height: compactHero ? 1.35 : 1.5,
-                  ),
-                ),
-                SizedBox(height: compactHero ? 6 : 12),
-                Text(
-                  firstUserGrowthMode ? '別の悩みで試す' : 'ほかの悩みを1タップで試す',
-                  style: TextStyle(
-                    color: heroMode
-                        ? const Color(0xFFC9D1D7)
-                        : const Color(0xFF475569),
-                    fontSize: compactHero ? 11 : 12,
-                    fontWeight: FontWeight.w700,
-                    height: 1.4,
-                  ),
-                ),
-                SizedBox(height: compactHero ? 5 : 7),
-                Wrap(
-                  spacing: compactHero ? 6 : 8,
-                  runSpacing: compactHero ? 6 : 8,
-                  children: [
-                    ActionChip(
-                      key: const Key('landing_trial_sample_priority'),
-                      avatar: Icon(Icons.flash_on, size: compactHero ? 16 : 18),
-                      label: Text(compactHero ? '最優先' : '今日の最優先'),
-                      visualDensity: compactHero ? VisualDensity.compact : null,
-                      materialTapTargetSize:
-                          compactHero ? MaterialTapTargetSize.shrinkWrap : null,
-                      onPressed: _isTrialLoading || _showGuidedTrialIntake
-                          ? null
-                          : () => _runQuickTrialSample(
-                                '今日の最優先タスクを1件に絞りたい',
-                                recordHeroCta: heroMode,
-                              ),
+                if (!compactFocusedStage) ...[
+                  SizedBox(height: compactHero ? 4 : 6),
+                  Text(
+                    firstUserGrowthMode
+                        ? '入力・登録・カードは不要です。下のボタンだけで「今やる1件」を確認し、役立った時だけ保存できます。'
+                        : compactHero
+                            ? '登録不要。1行書いて5問に答えると、AIが「今やる1件」を返します。'
+                            : heroMode
+                                ? '登録はまだ不要です。5つの短い質問で状況を整理してから、AIが「今やる1件」を返します。'
+                                : '5つの短い質問で状況を整理し、AIへの送信内容を確認してから「今やる1件」を受け取れます。',
+                    style: TextStyle(
+                      color: heroMode
+                          ? const Color(0xFFBCC6CE)
+                          : const Color(0xFF64748B),
+                      fontSize: compactHero ? 12 : 14,
+                      height: compactHero ? 1.35 : 1.5,
                     ),
-                    ActionChip(
-                      key: const Key('landing_trial_sample_plan'),
-                      avatar: Icon(
-                        Icons.event_note,
-                        size: compactHero ? 16 : 18,
+                  ),
+                  SizedBox(height: compactHero ? 6 : 12),
+                  Text(
+                    firstUserGrowthMode ? '別の悩みで試す' : 'ほかの悩みを1タップで試す',
+                    style: TextStyle(
+                      color: heroMode
+                          ? const Color(0xFFC9D1D7)
+                          : const Color(0xFF475569),
+                      fontSize: compactHero ? 11 : 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: compactHero ? 5 : 7),
+                  Wrap(
+                    spacing: compactHero ? 6 : 8,
+                    runSpacing: compactHero ? 6 : 8,
+                    children: [
+                      ActionChip(
+                        key: const Key('landing_trial_sample_priority'),
+                        avatar:
+                            Icon(Icons.flash_on, size: compactHero ? 16 : 18),
+                        label: Text(compactHero ? '最優先' : '今日の最優先'),
+                        visualDensity:
+                            compactHero ? VisualDensity.compact : null,
+                        materialTapTargetSize: compactHero
+                            ? MaterialTapTargetSize.shrinkWrap
+                            : null,
+                        onPressed: _isTrialLoading || _showGuidedTrialIntake
+                            ? null
+                            : () => _runQuickTrialSample(
+                                  '今日の最優先タスクを1件に絞りたい',
+                                  recordHeroCta: heroMode,
+                                ),
                       ),
-                      label: Text(compactHero ? '計画' : '今日の計画を立てる'),
-                      visualDensity: compactHero ? VisualDensity.compact : null,
-                      materialTapTargetSize:
-                          compactHero ? MaterialTapTargetSize.shrinkWrap : null,
-                      onPressed: _isTrialLoading || _showGuidedTrialIntake
-                          ? null
-                          : () => _runQuickTrialSample(
-                                '今日1日の計画を立てて、最も重要なことに集中したい',
-                                recordHeroCta: heroMode,
-                              ),
+                      ActionChip(
+                        key: const Key('landing_trial_sample_plan'),
+                        avatar: Icon(
+                          Icons.event_note,
+                          size: compactHero ? 16 : 18,
+                        ),
+                        label: Text(compactHero ? '計画' : '今日の計画を立てる'),
+                        visualDensity:
+                            compactHero ? VisualDensity.compact : null,
+                        materialTapTargetSize: compactHero
+                            ? MaterialTapTargetSize.shrinkWrap
+                            : null,
+                        onPressed: _isTrialLoading || _showGuidedTrialIntake
+                            ? null
+                            : () => _runQuickTrialSample(
+                                  '今日1日の計画を立てて、最も重要なことに集中したい',
+                                  recordHeroCta: heroMode,
+                                ),
+                      ),
+                      ActionChip(
+                        key: const Key('landing_trial_sample_procrastination'),
+                        avatar:
+                            Icon(Icons.done_all, size: compactHero ? 16 : 18),
+                        label: Text(compactHero ? '先送り' : '先送り解消'),
+                        visualDensity:
+                            compactHero ? VisualDensity.compact : null,
+                        materialTapTargetSize: compactHero
+                            ? MaterialTapTargetSize.shrinkWrap
+                            : null,
+                        onPressed: _isTrialLoading || _showGuidedTrialIntake
+                            ? null
+                            : () => _runQuickTrialSample(
+                                  '今いちばん先送りしていることを片付けたい',
+                                  recordHeroCta: heroMode,
+                                ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: compactHero ? 8 : 14),
+                  Semantics(
+                    container: true,
+                    child: TextField(
+                      key: const Key('landing_trial_prompt_input'),
+                      controller: _trialPromptController,
+                      focusNode: _trialPromptFocusNode,
+                      readOnly: _isTrialLoading || _showGuidedTrialIntake,
+                      onChanged: _handleTrialPromptChanged,
+                      minLines: heroMode ? 1 : 2,
+                      maxLines: heroMode ? 2 : 3,
+                      decoration: InputDecoration(
+                        labelText: '例: 今日いちばん詰まっていることを簡単に書く',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.bolt),
+                        isDense: compactHero,
+                        contentPadding: compactHero
+                            ? const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              )
+                            : null,
+                      ),
                     ),
-                    ActionChip(
-                      key: const Key('landing_trial_sample_procrastination'),
-                      avatar: Icon(Icons.done_all, size: compactHero ? 16 : 18),
-                      label: Text(compactHero ? '先送り' : '先送り解消'),
-                      visualDensity: compactHero ? VisualDensity.compact : null,
-                      materialTapTargetSize:
-                          compactHero ? MaterialTapTargetSize.shrinkWrap : null,
+                  ),
+                  SizedBox(height: compactHero ? 8 : 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      key: Key(
+                        heroMode
+                            ? 'landing_h03_inline_trial_action'
+                            : 'landing_h03_lower_trial_action',
+                      ),
                       onPressed: _isTrialLoading || _showGuidedTrialIntake
                           ? null
-                          : () => _runQuickTrialSample(
-                                '今いちばん先送りしていることを片付けたい',
-                                recordHeroCta: heroMode,
-                              ),
+                          : heroMode
+                              ? _runHeroTrialActionPreview
+                              : _openGuidedTrialIntake,
+                      icon: _isTrialLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.play_arrow),
+                      label: Text(
+                        _isTrialLoading
+                            ? 'AIが具体的な1件を考えています…'
+                            : _showGuidedTrialIntake
+                                ? '5つの質問に回答中'
+                                : '今やる1件を試す',
+                      ),
+                      style: compactHero
+                          ? FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(44),
+                            )
+                          : null,
+                    ),
+                  ),
+                  if (!_showGuidedTrialIntake && !_isTrialLoading) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'AIへの送信は、5問の回答を確認してから1回だけ行います。',
+                      style: TextStyle(
+                        color: heroMode
+                            ? const Color(0xFF9FADB8)
+                            : const Color(0xFF64748B),
+                        fontSize: 11,
+                        height: 1.45,
+                      ),
                     ),
                   ],
-                ),
-                SizedBox(height: compactHero ? 8 : 14),
-                TextField(
-                  key: const Key('landing_trial_prompt_input'),
-                  controller: _trialPromptController,
-                  focusNode: _trialPromptFocusNode,
-                  readOnly: _isTrialLoading || _showGuidedTrialIntake,
-                  onChanged: _handleTrialPromptChanged,
-                  minLines: heroMode ? 1 : 2,
-                  maxLines: heroMode ? 2 : 3,
-                  decoration: InputDecoration(
-                    labelText: '例: 今日いちばん詰まっていることを簡単に書く',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.bolt),
-                    isDense: compactHero,
-                    contentPadding: compactHero
-                        ? const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          )
-                        : null,
-                  ),
-                ),
-                SizedBox(height: compactHero ? 8 : 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    key: Key(
-                      heroMode
-                          ? 'landing_h03_inline_trial_action'
-                          : 'landing_h03_lower_trial_action',
-                    ),
-                    onPressed: _isTrialLoading || _showGuidedTrialIntake
-                        ? null
-                        : heroMode
-                            ? _runHeroTrialActionPreview
-                            : _openGuidedTrialIntake,
-                    icon: _isTrialLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.play_arrow),
-                    label: Text(
-                      _isTrialLoading
-                          ? 'AIが具体的な1件を考えています…'
-                          : _showGuidedTrialIntake
-                              ? '5つの質問に回答中'
-                              : '今やる1件を試す',
-                    ),
-                    style: compactHero
-                        ? FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(44),
-                          )
-                        : null,
-                  ),
-                ),
+                ],
                 if (_showGuidedTrialIntake) ...[
                   SizedBox(height: compactHero ? 10 : 14),
                   LandingTrialGuidedIntake(
@@ -4339,18 +4407,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                     compact: compactHero,
                     onCancel: _cancelGuidedTrialIntake,
                     onSubmit: _submitGuidedTrialPrompt,
-                  ),
-                ] else if (!_isTrialLoading) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'AIへの送信は、5問の回答を確認してから1回だけ行います。',
-                    style: TextStyle(
-                      color: heroMode
-                          ? const Color(0xFF9FADB8)
-                          : const Color(0xFF64748B),
-                      fontSize: 11,
-                      height: 1.45,
-                    ),
                   ),
                 ],
                 if (_showTrialAnswerPreview) ...[
@@ -4567,7 +4623,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                             ),
                           )
                         else if (_hypothesisEnabled('h04'))
-                          _buildInlineTrialMagicLink()
+                          _buildInlineTrialMagicLink(compact: compactHero)
                         else
                           SizedBox(
                             width: double.infinity,
@@ -4582,6 +4638,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                               ),
                             ),
                           ),
+                        if (compactHero) ...[
+                          const SizedBox(height: 4),
+                          TextButton.icon(
+                            key: const Key('landing_trial_restart'),
+                            onPressed: _restartTrial,
+                            icon: const Icon(Icons.refresh, size: 17),
+                            label: const Text('別の相談をする'),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -4727,62 +4792,46 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
-  Widget _buildInlineTrialMagicLink() {
-    return Container(
-      key: const Key('landing_h04_inline_magic_capture'),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFB9D7F2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+  Widget _buildInlineTrialMagicLink({bool compact = false}) {
+    final form = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_googleLoginEnabled) ...[
+          FilledButton.icon(
+            key: const Key('landing_h04_inline_google'),
+            onPressed: _isLoading ? null : _saveTrialWithGoogle,
+            icon: const Icon(Icons.login, size: 18),
+            label: const Text('Googleで無料登録して引き継ぐ'),
+          ),
+          const SizedBox(height: 8),
           const Text(
-            'この提案を登録後に引き継ぐ',
+            'Google認証で続行します。登録時にカード入力はありません。',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFF172033),
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
+              color: Color(0xFF64748B),
+              fontSize: 12,
               height: 1.45,
             ),
           ),
-          const SizedBox(height: 8),
-          if (_googleLoginEnabled) ...[
-            FilledButton.icon(
-              key: const Key('landing_h04_inline_google'),
-              onPressed: _isLoading ? null : _saveTrialWithGoogle,
-              icon: const Icon(Icons.login, size: 18),
-              label: const Text('Googleで無料登録して引き継ぐ'),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Google認証で続行します。登録時にカード入力はありません。',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF64748B),
-                fontSize: 12,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Row(
-              children: [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    'またはメールで保存',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                  ),
+          const SizedBox(height: 10),
+          const Row(
+            children: [
+              Expanded(child: Divider()),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  'またはメールで保存',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                 ),
-                Expanded(child: Divider()),
-              ],
-            ),
-            const SizedBox(height: 10),
-          ],
-          TextField(
+              ),
+              Expanded(child: Divider()),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+        Semantics(
+          container: true,
+          child: TextField(
             key: const Key('landing_h04_inline_email'),
             controller: _trialEmailController,
             focusNode: _trialEmailFocusNode,
@@ -4801,42 +4850,131 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               isDense: true,
             ),
           ),
-          const SizedBox(height: 8),
-          FilledButton.icon(
-            key: const Key('landing_h04_inline_magic_link'),
-            onPressed: (_isLoading || _isMagicLinkCoolingDown)
-                ? null
-                : _saveTrialWithMagicLink,
-            icon: Icon(
-              _showInboxShortcut
-                  ? Icons.check_circle_outline
-                  : Icons.bookmark_add_outlined,
-              size: 18,
-            ),
-            label: Text(
-              _showInboxShortcut ? 'ログインリンクを送信しました' : '無料登録して提案を引き継ぐ',
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
+        ),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          key: const Key('landing_h04_inline_magic_link'),
+          onPressed: (_isLoading || _isMagicLinkCoolingDown)
+              ? null
+              : _saveTrialWithMagicLink,
+          icon: Icon(
             _showInboxShortcut
-                ? '受信箱のリンクを開くと、保存した提案から開始できます。'
-                : 'メールで届くログインリンクを使います。パスワード・カード入力はありません。',
-            style: const TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 12,
-              height: 1.45,
+                ? Icons.check_circle_outline
+                : Icons.bookmark_add_outlined,
+            size: 18,
+          ),
+          label: Text(
+            _showInboxShortcut ? 'ログインリンクを送信しました' : '無料登録して提案を引き継ぐ',
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _showInboxShortcut
+              ? '受信箱のリンクを開くと、保存した提案から開始できます。'
+              : 'メールで届くログインリンクを使います。パスワード・カード入力はありません。',
+          style: const TextStyle(
+            color: Color(0xFF64748B),
+            fontSize: 12,
+            height: 1.45,
+          ),
+        ),
+        if (_showInboxShortcut) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('landing_h04_inline_open_inbox'),
+            onPressed: _openInbox,
+            icon: const Icon(Icons.open_in_new, size: 17),
+            label: const Text('受信箱を開く'),
+          ),
+        ],
+      ],
+    );
+
+    const decoration = BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+      border: Border.fromBorderSide(BorderSide(color: Color(0xFFB9D7F2))),
+    );
+
+    if (compact && !_showCompactTrialSaveForm) {
+      return Container(
+        key: const Key('landing_h04_inline_magic_capture'),
+        decoration: decoration,
+        child: InkWell(
+          key: const Key('landing_h04_inline_save_expansion'),
+          borderRadius: BorderRadius.circular(8),
+          onTap: _showCompactTrialSaveOptions,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Row(
+              children: [
+                Icon(Icons.bookmark_add_outlined, color: Color(0xFF172033)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'この提案を保存',
+                        style: TextStyle(
+                          color: Color(0xFF172033),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          height: 1.4,
+                        ),
+                      ),
+                      Text(
+                        '必要なときだけ無料登録（カード不要）',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 11,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.expand_more, color: Color(0xFF172033)),
+              ],
             ),
           ),
-          if (_showInboxShortcut) ...[
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              key: const Key('landing_h04_inline_open_inbox'),
-              onPressed: _openInbox,
-              icon: const Icon(Icons.open_in_new, size: 17),
-              label: const Text('受信箱を開く'),
-            ),
-          ],
+        ),
+      );
+    }
+
+    return Container(
+      key: const Key('landing_h04_inline_magic_capture'),
+      padding: const EdgeInsets.all(12),
+      decoration: decoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'この提案を登録後に引き継ぐ',
+                  style: TextStyle(
+                    color: Color(0xFF172033),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+              if (compact)
+                IconButton(
+                  key: const Key('landing_h04_inline_save_collapse'),
+                  onPressed: () {
+                    setState(() => _showCompactTrialSaveForm = false);
+                  },
+                  tooltip: '保存方法を閉じる',
+                  icon: const Icon(Icons.close, color: Color(0xFF172033)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          form,
         ],
       ),
     );
@@ -5276,15 +5414,18 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
                 const SizedBox(height: 14),
               ],
-              TextField(
-                key: const Key('landing_auth_email'),
-                controller: _emailController,
-                focusNode: _emailFocusNode,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'メールアドレス',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email_outlined),
+              Semantics(
+                container: true,
+                child: TextField(
+                  key: const Key('landing_auth_email'),
+                  controller: _emailController,
+                  focusNode: _emailFocusNode,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'メールアドレス',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
                 ),
               ),
               if (_hypothesisEnabled('h10')) ...[

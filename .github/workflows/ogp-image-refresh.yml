@@ -38,6 +38,9 @@ permissions: {}
 
 jobs:
   refresh:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
     name: OGP Image Refresh

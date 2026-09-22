@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import '../pages/aero_lab_page.dart';
+import '../pages/sound_bloom_page.dart';
+import '../pages/lumen_path_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,6 +19,7 @@ import '../pages/autonomous_ops_console_page.dart';
 import '../pages/micro_mentor_dashboard_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
+import '../ui/features/toeic/toeic_feature.dart';
 import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
@@ -60,10 +65,12 @@ import '../pages/payment_reminder_page.dart';
 import '../pages/prison_mode_page.dart';
 import '../pages/public_memo_directory_page.dart';
 import '../pages/purchase_log_page.dart';
+import '../pages/process_quality_dashboard_page.dart';
 import '../pages/reality_check_page.dart';
 import '../pages/real_world_danshari_page.dart';
 import '../pages/referral_page.dart';
 import '../pages/shopping_list_page.dart';
+import '../pages/spreadsheet_database_page.dart';
 import '../pages/stock_tasks_page.dart';
 import '../pages/table_data_page.dart';
 import '../pages/tech_blog_tracker_page.dart';
@@ -161,6 +168,7 @@ import '../pages/social_feed_page.dart';
 import '../pages/subscription_billing_page.dart';
 import '../pages/digital_product_store_pages.dart';
 import '../pages/viral_ad_generator_page.dart';
+import '../ui/features/palm_reading/palm_reading_feature.dart';
 import '../ui/features/video_studio/video_studio_feature.dart';
 import '../ui/features/notion_migration/notion_migration_feature.dart';
 import '../pages/youtube_stats_page.dart';
@@ -169,6 +177,7 @@ import '../pages/work_menu_page.dart';
 import '../pages/workflow_templates_page.dart';
 import '../pages/crm_sales_pipeline_page.dart';
 import '../pages/travel_itinerary_page.dart';
+import '../pages/art_museum_directory_page.dart';
 import '../pages/virtual_whiteboard_page.dart';
 import '../pages/recipe_meal_planner_page.dart';
 import '../pages/language_learning_page.dart';
@@ -842,6 +851,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
           _pushPage(context, const EnglishReadingCurriculumPage()),
     ),
     HomeToolEntry(
+      id: 'ai-university-toeic',
+      sectionId: 'knowledge',
+      title: 'AI大学 TOEIC対策',
+      subtitle: '毎日5問のPart別ドリルで目標スコアへ',
+      icon: Icons.school_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>[
+        'TOEIC',
+        '英語',
+        '文法',
+        '語彙',
+        'Part 5',
+        'Part 6',
+        'Part 7',
+        'English',
+      ],
+      onOpen: (context) => _pushPage(context, const ToeicFeature()),
+    ),
+    HomeToolEntry(
       id: 'agent-gpa-dashboard',
       sectionId: 'knowledge',
       title: 'AI Executive GPA',
@@ -1008,6 +1036,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['性格診断', 'MBTI', '16タイプ', '自己分析'],
       onOpen: (context) =>
           _pushPage(context, const PersonalityTestQuestionsPage(testId: 1)),
+    ),
+    HomeToolEntry(
+      id: 'palm-reading',
+      sectionId: 'knowledge',
+      title: '手相AI占い',
+      subtitle: '手のひらを撮影し、鑑定履歴と変化をAIで振り返る',
+      icon: Icons.back_hand_outlined,
+      color: const Color(0xFF7C4DFF),
+      keywords: const <String>[
+        '手相',
+        '占い',
+        'AI占い',
+        '手のひら',
+        '写真',
+        '変化',
+        '履歴',
+        'palm',
+      ],
+      onOpen: (context) => _pushPage(context, const PalmReadingPage()),
     ),
     HomeToolEntry(
       id: 'iq-test',
@@ -1948,6 +1995,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
     ),
     // office セクション
     HomeToolEntry(
+      id: 'spreadsheet-database',
+      sectionId: 'office',
+      title: '表計算',
+      subtitle: 'セル編集・基本数式・自動保存に対応したデスクトップ表計算',
+      icon: Icons.grid_on_outlined,
+      color: const Color(0xFF107C41),
+      keywords: const <String>['表計算', 'スプレッドシート', 'Excel', '数式', '集計', 'SUM'],
+      onOpen: (context) => _pushPage(context, const SpreadsheetDatabasePage()),
+    ),
+    HomeToolEntry(
       id: 'shop',
       sectionId: 'office',
       title: 'デジタル作品ストア',
@@ -2334,6 +2391,36 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
     ),
     HomeToolEntry(
+      id: 'lumen-path',
+      sectionId: 'growth',
+      title: '光の道 · LUMEN PATH',
+      subtitle: '鏡を回して、3色の光をゴールへ導く',
+      icon: Icons.route_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['光', '鏡', 'パズル', 'LUMEN PATH', 'Astra'],
+      onOpen: (context) => _pushPage(context, const LumenPathPage()),
+    ),
+    HomeToolEntry(
+      id: 'sound-bloom',
+      sectionId: 'growth',
+      title: '音と光の庭 · SOUND BLOOM',
+      subtitle: '光を植えて、音楽を育てる',
+      icon: Icons.music_note_outlined,
+      color: const Color(0xFF527D62),
+      keywords: const <String>['音楽', '作曲', 'SOUND BLOOM', '楽器', 'Astra'],
+      onOpen: (context) => _pushPage(context, const SoundBloomPage()),
+    ),
+    HomeToolEntry(
+      id: 'aero-lab',
+      sectionId: 'growth',
+      title: '3D実験室 · AERO LAB',
+      subtitle: 'エンジンを回して、開いて、空気の流れを学ぶ',
+      icon: Icons.science_outlined,
+      color: const Color(0xFF00838F),
+      keywords: const <String>['3D', 'AERO LAB', 'エンジン', '実験', 'Astra'],
+      onOpen: (context) => _pushPage(context, const AeroLabPage()),
+    ),
+    HomeToolEntry(
       id: 'video-studio',
       sectionId: 'growth',
       title: 'AI動画スタジオ',
@@ -2395,6 +2482,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['法人', 'エンタープライズ', '組織', 'enterprise', 'ビジネス'],
       onOpen: (context) => _pushPage(context, const EnterprisePage()),
+    ),
+    HomeToolEntry(
+      id: 'corporate-site-readiness',
+      sectionId: 'growth',
+      title: '法人口座サイト準備チェック',
+      subtitle: '会社情報の不足確認と事業計画・WBSからのHTML生成',
+      icon: Icons.domain_verification_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        '法人口座',
+        '銀行審査',
+        '会社概要',
+        'バーチャルオフィス',
+        '事業計画',
+        'WBS',
+        'コーポレートサイト',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/corporate-site-readiness'),
     ),
     HomeToolEntry(
       id: 'feature-flags',
@@ -2522,6 +2628,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'TripAdvisor',
       ],
       onOpen: (context) => _pushPage(context, const TravelItineraryPage()),
+    ),
+    HomeToolEntry(
+      id: 'art-museums',
+      sectionId: 'knowledge',
+      title: '全国の美術館',
+      subtitle: '文化庁データから全国の美術館を地域・都道府県・名称で探す',
+      icon: Icons.museum_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '美術館',
+        'アート',
+        '博物館',
+        '文化',
+        '展覧会',
+        '都道府県',
+        'museum',
+        'art',
+      ],
+      onOpen: (context) => _pushPage(context, const ArtMuseumDirectoryPage()),
     ),
     HomeToolEntry(
       id: 'virtual-whiteboard',
@@ -2807,6 +2932,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => Navigator.of(context).pushNamed('/release-notes'),
     ),
     HomeToolEntry(
+      id: 'process-quality-dashboard',
+      sectionId: 'ai',
+      title: 'プロセス品質ダッシュボード',
+      subtitle: '対象規模あたりのレビュー時間・指摘件数を比較し、閾値未達を確認',
+      icon: Icons.analytics_outlined,
+      color: const Color(0xFF0369A1),
+      keywords: const <String>[
+        'プロセス品質',
+        'レビュー密度',
+        '指摘密度',
+        '品質指標',
+        'ダッシュボード',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const ProcessQualityDashboardPage()),
+    ),
+    HomeToolEntry(
       id: 'tiger-reviewers',
       sectionId: 'ai',
       title: '虎レビュアー成績',
@@ -2874,6 +3016,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'observability',
       ],
       onOpen: (context) => _pushPage(context, const EdgeLlmPlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'jev-mario-lab',
+      sectionId: 'ai',
+      title: 'Jev Mario Lab',
+      subtitle: 'マリオの操作とJevの応答速度を測定（ROMなしのAPI測定にも対応）',
+      icon: Icons.sports_esports_outlined,
+      color: const Color(0xFF168A75),
+      keywords: const <String>['Jev', 'Mario', 'マリオ', '応答速度', 'ベンチマーク'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/jev-mario-lab'),
     ),
     HomeToolEntry(
       id: 'agi-fireworks',

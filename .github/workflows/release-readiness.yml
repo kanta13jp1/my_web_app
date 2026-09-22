@@ -31,20 +31,29 @@ concurrency:
 
 permissions: {}
 
-env:
-  DEFAULT_BASE_URL: https://my-web-app-b67f4.web.app
-  SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || 'https://smmkxxavexumewbfaqpy.supabase.co' }}
-  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-  FLUTTER_VERSION: "3.38.x"
-  LANDING_GOOGLE_LOGIN_ENABLED: "true"
-
 jobs:
+  deployment-scope:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+    permissions:
+      actions: read
+    uses: ./.github/workflows/production-followup-scope.yml
+
   readiness:
+    needs: deployment-scope
+    env:
+      DEFAULT_BASE_URL: https://my-web-app-b67f4.web.app
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || 'https://smmkxxavexumewbfaqpy.supabase.co' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      FLUTTER_VERSION: "3.38.x"
+      LANDING_GOOGLE_LOGIN_ENABLED: "true"
+    environment:
+      name: observability-production
+      deployment: false
     permissions:
       contents: read
     name: Alpha release readiness
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: always() && needs.deployment-scope.outputs.skip != 'true' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 40
 

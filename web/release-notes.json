@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-08-26",
+    "date": "2026-09-21",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-08-26T00:00:00Z",
+  "generatedAt": "2026-09-21T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -32,396 +32,396 @@
       "changes": [
         {
           "category": "feature",
-          "id": "pr-4870",
+          "id": "pr-5487",
           "links": [
             {
-              "title": "PR #4870",
+              "title": "PR #5487",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4870"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5487"
             }
           ],
-          "mergedAt": "2026-08-26T04:23:23Z",
-          "summary": "#4870 feat: publish Antigravity video lesson in AI University"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4866",
-          "links": [
-            {
-              "title": "PR #4866",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4866"
-            }
-          ],
-          "mergedAt": "2026-08-26T01:55:37Z",
-          "summary": "#4866 fix: Edge Function監査のSupabase upsert競合を解消"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4865",
-          "links": [
-            {
-              "title": "PR #4865",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4865"
-            }
-          ],
-          "mergedAt": "2026-08-26T01:52:41Z",
-          "summary": "#4865 fix: backend-only Edge FunctionをUI監査から除外"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4864",
-          "links": [
-            {
-              "title": "PR #4864",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4864"
-            }
-          ],
-          "mergedAt": "2026-08-26T01:34:14Z",
-          "summary": "#4864 fix: 01.AI API overviewの根拠表記を修正"
+          "mergedAt": "2026-09-21T14:34:09Z",
+          "summary": "#5487 feat: record and download Jev Mario gameplay"
         },
         {
           "category": "feature",
-          "id": "pr-4775",
+          "id": "pr-5485",
           "links": [
             {
-              "title": "PR #4775",
+              "title": "PR #5485",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4775"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5485"
             }
           ],
-          "mergedAt": "2026-08-26T01:07:49Z",
-          "summary": "#4775 deps: bump the flutter-dependencies group across 1 directory with 20 updates"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4858",
-          "links": [
-            {
-              "title": "PR #4858",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4858"
-            }
-          ],
-          "mergedAt": "2026-08-26T00:32:33Z",
-          "summary": "#4858 fix(comparison): require evidence for public claims (closes #4726)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4857",
-          "links": [
-            {
-              "title": "PR #4857",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4857"
-            }
-          ],
-          "mergedAt": "2026-08-25T23:56:34Z",
-          "summary": "#4857 fix: reduce avatar Storage egress (closes #4482)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4856",
-          "links": [
-            {
-              "title": "PR #4856",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4856"
-            }
-          ],
-          "mergedAt": "2026-08-25T23:28:40Z",
-          "summary": "#4856 fix(growth): attribute AI video X posts (#3765)"
+          "mergedAt": "2026-09-21T14:03:09Z",
+          "summary": "#5485 feat: improve Mario presentation, sound and decision diagnostics"
         },
         {
           "category": "feature",
-          "id": "pr-4854",
+          "id": "pr-5483",
           "links": [
             {
-              "title": "PR #4854",
+              "title": "PR #5483",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4854"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5483"
             }
           ],
-          "mergedAt": "2026-08-25T21:53:54Z",
-          "summary": "#4854 feat(dev-env): report Codex session resource budget (#1983)"
+          "mergedAt": "2026-09-21T13:26:44Z",
+          "summary": "#5483 feat: animate Jev Mario movement and add crouching"
         },
         {
           "category": "feature",
-          "id": "pr-4853",
+          "id": "pr-5479",
           "links": [
             {
-              "title": "PR #4853",
+              "title": "PR #5479",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4853"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5479"
             }
           ],
-          "mergedAt": "2026-08-25T21:34:19Z",
-          "summary": "#4853 chore(ai): configure Dart and Flutter MCP routing (#1873)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4852",
-          "links": [
-            {
-              "title": "PR #4852",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4852"
-            }
-          ],
-          "mergedAt": "2026-08-25T21:27:10Z",
-          "summary": "#4852 fix(quota): persist Actions minutes gauge (#1870)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4849",
-          "links": [
-            {
-              "title": "PR #4849",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4849"
-            }
-          ],
-          "mergedAt": "2026-08-25T21:14:48Z",
-          "summary": "#4849 docs(claude): clarify Windows runtime boundaries (#1861)"
+          "mergedAt": "2026-09-21T13:01:03Z",
+          "summary": "#5479 feat: expose Notion WBS resolution lanes in cloud audit"
         },
         {
           "category": "automation",
-          "id": "pr-4847",
+          "id": "pr-5478",
           "links": [
             {
-              "title": "PR #4847",
+              "title": "PR #5478",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4847"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5478"
             }
           ],
-          "mergedAt": "2026-08-25T21:08:09Z",
-          "summary": "#4847 docs(codex): adopt persisted goal workflow (#1860)"
+          "mergedAt": "2026-09-21T12:50:59Z",
+          "summary": "#5478 ci: skip production follow-ups only for confirmed no-op runs"
         },
         {
           "category": "feature",
-          "id": "pr-4846",
+          "id": "pr-5481",
           "links": [
             {
-              "title": "PR #4846",
+              "title": "PR #5481",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4846"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5481"
             }
           ],
-          "mergedAt": "2026-08-25T20:56:07Z",
-          "summary": "#4846 docs(imbue): strengthen human agency safeguards"
+          "mergedAt": "2026-09-21T10:24:28Z",
+          "summary": "#5481 feat: add BGM and sound effects to Jev Mario Lab"
         },
         {
           "category": "fix",
-          "id": "pr-4845",
+          "id": "pr-5477",
           "links": [
             {
-              "title": "PR #4845",
+              "title": "PR #5477",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4845"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5477"
             }
           ],
-          "mergedAt": "2026-08-25T20:05:35Z",
-          "summary": "#4845 fix(ci): add analyzer crash fallback evidence"
+          "mergedAt": "2026-09-21T09:55:17Z",
+          "summary": "#5477 fix: accept configurable Jev response age and explain rejected decisions"
         },
         {
           "category": "fix",
-          "id": "pr-4844",
+          "id": "pr-5473",
           "links": [
             {
-              "title": "PR #4844",
+              "title": "PR #5473",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4844"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5473"
             }
           ],
-          "mergedAt": "2026-08-25T19:50:01Z",
-          "summary": "#4844 fix(ci): enforce responsible AI code review gate"
+          "mergedAt": "2026-09-21T09:23:16Z",
+          "summary": "#5473 fix: restore Jev Mario direct navigation and asset loading"
         },
         {
           "category": "fix",
-          "id": "pr-4840",
+          "id": "pr-5475",
           "links": [
             {
-              "title": "PR #4840",
+              "title": "PR #5475",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4840"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5475"
             }
           ],
-          "mergedAt": "2026-08-25T18:45:19Z",
-          "summary": "#4840 fix(ci): standardize untrusted workflow inputs"
+          "mergedAt": "2026-09-21T09:06:06Z",
+          "summary": "#5475 fix: unblock AI University release by repairing unapplied course seeds"
         },
         {
           "category": "feature",
-          "id": "pr-4838",
+          "id": "pr-5474",
           "links": [
             {
-              "title": "PR #4838",
+              "title": "PR #5474",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4838"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5474"
             }
           ],
-          "mergedAt": "2026-08-25T18:02:27Z",
-          "summary": "#4838 docs(windows): add safe VS Code terminal recovery runbook"
+          "mergedAt": "2026-09-21T08:53:11Z",
+          "summary": "#5474 feat: add September Claude Code installation video to AI University"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5469",
+          "links": [
+            {
+              "title": "PR #5469",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5469"
+            }
+          ],
+          "mergedAt": "2026-09-21T08:11:41Z",
+          "summary": "#5469 feat: ROM不要のWorld 1-1再現ゲームをJev Mario Labへ追加"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5471",
+          "links": [
+            {
+              "title": "PR #5471",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5471"
+            }
+          ],
+          "mergedAt": "2026-09-21T07:53:34Z",
+          "summary": "#5471 fix(ci): exclude Playwright evidence tools from production deploy"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5470",
+          "links": [
+            {
+              "title": "PR #5470",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5470"
+            }
+          ],
+          "mergedAt": "2026-09-21T07:47:41Z",
+          "summary": "#5470 fix(ci): preserve Playwright reports and fail on missing evidence"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5454",
+          "links": [
+            {
+              "title": "PR #5454",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5454"
+            }
+          ],
+          "mergedAt": "2026-09-21T07:27:50Z",
+          "summary": "#5454 deps: bump the npm-dev-dependencies group across 1 directory with 2 updates"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5467",
+          "links": [
+            {
+              "title": "PR #5467",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5467"
+            }
+          ],
+          "mergedAt": "2026-09-21T06:30:24Z",
+          "summary": "#5467 feat: Jev Mario real-time control and latency lab"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5464",
+          "links": [
+            {
+              "title": "PR #5464",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5464"
+            }
+          ],
+          "mergedAt": "2026-09-21T04:52:44Z",
+          "summary": "#5464 feat: 手相AI占いの履歴・同じ手比較を追加"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5463",
+          "links": [
+            {
+              "title": "PR #5463",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5463"
+            }
+          ],
+          "mergedAt": "2026-09-21T04:50:23Z",
+          "summary": "#5463 fix: guide signed-out users from digital danshari"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5460",
+          "links": [
+            {
+              "title": "PR #5460",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5460"
+            }
+          ],
+          "mergedAt": "2026-09-21T02:48:13Z",
+          "summary": "#5460 feat(ai): 認証付きJev分類候補とサーバー側の利用上限"
         },
         {
           "category": "automation",
-          "id": "pr-4839",
+          "id": "pr-5458",
           "links": [
             {
-              "title": "PR #4839",
+              "title": "PR #5458",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4839"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5458"
             }
           ],
-          "mergedAt": "2026-08-25T18:00:14Z",
-          "summary": "#4839 ci: emit required checks for docs-only PRs"
+          "mergedAt": "2026-09-21T02:21:39Z",
+          "summary": "#5458 ci: skip unrelated Flutter checks for audited Python skill tests"
         },
         {
           "category": "feature",
-          "id": "pr-4837",
+          "id": "pr-5453",
           "links": [
             {
-              "title": "PR #4837",
+              "title": "PR #5453",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4837"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5453"
             }
           ],
-          "mergedAt": "2026-08-25T17:48:47Z",
-          "summary": "#4837 chore(vscode): standardize cross-platform terminal profiles"
+          "mergedAt": "2026-09-20T21:43:38Z",
+          "summary": "#5453 feat: 支出に分類候補と要確認を表示（自動記帳なし）"
         },
         {
           "category": "feature",
-          "id": "pr-4829",
+          "id": "pr-5451",
           "links": [
             {
-              "title": "PR #4829",
+              "title": "PR #5451",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4829"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5451"
             }
           ],
-          "mergedAt": "2026-08-25T15:28:15Z",
-          "summary": "#4829 feat: publish AI Foundations 3.3 in AI University"
+          "mergedAt": "2026-09-20T20:48:39Z",
+          "summary": "#5451 feat(ai): optional local Laya System One adapter (#5450)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5449",
+          "links": [
+            {
+              "title": "PR #5449",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5449"
+            }
+          ],
+          "mergedAt": "2026-09-20T20:03:59Z",
+          "summary": "#5449 Complete canonical skill curation and contract CI"
         },
         {
           "category": "fix",
-          "id": "pr-4826",
+          "id": "pr-5447",
           "links": [
             {
-              "title": "PR #4826",
+              "title": "PR #5447",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4826"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5447"
             }
           ],
-          "mergedAt": "2026-08-25T14:47:58Z",
-          "summary": "#4826 fix: bound local analyzer subprocesses"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4790",
-          "links": [
-            {
-              "title": "PR #4790",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4790"
-            }
-          ],
-          "mergedAt": "2026-08-25T00:32:25Z",
-          "summary": "#4790 feat: add AI University evidence operations and recovery analytics"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4802",
-          "links": [
-            {
-              "title": "PR #4802",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4802"
-            }
-          ],
-          "mergedAt": "2026-08-25T00:09:08Z",
-          "summary": "#4802 feat: 虎プロフィール拡充ラウンド4"
+          "mergedAt": "2026-09-20T19:49:58Z",
+          "summary": "#5447 fix(jev): use System One wire contract for cloud and local backends"
         },
         {
           "category": "fix",
-          "id": "pr-4773",
+          "id": "pr-5438",
           "links": [
             {
-              "title": "PR #4773",
+              "title": "PR #5438",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4773"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5438"
             }
           ],
-          "mergedAt": "2026-08-24T23:47:01Z",
-          "summary": "#4773 fix: 虎プロフィール公開キャッシュを更新"
+          "mergedAt": "2026-09-20T19:33:54Z",
+          "summary": "#5438 fix(asset): exclude unpaid estimates from new borrowing calculation"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5448",
+          "links": [
+            {
+              "title": "PR #5448",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5448"
+            }
+          ],
+          "mergedAt": "2026-09-20T19:03:19Z",
+          "summary": "#5448 fix: make landing trial and home usable on mobile"
         },
         {
           "category": "feature",
-          "id": "pr-4783",
+          "id": "pr-5446",
           "links": [
             {
-              "title": "PR #4783",
+              "title": "PR #5446",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4783"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5446"
             }
           ],
-          "mergedAt": "2026-08-24T12:09:51Z",
-          "summary": "#4783 feat: 先延ばしリセット機能を追加"
+          "mergedAt": "2026-09-20T14:43:14Z",
+          "summary": "#5446 feat(ai): add Jev semantic expense search service (#5445)"
         },
         {
           "category": "feature",
-          "id": "pr-4774",
+          "id": "pr-5444",
           "links": [
             {
-              "title": "PR #4774",
+              "title": "PR #5444",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4774"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5444"
             }
           ],
-          "mergedAt": "2026-08-24T00:35:39Z",
-          "summary": "#4774 feat: publish AI Foundations 3.2 video lesson"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4772",
-          "links": [
-            {
-              "title": "PR #4772",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4772"
-            }
-          ],
-          "mergedAt": "2026-08-24T00:03:12Z",
-          "summary": "#4772 chore: 虎プロフィール拡充ループ第3回を反映"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4769",
-          "links": [
-            {
-              "title": "PR #4769",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4769"
-            }
-          ],
-          "mergedAt": "2026-08-23T17:25:48Z",
-          "summary": "#4769 deploy-review-history-cache-policy"
+          "mergedAt": "2026-09-20T13:01:47Z",
+          "summary": "#5444 feat(ai): add LocalJev (GitHub Next) local endpoint compatibility (#5443)"
         },
         {
           "category": "automation",
-          "id": "pr-4766",
+          "id": "pr-5442",
           "links": [
             {
-              "title": "PR #4766",
+              "title": "PR #5442",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4766"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5442"
             }
           ],
-          "mergedAt": "2026-08-23T17:16:55Z",
-          "summary": "#4766 feat(notes): add Evernote-compatible tag workflows"
+          "mergedAt": "2026-09-20T12:18:37Z",
+          "summary": "#5442 feat(ai): integrate Jev instant category classifier for real-time transactions (#5441)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5440",
+          "links": [
+            {
+              "title": "PR #5440",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5440"
+            }
+          ],
+          "mergedAt": "2026-09-20T08:55:28Z",
+          "summary": "#5440 feat(ai): integrate TypeSafe AI (Jev) low-latency routing (#5439)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5435",
+          "links": [
+            {
+              "title": "PR #5435",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5435"
+            }
+          ],
+          "mergedAt": "2026-09-16T17:44:15Z",
+          "summary": "#5435 fix(asset-ai): exclude future-usage and instrumental mentions of paid debts from urging detection"
         }
       ],
-      "date": "2026-08-26",
+      "date": "2026-09-21",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,

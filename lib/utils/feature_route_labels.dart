@@ -44,7 +44,13 @@ const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
 };
 
 const Map<String, String> _consolidatedFeatureLabels = <String, String>{
+  '/palm-reading': '手相AI占い',
+  '/lumen-path': '光の道 · LUMEN PATH',
+  '/sound-bloom': '音と光の庭 · SOUND BLOOM',
+  '/aero-lab': '3D実験室 · AERO LAB',
   '/ai-writing-assistant': 'AI文章・要約アシスタント',
+  '/ai-university-toeic': 'AI大学 TOEIC対策',
+  '/art-museums': '全国の美術館',
   '/asset-management': '資産・家計管理',
   '/autonomous-ops-console': '自律オペレーションコンソール',
   '/custom-task-list': 'AI カスタムタスクリスト',

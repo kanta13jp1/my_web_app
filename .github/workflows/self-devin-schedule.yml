@@ -26,6 +26,9 @@ permissions: {}
 
 jobs:
   route-next-feature-request:
+    environment:
+      name: wbs-automation-production
+      deployment: false
     permissions:
       actions: write
       contents: read

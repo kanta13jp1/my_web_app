@@ -33,9 +33,9 @@ winget packages, and prints a version summary at the end.
 
 | Area | Items |
 | --- | --- |
-| Core CLI | Git, GitHub CLI, Node.js LTS, Python 3.12, Deno |
+| Core CLI | Git, GitHub CLI, Node.js LTS, Python 3.12, Deno, Podman |
 | App tooling | Visual Studio Code, OpenJDK 17, AWS CLI |
-| VS Code | Dart, Flutter, Deno, PowerShell, GitHub Actions, Copilot, Docker, Prettier, ESLint |
+| VS Code | Dart, Flutter, Deno, PowerShell, GitHub Actions, Copilot, Container Tools, Dev Containers, Prettier, ESLint |
 
 After the script finishes, open a new terminal and run:
 
@@ -47,11 +47,17 @@ python --version
 deno --version
 gh --version
 java --version
+podman --version
 ```
 
 Flutter itself is intentionally not installed by the script because teams often
 pin the SDK through FVM, a local SDK cache, or a managed corporate image. Use
 the repository's current Flutter setup notes before adding a global SDK.
+
+The script installs the Podman CLI but does not create or start a Podman machine,
+pull images, or change the active container runtime. Complete those host-changing
+steps only after the resource and approval gates in
+[`ROOTLESS_CONTAINER_SETUP.md`](../ROOTLESS_CONTAINER_SETUP.md) pass.
 
 ## Proxy troubleshooting
 

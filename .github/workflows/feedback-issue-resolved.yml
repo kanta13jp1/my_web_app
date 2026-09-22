@@ -12,6 +12,9 @@ permissions: {}
 
 jobs:
   notify:
+    environment:
+      name: customer-operations-production
+      deployment: false
     permissions:
       contents: read
       issues: read

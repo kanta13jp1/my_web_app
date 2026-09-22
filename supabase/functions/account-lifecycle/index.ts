@@ -14,6 +14,7 @@ import {
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
+  positiveRequestId,
   remainingDeletionDependencyCount,
   requiresSubscriptionCancellation,
   safeErrorCode,
@@ -76,11 +77,18 @@ serve(async (request: Request) => {
     const action = asString(body.action);
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    if (action === "process_due") {
+    if (action === "process_due" || action === "preflight_due") {
       if (!isServiceRoleRequest(request, SERVICE_ROLE_KEY)) {
         return jsonResponse({ error: "service_role_required" }, 401);
       }
-      return await processDueRequest(admin);
+      const requestId = positiveRequestId(body.request_id);
+      if (body.request_id != null && requestId == null) {
+        return jsonResponse({ error: "invalid_request_id" }, 400);
+      }
+      if (action === "preflight_due") {
+        return await preflightDueRequest(admin, requestId);
+      }
+      return await processDueRequest(admin, requestId);
     }
 
     const authenticated = await authenticatedContext(request);
@@ -242,9 +250,35 @@ async function hasRecentAccountDeletionSession(
   return data === true;
 }
 
-async function processDueRequest(admin: SupabaseClient): Promise<Response> {
+async function preflightDueRequest(
+  admin: SupabaseClient,
+  requestId: number | null,
+): Promise<Response> {
+  const { data, error } = await admin.rpc(
+    "preflight_due_account_deletion",
+    { p_request_id: requestId },
+  );
+  if (error) throw error;
+  const candidate = Array.isArray(data) ? data[0] : undefined;
+  if (!candidate) {
+    return jsonResponse({
+      success: true,
+      candidate: null,
+      reason: "no_due_request",
+    });
+  }
+  return jsonResponse({ success: true, candidate });
+}
+
+async function processDueRequest(
+  admin: SupabaseClient,
+  requestId: number | null,
+): Promise<Response> {
   const { data: claimedRows, error: claimError } = await admin.rpc(
-    "claim_due_account_deletion",
+    requestId == null
+      ? "claim_due_account_deletion"
+      : "claim_due_account_deletion_by_id",
+    requestId == null ? undefined : { p_request_id: requestId },
   );
   if (claimError) throw claimError;
   const request = Array.isArray(claimedRows)

@@ -1,0 +1,34 @@
+name: Paid Claude and Codex policy gate
+description: Fail closed unless the owner opts in and the repository has zero open Issues.
+
+inputs:
+  requested:
+    description: Value of the owner-controlled PAID_AI_CLAUDE_CODEX_ENABLED variable.
+    required: false
+    default: "false"
+
+outputs:
+  enabled:
+    description: true only when owner opt-in and Issues=0 are both proven.
+    value: ${{ steps.policy.outputs.enabled }}
+  reason:
+    description: Machine-readable policy reason.
+    value: ${{ steps.policy.outputs.reason }}
+  open_issue_count:
+    description: Live open-Issue count, or unknown when no lookup was needed/possible.
+    value: ${{ steps.policy.outputs.open_issue_count }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve paid Claude/Codex policy
+      id: policy
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PAID_AI_REQUESTED: ${{ inputs.requested }}
+        PAID_AI_REPOSITORY: ${{ github.repository }}
+      run: >-
+        python "$GITHUB_WORKSPACE/scripts/paid_ai_policy.py" gate
+        --requested "$PAID_AI_REQUESTED"
+        --repository "$PAID_AI_REPOSITORY"

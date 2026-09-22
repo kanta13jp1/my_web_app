@@ -35,6 +35,9 @@ permissions: {}
 
 jobs:
   publish:
+    environment:
+      name: content-automation-production
+      deployment: false
     permissions:
       contents: write
       pull-requests: write

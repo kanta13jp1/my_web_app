@@ -76,7 +76,7 @@ void main() {
       amount: 30000,
       currentBalance: 200000,
       problem: '内部説明',
-      action: 'カードを一括返済へ戻す',
+      action: '最低返済額に新規利用分を上乗せし25日に返済する',
     );
   }
 
@@ -215,7 +215,10 @@ void main() {
       expect(chro, isNotNull);
       expect(chro!.severity, AdvisorySeverity.info);
       expect(chro.detail, contains('判定'));
-      expect(chro.detail.contains('追加借入ゼロ・カード一括返済を達成'), isFalse);
+      expect(
+        chro.detail.contains('カード以外の追加借入ゼロ・新規利用分の25日全額返済を達成'),
+        isFalse,
+      );
       expect(chro.headline.contains('規律を維持'), isFalse);
     });
 
@@ -231,9 +234,9 @@ void main() {
       );
       final chro = actionFor(briefing, 'discipline_violation');
       expect(chro, isNotNull);
-      expect(chro!.detail, contains('誓約①追加借入ゼロ: 判定保留'));
+      expect(chro!.detail, contains('誓約①カード以外の追加借入ゼロ: 判定保留'));
       // 誓約②は前月データ不要なので、そのまま未達と出る。
-      expect(chro.detail, contains('誓約②カード一括: 未達'));
+      expect(chro.detail, contains('誓約②新規利用分の25日全額返済: 未達'));
     });
 
     test('two criticals trigger a CEO priority ruling sorted to the top', () {

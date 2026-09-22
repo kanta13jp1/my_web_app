@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../data/ai_university_curated_videos.dart';
 import '../services/ai_university_video_lesson_service.dart';
 import '../widgets/ai_university_youtube_embed.dart';
 
@@ -23,6 +24,7 @@ class AiUniversityVideoPage extends StatefulWidget {
 class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
   final _supabase = Supabase.instance.client;
 
+  int _curatedVideoIndex = 0;
   bool _loadingCatalog = true;
   bool _generating = false;
   String? _catalogError;
@@ -179,8 +181,9 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
   }
 
   Future<void> _openUrl(String rawUrl) async {
-    final uri = Uri.tryParse(rawUrl);
-    if (uri == null) return;
+    final parsed = Uri.tryParse(rawUrl);
+    if (parsed == null) return;
+    final uri = parsed.hasScheme ? parsed : Uri.base.resolveUri(parsed);
     await launchUrl(uri, mode: LaunchMode.platformDefault);
   }
 
@@ -219,6 +222,7 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
     const surface2 = Color(0xFF1E1E1E);
     const accent = Color(0xFFFF6B35);
     final topic = _selectedTopic;
+    final curatedVideo = aiUniversityCuratedVideos[_curatedVideoIndex];
     final youtubeVideoId = topic?.youtubeVideoId;
     final providerLabel = _provider == null
         ? null
@@ -247,6 +251,15 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  _CuratedVideoLibrary(
+                    selectedIndex: _curatedVideoIndex,
+                    video: curatedVideo,
+                    onSelected: (index) => setState(
+                      () => _curatedVideoIndex = index,
+                    ),
+                    onOpen: () => _openUrl(curatedVideo.sourceUrl),
+                  ),
+                  const SizedBox(height: 12),
                   _InfoCard(
                     title: 'テキスト教材をアバター動画に変換',
                     subtitle:
@@ -546,6 +559,101 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.white12),
+      ),
+    );
+  }
+}
+
+class _CuratedVideoLibrary extends StatelessWidget {
+  const _CuratedVideoLibrary({
+    required this.selectedIndex,
+    required this.video,
+    required this.onSelected,
+    required this.onOpen,
+  });
+
+  final int selectedIndex;
+  final AiUniversityCuratedVideo video;
+  final ValueChanged<int> onSelected;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoCard(
+      title: '公開済みAI大学動画',
+      subtitle: '理念ページから移管したAI学習教材です。理念動画とは分けて、ここで選んで視聴できます。',
+      accent: const Color(0xFF3D5AFE),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List<Widget>.generate(
+                aiUniversityCuratedVideos.length,
+                (index) {
+                  final candidate = aiUniversityCuratedVideos[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      key: Key('ai_university_curated_${candidate.id}'),
+                      label: Text('${candidate.title} • ${candidate.duration}'),
+                      selected: selectedIndex == index,
+                      onSelected: (_) => onSelected(index),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            video.description,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (video.youtubeVideoId case final videoId?)
+            AiUniversityYoutubeEmbed(
+              key: ValueKey(video.id),
+              videoId: videoId,
+              title: video.title,
+              onOpen: onOpen,
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF111827),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.smart_display_rounded,
+                    color: Color(0xFFFF6B35),
+                    size: 52,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'サイト内の公開動画を再生します',
+                    style: TextStyle(color: Colors.white70, height: 1.5),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: onOpen,
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('動画を開く'),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

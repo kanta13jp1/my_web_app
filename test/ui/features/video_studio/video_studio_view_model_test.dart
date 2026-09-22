@@ -178,6 +178,122 @@ void main() {
       expect(viewModel.hasAppliedImprovement, isFalse);
     },
   );
+
+  test(
+    'load restores an unconsumed improve review after a later session',
+    () async {
+      final gateway = _FakeVideoStudioGateway(
+        balance: _balance(400),
+        initialJobs: [
+          _job(
+            status: 'succeeded',
+            artifact: _artifact(latestReview: _review()),
+          ),
+        ],
+      );
+      final viewModel = VideoStudioViewModel(gateway: gateway);
+      addTearDown(viewModel.dispose);
+
+      await viewModel.load();
+
+      expect(viewModel.hasAppliedImprovement, isTrue);
+      expect(viewModel.appliedReviewId, _reviewId);
+      expect(viewModel.prompt, 'Natural hand movement in a bright office');
+    },
+  );
+
+  test(
+    'authorization registration atomically starts the first 300 credit run',
+    () async {
+      final gateway = _FakeVideoStudioGateway(
+        balance: _balance(400),
+        initialJobs: [
+          _job(
+            status: 'succeeded',
+            artifact: _artifact(latestReview: _review()),
+          ),
+        ],
+      );
+      final viewModel = VideoStudioViewModel(gateway: gateway);
+      addTearDown(viewModel.dispose);
+      await viewModel.load();
+      viewModel
+        ..setRightsConfirmed(true)
+        ..setAdultConfirmed(true)
+        ..setAuthorizationValidityHours(168)
+        ..setAuthorizationRegenerations(2);
+
+      expect(await viewModel.authorizeAndGenerateImprovement(), isTrue);
+
+      expect(gateway.authorizedSourceArtifactId, _artifactId);
+      expect(gateway.authorizedSourceReviewId, _reviewId);
+      expect(gateway.authorizedValidityHours, 168);
+      expect(gateway.authorizedRegenerations, 2);
+      expect(viewModel.balance.availableCredits, 100);
+      expect(viewModel.authorizations.single.id, _authorizationId);
+      expect(viewModel.hasAppliedImprovement, isFalse);
+    },
+  );
+
+  test(
+    'authorization persists as pending when the first reservation lacks funds',
+    () async {
+      final gateway = _FakeVideoStudioGateway(
+        balance: _balance(100),
+        initialJobs: [
+          _job(
+            status: 'succeeded',
+            artifact: _artifact(latestReview: _review()),
+          ),
+        ],
+      );
+      final viewModel = VideoStudioViewModel(gateway: gateway);
+      addTearDown(viewModel.dispose);
+      await viewModel.load();
+      viewModel
+        ..setRightsConfirmed(true)
+        ..setAdultConfirmed(true)
+        ..setAuthorizationValidityHours(168)
+        ..setAuthorizationRegenerations(2);
+
+      expect(viewModel.canAuthorizeImprovement, isTrue);
+      expect(await viewModel.authorizeAndGenerateImprovement(), isTrue);
+
+      expect(viewModel.balance.availableCredits, 100);
+      expect(viewModel.authorizations.single.status, 'pending_funding');
+      expect(viewModel.authorizations.single.pendingReasons, [
+        'insufficient_credits',
+      ]);
+      expect(viewModel.activeJob, isNull);
+      expect(viewModel.hasAppliedImprovement, isTrue);
+      expect(viewModel.noticeMessage, contains('同じ承認IDで再開'));
+    },
+  );
+
+  test('an active envelope is reused for the next improve review', () async {
+    final gateway = _FakeVideoStudioGateway(
+      balance: _balance(400),
+      initialAuthorizations: [_authorization(reservedCredits: 0)],
+      initialJobs: [
+        _job(
+          status: 'succeeded',
+          artifact: _artifact(latestReview: _review()),
+        ),
+      ],
+    );
+    final viewModel = VideoStudioViewModel(gateway: gateway);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    viewModel
+      ..setRightsConfirmed(true)
+      ..setAdultConfirmed(true);
+
+    expect(viewModel.matchingActiveAuthorization?.id, _authorizationId);
+    expect(await viewModel.runAuthorizedImprovement(), isTrue);
+    expect(gateway.ranAuthorizationId, _authorizationId);
+    expect(gateway.authorizedSourceReviewId, _reviewId);
+    expect(viewModel.balance.availableCredits, 100);
+  });
 }
 
 class _FakeVideoStudioGateway implements VideoStudioGateway {
@@ -187,6 +303,7 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
     this.refreshedJob,
     this.loadError,
     this.checkoutError,
+    this.initialAuthorizations = const [],
   });
 
   VideoCreditBalance balance;
@@ -194,10 +311,16 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
   final VideoGenerationJob? refreshedJob;
   final Exception? loadError;
   final Exception? checkoutError;
+  final List<VideoImprovementAuthorization> initialAuthorizations;
   String? createdIdempotencyKey;
   String? createdParentArtifactId;
   String? createdAppliedReviewId;
   int refreshCount = 0;
+  String? authorizedSourceArtifactId;
+  String? authorizedSourceReviewId;
+  int? authorizedValidityHours;
+  int? authorizedRegenerations;
+  String? ranAuthorizationId;
 
   @override
   Future<VideoStudioCatalog> loadCatalog() async {
@@ -213,6 +336,11 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
   @override
   Future<List<VideoGenerationJob>> listJobs() async {
     return initialJobs;
+  }
+
+  @override
+  Future<List<VideoImprovementAuthorization>> loadAuthorizations() async {
+    return initialAuthorizations;
   }
 
   @override
@@ -253,6 +381,72 @@ class _FakeVideoStudioGateway implements VideoStudioGateway {
       review: savedReview,
     );
   }
+
+  @override
+  Future<VideoAuthorizationCreateResult> authorizeImprovement({
+    required String idempotencyKey,
+    required String sourceArtifactId,
+    required String sourceReviewId,
+    required int validityHours,
+    required int totalRegenerations,
+  }) async {
+    createdIdempotencyKey = idempotencyKey;
+    authorizedSourceArtifactId = sourceArtifactId;
+    authorizedSourceReviewId = sourceReviewId;
+    authorizedValidityHours = validityHours;
+    authorizedRegenerations = totalRegenerations;
+    if (balance.availableCredits < 300) {
+      return VideoAuthorizationCreateResult(
+        authorization: _authorization(
+          status: 'pending_funding',
+          reservedCredits: 0,
+          remainingCredits: 300 * totalRegenerations,
+          remainingRegenerations: totalRegenerations,
+          pendingReasons: const ['insufficient_credits'],
+        ),
+        job: null,
+        balance: balance,
+      );
+    }
+    balance = _balance(balance.availableCredits - 300);
+    return VideoAuthorizationCreateResult(
+      authorization: _authorization(
+        remainingCredits: 300 * totalRegenerations - 300,
+        remainingRegenerations: totalRegenerations - 1,
+      ),
+      job: _job(status: 'queued'),
+      balance: balance,
+    );
+  }
+
+  @override
+  Future<VideoAuthorizationCreateResult> runAuthorizedImprovement({
+    required String idempotencyKey,
+    required String authorizationId,
+    required String sourceArtifactId,
+    required String sourceReviewId,
+  }) async {
+    createdIdempotencyKey = idempotencyKey;
+    ranAuthorizationId = authorizationId;
+    authorizedSourceArtifactId = sourceArtifactId;
+    authorizedSourceReviewId = sourceReviewId;
+    balance = _balance(balance.availableCredits - 300);
+    return VideoAuthorizationCreateResult(
+      authorization: _authorization(
+        reservedCredits: 300,
+        remainingCredits: 0,
+        remainingRegenerations: 0,
+      ),
+      job: _job(status: 'queued'),
+      balance: balance,
+    );
+  }
+
+  @override
+  Future<VideoImprovementAuthorization> revokeAuthorization(
+    String authorizationId,
+  ) async =>
+      _authorization(status: 'revoked');
 
   @override
   Future<Uri> createCreditCheckout({
@@ -321,6 +515,7 @@ VideoGenerationJob _job({
 
 const _artifactId = '22222222-2222-4222-8222-222222222222';
 const _reviewId = '33333333-3333-4333-8333-333333333333';
+const _authorizationId = '44444444-4444-4444-8444-444444444444';
 
 VideoArtifact _artifact({VideoArtifactReview? latestReview}) => VideoArtifact(
       id: _artifactId,
@@ -353,4 +548,28 @@ VideoArtifactReview _review({
       suggestedPrompt: suggestedPrompt,
       notes: '',
       createdAt: DateTime.utc(2026, 8, 20, 1),
+    );
+
+VideoImprovementAuthorization _authorization({
+  String status = 'active',
+  int reservedCredits = 300,
+  int remainingCredits = 300,
+  int remainingRegenerations = 1,
+  List<String> pendingReasons = const [],
+}) =>
+    VideoImprovementAuthorization(
+      id: _authorizationId,
+      status: status,
+      validUntil: DateTime.now().add(const Duration(days: 7)),
+      totalCreditLimit: 600,
+      reservedCredits: reservedCredits,
+      consumedCredits: 0,
+      remainingCredits: remainingCredits,
+      totalRegenerationLimit: 2,
+      consumedRegenerations: 1,
+      remainingRegenerations: remainingRegenerations,
+      rootArtifactId: _artifactId,
+      initialReviewId: _reviewId,
+      allowCreditPurchase: false,
+      pendingReasons: pendingReasons,
     );

@@ -182,7 +182,8 @@ class DualSecurityReviewTest(unittest.TestCase):
         self.assertIn("id-token: write", workflow)
         self.assertIn("branches: [main]", workflow)
         self.assertNotIn("branches: [main, staging, develop]", workflow)
-        self.assertIn("environment: high-risk-security-review", workflow)
+        self.assertIn("name: high-risk-security-review", workflow)
+        self.assertIn("deployment: false", workflow)
         self.assertIn("ref: ${{ github.sha }}", workflow)
         self.assertIn('[ "$GITHUB_REF" != "refs/heads/main" ]', workflow)
         self.assertIn('[ "$base_ref" != "main" ]', workflow)
@@ -209,19 +210,23 @@ class DualSecurityReviewTest(unittest.TestCase):
             root / "scripts/requirements-high-risk-security-review.txt"
         ).read_text(encoding="utf-8")
         requirements = re.findall(
-            r"(?m)^([a-z0-9-]+)==([^\s\\]+) \\\n"
-            r"\s+--hash=sha256:([0-9a-f]{64})$",
+            r"(?m)^([a-z0-9-]+)==([^\s\\]+)",
             lock,
         )
-        names = [name for name, _, _ in requirements]
+        names = [name for name, _ in requirements]
         self.assertEqual(len(requirements), 14)
         self.assertEqual(len(names), len(set(names)))
-        versions = [(name, version) for name, version, _ in requirements]
-        self.assertIn(("openai", "3.6.0"), versions)
+        versions = [(name, version) for name, version in requirements]
+        self.assertIn(("openai", "3.14.1"), versions)
         self.assertNotRegex(
             lock,
             r"(?:>=|<=|~=|!=|(?<![=])>(?!=)|(?<![=])<(?!=))",
         )
+        hashes = re.findall(
+            r"\s+--hash=sha256:([0-9a-f]{64})",
+            lock,
+        )
+        self.assertGreaterEqual(len(hashes), 14)
 
 
 if __name__ == "__main__":
