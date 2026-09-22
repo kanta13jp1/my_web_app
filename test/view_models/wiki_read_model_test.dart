@@ -46,7 +46,8 @@ void main() {
     final a = Completer<dynamic>();
     final b = Completer<dynamic>();
     final model = WikiReadModel(
-        WikiRepository((body) => body['id'] == 'a' ? a.future : b.future),);
+      WikiRepository((body) => body['id'] == 'a' ? a.future : b.future),
+    );
     addTearDown(model.dispose);
     final first = model.select('a');
     final second = model.select('b');

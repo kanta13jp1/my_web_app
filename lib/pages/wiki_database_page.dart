@@ -285,8 +285,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             return Column(
               children: [
                 if (_readModel.error != null)
-                  Text(_readModel.error!,
-                      style: const TextStyle(color: Colors.red),),
+                  Text(
+                    _readModel.error!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
                 if (_readModel.nextOffset != null || _readModel.error != null)
                   TextButton(
                     onPressed: _readModel.loading
