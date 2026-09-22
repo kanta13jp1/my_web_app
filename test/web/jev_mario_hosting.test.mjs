@@ -13,7 +13,7 @@ test('direct app navigation cannot be shadowed by a static directory index', () 
   const hosting = JSON.parse(read('firebase.json')).hosting;
   const configs = Array.isArray(hosting) ? hosting : [hosting];
   assert.ok(configs.some(c => c.rewrites?.some(r => r.source === '**' && r.destination === '/index.html')));
-  assert.ok(read('lib/widgets/jev_mario_view_web.dart').includes("'/labs/jev-mario/index.html?v=revalidate-1'"));
+  assert.ok(read('lib/widgets/jev_mario_view_web.dart').includes("'/labs/jev-mario/index.html?v=student-1'"));
 });
 
 test('isolated game HTML resolves every local script and stylesheet to a real asset', () => {
@@ -21,8 +21,8 @@ test('isolated game HTML resolves every local script and stylesheet to a real as
   const html = readFileSync(doc, 'utf8');
   const refs = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
     .map(m => m[1]).filter(ref => !/^https?:/.test(ref));
-  assert.ok(refs.includes('lab.mjs?v=revalidate-1'));
-  assert.ok(refs.includes('style.css?v=revalidate-1'));
+  assert.ok(refs.includes('lab.mjs?v=student-1'));
+  assert.ok(refs.includes('style.css?v=student-1'));
   for (const ref of refs) {
     const asset = new URL(ref, doc);
     assert.ok(existsSync(asset), `missing ${ref}`);

@@ -1,7 +1,7 @@
-import {clone,advance,plan} from './search-assist.mjs';
-import {features,ACTIONS} from './student-features.mjs';
-import {predict} from './student-predict.mjs';
-import model from './student-model.mjs';
+import {clone,advance,plan} from './search-assist.mjs?v=student-1';
+import {features,ACTIONS} from './student-features.mjs?v=student-1';
+import {predict} from './student-predict.mjs?v=student-1';
+import model from './student-model.mjs?v=student-1';
 self.postMessage({type:'ready'});
 self.onmessage=({data})=>{
  try{

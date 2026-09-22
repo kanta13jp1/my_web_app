@@ -1,5 +1,5 @@
 export class StudentSession{
- constructor(factory=()=>new Worker(new URL('./student-worker.mjs',import.meta.url),{type:'module'}),clock=()=>performance.now()){this.factory=factory;this.clock=clock;this.token=0;this.active=false;this.action='noop';this.stats={};}
+ constructor(factory=()=>new Worker(new URL('./student-worker.mjs?v=student-1',import.meta.url),{type:'module'}),clock=()=>performance.now()){this.factory=factory;this.clock=clock;this.token=0;this.active=false;this.action='noop';this.stats={};}
  start({ready,update,error}){
   this.stop();const token=++this.token;this.active=true;this.ready=false;this.pending=false;this.next=0;this.age=100;this.started=this.clock();this.action='noop';
   this.stats={model:'jev-student-166-v1',teacher:'jev-1.13.0',control:'LightGBM + exact-simulator search + latency prediction',decisions:0,accepted:0,overrides:0,jump_releases:0,samples:[]};
