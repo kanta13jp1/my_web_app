@@ -1,0 +1,847 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "mode": "saved_browser_webgpu_measurement",
+  "recorded_at": "2026-09-22T08:04:23Z",
+  "run_id": "35694974350",
+  "app_revision": "304f92d531587c381d8e9ebe95b8a18ecb294e6c",
+  "inputs_sha256": "d83cb6636c27ee7e701a920b0155e8b1d9b7453f854b2d51d93b2ad0da264104",
+  "engine": {
+    "space": "kishida/jwenv-demo",
+    "revision": "8263b814fde5ca11e47718a7ac82945639c02d8d",
+    "vendorDir": "vendor/jwenv-8263b81",
+    "vendored_files": 18
+  },
+  "model": {
+    "repo": "kishida/jwenv-0.6b-poc-gguf",
+    "revision": "fd39b70075029880f46507aa39f7733bb7f1d31d",
+    "file": "jwenv-0.6b-poc-q8_0.gguf",
+    "bytes": 639446848,
+    "sha256": "293ef32a06953c06d1ba9a9bbd23cf734ece3fb94ad1a360faa9ca3c86294a95",
+    "page": "https://huggingface.co/kishida/jwenv-0.6b-poc-gguf/tree/fd39b70075029880f46507aa39f7733bb7f1d31d",
+    "verified_sha256": true
+  },
+  "environment": {
+    "browser": "Chromium 140.0.7339.16",
+    "flags": [
+      "--enable-unsafe-webgpu",
+      "--enable-features=Vulkan",
+      "--use-vulkan=swiftshader",
+      "--use-webgpu-adapter=swiftshader",
+      "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader",
+      "--ignore-gpu-blocklist",
+      "--disable-vulkan-surface"
+    ],
+    "adapter": "google / swiftshader",
+    "adapter_info": {
+      "vendor": "google",
+      "architecture": "swiftshader",
+      "device": "",
+      "description": ""
+    },
+    "runner": {
+      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "python": "3.12.3",
+      "cpu_count": 4,
+      "cpu_model": "AMD EPYC 9V45 96-Core Processor",
+      "memory_total": "16373452 kB"
+    },
+    "headless": true
+  },
+  "timing_scope": "performance.now() in the page. load_ms covers GGUF parse, CPU-side weight preparation and GPU upload (the file is read from local disk). Request ms covers JevClassifier.systemOne: validation, tokenization, forward pass and readback. Software WebGPU (SwiftShader) on a CPU runner; not a GPU measurement.",
+  "network": {
+    "requests": 26,
+    "origins": [
+      "http://127.0.0.1:42429"
+    ],
+    "external_requests": []
+  },
+  "load_ms": 1955.7000000000116,
+  "model_snapshot": {
+    "metadata": {
+      "general.architecture": "qwen3",
+      "general.type": "model",
+      "general.sampling.top_k": 20,
+      "general.sampling.top_p": 0.949999988079071,
+      "general.sampling.temp": 0.6000000238418579,
+      "general.name": "Jwenv 0.6b Poc Merged",
+      "general.finetune": "poc-merged",
+      "general.basename": "jwenv",
+      "general.size_label": "0.6B",
+      "qwen3.block_count": 28,
+      "qwen3.context_length": 40960,
+      "qwen3.embedding_length": 1024,
+      "qwen3.feed_forward_length": 3072,
+      "qwen3.attention.head_count": 16,
+      "qwen3.attention.head_count_kv": 8,
+      "qwen3.rope.freq_base": 1000000,
+      "qwen3.attention.layer_norm_rms_epsilon": 9.999999974752427e-07,
+      "qwen3.attention.key_length": 128,
+      "qwen3.attention.value_length": 128,
+      "general.quantization_version": 2,
+      "general.file_type": 7,
+      "jev.temperature": 1.5347009897232056
+    },
+    "tensor_count": 310,
+    "parameter_count": 596049920,
+    "token_embd": {
+      "dims": [
+        1024,
+        151936
+      ],
+      "type": "Q8_0",
+      "bytes": 165306368
+    },
+    "file": {
+      "name": "jwenv.gguf",
+      "bytes": 639446848
+    },
+    "adapter": "google / swiftshader",
+    "load_ms": 1955.7000000000116,
+    "gpu_bytes": 1251954944,
+    "config": {
+      "nLayer": 28,
+      "dim": 1024,
+      "ffnDim": 3072,
+      "nHead": 16,
+      "nKV": 8,
+      "headDim": 128,
+      "ropeBase": 1000000,
+      "eps": 9.999999974752427e-07,
+      "vocab": 151936,
+      "contextLength": 40960
+    },
+    "temperature": 1.5347009897232056,
+    "head": {
+      "tensor": "token_embd.weight",
+      "dims": [
+        1024,
+        151936
+      ],
+      "type": "Q8_0",
+      "bytes": 165306368,
+      "tied_to_token_embd": true
+    },
+    "token_embd_bytes_on_cpu": 165306368,
+    "candidate_token_ids": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H"
+    ]
+  },
+  "article_example": {
+    "request": {
+      "model": "jev-latest",
+      "state": "三井住友カード株式会社から5,000円の利用通知を受信",
+      "questions": {
+        "category": {
+          "type": "choice",
+          "instructions": "支出の勘定科目を分類してください",
+          "criteria": {
+            "utilities": "水道光熱費",
+            "food": "食費・飲食代",
+            "transport": "交通費",
+            "credit_repayment": "クレジットカード利用代金"
+          }
+        }
+      }
+    },
+    "response": {
+      "model": "jwenv",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "credit_repayment",
+          "probabilities": {
+            "utilities": 0.0128,
+            "food": 0.0257,
+            "transport": 0.0054,
+            "credit_repayment": 0.9561
+          },
+          "confidence": 0.8405
+        }
+      },
+      "usage": {
+        "input_tokens": 122,
+        "output_tokens": 0
+      }
+    },
+    "ms": 47434.5,
+    "confidence_recomputed_from_rounded": 0.8405835237790094,
+    "max_probability": 0.9561
+  },
+  "limit_check": {
+    "options": 12,
+    "rejected": true,
+    "code": "too_many_options",
+    "status": 422,
+    "field": "questions.category.criteria",
+    "message": "this model supports at most 8 options per choice"
+  },
+  "slice_checks": [
+    {
+      "question": "category",
+      "prompt_tokens": 122,
+      "vocab_rows": 151936,
+      "dim": 1024,
+      "head_tensor": "token_embd.weight",
+      "head_type": "Q8_0",
+      "tied_to_token_embd": true,
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "candidate_token_ids": [
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "engine_logits": [
+        14.686579704284668,
+        15.757173538208008,
+        13.359542846679688,
+        21.305130004882812,
+        13.947802543640137,
+        12.4049072265625,
+        11.662782669067383,
+        11.554909706115723
+      ],
+      "cpu_logits_at_candidates": [
+        14.686579704284668,
+        15.757173538208008,
+        13.359542846679688,
+        21.305130004882812,
+        13.947803497314453,
+        12.404908180236816,
+        11.662782669067383,
+        11.554909706115723
+      ],
+      "max_abs_diff": 9.5367431640625e-07,
+      "best_label": "D",
+      "best_label_rank_in_full_vocab": 1,
+      "full_vocab_top10": [
+        {
+          "id": 35,
+          "token": "D",
+          "logit": 21.305130004882812,
+          "is_candidate": true
+        },
+        {
+          "id": 33,
+          "token": "B",
+          "logit": 15.757173538208008,
+          "is_candidate": true
+        },
+        {
+          "id": 32,
+          "token": "A",
+          "logit": 14.686579704284668,
+          "is_candidate": true
+        },
+        {
+          "id": 36,
+          "token": "E",
+          "logit": 13.947803497314453,
+          "is_candidate": true
+        },
+        {
+          "id": 34,
+          "token": "C",
+          "logit": 13.359542846679688,
+          "is_candidate": true
+        },
+        {
+          "id": 44,
+          "token": "M",
+          "logit": 12.79199504852295,
+          "is_candidate": false
+        },
+        {
+          "id": 47,
+          "token": "P",
+          "logit": 12.749381065368652,
+          "is_candidate": false
+        },
+        {
+          "id": 67,
+          "token": "d",
+          "logit": 12.667949676513672,
+          "is_candidate": false
+        },
+        {
+          "id": 37,
+          "token": "F",
+          "logit": 12.404908180236816,
+          "is_candidate": true
+        },
+        {
+          "id": 5341,
+          "token": "Option",
+          "logit": 11.91991138458252,
+          "is_candidate": false
+        }
+      ],
+      "forward_ms": 43410.20000000001,
+      "cpu_full_vocab_ms": 1661.7999999999884
+    },
+    {
+      "question": "food",
+      "prompt_tokens": 119,
+      "vocab_rows": 151936,
+      "dim": 1024,
+      "head_tensor": "token_embd.weight",
+      "head_type": "Q8_0",
+      "tied_to_token_embd": true,
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "candidate_token_ids": [
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "engine_logits": [
+        21.173641204833984,
+        17.97504234313965,
+        16.74654769897461,
+        16.436309814453125,
+        14.628801345825195,
+        12.989829063415527,
+        12.65397834777832,
+        12.647443771362305
+      ],
+      "cpu_logits_at_candidates": [
+        21.173641204833984,
+        17.97504234313965,
+        16.74654769897461,
+        16.436309814453125,
+        14.628801345825195,
+        12.989829063415527,
+        12.65397834777832,
+        12.647443771362305
+      ],
+      "max_abs_diff": 0,
+      "best_label": "A",
+      "best_label_rank_in_full_vocab": 1,
+      "full_vocab_top10": [
+        {
+          "id": 32,
+          "token": "A",
+          "logit": 21.173641204833984,
+          "is_candidate": true
+        },
+        {
+          "id": 33,
+          "token": "B",
+          "logit": 17.97504234313965,
+          "is_candidate": true
+        },
+        {
+          "id": 34,
+          "token": "C",
+          "logit": 16.74654769897461,
+          "is_candidate": true
+        },
+        {
+          "id": 35,
+          "token": "D",
+          "logit": 16.436309814453125,
+          "is_candidate": true
+        },
+        {
+          "id": 9454,
+          "token": "Yes",
+          "logit": 14.831697463989258,
+          "is_candidate": false
+        },
+        {
+          "id": 36,
+          "token": "E",
+          "logit": 14.628801345825195,
+          "is_candidate": true
+        },
+        {
+          "id": 64,
+          "token": "a",
+          "logit": 14.238698959350586,
+          "is_candidate": false
+        },
+        {
+          "id": 56,
+          "token": "Y",
+          "logit": 13.185480117797852,
+          "is_candidate": false
+        },
+        {
+          "id": 9693,
+          "token": "yes",
+          "logit": 13.170781135559082,
+          "is_candidate": false
+        },
+        {
+          "id": 37,
+          "token": "F",
+          "logit": 12.989829063415527,
+          "is_candidate": true
+        }
+      ],
+      "forward_ms": 41889.09999999998,
+      "cpu_full_vocab_ms": 1652.4000000000233
+    }
+  ],
+  "expense": {
+    "question_type": "noul",
+    "questions_per_request": 12,
+    "threshold": 0.5,
+    "bert_run_id": "35682805714",
+    "runs": [
+      {
+        "pass": 1,
+        "rows": [
+          {
+            "id": "groceries",
+            "text": "スーパーで自炊用の野菜とお米を購入",
+            "expected": "food",
+            "review_required": false,
+            "rule": "food",
+            "bert": "food",
+            "jwenv": "food",
+            "p_yes": 0.8894,
+            "review": false,
+            "top3": [
+              {
+                "id": "food",
+                "p": 0.8894
+              },
+              {
+                "id": "daily_necessities",
+                "p": 0.7495
+              },
+              {
+                "id": "dining_out",
+                "p": 0.6406
+              }
+            ],
+            "ms": 195489.1,
+            "input_tokens": 1389
+          },
+          {
+            "id": "cafe",
+            "text": "カフェでコーヒーとケーキ",
+            "expected": "cafe_snack",
+            "review_required": false,
+            "rule": "cafe_snack",
+            "bert": "cafe_snack",
+            "jwenv": "cafe_snack",
+            "p_yes": 0.8297,
+            "review": false,
+            "top3": [
+              {
+                "id": "cafe_snack",
+                "p": 0.8297
+              },
+              {
+                "id": "dining_out",
+                "p": 0.8028
+              },
+              {
+                "id": "other",
+                "p": 0.6207
+              }
+            ],
+            "ms": 420192.20000000007,
+            "input_tokens": 1281
+          },
+          {
+            "id": "convenience",
+            "text": "ローソンで買い物",
+            "expected": "convenience",
+            "review_required": false,
+            "rule": "convenience",
+            "bert": "convenience",
+            "jwenv": "food",
+            "p_yes": 0.881,
+            "review": false,
+            "top3": [
+              {
+                "id": "food",
+                "p": 0.881
+              },
+              {
+                "id": "dining_out",
+                "p": 0.8729
+              },
+              {
+                "id": "convenience",
+                "p": 0.8343
+              }
+            ],
+            "ms": 401627.9999999999,
+            "input_tokens": 1293
+          },
+          {
+            "id": "meal",
+            "text": "レストランで夕食",
+            "expected": "dining_out",
+            "review_required": false,
+            "rule": "other",
+            "bert": "dining_out",
+            "jwenv": "dining_out",
+            "p_yes": 0.9088,
+            "review": false,
+            "top3": [
+              {
+                "id": "dining_out",
+                "p": 0.9088
+              },
+              {
+                "id": "food",
+                "p": 0.8804
+              },
+              {
+                "id": "cafe_snack",
+                "p": 0.8096
+              }
+            ],
+            "ms": 384833.7000000002,
+            "input_tokens": 1269
+          },
+          {
+            "id": "cleaning",
+            "text": "洗剤とティッシュを購入",
+            "expected": "daily_necessities",
+            "review_required": false,
+            "rule": "daily_necessities",
+            "bert": "daily_necessities",
+            "jwenv": "daily_necessities",
+            "p_yes": 0.9082,
+            "review": false,
+            "top3": [
+              {
+                "id": "daily_necessities",
+                "p": 0.9082
+              },
+              {
+                "id": "other",
+                "p": 0.702
+              },
+              {
+                "id": "utilities",
+                "p": 0.6661
+              }
+            ],
+            "ms": 415184.99999999977,
+            "input_tokens": 1329
+          },
+          {
+            "id": "train",
+            "text": "電車の切符",
+            "expected": "transport",
+            "review_required": false,
+            "rule": "transport",
+            "bert": "transport",
+            "jwenv": "transport",
+            "p_yes": 0.8913,
+            "review": false,
+            "top3": [
+              {
+                "id": "transport",
+                "p": 0.8913
+              },
+              {
+                "id": "utilities",
+                "p": 0.8774
+              },
+              {
+                "id": "dining_out",
+                "p": 0.7745
+              }
+            ],
+            "ms": 417634.6000000001,
+            "input_tokens": 1281
+          },
+          {
+            "id": "power",
+            "text": "今月の電気料金",
+            "expected": "utilities",
+            "review_required": false,
+            "rule": "utilities",
+            "bert": "utilities",
+            "jwenv": "utilities",
+            "p_yes": 0.9142,
+            "review": false,
+            "top3": [
+              {
+                "id": "utilities",
+                "p": 0.9142
+              },
+              {
+                "id": "telecom",
+                "p": 0.8046
+              },
+              {
+                "id": "housing",
+                "p": 0.786
+              }
+            ],
+            "ms": 411070.8000000003,
+            "input_tokens": 1305
+          },
+          {
+            "id": "phone",
+            "text": "スマートフォンの月額利用料金",
+            "expected": "telecom",
+            "review_required": false,
+            "rule": "other",
+            "bert": "telecom",
+            "jwenv": "telecom",
+            "p_yes": 0.9081,
+            "review": false,
+            "top3": [
+              {
+                "id": "telecom",
+                "p": 0.9081
+              },
+              {
+                "id": "utilities",
+                "p": 0.7685
+              },
+              {
+                "id": "food",
+                "p": 0.706
+              }
+            ],
+            "ms": 425190.8999999999,
+            "input_tokens": 1341
+          },
+          {
+            "id": "movie",
+            "text": "映画館の鑑賞チケット",
+            "expected": "subscription_entertainment",
+            "review_required": false,
+            "rule": "subscription_entertainment",
+            "bert": "dining_out",
+            "jwenv": "subscription_entertainment",
+            "p_yes": 0.8621,
+            "review": false,
+            "top3": [
+              {
+                "id": "subscription_entertainment",
+                "p": 0.8621
+              },
+              {
+                "id": "dining_out",
+                "p": 0.785
+              },
+              {
+                "id": "utilities",
+                "p": 0.7332
+              }
+            ],
+            "ms": 405738.3999999999,
+            "input_tokens": 1329
+          },
+          {
+            "id": "dentist",
+            "text": "歯科の診察代",
+            "expected": "medical",
+            "review_required": false,
+            "rule": "medical",
+            "bert": "medical",
+            "jwenv": "medical",
+            "p_yes": 0.8784,
+            "review": false,
+            "top3": [
+              {
+                "id": "medical",
+                "p": 0.8784
+              },
+              {
+                "id": "utilities",
+                "p": 0.7851
+              },
+              {
+                "id": "daily_necessities",
+                "p": 0.7058
+              }
+            ],
+            "ms": 399976.7000000002,
+            "input_tokens": 1305
+          },
+          {
+            "id": "rent",
+            "text": "来月の家賃",
+            "expected": "housing",
+            "review_required": false,
+            "rule": "housing",
+            "bert": "housing",
+            "jwenv": "housing",
+            "p_yes": 0.8927,
+            "review": false,
+            "top3": [
+              {
+                "id": "housing",
+                "p": 0.8927
+              },
+              {
+                "id": "utilities",
+                "p": 0.773
+              },
+              {
+                "id": "food",
+                "p": 0.7333
+              }
+            ],
+            "ms": 402323.50000000047,
+            "input_tokens": 1293
+          },
+          {
+            "id": "unknown",
+            "text": "支払い",
+            "expected": null,
+            "review_required": true,
+            "rule": "other",
+            "bert": "housing",
+            "jwenv": "utilities",
+            "p_yes": 0.836,
+            "review": false,
+            "top3": [
+              {
+                "id": "utilities",
+                "p": 0.836
+              },
+              {
+                "id": "telecom",
+                "p": 0.8277
+              },
+              {
+                "id": "housing",
+                "p": 0.8182
+              }
+            ],
+            "ms": 400117.0999999996,
+            "input_tokens": 1245
+          },
+          {
+            "id": "mixed",
+            "text": "コンビニでお弁当と洗剤を購入",
+            "expected": null,
+            "review_required": true,
+            "rule": "daily_necessities",
+            "bert": "daily_necessities",
+            "jwenv": "daily_necessities",
+            "p_yes": 0.8849,
+            "review": false,
+            "top3": [
+              {
+                "id": "daily_necessities",
+                "p": 0.8849
+              },
+              {
+                "id": "food",
+                "p": 0.8264
+              },
+              {
+                "id": "convenience",
+                "p": 0.8123
+              }
+            ],
+            "ms": 430843.5,
+            "input_tokens": 1377
+          },
+          {
+            "id": "ambiguous",
+            "text": "ドラッグストアで処方薬と食材を購入",
+            "expected": null,
+            "review_required": true,
+            "rule": "food",
+            "bert": "daily_necessities",
+            "jwenv": "medical",
+            "p_yes": 0.8661,
+            "review": false,
+            "top3": [
+              {
+                "id": "medical",
+                "p": 0.8661
+              },
+              {
+                "id": "food",
+                "p": 0.8551
+              },
+              {
+                "id": "daily_necessities",
+                "p": 0.7683
+              }
+            ],
+            "ms": 429518.60000000056,
+            "input_tokens": 1401
+          }
+        ],
+        "median_ms": 408404.6000000001,
+        "total_ms": 5539742.100000001
+      }
+    ],
+    "agreement": {
+      "jwenv": {
+        "referenced": 11,
+        "matches": 10
+      },
+      "rule": {
+        "referenced": 11,
+        "matches": 9
+      },
+      "bert": {
+        "referenced": 11,
+        "matches": 10
+      }
+    },
+    "same_choice_every_pass": true,
+    "passes_requested": 2,
+    "passes_run": 1
+  },
+  "unmeasured": [
+    "Real GPU (discrete or integrated) timing: CI runners have no GPU.",
+    "Offline start: model and page were served from local disk/loopback, not tested offline.",
+    "Model download time from Hugging Face in a browser: the file was selected from local disk.",
+    "Accuracy beyond these 14 synthetic memos."
+  ]
+}

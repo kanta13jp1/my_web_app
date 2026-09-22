@@ -1,7 +1,7 @@
 # Jwenv WebGPU lab
 
-`web/labs/jwenv/` runs kishida's Jwenv (a Jev-compatible classifier on Qwen3-0.6B) inside
-the browser with WebGPU. It is a read-only experiment next to the BERT comparison in
+`web/labs/jwenv/` runs kishida's Jwenv (Qwen3-0.6B fine-tuned to behave like Jev, per the
+author's post) inside the browser with WebGPU. It is a read-only experiment next to the BERT comparison in
 `web/labs/expense-comparison/` and uses the same 14 synthetic memos and 12 categories.
 
 ## What the page does
@@ -51,3 +51,13 @@ No memo, result or model byte leaves the device. No category is applied to real 
 - Offline start, and model download time from Hugging Face in a browser.
 - Accuracy beyond the 14 synthetic memos; P(yes) values are not calibrated probabilities
   of the category being correct and do not sum to 1 across categories.
+
+## Saved measurement (run 35694974350)
+
+`web/labs/jwenv/results.json` and `docs/validation/jwenv-lab-20260922/` hold the CI record:
+Chromium 140 with the SwiftShader adapter on a 4-vCPU AMD EPYC runner. Model load 1,956 ms;
+the article example took 47,435 ms (122 tokens); the 8 candidate logits matched a CPU
+recomputation over all 151,936 rows (max abs diff 9.5e-7); Jwenv matched 10 of the 11
+referenced memos (rule 9, BERT 10) with a median of 408,405 ms per 12-question request.
+The example took over 30 s, so the harness ran the memos once instead of twice. All 26 page
+requests went to the loopback server. These are CPU-emulation timings, not GPU timings.
