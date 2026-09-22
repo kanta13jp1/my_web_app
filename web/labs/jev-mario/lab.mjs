@@ -1,4 +1,4 @@
-import { ReactionAssist, hazards } from './reaction.mjs?v=revalidate-1';
+import { ReactionAssist, hazards, prediction } from './reaction.mjs?v=revalidate-1';
 import { GameRecording } from './recording.mjs?v=revalidate-1';
 import { GameAudio } from './audio.mjs?v=revalidate-1';
 import { World11, drawWorld, playerPose } from './world11.mjs?v=revalidate-1';
@@ -77,6 +77,7 @@ function controls(action) {
 function stop(reason = '停止しました') { audio.stop(); loop.stop(reason); gameRunning = false; controls('noop'); status(reason); }
 function state() {
   const value = isRecreation() ? world.telemetry(lastResponse) : isRom() ? readState(nes.cpu.mem, lastResponse) : fixture();
+  if(isRecreation()&&metadata.input_profile==='prediction_v1')value.prediction=prediction(world,lastResponse);
   $('state').textContent = JSON.stringify(value, null, 2); return value;
 }
 function metric(id, values) {
@@ -116,6 +117,7 @@ const loop = new DecisionLoop({ request, state, observe:()=>isRecreation()?{...w
 });
 parent.postMessage({ type: 'jev-mario-hello' }, origin);
 setTimeout(() => { if (!connected) status('my_web_appの「Jev Mario Lab」から開いてください。このページ単独ではAPIを呼び出せません。'); }, 3000);
+$('input-profile').onchange=()=>stop('入力条件を変更しました。最初からに戻して比較してください');
 $('mode').addEventListener('change', () => { stop('モードを変更しました'); $('rom-controls').hidden = !isRom(); $('recreation-controls').hidden = !isRecreation(); $('touch-controls').hidden = !isRecreation();
   if (isRecreation()) {drawWorld(context,world);showPose();} else context.clearRect(0,0,256,240);
   $('mode-note').textContent = isRecreation() ? '初代1-1を参考に一から実装した再現ゲームです。原作ROMの実行や完全一致ではありません。手動プレイはAPI不要です。' : isRom() ? '手元のROMで手動プレイを開始し、1-1の操作可能な場面から測定します。' : '合成したゲーム状態を繰り返し送ります。実ゲームのプレイ結果ではありません。';
@@ -148,9 +150,9 @@ $('start').onclick = () => {
   if (loop.active || loop.pending || pendingBridge) return status('現在の測定を停止し、応答が終了するまでお待ちください');
   if (isRecreation() && world.phase !== 'playing') return status('1-1を最初からやり直してください');
   if (isRom() && (!nes || nes.cpu.mem[0x770] !== 1 || nes.cpu.mem[0x75f] !== 0 || nes.cpu.mem[0x75c] !== 0 || nes.cpu.mem[0xe] !== 8)) return status('対応ROMを読み込み、手動で1-1の操作可能な場面まで進めてください');
-  samples = []; lastResponse = 0; interventions=[];lastIntervention='';assist.reset();update(); metadata = { lab_revision: 'reaction-1', controller:isRecreation()?$('controller').value:'jev_only', started_at: new Date().toISOString(), mode: $('mode').value,
+  samples = []; lastResponse = 0; interventions=[];lastIntervention='';assist.reset();update(); metadata = { lab_revision: 'feedback-1', controller:isRecreation()?$('controller').value:'jev_only', input_profile:isRecreation()?$('input-profile').value:'baseline', started_at: new Date().toISOString(), mode: $('mode').value,
     cadence_ms: Number($('cadence').value), max_calls: Number($('count').value), max_duration_ms: 60000, max_age_ms: Number($('max-age').value),
-    emulator: isRecreation() ? 'independent-world11-v3' : 'jsnes@2.1.0', timing: 'browser RTT includes proxy/auth/quota; upstream HTTP is not pure inference', user_agent: navigator.userAgent };
+    emulator: isRecreation() ? 'independent-world11-v5' : 'jsnes@2.1.0', timing: 'browser RTT includes proxy/auth/quota; upstream HTTP is not pure inference', user_agent: navigator.userAgent };
   gameRunning = isGame(); status(isGame() ? 'Jev操作を計測中。通信待ち中もゲームは進みます。' : '固定状態でAPI往復を測定中（実プレイではありません）');
   if (isRecreation()) void unlockAudio();
   loop.start({ count: metadata.max_calls, cadence: metadata.cadence_ms, maxAge: metadata.max_age_ms });
@@ -202,7 +204,7 @@ function frame(now) {
       if(gameRunning && isRecreation()) audio.tick(world.room,{star:world.star>0,hurry:world.time<=100});
       const s = isRecreation() ? world.telemetry() : readState(nes.cpu.mem); if(isRecreation()) {drawWorld(context,world);showPose();} $('progress').textContent = `World ${s.world}-${s.stage} · x=${Math.round(s.player.x)} · ${frameCount} frames${isRecreation() ? ' · 再現ゲーム · '+world.phase : ''}`;
     } catch { stop('エミュレーターを継続できません。対応ROMを確認してください。'); }
-  } else {frameBudget=0;if(!document.hidden&&isRecreation()&&world.phase!=='playing'&&world.presentation<180){presentationBudget+=delta;while(presentationBudget>=1000/60){world.presentationStep();presentationBudget-=1000/60;}drawWorld(context,world);showPose();}}
+  } else {frameBudget=0;if(!document.hidden&&isRecreation()&&world.phase!=='playing'&&world.presentation<180){presentationBudget+=delta;while(presentationBudget>=1000/60){world.presentationStep();for(const sound of world.drainSounds())audio.effect(sound);presentationBudget-=1000/60;}drawWorld(context,world);showPose();}}
   if(isRecreation()&&world.phase!=='playing'&&world.presentation>=180)recording.stop('ゲーム終了で録画を停止しました');
   requestAnimationFrame(frame);
 }

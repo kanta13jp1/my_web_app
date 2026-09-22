@@ -252,3 +252,21 @@ test('local assistance is opt-in, exports attribution and can return to Jev-only
  await lab.locator('#controller').selectOption('jev_only');await expect(lab.locator('#status')).toContainText('操作方式');
  await lab.locator('#restart-local').click();await lab.locator('#play-local').click();await expect(lab.locator('#status')).toContainText('手動');
 });
+
+
+test('prediction input is opt-in, exported and absent in the baseline', async ({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await expect(lab.locator('#status')).toContainText('準備完了');await expect(lab.locator('#input-profile')).toHaveValue('baseline');
+ await lab.locator('#input-profile').selectOption('prediction_v1');await lab.locator('#consent').check();await lab.locator('#start').click();
+ await expect(lab.locator('#state')).toContainText('projected_gap');await expect(lab.locator('#counts')).not.toHaveText('0 / 0 / 0');await lab.locator('#stop').click();
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await (await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();
+ const log=JSON.parse(raw);expect(log.input_profile).toBe('prediction_v1');expect(log.samples[0].observation.state.prediction.horizon_ms).toBe(1000);
+ await screenshot(page,info.outputPath('prediction-input.png'));
+ await lab.locator('#input-profile').selectOption('baseline');await lab.locator('#restart-local').click();await lab.locator('#start').click();await expect(lab.locator('#state')).not.toContainText('projected_gap');await lab.locator('#stop').click();
+});
+
+test('stomp score and fire impact render in a deterministic canvas fixture',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;await frame.waitForSelector('#screen');
+ const result=await frame.evaluate(async()=>{const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs');const g=new World11();Object.assign(g.p,{x:100,y:175,vx:0,vy:2,grounded:false});g.input={jump:true};g.wasJump=true;g.enemies=[{x:100,y:192,w:14,h:16,vx:0,vy:0,kind:'goomba',dead:0}];g.step();g.effects.push({kind:'burst',x:125,y:190,life:9});const canvas=document.createElement('canvas');canvas.width=256;canvas.height=240;canvas.style.width='512px';canvas.dataset.testid='feedback-fixture';document.body.prepend(canvas);drawWorld(canvas.getContext('2d'),g);return {score:g.score,bounce:g.p.vy,popups:g.effects.filter(f=>f.kind==='score').length};});
+ expect(result.score).toBe(100);expect(result.bounce).toBeLessThan(-3.5);expect(result.popups).toBe(1);await screenshot(page,info.outputPath('stomp-score-fixture.png'));
+});

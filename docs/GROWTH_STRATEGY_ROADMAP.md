@@ -33635,3 +33635,15 @@ Added independent pixel-art poses for walking/running, facing, jumping/falling a
 - Add explicit Jev-only/default versus Jev plus local reaction rules, logging interventions separately from raw API timings. Recreate the supplied near-enemy state in deterministic cloud tests without additional model calls.
 - Improve block/enemy reactions, 100-coin lives, item emergence/life effects and synthesized 25% pulse audio. These are independent approximations, not cycle-accurate NES emulation.
 - Validate UI mode change/recovery/export, sound, game and recording regressions in cloud CI; report source claims and our measurements separately in the requested article.
+
+
+### 2026-09-22 Jev Mario course verification
+
+- Compare deterministic full-course lookahead, held-right and local assistance without labelling rules as Jev performance. Save bounded experiment artifacts.
+- Refine flag descent, left-facing fire, differentiated enemies/items and original noise/percussion/flag/tally effects. Cloud tests and production verification required.
+
+
+### 2026-09-22 Jev入力予測と走行ジャンプの比較
+
+- Issue #5495: 最新のJev単独ログ（右→右→ダッシュ、frame218/x308.26で死亡）を再現。予測値を追加する入力を明示選択し、基準入力とJSONで区別。認証・同意・利用枠は維持。
+- 回避補助はダッシュを保持し、アイテム出現動作とブレーキSEを改善。API性能とシミュレーションは区別してクラウドで検証。
