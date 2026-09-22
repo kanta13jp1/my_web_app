@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-09-21",
+    "date": "2026-09-22",
     "users": {
       "total": 61
     },
@@ -34,24 +34,24 @@
     },
     "recentAchievements": [
       {
-        "title": "Codex #4: tax export deterministic core (#2492)",
-        "completed_at": "2026-07-13T00:00:00+00:00"
+        "title": "MoneyForward連携ページの偽OAuth成功表示を修正",
+        "completed_at": "2026-09-16T00:00:00+00:00"
       },
       {
-        "title": "自分API v1 (Notion Developer Platform 対抗)",
-        "completed_at": "2026-07-12T00:00:00+00:00"
+        "title": "資産管理: 給料収入計画の自動整合 + 未受領判定の誤検知防止",
+        "completed_at": "2026-09-09T00:00:00+00:00"
       },
       {
-        "title": "XLSX/DOCXインポート対応 (Notion移行0ステップ強化)",
-        "completed_at": "2026-07-12T00:00:00+00:00"
+        "title": "資産管理: 支払元無効アラートの誤検知を抑制",
+        "completed_at": "2026-09-09T00:00:00+00:00"
       },
       {
-        "title": "構造化タスク管理 (GitHub Issue Fields相当)",
-        "completed_at": "2026-07-12T00:00:00+00:00"
+        "title": "資産管理AI: 否定文脈の督促文言を誤検知しないよう修正",
+        "completed_at": "2026-09-09T00:00:00+00:00"
       },
       {
-        "title": "AI大学 FinTech/Trading AI 掲載コンテンツの日本語化",
-        "completed_at": "2026-06-21T00:00:00+00:00"
+        "title": "資産管理AI: 債務間の根拠確認をセグメント化",
+        "completed_at": "2026-09-09T00:00:00+00:00"
       }
     ],
     "revenue": {
@@ -65,6 +65,6 @@
       "team": 0
     }
   },
-  "fetched_at": "2026-09-21T09:25:08+09:00",
-  "report_date": "2026-09-21"
+  "fetched_at": "2026-09-22T10:02:52+09:00",
+  "report_date": "2026-09-22"
 }
