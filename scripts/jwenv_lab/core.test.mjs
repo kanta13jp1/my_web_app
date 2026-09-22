@@ -30,6 +30,13 @@ test('12 categories as one choice question are rejected with status 422', () => 
   });
 });
 
+test('the choice limit is exactly 8 options: 8 accepted, 9 rejected', () => {
+  const choice = (n) => ({ model: 'jev-latest', state: 'x', questions: { q: { type: 'choice', instructions: 'pick',
+    criteria: Object.fromEntries(Array.from({ length: n }, (_, i) => [`o${i}`, null])) } } });
+  assert.doesNotThrow(() => jev.validate(choice(8), jev.MODEL_ALIASES));
+  assert.throws(() => jev.validate(choice(9), jev.MODEL_ALIASES), (e) => e.code === 'too_many_options' && e.status === 422);
+});
+
 test('the same categories fit as 12 yes/no questions in one request', () => {
   const request = core.expenseRequest('ローソンで買い物', reference.categories, core.EXPENSE_DOMAIN);
   assert.equal(Object.keys(request.questions).length, 12);

@@ -60,6 +60,14 @@ def runner_info():
     return info
 
 
+def network_summary(urls, port):
+    from urllib.parse import urlsplit
+    origins = sorted({f'{u.scheme}://{u.netloc}' for u in map(urlsplit, urls) if u.scheme in ('http', 'https')})
+    local = f'http://127.0.0.1:{port}'
+    return {'requests': len(urls), 'origins': origins,
+            'external_requests': sorted({u for u in urls if urlsplit(u).scheme in ('http', 'https') and not u.startswith(local)})}
+
+
 def serve():
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT / 'web'))
     handler.log_message = lambda *a: None
@@ -79,6 +87,7 @@ def measure(model_path, out, passes):
     server = serve()
     url = f'http://127.0.0.1:{server.server_port}/labs/jwenv/index.html'
     console = []
+    requests = []
     with sync_playwright() as p:
         browser = page = flags = adapter = None
         for candidate in FLAG_SETS:
@@ -86,6 +95,7 @@ def measure(model_path, out, passes):
             pg = b.new_page(viewport={'width': 1280, 'height': 1000})
             pg.on('console', lambda m: console.append(f'[{m.type}] {m.text}'))
             pg.on('pageerror', lambda e: console.append(f'[pageerror] {e}'))
+            pg.on('request', lambda r: requests.append(r.url))
             pg.goto(url)
             pg.evaluate('window.jwenvLab.ready')
             info = pg.evaluate("""async () => { const a = navigator.gpu && await navigator.gpu.requestAdapter();
@@ -156,6 +166,7 @@ def measure(model_path, out, passes):
         'timing_scope': 'performance.now() in the page. load_ms covers GGUF parse, CPU-side weight preparation and GPU upload '
                         '(the file is read from local disk). Request ms covers JevClassifier.systemOne: validation, '
                         'tokenization, forward pass and readback. Software WebGPU (SwiftShader) on a CPU runner; not a GPU measurement.',
+        'network': network_summary(requests, server.server_port),
         'load_ms': snapshot['load_ms'],
         'model_snapshot': snapshot,
         'article_example': example,

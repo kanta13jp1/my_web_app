@@ -86,7 +86,16 @@ function modelSnapshot() {
   const m = state.model;
   if (!m) return null;
   const head = m.headInfo;
+  const metadata = {};
+  for (const [k, v] of m.gguf.metadata) {
+    if (/^(general|jev|qwen3)\./.test(k) && ['string', 'number', 'boolean'].includes(typeof v)) metadata[k] = v;
+  }
+  let parameters = 0;
+  for (const t of m.gguf.tensors.values()) parameters += t.nElements;
+  const embd = m.embdInfo;
   return {
+    metadata, tensor_count: m.gguf.tensors.size, parameter_count: parameters,
+    token_embd: { dims: embd.dims, type: GGML_TYPE_NAME[embd.type] ?? embd.type, bytes: embd.nBytes },
     file: state.file, adapter: state.adapterInfo, load_ms: state.loadMs, gpu_bytes: m.gpuBytes,
     config: m.cfg, temperature: state.jev.temperature,
     head: { tensor: head.name, dims: head.dims, type: GGML_TYPE_NAME[head.type] ?? head.type, bytes: head.nBytes,
