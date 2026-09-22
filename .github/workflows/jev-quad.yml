@@ -1,0 +1,106 @@
+name: Jev four-lane comparison
+on:
+  pull_request:
+    paths: ['scripts/jev_quad/**', '.github/workflows/jev-quad.yml']
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: jev-quad-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  contract:
+    permissions: {contents: read}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: |
+          node --check scripts/jev_quad/run.mjs
+          node --check scripts/jev_quad/provider.mjs
+          python -m py_compile scripts/jev_quad/laya_server.py scripts/jev_quad/video.py
+  experiment:
+    if: github.event_name == 'workflow_dispatch'
+    permissions: {contents: read}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [cloud_jev, localjev, lightgbm, laya]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 0}
+      - name: Frozen game and hardware record
+        run: |
+          mkdir -p out/lightgbm/frozen out/quad
+          for module in world11 reaction; do
+            git show d224c892c1f16895f24978358717717f96bad657:web/labs/jev-mario/$module.mjs > out/lightgbm/frozen/$module.mjs
+          done
+          lscpu > out/quad/${{ matrix.lane }}-cpu.txt
+      - name: Actual LocalJev backend
+        if: matrix.lane == 'localjev'
+        run: bash scripts/jev_triad/local-setup.sh
+      - name: Reproduce fixed Jev student
+        if: matrix.lane == 'lightgbm'
+        run: |
+          node scripts/jev_distillation/collect.mjs
+          python -m pip install lightgbm==4.6.0 numpy==2.2.6 scipy==1.15.3
+          python scripts/jev_distillation/train.py
+      - name: Actual pinned Laya English 421M on CPU
+        if: matrix.lane == 'laya'
+        run: |
+          python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install transformers==4.51.3 huggingface_hub==0.30.2 safetensors==0.5.3 numpy==2.2.6
+          python -m pip install --no-deps git+https://github.com/NandhaKishorM/laya.git@573e5b62696ba441230cd6be71d593331b5d23af
+          python scripts/jev_quad/laya_server.py > out/quad/laya-server.log 2>&1 &
+          for i in $(seq 1 150); do
+            if curl -fsS http://127.0.0.1:8081/health >/dev/null 2>&1; then exit 0; fi
+            sleep 4
+          done
+          cat out/quad/laya-server.log
+          exit 1
+      - name: Assisted and unassisted wall-clock trials
+        env:
+          LANE: ${{ matrix.lane }}
+          JEV_MARIO_EXPERIMENT_KEY: ${{ matrix.lane == 'cloud_jev' && secrets.JEV_MARIO_EXPERIMENT_KEY || '' }}
+        run: |
+          CONTROL_MODE=assisted node scripts/jev_quad/run.mjs
+          CONTROL_MODE=raw node scripts/jev_quad/run.mjs
+      - name: Preserve backend evidence
+        if: always() && matrix.lane == 'localjev'
+        run: |
+          cp /tmp/jev-backend/model.sha256 out/quad/ || true
+          cp /tmp/jev-backend/localjev.log out/quad/ || true
+          cp /tmp/jev-backend/llama.log out/quad/ || true
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: quad-${{ matrix.lane }}-${{ github.run_id }}
+          path: out/quad/
+          retention-days: 14
+  video:
+    needs: experiment
+    permissions: {contents: read}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 0}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: quad-*-${{ github.run_id }}
+          path: out/quad/
+          merge-multiple: true
+      - run: |
+          mkdir -p out/lightgbm/frozen
+          for module in world11 reaction audio; do
+            git show d224c892c1f16895f24978358717717f96bad657:web/labs/jev-mario/$module.mjs > out/lightgbm/frozen/$module.mjs
+          done
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+          python scripts/jev_quad/video.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: quad-video-${{ github.run_id }}
+          path: out/quad/video/
+          retention-days: 14
