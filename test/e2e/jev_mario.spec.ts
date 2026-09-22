@@ -287,7 +287,7 @@ test('stomp score and fire impact render in a deterministic canvas fixture',asyn
 test('spinning coins render in the underground room without changing simulation state',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');
  const result=await page.evaluate(async()=>{
-  const {World11,drawWorld}=await import('/labs/jev-mario/world11.mjs');
+  const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs');
   const g=new World11();g.room='underground';g.camera=0;g.contents=new Map([['4,7','loose']]);g.items=[{kind:'flower',x:100,y:128,w:14,h:16}];
   const canvas=document.createElement('canvas');canvas.width=256;canvas.height=240;canvas.style.width='512px';canvas.style.imageRendering='pixelated';document.body.replaceChildren(canvas);
   const ctx=canvas.getContext('2d')!;g.frames=0;const before=JSON.stringify(g.snapshot());drawWorld(ctx,g);const a=ctx.getImageData(64,112,16,16).data.slice();const unchanged=JSON.stringify(g.snapshot())===before;
