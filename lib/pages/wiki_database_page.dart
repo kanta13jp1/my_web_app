@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
-import 'package:my_web_app/utils/wiki_page_response.dart';
+import 'package:my_web_app/repositories/wiki_repository.dart';
+import 'package:my_web_app/view_models/wiki_read_model.dart';
 
 /// Wiki・データベースページ
 /// wiki-database Edge Function と連携して階層型Wikiを管理
@@ -23,11 +24,14 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
 
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
-  bool _isLoading = false;
-  String? _errorMessage;
-  List<Map<String, dynamic>> _pages = [];
-  String? _selectedPageId;
-  Map<String, dynamic>? _selectedPage;
+  late final WikiReadModel _readModel;
+  bool get _isLoading =>
+      (_readModel.loading && _pages.isEmpty) || _readModel.detailLoading;
+  String? get _errorMessage =>
+      _pages.isEmpty ? _readModel.error : _readModel.detailError;
+  List<Map<String, dynamic>> get _pages => _readModel.pages;
+  String? get _selectedPageId => _readModel.selectedId;
+  Map<String, dynamic>? get _selectedPage => _readModel.selectedPage;
   List<Map<String, dynamic>> _children = [];
   List<Map<String, dynamic>> _tableRows = [];
   final _titleCtrl = TextEditingController();
@@ -38,11 +42,22 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _readModel = WikiReadModel(WikiRepository((body) async {
+      final response = await _supabase.functions.invoke('enterprise-hub', body: body);
+      return response.data;
+    }));
+    _readModel.addListener(_onReadChanged);
     _fetchPages();
+  }
+
+  void _onReadChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _readModel.removeListener(_onReadChanged);
+    _readModel.dispose();
     _tabController.dispose();
     _titleCtrl.dispose();
     _contentCtrl.dispose();
@@ -51,63 +66,12 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   }
 
   Future<void> _fetchPages() async {
-    if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final response = await _supabase.functions
-          .invoke('enterprise-hub', body: {'action': 'wiki.list'});
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['pages'] is List) {
-        setState(
-          () => _pages = (data['pages'] as List)
-              .cast<Map<String, dynamic>>()
-              .map(normalizeWikiPageResponse)
-              .toList(),
-        );
-      } else {
-        setState(() => _pages = []);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Wiki ページの取得に失敗しました: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    if (_supabase.auth.currentUser == null) return;
+    await _readModel.refresh();
   }
 
   Future<void> _fetchPageDetail(String pageId) async {
-    setState(() => _isLoading = true);
-    try {
-      final response = await _supabase.functions.invoke(
-        'enterprise-hub',
-        body: {'action': 'wiki.list'},
-      );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['pages'] is List) {
-        final allPages = (data['pages'] as List)
-            .cast<Map<String, dynamic>>()
-            .map(normalizeWikiPageResponse)
-            .toList();
-        final page = allPages.where((p) {
-          return p['id']?.toString() == pageId;
-        }).firstOrNull;
-        if (!mounted || _selectedPageId != pageId) return;
-        setState(() {
-          _selectedPage = page;
-          _children = [];
-          _tableRows = [];
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'ページ詳細の取得に失敗しました: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    await _readModel.select(pageId);
   }
 
   Future<void> _createPage({String? parentId}) async {
@@ -313,8 +277,21 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
       onRefresh: _fetchPages,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: _pages.length,
+        itemCount: _pages.length + 1,
         itemBuilder: (context, index) {
+          if (index == _pages.length) {
+            return Column(
+              children: [
+                if (_readModel.error != null)
+                  Text(_readModel.error!, style: const TextStyle(color: Colors.red)),
+                if (_readModel.nextOffset != null || _readModel.error != null)
+                  TextButton(
+                    onPressed: _readModel.loading ? null : _readModel.loadMore,
+                    child: Text(_readModel.loading ? '読み込み中…' : '続きを読む'),
+                  ),
+              ],
+            );
+          }
           final page = _pages[index];
           final title = page['title']?.toString() ?? '無題';
           final pageId =
@@ -360,12 +337,8 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                 ],
               ),
               onTap: () {
-                setState(() {
-                  _selectedPageId = pageId;
-                  _selectedPage = null;
-                  _children = [];
-                  _tableRows = [];
-                });
+                _children = [];
+                _tableRows = [];
                 _fetchPageDetail(pageId);
                 _tabController.animateTo(1);
               },
@@ -454,7 +427,6 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                       child['id']?.toString() ??
                       '';
                   if (id.isNotEmpty) {
-                    setState(() => _selectedPageId = id);
                     _fetchPageDetail(id);
                   }
                 },
