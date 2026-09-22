@@ -1,0 +1,48 @@
+name: Jev triad assisted experiment
+on:
+  pull_request:
+    paths:
+      - 'scripts/jev_triad/**'
+      - '.github/workflows/jev-triad.yml'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: jev-triad-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  assisted:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [planner, lightgbm]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Materialize frozen simulation
+        run: |
+          mkdir -p out/lightgbm/frozen
+          git show d224c892c1f16895f24978358717717f96bad657:web/labs/jev-mario/world11.mjs > out/lightgbm/frozen/world11.mjs
+          git show d224c892c1f16895f24978358717717f96bad657:web/labs/jev-mario/reaction.mjs > out/lightgbm/frozen/reaction.mjs
+      - name: Reproduce Jev-only student
+        if: matrix.lane == 'lightgbm'
+        run: |
+          node scripts/jev_distillation/collect.mjs
+          python -m pip install lightgbm==4.6.0 numpy==2.2.6 scipy==1.15.3
+          python scripts/jev_distillation/train.py
+      - name: Evaluate closed loop with disclosed search assistance
+        env:
+          LANE: ${{ matrix.lane }}
+        run: node scripts/jev_triad/run.mjs
+      - name: Preserve results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: triad-${{ matrix.lane }}-${{ github.run_id }}
+          path: out/triad/
+          retention-days: 14
+          if-no-files-found: error
