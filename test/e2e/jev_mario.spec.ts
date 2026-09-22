@@ -296,3 +296,13 @@ test('spinning coins render in the underground room without changing simulation 
  });
  expect(result).toEqual({changed:true,unchanged:true});await page.locator('canvas').screenshot({path:info.outputPath('world11-spinning-coin.png')});
 });
+
+test('underground selection, manual movement, reset and stage return',async({page},info)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#stage').selectOption('2');await expect(lab.locator('#progress')).toContainText('1-2');
+ await lab.locator('#play-local').click();await page.keyboard.down('ArrowRight');await page.waitForTimeout(500);await page.keyboard.up('ArrowRight');
+ await expect(lab.locator('#progress')).toContainText('World 1-2');await expect(lab.locator('#progress')).not.toContainText('x=32 ');
+ await screenshot(page,info.outputPath('world12-manual.png'));await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('1-2をリセット');
+ await lab.locator('#stage').selectOption('1');await expect(lab.locator('#progress')).toContainText('1-1');await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');expect(errors).toEqual([]);
+});
