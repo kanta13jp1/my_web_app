@@ -1,5 +1,6 @@
 """Black-box browser checks; screenshots use the committed/measured real report only."""
 import functools
+import copy
 import http.server
 import json
 from pathlib import Path
@@ -40,6 +41,10 @@ try:
                     route.fulfill(status=503,body='Unavailable')
                 elif failure['mode']=='schema':
                     route.fulfill(json={'schema_version':999})
+                elif failure['mode']=='inference':
+                    failed=copy.deepcopy(report)
+                    failed['samples'][0]['trials'][0]={'status':'error','error':'http_500','http_ms':1}
+                    route.fulfill(json=failed)
                 else:
                     route.fulfill(json=report)
             page.route('**/results.json',respond)
@@ -48,6 +53,18 @@ try:
             page.locator('#workspace').wait_for(state='visible')
             assert page.locator('#sample option').count()==14
             assert page.locator('.score').count()==12
+            for index,sample in enumerate(report['samples']):
+                page.locator('#sample').select_option(str(index))
+                assert page.locator('#memo').inner_text()==sample['text']
+                assert page.locator('#rule').inner_text()==report['categories'][sample['rule']]['label']
+                for trial_index,trial in enumerate(sample['trials']):
+                    page.locator('#trial').select_option(str(trial_index))
+                    if trial['status']=='ok':
+                        assert page.locator('#bert').inner_text()==report['categories'][trial['answer']['choice']]['label']
+                    else:
+                        assert '候補なし' in page.locator('#bert').inner_text()
+            page.locator('#sample').select_option('0')
+            page.locator('#trial').select_option('0')
             if measured:
                 page.screenshot(path=str(out/f'comparison-{width}.png'),full_page=True)
             page.locator('#sample').select_option('12')
@@ -55,6 +72,11 @@ try:
             page.locator('#trial').select_option('1')
             assert '2回目' in page.locator('#latency').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+            failure['mode']='inference'
+            page.reload()
+            page.locator('#workspace').wait_for(state='visible')
+            assert '推論失敗' in page.locator('#bert').inner_text()
+            assert page.locator('.score').count()==0
             failure['mode']='http'
             page.reload()
             page.locator('#retry').wait_for(state='visible')
@@ -69,7 +91,7 @@ try:
             assert not errors,errors
             page.close()
         browser.close()
-    print('PASS: two widths; normal candidates, ambiguous input, trial switch, HTTP/schema error and recovery.')
+    print('PASS: two widths; all 28 candidates, ambiguous input, trial switch, inference/HTTP/schema error and recovery.')
     print('Evidence: '+('real saved model measurements' if measured else 'mocked HTTP contract ONLY, no model inference or screenshots'))
 finally:
     server.shutdown()

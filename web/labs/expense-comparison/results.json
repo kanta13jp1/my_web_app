@@ -1,0 +1,911 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "mode": "saved_real_model_measurement",
+  "recorded_at": "2026-09-22T03:22:34Z",
+  "app_revision": "80a383bc7993e71b272824338c9eebfc4359cbe6",
+  "run_id": "35682805714",
+  "upstream_revision": "5a5af4ebd99c8b7db9f227d4d46216d668c2cc8f",
+  "model": "jevbert-poc-nli-ja-en-0.2.0",
+  "model_revision": "9abf1c8aaeb82a2447809c20753ed0b106b76652",
+  "fixtures_sha256": "987b17d0af7e194e30672cea85a7db4558e80eb3d42690958a7a0cc340880564",
+  "benchmark_sha256": "725203b974c0c66475709219fe343c275e8ce3ae68c2f4a16e5c1a86d45a7af5",
+  "rule_source_revision": "90417af305414172f97ad06ad3b97b5ec35d4192",
+  "environment": {
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "cpu": "x86_64",
+    "cpu_count": 4,
+    "python": "3.13.7",
+    "device": "CPU",
+    "threads": 2
+  },
+  "timing_scope": "Loopback HTTP JSON round trip, including serialization, queue and CPU inference; excludes server/model startup. First call retained, 2 calls/sample, no retry.",
+  "confidence_note": "Uncalibrated distribution concentration; not correctness or probability of truth.",
+  "categories": {
+    "food": {
+      "label": "食費・食材",
+      "description": "スーパーマーケット、八百屋、肉屋、自炊用食材の購入"
+    },
+    "cafe_snack": {
+      "label": "カフェ・間食",
+      "description": "スターバックス、喫茶店、カフェ、おやつ、軽食、スイーツ"
+    },
+    "convenience": {
+      "label": "コンビニ",
+      "description": "セブンイレブン、ファミリーマート、ローソン等での買い物"
+    },
+    "dining_out": {
+      "label": "外食・交際費",
+      "description": "レストラン、居酒屋、同僚や友人との食事、飲み会"
+    },
+    "daily_necessities": {
+      "label": "日用品・消耗品",
+      "description": "ドラッグストア、洗剤、ティッシュ、雑貨、生活消耗品"
+    },
+    "transport": {
+      "label": "交通費",
+      "description": "電車、バス、タクシー、Suica/PASMOチャージ、航空券"
+    },
+    "utilities": {
+      "label": "水道・光熱費",
+      "description": "電気代、ガス代、水道料金"
+    },
+    "telecom": {
+      "label": "通信費",
+      "description": "スマートフォン月額、インターネット回線、Wi-Fi"
+    },
+    "subscription_entertainment": {
+      "label": "サブスク・娯楽",
+      "description": "Netflix、Spotify、本、マンガ、ゲーム、映画、趣味"
+    },
+    "medical": {
+      "label": "医療・健康",
+      "description": "病院、クリニック、処方箋、薬局、歯科、コンタクト"
+    },
+    "housing": {
+      "label": "住居・家賃",
+      "description": "家賃、管理費、更新料、住宅ローン"
+    },
+    "other": {
+      "label": "その他支出",
+      "description": "上記のいずれにも明確に当てはまらない支出"
+    }
+  },
+  "samples": [
+    {
+      "id": "groceries",
+      "text": "スーパーで自炊用の野菜とお米を購入",
+      "expected": "food",
+      "review_required": false,
+      "rule": "food",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "food",
+            "probabilities": {
+              "food": 0.4011580684009648,
+              "cafe_snack": 0.056584841210639926,
+              "convenience": 0.07843029818735721,
+              "dining_out": 0.1170524812414165,
+              "daily_necessities": 0.1407978628624183,
+              "transport": 0.012685552169367351,
+              "utilities": 0.004804718576332538,
+              "telecom": 0.03526948417136108,
+              "subscription_entertainment": 0.06258983683208576,
+              "medical": 0.015607216290141761,
+              "housing": 0.007229912512902453,
+              "other": 0.06778972754501227
+            },
+            "confidence": 0.23088845668319513
+          },
+          "repetition": 1,
+          "http_ms": 2699.094
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "food",
+            "probabilities": {
+              "food": 0.4011580684009648,
+              "cafe_snack": 0.056584841210639926,
+              "convenience": 0.07843029818735721,
+              "dining_out": 0.1170524812414165,
+              "daily_necessities": 0.1407978628624183,
+              "transport": 0.012685552169367351,
+              "utilities": 0.004804718576332538,
+              "telecom": 0.03526948417136108,
+              "subscription_entertainment": 0.06258983683208576,
+              "medical": 0.015607216290141761,
+              "housing": 0.007229912512902453,
+              "other": 0.06778972754501227
+            },
+            "confidence": 0.23088845668319513
+          },
+          "repetition": 2,
+          "http_ms": 2691.238
+        }
+      ]
+    },
+    {
+      "id": "cafe",
+      "text": "カフェでコーヒーとケーキ",
+      "expected": "cafe_snack",
+      "review_required": false,
+      "rule": "cafe_snack",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "cafe_snack",
+            "probabilities": {
+              "food": 0.1528688645950061,
+              "cafe_snack": 0.22614387518929097,
+              "convenience": 0.05045257195969582,
+              "dining_out": 0.13134976809631996,
+              "daily_necessities": 0.10508717755160067,
+              "transport": 0.024212095485719336,
+              "utilities": 0.02515000638982732,
+              "telecom": 0.025910877395180585,
+              "subscription_entertainment": 0.046904870078316244,
+              "medical": 0.06691707208364346,
+              "housing": 0.044912856186252605,
+              "other": 0.10008996498914698
+            },
+            "confidence": 0.09495374732764728
+          },
+          "repetition": 1,
+          "http_ms": 2490.628
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "cafe_snack",
+            "probabilities": {
+              "food": 0.1528688645950061,
+              "cafe_snack": 0.22614387518929097,
+              "convenience": 0.05045257195969582,
+              "dining_out": 0.13134976809631996,
+              "daily_necessities": 0.10508717755160067,
+              "transport": 0.024212095485719336,
+              "utilities": 0.02515000638982732,
+              "telecom": 0.025910877395180585,
+              "subscription_entertainment": 0.046904870078316244,
+              "medical": 0.06691707208364346,
+              "housing": 0.044912856186252605,
+              "other": 0.10008996498914698
+            },
+            "confidence": 0.09495374732764728
+          },
+          "repetition": 2,
+          "http_ms": 2510.619
+        }
+      ]
+    },
+    {
+      "id": "convenience",
+      "text": "ローソンで買い物",
+      "expected": "convenience",
+      "review_required": false,
+      "rule": "convenience",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "convenience",
+            "probabilities": {
+              "food": 0.0972747846223434,
+              "cafe_snack": 0.033304125542602515,
+              "convenience": 0.3036701435346459,
+              "dining_out": 0.0727250539897312,
+              "daily_necessities": 0.16661361999941435,
+              "transport": 0.011628921956902261,
+              "utilities": 0.032288917422465466,
+              "telecom": 0.008453865303155563,
+              "subscription_entertainment": 0.01850398580348895,
+              "medical": 0.08323608189473841,
+              "housing": 0.09912301358661807,
+              "other": 0.07317748634389393
+            },
+            "confidence": 0.15678428259213073
+          },
+          "repetition": 1,
+          "http_ms": 2442.94
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "convenience",
+            "probabilities": {
+              "food": 0.0972747846223434,
+              "cafe_snack": 0.033304125542602515,
+              "convenience": 0.3036701435346459,
+              "dining_out": 0.0727250539897312,
+              "daily_necessities": 0.16661361999941435,
+              "transport": 0.011628921956902261,
+              "utilities": 0.032288917422465466,
+              "telecom": 0.008453865303155563,
+              "subscription_entertainment": 0.01850398580348895,
+              "medical": 0.08323608189473841,
+              "housing": 0.09912301358661807,
+              "other": 0.07317748634389393
+            },
+            "confidence": 0.15678428259213073
+          },
+          "repetition": 2,
+          "http_ms": 2456.551
+        }
+      ]
+    },
+    {
+      "id": "meal",
+      "text": "レストランで夕食",
+      "expected": "dining_out",
+      "review_required": false,
+      "rule": "other",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "dining_out",
+            "probabilities": {
+              "food": 0.29382655008160147,
+              "cafe_snack": 0.05524055207119878,
+              "convenience": 0.016338133992314353,
+              "dining_out": 0.2970615151863261,
+              "daily_necessities": 0.09477239526958173,
+              "transport": 0.023560659566529606,
+              "utilities": 0.02181176419904892,
+              "telecom": 0.013507908507383716,
+              "subscription_entertainment": 0.027682826958906073,
+              "medical": 0.05073623260254363,
+              "housing": 0.03407849453312527,
+              "other": 0.0713829670314403
+            },
+            "confidence": 0.21325923755426202
+          },
+          "repetition": 1,
+          "http_ms": 2440.727
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "dining_out",
+            "probabilities": {
+              "food": 0.29382655008160147,
+              "cafe_snack": 0.05524055207119878,
+              "convenience": 0.016338133992314353,
+              "dining_out": 0.2970615151863261,
+              "daily_necessities": 0.09477239526958173,
+              "transport": 0.023560659566529606,
+              "utilities": 0.02181176419904892,
+              "telecom": 0.013507908507383716,
+              "subscription_entertainment": 0.027682826958906073,
+              "medical": 0.05073623260254363,
+              "housing": 0.03407849453312527,
+              "other": 0.0713829670314403
+            },
+            "confidence": 0.21325923755426202
+          },
+          "repetition": 2,
+          "http_ms": 2442.966
+        }
+      ]
+    },
+    {
+      "id": "cleaning",
+      "text": "洗剤とティッシュを購入",
+      "expected": "daily_necessities",
+      "review_required": false,
+      "rule": "daily_necessities",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "daily_necessities",
+            "probabilities": {
+              "food": 0.013680182862528706,
+              "cafe_snack": 0.008250048513826894,
+              "convenience": 0.04804367273269853,
+              "dining_out": 0.0177826711442516,
+              "daily_necessities": 0.811302049467456,
+              "transport": 0.009467447340089719,
+              "utilities": 0.008677829579473918,
+              "telecom": 0.01739073442274432,
+              "subscription_entertainment": 0.006860222284426018,
+              "medical": 0.019554718497565272,
+              "housing": 0.008703396012892868,
+              "other": 0.030287027142046185
+            },
+            "confidence": 0.6379973410206602
+          },
+          "repetition": 1,
+          "http_ms": 2531.278
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "daily_necessities",
+            "probabilities": {
+              "food": 0.013680182862528706,
+              "cafe_snack": 0.008250048513826894,
+              "convenience": 0.04804367273269853,
+              "dining_out": 0.0177826711442516,
+              "daily_necessities": 0.811302049467456,
+              "transport": 0.009467447340089719,
+              "utilities": 0.008677829579473918,
+              "telecom": 0.01739073442274432,
+              "subscription_entertainment": 0.006860222284426018,
+              "medical": 0.019554718497565272,
+              "housing": 0.008703396012892868,
+              "other": 0.030287027142046185
+            },
+            "confidence": 0.6379973410206602
+          },
+          "repetition": 2,
+          "http_ms": 2539.807
+        }
+      ]
+    },
+    {
+      "id": "train",
+      "text": "電車の切符",
+      "expected": "transport",
+      "review_required": false,
+      "rule": "transport",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "transport",
+            "probabilities": {
+              "food": 0.016114858947332993,
+              "cafe_snack": 0.027638027882134923,
+              "convenience": 0.025887638617494692,
+              "dining_out": 0.04046088639054264,
+              "daily_necessities": 0.11116066630090618,
+              "transport": 0.4913626329613399,
+              "utilities": 0.029291305283703013,
+              "telecom": 0.03478706402352243,
+              "subscription_entertainment": 0.05659578126755737,
+              "medical": 0.07735169143808694,
+              "housing": 0.02288591767180474,
+              "other": 0.06646352921557422
+            },
+            "confidence": 0.26323129336149376
+          },
+          "repetition": 1,
+          "http_ms": 2444.358
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "transport",
+            "probabilities": {
+              "food": 0.016114858947332993,
+              "cafe_snack": 0.027638027882134923,
+              "convenience": 0.025887638617494692,
+              "dining_out": 0.04046088639054264,
+              "daily_necessities": 0.11116066630090618,
+              "transport": 0.4913626329613399,
+              "utilities": 0.029291305283703013,
+              "telecom": 0.03478706402352243,
+              "subscription_entertainment": 0.05659578126755737,
+              "medical": 0.07735169143808694,
+              "housing": 0.02288591767180474,
+              "other": 0.06646352921557422
+            },
+            "confidence": 0.26323129336149376
+          },
+          "repetition": 2,
+          "http_ms": 2449.377
+        }
+      ]
+    },
+    {
+      "id": "power",
+      "text": "今月の電気料金",
+      "expected": "utilities",
+      "review_required": false,
+      "rule": "utilities",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "utilities",
+            "probabilities": {
+              "food": 0.014148077606437588,
+              "cafe_snack": 0.039316139065823985,
+              "convenience": 0.02309091595133921,
+              "dining_out": 0.05085357857245557,
+              "daily_necessities": 0.11029268259267776,
+              "transport": 0.009796171706075925,
+              "utilities": 0.35588898232667576,
+              "telecom": 0.0879137914486236,
+              "subscription_entertainment": 0.044874905057635715,
+              "medical": 0.06581927456516298,
+              "housing": 0.1580382842742048,
+              "other": 0.039967196832887075
+            },
+            "confidence": 0.18125826291208147
+          },
+          "repetition": 1,
+          "http_ms": 2397.894
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "utilities",
+            "probabilities": {
+              "food": 0.014148077606437588,
+              "cafe_snack": 0.039316139065823985,
+              "convenience": 0.02309091595133921,
+              "dining_out": 0.05085357857245557,
+              "daily_necessities": 0.11029268259267776,
+              "transport": 0.009796171706075925,
+              "utilities": 0.35588898232667576,
+              "telecom": 0.0879137914486236,
+              "subscription_entertainment": 0.044874905057635715,
+              "medical": 0.06581927456516298,
+              "housing": 0.1580382842742048,
+              "other": 0.039967196832887075
+            },
+            "confidence": 0.18125826291208147
+          },
+          "repetition": 2,
+          "http_ms": 2400.692
+        }
+      ]
+    },
+    {
+      "id": "phone",
+      "text": "スマートフォンの月額利用料金",
+      "expected": "telecom",
+      "review_required": false,
+      "rule": "other",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "telecom",
+            "probabilities": {
+              "food": 0.029383366117993668,
+              "cafe_snack": 0.07690280523022558,
+              "convenience": 0.040349763263339306,
+              "dining_out": 0.09831622504552043,
+              "daily_necessities": 0.06764357776222138,
+              "transport": 0.011329371785761596,
+              "utilities": 0.03792023515601023,
+              "telecom": 0.33747189934439403,
+              "subscription_entertainment": 0.08896239233789192,
+              "medical": 0.08155860428787491,
+              "housing": 0.04332823474164921,
+              "other": 0.08683352492711764
+            },
+            "confidence": 0.13477546900145843
+          },
+          "repetition": 1,
+          "http_ms": 2566.517
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "telecom",
+            "probabilities": {
+              "food": 0.029383366117993668,
+              "cafe_snack": 0.07690280523022558,
+              "convenience": 0.040349763263339306,
+              "dining_out": 0.09831622504552043,
+              "daily_necessities": 0.06764357776222138,
+              "transport": 0.011329371785761596,
+              "utilities": 0.03792023515601023,
+              "telecom": 0.33747189934439403,
+              "subscription_entertainment": 0.08896239233789192,
+              "medical": 0.08155860428787491,
+              "housing": 0.04332823474164921,
+              "other": 0.08683352492711764
+            },
+            "confidence": 0.13477546900145843
+          },
+          "repetition": 2,
+          "http_ms": 2594.058
+        }
+      ]
+    },
+    {
+      "id": "movie",
+      "text": "映画館の鑑賞チケット",
+      "expected": "subscription_entertainment",
+      "review_required": false,
+      "rule": "subscription_entertainment",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "dining_out",
+            "probabilities": {
+              "food": 0.060657508087187034,
+              "cafe_snack": 0.0698266848350287,
+              "convenience": 0.05710785316345715,
+              "dining_out": 0.22799004235776524,
+              "daily_necessities": 0.05153884633069586,
+              "transport": 0.06360763697436157,
+              "utilities": 0.01467995740673804,
+              "telecom": 0.05477168307870605,
+              "subscription_entertainment": 0.14292180392078846,
+              "medical": 0.08864459775588643,
+              "housing": 0.027102348019328086,
+              "other": 0.14115103807005744
+            },
+            "confidence": 0.08546097580942857
+          },
+          "repetition": 1,
+          "http_ms": 2527.808
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "dining_out",
+            "probabilities": {
+              "food": 0.060657508087187034,
+              "cafe_snack": 0.0698266848350287,
+              "convenience": 0.05710785316345715,
+              "dining_out": 0.22799004235776524,
+              "daily_necessities": 0.05153884633069586,
+              "transport": 0.06360763697436157,
+              "utilities": 0.01467995740673804,
+              "telecom": 0.05477168307870605,
+              "subscription_entertainment": 0.14292180392078846,
+              "medical": 0.08864459775588643,
+              "housing": 0.027102348019328086,
+              "other": 0.14115103807005744
+            },
+            "confidence": 0.08546097580942857
+          },
+          "repetition": 2,
+          "http_ms": 2558.364
+        }
+      ]
+    },
+    {
+      "id": "dentist",
+      "text": "歯科の診察代",
+      "expected": "medical",
+      "review_required": false,
+      "rule": "medical",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "medical",
+            "probabilities": {
+              "food": 0.08264790856703601,
+              "cafe_snack": 0.05105023675578791,
+              "convenience": 0.041898973006857555,
+              "dining_out": 0.09375703937651424,
+              "daily_necessities": 0.1274959606818989,
+              "transport": 0.01783547516097076,
+              "utilities": 0.030272380361301685,
+              "telecom": 0.07154847038767846,
+              "subscription_entertainment": 0.06150538704156964,
+              "medical": 0.3049924402260713,
+              "housing": 0.04468626932517637,
+              "other": 0.07230945910913716
+            },
+            "confidence": 0.11292904922980396
+          },
+          "repetition": 1,
+          "http_ms": 2476.014
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "medical",
+            "probabilities": {
+              "food": 0.08264790856703601,
+              "cafe_snack": 0.05105023675578791,
+              "convenience": 0.041898973006857555,
+              "dining_out": 0.09375703937651424,
+              "daily_necessities": 0.1274959606818989,
+              "transport": 0.01783547516097076,
+              "utilities": 0.030272380361301685,
+              "telecom": 0.07154847038767846,
+              "subscription_entertainment": 0.06150538704156964,
+              "medical": 0.3049924402260713,
+              "housing": 0.04468626932517637,
+              "other": 0.07230945910913716
+            },
+            "confidence": 0.11292904922980396
+          },
+          "repetition": 2,
+          "http_ms": 2493.077
+        }
+      ]
+    },
+    {
+      "id": "rent",
+      "text": "来月の家賃",
+      "expected": "housing",
+      "review_required": false,
+      "rule": "housing",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "housing",
+            "probabilities": {
+              "food": 0.033945479743588476,
+              "cafe_snack": 0.02834668416683195,
+              "convenience": 0.02889953612390671,
+              "dining_out": 0.05743472872407341,
+              "daily_necessities": 0.08666932485572615,
+              "transport": 0.04430548979643927,
+              "utilities": 0.16512228786702923,
+              "telecom": 0.054551385350037306,
+              "subscription_entertainment": 0.04357300854815084,
+              "medical": 0.04548051950388392,
+              "housing": 0.39396685667871484,
+              "other": 0.01770469864161797
+            },
+            "confidence": 0.19355063411468454
+          },
+          "repetition": 1,
+          "http_ms": 2487.797
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "housing",
+            "probabilities": {
+              "food": 0.033945479743588476,
+              "cafe_snack": 0.02834668416683195,
+              "convenience": 0.02889953612390671,
+              "dining_out": 0.05743472872407341,
+              "daily_necessities": 0.08666932485572615,
+              "transport": 0.04430548979643927,
+              "utilities": 0.16512228786702923,
+              "telecom": 0.054551385350037306,
+              "subscription_entertainment": 0.04357300854815084,
+              "medical": 0.04548051950388392,
+              "housing": 0.39396685667871484,
+              "other": 0.01770469864161797
+            },
+            "confidence": 0.19355063411468454
+          },
+          "repetition": 2,
+          "http_ms": 2484.171
+        }
+      ]
+    },
+    {
+      "id": "unknown",
+      "text": "支払い",
+      "expected": null,
+      "review_required": true,
+      "rule": "other",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "housing",
+            "probabilities": {
+              "food": 0.1135937691814306,
+              "cafe_snack": 0.01994123737355247,
+              "convenience": 0.03066257471649457,
+              "dining_out": 0.07169873962270958,
+              "daily_necessities": 0.09665042521009215,
+              "transport": 0.03034838799090824,
+              "utilities": 0.11852491498036206,
+              "telecom": 0.02279034823964283,
+              "subscription_entertainment": 0.025349296159965732,
+              "medical": 0.06508336762687451,
+              "housing": 0.3558927179024788,
+              "other": 0.04946422099548852
+            },
+            "confidence": 0.16327968469621823
+          },
+          "repetition": 1,
+          "http_ms": 2351.457
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "housing",
+            "probabilities": {
+              "food": 0.1135937691814306,
+              "cafe_snack": 0.01994123737355247,
+              "convenience": 0.03066257471649457,
+              "dining_out": 0.07169873962270958,
+              "daily_necessities": 0.09665042521009215,
+              "transport": 0.03034838799090824,
+              "utilities": 0.11852491498036206,
+              "telecom": 0.02279034823964283,
+              "subscription_entertainment": 0.025349296159965732,
+              "medical": 0.06508336762687451,
+              "housing": 0.3558927179024788,
+              "other": 0.04946422099548852
+            },
+            "confidence": 0.16327968469621823
+          },
+          "repetition": 2,
+          "http_ms": 2359.923
+        }
+      ]
+    },
+    {
+      "id": "mixed",
+      "text": "コンビニでお弁当と洗剤を購入",
+      "expected": null,
+      "review_required": true,
+      "rule": "daily_necessities",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "daily_necessities",
+            "probabilities": {
+              "food": 0.18952507563334758,
+              "cafe_snack": 0.011781160341378492,
+              "convenience": 0.09511907136723587,
+              "dining_out": 0.10481302102878974,
+              "daily_necessities": 0.31706591849161786,
+              "transport": 0.03206162755484597,
+              "utilities": 0.00957193402232283,
+              "telecom": 0.02302919638548563,
+              "subscription_entertainment": 0.04869009381955321,
+              "medical": 0.06161563251022415,
+              "housing": 0.014505399086731697,
+              "other": 0.09222186975846698
+            },
+            "confidence": 0.18159359899649674
+          },
+          "repetition": 1,
+          "http_ms": 2583.362
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "daily_necessities",
+            "probabilities": {
+              "food": 0.18952507563334758,
+              "cafe_snack": 0.011781160341378492,
+              "convenience": 0.09511907136723587,
+              "dining_out": 0.10481302102878974,
+              "daily_necessities": 0.31706591849161786,
+              "transport": 0.03206162755484597,
+              "utilities": 0.00957193402232283,
+              "telecom": 0.02302919638548563,
+              "subscription_entertainment": 0.04869009381955321,
+              "medical": 0.06161563251022415,
+              "housing": 0.014505399086731697,
+              "other": 0.09222186975846698
+            },
+            "confidence": 0.18159359899649674
+          },
+          "repetition": 2,
+          "http_ms": 2588.387
+        }
+      ]
+    },
+    {
+      "id": "ambiguous",
+      "text": "ドラッグストアで処方薬と食材を購入",
+      "expected": null,
+      "review_required": true,
+      "rule": "food",
+      "trials": [
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "daily_necessities",
+            "probabilities": {
+              "food": 0.08611229447857732,
+              "cafe_snack": 0.06262601472844563,
+              "convenience": 0.11859712393462449,
+              "dining_out": 0.07561417269783745,
+              "daily_necessities": 0.24959191985280768,
+              "transport": 0.010248122439969698,
+              "utilities": 0.013111101894163299,
+              "telecom": 0.01518848568131607,
+              "subscription_entertainment": 0.05377349811662423,
+              "medical": 0.22261445207596553,
+              "housing": 0.010555111610981318,
+              "other": 0.08196770248868722
+            },
+            "confidence": 0.1584248680694934
+          },
+          "repetition": 1,
+          "http_ms": 2789.419
+        },
+        {
+          "status": "ok",
+          "model": "jevbert-poc-nli-ja-en-0.2.0",
+          "answer": {
+            "type": "choice",
+            "choice": "daily_necessities",
+            "probabilities": {
+              "food": 0.08611229447857732,
+              "cafe_snack": 0.06262601472844563,
+              "convenience": 0.11859712393462449,
+              "dining_out": 0.07561417269783745,
+              "daily_necessities": 0.24959191985280768,
+              "transport": 0.010248122439969698,
+              "utilities": 0.013111101894163299,
+              "telecom": 0.01518848568131607,
+              "subscription_entertainment": 0.05377349811662423,
+              "medical": 0.22261445207596553,
+              "housing": 0.010555111610981318,
+              "other": 0.08196770248868722
+            },
+            "confidence": 0.1584248680694934
+          },
+          "repetition": 2,
+          "http_ms": 2799.195
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "valid": 28,
+    "total": 28,
+    "http_median_ms": 2491.8525
+  },
+  "unmeasured": {
+    "jwenv": "12 choices not validated; prior Jwenv contract supports at most 8.",
+    "cloud_jev": "Not called in this experiment."
+  }
+}
