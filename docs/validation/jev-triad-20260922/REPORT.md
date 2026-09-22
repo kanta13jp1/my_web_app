@@ -36,3 +36,22 @@ Cloud Jev assisted HTTP median117.8ms on the GitHub runner, raw140.6ms. These in
 - Temporary encrypted repository API secret was deleted after cloud requests finished; keys are absent from source and artifacts.
 
 Next: live-clock/non-paused control, better LocalJev model/input contract, browser playback and assistance cost, then production integration. This report does not claim the overall project is complete.
+
+## Wall-clock follow-up: game keeps advancing
+
+Measured codecf424ae4e409ae72ac36f8b702f47489e9a4eb3a, run35678095497, all four parallel jobs succeeded. Game60Hz wall clock advances while search runs in a worker and HTTP requests are pending. Main loop catches up elapsed simulation frames before applying a worker result; it never pauses game time to await inference. Rendering/browser costs are absent. Same exact frozen game, canonical start, one trial each.
+
+Worker first predicts continued current controls over the previous solve age (rounded/clamped1..12frames), then searches. This is an explicit latency-compensation heuristic, not learned inference. Last valid API proposal is retained until a subsequent response/error and re-evaluated by current-state search. Unlike production's1.5s expiry, this harness has no API proposal TTL. No valid proposal means search-only fallback. API cap60calls, single in-flight, minimum500ms between request starts. HTTP is aborted on game end.
+
+| Lane | Finish | Wall time | Accepted valid proposals | Search overrides | Search-only decisions | Jump releases | API |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Jev student + search | won x3168.06 frame1235 | 20.60s | 130 | 73 | 0 | 12 | none |
+| Cloud Jev + search | won x3168.84 frame1277 | 21.30s | 29 | 181 | 1 | 11 | 43 valid /43 |
+| LocalJev + search | won x3169.90 frame1274 | 21.25s | 4 | 62 | 96 | 6 | 1 valid,1 cancelled |
+| Search only | won x3169.40 frame1262 | 21.05s | 0 | 0 | 210 | 13 | none |
+
+LocalJev's only valid response took13118.14ms and was uniform over7actions (tie=>noop); second call was cancelled8112.50ms later at finish. Its four accepted valid proposals do not demonstrate useful learned control. The assistant dominates that lane; do not advertise a13-second model as a real-time reflex model.
+
+Earlier no-forecast worker run35677587063 (codef41736f) failed: student x1412.39 and planner x1785.18. First forecast trial35677805769 (code02ab1404) cleared student x3170.26 in20.55s, but planner diedx1128.20. All raw result JSONs are included. Runtime variation changes trajectories; we have not established reliable browser clear rates or model-only success. The latest all-clear run is one comparison, not proof of universal success.
+
+Clone-isolation and jump-edge tests passed. Replaying recorded step-locked effective actions reproduces the measured final phase/x for all three seeds per lane. The optional video is labelled an action trace replay; it is not footage of live API inference.

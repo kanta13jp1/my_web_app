@@ -101,6 +101,13 @@ jobs:
           node scripts/jev_triad/run.mjs
           node scripts/jev_triad/replay.mjs
           node scripts/jev_triad/live.mjs
+      - name: Record explicitly labelled successful action replay
+        if: matrix.lane == 'lightgbm'
+        run: |
+          git show d224c892c1f16895f24978358717717f96bad657:web/labs/jev-mario/audio.mjs > out/lightgbm/frozen/audio.mjs
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+          python scripts/jev_triad/video.py
       - name: Preserve results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
