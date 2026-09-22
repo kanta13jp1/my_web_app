@@ -52,13 +52,13 @@ jobs:
           cp /tmp/jev-backend/localjev.log out/triad/ || true
           cp /tmp/jev-backend/llama.log out/triad/ || true
       - name: Preserve results
-        if: always()
+        if: always() && (matrix.lane != 'cloud_jev' || inputs.api_lane == 'both')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: triad-${{ matrix.lane }}-${{ github.run_id }}
           path: out/triad/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: error
   assisted:
     permissions:
       contents: read
@@ -86,7 +86,10 @@ jobs:
       - name: Evaluate closed loop with disclosed search assistance
         env:
           LANE: ${{ matrix.lane }}
-        run: node scripts/jev_triad/run.mjs
+        run: |
+          node --test scripts/jev_triad/planner.test.mjs
+          node scripts/jev_triad/run.mjs
+          node scripts/jev_triad/replay.mjs
       - name: Preserve results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
