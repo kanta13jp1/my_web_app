@@ -294,5 +294,5 @@ test('spinning coins render in the underground room without changing simulation 
   g.frames=10;drawWorld(ctx,g);const b=ctx.getImageData(64,112,16,16).data;
   return {changed:a.some((v,i)=>v!==b[i]),unchanged};
  });
- expect(result).toEqual({changed:true,unchanged:true});await screenshot(page,info.outputPath('world11-spinning-coin.png'));
+ expect(result).toEqual({changed:true,unchanged:true});await page.locator('canvas').screenshot({path:info.outputPath('world11-spinning-coin.png')});
 });
