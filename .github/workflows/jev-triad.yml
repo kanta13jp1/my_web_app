@@ -11,6 +11,10 @@ on:
         type: choice
         options: [both, localjev]
         default: both
+      live_only:
+        description: Skip step-locked API trials; run wall-clock trials only
+        type: boolean
+        default: false
 permissions: {}
 concurrency:
   group: jev-triad-${{ github.ref }}
@@ -42,8 +46,14 @@ jobs:
         env:
           LANE: ${{ matrix.lane }}
           JEV_MARIO_EXPERIMENT_KEY: ${{ matrix.lane == 'cloud_jev' && secrets.JEV_MARIO_EXPERIMENT_KEY || '' }}
-        if: matrix.lane != 'cloud_jev' || inputs.api_lane == 'both'
+        if: (matrix.lane != 'cloud_jev' || inputs.api_lane == 'both') && !inputs.live_only
         run: node scripts/jev_triad/api-run.mjs
+      - name: Evaluate wall-clock API control
+        if: matrix.lane != 'cloud_jev' || inputs.api_lane == 'both'
+        env:
+          LANE: ${{ matrix.lane }}
+          JEV_MARIO_EXPERIMENT_KEY: ${{ matrix.lane == 'cloud_jev' && secrets.JEV_MARIO_EXPERIMENT_KEY || '' }}
+        run: node scripts/jev_triad/live.mjs
       - name: Preserve backend provenance
         if: always() && matrix.lane == 'localjev'
         run: |
