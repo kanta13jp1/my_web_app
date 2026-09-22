@@ -3,6 +3,11 @@ on:
   pull_request:
     paths: ['scripts/jev_quad/**', '.github/workflows/jev-quad.yml']
   workflow_dispatch:
+    inputs:
+      replay_run:
+        description: Existing measurement run to render without any inference calls
+        type: string
+        default: ''
 permissions: {}
 concurrency:
   group: jev-quad-${{ github.ref }}
@@ -19,7 +24,7 @@ jobs:
           node --check scripts/jev_quad/provider.mjs
           python -m py_compile scripts/jev_quad/laya_server.py scripts/jev_quad/video.py
   experiment:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.replay_run == ''
     permissions: {contents: read}
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -80,7 +85,8 @@ jobs:
           retention-days: 14
   video:
     needs: experiment
-    permissions: {contents: read}
+    if: always() && github.event_name == 'workflow_dispatch' && (needs.experiment.result == 'success' || inputs.replay_run != '')
+    permissions: {contents: read, actions: read}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -88,9 +94,11 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          pattern: quad-*-${{ github.run_id }}
+          pattern: quad-*-${{ inputs.replay_run || github.run_id }}
           path: out/quad/
           merge-multiple: true
+          run-id: ${{ inputs.replay_run || github.run_id }}
+          github-token: ${{ github.token }}
       - run: |
           mkdir -p out/lightgbm/frozen
           for module in world11 reaction audio; do
@@ -98,6 +106,7 @@ jobs:
           done
           python -m pip install playwright==1.55.0
           python -m playwright install --with-deps chromium
+          sudo apt-get update -qq && sudo apt-get install -y ffmpeg
           python scripts/jev_quad/video.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:

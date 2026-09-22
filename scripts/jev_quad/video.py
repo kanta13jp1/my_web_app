@@ -1,5 +1,5 @@
 """2x2 replay of actual parallel trials, aligned by elapsed simulation frame."""
-import base64,http.server,threading,json
+import base64,http.server,threading,json,subprocess
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 class Quiet(http.server.SimpleHTTPRequestHandler):
@@ -46,7 +46,7 @@ try:
       // Preserve the verified terminal game state; all four retain their actual finish result.
       const sounds=g.drainSounds();if(i===2){for(const name of sounds)audio.effect(name);if(g.phase==='playing'&&frame<r.frames)audio.tick(g.room,{star:g.star>0,hurry:g.time<100});}
       ctx.fillStyle=['#59d5e4','#c5a0ff','#70dfac','#ffbf75'][i];ctx.font='bold 21px sans-serif';ctx.fillText(titles[i],x+12,y+24);
-      ctx.save();ctx.translate(x+16,y+34);ctx.scale(1.875,1.875);drawWorld(ctx,g);ctx.restore();
+      ctx.save();ctx.beginPath();ctx.rect(x+16,y+34,480,450);ctx.clip();ctx.translate(x+16,y+34);ctx.scale(1.875,1.875);drawWorld(ctx,g);ctx.restore();
       const returned=r.apiTrace.filter(a=>(a.received_frame??a.frame)<=g.frames&&!a.error);const a=returned.at(-1);
       ctx.fillStyle='#fff';ctx.font='16px monospace';ctx.fillText(`t=${(Math.min(frame,r.frames)/60).toFixed(2)}s x=${g.p.x.toFixed(0)} ${g.phase}`,x+12,y+507);
       ctx.fillText(`accepted ${l.accepted} / override ${l.overrides}`,x+12,y+529);
@@ -60,6 +60,7 @@ try:
     return {data,mode,frames,replayParity:true,results:runs.map(r=>({lane:r.lane,clear:r.clear,x:r.x,wall_ms:r.wall_ms,accepted:r.accepted,overrides:r.overrides,apiCalls:r.apiCalls})),label:'Measured parallel trials aligned to t=0; action replay, not live capture'};
    }''',mode)
    (out/f'four-lane-{mode}.webm').write_bytes(base64.b64decode(result.pop('data')))
+   subprocess.run(['ffmpeg','-y','-loglevel','error','-i',str(out/f'four-lane-{mode}.webm'),'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart',str(out/f'four-lane-{mode}.mp4')],check=True)
    (out/f'{mode}.json').write_text(json.dumps(result,indent=2))
    page.locator('canvas').screenshot(path=str(out/f'{mode}.png'));page.close()
   browser.close()
