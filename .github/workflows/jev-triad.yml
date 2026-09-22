@@ -90,6 +90,7 @@ jobs:
           node --test scripts/jev_triad/planner.test.mjs
           node scripts/jev_triad/run.mjs
           node scripts/jev_triad/replay.mjs
+          node scripts/jev_triad/live.mjs
       - name: Preserve results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
