@@ -42,7 +42,7 @@ class WikiRepository {
       'action': 'wiki.list',
       'offset': offset,
       'limit': limit,
-    }));
+    }),);
     final rows = data['pages'];
     final next = data['next_offset'];
     if (rows is! List || rows.length > limit ||

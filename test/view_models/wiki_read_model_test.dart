@@ -18,7 +18,7 @@ void main() {
       }
       if (failNext) { failNext = false; throw StateError('offline'); }
       return {'success': true, 'pages': [{'id': 'p-50'}], 'next_offset': null};
-    }));
+    }),);
     addTearDown(model.dispose);
     await model.refresh();
     await model.loadMore();
@@ -65,7 +65,7 @@ void main() {
       offsets.add(body['offset'] as int);
       if (++requests == 2) throw StateError('offline');
       return {'success': true, 'pages': [{'id': 'a'}], 'next_offset': null};
-    }));
+    }),);
     addTearDown(model.dispose);
     await model.refresh();
     await model.refresh();
@@ -81,7 +81,7 @@ void main() {
     final model = WikiReadModel(WikiRepository((_) async {
       if (++requests == 1) throw StateError('offline');
       return {'success': true, 'page': {'id': 'a'}};
-    }));
+    }),);
     addTearDown(model.dispose);
     await model.select('a');
     expect(model.detailError, isNotNull);

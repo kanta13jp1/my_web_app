@@ -26,7 +26,7 @@ void main() {
           'success': true,
           'pages': <dynamic>[],
           'next_offset': null,
-        });
+        },);
     final batch = await repository.list();
     expect(batch.pages, isEmpty);
     expect(batch.nextOffset, isNull);
@@ -38,13 +38,13 @@ void main() {
             'success': true,
             'pages': <dynamic>[],
             'next_offset': next,
-          });
+          },);
       await expectLater(repository.list(), throwsFormatException);
     }
     final legacy = WikiRepository((_) async => {
           'success': true,
           'pages': <dynamic>[],
-        });
+        },);
     await expectLater(legacy.list(), throwsFormatException);
   });
 
@@ -63,7 +63,7 @@ void main() {
     final wrong = WikiRepository((_) async => {
           'success': true,
           'page': {'id': 'other'},
-        });
+        },);
     await expectLater(wrong.get('expected'), throwsFormatException);
     final failed = WikiRepository((_) async => {'success': false});
     await expectLater(failed.list(), throwsFormatException);

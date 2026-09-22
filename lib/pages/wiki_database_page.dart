@@ -45,7 +45,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
     _readModel = WikiReadModel(WikiRepository((body) async {
       final response = await _supabase.functions.invoke('enterprise-hub', body: body);
       return response.data;
-    }));
+    }),);
     _readModel.addListener(_onReadChanged);
     _fetchPages();
   }
@@ -293,7 +293,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                             : _readModel.loadMore,
                     child: Text(_readModel.loading
                         ? '読み込み中…'
-                        : _readModel.error != null ? '再試行' : '続きを読む'),
+                        : _readModel.error != null ? '再試行' : '続きを読む',),
                   ),
               ],
             );
