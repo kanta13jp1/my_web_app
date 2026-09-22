@@ -124,7 +124,7 @@ setTimeout(() => { if (!connected&&!student.active) status('my_web_appの「Jev 
 $('input-profile').onchange=()=>stop('入力条件を変更しました。最初からに戻して比較してください');
 $('mode').addEventListener('change', () => { stop('モードを変更しました'); $('rom-controls').hidden = !isRom(); $('recreation-controls').hidden = !isRecreation(); $('touch-controls').hidden = !isRecreation();
   if (isRecreation()) {drawWorld(context,world);showPose();} else context.clearRect(0,0,256,240);
-  $('mode-note').textContent = isRecreation() ? '初代1-1を参考に一から実装した再現ゲームです。原作ROMの実行や完全一致ではありません。手動プレイはAPI不要です。' : isRom() ? '手元のROMで手動プレイを開始し、1-1の操作可能な場面から測定します。' : '合成したゲーム状態を繰り返し送ります。実ゲームのプレイ結果ではありません。';
+  $('mode-note').textContent = isRecreation() ? stageName()+'を参考にした独立実装です。原作ROMの実行や完全一致ではありません。手動プレイはAPI不要です。' : isRom() ? '手元のROMで手動プレイを開始し、1-1の操作可能な場面から測定します。' : '合成したゲーム状態を繰り返し送ります。実ゲームのプレイ結果ではありません。';
   samples = []; update(); $('state').textContent = ''; });
 $('rom').addEventListener('change', async e => {
   stop(); const file = e.target.files[0]; if (!file) return;
