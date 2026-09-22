@@ -4,6 +4,15 @@ on:
     paths: ['scripts/jev_quad/**', '.github/workflows/jev-quad.yml']
   workflow_dispatch:
     inputs:
+      survival_shield:
+        description: Additional exact-simulator death check (assisted only)
+        type: boolean
+        default: false
+      input_format:
+        description: API input representation (LightGBM features unchanged)
+        type: choice
+        options: [original, compact]
+        default: original
       replay_run:
         description: Existing measurement run to render without any inference calls
         type: string
@@ -22,6 +31,7 @@ jobs:
       - run: |
           node --check scripts/jev_quad/run.mjs
           node --check scripts/jev_quad/provider.mjs
+          node --test scripts/jev_quad/compact.test.mjs
           python -m py_compile scripts/jev_quad/laya_server.py scripts/jev_quad/video.py
   experiment:
     if: github.event_name == 'workflow_dispatch' && inputs.replay_run == ''
@@ -66,6 +76,8 @@ jobs:
           exit 1
       - name: Assisted and unassisted wall-clock trials
         env:
+          SURVIVAL_SHIELD: ${{ inputs.survival_shield }}
+          INPUT_FORMAT: ${{ inputs.input_format }}
           LANE: ${{ matrix.lane }}
           JEV_MARIO_EXPERIMENT_KEY: ${{ matrix.lane == 'cloud_jev' && secrets.JEV_MARIO_EXPERIMENT_KEY || '' }}
         run: |
