@@ -58,4 +58,37 @@ void main() {
     await request;
     expect(notifications, 1);
   });
+  test('failed refresh retries from zero even after reaching final page', () async {
+    var requests = 0;
+    final offsets = <int>[];
+    final model = WikiReadModel(WikiRepository((body) async {
+      offsets.add(body['offset'] as int);
+      if (++requests == 2) throw StateError('offline');
+      return {'success': true, 'pages': [{'id': 'a'}], 'next_offset': null};
+    }));
+    addTearDown(model.dispose);
+    await model.refresh();
+    await model.refresh();
+    expect(model.pages.single['id'], 'a');
+    expect(model.error, isNotNull);
+    await model.retry();
+    expect(model.error, isNull);
+    expect(offsets, [0, 0, 0]);
+  });
+
+  test('failed detail can be retried without losing list navigation', () async {
+    var requests = 0;
+    final model = WikiReadModel(WikiRepository((_) async {
+      if (++requests == 1) throw StateError('offline');
+      return {'success': true, 'page': {'id': 'a'}};
+    }));
+    addTearDown(model.dispose);
+    await model.select('a');
+    expect(model.detailError, isNotNull);
+    expect(model.error, isNull);
+    await model.select(model.selectedId!);
+    expect(model.detailError, isNull);
+    expect(model.selectedPage!['id'], 'a');
+  });
+
 }

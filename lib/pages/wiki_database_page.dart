@@ -28,7 +28,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   bool get _isLoading =>
       (_readModel.loading && _pages.isEmpty) || _readModel.detailLoading;
   String? get _errorMessage =>
-      _pages.isEmpty ? _readModel.error : _readModel.detailError;
+      _pages.isEmpty ? _readModel.error : null;
   List<Map<String, dynamic>> get _pages => _readModel.pages;
   String? get _selectedPageId => _readModel.selectedId;
   Map<String, dynamic>? get _selectedPage => _readModel.selectedPage;
@@ -286,8 +286,14 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                   Text(_readModel.error!, style: const TextStyle(color: Colors.red)),
                 if (_readModel.nextOffset != null || _readModel.error != null)
                   TextButton(
-                    onPressed: _readModel.loading ? null : _readModel.loadMore,
-                    child: Text(_readModel.loading ? '読み込み中…' : '続きを読む'),
+                    onPressed: _readModel.loading
+                        ? null
+                        : _readModel.error != null
+                            ? _readModel.retry
+                            : _readModel.loadMore,
+                    child: Text(_readModel.loading
+                        ? '読み込み中…'
+                        : _readModel.error != null ? '再試行' : '続きを読む'),
                   ),
               ],
             );
@@ -350,6 +356,20 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   }
 
   Widget _buildPageDetail() {
+    if (_readModel.detailError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_readModel.detailError!),
+            TextButton(
+              onPressed: () => _fetchPageDetail(_selectedPageId!),
+              child: const Text('再試行'),
+            ),
+          ],
+        ),
+      );
+    }
     if (_selectedPage == null) {
       return const Center(
         child: Column(

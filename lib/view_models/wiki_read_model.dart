@@ -16,8 +16,15 @@ class WikiReadModel extends ChangeNotifier {
   int _listRequest = 0;
   int _detailRequest = 0;
   bool _disposed = false;
+  int _retryOffset = 0;
+  bool _retryReplace = true;
 
   Future<void> refresh() => _load(0, replace: true);
+
+  Future<void> retry() async {
+    if (loading || error == null) return;
+    await _load(_retryOffset, replace: _retryReplace);
+  }
 
   Future<void> loadMore() async {
     if (loading) return;
@@ -28,6 +35,8 @@ class WikiReadModel extends ChangeNotifier {
   Future<void> _load(int offset, {required bool replace}) async {
     if (_disposed) return;
     final request = ++_listRequest;
+    _retryOffset = offset;
+    _retryReplace = replace;
     loading = true;
     error = null;
     notifyListeners();
