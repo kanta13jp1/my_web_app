@@ -6,7 +6,7 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 
 from check_cicd_path_filters import _extract_paths_ignore
-from classify_ci_changes import SKILL_CONTRACT_TESTS, classify
+from classify_ci_changes import NOTION_AUDIT_TESTS, SKILL_CONTRACT_TESTS, classify
 
 
 class ClassifyCiChangesTest(unittest.TestCase):
@@ -109,6 +109,39 @@ class ClassifyCiChangesTest(unittest.TestCase):
                      "test/services/example_test.dart", "pubspec.lock"]:
             with self.subTest(path=path):
                 self.assertTrue(classify([*SKILL_CONTRACT_TESTS, path])["flutter"])
+
+    def test_notion_suites_have_dedicated_pr_validation(self) -> None:
+        self.assertEqual(NOTION_AUDIT_TESTS, (
+            "test/scripts/test_notion_migration_cloud_audit.py",
+            "test/scripts/test_notion_wbs_import_plan.py",
+        ))
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/notion-migration-cloud-audit.yml").read_text(
+                        encoding="utf-8")
+        pr_paths = workflow.split("  pull_request:\n    paths:\n", 1)[1].split(
+            "  workflow_dispatch:", 1)[0]
+        paths = [line.strip().removeprefix("- ") for line in pr_paths.splitlines()
+                 if line.strip().startswith("- ")]
+        validate = workflow.split("  validate:\n", 1)[1].split("  audit:\n", 1)[0]
+        self.assertIn("if: github.event_name == 'pull_request'", validate)
+        self.assertNotIn("continue-on-error", validate)
+        for path in NOTION_AUDIT_TESTS:
+            with self.subTest(path=path):
+                self.assertIn(path, paths)
+                self.assertIn("          PYTHONPATH=. python " + path + "\n", validate)
+                self.assertFalse(any(classify([path]).values()))
+        self.assertFalse(any(classify([
+            "scripts/notion_migration_cloud_audit.py", *NOTION_AUDIT_TESTS,
+        ]).values()))
+
+    def test_notion_exceptions_preserve_mixed_and_forced_validation(self) -> None:
+        for path in ["lib/main.dart", "web/index.html", "pubspec.lock",
+                     "test/scripts/tool_test.dart", "test/unknown_test.py",
+                     "test/scripts/test_notion_other.py"]:
+            with self.subTest(path=path):
+                self.assertTrue(classify([*NOTION_AUDIT_TESTS, path])["flutter"])
+        self.assertTrue(classify([*NOTION_AUDIT_TESTS, "lib/main.dart"])["web"])
+        self.assertTrue(all(classify(list(NOTION_AUDIT_TESTS), force_all=True).values()))
 
     def test_unknown_python_tests_remain_conservative(self) -> None:
         self.assertTrue(classify(["test/scripts/new_tool_test.py"])["flutter"])
