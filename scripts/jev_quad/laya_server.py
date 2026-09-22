@@ -34,7 +34,7 @@ class Handler(BaseHTTPRequestHandler):
    budget=max_len-len(empty)
    before=time.perf_counter();result=agent.system_one(state,body['questions']);elapsed=(time.perf_counter()-before)*1000
    result['laya_compute_ms']=elapsed
-   result['laya_input']={'state_tokens':state_tokens,'state_budget':budget,'truncated':state_tokens>budget,'encoded_tokens':len(ids),'options':len(markers)}
+   result['laya_input']={'state_tokens':state_tokens,'state_budget':budget,'truncated':state_tokens>budget,'encoded_tokens':len(ids),'options':len(markers),'question_and_options_tokens':len(empty),'max_tokens':max_len}
    encoded=json.dumps(result).encode();self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(encoded)
   except BrokenPipeError:pass
   except Exception as exc:
