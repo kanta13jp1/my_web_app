@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
+import 'package:my_web_app/utils/wiki_page_response.dart';
 
 /// Wiki・データベースページ
 /// wiki-database Edge Function と連携して階層型Wikiを管理
@@ -64,7 +65,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
       final data = response.data;
       if (data is Map<String, dynamic> && data['pages'] is List) {
         setState(
-          () => _pages = (data['pages'] as List).cast<Map<String, dynamic>>(),
+          () => _pages = (data['pages'] as List)
+              .cast<Map<String, dynamic>>()
+              .map(normalizeWikiPageResponse)
+              .toList(),
         );
       } else {
         setState(() => _pages = []);
@@ -85,11 +89,14 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['pages'] is List) {
-        final allPages = (data['pages'] as List).cast<Map<String, dynamic>>();
+        final allPages = (data['pages'] as List)
+              .cast<Map<String, dynamic>>()
+              .map(normalizeWikiPageResponse)
+              .toList();
         final page = allPages.where((p) {
-          final meta = p['metadata'] as Map<String, dynamic>? ?? p;
-          return (meta['id'] ?? p['id'])?.toString() == pageId;
+          return p['id']?.toString() == pageId;
         }).firstOrNull;
+        if (!mounted || _selectedPageId != pageId) return;
         setState(() {
           _selectedPage = page;
           _children = [];
@@ -187,6 +194,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
         ],
       ),
     );
+    final rowContent = ctrl.text.trim();
     ctrl.dispose();
     if (confirmed != true) return;
     try {
@@ -195,7 +203,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
         body: {
           'action': 'sheet.add_row',
           'sheet_id': pageId,
-          'data': {'content': ctrl.text.trim()},
+          'data': {'content': rowContent},
         },
       );
       await _fetchPageDetail(pageId);
