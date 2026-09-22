@@ -7,8 +7,8 @@ const url=cloud?'https://api.typesafe.ai/v1/systemone':'http://127.0.0.1:8080/v1
 const teacher=JSON.parse(fs.readFileSync('scripts/jev_distillation/teacher.json'));
 const out='out/triad';fs.mkdirSync(out,{recursive:true});
 const results={source:SOURCE,lane,backend:cloud?'jev-latest':'LocalJev 3f23e36 + Qwen2.5-0.5B-Instruct Q4_K_M + llama.cpp b6000 CPU',timing:'STEP-LOCKED diagnostic. Simulation pauses for API/search; not real-time clear. HTTP is not pure inference.',episodes:[]};
-let budget=80;
 for(const assisted of [false,true]){
+ let budget=50,maxX=32,lastProgress=0;
  const g=init();let raw='noop',effective='noop',calls=0,valid=0,accepted=0,overrides=0,releases=0;const trace=[];
  while(g.phase==='playing'&&g.frames<2400&&budget>0){
   if(g.frames%30===0){
@@ -29,6 +29,8 @@ for(const assisted of [false,true]){
   }
   const action=assisted?edge(g,effective):effective;if(action!==effective)releases++;
   g.buttons(action);g.step();g.drainSounds();
+  if(g.p.x>maxX+1){maxX=g.p.x;lastProgress=g.frames;}
+  if(g.frames-lastProgress>=300)break;
  }
  const row={assisted,clear:g.phase==='won',phase:g.phase,x:g.p.x,frames:g.frames,calls,valid,accepted,overrides,releases,budget_remaining:budget};results.episodes.push(row);
  fs.writeFileSync(`${out}/${lane}-${assisted?'assisted':'pure'}-trace.json`,JSON.stringify(trace,null,2));fs.writeFileSync(`${out}/${lane}.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(row));

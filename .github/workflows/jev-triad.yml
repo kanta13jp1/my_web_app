@@ -5,6 +5,12 @@ on:
       - 'scripts/jev_triad/**'
       - '.github/workflows/jev-triad.yml'
   workflow_dispatch:
+    inputs:
+      api_lane:
+        description: API lanes to run (cloud Jev requires temporary secret)
+        type: choice
+        options: [both, localjev]
+        default: both
 permissions: {}
 concurrency:
   group: jev-triad-${{ github.ref }}
@@ -36,6 +42,7 @@ jobs:
         env:
           LANE: ${{ matrix.lane }}
           JEV_MARIO_EXPERIMENT_KEY: ${{ matrix.lane == 'cloud_jev' && secrets.JEV_MARIO_EXPERIMENT_KEY || '' }}
+        if: matrix.lane != 'cloud_jev' || inputs.api_lane == 'both'
         run: node scripts/jev_triad/api-run.mjs
       - name: Preserve backend provenance
         if: always() && matrix.lane == 'localjev'
@@ -51,7 +58,7 @@ jobs:
           name: triad-${{ matrix.lane }}-${{ github.run_id }}
           path: out/triad/
           retention-days: 14
-          if-no-files-found: error
+          if-no-files-found: warn
   assisted:
     permissions:
       contents: read
