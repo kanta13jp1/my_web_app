@@ -34,7 +34,7 @@ try:
      ctx.fillText('Independent CPUs; no inference pause. Audio: LightGBM. Shield shown below.',20,80);
      for(let i=0;i<4;i++){
       const l=lanes[i],g=l.game,r=l.run,x=(i%2)*512,y=100+Math.floor(i/2)*560;
-      while(l.index<r.trace.length&&r.trace[l.index].frame===g.frames){const d=r.trace[l.index++];l.action=d.effective;if(d.source==='survival-shield')l.shield++;else if(d.raw===null)l.fallback++;else if(d.accepted)l.accepted++;else l.overrides++;}
+      while(l.index<r.trace.length&&r.trace[l.index].frame===g.frames){const d=r.trace[l.index++];l.action=d.effective;if(d.applyShield)l.shield++;if(d.source==='survival-shield')l.shield++;else if(d.raw===null)l.fallback++;else if(d.accepted)l.accepted++;else l.overrides++;}
       if(g.frames<r.frames&&g.phase==='playing'){
        const a=mode==='assisted'&&g.p.grounded&&g.wasJump&&l.action.includes('jump')?(l.action==='jump'?'noop':l.action.replace('_jump','')):l.action;
        g.buttons(a);g.step();
