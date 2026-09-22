@@ -38,7 +38,7 @@ export interface IntegrationRegistrySnapshot {
 const JSON_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Content-Type": "application/json",
 };
 
