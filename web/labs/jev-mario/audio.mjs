@@ -46,11 +46,12 @@ export class GameAudio{
   const now=this.context.currentTime;if(now<this.musicUntil)return;
   const track=star?'star':room==='underground'?'underground':'overworld';
   if(track!==this.track){this.stopMusic();this.track=track;this.beat=0;this.next=now;}
-  if(this.next<now-.25)this.next=now;
+  // Do not bunch late beats together after a stalled browser frame.
+  if(this.next<now)this.next=now;
   const step=(track==='star'?.095:track==='underground'?.18:.145)*(hurry?.78:1),melody=scores[track];
   while(this.next<now+.08){const n=melody[this.beat%melody.length],root=[48,45,53,43][Math.floor(this.beat/16)%4];
    this.tone(n,this.next,step*.8,'square',.045,true);
-   if(track==='overworld'&&this.beat%4===2)this.tone(n?n-12:0,this.next,step*.65,'square',.025,true,0,.5);
+   if(track==='overworld'&&this.beat%2===0)this.tone(root+12+[0,4,7,4][Math.floor(this.beat/2)%4],this.next,step*.65,'square',.020,true,0,.5);
    if(this.beat%2===0)this.tone(track==='underground'?36:root+(this.beat%4===2?7:0),this.next,step*1.6,'triangle',.10,true);
    // Short low pulse supplies a bounded percussion voice.
    if(track==='overworld'&&this.beat%2===1)this.noise(this.next,.035,.012,true);
