@@ -1,4 +1,17 @@
 import { test, expect, type Page } from '@playwright/test';
+
+test('LightGBM worker plays without consent or API; records assistance and stops',async({page},info)=>{
+ test.setTimeout(90000);
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await expect(lab.locator('#consent')).not.toBeChecked();await lab.locator('#play-student').click();
+ await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
+ await expect(lab.locator('#student-status')).toContainText('探索変更',{timeout:15000});
+ if(info.project.name==='desktop')await expect(lab.locator('#status')).toContainText('1-1クリア！',{timeout:60000});
+ await screenshot(page,info.outputPath('world11-student.png'));await lab.locator('#stop').click();
+ const before=await lab.locator('#progress').textContent();await page.waitForTimeout(350);await expect(lab.locator('#progress')).toHaveText(before!);
+ await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');await expect(lab.locator('#consent')).not.toBeChecked();expect(errors).toEqual([]);
+});
 test('keyboard and touch crouch recover; walk and jump poses render',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
  await lab.locator('#play-local').click();
@@ -269,4 +282,27 @@ test('stomp score and fire impact render in a deterministic canvas fixture',asyn
  await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;await frame.waitForSelector('#screen');
  const result=await frame.evaluate(async()=>{const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs');const g=new World11();Object.assign(g.p,{x:100,y:175,vx:0,vy:2,grounded:false});g.input={jump:true};g.wasJump=true;g.enemies=[{x:100,y:192,w:14,h:16,vx:0,vy:0,kind:'goomba',dead:0}];g.step();g.effects.push({kind:'burst',x:125,y:190,life:9});const canvas=document.createElement('canvas');canvas.width=256;canvas.height=240;canvas.style.width='512px';canvas.dataset.testid='feedback-fixture';document.body.prepend(canvas);drawWorld(canvas.getContext('2d'),g);return {score:g.score,bounce:g.p.vy,popups:g.effects.filter(f=>f.kind==='score').length};});
  expect(result.score).toBe(100);expect(result.bounce).toBeLessThan(-3.5);expect(result.popups).toBe(1);await screenshot(page,info.outputPath('stomp-score-fixture.png'));
+});
+
+test('spinning coins render in the underground room without changing simulation state',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');
+ const result=await page.evaluate(async()=>{
+  const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs');
+  const g=new World11();g.room='underground';g.camera=0;g.contents=new Map([['4,7','loose']]);g.items=[{kind:'flower',x:100,y:128,w:14,h:16}];
+  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=240;canvas.style.width='512px';canvas.style.imageRendering='pixelated';document.body.replaceChildren(canvas);
+  const ctx=canvas.getContext('2d')!;g.frames=0;const before=JSON.stringify(g.snapshot());drawWorld(ctx,g);const a=ctx.getImageData(64,112,16,16).data.slice();const unchanged=JSON.stringify(g.snapshot())===before;
+  g.frames=10;drawWorld(ctx,g);const b=ctx.getImageData(64,112,16,16).data;
+  return {changed:a.some((v,i)=>v!==b[i]),unchanged};
+ });
+ expect(result).toEqual({changed:true,unchanged:true});await page.locator('canvas').screenshot({path:info.outputPath('world11-spinning-coin.png')});
+});
+
+test('underground selection, manual movement, reset and stage return',async({page},info)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#stage').selectOption('2');await expect(lab.locator('#progress')).toContainText('1-2');
+ await lab.locator('#play-local').click();await page.keyboard.down('ArrowRight');await page.waitForTimeout(500);await page.keyboard.up('ArrowRight');
+ await expect(lab.locator('#progress')).toContainText('World 1-2');await expect(lab.locator('#progress')).not.toContainText('x=32 ');
+ await screenshot(page,info.outputPath('world12-manual.png'));await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('1-2をリセット');
+ await lab.locator('#stage').selectOption('1');await expect(lab.locator('#progress')).toContainText('1-1');await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');expect(errors).toEqual([]);
 });
