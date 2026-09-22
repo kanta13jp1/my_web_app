@@ -1,0 +1,301 @@
+{
+  "source": "cc39a8f34e5bc274d9c987aa51ead1bcd5af9b49",
+  "stage": 2,
+  "lane": "lightgbm",
+  "mode": "raw",
+  "started_at": "2026-09-22T04:54:03.026Z",
+  "api_min_start_ms": 500,
+  "max_api_calls": 60,
+  "model_input": "compact-v1: same telemetry with binary map and short instructions; no new features",
+  "forecast": "Predict current held input for previous solve age, rounded/clamped to1..12frames",
+  "timing": "60Hz wall-clock simulation continues during worker search and any API wait; Node CPU, no browser/rendering",
+  "shieldChanges": 0,
+  "applyShieldChanges": 0,
+  "shield": "30-frame exact-simulator death check every6frames AND at worker-result application; separate from model and worker search",
+  "clear": false,
+  "phase": "dead",
+  "x": 290.0200000000007,
+  "frames": 202,
+  "wall_ms": 3371.578458,
+  "decisions": 34,
+  "accepted": 34,
+  "overrides": 0,
+  "fallbackDecisions": 0,
+  "releases": 0,
+  "apiCalls": 0,
+  "apiTrace": [],
+  "trace": [
+    {
+      "frame": 0,
+      "x": 32,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.7428550000000058
+    },
+    {
+      "frame": 6,
+      "x": 34.730000000000004,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.5221910000000207
+    },
+    {
+      "frame": 12,
+      "x": 42.129999999999995,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.23451199999999517
+    },
+    {
+      "frame": 18,
+      "x": 51.42999999999998,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.1704740000000129
+    },
+    {
+      "frame": 24,
+      "x": 60.72999999999996,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.25665700000001834
+    },
+    {
+      "frame": 30,
+      "x": 70.02999999999994,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.2855179999999109
+    },
+    {
+      "frame": 36,
+      "x": 79.32999999999993,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.1791210000000092
+    },
+    {
+      "frame": 42,
+      "x": 88.62999999999991,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.14357300000006035
+    },
+    {
+      "frame": 48,
+      "x": 97.9299999999999,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.31549600000005285
+    },
+    {
+      "frame": 54,
+      "x": 107.22999999999988,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.23682499999995343
+    },
+    {
+      "frame": 60,
+      "x": 116.52999999999986,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.16870700000004035
+    },
+    {
+      "frame": 66,
+      "x": 125.82999999999984,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.1322650000001886
+    },
+    {
+      "frame": 72,
+      "x": 135.12999999999988,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.11912699999993492
+    },
+    {
+      "frame": 78,
+      "x": 144.42999999999995,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.17000099999995655
+    },
+    {
+      "frame": 84,
+      "x": 152.04999999999993,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.11669899999992595
+    },
+    {
+      "frame": 90,
+      "x": 156.78999999999994,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.10491000000001804
+    },
+    {
+      "frame": 96,
+      "x": 163.05999999999995,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.13816799999995055
+    },
+    {
+      "frame": 102,
+      "x": 169.59999999999994,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.16040300000008756
+    },
+    {
+      "frame": 108,
+      "x": 177.54999999999995,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.14889100000004873
+    },
+    {
+      "frame": 114,
+      "x": 180.39,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.17705900000009933
+    },
+    {
+      "frame": 120,
+      "x": 180.69,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.1501429999998436
+    },
+    {
+      "frame": 126,
+      "x": 180.69,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.136457000000064
+    },
+    {
+      "frame": 132,
+      "x": 183.42,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.19802100000015344
+    },
+    {
+      "frame": 138,
+      "x": 190.82,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.12486099999978251
+    },
+    {
+      "frame": 144,
+      "x": 200.12000000000006,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.11265099999991435
+    },
+    {
+      "frame": 150,
+      "x": 209.42000000000013,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.176633000000038
+    },
+    {
+      "frame": 156,
+      "x": 218.7200000000002,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.12439499999982218
+    },
+    {
+      "frame": 162,
+      "x": 228.02000000000027,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.11715500000036627
+    },
+    {
+      "frame": 168,
+      "x": 237.32000000000033,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.12266300000010233
+    },
+    {
+      "frame": 174,
+      "x": 246.6200000000004,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.12245200000006662
+    },
+    {
+      "frame": 180,
+      "x": 255.92000000000047,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.1176580000001195
+    },
+    {
+      "frame": 186,
+      "x": 265.22000000000054,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.10417999999981475
+    },
+    {
+      "frame": 192,
+      "x": 274.5200000000006,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.09600700000009965
+    },
+    {
+      "frame": 198,
+      "x": 283.8200000000007,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.08247900000014852
+    }
+  ]
+}
