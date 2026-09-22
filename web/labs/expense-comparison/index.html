@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>支出分類の比較ノート | my_web_app</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+<main>
+  <header><a href="/asset-management">← 資産管理</a><span class="tag">EXPERIMENT / 01</span></header>
+  <section class="intro">
+    <p class="eyebrow">判断する前に、見比べる。</p>
+    <h1>支出分類の<br><span>比較ノート</span></h1>
+    <p class="lead">同じメモを、辞書とBERTはどう読むか。<br>合成サンプルの保存済み実測から、候補の違いを確認できます。</p>
+    <div class="notice">実際の明細は使用していません。この画面では推論の実行・外部API送信・記帳を行いません。</div>
+  </section>
+  <p id="status" role="status">比較記録を読み込んでいます…</p>
+  <button id="retry" hidden>記録を再読み込み</button>
+  <section id="workspace" hidden>
+    <div class="toolbar">
+      <label for="sample">01 / メモを選ぶ<select id="sample"></select></label>
+      <label for="trial">測定回<select id="trial"><option value="0">1回目</option><option value="1">2回目</option></select></label>
+    </div>
+    <div class="memo"><span>合成メモ</span><p id="memo"></p><p id="expected"></p></div>
+    <p id="review" class="review"></p>
+    <div class="cards">
+      <article><p class="eyebrow">DICTIONARY</p><h2>既存のルール辞書</h2><p class="candidate" id="rule"></p><p>固定版の辞書を先頭から照合。AIの推論結果ではありません。</p></article>
+      <article class="model"><p class="eyebrow">BERT / ZERO-SHOT NLI</p><h2>BERTの分類候補</h2><p class="candidate" id="bert"></p><p id="latency"></p><p id="confidence"></p></article>
+    </div>
+    <section class="distribution"><h2>候補ごとのスコア</h2><p>スコアは未校正です。「この分類が正しい確率」を示すものではありません。</p><div id="scores"></div></section>
+    <details><summary>測定条件と確認できていないこと</summary>
+      <p id="provenance"></p>
+      <p>同じ14件を各2回、12カテゴリで測定。モデル読込後の初回を含み、ウォームアップによる除外・再試行はありません。CPU・ループバックHTTPの往復を含む時間で、日本のブラウザからの時間や純粋な推論時間とは異なります。</p>
+      <p>正解ラベルは検証用に設定した参照です。曖昧な3件には正解を置かず、正答率を計算しません。業務精度や一般的な性能の評価には不十分です。</p>
+      <p>Jwenvは確認した実装で最大8選択肢のため、この12カテゴリ条件では未測定です。クラウドJevもこの比較では呼び出していません。</p>
+      <p>BERT側は非公式のPoCで、公開NLIモデルを使っています。Jevの重みや判断品質を再現したものではありません。</p>
+      <a id="run" target="_blank" rel="noopener">測定の実行記録</a> · <a href="results.json" download>比較データを保存</a>
+    </details>
+  </section>
+  <footer>my_web_app / 分類候補は、明細を確認するための補助です。</footer>
+</main>
+</body>
+</html>

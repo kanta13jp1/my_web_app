@@ -1,0 +1,112 @@
+name: Expense BERT comparison
+on:
+  pull_request:
+    paths:
+      - 'scripts/expense_comparison/**'
+      - 'web/labs/expense-comparison/**'
+      - 'test/e2e/expense_comparison.py'
+      - '.github/workflows/expense-bert-comparison.yml'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: expense-bert-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {contents: read}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: {persist-credentials: false}
+      - run: |
+          python -B -m unittest discover -s scripts/expense_comparison -p 'test_*.py' -v
+          node --check web/labs/expense-comparison/app.mjs
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+          python test/e2e/expense_comparison.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: expense-browser-${{ github.run_id }}
+          path: out/expense-comparison/
+          retention-days: 14
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions: {contents: read}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: {persist-credentials: false}
+      - name: Decide whether new measurement is needed
+        id: plan
+        run: |
+          if test -f web/labs/expense-comparison/results.json; then
+            echo 'measure=false' >> "$GITHUB_OUTPUT"
+            python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path
+          r=json.loads(p('web/labs/expense-comparison/results.json').read_text())
+          for field,name in [('fixtures_sha256','fixtures.json'),('benchmark_sha256','benchmark.py')]:
+              assert r[field]==hashlib.sha256(p('scripts/expense_comparison',name).read_bytes()).hexdigest()
+          assert r['summary']['valid']==r['summary']['total']==28
+          print('Saved measurement matches current fixtures and benchmark; no repeated model download.')
+          PY
+          else
+            echo 'measure=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Prepare fixed upstream and CPU dependencies
+        if: steps.plan.outputs.measure == 'true'
+        run: |
+          mkdir -p out/expense-comparison
+          lscpu > out/expense-comparison/cpu.txt
+          python -m pip install uv==0.8.22
+          uv python install 3.13
+          git init /tmp/expense-bert
+          git -C /tmp/expense-bert remote add origin https://github.com/hawkymisc/typed-decision-bert.git
+          git -C /tmp/expense-bert fetch --depth 1 origin 5a5af4ebd99c8b7db9f227d4d46216d668c2cc8f
+          git -C /tmp/expense-bert checkout --detach FETCH_HEAD
+          test "$(git -C /tmp/expense-bert rev-parse HEAD)" = 5a5af4ebd99c8b7db9f227d4d46216d668c2cc8f
+          uv venv --python 3.13 /tmp/expense-bert/.venv
+          uv pip install --python /tmp/expense-bert/.venv/bin/python torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+          uv pip install --python /tmp/expense-bert/.venv/bin/python fastapi==0.116.1 uvicorn==0.35.0 pydantic==2.11.9 pydantic-settings==2.10.1 pyyaml==6.0.2 transformers==4.56.2 safetensors==0.6.2 huggingface-hub==0.34.4
+          uv pip install --python /tmp/expense-bert/.venv/bin/python --no-deps /tmp/expense-bert
+          uv pip freeze --python /tmp/expense-bert/.venv/bin/python > out/expense-comparison/dependencies.txt
+      - name: Fetch verified model and measure synthetic inputs
+        if: steps.plan.outputs.measure == 'true'
+        env:
+          OMP_NUM_THREADS: '2'
+          MKL_NUM_THREADS: '2'
+          TOKENIZERS_PARALLELISM: 'false'
+        run: |
+          export JEVBERT_API_KEYS
+          JEVBERT_API_KEYS="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          echo "::add-mask::$JEVBERT_API_KEYS"
+          cd /tmp/expense-bert
+          .venv/bin/python -m jevbert fetch-model
+          cp manifests/jevbert-poc-nli-ja-en-0.2.0.json "$GITHUB_WORKSPACE/out/expense-comparison/model-manifest.json"
+          .venv/bin/python -m jevbert serve --config configs/jevbert.poc.yaml > "$GITHUB_WORKSPACE/out/expense-comparison/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8765/readyz >/dev/null; then ready=true; break; fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then break; fi
+            sleep 2
+          done
+          if test "$ready" != true; then cat "$GITHUB_WORKSPACE/out/expense-comparison/server.log"; exit 1; fi
+          cd "$GITHUB_WORKSPACE"
+          /tmp/expense-bert/.venv/bin/python scripts/expense_comparison/benchmark.py
+      - name: Verify the real results in the browser
+        if: steps.plan.outputs.measure == 'true'
+        run: |
+          cp out/expense-comparison/results.json web/labs/expense-comparison/results.json
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+          python test/e2e/expense_comparison.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always() && steps.plan.outputs.measure == 'true'
+        with:
+          name: expense-measurement-${{ github.run_id }}
+          path: out/expense-comparison/
+          retention-days: 14
