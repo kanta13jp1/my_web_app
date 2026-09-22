@@ -1,0 +1,34 @@
+{
+  "source": "d224c892c1f16895f24978358717717f96bad657",
+  "lane": "cloud_jev",
+  "backend": "jev-latest",
+  "timing": "STEP-LOCKED diagnostic. Simulation pauses for API/search; not real-time clear. HTTP is not pure inference.",
+  "episodes": [
+    {
+      "assisted": false,
+      "clear": false,
+      "phase": "dead",
+      "x": 300.63000000000034,
+      "frames": 151,
+      "calls": 6,
+      "valid": 6,
+      "accepted": 0,
+      "overrides": 0,
+      "releases": 0,
+      "budget_remaining": 74
+    },
+    {
+      "assisted": true,
+      "clear": true,
+      "phase": "won",
+      "x": 3169.33999999993,
+      "frames": 1257,
+      "calls": 42,
+      "valid": 42,
+      "accepted": 22,
+      "overrides": 188,
+      "releases": 14,
+      "budget_remaining": 32
+    }
+  ]
+}

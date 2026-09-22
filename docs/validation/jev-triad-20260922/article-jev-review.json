@@ -1,0 +1,373 @@
+[
+  {
+    "sections": {
+      "s0": "---",
+      "s1": "## はじめに：タイムラインを騒がせる「Jevって何ができる？」",
+      "s2": "## 1. なぜマリオをリアルタイム操作できるのか？",
+      "s3": "### 紹介デモの51msと、実際に操作へ届くまでの時間",
+      "s4": "### 「文字を書かない」からこそ成立する構造化出力",
+      "s5": "### 【追試と進化】日本からのレイテンシの壁と「LightGBM蒸留（0.77ms）」の衝撃",
+      "s6": "### 【自分の環境での検証】応答成功でも、入力は敵に間に合わなかった",
+      "s7": "#### 同じ衝突直前状態による比較"
+    },
+    "response": {
+      "model": "jev-1.13.0",
+      "answers": {
+        "s0": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.33,
+          "probabilities": {
+            "condense": 0.1,
+            "keep": 0.34,
+            "clarify": 0.55
+          }
+        },
+        "s1": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.18,
+          "probabilities": {
+            "condense": 0.14,
+            "keep": 0.4,
+            "clarify": 0.46
+          }
+        },
+        "s2": {
+          "type": "choice",
+          "choice": "keep",
+          "confidence": 0.3,
+          "probabilities": {
+            "condense": 0.11,
+            "keep": 0.53,
+            "clarify": 0.36
+          }
+        },
+        "s3": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.27,
+          "probabilities": {
+            "condense": 0.01,
+            "keep": 0.47,
+            "clarify": 0.52
+          }
+        },
+        "s4": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.54,
+          "probabilities": {
+            "condense": 0.03,
+            "keep": 0.28,
+            "clarify": 0.69
+          }
+        },
+        "s5": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.79,
+          "probabilities": {
+            "condense": 0.06,
+            "keep": 0.09,
+            "clarify": 0.85
+          }
+        },
+        "s6": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.45,
+          "probabilities": {
+            "condense": 0.3,
+            "keep": 0.06,
+            "clarify": 0.64
+          }
+        },
+        "s7": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.33,
+          "probabilities": {
+            "condense": 0.34,
+            "keep": 0.11,
+            "clarify": 0.55
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 5857,
+        "output_tokens": 314
+      }
+    }
+  },
+  {
+    "sections": {
+      "s8": "#### 全コースへ広げると、回避補助にも限界があった",
+      "s9": "#### 操作感・見た目・音の改善",
+      "s10": "#### 追加実測：ダッシュへ変わっても、次の回答より先に接触した",
+      "s11": "#### 次の比較に向けて、入力へ予測情報を追加する",
+      "s12": "#### 追加検証：同じ3局面を実Jevへ12回送って比較した",
+      "s13": "#### LightGBMを実際に学習：速く推論できても、まだクリアできない",
+      "s14": "## 2. エンジニアたちが見つけた実践的ユースケース5選",
+      "s15": "### ① リアルタイム・ゲーム操作と物理制御"
+    },
+    "response": {
+      "model": "jev-1.13.0",
+      "answers": {
+        "s8": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.58,
+          "probabilities": {
+            "condense": 0.13,
+            "clarify": 0.72,
+            "keep": 0.15
+          }
+        },
+        "s9": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.2,
+          "probabilities": {
+            "condense": 0.14,
+            "clarify": 0.45999999999999996,
+            "keep": 0.4
+          }
+        },
+        "s10": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.64,
+          "probabilities": {
+            "condense": 0.1,
+            "clarify": 0.77,
+            "keep": 0.13
+          }
+        },
+        "s11": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.42,
+          "probabilities": {
+            "condense": 0.29,
+            "clarify": 0.62,
+            "keep": 0.09
+          }
+        },
+        "s12": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.28,
+          "probabilities": {
+            "condense": 0.41,
+            "clarify": 0.52,
+            "keep": 0.07
+          }
+        },
+        "s13": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.4,
+          "probabilities": {
+            "condense": 0.32,
+            "clarify": 0.61,
+            "keep": 0.07
+          }
+        },
+        "s14": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.45,
+          "probabilities": {
+            "condense": 0.09,
+            "clarify": 0.63,
+            "keep": 0.28
+          }
+        },
+        "s15": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.49,
+          "probabilities": {
+            "condense": 0.06,
+            "clarify": 0.66,
+            "keep": 0.28
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 8118,
+        "output_tokens": 321
+      }
+    }
+  },
+  {
+    "sections": {
+      "s16": "### ② リアルタイムUI予測＆インライン高速サジェスト",
+      "s17": "### ③ Pre-flight セーフティガードレール（防壁）",
+      "s18": "### ④ 大量ツール（Skills / MCP）の超高速ルーティング",
+      "s19": "### ⑤ 確率的Lint（命名や意図のニュアンス検知）",
+      "s20": "## 3. 本番Webアプリ（Flutter/Dart）へ組み込んだ実装パターン",
+      "s21": "### ① 超低遅延クライアントと確信度ハンドリング",
+      "s22": "### ② 障害時に既存処理へ戻す Fail-Open 設計",
+      "s23": "#### 【手元環境での実機実証】支出ルーティングにおける確信度分岐の実測データ"
+    },
+    "response": {
+      "model": "jev-1.13.0",
+      "answers": {
+        "s16": {
+          "type": "choice",
+          "choice": "keep",
+          "confidence": 0.33,
+          "probabilities": {
+            "keep": 0.56,
+            "clarify": 0.43,
+            "condense": 0.01
+          }
+        },
+        "s17": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.42,
+          "probabilities": {
+            "keep": 0.38,
+            "clarify": 0.61,
+            "condense": 0.01
+          }
+        },
+        "s18": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.75,
+          "probabilities": {
+            "keep": 0.16,
+            "clarify": 0.84,
+            "condense": 0.0
+          }
+        },
+        "s19": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.54,
+          "probabilities": {
+            "keep": 0.3,
+            "clarify": 0.69,
+            "condense": 0.01
+          }
+        },
+        "s20": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.64,
+          "probabilities": {
+            "keep": 0.03,
+            "clarify": 0.76,
+            "condense": 0.21
+          }
+        },
+        "s21": {
+          "type": "choice",
+          "choice": "keep",
+          "confidence": 0.27,
+          "probabilities": {
+            "keep": 0.52,
+            "clarify": 0.47,
+            "condense": 0.01
+          }
+        },
+        "s22": {
+          "type": "choice",
+          "choice": "condense",
+          "confidence": 0.33,
+          "probabilities": {
+            "keep": 0.04,
+            "clarify": 0.4,
+            "condense": 0.55
+          }
+        },
+        "s23": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.8,
+          "probabilities": {
+            "keep": 0.1,
+            "clarify": 0.86,
+            "condense": 0.04
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 3544,
+        "output_tokens": 321
+      }
+    }
+  },
+  {
+    "sections": {
+      "s24": "## 4. 記帳を自動化せず、分類候補を確認できるUIにする",
+      "s25": "## 5. Codex × Jev：作業の実行と仕分けを分ける",
+      "s26": "### この環境で導入したタスク前ルーター",
+      "s27": "## 検証から分かったことと、次の比較",
+      "s28": "### 【速報】GitHub NextがJev互換OSS「LocalJev」を電撃公開！"
+    },
+    "response": {
+      "model": "jev-1.13.0",
+      "answers": {
+        "s24": {
+          "type": "choice",
+          "choice": "condense",
+          "confidence": 0.09,
+          "probabilities": {
+            "condense": 0.4,
+            "clarify": 0.34,
+            "keep": 0.26
+          }
+        },
+        "s25": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.35,
+          "probabilities": {
+            "condense": 0.07,
+            "clarify": 0.57,
+            "keep": 0.36
+          }
+        },
+        "s26": {
+          "type": "choice",
+          "choice": "keep",
+          "confidence": 0.33,
+          "probabilities": {
+            "condense": 0.07,
+            "clarify": 0.37,
+            "keep": 0.56
+          }
+        },
+        "s27": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.73,
+          "probabilities": {
+            "condense": 0.03,
+            "clarify": 0.82,
+            "keep": 0.15
+          }
+        },
+        "s28": {
+          "type": "choice",
+          "choice": "clarify",
+          "confidence": 0.37,
+          "probabilities": {
+            "condense": 0.2,
+            "clarify": 0.58,
+            "keep": 0.22
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 3731,
+        "output_tokens": 202
+      }
+    }
+  }
+]
