@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - run: |
           node --check scripts/jev_quad/run.mjs
           node --check scripts/jev_quad/provider.mjs
@@ -28,7 +28,7 @@ jobs:
       matrix:
         lane: [cloud_jev, localjev, lightgbm, laya]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: {fetch-depth: 0}
       - name: Frozen game and hardware record
         run: |
@@ -72,7 +72,7 @@ jobs:
           cp /tmp/jev-backend/model.sha256 out/quad/ || true
           cp /tmp/jev-backend/localjev.log out/quad/ || true
           cp /tmp/jev-backend/llama.log out/quad/ || true
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
           name: quad-${{ matrix.lane }}-${{ github.run_id }}
@@ -84,9 +84,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: {fetch-depth: 0}
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: quad-*-${{ github.run_id }}
           path: out/quad/
@@ -99,7 +99,7 @@ jobs:
           python -m pip install playwright==1.55.0
           python -m playwright install --with-deps chromium
           python scripts/jev_quad/video.py
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: quad-video-${{ github.run_id }}
           path: out/quad/video/
