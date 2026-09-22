@@ -1,0 +1,42 @@
+:root {
+  --bg: #f6f4ef; --ink: #1d1c1a; --muted: #5f5b53; --line: #d9d4c9; --card: #ffffff;
+  --accent: #3b4fd8; --warn: #9a5b00; --ok: #1f7a4d; --bad: #b3261e;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #151514; --ink: #ecebe7; --muted: #a8a49b; --line: #34322e; --card: #1f1e1c;
+          --accent: #8b9bff; --warn: #e0a64a; --ok: #6fcf97; --bad: #ff8a80; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 16px/1.7 "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+header { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+header a { color: var(--muted); }
+.tag, .eyebrow { font-size: 12px; letter-spacing: .12em; color: var(--muted); }
+h1 { font-size: clamp(32px, 7vw, 56px); line-height: 1.15; margin: 8px 0 16px; }
+h1 span { color: var(--accent); }
+h2 { font-size: 18px; margin: 0 0 12px; }
+h3 { font-size: 16px; margin: 0 0 8px; }
+.lead { color: var(--muted); }
+.notice { border-left: 4px solid var(--accent); background: var(--card); padding: 12px 14px; font-size: 14px; }
+.panel, details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-top: 16px; }
+.file { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+input[type=file] { max-width: 100%; }
+progress { width: 100%; margin-top: 8px; }
+[data-state=error], [data-state=unavailable] { color: var(--bad); }
+[data-state=loaded], [data-state=ok] { color: var(--ok); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+button { font: inherit; font-size: 14px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--accent);
+         background: var(--accent); color: #fff; cursor: pointer; }
+button:disabled { background: transparent; color: var(--muted); border-color: var(--line); cursor: not-allowed; }
+.result { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 12px; }
+pre { overflow-x: auto; background: var(--bg); padding: 12px; border-radius: 8px; font-size: 13px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+td.num { text-align: right; white-space: nowrap; }
+td.review { color: var(--warn); }
+.facts { padding-left: 20px; font-size: 14px; }
+code { overflow-wrap: anywhere; }
+footer { margin-top: 32px; font-size: 12px; color: var(--muted); }

@@ -1,0 +1,99 @@
+{
+  "source": "https://huggingface.co/spaces/kishida/jwenv-demo",
+  "revision": "8263b814fde5ca11e47718a7ac82945639c02d8d",
+  "license": "MIT (declared in the Space card metadata; the Space has no separate LICENSE file)",
+  "author": "kishida",
+  "modified": false,
+  "files": {
+    "browser_source.js": {
+      "upstream_path": "dist/web/src/browser_source.js",
+      "sha256": "7ea242656813f877e0d18e48c93aa95fb80b9dd3f62bd81732c0210f4f028504",
+      "bytes": 222
+    },
+    "shaders/attention.wgsl": {
+      "upstream_path": "dist/web/src/shaders/attention.wgsl",
+      "sha256": "c7c06ae68332ef6892b3c6ed0ecaf26733d4c2accc0ebb355c10c8c301ad90cb",
+      "bytes": 4755
+    },
+    "shaders/kv_copy.wgsl": {
+      "upstream_path": "dist/web/src/shaders/kv_copy.wgsl",
+      "sha256": "dac8b2c87f59eecb0ea52e86c8293609dd45723c2bc5a74d2da3e4b1261e337c",
+      "bytes": 983
+    },
+    "shaders/kv_store.wgsl": {
+      "upstream_path": "dist/web/src/shaders/kv_store.wgsl",
+      "sha256": "af1ba174413e31d1bd322b6a4af09829ff5631d48416b033e7602e1ebc2f0042",
+      "bytes": 1011
+    },
+    "shaders/lm_head_slice.wgsl": {
+      "upstream_path": "dist/web/src/shaders/lm_head_slice.wgsl",
+      "sha256": "05590d104c2f1ab7fb8093a1eaf3b20a5757a9e5c88b45cf1a14900d715e493c",
+      "bytes": 1302
+    },
+    "shaders/matmul.wgsl": {
+      "upstream_path": "dist/web/src/shaders/matmul.wgsl",
+      "sha256": "8dab005ec96d79a425ab6ef3b4565327a19eb2b9e6888d1555781167fcdd3748",
+      "bytes": 6540
+    },
+    "shaders/qknorm.wgsl": {
+      "upstream_path": "dist/web/src/shaders/qknorm.wgsl",
+      "sha256": "1ada8c3b71c37d4055c823a36c225018654e97883b30e15bbebe2290e6d79be5",
+      "bytes": 1150
+    },
+    "shaders/rmsnorm.wgsl": {
+      "upstream_path": "dist/web/src/shaders/rmsnorm.wgsl",
+      "sha256": "56702f4a24f514c25d99764be8d57dbed9dcc0e7afa1f73675c05c77b1afb281",
+      "bytes": 1052
+    },
+    "shaders/rope.wgsl": {
+      "upstream_path": "dist/web/src/shaders/rope.wgsl",
+      "sha256": "d882265014718dacac8f9f1a33e268c1a25bee5c2c90853aaff57cce176161be",
+      "bytes": 1242
+    },
+    "shaders/swiglu.wgsl": {
+      "upstream_path": "dist/web/src/shaders/swiglu.wgsl",
+      "sha256": "93d6249c45c5d71ad126d691a798e04acc2041be84ab8229d1730eddece06ecf",
+      "bytes": 566
+    },
+    "src/gguf/dequant.js": {
+      "upstream_path": "dist/src/gguf/dequant.js",
+      "sha256": "38f9bcd2dc7a0ffc6f71467f74d661cbd529e46eda749e5cf63a345e071cac61",
+      "bytes": 12677
+    },
+    "src/gguf/parser.js": {
+      "upstream_path": "dist/src/gguf/parser.js",
+      "sha256": "8de4593b303c2f36487dfd9a3ed3a962563e3e78ab12b51d1b896fda91805a11",
+      "bytes": 6913
+    },
+    "src/gpu/buffers.js": {
+      "upstream_path": "dist/src/gpu/buffers.js",
+      "sha256": "23547eec181929dc4811fdb89b969d7dcac79b235792dfc4b36c274cfaaaf75b",
+      "bytes": 1860
+    },
+    "src/gpu/device.js": {
+      "upstream_path": "dist/src/gpu/device.js",
+      "sha256": "3e476517bf0898e5a109b21077095d74308493ad34c775754d0f4c7ad13c13da",
+      "bytes": 1181
+    },
+    "src/jev.js": {
+      "upstream_path": "dist/src/jev.js",
+      "sha256": "4b7f7313128c13a0fc3e12388acec6d35035e76feaba8cd06233479983c1f332",
+      "bytes": 12240
+    },
+    "src/model/kv_cache.js": {
+      "upstream_path": "dist/src/model/kv_cache.js",
+      "sha256": "5dd15acfbaf926485beca27c9968f537d65a137478535812044f33d3ec23946d",
+      "bytes": 5374
+    },
+    "src/model/qwen3.js": {
+      "upstream_path": "dist/src/model/qwen3.js",
+      "sha256": "b8b32824fd589f71599940f523f63fe9ee61d210f6143b4d69882fded4bc4927",
+      "bytes": 22401
+    },
+    "src/tokenizer/bpe.js": {
+      "upstream_path": "dist/src/tokenizer/bpe.js",
+      "sha256": "6e93366bfd1af1ae4f75674a547c65667a08099cbc2157fbbf199b090520143e",
+      "bytes": 5439
+    }
+  }
+}
