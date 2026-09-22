@@ -44,7 +44,8 @@ class WikiReadModel extends ChangeNotifier {
       final batch = await _repository.list(offset: offset);
       if (_disposed || request != _listRequest) return;
       final byId = <String, Map<String, dynamic>>{
-        if (!replace) for (final page in _pages) page['id'] as String: page,
+        if (!replace)
+          for (final page in _pages) page['id'] as String: page,
         for (final page in batch.pages) page['id'] as String: page,
       };
       _pages = byId.values.toList();

@@ -27,8 +27,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   late final WikiReadModel _readModel;
   bool get _isLoading =>
       (_readModel.loading && _pages.isEmpty) || _readModel.detailLoading;
-  String? get _errorMessage =>
-      _pages.isEmpty ? _readModel.error : null;
+  String? get _errorMessage => _pages.isEmpty ? _readModel.error : null;
   List<Map<String, dynamic>> get _pages => _readModel.pages;
   String? get _selectedPageId => _readModel.selectedId;
   Map<String, dynamic>? get _selectedPage => _readModel.selectedPage;
@@ -42,10 +41,13 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _readModel = WikiReadModel(WikiRepository((body) async {
-      final response = await _supabase.functions.invoke('enterprise-hub', body: body);
-      return response.data;
-    }),);
+    _readModel = WikiReadModel(
+      WikiRepository((body) async {
+        final response =
+            await _supabase.functions.invoke('enterprise-hub', body: body);
+        return response.data;
+      }),
+    );
     _readModel.addListener(_onReadChanged);
     _fetchPages();
   }
@@ -283,7 +285,8 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             return Column(
               children: [
                 if (_readModel.error != null)
-                  Text(_readModel.error!, style: const TextStyle(color: Colors.red)),
+                  Text(_readModel.error!,
+                      style: const TextStyle(color: Colors.red)),
                 if (_readModel.nextOffset != null || _readModel.error != null)
                   TextButton(
                     onPressed: _readModel.loading
@@ -291,9 +294,13 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                         : _readModel.error != null
                             ? _readModel.retry
                             : _readModel.loadMore,
-                    child: Text(_readModel.loading
-                        ? '読み込み中…'
-                        : _readModel.error != null ? '再試行' : '続きを読む',),
+                    child: Text(
+                      _readModel.loading
+                          ? '読み込み中…'
+                          : _readModel.error != null
+                              ? '再試行'
+                              : '続きを読む',
+                    ),
                   ),
               ],
             );

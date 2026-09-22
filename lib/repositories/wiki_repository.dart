@@ -38,17 +38,20 @@ class WikiRepository {
     if (offset < 0 || offset > 1000000 || limit < 1 || limit > 100) {
       throw ArgumentError('Invalid Wiki pagination');
     }
-    final data = _response(await _invoke({
-      'action': 'wiki.list',
-      'offset': offset,
-      'limit': limit,
-    }),);
+    final data = _response(
+      await _invoke({
+        'action': 'wiki.list',
+        'offset': offset,
+        'limit': limit,
+      }),
+    );
     final rows = data['pages'];
     final next = data['next_offset'];
-    if (rows is! List || rows.length > limit ||
+    if (rows is! List ||
+        rows.length > limit ||
         !data.containsKey('next_offset') ||
-        (next != null && (next is! int || next != offset + limit ||
-            rows.length != limit))) {
+        (next != null &&
+            (next is! int || next != offset + limit || rows.length != limit))) {
       throw const FormatException('Invalid Wiki pagination response');
     }
     return WikiPageBatch(rows.map(_page).toList(), next as int?);

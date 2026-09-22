@@ -8,7 +8,10 @@ void main() {
       return {
         'success': true,
         'pages': [
-          {'id': 'real', 'metadata': {'id': 'old', 'title': 'Title'}},
+          {
+            'id': 'real',
+            'metadata': {'id': 'old', 'title': 'Title'}
+          },
         ],
         'next_offset': 51,
       };
@@ -22,29 +25,36 @@ void main() {
   });
 
   test('empty final page is distinct from malformed response', () async {
-    final repository = WikiRepository((_) async => {
-          'success': true,
-          'pages': <dynamic>[],
-          'next_offset': null,
-        },);
+    final repository = WikiRepository(
+      (_) async => {
+        'success': true,
+        'pages': <dynamic>[],
+        'next_offset': null,
+      },
+    );
     final batch = await repository.list();
     expect(batch.pages, isEmpty);
     expect(batch.nextOffset, isNull);
   });
 
-  test('invalid continuation is rejected rather than looping or truncating', () async {
+  test('invalid continuation is rejected rather than looping or truncating',
+      () async {
     for (final next in [0, -1, '50', 51]) {
-      final repository = WikiRepository((_) async => {
-            'success': true,
-            'pages': <dynamic>[],
-            'next_offset': next,
-          },);
-      await expectLater(repository.list(), throwsFormatException);
-    }
-    final legacy = WikiRepository((_) async => {
+      final repository = WikiRepository(
+        (_) async => {
           'success': true,
           'pages': <dynamic>[],
-        },);
+          'next_offset': next,
+        },
+      );
+      await expectLater(repository.list(), throwsFormatException);
+    }
+    final legacy = WikiRepository(
+      (_) async => {
+        'success': true,
+        'pages': <dynamic>[],
+      },
+    );
     await expectLater(legacy.list(), throwsFormatException);
   });
 
@@ -53,17 +63,22 @@ void main() {
       expect(body, {'action': 'wiki.get', 'id': 'page-75'});
       return {
         'success': true,
-        'page': {'id': 'page-75', 'metadata': {'content': 'a\n\n b'}},
+        'page': {
+          'id': 'page-75',
+          'metadata': {'content': 'a\n\n b'}
+        },
       };
     });
     expect((await repository.get('page-75'))['content'], 'a\n\n b');
   });
 
   test('get rejects wrong page identity and unsuccessful responses', () async {
-    final wrong = WikiRepository((_) async => {
-          'success': true,
-          'page': {'id': 'other'},
-        },);
+    final wrong = WikiRepository(
+      (_) async => {
+        'success': true,
+        'page': {'id': 'other'},
+      },
+    );
     await expectLater(wrong.get('expected'), throwsFormatException);
     final failed = WikiRepository((_) async => {'success': false});
     await expectLater(failed.list(), throwsFormatException);

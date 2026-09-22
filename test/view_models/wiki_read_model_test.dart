@@ -7,18 +7,29 @@ void main() {
   test('append failure preserves pages and retries the same offset', () async {
     var failNext = true;
     final offsets = <int>[];
-    final model = WikiReadModel(WikiRepository((body) async {
-      offsets.add(body['offset'] as int);
-      if (body['offset'] == 0) {
+    final model = WikiReadModel(
+      WikiRepository((body) async {
+        offsets.add(body['offset'] as int);
+        if (body['offset'] == 0) {
+          return {
+            'success': true,
+            'pages': List.generate(50, (n) => {'id': 'p-$n'}),
+            'next_offset': 50,
+          };
+        }
+        if (failNext) {
+          failNext = false;
+          throw StateError('offline');
+        }
         return {
           'success': true,
-          'pages': List.generate(50, (n) => {'id': 'p-$n'}),
-          'next_offset': 50,
+          'pages': [
+            {'id': 'p-50'}
+          ],
+          'next_offset': null
         };
-      }
-      if (failNext) { failNext = false; throw StateError('offline'); }
-      return {'success': true, 'pages': [{'id': 'p-50'}], 'next_offset': null};
-    }),);
+      }),
+    );
     addTearDown(model.dispose);
     await model.refresh();
     await model.loadMore();
@@ -34,13 +45,20 @@ void main() {
   test('late detail response cannot replace a newer selection', () async {
     final a = Completer<dynamic>();
     final b = Completer<dynamic>();
-    final model = WikiReadModel(WikiRepository((body) => body['id'] == 'a' ? a.future : b.future));
+    final model = WikiReadModel(
+        WikiRepository((body) => body['id'] == 'a' ? a.future : b.future));
     addTearDown(model.dispose);
     final first = model.select('a');
     final second = model.select('b');
-    b.complete({'success': true, 'page': {'id': 'b'}});
+    b.complete({
+      'success': true,
+      'page': {'id': 'b'}
+    });
     await second;
-    a.complete({'success': true, 'page': {'id': 'a'}});
+    a.complete({
+      'success': true,
+      'page': {'id': 'a'}
+    });
     await first;
     expect(model.selectedId, 'b');
     expect(model.selectedPage!['id'], 'b');
@@ -58,14 +76,23 @@ void main() {
     await request;
     expect(notifications, 1);
   });
-  test('failed refresh retries from zero even after reaching final page', () async {
+  test('failed refresh retries from zero even after reaching final page',
+      () async {
     var requests = 0;
     final offsets = <int>[];
-    final model = WikiReadModel(WikiRepository((body) async {
-      offsets.add(body['offset'] as int);
-      if (++requests == 2) throw StateError('offline');
-      return {'success': true, 'pages': [{'id': 'a'}], 'next_offset': null};
-    }),);
+    final model = WikiReadModel(
+      WikiRepository((body) async {
+        offsets.add(body['offset'] as int);
+        if (++requests == 2) throw StateError('offline');
+        return {
+          'success': true,
+          'pages': [
+            {'id': 'a'}
+          ],
+          'next_offset': null
+        };
+      }),
+    );
     addTearDown(model.dispose);
     await model.refresh();
     await model.refresh();
@@ -78,10 +105,15 @@ void main() {
 
   test('failed detail can be retried without losing list navigation', () async {
     var requests = 0;
-    final model = WikiReadModel(WikiRepository((_) async {
-      if (++requests == 1) throw StateError('offline');
-      return {'success': true, 'page': {'id': 'a'}};
-    }),);
+    final model = WikiReadModel(
+      WikiRepository((_) async {
+        if (++requests == 1) throw StateError('offline');
+        return {
+          'success': true,
+          'page': {'id': 'a'}
+        };
+      }),
+    );
     addTearDown(model.dispose);
     await model.select('a');
     expect(model.detailError, isNotNull);
@@ -90,5 +122,4 @@ void main() {
     expect(model.detailError, isNull);
     expect(model.selectedPage!['id'], 'a');
   });
-
 }
