@@ -3,3 +3,5 @@
 #touch-controls button{touch-action:none;user-select:none;flex:1 1 60px;white-space:nowrap;padding:10px 12px}#screen:focus-visible{outline:3px solid #ffdf80}#screen{max-width:768px}
 
 #record-preview{display:block;width:100%;max-width:512px;image-rendering:pixelated;background:#000}#record-download{display:inline-block;padding:12px;border:1px solid currentColor;border-radius:8px}button:disabled{opacity:.5;cursor:not-allowed}
+
+#reference-view{background:#0c1114;border-color:#263038;padding:12px;border-radius:6px}#presentation{width:100%;max-width:none;aspect-ratio:16/9;image-rendering:auto}#reference-view p{font-size:.85rem}#decision-summary{color:#b6e5dc}#record-preview{max-width:100%}
