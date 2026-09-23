@@ -306,3 +306,23 @@ test('underground selection, manual movement, reset and stage return',async({pag
  await screenshot(page,info.outputPath('world12-manual.png'));await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('1-2をリセット');
  await lab.locator('#stage').selectOption('1');await expect(lab.locator('#progress')).toContainText('1-1');await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');expect(errors).toEqual([]);
 });
+
+test('reference dashboard shows live state and records a 16:9 playable video',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await expect(lab.locator('#presentation')).toBeVisible();
+ await lab.locator('#watch-manual').click();await expect(lab.locator('#decision-summary')).toContainText('LIVE');
+ await page.keyboard.down('ArrowRight');await expect(lab.locator('#decision-summary')).toContainText('操作 right');
+ await page.keyboard.up('ArrowRight');await lab.locator('#watch-record').click();
+ await expect(lab.locator('#record-status')).toContainText('録画中');await expect(lab.locator('#record-layout')).toBeDisabled();
+ await page.waitForTimeout(1300);await lab.locator('#record-stop').click();
+ await expect(lab.locator('#record-result')).toBeVisible();await lab.locator('#watch-stop').click();
+ const video=lab.locator('#record-preview');await expect.poll(()=>video.evaluate((v:HTMLVideoElement)=>v.readyState)).toBeGreaterThan(0);
+ expect(await video.evaluate((v:HTMLVideoElement)=>[v.videoWidth,v.videoHeight])).toEqual([1280,720]);
+ const saved=page.waitForEvent('download');await lab.locator('#record-download').click();const download=await saved;await download.saveAs(info.outputPath('reference-dashboard.webm'));
+ await expect(lab.locator('#decision-summary')).toContainText('PAUSED');
+ await lab.locator('#presentation').screenshot({path:info.outputPath('reference-dashboard.png')});
+ await lab.locator('#restart-local').click();await lab.locator('#watch-student').click();
+ await expect(lab.locator('#decision-summary')).toContainText('LightGBM + search',{timeout:20000});
+ await lab.locator('#presentation').screenshot({path:info.outputPath('reference-dashboard-student.png')});
+ await lab.locator('#watch-stop').click();
+});

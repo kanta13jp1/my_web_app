@@ -1,3 +1,4 @@
+import {drawPresentation} from './presentation.mjs?v=student-1';
 import { StudentSession } from './student-session.mjs?v=student-1';
 import { ReactionAssist, hazards, prediction } from './reaction.mjs?v=student-1';
 import { GameRecording } from './recording.mjs?v=student-1';
@@ -19,6 +20,13 @@ const audio = new GameAudio();
 const stageName=()=>`1-${world.stage}`;
 $('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。手動プレイはAPI不要です。';};
 const student = new StudentSession();
+const presentation=$('presentation'),presentationContext=presentation.getContext('2d');
+let decision={},effectiveAction='noop',watchMode=false;
+function resetDecision(){decision={};effectiveAction='noop';}
+for(const id of ['play-local','play-student','start','restart-local','reset'])$(id).addEventListener('click',resetDecision);
+for(const id of ['stage','mode'])$(id).addEventListener('change',resetDecision);
+for(const [button,target] of [['watch-student','play-student'],['watch-manual','play-local'],['watch-stop','stop']])$(button).onclick=()=>{watchMode=true;$(target).click();presentation.focus();};
+$('watch-record').onclick=()=>{if(recording.active||recordStarting)return; $('record-layout').value='dashboard';$('record-start').click();};
 const assist=new ReactionAssist();let proposedAction='noop',interventions=[],lastIntervention='';
 const assistanceEnabled=()=>isRecreation()&&metadata.controller==='jev_plus_local';
 async function unlockAudio() {
@@ -32,7 +40,7 @@ $('volume').oninput = () => { audio.setVolume(Number($('volume').value)/100); $(
 
 let recordUrl = null, recordStarting = false, recordEpoch = 0;
 const recording = new GameRecording({ canvas,
-  changed: () => { $('record-start').disabled = !recording.supported || recording.active || recordStarting || !isGame(); $('record-stop').disabled = !recording.active || recording.finishing; if(recording.finishing)$('record-status').textContent='動画を作成しています…'; },
+  changed: () => { $('record-start').disabled = !recording.supported || recording.active || recordStarting || !isGame(); $('record-layout').disabled=recording.active||recordStarting||recording.finishing; $('watch-record').disabled=!recording.supported||recording.active||recordStarting||recording.finishing||!isGame(); $('record-stop').disabled = !recording.active || recording.finishing; if(recording.finishing)$('record-status').textContent='動画を作成しています…'; },
   failed: message => { $('record-status').textContent=message; },
   ready: (blob,extension,reason) => {
     const old=recordUrl;recordUrl=URL.createObjectURL(blob);
@@ -53,9 +61,10 @@ $('record-start').onclick=async()=>{
     if(isRecreation())await unlockAudio();
     if(epoch!==recordEpoch)return;
     const output=isRecreation()?audio.captureOutput():null;
+    recording.canvas=$('record-layout').value==='dashboard'?presentation:canvas;
     if(recording.start(output)){
       $('record-status').textContent='● 録画中（最大60秒）'+(output?'・ゲーム音あり':'・音声なし');
-      canvas.focus();
+      recording.canvas.focus();
     }
   }catch{ $('record-status').textContent='録画を開始できませんでした。再試行してください。'; }
   finally{recordStarting=false;recording.changed();}
@@ -71,7 +80,7 @@ function showPose(){const pose=playerPose(world);$('posture').textContent='姿�
 showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
-  proposedAction=action;world.buttons(action);
+  effectiveAction=action;proposedAction=action;world.buttons(action);
   if (nes) {
     for (let i = 0; i < 8; i++) nes.buttonUp(1, i);
     for (const b of BUTTONS[action] ?? []) nes.buttonDown(1, b);
@@ -116,6 +125,7 @@ window.addEventListener('message', e => {
 });
 const loop = new DecisionLoop({ request, state, observe:()=>isRecreation()?{...world.snapshot(),hazards:hazards(world)}:null, apply: controls,
   record: s => { samples.push({ index: samples.length + 1, ...s }); lastResponse = s.rtt_ms;
+    if(s.ok)decision={source:'Cloud Jev',proposal:s.choice,probabilities:s.probabilities,latency:s.rtt_ms,latencyKind:'Browser round trip (not pure inference)',count:samples.length,note:s.stale?'Stale response: not applied':'Cloud response'};
     if (!s.ok) $('last-error').textContent = s.error; update(); },
   done: reason => { audio.stop(); gameRunning = false; status(reason); },
 });
@@ -152,7 +162,7 @@ $('play-student').onclick=()=>{
   if(loop.pending||pendingBridge)return status('API応答の終了を待ってから開始してください');
   stop();world.reset();frameCount=0;samples=[];interventions=[];metadata={lab_revision:'stage-2',stage:world.stage,controller:'lightgbm_plus_search',mode:'recreation',started_at:new Date().toISOString(),timing:'Browser rendering and asynchronous local search; no API requests'};update();
   $('last-error').textContent='';void unlockAudio();status('学習済みモデルを読み込んでいます…');
-  student.start({ready:()=>{gameRunning=true;frameBudget=0;canvas.focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
+  student.start({ready:()=>{gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{decision={source:'LightGBM + search | Jev teacher',proposal:student.latest.raw,probabilities:student.latest.probabilities,latency:student.latest.inferenceMs,latencyKind:'Local tree inference only (search excluded)',count:stats.decisions,accepted:stats.accepted,overrides:stats.overrides};$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
 };
 $('start').onclick = () => {
   if(student.active)return status('ローカルプレイを停止してからJev測定を開始してください');
@@ -199,9 +209,9 @@ function frame(now) {
     try {
       while (frameBudget >= 1000 / 60 && gameRunning) {
         if(isRecreation()) {
-          if(student.active){const action=student.tick(world);world.buttons(action);$('action').textContent=`操作: ${action}`;}
+          if(student.active){const action=student.tick(world);world.buttons(action);effectiveAction=action;$('action').textContent=`操作: ${action}`;}
           if(loop.active&&assistanceEnabled()){
-            const decision=assist.decide(world,proposedAction);world.buttons(decision.action);
+            const decision=assist.decide(world,proposedAction);world.buttons(decision.action);effectiveAction=decision.action;
             const key=decision.reason+':'+decision.action;
             if(key!==lastIntervention){
               if(decision.reason&&interventions.length<600)interventions.push({frame:world.frames,proposed:proposedAction,...decision});
@@ -220,6 +230,10 @@ function frame(now) {
     } catch { stop('エミュレーターを継続できません。対応ROMを確認してください。'); }
   } else {frameBudget=0;if(!document.hidden&&isRecreation()&&world.phase!=='playing'&&world.presentation<180){presentationBudget+=delta;while(presentationBudget>=1000/60){world.presentationStep();for(const sound of world.drainSounds())audio.effect(sound);presentationBudget-=1000/60;}drawWorld(context,world);showPose();}}
   if(isRecreation()&&world.phase!=='playing'&&world.presentation>=180)recording.stop('ゲーム終了で録画を停止しました');
+  if(gameRunning&&isRecreation()&&!student.active&&!loop.active){const k=world.input;effectiveAction=k.left?'left':k.right?(k.run?'right_run':'right')+(k.jump?'_jump':''):k.jump?'jump':k.down?'crouch':'noop';}
+  drawPresentation(presentationContext,canvas,{world,decision:{...decision,action:effectiveAction},running:gameRunning,recording:recording.active,fixture:!isGame()});
+  const summary=`${decision.source||'手動 / 待機'} · ${world.phase==='won'?'WORLD CLEAR':world.phase==='dead'?'TRY AGAIN':gameRunning?'LIVE':'PAUSED'} · 操作 ${effectiveAction} · 判断 ${decision.count??0}`;
+  if($('decision-summary').textContent!==summary)$('decision-summary').textContent=summary;
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
