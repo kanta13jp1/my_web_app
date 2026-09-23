@@ -1,4 +1,4 @@
-import {drawPresentation} from './presentation.mjs?v=reference-1';
+import {drawPresentation} from './presentation.mjs?v=student-1';
 import { StudentSession } from './student-session.mjs?v=student-1';
 import { ReactionAssist, hazards, prediction } from './reaction.mjs?v=student-1';
 import { GameRecording } from './recording.mjs?v=student-1';
@@ -21,11 +21,11 @@ const stageName=()=>`1-${world.stage}`;
 $('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。手動プレイはAPI不要です。';};
 const student = new StudentSession();
 const presentation=$('presentation'),presentationContext=presentation.getContext('2d');
-let decision={},effectiveAction='noop';
+let decision={},effectiveAction='noop',watchMode=false;
 function resetDecision(){decision={};effectiveAction='noop';}
 for(const id of ['play-local','play-student','start','restart-local','reset'])$(id).addEventListener('click',resetDecision);
 for(const id of ['stage','mode'])$(id).addEventListener('change',resetDecision);
-for(const [button,target] of [['watch-student','play-student'],['watch-manual','play-local'],['watch-stop','stop']])$(button).onclick=()=>{$(target).click();presentation.focus();};
+for(const [button,target] of [['watch-student','play-student'],['watch-manual','play-local'],['watch-stop','stop']])$(button).onclick=()=>{watchMode=true;$(target).click();presentation.focus();};
 $('watch-record').onclick=()=>{if(recording.active||recordStarting)return; $('record-layout').value='dashboard';$('record-start').click();};
 const assist=new ReactionAssist();let proposedAction='noop',interventions=[],lastIntervention='';
 const assistanceEnabled=()=>isRecreation()&&metadata.controller==='jev_plus_local';
@@ -64,7 +64,7 @@ $('record-start').onclick=async()=>{
     recording.canvas=$('record-layout').value==='dashboard'?presentation:canvas;
     if(recording.start(output)){
       $('record-status').textContent='● 録画中（最大60秒）'+(output?'・ゲーム音あり':'・音声なし');
-      canvas.focus();
+      recording.canvas.focus();
     }
   }catch{ $('record-status').textContent='録画を開始できませんでした。再試行してください。'; }
   finally{recordStarting=false;recording.changed();}
@@ -162,7 +162,7 @@ $('play-student').onclick=()=>{
   if(loop.pending||pendingBridge)return status('API応答の終了を待ってから開始してください');
   stop();world.reset();frameCount=0;samples=[];interventions=[];metadata={lab_revision:'stage-2',stage:world.stage,controller:'lightgbm_plus_search',mode:'recreation',started_at:new Date().toISOString(),timing:'Browser rendering and asynchronous local search; no API requests'};update();
   $('last-error').textContent='';void unlockAudio();status('学習済みモデルを読み込んでいます…');
-  student.start({ready:()=>{gameRunning=true;frameBudget=0;canvas.focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{decision={source:'LightGBM + search | Jev teacher',proposal:student.latest.raw,probabilities:student.latest.probabilities,latency:student.latest.inferenceMs,latencyKind:'Local tree inference only (search excluded)',count:stats.decisions,accepted:stats.accepted,overrides:stats.overrides};$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
+  student.start({ready:()=>{gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{decision={source:'LightGBM + search | Jev teacher',proposal:student.latest.raw,probabilities:student.latest.probabilities,latency:student.latest.inferenceMs,latencyKind:'Local tree inference only (search excluded)',count:stats.decisions,accepted:stats.accepted,overrides:stats.overrides};$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
 };
 $('start').onclick = () => {
   if(student.active)return status('ローカルプレイを停止してからJev測定を開始してください');
