@@ -318,9 +318,11 @@ test('reference dashboard shows live state and records a 16:9 playable video',as
  await expect(lab.locator('#record-result')).toBeVisible();await lab.locator('#watch-stop').click();
  const video=lab.locator('#record-preview');await expect.poll(()=>video.evaluate((v:HTMLVideoElement)=>v.readyState)).toBeGreaterThan(0);
  expect(await video.evaluate((v:HTMLVideoElement)=>[v.videoWidth,v.videoHeight])).toEqual([1280,720]);
+ const saved=page.waitForEvent('download');await lab.locator('#record-download').click();const download=await saved;await download.saveAs(info.outputPath('reference-dashboard.webm'));
  await expect(lab.locator('#decision-summary')).toContainText('PAUSED');
  await lab.locator('#presentation').screenshot({path:info.outputPath('reference-dashboard.png')});
  await lab.locator('#restart-local').click();await lab.locator('#watch-student').click();
  await expect(lab.locator('#decision-summary')).toContainText('LightGBM + search',{timeout:20000});
+ await lab.locator('#presentation').screenshot({path:info.outputPath('reference-dashboard-student.png')});
  await lab.locator('#watch-stop').click();
 });
