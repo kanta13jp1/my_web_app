@@ -1,7 +1,7 @@
 export class StudentSession{
  constructor(factory=()=>new Worker(new URL('./student-worker.mjs?v=student-1',import.meta.url),{type:'module'}),clock=()=>performance.now()){this.factory=factory;this.clock=clock;this.token=0;this.active=false;this.action='noop';this.stats={};}
  start({ready,update,error}){
-  this.stop();const token=++this.token;this.active=true;this.ready=false;this.pending=false;this.next=0;this.age=100;this.started=this.clock();this.action='noop';
+  this.stop();const token=++this.token;this.active=true;this.ready=false;this.pending=false;this.next=0;this.age=100;this.started=this.clock();this.action='noop';this.latest=null;
   this.stats={model:'jev-student-166-v1',teacher:'jev-1.13.0',control:'LightGBM + exact-simulator search + latency prediction',decisions:0,accepted:0,overrides:0,jump_releases:0,samples:[]};
   try{
    const worker=this.factory();this.worker=worker;
@@ -14,6 +14,7 @@ export class StudentSession{
     this.pending=false;this.action=data.action;this.age=this.clock()-data.issued;
     this.stats.decisions++;if(data.accepted)this.stats.accepted++;else this.stats.overrides++;
     if(this.stats.samples.length<1000)this.stats.samples.push({frame:data.frame,raw:data.raw,action:data.action,accepted:data.accepted,worker_round_trip_ms:this.age,tree_inference_ms:data.inferenceMs});
+    this.latest={...data,workerRoundTripMs:this.age};
     update(this.stats);
    };
   }catch{this.stop();error();}

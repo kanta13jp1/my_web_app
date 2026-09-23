@@ -12,13 +12,13 @@ export class GameRecording {
     let video, recorder;
     try {
       if (!this.supported) throw new Error('このブラウザは録画に対応していません。');
-      video = this.canvas.captureStream(30);
+      video = this.canvas.captureStream(this.canvas.width>=1280?60:30);
       const tracks = audio?.stream.getAudioTracks() ?? [];
       for (const track of tracks) video.addTrack(track);
       const types = tracks.length ? ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'] : ['video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
       const mimeType = types.find(t => this.Recorder.isTypeSupported(t));
       if (!mimeType) throw new Error('保存できる動画形式がありません。別のブラウザをお試しください。');
-      recorder = new this.Recorder(video, { mimeType, videoBitsPerSecond: 1500000 });
+      recorder = new this.Recorder(video, { mimeType, videoBitsPerSecond: this.canvas.width>=1280?4000000:1500000 });
       const chunks = []; let bytes = 0, error = null;
       this.recorder = recorder; this.active = true; this.reason = '録画を停止しました';
       recorder.ondataavailable = e => {
