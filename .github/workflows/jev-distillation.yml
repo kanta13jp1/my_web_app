@@ -3,14 +3,68 @@ on:
   pull_request:
     paths:
       - 'scripts/jev_distillation/**'
+      - 'scripts/jev_search_student/**'
+      - 'web/labs/jev-mario/student2-*'
       - '.github/workflows/jev-distillation.yml'
   workflow_dispatch:
+    inputs:
+      experiment:
+        description: jev166 = published Jev-label pilot; search_student = DAgger student taught by exact-state search
+        type: choice
+        options: [jev166, search_student]
+        default: jev166
+      rounds:
+        description: DAgger rounds after the teacher-only round (search_student)
+        type: string
+        default: '8'
 permissions: {}
 concurrency:
   group: jev-distillation-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  search_contract:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Syntax and a short campaign smoke run
+        run: |
+          for f in scripts/jev_search_student/*.mjs web/labs/jev-mario/student2-*.mjs; do node --check "$f"; done
+          python -m py_compile scripts/jev_search_student/train.py
+          node --test scripts/jev_search_student/campaign.test.mjs
+  search_student:
+    if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'search_student'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      matrix:
+        scope: [campaign, stage1]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: DAgger rounds and held-out evaluation
+        env:
+          SCOPE: ${{ matrix.scope }}
+          ROUNDS: ${{ inputs.rounds }}
+          OUT: out/search_student/${{ matrix.scope }}
+        run: |
+          python -m pip install lightgbm==4.6.0 numpy==2.2.6 scipy==1.15.3
+          mkdir -p "$OUT" && node --version && lscpu > "$OUT/cpu.txt"
+          node scripts/jev_search_student/dagger.mjs
+          node scripts/jev_search_student/parity.mjs "$OUT"
+          rm -f "$OUT/X.f64"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: search-student-${{ matrix.scope }}-${{ github.run_id }}
+          path: out/search_student/
+          retention-days: 14
   experiment:
+    if: github.event_name != 'workflow_dispatch' || inputs.experiment != 'search_student'
     permissions:
       contents: read
     runs-on: ubuntu-latest
