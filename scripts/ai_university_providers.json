@@ -1,0 +1,377 @@
+[
+  {
+    "provider": "google",
+    "url": "https://blog.google/technology/ai/rss/",
+    "name": "Google AI"
+  },
+  {
+    "provider": "openai",
+    "url": "https://openai.com/news/rss.xml",
+    "name": "OpenAI"
+  },
+  {
+    "provider": "microsoft",
+    "url": "https://blogs.microsoft.com/ai/feed/",
+    "name": "Microsoft AI"
+  },
+  {
+    "provider": "amazon",
+    "url": "https://aws.amazon.com/blogs/machine-learning/feed/",
+    "name": "Amazon Bedrock"
+  },
+  {
+    "provider": "huggingface",
+    "url": "https://huggingface.co/blog/feed.xml",
+    "name": "Hugging Face"
+  },
+  {
+    "provider": "nvidia",
+    "url": "https://blogs.nvidia.com/feed/",
+    "name": "NVIDIA"
+  },
+  {
+    "provider": "lightricks",
+    "url": "https://www.lightricks.com/blog/feed",
+    "name": "Lightricks LTX-2"
+  },
+  {
+    "provider": "arcee_ai",
+    "url": "https://www.arcee.ai/blog/rss.xml",
+    "name": "Arcee AI Trinity"
+  },
+  {
+    "provider": "minimax",
+    "url": "https://www.minimax.io/blog/rss.xml",
+    "name": "MiniMax Hailuo"
+  },
+  {
+    "provider": "moondream",
+    "url": "https://moondream.ai/blog/rss.xml",
+    "name": "Moondream VLM"
+  },
+  {
+    "provider": "rakuten_ai",
+    "url": "https://global.rakuten.com/corp/news/press.rss",
+    "name": "Rakuten AI 3.0"
+  },
+  {
+    "provider": "pfn",
+    "url": "https://www.preferred.jp/en/feed/",
+    "name": "Preferred Networks (PLaMo)"
+  },
+  {
+    "provider": "siliconflow",
+    "url": "https://siliconflow.cn/blog/rss.xml",
+    "name": "SiliconFlow"
+  },
+  {
+    "provider": "novita_ai",
+    "url": "https://novita.ai/blog/rss.xml",
+    "name": "Novita AI"
+  },
+  {
+    "provider": "deepinfra",
+    "url": "https://deepinfra.com/blog/rss.xml",
+    "name": "DeepInfra"
+  },
+  {
+    "provider": "nebius",
+    "url": "https://nebius.com/blog/rss.xml",
+    "name": "Nebius AI Studio"
+  },
+  {
+    "provider": "fal_ai",
+    "url": "https://blog.fal.ai/rss/",
+    "name": "fal.ai"
+  },
+  {
+    "provider": "fish_audio",
+    "url": "https://fish.audio/blog/rss.xml",
+    "name": "Fish Audio"
+  },
+  {
+    "provider": "atlas_cloud",
+    "url": "https://www.atlascloud.ai/blog/rss",
+    "name": "Atlas Cloud"
+  },
+  {
+    "provider": "mira_network",
+    "url": "https://docs.mira.network/blog/rss.xml",
+    "name": "Mira Network"
+  },
+  {
+    "provider": "gmi_cloud",
+    "url": "https://www.gmicloud.ai/blog/rss.xml",
+    "name": "GMI Cloud"
+  },
+  {
+    "provider": "inworld",
+    "url": "https://inworld.ai/blog/rss.xml",
+    "name": "Inworld AI"
+  },
+  {
+    "provider": "coreweave",
+    "url": "https://www.coreweave.com/blog/rss.xml",
+    "name": "CoreWeave"
+  },
+  {
+    "provider": "lambda_labs",
+    "url": "https://lambda.ai/blog/rss.xml",
+    "name": "Lambda Labs"
+  },
+  {
+    "provider": "hyperbolic",
+    "url": "https://hyperbolic.ai/blog/rss.xml",
+    "name": "Hyperbolic Labs"
+  },
+  {
+    "provider": "anyscale",
+    "url": "https://www.anyscale.com/blog/rss.xml",
+    "name": "Anyscale"
+  },
+  {
+    "provider": "cerebrium",
+    "url": "https://www.cerebrium.ai/blog/rss.xml",
+    "name": "Cerebrium"
+  },
+  {
+    "provider": "magic_ai",
+    "url": "https://magic.dev/blog/rss.xml",
+    "name": "Magic AI"
+  },
+  {
+    "provider": "nous_research",
+    "url": "https://nousresearch.com/feed/",
+    "name": "Nous Research (Hermes 4 / Psyche)"
+  },
+  {
+    "provider": "sierra_ai",
+    "url": "https://sierra.ai/blog/rss.xml",
+    "name": "Sierra (Bret Taylor)"
+  },
+  {
+    "provider": "figure_ai",
+    "url": "https://figure.ai/news/rss.xml",
+    "name": "Figure AI (Figure 03 / Helix VLA)"
+  },
+  {
+    "provider": "replit",
+    "url": "https://blog.replit.com/rss.xml",
+    "name": "Replit (Agent 4)"
+  },
+  {
+    "provider": "cursor",
+    "url": "https://cursor.com/blog/rss.xml",
+    "name": "Cursor (Anysphere)"
+  },
+  {
+    "provider": "lovable",
+    "url": "https://lovable.dev/blog/rss.xml",
+    "name": "Lovable (Anton Osika)"
+  },
+  {
+    "provider": "bolt_new",
+    "url": "https://bolt.new/blog/rss.xml",
+    "name": "Bolt.new (StackBlitz)"
+  },
+  {
+    "provider": "v0",
+    "url": "https://vercel.com/blog/rss.xml",
+    "name": "v0 by Vercel"
+  },
+  {
+    "provider": "windsurf",
+    "url": "https://windsurf.com/blog/rss.xml",
+    "name": "Windsurf (旧 Codeium / Cascade)"
+  },
+  {
+    "provider": "hume_ai",
+    "url": "https://www.hume.ai/blog/rss.xml",
+    "name": "Hume AI (EVI / 感情知能 Voice AI)"
+  },
+  {
+    "provider": "glean",
+    "url": "https://www.glean.com/blog/rss.xml",
+    "name": "Glean (Enterprise Work AI)"
+  },
+  {
+    "provider": "vapi",
+    "url": "https://vapi.ai/blog/rss.xml",
+    "name": "Vapi (Voice AI Platform)"
+  },
+  {
+    "provider": "e2b",
+    "url": "https://e2b.dev/blog/rss.xml",
+    "name": "E2B (AI Agent Code Execution)"
+  },
+  {
+    "provider": "firecrawl",
+    "url": "https://www.firecrawl.dev/blog/rss.xml",
+    "name": "Firecrawl (Web Scraping for AI)"
+  },
+  {
+    "provider": "weaviate",
+    "url": "https://weaviate.io/blog/rss.xml",
+    "name": "Weaviate (AI-Native Vector DB)"
+  },
+  {
+    "provider": "livekit",
+    "url": "https://blog.livekit.io/rss/",
+    "name": "LiveKit (Realtime AI Agents)"
+  },
+  {
+    "provider": "higgsfield",
+    "url": "https://higgsfield.ai/blog/rss.xml",
+    "name": "Higgsfield AI (Multi-Model Video)"
+  },
+  {
+    "provider": "browserbase",
+    "url": "https://www.browserbase.com/blog/rss.xml",
+    "name": "Browserbase (AI Browser Automation)"
+  },
+  {
+    "provider": "tavily",
+    "url": "https://blog.tavily.com/rss.xml",
+    "name": "Tavily (AI Search API for Agents)"
+  },
+  {
+    "provider": "nomic_ai",
+    "url": "https://www.nomic.ai/blog/rss.xml",
+    "name": "Nomic AI (Open Source Embeddings)"
+  },
+  {
+    "provider": "chroma",
+    "url": "https://www.trychroma.com/blog/rss.xml",
+    "name": "Chroma (Open Source Vector DB)"
+  },
+  {
+    "provider": "upstage",
+    "url": "https://www.upstage.ai/blog/rss.xml",
+    "name": "Upstage (Solar LLM / Korea AI Unicorn)"
+  },
+  {
+    "provider": "modal",
+    "url": "https://modal.com/blog/rss.xml",
+    "name": "Modal (Serverless GPU Cloud)"
+  },
+  {
+    "provider": "runpod",
+    "url": "https://blog.runpod.io/rss/",
+    "name": "RunPod (GPU Cloud Marketplace)"
+  },
+  {
+    "provider": "scale_ai",
+    "url": "https://scale.com/blog/rss",
+    "name": "Scale AI (Data & Enterprise AI)"
+  },
+  {
+    "provider": "baseten",
+    "url": "https://www.baseten.co/blog/rss.xml",
+    "name": "Baseten (ML Inference Platform)"
+  },
+  {
+    "provider": "arize_ai",
+    "url": "https://arize.com/blog/rss/",
+    "name": "Arize AI (LLM Observability)"
+  },
+  {
+    "provider": "langsmith",
+    "url": "https://blog.langchain.dev/rss/",
+    "name": "LangSmith (LLM Observability by LangChain)"
+  },
+  {
+    "provider": "comet_ml",
+    "url": "https://www.comet.com/site/blog/feed/",
+    "name": "Comet ML (ML Experiment Tracking & LLM Evals)"
+  },
+  {
+    "provider": "braintrust",
+    "url": "https://www.braintrust.dev/blog/rss.xml",
+    "name": "Braintrust (AI Observability & Eval Platform)"
+  },
+  {
+    "provider": "galileo",
+    "url": "https://www.galileo.ai/blog/rss.xml",
+    "name": "Galileo AI (LLM Eval Guardrails Monitoring)"
+  },
+  {
+    "provider": "prefect",
+    "url": "https://www.prefect.io/blog/rss.xml",
+    "name": "Prefect (Python Workflow Orchestration)"
+  },
+  {
+    "provider": "confident_ai",
+    "url": "https://www.confident-ai.com/blog/rss.xml",
+    "name": "Confident AI / DeepEval (LLM Evaluation)"
+  },
+  {
+    "provider": "crewai",
+    "url": "https://www.crewai.com/blog/rss.xml",
+    "name": "CrewAI (Multi-Agent Orchestration)"
+  },
+  {
+    "provider": "patronus_ai",
+    "url": "https://www.patronus.ai/blog/rss.xml",
+    "name": "Patronus AI (LLM Evaluation & Safety)"
+  },
+  {
+    "provider": "autogen",
+    "url": "https://devblogs.microsoft.com/autogen/feed/",
+    "name": "AutoGen (Microsoft Research Multi-Agent OSS)"
+  },
+  {
+    "provider": "agno",
+    "url": "https://www.agno.com/blog/rss.xml",
+    "name": "Agno / phidata (Python-native Agent Framework)"
+  },
+  {
+    "provider": "haystack",
+    "url": "https://haystack.deepset.ai/blog/feed",
+    "name": "Haystack deepset (OSS RAG & LLM App Framework)"
+  },
+  {
+    "provider": "zenml",
+    "url": "https://www.zenml.io/blog/rss.xml",
+    "name": "ZenML (MLOps Pipeline OSS)"
+  },
+  {
+    "provider": "vllm",
+    "url": "https://blog.vllm.ai/feed.xml",
+    "name": "vLLM (UC Berkeley High-Throughput LLM Serving)"
+  },
+  {
+    "provider": "ragas",
+    "url": "https://docs.ragas.io/blog/rss.xml",
+    "name": "Ragas (RAG Evaluation Framework OSS)"
+  },
+  {
+    "provider": "continue_dev",
+    "url": "https://blog.continue.dev/rss.xml",
+    "name": "Continue.dev (OSS AI Coding Assistant for VS Code/JetBrains)"
+  },
+  {
+    "provider": "aider",
+    "url": "https://aider.chat/feed.xml",
+    "name": "Aider (AI Pair Programmer CLI with Git Integration)"
+  },
+  {
+    "provider": "dspy",
+    "url": "https://dspy.ai/blog/rss.xml",
+    "name": "DSPy (Stanford — Programming not Prompting LLM Framework)"
+  },
+  {
+    "provider": "pydantic_ai",
+    "url": "https://ai.pydantic.dev/blog/rss.xml",
+    "name": "Pydantic AI (Type-Safe Production Agent Framework)"
+  },
+  {
+    "provider": "litellm",
+    "url": "https://blog.litellm.ai/rss.xml",
+    "name": "LiteLLM (100+ LLM Unified Proxy / OpenAI Compatible)"
+  },
+  {
+    "provider": "langgraph",
+    "url": "https://blog.langchain.dev/rss/",
+    "name": "LangGraph (Stateful Multi-Actor LLM Graph Framework)"
+  }
+]
