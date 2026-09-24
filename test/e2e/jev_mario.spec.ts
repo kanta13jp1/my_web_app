@@ -414,3 +414,38 @@ test('2-1 terrain and reference-style pipe silhouettes render across camera clip
  });
  await page.locator('#world21-scenes').screenshot({path:info.outputPath('world21-scenes.png')});
 });
+
+
+test('local autoplay survives elapsed benchmark time and continues into the next course',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ // Hold a safe scene while advancing wall time; this is lifecycle coverage, not AI clear evidence.
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');(window as any).originalStep=World11.prototype.step;World11.prototype.step=function(){this.frames++;};});
+ await lab.locator('#watch-student').click();await expect(lab.locator('#student-status')).toContainText('探索変更',{timeout:20000});
+ await frame.evaluate(()=>{const original=performance.now.bind(performance);Object.defineProperty(performance,'now',{configurable:true,value:()=>original()+65000});});
+ const before=await lab.locator('#progress').textContent();await expect(lab.locator('#progress')).not.toHaveText(before!);
+ await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');World11.prototype.step=function(){if(this.stage===1){this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;(window as any).originalStep.call(this);this.presentation=179;}else this.frames++;};});
+ await expect(lab.locator('#stage')).toHaveValue('2',{timeout:10000});await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中');
+ await lab.locator('#presentation').screenshot({path:info.outputPath('continuous-local.png')});
+ await lab.locator('#stop').click();const stopped=await lab.locator('#progress').textContent();await page.waitForTimeout(200);await expect(lab.locator('#progress')).toHaveText(stopped!);await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');
+});
+
+test('visible blur releases manual keys but preserves play and recording',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#watch-manual').click();await page.keyboard.down('ArrowRight');await expect(lab.locator('#posture')).toContainText('歩く');
+ await lab.locator('#record-start').click();await expect(lab.locator('#record-status')).toContainText('録画中');
+ await frame.evaluate(()=>window.dispatchEvent(new Event('blur')));await page.keyboard.up('ArrowRight');
+ await expect(lab.locator('#action')).toHaveText('操作: noop');await expect(lab.locator('#status')).toContainText('手動プレイ中');await expect(lab.locator('#record-status')).toContainText('録画中');
+ await lab.locator('#stop').click();await expect(lab.locator('#record-result')).toBeVisible();
+});
+
+test('autoplay ignores visible blur but hidden page stops and can restart',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#watch-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
+ await frame.evaluate(()=>window.dispatchEvent(new Event('blur')));await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中');
+ await frame.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
+ await expect(lab.locator('#status')).toContainText('バックグラウンド');const stopped=await lab.locator('#progress').textContent();await page.waitForTimeout(200);await expect(lab.locator('#progress')).toHaveText(stopped!);
+ await frame.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+ await lab.locator('#watch-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});await lab.locator('#stop').click();
+});

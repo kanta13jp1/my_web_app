@@ -21,7 +21,7 @@ const stageName=()=>courseInfo(world.stage).label;
 $('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。手動プレイはAPI不要です。';};
 const student = new StudentSession();
 const presentation=$('presentation'),presentationContext=presentation.getContext('2d');
-let decision={},effectiveAction='noop',watchMode=false,transition=null,studentDeadline=0;
+let decision={},effectiveAction='noop',watchMode=false,transition=null;
 function resetDecision(){decision={};effectiveAction='noop';}
 for(const id of ['play-local','play-student','start','restart-local','reset'])$(id).addEventListener('click',resetDecision);
 for(const id of ['stage','mode'])$(id).addEventListener('change',resetDecision);
@@ -71,7 +71,6 @@ $('record-start').onclick=async()=>{
 };
 $('record-stop').onclick=()=>stopRecording();
 for(const id of ['mode','stage','restart-local','reset','rom'])$(id).addEventListener(id==='mode'||id==='stage'||id==='rom'?'change':'click',()=>{stopRecording('ゲームを変更したため録画を停止しました');recording.changed();});
-window.addEventListener('blur',()=>stopRecording('画面から離れたため録画を停止しました'));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopRecording('バックグラウンドになったため録画を停止しました');});
 window.addEventListener('pagehide',()=>{stopRecording();if(recordUrl)URL.revokeObjectURL(recordUrl);});
 
@@ -127,7 +126,7 @@ const loop = new DecisionLoop({ request, state, observe:()=>isRecreation()?{...w
   record: s => { samples.push({ index: samples.length + 1, ...s }); lastResponse = s.rtt_ms;
     if(s.ok)decision={source:'Cloud Jev',proposal:s.choice,probabilities:s.probabilities,latency:s.rtt_ms,latencyKind:'Browser round trip (not pure inference)',count:samples.length,note:s.stale?'Stale response: not applied':'Cloud response'};
     if (!s.ok) $('last-error').textContent = s.error; update(); },
-  done: reason => { audio.stop(); gameRunning = false; status(reason); },
+  done: reason => { audio.stop(); gameRunning = false; status(reason==='測定完了'?'Jev測定完了（回数または時間の上限）。続けるには測定を再開してください。':reason==='時間上限で停止'?'Jev測定は60秒上限で停止しました。続けるには測定を再開してください。':reason); },
 });
 parent.postMessage({ type: 'jev-mario-hello' }, origin);
 setTimeout(() => { if (!connected&&!student.active) status('my_web_appの「Jev Mario Lab」から開いてください。このページ単独ではAPIを呼び出せません。'); }, 3000);
@@ -161,7 +160,7 @@ $('play-student').onclick=()=>startStudent();
 function startStudent(continuing=false){
   if(!isRecreation())return status('再現ゲームを選んでください');
   if(loop.pending||pendingBridge)return status('API応答の終了を待ってから開始してください');
-  if(!continuing){stop();world.reset();studentDeadline=performance.now()+60000;frameCount=0;samples=[];interventions=[];metadata={lab_revision:'stage-3',course_id:world.stage,...courseInfo(world.stage),controller:'lightgbm_plus_search',mode:'recreation',started_at:new Date().toISOString(),timing:'Browser rendering and asynchronous local search; no API requests'};}update();
+  if(!continuing){stop();world.reset();frameCount=0;samples=[];interventions=[];metadata={lab_revision:'stage-3',course_id:world.stage,...courseInfo(world.stage),controller:'lightgbm_plus_search',play_policy:'continuous_until_terminal_or_user_stop',mode:'recreation',started_at:new Date().toISOString(),timing:'Browser rendering and asynchronous local search; no API requests'};}update();
   $('last-error').textContent='';void unlockAudio();status('学習済みモデルを読み込んでいます…');
   student.start({ready:()=>{gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{decision={source:'LightGBM + search | Jev teacher',proposal:student.latest.raw,probabilities:student.latest.probabilities,latency:student.latest.inferenceMs,latencyKind:'Local tree inference only (search excluded)',count:stats.decisions,accepted:stats.accepted,overrides:stats.overrides};$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
 };
@@ -199,7 +198,8 @@ for(const button of document.querySelectorAll('[data-key]')) {
   button.addEventListener('pointerdown', e => { if(!gameRunning||loop.active||student.active)return; e.preventDefault(); button.setPointerCapture(e.pointerId);world.input[button.dataset.key]=true; });
   for(const event of ['pointerup','pointercancel','lostpointercapture']) button.addEventListener(event,()=>{world.input[button.dataset.key]=false;});
 }
-window.addEventListener('blur', () => stop('画面から離れたため停止しました'));
+// Losing focus must release held manual keys, not terminate visible autoplay.
+window.addEventListener('blur', () => { if(!loop.active&&!student.active)controls('noop'); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop('バックグラウンドになったため停止しました'); });
 window.addEventListener('pagehide', () => stop());
 function finishStage(){
@@ -215,7 +215,7 @@ function continueStage(){
  frameBudget=0;presentationBudget=0;frameCount=0;assist.reset();proposedAction='noop';resetDecision();
  drawWorld(context,world);showPose();$('progress').textContent='World '+stageName();metadata.current_course_id=world.stage;metadata.current_stage=courseInfo(world.stage);
  if(resume.kind==='student'){
-  if(performance.now()<studentDeadline)startStudent(true);else status('次のステージへ移動しました。60秒上限のためプレイ停止');
+  startStudent(true);
  }else if(resume.kind==='api'){
   const duration=resume.deadline-performance.now();
   if(resume.remaining>0&&duration>0&&$('consent').checked){gameRunning=true;loop.start({count:resume.remaining,duration,cadence:resume.cadence,maxAge:resume.maxAge});status(stageName()+' Jev操作を継続中');}
@@ -226,7 +226,6 @@ function frame(now) {
   const delta = lastFrame ? Math.min(100, now - lastFrame) : 0; lastFrame = now;
   if (gameRunning && (isRecreation() || nes)) {
     frameBudget += delta;
-    if(student.active&&performance.now()>=studentDeadline)stop('ローカルプレイの60秒上限に達しました');
     try {
       while (frameBudget >= 1000 / 60 && gameRunning) {
         if(isRecreation()) {
