@@ -5,8 +5,9 @@ import { dequantRow } from './vendor/jwenv-8263b81/src/gguf/dequant.js';
 import { GGML_TYPE_NAME } from './vendor/jwenv-8263b81/src/gguf/parser.js';
 import { blobSource } from './vendor/jwenv-8263b81/browser_source.js';
 import {
-  ARTICLE_EXAMPLE, ENGINE, EXPENSE_DOMAIN, LOAD_OPTIONS, MODEL, NOUL_THRESHOLD, agreement, expenseRequest,
-  isHtmlFallback, limitCheckRequest, median, normalizedEntropyConfidence, pickCategory, rankNoul,
+  ARTICLE_EXAMPLE, CHOICE_MAJORITY, ENGINE, EXPENSE_DOMAIN, LOAD_OPTIONS, MODEL, NOUL_THRESHOLD, STAGE2_OPTIONS,
+  STAGE2_PERMUTATIONS, adoptionCheck, decideStage2, expenseRequest, isHtmlFallback, limitCheckRequest, median,
+  normalizedEntropyConfidence, pickCategory, rankNoul, stage2Request, summarizeMethods,
 } from './core.mjs';
 
 const byId = (id) => document.getElementById(id);
@@ -33,20 +34,25 @@ async function shaderLoader(name) {
   return text;
 }
 
-// ------------------------------------------------------------ reference samples (from the BERT lab)
+// ------------------------------------------------------------ reference samples
+// The 14 memos and 12 categories come from the BERT lab; holdout.json adds 20 pre-registered memos.
 async function loadReference() {
   const data = await fetchJson('../expense-comparison/results.json');
   if (!data || Object.keys(data.categories ?? {}).length !== 12 || data.samples?.length !== 14) {
     throw Error('reference samples are unavailable');
   }
-  return {
-    categories: data.categories,
-    samples: data.samples.map((s) => ({
-      id: s.id, text: s.text, expected: s.expected, review_required: s.review_required, rule: s.rule,
-      bert: s.trials?.[0]?.status === 'ok' ? s.trials[0].answer.choice : null,
-    })),
-    bertRunId: data.run_id,
-  };
+  const samples = data.samples.map((s) => ({
+    set: 'original', id: s.id, text: s.text, expected: s.expected, review_required: s.review_required, rule: s.rule,
+    bert: s.trials?.[0]?.status === 'ok' ? s.trials[0].answer.choice : null,
+  }));
+  let holdout = [];
+  try {
+    const h = await fetchJson('holdout.json');
+    const ok = h?.samples?.length === 20 && h.samples.every((s) => typeof s.text === 'string' &&
+      (s.expected === null || s.expected in data.categories));
+    if (ok) holdout = h.samples.map((s) => ({ set: 'holdout', ...s, rule: null, bert: null }));
+  } catch { /* the 14 original memos still work without the holdout set */ }
+  return { categories: data.categories, samples: [...samples, ...holdout], bertRunId: data.run_id };
 }
 
 // ------------------------------------------------------------ environment and model
@@ -132,30 +138,40 @@ function runLimit() {
   }
 }
 
-async function runExpense(passes = 2, onProgress = () => {}) {
-  const ids = Object.keys(state.ref.categories);
-  const runs = [];
-  for (let pass = 1; pass <= passes; pass++) {
-    const rows = [];
-    for (const s of state.ref.samples) {
-      const request = expenseRequest(s.text, state.ref.categories, EXPENSE_DOMAIN);
-      const t0 = performance.now();
-      const res = await state.jev.systemOne(request);
-      const ms = performance.now() - t0;
-      const ranked = rankNoul(res.answers, ids);
-      const pick = pickCategory(ranked);
-      rows.push({ ...s, jwenv: pick.choice, p_yes: pick.p, review: pick.review, top3: ranked.slice(0, 3),
-                  ms, input_tokens: res.usage.input_tokens });
-      onProgress(pass, rows.length);
-    }
-    runs.push({ pass, rows, median_ms: median(rows.map((r) => r.ms)), total_ms: rows.reduce((a, r) => a + r.ms, 0) });
+/** Methods A and B (docs/JWENV_DECISION_METHOD.md) on the selected memo sets; B reuses A's stage-1 request. */
+async function runMethods({ sets = ['original', 'holdout'], limit = Infinity, onProgress = () => {} } = {}) {
+  const cats = state.ref.categories;
+  const ids = Object.keys(cats);
+  const samples = state.ref.samples.filter((s) => sets.includes(s.set)).slice(0, limit);
+  const rows = [];
+  for (const s of samples) {
+    const t0 = performance.now();
+    const r1 = await state.jev.systemOne(expenseRequest(s.text, cats, EXPENSE_DOMAIN));
+    const stage1Ms = performance.now() - t0;
+    const ranked = rankNoul(r1.answers, ids);
+    const a = pickCategory(ranked);
+    const t1 = performance.now();
+    const r2 = await state.jev.systemOne(stage2Request(s.text, ranked, cats, EXPENSE_DOMAIN));
+    const stage2Ms = performance.now() - t1;
+    const b = decideStage2(r2.answers.category);
+    const top8 = ranked.slice(0, STAGE2_OPTIONS).map((r) => r.id);
+    rows.push({
+      set: s.set, id: s.id, text: s.text, expected: s.expected, review_required: s.review_required, rule: s.rule, bert: s.bert,
+      a: { choice: a.choice, p: a.p, review: a.review, top3: ranked.slice(0, 3) },
+      b: { ...b, probabilities: r2.answers.category.probabilities, expected_in_top8: s.expected ? top8.includes(s.expected) : null },
+      stage1_ms: stage1Ms, stage2_ms: stage2Ms, stage1_tokens: r1.usage.input_tokens, stage2_tokens: r2.usage.input_tokens,
+    });
+    onProgress(rows.length, samples.length);
   }
-  const first = runs[0].rows;
+  const usedSets = sets.filter((set) => rows.some((r) => r.set === set));
+  const summary = Object.fromEntries(usedSets.map((set) => [set, summarizeMethods(rows.filter((r) => r.set === set))]));
   return {
-    question_type: 'noul', questions_per_request: ids.length, threshold: NOUL_THRESHOLD, bert_run_id: state.ref.bertRunId,
-    runs,
-    agreement: { jwenv: agreement(first, 'jwenv'), rule: agreement(first, 'rule'), bert: agreement(first, 'bert') },
-    same_choice_every_pass: first.every((r, i) => runs.every((run) => run.rows[i].jwenv === r.jwenv)),
+    method_doc: 'docs/JWENV_DECISION_METHOD.md',
+    thresholds: { a_p_yes: NOUL_THRESHOLD, b_choice: CHOICE_MAJORITY },
+    stage2: { options: STAGE2_OPTIONS, permutations: STAGE2_PERMUTATIONS },
+    rows, summary,
+    adoption: summary.holdout && rows.filter((r) => r.set === 'holdout').length === 20 ? adoptionCheck(summary.holdout) : null,
+    timing: { stage1_median_ms: median(rows.map((r) => r.stage1_ms)), stage2_median_ms: median(rows.map((r) => r.stage2_ms)) },
   };
 }
 
@@ -239,6 +255,31 @@ function expenseTable(result, pass = 0, prefix = 'live') {
     el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, head), el('tbody', {}, ...body))));
 }
 
+const SET_NAMES = { original: '元の14件', holdout: '検証用20件（事前登録）' };
+
+function methodsBlock(result, prefix = 'live') {
+  const blocks = Object.entries(result.summary).map(([set, s]) => {
+    const head = el('tr', {}, ...['メモ', '参照', '方式A（P(yes)）', '方式B（確率）', '段階1+2の時間'].map((h) => el('th', { scope: 'col' }, h)));
+    const body = result.rows.filter((r) => r.set === set).map((r) => el('tr', {},
+      el('td', {}, r.text), el('td', {}, r.expected ? label(r.expected) : '参照なし'),
+      el('td', { class: r.a.review ? 'review' : '' }, `${label(r.a.choice)}（${fmtP(r.a.p)}）${r.a.review ? ' 要確認' : ''}`),
+      el('td', { class: r.b.review ? 'review' : '' }, `${label(r.b.choice)}（${fmtP(r.b.p)}）${r.b.review ? ' 要確認' : ''}`),
+      el('td', { class: 'num' }, fmtMs(r.stage1_ms + r.stage2_ms))));
+    const line = (k) => `参照一致 ${s[k].matches}/${s[k].referenced}、要確認の検出 ${s[k].flagged}/${s[k].review_required}、誤って要確認 ${s[k].false_reviews}`;
+    return el('div', { class: 'result', id: `${prefix}-methods-${set}` },
+      el('h3', {}, SET_NAMES[set] ?? set),
+      el('p', {}, `方式A：${line('a')}。方式B：${line('b')}（参照が段階1の上位8に入った件数 ${s.b_expected_in_top8}/${s.b.referenced}）。`),
+      el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, head), el('tbody', {}, ...body))));
+  });
+  const verdict = result.adoption
+    ? `事前登録の判断基準（検証用20件）：方式Bの要確認の検出が方式Aより多い＝${result.adoption.b_flags_more ? 'はい' : 'いいえ'}、参照一致の減少 ${result.adoption.match_drop}件 → ${result.adoption.adopt ? '採用候補' : '不採用'}`
+    : '検証用20件をすべて実行していないため、判断基準は評価していません。';
+  return el('div', { class: 'result', id: `${prefix}-methods` },
+    el('p', { class: 'verdict' }, verdict),
+    el('p', {}, `要求時間の中央値：段階1 ${fmtMs(result.timing.stage1_median_ms)}、段階2 ${fmtMs(result.timing.stage2_median_ms)}。`),
+    ...blocks);
+}
+
 function exampleBlock(r) {
   const a = r.response.answers.category;
   return el('div', { class: 'result', id: 'example-result' },
@@ -316,6 +357,28 @@ function renderSaved(d) {
     el('p', {}, run, ' · ', el('a', { href: 'results.json', download: '' }, '記録を保存')));
 }
 
+// ------------------------------------------------------------ saved real-GPU measurement (methods A and B)
+function validateSavedGpu(d) {
+  if (d?.schema_version !== 2 || d.mode !== 'saved_browser_webgpu_measurement' || d.synthetic !== true ||
+      d.model?.sha256 !== MODEL.sha256 || d.engine?.revision !== ENGINE.revision || typeof d.environment?.adapter !== 'string' ||
+      !Array.isArray(d.methods?.rows) || !d.methods.rows.length || !d.methods.summary) {
+    throw Error('invalid record');
+  }
+  return d;
+}
+
+function renderSavedGpu(d) {
+  byId('gpu-saved-status').textContent = `${d.recorded_at} にローカルPCの実機GPUで記録した実測です。`;
+  byId('gpu-saved').replaceChildren(
+    el('ul', { class: 'facts' },
+      el('li', {}, `WebGPUアダプタ：${d.environment.adapter}`),
+      el('li', {}, `ブラウザ：${d.environment.browser}`),
+      el('li', {}, `モデル読込：${fmtMs(d.load_ms)}（${MODEL.file}、sha256確認済み）`),
+      el('li', {}, `記事の入力例：${d.article_example.response.answers.category.choice}（${fmtMs(d.article_example.ms)}）`)),
+    methodsBlock(d.methods, 'gpu-saved'),
+    el('p', {}, el('a', { href: 'results-gpu.json', download: '' }, '記録を保存')));
+}
+
 // ------------------------------------------------------------ boot
 async function boot() {
   byId('model-link').href = MODEL.page;
@@ -362,8 +425,8 @@ async function boot() {
   byId('run-limit').addEventListener('click', () => guarded('12択の確認', async () => show(limitBlock(runLimit()), 'limit-result')));
   byId('verify-slice').addEventListener('click', () => guarded('一致確認', async () => show(sliceBlock(await verifySlice()), 'slice-result')));
   byId('run-expense').addEventListener('click', () => guarded('支出メモの検証', async () => {
-    const r = await runExpense(1, (_, n) => { byId('run-status').textContent = `支出メモの検証中… ${n}/14`; });
-    show(expenseTable(r), 'live-expense-1');
+    const r = await runMethods({ onProgress: (n, total) => { byId('run-status').textContent = `支出メモの検証中… ${n}/${total}`; } });
+    show(methodsBlock(r), 'live-methods');
   }));
 
   try {
@@ -373,13 +436,20 @@ async function boot() {
   } catch {
     byId('saved-status').textContent = '保存済みの実測を読み込めません（記録の形式が正しくありません）。';
   }
+  try {
+    const gpu = await fetchJson('results-gpu.json');
+    if (!gpu) byId('gpu-saved-status').textContent = '実機GPUの保存済み実測はまだありません。';
+    else renderSavedGpu(validateSavedGpu(gpu));
+  } catch {
+    byId('gpu-saved-status').textContent = '実機GPUの保存済み実測を読み込めません（記録の形式が正しくありません）。';
+  }
 }
 
 // Automation hook for scripts/jwenv_lab/run_lab.py; it drives the same functions as the buttons.
 window.jwenvLab = {
   ready: boot(),
   snapshot: modelSnapshot,
-  runExample, runLimit, runExpense, verifySlice,
+  runExample, runLimit, runMethods, verifySlice,
   expenseRequestFor: (i) => expenseRequest(state.ref.samples[i].text, state.ref.categories, EXPENSE_DOMAIN),
-  render: { exampleBlock, limitBlock, sliceBlock, expenseTable, show },
+  render: { exampleBlock, limitBlock, sliceBlock, expenseTable, methodsBlock, show },
 };

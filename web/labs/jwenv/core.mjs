@@ -87,6 +87,55 @@ export function pickCategory(ranked, threshold = NOUL_THRESHOLD) {
   return { choice: top.id, p: top.p, review: top.p < threshold };
 }
 
+// Method B, pre-registered in docs/JWENV_DECISION_METHOD.md (do not tune after seeing results).
+export const STAGE2_OPTIONS = 8;
+export const STAGE2_PERMUTATIONS = 8;
+export const CHOICE_MAJORITY = 0.5;
+
+/** Stage 2: one choice over the top-8 categories of stage 1, averaged over all 8 label rotations. */
+export function stage2Request(text, ranked, categories, domain) {
+  const top = ranked.slice(0, STAGE2_OPTIONS);
+  return {
+    model: 'jev-latest',
+    state: text,
+    options: { permutations: STAGE2_PERMUTATIONS },
+    questions: {
+      category: {
+        type: 'choice',
+        instructions: `${domain}として、この支出に最も当てはまるカテゴリを選んでください`,
+        criteria: Object.fromEntries(top.map(({ id }) => [id, `${categories[id].label}（${categories[id].description}）`])),
+      },
+    },
+  };
+}
+
+export function decideStage2(answer) {
+  if (answer?.type !== 'choice' || !answer.probabilities) throw Error('missing choice answer');
+  const p = answer.probabilities[answer.choice];
+  return { choice: answer.choice, p, confidence: answer.confidence, review: p < CHOICE_MAJORITY };
+}
+
+/** Pre-registered metrics for one set of rows ({expected, a: {choice, review}, b: {choice, review, expected_in_top8}}). */
+export function summarizeMethods(rows) {
+  const referenced = rows.filter((r) => r.expected);
+  const ambiguous = rows.filter((r) => !r.expected);
+  const of = (k) => ({
+    referenced: referenced.length,
+    matches: referenced.filter((r) => r[k].choice === r.expected).length,
+    false_reviews: referenced.filter((r) => r[k].review).length,
+    review_required: ambiguous.length,
+    flagged: ambiguous.filter((r) => r[k].review).length,
+  });
+  return { a: of('a'), b: of('b'), b_expected_in_top8: referenced.filter((r) => r.b.expected_in_top8).length };
+}
+
+/** Adoption rule fixed before the run: B flags more review memos and loses fewer than 2 matches. */
+export function adoptionCheck(summary) {
+  const matchDrop = summary.a.matches - summary.b.matches;
+  const flagsMore = summary.b.flagged > summary.a.flagged;
+  return { b_flags_more: flagsMore, match_drop: matchDrop, adopt: flagsMore && matchDrop < 2 };
+}
+
 /** Same formula as upstream jev.js, used to re-check returned confidences. */
 export function normalizedEntropyConfidence(probabilities) {
   const n = probabilities.length;

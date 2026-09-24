@@ -34,39 +34,47 @@ jobs:
           path: out/jwenv-lab-e2e/
           retention-days: 14
   measure:
+    # Functional smoke of methods A and B in software WebGPU (SwiftShader). Real-GPU timings come
+    # from a local run (scripts/jwenv_lab/run_lab.py --suite full --browser chrome); runners have no GPU.
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 120
     permissions: {contents: read}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: {persist-credentials: false}
-      - name: Decide whether a new measurement is needed
+      - name: Decide whether a new smoke measurement is needed
         id: plan
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json, sys
           sys.path.insert(0, 'scripts/jwenv_lab')
-          from common import RESULTS, inputs_sha256
-          if RESULTS.exists() and json.loads(RESULTS.read_text())['inputs_sha256'] == inputs_sha256():
+          from common import RESULTS_SMOKE, inputs_sha256
+          if RESULTS_SMOKE.exists() and json.loads(RESULTS_SMOKE.read_text())['inputs_sha256'] == inputs_sha256():
               print('measure=false')
-              print('Saved measurement matches current inputs; the model is not downloaded again.', file=sys.stderr)
+              print('Saved smoke measurement matches current inputs; the model is not downloaded again.', file=sys.stderr)
           else:
               print('measure=true')
           PY
-      - name: Download the pinned model and verify size and sha256
+      - name: Restore the pinned model
+        if: steps.plan.outputs.measure == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: /tmp/jwenv.gguf
+          key: jwenv-0.6b-poc-q8_0-293ef32a06953c06d1ba9a9bbd23cf734ece3fb94ad1a360faa9ca3c86294a95
+      - name: Download (if not cached) and verify size and sha256
         if: steps.plan.outputs.measure == 'true'
         run: python scripts/jwenv_lab/run_lab.py download --dest /tmp/jwenv.gguf
-      - name: Measure in Chromium WebGPU (SwiftShader)
+      - name: Smoke-test methods A and B in Chromium WebGPU (SwiftShader)
         if: steps.plan.outputs.measure == 'true'
         run: |
           python -m pip install playwright==1.55.0
           python -m playwright install --with-deps chromium
           lscpu | tee out-lscpu.txt
-          python scripts/jwenv_lab/run_lab.py measure --model /tmp/jwenv.gguf --out out/jwenv-lab
+          python scripts/jwenv_lab/run_lab.py measure --model /tmp/jwenv.gguf --suite smoke --out out/jwenv-lab
           mv out-lscpu.txt out/jwenv-lab/cpu.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always() && steps.plan.outputs.measure == 'true'
         with:
-          name: jwenv-lab-measurement-${{ github.run_id }}
+          name: jwenv-lab-smoke-${{ github.run_id }}
           path: out/jwenv-lab/
           retention-days: 30

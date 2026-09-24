@@ -38,5 +38,6 @@ th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: lef
 td.num { text-align: right; white-space: nowrap; }
 td.review { color: var(--warn); }
 .facts { padding-left: 20px; font-size: 14px; }
+.verdict { font-weight: 600; }
 code { overflow-wrap: anywhere; }
 footer { margin-top: 32px; font-size: 12px; color: var(--muted); }

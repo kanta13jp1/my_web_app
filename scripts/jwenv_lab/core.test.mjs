@@ -68,3 +68,47 @@ test('agreement counts only samples with a reference', () => {
   assert.ok(core.isHtmlFallback('<!doctype html>'));
   assert.ok(!core.isHtmlFallback('{"a":1}'));
 });
+
+test('method B asks one 8-option choice over the stage-1 top 8, with all 8 rotations', () => {
+  const ids = Object.keys(reference.categories);
+  const ranked = ids.map((id, i) => ({ id, p: 1 - i / 20 }));
+  const request = core.stage2Request('ローソンで買い物', ranked, reference.categories, core.EXPENSE_DOMAIN);
+  assert.deepEqual(Object.keys(request.questions.category.criteria), ids.slice(0, 8));
+  assert.equal(request.options.permutations, 8);
+  assert.doesNotThrow(() => jev.validate(request, jev.MODEL_ALIASES));
+});
+
+test('method B flags review below a 0.5 majority only', () => {
+  const answer = (p) => ({ type: 'choice', choice: 'x', probabilities: { x: p, y: 1 - p }, confidence: 0 });
+  assert.equal(core.decideStage2(answer(0.5)).review, false);
+  assert.equal(core.decideStage2(answer(0.4999)).review, true);
+  assert.throws(() => core.decideStage2({ type: 'noul' }));
+});
+
+test('summary and adoption rule follow the pre-registered definitions', () => {
+  const row = (expected, a, b, top8 = true) => ({ expected, a, b: { ...b, expected_in_top8: expected ? top8 : null } });
+  const rows = [
+    row('x', { choice: 'x', review: false }, { choice: 'x', review: false }),
+    row('y', { choice: 'x', review: false }, { choice: 'y', review: true }, false),
+    row(null, { choice: 'x', review: false }, { choice: 'x', review: true }),
+  ];
+  const s = core.summarizeMethods(rows);
+  assert.deepEqual(s.a, { referenced: 2, matches: 1, false_reviews: 0, review_required: 1, flagged: 0 });
+  assert.deepEqual(s.b, { referenced: 2, matches: 2, false_reviews: 1, review_required: 1, flagged: 1 });
+  assert.equal(s.b_expected_in_top8, 1);
+  assert.deepEqual(core.adoptionCheck(s), { b_flags_more: true, match_drop: -1, adopt: true });
+  assert.equal(core.adoptionCheck({ a: { matches: 5, flagged: 1 }, b: { matches: 3, flagged: 4 } }).adopt, false);
+});
+
+test('the holdout set is 20 unique memos: one referenced per category plus 8 needing review', () => {
+  const holdout = JSON.parse(readFileSync(join(lab, 'holdout.json'), 'utf8'));
+  const ids = Object.keys(reference.categories);
+  assert.equal(holdout.samples.length, 20);
+  assert.equal(new Set(holdout.samples.map((s) => s.id)).size, 20);
+  const referenced = holdout.samples.filter((s) => s.expected);
+  assert.deepEqual(referenced.map((s) => s.expected).sort(), [...ids].sort());
+  assert.ok(referenced.every((s) => s.review_required === false));
+  assert.ok(holdout.samples.filter((s) => !s.expected).every((s) => s.review_required === true));
+  const original = new Set(reference.samples.map((s) => s.text));
+  assert.ok(holdout.samples.every((s) => !original.has(s.text)));
+});

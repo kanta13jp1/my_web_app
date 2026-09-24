@@ -1,9 +1,10 @@
 """Static checks for the Jwenv lab: vendored engine integrity, pinned model, and no external calls."""
+import hashlib
 import json
 import re
 import unittest
 
-from common import FIXTURES, LAB, VENDOR, core_constant, manifest, sha256_file
+from common import FIXTURES, LAB, VENDOR, core_constant, manifest
 
 
 class VendoredEngine(unittest.TestCase):
@@ -16,7 +17,9 @@ class VendoredEngine(unittest.TestCase):
         self.assertEqual(present - {'manifest.json', 'NOTICE.md'}, listed)
         for rel, info in m['files'].items():
             with self.subTest(rel):
-                self.assertEqual(sha256_file(VENDOR / rel), info['sha256'])
+                # Git stores LF; a Windows checkout with core.autocrlf=true writes CRLF.
+                data = (VENDOR / rel).read_bytes().replace(b'\r\n', b'\n')
+                self.assertEqual(hashlib.sha256(data).hexdigest(), info['sha256'])
 
     def test_notice_keeps_the_mit_permission_notice(self):
         notice = (VENDOR / 'NOTICE.md').read_text(encoding='utf-8')

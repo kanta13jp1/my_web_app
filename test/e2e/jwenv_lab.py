@@ -38,6 +38,25 @@ else:
              'expense': {'runs': [{'pass': 1, 'rows': rows, 'median_ms': 1}],
                          'agreement': {k: {'referenced': 11, 'matches': 0} for k in ('jwenv', 'rule', 'bert')}}}
 
+# Rendering fixture for the real-GPU section (schema 2). A committed results-gpu.json replaces it.
+gpu_path = LAB / 'results-gpu.json'
+if gpu_path.exists():
+    gpu_saved = json.loads(gpu_path.read_text(encoding='utf-8'))
+else:
+    def method_row(s):
+        return {'set': 'original', 'id': s['id'], 'text': s['text'], 'expected': s['expected'],
+                'a': {'choice': 'other', 'p': 0.1, 'review': True, 'top3': []},
+                'b': {'choice': 'other', 'p': 0.2, 'review': True, 'expected_in_top8': None},
+                'stage1_ms': 1, 'stage2_ms': 1}
+    counts = {'referenced': 11, 'matches': 0, 'false_reviews': 11, 'review_required': 3, 'flagged': 3}
+    gpu_saved = {'schema_version': 2, 'mode': 'saved_browser_webgpu_measurement', 'synthetic': True,
+                 'recorded_at': 'contract-fixture', 'model': {'sha256': model_sha}, 'engine': {'revision': engine_rev},
+                 'environment': {'adapter': 'contract fixture, not inference', 'browser': 'n/a'}, 'load_ms': 1,
+                 'article_example': {'ms': 1, 'response': {'answers': {'category': {'choice': 'food'}}}},
+                 'methods': {'rows': [method_row(s) for s in reference['samples']],
+                             'summary': {'original': {'a': counts, 'b': counts, 'b_expected_in_top8': 0}},
+                             'adoption': None, 'timing': {'stage1_median_ms': 1, 'stage2_median_ms': 1}}}
+
 handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT / 'web'))
 server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
 threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -56,7 +75,7 @@ try:
             page = browser.new_page(viewport={'width': width, 'height': height})
             errors = []
             page.on('pageerror', lambda e: errors.append(str(e)))
-            mode = {'saved': 'ok', 'reference': 'ok'}
+            mode = {'saved': 'ok', 'reference': 'ok', 'gpu': 'ok'}
 
             def saved_route(route):
                 if mode['saved'] == 'missing':
@@ -74,7 +93,16 @@ try:
                 else:
                     route.fulfill(json=reference)
 
+            def gpu_route(route):
+                if mode['gpu'] == 'missing':
+                    route.fulfill(status=404, body='')
+                elif mode['gpu'] == 'schema':
+                    route.fulfill(json={'schema_version': 2})
+                else:
+                    route.fulfill(json=gpu_saved)
+
             page.route('**/labs/jwenv/results.json', saved_route)
+            page.route('**/labs/jwenv/results-gpu.json', gpu_route)
             page.route('**/labs/expense-comparison/results.json', reference_route)
 
             # Normal load: saved record renders, model-dependent actions stay disabled.
@@ -87,6 +115,8 @@ try:
             assert page.locator('#run-limit').is_enabled()
             assert page.locator('#saved-expense-1 tbody tr').count() == 14
             assert 'GitHub Actions 実行' in page.locator('#saved-status').inner_text()
+            assert page.locator('#gpu-saved-methods-original tbody tr').count() == 14
+            assert '実機GPU' in page.locator('#gpu-saved-status').inner_text()
 
             # The 8-option limit is enforced by the vendored validator even without a model.
             page.locator('#run-limit').click()
@@ -116,6 +146,13 @@ try:
                 page.evaluate('window.jwenvLab.ready')
                 assert expected in page.locator('#saved-status').inner_text(), (m, page.locator('#saved-status').inner_text())
                 assert page.locator('#saved-expense-1').count() == 0
+            for m, expected in [('missing', 'まだありません'), ('schema', '形式が正しくありません')]:
+                mode['gpu'] = m
+                page.reload()
+                page.evaluate('window.jwenvLab.ready')
+                assert expected in page.locator('#gpu-saved-status').inner_text(), (m, page.locator('#gpu-saved-status').inner_text())
+                assert page.locator('#gpu-saved-methods').count() == 0
+            mode['gpu'] = 'ok'
             mode['saved'], mode['reference'] = 'ok', 'down'
             page.reload()
             page.evaluate('window.jwenvLab.ready')

@@ -34,7 +34,7 @@
     <h2 id="run-title">03 / 検証する</h2>
     <div class="actions">
       <button id="run-example" disabled>記事の入力例を実行</button>
-      <button id="run-expense" disabled>支出メモ14件 × 12カテゴリ</button>
+      <button id="run-expense" disabled>支出メモ34件 × 12カテゴリ（方式A・B）</button>
       <button id="run-limit" disabled>12択の上限を確認</button>
       <button id="verify-slice" disabled>候補スライスと全語彙の一致を確認</button>
     </div>
@@ -43,14 +43,21 @@
   </section>
 
   <section class="panel" aria-labelledby="saved-title">
-    <h2 id="saved-title">04 / CIの保存済み実測</h2>
+    <h2 id="saved-title">04 / CIの保存済み実測（SwiftShader・方式A）</h2>
     <p id="saved-status" role="status">保存済みの実測を読み込んでいます…</p>
     <div id="saved"></div>
   </section>
 
+  <section class="panel" aria-labelledby="gpu-saved-title">
+    <h2 id="gpu-saved-title">05 / 実機GPUの保存済み実測（方式A・B）</h2>
+    <p id="gpu-saved-status" role="status">実機GPUの保存済み実測を読み込んでいます…</p>
+    <div id="gpu-saved"></div>
+  </section>
+
   <details>
     <summary>この実験で確認できること・できないこと</summary>
-    <p>12カテゴリはJwenvの選択肢上限（8）を超えるため、カテゴリごとに「当てはまるか（yes/no）」を1つの要求内で12問に分けて尋ね、yesの確率が最も高いカテゴリを候補にしています。最大値が0.5未満のときは要確認と表示します。</p>
+    <p>12カテゴリはJwenvの選択肢上限（8）を超えます。方式Aは、カテゴリごとの「当てはまるか（yes/no）」12問を1回の要求で尋ね、yesの確率が最も高いカテゴリを候補にします（最大値が0.5未満なら要確認）。</p>
+    <p>方式Bは、方式Aの上位8カテゴリを選択肢にした8択を、ラベルの並びを8通りに回して尋ね直します。候補の確率が0.5未満なら要確認です。方式・しきい値・検証用メモ20件は、実行前に <code>docs/JWENV_DECISION_METHOD.md</code> と <code>holdout.json</code> で固定しました。</p>
     <p>yesの確率は質問ごとに独立した値で、12カテゴリの合計は1になりません。正答率やカテゴリが正しい確率を示すものではありません。</p>
     <p>CIの実測はGitHub ActionsのCPU上でソフトウェア実装のWebGPU（SwiftShader）を使っています。実機GPUでの速度とは異なります。</p>
     <p>エンジンは <code>kishida/jwenv-demo</code> の固定版を変更せずに同梱しています（MIT）。詳しくは <a href="vendor/jwenv-8263b81/NOTICE.md">NOTICE</a> を参照してください。</p>

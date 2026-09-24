@@ -61,3 +61,25 @@ recomputation over all 151,936 rows (max abs diff 9.5e-7); Jwenv matched 10 of t
 referenced memos (rule 9, BERT 10) with a median of 408,405 ms per 12-question request.
 The example took over 30 s, so the harness ran the memos once instead of twice. All 26 page
 requests went to the loopback server. These are CPU-emulation timings, not GPU timings.
+
+## Decision methods A and B (2026-09-25)
+
+The saved SwiftShader run showed that method A's P(yes) values sit close together (around 0.8)
+and its 0.5 threshold flagged none of the three memos written to need review. Method B, the
+metrics and the adoption rule were pre-registered in `docs/JWENV_DECISION_METHOD.md` together
+with 20 holdout memos (`web/labs/jwenv/holdout.json`) before any run. The page and the harness
+now run both methods on the same stage-1 request.
+
+## Measurement suites
+
+- `--suite smoke` (CI `measure` job): Playwright Chromium with SwiftShader, the article example,
+  the limit check, one slice check and methods A/B on the first original memo. Functional only;
+  its timings are CPU emulation. Output `results-smoke.json`.
+- `--suite full --browser chrome` (local real GPU): installed Chrome, headed, all 34 memos with
+  both methods. Output `results-gpu.json`, shown in section 05 of the page. The harness refuses
+  to start below 4 GiB of free memory (AGENTS.md cloud-first threshold).
+
+```powershell
+python scripts/jwenv_lab/run_lab.py download --dest $env:TEMP\jwenv.gguf
+python scripts/jwenv_lab/run_lab.py measure --model $env:TEMP\jwenv.gguf --suite full --browser chrome --out out/jwenv-gpu
+```
