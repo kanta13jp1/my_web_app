@@ -7,7 +7,8 @@ import {predict2} from '../../web/labs/jev-mario/student2-predict.mjs';
 
 test('a cleared 1-1 presents for 180 frames, then continues on 1-2 with carried state',()=>{
  const g=new World11(1);g.clock=0;g.stageResults=[];g.coins=7;
- g.p.x=198*16;tick(g,'right',2);assert.equal(g.phase,'won');assert.equal(g.stageResults.length,1);
+ // Touch the pole above its solid base.
+ Object.assign(g.p,{x:198*16,y:120,vy:0,grounded:false});tick(g,'right',2);assert.equal(g.phase,'won');assert.equal(g.stageResults.length,1);
  assert.equal(finished(g,2),false);
  for(let i=0;i<180;i++)tick(g,'noop',2);
  assert.equal(g.stage,2);assert.equal(g.phase,'playing');assert.equal(g.coins,7);assert.equal(g.clock,181);
