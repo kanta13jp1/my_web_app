@@ -119,7 +119,7 @@ export class World11 {
     if(this.phase==='dead'){
       const t=Math.max(0,this.presentation-22);this.p.y=this.deathY-4.6*t+.095*t*t;
     }else{
-      if(this.stage===4){if(this.presentation<65&&this.presentation%4===0)this.cells.delete(`${180+Math.floor(this.presentation/4)},12`);this.p.x=Math.min(201*16,this.p.x+1.2);this.p.y=208-this.p.h;this.p.stride=(this.p.stride??0)+1.2;}
+      if(this.stage===4){if(this.presentation<65&&this.presentation%4===0)this.cells.delete(`${179+Math.floor(this.presentation/4)},12`);this.p.x=Math.min(201*16,this.p.x+1.2);this.p.y=208-this.p.h;this.p.stride=(this.p.stride??0)+1.2;}
       else if(this.stage===2){this.p.x=Math.min(198*16,this.p.x+1.2);this.p.stride=(this.p.stride??0)+1.2;}
       else if(this.presentation<60)this.p.y=Math.min(192,this.flagStartY+this.presentation*2.7);
       else{this.p.y=208-this.p.h;this.p.x=Math.min(202*16+32,this.p.x+1.2);this.p.facing=1;this.p.stride=(this.p.stride??0)+1.2;}
