@@ -58,3 +58,7 @@ test('world 2 course has distinct terrain, enemies, collectible coins and public
  const fall=new World11(5);fall.p.x=45*16;fall.p.y=251;fall.step();assert.equal(fall.phase,'dead');assert.equal(fall.advanceStage(),false);
  const win=new World11(5);win.p.x=198*16;win.step();assert.equal(win.phase,'won');for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.advanceStage(),false);
 });
+
+test('2-1 reaches the flag above its solid base with existing horizontal momentum',()=>{
+ const g=new World11(5);g.p.x=198*16;g.p.y=160;g.p.vx=1.5;g.step();assert.equal(g.phase,'won');
+});
