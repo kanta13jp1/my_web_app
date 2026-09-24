@@ -357,3 +357,17 @@ test('API campaign discards previous-stage response and preserves remaining call
  expect(await page.evaluate(()=>(window as any).campaignRequests)).toEqual([1,2]);
  await expect(lab.locator('#sample-detail')).toContainText('停止時キャンセル 1件');
 });
+
+
+test('pixel scenery and HUD render representative course scenes without altering state',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');
+ const result=await page.evaluate(async()=>{
+  const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');
+  const board=document.createElement('div');board.style.cssText='display:grid;grid-template-columns:repeat(2,256px);gap:8px;background:#111;padding:8px;width:520px';board.dataset.testid='pixel-scenes';
+  const labels=document.createElement('p');labels.textContent='FIXED VISUAL FIXTURES: start / pipes / goal / stage 1-3';document.body.replaceChildren(labels,board);
+  let unchanged=true;
+  for(const [stage,x]of [[1,32],[1,700],[1,3120],[3,650]]){const g=new World11(stage);g.camera=Math.max(0,x-100);g.p.x=x;const before=JSON.stringify(g.snapshot());const canvas=document.createElement('canvas');canvas.width=256;canvas.height=240;board.append(canvas);drawWorld(canvas.getContext('2d'),g);unchanged&&=JSON.stringify(g.snapshot())===before;}
+  return unchanged;
+ });
+ expect(result).toBe(true);await page.locator('[data-testid="pixel-scenes"]').screenshot({path:info.outputPath('pixel-scenes.png')});
+});

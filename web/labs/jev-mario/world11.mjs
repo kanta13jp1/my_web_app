@@ -1,3 +1,4 @@
+import {pixelText,pixelCloud,pixelHill,pixelTile} from './pixel-art.mjs?v=student-1';
 // Independently authored 1-1 reconstruction. No ROM, sprite sheet or game code is loaded.
 export const TILE = 16;
 export function level() {
@@ -204,20 +205,20 @@ function drawCoin(ctx,x,y,frame){
   ctx.fillStyle='#ffd040';ctx.fillRect(left,y+2,width,8);
   if(width>2){ctx.fillStyle='#fff0a0';ctx.fillRect(left+1,y+3,1,5);ctx.fillStyle='#b87800';ctx.fillRect(left+width-2,y+3,1,5);}
 }
-export function drawWorld(ctx,g){const cam=g.camera,underground=g.room==='underground'||g.stage===2;ctx.imageSmoothingEnabled=false;ctx.fillStyle=underground?'#101020':'#5c94fc';ctx.fillRect(0,0,256,240);
+export function drawWorld(ctx,g){const cam=Math.floor(g.camera),underground=g.room==='underground'||g.stage===2;ctx.imageSmoothingEnabled=false;ctx.fillStyle=underground?'#101020':'#6888fc';ctx.fillRect(0,0,256,240);
   if(!underground){
-    for(let start=0;start<g.width;start+=768){for(const [x,y,w]of[[130,42,30],[315,26,44],[530,42,30]]){const px=x+start-cam*.6;ctx.fillStyle='#182848';ctx.beginPath();ctx.moveTo(px,y+10);for(let n=0;n<w;n+=8){ctx.lineTo(px+n,y+3);ctx.lineTo(px+n+3,y);ctx.lineTo(px+n+6,y+3);}ctx.lineTo(px+w,y+10);ctx.lineTo(px+w-3,y+13);ctx.lineTo(px+3,y+13);ctx.fill();ctx.fillStyle='#fff';for(let n=0;n<w-4;n+=8){ctx.fillRect(px+n+2,y+4,8,7);ctx.fillRect(px+n+4,y+2,4,10);}ctx.fillStyle='#cbdcff';ctx.fillRect(px+4,y+10,w-8,2);}
-      for(const [x,h]of[[0,32],[256,16],[576,32]]){const px=x+start-cam;ctx.fillStyle='#00a800';ctx.beginPath();ctx.moveTo(px,208);ctx.lineTo(px+h,208-h);ctx.lineTo(px+h*2,208);ctx.fill();ctx.fillStyle='#005800';ctx.fillRect(px+h,202-h,2,4);}
-      for(const x of[184,368,664]){ctx.fillStyle='#00a800';for(let i=0;i<3;i++)ctx.fillRect(x+start-cam+i*8,198-(i%2)*4,16,10+(i%2)*4);}
+    for(let start=0;start<g.width;start+=768){
+      for(const [x,y,count]of[[128,32,1],[304,24,3],[528,40,1]])pixelCloud(ctx,x+start-cam,y,count);
+      for(const [x,h]of[[0,32],[256,16],[576,32]])pixelHill(ctx,x+start-cam,208,h);
+      for(const [x,count]of[[184,1],[368,3],[664,2]])pixelCloud(ctx,x+start-cam,194,count,true);
     }
     const flag=198*16-cam;ctx.fillStyle='#80d010';ctx.fillRect(flag+7,32,2,160);ctx.fillRect(flag+5,28,6,6);ctx.fillStyle='#fff';ctx.beginPath();const flagY=g.phase==='won'?36+Math.min(144,g.presentation*2.7):36;ctx.moveTo(flag+7,flagY);ctx.lineTo(flag-9,flagY);ctx.lineTo(flag+7,flagY+12);ctx.fill();
-    const castle=202*16-cam;ctx.fillStyle='#b85020';ctx.fillRect(castle,176,80,32);ctx.fillRect(castle+16,152,48,24);for(let i=0;i<5;i++)ctx.fillRect(castle+i*16,168,8,8);for(let i=0;i<3;i++)ctx.fillRect(castle+16+i*16,144,8,8);ctx.fillStyle='#101020';ctx.fillRect(castle+32,184,16,24);ctx.fillRect(castle+24,160,8,10);ctx.fillRect(castle+48,160,8,10);
+    const castle=202*16-cam;for(let row=11;row<13;row++)for(let col=0;col<5;col++)pixelTile(ctx,'brick',castle+col*16,row*16);for(let row=9;row<11;row++)for(let col=1;col<4;col++)pixelTile(ctx,'brick',castle+col*16,row*16);ctx.fillStyle='#b85020';for(let i=0;i<5;i++)ctx.fillRect(castle+i*16,168,8,8);for(let i=0;i<3;i++)ctx.fillRect(castle+16+i*16,144,8,8);ctx.fillStyle='#101020';ctx.fillRect(castle+32,184,16,24);ctx.fillRect(castle+24,160,8,10);ctx.fillRect(castle+48,160,8,10);
   }
   for(const[key,t]of g.cells){if(t==='hidden')continue;const[col,row]=key.split(',').map(Number),x=col*16-cam,baseY=row*16,bump=g.effects.find(f=>f.kind==='bump'&&f.x===col*16&&f.y===baseY),y=baseY-(bump?Math.sin((12-bump.life)/12*Math.PI)*4:0);if(x<-16||x>256)continue;
     if(t==='platform'){ctx.fillStyle='#755035';ctx.fillRect(x+6,y+8,4,240-y);ctx.fillStyle='#e07038';ctx.fillRect(x,y,16,8);ctx.fillStyle='#ffe4a8';ctx.fillRect(x+1,y+1,14,3);continue;}
     if(t.startsWith('pipe')){ctx.fillStyle='#005800';ctx.fillRect(x,y,16,16);ctx.fillStyle='#00a800';ctx.fillRect(x+2,y,11,16);ctx.fillStyle='#80d010';ctx.fillRect(x+3,y,3,16);if(t==='pipe-top'){ctx.fillStyle='#003800';ctx.fillRect(x,y,16,2);ctx.fillRect(x,y+14,16,2);}continue;}
-    ctx.fillStyle=t==='question'?['#f8a040','#d88020','#f8a040'][Math.floor(g.frames/12)%3]:t==='used'?'#a85820':underground?'#0088a8':'#c84c0c';ctx.fillRect(x,y,16,16);ctx.strokeStyle='#381800';ctx.lineWidth=1;ctx.strokeRect(x+.5,y+.5,15,15);ctx.fillStyle='#f8c080';ctx.fillRect(x+1,y+1,14,1);
-    if(t==='question'){ctx.fillStyle='#702800';ctx.font='bold 14px monospace';ctx.fillText('?',x+4,y+13);}else if(t==='brick'||t==='ground'){ctx.fillStyle='#502800';ctx.fillRect(x,y+7,16,1);ctx.fillRect(x+7,y,1,7);ctx.fillRect(x+3,y+8,1,8);}else if(t==='stone'){ctx.fillStyle='#fff0d0';ctx.beginPath();ctx.moveTo(x+1,y+1);ctx.lineTo(x+14,y+1);ctx.lineTo(x+10,y+5);ctx.lineTo(x+5,y+5);ctx.lineTo(x+5,y+10);ctx.lineTo(x+1,y+14);ctx.fill();ctx.fillStyle='#502800';ctx.beginPath();ctx.moveTo(x+15,y+1);ctx.lineTo(x+10,y+5);ctx.lineTo(x+10,y+10);ctx.lineTo(x+5,y+10);ctx.lineTo(x+1,y+15);ctx.lineTo(x+15,y+15);ctx.fill();}
+    pixelTile(ctx,t,x,y,underground,g.frames);
   }
   for(const[key,item]of g.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);drawCoin(ctx,x*16+4-cam,y*16+2,g.frames);}
   for(const e of g.enemies){if(e.dead||e.x<cam-16||e.x>cam+256)continue;
@@ -234,8 +235,12 @@ export function drawWorld(ctx,g){const cam=g.camera,underground=g.room==='underg
       ['....RRRR....','..RRSSRRRR..','.RRSSSSRRRR.','RRRRSSRRSSRR','RRRRRRRRSSRR','.RRRRRRRRRR.','...SSB SBS...'.replace(' ',''),'...SSSSSS...','....SSSS....'];
     sprite(ctx,rows,i.x-cam,i.y+16-rows.length,{R:i.kind==='life'?'#00a800':i.kind==='flower'?['#f83800','#ffb030','#fff0a0','#ffb030'][Math.floor(g.frames/6)%4]:'#f83800',S:'#ffe0b0',B:'#101020',G:'#00a800',Y:g.frames%12<6?'#ffd040':'#fff'});ctx.restore();
   }
-  for(const f of [...g.effects,...g.shots]){if(f.kind==='bump')continue;if(f.kind==='coin'){drawCoin(ctx,f.x-cam,f.y,g.frames);continue;}if(f.kind==='score'){ctx.fillStyle='#fff';ctx.font='8px monospace';ctx.fillText(f.value,f.x-cam,f.y);continue;}if(f.kind==='burst'){ctx.fillStyle=f.life%2?'#fff':'#ffb030';ctx.fillRect(f.x-cam-2,f.y+2,8,2);ctx.fillRect(f.x-cam+1,f.y-1,2,8);continue;}ctx.fillStyle=f.kind==='debris'||f.kind==='squash'?'#b85020':'#ffd040';ctx.fillRect(f.x-cam,f.y,f.kind==='squash'?14:5,f.kind==='squash'?4:7);}
+  for(const f of [...g.effects,...g.shots]){if(f.kind==='bump')continue;if(f.kind==='coin'){drawCoin(ctx,f.x-cam,f.y,g.frames);continue;}if(f.kind==='score'){pixelText(ctx,f.value,f.x-cam,f.y-7);continue;}if(f.kind==='burst'){ctx.fillStyle=f.life%2?'#fff':'#ffb030';ctx.fillRect(f.x-cam-2,f.y+2,8,2);ctx.fillRect(f.x-cam+1,f.y-1,2,8);continue;}ctx.fillStyle=f.kind==='debris'||f.kind==='squash'?'#b85020':'#ffd040';ctx.fillRect(f.x-cam,f.y,f.kind==='squash'?14:5,f.kind==='squash'?4:7);}
   if(!g.invincible||g.frames%6<3){const palette={R:g.power===2?'#fff':'#f83800',H:'#803000',S:'#ffbc80',B:g.star&&g.frames%12<6?'#00d8f8':'#b85000',Y:'#ffc000'};drawPlayer(ctx,g,palette);}
-  ctx.fillStyle='#fff';ctx.font='8px monospace';ctx.fillText('MARIO',16,15);ctx.fillText(String(g.score).padStart(6,'0'),16,25);ctx.fillText(`COIN ${String(g.coins).padStart(2,'0')}`,82,25);ctx.fillText('x'+g.lives,112,15);ctx.fillText('WORLD',144,15);ctx.fillText(`1-${g.stage??1}`,150,25);ctx.fillText('TIME',208,15);ctx.fillText(String(g.time),216,25);
-  if(g.phase!=='playing'&&g.presentation>=180){ctx.fillStyle='#101020dd';ctx.fillRect(20,86,216,52);ctx.fillStyle='#fff';ctx.font='bold 14px monospace';ctx.fillText(g.phase==='won'?`WORLD 1-${g.stage??1} CLEAR!`:'TRY AGAIN',g.phase==='won'?38:88,108);ctx.font='8px monospace';ctx.fillText('RESTART TO PLAY AGAIN',47,126);}
+  pixelText(ctx,'MARIO',24,16);pixelText(ctx,String(g.score).padStart(6,'0'),24,24);
+  drawCoin(ctx,88,20,g.frames);pixelText(ctx,'X'+String(g.coins).padStart(2,'0'),96,24);
+  pixelText(ctx,'WORLD',144,16);pixelText(ctx,`1-${g.stage??1}`,152,24);
+  pixelText(ctx,'TIME',208,16);pixelText(ctx,String(g.time).padStart(3,'0'),216,24);
+  if(g.phase!=='playing'&&g.presentation>=180){ctx.fillStyle='#101020dd';ctx.fillRect(20,86,216,52);const title=g.phase==='won'?`WORLD 1-${g.stage??1} CLEAR!`:'TRY AGAIN';pixelText(ctx,title,(256-title.length*8)/2,102);pixelText(ctx,'RESTART TO PLAY AGAIN',48,121);}
+
 }
