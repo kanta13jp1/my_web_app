@@ -22,7 +22,8 @@ test('campaign advances only after clear presentation and preserves earned state
  assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);
  assert.equal(g.phase,'playing');assert.equal(g.frames,0);assert.deepEqual(g.input,{});
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,3);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);assert.equal(g.stage,3);
+ g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,4);
+ g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);assert.equal(g.stage,4);
 });
 test('sky course has elevated platforms, gaps, collectibles and a distinct finish',()=>{
  const g=new World11(3);assert.equal(g.telemetry().stage,3);assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);
@@ -30,4 +31,20 @@ test('sky course has elevated platforms, gaps, collectibles and a distinct finis
  g.p.x=32*16;g.p.y=100;g.p.vy=3;for(let i=0;i<30;i++)g.step();assert.equal(g.p.y+g.p.h,160);
  const fall=new World11(3);fall.p.x=30*16;fall.p.y=240;for(let i=0;i<20;i++)fall.step();assert.equal(fall.phase,'dead');
  const win=new World11(3);win.p.x=198*16;win.step();assert.equal(win.phase,'won');
+});
+
+test('castle selection, lava, rotating fire and axe completion have separate outcomes',()=>{
+ const g=new World11(4);assert.equal(g.room,'castle');assert.equal(g.telemetry().stage,4);assert.equal(g.tile(10,2),'castle');assert.equal(g.tile(30,13),undefined);assert.equal(g.tile(180,12),'bridge');
+ const a=g.fireHazards();g.step();assert.notDeepEqual(g.fireHazards(),a);
+ const lava=new World11(4);lava.p.x=31*16;lava.p.y=208;lava.step();assert.equal(lava.phase,'dead');
+ const hit=new World11(4);hit.frames=0;const next=new World11(4);next.frames=1;const flame=next.fireHazards()[0];hit.p.x=flame.x;hit.p.y=flame.y;hit.step();assert.equal(hit.phase,'dead');
+ const shield=new World11(4);shield.p.x=flame.x;shield.p.y=flame.y;shield.invincible=20;shield.step();assert.equal(shield.phase,'playing');
+ const below=new World11(4);below.p.x=196*16;below.step();assert.equal(below.phase,'playing');
+ const win=new World11(4);win.p.x=196*16;win.p.y=176;win.step();assert.equal(win.phase,'won');assert.ok(win.drainSounds().includes('bridge'));
+ for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.tile(180,12),undefined);assert.equal(win.advanceStage(),false);assert.ok(win.p.x>196*16);
+ win.reset();assert.equal(win.stage,4);assert.equal(win.phase,'playing');assert.equal(win.tile(180,12),'bridge');assert.equal(win.p.x,32);assert.equal(win.fireBars.length,6);
+ win.stage=1;win.reset();assert.equal(win.fireBars.length,0);assert.equal(win.lava.length,0);
+});
+test('castle hazard prediction clones retain time and never alter live game',async()=>{
+ const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(4);const before=JSON.stringify(g.snapshot());const future=advance(clone(g),'right',8);assert.equal(g.frames,0);assert.equal(future.frames,8);assert.equal(JSON.stringify(g.snapshot()),before);assert.notDeepEqual(future.fireHazards(),g.fireHazards());
 });

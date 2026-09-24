@@ -52,13 +52,28 @@ export function skyLevel(){
  cells.set('12,9','question');contents.set('12,9','mushroom');
  set(198,12,'stone');return {cells,contents,width:212*16};
 }
+// Independently designed castle: lava gaps, timed fire bars and an axe bridge exit.
+export function castleLevel(){
+ const cells=new Map(),contents=new Map(),set=(x,y,t='castle')=>cells.set(`${x},${y}`,t);
+ const lava=[[30,33],[59,62],[92,95],[126,129],[158,161],[180,195]];
+ for(let x=0;x<212;x++){
+  for(let y=2;y<4;y++)set(x,y);
+  if(!lava.some(([a,b])=>x>=a&&x<=b))for(let y=13;y<15;y++)set(x,y);
+ }
+ for(const x of [20,45,73,106,140,168]){set(x,11);set(x+1,11);}
+ for(let x=180;x<=195;x++)set(x,12,'bridge');
+ cells.set('12,9','question');contents.set('12,9','mushroom');
+ for(const x of [36,66,99,133,164])contents.set(`${x},11`,'loose');
+ const fireBars=[24,50,80,115,148,172].map((x,i)=>({x:x*16+8,y:168,length:4,offset:i*Math.PI/3,direction:i%2?-1:1}));
+ return {cells,contents,width:212*16,lava,fireBars};
+}
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 export class World11 {
-  constructor(stage=1){this.stage=[1,2,3].includes(stage)?stage:1;this.reset();}
-  reset(){this.sounds=[];Object.assign(this,this.stage===3?skyLevel():this.stage===2?undergroundLevel():level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.presentation=0;this.flagStartY=0;this.wasSkidding=false;this.hurry=false;this.room=this.stage===2?'stage-underground':'overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;
-    this.enemies=(this.stage===3?[37,61,85,109,133,157,180]:this.stage===2?[22,38,53,64,82,96,107,126,140,158,172]:[22,40,51,53,80,82,97,98,107,114,116,124,126,128,130,174,176]).map((x,i)=>({x:x*16,y:this.stage===3?(Math.min(...[...this.cells.keys()].filter(k=>k.startsWith(x+',')).map(k=>Number(k.split(',')[1])))*16-16):this.stage!==2&&(x===80||x===82)?64:192,w:14,h:16,vx:-.5,vy:0,kind:i===8?'koopa':'goomba',dead:0}));}
+  constructor(stage=1){this.stage=[1,2,3,4].includes(stage)?stage:1;this.reset();}
+  reset(){this.sounds=[];this.lava=[];this.fireBars=[];Object.assign(this,this.stage===4?castleLevel():this.stage===3?skyLevel():this.stage===2?undergroundLevel():level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.presentation=0;this.flagStartY=0;this.wasSkidding=false;this.hurry=false;this.room=this.stage===4?'castle':this.stage===2?'stage-underground':'overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;
+    this.enemies=(this.stage===4?[]:this.stage===3?[37,61,85,109,133,157,180]:this.stage===2?[22,38,53,64,82,96,107,126,140,158,172]:[22,40,51,53,80,82,97,98,107,114,116,124,126,128,130,174,176]).map((x,i)=>({x:x*16,y:this.stage===3?(Math.min(...[...this.cells.keys()].filter(k=>k.startsWith(x+',')).map(k=>Number(k.split(',')[1])))*16-16):this.stage!==2&&(x===80||x===82)?64:192,w:14,h:16,vx:-.5,vy:0,kind:i===8?'koopa':'goomba',dead:0}));}
   advanceStage(){
-    if(this.phase!=='won'||this.presentation<180||this.stage>=3)return false;
+    if(this.phase!=='won'||this.presentation<180||this.stage>=4)return false;
     const saved={score:this.score,coins:this.coins,lives:this.lives,power:this.power,deaths:this.deaths};
     this.stage++;this.reset();Object.assign(this,saved);if(this.power)this.resizePlayer(28);return true;
   }
@@ -78,7 +93,7 @@ export class World11 {
   buttons(action){this.input={right:action.startsWith('right'),left:action==='left',jump:action.includes('jump'),run:action.includes('run')};}
   tile(x,y){return this.cells.get(`${x},${y}`);}
   solid(x,y){const t=this.tile(x,y);return !!t&&t!=='hidden';}
-  hitBlock(x,y){const key=`${x},${y}`,t=this.cells.get(key);if(!t||t==='used'||t.includes('pipe')||t==='stone'||t==='ground')return;
+  hitBlock(x,y){const key=`${x},${y}`,t=this.cells.get(key);if(!t||t==='used'||t.includes('pipe')||t==='stone'||t==='ground'||t==='castle'||t==='bridge')return;
     this.sound('bump');
     for(const e of this.enemies)if(!e.dead&&e.x+e.w>x*16&&e.x<(x+1)*16&&Math.abs(e.y+e.h-y*16)<2){e.dead=1;this.score+=100;this.sound('stomp');this.effects.push({x:e.x,y:e.y,kind:'debris',life:25,vx:1,vy:-3});}
     const item=this.contents.get(key);this.effects.push({x:x*16,y:y*16,life:12,kind:'bump'});
@@ -104,7 +119,8 @@ export class World11 {
     if(this.phase==='dead'){
       const t=Math.max(0,this.presentation-22);this.p.y=this.deathY-4.6*t+.095*t*t;
     }else{
-      if(this.stage===2){this.p.x=Math.min(198*16,this.p.x+1.2);this.p.stride=(this.p.stride??0)+1.2;}
+      if(this.stage===4){if(this.presentation<65&&this.presentation%4===0)this.cells.delete(`${180+Math.floor(this.presentation/4)},12`);this.p.x=Math.min(201*16,this.p.x+1.2);this.p.y=208-this.p.h;this.p.stride=(this.p.stride??0)+1.2;}
+      else if(this.stage===2){this.p.x=Math.min(198*16,this.p.x+1.2);this.p.stride=(this.p.stride??0)+1.2;}
       else if(this.presentation<60)this.p.y=Math.min(192,this.flagStartY+this.presentation*2.7);
       else{this.p.y=208-this.p.h;this.p.x=Math.min(202*16+32,this.p.x+1.2);this.p.facing=1;this.p.stride=(this.p.stride??0)+1.2;}
       if(this.presentation===61)this.sound('clear');
@@ -115,6 +131,9 @@ export class World11 {
     return {stage:this.stage,frame:this.frames,phase:this.phase,room:this.room,time:this.time,
       player:{...this.p},input:{...this.input},jump_was_pressed:this.wasJump,
       enemies:this.enemies.filter(e=>!e.dead&&Math.abs(e.x-this.p.x)<256).slice(0,5).map(e=>({x:e.x,y:e.y,w:e.w,h:e.h,vx:e.vx,vy:e.vy,kind:e.kind,edge_gap:e.x-(this.p.x+this.p.w)}))};
+  }
+  fireHazards(){
+    return this.fireBars.flatMap(bar=>Array.from({length:bar.length},(_,i)=>{const angle=bar.offset+this.frames*.025*bar.direction,r=(i+1)*8;return {x:bar.x+Math.cos(angle)*r-4,y:bar.y+Math.sin(angle)*r-4,w:8,h:8};}));
   }
   hurt(){if(this.invincible||this.star)return;if(this.power){this.sound('hurt');this.power=0;this.p.y+=this.p.h-16;this.p.h=16;this.invincible=120;}else this.die();}
   enterRoom(){const p=this.p;if(this.stage===1&&this.room==='overworld'&&p.grounded&&p.x>57*16-2&&p.x<58*16+2&&p.y+p.h===144){this.saved={cells:this.cells,contents:this.contents,enemies:this.enemies};this.cells=new Map();this.contents=new Map();this.enemies=[];this.sound('pipe');this.room='underground';this.camera=0;p.x=32;p.y=32;
@@ -142,11 +161,15 @@ export class World11 {
     p.x=Math.max(this.camera,p.x);p.stride=(p.stride??0)+(p.grounded?Math.abs(p.vx):0);if(p.y>250)this.die();
     if(k.down)this.enterRoom();
     if(this.power===2&&k.run&&!this.wasFire&&this.shots.length<2){this.sound('fire');const facing=p.facing??1;this.shots.push({x:facing<0?p.x-4:p.x+p.w,y:p.y+10,w:4,h:4,vx:facing*3.5,vy:1});}this.wasFire=!!k.run;
-    if(this.room==='underground'||this.stage===2){
+    if(this.room==='underground'||this.stage===2||this.stage===3||this.stage===4){
       for(const [key,item]of this.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);if(overlap(p,{x:x*16,y:y*16,w:12,h:16})){this.contents.delete(key);this.collectCoin();}}
       if(this.room==='underground'&&p.x>=12*16&&p.y+p.h<=160&&k.right)this.exitRoom();
-      if(this.stage===2)this.camera=Math.max(this.camera,Math.min(this.width-256,p.x-96));
+      if(this.stage!==1)this.camera=Math.max(this.camera,Math.min(this.width-256,p.x-96));
     }else this.camera=Math.max(this.camera,Math.min(this.width-256,p.x-96));
+    if(this.stage===4&&this.phase==='playing'){
+      if(p.y+p.h>=220&&this.lava.some(([a,b])=>p.x+p.w>a*16&&p.x<(b+1)*16))this.die();
+      if(this.fireHazards().some(f=>overlap(p,f)))this.hurt();
+    }
     for(const e of this.enemies){if(e.dead||e.x>this.camera+280||e.x<this.camera-32)continue;
       const speed=e.vx;e.vy=Math.min(6,e.vy+.38);this.move(e);if(e.vx===0)e.vx=-speed;
       if(e.y>250){e.dead=1;continue;}if(overlap(p,e)&&this.phase==='playing'){
@@ -161,7 +184,7 @@ export class World11 {
     for(const shot of this.shots){shot.vy+=.35;this.move(shot);if(shot.grounded)shot.vy=-2.8;if(!shot.vx){shot.dead=true;this.sound('impact');this.effects.push({kind:'burst',x:shot.x,y:shot.y,life:10});}if(shot.x<this.camera||shot.x>this.camera+256)shot.dead=true;if(!shot.dead)for(const e of this.enemies)if(!e.dead&&overlap(shot,e)){this.defeat(e);shot.dead=true;this.effects.push({kind:'burst',x:shot.x,y:shot.y,life:10});break;}}
     this.shots=this.shots.filter(s=>!s.dead);
     for(const fx of this.effects){fx.life--;if(fx.kind==='coin')fx.y-=1;if(fx.kind==='score')fx.y-=.35;if(fx.kind==='debris'){fx.x+=fx.vx;fx.y+=fx.vy;fx.vy+=.25;}}this.effects=this.effects.filter(f=>f.life>0);
-    if((this.stage===2?p.x>=196*16:this.room==='overworld'&&p.x>=198*16)&&this.phase==='playing'){this.sound(this.stage===2?'pipe':'flag');this.phase='won';this.presentation=0;this.flagStartY=p.y;this.score+=Math.max(100,5000-Math.floor(p.y)*20);this.input={};}
+    if((this.stage===4?overlap(p,{x:196*16,y:160,w:16,h:32}):this.stage===2?p.x>=196*16:this.room==='overworld'&&p.x>=198*16)&&this.phase==='playing'){this.sound(this.stage===4?'bridge':this.stage===2?'pipe':'flag');this.phase='won';this.presentation=0;this.flagStartY=p.y;this.score+=Math.max(100,5000-Math.floor(p.y)*20);this.input={};}
   }
   telemetry(previous=0){const p=this.p,tiles=[];for(let row=0;row<13;row++)for(let col=-2;col<=6;col++)tiles.push(this.solid(Math.floor(p.x/16)+col,row+2)?84:0);
     return{player:{x:p.x,y:p.y+p.h-16,vx:p.vx,vy:p.vy,grounded:p.grounded},tiles,enemies:this.enemies.filter(e=>!e.dead&&Math.abs(e.x-p.x)<256).slice(0,5).map(e=>({dx:e.x-p.x,y:e.y,type:e.kind==='goomba'?6:0})),world:1,stage:this.stage,previous_response_ms:Math.min(10000,previous)};}
@@ -181,7 +204,7 @@ const poses={
 };
 export function playerPose(g){
   if(g.phase==='dead')return 'dead';
-  if(g.phase==='won'&&g.stage===2)return `walk${Math.floor((g.p.stride??0)/5)%3}`;
+  if(g.phase==='won'&&(g.stage===2||g.stage===4))return `walk${Math.floor((g.p.stride??0)/5)%3}`;
   if(g.phase==='won')return g.presentation<60?'climb':`walk${Math.floor((g.p.stride??0)/5)%3}`;
   if(g.p.crouching)return 'crouch';
   if(g.p.grounded&&Math.abs(g.p.vx)>.4&&((g.input.left&&g.p.vx>0)||(g.input.right&&g.p.vx<0)))return 'skid';
@@ -205,7 +228,7 @@ function drawCoin(ctx,x,y,frame){
   ctx.fillStyle='#ffd040';ctx.fillRect(left,y+2,width,8);
   if(width>2){ctx.fillStyle='#fff0a0';ctx.fillRect(left+1,y+3,1,5);ctx.fillStyle='#b87800';ctx.fillRect(left+width-2,y+3,1,5);}
 }
-export function drawWorld(ctx,g){const cam=Math.floor(g.camera),underground=g.room==='underground'||g.stage===2;ctx.imageSmoothingEnabled=false;ctx.fillStyle=underground?'#101020':'#6888fc';ctx.fillRect(0,0,256,240);
+export function drawWorld(ctx,g){const cam=Math.floor(g.camera),underground=g.room==='underground'||g.stage===2||g.stage===4;ctx.imageSmoothingEnabled=false;ctx.fillStyle=underground?'#101020':'#6888fc';ctx.fillRect(0,0,256,240);
   if(!underground){
     for(let start=0;start<g.width;start+=768){
       for(const [x,y,count]of[[128,32,1],[304,24,3],[528,40,1]])pixelCloud(ctx,x+start-cam,y,count);
@@ -216,9 +239,18 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),underground=g.ro
     const castle=202*16-cam;for(let row=11;row<13;row++)for(let col=0;col<5;col++)pixelTile(ctx,'brick',castle+col*16,row*16);for(let row=9;row<11;row++)for(let col=1;col<4;col++)pixelTile(ctx,'brick',castle+col*16,row*16);ctx.fillStyle='#b85020';for(let i=0;i<5;i++)ctx.fillRect(castle+i*16,168,8,8);for(let i=0;i<3;i++)ctx.fillRect(castle+16+i*16,144,8,8);ctx.fillStyle='#101020';ctx.fillRect(castle+32,184,16,24);ctx.fillRect(castle+24,160,8,10);ctx.fillRect(castle+48,160,8,10);
   }
   for(const[key,t]of g.cells){if(t==='hidden')continue;const[col,row]=key.split(',').map(Number),x=col*16-cam,baseY=row*16,bump=g.effects.find(f=>f.kind==='bump'&&f.x===col*16&&f.y===baseY),y=baseY-(bump?Math.sin((12-bump.life)/12*Math.PI)*4:0);if(x<-16||x>256)continue;
+    if(t==='castle'){ctx.fillStyle='#303038';ctx.fillRect(x,y,16,16);ctx.fillStyle='#909098';ctx.fillRect(x,y,16,1);ctx.fillRect(x,y+8,16,1);ctx.fillRect(x+8,y,1,8);ctx.fillRect(x,y+8,1,8);continue;}
+    if(t==='bridge'){ctx.fillStyle='#904018';ctx.fillRect(x,y,16,8);ctx.fillStyle='#f8b850';ctx.fillRect(x,y,16,2);ctx.fillRect(x+3,y+2,2,6);continue;}
     if(t==='platform'){ctx.fillStyle='#755035';ctx.fillRect(x+6,y+8,4,240-y);ctx.fillStyle='#e07038';ctx.fillRect(x,y,16,8);ctx.fillStyle='#ffe4a8';ctx.fillRect(x+1,y+1,14,3);continue;}
     if(t.startsWith('pipe')){ctx.fillStyle='#005800';ctx.fillRect(x,y,16,16);ctx.fillStyle='#00a800';ctx.fillRect(x+2,y,11,16);ctx.fillStyle='#80d010';ctx.fillRect(x+3,y,3,16);if(t==='pipe-top'){ctx.fillStyle='#003800';ctx.fillRect(x,y,16,2);ctx.fillRect(x,y+14,16,2);}continue;}
     pixelTile(ctx,t,x,y,underground,g.frames);
+  }
+  if(g.stage===4){
+    for(const[a,b]of g.lava){const left=Math.max(0,a*16-cam),right=Math.min(256,(b+1)*16-cam);if(right<=left)continue;ctx.fillStyle='#b82000';ctx.fillRect(left,220,right-left,20);ctx.fillStyle='#ff7800';ctx.fillRect(left,220,right-left,4);ctx.fillStyle='#ffd040';for(let x=left;x<right;x+=8)ctx.fillRect(x,220+(Math.floor(g.frames/8+x/8)%2)*2,4,2);}
+    for(const bar of g.fireBars){ctx.fillStyle='#909098';ctx.fillRect(bar.x-4-cam,bar.y-4,8,8);}
+    for(const h of g.fireHazards()){if(h.x<cam-8||h.x>cam+256)continue;ctx.fillStyle='#f83800';ctx.fillRect(Math.round(h.x)-cam,Math.round(h.y),8,8);ctx.fillStyle='#ffb030';ctx.fillRect(Math.round(h.x)+1-cam,Math.round(h.y)+1,6,6);ctx.fillStyle='#fff0b0';ctx.fillRect(Math.round(h.x)+3-cam,Math.round(h.y)+2,2,3);}
+    if(g.phase!=='won'){const x=196*16-cam;ctx.fillStyle='#b85020';ctx.fillRect(x+7,166,3,26);ctx.fillStyle='#fcfcfc';ctx.fillRect(x,160,10,7);ctx.fillRect(x-2,162,4,9);}
+    const door=202*16-cam;ctx.fillStyle='#000';ctx.fillRect(door,176,24,32);ctx.fillStyle='#b8b8c0';ctx.fillRect(door-2,174,28,2);
   }
   for(const[key,item]of g.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);drawCoin(ctx,x*16+4-cam,y*16+2,g.frames);}
   for(const e of g.enemies){if(e.dead||e.x<cam-16||e.x>cam+256)continue;

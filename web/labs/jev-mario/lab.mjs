@@ -203,7 +203,7 @@ window.addEventListener('blur', () => stop('画面から離れたため停止し
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop('バックグラウンドになったため停止しました'); });
 window.addEventListener('pagehide', () => stop());
 function finishStage(){
- const resume=world.phase==='won'&&world.stage<3?{kind:student.active?'student':loop.active?'api':'manual',remaining:loop.limit-loop.attempts,deadline:loop.deadline,cadence:loop.cadence,maxAge:loop.maxAge}:null;
+ const resume=world.phase==='won'&&world.stage<4?{kind:student.active?'student':loop.active?'api':'manual',remaining:loop.limit-loop.attempts,deadline:loop.deadline,cadence:loop.cadence,maxAge:loop.maxAge}:null;
  const result={stage:world.stage,phase:world.phase,frames:world.frames,score:world.score,student:student.active?structuredClone(student.stats):undefined};
  metadata.stage_results??=[];metadata.stage_results.push(result);
  stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):'ミス！最初から再挑戦できます');
