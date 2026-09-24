@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "created": "2026-09-25",
+  "purpose": "Held-out memos written before any run of decision method B. Do not edit after the first measurement that uses them.",
+  "samples": [
+    {"id": "h_butcher", "text": "精肉店で豚ロースと鶏むね肉を購入", "expected": "food", "review_required": false},
+    {"id": "h_kissaten", "text": "喫茶店でホットコーヒーとプリン", "expected": "cafe_snack", "review_required": false},
+    {"id": "h_konbini", "text": "コンビニでおにぎりとペットボトル飲料", "expected": "convenience", "review_required": false},
+    {"id": "h_izakaya", "text": "同僚と居酒屋で飲み会", "expected": "dining_out", "review_required": false},
+    {"id": "h_shampoo", "text": "ドラッグストアでシャンプーと歯ブラシ", "expected": "daily_necessities", "review_required": false},
+    {"id": "h_bus", "text": "空港までのリムジンバス運賃", "expected": "transport", "review_required": false},
+    {"id": "h_gas", "text": "今月のガス料金", "expected": "utilities", "review_required": false},
+    {"id": "h_fiber", "text": "自宅の光回線インターネット月額", "expected": "telecom", "review_required": false},
+    {"id": "h_music", "text": "音楽配信サービスの月額プラン", "expected": "subscription_entertainment", "review_required": false},
+    {"id": "h_clinic", "text": "内科クリニックの診察と処方薬", "expected": "medical", "review_required": false},
+    {"id": "h_kanrihi", "text": "マンションの管理費", "expected": "housing", "review_required": false},
+    {"id": "h_goshugi", "text": "友人の結婚式のご祝儀", "expected": "other", "review_required": false},
+    {"id": "h_furikomi", "text": "振込", "expected": null, "review_required": true},
+    {"id": "h_card", "text": "カード引き落とし", "expected": null, "review_required": true},
+    {"id": "h_amazon", "text": "Amazonで購入", "expected": null, "review_required": true},
+    {"id": "h_cash", "text": "現金で支払い", "expected": null, "review_required": true},
+    {"id": "h_aeon_mix", "text": "イオンで食材と洗剤と薬を購入", "expected": null, "review_required": true},
+    {"id": "h_ekinaka", "text": "駅ナカの店で購入", "expected": null, "review_required": true},
+    {"id": "h_monthly", "text": "月額料金", "expected": null, "review_required": true},
+    {"id": "h_tatekae", "text": "立替金の精算", "expected": null, "review_required": true}
+  ]
+}
