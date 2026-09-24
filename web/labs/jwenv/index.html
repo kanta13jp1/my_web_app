@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ブラウザ内Jwenv実験 | my_web_app</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+<main>
+  <header><a href="/labs/expense-comparison/">← 支出分類の比較ノート</a><span class="tag">EXPERIMENT / 02</span></header>
+  <section class="intro">
+    <p class="eyebrow">推論を、この端末のブラウザで。</p>
+    <h1>Jwenvを<br><span>ブラウザで動かす</span></h1>
+    <p class="lead">きしだ氏がQwen3-0.6BをJevのように動作するようファインチューンしたモデル「Jwenv」と、そのブラウザ用エンジンを、WebGPUでこのページ内に読み込みます。支出メモは合成サンプルだけを使います。</p>
+    <div class="notice">モデルは自動で取得しません。手元に保存したGGUFファイルを選んだときだけ読み込みます。入力や結果を外部へ送信せず、記帳やカテゴリの自動適用もしません。</div>
+  </section>
+
+  <section class="panel" aria-labelledby="env-title">
+    <h2 id="env-title">01 / 実行環境</h2>
+    <p id="gpu-status" role="status">WebGPUの対応状況を確認しています…</p>
+  </section>
+
+  <section class="panel" aria-labelledby="model-title">
+    <h2 id="model-title">02 / モデルを読み込む</h2>
+    <p>検証に使った固定版は <a id="model-link" target="_blank" rel="noopener">kishida/jwenv-0.6b-poc-gguf</a> の <code id="model-file-name"></code>（<span id="model-size"></span>）です。ダウンロードしたファイルを選んでください。読み込み中は端末のメモリとGPUを使います。</p>
+    <label class="file">GGUFファイル<input id="model-file" type="file" accept=".gguf"></label>
+    <progress id="progress" max="1" value="0" hidden></progress>
+    <p id="model-status" role="status" data-state="none">モデル未読込</p>
+  </section>
+
+  <section class="panel" aria-labelledby="run-title">
+    <h2 id="run-title">03 / 検証する</h2>
+    <div class="actions">
+      <button id="run-example" disabled>記事の入力例を実行</button>
+      <button id="run-expense" disabled>支出メモ34件 × 12カテゴリ（方式A・B）</button>
+      <button id="run-limit" disabled>12択の上限を確認</button>
+      <button id="verify-slice" disabled>候補スライスと全語彙の一致を確認</button>
+    </div>
+    <p id="run-status" role="status"></p>
+    <div id="live"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="saved-title">
+    <h2 id="saved-title">04 / CIの保存済み実測（SwiftShader・方式A）</h2>
+    <p id="saved-status" role="status">保存済みの実測を読み込んでいます…</p>
+    <div id="saved"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="gpu-saved-title">
+    <h2 id="gpu-saved-title">05 / 実機GPUの保存済み実測（方式A・B）</h2>
+    <p id="gpu-saved-status" role="status">実機GPUの保存済み実測を読み込んでいます…</p>
+    <div id="gpu-saved"></div>
+  </section>
+
+  <details>
+    <summary>この実験で確認できること・できないこと</summary>
+    <p>12カテゴリはJwenvの選択肢上限（8）を超えます。方式Aは、カテゴリごとの「当てはまるか（yes/no）」12問を1回の要求で尋ね、yesの確率が最も高いカテゴリを候補にします（最大値が0.5未満なら要確認）。</p>
+    <p>方式Bは、方式Aの上位8カテゴリを選択肢にした8択を、ラベルの並びを8通りに回して尋ね直します。候補の確率が0.5未満なら要確認です。方式・しきい値・検証用メモ20件は、実行前に <code>docs/JWENV_DECISION_METHOD.md</code> と <code>holdout.json</code> で固定しました。</p>
+    <p>yesの確率は質問ごとに独立した値で、12カテゴリの合計は1になりません。正答率やカテゴリが正しい確率を示すものではありません。</p>
+    <p>CIの実測はGitHub ActionsのCPU上でソフトウェア実装のWebGPU（SwiftShader）を使っています。実機GPUでの速度とは異なります。</p>
+    <p>エンジンは <code>kishida/jwenv-demo</code> の固定版を変更せずに同梱しています（MIT）。詳しくは <a href="vendor/jwenv-8263b81/NOTICE.md">NOTICE</a> を参照してください。</p>
+  </details>
+  <footer>my_web_app / 分類候補は、明細を確認するための補助です。</footer>
+</main>
+</body>
+</html>
