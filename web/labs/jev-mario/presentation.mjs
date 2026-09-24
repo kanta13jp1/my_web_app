@@ -1,3 +1,4 @@
+import {courseInfo} from './world11.mjs?v=student-1';
 // A live composition of the game and measured controller output, never a replay.
 export const ACTIONS=['noop','right','right_jump','right_run','right_run_jump','jump','left'];
 export function decisionView(value={}){
@@ -18,7 +19,7 @@ export function drawPresentation(ctx,screen,{world,decision={},running=false,rec
  ctx.fillStyle='#121a1e';ctx.fillRect(16,57,830,648);
  if(!fixture)ctx.drawImage(screen,0,0,screen.width,screen.height,88,61,682,639);
  else text('固定状態の計測 — ゲームプレイではありません',95,350,22);
- text(`World 1-${world.stage} · Decision ${String(d.count??0).padStart(4,'0')}`,868,76,13);
+ text(`World ${courseInfo(world.stage).label} · Decision ${String(d.count??0).padStart(4,'0')}`,868,76,13);
  text((d.action||'noop').replaceAll('_',' '),868,112,30,'#f0f4f6');
  text(`Model proposal: ${(d.proposal||'—').replaceAll('_',' ')}`,868,143,14);
  line(160);
