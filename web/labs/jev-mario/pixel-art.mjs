@@ -8,14 +8,26 @@ export function pixelText(ctx,value,x,y,color='#fff'){
  const columns=[0,0,1,2,3,4,4];
  for(const char of String(value).toUpperCase()){const rows=glyphs[char]||glyphs['?'];for(let r=0;r<rows.length;r++)for(let c=0;c<7;c++)if(rows[r][columns[c]]==='1')ctx.fillRect(x+c,y+r,1,1);x+=8;}
 }
-const cloudMask=Array.from({length:24},(_,y)=>Array.from({length:32},(_,x)=>[[7,14,7],[14,9,8],[23,13,7],[16,16,10]].some(([a,b,r])=>(x-a)**2+(y-b)**2<=r*r)));
+const cloudMasks=new Map();
+function cloudMask(count){
+ if(!cloudMasks.has(count))cloudMasks.set(count,Array.from({length:24},(_,y)=>Array.from({length:32+(count-1)*20},(_,x)=>Array.from({length:count},(_,n)=>x-n*20).some(px=>[[6,15,6],[12,10,7],[20,12,7],[26,17,5],[10,18,5],[19,19,4]].some(([a,b,r])=>(px-a)**2+(y-b)**2<=r*r)))));
+ return cloudMasks.get(count);
+}
 export function pixelCloud(ctx,x,y,count=1,bush=false){
- x=Math.round(x);y=Math.round(y);if(x>256||x+32+(count-1)*20<0)return;
- for(let n=0;n<count;n++)for(let r=0;r<24;r++)for(let c=0;c<32;c++)if(cloudMask[r][c]){
-  const edge=!cloudMask[r-1]?.[c]||!cloudMask[r+1]?.[c]||!cloudMask[r]?.[c-1]||!cloudMask[r]?.[c+1];
+ x=Math.round(x);y=Math.round(y);const mask=cloudMask(count);if(x>256||x+mask[0].length<0)return;
+ for(let r=0;r<24;r++)for(let c=0;c<mask[r].length;c++)if(mask[r][c]){
+  const edge=!mask[r-1]?.[c]||!mask[r+1]?.[c]||!mask[r]?.[c-1]||!mask[r]?.[c+1];
   ctx.fillStyle=edge?'#182830':bush?(r>18?'#00a800':'#b8f818'):(r>18?'#9ce8fc':'#fcfcfc');
-  ctx.fillRect(x+c+n*20,y+(bush?Math.floor(r*.6):r),1,1);
+  ctx.fillRect(x+c,y+(bush?Math.floor(r*.6):r),1,1);
  }
+}
+export function pixelPipe(ctx,x,y,width=32,top=false){
+ x=Math.round(x);y=Math.round(y);ctx.fillStyle='#003800';ctx.fillRect(x,y,width,16);
+ ctx.fillStyle='#00a800';ctx.fillRect(x+2,y,width-4,16);
+ ctx.fillStyle='#80d010';ctx.fillRect(x+4,y,5,16);ctx.fillRect(x+12,y,2,16);
+ ctx.fillStyle='#b8f818';ctx.fillRect(x+3,y,1,16);
+ ctx.fillStyle='#005800';ctx.fillRect(x+width-7,y,3,16);
+ if(top){ctx.fillStyle='#003800';ctx.fillRect(x,y,width,2);ctx.fillRect(x,y+14,width,2);ctx.fillStyle='#b8f818';ctx.fillRect(x+2,y+2,width-4,1);}
 }
 export function pixelHill(ctx,x,y,height){
  x=Math.round(x);y=Math.round(y);if(x>256||x+height*2<0)return;
