@@ -75,7 +75,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopRecordi
 window.addEventListener('pagehide',()=>{stopRecording();if(recordUrl)URL.revokeObjectURL(recordUrl);});
 
 drawWorld(context, world);
-function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':pose==='climb'?'旗を降りる':pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
+function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':world.stage===6&&world.phase==='playing'?'泳ぐ':pose==='climb'?'旗を降りる':pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
 showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
