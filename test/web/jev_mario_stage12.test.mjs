@@ -24,7 +24,7 @@ test('campaign advances only after clear presentation and preserves earned state
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,3);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,4);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,5);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);assert.equal(g.stage,5);
+ g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
 });
 test('sky course has elevated platforms, gaps, collectibles and a distinct finish',()=>{
  const g=new World11(3);assert.equal(g.telemetry().stage,3);assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);
@@ -56,9 +56,23 @@ test('world 2 course has distinct terrain, enemies, collectible coins and public
  const [x,y]=[...g.contents].find(([,v])=>v==='loose')[0].split(',').map(Number);g.p.x=x*16;g.p.y=y*16;g.step();assert.equal(g.coins,1);
  g.reset();assert.equal(g.stage,5);assert.equal(g.p.x,32);assert.equal(g.coins,0);
  const fall=new World11(5);fall.p.x=45*16;fall.p.y=251;fall.step();assert.equal(fall.phase,'dead');assert.equal(fall.advanceStage(),false);
- const win=new World11(5);win.p.x=198*16;win.step();assert.equal(win.phase,'won');for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.advanceStage(),false);
+ const win=new World11(5);win.p.x=198*16;win.step();assert.equal(win.phase,'won');for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.advanceStage(),true);assert.equal(win.stage,6);
 });
 
 test('2-1 reaches the flag above its solid base with existing horizontal momentum',()=>{
  const g=new World11(5);g.p.x=198*16;g.p.y=160;g.p.vx=1.5;g.step();assert.equal(g.phase,'won');
+});
+
+
+test('water stroke, surface, enemy contact and low exit follow swimming rules',()=>{
+ const g=new World11(6);assert.deepEqual(courseInfo(6),{world:2,stage:2,label:'2-2'});assert.equal(g.room,'underwater');assert.equal(g.telemetry().stage,2);assert.equal(g.enemies[0].kind,'squid');
+ g.buttons('jump');g.step();assert.ok(g.p.vy<0);assert.ok(g.drainSounds().includes('swim'));for(let i=0;i<40;i++)g.step();assert.ok(g.p.vy>0,'holding jump does not retrigger strokes');
+ g.buttons('noop');g.step();g.buttons('jump');g.step();assert.ok(g.p.vy<0);g.p.y=40;g.p.vy=-2;g.step();assert.ok(g.p.y>=40);
+ const hit=new World11(6);hit.enemies=[{x:32,y:129,w:14,h:14,vx:0,vy:0,kind:'fish',offset:0,dead:0}];hit.step();assert.equal(hit.phase,'dead');assert.equal(hit.score,0);
+ const win=new World11(6);win.p.x=196*16;win.p.y=80;win.step();assert.equal(win.phase,'playing');win.p.y=180;win.step();assert.equal(win.phase,'won');assert.ok(win.drainSounds().includes('pipe'));for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.advanceStage(),false);
+ win.reset();assert.equal(win.stage,6);assert.equal(win.room,'underwater');assert.equal(win.p.y,128);
+});
+
+test('water simulator clones preserve swim physics without changing live state',async()=>{
+ const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(6),saved=JSON.stringify(g.snapshot());const future=advance(clone(g),'right_jump',8);assert.equal(future.stage,6);assert.ok(future.p.y<g.p.y);assert.equal(JSON.stringify(g.snapshot()),saved);
 });

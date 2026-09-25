@@ -400,10 +400,10 @@ test('2-1 direct selection, API world-stage payload, terminal finish and exporte
  await lab.locator('#consent').check();await lab.locator('#start').click();await expect.poll(()=>page.evaluate(()=>(window as any).worldRequests.length)).toBeGreaterThan(0);
  await lab.locator('#stop').click();expect(await page.evaluate(()=>(window as any).worldRequests[0])).toEqual({world:2,stage:1});
  await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
- await expect(lab.locator('#status')).toContainText('2-1クリア！ 全ステージ終了');await page.waitForTimeout(3200);await expect(lab.locator('#stage')).toHaveValue('5');
+ await expect(lab.locator('#status')).toContainText('2-1クリア！ 次のステージへ進みます');await expect(lab.locator('#stage')).toHaveValue('6',{timeout:7000});
  await lab.locator('#presentation').screenshot({path:info.outputPath('world21-clear.png')});
  const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await (await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();const data=JSON.parse(raw);expect(data.world).toBe(2);expect(data.stage).toBe(1);expect(data.stage_results.at(-1)).toMatchObject({world:2,stage:1,label:'2-1',course_id:5});
- await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('2-1をリセット');
+ await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('2-2をリセット');
 });
 test('2-1 terrain and reference-style pipe silhouettes render across camera clipping',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');
@@ -448,4 +448,16 @@ test('autoplay ignores visible blur but hidden page stops and can restart',async
  await expect(lab.locator('#status')).toContainText('バックグラウンド');const stopped=await lab.locator('#progress').textContent();await page.waitForTimeout(200);await expect(lab.locator('#progress')).toHaveText(stopped!);
  await frame.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
  await lab.locator('#watch-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});await lab.locator('#stop').click();
+});
+
+
+test('2-2 swimming controls, underwater audio, stop/reset and terminal export',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('6');await expect(lab.locator('#restart-local')).toHaveText('2-2を最初から');await lab.locator('#watch-manual').click();
+ await page.keyboard.press('Space');await expect(lab.locator('#posture')).toContainText('泳ぐ');await expect(lab.locator('#audio-status')).toContainText('音声ON');
+ await lab.locator('#presentation').screenshot({path:info.outputPath('world22-swim.png')});
+ await lab.locator('#stop').click();await expect(lab.locator('#status')).toContainText('停止');await lab.locator('#restart-local').click();await expect(lab.locator('#stage')).toHaveValue('6');
+ await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=196*16;this.p.y=180;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('2-2クリア！ 全ステージ終了');await page.waitForTimeout(3200);await expect(lab.locator('#stage')).toHaveValue('6');
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:2,stage:2,course_id:6,phase:'won'});
 });
