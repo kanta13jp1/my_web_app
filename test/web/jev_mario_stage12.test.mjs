@@ -24,7 +24,7 @@ test('campaign advances only after clear presentation and preserves earned state
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,3);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,4);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,5);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
+ g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
 });
 test('sky course has elevated platforms, gaps, collectibles and a distinct finish',()=>{
  const g=new World11(3);assert.equal(g.telemetry().stage,3);assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);
@@ -69,10 +69,24 @@ test('water stroke, surface, enemy contact and low exit follow swimming rules',(
  g.buttons('jump');g.step();assert.ok(g.p.vy<0);assert.ok(g.drainSounds().includes('swim'));for(let i=0;i<40;i++)g.step();assert.ok(g.p.vy>0,'holding jump does not retrigger strokes');
  g.buttons('noop');g.step();g.buttons('jump');g.step();assert.ok(g.p.vy<0);g.p.y=40;g.p.vy=-2;g.step();assert.ok(g.p.y>=40);
  const hit=new World11(6);hit.enemies=[{x:32,y:129,w:14,h:14,vx:0,vy:0,kind:'fish',offset:0,dead:0}];hit.step();assert.equal(hit.phase,'dead');assert.equal(hit.score,0);
- const win=new World11(6);win.p.x=196*16;win.p.y=80;win.step();assert.equal(win.phase,'playing');win.p.y=180;win.step();assert.equal(win.phase,'won');assert.ok(win.drainSounds().includes('pipe'));for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.advanceStage(),false);
- win.reset();assert.equal(win.stage,6);assert.equal(win.room,'underwater');assert.equal(win.p.y,128);
+ const win=new World11(6);win.p.x=196*16;win.p.y=80;win.step();assert.equal(win.phase,'playing');win.p.y=180;win.step();assert.equal(win.phase,'won');assert.ok(win.drainSounds().includes('pipe'));for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.advanceStage(),true);assert.equal(win.stage,7);
+ win.stage=6;win.reset();assert.equal(win.stage,6);assert.equal(win.room,'underwater');assert.equal(win.p.y,128);
 });
 
 test('water simulator clones preserve swim physics without changing live state',async()=>{
  const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(6),saved=JSON.stringify(g.snapshot());const future=advance(clone(g),'right_jump',8);assert.equal(future.stage,6);assert.ok(future.p.y<g.p.y);assert.equal(JSON.stringify(g.snapshot()),saved);
+});
+
+
+test('2-3 bridge gaps, coins and leaping fish have deterministic motion and a terminal flag',()=>{
+ const g=new World11(7);assert.deepEqual(courseInfo(7),{world:2,stage:3,label:'2-3'});assert.equal(g.room,'overworld');assert.equal(g.tile(25,12),'bridge');assert.equal(g.tile(49,12),undefined);assert.equal(g.tile(49,13),undefined);assert.equal(g.telemetry().stage,3);assert.ok(g.contents.size>20);
+ g.p.x=400;g.p.y=176;g.camera=304;const fish=g.enemies[0];g.step();assert.equal(fish.launched,true);assert.ok(fish.vy<0);for(let i=0;i<20;i++)g.step();assert.ok(fish.y<192,'fish jumps through bridge from below');
+ for(let i=0;i<90;i++)g.step();assert.equal(fish.dead,1,'fish falls below the screen and expires');
+ const hit=new World11(7);hit.enemies=[{x:32,y:192,w:14,h:14,vx:0,vy:0,kind:'leaping-fish',launched:true,dead:0}];hit.step();assert.equal(hit.phase,'dead');
+ const fall=new World11(7);fall.p.x=49*16;fall.p.y=251;fall.step();assert.equal(fall.phase,'dead');assert.equal(fall.advanceStage(),false);
+ const win=new World11(7);win.p.x=198*16;win.p.y=160;win.step();assert.equal(win.phase,'won');for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.advanceStage(),false);win.reset();assert.equal(win.stage,7);assert.equal(win.enemies[0].launched,false);assert.equal(win.p.x,32);
+});
+
+test('2-3 prediction keeps leaping fish motion and live state separate',async()=>{
+ const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(7);g.p.x=400;g.p.y=176;g.camera=304;const before=JSON.stringify(g.snapshot());const a=advance(clone(g),'right',8),b=advance(clone(g),'right',8);assert.equal(JSON.stringify(a.snapshot()),JSON.stringify(b.snapshot()));assert.ok(a.enemies[0].y<260);assert.equal(JSON.stringify(g.snapshot()),before);
 });

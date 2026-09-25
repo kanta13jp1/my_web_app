@@ -458,6 +458,18 @@ test('2-2 swimming controls, underwater audio, stop/reset and terminal export',a
  await lab.locator('#presentation').screenshot({path:info.outputPath('world22-swim.png')});
  await lab.locator('#stop').click();await expect(lab.locator('#status')).toContainText('停止');await lab.locator('#restart-local').click();await expect(lab.locator('#stage')).toHaveValue('6');
  await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=196*16;this.p.y=180;this.p.vx=0;this.p.vy=0;original.call(this);};});
- await expect(lab.locator('#status')).toContainText('2-2クリア！ 全ステージ終了');await page.waitForTimeout(3200);await expect(lab.locator('#stage')).toHaveValue('6');
+ await expect(lab.locator('#status')).toContainText('2-2クリア！ 次のステージへ進みます');await expect(lab.locator('#stage')).toHaveValue('7',{timeout:7000});
  const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:2,stage:2,course_id:6,phase:'won'});
+});
+
+
+test('2-3 selection, bridge/fish scenes, reset and final campaign result',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('7');await expect(lab.locator('#restart-local')).toHaveText('2-3を最初から');await lab.locator('#watch-manual').click();await expect(lab.locator('#audio-status')).toContainText('音声ON');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=400;this.p.y=176;this.camera=304;this.invincible=300;original.call(this);};});
+ await page.waitForTimeout(400);await lab.locator('#presentation').screenshot({path:info.outputPath('world23-bridge.png')});
+ await lab.locator('#restart-local').click();await expect(lab.locator('#stage')).toHaveValue('7');await expect(lab.locator('#progress')).toContainText('2-3をリセット');
+ await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('2-3クリア！ 全ステージ終了');await page.waitForTimeout(3200);await expect(lab.locator('#stage')).toHaveValue('7');
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:2,stage:3,course_id:7,phase:'won'});
 });
