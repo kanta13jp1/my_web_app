@@ -12,10 +12,10 @@ width, out = int(sys.argv[1]), Path(sys.argv[2])
 X = np.fromfile(out / 'X.f64', dtype=np.float64).reshape(-1, width)
 y = np.array(json.loads((out / 'y.json').read_text()), dtype=int)
 assert len(X) == len(y) and np.isfinite(X).all() and y.min() >= 0
-params = {'objective': 'multiclass', 'num_class': 7, 'num_leaves': 15, 'learning_rate': 0.1,
-          'min_data_in_leaf': 20, 'lambda_l2': 1.0, 'feature_fraction': 0.9, 'seed': 20260925,
+params = {'objective': 'multiclass', 'num_class': 7, 'num_leaves': 31, 'learning_rate': 0.1,
+          'min_data_in_leaf': 10, 'lambda_l2': 1.0, 'feature_fraction': 0.9, 'seed': 20260925,
           'deterministic': True, 'force_row_wise': True, 'num_threads': 4, 'verbosity': -1}
-booster = lgb.train(params, lgb.Dataset(X, label=y), num_boost_round=150)
+booster = lgb.train(params, lgb.Dataset(X, label=y), num_boost_round=250)
 
 
 def export(tree):
