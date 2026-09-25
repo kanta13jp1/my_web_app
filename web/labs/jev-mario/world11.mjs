@@ -1,8 +1,8 @@
 import {pixelText,pixelCloud,pixelHill,pixelTile,pixelPipe} from './pixel-art.mjs?v=student-1';
 // Independently authored 1-1 reconstruction. No ROM, sprite sheet or game code is loaded.
 export const TILE = 16;
-// Internal course IDs retain compatibility with saved simulations (1..6).
-export const LAST_COURSE=6;
+// Internal course IDs retain compatibility with saved simulations (1..7).
+export const LAST_COURSE=7;
 export function courseInfo(id=1){const world=id>=5?2:1,stage=id>=5?id-4:id;return {world,stage,label:`${world}-${stage}`};}
 export function level() {
   const cells = new Map(), contents = new Map();
@@ -94,12 +94,25 @@ export function waterLevel(){
  for(let x=198;x<200;x++)for(let y=10;y<13;y++)cells.set(`${x},${y}`,'pipe');
  return {cells,contents,width:212*16};
 }
+// Independent bridge course with deterministic leaping fish.
+export function bridgeLevel(){
+ const cells=new Map(),contents=new Map();
+ for(let x=0;x<212;x++){
+  if(x<20||x>=185){for(let y=13;y<15;y++)cells.set(`${x},${y}`,'ground');}
+  else if(![[48,50],[83,85],[119,122],[158,160]].some(([a,b])=>x>=a&&x<=b))cells.set(`${x},12`,'bridge');
+ }
+ for(const start of [28,62,97,137,171])for(let x=start;x<start+5;x++)contents.set(`${x},9`,'loose');
+ cells.set('12,9','question');contents.set('12,9','mushroom');cells.set('198,12','stone');
+ return {cells,contents,width:212*16};
+}
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 export class World11 {
-  constructor(stage=1){this.stage=[1,2,3,4,5,6].includes(stage)?stage:1;this.reset();}
-  reset(){this.sounds=[];this.lava=[];this.fireBars=[];Object.assign(this,this.stage===6?waterLevel():this.stage===5?world21Level():this.stage===4?castleLevel():this.stage===3?skyLevel():this.stage===2?undergroundLevel():level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.presentation=0;this.flagStartY=0;this.wasSkidding=false;this.hurry=false;this.room=this.stage===6?'underwater':this.stage===4?'castle':this.stage===2?'stage-underground':'overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;
+  constructor(stage=1){this.stage=[1,2,3,4,5,6,7].includes(stage)?stage:1;this.reset();}
+  reset(){this.sounds=[];this.lava=[];this.fireBars=[];Object.assign(this,this.stage===7?bridgeLevel():this.stage===6?waterLevel():this.stage===5?world21Level():this.stage===4?castleLevel():this.stage===3?skyLevel():this.stage===2?undergroundLevel():level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.presentation=0;this.flagStartY=0;this.wasSkidding=false;this.hurry=false;this.room=this.stage===6?'underwater':this.stage===4?'castle':this.stage===2?'stage-underground':'overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;
     this.enemies=(this.stage===5?[17,33,37,67,71,91,105,113,139,152,170]:this.stage===4?[]:this.stage===3?[37,61,85,109,133,157,180]:this.stage===2?[22,38,53,64,82,96,107,126,140,158,172]:[22,40,51,53,80,82,97,98,107,114,116,124,126,128,130,174,176]).map((x,i)=>({x:x*16,y:this.stage===3?(Math.min(...[...this.cells.keys()].filter(k=>k.startsWith(x+',')).map(k=>Number(k.split(',')[1])))*16-16):this.stage!==2&&(x===80||x===82)?64:192,w:14,h:16,vx:-.5,vy:0,kind:(this.stage===5?(i===3||i===7):i===8)?'koopa':'goomba',dead:0}));
-    if(this.stage===6){this.p.y=128;this.p.grounded=false;this.enemies=[32,54,70,94,120,145,168,184].map((x,i)=>({x:x*16,y:80+(i%3)*32,baseY:80+(i%3)*32,w:14,h:14,vx:i%2?.65:-.65,vy:0,kind:i%3?'fish':'squid',dead:0,offset:i*30}));}}
+    if(this.stage===6){this.p.y=128;this.p.grounded=false;this.enemies=[32,54,70,94,120,145,168,184].map((x,i)=>({x:x*16,y:80+(i%3)*32,baseY:80+(i%3)*32,w:14,h:14,vx:i%2?.65:-.65,vy:0,kind:i%3?'fish':'squid',dead:0,offset:i*30}));}
+    if(this.stage===7)this.enemies=[30,39,55,67,78,92,106,114,131,143,153,167,177].map((x,i)=>({x:x*16,y:260,w:14,h:14,vx:i%2?-.8:.9,vy:-7,kind:'leaping-fish',dead:0,launched:false}));}
+
 
   advanceStage(){
     if(this.phase!=='won'||this.presentation<180||this.stage>=LAST_COURSE)return false;
@@ -197,7 +210,7 @@ export class World11 {
     p.x=Math.max(this.camera,p.x);p.stride=(p.stride??0)+(p.grounded?Math.abs(p.vx):0);if(p.y>250)this.die();
     if(k.down)this.enterRoom();
     if(this.power===2&&k.run&&!this.wasFire&&this.shots.length<2){this.sound('fire');const facing=p.facing??1;this.shots.push({x:facing<0?p.x-4:p.x+p.w,y:p.y+10,w:4,h:4,vx:facing*3.5,vy:1});}this.wasFire=!!k.run;
-    if(this.room==='underground'||this.stage===2||this.stage===3||this.stage===4||this.stage===5||this.stage===6){
+    if(this.room==='underground'||this.stage===2||this.stage===3||this.stage===4||this.stage===5||this.stage===6||this.stage===7){
       for(const [key,item]of this.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);if(overlap(p,{x:x*16,y:y*16,w:12,h:16})){this.contents.delete(key);this.collectCoin();}}
       if(this.room==='underground'&&p.x>=12*16&&p.y+p.h<=160&&k.right)this.exitRoom();
       if(this.stage!==1)this.camera=Math.max(this.camera,Math.min(this.width-256,p.x-96));
@@ -207,8 +220,9 @@ export class World11 {
       if(this.fireHazards().some(f=>overlap(p,f)))this.hurt();
     }
     for(const e of this.enemies){if(e.dead||e.x>this.camera+280||e.x<this.camera-32)continue;
-      const speed=e.vx;if(this.stage===6){e.vy=Math.sin((this.frames+e.offset)/35)*.6;this.move(e);e.y=Math.max(44,Math.min(194,e.y));if(e.vx===0)e.vx=-speed;}else{e.vy=Math.min(6,e.vy+.38);this.move(e);if(e.vx===0)e.vx=-speed;}
-      if(e.y>250){e.dead=1;continue;}if(overlap(p,e)&&this.phase==='playing'){
+      if(e.kind==='leaping-fish'){if(!e.launched){if(e.x>p.x+176)continue;e.launched=true;}e.x+=e.vx;e.vy+=.16;e.y+=e.vy;}
+      else {const speed=e.vx;if(this.stage===6){e.vy=Math.sin((this.frames+e.offset)/35)*.6;this.move(e);e.y=Math.max(44,Math.min(194,e.y));if(e.vx===0)e.vx=-speed;}else{e.vy=Math.min(6,e.vy+.38);this.move(e);if(e.vx===0)e.vx=-speed;}}
+      if(e.y>270||(e.kind!=='leaping-fish'&&e.y>250)){e.dead=1;continue;}if(overlap(p,e)&&this.phase==='playing'){
         if(this.star){this.defeat(e);}
         else if(this.stage!==6&&p.vy>=0&&beforeY+p.h<=e.y+6){this.sound('stomp');p.y=e.y-p.h;p.vy=k.jump?-5.2:-3.5;p.grounded=false;this.score+=100;this.popup(100,e.x,e.y);if(e.kind==='koopa'){e.kind='shell';e.vx=0;}else if(e.kind==='shell'){e.vx=e.vx?0:(p.x<e.x?4:-4);}else{e.dead=1;this.effects.push({x:e.x,y:e.y+12,kind:'squash',life:20});}}
         else if(e.kind==='shell'&&!e.vx){this.sound('kick');e.vx=p.x<e.x?4:-4;e.x+=Math.sign(e.vx)*10;}else this.hurt();
@@ -269,11 +283,14 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===
   if(!underground&&!water){
     for(let start=0;start<g.width;start+=768){
       for(const [x,y,count]of[[128,32,1],[304,24,3],[528,40,1]])pixelCloud(ctx,x+start-cam,y,count);
-      for(const [x,h]of[[0,32],[256,16],[576,32]])pixelHill(ctx,x+start-cam,208,h);
-      for(const [x,count]of[[184,1],[368,3],[664,2]])pixelCloud(ctx,x+start-cam,194,count,true);
+      for(const [x,h]of(g.stage===7?[]:[[0,32],[256,16],[576,32]]))pixelHill(ctx,x+start-cam,208,h);
+      for(const [x,count]of(g.stage===7?[]:[[184,1],[368,3],[664,2]]))pixelCloud(ctx,x+start-cam,194,count,true);
     }
     const flag=198*16-cam;ctx.fillStyle='#80d010';ctx.fillRect(flag+7,32,2,160);ctx.fillRect(flag+5,28,6,6);ctx.fillStyle='#fff';ctx.beginPath();const flagY=g.phase==='won'?36+Math.min(144,g.presentation*2.7):36;ctx.moveTo(flag+7,flagY);ctx.lineTo(flag-9,flagY);ctx.lineTo(flag+7,flagY+12);ctx.fill();
     const castle=202*16-cam;for(let row=11;row<13;row++)for(let col=0;col<5;col++)pixelTile(ctx,'brick',castle+col*16,row*16);for(let row=9;row<11;row++)for(let col=1;col<4;col++)pixelTile(ctx,'brick',castle+col*16,row*16);ctx.fillStyle='#b85020';for(let i=0;i<5;i++)ctx.fillRect(castle+i*16,168,8,8);for(let i=0;i<3;i++)ctx.fillRect(castle+16+i*16,144,8,8);ctx.fillStyle='#101020';ctx.fillRect(castle+32,184,16,24);ctx.fillRect(castle+24,160,8,10);ctx.fillRect(castle+48,160,8,10);
+  }
+  if(g.stage===7){
+    ctx.fillStyle='#1858a0';ctx.fillRect(0,224,256,16);ctx.fillStyle='#8ce0f8';for(let x=0;x<256;x+=16)ctx.fillRect(x,224+Math.floor((g.frames/12+x/16)%2)*2,10,2);
   }
   if(water){
     ctx.fillStyle='#78d8f8';ctx.fillRect(0,36,256,2);
@@ -282,7 +299,7 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===
   }
   for(const[key,t]of g.cells){if(t==='hidden')continue;const[col,row]=key.split(',').map(Number),x=col*16-cam,baseY=row*16,bump=g.effects.find(f=>f.kind==='bump'&&f.x===col*16&&f.y===baseY),y=baseY-(bump?Math.sin((12-bump.life)/12*Math.PI)*4:0);if(x<(t.startsWith('pipe')?-64:-16)||x>256)continue;
     if(t==='castle'){ctx.fillStyle='#303038';ctx.fillRect(x,y,16,16);ctx.fillStyle='#909098';ctx.fillRect(x,y,16,1);ctx.fillRect(x,y+8,16,1);ctx.fillRect(x+8,y,1,8);ctx.fillRect(x,y+8,1,8);continue;}
-    if(t==='bridge'){ctx.fillStyle='#904018';ctx.fillRect(x,y,16,8);ctx.fillStyle='#f8b850';ctx.fillRect(x,y,16,2);ctx.fillRect(x+3,y+2,2,6);continue;}
+    if(t==='bridge'){if(g.stage===7){ctx.fillStyle='#b89060';ctx.fillRect(x,y-12,16,2);ctx.fillRect(x+1,y-12,2,12);ctx.fillStyle='#583818';ctx.fillRect(x+6,y+8,4,240-y);}ctx.fillStyle='#904018';ctx.fillRect(x,y,16,8);ctx.fillStyle='#f8b850';ctx.fillRect(x,y,16,2);ctx.fillRect(x+3,y+2,2,6);continue;}
     if(t==='platform'){ctx.fillStyle='#755035';ctx.fillRect(x+6,y+8,4,240-y);ctx.fillStyle='#e07038';ctx.fillRect(x,y,16,8);ctx.fillStyle='#ffe4a8';ctx.fillRect(x+1,y+1,14,3);continue;}
     if(t.startsWith('pipe')){if(g.tile(col-1,row)?.startsWith('pipe'))continue;let width=1;while(g.tile(col+width,row)?.startsWith('pipe'))width++;pixelPipe(ctx,x,y,width*16,t==='pipe-top');continue;}
     pixelTile(ctx,t,x,y,underground,g.frames);
@@ -297,7 +314,7 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===
   for(const[key,item]of g.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);drawCoin(ctx,x*16+4-cam,y*16+2,g.frames);}
   for(const e of g.enemies){if(e.dead||e.x<cam-16||e.x>cam+256)continue;
     const walking=g.frames%16<8;
-    const rows=e.kind==='fish'?['....RRRR....','..RRRRRRSS..','.RRRRRRBS SS.'.replace(' ',''),'RRRRRRRSSSS.','.RRRRRRSSSS.','..RRRRRRSS..',walking?'SS..RRRR....':'.SS..RRRR...']:e.kind==='squid'?['....SSSS....','...SSSSSS...','..SSSSSSSS..','.SSSBSSBSSS.','..SSSSSSSS..','...SSSSSS...',walking?'..SS.SS.SS..':'...SS..SS...']:e.kind==='shell'?['....GGGG....','..GGLLLLGG..','.GLLLLLLLLG.','GGLLGGGGLLGG','GLLGGLLGGLLG','GGGGGGGGGGGG','.SSSSSSSSSS.']:
+    const rows=(e.kind==='fish'||e.kind==='leaping-fish')?['.....RRRR.....','...RRRRRRRR...','..RRRRRRRRSS..','.RRRRRRRBSSSS.','RRRRRRRRBSSSS.','RRRRRRRRRSSSS.','.RRRRRSSSSSSS.','..RRRSSSSSSS..','..RRRSSSSSS...',walking?'SSRRRRSSSS....':'.SSRRRSSSS....',walking?'SSSRRRRR......':'..SSRRRR......','...RRRRR......','....SSS.......','.....SS.......']:e.kind==='squid'?['....SSSS....','...SSSSSS...','..SSSSSSSS..','.SSSBSSBSSS.','..SSSSSSSS..','...SSSSSS...',walking?'..SS.SS.SS..':'...SS..SS...']:e.kind==='shell'?['....GGGG....','..GGLLLLGG..','.GLLLLLLLLG.','GGLLGGGGLLGG','GLLGGLLGGLLG','GGGGGGGGGGGG','.SSSSSSSSSS.']:
       e.kind==='koopa'?['.......SSS..','......SSBSS.','......SSSSS.','...GGGGSS...','..GLLLLGSS..','.GLLGGLLG...','.GLLLLLLG...','..GGGGGG....','...SSSSS....',walking?'..SS...SSS..':'...SSS..SS..']:
       ['.....HHHHHH.....','....HHHHHHHH....','...HHHHHHHHHH...','..HHHHHHHHHHHH..','.HHHBBHHHHBBHHH.','HHHSSBBHHBBSSHHH','HHHSSSBHHBSSSHHH','.HHSSSSSSSSSSHH.','..HHHHHHHHHHHH..','....SSSSSSSS....','....SSSSSSSS....','...SSSSSSSSSS...',walking?'..BBBBBSSBBBB...':'...BBBBSSBBBBB..',walking?'.BBBBBB..BBBBB..':'..BBBBB..BBBBBB.',walking?'.BBBB....BBBB...':'...BBBB....BBBB.','................'];
     sprite(ctx,rows,e.x-cam,e.y+e.h-rows.length,{R:'#f83800',H:'#a84800',S:'#ffe0b0',B:'#101020',G:'#005800',L:'#80d010'});
