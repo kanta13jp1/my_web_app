@@ -61,8 +61,7 @@ class _AiUniversityYoutubeEmbedState extends State<AiUniversityYoutubeEmbed> {
         children: [
           LayoutBuilder(
             builder: (context, constraints) {
-              final heightLimit =
-                  widget.maxPlayerHeight ??
+              final heightLimit = widget.maxPlayerHeight ??
                   MediaQuery.sizeOf(context).height * 0.6;
               final width = math.min(
                 constraints.maxWidth,
