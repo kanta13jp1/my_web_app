@@ -322,7 +322,7 @@ export class World11 {
     for(const shot of this.shots){shot.vy+=.35;this.move(shot);if(shot.grounded)shot.vy=-2.8;if(!shot.vx){shot.dead=true;this.sound('impact');this.effects.push({kind:'burst',x:shot.x,y:shot.y,life:10});}if(shot.x<this.camera||shot.x>this.camera+256)shot.dead=true;if(!shot.dead)for(const e of this.enemies)if(!e.dead&&e.kind!=='bullet'&&overlap(shot,e)){this.defeat(e);shot.dead=true;this.effects.push({kind:'burst',x:shot.x,y:shot.y,life:10});break;}}
     this.shots=this.shots.filter(s=>!s.dead);
     for(const fx of this.effects){fx.life--;if(fx.kind==='coin')fx.y-=1;if(fx.kind==='score')fx.y-=.35;if(fx.kind==='debris'){fx.x+=fx.vx;fx.y+=fx.vy;fx.vy+=.25;}}this.effects=this.effects.filter(f=>f.life>0);
-    if(((this.stage===4||this.stage===8)?overlap(p,{x:196*16,y:160,w:16,h:32}):this.stage===6?p.x>=196*16&&p.y+p.h>=176:this.stage===2?p.x>=196*16:this.room==='overworld'&&p.x>=198*16)&&this.phase==='playing'){this.sound((this.stage===4||this.stage===8)?'bridge':(this.stage===2||this.stage===6)?'pipe':'flag');this.phase='won';const digit=this.time%10;this.fireworksTotal=![2,4,6,8].includes(this.stage)&&[1,3,6].includes(digit)?digit:0;this.fireworksFired=0;this.fireworks=[];this.bossFlames=[];this.hammers=[];this.presentation=0;this.flagStartY=p.y;this.score+=Math.max(100,5000-Math.floor(p.y)*20);this.input={};}
+    if(((this.stage===4||this.stage===8)?overlap(p,{x:196*16,y:160,w:16,h:32}):this.stage===6?p.x>=196*16&&p.y+p.h>=176:this.stage===2?p.x>=196*16:this.room==='overworld'&&p.x>=198*16)&&this.phase==='playing'){this.sound((this.stage===4||this.stage===8)?'bridge':(this.stage===2||this.stage===6)?'pipe':'flag');this.phase='won';const digit=this.time%10;this.fireworksTotal=![2,4,6,8].includes(this.stage)&&[1,3,6].includes(digit)?digit:0;this.fireworksFired=0;this.fireworks=[];this.enemies=this.enemies.filter(e=>!['lakitu','spiny','spiny-egg'].includes(e.kind));this.bossFlames=[];this.hammers=[];this.presentation=0;this.flagStartY=p.y;this.score+=Math.max(100,5000-Math.floor(p.y)*20);this.input={};}
   }
   telemetry(previous=0){const p=this.p,tiles=[];for(let row=0;row<13;row++)for(let col=-2;col<=6;col++)tiles.push(this.solid(Math.floor(p.x/16)+col,row+2)?84:0);
     return{player:{x:p.x,y:p.y+p.h-16,vx:p.vx,vy:p.vy,grounded:p.grounded},tiles,enemies:[...(this.boss&&!this.boss.dead?[this.boss]:[]),...this.bossFlames,...this.hammers,...this.enemies].filter(e=>!e.dead&&Math.abs(e.x-p.x)<256).slice(0,5).map(e=>({dx:e.x-p.x,y:e.y,type:e.kind==='goomba'?6:0})),world:courseInfo(this.stage).world,stage:courseInfo(this.stage).stage,previous_response_ms:Math.min(10000,previous)};}
@@ -370,7 +370,7 @@ function drawCoin(ctx,x,y,frame){
 export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===6,underground=g.room==='underground'||g.stage===2||g.stage===4||g.stage===8;ctx.imageSmoothingEnabled=false;ctx.fillStyle=water?'#2048a0':underground?'#101020':g.stage>=9?'#081028':'#6888fc';ctx.fillRect(0,0,256,240);
   if(!underground&&!water){
     for(let start=0;start<g.width;start+=768){
-      for(const [x,y,count]of[[128,32,1],[304,24,3],[528,40,1]])pixelCloud(ctx,x+start-cam,y,count);
+      for(const [x,y,count]of[[128,32,1],[304,24,3],[528,40,1]])pixelCloud(ctx,x+start-cam,Math.max(40,y),count);
       for(const [x,h]of([3,7,11].includes(g.stage)?[]:[[0,32],[256,16],[576,32]]))pixelHill(ctx,x+start-cam,208,h);
       for(const [x,count]of([3,7,11].includes(g.stage)?[]:[[184,1],[368,3],[664,2]]))pixelCloud(ctx,x+start-cam,194,count,true);
     }

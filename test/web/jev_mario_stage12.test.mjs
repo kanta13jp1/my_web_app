@@ -160,7 +160,7 @@ test('3-2 simulator isolates projectiles and cannon timers',async()=>{
 test('3-3 treetops have reachable platforms, finite enemies and a final flag',()=>{
  const g=new World11(11);assert.deepEqual(courseInfo(11),{world:3,stage:3,label:'3-3'});assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);assert.equal(g.tile(32,10),'platform');assert.ok(g.enemies.every(e=>Number.isFinite(e.y)));assert.equal(g.enemies.filter(e=>e.kind==='lakitu').length,1);
  g.p.x=33*16;g.p.y=100;g.p.vy=3;g.enemies=[];for(let i=0;i<20;i++)g.step();assert.equal(g.p.y+g.p.h,160);
- g.p.x=198*16;g.p.y=160;g.p.vx=0;g.p.vy=0;g.step();assert.equal(g.phase,'won');for(let i=0;i<g.presentationLength();i++)g.presentationStep();assert.equal(g.advanceStage(),false);assert.equal(g.peachRescued,true);
+ g.enemies.push({x:g.p.x+40,y:40,w:16,h:16,kind:'lakitu',dead:0,active:true,age:0,vx:0,vy:0});g.p.x=198*16;g.p.y=160;g.p.vx=0;g.p.vy=0;g.step();assert.equal(g.phase,'won');assert.ok(!g.enemies.some(e=>e.kind==='lakitu'));for(let i=0;i<g.presentationLength();i++)g.presentationStep();assert.equal(g.advanceStage(),false);assert.equal(g.peachRescued,true);
 });
 
 test('Lakitu follows, drops bounded eggs which become walking Spinies, and expires hazards',()=>{
