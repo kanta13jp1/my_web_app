@@ -7354,8 +7354,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _buildRlhfCard(providerId, m),
           const SizedBox(height: 12),
           if (rows != null && rows.isNotEmpty)
-            ...rows.map((row) =>
-                _buildContentCard(row, isDark, surface, viewport.maxHeight))
+            ...rows.map(
+              (row) =>
+                  _buildContentCard(row, isDark, surface, viewport.maxHeight),
+            )
           else
             _buildFallbackCard(providerId, surface),
           const SizedBox(height: 16),

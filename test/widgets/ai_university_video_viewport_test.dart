@@ -14,30 +14,44 @@ void main() {
       await tester.binding.setSurfaceSize(size);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       var opened = false;
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: Column(children: [
-            SizedBox(height: size.height * 0.5),
-            Expanded(child: LayoutBuilder(builder: (context, viewport) {
-              return ListView(padding: const EdgeInsets.all(16), children: [
-                AiUniversityYoutubeEmbed(
-                  videoId: 'zBLlOoS6Mp0',
-                  title: 'Lesson',
-                  maxPlayerHeight: (viewport.maxHeight - 96).clamp(0.0, 720.0),
-                  onOpen: () => opened = true,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                SizedBox(height: size.height * 0.5),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, viewport) {
+                      return ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          AiUniversityYoutubeEmbed(
+                            videoId: 'zBLlOoS6Mp0',
+                            title: 'Lesson',
+                            maxPlayerHeight:
+                                (viewport.maxHeight - 96).clamp(0.0, 720.0),
+                            onOpen: () => opened = true,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ]);
-            })),
-          ]),
+              ],
+            ),
+          ),
         ),
-      ));
+      );
       final picture = tester.getRect(find.byType(AspectRatio));
       expect(picture.width / picture.height, closeTo(16 / 9, 0.001));
       expect(picture.left, greaterThanOrEqualTo(16));
       expect(picture.right, lessThanOrEqualTo(size.width - 16));
       expect(picture.bottom, lessThanOrEqualTo(size.height - 64));
-      expect(tester.getRect(find.byType(TextButton)).bottom,
-          lessThanOrEqualTo(size.height));
+      expect(
+        tester.getRect(find.byType(TextButton)).bottom,
+        lessThanOrEqualTo(size.height),
+      );
       await tester.tap(find.text('YouTubeで開く'));
       expect(opened, isTrue);
       expect(tester.takeException(), isNull);
