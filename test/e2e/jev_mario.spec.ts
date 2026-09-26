@@ -489,10 +489,22 @@ test('2-4 boss scene, axe rescue, final result and reset',async({page},info)=>{
 
 test('3-1 night scene, Peach bonus ending, export and reset',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
- await lab.locator('#stage').selectOption('9');await expect(lab.locator('#mode-note')).toContainText('原作と異なる追加演出');await expect(lab.locator('#restart-local')).toHaveText('3-1を最初から');await lab.locator('#watch-manual').click();await expect(lab.locator('#audio-status')).toContainText('音声ON');
+ await lab.locator('#stage').selectOption('9');await expect(lab.locator('#mode-note')).toContainText('原作と異なるアレンジ');await expect(lab.locator('#restart-local')).toHaveText('3-1を最初から');await lab.locator('#watch-manual').click();await expect(lab.locator('#audio-status')).toContainText('音声ON');
  await lab.locator('#presentation').screenshot({path:info.outputPath('world31-night.png')});
  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
- await expect(lab.locator('#status')).toContainText('3-1クリア！ 全ステージ終了');await page.waitForTimeout(3200);await expect(lab.locator('#stage')).toHaveValue('9');await lab.locator('#presentation').screenshot({path:info.outputPath('world31-peach.png')});
+ await expect(lab.locator('#status')).toContainText('3-1クリア！ 次のステージへ進みます');await page.waitForTimeout(2500);await lab.locator('#presentation').screenshot({path:info.outputPath('world31-peach.png')});await expect(lab.locator('#stage')).toHaveValue('10',{timeout:7000});
  const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:3,stage:1,course_id:9,phase:'won'});
- await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('3-1をリセット');
+ await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('3-2をリセット');
+});
+
+
+test('3-2 projectile scene, final Peach ending and reset',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('10');await expect(lab.locator('#restart-local')).toHaveText('3-2を最初から');await expect(lab.locator('#mode-note')).toContainText('原作と異なるアレンジ');await lab.locator('#watch-manual').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=736;this.p.y=192;this.camera=640;original.call(this);};});
+ await page.waitForTimeout(150);await lab.locator('#presentation').screenshot({path:info.outputPath('world32-enemies.png')});
+ await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('3-2をリセット');await lab.locator('#watch-manual').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('3-2クリア！ 全ステージ終了');await page.waitForTimeout(3200);await expect(lab.locator('#stage')).toHaveValue('10');await lab.locator('#presentation').screenshot({path:info.outputPath('world32-peach.png')});
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:3,stage:2,course_id:10,phase:'won'});
 });
