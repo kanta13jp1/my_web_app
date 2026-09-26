@@ -24,7 +24,7 @@ test('campaign advances only after clear presentation and preserves earned state
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,3);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,4);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,5);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,8);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,9);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
+ g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,8);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,9);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,10);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
 });
 test('sky course has elevated platforms, gaps, collectibles and a distinct finish',()=>{
  const g=new World11(3);assert.equal(g.telemetry().stage,3);assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);
@@ -117,9 +117,41 @@ test('3-1 night course uses world 3 numbering, distinct terrain and enemies',()=
 });
 
 test('3-1 flag ending reveals Peach only after clear and resets cleanly',()=>{
- const g=new World11(9);assert.equal(g.peachRescued,false);g.p.x=198*16;g.p.y=160;g.step();assert.equal(g.phase,'won');for(let i=0;i<139;i++)g.presentationStep();assert.equal(g.peachRescued,false);g.presentationStep();assert.equal(g.peachRescued,true);for(let i=140;i<180;i++)g.presentationStep();assert.equal(g.advanceStage(),false);assert.equal(g.p.grounded,true);assert.equal(g.snapshot().peach_rescued,true);g.reset();assert.equal(g.stage,9);assert.equal(g.peachRescued,false);assert.equal(g.phase,'playing');assert.equal(g.p.x,32);
+ const g=new World11(9);assert.equal(g.peachRescued,false);g.p.x=198*16;g.p.y=160;g.step();assert.equal(g.phase,'won');for(let i=0;i<139;i++)g.presentationStep();assert.equal(g.peachRescued,false);g.presentationStep();assert.equal(g.peachRescued,true);for(let i=140;i<180;i++)g.presentationStep();assert.equal(g.p.grounded,true);assert.equal(g.snapshot().peach_rescued,true);assert.equal(g.advanceStage(),true);assert.equal(g.stage,10);g.stage=9;g.reset();assert.equal(g.stage,9);assert.equal(g.peachRescued,false);assert.equal(g.phase,'playing');assert.equal(g.p.x,32);
 });
 
 test('night course prediction preserves live state',async()=>{
  const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(9),before=JSON.stringify(g.snapshot());const future=advance(clone(g),'right',8);assert.equal(future.stage,9);assert.ok(future.p.x>g.p.x);assert.equal(JSON.stringify(g.snapshot()),before);
+});
+
+
+test('3-2 map, observations, clear, and reset retain correct campaign IDs',()=>{
+ const g=new World11(10);assert.deepEqual(courseInfo(10),{world:3,stage:2,label:'3-2'});assert.equal(g.telemetry().stage,2);assert.equal(g.tile(59,13),undefined);assert.equal(g.tile(40,11),'cannon');assert.equal(g.cannons.length,4);assert.equal(g.enemies.filter(e=>e.kind==='hammer-bro').length,3);g.hitBlock(40,11);assert.equal(g.tile(40,11),'cannon');
+ g.p.x=198*16;g.p.y=160;g.step();assert.equal(g.phase,'won');for(let i=0;i<180;i++)g.presentationStep();assert.equal(g.peachRescued,true);assert.equal(g.advanceStage(),false);g.reset();assert.equal(g.phase,'playing');assert.equal(g.peachRescued,false);assert.equal(g.cannons[0].timer,0);assert.deepEqual(g.hammers,[]);g.stage=1;g.reset();assert.deepEqual(g.cannons,[]);
+});
+
+test('cannons launch toward player, respect proximity and retire off-screen bullets',()=>{
+ const g=new World11(10);g.enemies=[];g.p.x=500;g.camera=404;g.step();const bullet=g.enemies.find(e=>e.kind==='bullet');assert.ok(bullet);assert.ok(bullet.vx<0);const y=bullet.y,x=bullet.x;g.step();assert.equal(bullet.y,y);assert.ok(bullet.x<x);
+ bullet.x=g.camera-60;g.step();assert.ok(!g.enemies.includes(bullet));
+ for(const [offset,vx]of [[279,2.2],[-31,-2.2]]){const edge={...bullet,x:g.camera+offset,vx,dead:0};g.enemies.push(edge);g.step();g.step();assert.ok(!g.enemies.includes(edge),'offscreen bullet must not freeze and consume spawn quota');}
+ const near=new World11(10);near.enemies=[];near.p.x=640;near.p.y=150;near.camera=544;near.step();assert.equal(near.enemies.length,0);
+ const right=new World11(10);right.enemies=[];right.p.x=710;right.camera=614;right.step();assert.ok(right.enemies.find(e=>e.kind==='bullet').vx>0);
+});
+
+test('Bullet Bill can be stomped or star-defeated but ignores fireballs',()=>{
+ const fixture=()=>{const g=new World11(10);g.cannons=[];g.enemies=[{x:40,y:192,w:16,h:14,vx:0,vy:0,kind:'bullet',dead:0}];return g;};
+ const hit=fixture();hit.step();assert.equal(hit.phase,'dead');
+ const stomp=fixture();stomp.p.y=175;stomp.p.vy=2;stomp.step();assert.equal(stomp.enemies[0].dead,1);assert.equal(stomp.phase,'playing');assert.ok(stomp.p.vy<0);
+ const fire=fixture();fire.p.x=0;fire.shots=[{x:40,y:194,w:4,h:4,vx:1,vy:0}];fire.step();assert.equal(fire.enemies[0].dead,0);
+ const star=fixture();star.star=30;star.step();assert.equal(star.enemies[0].dead,1);assert.equal(star.phase,'playing');
+});
+
+test('Hammer Bro throws ballistic hazards, jumps and respects invincibility',()=>{
+ const g=new World11(10);g.cannons=[];const bro={x:200,y:184,w:14,h:24,vx:.35,vy:0,kind:'hammer-bro',anchor:200,age:0,dead:0};g.enemies=[bro];g.step();assert.equal(g.hammers.length,1);const h=g.hammers[0],vy=h.vy;g.step();assert.ok(h.vy>vy);assert.ok(h.x<200);bro.age=159;bro.grounded=true;g.step();assert.ok(bro.vy<0);
+ const hit=new World11(10);hit.cannons=[];hit.enemies=[];hit.hammers=[{x:32,y:192,w:8,h:8,vx:0,vy:0,spin:0}];hit.step();assert.equal(hit.phase,'dead');
+ const shield=new World11(10);shield.cannons=[];shield.enemies=[];shield.invincible=20;shield.hammers=[{x:32,y:192,w:8,h:8,vx:0,vy:0,spin:0}];shield.step();assert.equal(shield.phase,'playing');assert.ok(shield.telemetry().enemies.length);shield.hammers[0].y=261;shield.step();assert.equal(shield.hammers.length,0);
+});
+
+test('3-2 simulator isolates projectiles and cannon timers',async()=>{
+ const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(10);g.p.x=500;g.camera=404;const before=JSON.stringify(g.snapshot());const future=advance(clone(g),'noop',8);assert.ok(future.cannons[0].timer>0);assert.equal(JSON.stringify(g.snapshot()),before);
 });
