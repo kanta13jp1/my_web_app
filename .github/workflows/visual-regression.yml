@@ -129,6 +129,14 @@ jobs:
           npx playwright test test/e2e/blur_studio.spec.ts \
             --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
+      - name: Verify shared JSON download consumers
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lab-json-download-results.json
+        run: |
+          npx playwright test test/e2e/lab_json_download.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Stop short-lived SPA server
         if: always()
         shell: bash
