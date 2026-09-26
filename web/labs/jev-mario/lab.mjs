@@ -1,3 +1,4 @@
+import { downloadJson } from '../shared/download-json.mjs?v=student-1';
 import {drawPresentation} from './presentation.mjs?v=student-1';
 import { StudentSession } from './student-session.mjs?v=student-1';
 import { ReactionAssist, hazards, prediction } from './reaction.mjs?v=student-1';
@@ -18,7 +19,7 @@ const isGame = () => isRom() || isRecreation();
 const world = new World11();
 const audio = new GameAudio();
 const stageName=()=>courseInfo(world.stage).label;
-$('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。手動プレイはAPI不要です。';};
+$('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。'+(world.stage===9?'ピーチの登場は原作と異なる追加演出です。':'')+'手動プレイはAPI不要です。';};
 const student = new StudentSession();
 const presentation=$('presentation'),presentationContext=presentation.getContext('2d');
 let decision={},effectiveAction='noop',watchMode=false,transition=null;
@@ -186,8 +187,7 @@ $('consent').onchange = () => { if (!$('consent').checked) stop('送信同意を
 $('export').onclick = () => {
   const data = { ...metadata, samples, local_interventions:interventions, student:metadata.controller==='lightgbm_plus_search'?student.stats:undefined, counts: { attempts: samples.length, failures: samples.filter(s => !s.ok&&!s.cancelled).length, cancelled: samples.filter(s=>s.cancelled).length, applied: samples.filter(s=>s.applied).length, stale: samples.filter(s=>s.stale).length },
     browser_rtt: summarize(samples.filter(s => s.ok).map(s => s.rtt_ms)) };
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-  const a = document.createElement('a'); a.href = url; a.download = 'jev-mario-measurement.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  downloadJson(data, 'jev-mario-measurement.json');
 };
 const keys = { ArrowRight: 7, ArrowLeft: 6, KeyX: 0, Space: 0, KeyZ: 1, Enter: 3, ArrowDown: 5 };
 const inputNames = {7:'right',6:'left',0:'jump',1:'run',5:'down'};
