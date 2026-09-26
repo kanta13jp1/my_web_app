@@ -1,4 +1,4 @@
-import { downloadJson } from '../shared/download-json.mjs';
+import { downloadJson } from '../shared/download-json.mjs?v=student-1';
 import {drawPresentation} from './presentation.mjs?v=student-1';
 import { StudentSession } from './student-session.mjs?v=student-1';
 import { ReactionAssist, hazards, prediction } from './reaction.mjs?v=student-1';
