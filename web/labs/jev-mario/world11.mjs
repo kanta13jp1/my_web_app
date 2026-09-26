@@ -1,8 +1,8 @@
 import {pixelText,pixelCloud,pixelHill,pixelTile,pixelPipe} from './pixel-art.mjs?v=student-1';
 // Independently authored 1-1 reconstruction. No ROM, sprite sheet or game code is loaded.
 export const TILE = 16;
-// Internal course IDs retain compatibility with saved simulations (1..12).
-export const LAST_COURSE=12;
+// Internal course IDs retain compatibility with saved simulations (1..13).
+export const LAST_COURSE=13;
 export const isCastle=stage=>[4,8,12].includes(stage);
 export function courseInfo(id=1){const world=Math.floor((id-1)/4)+1,stage=(id-1)%4+1;return {world,stage,label:`${world}-${stage}`};}
 export function level() {
@@ -69,7 +69,8 @@ export function castleLevel(second=false,third=false){
  cells.set('12,9','question');contents.set('12,9','mushroom');
  for(const x of [36,66,99,133,164])contents.set(`${x},11`,'loose');
  const fireBars=(third?[22,48,82,113,146,173]:second?[26,54,86,120,154,174]:[24,50,80,115,148,172]).map((x,i)=>({x:x*16+8,y:168,length:third?(i%2?5:4):4,offset:i*Math.PI/3,direction:i%2?-1:1}));
- return {cells,contents,width:212*16,lava,fireBars};
+ const lavaBubbles=lava.slice(0,-1).map(([a,b],i)=>({x:(a+b+1)*8-6,y:232,w:12,h:16,vy:0,timer:30+i*19,active:false}));
+ return {cells,contents,width:212*16,lava,fireBars,lavaBubbles};
 }
 // Independent second-world ground course; distinct from the 1-1 layout.
 export function world21Level(){
@@ -138,16 +139,26 @@ export function world33Level(){
  set(12,9,'question');contents.set('12,9','mushroom');set(198,12,'stone');
  return {cells,contents,width:212*16};
 }
+// Independent daytime course with open ground for Lakitu and Spiny encounters.
+export function world41Level(){
+ const cells=new Map(),contents=new Map(),set=(x,y,t='brick',item)=>{cells.set(`${x},${y}`,t);if(item)contents.set(`${x},${y}`,item);};
+ for(let x=0;x<212;x++)if(![[63,64],[118,120]].some(([a,b])=>x>=a&&x<=b))for(let y=13;y<15;y++)set(x,y,'ground');
+ for(const [x,h]of [[28,2],[47,3],[83,2],[109,3],[144,2],[171,2]])for(let c=0;c<2;c++)for(let y=13-h;y<13;y++)set(x+c,y,y===13-h?'pipe-top':'pipe');
+ for(const start of [12,37,70,96,128,154]){for(let x=start;x<start+4;x++)set(x,9,x===start+1?'question':'brick',x===start+1?(start===12||start===96?'mushroom':'coin'):null);for(let x=start;x<start+4;x++)contents.set(`${x},6`,'loose');}
+ set(134,5,'question','star');set(55,8,'hidden','life');
+ for(let k=0;k<8;k++)for(let y=12-k;y<13;y++)set(181+k,y,'stone');for(let y=5;y<13;y++)set(189,y,'stone');set(198,12,'stone');
+ return {cells,contents,width:212*16};
+}
 export class World11 {
-  constructor(stage=1){this.stage=[1,2,3,4,5,6,7,8,9,10,11,12].includes(stage)?stage:1;this.reset();}
-  reset(){this.sounds=[];this.lava=[];this.fireBars=[];this.cannons=[];this.hammers=[];this.fireworks=[];this.fireworksTotal=0;this.fireworksFired=0;Object.assign(this,this.stage===12?castleLevel(false,true):this.stage===11?world33Level():this.stage===10?world32Level():this.stage===9?nightLevel():this.stage===8?castleLevel(true):this.stage===7?bridgeLevel():this.stage===6?waterLevel():this.stage===5?world21Level():this.stage===4?castleLevel():this.stage===3?skyLevel():this.stage===2?undergroundLevel():level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.presentation=0;this.flagStartY=0;this.wasSkidding=false;this.hurry=false;this.room=this.stage===6?'underwater':isCastle(this.stage)?'castle':this.stage===2?'stage-underground':'overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;this.boss=isCastle(this.stage)?{x:189*16,y:160,w:28,h:32,vx:-.45,vy:0,grounded:true,hp:5,dead:false,active:0}:null;this.bossFlames=[];this.rescued=false;this.peachRescued=false;
-    this.enemies=(this.stage===11?[36,51,64,77,90,103,117,130,144,158,170]:this.stage===10?[18,20,31,34,51,66,78,97,109,122,139,163,167]:this.stage===9?[19,31,43,57,66,79,91,106,116,140,153,168]:this.stage===5?[17,33,37,67,71,91,105,113,139,152,170]:isCastle(this.stage)?[]:this.stage===3?[37,61,85,109,133,157,180]:this.stage===2?[22,38,53,64,82,96,107,126,140,158,172]:[22,40,51,53,80,82,97,98,107,114,116,124,126,128,130,174,176]).map((x,i)=>({x:x*16,y:(this.stage===3||this.stage===11)?(Math.min(...[...this.cells.keys()].filter(k=>k.startsWith(x+',')).map(k=>Number(k.split(',')[1])))*16-16):this.stage!==2&&(x===80||x===82)?64:192,w:14,h:16,vx:-.5,vy:0,kind:(this.stage===11?(i%2===0):this.stage===10?(i%2===0):this.stage===9?(i%3===1):this.stage===5?(i===3||i===7):i===8)?'koopa':'goomba',dead:0}));
+  constructor(stage=1){this.stage=[1,2,3,4,5,6,7,8,9,10,11,12,13].includes(stage)?stage:1;this.reset();}
+  reset(){this.sounds=[];this.lava=[];this.lavaBubbles=[];this.fireBars=[];this.cannons=[];this.hammers=[];this.fireworks=[];this.fireworksTotal=0;this.fireworksFired=0;Object.assign(this,this.stage===13?world41Level():this.stage===12?castleLevel(false,true):this.stage===11?world33Level():this.stage===10?world32Level():this.stage===9?nightLevel():this.stage===8?castleLevel(true):this.stage===7?bridgeLevel():this.stage===6?waterLevel():this.stage===5?world21Level():this.stage===4?castleLevel():this.stage===3?skyLevel():this.stage===2?undergroundLevel():level());this.p={x:32,y:192,w:12,h:16,vx:0,vy:0,grounded:true};this.camera=0;this.time=400;this.frames=0;this.score=0;this.coins=0;this.lives=3;this.power=0;this.invincible=0;this.star=0;this.phase='playing';this.presentation=0;this.flagStartY=0;this.wasSkidding=false;this.hurry=false;this.room=this.stage===6?'underwater':isCastle(this.stage)?'castle':this.stage===2?'stage-underground':'overworld';this.input={};this.wasJump=false;this.wasFire=false;this.items=[];this.shots=[];this.effects=[];this.deaths=0;this.multi=0;this.saved=null;this.boss=isCastle(this.stage)?{x:189*16,y:160,w:28,h:32,vx:-.45,vy:0,grounded:true,hp:5,dead:false,active:0}:null;this.bossFlames=[];this.rescued=false;this.peachRescued=false;
+    this.enemies=(this.stage===13?[]:this.stage===11?[36,51,64,77,90,103,117,130,144,158,170]:this.stage===10?[18,20,31,34,51,66,78,97,109,122,139,163,167]:this.stage===9?[19,31,43,57,66,79,91,106,116,140,153,168]:this.stage===5?[17,33,37,67,71,91,105,113,139,152,170]:isCastle(this.stage)?[]:this.stage===3?[37,61,85,109,133,157,180]:this.stage===2?[22,38,53,64,82,96,107,126,140,158,172]:[22,40,51,53,80,82,97,98,107,114,116,124,126,128,130,174,176]).map((x,i)=>({x:x*16,y:(this.stage===3||this.stage===11)?(Math.min(...[...this.cells.keys()].filter(k=>k.startsWith(x+',')).map(k=>Number(k.split(',')[1])))*16-16):this.stage!==2&&(x===80||x===82)?64:192,w:14,h:16,vx:-.5,vy:0,kind:(this.stage===11?(i%2===0):this.stage===10?(i%2===0):this.stage===9?(i%3===1):this.stage===5?(i===3||i===7):i===8)?'koopa':'goomba',dead:0}));
     if(this.stage===2)for(const i of [0,3,6])Object.assign(this.enemies[i],{kind:'beetle',armored:true});
-    if([2,5,9,10].includes(this.stage))for(const [key,t]of this.cells){
+    if([2,5,9,10,13].includes(this.stage))for(const [key,t]of this.cells){
       const [col,row]=key.split(',').map(Number);if(t!=='pipe-top'||this.tile(col-1,row)==='pipe-top')continue;
       this.enemies.push({x:col*16+8,y:row*16,w:16,h:0,vx:0,vy:0,kind:'piranha',dead:0,pipeY:row*16,age:0,hidden:true});
     }
-    if(this.stage===11)this.enemies.push({x:42*16,y:40,w:16,h:16,vx:0,vy:0,kind:'lakitu',dead:0,age:0,active:false});
+    if([11,13].includes(this.stage))this.enemies.push({x:42*16,y:40,w:16,h:16,vx:0,vy:0,kind:'lakitu',dead:0,age:0,active:false});
     if(this.stage===10)for(const x of [52,99,164])this.enemies.push({x:x*16,y:184,w:14,h:24,vx:.35,vy:0,kind:'hammer-bro',dead:0,anchor:x*16,age:0});
     if(this.stage===6){this.p.y=128;this.p.grounded=false;this.enemies=[32,54,70,94,120,145,168,184].map((x,i)=>({x:x*16,y:80+(i%3)*32,baseY:80+(i%3)*32,w:14,h:14,vx:i%2?.65:-.65,vy:0,kind:i%3?'fish':'squid',dead:0,offset:i*30}));}
     if(this.stage===7)this.enemies=[30,39,55,67,78,92,106,114,131,143,153,167,177].map((x,i)=>({x:x*16,y:260,w:14,h:14,vx:i%2?-.8:.9,vy:-7,kind:'leaping-fish',dead:0,launched:false}));}
@@ -212,7 +223,7 @@ export class World11 {
       else if(this.presentation<60)this.p.y=Math.min(192,this.flagStartY+this.presentation*2.7);
       else{this.p.y=208-this.p.h;this.p.grounded=true;this.p.vx=0;this.p.vy=0;this.p.x=Math.min(202*16+32,this.p.x+1.2);this.p.facing=1;this.p.stride=(this.p.stride??0)+1.2;}
       if(isCastle(this.stage)){if(this.boss&&this.presentation>32){this.boss.dead=true;this.boss.y+=3;}if(this.presentation===90){this.rescued=true;this.sound('life');}}
-      if(this.stage>=9&&!isCastle(this.stage)&&this.presentation===140){this.peachRescued=true;this.sound('life');}
+      if([9,10,11].includes(this.stage)&&this.presentation===140){this.peachRescued=true;this.sound('life');}
       if(this.fireworksFired<this.fireworksTotal&&this.presentation===140+this.fireworksFired*18){
         const i=this.fireworksFired++;this.fireworks.push({x:202*16+[8,56,24,72,0,44][i],y:[56,80,44,60,84,48][i],age:0});this.score+=500;this.sound('firework');
       }
@@ -222,12 +233,22 @@ export class World11 {
   }
   snapshot(){
     return {course_id:this.stage,...courseInfo(this.stage),frame:this.frames,phase:this.phase,room:this.room,time:this.time,lives:this.lives,deaths:this.deaths,fireworks_total:this.fireworksTotal,fireworks_fired:this.fireworksFired,
-      boss:this.boss?{...this.boss}:null,boss_flames:this.bossFlames.map(f=>({...f})),rescued:this.rescued,peach_rescued:this.peachRescued,hammers:this.hammers.map(h=>({...h})),cannons:this.cannons.map(c=>({...c})),
+      lava_bubbles:this.lavaBubbles.map(f=>({...f})),boss:this.boss?{...this.boss}:null,boss_flames:this.bossFlames.map(f=>({...f})),rescued:this.rescued,peach_rescued:this.peachRescued,hammers:this.hammers.map(h=>({...h})),cannons:this.cannons.map(c=>({...c})),
       player:{...this.p},input:{...this.input},jump_was_pressed:this.wasJump,
       enemies:this.enemies.filter(e=>!e.dead&&!e.hidden&&Math.abs(e.x-this.p.x)<256).slice(0,5).map(e=>({x:e.x,y:e.y,w:e.w,h:e.h,vx:e.vx,vy:e.vy,kind:e.kind,edge_gap:e.x-(this.p.x+this.p.w)}))};
   }
   fireHazards(){
     return this.fireBars.flatMap(bar=>Array.from({length:bar.length},(_,i)=>{const angle=bar.offset+this.frames*.025*bar.direction,r=(i+1)*8;return {x:bar.x+Math.cos(angle)*r-4,y:bar.y+Math.sin(angle)*r-4,w:8,h:8};}));
+  }
+  lavaBubbleStep(){
+    if(this.phase!=='playing')return;
+    for(const f of this.lavaBubbles){
+      if(f.x<this.camera-24||f.x>this.camera+280)continue;
+      if(!f.active){if(--f.timer>0)continue;f.active=true;f.y=232;f.vy=-6.6;this.sound('fire');}
+      f.y+=f.vy;f.vy+=.18;
+      if(f.y>=232&&f.vy>0){f.y=232;f.vy=0;f.active=false;f.timer=90;continue;}
+      if(f.y<220&&overlap(this.p,f))this.hurt();
+    }
   }
   projectileStep(){
     if(this.phase!=='playing')return;
@@ -241,7 +262,7 @@ export class World11 {
     this.hammers=this.hammers.filter(h=>h.y<260&&h.x>this.camera-48&&h.x<this.camera+304);
   }
   lakituStep(){
-    if(this.stage!==11||this.phase!=='playing')return;
+    if(![11,13].includes(this.stage)||this.phase!=='playing')return;
     this.enemies=this.enemies.filter(e=>!['spiny','spiny-egg'].includes(e.kind)||(!e.dead&&e.y<260&&e.x>=this.camera-32&&e.x<=this.camera+280));
     for(const e of this.enemies.filter(e=>e.kind==='lakitu'&&!e.dead)){
       if(!e.active){if(this.p.x<24*16)continue;e.active=true;e.x=this.p.x+72;}
@@ -314,7 +335,7 @@ export class World11 {
       if(p.y+p.h>=220&&this.lava.some(([a,b])=>p.x+p.w>a*16&&p.x<(b+1)*16))this.die();
       if(this.fireHazards().some(f=>overlap(p,f)))this.hurt();
     }
-    this.projectileStep();this.lakituStep();this.bossStep();
+    this.lavaBubbleStep();this.projectileStep();this.lakituStep();this.bossStep();
     for(const e of this.enemies){if(e.dead||e.x>this.camera+280||e.x<this.camera-32)continue;
       if(e.kind==='hammer-bro'){e.age++;if(e.x<e.anchor-18)e.vx=.35;if(e.x>e.anchor+18)e.vx=-.35;if(e.age%160===0&&e.grounded)e.vy=-5;if(e.age%75===1&&this.hammers.length<12){this.hammers.push({x:e.x,y:e.y-4,w:8,h:8,vx:(p.x<e.x?-1:1)*1.3,vy:-4.2,spin:0});this.sound('fire');}}
       if(e.kind==='piranha'){this.plantStep(e);if(e.hidden)continue;}
@@ -335,10 +356,10 @@ export class World11 {
     for(const shot of this.shots){shot.vy+=.35;this.move(shot);if(shot.grounded)shot.vy=-2.8;if(!shot.vx){shot.dead=true;this.sound('impact');this.effects.push({kind:'burst',x:shot.x,y:shot.y,life:10});}if(shot.x<this.camera||shot.x>this.camera+256)shot.dead=true;if(!shot.dead)for(const e of this.enemies)if(!e.dead&&!e.hidden&&e.kind!=='bullet'&&overlap(shot,e)){if(!e.armored)this.defeat(e);shot.dead=true;this.effects.push({kind:'burst',x:shot.x,y:shot.y,life:10});break;}}
     this.shots=this.shots.filter(s=>!s.dead);
     for(const fx of this.effects){fx.life--;if(fx.kind==='coin')fx.y-=1;if(fx.kind==='score')fx.y-=.35;if(fx.kind==='debris'){fx.x+=fx.vx;fx.y+=fx.vy;fx.vy+=.25;}}this.effects=this.effects.filter(f=>f.life>0);
-    if((isCastle(this.stage)?overlap(p,{x:196*16,y:160,w:16,h:32}):this.stage===6?p.x>=196*16&&p.y+p.h>=176:this.stage===2?p.x>=196*16:this.room==='overworld'&&p.x>=198*16)&&this.phase==='playing'){this.sound(isCastle(this.stage)?'bridge':(this.stage===2||this.stage===6)?'pipe':'flag');this.phase='won';const digit=this.time%10;this.fireworksTotal=![2,4,6,8,12].includes(this.stage)&&[1,3,6].includes(digit)?digit:0;this.fireworksFired=0;this.fireworks=[];this.enemies=this.enemies.filter(e=>!['lakitu','spiny','spiny-egg'].includes(e.kind));this.bossFlames=[];this.hammers=[];this.presentation=0;this.flagStartY=p.y;this.score+=Math.max(100,5000-Math.floor(p.y)*20);this.input={};}
+    if((isCastle(this.stage)?overlap(p,{x:196*16,y:160,w:16,h:32}):this.stage===6?p.x>=196*16&&p.y+p.h>=176:this.stage===2?p.x>=196*16:this.room==='overworld'&&p.x>=198*16)&&this.phase==='playing'){this.sound(isCastle(this.stage)?'bridge':(this.stage===2||this.stage===6)?'pipe':'flag');this.phase='won';const digit=this.time%10;this.fireworksTotal=![2,4,6,8,12].includes(this.stage)&&[1,3,6].includes(digit)?digit:0;this.fireworksFired=0;this.fireworks=[];this.enemies=this.enemies.filter(e=>!['lakitu','spiny','spiny-egg'].includes(e.kind));this.bossFlames=[];for(const f of this.lavaBubbles){f.active=false;f.y=232;}this.hammers=[];this.presentation=0;this.flagStartY=p.y;this.score+=Math.max(100,5000-Math.floor(p.y)*20);this.input={};}
   }
   telemetry(previous=0){const p=this.p,tiles=[];for(let row=0;row<13;row++)for(let col=-2;col<=6;col++)tiles.push(this.solid(Math.floor(p.x/16)+col,row+2)?84:0);
-    return{player:{x:p.x,y:p.y+p.h-16,vx:p.vx,vy:p.vy,grounded:p.grounded},tiles,enemies:[...(this.boss&&!this.boss.dead?[this.boss]:[]),...this.bossFlames,...this.hammers,...this.enemies].filter(e=>!e.dead&&!e.hidden&&Math.abs(e.x-p.x)<256).slice(0,5).map(e=>({dx:e.x-p.x,y:e.y,type:e.kind==='goomba'?6:0})),world:courseInfo(this.stage).world,stage:courseInfo(this.stage).stage,previous_response_ms:Math.min(10000,previous)};}
+    return{player:{x:p.x,y:p.y+p.h-16,vx:p.vx,vy:p.vy,grounded:p.grounded},tiles,enemies:[...(this.boss&&!this.boss.dead?[this.boss]:[]),...this.bossFlames,...this.lavaBubbles.filter(f=>f.active&&f.y<220),...this.hammers,...this.enemies].filter(e=>!e.dead&&!e.hidden&&Math.abs(e.x-p.x)<256).slice(0,5).map(e=>({dx:e.x-p.x,y:e.y,type:e.kind==='goomba'?6:0})),world:courseInfo(this.stage).world,stage:courseInfo(this.stage).stage,previous_response_ms:Math.min(10000,previous)};}
 }
 const playerPixels=['....RRRRR...','...RRRRRRRR.','...HHHSSBS..','..HSHSSSBSSS','..HSHHSSSBSS','..HHSSSSBBB.','....SSSSSS..','...RBRRRB...','..RRBRRRBRR.','.RRRBBBBBRRR','.SSRBYBYBRSS','.SSBBBBBBBSS','...BBB.BBB..','..BBB...BBB.','.HHH.....HHH','HHHH.....HHHH'];
 const poses={
@@ -380,7 +401,7 @@ function drawCoin(ctx,x,y,frame){
   ctx.fillStyle='#ffd040';ctx.fillRect(left,y+2,width,8);
   if(width>2){ctx.fillStyle='#fff0a0';ctx.fillRect(left+1,y+3,1,5);ctx.fillStyle='#b87800';ctx.fillRect(left+width-2,y+3,1,5);}
 }
-export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===6,underground=g.room==='underground'||g.stage===2||isCastle(g.stage);ctx.imageSmoothingEnabled=false;ctx.fillStyle=water?'#2048a0':underground?'#101020':g.stage>=9?'#081028':'#6888fc';ctx.fillRect(0,0,256,240);
+export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===6,underground=g.room==='underground'||g.stage===2||isCastle(g.stage);ctx.imageSmoothingEnabled=false;ctx.fillStyle=water?'#2048a0':underground?'#101020':[9,10,11].includes(g.stage)?'#081028':'#6888fc';ctx.fillRect(0,0,256,240);
   if(!underground&&!water){
     for(let start=0;start<g.width;start+=768){
       for(const [x,y,count]of[[128,32,1],[304,24,3],[528,40,1]])pixelCloud(ctx,x+start-cam,Math.max(40,y),count);
@@ -408,6 +429,11 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===
   }
   if(isCastle(g.stage)){
     for(const[a,b]of g.lava){const left=Math.max(0,a*16-cam),right=Math.min(256,(b+1)*16-cam);if(right<=left)continue;ctx.fillStyle='#b82000';ctx.fillRect(left,220,right-left,20);ctx.fillStyle='#ff7800';ctx.fillRect(left,220,right-left,4);ctx.fillStyle='#ffd040';for(let x=left;x<right;x+=8)ctx.fillRect(x,220+(Math.floor(g.frames/8+x/8)%2)*2,4,2);}
+    for(const f of g.lavaBubbles){
+      if(!f.active||f.y>=220||f.x<cam-16||f.x>cam+256)continue;
+      const rows=['....RRRR....','..RRYYYYRR..','.RRYYYYYYRR.','RRYYWWWWYYRR','RRYYWWWWYYRR','.RRYYYYYYRR.','..RRYYYYRR..','...RRYYRR...','....RRRR....','.....RR.....'];
+      ctx.save();ctx.translate(Math.round(f.x)-cam,Math.round(f.y));if(f.vy>0){ctx.translate(0,16);ctx.scale(1,-1);}sprite(ctx,rows,0,0,{R:'#f83800',Y:'#ffb030',W:'#fff0b0'},1,1.6);ctx.restore();
+    }
     for(const bar of g.fireBars){ctx.fillStyle='#909098';ctx.fillRect(bar.x-4-cam,bar.y-4,8,8);}
     for(const h of g.fireHazards()){if(h.x<cam-8||h.x>cam+256)continue;ctx.fillStyle='#f83800';ctx.fillRect(Math.round(h.x)-cam,Math.round(h.y),8,8);ctx.fillStyle='#ffb030';ctx.fillRect(Math.round(h.x)+1-cam,Math.round(h.y)+1,6,6);ctx.fillStyle='#fff0b0';ctx.fillRect(Math.round(h.x)+3-cam,Math.round(h.y)+2,2,3);}
     if(g.phase!=='won'){const x=196*16-cam;ctx.fillStyle='#b85020';ctx.fillRect(x+7,166,3,26);ctx.fillStyle='#fcfcfc';ctx.fillRect(x,160,10,7);ctx.fillRect(x-2,162,4,9);}
@@ -420,7 +446,7 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===
     const rows=['....RRRRRR....','..RRWWRRWWRR..','.RRWWWRRWWWRR.','RRRWWWRRWWWRRR','RRRRRRRRRRRRRR','.WWWWWWWWWWWW.','...SSBSSBSS...','...SSSSSSSS...','....SSSSSS....','...BSSSSSSB...','..SBBSSSSBBS..','..SSBBBBBBSS..','....SSSSSS....','...HHH..HHH...'];sprite(ctx,rows,204*16-cam,194,{R:'#f83800',W:'#fff',S:'#ffbc80',B:'#2858b0',H:'#804020'},1,1);
     if(g.rescued){ctx.fillStyle='#101020';ctx.fillRect(8,72,240,52);pixelText(ctx,'THANK YOU MARIO!',68,82);pixelText(ctx,'TOAD IS SAFE',80,102);}
   }
-  if(g.stage>=9&&!isCastle(g.stage)&&g.phase==='won'&&g.presentation>=100){
+  if([9,10,11].includes(g.stage)&&g.phase==='won'&&g.presentation>=100){
     // Bonus ending requested by the user, not an original stage ending.
     const rows=['.....Y.Y.Y.....','.....YYYYY.....','....HHHHHHH....','....HSSBSSH....','....HSSSSSH....','....HHSSSHH....','.....PPPPP.....','....PPPSPPP....','...SPPPPPPS...','..SSPPPPPPSS..','....PPPPPPP....','...PPPPPPPPP...','..PPPPPPPPPPP..','.PPPPPPPPPPPPP.','....HH...HH....'];
     sprite(ctx,rows,205*16-cam,178,{Y:'#ffd040',H:'#e8a030',S:'#ffcfaa',B:'#2048a0',P:'#f878b8'},1,2);
