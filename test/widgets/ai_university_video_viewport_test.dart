@@ -49,7 +49,9 @@ void main() {
       expect(picture.right, lessThanOrEqualTo(size.width - 16));
       expect(picture.bottom, lessThanOrEqualTo(size.height - 64));
       expect(
-        tester.getRect(find.byType(TextButton)).bottom,
+        tester
+            .getRect(find.byWidgetPredicate((widget) => widget is TextButton))
+            .bottom,
         lessThanOrEqualTo(size.height),
       );
       await tester.tap(find.text('YouTubeで開く'));
