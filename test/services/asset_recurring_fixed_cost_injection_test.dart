@@ -5,6 +5,49 @@ import 'package:my_web_app/services/asset_liability_planning_service.dart';
 void main() {
   const planning = AssetLiabilityPlanningService();
 
+  test('billing stop survives serialization and preserves earlier charges', () {
+    final cost = AssetRecurringFixedCost(
+      id: 'example',
+      name: 'Example service',
+      amount: 100,
+      paymentDay: 10,
+      billingStoppedFrom: DateTime(2026, 6, 10),
+    );
+    final restored = AssetRecurringFixedCost.fromJson(cost.id, cost.toJson())!;
+    expect(restored.billingStoppedFrom, DateTime(2026, 6, 10));
+    expect(
+      restored.copyWith(name: 'Renamed').billingStoppedFrom,
+      cost.billingStoppedFrom,
+    );
+    expect(
+      restored.copyWith(clearBillingStoppedFrom: true).billingStoppedFrom,
+      isNull,
+    );
+    for (final base in [DateTime(2026, 5, 15), DateTime(2026, 6, 15)]) {
+      final workbook = planning.buildWorkbook(
+        latestSnapshot: const {},
+        baseDate: base,
+        recurringFixedCosts: [restored],
+      );
+      expect(
+        workbook.debtMasterRows.any((row) => row.name == restored.name),
+        base.month == 5,
+      );
+    }
+    final crossing = planning.buildWorkbook(
+      latestSnapshot: const {},
+      baseDate: DateTime(2026, 5, 25),
+      salaryDay: 25,
+      recurringFixedCosts: [restored],
+    );
+    expect(
+      crossing.debtMasterRows.any((row) => row.name == restored.name),
+      isFalse,
+    );
+    expect(AssetRecurringFixedCost.parseBillingDate('2026-02-30'), isNull);
+    expect(AssetRecurringFixedCost.parseBillingDate('2026-2-3'), isNull);
+  });
+
   AssetLiabilityDebtRow? debtRowByName(
     AssetLiabilityWorkbook workbook,
     String name,

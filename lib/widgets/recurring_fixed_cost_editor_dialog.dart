@@ -128,6 +128,7 @@ class _RecurringFixedCostEditorDialogState
   late final TextEditingController _nameController;
   late final TextEditingController _amountController;
   late final TextEditingController _dayController;
+  late final TextEditingController _stopDateController;
   late AssetRecurringFixedCostCadence _cadence;
   late AssetRecurringFixedCostCategory _category;
   late AssetSubscriptionBillingGateway _gateway;
@@ -156,6 +157,13 @@ class _RecurringFixedCostEditorDialogState
       text: initial == null ? '' : initial.paymentDay.toString(),
     );
     _cadence = initial?.cadence ?? AssetRecurringFixedCostCadence.monthly;
+    _stopDateController = TextEditingController(
+      text: initial?.billingStoppedFrom == null
+          ? ''
+          : AssetRecurringFixedCost.formatBillingDate(
+              initial!.billingStoppedFrom!,
+            ),
+    );
     // 渡された候補に無い振替元IDは保持しない (古い参照を残さない)。
     final ids = widget.sourceAccounts.map((option) => option.id).toSet();
     final source = initial?.sourceAccountId;
@@ -177,6 +185,7 @@ class _RecurringFixedCostEditorDialogState
     _nameController.dispose();
     _amountController.dispose();
     _dayController.dispose();
+    _stopDateController.dispose();
     super.dispose();
   }
 
@@ -221,6 +230,9 @@ class _RecurringFixedCostEditorDialogState
           : AssetSubscriptionBillingGateway.direct,
       currency: _currency,
       usdAmount: usdAmount,
+      billingStoppedFrom: AssetRecurringFixedCost.parseBillingDate(
+        _stopDateController.text.trim(),
+      ),
     );
     Navigator.of(context).pop(cost);
   }
@@ -467,6 +479,25 @@ class _RecurringFixedCostEditorDialogState
                     ),
                 ],
                 onChanged: (value) => setState(() => _sourceAccountId = value),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                key: const Key('billing-stopped-from'),
+                controller: _stopDateController,
+                decoration: const InputDecoration(
+                  labelText: 'この日以降は請求なし (任意)',
+                  hintText: 'YYYY-MM-DD',
+                  helperText:
+                      '過去の記録は残ります。契約の解約手続きは行いません。\n再開する場合は日付を空欄にしてください。',
+                  helperMaxLines: 3,
+                ),
+                validator: (value) {
+                  final text = (value ?? '').trim();
+                  return text.isEmpty ||
+                          AssetRecurringFixedCost.parseBillingDate(text) != null
+                      ? null
+                      : '有効な日付を YYYY-MM-DD で入力してください';
+                },
               ),
             ],
           ),
