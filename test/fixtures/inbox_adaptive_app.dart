@@ -22,30 +22,38 @@ class _InboxFixtureState extends State<InboxFixture> {
   @override
   Widget build(BuildContext context) => MaterialApp(
         theme: ThemeData(
-            platform: Uri.base.queryParameters['platform'] == 'ios'
-                ? TargetPlatform.iOS
-                : TargetPlatform.android,),
+          platform: Uri.base.queryParameters['platform'] == 'ios'
+              ? TargetPlatform.iOS
+              : TargetPlatform.android,
+        ),
         home: Builder(
-            builder: (context) => Scaffold(
-                  appBar: AppBar(title: const Text('Inbox検証用画面')),
-                  body: Column(children: [
-                    Text(result),
-                    Text('保存呼出: $calls'),
-                    TextButton(
-                        onPressed: () => showDialog<bool>(
-                            context: context,
-                            builder: (_) =>
-                                InboxQuickCaptureDialog(onSave: (text) async {
-                                  setState(() => calls++);
-                                  await Future<void>.delayed(
-                                      const Duration(milliseconds: 1200),);
-                                  if (text == '失敗') {
-                                    throw Exception('synthetic failure');
-                                  }
-                                  setState(() => result = '保存済み: $text');
-                                },),),
-                        child: const Text('Inboxへメモを開く'),),
-                  ],),
-                ),),
+          builder: (context) => Scaffold(
+            appBar: AppBar(title: const Text('Inbox検証用画面')),
+            body: Column(
+              children: [
+                Text(result),
+                Text('保存呼出: $calls'),
+                TextButton(
+                  onPressed: () => showDialog<bool>(
+                    context: context,
+                    builder: (_) => InboxQuickCaptureDialog(
+                      onSave: (text) async {
+                        setState(() => calls++);
+                        await Future<void>.delayed(
+                          const Duration(milliseconds: 1200),
+                        );
+                        if (text == '失敗') {
+                          throw Exception('synthetic failure');
+                        }
+                        setState(() => result = '保存済み: $text');
+                      },
+                    ),
+                  ),
+                  child: const Text('Inboxへメモを開く'),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
 }
