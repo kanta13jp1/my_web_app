@@ -24,7 +24,7 @@ test('campaign advances only after clear presentation and preserves earned state
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,3);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,4);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,5);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,8);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
+ g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,8);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,9);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
 });
 test('sky course has elevated platforms, gaps, collectibles and a distinct finish',()=>{
  const g=new World11(3);assert.equal(g.telemetry().stage,3);assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);
@@ -101,10 +101,25 @@ test('2-4 boss patrol, jump, flames, collision and fireball defeat',()=>{
 });
 
 test('2-4 axe collapses bridge, rescues Toad and resets all boss state',()=>{
- const g=new World11(8);g.p.x=196*16;g.p.y=176;g.step();assert.equal(g.phase,'won');assert.equal(g.bossFlames.length,0);for(let i=0;i<180;i++)g.presentationStep();assert.equal(g.tile(180,12),undefined);assert.equal(g.boss.dead,true);assert.equal(g.rescued,true);assert.equal(g.advanceStage(),false);assert.ok(g.drainSounds().includes('life'));
+ const g=new World11(8);g.p.x=196*16;g.p.y=176;g.step();assert.equal(g.phase,'won');assert.equal(g.bossFlames.length,0);for(let i=0;i<180;i++)g.presentationStep();assert.equal(g.tile(180,12),undefined);assert.equal(g.boss.dead,true);assert.equal(g.rescued,true);assert.equal(g.p.grounded,true);assert.equal(g.p.vy,0);assert.ok(g.drainSounds().includes('life'));assert.equal(g.advanceStage(),true);assert.equal(g.stage,9);g.stage=8;
  g.reset();assert.equal(g.boss.hp,5);assert.equal(g.boss.dead,false);assert.equal(g.rescued,false);assert.equal(g.tile(180,12),'bridge');g.stage=1;g.reset();assert.equal(g.boss,null);assert.deepEqual(g.bossFlames,[]);
 });
 
 test('boss predictions and projectiles do not mutate live encounter',async()=>{
  const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(8);g.camera=180*16;g.p.x=181*16;g.p.y=176;const before=JSON.stringify(g.snapshot());const future=advance(clone(g),'noop',8);assert.ok(future.boss.active>0);assert.ok(future.bossFlames.length);assert.equal(JSON.stringify(g.snapshot()),before);
+});
+
+
+test('3-1 night course uses world 3 numbering, distinct terrain and enemies',()=>{
+ const g=new World11(9);assert.deepEqual(courseInfo(9),{world:3,stage:1,label:'3-1'});assert.equal(g.telemetry().world,3);assert.equal(g.telemetry().stage,1);assert.equal(g.snapshot().course_id,9);assert.equal(g.room,'overworld');assert.equal(g.boss,null);assert.equal(g.tile(48,13),undefined);assert.equal(g.tile(26,11),'pipe-top');assert.equal(g.tile(71,6),'brick');assert.equal(g.enemies.filter(e=>e.kind==='koopa').length,4);
+ const [x,y]=[...g.contents].find(([,v])=>v==='loose')[0].split(',').map(Number);g.p.x=x*16;g.p.y=y*16;g.step();assert.equal(g.coins,1);
+ const dead=new World11(9);dead.p.x=49*16;dead.p.y=251;dead.step();assert.equal(dead.phase,'dead');assert.equal(dead.advanceStage(),false);
+});
+
+test('3-1 flag ending reveals Peach only after clear and resets cleanly',()=>{
+ const g=new World11(9);assert.equal(g.peachRescued,false);g.p.x=198*16;g.p.y=160;g.step();assert.equal(g.phase,'won');for(let i=0;i<139;i++)g.presentationStep();assert.equal(g.peachRescued,false);g.presentationStep();assert.equal(g.peachRescued,true);for(let i=140;i<180;i++)g.presentationStep();assert.equal(g.advanceStage(),false);assert.equal(g.p.grounded,true);assert.equal(g.snapshot().peach_rescued,true);g.reset();assert.equal(g.stage,9);assert.equal(g.peachRescued,false);assert.equal(g.phase,'playing');assert.equal(g.p.x,32);
+});
+
+test('night course prediction preserves live state',async()=>{
+ const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(9),before=JSON.stringify(g.snapshot());const future=advance(clone(g),'right',8);assert.equal(future.stage,9);assert.ok(future.p.x>g.p.x);assert.equal(JSON.stringify(g.snapshot()),before);
 });
