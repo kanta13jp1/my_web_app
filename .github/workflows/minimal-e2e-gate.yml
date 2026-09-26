@@ -35,6 +35,12 @@ concurrency:
 permissions: {}
 
 jobs:
+  deployment-scope:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+    permissions:
+      actions: read
+    uses: ./.github/workflows/production-followup-scope.yml
+
   pr-e2e-declaration:
     name: PR minimal E2E declaration
     runs-on: ubuntu-latest
@@ -142,21 +148,52 @@ jobs:
           echo "### Design accessibility audit: advisory findings" >> "$GITHUB_STEP_SUMMARY"
           echo "Audit evidence is missing, incomplete, or the audit could not run. This is not an accessibility pass. See the audit step log; other required gates remain enforced." >> "$GITHUB_STEP_SUMMARY"
 
+  playwright-evidence-contract:
+    needs: deployment-scope
+    if: always() && needs.deployment-scope.outputs.skip != 'true'
+    name: Playwright evidence contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout evidence tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test report persistence and failure propagation
+        run: node --test scripts/summarize_playwright_results_test.mjs scripts/playwright_report_persistence_test.mjs
+
   public-e2e-stability:
+    needs: deployment-scope
     permissions:
       contents: read
     name: Public E2E stability smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+      always() && needs.deployment-scope.outputs.skip != 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'))
 
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -187,7 +224,9 @@ jobs:
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
           REPEAT_EACH: ${{ github.event.inputs.repeat_each || '3' }}
-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/public-smoke-results.json
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results/public-smoke.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/html/public-smoke
+          PLAYWRIGHT_TEST_OUTPUT_DIR: test-results/public-smoke
 
       - name: Run desktop and mobile visual evidence tests
         run: >
@@ -197,14 +236,16 @@ jobs:
           --workers=1
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-evidence-results.json
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results/visual-evidence.json
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/html/visual-evidence
+          PLAYWRIGHT_TEST_OUTPUT_DIR: test-results/visual-evidence
 
       - name: Summarize Playwright evidence
         if: always()
         run: |
           node scripts/summarize_playwright_results.mjs \
-            playwright-report/public-smoke-results.json \
-            playwright-report/visual-evidence-results.json \
+            playwright-report/results/public-smoke.json \
+            playwright-report/results/visual-evidence.json \
             --out playwright-report/issue-summary.md
 
       - name: Upload Playwright report

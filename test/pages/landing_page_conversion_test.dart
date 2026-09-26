@@ -1290,6 +1290,13 @@ void main() {
           await tester.pump();
           await tester.tap(trialButton);
           await tester.pump();
+          if (size.width < 480) {
+            expect(
+              promptInput,
+              findsNothing,
+              reason: 'mobile should show only the active guided step',
+            );
+          }
           await _completeGuidedTrialWithQuickAnswers(tester);
 
           final resultAction = find.byKey(
@@ -1310,6 +1317,25 @@ void main() {
           final email = find.byKey(const Key('landing_h04_inline_email'));
           if (useInstantPreview) {
             expect(email, findsNothing);
+          } else if (size.width < 480) {
+            expect(email, findsNothing);
+            expect(
+              find.byKey(const Key('landing_h04_inline_save_expansion')),
+              findsOneWidget,
+            );
+            expect(
+              find.byKey(const Key('landing_trial_restart')),
+              findsOneWidget,
+            );
+            await tester.tap(
+              find.byKey(const Key('landing_h04_inline_save_expansion')),
+            );
+            await tester.pumpAndSettle();
+            expect(email, findsOneWidget);
+            expect(
+              tester.widget<TextField>(email).focusNode?.hasFocus,
+              isFalse,
+            );
           } else {
             expect(
               tester.widget<TextField>(email).focusNode?.hasFocus,
@@ -1666,6 +1692,11 @@ void main() {
     );
     expect(tester.takeException(), isNull);
 
+    await tester.drag(
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -600),
+    );
+    await tester.pump();
     await tester.tap(
       find.byKey(const Key('landing_h09_mobile_sticky_cta')),
     );
@@ -2013,6 +2044,10 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
+    await tester.tap(
+      find.byKey(const Key('landing_h04_inline_save_expansion')),
+    );
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('landing_h04_inline_email')),
       'mobile-first-user@example.com',

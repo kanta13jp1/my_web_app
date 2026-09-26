@@ -16,6 +16,7 @@ import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
 import '../pages/agent_board_page.dart';
 import '../pages/autonomous_ops_console_page.dart';
+import '../pages/micro_mentor_dashboard_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
 import '../ui/features/toeic/toeic_feature.dart';
@@ -167,6 +168,7 @@ import '../pages/social_feed_page.dart';
 import '../pages/subscription_billing_page.dart';
 import '../pages/digital_product_store_pages.dart';
 import '../pages/viral_ad_generator_page.dart';
+import '../ui/features/palm_reading/palm_reading_feature.dart';
 import '../ui/features/video_studio/video_studio_feature.dart';
 import '../ui/features/notion_migration/notion_migration_feature.dart';
 import '../pages/youtube_stats_page.dart';
@@ -886,6 +888,17 @@ List<HomeToolEntry> buildHomeToolCatalog({
       requiresClearDeck: true,
     ),
     HomeToolEntry(
+      id: 'micro-mentors',
+      sectionId: 'knowledge',
+      title: 'マイクロAIメンター',
+      subtitle: '領域別メンターの提案を比較する',
+      icon: Icons.psychology_alt_outlined,
+      color: const Color(0xFF00796B),
+      keywords: const <String>['AIメンター', 'ペルソナ', '提案', '予定'],
+      onOpen: (context) => _pushPage(context, MicroMentorDashboardPage()),
+      requiresClearDeck: true,
+    ),
+    HomeToolEntry(
       id: 'ai-company-builder',
       sectionId: 'knowledge',
       title: 'AI Company Builder',
@@ -1023,6 +1036,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['性格診断', 'MBTI', '16タイプ', '自己分析'],
       onOpen: (context) =>
           _pushPage(context, const PersonalityTestQuestionsPage(testId: 1)),
+    ),
+    HomeToolEntry(
+      id: 'palm-reading',
+      sectionId: 'knowledge',
+      title: '手相AI占い',
+      subtitle: '手のひらを撮影し、鑑定履歴と変化をAIで振り返る',
+      icon: Icons.back_hand_outlined,
+      color: const Color(0xFF7C4DFF),
+      keywords: const <String>[
+        '手相',
+        '占い',
+        'AI占い',
+        '手のひら',
+        '写真',
+        '変化',
+        '履歴',
+        'palm',
+      ],
+      onOpen: (context) => _pushPage(context, const PalmReadingPage()),
     ),
     HomeToolEntry(
       id: 'iq-test',
@@ -2984,6 +3016,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'observability',
       ],
       onOpen: (context) => _pushPage(context, const EdgeLlmPlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'jev-mario-lab',
+      sectionId: 'ai',
+      title: 'Jev Mario Lab',
+      subtitle: 'マリオの操作とJevの応答速度を測定（ROMなしのAPI測定にも対応）',
+      icon: Icons.sports_esports_outlined,
+      color: const Color(0xFF168A75),
+      keywords: const <String>['Jev', 'Mario', 'マリオ', '応答速度', 'ベンチマーク'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/jev-mario-lab'),
     ),
     HomeToolEntry(
       id: 'agi-fireworks',
