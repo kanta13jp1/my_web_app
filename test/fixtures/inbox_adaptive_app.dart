@@ -24,7 +24,7 @@ class _InboxFixtureState extends State<InboxFixture> {
         theme: ThemeData(
             platform: Uri.base.queryParameters['platform'] == 'ios'
                 ? TargetPlatform.iOS
-                : TargetPlatform.android),
+                : TargetPlatform.android,),
         home: Builder(
             builder: (context) => Scaffold(
                   appBar: AppBar(title: const Text('Inbox検証用画面')),
@@ -38,13 +38,14 @@ class _InboxFixtureState extends State<InboxFixture> {
                                 InboxQuickCaptureDialog(onSave: (text) async {
                                   setState(() => calls++);
                                   await Future<void>.delayed(
-                                      const Duration(milliseconds: 1200));
-                                  if (text == '失敗')
+                                      const Duration(milliseconds: 1200),);
+                                  if (text == '失敗') {
                                     throw Exception('synthetic failure');
+                                  }
                                   setState(() => result = '保存済み: $text');
-                                })),
-                        child: const Text('Inboxへメモを開く')),
-                  ]),
-                )),
+                                },),),
+                        child: const Text('Inboxへメモを開く'),),
+                  ],),
+                ),),
       );
 }
