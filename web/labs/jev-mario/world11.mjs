@@ -466,7 +466,7 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===
   }
   for(const f of [...g.effects,...g.shots]){if(f.kind==='bump')continue;if(f.kind==='coin'){drawCoin(ctx,f.x-cam,f.y,g.frames);continue;}if(f.kind==='score'){pixelText(ctx,f.value,f.x-cam,f.y-7);continue;}if(f.kind==='burst'){ctx.fillStyle=f.life%2?'#fff':'#ffb030';ctx.fillRect(f.x-cam-2,f.y+2,8,2);ctx.fillRect(f.x-cam+1,f.y-1,2,8);continue;}ctx.fillStyle=f.kind==='debris'||f.kind==='squash'?'#b85020':'#ffd040';ctx.fillRect(f.x-cam,f.y,f.kind==='squash'?14:5,f.kind==='squash'?4:7);}
   for(const f of g.fireworks){const radius=2+f.age*.65;ctx.fillStyle=f.age%4<2?'#fff0a0':'#ff7830';for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.fillRect(Math.round(f.x-cam+Math.cos(a)*radius),Math.round(f.y+Math.sin(a)*radius),3,3);}if(f.age<8){ctx.fillStyle='#fff';ctx.fillRect(f.x-cam-2,f.y-2,5,5);}}
-  if(!g.invincible||g.frames%6<3){const palette={R:g.power===2?'#fff':'#f83800',H:'#803000',S:'#ffbc80',B:g.star&&g.frames%12<6?'#00d8f8':'#b85000',Y:'#ffc000'};drawPlayer(ctx,g,palette);}
+  if(g.phase!=='playing'||!g.invincible||g.frames%6<3){const palette={R:g.power===2?'#fff':'#f83800',H:'#803000',S:'#ffbc80',B:g.star&&g.frames%12<6?'#00d8f8':'#b85000',Y:'#ffc000'};drawPlayer(ctx,g,palette);}
   pixelText(ctx,'MARIO',24,16);pixelText(ctx,String(g.score).padStart(6,'0'),24,24);
   drawCoin(ctx,88,20,g.frames);pixelText(ctx,'X'+String(g.coins).padStart(2,'0'),96,24);
   pixelText(ctx,'WORLD',144,16);pixelText(ctx,courseInfo(g.stage??1).label,152,24);

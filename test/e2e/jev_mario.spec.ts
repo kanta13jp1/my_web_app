@@ -577,3 +577,10 @@ test('underground beetle and pipe plant render, retract near player and reset',a
  expect(await frame.evaluate(()=>{const w=(window as any).plantWorld,e=w.enemies.find(e=>e.kind==='piranha');return {hidden:e.hidden,age:e.age,phase:w.phase};})).toEqual({hidden:true,age:0,phase:'playing'});
  await lab.locator('#presentation').screenshot({path:info.outputPath('world12-plant-hidden.png')});await lab.locator('#stop').click();await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('1-2をリセット');expect(errors).toEqual([]);
 });
+
+
+test('clear and death presentation keep Mario visible despite a frozen damage blink',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const checks=await frame.evaluate(async()=>{const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const canvas=document.createElement('canvas');canvas.width=256;canvas.height=240;const ctx=canvas.getContext('2d')!;return ['won','dead'].map(phase=>{const g=new World11(12);g.phase=phase;g.frames=3;g.presentation=100;g.p.x=201*16;g.p.y=192;g.camera=193*16;g.invincible=0;drawWorld(ctx,g);const expected=ctx.getImageData(128,192,16,16).data.slice();g.invincible=90;drawWorld(ctx,g);const actual=ctx.getImageData(128,192,16,16).data;return actual.every((v,i)=>v===expected[i]);});});
+ expect(checks).toEqual([true,true]);
+});
