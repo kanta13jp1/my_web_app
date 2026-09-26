@@ -133,6 +133,7 @@ test('3-2 map, observations, clear, and reset retain correct campaign IDs',()=>{
 test('cannons launch toward player, respect proximity and retire off-screen bullets',()=>{
  const g=new World11(10);g.enemies=[];g.p.x=500;g.camera=404;g.step();const bullet=g.enemies.find(e=>e.kind==='bullet');assert.ok(bullet);assert.ok(bullet.vx<0);const y=bullet.y,x=bullet.x;g.step();assert.equal(bullet.y,y);assert.ok(bullet.x<x);
  bullet.x=g.camera-60;g.step();assert.ok(!g.enemies.includes(bullet));
+ for(const [offset,vx]of [[279,2.2],[-31,-2.2]]){const edge={...bullet,x:g.camera+offset,vx,dead:0};g.enemies.push(edge);g.step();g.step();assert.ok(!g.enemies.includes(edge),'offscreen bullet must not freeze and consume spawn quota');}
  const near=new World11(10);near.enemies=[];near.p.x=640;near.p.y=150;near.camera=544;near.step();assert.equal(near.enemies.length,0);
  const right=new World11(10);right.enemies=[];right.p.x=710;right.camera=614;right.step();assert.ok(right.enemies.find(e=>e.kind==='bullet').vx>0);
 });

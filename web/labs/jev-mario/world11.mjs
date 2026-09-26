@@ -204,7 +204,7 @@ export class World11 {
   }
   projectileStep(){
     if(this.phase!=='playing')return;
-    this.enemies=this.enemies.filter(e=>e.kind!=='bullet'||(!e.dead&&e.x>=this.camera-48&&e.x<=this.camera+304));
+    this.enemies=this.enemies.filter(e=>e.kind!=='bullet'||(!e.dead&&e.x>=this.camera-32&&e.x<=this.camera+280));
     for(const c of this.cannons){
       if(c.x<this.camera||c.x>this.camera+256||Math.abs(c.x-this.p.x)<32)continue;
       c.timer++;
