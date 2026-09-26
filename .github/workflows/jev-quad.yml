@@ -1,14 +1,19 @@
 name: Jev four-lane comparison
 on:
   pull_request:
-    paths: ['scripts/jev_quad/**', '.github/workflows/jev-quad.yml']
+    paths: ['scripts/jev_quad/**', 'scripts/jev_triad/planner-worker.mjs', '.github/workflows/jev-quad.yml']
   workflow_dispatch:
     inputs:
       stage:
-        description: Game stage (2 uses the checked branch game; student remains trained on 1-1)
+        description: Game stage (2 and campaign use the checked branch game; campaign = 1-1 then 1-2)
         type: choice
-        options: ['1', '2']
+        options: ['1', '2', 'campaign']
         default: '1'
+      student:
+        description: LightGBM lane model (jev166 = published Jev-label pilot; search = committed DAgger student)
+        type: choice
+        options: [jev166, search]
+        default: jev166
       survival_shield:
         description: Additional exact-simulator death check (assisted only)
         type: boolean
@@ -61,7 +66,7 @@ jobs:
         if: matrix.lane == 'localjev'
         run: bash scripts/jev_triad/local-setup.sh
       - name: Reproduce fixed Jev student
-        if: matrix.lane == 'lightgbm'
+        if: matrix.lane == 'lightgbm' && inputs.student != 'search'
         run: |
           node scripts/jev_distillation/collect.mjs
           python -m pip install lightgbm==4.6.0 numpy==2.2.6 scipy==1.15.3
@@ -79,15 +84,17 @@ jobs:
           done
           cat out/quad/laya-server.log
           exit 1
-      - name: Install checked underground game after fixed student training
-        if: inputs.stage == '2'
+      - name: Install checked branch game after fixed student training
+        if: inputs.stage != '1'
         run: |
-          cp web/labs/jev-mario/world11.mjs out/lightgbm/frozen/world11.mjs
-          cp web/labs/jev-mario/reaction.mjs out/lightgbm/frozen/reaction.mjs
+          for module in world11 reaction pixel-art audio; do
+            cp web/labs/jev-mario/$module.mjs out/lightgbm/frozen/$module.mjs
+          done
       - name: Assisted and unassisted wall-clock trials
         env:
           STAGE: ${{ inputs.stage }}
-          GAME_SHA: ${{ inputs.stage == '2' && github.sha || 'd224c892c1f16895f24978358717717f96bad657' }}
+          GAME_SHA: ${{ inputs.stage != '1' && github.sha || 'd224c892c1f16895f24978358717717f96bad657' }}
+          STUDENT: ${{ inputs.student }}
           SURVIVAL_SHIELD: ${{ inputs.survival_shield }}
           INPUT_FORMAT: ${{ inputs.input_format }}
           LANE: ${{ matrix.lane }}
@@ -131,8 +138,10 @@ jobs:
           sources={r['source'] for r in runs}
           assert len(runs)==4 and len(sources)==1
           source=sources.pop();assert re.fullmatch('[0-9a-f]{40}',source)
-          for module in ['world11','reaction','audio']:
-              data=subprocess.check_output(['git','show',source+':web/labs/jev-mario/'+module+'.mjs'])
+          for module in ['world11','reaction','audio','pixel-art']:
+              try:data=subprocess.check_output(['git','show',source+':web/labs/jev-mario/'+module+'.mjs'],stderr=subprocess.DEVNULL)
+              except subprocess.CalledProcessError:
+                  assert module=='pixel-art';continue
               pathlib.Path('out/lightgbm/frozen/'+module+'.mjs').write_bytes(data)
           PY
           python -m pip install playwright==1.55.0
