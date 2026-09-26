@@ -63,10 +63,8 @@ class _AiUniversityYoutubeEmbedState extends State<AiUniversityYoutubeEmbed> {
             builder: (context, constraints) {
               final heightLimit = widget.maxPlayerHeight ??
                   MediaQuery.sizeOf(context).height * 0.6;
-              final width = math.min(
-                constraints.maxWidth,
-                heightLimit * 16 / 9,
-              );
+              final width =
+                  math.min(constraints.maxWidth, heightLimit * 16 / 9);
               return Center(
                 child: SizedBox(
                   width: width,

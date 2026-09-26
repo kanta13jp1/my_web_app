@@ -5937,12 +5937,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       return true;
     } catch (_) {
       try {
-        await _supabase.from('ai_university_scores').upsert({
-          'user_id': user.id,
-          'provider_id': providerId,
-          'quiz_correct': true,
-          'studied_at': DateTime.now().toIso8601String(),
-        }, onConflict: 'user_id,provider_id');
+        await _supabase.from('ai_university_scores').upsert(
+          {
+            'user_id': user.id,
+            'provider_id': providerId,
+            'quiz_correct': true,
+            'studied_at': DateTime.now().toIso8601String(),
+          },
+          onConflict: 'user_id,provider_id',
+        );
         await _supabase.rpc(
           'update_ai_university_streak',
           params: {'p_user_id': user.id},
@@ -6016,14 +6019,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       final message = result.posted
           ? '$account にAI大学の学習ログを投稿しました'
           : 'X投稿文を作成しました。SupabaseのX API secret設定を確認してください';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('AI X投稿に失敗しました: $error')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('AI X投稿に失敗しました: $error')));
     } finally {
       if (mounted) {
         setState(() => _xPostSubmitting = false);
@@ -6265,9 +6266,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       a.click();
       a.remove();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('画像を保存しました')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('画像を保存しました')));
       }
     } catch (e) {
       if (mounted) {
@@ -6416,9 +6416,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final topics = <AiUniversityVideoLessonTopic>[];
     for (final rows in _content.values) {
       topics.addAll(
-        AiUniversityVideoLessonService.topicsFromRows(
-          rows,
-        ).where((topic) => topic.youtubeVideoId != null),
+        AiUniversityVideoLessonService.topicsFromRows(rows)
+            .where((topic) => topic.youtubeVideoId != null),
       );
     }
     topics.sort((a, b) => a.title.compareTo(b.title));
@@ -6465,9 +6464,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFFFF6B35,
-                          ).withValues(alpha: 0.16),
+                          color:
+                              const Color(0xFFFF6B35).withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         alignment: Alignment.center,
@@ -6539,9 +6537,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         foregroundColor: const Color(0xFFFFA07A),
                         minimumSize: const Size(0, 44),
                         side: BorderSide(
-                          color: const Color(
-                            0xFFFF6B35,
-                          ).withValues(alpha: 0.46),
+                          color:
+                              const Color(0xFFFF6B35).withValues(alpha: 0.46),
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -6758,12 +6755,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     }
     if (!await _recordQuizScoreToSupabase(providerId)) {
       try {
-        await _supabase.from('ai_university_scores').upsert({
-          'user_id': user.id,
-          'provider_id': providerId,
-          'quiz_correct': true,
-          'studied_at': DateTime.now().toIso8601String(),
-        }, onConflict: 'user_id,provider_id');
+        await _supabase.from('ai_university_scores').upsert(
+          {
+            'user_id': user.id,
+            'provider_id': providerId,
+            'quiz_correct': true,
+            'studied_at': DateTime.now().toIso8601String(),
+          },
+          onConflict: 'user_id,provider_id',
+        );
         // ストリーク更新 (DB関数で連続学習日数を計算)
         await _supabase.rpc(
           'update_ai_university_streak',
@@ -7354,10 +7354,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _buildRlhfCard(providerId, m),
           const SizedBox(height: 12),
           if (rows != null && rows.isNotEmpty)
-            ...rows.map(
-              (row) =>
-                  _buildContentCard(row, isDark, surface, viewport.maxHeight),
-            )
+            ...rows.map((row) =>
+                _buildContentCard(row, isDark, surface, viewport.maxHeight))
           else
             _buildFallbackCard(providerId, surface),
           const SizedBox(height: 16),
@@ -8159,10 +8157,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   AiUniversityYoutubeEmbed(
                     videoId: youtubeVideoId,
                     title: title,
-                    maxPlayerHeight: (videoViewportHeight - 96).clamp(
-                      0.0,
-                      720.0,
-                    ),
+                    maxPlayerHeight:
+                        (videoViewportHeight - 96).clamp(0.0, 720.0),
                     onOpen: () => _launchUrl(sourceUrl ?? ''),
                   ),
                 ],
