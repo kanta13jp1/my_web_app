@@ -116,7 +116,8 @@ class _InboxQuickCaptureDialogState extends State<InboxQuickCaptureDialog> {
   @override
   Widget build(BuildContext context) {
     return PopScope<bool>(
-      canPop: !_saving && !_hasDraft,
+      // Read the current draft in _requestClose, even before the next frame.
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) _requestClose();
       },

@@ -42,7 +42,7 @@ void main() {
         calls++;
       });
       await tester.enterText(find.byType(TextField), 'draft');
-      await tester.pump();
+      // Dismiss before rebuilding: a stale empty-input frame must not pop.
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.text('入力したメモを破棄しますか？'), findsOneWidget);

@@ -16,6 +16,7 @@ for (const platform of ['android', 'ios']) {
     const save = page.getByRole('button', { name: 'Inboxに保存', exact: true });
     await expect(save).toBeDisabled();
     await input.fill('確認用メモ');
+    await expect(save).toBeEnabled();
     await page.keyboard.press('Escape');
     await expect(page.getByText('入力したメモを破棄しますか？', { exact: true })).toBeVisible();
     await page.screenshot({ path: info.outputPath('discard-confirmation.png') });
