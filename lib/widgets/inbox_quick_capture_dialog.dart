@@ -54,8 +54,8 @@ class _InboxQuickCaptureDialogState extends State<InboxQuickCaptureDialog> {
       barrierDismissible: false,
       builder: (dialogContext) {
         final platform = Theme.of(dialogContext).platform;
-        final apple = platform == TargetPlatform.iOS ||
-            platform == TargetPlatform.macOS;
+        final apple =
+            platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
         void finish(bool value) => Navigator.of(dialogContext).pop(value);
         return AlertDialog.adaptive(
           title: const Text('入力したメモを破棄しますか？'),
@@ -121,65 +121,66 @@ class _InboxQuickCaptureDialogState extends State<InboxQuickCaptureDialog> {
         if (!didPop) _requestClose();
       },
       child: AlertDialog(
-      scrollable: true,
-      title: const Row(
-        children: [
-          Icon(Icons.inbox_outlined),
-          SizedBox(width: 8),
-          Text('Inboxへメモ'),
-        ],
-      ),
-      content: SizedBox(
-        width: 520,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        scrollable: true,
+        title: const Row(
           children: [
-            TextField(
-              key: const Key('inbox_quick_capture_text_field'),
-              controller: _controller,
-              autofocus: true,
-              readOnly: _saving,
-              minLines: 4,
-              maxLines: 10,
-              textInputAction: TextInputAction.newline,
-              decoration: const InputDecoration(
-                labelText: 'メモ',
-                hintText: '今の考えをそのまま入力',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 8),
-              Semantics(
-                liveRegion: true,
-                child: Text(
-                _errorMessage!,
-                key: const Key('inbox_quick_capture_error'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
-            ],
+            Icon(Icons.inbox_outlined),
+            SizedBox(width: 8),
+            Text('Inboxへメモ'),
           ],
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : _requestClose,
-          child: const Text('キャンセル'),
+        content: SizedBox(
+          width: 520,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                key: const Key('inbox_quick_capture_text_field'),
+                controller: _controller,
+                autofocus: true,
+                readOnly: _saving,
+                minLines: 4,
+                maxLines: 10,
+                textInputAction: TextInputAction.newline,
+                decoration: const InputDecoration(
+                  labelText: 'メモ',
+                  hintText: '今の考えをそのまま入力',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    _errorMessage!,
+                    key: const Key('inbox_quick_capture_error'),
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
-        FilledButton.icon(
-          key: const Key('inbox_quick_capture_save_button'),
-          onPressed: _canSave ? _save : null,
-          icon: _saving
-              ? const SizedBox.square(
-                  dimension: 16,
-                  child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-                )
-              : const Icon(Icons.save_outlined),
-          label: Text(_saving ? '保存中…' : 'Inboxに保存'),
-        ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: _saving ? null : _requestClose,
+            child: const Text('キャンセル'),
+          ),
+          FilledButton.icon(
+            key: const Key('inbox_quick_capture_save_button'),
+            onPressed: _canSave ? _save : null,
+            icon: _saving
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator.adaptive(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save_outlined),
+            label: Text(_saving ? '保存中…' : 'Inboxに保存'),
+          ),
+        ],
       ),
     );
   }
