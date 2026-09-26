@@ -24,7 +24,7 @@ test('campaign advances only after clear presentation and preserves earned state
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,3);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,4);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,5);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,8);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,9);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,10);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
+ g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,8);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,9);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,10);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,11);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
 });
 test('sky course has elevated platforms, gaps, collectibles and a distinct finish',()=>{
  const g=new World11(3);assert.equal(g.telemetry().stage,3);assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);
@@ -127,7 +127,7 @@ test('night course prediction preserves live state',async()=>{
 
 test('3-2 map, observations, clear, and reset retain correct campaign IDs',()=>{
  const g=new World11(10);assert.deepEqual(courseInfo(10),{world:3,stage:2,label:'3-2'});assert.equal(g.telemetry().stage,2);assert.equal(g.tile(59,13),undefined);assert.equal(g.tile(40,11),'cannon');assert.equal(g.cannons.length,4);assert.equal(g.enemies.filter(e=>e.kind==='hammer-bro').length,3);g.hitBlock(40,11);assert.equal(g.tile(40,11),'cannon');
- g.p.x=198*16;g.p.y=160;g.step();assert.equal(g.phase,'won');for(let i=0;i<180;i++)g.presentationStep();assert.equal(g.peachRescued,true);assert.equal(g.advanceStage(),false);g.reset();assert.equal(g.phase,'playing');assert.equal(g.peachRescued,false);assert.equal(g.cannons[0].timer,0);assert.deepEqual(g.hammers,[]);g.stage=1;g.reset();assert.deepEqual(g.cannons,[]);
+ g.p.x=198*16;g.p.y=160;g.step();assert.equal(g.phase,'won');for(let i=0;i<180;i++)g.presentationStep();assert.equal(g.peachRescued,true);assert.equal(g.advanceStage(),true);assert.equal(g.stage,11);g.stage=10;g.reset();assert.equal(g.phase,'playing');assert.equal(g.peachRescued,false);assert.equal(g.cannons[0].timer,0);assert.deepEqual(g.hammers,[]);g.stage=1;g.reset();assert.deepEqual(g.cannons,[]);
 });
 
 test('cannons launch toward player, respect proximity and retire off-screen bullets',()=>{
@@ -154,4 +154,47 @@ test('Hammer Bro throws ballistic hazards, jumps and respects invincibility',()=
 
 test('3-2 simulator isolates projectiles and cannon timers',async()=>{
  const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(10);g.p.x=500;g.camera=404;const before=JSON.stringify(g.snapshot());const future=advance(clone(g),'noop',8);assert.ok(future.cannons[0].timer>0);assert.equal(JSON.stringify(g.snapshot()),before);
+});
+
+
+test('3-3 treetops have reachable platforms, finite enemies and a final flag',()=>{
+ const g=new World11(11);assert.deepEqual(courseInfo(11),{world:3,stage:3,label:'3-3'});assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);assert.equal(g.tile(32,10),'platform');assert.ok(g.enemies.every(e=>Number.isFinite(e.y)));assert.equal(g.enemies.filter(e=>e.kind==='lakitu').length,1);
+ g.p.x=33*16;g.p.y=100;g.p.vy=3;g.enemies=[];for(let i=0;i<20;i++)g.step();assert.equal(g.p.y+g.p.h,160);
+ g.p.x=198*16;g.p.y=160;g.p.vx=0;g.p.vy=0;g.step();assert.equal(g.phase,'won');for(let i=0;i<g.presentationLength();i++)g.presentationStep();assert.equal(g.advanceStage(),false);assert.equal(g.peachRescued,true);
+});
+
+test('Lakitu follows, drops bounded eggs which become walking Spinies, and expires hazards',()=>{
+ const g=new World11(11);const cloud=g.enemies.find(e=>e.kind==='lakitu');g.enemies=[cloud];g.p.x=24*16;g.p.y=170;g.camera=g.p.x-96;g.step();assert.equal(cloud.active,true);assert.ok(cloud.x>g.p.x);const egg=g.enemies.find(e=>e.kind==='spiny-egg');assert.ok(egg);const y=egg.y;g.step();assert.ok(egg.y>y);assert.ok(g.snapshot().enemies.some(e=>e.kind==='spiny-egg'));
+ // Ground an egg with the real collision step, without advancing a player into a gap.
+ egg.x=32;egg.y=195;egg.vy=2;g.camera=0;g.p.x=160;g.p.y=192;g.step();assert.equal(egg.kind,'spiny');assert.ok(egg.vx<0);
+ egg.x=g.camera-31;egg.vx=-2;g.step();g.step();assert.ok(!g.enemies.includes(egg));
+ for(let i=0;i<6;i++)g.enemies.push({x:180+i,y:150,w:12,h:12,vx:0,vy:0,kind:'spiny-egg',dead:0});cloud.age=180;g.lakituStep();assert.equal(g.enemies.filter(e=>e.kind==='spiny-egg').length,6);
+});
+
+test('spikes hurt even from above; stars and fireballs defeat Spinies, Lakitu can be stomped',()=>{
+ const fixture=kind=>{const g=new World11(11);g.enemies=[{x:40,y:192,w:12,h:12,vx:0,vy:0,kind,dead:0,age:0,active:true}];return g;};
+ const hit=fixture('spiny');hit.p.y=175;hit.p.vy=2;hit.step();assert.equal(hit.phase,'dead');assert.equal(hit.enemies[0].dead,0);
+ const star=fixture('spiny');star.star=30;star.step();assert.equal(star.phase,'playing');assert.equal(star.enemies[0].dead,1);
+ const fire=fixture('spiny');fire.p.x=0;fire.shots=[{x:40,y:194,w:4,h:4,vx:1,vy:0}];fire.step();assert.equal(fire.enemies[0].dead,1);
+ const cloud=fixture('lakitu');cloud.p.x=40;cloud.p.y=21;cloud.p.vy=4;cloud.step();assert.equal(cloud.enemies[0].dead,1);assert.equal(cloud.phase,'playing');
+});
+
+test('life retry resets the current course while preserving earned totals and stopping at zero',()=>{
+ for(const stage of [1,2,6,8,11]){const g=new World11(stage);Object.assign(g,{score:1234,coins:37,power:2,star:30});g.p.x=600;g.p.h=28;g.camera=400;g.time=23;g.die();g.die();assert.equal(g.lives,2);assert.equal(g.deaths,1);assert.equal(g.restartLife(),false);
+  for(let i=0;i<180;i++)g.presentationStep();assert.equal(g.restartLife(),true);assert.equal(g.stage,stage);assert.equal(g.p.x,32);assert.equal(g.camera,0);assert.equal(g.time,400);assert.equal(g.power,0);assert.equal(g.p.h,16);assert.equal(g.star,0);assert.deepEqual([g.score,g.coins,g.lives,g.deaths],[1234,37,2,1]);assert.deepEqual(g.input,{});
+  g.lives=1;g.die();for(let i=0;i<180;i++)g.presentationStep();assert.equal(g.restartLife(),false);assert.equal(g.phase,'dead');assert.equal(g.lives,0);
+ }
+});
+
+test('flag timer digits launch exact fireworks with score, sound, bounded duration and no repeat',()=>{
+ for(const [remaining,count]of [[331,1],[333,3],[336,6],[330,0],[332,0]]){
+  const g=new World11(10);g.frames=(400-remaining)*24-1;g.p.x=198*16;g.p.y=160;g.step();assert.equal(g.time,remaining);assert.equal(g.fireworksTotal,count);const score=g.score;let sounds=0,max=0;
+  for(let i=0;i<g.presentationLength();i++){g.presentationStep();sounds+=g.drainSounds().filter(x=>x==='firework').length;max=Math.max(max,g.fireworks.length);if(i===178&&count)assert.equal(g.advanceStage(),false);}
+  assert.equal(g.fireworksFired,count);assert.equal(sounds,count);assert.ok(max<=2);assert.equal(g.fireworks.length,0);assert.equal(g.score,score+remaining*50+count*500);const end=g.score;g.presentationStep();assert.equal(g.score,end);assert.equal(g.advanceStage(),true);assert.equal(g.stage,11);assert.equal(g.fireworksTotal,0);
+ }
+ for(const stage of [2,4,6,8]){const g=new World11(stage);g.frames=(400-336)*24-1;g.p.x=196*16;g.p.y=180;g.step();assert.equal(g.phase,'won');assert.equal(g.fireworksTotal,0);}
+});
+
+test('3-3 predictions isolate cloud pursuit, eggs and retry counters',async()=>{
+ const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(11);g.p.x=384;g.p.y=170;g.camera=288;const before=JSON.stringify(g.snapshot());const future=advance(clone(g),'noop',8);assert.ok(future.enemies.some(e=>e.kind==='spiny-egg'));assert.equal(JSON.stringify(g.snapshot()),before);
 });
