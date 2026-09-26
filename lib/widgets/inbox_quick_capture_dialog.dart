@@ -127,7 +127,7 @@ class _InboxQuickCaptureDialogState extends State<InboxQuickCaptureDialog> {
           children: [
             Icon(Icons.inbox_outlined),
             SizedBox(width: 8),
-            Text('Inboxへメモ'),
+            Expanded(child: Text('Inboxへメモ')),
           ],
         ),
         content: SizedBox(
