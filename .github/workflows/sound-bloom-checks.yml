@@ -2,6 +2,7 @@ name: SOUND BLOOM checks
 on:
   pull_request:
     paths:
+      - 'web/labs/shared/**'
       - 'web/labs/sound-bloom/**'
       - 'lib/pages/sound_bloom_page.dart'
       - 'lib/ui/features/sound_bloom/**'
