@@ -18,6 +18,7 @@ for (const platform of ['android', 'ios']) {
     await input.fill('確認用メモ');
     await page.keyboard.press('Escape');
     await expect(page.getByText('入力したメモを破棄しますか？', { exact: true })).toBeVisible();
+    await page.screenshot({ path: info.outputPath('discard-confirmation.png') });
     await page.getByRole('button', { name: '入力を続ける', exact: true }).click();
     await expect(input).toHaveValue('確認用メモ');
     await page.getByRole('button', { name: 'キャンセル', exact: true }).click();
@@ -30,7 +31,7 @@ for (const platform of ['android', 'ios']) {
     await expect(page.getByRole('button', { name: '保存中…', exact: true })).toBeDisabled();
     await page.keyboard.press('Escape');
     await expect(input).toHaveValue('失敗');
-    await expect(page.getByText('保存できませんでした。通信状態を確認して、もう一度お試しください。', { exact: true })).toBeVisible();
+    await expect(page.getByRole('alertdialog').getByText('保存できませんでした。通信状態を確認して、もう一度お試しください。', { exact: true })).toBeVisible();
     await expect(input).toHaveValue('失敗');
     await input.fill('再試行したメモ');
     // Flutter canvas animations are not DOM animations. Confirm semantic state,
