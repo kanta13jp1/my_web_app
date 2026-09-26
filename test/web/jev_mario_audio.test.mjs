@@ -72,3 +72,8 @@ test('late animation frames resume music without replaying a burst of overdue be
  const fresh=c.oscillators.filter(o=>!o.stopped);assert.ok(fresh.every(o=>o.started<=a.next));
  a.stop();assert.equal(a.nodes.size,0);
 });
+
+
+test('fireworks synthesize a bounded burst and mute releases it',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);let bursts=0;a.noise=(_t,duration)=>{bursts++;assert.equal(duration,.16);};a.effect('firework');assert.equal(bursts,1);assert.equal(c.oscillators.length,1);await a.enable(false);assert.equal(a.nodes.size,0);
+});
