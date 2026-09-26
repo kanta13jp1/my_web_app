@@ -33647,3 +33647,10 @@ Added independent pixel-art poses for walking/running, facing, jumping/falling a
 
 - Issue #5495: 最新のJev単独ログ（右→右→ダッシュ、frame218/x308.26で死亡）を再現。予測値を追加する入力を明示選択し、基準入力とJSONで区別。認証・同意・利用枠は維持。
 - 回避補助はダッシュを保持し、アイテム出現動作とブレーキSEを改善。API性能とシミュレーションは区別してクラウドで検証。
+
+
+## 2026-09-27: Inbox draft protection and adaptive confirmation (PR #5544)
+
+- Preserve draft text when back, Escape, or the barrier dismisses Inbox; require explicit discard.
+- Keep pending saves open, preserve failed input, and allow retry. Use platform-adaptive discard actions without upgrading Flutter or claiming native Liquid Glass support.
+- Verify Android/iOS/Windows widget behavior and desktop/mobile Chromium flows through the existing cloud CI and visual-regression workflow. Production release remains subject to successful checks.

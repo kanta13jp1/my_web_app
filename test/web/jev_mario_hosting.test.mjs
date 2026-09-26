@@ -38,6 +38,11 @@ test('game documents and their dependency graph bypass old fresh caches and reva
   const cache = policy.headers.find(h => h.key.toLowerCase() === 'cache-control').value;
   assert.match(cache, /no-cache/);
   assert.match(cache, /must-revalidate/);
+  const sharedPolicy = hosting.headers.find(h => h.source === '/labs/shared/**');
+  assert.ok(sharedPolicy, 'shared dependencies also need to revalidate');
+  const sharedCache = sharedPolicy.headers.find(h => h.key.toLowerCase() === 'cache-control').value;
+  assert.match(sharedCache, /no-cache/);
+  assert.match(sharedCache, /must-revalidate/);
   const frame = read('lib/widgets/jev_mario_view_web.dart').match(/src = '([^']+)'/)[1];
   const doc = new URL(`web${frame}`, root);
   const revision = doc.searchParams.get('v');

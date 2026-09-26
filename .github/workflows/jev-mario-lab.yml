@@ -2,6 +2,7 @@ name: Jev Mario lab
 on:
   pull_request:
     paths:
+      - 'web/labs/shared/**'
       - 'web/jev-mario-lab/**'
       - 'web/labs/jev-mario/**'
       - 'lib/**/jev_mario*'
