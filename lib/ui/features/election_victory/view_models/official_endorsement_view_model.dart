@@ -54,7 +54,8 @@ class OfficialEndorsementViewModel extends ChangeNotifier {
           currentPrefecture.incumbentCount != nextPrefecture.incumbentCount ||
           currentPrefecture.newcomerCount != nextPrefecture.newcomerCount ||
           currentPrefecture.formerCount != nextPrefecture.formerCount ||
-          currentPrefecture.prefecturalCount != nextPrefecture.prefecturalCount ||
+          currentPrefecture.prefecturalCount !=
+              nextPrefecture.prefecturalCount ||
           currentPrefecture.municipalCount != nextPrefecture.municipalCount) {
         return false;
       }

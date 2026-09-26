@@ -116,8 +116,7 @@ void main() {
     expect(roundTrip.officialEndorsements.recommendationCount, 9);
   });
 
-  test('official endorsement prefecture defaults the assembly breakdown to '
-      'zero when the source snapshot predates it', () {
+  test('defaults assembly breakdown to zero for pre-schema snapshots', () {
     final prefecture = OfficialEndorsementPrefecture.fromJson(
       <String, dynamic>{
         'prefecture': '東京',
