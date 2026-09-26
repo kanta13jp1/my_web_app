@@ -470,6 +470,18 @@ test('2-3 selection, bridge/fish scenes, reset and final campaign result',async(
  await page.waitForTimeout(400);await lab.locator('#presentation').screenshot({path:info.outputPath('world23-bridge.png')});
  await lab.locator('#restart-local').click();await expect(lab.locator('#stage')).toHaveValue('7');await expect(lab.locator('#progress')).toContainText('2-3をリセット');
  await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
- await expect(lab.locator('#status')).toContainText('2-3クリア！ 全ステージ終了');await page.waitForTimeout(3200);await expect(lab.locator('#stage')).toHaveValue('7');
+ await expect(lab.locator('#status')).toContainText('2-3クリア！ 次のステージへ進みます');await expect(lab.locator('#stage')).toHaveValue('8',{timeout:7000});
  const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:2,stage:3,course_id:7,phase:'won'});
+});
+
+
+test('2-4 boss scene, axe rescue, final result and reset',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('8');await expect(lab.locator('#restart-local')).toHaveText('2-4を最初から');await lab.locator('#watch-manual').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=184*16;this.p.y=176;this.camera=180*16;original.call(this);};});
+ await page.waitForTimeout(150);await lab.locator('#presentation').screenshot({path:info.outputPath('world24-boss.png')});
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=196*16;this.p.y=176;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('2-4クリア！ 全ステージ終了');await page.waitForTimeout(3200);await expect(lab.locator('#stage')).toHaveValue('8');await lab.locator('#presentation').screenshot({path:info.outputPath('world24-rescue.png')});
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:2,stage:4,course_id:8,phase:'won'});
+ await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('2-4をリセット');
 });
