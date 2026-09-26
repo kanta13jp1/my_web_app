@@ -24,7 +24,7 @@ test('campaign advances only after clear presentation and preserves earned state
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,3);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,4);
  g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,5);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
+ g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,8);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
 });
 test('sky course has elevated platforms, gaps, collectibles and a distinct finish',()=>{
  const g=new World11(3);assert.equal(g.telemetry().stage,3);assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);
@@ -84,9 +84,27 @@ test('2-3 bridge gaps, coins and leaping fish have deterministic motion and a te
  for(let i=0;i<90;i++)g.step();assert.equal(fish.dead,1,'fish falls below the screen and expires');
  const hit=new World11(7);hit.enemies=[{x:32,y:192,w:14,h:14,vx:0,vy:0,kind:'leaping-fish',launched:true,dead:0}];hit.step();assert.equal(hit.phase,'dead');
  const fall=new World11(7);fall.p.x=49*16;fall.p.y=251;fall.step();assert.equal(fall.phase,'dead');assert.equal(fall.advanceStage(),false);
- const win=new World11(7);win.p.x=198*16;win.p.y=160;win.step();assert.equal(win.phase,'won');for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.advanceStage(),false);win.reset();assert.equal(win.stage,7);assert.equal(win.enemies[0].launched,false);assert.equal(win.p.x,32);
+ const win=new World11(7);win.p.x=198*16;win.p.y=160;win.step();assert.equal(win.phase,'won');for(let i=0;i<180;i++)win.presentationStep();assert.equal(win.advanceStage(),true);assert.equal(win.stage,8);win.stage=7;win.reset();assert.equal(win.stage,7);assert.equal(win.enemies[0].launched,false);assert.equal(win.p.x,32);
 });
 
 test('2-3 prediction keeps leaping fish motion and live state separate',async()=>{
  const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(7);g.p.x=400;g.p.y=176;g.camera=304;const before=JSON.stringify(g.snapshot());const a=advance(clone(g),'right',8),b=advance(clone(g),'right',8);assert.equal(JSON.stringify(a.snapshot()),JSON.stringify(b.snapshot()));assert.ok(a.enemies[0].y<260);assert.equal(JSON.stringify(g.snapshot()),before);
+});
+
+
+test('2-4 boss patrol, jump, flames, collision and fireball defeat',()=>{
+ const g=new World11(8);assert.equal(g.room,'castle');assert.equal(g.tile(32,13),undefined);assert.equal(g.snapshot().label,'2-4');assert.equal(g.boss.hp,5);
+ g.camera=180*16;g.p.x=181*16;g.p.y=176;g.invincible=500;g.step();assert.equal(g.bossFlames.length,1);assert.ok(g.boss.x<189*16);g.boss.active=139;g.boss.grounded=true;g.step();assert.ok(g.boss.vy<0);
+ const hit=new World11(8);hit.camera=180*16;hit.p.x=hit.boss.x;hit.p.y=hit.boss.y;hit.step();assert.equal(hit.phase,'dead');
+ const flame=new World11(8);flame.bossFlames=[{x:33,y:192,w:14,h:8,vx:-1,vy:0}];flame.step();assert.equal(flame.phase,'dead');
+ const shot=new World11(8);shot.camera=180*16;shot.p.x=181*16;shot.p.y=176;shot.boss.hp=1;shot.shots=[{x:shot.boss.x,y:shot.boss.y+8,w:4,h:4,vx:3,vy:0}];shot.step();assert.equal(shot.boss.dead,true);assert.equal(shot.phase,'playing','defeating boss still requires axe');
+});
+
+test('2-4 axe collapses bridge, rescues Toad and resets all boss state',()=>{
+ const g=new World11(8);g.p.x=196*16;g.p.y=176;g.step();assert.equal(g.phase,'won');assert.equal(g.bossFlames.length,0);for(let i=0;i<180;i++)g.presentationStep();assert.equal(g.tile(180,12),undefined);assert.equal(g.boss.dead,true);assert.equal(g.rescued,true);assert.equal(g.advanceStage(),false);assert.ok(g.drainSounds().includes('life'));
+ g.reset();assert.equal(g.boss.hp,5);assert.equal(g.boss.dead,false);assert.equal(g.rescued,false);assert.equal(g.tile(180,12),'bridge');g.stage=1;g.reset();assert.equal(g.boss,null);assert.deepEqual(g.bossFlames,[]);
+});
+
+test('boss predictions and projectiles do not mutate live encounter',async()=>{
+ const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const g=new World11(8);g.camera=180*16;g.p.x=181*16;g.p.y=176;const before=JSON.stringify(g.snapshot());const future=advance(clone(g),'noop',8);assert.ok(future.boss.active>0);assert.ok(future.bossFlames.length);assert.equal(JSON.stringify(g.snapshot()),before);
 });
