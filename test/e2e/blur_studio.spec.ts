@@ -10,10 +10,13 @@ test('adjust background, disable effect, and recover with reset', async ({ page 
   await page.goto(route);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('やわらかく');
   const slider = page.getByLabel('ぼかしの強さ');
+  await expect(slider).toBeEnabled();
+  const initialCard = await page.locator('.soft').screenshot();
   await slider.focus();
   await slider.press('Home');
   await slider.press('ArrowRight');
   await expect(page.locator('#status')).toHaveText('Apricot · 1 px');
+  expect(Buffer.compare(initialCard, await page.locator('.soft').screenshot())).not.toBe(0);
   await page.getByLabel('色の組み合わせ').selectOption('iris');
   await expect(page.locator('#status')).toHaveText('Iris · 1 px');
   await page.getByLabel('ぼかし効果を使う').uncheck();
@@ -32,7 +35,7 @@ test('static comparison remains readable without JavaScript', async ({ browser }
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await page.goto(new URL(route, info.project.use.baseURL as string).href);
-  await expect(page.getByText('JavaScriptが無効のため', { exact: false })).toBeVisible();
+  await expect(page.getByText('操作用のJavaScriptが読み込まれていないため', { exact: false })).toBeVisible();
   await expect(page.getByLabel('ぼかしの強さ')).toBeDisabled();
   await expect(page.getByText('余白の時間', { exact: true })).toHaveCount(2);
   await page.screenshot({ path: info.outputPath('no-javascript.png'), fullPage: true });

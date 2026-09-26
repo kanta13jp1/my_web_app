@@ -21,7 +21,14 @@ function render() {
     : `${name} · ${enabled.checked ? `${radius} px` : 'ぼかしなし'}`;
 }
 form.addEventListener('input', render);
-form.addEventListener('reset', () => queueMicrotask(render));
+form.addEventListener('reset', event => {
+  event.preventDefault();
+  blur.value = blur.defaultValue;
+  palette.value = 'apricot';
+  enabled.checked = enabled.defaultChecked;
+  render();
+});
 reduction.addEventListener('change', render);
 document.querySelector('#settings').disabled = false;
 render();
+document.querySelector('#fallback').hidden = true;
