@@ -255,7 +255,7 @@ function frame(now) {
   if(!transition&&isRecreation()&&world.phase!=='playing'&&world.presentation>=world.presentationLength()){finalizeStageResult();recording.stop('ゲーム終了で録画を停止しました');}
   if(gameRunning&&isRecreation()&&!student.active&&!loop.active){const k=world.input;effectiveAction=k.left?'left':k.right?(k.run?'right_run':'right')+(k.jump?'_jump':''):k.jump?'jump':k.down?'crouch':'noop';}
   drawPresentation(presentationContext,canvas,{world,decision:{...decision,action:effectiveAction},running:gameRunning,recording:recording.active,fixture:!isGame()});
-  const summary=`${decision.source||'手動 / 待機'} · ${world.phase==='won'?'WORLD CLEAR':world.phase==='dead'?'TRY AGAIN':gameRunning?'LIVE':'PAUSED'} · 操作 ${effectiveAction} · 判断 ${decision.count??0}`;
+  const summary=`${decision.source||'手動 / 待機'} · ${world.phase==='won'?'WORLD CLEAR':world.phase==='dead'?(world.lives>0?'LIFE LOST':'GAME OVER'):gameRunning?'LIVE':'PAUSED'} · 操作 ${effectiveAction} · 判断 ${decision.count??0}`;
   if($('decision-summary').textContent!==summary)$('decision-summary').textContent=summary;
   requestAnimationFrame(frame);
 }

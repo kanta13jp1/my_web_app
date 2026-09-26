@@ -13,7 +13,7 @@ export function drawPresentation(ctx,screen,{world,decision={},running=false,rec
  const text=(s,x,y,size=14,color='#9da8af',font='system-ui')=>{ctx.fillStyle=color;ctx.font=`${size}px ${font}`;ctx.fillText(String(s),x,y);};
  const line=y=>{ctx.fillStyle='#263038';ctx.fillRect(866,y,392,1);};
  text(d.source||'Mario Decision Lab',20,29,22,'#edf2f5');
- const phase=fixture?'FIXED STATE':world.phase==='won'?'WORLD CLEAR':world.phase==='dead'?'TRY AGAIN':running?'LIVE GAMEPLAY':'PAUSED';
+ const phase=fixture?'FIXED STATE':world.phase==='won'?'WORLD CLEAR':world.phase==='dead'?(world.lives>0?'LIFE LOST':'GAME OVER'):running?'LIVE GAMEPLAY':'PAUSED';
  text((recording?'● RECORDING · ':'')+phase,740,28,12,world.phase==='won'?'#a4e5bc':'#b4c5c9');
  ctx.fillStyle='#263038';ctx.fillRect(16,45,1248,1);
  ctx.fillStyle='#121a1e';ctx.fillRect(16,57,830,648);
@@ -35,7 +35,7 @@ export function drawPresentation(ctx,screen,{world,decision={},running=false,rec
  const p=world.p;const pose=p.crouching?'crouching':p.grounded?(Math.abs(p.vx)>.1?'moving':'standing'):p.vy<0?'jumping':'falling';
  text(`Position  ${Math.round(p.x)}, ${Math.round(p.y)}`,868,566,14,'#b2bdc4','monospace');
  text(`Motion    ${pose} ${(p.facing??1)<0?'left':'right'}`,868,589,14,'#b2bdc4','monospace');
- text(`Time      ${world.time}    Score ${world.score}`,868,612,14,'#b2bdc4','monospace');
+ text(`Time ${world.time}  Score ${world.score}  Lives ${world.lives}`,868,612,14,'#b2bdc4','monospace');
  text(`Model accepted ${d.accepted??0} / Search changed ${d.overrides??0}`,868,642,13);
  text('Independent recreation · real measurements',868,676,12);
  text(d.note||'No DeepSeek-trained weights loaded',868,696,12);
