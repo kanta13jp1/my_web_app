@@ -89,6 +89,8 @@ export interface OfficialEndorsementPrefectureSnapshot {
   incumbentCount: number;
   newcomerCount: number;
   formerCount: number;
+  prefecturalCount: number;
+  municipalCount: number;
 }
 
 export interface OfficialEndorsementSnapshot {
@@ -101,6 +103,8 @@ export interface OfficialEndorsementSnapshot {
   formerCount: number;
   recommendationCount: number;
   prefectureCount: number;
+  prefecturalCount: number;
+  municipalCount: number;
   prefectures: OfficialEndorsementPrefectureSnapshot[];
 }
 
@@ -304,6 +308,8 @@ export function normalizeOfficialEndorsementSnapshot(
         incumbentCount: asNumber(row.incumbentCount),
         newcomerCount: asNumber(row.newcomerCount),
         formerCount: asNumber(row.formerCount),
+        prefecturalCount: asNumber(row.prefecturalCount),
+        municipalCount: asNumber(row.municipalCount),
       };
     }).filter((row) => row.prefecture !== "")
     .sort((left, right) =>
@@ -319,6 +325,8 @@ export function normalizeOfficialEndorsementSnapshot(
     formerCount: asNumber(summary.formerCount),
     recommendationCount: asNumber(recommendations.totalCount),
     prefectureCount: asNumber(summary.prefectureCount),
+    prefecturalCount: asNumber(summary.prefecturalCount),
+    municipalCount: asNumber(summary.municipalCount),
     prefectures,
   };
   const breakdown = snapshot.incumbentCount + snapshot.newcomerCount +
@@ -327,7 +335,8 @@ export function normalizeOfficialEndorsementSnapshot(
     !snapshot.sourceUrl || !/^\d{4}-\d{2}-\d{2}$/.test(snapshot.sourceAsOf) ||
     !/^[a-f0-9]{64}$/i.test(snapshot.sourceDocumentSha256) ||
     snapshot.totalCount < 30 || breakdown !== snapshot.totalCount ||
-    snapshot.prefectureCount !== snapshot.prefectures.length
+    snapshot.prefectureCount !== snapshot.prefectures.length ||
+    snapshot.prefecturalCount + snapshot.municipalCount > snapshot.totalCount
   ) {
     throw new Error("official endorsement snapshot failed validation");
   }
@@ -338,6 +347,11 @@ export function normalizeOfficialEndorsementSnapshot(
     ) {
       throw new Error(
         `official endorsement prefecture breakdown invalid: ${row.prefecture}`,
+      );
+    }
+    if (row.prefecturalCount + row.municipalCount > row.totalCount) {
+      throw new Error(
+        `official endorsement prefecture assembly breakdown invalid: ${row.prefecture}`,
       );
     }
   }
@@ -355,6 +369,8 @@ export function emptyOfficialEndorsementSnapshot(): OfficialEndorsementSnapshot 
     formerCount: 0,
     recommendationCount: 0,
     prefectureCount: 0,
+    prefecturalCount: 0,
+    municipalCount: 0,
     prefectures: [],
   };
 }
@@ -433,6 +449,8 @@ export function fallbackOfficialEndorsementSnapshot(): OfficialEndorsementSnapsh
     formerCount: 9,
     recommendationCount: 9,
     prefectureCount: 33,
+    prefecturalCount: 0,
+    municipalCount: 0,
     prefectures: [],
   };
 }
@@ -587,6 +605,8 @@ export function canonicalizeElectionIntelligenceSnapshot(
         incumbentCount: asNumber(row.incumbentCount),
         newcomerCount: asNumber(row.newcomerCount),
         formerCount: asNumber(row.formerCount),
+        prefecturalCount: asNumber(row.prefecturalCount),
+        municipalCount: asNumber(row.municipalCount),
       };
     }).filter((row) => row.prefecture !== "").sort((left, right) =>
       left.prefecture.localeCompare(right.prefecture, "ja")
@@ -601,6 +621,8 @@ export function canonicalizeElectionIntelligenceSnapshot(
       formerCount: asNumber(rawEndorsements.formerCount),
       recommendationCount: asNumber(rawEndorsements.recommendationCount),
       prefectureCount: asNumber(rawEndorsements.prefectureCount),
+      prefecturalCount: asNumber(rawEndorsements.prefecturalCount),
+      municipalCount: asNumber(rawEndorsements.municipalCount),
       prefectures,
     };
   }
