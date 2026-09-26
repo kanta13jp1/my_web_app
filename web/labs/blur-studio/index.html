@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="図形から柔らかな背景へ。文字をぼかさず、背景のぼかしを比較する小さなデザイン実験室。">
+  <title>Blur Studio — 背景を、やわらかく。</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+  <main>
+    <header class="masthead"><a href="/">自分株式会社</a><span>DESIGN LAB / 01</span></header>
+    <section class="intro" aria-labelledby="title">
+      <p class="eyebrow">BLUR STUDIO</p>
+      <h1 id="title">背景を、<br><em>やわらかく。</em></h1>
+      <p class="description">輪郭をほどくと、色が空気になる。<br>図形とぼかしを並べて、心地よい背景を探そう。</p>
+    </section>
+    <section class="workspace" aria-label="ぼかしの比較と調整">
+      <div class="comparison">
+        <figure><figcaption><span>01 / SHAPES</span><strong>図形のまま</strong></figcaption>
+          <div class="card sharp"><div class="art" aria-hidden="true"><i></i><i></i><i></i></div><div class="card-content"><span class="card-kicker">A LITTLE PAUSE</span><p class="card-title">余白の時間</p><p class="card-detail">深呼吸して、ひとつずつ。</p><span class="card-foot">MAKE ROOM FOR A MOMENT</span></div></div>
+        </figure>
+        <figure><figcaption><span>02 / ATMOSPHERE</span><strong>ぼかした背景</strong></figcaption>
+          <div class="card soft"><div class="art" aria-hidden="true"><i></i><i></i><i></i></div><div class="card-content"><span class="card-kicker">A LITTLE PAUSE</span><p class="card-title">余白の時間</p><p class="card-detail">深呼吸して、ひとつずつ。</p><span class="card-foot">MAKE ROOM FOR A MOMENT</span></div></div>
+        </figure>
+      </div>
+      <form class="controls" aria-label="背景の設定">
+        <fieldset disabled id="settings">
+          <legend>あなただけの空気感</legend>
+          <label class="range-label" for="blur">ぼかしの強さ <output id="amount" for="blur">28 px</output></label>
+          <input id="blur" type="range" min="0" max="48" value="28" step="1" aria-describedby="range-help">
+          <p id="range-help" class="hint">0で輪郭を残す、48でふんわり。</p>
+          <label for="palette">色の組み合わせ</label>
+          <select id="palette"><option value="apricot">Apricot / あたたかな午後</option><option value="iris">Iris / 静かな夕暮れ</option><option value="mint">Mint / 朝の深呼吸</option></select>
+          <label class="toggle"><input id="enabled" type="checkbox" checked>ぼかし効果を使う</label>
+          <button type="reset">最初の設定に戻す <span aria-hidden="true">↗</span></button>
+        </fieldset>
+        <p class="status" role="status" id="status">Apricot · 28 px</p>
+        <noscript><p>JavaScriptが無効のため、初期設定の比較を表示しています。調整するにはJavaScriptを有効にしてください。</p></noscript>
+      </form>
+    </section>
+    <section class="notes" aria-label="デザインのポイント"><p><b>01</b><strong>文字は、くっきり。</strong><span>ぼかすのは装飾だけ。読みたい情報は別のレイヤーに。</span></p><p><b>02</b><strong>動かさず、伝える。</strong><span>自動アニメーションなし。自分のペースで比較できます。</span></p><p><b>03</b><strong>引き算も、選べる。</strong><span>効果を切って輪郭へ戻す。好みに合わせて調整できます。</span></p></section>
+    <footer><p>図形から背景へ。独自実装によるデザイン実験。</p><a href="https://x.com/uiux_hamad/status/2097266353212207111" target="_blank" rel="noopener noreferrer">着想元：Hamad Tanveer (@uiux_hamad) の投稿 ↗</a></footer>
+  </main>
+</body>
+</html>
