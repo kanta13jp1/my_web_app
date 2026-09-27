@@ -32,10 +32,19 @@ class FakeIntegrationRegistryStore implements IntegrationRegistryStore {
     userId: string,
     metadata: Record<string, unknown>,
   ): Promise<IntegrationRegistryRow> {
+    const keyField = source === INTEGRATION_REGISTRY_SOURCES.system
+      ? "system_key"
+      : source === INTEGRATION_REGISTRY_SOURCES.interface
+      ? "interface_key"
+      : "mapping_key";
+    const version = this.rows.filter((item) =>
+      item.source === source && item.metadata.user_id === userId &&
+      item.metadata[keyField] === metadata[keyField]
+    ).reduce((max, item) => Math.max(max, Number(item.metadata.version)), 0) + 1;
     const row: IntegrationRegistryRow = {
       id: `row-${this.nextId++}`,
       source,
-      metadata: { ...metadata, user_id: userId },
+      metadata: { ...metadata, user_id: userId, version },
       created_at: `2026-07-23T00:00:0${this.nextId}Z`,
     };
     this.rows.push(row);
@@ -337,4 +346,27 @@ Deno.test("registry store retains history beyond 5000 rows and short pages", asy
   assertEquals(result[0].id, "00000000");
   assertEquals(result[5001].id, "00005001");
   assertEquals(pages, 38);
+});
+
+Deno.test("registry store uses only the atomic RPC and preserves server errors", async () => {
+  const { createSupabaseIntegrationRegistryStore } = await import("./integration_registry.ts");
+  const calls: unknown[] = [];
+  const admin = {
+    rpc(name: string, args: unknown) {
+      calls.push([name, args]);
+      return { single: () => Promise.resolve({ data: null, error: { message: "migration required" } }) };
+    },
+    from() { throw new Error("Unsafe direct-table fallback"); },
+  } as unknown as Parameters<typeof createSupabaseIntegrationRegistryStore>[0];
+  let message = "";
+  try {
+    await createSupabaseIntegrationRegistryStore(admin).insert(
+      INTEGRATION_REGISTRY_SOURCES.system, "verified-owner", { system_key: "billing" },
+    );
+  } catch (error) { message = (error as Error).message; }
+  assertEquals(message, "migration required");
+  assertEquals(calls, [["insert_integration_registry_version", {
+    p_source: INTEGRATION_REGISTRY_SOURCES.system,
+    p_user_id: "verified-owner", p_metadata: { system_key: "billing" },
+  }]]);
 });

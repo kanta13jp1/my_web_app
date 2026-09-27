@@ -144,16 +144,6 @@ export function buildIntegrationRegistrySnapshot(
   };
 }
 
-function nextVersion(
-  items: Record<string, unknown>[],
-  keyField: string,
-  key: string,
-): number {
-  return items
-    .filter((item) => text(item[keyField]) === key)
-    .reduce((max, item) => Math.max(max, integer(item.version)), 0) + 1;
-}
-
 function sanitizeFields(value: unknown): Record<string, unknown>[] {
   if (!Array.isArray(value)) return [];
   return value.map((raw) => {
@@ -309,13 +299,12 @@ export function createSupabaseIntegrationRegistryStore(
       }
     },
     async insert(source, userId, metadata) {
-      const { data, error } = await admin.from("hub_data")
-        .insert({
-          source,
-          metadata: { ...metadata, user_id: userId },
-        })
-        .select("id, source, metadata, created_at")
-        .single();
+      // The database allocates the version while holding a transaction lock.
+      // Never fall back to a direct insert when the RPC is unavailable.
+      const { data, error } = await admin.rpc(
+        "insert_integration_registry_version",
+        { p_source: source, p_user_id: userId, p_metadata: metadata },
+      ).single();
       if (error) throw new Error(error.message);
       return data as IntegrationRegistryRow;
     },
@@ -347,11 +336,6 @@ export async function handleIntegrationRegistryAction(
       if (name === "" || systemKey === "") {
         return json({ error: "name and system_key are required" }, 400);
       }
-      const version = nextVersion(
-        snapshot.system_versions,
-        "system_key",
-        systemKey,
-      );
       const row = await deps.store.insert(
         INTEGRATION_REGISTRY_SOURCES.system,
         deps.userId,
@@ -361,7 +345,6 @@ export async function handleIntegrationRegistryAction(
           description: boundedText(deps.body.description, 1_000),
           owner: boundedText(deps.body.owner, 120),
           status: boundedText(deps.body.status, 30) || "active",
-          version,
           published_at: new Date().toISOString(),
         },
       );
@@ -402,11 +385,6 @@ export async function handleIntegrationRegistryAction(
         }, 400);
       }
       const fields = sanitizeFields(deps.body.fields);
-      const version = nextVersion(
-        snapshot.interface_versions,
-        "interface_key",
-        interfaceKey,
-      );
       const row = await deps.store.insert(
         INTEGRATION_REGISTRY_SOURCES.interface,
         deps.userId,
@@ -421,7 +399,6 @@ export async function handleIntegrationRegistryAction(
           description: boundedText(deps.body.description, 1_000),
           status: boundedText(deps.body.status, 30) || "active",
           fields,
-          version,
           published_at: new Date().toISOString(),
         },
       );
@@ -462,11 +439,6 @@ export async function handleIntegrationRegistryAction(
           error: "source_system_key and target_system_key must exist",
         }, 409);
       }
-      const version = nextVersion(
-        snapshot.mapping_versions,
-        "mapping_key",
-        mappingKey,
-      );
       const row = await deps.store.insert(
         INTEGRATION_REGISTRY_SOURCES.mapping,
         deps.userId,
@@ -478,7 +450,6 @@ export async function handleIntegrationRegistryAction(
           description: boundedText(deps.body.description, 1_000),
           entries,
           entry_count: entries.length,
-          version,
           published_at: new Date().toISOString(),
         },
       );
