@@ -110,10 +110,16 @@ class _PlatformReleaseChecklistPageState
   }
 
   Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: _checklist.toShareText()));
-    if (mounted) {
+    try {
+      await Clipboard.setData(ClipboardData(text: _checklist.toShareText()));
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('確認内容をクリップボードにコピーしました')),
+      );
+    } on Exception {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('クリップボードへコピーできませんでした')),
       );
     }
   }
@@ -124,7 +130,7 @@ class _PlatformReleaseChecklistPageState
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('端末内の確認内容を空にしました'),
+          content: const Text('画面の入力を空にしました'),
           action: SnackBarAction(label: '元に戻す', onPressed: _restore),
         ),
       );
