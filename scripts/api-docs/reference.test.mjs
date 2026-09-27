@@ -28,10 +28,10 @@ test('stale HTML fails, regenerating recovers, and changed source changes proven
 
 test('removed example or parameter description fails with a useful message', () => {
   const noExample = structuredClone(doclets);
-  delete noExample.find((d) => d.kind === 'function' && d.name === 'downloadJson').examples;
+  delete noExample.find((d) => d.kind === 'function' && d.name === 'downloadJson' && !d.undocumented).examples;
   assert.throws(() => documentedFunction(noExample), /Missing/);
   const noParam = structuredClone(doclets);
-  delete noParam.find((d) => d.kind === 'function' && d.name === 'downloadJson').params[0].description;
+  delete noParam.find((d) => d.kind === 'function' && d.name === 'downloadJson' && !d.undocumented).params[0].description;
   assert.throws(() => documentedFunction(noParam), /Parameter/);
 });
 
@@ -46,7 +46,7 @@ test('actual renamed source parameter rejects stale JSDoc', () => {
 
 test('comment markup is escaped instead of becoming executable HTML', () => {
   const modified = structuredClone(doclets);
-  modified.find((d) => d.kind === 'function' && d.name === 'downloadJson').description = '<script>alert(1)</script>';
+  modified.find((d) => d.kind === 'function' && d.name === 'downloadJson' && !d.undocumented).description = '<script>alert(1)</script>';
   const html = renderReference(modified, source);
   assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
   assert.ok(!html.includes('<script>'));
