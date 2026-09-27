@@ -10,6 +10,11 @@ test('LightGBM worker plays without consent or API; records assistance and stops
  if(info.project.name==='desktop')await expect(lab.locator('#status')).toContainText('1-1クリア！',{timeout:60000});
  await screenshot(page,info.outputPath('world11-student.png'));await lab.locator('#stop').click();
  const before=await lab.locator('#progress').textContent();await page.waitForTimeout(350);await expect(lab.locator('#progress')).toHaveText(before!);
+ if(info.project.name==='desktop'){
+  const pending=page.waitForEvent('download');await lab.locator('#export').click();const d=await pending;await d.saveAs(info.outputPath('world11-student.json'));
+  const stream=await d.createReadStream();let raw='';for await(const b of stream!)raw+=b.toString();const data=JSON.parse(raw);
+  const clear=data.stage_results.find((r:any)=>r.course_id===1&&r.phase==='won');expect(clear).toBeTruthy();expect(Object.values(clear.items_collected).reduce((n:number,v:any)=>n+Number(v),0)).toBeGreaterThan(0);
+ }
  await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');await expect(lab.locator('#consent')).not.toBeChecked();expect(errors).toEqual([]);
 });
 test('keyboard and touch crouch recover; walk and jump poses render',async({page},info)=>{
@@ -25,7 +30,7 @@ test('keyboard and touch crouch recover; walk and jump poses render',async({page
  await page.keyboard.up('Space');await page.keyboard.up('ArrowRight');
  await lab.locator('#restart-local').click();await lab.locator('#play-local').click();
  const down=lab.getByRole('button',{name:'しゃがむ・土管に入る'});
- const box=await down.boundingBox();expect(box).not.toBeNull();
+ await down.scrollIntoViewIfNeeded();const box=await down.boundingBox();expect(box).not.toBeNull();
  await page.mouse.move(box!.x+box!.width/2,box!.y+box!.height/2);await page.mouse.down();
  await expect(lab.locator('#posture')).toContainText('しゃがみ');
  await page.mouse.up();await expect(lab.locator('#posture')).toContainText('待機');
@@ -726,7 +731,7 @@ test('run history survives reload, sharing errors recover and ranking renders sa
  await lab.locator('#rank-course').selectOption('17');await lab.locator('#ranking-load').click();await expect(lab.locator('#ranking-rows')).toContainText('Player-test');await expect(lab.locator('#ranking-rows')).toContainText('15.0秒');await lab.locator('#ranking-rows').locator('..').screenshot({path:info.outputPath('history-ranking.png')});await lab.locator('#rank-course').locator('..').screenshot({path:info.outputPath('history-ranking-filters.png')});
 });
 
-test('seven-part audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
+test('eight-part audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
  const result=await frame.evaluate(async()=>{const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const all:number[]=[],metrics:any[]=[];
   for(const room of ['overworld','underground','underwater','castle']){
@@ -775,4 +780,15 @@ test('local retry experience survives reload and can be cleared; Luigi is select
  await page.reload();const lab=page.frameLocator('iframe');await expect(lab.locator('#retry-status')).toContainText('1か所');
  await lab.locator('#character').selectOption('luigi');await lab.locator('#watch-manual').click();await lab.locator('#stop').click();await lab.locator('#presentation').screenshot({path:info.outputPath('luigi-retry.png')});
  await lab.locator('#clear-retry').click();await expect(lab.locator('#retry-status')).toContainText('0か所');await page.reload();await expect(lab.locator('#retry-status')).toContainText('0か所');expect(errors).toEqual([]);
+});
+
+
+test('LightGBM worker completes 2-2 and advances to 2-3 without going offscreen',async({page},info)=>{
+ test.setTimeout(120000);
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#stage').selectOption('6');await lab.locator('#watch-student').click();
+ await expect(lab.locator('#status')).toContainText('2-2クリア！',{timeout:100000});
+ await lab.locator('#presentation').screenshot({path:info.outputPath('water-autoplay-clear.png')});
+ await expect(lab.locator('#stage')).toHaveValue('7',{timeout:15000});await lab.locator('#stop').click();
+ const download=page.waitForEvent('download');await lab.locator('#export').click();await(await download).saveAs(info.outputPath('water-autoplay.json'));
 });

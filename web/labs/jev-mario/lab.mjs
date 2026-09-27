@@ -86,7 +86,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopRecordi
 window.addEventListener('pagehide',()=>{stopRecording();if(recordUrl)URL.revokeObjectURL(recordUrl);});
 
 drawWorld(context, world);
-function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':isWater(world.stage)&&world.phase==='playing'?'泳ぐ':pose==='climb'?(world.p.climbing?'つるを登る':'旗を降りる'):pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
+function showPose(){const counts=world.pickups;const text=`このステージの取得: キノコ ${counts.mushroom} / フラワー ${counts.flower} / 1UP ${counts.life} / スター ${counts.star}`;if($('pickup-status').textContent!==text)$('pickup-status').textContent=text;const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':isWater(world.stage)&&world.phase==='playing'?'泳ぐ':pose==='climb'?(world.p.climbing?'つるを登る':'旗を降りる'):pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
 showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
