@@ -1,0 +1,441 @@
+{
+  "source": "cc39a8f34e5bc274d9c987aa51ead1bcd5af9b49",
+  "stage": 2,
+  "lane": "laya",
+  "mode": "raw",
+  "started_at": "2026-09-22T04:54:43.411Z",
+  "api_min_start_ms": 500,
+  "max_api_calls": 60,
+  "model_input": "compact-v1: same telemetry with binary map and short instructions; no new features",
+  "forecast": "Predict current held input for previous solve age, rounded/clamped to1..12frames",
+  "timing": "60Hz wall-clock simulation continues during worker search and any API wait; Node CPU, no browser/rendering",
+  "shieldChanges": 0,
+  "applyShieldChanges": 0,
+  "shield": "30-frame exact-simulator death check every6frames AND at worker-result application; separate from model and worker search",
+  "clear": false,
+  "phase": "dead",
+  "x": 314.1000000000001,
+  "frames": 256,
+  "wall_ms": 4277.1418650000005,
+  "decisions": 43,
+  "accepted": 20,
+  "overrides": 0,
+  "fallbackDecisions": 23,
+  "releases": 0,
+  "apiCalls": 3,
+  "apiTrace": [
+    {
+      "frame": 0,
+      "received_frame": 136,
+      "choice": "right_run",
+      "probabilities": {
+        "noop": 0.0679,
+        "right": 0.0635,
+        "right_run": 0.4264,
+        "left": 0.0274,
+        "jump": 0.0646,
+        "right_jump": 0.219,
+        "right_run_jump": 0.1312
+      },
+      "model": "laya-rl-agent",
+      "uniform": false,
+      "usage": {
+        "input_tokens": 216,
+        "output_tokens": 0
+      },
+      "laya_input": {
+        "state_tokens": 94,
+        "state_budget": 390,
+        "truncated": false,
+        "encoded_tokens": 216,
+        "options": 7,
+        "question_and_options_tokens": 122,
+        "max_tokens": 512
+      },
+      "laya_compute_ms": 1099.440119999997,
+      "http_ms": 2277.447537
+    },
+    {
+      "frame": 137,
+      "received_frame": 203,
+      "choice": "right_run",
+      "probabilities": {
+        "noop": 0.0679,
+        "right": 0.0635,
+        "right_run": 0.4264,
+        "left": 0.0274,
+        "jump": 0.0646,
+        "right_jump": 0.219,
+        "right_run_jump": 0.1312
+      },
+      "model": "laya-rl-agent",
+      "uniform": false,
+      "usage": {
+        "input_tokens": 216,
+        "output_tokens": 0
+      },
+      "laya_input": {
+        "state_tokens": 94,
+        "state_budget": 390,
+        "truncated": false,
+        "encoded_tokens": 216,
+        "options": 7,
+        "question_and_options_tokens": 122,
+        "max_tokens": 512
+      },
+      "laya_compute_ms": 1101.77822,
+      "http_ms": 1106.9511080000002
+    },
+    {
+      "frame": 203,
+      "error": "cancelled",
+      "http_ms": 880.0741090000001
+    }
+  ],
+  "trace": [
+    {
+      "frame": 0,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.011060000000000514
+    },
+    {
+      "frame": 6,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.01581999999999084
+    },
+    {
+      "frame": 12,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.021691000000004124
+    },
+    {
+      "frame": 18,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.008135999999979049
+    },
+    {
+      "frame": 24,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002223999999955595
+    },
+    {
+      "frame": 30,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0016530000000329892
+    },
+    {
+      "frame": 36,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0014130000000704968
+    },
+    {
+      "frame": 42,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0016030000000455402
+    },
+    {
+      "frame": 48,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0020839999999680003
+    },
+    {
+      "frame": 54,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0013319999999339416
+    },
+    {
+      "frame": 60,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0019640000000435975
+    },
+    {
+      "frame": 66,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0014419999999972788
+    },
+    {
+      "frame": 72,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0012830000000576547
+    },
+    {
+      "frame": 78,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.001402000000098269
+    },
+    {
+      "frame": 84,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0014730000000326982
+    },
+    {
+      "frame": 90,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0014430000001084409
+    },
+    {
+      "frame": 96,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0015330000001085864
+    },
+    {
+      "frame": 102,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002173999999968146
+    },
+    {
+      "frame": 108,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0013329999999314168
+    },
+    {
+      "frame": 114,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.001672999999982494
+    },
+    {
+      "frame": 120,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0014429999998810672
+    },
+    {
+      "frame": 126,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0014030000002094312
+    },
+    {
+      "frame": 132,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.01886500000000524
+    },
+    {
+      "frame": 138,
+      "x": 32,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0018329999998059066
+    },
+    {
+      "frame": 144,
+      "x": 34.730000000000004,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0383719999999812
+    },
+    {
+      "frame": 150,
+      "x": 42.14,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.024065000000064174
+    },
+    {
+      "frame": 156,
+      "x": 54.22999999999999,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.004237999999986641
+    },
+    {
+      "frame": 162,
+      "x": 69.69999999999997,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.00413799999978437
+    },
+    {
+      "frame": 168,
+      "x": 85.29999999999994,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.004527999999936583
+    },
+    {
+      "frame": 174,
+      "x": 100.8999999999999,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.005630000000110158
+    },
+    {
+      "frame": 180,
+      "x": 116.49999999999987,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003627000000051339
+    },
+    {
+      "frame": 186,
+      "x": 132.09999999999985,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0035060000000157743
+    },
+    {
+      "frame": 192,
+      "x": 147.69999999999982,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0034459999997125124
+    },
+    {
+      "frame": 198,
+      "x": 163.29999999999978,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003196000000116328
+    },
+    {
+      "frame": 204,
+      "x": 178.89999999999975,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.002355000000079599
+    },
+    {
+      "frame": 210,
+      "x": 194.49999999999972,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003936999999950785
+    },
+    {
+      "frame": 216,
+      "x": 210.09999999999968,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003545999999914784
+    },
+    {
+      "frame": 222,
+      "x": 225.69999999999965,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0036869999998998537
+    },
+    {
+      "frame": 228,
+      "x": 241.2999999999996,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0036460000001170556
+    },
+    {
+      "frame": 234,
+      "x": 256.8999999999996,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003365999999914493
+    },
+    {
+      "frame": 240,
+      "x": 272.4999999999997,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003917000000001281
+    },
+    {
+      "frame": 246,
+      "x": 288.09999999999985,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003417000000808912
+    },
+    {
+      "frame": 252,
+      "x": 303.7,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003386999999747786
+    }
+  ]
+}

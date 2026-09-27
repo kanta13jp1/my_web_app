@@ -41,8 +41,19 @@ GROUPS: dict[str, tuple[str, ...]] = {
     "tiger": ("assets/data/tiger_*",),
 }
 
+# These exact Python suites are executed by Agent Skill Contract on every
+# matching PR. Keep unknown tests conservative: only this audited allowlist
+# can avoid Flutter; Dart tests and mixed application changes still run it.
+SKILL_CONTRACT_TESTS = (
+    "test/scripts/test_validate_agent_skills.py",
+    "test/scripts/test_agent_skill_cli_contract.py",
+    "test/scripts/test_design_ssot_contract.py",
+    "test/scripts/test_musubi_skill_scripts.py",
+    "test/scripts/test_youtube_skill_scripts.py",
+)
+
 IGNORED_PATTERNS: dict[str, tuple[str, ...]] = {
-    "flutter": ("assets/data/tiger_*",),
+    "flutter": ("assets/data/tiger_*", *SKILL_CONTRACT_TESTS),
     "web": ("assets/data/tiger_*",),
 }
 

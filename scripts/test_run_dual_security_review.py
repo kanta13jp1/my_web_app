@@ -217,7 +217,7 @@ class DualSecurityReviewTest(unittest.TestCase):
         self.assertEqual(len(requirements), 14)
         self.assertEqual(len(names), len(set(names)))
         versions = [(name, version) for name, version in requirements]
-        self.assertIn(("openai", "3.6.0"), versions)
+        self.assertIn(("openai", "3.14.1"), versions)
         self.assertNotRegex(
             lock,
             r"(?:>=|<=|~=|!=|(?<![=])>(?!=)|(?<![=])<(?!=))",

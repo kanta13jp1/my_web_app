@@ -1,3 +1,4 @@
+import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:my_web_app/widgets/asset_interest_history_card.dart';
 import 'package:my_web_app/services/asset_interest_repository.dart';
 import 'package:my_web_app/services/asset_pain_metric_service.dart';
@@ -71,6 +72,7 @@ import 'package:my_web_app/services/asset_salary_amount_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_salary_deposit_detector.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
+import 'package:my_web_app/services/asset_salary_reconciliation_service.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/models/daily_todo.dart';
@@ -7703,6 +7705,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // テスト注入 (debugInitialPayslip*) がある場合はフェッチで上書きしない。
     if (widget.debugInitialPayslipSalaryIncomes != null ||
         widget.debugInitialPayslipRows != null) {
+      _reconcileAndSaveSalaryIncomePlansIfPending();
       return;
     }
     final userId = _supabase.auth.currentUser?.id;
@@ -7740,6 +7743,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isLoadingPayslipFinance = false;
         _payslipIngestionMessage = null;
       });
+      _reconcileAndSaveSalaryIncomePlansIfPending();
     } catch (e) {
       debugPrint('Error loading payslip finance data: $e');
       if (!mounted) return;
@@ -10408,6 +10412,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
       }
     }
+    final currentCycleKey = _currentSalaryCycleKey();
+    for (final row in _payslipRows) {
+      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final amount =
+          ((row['net_amount'] ?? row['amount']) as num?)?.toDouble() ?? 0;
+      if (payDate != null && amount > 0) {
+        final cycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+          AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+            payDate,
+            salaryDay: _salaryDay,
+          ),
+        );
+        if (cycleKey == currentCycleKey) {
+          return true;
+        }
+      }
+    }
+    for (final row in _payslipSalaryIncomes) {
+      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final amount = (row['amount'] as num?)?.toDouble() ?? 0;
+      if (payDate != null && amount > 0) {
+        final cycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+          AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+            payDate,
+            salaryDay: _salaryDay,
+          ),
+        );
+        if (cycleKey == currentCycleKey) {
+          return true;
+        }
+      }
+    }
     return false;
   }
 
@@ -10423,15 +10459,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     List<AssetLiabilityIncomePlan> plans, {
     bool forceSalaryReceived = false,
   }) {
+    final reconciledWithPayslips = AssetSalaryReconciliationService.reconcile(
+      monthlyIncomePlans: plans,
+      payslipRows: _payslipRows,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      salaryDay: _salaryDay,
+      baseDate: _now,
+    );
+
     final shouldMarkSalaryReceived =
         forceSalaryReceived || _hasSalaryInflowInCurrentCycle();
 
     if (!shouldMarkSalaryReceived) {
-      return plans;
+      return reconciledWithPayslips;
     }
 
     return [
-      for (final plan in plans)
+      for (final plan in reconciledWithPayslips)
         if (_isSalaryIncomePlan(plan) && !plan.received)
           AssetLiabilityIncomePlan(
             id: plan.id,
@@ -10453,7 +10497,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     if (original.length != reconciled.length) return true;
     for (var i = 0; i < original.length; i++) {
-      if (original[i].received != reconciled[i].received) return true;
+      if (original[i].received != reconciled[i].received ||
+          original[i].amount != reconciled[i].amount ||
+          original[i].name != reconciled[i].name) {
+        return true;
+      }
     }
     return false;
   }
@@ -11218,8 +11266,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         hasLocal: hasLocal,
         mirrorUpdatedAt: mirrorUpdatedAt,
       );
-      final merged = Map<String, AssetRecurringFixedCost>.from(localBefore);
-      var changed = false;
+      final normalizedLocal = <String, AssetRecurringFixedCost>{
+        for (final entry in localBefore.entries)
+          entry.key: AssetRecurringFixedCostStore.normalizeCost(entry.value),
+      };
+      final merged = Map<String, AssetRecurringFixedCost>.from(normalizedLocal);
+      var changed = localBefore.entries.any(
+        (entry) => normalizedLocal[entry.key] != entry.value,
+      );
       // 削除トゥームストーン済み id はローカルからも除く (clear 伝播 / 復活防止)。
       merged.removeWhere((key, _) {
         if (tombstoned.contains(key)) {
@@ -11263,12 +11317,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
       // ローカルにあってサーバに無い id は、マージ結果をサーバへバックフィルし、
-      // サーバを全端末の和集合に保つ。
+      // サーバを全端末の和集合に保つ。レガシー固定費の自動正規化が発生した場合もサーバへ同期する。
       final localHasExtra = localBefore.keys.any(
         (key) => !tombstoned.contains(key) && !serverConfigs.containsKey(key),
       );
       final serverHasTombstoned = serverConfigs.keys.any(tombstoned.contains);
-      if ((localHasExtra || serverHasTombstoned) && debugMirror == null) {
+      final hasNormalizedUpdate = localBefore.entries.any(
+            (entry) =>
+                AssetRecurringFixedCostStore.normalizeCost(entry.value) !=
+                entry.value,
+          ) ||
+          serverConfigs.values.any(
+            (cost) => AssetRecurringFixedCostStore.normalizeCost(cost) != cost,
+          );
+      if ((localHasExtra || serverHasTombstoned || hasNormalizedUpdate) &&
+          debugMirror == null) {
         unawaited(_mirrorRecurringFixedCosts());
       }
     } catch (e) {
@@ -32097,6 +32160,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             if (_isExpenseFlowSelected) ...[
+              const SizedBox(height: 8),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _flowMemoController,
+                builder: (context, value, child) =>
+                    ExpenseClassificationReview(memo: value.text),
+              ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String?>(
                 initialValue: _selectedWasteCategory,

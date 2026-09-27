@@ -144,6 +144,7 @@ jobs:
           python scripts/classify_ci_changes_test.py
           python scripts/cloud_ci_handoff_test.py
           python scripts/cloud_first_route_test.py
+          python scripts/claude_remote_control_server_plan_test.py
           python -m unittest scripts/kg_index_common_test.py scripts/kg_index_workflow_test.py
           python scripts/generate_infrastructure_map_test.py
           python scripts/cicd_efficiency_test.py
@@ -396,6 +397,13 @@ jobs:
             exit 1
           fi
         continue-on-error: false  # migration 構文エラーはCIブロック
+
+      - name: Verify acquisition measurement audit
+        run: |
+          python -m unittest discover -s test/scripts -p 'test_seo_measurement_audit.py'
+          python -m unittest discover -s test/scripts -p 'test_search_console_measurement.py'
+          python scripts/seo_measurement_audit.py docs/evidence/seo-measurement-20260927/observations.json --output /tmp/seo-audit.json
+          diff -u docs/evidence/seo-measurement-20260927/report.json /tmp/seo-audit.json
 
       - name: Check GitHub Actions Node runtime floor
         run: |

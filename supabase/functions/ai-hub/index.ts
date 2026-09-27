@@ -1,3 +1,5 @@
+import { decideMario, MarioError } from "./jev_mario.ts";
+import { classifyJevExpense, JevExpenseError } from "./jev_expense.ts";
 // ai-hub — AI・エージェント・AI大学統合EF
 // Merges (16 EFs): daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
 //   ai-summarizer, agent-hub, virtual-organization, my-ai-agent,
@@ -153,6 +155,12 @@ import {
   buildSubscriptionStatementPrompt,
   parseSubscriptionStatementResponse,
 } from "./subscription_statement_scan.ts";
+import {
+  buildPalmReadingPrompt,
+  decodePalmImageBase64,
+  normalizePalmHandSide,
+  parsePalmReadingResponse,
+} from "./palm_reading.ts";
 import {
   createWriterKnowledgeGraphGateway,
   handleWriterKnowledgeGraphAction,
@@ -6547,6 +6555,221 @@ serve(async (req: Request) => {
         });
       }
 
+      case "palm_reading.analyze": {
+        const handSide = normalizePalmHandSide(
+          body.hand_side ?? body.handSide,
+        );
+        if (!handSide) {
+          return json({ error: "hand_side must be left or right" }, 400);
+        }
+        const requestId = asString(body.request_id ?? body.requestId);
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(requestId)
+        ) {
+          return json({ error: "valid request_id required" }, 400);
+        }
+        const parsedImage = parseInlineImage(body);
+        if (parsedImage.error) {
+          return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        }
+        const image = parsedImage.image;
+        if (!image) {
+          return json({ error: "imageBase64 required" }, 400);
+        }
+        if (
+          !["image/png", "image/jpeg", "image/webp"].includes(image.mimeType)
+        ) {
+          return json({ error: "PNG, JPEG, or WebP image required" }, 400);
+        }
+
+        const { data: existing, error: existingError } = await admin
+          .from("palm_readings")
+          .select(
+            "id,request_id,hand_side,image_path,image_mime_type,analysis,comparison,provider,model,schema_version,quality_score,created_at",
+          )
+          .eq("user_id", userId!)
+          .eq("request_id", requestId)
+          .maybeSingle();
+        if (existingError) throw new Error(existingError.message);
+        if (existing) {
+          return json({
+            success: true,
+            idempotent_replay: true,
+            image_persisted: true,
+            reading: existing,
+          });
+        }
+
+        const imageBytes = decodePalmImageBase64(
+          image.base64,
+          image.mimeType,
+        );
+        if (!imageBytes) {
+          return json({
+            error: "imageBase64 is invalid or does not match mimeType",
+          }, 400);
+        }
+
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "palm_reading.analyze",
+              provider: "google",
+            }),
+            409,
+          );
+        }
+
+        const { data: previousRows, error: previousError } = await admin
+          .from("palm_readings")
+          .select("id,analysis,created_at")
+          .eq("user_id", userId!)
+          .eq("hand_side", handSide)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(1);
+        if (previousError) throw new Error(previousError.message);
+        const previous = previousRows?.[0] as
+          | Record<string, unknown>
+          | undefined;
+
+        const usage = await checkAndRecordAiUsage(
+          supabaseUsageStore(admin),
+          userId!,
+        );
+        if (!usage.allowed) {
+          return json({
+            success: false,
+            status: "freeLimitReached",
+            error: "usageLimitReached",
+            message: "AIの無料利用上限に達しました。",
+          }, 402);
+        }
+        const budget = await checkBudget("ef", "ai-hub");
+        if (!budget.ok) {
+          return json({
+            success: false,
+            status: "budgetExceeded",
+            error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+            message:
+              "AIの予算上限に達しました。時間をおいて再試行してください。",
+          }, 429);
+        }
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({
+            success: false,
+            status: "apiKeyRequired",
+            secret_needed: "GEMINI_API_KEY",
+            message: "Supabase Secret GEMINI_API_KEY is required.",
+          });
+        }
+
+        const raw = await callGemini(
+          buildPalmReadingPrompt(handSide, previous?.analysis),
+          geminiKey,
+          image,
+        );
+        const payload = parsePalmReadingResponse(raw, Boolean(previous));
+        if (!payload) {
+          return json({
+            success: false,
+            status: "invalidAiResponse",
+            message: "AI鑑定結果を安全な形式に整えられませんでした。",
+          }, 502);
+        }
+        if (!payload.analysis.photo_quality.is_usable) {
+          return json({
+            success: false,
+            status: "imageNeedsRetake",
+            message: payload.analysis.photo_quality.feedback,
+            photo_quality: payload.analysis.photo_quality,
+          });
+        }
+
+        const readingId = crypto.randomUUID();
+        const extension = image.mimeType === "image/png"
+          ? "png"
+          : image.mimeType === "image/webp"
+          ? "webp"
+          : "jpg";
+        const imagePath = `${userId}/${readingId}.${extension}`;
+        const { error: uploadError } = await admin.storage
+          .from("palm-readings")
+          .upload(imagePath, imageBytes, {
+            contentType: image.mimeType,
+            upsert: false,
+          });
+        if (uploadError) throw new Error(uploadError.message);
+
+        const { data: reading, error: insertError } = await admin
+          .from("palm_readings")
+          .insert({
+            id: readingId,
+            request_id: requestId,
+            user_id: userId!,
+            hand_side: handSide,
+            image_path: imagePath,
+            image_mime_type: image.mimeType,
+            analysis: payload.analysis,
+            comparison: payload.comparison,
+            provider: "google",
+            model: "gemini-2.5-flash",
+            schema_version: 1,
+            quality_score: payload.analysis.photo_quality.score,
+          })
+          .select(
+            "id,request_id,hand_side,image_path,image_mime_type,analysis,comparison,provider,model,schema_version,quality_score,created_at",
+          )
+          .single();
+        if (insertError) {
+          await admin.storage.from("palm-readings").remove([imagePath]);
+          throw new Error(insertError.message);
+        }
+
+        return json({
+          success: true,
+          idempotent_replay: false,
+          image_persisted: true,
+          reading,
+        });
+      }
+
+      case "palm_reading.delete": {
+        const readingId = asString(body.reading_id ?? body.readingId);
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(readingId)
+        ) {
+          return json({ error: "valid reading_id required" }, 400);
+        }
+        const { data: ownedReading, error: lookupError } = await admin
+          .from("palm_readings")
+          .select("id,image_path")
+          .eq("id", readingId)
+          .eq("user_id", userId!)
+          .maybeSingle();
+        if (lookupError) throw new Error(lookupError.message);
+        if (!ownedReading) return json({ error: "reading not found" }, 404);
+
+        const imagePath = asString(ownedReading.image_path);
+        if (imagePath) {
+          const { error: removeError } = await admin.storage
+            .from("palm-readings")
+            .remove([imagePath]);
+          if (removeError) throw new Error(removeError.message);
+        }
+        const { error: deleteError } = await admin
+          .from("palm_readings")
+          .delete()
+          .eq("id", readingId)
+          .eq("user_id", userId!);
+        if (deleteError) throw new Error(deleteError.message);
+        return json({ success: true, deleted_id: readingId });
+      }
+
       case "payslip.parse":
       case "parse-payslip": {
         if (!isPayslipIngestionAction(action)) {
@@ -6575,6 +6798,64 @@ serve(async (req: Request) => {
           },
         });
         return json({ success: true, ...result });
+      }
+
+      case "mario.jev_decide": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, { action, provider: "typesafe" }), 409);
+        }
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          return json(await decideMario({
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            allowedUsers: (Deno.env.get("JEV_MARIO_USER_IDS") ?? "").split(",").map(s => s.trim()).filter(Boolean),
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "", body,
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_mario_call", { p_user_id: id });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          }));
+        } catch (error) {
+          if (error instanceof MarioError) return json({ error: error.code }, error.status);
+          return json({ error: "provider_unavailable" }, 503);
+        }
+      }
+
+      case "expense.jev_suggest": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, {
+            action, provider: "typesafe",
+          }), 409);
+        }
+        // Re-read the authenticated account; anonymous sessions must not spend.
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          const result = await classifyJevExpense({
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            body,
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "",
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_expense_call", {
+                p_user_id: id,
+              });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          });
+          return json(result);
+        } catch (error) {
+          if (error instanceof JevExpenseError) {
+            return json({ error: error.code }, error.status);
+          }
+          return json({ error: "provider_unavailable" }, 503);
+        }
       }
 
       case "expense.classify":

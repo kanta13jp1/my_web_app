@@ -206,7 +206,10 @@ class AssetLiabilityAccount {
   bool get isLiability => balance < 0;
   double get liabilityBalance => isLiability ? balance.abs() : 0;
 
-  AssetLiabilityAccount copyWith({int? paymentDay}) {
+  AssetLiabilityAccount copyWith({
+    int? paymentDay,
+    double? annualRate,
+  }) {
     return AssetLiabilityAccount(
       id: id,
       name: name,
@@ -220,7 +223,7 @@ class AssetLiabilityAccount {
       billingAccountId: billingAccountId,
       billingAccountName: billingAccountName,
       includedInBillingAccount: includedInBillingAccount,
-      annualRate: annualRate,
+      annualRate: annualRate ?? this.annualRate,
       minimumPaymentRate: minimumPaymentRate,
       minimumPaymentFloor: minimumPaymentFloor,
       fullPaymentEstimate: fullPaymentEstimate,
@@ -1647,5 +1650,89 @@ class AssetLiabilityWorkbook {
                   .clamp(0, row.scheduledPaymentAmount)
                   .toDouble(),
         );
+  }
+
+  AssetLiabilityWorkbook copyWith({
+    DateTime? baseDate,
+    List<AssetLiabilityAccount>? accounts,
+    List<AssetLiabilityDebtRow>? debtMasterRows,
+    List<AssetLiabilityDebtRow>? repaymentPriorityRows,
+    List<AssetLiabilityPaymentDayRisk>? paymentDayRisks,
+    List<AssetLiabilityCashflowRow>? cashflowRows,
+    List<AssetLiabilityIncomePlan>? incomePlans,
+    List<AssetLiabilityTransferTask>? transferTasks,
+    List<AssetLiabilityAccountCashflowSummary>? accountCashflowSummaries,
+    List<AssetLiabilityTransferSuggestion>? transferSuggestions,
+    AssetLiabilityCardBillingReviewData? cardBillingReview,
+    AssetLiabilityCardStatementReconciliationData? cardStatementReconciliation,
+    double? cashLikeTotal,
+    double? securitiesTotal,
+    double? positiveAssetTotal,
+    double? liabilityTotal,
+    double? netWorth,
+    double? monthlyMinimumPaymentEstimateTotal,
+    double? monthlyScheduledPaymentTotal,
+    double? monthlyActualPaymentTotal,
+    double? monthlyPaymentDifferenceTotal,
+    double? monthlyUnpaidPaymentTotal,
+    double? monthlyUnreceivedIncomeTotal,
+    double? cashAfterMinimumPayments,
+    double? cashAfterScheduledPayments,
+    double? debtToAssetRatio,
+    double? topFourDebtShare,
+    int? manualPaymentCount,
+    int? estimatedPaymentCount,
+    Set<String>? scheduledExpenseAccountIds,
+    Set<String>? subscriptionFixedCostAccountIds,
+    Map<String, AssetCardUsagePolicy>? cardUsagePolicies,
+  }) {
+    return AssetLiabilityWorkbook(
+      baseDate: baseDate ?? this.baseDate,
+      accounts: accounts ?? this.accounts,
+      debtMasterRows: debtMasterRows ?? this.debtMasterRows,
+      repaymentPriorityRows:
+          repaymentPriorityRows ?? this.repaymentPriorityRows,
+      paymentDayRisks: paymentDayRisks ?? this.paymentDayRisks,
+      cashflowRows: cashflowRows ?? this.cashflowRows,
+      incomePlans: incomePlans ?? this.incomePlans,
+      transferTasks: transferTasks ?? this.transferTasks,
+      accountCashflowSummaries:
+          accountCashflowSummaries ?? this.accountCashflowSummaries,
+      transferSuggestions: transferSuggestions ?? this.transferSuggestions,
+      cardBillingReview: cardBillingReview ?? this.cardBillingReview,
+      cardStatementReconciliation:
+          cardStatementReconciliation ?? this.cardStatementReconciliation,
+      cashLikeTotal: cashLikeTotal ?? this.cashLikeTotal,
+      securitiesTotal: securitiesTotal ?? this.securitiesTotal,
+      positiveAssetTotal: positiveAssetTotal ?? this.positiveAssetTotal,
+      liabilityTotal: liabilityTotal ?? this.liabilityTotal,
+      netWorth: netWorth ?? this.netWorth,
+      monthlyMinimumPaymentEstimateTotal: monthlyMinimumPaymentEstimateTotal ??
+          this.monthlyMinimumPaymentEstimateTotal,
+      monthlyScheduledPaymentTotal:
+          monthlyScheduledPaymentTotal ?? this.monthlyScheduledPaymentTotal,
+      monthlyActualPaymentTotal:
+          monthlyActualPaymentTotal ?? this.monthlyActualPaymentTotal,
+      monthlyPaymentDifferenceTotal:
+          monthlyPaymentDifferenceTotal ?? this.monthlyPaymentDifferenceTotal,
+      monthlyUnpaidPaymentTotal:
+          monthlyUnpaidPaymentTotal ?? this.monthlyUnpaidPaymentTotal,
+      monthlyUnreceivedIncomeTotal:
+          monthlyUnreceivedIncomeTotal ?? this.monthlyUnreceivedIncomeTotal,
+      cashAfterMinimumPayments:
+          cashAfterMinimumPayments ?? this.cashAfterMinimumPayments,
+      cashAfterScheduledPayments:
+          cashAfterScheduledPayments ?? this.cashAfterScheduledPayments,
+      debtToAssetRatio: debtToAssetRatio ?? this.debtToAssetRatio,
+      topFourDebtShare: topFourDebtShare ?? this.topFourDebtShare,
+      manualPaymentCount: manualPaymentCount ?? this.manualPaymentCount,
+      estimatedPaymentCount:
+          estimatedPaymentCount ?? this.estimatedPaymentCount,
+      scheduledExpenseAccountIds:
+          scheduledExpenseAccountIds ?? this.scheduledExpenseAccountIds,
+      subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds ??
+          this.subscriptionFixedCostAccountIds,
+      cardUsagePolicies: cardUsagePolicies ?? this.cardUsagePolicies,
+    );
   }
 }

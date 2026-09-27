@@ -897,6 +897,8 @@ void main() {
       expect(prompt.contains('負債マスタ詳細'), true);
       expect(prompt.contains('現実装コンテキスト'), true);
       expect(prompt.contains('asset_management_page.dart'), true);
+      expect(prompt.contains('Claude（Claude AI SUBSCRIPTION）の扱い'), true);
+      expect(prompt.contains('Claude Pro'), true);
       expect(prompt.contains('開発者向け改善提案候補'), true);
       expect(prompt.contains('受け入れ条件'), true);
       expect(prompt.contains(report.actionItems.first.title), true);

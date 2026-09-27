@@ -16,10 +16,7 @@ void main() {
     test('flags new borrowing on a loan that grew beyond interest', () {
       // モビット 前月10万→今月20万、返済5千。利息3千 → 新規利用 約10.2万。
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'モビット': -200000,
-        },
+        latestSnapshot: const <String, double>{'bank': 500000, 'モビット': -200000},
         baseDate: baseDate,
         monthlyPaymentOverrides: const <String, double>{'モビット': 5000},
       );
@@ -44,10 +41,7 @@ void main() {
     test('does NOT flag interest-only growth as new borrowing', () {
       // 残高がほぼ利息分だけ増えた（新規利用なし）→ 違反にしない。
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'モビット': -200500,
-        },
+        latestSnapshot: const <String, double>{'bank': 500000, 'モビット': -200500},
         baseDate: baseDate,
         monthlyPaymentOverrides: const <String, double>{'モビット': 2000},
       );
@@ -63,10 +57,7 @@ void main() {
 
     test('does NOT flag a loan being paid down with no new usage', () {
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          'モビット': -150000,
-        },
+        latestSnapshot: const <String, double>{'bank': 500000, 'モビット': -150000},
         baseDate: baseDate,
         monthlyPaymentOverrides: const <String, double>{'モビット': 50000},
       );
@@ -80,7 +71,62 @@ void main() {
       expect(report.isCompliant, isTrue);
       expect(report.zeroNewBorrowingAchieved, isTrue);
     });
+
+    test(
+      'does NOT flag unpaid loan rows as new borrowing when balance has not increased (e.g. 72,314 yen false positive bug)',
+      () {
+        // モビット 残高1,450,000円 (前月と同じ)、未返済、返済予定額40,000円、利息約18,000円
+        // 従前のバグでは (balance - prior) + payment - interest = 0 + 40000 - 18000 = 22,000円 が新規借入と誤検知されていた。
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 500000,
+            'モビット': -1450000,
+          },
+          baseDate: baseDate,
+          monthlyPaymentOverrides: const <String, double>{'モビット': 40000},
+        );
+        final id = debtId(workbook, 'モビット');
+
+        final report = monitor.evaluate(
+          workbook: workbook,
+          priorBalancesByAccountId: <String, double>{id: 1450000},
+        );
+
+        expect(report.newBorrowingViolations, isEmpty);
+        expect(report.zeroNewBorrowingAchieved, isTrue);
+        expect(report.totalNewBorrowing, 0.0);
+      },
+    );
   });
+
+  for (final currentBalance in [200000.0, 190000.0]) {
+    test('detects borrowing offset by a paid loan at $currentBalance', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'bank': 500000,
+          'モビット': -currentBalance,
+        },
+        baseDate: baseDate,
+        monthlyPaymentOverrides: const <String, double>{'モビット': 50000},
+        paidAccountNames: const <String>{'モビット'},
+        actualPaymentAmounts: const <String, double>{'モビット': 40000},
+      );
+      final row = workbook.debtMasterRows.firstWhere((r) => r.name == 'モビット');
+      expect(row.paid, isTrue);
+      final report = monitor.evaluate(
+        workbook: workbook,
+        priorBalancesByAccountId: <String, double>{row.id: 200000},
+      );
+      expect(report.newBorrowingViolations, hasLength(1));
+      expect(
+        report.totalNewBorrowing,
+        closeTo(
+          currentBalance - 200000 + 40000 - row.monthlyInterestEstimate,
+          0.01,
+        ),
+      );
+    });
+  }
 
   group('AssetDebtDisciplineMonitor — 誓約② 新規利用分は25日に全額返済', () {
     test('does not flag an existing revolving balance paid at the minimum', () {
@@ -219,10 +265,7 @@ void main() {
 
     test('excludes full-payment fixed costs (rent/utility)', () {
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 500000,
-          '家賃': -80000,
-        },
+        latestSnapshot: const <String, double>{'bank': 500000, '家賃': -80000},
         baseDate: baseDate,
       );
       final id = debtId(workbook, '家賃');
