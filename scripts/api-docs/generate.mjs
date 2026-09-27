@@ -13,7 +13,7 @@ export function parseDoclets(source = path.join(root, sourcePath)) {
   // JSDoc parses source only; never import/execute the target module here.
   return JSON.parse(execFileSync(process.execPath, [
     fileURLToPath(new URL('node_modules/jsdoc/jsdoc.js', import.meta.url)),
-    '-X', '--pedantic', source,
+    '-X', '--pedantic', '-c', fileURLToPath(new URL('jsdoc.json', import.meta.url)), source,
   ], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 }));
 }
 
