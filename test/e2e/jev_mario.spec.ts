@@ -776,3 +776,14 @@ test('local retry experience survives reload and can be cleared; Luigi is select
  await lab.locator('#character').selectOption('luigi');await lab.locator('#watch-manual').click();await lab.locator('#stop').click();await lab.locator('#presentation').screenshot({path:info.outputPath('luigi-retry.png')});
  await lab.locator('#clear-retry').click();await expect(lab.locator('#retry-status')).toContainText('0か所');await page.reload();await expect(lab.locator('#retry-status')).toContainText('0か所');expect(errors).toEqual([]);
 });
+
+
+test('LightGBM worker completes 2-2 and advances to 2-3 without going offscreen',async({page},info)=>{
+ test.setTimeout(120000);
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#stage').selectOption('6');await lab.locator('#watch-student').click();
+ await expect(lab.locator('#status')).toContainText('2-2クリア！',{timeout:100000});
+ await lab.locator('#presentation').screenshot({path:info.outputPath('water-autoplay-clear.png')});
+ await expect(lab.locator('#stage')).toHaveValue('7',{timeout:15000});await lab.locator('#stop').click();
+ const download=page.waitForEvent('download');await lab.locator('#export').click();await(await download).saveAs(info.outputPath('water-autoplay.json'));
+});

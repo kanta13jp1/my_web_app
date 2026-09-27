@@ -33689,3 +33689,10 @@ Add 8-1..8-4, six original pitched voices, bounded live-state collision assistan
 ## 2026-09-28 Persistent Mario retry experience (Issue #5576)
 
 Persist capped device-local failure clusters and extend search/collision foresight near repeated failures. This is explicit assistance, not LightGBM retraining. Add useful-item priorities, Luigi palette, red Koopa/Paratroopa behavior and a seventh original musical answer part. Preserve existing campaign sharing and privacy. Validate before/after obstacle progress, reload/clear, mute/audio headroom and desktop/mobile play in cloud. Full natural 32-course clear and exact original parity remain unverified.
+
+## 2026-09-28: Underwater exit and power-up pursuit (#5582)
+
+- Bound the player to the course; stop rewarding progress past underwater exits and value descent near the pipe. Pulse swimming input explicitly.
+- Search for reachable power-ups, including block reveals, with a longer horizon. Preserve local retry memory and shared campaign rankings.
+- Add a quiet eighth bell part; original synthesized arrangement, not the reference soundtrack.
+- Cloud tests cover complete water courses, overshot-exit recovery, pickups and browser/audio regressions; final outcomes are recorded in the PR.
