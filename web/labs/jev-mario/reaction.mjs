@@ -2,7 +2,7 @@ import {itemIntent} from './item-goal.mjs?v=student-1';
 // Optional local rules, not Jev inference. Times are predictions at 60 simulation Hz.
 export function hazards(world) {
   const p=world.p,forward=Math.max(0,p.vx),feet=p.y+p.h;
-  const enemy=world.enemies.filter(e=>!e.dead&&e.x>=p.x&&Math.abs(e.y+e.h-feet)<24)
+  const enemy=world.enemies.filter(e=>!e.dead&&!e.carried&&!e.hidden&&e.x>=p.x&&Math.abs(e.y+e.h-feet)<24)
     .map(e=>({gap:e.x-p.x-p.w,closing:forward-e.vx})).filter(e=>e.closing>0)
     .sort((a,b)=>a.gap-b.gap)[0];
   const contact=enemy?Math.max(0,enemy.gap)/enemy.closing*1000/60:null;
@@ -12,22 +12,22 @@ export function hazards(world) {
     wall_ahead:p.grounded&&world.solid(Math.floor((p.x+p.w+4)/16),Math.floor((feet-4)/16))};
 }
 export class ReactionAssist {
-  reset(){this.jumping=false;}
+  reset(){this.jumping=false;this.jumpAction=null;}
   decide(world,proposed){
     const hazard=hazards(world);
     if(world.phase!=='playing'||!proposed.startsWith('right')){this.reset();return {action:proposed,reason:null,hazard};}
     const jump=proposed.includes('run')?'right_run_jump':'right_jump';
     const released=proposed.includes('run')?'right_run':'right';
     if(this.jumping){
-      if(!world.p.grounded)return {action:jump,reason:'local_jump_hold',hazard};
-      this.jumping=false;
+      if(!world.p.grounded)return {action:this.jumpAction??jump,reason:'local_jump_hold',hazard};
+      this.jumping=false;this.jumpAction=null;
       // Release A once after landing so the next jump can have a rising edge.
       return {action:released,reason:'local_jump_release',hazard};
     }
     const reason=hazard.contact_ms!==null&&hazard.contact_ms<260?'enemy':hazard.gap_ahead?'gap':hazard.wall_ahead?'wall':null;
     if(world.p.grounded&&reason){this.jumping=true;return {action:jump,reason:'local_'+reason,hazard};}
     const item=!reason&&hazard.enemy_gap===null?itemIntent(world):null;
-    if(item&&!world.wasJump)return {action:item,reason:'local_item',hazard};
+    if(item&&!world.wasJump){if(item.includes('jump')){this.jumping=true;this.jumpAction=item;}return {action:item,reason:'local_item',hazard};}
     return {action:proposed,reason:null,hazard};
   }
 }
@@ -35,7 +35,7 @@ export class ReactionAssist {
 // Linear estimate only: no terrain/enemy activation/acceleration simulation.
 export function prediction(world,previous=0){
  const p=world.p,horizon=Math.max(0,Math.min(3000,previous||1000)),h=hazards(world);
- const e=world.enemies.filter(e=>!e.dead&&e.x>=p.x&&e.x-p.x<256&&Math.abs(e.y+e.h-p.y-p.h)<24).sort((a,b)=>a.x-b.x)[0];
+ const e=world.enemies.filter(e=>!e.dead&&!e.carried&&!e.hidden&&e.x>=p.x&&e.x-p.x<256&&Math.abs(e.y+e.h-p.y-p.h)<24).sort((a,b)=>a.x-b.x)[0];
  const gap=e?e.x-p.x-p.w:null,closing=e?Math.max(0,p.vx)-e.vx:0;
  const contact=speed=>e&&speed>0?Math.min(10000,Math.max(0,gap)/speed*1000/60):null;
  return {horizon_ms:horizon,jump_pressed:!!world.input.jump,run_pressed:!!world.input.run,

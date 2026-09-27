@@ -330,3 +330,10 @@ test('powerup pickups preserve fire power, record 1UP/star and never collect aft
  const g=new World11();g.enemies=[];g.power=2;g.items=[{x:32,y:192,w:14,h:16,vx:0,vy:0,emerging:0,kind:'mushroom'}];g.step();assert.equal(g.power,2);assert.equal(g.pickups.mushroom,1);
  const d=new World11();d.enemies=[{x:40,y:192,w:14,h:16,vx:0,vy:0,kind:'goomba',dead:0}];d.items=[{x:32,y:192,w:14,h:16,vx:0,vy:0,emerging:0,kind:'life'}];d.step();assert.equal(d.phase,'dead');assert.equal(d.lives,2);assert.equal(d.pickups.life,0);
 });
+
+
+test('Jev local assistance holds an item jump long enough to open a powerup block',async()=>{
+ const {ReactionAssist}=await import('../../web/labs/jev-mario/reaction.mjs');const g=new World11(),a=new ReactionAssist();g.enemies=[];g.p.x=21*16;a.reset();let itemDecision=false;
+ for(let i=0;i<35;i++){const d=a.decide(g,'right');itemDecision||=d.reason==='local_item';g.buttons(d.action);g.step();}
+ assert.equal(itemDecision,true);assert.equal(g.tile(21,9),'used');assert.ok(g.items.some(i=>i.kind==='mushroom'));
+});
