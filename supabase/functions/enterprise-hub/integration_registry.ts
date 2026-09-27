@@ -285,14 +285,28 @@ export function createSupabaseIntegrationRegistryStore(
 ): IntegrationRegistryStore {
   return {
     async list(userId) {
-      const { data, error } = await admin.from("hub_data")
-        .select("id, source, metadata, created_at")
-        .in("source", Object.values(INTEGRATION_REGISTRY_SOURCES))
-        .filter("metadata->>user_id", "eq", userId)
-        .order("created_at", { ascending: false })
-        .limit(5_000);
-      if (error) throw new Error(error.message);
-      return (data ?? []) as IntegrationRegistryRow[];
+      const rows: IntegrationRegistryRow[] = [];
+      let cursor: string | null = null;
+      // Keep owner filtering on every page. Do not infer EOF from a short
+      // page: PostgREST may enforce a smaller server-side row limit.
+      while (true) {
+        let query = admin.from("hub_data")
+          .select("id, source, metadata, created_at")
+          .in("source", Object.values(INTEGRATION_REGISTRY_SOURCES))
+          .filter("metadata->>user_id", "eq", userId)
+          .order("id", { ascending: true });
+        if (cursor !== null) query = query.gt("id", cursor);
+        const { data, error } = await query.limit(1_000);
+        if (error) throw new Error(error.message);
+        const page = (data ?? []) as IntegrationRegistryRow[];
+        if (page.length === 0) return rows;
+        const nextCursor = String(page[page.length - 1].id);
+        if (!nextCursor || nextCursor === cursor) {
+          throw new Error("Integration registry pagination did not advance");
+        }
+        rows.push(...page);
+        cursor = nextCursor;
+      }
     },
     async insert(source, userId, metadata) {
       const { data, error } = await admin.from("hub_data")

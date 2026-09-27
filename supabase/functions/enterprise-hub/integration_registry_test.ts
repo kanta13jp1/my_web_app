@@ -296,3 +296,45 @@ Deno.test("impact report follows transitive system dependencies", () => {
   );
   assertExists(impact.counts);
 });
+
+Deno.test("registry store retains history beyond 5000 rows and short pages", async () => {
+  const { createSupabaseIntegrationRegistryStore } = await import("./integration_registry.ts");
+  const history = Array.from({ length: 5002 }, (_, index) => ({
+    id: String(index).padStart(8, "0"),
+    source: "integration_registry_system",
+    metadata: { user_id: "owner", system_key: `key-${index}`, version: 1 },
+    created_at: "2026-01-01T00:00:00Z",
+  }));
+  let pages = 0;
+  const admin = {
+    from(table: string) {
+      assertEquals(table, "hub_data");
+      let cursor = "";
+      const query = {
+        select(_columns: string) { return query; },
+        in(_column: string, _sources: string[]) { return query; },
+        filter(column: string, op: string, user: string) {
+          assertEquals([column, op, user], ["metadata->>user_id", "eq", "owner"]);
+          return query;
+        },
+        order(column: string, options: { ascending: boolean }) {
+          assertEquals([column, options.ascending], ["id", true]);
+          return query;
+        },
+        gt(column: string, value: string) {
+          assertEquals(column, "id"); cursor = value; return query;
+        },
+        limit(_size: number) {
+          pages++;
+          return Promise.resolve({ data: history.filter((r) => r.id > cursor).slice(0, 137), error: null });
+        },
+      };
+      return query;
+    },
+  } as unknown as Parameters<typeof createSupabaseIntegrationRegistryStore>[0];
+  const result = await createSupabaseIntegrationRegistryStore(admin).list("owner");
+  assertEquals(result.length, 5002);
+  assertEquals(result[0].id, "00000000");
+  assertEquals(result[5001].id, "00005001");
+  assertEquals(pages, 38);
+});
