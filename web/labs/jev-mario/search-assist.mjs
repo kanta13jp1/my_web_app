@@ -23,7 +23,7 @@ function score(g,start,failures,target){
   pursuit=-Math.abs(goal.x-g.p.x-g.p.w/2)*1.4-Math.abs(goal.y-g.p.y)*.4+(revealed?70:0);
  }
  const repeat=0; // Failure memory expands foresight instead of creating an invisible wall.
- return -repeat+collected*2+pursuit+Math.max(0,g.power-start.power)*60+itemPotential(g)-itemPotential(start)+(g.p.x-start.p.x)*(target?.25:1)+(192-g.p.y)*.12+g.p.vx*2-(g.power<start.power?80:0)-(g.p.y>208?(g.p.y-208)*8:0);
+ return -repeat+collected*2+pursuit+Math.max(0,g.power-start.power)*60+itemPotential(g)-itemPotential(start)+(g.p.x-start.p.x)*(target ? .25 : 1)+(192-g.p.y)*.12+g.p.vx*2-(g.power<start.power?80:0)-(g.p.y>208?(g.p.y-208)*8:0);
 }
 export function plan(g,raw=null,failures=[]){
  const target=isWater(g.stage)?null:itemTargets(g)[0],level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);

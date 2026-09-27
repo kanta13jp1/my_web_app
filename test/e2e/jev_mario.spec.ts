@@ -10,6 +10,11 @@ test('LightGBM worker plays without consent or API; records assistance and stops
  if(info.project.name==='desktop')await expect(lab.locator('#status')).toContainText('1-1クリア！',{timeout:60000});
  await screenshot(page,info.outputPath('world11-student.png'));await lab.locator('#stop').click();
  const before=await lab.locator('#progress').textContent();await page.waitForTimeout(350);await expect(lab.locator('#progress')).toHaveText(before!);
+ if(info.project.name==='desktop'){
+  const pending=page.waitForEvent('download');await lab.locator('#export').click();const d=await pending;await d.saveAs(info.outputPath('world11-student.json'));
+  const stream=await d.createReadStream();let raw='';for await(const b of stream!)raw+=b.toString();const data=JSON.parse(raw);
+  const clear=data.stage_results.find((r:any)=>r.course_id===1&&r.phase==='won');expect(clear).toBeTruthy();expect(Object.values(clear.items_collected).reduce((n:number,v:any)=>n+Number(v),0)).toBeGreaterThan(0);
+ }
  await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');await expect(lab.locator('#consent')).not.toBeChecked();expect(errors).toEqual([]);
 });
 test('keyboard and touch crouch recover; walk and jump poses render',async({page},info)=>{
