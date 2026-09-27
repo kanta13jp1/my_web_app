@@ -33690,6 +33690,12 @@ Add 8-1..8-4, six original pitched voices, bounded live-state collision assistan
 
 Persist capped device-local failure clusters and extend search/collision foresight near repeated failures. This is explicit assistance, not LightGBM retraining. Add useful-item priorities, Luigi palette, red Koopa/Paratroopa behavior and a seventh original musical answer part. Preserve existing campaign sharing and privacy. Validate before/after obstacle progress, reload/clear, mute/audio headroom and desktop/mobile play in cloud. Full natural 32-course clear and exact original parity remain unverified.
 
+
+## 2026-09-28 Measured AI usage comparison (Issue #5574)
+
+- Add browser-only condition comparison of measured token components, request counts and reported model/run costs. Preserve the archived 18-trial provenance; no model calls, telemetry or secret handling.
+- Validate invalid input, duplicate trials, model mixing, zero baseline, export and desktop/mobile interactions in cloud. Production verification and article PR82 remain required before completion.
+
 ## 2026-09-28: Underwater exit and power-up pursuit (#5582)
 
 - Bound the player to the course; stop rewarding progress past underwater exits and value descent near the pipe. Pulse swimming input explicitly.

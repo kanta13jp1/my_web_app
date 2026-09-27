@@ -1,0 +1,57 @@
+name: Isolated Auth Restore Compatibility
+on:
+  pull_request:
+    paths:
+      - .github/workflows/supabase-backup-restore.yml
+      - .github/workflows/auth-restore-compat.yml
+      - scripts/sql/supabase_auth_recovery_codes_20260824.sql
+permissions: {}
+concurrency:
+  group: auth-restore-compat-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
+        with:
+          version: 2.115.0
+      - name: Validate official compatibility SQL without production credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="$(mktemp -d)"
+          trap 'supabase stop --workdir "$target" --no-backup >/dev/null 2>&1 || true' EXIT
+          supabase init --workdir "$target"
+          sed -i 's/major_version = [0-9][0-9]*/major_version = 17/' "$target/supabase/config.toml"
+          supabase start --workdir "$target" --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+          container="$(docker ps --filter 'name=supabase_db_' --format '{{.Names}}')"
+          test -n "$container"
+          test "$(echo "$container" | wc -l)" -eq 1
+          echo "221eed0cbc28a4a1d9e7bffb5663311c13cb6de8aa7df2bc04036b75b1b6a273  scripts/sql/supabase_auth_recovery_codes_20260824.sql" | sha256sum --check
+          docker cp scripts/sql/supabase_auth_recovery_codes_20260824.sql "$container:/tmp/compat.sql"
+          for pass in 1 2; do
+            docker exec "$container" sh -c 'export PGPASSWORD="$POSTGRES_PASSWORD"; exec psql --host 127.0.0.1 --username supabase_auth_admin --dbname postgres --variable ON_ERROR_STOP=1 --file /tmp/compat.sql'
+          done
+          docker exec -i "$container" psql --username postgres --dbname postgres --variable ON_ERROR_STOP=1 <<'SQL'
+          DO $$ BEGIN
+            IF to_regclass('auth.mfa_recovery_code_sets') IS NULL OR to_regclass('auth.mfa_recovery_codes') IS NULL THEN
+              RAISE EXCEPTION 'Recovery tables missing';
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = 'auth.factor_type'::regtype AND enumlabel = 'recovery_code') THEN
+              RAISE EXCEPTION 'Recovery factor type missing';
+            END IF;
+            IF (SELECT count(*) FROM pg_constraint WHERE conrelid IN ('auth.mfa_recovery_code_sets'::regclass, 'auth.mfa_recovery_codes'::regclass) AND contype = 'f') <> 3 THEN
+              RAISE EXCEPTION 'Expected three recovery foreign keys';
+            END IF;
+            IF to_regclass('auth.mfa_recovery_codes_set_id_idx') IS NULL THEN
+              RAISE EXCEPTION 'Recovery lookup index missing';
+            END IF;
+          END $$;
+          SQL
