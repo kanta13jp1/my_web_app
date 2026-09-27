@@ -1,3 +1,4 @@
+import {itemIntent} from './item-goal.mjs?v=student-1';
 // Optional local rules, not Jev inference. Times are predictions at 60 simulation Hz.
 export function hazards(world) {
   const p=world.p,forward=Math.max(0,p.vx),feet=p.y+p.h;
@@ -25,6 +26,8 @@ export class ReactionAssist {
     }
     const reason=hazard.contact_ms!==null&&hazard.contact_ms<260?'enemy':hazard.gap_ahead?'gap':hazard.wall_ahead?'wall':null;
     if(world.p.grounded&&reason){this.jumping=true;return {action:jump,reason:'local_'+reason,hazard};}
+    const item=!reason&&hazard.enemy_gap===null?itemIntent(world):null;
+    if(item&&!world.wasJump)return {action:item,reason:'local_item',hazard};
     return {action:proposed,reason:null,hazard};
   }
 }

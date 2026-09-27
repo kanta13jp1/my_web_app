@@ -76,7 +76,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopRecordi
 window.addEventListener('pagehide',()=>{stopRecording();if(recordUrl)URL.revokeObjectURL(recordUrl);});
 
 drawWorld(context, world);
-function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':world.stage===6&&world.phase==='playing'?'泳ぐ':pose==='climb'?'旗を降りる':pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
+function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':world.stage===6&&world.phase==='playing'?'泳ぐ':pose==='climb'?(world.p.climbing?'つるを登る':'旗を降りる'):pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
 showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
@@ -189,8 +189,8 @@ $('export').onclick = () => {
     browser_rtt: summarize(samples.filter(s => s.ok).map(s => s.rtt_ms)) };
   downloadJson(data, 'jev-mario-measurement.json');
 };
-const keys = { ArrowRight: 7, ArrowLeft: 6, KeyX: 0, Space: 0, KeyZ: 1, Enter: 3, ArrowDown: 5 };
-const inputNames = {7:'right',6:'left',0:'jump',1:'run',5:'down'};
+const keys = { ArrowRight: 7, ArrowLeft: 6, KeyX: 0, Space: 0, KeyZ: 1, Enter: 3, ArrowDown: 5, ArrowUp: 4, KeyC: 8 };
+const inputNames = {7:'right',6:'left',0:'jump',1:'run',5:'down',4:'up',8:'carry'};
 function manualKey(code,pressed) { if(loop.active||student.active) return; if(isRecreation()) { const key=inputNames[code]; if(key) world.input[key]=pressed; } else if(nes) nes[pressed?'buttonDown':'buttonUp'](1,code); }
 window.addEventListener('keydown', e => { if (e.target.matches('input,select,button') || !gameRunning || loop.active || student.active || !(e.code in keys)) return; e.preventDefault(); manualKey(keys[e.code],true); });
 window.addEventListener('keyup', e => { if(e.code in keys) manualKey(keys[e.code],false); });
