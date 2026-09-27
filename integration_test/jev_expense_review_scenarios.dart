@@ -10,7 +10,8 @@ import 'package:my_web_app/services/jev_expense_proxy_client.dart';
 import 'package:my_web_app/services/jev_instant_classifier_service.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
 
-http.Response answer(String category, {double confidence = 0.96}) => http.Response(
+http.Response answer(String category, {double confidence = 0.96}) =>
+    http.Response(
       jsonEncode({
         'answers': {
           'classification': {
