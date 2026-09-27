@@ -26,7 +26,7 @@ function score(g,start,failures,target){
  return -repeat+collected*2+pursuit+Math.max(0,g.power-start.power)*60+itemPotential(g)-itemPotential(start)+(g.p.x-start.p.x)*(target ? .25 : 1)+(192-g.p.y)*.12+g.p.vx*2-(g.power<start.power?80:0)-(g.p.y>208?(g.p.y-208)*8:0);
 }
 export function plan(g,raw=null,failures=[]){
- const target=isWater(g.stage)?null:itemTargets(g)[0],level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
+ const target=isWater(g.stage)?null:itemTargets(g).find(t=>!failures.some(r=>r.kind==='stalled'&&r.count>=2&&r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
  const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left']:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
  let beam=[{g,first:null,value:0}],byFirst={};
  for(let depth=0;depth<depthLimit;depth++){

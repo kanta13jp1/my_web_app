@@ -26,8 +26,8 @@ export class StudentSession{
  tick(world){
   if(!this.active||!this.ready)return 'noop';
   if(world.cells&&world.phase==='playing'){
-   if(!this.progress||this.progress.stage!==world.stage||this.progress.room!==world.room||Math.abs(world.p.x-this.progress.x)>12)this.progress={stage:world.stage,room:world.room,x:world.p.x,frame:world.frames};
-   else if(world.frames-this.progress.frame>=180&&this.action.includes('right')){this.noteFailure(world,'stalled');this.progress.frame=world.frames;}
+   if(!this.progress||this.progress.stage!==world.stage||this.progress.room!==world.room||world.p.x-this.progress.x>12)this.progress={stage:world.stage,room:world.room,x:world.p.x,frame:world.frames};
+   else if(world.frames-this.progress.frame>=180){this.noteFailure(world,'stalled');this.progress.frame=world.frames;}
   }
   if(!this.pending&&world.frames>=this.next){this.pending=true;this.next=world.frames+6;this.worker.postMessage({state:world,effective:this.guard.action??this.action,issued:this.clock(),failures:this.failures,forecastFrames:Math.max(1,Math.min(36,Math.round(this.age*.06)))});}
   const before=this.guard.interventions,action=this.guard.decide(world,this.action,this.failures);this.stats.live_guard=this.guard.interventions;
