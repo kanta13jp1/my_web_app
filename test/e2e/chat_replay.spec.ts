@@ -16,8 +16,8 @@ test('saved history presents, rewinds and exits without requests', async ({ page
   await page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true }).click();
   await expect(page.getByRole('heading', { name: '準備ができました', exact: true })).toBeVisible();
   await expect(page.getByText('会話を一件ずつ紹介したいです。', { exact: true })).not.toBeVisible();
-  const calls: string[] = [];
-  page.on('request', r => calls.push(`${r.method()} ${r.url()}`));
+  const calls: { method: string; url: string }[] = [];
+  page.on('request', r => calls.push({ method: r.method(), url: r.url() }));
   await page.evaluate(async () => {
     await Promise.all(document.getAnimations({ subtree: true }).filter(a =>
       a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {})));
@@ -36,7 +36,19 @@ test('saved history presents, rewinds and exits without requests', async ({ page
   await expect(page.getByRole('heading', { name: '準備ができました', exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true })).toBeVisible();
-  expect(calls).toEqual([]);
+  // Flutter lazily loads glyph-range fallback fonts. Account for these exact
+  // static GET resources rather than claiming an offline app or allowing all GETs.
+  const fallbackFonts = calls.filter(r => {
+    const url = new URL(r.url);
+    return r.method === 'GET' && url.origin === 'https://fonts.gstatic.com' &&
+      /^\/s\/notosans(?:sc|jp)\/v\d+\/[^/?]+\.woff2$/.test(url.pathname) && !url.search;
+  });
+  const unexpected = calls.filter(r => !fallbackFonts.includes(r));
+  await info.attach('presentation-network.json', {
+    body: JSON.stringify({ calls, fallbackFonts, unexpected }, null, 2),
+    contentType: 'application/json',
+  });
+  expect(unexpected).toEqual([]);
   expect(errors).toEqual([]);
 });
 
