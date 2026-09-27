@@ -17,7 +17,7 @@ test('follow all five guides, reset and draw freely without sending strokes', as
     await page.locator('#board').scrollIntoViewIfNeeded();
     const positions = await page.locator('#track').evaluate((node: SVGPathElement) => {
       const length = node.getTotalLength();
-      return Array.from({ length: Math.ceil(length / 3) + 1 }, (_, i, ) => {
+      return Array.from({ length: Math.ceil(length / 3) + 1 }, (_, i) => {
         const p = node.getPointAtLength(Math.min(i * 3, length));
         const transformed = new DOMPoint(p.x, p.y).matrixTransform(node.getScreenCTM()!);
         return { x: transformed.x, y: transformed.y };
@@ -25,7 +25,14 @@ test('follow all five guides, reset and draw freely without sending strokes', as
     });
     await page.mouse.move(positions[0].x, positions[0].y);
     await page.mouse.down();
-    for (const p of positions) await page.mouse.move(p.x, p.y);
+    for (const [index, p] of positions.entries()) {
+      await page.mouse.move(p.x, p.y);
+      if (index === Math.floor(positions.length / 2)) {
+        await page.mouse.up();
+        await expect(page.getByRole('status')).not.toContainText('さいごまで');
+        await page.mouse.down();
+      }
+    }
     await page.mouse.up();
     await expect(page.getByRole('status')).toContainText('さいごまで線をたどれたね');
   }

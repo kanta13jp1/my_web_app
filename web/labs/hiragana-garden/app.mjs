@@ -71,6 +71,10 @@ function move(event) {
 }
 board.addEventListener('pointerdown', event => {
   if (active !== null || !event.isPrimary || event.button !== 0) return;
+  if ($('mode').value === 'free' && pointCount >= 10000) {
+    $('status').textContent = 'たくさん書けたね。「もういちど」で消して続けよう。';
+    return;
+  }
   const p = position(event);
   if (!p) return;
   active = event.pointerId;
