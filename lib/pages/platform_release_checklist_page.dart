@@ -65,8 +65,10 @@ class _PlatformReleaseChecklistPageState
     if (mounted) setState(() => _loading = false);
   }
 
-  void _setChecklist(PlatformReleaseChecklist checklist,
-      {bool persist = true}) {
+  void _setChecklist(
+    PlatformReleaseChecklist checklist, {
+    bool persist = true,
+  }) {
     _checklist = checklist;
     _scopeController.text = checklist.sharedScope;
     for (final platform in PlatformReleaseChecklist.platforms) {
@@ -96,11 +98,12 @@ class _PlatformReleaseChecklistPageState
     }
   }
 
-  void _update(
-      {String? sharedScope,
-      String? platform,
-      PlatformCheckStatus? status,
-      String? note}) {
+  void _update({
+    String? sharedScope,
+    String? platform,
+    PlatformCheckStatus? status,
+    String? note,
+  }) {
     final statuses = Map<String, PlatformCheckStatus>.of(_checklist.statuses);
     final notes = Map<String, String>.of(_checklist.notes);
     if (platform != null && status != null) statuses[platform] = status;

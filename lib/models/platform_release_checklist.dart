@@ -96,7 +96,8 @@ class PlatformReleaseChecklist {
     for (final platform in platforms) {
       final note = notes[platform] ?? '';
       lines.add(
-          '$platform: ${statusFor(platform).label}${note.isEmpty ? '' : ' — $note'}');
+        '$platform: ${statusFor(platform).label}${note.isEmpty ? '' : ' — $note'}',
+      );
     }
     lines.add('注: 確認済みは、この一覧に記録した確認に限ります。端末・ストア・OS固有の確認は別々に行います。');
     return lines.join('\n');
