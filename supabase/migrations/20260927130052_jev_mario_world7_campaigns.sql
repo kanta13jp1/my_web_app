@@ -3,7 +3,7 @@ alter table mario_private.campaigns drop constraint campaigns_revision_check;
 alter table mario_private.campaigns add constraint campaigns_revision_check check (revision in ('world6-1','world7-1'));
 alter table mario_private.campaigns drop constraint campaigns_course_check;
 alter table mario_private.campaigns add constraint campaigns_course_check check (course between 1 and 28);
-alter table mario_private.campaigns drop constraint campaigns_reached_check;
+alter table mario_private.campaigns drop constraint campaigns_check;
 alter table mario_private.campaigns add constraint campaigns_reached_check check (reached between course and 28);
 
 create or replace function mario_private.campaign_access(p_action text,p_data jsonb default '{}'::jsonb)
