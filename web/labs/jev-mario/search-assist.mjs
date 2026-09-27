@@ -15,7 +15,7 @@ function score(g,start,failures){
 }
 export function plan(g,raw=null,failures=[]){
  const level=retryLevel(g,failures),depthLimit=8+level*2;
- const actions=[...new Set([...(itemTargets(g).some(t=>t.x<g.p.x)?['left']:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
+ const actions=[...new Set([...(level>=2||itemTargets(g).some(t=>t.x<g.p.x)?['left']:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
  let beam=[{g,first:null,value:0}],byFirst={};
  for(let depth=0;depth<depthLimit;depth++){
   const expanded=[];
