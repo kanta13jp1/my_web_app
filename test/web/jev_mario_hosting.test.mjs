@@ -20,7 +20,8 @@ test('isolated game HTML resolves every local script and stylesheet to a real as
   const doc = new URL('web/labs/jev-mario/index.html', root);
   const html = readFileSync(doc, 'utf8');
   const refs = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
-    .map(m => m[1]).filter(ref => !/^https?:/.test(ref));
+    .map(m => m[1]).filter(ref => !/^(https?:|#)/.test(ref));
+  for (const [,id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(html.includes(`id="${id}"`), `missing anchor ${id}`);
   assert.ok(refs.includes('lab.mjs?v=student-1'));
   assert.ok(refs.includes('style.css?v=student-1'));
   for (const ref of refs) {

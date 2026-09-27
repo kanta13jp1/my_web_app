@@ -33668,3 +33668,8 @@ Add 6-1..6-4, four musical voices, and one automatic record per play across life
 ## 2026-09-27: acquisition measurement audit (#5563)
 
 Added a read-only anonymous production measurement audit and actual service transport fault tests. Added finalized Search Console daily collection/validation with timezone and missing-day preservation. See docs/evidence/seo-measurement-20260927/PROTOCOL.md and docs/SEARCH_CONSOLE_MEASUREMENT.md. Google property/authorization and prospective causal evidence remain pending.
+
+
+## 2026-09-27 Jev Mario World 7 and visible campaign ranking (Issue #5565)
+
+Add independent 7-1..7-4, five-voice original arrangements, automatic ranking loading/filter refresh/post-share refresh. Extend course and version constraints only; preserve the approved authenticated automatic sharing model, retention, quotas, pseudonyms and historical records. Cloud tests cover water physics, progression, rescue, audio headroom, ranking responses and denied access. No exact original parity or natural model clear claim. CLOUD_REQUIRED, frontier/high lead, no workers.
