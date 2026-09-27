@@ -34,7 +34,7 @@ jobs:
           container="$(docker ps --filter 'name=supabase_db_' --format '{{.Names}}')"
           test -n "$container"
           test "$(echo "$container" | wc -l)" -eq 1
-          echo "221eed0cbc28a4a1d9e7bffb5663311c13cb6de8aa7df2bc04036b75b1b6a273  scripts/sql/supabase_auth_recovery_codes_20260824.sql" | sha256sum --check
+          echo "1ae2cae8d87ab6df4eb00e211a9e0b966b8254da5c4a8d689641770c234fa571  scripts/sql/supabase_auth_recovery_codes_20260824.sql" | sha256sum --check
           docker cp scripts/sql/supabase_auth_recovery_codes_20260824.sql "$container:/tmp/compat.sql"
           for pass in 1 2; do
             docker exec "$container" sh -c 'export PGPASSWORD="$POSTGRES_PASSWORD"; exec psql --host 127.0.0.1 --username supabase_auth_admin --dbname postgres --variable ON_ERROR_STOP=1 --file /tmp/compat.sql'
@@ -52,6 +52,12 @@ jobs:
             END IF;
             IF to_regclass('auth.mfa_recovery_codes_set_id_idx') IS NULL THEN
               RAISE EXCEPTION 'Recovery lookup index missing';
+            END IF;
+            IF to_regclass('auth.scim_users') IS NULL OR to_regclass('auth.scim_tokens') IS NULL THEN
+              RAISE EXCEPTION 'SCIM tables missing';
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'auth' AND table_name = 'one_time_tokens' AND column_name = 'expires_at' AND data_type = 'timestamp with time zone') THEN
+              RAISE EXCEPTION 'one_time_tokens.expires_at missing or incorrect type';
             END IF;
           END $$;
           SQL
