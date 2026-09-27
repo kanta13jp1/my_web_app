@@ -7,9 +7,14 @@ import 'package:my_web_app/models/platform_release_checklist.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PlatformReleaseChecklistPage extends StatefulWidget {
-  const PlatformReleaseChecklistPage({super.key});
+  const PlatformReleaseChecklistPage({
+    super.key,
+    this.initialChecklist,
+  });
 
   static const routeName = '/platform-release-checklist';
+
+  final PlatformReleaseChecklist? initialChecklist;
 
   @override
   State<PlatformReleaseChecklistPage> createState() =>
@@ -34,7 +39,13 @@ class _PlatformReleaseChecklistPageState
       for (final platform in PlatformReleaseChecklist.platforms)
         platform: TextEditingController(),
     };
-    _load();
+    final initialChecklist = widget.initialChecklist;
+    if (initialChecklist == null) {
+      _load();
+    } else {
+      _setChecklist(initialChecklist, persist: false);
+      _loading = false;
+    }
   }
 
   Future<void> _load() async {
@@ -250,7 +261,8 @@ class _PlatformCard extends StatelessWidget {
           Text(platform, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           DropdownButtonFormField<PlatformCheckStatus>(
-            value: status,
+            key: ValueKey<String>('$platform-${status.name}'),
+            initialValue: status,
             decoration: const InputDecoration(labelText: '確認状態'),
             items: PlatformCheckStatus.values
                 .map(

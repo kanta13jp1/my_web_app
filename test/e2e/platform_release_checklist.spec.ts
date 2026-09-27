@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('platform release checklist keeps default status separate and restores a clear', async ({ page }) => {
-  await page.goto('/platform-release-checklist');
+  await page.goto('/#/platform-release-checklist');
   await expect(page.getByText('プラットフォーム別リリース確認', { exact: true })).toBeVisible();
 
   const untested = page.getByText('未確認', { exact: true });
