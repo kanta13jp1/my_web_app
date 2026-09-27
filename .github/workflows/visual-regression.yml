@@ -137,6 +137,14 @@ jobs:
           npx playwright test test/e2e/lab_json_download.spec.ts \
             --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
+      - name: Verify generated API reference usability
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lab-api-reference-results.json
+        run: |
+          npx playwright test test/e2e/lab_api_reference.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Verify Inbox platform dismissal and save recovery
         shell: bash
         env:
