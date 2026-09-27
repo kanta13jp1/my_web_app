@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {RetryMemory,MEMORY_KEY,retryLevel} from '../../web/labs/jev-mario/retry-memory.mjs';
 import {World11} from '../../web/labs/jev-mario/world11.mjs';
+import {StudentSession} from '../../web/labs/jev-mario/student-session.mjs';
 import {LiveGuard} from '../../web/labs/jev-mario/live-guard.mjs';
 import {itemValue} from '../../web/labs/jev-mario/item-goal.mjs';
 const storage=()=>{const values=new Map();return {getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};};
@@ -33,3 +34,13 @@ test('Luigi survives reset/progression and red variants have distinct platform b
  g.phase='won';g.presentation=300;g.advanceStage();assert.equal(g.character,'luigi');
 });
 test('item priorities adapt to small/fire form and low lives',()=>{const g=new World11();assert.ok(itemValue(g,'mushroom')>itemValue({...g,power:2},'mushroom'));assert.ok(itemValue({...g,lives:1},'life')>itemValue(g,'life'));assert.ok(itemValue(g,'flower')>itemValue({...g,power:2},'flower'));assert.ok(itemValue(g,'star')>itemValue({...g,star:300},'star'));});
+
+test('running session discovers a stalled pipe and reuses its experience after a new start',()=>{
+ const store=storage(),g=new World11();let worker;
+ const session=new StudentSession(()=>worker={terminate(){},postMessage(m){this.onmessage({data:{type:'decision',action:'right_run',raw:'right_run',accepted:true,issued:m.issued,frame:m.state.frames,inferenceMs:0,probabilities:[]}});}},()=>g.frames*1000/60,store);
+ const callbacks={ready(){},update(){},error(){assert.fail();}};session.start(callbacks);worker.onmessage({data:{type:'ready'}});
+ let furthest=0;for(let i=0;i<900&&g.phase==='playing';i++){g.buttons(session.tick(g));g.step();g.drainSounds();furthest=Math.max(furthest,g.p.x);}
+ assert.ok(session.failures.some(f=>f.kind==='stalled'));assert.ok(session.stats.retry_assists>0);assert.ok(furthest>470);
+ const remembered=structuredClone(session.failures);session.stop();session.start(callbacks);assert.deepEqual(session.failures,remembered);assert.deepEqual(new RetryMemory(store).records,remembered);
+ mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-retry-session.json',JSON.stringify({scenario:'mock worker always right_run; automatic stall discovery in actual session, not model inference',furthest,phase:g.phase,memory:remembered},null,2));session.stop();
+});
