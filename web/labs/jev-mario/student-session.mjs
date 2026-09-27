@@ -24,7 +24,7 @@ export class StudentSession{
  }
  tick(world){
   if(!this.active||!this.ready)return 'noop';
-  if(!this.pending&&world.frames>=this.next){this.pending=true;this.next=world.frames+6;this.worker.postMessage({state:world,effective:this.action,issued:this.clock(),failures:this.failures,forecastFrames:Math.max(1,Math.min(36,Math.round(this.age*.06)))});}
+  if(!this.pending&&world.frames>=this.next){this.pending=true;this.next=world.frames+6;this.worker.postMessage({state:world,effective:this.guard.action??this.action,issued:this.clock(),failures:this.failures,forecastFrames:Math.max(1,Math.min(36,Math.round(this.age*.06)))});}
   const before=this.guard.interventions,action=this.guard.decide(world,this.action);this.stats.live_guard=this.guard.interventions;
   if(before!==this.guard.interventions&&this.stats.guard_events.length<600)this.stats.guard_events.push({frame:world.frames,proposed:this.action,action,reason:this.guard.lastReason});
   const release=world.p.grounded&&world.wasJump&&this.action.includes('jump');if(release)this.stats.jump_releases++;
