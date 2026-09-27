@@ -89,8 +89,10 @@ Widget _app(_FakeHistoryRepository repository) {
 }
 
 void main() {
-  testWidgets('presentation does not fetch again or delete saved history', (tester) async {
-    final repository = _FakeHistoryRepository(threads: [_thread('thread-1', '発表用')]);
+  testWidgets('presentation does not fetch again or delete saved history',
+      (tester) async {
+    final repository =
+        _FakeHistoryRepository(threads: [_thread('thread-1', '発表用')]);
     await tester.pumpWidget(_app(repository));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('asset_chat_thread_thread-1')));

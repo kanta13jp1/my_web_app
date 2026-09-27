@@ -42,13 +42,13 @@ class _ChatReplayPageState extends State<ChatReplayPage> {
     final message = _position == 0 ? null : widget.messages[_position - 1];
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.arrowRight):
-            () => _move(_position + 1),
-        const SingleActivator(LogicalKeyboardKey.arrowLeft):
-            () => _move(_position - 1),
+        const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
+            _move(_position + 1),
+        const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
+            _move(_position - 1),
         const SingleActivator(LogicalKeyboardKey.home): () => _move(0),
-        const SingleActivator(LogicalKeyboardKey.escape):
-            () => Navigator.of(context).maybePop(),
+        const SingleActivator(LogicalKeyboardKey.escape): () =>
+            Navigator.of(context).maybePop(),
       },
       child: Focus(
         autofocus: true,
@@ -74,7 +74,8 @@ class _ChatReplayPageState extends State<ChatReplayPage> {
                   children: [
                     const Text(
                       '保存済み会話の再生',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 8),
                     const Text('AIへの再送信・追加取得・保存は行いません。'),
@@ -134,12 +135,16 @@ class _ChatReplayPageState extends State<ChatReplayPage> {
                       runSpacing: 12,
                       children: [
                         OutlinedButton.icon(
-                          onPressed: _position == 0 ? null : () => _move(_position - 1),
+                          onPressed: _position == 0
+                              ? null
+                              : () => _move(_position - 1),
                           icon: const Icon(Icons.arrow_back),
                           label: const Text('前へ'),
                         ),
                         FilledButton.icon(
-                          onPressed: _position == total ? null : () => _move(_position + 1),
+                          onPressed: _position == total
+                              ? null
+                              : () => _move(_position + 1),
                           icon: const Icon(Icons.arrow_forward),
                           label: const Text('次へ'),
                         ),

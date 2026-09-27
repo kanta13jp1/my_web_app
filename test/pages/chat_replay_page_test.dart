@@ -16,7 +16,8 @@ AssetChatStoredMessage message(String text) => AssetChatStoredMessage(
     );
 
 void main() {
-  testWidgets('freezes input, conceals content, clamps and rewinds', (tester) async {
+  testWidgets('freezes input, conceals content, clamps and rewinds',
+      (tester) async {
     final source = [message('一件目'), message('二件目')];
     final page = ChatReplayPage(messages: source);
     source.clear();
@@ -47,22 +48,26 @@ void main() {
   testWidgets('empty snapshot has no next action', (tester) async {
     await tester.pumpWidget(MaterialApp(home: ChatReplayPage(messages: [])));
     expect(find.text('再生する会話がありません'), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed, isNull);
+    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
     expect(find.text('0 / 0 件'), findsOneWidget);
   });
 
-  testWidgets('partial long content scrolls at narrow width and double text size',
+  testWidgets(
+      'partial long content scrolls at narrow width and double text size',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(320, 568));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(MaterialApp(
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(2)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: const TextScaler.linear(2)),
         child: child!,
       ),
-      home: ChatReplayPage(messages: [message('長い本文\n' * 80)], hasOlderMessages: true),
+      home: ChatReplayPage(
+          messages: [message('長い本文\n' * 80)], hasOlderMessages: true),
     ));
     expect(find.byKey(const Key('chat_replay_partial')), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
