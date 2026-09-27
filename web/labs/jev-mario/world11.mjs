@@ -189,7 +189,7 @@ export class World11 {
     }
     if([11,13].includes(this.stage))this.enemies.push({x:42*16,y:40,w:16,h:16,vx:0,vy:0,kind:'lakitu',dead:0,age:0,active:false});
     if(this.stage===10)for(const x of [52,99,164])this.enemies.push({x:x*16,y:184,w:14,h:24,vx:.35,vy:0,kind:'hammer-bro',dead:0,anchor:x*16,age:0});
-    if([14,15].includes(this.stage))for(const x of (this.stage===15?[38,86,134]:[40,122]))this.enemies.push({x:x*16,y:192,w:14,h:16,vx:-.6,vy:0,kind:'paratroopa',dead:0});
+    if([14,15].includes(this.stage))for(const x of (this.stage===15?[38,86,134]:[40,122]))this.enemies.push({x:x*16,y:this.stage===15?Math.min(...[...this.cells.keys()].filter(k=>k.startsWith(x+',')).map(k=>Number(k.split(',')[1])))*16-16:192,w:14,h:16,vx:-.6,vy:0,kind:'paratroopa',dead:0});
     if(this.stage===6){this.p.y=128;this.p.grounded=false;this.enemies=[32,54,70,94,120,145,168,184].map((x,i)=>({x:x*16,y:80+(i%3)*32,baseY:80+(i%3)*32,w:14,h:14,vx:i%2?.65:-.65,vy:0,kind:i%3?'fish':'squid',dead:0,offset:i*30}));}
     if(this.stage===7)this.enemies=[30,39,55,67,78,92,106,114,131,143,153,167,177].map((x,i)=>({x:x*16,y:260,w:14,h:14,vx:i%2?-.8:.9,vy:-7,kind:'leaping-fish',dead:0,launched:false}));}
 
