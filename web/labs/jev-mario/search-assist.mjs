@@ -1,7 +1,7 @@
 // Explicit model-based search assistance, NOT learned inference.
 // Hypothetical clones never replace or rewind the real simulation.
 import {retryLevel} from './retry-memory.mjs?v=student-1';
-import {itemPotential,itemTargets,itemValue} from './item-goal.mjs?v=student-1';
+import {itemPotential,itemTargets,itemValue,itemApproach} from './item-goal.mjs?v=student-1';
 import {World11,isWater} from './world11.mjs?v=student-1';
 export function clone(g){return Object.assign(Object.create(World11.prototype),structuredClone(g));}
 export function edge(g,a){return (g.p.grounded||(isWater(g.stage)&&g.frames%20===0))&&g.wasJump&&a.includes('jump')?(a==='jump'?'noop':a.replace('_jump','')):a;}
@@ -19,7 +19,7 @@ function score(g,start,failures,target){
  if(target){
   const spawned=g.items.filter(i=>!i.taken&&Math.abs(i.x-target.x)<112).sort((a,b)=>Math.abs(a.x-g.p.x)-Math.abs(b.x-g.p.x))[0];
   const revealed=target.block&&!g.contents.has(target.key);
-  const goal=spawned?{x:spawned.x+7,y:spawned.y}:target;
+  const goal=spawned?{x:spawned.x+7,y:spawned.y}:itemApproach(g,target);
   pursuit=-Math.abs(goal.x-g.p.x-g.p.w/2)*1.4-Math.abs(goal.y-g.p.y)*.4+(revealed?70:0);
  }
  const repeat=0; // Failure memory expands foresight instead of creating an invisible wall.

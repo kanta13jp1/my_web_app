@@ -30,7 +30,7 @@ test('keyboard and touch crouch recover; walk and jump poses render',async({page
  await page.keyboard.up('Space');await page.keyboard.up('ArrowRight');
  await lab.locator('#restart-local').click();await lab.locator('#play-local').click();
  const down=lab.getByRole('button',{name:'しゃがむ・土管に入る'});
- const box=await down.boundingBox();expect(box).not.toBeNull();
+ await down.scrollIntoViewIfNeeded();const box=await down.boundingBox();expect(box).not.toBeNull();
  await page.mouse.move(box!.x+box!.width/2,box!.y+box!.height/2);await page.mouse.down();
  await expect(lab.locator('#posture')).toContainText('しゃがみ');
  await page.mouse.up();await expect(lab.locator('#posture')).toContainText('待機');
