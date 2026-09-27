@@ -241,7 +241,7 @@ export class World11 {
       if(held){held.carried=true;this.sound('kick');}
     }
     if(!held)return;
-    const facing=p.facing??1;held.x=facing>0?p.x+p.w+2:p.x-held.w-2;held.y=p.y+p.h-14;held.vx=0;held.vy=0;
+    const facing=p.facing??1;held.x=facing>0?p.x+p.w+2:p.x-held.w-2;held.y=p.y+p.h-held.h;held.vx=0;held.vy=0;
     if(!k.carry||this.phase!=='playing'){held.carried=false;held.vx=facing*4;held.vy=this.phase==='playing'?-2.5:0;held.ownerGrace=12;this.sound('kick');}
   }
   liftStep(){
