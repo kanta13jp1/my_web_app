@@ -33647,3 +33647,51 @@ Added independent pixel-art poses for walking/running, facing, jumping/falling a
 
 - Issue #5495: 最新のJev単独ログ（右→右→ダッシュ、frame218/x308.26で死亡）を再現。予測値を追加する入力を明示選択し、基準入力とJSONで区別。認証・同意・利用枠は維持。
 - 回避補助はダッシュを保持し、アイテム出現動作とブレーキSEを改善。API性能とシミュレーションは区別してクラウドで検証。
+
+
+## 2026-09-27: Inbox draft protection and adaptive confirmation (PR #5544)
+
+- Preserve draft text when back, Escape, or the barrier dismisses Inbox; require explicit discard.
+- Keep pending saves open, preserve failed input, and allow retry. Use platform-adaptive discard actions without upgrading Flutter or claiming native Liquid Glass support.
+- Verify Android/iOS/Windows widget behavior and desktop/mobile Chromium flows through the existing cloud CI and visual-regression workflow. Production release remains subject to successful checks.
+
+## 2026-09-27 Jev Mario World 5 / audio / shared ranking (Issue #5557)
+
+Add independently arranged 5-1..5-4, three-voice original chiptune arrangements with percussion, bounded local attempt history and authenticated opt-in shared self-reported ranking. Rank within course/controller/starting-power/revision; do not claim verified competitive scores, original ROM parity or new-course natural AI clear. Private-schema table, explicit authenticated RPC, ownership-only history, no public auth IDs, bounded retention and serialized submission limits. Cloud CI and final security/release review pending. Local resources CLOUD_REQUIRED; lead gpt-6-astra/high recommendation, no worker launched.
+
+
+## 2026-09-27 Jev Mario World 6 and campaign ranking (Issue #5561)
+
+Add 6-1..6-4, four musical voices, and one automatic record per play across life retries and stage transitions. Rank by reached course, course cleared, total score, then wall-clock duration, grouped by starting course/controller/power/revision. Keep authenticated self-reported sharing, generated player names, bounded retention and owner-only history. Preserve legacy records. Cloud CI and concrete DB/auth owner review pending before production. No new-course natural AI clear or original ROM/music parity claim. Resource routing CLOUD_REQUIRED; lead frontier/high, no workers.
+
+
+## 2026-09-27: acquisition measurement audit (#5563)
+
+Added a read-only anonymous production measurement audit and actual service transport fault tests. Added finalized Search Console daily collection/validation with timezone and missing-day preservation. See docs/evidence/seo-measurement-20260927/PROTOCOL.md and docs/SEARCH_CONSOLE_MEASUREMENT.md. Google property/authorization and prospective causal evidence remain pending.
+
+
+## 2026-09-27 Jev Mario World 7 and visible campaign ranking (Issue #5565)
+
+Add independent 7-1..7-4, five-voice original arrangements, automatic ranking loading/filter refresh/post-share refresh. Extend course and version constraints only; preserve the approved authenticated automatic sharing model, retention, quotas, pseudonyms and historical records. Cloud tests cover water physics, progression, rescue, audio headroom, ranking responses and denied access. No exact original parity or natural model clear claim. CLOUD_REQUIRED, frontier/high lead, no workers.
+
+
+## 2026-09-27 Acquisition comparison tool (#5563)
+
+- Turn the Zenn measurement findings into a public, browser-only comparison tool: strict daily input, missing-data hold, per-day rates, descriptive control/search comparisons, timezone boundaries, transport-stage reconciliation and JSON export.
+- Verify the actual desktop/mobile interface in cloud and production before adding the direct article link. Google live data and prospective causal evidence remain separate incomplete gates; no invented outcomes.
+
+
+## 2026-09-27 World 8 and repeated autoplay failures (Issue #5571)
+
+Add 8-1..8-4, six original pitched voices, bounded live-state collision assistance and per-play failure memory for LightGBM + search. Preserve cumulative campaign ranking, authenticated automatic sharing, retry/lives/items/fireworks and old records. Extend only course/revision limits. Validate delayed worker delivery separately from tree inference and original-game fidelity. CLOUD_REQUIRED, Jev recommends frontier/xhigh; lead execution retained, no local workers or heavy runs.
+
+
+## 2026-09-28 Persistent Mario retry experience (Issue #5576)
+
+Persist capped device-local failure clusters and extend search/collision foresight near repeated failures. This is explicit assistance, not LightGBM retraining. Add useful-item priorities, Luigi palette, red Koopa/Paratroopa behavior and a seventh original musical answer part. Preserve existing campaign sharing and privacy. Validate before/after obstacle progress, reload/clear, mute/audio headroom and desktop/mobile play in cloud. Full natural 32-course clear and exact original parity remain unverified.
+
+
+## 2026-09-28 Measured AI usage comparison (Issue #5574)
+
+- Add browser-only condition comparison of measured token components, request counts and reported model/run costs. Preserve the archived 18-trial provenance; no model calls, telemetry or secret handling.
+- Validate invalid input, duplicate trials, model mixing, zero baseline, export and desktop/mobile interactions in cloud. Production verification and article PR82 remain required before completion.

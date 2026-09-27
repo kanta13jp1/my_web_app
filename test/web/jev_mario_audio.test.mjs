@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GameAudio, effects } from '../../web/labs/jev-mario/audio.mjs';
+import { GameAudio, effects, musicStep, arrangements } from '../../web/labs/jev-mario/audio.mjs';
 import { World11 } from '../../web/labs/jev-mario/world11.mjs';
 test('noise percussion reuses one buffer and stops with music or mute',async()=>{
  const c=context();let buffers=0;const sources=[];c.sampleRate=48000;
@@ -41,6 +41,7 @@ test('world emits one jump per liftoff, coin once, and terminal events once',()=
 test('room/star themes switch, hurry speeds sequence, terminal stingers stop music',async()=>{
  const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick();assert.equal(a.track,'overworld');
  c.currentTime+=1;a.tick('underground');assert.equal(a.track,'underground');
+ c.currentTime+=1;a.tick('castle');assert.equal(a.track,'castle');assert.ok(a.music.size>0);
  c.currentTime+=1;a.tick('overworld',{star:true});assert.equal(a.track,'star');
  const old=[...a.music];a.effect('death');assert.equal(a.music.size,0);assert.ok(old.every(o=>o.stopped));
  const count=c.oscillators.length;a.tick();assert.equal(c.oscillators.length,count);
@@ -71,3 +72,18 @@ test('late animation frames resume music without replaying a burst of overdue be
  const fresh=c.oscillators.filter(o=>!o.stopped);assert.ok(fresh.every(o=>o.started<=a.next));
  a.stop();assert.equal(a.nodes.size,0);
 });
+
+
+test('fireworks synthesize a bounded burst and mute releases it',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);let bursts=0;a.noise=(_t,duration)=>{bursts++;assert.equal(duration,.16);};a.effect('firework');assert.equal(bursts,1);assert.equal(c.oscillators.length,1);await a.enable(false);assert.equal(a.nodes.size,0);
+});
+
+test('every room has independent seven-part harmony, stable tempo and retained mute',async()=>{
+ for(const track of Object.keys(arrangements)){
+  const a=musicStep(track,0),b=musicStep(track,16);assert.ok(a.lead>0&&a.harmony>0&&a.bass>0&&a.counter>0&&a.pad>0&&a.fifth>0&&a.answer>0);assert.notEqual(a.bass,b.bass);assert.ok(musicStep(track,0,true).step<a.step);
+  const c=context(),audio=new GameAudio(()=>c);await audio.enable(true);audio.tick(track,{star:track==='star'});assert.ok(c.oscillators.length>=6,track);audio.stop();assert.equal(audio.nodes.size,0);
+ }
+ assert.notDeepEqual(arrangements.castle.chords,arrangements.overworld.chords);
+});
+
+test('seventh answer part enters on the offbeat and releases on mute',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick('overworld');const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=2;a.next=c.currentTime;a.tick('overworld');const note=musicStep('overworld',2);assert.ok(scheduled.some(x=>x[0]===note.answer&&x[1]>c.currentTime&&x[3]==='triangle'));await a.enable(false);assert.equal(a.nodes.size,0);});

@@ -154,6 +154,20 @@ jobs:
             | sha256sum --check
           docker cp scripts/sql/supabase_storage_v1_71_0_0062.sql \
             "$db_container:/tmp/storage-compat.sql"
+          # Official Auth compatibility DDL, isolated target only (#5465).
+          echo "221eed0cbc28a4a1d9e7bffb5663311c13cb6de8aa7df2bc04036b75b1b6a273  scripts/sql/supabase_auth_recovery_codes_20260824.sql" \
+            | sha256sum --check
+          docker cp scripts/sql/supabase_auth_recovery_codes_20260824.sql \
+            "$db_container:/tmp/auth-recovery-compat.sql"
+          docker exec "$db_container" sh -c '
+            export PGPASSWORD="$POSTGRES_PASSWORD"
+            exec psql \
+              --host 127.0.0.1 \
+              --username supabase_auth_admin \
+              --dbname postgres \
+              --variable ON_ERROR_STOP=1 \
+              --file /tmp/auth-recovery-compat.sql
+          '
           docker cp "$restore_input/roles.sql" "$db_container:/tmp/roles.sql"
           docker cp "$restore_input/schema.sql" "$db_container:/tmp/schema.sql"
           docker cp "$restore_input/data.sql" "$db_container:/tmp/data.sql"
