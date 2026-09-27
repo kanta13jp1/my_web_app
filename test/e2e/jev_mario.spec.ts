@@ -541,7 +541,7 @@ test('stop during death cancels retry; local AI can retry with a fresh worker',a
  await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.die();};});
  await expect(lab.locator('#status')).toContainText('残り2機');await lab.locator('#watch-stop').click();await page.waitForTimeout(3300);await expect(lab.locator('#status')).toContainText('停止しました');await expect(lab.locator('#decision-summary')).not.toContainText('LIVE');
  await lab.locator('#watch-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
- await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');let died=false;World11.prototype.step=function(){if(!died){died=true;this.die();}else this.frames++;};});
+ await frame.evaluate(async()=>{const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const original=StudentSession.prototype.tick;let died=false;StudentSession.prototype.tick=function(world){if(!died){died=true;world.die();return 'noop';}return original.call(this,world);};});
  await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:10000});await expect(lab.locator('#progress')).toContainText('残り2機');await expect(lab.locator('#student-status')).toContainText('モデル案採用');await lab.locator('#stop').click();
 });
 
