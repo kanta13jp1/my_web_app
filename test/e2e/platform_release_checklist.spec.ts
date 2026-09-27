@@ -9,6 +9,7 @@ async function openChecklist(page: Page) {
   await page.goto('/platform-release-checklist');
   await expect(page.getByRole('heading', { name: 'プラットフォーム別リリース確認', exact: true }))
     .toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('#seo-shell')).toBeHidden({ timeout: 30_000 });
 }
 
 async function markWeb(page: Page) {
@@ -36,6 +37,7 @@ test('platform release checklist reloads a platform result and note', async ({ p
   await markWeb(page);
   await page.waitForTimeout(300);
   await page.reload();
+  await expect(page.locator('#seo-shell')).toBeHidden({ timeout: 30_000 });
   await expect(status(page, 'Web', '確認済み')).toBeVisible({ timeout: 30_000 });
   // Focus the semantic input directly; pointer auto-scroll can move Flutter's canvas hit target.
   await page.getByRole('textbox', { name: /^Web の確認メモ(?: |$)/ }).focus();
