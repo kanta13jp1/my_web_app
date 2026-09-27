@@ -142,6 +142,7 @@ class _ChatReplayPageState extends State<ChatReplayPage> {
                           label: const Text('前へ'),
                         ),
                         FilledButton.icon(
+                          key: const Key('chat_replay_next'),
                           onPressed: _position == total
                               ? null
                               : () => _move(_position + 1),

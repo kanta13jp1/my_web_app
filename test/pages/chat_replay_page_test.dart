@@ -48,7 +48,7 @@ void main() {
   testWidgets('empty snapshot has no next action', (tester) async {
     await tester.pumpWidget(MaterialApp(home: ChatReplayPage(messages: [])));
     expect(find.text('再生する会話がありません'), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+    expect(tester.widget<FilledButton>(find.byKey(const Key('chat_replay_next'))).onPressed,
         isNull);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
