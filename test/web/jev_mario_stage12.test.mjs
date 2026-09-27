@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {World11,undergroundLevel,courseInfo} from '../../web/labs/jev-mario/world11.mjs';
+import {World11,undergroundLevel,courseInfo,LAST_COURSE} from '../../web/labs/jev-mario/world11.mjs';
 test('stage selection resets its own course and identifies telemetry',()=>{
  const a=new World11(),b=new World11(2);assert.equal(a.telemetry().stage,1);assert.equal(b.telemetry().stage,2);assert.equal(b.room,'stage-underground');assert.equal(b.tile(10,2),'brick');assert.equal(a.tile(10,2),undefined);
  b.p.x=400;b.reset();assert.equal(b.p.x,32);assert.equal(b.stage,2);assert.equal(b.tile(10,2),'brick');
@@ -16,7 +16,7 @@ test('underground camera scrolls; coins collect; exit and death are distinct',()
 test('campaign advances only after clear presentation and preserves earned state',()=>{
  const g=new World11();assert.equal(g.advanceStage(),false);g.phase='dead';g.presentation=180;assert.equal(g.advanceStage(),false);g.phase='won';g.presentation=179;assert.equal(g.advanceStage(),false);
  Object.assign(g,{score:12300,coins:17,lives:2,power:2,deaths:1});
- for(let next=2;next<=24;next++){g.phase='won';g.presentation=g.presentationLength();assert.equal(g.advanceStage(),true);assert.equal(g.stage,next);assert.equal(g.p.x,32);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);assert.equal(g.phase,'playing');assert.equal(g.frames,0);}
+ for(let next=2;next<=LAST_COURSE;next++){g.phase='won';g.presentation=g.presentationLength();assert.equal(g.advanceStage(),true);assert.equal(g.stage,next);assert.equal(g.p.x,32);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);assert.equal(g.phase,'playing');assert.equal(g.frames,0);}
  g.phase='won';g.presentation=g.presentationLength();assert.equal(g.advanceStage(),false);
 });
 test('sky course has elevated platforms, gaps, collectibles and a distinct finish',()=>{
