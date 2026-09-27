@@ -692,7 +692,7 @@ test('world 7 course selection, life restart, progression and final rescue',asyn
    await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
    await frame.waitForFunction(()=>(window as any).fifth.phase==='playing');
   }
-  await frame.evaluate(()=>{const g=(window as any).fifth;Object.assign(g.p,{x:(g.stage===28?196:198)*16,y:g.stage===28?176:160,vx:0,vy:0});g.frames=(400-330)*24-1;g.invincible=1000;});
+  await frame.evaluate(()=>{const g=(window as any).fifth;Object.assign(g.p,{x:([26,28].includes(g.stage)?196:198)*16,y:[26,28].includes(g.stage)?176:160,vx:0,vy:0});g.frames=(400-330)*24-1;g.invincible=1000;});
   await expect(lab.locator('#status')).toContainText(`7-${id-24}クリア！`);
   if(id<28)await expect(lab.locator('#stage')).toHaveValue(String(id+1),{timeout:7000});
   else{await expect(lab.locator('#status')).toContainText('全ステージ終了');await frame.waitForFunction(()=>(window as any).fifth.peachRescued);await expect.poll(()=>frame.evaluate(()=>{const p=(document.getElementById('screen') as HTMLCanvasElement).getContext('2d')!.getImageData(0,0,256,240).data;let n=0;for(let i=0;i<p.length;i+=4)if(p[i]===248&&p[i+1]===120&&p[i+2]===184)n++;return n;})).toBeGreaterThan(20);await lab.locator('#presentation').screenshot({path:info.outputPath('world74-rescue.png')});await expect(lab.locator('#history-rows')).toContainText('クリア',{timeout:7000});}
