@@ -33654,3 +33654,7 @@ Added independent pixel-art poses for walking/running, facing, jumping/falling a
 - Preserve draft text when back, Escape, or the barrier dismisses Inbox; require explicit discard.
 - Keep pending saves open, preserve failed input, and allow retry. Use platform-adaptive discard actions without upgrading Flutter or claiming native Liquid Glass support.
 - Verify Android/iOS/Windows widget behavior and desktop/mobile Chromium flows through the existing cloud CI and visual-regression workflow. Production release remains subject to successful checks.
+
+## 2026-09-27 Jev Mario World 5 / audio / shared ranking (Issue #5557)
+
+Add independently arranged 5-1..5-4, three-voice original chiptune arrangements with percussion, bounded local attempt history and authenticated opt-in shared self-reported ranking. Rank within course/controller/starting-power/revision; do not claim verified competitive scores, original ROM parity or new-course natural AI clear. Private-schema table, explicit authenticated RPC, ownership-only history, no public auth IDs, bounded retention and serialized submission limits. Cloud CI and final security/release review pending. Local resources CLOUD_REQUIRED; lead gpt-6-astra/high recommendation, no worker launched.

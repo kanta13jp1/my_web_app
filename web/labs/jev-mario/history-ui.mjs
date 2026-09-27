@@ -1,0 +1,17 @@
+import {RunHistory,CONTROLLERS} from './history.mjs?v=student-1';
+import {downloadJson} from '../shared/download-json.mjs?v=student-1';
+export function setupHistory(){
+ const $=id=>document.getElementById(id);let storage;try{storage=localStorage;}catch{storage={getItem(){throw Error();},setItem(){throw Error();}};}
+ const history=new RunHistory(storage);let seq=0,pending=null;
+ const label=course=>`${Math.floor((course-1)/4)+1}-${(course-1)%4+1}`;
+ const outcome={won:'クリア',dead:'ミス',stopped:'途中停止'};
+ function cell(row,text){const td=document.createElement('td');td.textContent=String(text);row.append(td);return td;}
+ function render(){const body=$('history-rows');body.replaceChildren();for(const r of history.rows.slice(0,20)){const tr=document.createElement('tr');cell(tr,label(r.course));cell(tr,CONTROLLERS[r.controller]);cell(tr,outcome[r.outcome]);cell(tr,r.score);cell(tr,(r.frames/60).toFixed(1)+'秒');const td=cell(tr,'');const b=document.createElement('button');b.textContent='共有する';b.onclick=async()=>{b.disabled=true;try{await request('submit',{run:r});$('history-status').textContent='共有しました。ランキングを更新すると表示されます。';}catch(e){$('history-status').textContent=e.message;}finally{b.disabled=false;}};td.append(b);body.append(tr);}
+ $('history-empty').hidden=history.rows.length>0;$('history-status').textContent=history.warning||'直近100件をこのブラウザに保存します。共有は各記録のボタンから行えます。';}
+ function request(action,payload={}){if(pending)return Promise.reject(Error('前の操作の完了をお待ちください。'));return new Promise((resolve,reject)=>{const id=++seq,timer=setTimeout(()=>{pending=null;reject(Error('応答がありません。アプリから開いてログインし、再試行してください。'));},12000);pending={id,timer,resolve,reject};parent.postMessage({type:'jev-mario-ranking',id,action,...payload},location.origin);});}
+ window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==parent||e.data?.type!=='jev-mario-ranking-response'||!pending||e.data.id!==pending.id)return;const p=pending;pending=null;clearTimeout(p.timer);if(e.data.error)p.reject(Error(e.data.error));else p.resolve(e.data.result);});
+ $('history-export').onclick=()=>downloadJson({revision:1,records:history.rows},'jev-mario-history.json');
+ $('ranking-load').onclick=async()=>{const b=$('ranking-load');b.disabled=true;try{const rows=await request('list',{course:Number($('rank-course').value),controller:$('rank-controller').value,power:Number($('rank-power').value)});if(!Array.isArray(rows))throw Error('ランキングの形式を確認できません。');const body=$('ranking-rows');body.replaceChildren();for(const [i,r]of rows.slice(0,20).entries()){const tr=document.createElement('tr');cell(tr,i+1);cell(tr,r.player);cell(tr,outcome[r.outcome]||'—');cell(tr,r.score);cell(tr,(r.frames/60).toFixed(1)+'秒');body.append(tr);}$('ranking-status').textContent=rows.length?'同条件・同バージョンの各利用者の最高記録です。':'この条件の共有記録はまだありません。';}catch(e){$('ranking-status').textContent=e.message;}finally{b.disabled=false;}};
+ $('shared-history').onclick=async()=>{try{const rows=await request('mine');downloadJson({records:rows},'jev-mario-shared-history.json');$('history-status').textContent='アカウントの共有履歴を保存しました。';}catch(e){$('history-status').textContent=e.message;}};
+ render();return {add:r=>{history.add(r);render();},history};
+}
