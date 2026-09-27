@@ -20,6 +20,8 @@ do $$ declare n int;v jsonb;begin
  v:=public.jev_mario_runs('mine');if jsonb_array_length(v)<>1 or v::text like '%user_id%' then raise exception 'history isolation';end if;
  v:=public.jev_mario_runs('list','{"course":17,"controller":"manual","power":0}');if jsonb_array_length(v)<>1 or v::text like '%00000000-0000%' then raise exception 'public id exposed';end if;
  begin select count(*) into n from mario_private.runs;raise exception 'direct table read allowed';exception when insufficient_privilege then null;end;
+ begin insert into mario_private.runs(user_id,id) values(auth.uid(),gen_random_uuid());raise exception 'direct insert allowed';exception when insufficient_privilege then null;end;
+ begin update mario_private.runs set score=0;raise exception 'direct update allowed';exception when insufficient_privilege then null;end;
  begin delete from mario_private.runs;raise exception 'direct delete allowed';exception when insufficient_privilege then null;end;
  -- Idempotent retry must work even inside the frequency window.
  perform public.jev_mario_runs('submit','{"id":"10000000-0000-4000-8000-000000000001"}');

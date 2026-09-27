@@ -138,16 +138,21 @@ class _JevMarioViewState extends State<JevMarioView> {
         reply(error: '共有履歴・ランキングはログイン後に利用できます。');
         return;
       }
-      final result = await client.rpc('jev_mario_runs', params: {
-        'p_action': action,
-        'p_data': action == 'submit'
-            ? data['run']
-            : {
-                'course': data['course'],
-                'controller': data['controller'],
-                'power': data['power'],
-              },
-      }).timeout(const Duration(seconds: 10));
+      final result = await client
+          .rpc(
+            'jev_mario_runs',
+            params: {
+              'p_action': action,
+              'p_data': action == 'submit'
+                  ? data['run']
+                  : {
+                      'course': data['course'],
+                      'controller': data['controller'],
+                      'power': data['power'],
+                    },
+            },
+          )
+          .timeout(const Duration(seconds: 10));
       if (!mounted || client.auth.currentUser?.id != user.id) {
         reply(error: 'ログイン状態が変わりました。再読み込みしてください。');
         return;
