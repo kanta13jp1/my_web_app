@@ -3,8 +3,8 @@ const kinds=new Set(['mushroom','flower','life','star']);
 export function itemValue(g,kind){return kind==='life'?(g.lives<=1?180:120):kind==='star'?(g.star>120?70:130):kind==='flower'?(g.power<2?150:65):g.power===0?150:60;}
 export function itemTargets(g){
  const p=g.p,targets=g.items.filter(i=>!i.taken&&kinds.has(i.kind)).map(i=>({x:i.x+7,y:i.y,kind:i.kind,block:false}));
- for(const [key,kind]of g.contents)if(kinds.has(kind)){const [x,y]=key.split(',').map(Number);targets.push({x:x*16+8,y:y*16+16,kind,block:true});}
- return targets.filter(t=>t.x>=g.camera&&t.x>=p.x-24&&t.x<=p.x+80&&Math.abs(t.y-p.y)<80).sort((a,b)=>(Math.abs(a.x-p.x)-itemValue(g,a.kind)*.15)-(Math.abs(b.x-p.x)-itemValue(g,b.kind)*.15));
+ for(const [key,kind]of g.contents)if(kinds.has(kind)){const [x,y]=key.split(',').map(Number);targets.push({x:x*16+8,y:y*16+16,kind,key,block:true});}
+ return targets.filter(t=>t.x>=g.camera&&t.x>=p.x-80&&t.x<=p.x+160&&Math.abs(t.y-p.y)<160).sort((a,b)=>(Math.abs(a.x-p.x)-itemValue(g,a.kind)*.15)-(Math.abs(b.x-p.x)-itemValue(g,b.kind)*.15));
 }
 export function itemPotential(g){
  return itemTargets(g).reduce((best,t)=>Math.max(best,itemValue(g,t.kind)*.15-Math.abs(t.x-g.p.x-g.p.w/2)*.25-Math.abs(t.y-g.p.y)*.08),0);
@@ -18,4 +18,13 @@ export function itemIntent(g){
  if(!t.block&&Math.abs(t.y-p.y)<22&&dx<0&&dx>-24)return 'left';
  if(!t.block&&t.y<p.y-10&&Math.abs(dx)<24)return 'right_jump';
  return null;
+}
+
+// Approach a block from below, rather than rewarding a jump over its top.
+export function itemApproach(g,target){
+ if(!target.block||g.p.y>=target.y-2)return target;
+ const [col,row]=target.key.split(',').map(Number),left=g.p.x+g.p.w/2<target.x;
+ let edge=col;
+ while(g.solid(edge+(left?-1:1),row)&&Math.abs(edge-col)<12)edge+=left?-1:1;
+ return {x:left?edge*16-g.p.w/2-2:(edge+1)*16+g.p.w/2+2,y:target.y+20};
 }
