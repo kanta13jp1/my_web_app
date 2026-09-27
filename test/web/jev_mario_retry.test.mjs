@@ -29,7 +29,7 @@ test('repeated failure experience improves a deterministic obstacle approach',()
  assert.ok(rows.some(r=>r.after.furthest>r.before.furthest+32),'at least one reproduced failure must pass its previous failure point');
 });
 test('Luigi survives reset/progression and red variants have distinct platform behavior',()=>{
- const g=new World11(15);g.character='luigi';g.reset();assert.equal(g.character,'luigi');const red=g.enemies.find(e=>e.red&&e.kind==='paratroopa');assert.ok(red);g.camera=red.x-64;g.p.x=red.x-100;const x=red.x,y=red.y;for(let i=0;i<10;i++)g.step();assert.equal(red.x,x);assert.notEqual(red.y,y);
+ const g=new World11(15);g.character='luigi';g.reset();assert.equal(g.character,'luigi');const red=g.enemies.find(e=>e.red&&e.kind==='paratroopa');assert.ok(red);const floor=Math.min(...[...g.cells.keys()].filter(k=>k.startsWith(Math.floor(red.x/16)+',')).map(k=>Number(k.split(',')[1])*16));assert.ok(red.flightY+32+red.h<=floor,'vertical flight stays above its platform');g.camera=red.x-64;g.p.x=red.x-100;const x=red.x,y=red.y;for(let i=0;i<10;i++)g.step();assert.equal(red.x,x);assert.notEqual(red.y,y);
  const k={x:18,y:192,w:14,h:16,vx:.5,vy:0,grounded:true,kind:'koopa',red:true,dead:0};const a=new World11();a.enemies=[k];a.p.x=120;for(let c=2;c<6;c++)for(let r=13;r<16;r++)a.cells.delete(c+','+r);a.step();assert.ok(k.vx<0,'red Koopa turns before the missing floor');
  g.phase='won';g.presentation=300;g.advanceStage();assert.equal(g.character,'luigi');
 });

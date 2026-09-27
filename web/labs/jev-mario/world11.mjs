@@ -300,7 +300,7 @@ export class World11 {
     if([11,13,19,21,30].includes(this.stage))this.enemies.push({x:42*16,y:40,w:16,h:16,vx:0,vy:0,kind:'lakitu',dead:0,age:0,active:false});
     if([10,18,22,25,31].includes(this.stage))for(const x of (this.stage===18?[56,116,154]:[52,99,164]))this.enemies.push({x:x*16,y:184,w:14,h:24,vx:.35,vy:0,kind:'hammer-bro',dead:0,anchor:x*16,age:0});
     if([14,15,17,19,22,23,25,29,30].includes(this.stage))for(const x of ([19,23].includes(this.stage)?[38,90,132]:this.stage===17?[72,142]:this.stage===15?[38,86,134]:[40,122]))this.enemies.push({x:x*16,y:[15,19,23].includes(this.stage)?Math.min(...[...this.cells.keys()].filter(k=>k.startsWith(x+',')).map(k=>Number(k.split(',')[1])))*16-16:192,w:14,h:16,vx:-.6,vy:0,kind:'paratroopa',dead:0});
-    if([15,19,23,30].includes(this.stage)){const e=this.enemies.find(e=>e.kind==='paratroopa');if(e){e.red=true;e.flightY=Number.isFinite(e.y)?Math.max(48,e.y-24):112;e.y=e.flightY;e.flightAge=0;e.vx=0;}}
+    if([15,19,23,30].includes(this.stage)){const e=this.enemies.find(e=>e.kind==='paratroopa');if(e){e.red=true;e.flightY=Number.isFinite(e.y)?Math.max(32,e.y-48):112;e.y=e.flightY;e.flightAge=0;e.vx=0;}}
     if(isWater(this.stage)){this.p.y=128;this.p.grounded=false;this.enemies=[32,54,70,94,120,145,168,184].map((x,i)=>({x:x*16,y:80+(i%3)*32,baseY:80+(i%3)*32,w:14,h:14,vx:i%2?.65:-.65,vy:0,kind:i%3?'fish':'squid',dead:0,offset:i*30}));}
     if(isBridge(this.stage))this.enemies=[30,39,55,67,78,92,106,114,131,143,153,167,177].map((x,i)=>({x:x*16,y:260,w:14,h:14,vx:i%2?-.8:.9,vy:-7,kind:'leaping-fish',dead:0,launched:false}));}
 
