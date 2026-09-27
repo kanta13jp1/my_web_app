@@ -649,8 +649,8 @@ test('world 5 course selection, life restart, progression and final rescue',asyn
  test.setTimeout(60000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
  for(const id of [17,18,19,20]){
   await lab.locator('#stage').selectOption(String(id));await lab.locator('#watch-manual').click();
-  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;this.invincible=1000;step.call(this);};});
-  await frame.waitForFunction((id)=>(window as any).fifth?.stage===id,id);await lab.locator('#presentation').screenshot({path:info.outputPath(`world5-${id-16}.png`)});
+  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+  await frame.waitForFunction((id)=>(window as any).fifth?.stage===id,id);if(id===18)expect(await frame.evaluate(()=>Array.from((document.getElementById('screen') as HTMLCanvasElement).getContext('2d')!.getImageData(0,0,1,1).data))).toEqual([8,16,40,255]);await lab.locator('#presentation').screenshot({path:info.outputPath(`world5-${id-16}.png`)});
   if(id===18){await frame.evaluate(()=>(window as any).fifth.die());await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('5-2 手動プレイ中',{timeout:7000});
    // Retry constructs a new world: target the live instance, never the dead fixture.
    await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
@@ -659,7 +659,7 @@ test('world 5 course selection, life restart, progression and final rescue',asyn
   await frame.evaluate(()=>{const g=(window as any).fifth;Object.assign(g.p,{x:(g.stage===20?196:198)*16,y:g.stage===20?176:160,vx:0,vy:0});g.frames=(400-330)*24-1;g.invincible=1000;});
   await expect(lab.locator('#status')).toContainText(`5-${id-16}クリア！`);
   if(id<20)await expect(lab.locator('#stage')).toHaveValue(String(id+1),{timeout:7000});
-  else{await expect(lab.locator('#status')).toContainText('全ステージ終了');await frame.waitForFunction(()=>(window as any).fifth.peachRescued);await lab.locator('#presentation').screenshot({path:info.outputPath('world54-rescue.png')});await expect(lab.locator('#history-rows')).toContainText('クリア',{timeout:7000});}
+  else{await expect(lab.locator('#status')).toContainText('全ステージ終了');await frame.waitForFunction(()=>(window as any).fifth.peachRescued);await expect.poll(()=>frame.evaluate(()=>{const p=(document.getElementById('screen') as HTMLCanvasElement).getContext('2d')!.getImageData(0,0,256,240).data;let n=0;for(let i=0;i<p.length;i+=4)if(p[i]===248&&p[i+1]===120&&p[i+2]===184)n++;return n;})).toBeGreaterThan(20);await lab.locator('#presentation').screenshot({path:info.outputPath('world54-rescue.png')});await expect(lab.locator('#history-rows')).toContainText('クリア',{timeout:7000});}
  }
  expect(errors).toEqual([]);
 });
@@ -669,7 +669,7 @@ test('run history survives reload, sharing errors recover and ranking renders sa
  await page.reload();lab=page.frameLocator('iframe');await expect(lab.locator('#history-rows')).toContainText('5-1');
  await page.evaluate(()=>{let failed=false;window.addEventListener('message',e=>{if(e.data?.type!=='jev-mario-ranking')return;const data=e.data;if(data.action==='submit'&&!failed){failed=true;(e.source as Window).postMessage({type:'jev-mario-ranking-response',id:data.id,error:'共有履歴・ランキングはログイン後に利用できます。'},location.origin);return;}(e.source as Window).postMessage({type:'jev-mario-ranking-response',id:data.id,result:data.action==='list'?[{player:'Player-test',score:1200,frames:900,outcome:'won'}]:{saved:true}},location.origin);});});
  await lab.locator('#history-rows button').first().click();await expect(lab.locator('#history-status')).toContainText('ログイン');await lab.locator('#history-rows button').first().click();await expect(lab.locator('#history-status')).toContainText('共有しました');
- await lab.locator('#rank-course').selectOption('17');await lab.locator('#ranking-load').click();await expect(lab.locator('#ranking-rows')).toContainText('Player-test');await expect(lab.locator('#ranking-rows')).toContainText('15.0秒');await lab.locator('[aria-labelledby="history-title"]').screenshot({path:info.outputPath('history-ranking.png')});
+ await lab.locator('#rank-course').selectOption('17');await lab.locator('#ranking-load').click();await expect(lab.locator('#ranking-rows')).toContainText('Player-test');await expect(lab.locator('#ranking-rows')).toContainText('15.0秒');await lab.locator('#ranking-rows').locator('..').screenshot({path:info.outputPath('history-ranking.png')});await lab.locator('#rank-course').locator('..').screenshot({path:info.outputPath('history-ranking-filters.png')});
 });
 
 test('three-voice audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{

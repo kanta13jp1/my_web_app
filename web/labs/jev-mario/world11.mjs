@@ -502,7 +502,7 @@ function drawCoin(ctx,x,y,frame){
   ctx.fillStyle='#ffd040';ctx.fillRect(left,y+2,width,8);
   if(width>2){ctx.fillStyle='#fff0a0';ctx.fillRect(left+1,y+3,1,5);ctx.fillStyle='#b87800';ctx.fillRect(left+width-2,y+3,1,5);}
 }
-export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===6,underground=g.room==='underground'||isUnderground(g.stage)||isCastle(g.stage);ctx.imageSmoothingEnabled=false;ctx.fillStyle=water?'#2048a0':underground?'#101020':[9,10,11].includes(g.stage)?'#081028':'#6888fc';ctx.fillRect(0,0,256,240);
+export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===6,underground=g.room==='underground'||isUnderground(g.stage)||isCastle(g.stage);ctx.imageSmoothingEnabled=false;ctx.fillStyle=water?'#2048a0':underground?'#101020':[9,10,11,18].includes(g.stage)?'#081028':'#6888fc';ctx.fillRect(0,0,256,240);
   if(!underground&&!water){
     for(let start=0;start<g.width;start+=768){
       for(const [x,y,count]of[[128,32,1],[304,24,3],[528,40,1]])pixelCloud(ctx,x+start-cam,Math.max(40,y),count);
@@ -548,10 +548,10 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=g.stage===
     const rows=['....RRRRRR....','..RRWWRRWWRR..','.RRWWWRRWWWRR.','RRRWWWRRWWWRRR','RRRRRRRRRRRRRR','.WWWWWWWWWWWW.','...SSBSSBSS...','...SSSSSSSS...','....SSSSSS....','...BSSSSSSB...','..SBBSSSSBBS..','..SSBBBBBBSS..','....SSSSSS....','...HHH..HHH...'];sprite(ctx,rows,204*16-cam,194,{R:'#f83800',W:'#fff',S:'#ffbc80',B:'#2858b0',H:'#804020'},1,1);
     if(g.rescued){ctx.fillStyle='#101020';ctx.fillRect(8,72,240,52);pixelText(ctx,'THANK YOU MARIO!',68,82);pixelText(ctx,g.stage===20?'TOAD AND PEACH SAFE':'TOAD IS SAFE',g.stage===20?56:80,102);}
   }
-  if([9,10,11,20].includes(g.stage)&&g.phase==='won'&&g.presentation>=100){
+  if([9,10,11,20].includes(g.stage)&&g.phase==='won'&&g.presentation>=(g.stage===20?90:100)){
     // Bonus ending requested by the user, not an original stage ending.
     const rows=['.....Y.Y.Y.....','.....YYYYY.....','....HHHHHHH....','....HSSBSSH....','....HSSSSSH....','....HHSSSHH....','.....PPPPP.....','....PPPSPPP....','...SPPPPPPS...','..SSPPPPPPSS..','....PPPPPPP....','...PPPPPPPPP...','..PPPPPPPPPPP..','.PPPPPPPPPPPPP.','....HH...HH....'];
-    sprite(ctx,rows,(g.stage===20?208:205)*16-cam,178,{Y:'#ffd040',H:'#e8a030',S:'#ffcfaa',B:'#2048a0',P:'#f878b8'},1,2);
+    sprite(ctx,rows,(g.stage===20?202.5:205)*16-cam,178,{Y:'#ffd040',H:'#e8a030',S:'#ffcfaa',B:'#2048a0',P:'#f878b8'},1,2);
     if(g.stage!==20&&g.peachRescued&&g.fireworksFired===g.fireworksTotal&&!g.fireworks.length){ctx.fillStyle='#101020ee';ctx.fillRect(12,72,232,64);pixelText(ctx,'THANK YOU MARIO!',68,82);pixelText(ctx,'PEACH IS SAFE',76,102);pixelText(ctx,'BONUS ENDING',80,122);}
   }
   for(const v of g.vines){ctx.fillStyle='#00a800';ctx.fillRect(v.x-cam,v.top,4,v.base-v.top);for(let y=v.base-8;y>v.top;y-=12){ctx.fillRect(v.x-cam-5,y,5,3);ctx.fillRect(v.x-cam+4,y-5,5,3);}}
