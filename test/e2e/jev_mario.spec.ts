@@ -651,7 +651,11 @@ test('world 5 course selection, life restart, progression and final rescue',asyn
   await lab.locator('#stage').selectOption(String(id));await lab.locator('#watch-manual').click();
   await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;this.invincible=1000;step.call(this);};});
   await frame.waitForFunction((id)=>(window as any).fifth?.stage===id,id);await lab.locator('#presentation').screenshot({path:info.outputPath(`world5-${id-16}.png`)});
-  if(id===18){await frame.evaluate(()=>(window as any).fifth.die());await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('5-2 手動プレイ中',{timeout:7000});}
+  if(id===18){await frame.evaluate(()=>(window as any).fifth.die());await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('5-2 手動プレイ中',{timeout:7000});
+   // Retry constructs a new world: target the live instance, never the dead fixture.
+   await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+   await frame.waitForFunction(()=>(window as any).fifth.phase==='playing');
+  }
   await frame.evaluate(()=>{const g=(window as any).fifth;Object.assign(g.p,{x:(g.stage===20?196:198)*16,y:g.stage===20?176:160,vx:0,vy:0});g.frames=(400-330)*24-1;g.invincible=1000;});
   await expect(lab.locator('#status')).toContainText(`5-${id-16}クリア！`);
   if(id<20)await expect(lab.locator('#stage')).toHaveValue(String(id+1),{timeout:7000});
