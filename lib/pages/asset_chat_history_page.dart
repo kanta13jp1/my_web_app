@@ -317,7 +317,14 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
                       hasOlderMessages: _viewModel.hasOlderMessages,
                     );
                     Navigator.of(context).push<void>(
-                      MaterialPageRoute(builder: (_) => replay),
+                      MaterialPageRoute(
+                        builder: (_) => replay,
+                        // Reload returns to history; never serialize a transcript
+                        // into the URL or reveal it automatically.
+                        settings: const RouteSettings(
+                          name: '/asset-chat-history?view=presentation',
+                        ),
+                      ),
                     );
                   },
             icon: const Icon(Icons.slideshow),

@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
+  test.setTimeout(90_000);
   await page.goto('http://127.0.0.1:7359/');
-  await expect(page.getByText('発表用サンプル', { exact: true })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole('button', { name: /^発表用サンプル 最終更新/ })).toBeVisible({ timeout: 60_000 });
 });
 
 test('saved history presents, rewinds and exits without requests', async ({ page }, info) => {
@@ -11,7 +12,7 @@ test('saved history presents, rewinds and exits without requests', async ({ page
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('requestfailed', r => errors.push(r.url()));
   page.on('response', r => { if (r.status() >= 500) errors.push(r.url()); });
-  await page.getByText('発表用サンプル', { exact: true }).click();
+  await page.getByRole('button', { name: /^発表用サンプル 最終更新/ }).click();
   await page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true }).click();
   await expect(page.getByText('準備ができました', { exact: true })).toBeVisible();
   await expect(page.getByText('会話を一件ずつ紹介したいです。', { exact: true })).not.toBeVisible();
@@ -40,21 +41,21 @@ test('saved history presents, rewinds and exits without requests', async ({ page
 });
 
 test('empty history disables presentation; another history recovers', async ({ page }) => {
-  await page.getByText('空の会話', { exact: true }).click();
+  await page.getByRole('button', { name: /^空の会話 最終更新/ }).click();
   await expect(page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true })).toBeDisabled();
   const back = page.getByRole('button', { name: '履歴一覧へ戻る', exact: true });
   if (await back.isVisible()) await back.click();
-  await page.getByText('発表用サンプル', { exact: true }).click();
+  await page.getByRole('button', { name: /^発表用サンプル 最終更新/ }).click();
   await expect(page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true })).toBeEnabled();
 });
 
 test('failed read cannot present; reselecting recovers', async ({ page }) => {
   await page.goto('http://127.0.0.1:7359/?fail=true');
-  await page.getByText('発表用サンプル', { exact: true }).click();
+  await page.getByRole('button', { name: /^発表用サンプル 最終更新/ }).click();
   await expect(page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true })).toBeDisabled();
   const back = page.getByRole('button', { name: '履歴一覧へ戻る', exact: true });
   if (await back.isVisible()) await back.click();
-  await page.getByText('発表用サンプル', { exact: true }).first().click();
+  await page.getByRole('button', { name: /^発表用サンプル 最終更新/ }).first().click();
   await page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true }).click();
   await expect(page.getByText('準備ができました', { exact: true })).toBeVisible();
 });
