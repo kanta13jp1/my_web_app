@@ -7,7 +7,7 @@ self.onmessage=({data})=>{
  try{
   const state=clone(data.state),start=performance.now(),prediction=predict(model,features(state)),raw=ACTIONS[prediction.index],inferenceMs=performance.now()-start;
   const future=advance(clone(state),data.effective,data.forecastFrames);
-  const result=plan(future.phase==='playing'?future:state,raw);
+  const result=plan(future.phase==='playing'?future:state,raw,data.failures??[]);
   self.postMessage({type:'decision',...result,raw,probabilities:prediction.probabilities,inferenceMs,issued:data.issued,frame:data.state.frames});
  }catch{self.postMessage({type:'error'});}
 };

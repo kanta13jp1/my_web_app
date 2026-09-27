@@ -33679,3 +33679,8 @@ Add independent 7-1..7-4, five-voice original arrangements, automatic ranking lo
 
 - Turn the Zenn measurement findings into a public, browser-only comparison tool: strict daily input, missing-data hold, per-day rates, descriptive control/search comparisons, timezone boundaries, transport-stage reconciliation and JSON export.
 - Verify the actual desktop/mobile interface in cloud and production before adding the direct article link. Google live data and prospective causal evidence remain separate incomplete gates; no invented outcomes.
+
+
+## 2026-09-27 World 8 and repeated autoplay failures (Issue #5571)
+
+Add 8-1..8-4, six original pitched voices, bounded live-state collision assistance and per-play failure memory for LightGBM + search. Preserve cumulative campaign ranking, authenticated automatic sharing, retry/lives/items/fireworks and old records. Extend only course/revision limits. Validate delayed worker delivery separately from tree inference and original-game fidelity. CLOUD_REQUIRED, Jev recommends frontier/xhigh; lead execution retained, no local workers or heavy runs.
