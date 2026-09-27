@@ -46,24 +46,44 @@ class PlatformReleaseChecklist {
   factory PlatformReleaseChecklist.fromJson(Map<String, Object?> json) {
     final rawNotes = json['notes'];
     final rawStatuses = json['statuses'];
+    final rawScope = json['sharedScope'];
+    if (rawScope != null && rawScope is! String) {
+      throw const FormatException('sharedScope must be a string');
+    }
+    if (rawNotes != null && rawNotes is! Map) {
+      throw const FormatException('notes must be a map');
+    }
+    if (rawStatuses != null && rawStatuses is! Map) {
+      throw const FormatException('statuses must be a map');
+    }
+    final notes = <String, String>{};
+    if (rawNotes is Map) {
+      for (final entry in rawNotes.entries) {
+        if (entry.key is! String || entry.value is! String) {
+          throw const FormatException('notes must contain strings');
+        }
+        notes[entry.key as String] = entry.value as String;
+      }
+    }
+    final statuses = <String, PlatformCheckStatus>{};
+    if (rawStatuses is Map) {
+      for (final entry in rawStatuses.entries) {
+        if (entry.key is! String || entry.value is! String) {
+          throw const FormatException('statuses must contain strings');
+        }
+        final matches = PlatformCheckStatus.values.where(
+          (candidate) => candidate.name == entry.value,
+        );
+        if (matches.isEmpty) {
+          throw const FormatException('statuses contains an unknown state');
+        }
+        statuses[entry.key as String] = matches.first;
+      }
+    }
     return PlatformReleaseChecklist(
-      sharedScope: json['sharedScope'] as String? ?? '',
-      notes: rawNotes is Map
-          ? rawNotes.map(
-              (key, value) => MapEntry(key.toString(), value.toString()),
-            )
-          : const <String, String>{},
-      statuses: rawStatuses is Map
-          ? rawStatuses.map((key, value) {
-              final status = PlatformCheckStatus.values.where(
-                (candidate) => candidate.name == value,
-              );
-              return MapEntry(
-                key.toString(),
-                status.isEmpty ? PlatformCheckStatus.untested : status.first,
-              );
-            })
-          : const <String, PlatformCheckStatus>{},
+      sharedScope: rawScope as String? ?? '',
+      notes: notes,
+      statuses: statuses,
     );
   }
 

@@ -39,4 +39,19 @@ void main() {
     expect(checklist.toShareText(), contains('iOS: 未確認'));
     expect(checklist.toShareText(), contains('Android: 対象外'));
   });
+
+  test('rejects malformed persisted values instead of inventing a status', () {
+    expect(
+      () => PlatformReleaseChecklist.fromJson(<String, Object?>{
+        'sharedScope': 42,
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => PlatformReleaseChecklist.fromJson(<String, Object?>{
+        'statuses': <String, String>{'iOS': 'finished'},
+      }),
+      throwsFormatException,
+    );
+  });
 }

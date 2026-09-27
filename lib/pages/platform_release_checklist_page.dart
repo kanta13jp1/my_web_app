@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ class _PlatformReleaseChecklistPageState
   late final Map<String, TextEditingController> _noteControllers;
   PlatformReleaseChecklist _checklist = const PlatformReleaseChecklist();
   PlatformReleaseChecklist? _clearedDraft;
+  String? _storageError;
   bool _loading = true;
 
   @override
@@ -36,17 +38,28 @@ class _PlatformReleaseChecklistPageState
   }
 
   Future<void> _load() async {
-    final preferences = await SharedPreferences.getInstance();
-    final raw = preferences.getString(_storageKey);
-    if (raw != null) {
-      try {
-        final decoded = jsonDecode(raw) as Map<String, dynamic>;
-        _setChecklist(
-          PlatformReleaseChecklist.fromJson(decoded.cast<String, Object?>()),
-          persist: false,
-        );
-      } on FormatException {
-        await preferences.remove(_storageKey);
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final raw = preferences.getString(_storageKey);
+      if (!mounted) return;
+      if (raw != null) {
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is! Map<String, dynamic>) {
+            throw const FormatException('checklist must be an object');
+          }
+          _setChecklist(
+            PlatformReleaseChecklist.fromJson(decoded.cast<String, Object?>()),
+            persist: false,
+          );
+        } on FormatException {
+          _storageError = '保存済みの確認内容を読み取れませんでした。画面の入力は新しく始められます。';
+          await preferences.remove(_storageKey);
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        _storageError = 'この端末では確認内容を保存できません。画面を閉じると入力は失われます。';
       }
     }
     if (mounted) setState(() => _loading = false);
@@ -58,13 +71,28 @@ class _PlatformReleaseChecklistPageState
     for (final platform in PlatformReleaseChecklist.platforms) {
       _noteControllers[platform]!.text = checklist.notes[platform] ?? '';
     }
-    if (persist) _persist();
+    if (persist) unawaited(_persist());
     if (mounted) setState(() {});
   }
 
   Future<void> _persist() async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_storageKey, jsonEncode(_checklist.toJson()));
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final saved = await preferences.setString(
+        _storageKey,
+        jsonEncode(_checklist.toJson()),
+      );
+      if (!saved) throw StateError('shared preferences rejected the write');
+      if (mounted && _storageError != null) {
+        setState(() => _storageError = null);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _storageError = 'この端末では確認内容を保存できません。画面を閉じると入力は失われます。';
+        });
+      }
+    }
   }
 
   void _update({String? sharedScope, String? platform, PlatformCheckStatus? status, String? note}) {
@@ -77,7 +105,7 @@ class _PlatformReleaseChecklistPageState
       notes: notes,
       statuses: statuses,
     );
-    _persist();
+    unawaited(_persist());
     setState(() {});
   }
 
@@ -148,6 +176,16 @@ class _PlatformReleaseChecklistPageState
             style: TextStyle(height: 1.5),
           ),
           const SizedBox(height: 16),
+          if (_storageError != null) ...<Widget>[
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _storageError!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           TextField(
             controller: _scopeController,
             onChanged: (value) => _update(sharedScope: value),
@@ -230,6 +268,10 @@ class _PlatformCard extends StatelessWidget {
               border: const OutlineInputBorder(),
             ),
             maxLines: 2,
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: Text('実機・OS・ストア審査が未確認なら、その理由と次の確認をメモに残します。'),
           ),
         ],
       ),
