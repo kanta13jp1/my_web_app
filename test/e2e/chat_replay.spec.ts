@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('button', { name: /^発表用サンプル 最終更新/ })).toBeVisible({ timeout: 60_000 });
 });
 
-test('saved history presents, rewinds and exits without requests', async ({ page }, info) => {
+test('saved history presents, rewinds and exits without application requests', async ({ page }, info) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
@@ -41,7 +41,7 @@ test('saved history presents, rewinds and exits without requests', async ({ page
   const fallbackFonts = calls.filter(r => {
     const url = new URL(r.url);
     return r.method === 'GET' && url.origin === 'https://fonts.gstatic.com' &&
-      /^\/s\/notosans(?:sc|jp)\/v\d+\/[^/?]+\.woff2$/.test(url.pathname) && !url.search;
+      /^\/s\/notosans(?:sc|jp|hk|symbols)\/v\d+\/[^/?]+\.woff2$/.test(url.pathname) && !url.search;
   });
   const unexpected = calls.filter(r => !fallbackFonts.includes(r));
   await info.attach('presentation-network.json', {
