@@ -11,14 +11,14 @@ async function enableFlutterAccessibility(page: Page) {
 }
 
 test('platform release checklist starts each platform as untested', async ({ page }) => {
-  await page.goto('/#/platform-release-checklist');
+  await page.goto('/platform-release-checklist');
   await enableFlutterAccessibility(page);
   await expect(page.getByText('プラットフォーム別リリース確認', { exact: true })).toBeVisible();
   await expect(page.getByText('未確認', { exact: true })).toHaveCount(3);
 });
 
 test('platform release checklist reloads a platform result and note', async ({ page }) => {
-  await page.goto('/#/platform-release-checklist');
+  await page.goto('/platform-release-checklist');
   await enableFlutterAccessibility(page);
   await page.getByText('未確認', { exact: true }).nth(0).click();
   await page.getByText('確認済み', { exact: true }).click();
@@ -31,7 +31,7 @@ test('platform release checklist reloads a platform result and note', async ({ p
 });
 
 test('platform release checklist restores a cleared result and note', async ({ page }) => {
-  await page.goto('/#/platform-release-checklist');
+  await page.goto('/platform-release-checklist');
   await enableFlutterAccessibility(page);
   await page.getByText('未確認', { exact: true }).nth(0).click();
   await page.getByText('確認済み', { exact: true }).click();
