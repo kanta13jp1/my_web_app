@@ -33663,3 +33663,8 @@ Add independently arranged 5-1..5-4, three-voice original chiptune arrangements 
 ## 2026-09-27 Jev Mario World 6 and campaign ranking (Issue #5561)
 
 Add 6-1..6-4, four musical voices, and one automatic record per play across life retries and stage transitions. Rank by reached course, course cleared, total score, then wall-clock duration, grouped by starting course/controller/power/revision. Keep authenticated self-reported sharing, generated player names, bounded retention and owner-only history. Preserve legacy records. Cloud CI and concrete DB/auth owner review pending before production. No new-course natural AI clear or original ROM/music parity claim. Resource routing CLOUD_REQUIRED; lead frontier/high, no workers.
+
+
+## 2026-09-27 Jev Mario World 7 and visible campaign ranking (Issue #5565)
+
+Add independent 7-1..7-4, five-voice original arrangements, automatic ranking loading/filter refresh/post-share refresh. Extend course and version constraints only; preserve the approved authenticated automatic sharing model, retention, quotas, pseudonyms and historical records. Cloud tests cover water physics, progression, rescue, audio headroom, ranking responses and denied access. No exact original parity or natural model clear claim. CLOUD_REQUIRED, frontier/high lead, no workers.

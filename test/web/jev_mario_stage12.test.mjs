@@ -346,7 +346,17 @@ test('fifth world maps, enemy roster, retries, castle rescue and final boundary'
  const d=new World11(20);assert.ok(d.boss);assert.ok(d.lavaBubbles.length);assert.ok(d.fireBars.length);
 });
 
-test('sixth world has four finite distinct routes and terminal rescue',()=>{
- const layouts=[];for(const id of [21,22,23,24]){const g=new World11(id);assert.equal(g.stage,id);assert.equal(g.telemetry().world,6);assert.ok(g.enemies.every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)));layouts.push(JSON.stringify([...g.cells]));g.score=500;g.lives=2;g.phase='won';g.presentation=g.presentationLength();assert.equal(g.advanceStage(),id<24);if(id<24){assert.equal(g.score,500);assert.equal(g.lives,2);}}
- assert.equal(new Set(layouts).size,4);const g=new World11(24);g.phase='won';for(let i=0;i<100;i++)g.presentationStep();assert.equal(g.peachRescued,true);assert.equal(g.rescued,true);
+test('sixth world has four finite distinct routes and onward progression',()=>{
+ const layouts=[];for(const id of [21,22,23,24]){const g=new World11(id);assert.equal(g.stage,id);assert.equal(g.telemetry().world,6);assert.ok(g.enemies.every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)));layouts.push(JSON.stringify([...g.cells]));g.score=500;g.lives=2;g.phase='won';g.presentation=g.presentationLength();assert.equal(g.advanceStage(),true);if(id<24){assert.equal(g.score,500);assert.equal(g.lives,2);}}
+ assert.equal(new Set(layouts).size,4);const g=new World11(24);g.phase='won';for(let i=0;i<100;i++)g.presentationStep();assert.equal(g.peachRescued,false);assert.equal(g.rescued,true);
+});
+test('seventh world has four finite distinct routes and terminal rescue',()=>{
+ const layouts=[];for(const id of [25,26,27,28]){const g=new World11(id);assert.equal(g.stage,id);assert.equal(g.telemetry().world,7);assert.ok(g.enemies.every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)));layouts.push(JSON.stringify([...g.cells]));g.score=500;g.lives=2;g.phase='won';g.presentation=g.presentationLength();assert.equal(g.advanceStage(),id<28);if(id<28){assert.equal(g.score,500);assert.equal(g.lives,2);}}
+ assert.equal(new Set(layouts).size,4);const g=new World11(28);g.phase='won';for(let i=0;i<100;i++)g.presentationStep();assert.equal(g.peachRescued,true);assert.equal(g.rescued,true);
+});
+
+test('seventh world uses water physics, fish bridges and active cannon hazards',()=>{
+ const g=new World11(25);assert.ok(g.enemies.some(e=>e.kind==='hammer-bro'));assert.ok(g.enemies.some(e=>e.kind==='beetle'));assert.ok(g.cannons.every(c=>Number.isFinite(c.timer)));assert.ok([...g.contents.values()].includes('vine'));
+ const w=new World11(26);assert.equal(w.room,'underwater');assert.ok(w.enemies.some(e=>e.kind==='squid'));assert.ok(w.enemies.some(e=>e.kind==='fish'));w.buttons('jump');for(let i=0;i<5;i++)w.step();assert.ok(w.p.y<128);
+ const b=new World11(27);assert.ok(b.enemies.every(e=>e.kind==='leaping-fish'));assert.ok(b.lifts.length);const c=new World11(28);assert.ok(c.boss&&c.fireBars.length&&c.lavaBubbles.length);
 });
