@@ -102,6 +102,7 @@ class _ChatReplayPageState extends State<ChatReplayPage> {
                     ),
                     const SizedBox(height: 24),
                     Card(
+                      semanticContainer: false,
                       margin: EdgeInsets.zero,
                       color: Theme.of(context).colorScheme.surfaceContainerLow,
                       child: Padding(
@@ -110,7 +111,8 @@ class _ChatReplayPageState extends State<ChatReplayPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Semantics(
-                              header: true,
+                              container: true,
+                              headingLevel: 2,
                               child: Text(
                                 message == null
                                     ? (total == 0 ? '再生する会話がありません' : '準備ができました')
