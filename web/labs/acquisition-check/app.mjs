@@ -11,7 +11,7 @@ $('sample').addEventListener('click', () => {
   for (const [key, value] of Object.entries({beforeStart:'2026-09-13',beforeEnd:'2026-09-19',afterStart:'2026-09-20',afterEnd:'2026-09-26'})) $(key).value=value;
   invalidate(); $('provenance').textContent = 'my_web_appの2026年9月13〜26日の本番受付記録。日本時間。同じ対象・流入元・日付の重複を除いたページ接触39→73件です。人数・クリック・登録完了とは異なり、管理者や試験操作を除外した値でもありません。取得日: 2026-09-27。';
 });
-const format = n => n === null || n === undefined ? '算出できません' : Number(n.toFixed(5)).toLocaleString('ja-JP');
+const format = n => n === null || n === undefined ? '算出できません' : n.toLocaleString('ja-JP',{maximumFractionDigits:5});
 function paragraph(text, className='') { const p=document.createElement('p');p.textContent=text;p.className=className;$('result-content').append(p); }
 $('compare').addEventListener('click', () => {
   invalidate();

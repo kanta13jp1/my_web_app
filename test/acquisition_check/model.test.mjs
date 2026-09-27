@@ -6,7 +6,7 @@ const counts=[7,10,7,2,7,3,3,8,28,17,2,8,5,5];
 const csv='date,count\n'+counts.map((n,i)=>`2026-09-${13+i},${n}`).join('\n');
 test('production observations reproduce daily ratios and conditional sign sensitivity',()=>{
   const r=compare(parseRows(csv),periods);
-  assert.equal(r.before.count,39);assert.equal(r.after.count,73);assert.equal(r.ratio,73/39);
+  assert.equal(r.before.count,39);assert.equal(r.after.count,73);assert.ok(Math.abs(r.ratio-73/39)<1e-12);
   assert.equal(r.sign.p,.03125);assert.deepEqual(r.sign.leaveOneOut,[.03125,.0625]);assert.equal(r.causalEffect,null);
 });
 test('invalid counts and dates are rejected without accepting partial numbers',()=>{
