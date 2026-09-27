@@ -632,7 +632,7 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=isWater(g.
     // Bonus ending requested by the user, not an original stage ending.
     const rows=['.....Y.Y.Y.....','.....YYYYY.....','....HHHHHHH....','....HSSBSSH....','....HSSSSSH....','....HHSSSHH....','.....PPPPP.....','....PPPSPPP....','...SPPPPPPS...','..SSPPPPPPSS..','....PPPPPPP....','...PPPPPPPPP...','..PPPPPPPPPPP..','.PPPPPPPPPPPPP.','....HH...HH....'];
     sprite(ctx,rows,(g.stage===LAST_COURSE?202.5:205)*16-cam,178,{Y:'#ffd040',H:'#e8a030',S:'#ffcfaa',B:'#2048a0',P:'#f878b8'},1,2);
-    if(g.stage!==28&&g.peachRescued&&g.fireworksFired===g.fireworksTotal&&!g.fireworks.length){ctx.fillStyle='#101020ee';ctx.fillRect(12,72,232,64);pixelText(ctx,'THANK YOU MARIO!',68,82);pixelText(ctx,'PEACH IS SAFE',76,102);pixelText(ctx,'BONUS ENDING',80,122);}
+    if(g.stage!==LAST_COURSE&&g.peachRescued&&g.fireworksFired===g.fireworksTotal&&!g.fireworks.length){ctx.fillStyle='#101020ee';ctx.fillRect(12,72,232,64);pixelText(ctx,'THANK YOU MARIO!',68,82);pixelText(ctx,'PEACH IS SAFE',76,102);pixelText(ctx,'BONUS ENDING',80,122);}
   }
   for(const v of g.vines){ctx.fillStyle='#00a800';ctx.fillRect(v.x-cam,v.top,4,v.base-v.top);for(let y=v.base-8;y>v.top;y-=12){ctx.fillRect(v.x-cam-5,y,5,3);ctx.fillRect(v.x-cam+4,y-5,5,3);}}
   for(const[key,item]of g.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);drawCoin(ctx,x*16+4-cam,y*16+2,g.frames);}
