@@ -14,17 +14,10 @@ test('underground camera scrolls; coins collect; exit and death are distinct',()
 
 
 test('campaign advances only after clear presentation and preserves earned state',()=>{
- const g=new World11();assert.equal(g.advanceStage(),false);
- g.phase='dead';g.presentation=180;assert.equal(g.advanceStage(),false);
- g.phase='won';g.presentation=179;assert.equal(g.advanceStage(),false);
- Object.assign(g,{presentation:180,score:12300,coins:17,lives:2,power:2,deaths:1});
- assert.equal(g.advanceStage(),true);assert.equal(g.stage,2);assert.equal(g.p.x,32);assert.equal(g.p.h,28);
- assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);
- assert.equal(g.phase,'playing');assert.equal(g.frames,0);assert.deepEqual(g.input,{});
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,3);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,4);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,5);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);
- g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,6);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,7);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,8);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,9);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,10);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,11);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,12);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,13);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,14);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,15);g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,16);for(const next of [17,18,19,20]){g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),true);assert.equal(g.stage,next);}g.phase='won';g.presentation=180;assert.equal(g.advanceStage(),false);
+ const g=new World11();assert.equal(g.advanceStage(),false);g.phase='dead';g.presentation=180;assert.equal(g.advanceStage(),false);g.phase='won';g.presentation=179;assert.equal(g.advanceStage(),false);
+ Object.assign(g,{score:12300,coins:17,lives:2,power:2,deaths:1});
+ for(let next=2;next<=24;next++){g.phase='won';g.presentation=g.presentationLength();assert.equal(g.advanceStage(),true);assert.equal(g.stage,next);assert.equal(g.p.x,32);assert.deepEqual([g.score,g.coins,g.lives,g.power,g.deaths],[12300,17,2,2,1]);assert.equal(g.phase,'playing');assert.equal(g.frames,0);}
+ g.phase='won';g.presentation=g.presentationLength();assert.equal(g.advanceStage(),false);
 });
 test('sky course has elevated platforms, gaps, collectibles and a distinct finish',()=>{
  const g=new World11(3);assert.equal(g.telemetry().stage,3);assert.equal(g.tile(20,12),'platform');assert.equal(g.tile(30,13),undefined);

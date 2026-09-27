@@ -705,3 +705,12 @@ test('four-voice audio renders audible non-clipping room arrangements and effect
  await info.attach('world6-audio-preview.wav',{body:Buffer.from(result.wav,'base64'),contentType:'audio/wav'});
  await info.attach('world5-audio-metrics.json',{body:Buffer.from(JSON.stringify(result.metrics)),contentType:'application/json'});
 });
+
+test('automatic campaign share spans retry and advancement without per-stage rows',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await page.evaluate(()=>{(window as any).campaignShares=[];window.addEventListener('message',e=>{if(e.data?.type!=='jev-mario-ranking'||e.data.action!=='submit')return;(window as any).campaignShares.push(e.data.run);(e.source as Window).postMessage({type:'jev-mario-ranking-response',id:e.data.id,result:{saved:true}},location.origin);});});
+ await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).wholeRun=this;this.score=500;this.die();};});
+ await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('1-1 手動プレイ中',{timeout:7000});await expect(lab.locator('#history-rows tr')).toHaveCount(0);
+ await frame.evaluate(()=>{const w=(window as any).wholeRun;w.p.x=198*16;w.p.y=160;w.invincible=1000;w.frames=(400-330)*24-1;});await expect(lab.locator('#stage')).toHaveValue('2',{timeout:7000});await expect(lab.locator('#history-rows tr')).toHaveCount(0);await lab.locator('#stop').click();await expect(lab.locator('#history-rows tr')).toHaveCount(1);await expect(lab.locator('#history-status')).toContainText('自動共有しました');
+ const rows=await page.evaluate(()=>(window as any).campaignShares);expect(rows).toHaveLength(1);expect(rows[0]).toMatchObject({course:1,reached:2,cleared:1,controller:'manual',outcome:'stopped',eligible:true});expect(rows[0].elapsed_ms).toBeGreaterThan(4000);expect(rows[0].score).toBeGreaterThan(500);
+});
