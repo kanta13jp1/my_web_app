@@ -140,6 +140,15 @@ jobs:
           npx playwright test test/e2e/lumen_path_route.spec.ts \
             --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
+      - name: Verify hiragana tracing and recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/hiragana-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: hiragana-results
+        run: |
+          node --test test/hiragana/model.test.mjs
+          npx playwright test test/e2e/hiragana_garden.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Verify Blur Studio controls and fallbacks
         shell: bash
         env:
@@ -215,6 +224,7 @@ jobs:
             test-results/
             api-reference-results/
             chat-replay-results/
+            hiragana-results/
             test/e2e/visual_regression.spec.ts-snapshots/
             .ci-logs/visual-regression-server.log
           if-no-files-found: warn

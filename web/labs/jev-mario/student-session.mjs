@@ -1,8 +1,11 @@
+import {LiveGuard} from './live-guard.mjs?v=student-1';
 export class StudentSession{
- constructor(factory=()=>new Worker(new URL('./student-worker.mjs?v=student-1',import.meta.url),{type:'module'}),clock=()=>performance.now()){this.factory=factory;this.clock=clock;this.token=0;this.active=false;this.action='noop';this.stats={};}
+ constructor(factory=()=>new Worker(new URL('./student-worker.mjs?v=student-1',import.meta.url),{type:'module'}),clock=()=>performance.now()){this.factory=factory;this.clock=clock;this.token=0;this.active=false;this.action='noop';this.stats={};this.guard=new LiveGuard();this.failures=[];}
+ clearFailures(){this.failures=[];}
+ noteFailure(world){if(world.phase!=='dead')return;this.failures.push({stage:world.stage,room:world.room,x:world.p.x,y:world.p.y});this.failures=this.failures.slice(-24);this.stats.failures=structuredClone(this.failures);}
  start({ready,update,error}){
-  this.stop();const token=++this.token;this.active=true;this.ready=false;this.pending=false;this.next=0;this.age=100;this.started=this.clock();this.action='noop';this.latest=null;
-  this.stats={model:'jev-student-166-v1',teacher:'jev-1.13.0',control:'LightGBM + exact-simulator search + latency prediction',decisions:0,accepted:0,overrides:0,jump_releases:0,samples:[]};
+  this.stop();this.guard.reset();const token=++this.token;this.active=true;this.ready=false;this.pending=false;this.next=0;this.age=100;this.started=this.clock();this.action='noop';this.latest=null;
+  this.stats={model:'jev-student-166-v1',teacher:'jev-1.13.0',control:'LightGBM + search + live collision guard + retry memory',decisions:0,accepted:0,overrides:0,jump_releases:0,live_guard:0,failures:structuredClone(this.failures),guard_events:[],samples:[]};
   try{
    const worker=this.factory();this.worker=worker;
    worker.onerror=()=>{if(this.token!==token)return;this.stop();error();};
@@ -21,9 +24,11 @@ export class StudentSession{
  }
  tick(world){
   if(!this.active||!this.ready)return 'noop';
-  if(!this.pending&&world.frames>=this.next){this.pending=true;this.next=world.frames+6;this.worker.postMessage({state:world,effective:this.action,issued:this.clock(),forecastFrames:Math.max(1,Math.min(12,Math.round(this.age*.06)))});}
+  if(!this.pending&&world.frames>=this.next){this.pending=true;this.next=world.frames+6;this.worker.postMessage({state:world,effective:this.guard.action??this.action,issued:this.clock(),failures:this.failures,forecastFrames:Math.max(1,Math.min(36,Math.round(this.age*.06)))});}
+  const before=this.guard.interventions,action=this.guard.decide(world,this.action);this.stats.live_guard=this.guard.interventions;
+  if(before!==this.guard.interventions&&this.stats.guard_events.length<600)this.stats.guard_events.push({frame:world.frames,proposed:this.action,action,reason:this.guard.lastReason});
   const release=world.p.grounded&&world.wasJump&&this.action.includes('jump');if(release)this.stats.jump_releases++;
-  return release?(this.action==='jump'?'noop':this.action.replace('_jump','')):this.action;
+  return release&&action===this.action?(action==='jump'?'noop':action.replace('_jump','')):action;
  }
  stop(){this.token++;this.worker?.terminate();this.worker=null;this.active=false;this.ready=false;this.pending=false;this.action='noop';}
 }
