@@ -1,5 +1,5 @@
 import {setupHistory} from './history-ui.mjs?v=student-1';
-import {RUN_REVISION} from './history.mjs?v=student-1';
+import {Campaign} from './history.mjs?v=student-1';
 import { downloadJson } from '../shared/download-json.mjs?v=student-1';
 import {drawPresentation} from './presentation.mjs?v=student-1';
 import { StudentSession } from './student-session.mjs?v=student-1';
@@ -20,9 +20,9 @@ const isRecreation = () => $('mode').value === 'recreation';
 const isGame = () => isRom() || isRecreation();
 const world = new World11();
 const audio = new GameAudio();
-const runHistory=setupHistory();let attempt=null;
-function beginAttempt(controller){attempt={id:crypto.randomUUID(),revision:RUN_REVISION,course:world.stage,controller,power:world.power,eligible:world.frames===0&&world.p.x===32,score:world.score,frames:world.frames,created_at:new Date().toISOString()};}
-function saveAttempt(outcome){if(!attempt)return;const a=attempt;attempt=null;runHistory.add({...a,outcome,score:Math.max(0,world.score-a.score),frames:Math.max(0,world.frames-a.frames)});}
+const runHistory=setupHistory(),campaign=new Campaign();let internalTransition=false;
+function beginAttempt(controller){campaign.begin(world,controller);campaign.observe(world);}
+function saveAttempt(outcome){if(internalTransition)return;const row=campaign.finish(world,outcome);if(row)runHistory.add(row);}
 
 const stageName=()=>courseInfo(world.stage).label;
 $('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。'+([9,10,11].includes(world.stage)?'ピーチの登場と追加敵の配置は原作と異なるアレンジです。':'')+'手動プレイはAPI不要です。';};
@@ -93,7 +93,7 @@ function controls(action) {
   }
   $('action').textContent = `操作: ${action}`;
 }
-function stop(reason = '停止しました') { if(!gameRunning&&isRecreation()&&world.phase!=='playing')finalizeStageResult();if(gameRunning&&isRecreation()&&world.phase==='playing')saveAttempt('stopped');transition=null; if(student.active)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,...student.stats};student.stop();audio.stop(); loop.stop(reason); gameRunning = false; controls('noop'); status(reason); }
+function stop(reason = '停止しました') { if(!internalTransition&&campaign.active&&isRecreation())saveAttempt(world.phase==='dead'&&world.lives===0?'dead':'stopped'); if(!gameRunning&&isRecreation()&&world.phase!=='playing')finalizeStageResult();if(gameRunning&&isRecreation()&&world.phase==='playing')saveAttempt('stopped');transition=null; if(student.active)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,...student.stats};student.stop();audio.stop(); loop.stop(reason); gameRunning = false; controls('noop'); status(reason); }
 function state() {
   const value = isRecreation() ? world.telemetry(lastResponse) : isRom() ? readState(nes.cpu.mem, lastResponse) : fixture();
   if(isRecreation()&&metadata.input_profile==='prediction_v1')value.prediction=prediction(world,lastResponse);
@@ -169,7 +169,7 @@ function startStudent(continuing=false){
   if(loop.pending||pendingBridge)return status('API応答の終了を待ってから開始してください');
   if(!continuing){stop();world.reset();frameCount=0;samples=[];interventions=[];metadata={lab_revision:'stage-3',course_id:world.stage,...courseInfo(world.stage),controller:'lightgbm_plus_search',play_policy:'continuous_until_terminal_or_user_stop',mode:'recreation',started_at:new Date().toISOString(),timing:'Browser rendering and asynchronous local search; no API requests'};}update();
   $('last-error').textContent='';void unlockAudio();status('学習済みモデルを読み込んでいます…');
-  student.start({ready:()=>{if(!attempt)beginAttempt('lightgbm_plus_search');gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{decision={source:'LightGBM + search | Jev teacher',proposal:student.latest.raw,probabilities:student.latest.probabilities,latency:student.latest.inferenceMs,latencyKind:'Local tree inference only (search excluded)',count:stats.decisions,accepted:stats.accepted,overrides:stats.overrides};$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{saveAttempt('stopped');gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
+  student.start({ready:()=>{if(!campaign.active)beginAttempt('lightgbm_plus_search');gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{decision={source:'LightGBM + search | Jev teacher',proposal:student.latest.raw,probabilities:student.latest.probabilities,latency:student.latest.inferenceMs,latencyKind:'Local tree inference only (search excluded)',count:stats.decisions,accepted:stats.accepted,overrides:stats.overrides};$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{saveAttempt('stopped');gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
 };
 $('start').onclick = () => {
   if(student.active)return status('ローカルプレイを停止してからJev測定を開始してください');
@@ -213,12 +213,12 @@ function finishStage(){
  const resume=(retry||world.phase==='won'&&world.stage<LAST_COURSE)?{retry,kind:student.active?'student':loop.active?'api':'manual',remaining:loop.limit-loop.attempts,deadline:loop.deadline,cadence:loop.cadence,maxAge:loop.maxAge}:null;
  const result={course_id:world.stage,...courseInfo(world.stage),phase:world.phase,frames:world.frames,score:world.score,lives:world.lives,deaths:world.deaths,fireworks:world.fireworksTotal,items_collected:{...world.pickups},student:student.active?structuredClone(student.stats):undefined};
  metadata.stage_results??=[];metadata.stage_results.push(result);
- stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス！残り${world.lives}機。同じステージの最初から再開します`:'ゲームオーバー。最初から再挑戦できます');
- transition=resume;
+ internalTransition=true;stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス！残り${world.lives}機。同じステージの最初から再開します`:'ゲームオーバー。最初から再挑戦できます');
+ internalTransition=false;transition=resume;
 }
-function finalizeStageResult(){const r=metadata.stage_results?.at(-1);if(r&&!r.finalized){r.score=world.score;r.fireworks=world.fireworksFired;r.finalized=true;saveAttempt(world.phase);}}
+function finalizeStageResult(){const r=metadata.stage_results?.at(-1);if(r&&!r.finalized){r.score=world.score;r.fireworks=world.fireworksFired;r.finalized=true;campaign.observe(world);if(!transition)saveAttempt(world.phase);}}
 function continueStage(){
- const resume=transition;transition=null;finalizeStageResult();if(!(resume.retry?world.restartLife():world.advanceStage()))return;
+ const resume=transition;finalizeStageResult();transition=null;if(!(resume.retry?world.restartLife():world.advanceStage()))return;
  $('stage').value=String(world.stage);$('restart-local').textContent=stageName()+'を最初から';
  frameBudget=0;presentationBudget=0;frameCount=0;assist.reset();proposedAction='noop';resetDecision();
  beginAttempt(metadata.controller||'manual');drawWorld(context,world);showPose();$('progress').textContent='World '+stageName();metadata.current_course_id=world.stage;metadata.current_stage=courseInfo(world.stage);
@@ -227,7 +227,7 @@ function continueStage(){
  }else if(resume.kind==='api'){
   const duration=resume.deadline-performance.now();
   if(resume.remaining>0&&duration>0&&$('consent').checked){gameRunning=true;loop.start({count:resume.remaining,duration,cadence:resume.cadence,maxAge:resume.maxAge});status(stageName()+' Jev操作を継続中');}
-  else status((resume.retry?'ステージの先頭へ戻りました。':'次のステージへ移動しました。')+'測定上限のためプレイ停止');
+  else {saveAttempt('stopped');status((resume.retry?'ステージの先頭へ戻りました。':'次のステージへ移動しました。')+'測定上限のためプレイ停止');}
  }else{gameRunning=true;status(stageName()+' 手動プレイ中');}
 }
 function frame(now) {

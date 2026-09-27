@@ -344,11 +344,16 @@ test('fifth world maps, enemy roster, retries, castle rescue and final boundary'
   const g=new World11(id);assert.equal(g.telemetry().world,5);assert.equal(g.telemetry().stage,id-16);assert.ok(g.enemies.every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)));layouts.push(JSON.stringify([...g.cells]));
   g.score=2500;g.die();for(let i=0;i<180;i++)g.presentationStep();assert.equal(g.restartLife(),true);assert.equal(g.stage,id);assert.equal(g.p.x,32);assert.equal(g.lives,2);assert.equal(g.score,2500);
   g.invincible=500;g.p.x=(id===20?196:198)*16;g.p.y=id===20?176:160;g.step();assert.equal(g.phase,'won');for(let i=0;i<220;i++)g.presentationStep();
-  if(id===20){assert.equal(g.rescued,true);assert.equal(g.peachRescued,true);assert.equal(g.fireworksTotal,0);assert.equal(g.advanceStage(),false);}else{assert.equal(g.advanceStage(),true);assert.equal(g.stage,id+1);}
+  if(id===20){assert.equal(g.rescued,true);assert.equal(g.peachRescued,false);assert.equal(g.fireworksTotal,0);assert.equal(g.advanceStage(),true);}else{assert.equal(g.advanceStage(),true);assert.equal(g.stage,id+1);}
  }
  assert.equal(new Set(layouts).size,4);
  const a=new World11(17);for(const kind of ['goomba','koopa','beetle','piranha','paratroopa'])assert.ok(a.enemies.some(e=>e.kind===kind),kind);assert.equal(a.cannons.length,3);
  const b=new World11(18);assert.ok(b.enemies.some(e=>e.kind==='hammer-bro'));assert.equal(b.contents.get('35,9'),'vine');assert.ok(b.lifts.length);
  const c=new World11(19);assert.ok(c.enemies.some(e=>e.kind==='lakitu'));assert.ok(c.enemies.some(e=>e.kind==='paratroopa'));assert.equal(c.lifts.length,3);
  const d=new World11(20);assert.ok(d.boss);assert.ok(d.lavaBubbles.length);assert.ok(d.fireBars.length);
+});
+
+test('sixth world has four finite distinct routes and terminal rescue',()=>{
+ const layouts=[];for(const id of [21,22,23,24]){const g=new World11(id);assert.equal(g.stage,id);assert.equal(g.telemetry().world,6);assert.ok(g.enemies.every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)));layouts.push(JSON.stringify([...g.cells]));g.score=500;g.lives=2;g.phase='won';g.presentation=g.presentationLength();assert.equal(g.advanceStage(),id<24);if(id<24){assert.equal(g.score,500);assert.equal(g.lives,2);}}
+ assert.equal(new Set(layouts).size,4);const g=new World11(24);g.phase='won';for(let i=0;i<100;i++)g.presentationStep();assert.equal(g.peachRescued,true);assert.equal(g.rescued,true);
 });

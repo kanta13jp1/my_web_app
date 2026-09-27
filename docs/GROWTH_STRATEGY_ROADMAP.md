@@ -33658,3 +33658,8 @@ Added independent pixel-art poses for walking/running, facing, jumping/falling a
 ## 2026-09-27 Jev Mario World 5 / audio / shared ranking (Issue #5557)
 
 Add independently arranged 5-1..5-4, three-voice original chiptune arrangements with percussion, bounded local attempt history and authenticated opt-in shared self-reported ranking. Rank within course/controller/starting-power/revision; do not claim verified competitive scores, original ROM parity or new-course natural AI clear. Private-schema table, explicit authenticated RPC, ownership-only history, no public auth IDs, bounded retention and serialized submission limits. Cloud CI and final security/release review pending. Local resources CLOUD_REQUIRED; lead gpt-6-astra/high recommendation, no worker launched.
+
+
+## 2026-09-27 Jev Mario World 6 and campaign ranking (Issue #5561)
+
+Add 6-1..6-4, four musical voices, and one automatic record per play across life retries and stage transitions. Rank by reached course, course cleared, total score, then wall-clock duration, grouped by starting course/controller/power/revision. Keep authenticated self-reported sharing, generated player names, bounded retention and owner-only history. Preserve legacy records. Cloud CI and concrete DB/auth owner review pending before production. No new-course natural AI clear or original ROM/music parity claim. Resource routing CLOUD_REQUIRED; lead frontier/high, no workers.

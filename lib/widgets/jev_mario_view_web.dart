@@ -139,7 +139,7 @@ class _JevMarioViewState extends State<JevMarioView> {
         return;
       }
       final result = await client.rpc(
-        'jev_mario_runs',
+        'jev_mario_campaigns',
         params: {
           'p_action': action,
           'p_data': action == 'submit'
