@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GameAudio, effects } from '../../web/labs/jev-mario/audio.mjs';
+import { GameAudio, effects, musicStep, arrangements } from '../../web/labs/jev-mario/audio.mjs';
 import { World11 } from '../../web/labs/jev-mario/world11.mjs';
 test('noise percussion reuses one buffer and stops with music or mute',async()=>{
  const c=context();let buffers=0;const sources=[];c.sampleRate=48000;
@@ -76,4 +76,12 @@ test('late animation frames resume music without replaying a burst of overdue be
 
 test('fireworks synthesize a bounded burst and mute releases it',async()=>{
  const c=context(),a=new GameAudio(()=>c);await a.enable(true);let bursts=0;a.noise=(_t,duration)=>{bursts++;assert.equal(duration,.16);};a.effect('firework');assert.equal(bursts,1);assert.equal(c.oscillators.length,1);await a.enable(false);assert.equal(a.nodes.size,0);
+});
+
+test('every room has independent three-voice harmony, stable tempo and retained mute',async()=>{
+ for(const track of Object.keys(arrangements)){
+  const a=musicStep(track,0),b=musicStep(track,16);assert.ok(a.lead>0&&a.harmony>0&&a.bass>0);assert.notEqual(a.bass,b.bass);assert.ok(musicStep(track,0,true).step<a.step);
+  const c=context(),audio=new GameAudio(()=>c);await audio.enable(true);audio.tick(track,{star:track==='star'});assert.ok(c.oscillators.length>=3,track);audio.stop();assert.equal(audio.nodes.size,0);
+ }
+ assert.notDeepEqual(arrangements.castle.chords,arrangements.overworld.chords);
 });
