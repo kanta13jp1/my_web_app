@@ -19,7 +19,7 @@ export function parseDoclets(source = path.join(root, sourcePath)) {
 
 export function documentedFunction(doclets) {
   const matches = doclets.filter((d) => d.kind === 'function' && d.name === 'downloadJson');
-  if (matches.length !== 1) throw new Error('Expected exactly one downloadJson function');
+  if (matches.length !== 1) throw new Error(`Expected exactly one downloadJson function: ${JSON.stringify(doclets.map(({name, kind, undocumented, longname}) => ({name, kind, undocumented, longname})))}`);
   const doc = matches[0];
   const params = doc.params || [];
   if (!doc.description?.trim() || doc.undocumented || !doc.examples?.length ||
