@@ -16,7 +16,8 @@ void main() {
     });
   });
 
-  testWidgets('loading, clearing, and undoing restores a saved platform status', (
+  testWidgets('loading, clearing, and undoing restores a saved platform status',
+      (
     tester,
   ) async {
     await tester.pumpWidget(

@@ -2,11 +2,11 @@ enum PlatformCheckStatus { untested, passed, failed, notApplicable }
 
 extension PlatformCheckStatusLabel on PlatformCheckStatus {
   String get label => switch (this) {
-    PlatformCheckStatus.untested => '未確認',
-    PlatformCheckStatus.passed => '確認済み',
-    PlatformCheckStatus.failed => '要修正',
-    PlatformCheckStatus.notApplicable => '対象外',
-  };
+        PlatformCheckStatus.untested => '未確認',
+        PlatformCheckStatus.passed => '確認済み',
+        PlatformCheckStatus.failed => '要修正',
+        PlatformCheckStatus.notApplicable => '対象外',
+      };
 }
 
 class PlatformReleaseChecklist {
@@ -29,19 +29,20 @@ class PlatformReleaseChecklist {
     String? sharedScope,
     Map<String, String>? notes,
     Map<String, PlatformCheckStatus>? statuses,
-  }) => PlatformReleaseChecklist(
-    sharedScope: sharedScope ?? this.sharedScope,
-    notes: notes ?? this.notes,
-    statuses: statuses ?? this.statuses,
-  );
+  }) =>
+      PlatformReleaseChecklist(
+        sharedScope: sharedScope ?? this.sharedScope,
+        notes: notes ?? this.notes,
+        statuses: statuses ?? this.statuses,
+      );
 
   Map<String, Object> toJson() => <String, Object>{
-    'sharedScope': sharedScope,
-    'notes': notes,
-    'statuses': statuses.map(
-      (platform, status) => MapEntry(platform, status.name),
-    ),
-  };
+        'sharedScope': sharedScope,
+        'notes': notes,
+        'statuses': statuses.map(
+          (platform, status) => MapEntry(platform, status.name),
+        ),
+      };
 
   factory PlatformReleaseChecklist.fromJson(Map<String, Object?> json) {
     final rawNotes = json['notes'];
@@ -94,7 +95,8 @@ class PlatformReleaseChecklist {
     ];
     for (final platform in platforms) {
       final note = notes[platform] ?? '';
-      lines.add('$platform: ${statusFor(platform).label}${note.isEmpty ? '' : ' — $note'}');
+      lines.add(
+          '$platform: ${statusFor(platform).label}${note.isEmpty ? '' : ' — $note'}');
     }
     lines.add('注: 確認済みは、この一覧に記録した確認に限ります。端末・ストア・OS固有の確認は別々に行います。');
     return lines.join('\n');

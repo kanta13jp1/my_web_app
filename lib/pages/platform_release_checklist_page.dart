@@ -65,7 +65,8 @@ class _PlatformReleaseChecklistPageState
     if (mounted) setState(() => _loading = false);
   }
 
-  void _setChecklist(PlatformReleaseChecklist checklist, {bool persist = true}) {
+  void _setChecklist(PlatformReleaseChecklist checklist,
+      {bool persist = true}) {
     _checklist = checklist;
     _scopeController.text = checklist.sharedScope;
     for (final platform in PlatformReleaseChecklist.platforms) {
@@ -95,7 +96,11 @@ class _PlatformReleaseChecklistPageState
     }
   }
 
-  void _update({String? sharedScope, String? platform, PlatformCheckStatus? status, String? note}) {
+  void _update(
+      {String? sharedScope,
+      String? platform,
+      PlatformCheckStatus? status,
+      String? note}) {
     final statuses = Map<String, PlatformCheckStatus>.of(_checklist.statuses);
     final notes = Map<String, String>.of(_checklist.notes);
     if (platform != null && status != null) statuses[platform] = status;
@@ -242,46 +247,46 @@ class _PlatformCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(platform, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<PlatformCheckStatus>(
-            key: ValueKey<String>('$platform-${status.name}'),
-            initialValue: status,
-            decoration: const InputDecoration(labelText: '確認状態'),
-            items: PlatformCheckStatus.values
-                .map(
-                  (candidate) => DropdownMenuItem(
-                    value: candidate,
-                    child: Text(candidate.label),
-                  ),
-                )
-                .toList(growable: false),
-            onChanged: (value) {
-              if (value != null) onStatusChanged(value);
-            },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(platform, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<PlatformCheckStatus>(
+                key: ValueKey<String>('$platform-${status.name}'),
+                initialValue: status,
+                decoration: const InputDecoration(labelText: '確認状態'),
+                items: PlatformCheckStatus.values
+                    .map(
+                      (candidate) => DropdownMenuItem(
+                        value: candidate,
+                        child: Text(candidate.label),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  if (value != null) onStatusChanged(value);
+                },
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: noteController,
+                onChanged: onNoteChanged,
+                decoration: InputDecoration(
+                  labelText: '$platform の確認メモ',
+                  hintText: '端末、OS、ストア審査、未確認事項など',
+                  border: const OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text('実機・OS・ストア審査が未確認なら、その理由と次の確認をメモに残します。'),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: noteController,
-            onChanged: onNoteChanged,
-            decoration: InputDecoration(
-              labelText: '$platform の確認メモ',
-              hintText: '端末、OS、ストア審査、未確認事項など',
-              border: const OutlineInputBorder(),
-            ),
-            maxLines: 2,
-          ),
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text('実機・OS・ストア審査が未確認なら、その理由と次の確認をメモに残します。'),
-          ),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }
