@@ -108,8 +108,10 @@ void main() {
       endpoint: 'http://127.0.0.1:8081/v1/systemone',
       httpClient: MockClient((request) async {
         requests++;
-        return answer(requests == 1 ? 'not_a_category' : 'utilities',
-            confidence: 1.0);
+        return answer(
+          requests == 1 ? 'not_a_category' : 'utilities',
+          confidence: 1.0,
+        );
       }),
     );
     addTearDown(client.dispose);
