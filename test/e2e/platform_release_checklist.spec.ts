@@ -14,8 +14,7 @@ async function openChecklist(page: Page) {
 async function markWeb(page: Page) {
   await status(page, 'Web', '未確認').click();
   // Select the visible option, without assuming desktop keyboard focus on touch viewports.
-  await page.getByRole('button', { name: '確認済み', exact: true })
-    .or(page.getByText('確認済み', { exact: true })).first().click();
+  await page.getByRole('menuitem', { name: '確認済み', exact: true }).click();
   await expect(status(page, 'Web', '確認済み')).toBeVisible();
   const note = page.getByRole('textbox', { name: /^Web の確認メモ(?: |$)/ });
   await note.click();
