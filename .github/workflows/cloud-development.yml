@@ -208,7 +208,10 @@ jobs:
       - name: Resolve dependencies and build Flutter Web
         run: |
           flutter pub get
-          flutter build web --release --pwa-strategy=none
+          flutter build web --release --pwa-strategy=none \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
 
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -232,7 +235,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/platform_release_checklist.spec.ts --project=chromium --project=mobile-chrome --workers=1
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/platform_release_checklist.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
       - name: Upload checklist E2E report
         if: always()
