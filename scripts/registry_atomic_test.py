@@ -3,6 +3,7 @@ import concurrent.futures
 import os
 from pathlib import Path
 import subprocess
+import time
 
 ROOT = Path(__file__).resolve().parent.parent
 MIGRATION = ROOT / 'supabase/migrations/20260927190917_integration_registry_atomic_versions.sql'
@@ -49,6 +50,45 @@ def insert(source, key_field, owner=OWNER):
       SELECT metadata->>'version' FROM public.insert_integration_registry_version(
         '{source}', '{owner}',
         '{{"{key_field}":"same-key","version":777,"user_id":"forged"}}');''')
+
+
+def forced_lock_overlap():
+    """Hold the first transaction open until the second is demonstrably blocked."""
+    workers = []
+    call = f'''SET ROLE service_role; SELECT metadata->>'version' FROM
+      public.insert_integration_registry_version('integration_registry_system',
+      '{OWNER}', '{{"system_key":"forced-overlap"}}');'''
+    try:
+        for name, prefix in [('registry-first', 'BEGIN;'), ('registry-second', '')]:
+            proc = subprocess.Popen(
+                ['psql', '-X', '-v', 'ON_ERROR_STOP=1', '-At', '-d', 'registry_clean'],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                text=True, env=os.environ,
+            )
+            workers.append(proc)
+            proc.stdin.write(f"SET application_name = '{name}'; {prefix} {call}\n")
+            proc.stdin.flush()
+            granted = 'true' if name == 'registry-first' else 'false'
+            deadline = time.monotonic() + 10
+            while sql(f'''SELECT count(*) FROM pg_locks l
+                JOIN pg_stat_activity a ON a.pid = l.pid
+                WHERE a.application_name = '{name}' AND l.locktype = 'advisory'
+                  AND l.granted = {granted}''') != '1':
+                if time.monotonic() > deadline:
+                    raise AssertionError(f'{name}: expected advisory lock state not observed')
+                time.sleep(0.05)
+        first_out, first_error = workers[0].communicate('COMMIT;\n', timeout=10)
+        second_out, second_error = workers[1].communicate('', timeout=10)
+        assert workers[0].returncode == 0, first_error
+        assert workers[1].returncode == 0, second_error
+        assert '1' in first_out.splitlines(), first_out
+        assert second_out.splitlines()[-1] == '2', second_out
+        print('PASS: second database transaction waited for the first advisory lock; versions 1 and 2')
+    finally:
+        for proc in workers:
+            if proc.poll() is None:
+                proc.kill()
+                proc.communicate()
 
 
 def main():
@@ -125,6 +165,7 @@ def main():
     assert sql(f'''SET ROLE service_role; SELECT metadata->>'version' FROM
       public.insert_integration_registry_version('integration_registry_system',
         '{OWNER}', '{{"system_key":"abort"}}');''').splitlines()[-1] == '1'
+    forced_lock_overlap()
     print('PASS: concurrent allocation, isolation, server-only writes, uniqueness, immutable history, rollback, and migration preflight')
 
 

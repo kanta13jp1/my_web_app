@@ -2,6 +2,8 @@
 -- Apply transactionally. Invalid/duplicate history must fail, never be repaired
 -- by this migration. The constraint/index validate all pre-existing rows.
 BEGIN;
+SET LOCAL lock_timeout = '5s';
+SET LOCAL statement_timeout = '60s';
 
 ALTER TABLE public.hub_data ADD CONSTRAINT integration_registry_valid_history
 CHECK (source NOT IN (
