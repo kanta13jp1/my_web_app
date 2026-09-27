@@ -33673,3 +33673,9 @@ Added a read-only anonymous production measurement audit and actual service tran
 ## 2026-09-27 Jev Mario World 7 and visible campaign ranking (Issue #5565)
 
 Add independent 7-1..7-4, five-voice original arrangements, automatic ranking loading/filter refresh/post-share refresh. Extend course and version constraints only; preserve the approved authenticated automatic sharing model, retention, quotas, pseudonyms and historical records. Cloud tests cover water physics, progression, rescue, audio headroom, ranking responses and denied access. No exact original parity or natural model clear claim. CLOUD_REQUIRED, frontier/high lead, no workers.
+
+
+## 2026-09-27 Acquisition comparison tool (#5563)
+
+- Turn the Zenn measurement findings into a public, browser-only comparison tool: strict daily input, missing-data hold, per-day rates, descriptive control/search comparisons, timezone boundaries, transport-stage reconciliation and JSON export.
+- Verify the actual desktop/mobile interface in cloud and production before adding the direct article link. Google live data and prospective causal evidence remain separate incomplete gates; no invented outcomes.
