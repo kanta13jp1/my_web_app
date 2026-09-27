@@ -480,7 +480,9 @@ jobs:
         id: dart_format
         if: steps.changes.outputs.flutter == 'true'
         # #1372: treat Dart formatting as a required static-analysis gate.
-        run: dart format --output=none --set-exit-if-changed .
+        run: |
+          dart format --output=show lib/widgets/jev_mario_view_web.dart
+          dart format --output=none --set-exit-if-changed .
 
       - name: Run VM tests
         if: steps.changes.outputs.flutter == 'true'
