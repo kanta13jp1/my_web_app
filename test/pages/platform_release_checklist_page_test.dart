@@ -1,6 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_web_app/models/platform_release_checklist.dart';
 import 'package:my_web_app/pages/platform_release_checklist_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,4 +35,3 @@ void main() {
     expect(find.text('Chrome で確認'), findsOneWidget);
   });
 }
-import 'dart:convert';
