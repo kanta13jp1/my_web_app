@@ -70,7 +70,16 @@ def main():
         assert sql("SELECT count(*) FROM pg_constraint WHERE conname = 'integration_registry_valid_history'", database) == '0'
         assert sql("SELECT to_regprocedure('public.insert_integration_registry_version(text,uuid,jsonb)') IS NULL", database) == 't'
     seed('registry_clean')
+    sql(f'''INSERT INTO public.hub_data(source, metadata) VALUES
+      ('integration_registry_system',
+      '{{"user_id":"{OWNER}","system_key":"historic","version":7,"name":"keep"}}');''')
+    historical = sql("SELECT to_jsonb(h) FROM public.hub_data h WHERE metadata->>'system_key' = 'historic'")
     sql(migration)
+    assert historical == sql("SELECT to_jsonb(h) FROM public.hub_data h WHERE metadata->>'system_key' = 'historic'")
+    assert sql(f'''SET ROLE service_role; SELECT metadata->>'version' FROM
+      public.insert_integration_registry_version('integration_registry_system',
+      '{OWNER}', '{{"system_key":"historic"}}');''').splitlines()[-1] == '8'
+    assert sql("SELECT prosecdef FROM pg_proc WHERE oid = 'public.insert_integration_registry_version(text,uuid,jsonb)'::regprocedure") == 'f'
     for source, key in [
         ('integration_registry_system', 'system_key'),
         ('integration_registry_interface', 'interface_key'),
@@ -82,6 +91,10 @@ def main():
         assert versions == list(range(1, 25)), versions
         assert insert(source, key, OTHER).splitlines()[-1] == '1'
     assert sql("SELECT count(*) FROM public.hub_data WHERE metadata->>'user_id' = 'forged'") == '0'
+    assert sql(f'''SET ROLE authenticated; SET request.jwt.claim.sub = '{OWNER}';
+      SELECT count(*) FROM public.hub_data WHERE metadata->>'user_id' = '{OTHER}';''').splitlines()[-1] == '0'
+    assert sql(f'''SET ROLE authenticated; SET request.jwt.claim.sub = '{OWNER}';
+      SELECT count(*) FROM public.hub_data WHERE metadata->>'user_id' = '{OWNER}';''').splitlines()[-1] == '74'
     for role in ['anon', 'authenticated']:
         sql(f'''SET ROLE {role}; SELECT public.insert_integration_registry_version(
           'integration_registry_system', '{OWNER}', '{{"system_key":"denied"}}');''', success=False)
@@ -90,7 +103,12 @@ def main():
       '{{"user_id":"{OWNER}","system_key":"denied","version":1}}');''', success=False)
     sql(f'''SET ROLE authenticated; SET request.jwt.claim.sub = '{OWNER}';
       INSERT INTO public.hub_data(source,metadata) VALUES ('unrelated', '{{"user_id":"{OWNER}"}}');
-      UPDATE public.hub_data SET metadata = metadata || '{{"ok":true}}' WHERE source = 'unrelated';
+      UPDATE public.hub_data SET metadata = metadata || '{{"ok":true}}' WHERE source = 'unrelated';''')
+    sql(f'''SET ROLE authenticated; SET request.jwt.claim.sub = '{OWNER}';
+      UPDATE public.hub_data SET source = 'integration_registry_system',
+      metadata = '{{"user_id":"{OWNER}","system_key":"bypass","version":1}}'
+      WHERE source = 'unrelated';''', success=False)
+    sql(f'''SET ROLE authenticated; SET request.jwt.claim.sub = '{OWNER}';
       DELETE FROM public.hub_data WHERE source = 'unrelated';''')
     for operation in ["UPDATE public.hub_data SET metadata = metadata || '{\"version\":100}'",
                       'DELETE FROM public.hub_data']:
