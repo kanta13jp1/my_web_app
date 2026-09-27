@@ -1,0 +1,39 @@
+{
+  "measurement_run": 35679658653,
+  "render_run": 35680117830,
+  "render_commit": "c1760983b313ccaee2e8510354b008c5060c3652",
+  "format": "H.264 / AAC MP4",
+  "timing": "Actual action log replay aligned to t=0; not simultaneous live capture",
+  "files": [
+    {
+      "name": "four-lane-assisted.mp4",
+      "size": 5279636,
+      "sha256": "e08a5373089aee607a318cb9f9ab38f389c0244787ff7ebd463dc8556c5f84d2"
+    },
+    {
+      "name": "four-lane-raw.mp4",
+      "size": 2648183,
+      "sha256": "29c2467e71d9b881b96919110aa27ceba87a73732366291cc81f55ad6cd25860"
+    },
+    {
+      "name": "assisted.png",
+      "size": 93637,
+      "sha256": "c9d8ae879fe013cb9fd4cf6362dc2091deaedc9c6c61438d7ebf47bc8f8b5b9e"
+    },
+    {
+      "name": "raw.png",
+      "size": 95570,
+      "sha256": "bed05085b9124a414561bb75e2c74ad1012e4f0719d070463f6918235a30e86b"
+    },
+    {
+      "name": "assisted.json",
+      "size": 918,
+      "sha256": "36a695e8fce70e0a36f05b8a270ed6e3a2615bb042443ed4567d81bc54fdaad0"
+    },
+    {
+      "name": "raw.json",
+      "size": 888,
+      "sha256": "50e29a1b57de884798f608daf41536c679d17467f2ceb3795b94f78f1b2b855b"
+    }
+  ]
+}

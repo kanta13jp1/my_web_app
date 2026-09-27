@@ -2203,6 +2203,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const SmartInboxTriagePage()),
     ),
     HomeToolEntry(
+      id: 'platform-release-checklist',
+      sectionId: 'knowledge',
+      title: 'プラットフォーム別リリース確認',
+      subtitle: 'Web・iOS・Androidの確認状態とメモを分けて記録',
+      icon: Icons.fact_check_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>[
+        'リリース',
+        'platform',
+        'iOS',
+        'Android',
+        'Web',
+        '確認',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/platform-release-checklist'),
+    ),
+    HomeToolEntry(
       id: 'form-builder',
       sectionId: 'knowledge',
       title: 'フォームビルダー',
