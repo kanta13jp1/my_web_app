@@ -11,7 +11,7 @@ void main() {
   runApp(MaterialApp(
     theme: ThemeData(colorSchemeSeed: const Color(0xFF176B57)),
     home: AssetChatHistoryPage(repository: ReplayFixtureRepository()),
-  ));
+  ),);
 }
 
 class ReplayFixtureRepository implements AssetChatHistoryRepository {
@@ -20,20 +20,20 @@ class ReplayFixtureRepository implements AssetChatHistoryRepository {
 
   @override
   Future<AssetChatThreadPage> fetchThreads(
-      {String searchQuery = '', int offset = 0, int limit = 50}) async {
+      {String searchQuery = '', int offset = 0, int limit = 50,}) async {
     return AssetChatThreadPage(items: [
       for (final id in ['sample', 'empty'])
         AssetChatThreadSummary(
             id: id,
             title: id == 'sample' ? '発表用サンプル' : '空の会話',
             createdAt: DateTime.utc(2026),
-            lastMessageAt: DateTime.utc(2026)),
-    ], hasMore: false);
+            lastMessageAt: DateTime.utc(2026),),
+    ], hasMore: false,);
   }
 
   @override
   Future<AssetChatMessagePage> fetchMessages(
-      {required String threadId, int offset = 0, int limit = 100}) async {
+      {required String threadId, int offset = 0, int limit = 100,}) async {
     reads++;
     if (failOnce) {
       failOnce = false;
@@ -51,7 +51,7 @@ class ReplayFixtureRepository implements AssetChatHistoryRepository {
                     tokensIn: 0,
                     tokensOut: 0,
                     model: null,
-                    createdAt: DateTime.utc(2026, 1, 1, 0, 1)),
+                    createdAt: DateTime.utc(2026, 1, 1, 0, 1),),
                 AssetChatStoredMessage(
                     id: 'prompt',
                     threadId: threadId,
@@ -60,9 +60,9 @@ class ReplayFixtureRepository implements AssetChatHistoryRepository {
                     tokensIn: 0,
                     tokensOut: 0,
                     model: null,
-                    createdAt: DateTime.utc(2026)),
+                    createdAt: DateTime.utc(2026),),
               ],
-        hasMore: threadId == 'sample');
+        hasMore: threadId == 'sample',);
   }
 
   @override
