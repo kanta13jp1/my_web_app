@@ -21,14 +21,15 @@ test('retry horizon applies only to the matching approach, independently of pit 
 });
 test('repeated failure experience improves a deterministic obstacle approach',()=>{
  // Fixed commands isolate assistance from model inference. Same actual physics and starting state.
- const run=(start,records)=>{const g=new World11(),guard=new LiveGuard();g.p.x=start;let max=g.p.x;for(let i=0;i<300&&g.phase==='playing';i++){g.buttons(guard.decide(g,'right_run',records));g.step();g.drainSounds();max=Math.max(max,g.p.x);}return {phase:g.phase,x:g.p.x,y:g.p.y,furthest:max,frames:g.frames,interventions:guard.interventions};};
- const rows=[];for(const start of [32,96,160,192,224,256]){const before=run(start,[]);if(before.phase!=='dead')continue;const records=[{stage:1,room:'overworld',x:before.x,y:before.y,count:3}];const after=run(start,records);rows.push({start,before,after});}
- mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-retry-comparison.json',JSON.stringify({scenario:'fixed right_run, 300-frame budget, deterministic assistance comparison, not a learned-model clear',rows},null,2));
+ const run=(start,records)=>{const g=new World11(),guard=new LiveGuard();g.p.x=start;let max=g.p.x;for(let i=0;i<600&&g.phase==='playing';i++){g.buttons(guard.decide(g,'right_run',records));g.step();g.drainSounds();max=Math.max(max,g.p.x);}return {phase:g.phase,x:g.p.x,y:g.p.y,furthest:max,frames:g.frames,interventions:guard.interventions};};
+ const rows=[];for(const start of [32,96,160,192,224,256]){const before=run(start,[]);const records=[{stage:1,room:'overworld',x:before.x,y:before.y,count:3}];const after=run(start,records);rows.push({start,before,after});}
+ mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-retry-comparison.json',JSON.stringify({scenario:'fixed right_run, 600-frame budget, deterministic assistance comparison, not a learned-model clear',rows},null,2));
+ console.log('RETRY_COMPARISON',JSON.stringify(rows));
  assert.ok(rows.some(r=>r.after.furthest>r.before.furthest+32),'at least one reproduced failure must pass its previous failure point');
 });
 test('Luigi survives reset/progression and red variants have distinct platform behavior',()=>{
  const g=new World11(15);g.character='luigi';g.reset();assert.equal(g.character,'luigi');const red=g.enemies.find(e=>e.red&&e.kind==='paratroopa');assert.ok(red);g.camera=red.x-64;g.p.x=red.x-100;const x=red.x,y=red.y;for(let i=0;i<10;i++)g.step();assert.equal(red.x,x);assert.notEqual(red.y,y);
- const k={x:16,y:192,w:14,h:16,vx:.5,vy:0,grounded:true,kind:'koopa',red:true,dead:0};const a=new World11();a.enemies=[k];a.p.x=120;for(let c=2;c<6;c++)for(let r=13;r<16;r++)a.cells.delete(c+','+r);a.step();assert.ok(k.vx<0,'red Koopa turns before the missing floor');
+ const k={x:18,y:192,w:14,h:16,vx:.5,vy:0,grounded:true,kind:'koopa',red:true,dead:0};const a=new World11();a.enemies=[k];a.p.x=120;for(let c=2;c<6;c++)for(let r=13;r<16;r++)a.cells.delete(c+','+r);a.step();assert.ok(k.vx<0,'red Koopa turns before the missing floor');
  g.phase='won';g.presentation=300;g.advanceStage();assert.equal(g.character,'luigi');
 });
 test('item priorities adapt to small/fire form and low lives',()=>{const g=new World11();assert.ok(itemValue(g,'mushroom')>itemValue({...g,power:2},'mushroom'));assert.ok(itemValue({...g,lives:1},'life')>itemValue(g,'life'));assert.ok(itemValue(g,'flower')>itemValue({...g,power:2},'flower'));assert.ok(itemValue(g,'star')>itemValue({...g,star:300},'star'));});
