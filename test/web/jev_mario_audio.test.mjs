@@ -78,10 +78,12 @@ test('fireworks synthesize a bounded burst and mute releases it',async()=>{
  const c=context(),a=new GameAudio(()=>c);await a.enable(true);let bursts=0;a.noise=(_t,duration)=>{bursts++;assert.equal(duration,.16);};a.effect('firework');assert.equal(bursts,1);assert.equal(c.oscillators.length,1);await a.enable(false);assert.equal(a.nodes.size,0);
 });
 
-test('every room has independent six-voice harmony, stable tempo and retained mute',async()=>{
+test('every room has independent seven-part harmony, stable tempo and retained mute',async()=>{
  for(const track of Object.keys(arrangements)){
-  const a=musicStep(track,0),b=musicStep(track,16);assert.ok(a.lead>0&&a.harmony>0&&a.bass>0&&a.counter>0&&a.pad>0&&a.fifth>0);assert.notEqual(a.bass,b.bass);assert.ok(musicStep(track,0,true).step<a.step);
+  const a=musicStep(track,0),b=musicStep(track,16);assert.ok(a.lead>0&&a.harmony>0&&a.bass>0&&a.counter>0&&a.pad>0&&a.fifth>0&&a.answer>0);assert.notEqual(a.bass,b.bass);assert.ok(musicStep(track,0,true).step<a.step);
   const c=context(),audio=new GameAudio(()=>c);await audio.enable(true);audio.tick(track,{star:track==='star'});assert.ok(c.oscillators.length>=6,track);audio.stop();assert.equal(audio.nodes.size,0);
  }
  assert.notDeepEqual(arrangements.castle.chords,arrangements.overworld.chords);
 });
+
+test('seventh answer part enters on the offbeat and releases on mute',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick('overworld');const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=2;a.next=c.currentTime;a.tick('overworld');const note=musicStep('overworld',2);assert.ok(scheduled.some(x=>x[0]===note.answer&&x[1]>c.currentTime&&x[3]==='triangle'));await a.enable(false);assert.equal(a.nodes.size,0);});
