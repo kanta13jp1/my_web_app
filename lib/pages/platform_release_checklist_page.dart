@@ -138,6 +138,9 @@ class _PlatformReleaseChecklistPageState
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+          duration: const Duration(seconds: 8),
           content: const Text('画面の入力を空にしました'),
           action: SnackBarAction(label: '元に戻す', onPressed: _restore),
         ),
