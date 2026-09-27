@@ -1282,7 +1282,7 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const SmartInboxTriagePage(),
       );
-    case PlatformReleaseChecklistPage.routeName:
+    case '/platform-release-checklist':
       return MaterialPageRoute(
         builder: (_) => const PlatformReleaseChecklistPage(),
       );
