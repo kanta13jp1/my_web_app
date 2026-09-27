@@ -52,8 +52,15 @@ SKILL_CONTRACT_TESTS = (
     "test/scripts/test_youtube_skill_scripts.py",
 )
 
+# Notion Migration Cloud Audit validates these exact suites on matching PRs.
+# Do not expand this to test/scripts/**: other tests may require Flutter.
+NOTION_AUDIT_TESTS = (
+    "test/scripts/test_notion_migration_cloud_audit.py",
+    "test/scripts/test_notion_wbs_import_plan.py",
+)
+
 IGNORED_PATTERNS: dict[str, tuple[str, ...]] = {
-    "flutter": ("assets/data/tiger_*", *SKILL_CONTRACT_TESTS),
+    "flutter": ("assets/data/tiger_*", *SKILL_CONTRACT_TESTS, *NOTION_AUDIT_TESTS),
     "web": ("assets/data/tiger_*",),
 }
 
