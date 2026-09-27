@@ -1,44 +1,54 @@
 import { test, expect, type Page } from '@playwright/test';
 
-async function enableFlutterAccessibility(page: Page) {
-  const placeholder = page.locator('flt-semantics-placeholder').first();
-  await placeholder.waitFor({ state: 'attached', timeout: 5_000 }).catch(
-    () => undefined,
-  );
-  if ((await placeholder.count()) > 0) {
-    await placeholder.evaluate((element) => (element as HTMLElement).click());
-  }
+const card = (page: Page, platform: string) =>
+  page.getByRole('group', { name: new RegExp(`^${platform} `) });
+const status = (page: Page, platform: string, label: string) =>
+  card(page, platform).getByRole('button', { name: `確認状態 ${label}`, exact: true });
+
+async function openChecklist(page: Page) {
+  await page.goto('/platform-release-checklist');
+  await expect(page.getByRole('heading', { name: 'プラットフォーム別リリース確認', exact: true }))
+    .toBeVisible({ timeout: 30_000 });
 }
 
-test('platform release checklist starts each platform as untested', async ({ page }) => {
-  await page.goto('/platform-release-checklist');
-  await enableFlutterAccessibility(page);
-  await expect(page.getByText('プラットフォーム別リリース確認', { exact: true })).toBeVisible();
-  await expect(page.getByText('未確認', { exact: true })).toHaveCount(3);
+async function markWeb(page: Page) {
+  await status(page, 'Web', '未確認').click();
+  // The selected first option owns focus; choose the next visible option.
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect(status(page, 'Web', '確認済み')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Web の確認メモ', exact: true }).fill('Chrome で確認');
+}
+
+test('platform release checklist starts each platform as untested', async ({ page }, info) => {
+  await openChecklist(page);
+  for (const platform of ['Web', 'iOS', 'Android']) {
+    await expect(status(page, platform, '未確認')).toHaveCount(1);
+    await expect(page.getByRole('textbox', { name: `${platform} の確認メモ`, exact: true })).toHaveValue('');
+  }
+  await page.screenshot({ path: info.outputPath('checklist-initial.png') });
 });
 
-test('platform release checklist reloads a platform result and note', async ({ page }) => {
-  await page.goto('/platform-release-checklist');
-  await enableFlutterAccessibility(page);
-  await page.getByText('未確認', { exact: true }).nth(0).click();
-  await page.getByText('確認済み', { exact: true }).click();
-  await page.getByLabel('Web の確認メモ').fill('Chrome で確認');
+test('platform release checklist reloads a platform result and note', async ({ page }, info) => {
+  await openChecklist(page);
+  await markWeb(page);
   await page.waitForTimeout(300);
   await page.reload();
-  await enableFlutterAccessibility(page);
-  await expect(page.getByText('確認済み', { exact: true })).toHaveCount(1);
-  await expect(page.getByLabel('Web の確認メモ')).toHaveValue('Chrome で確認');
+  await expect(status(page, 'Web', '確認済み')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('textbox', { name: 'Web の確認メモ', exact: true })).toHaveValue('Chrome で確認');
+  await expect(status(page, 'iOS', '未確認')).toHaveCount(1);
+  await expect(status(page, 'Android', '未確認')).toHaveCount(1);
+  await page.screenshot({ path: info.outputPath('checklist-reloaded.png') });
 });
 
-test('platform release checklist restores a cleared result and note', async ({ page }) => {
-  await page.goto('/platform-release-checklist');
-  await enableFlutterAccessibility(page);
-  await page.getByText('未確認', { exact: true }).nth(0).click();
-  await page.getByText('確認済み', { exact: true }).click();
-  await page.getByLabel('Web の確認メモ').fill('Chrome で確認');
-  await page.getByRole('button', { name: '確認内容を空にする' }).click();
-  await expect(page.getByText('未確認', { exact: true })).toHaveCount(3);
-  await page.getByRole('button', { name: '元に戻す' }).click();
-  await expect(page.getByText('確認済み', { exact: true })).toHaveCount(1);
-  await expect(page.getByLabel('Web の確認メモ')).toHaveValue('Chrome で確認');
+test('platform release checklist restores a cleared result and note', async ({ page }, info) => {
+  await openChecklist(page);
+  await markWeb(page);
+  await page.getByRole('button', { name: '確認内容を空にする', exact: true }).click();
+  await expect(status(page, 'Web', '未確認')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Web の確認メモ', exact: true })).toHaveValue('');
+  await page.getByRole('button', { name: '元に戻す', exact: true }).click();
+  await expect(status(page, 'Web', '確認済み')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Web の確認メモ', exact: true })).toHaveValue('Chrome で確認');
+  await page.screenshot({ path: info.outputPath('checklist-restored.png') });
 });
