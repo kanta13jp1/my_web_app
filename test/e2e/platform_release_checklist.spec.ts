@@ -17,7 +17,9 @@ async function markWeb(page: Page) {
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await expect(status(page, 'Web', '確認済み')).toBeVisible();
-  await page.getByRole('textbox', { name: 'Web の確認メモ', exact: true }).fill('Chrome で確認');
+  const note = page.getByRole('textbox', { name: 'Web の確認メモ', exact: true });
+  await note.click();
+  await note.fill('Chrome で確認');
 }
 
 test('platform release checklist starts each platform as untested', async ({ page }, info) => {
@@ -35,6 +37,7 @@ test('platform release checklist reloads a platform result and note', async ({ p
   await page.waitForTimeout(300);
   await page.reload();
   await expect(status(page, 'Web', '確認済み')).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('textbox', { name: 'Web の確認メモ', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Web の確認メモ', exact: true })).toHaveValue('Chrome で確認');
   await expect(status(page, 'iOS', '未確認')).toHaveCount(1);
   await expect(status(page, 'Android', '未確認')).toHaveCount(1);
@@ -46,9 +49,11 @@ test('platform release checklist restores a cleared result and note', async ({ p
   await markWeb(page);
   await page.getByRole('button', { name: '確認内容を空にする', exact: true }).click();
   await expect(status(page, 'Web', '未確認')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Web の確認メモ', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Web の確認メモ', exact: true })).toHaveValue('');
   await page.getByRole('button', { name: '元に戻す', exact: true }).click();
   await expect(status(page, 'Web', '確認済み')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Web の確認メモ', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Web の確認メモ', exact: true })).toHaveValue('Chrome で確認');
   await page.screenshot({ path: info.outputPath('checklist-restored.png') });
 });
