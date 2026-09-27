@@ -46,10 +46,15 @@ void main() {
   });
 
   testWidgets('empty snapshot has no next action', (tester) async {
-    await tester.pumpWidget(MaterialApp(home: ChatReplayPage(messages: const [])));
+    await tester
+        .pumpWidget(MaterialApp(home: ChatReplayPage(messages: const [])));
     expect(find.text('再生する会話がありません'), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.byKey(const Key('chat_replay_next'))).onPressed,
-        isNull,);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('chat_replay_next')))
+          .onPressed,
+      isNull,
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
     expect(find.text('0 / 0 件'), findsOneWidget);
@@ -60,15 +65,19 @@ void main() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(320, 568));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(MaterialApp(
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: const TextScaler.linear(2)),
-        child: child!,
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: ChatReplayPage(
+          messages: [message('長い本文\n' * 80)],
+          hasOlderMessages: true,
+        ),
       ),
-      home: ChatReplayPage(
-          messages: [message('長い本文\n' * 80)], hasOlderMessages: true,),
-    ),);
+    );
     expect(find.byKey(const Key('chat_replay_partial')), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
