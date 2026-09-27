@@ -191,8 +191,7 @@ jobs:
 
   platform-release-checklist-e2e:
     name: Platform release checklist E2E
-    needs: validate
-    if: needs.validate.result == 'success' && (github.event_name == 'pull_request' || inputs.profile == 'full')
+    if: github.event_name == 'pull_request' || inputs.profile == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
