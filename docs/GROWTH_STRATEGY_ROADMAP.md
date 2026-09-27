@@ -33686,6 +33686,11 @@ Add independent 7-1..7-4, five-voice original arrangements, automatic ranking lo
 Add 8-1..8-4, six original pitched voices, bounded live-state collision assistance and per-play failure memory for LightGBM + search. Preserve cumulative campaign ranking, authenticated automatic sharing, retry/lives/items/fireworks and old records. Extend only course/revision limits. Validate delayed worker delivery separately from tree inference and original-game fidelity. CLOUD_REQUIRED, Jev recommends frontier/xhigh; lead execution retained, no local workers or heavy runs.
 
 
+## 2026-09-28 Persistent Mario retry experience (Issue #5576)
+
+Persist capped device-local failure clusters and extend search/collision foresight near repeated failures. This is explicit assistance, not LightGBM retraining. Add useful-item priorities, Luigi palette, red Koopa/Paratroopa behavior and a seventh original musical answer part. Preserve existing campaign sharing and privacy. Validate before/after obstacle progress, reload/clear, mute/audio headroom and desktop/mobile play in cloud. Full natural 32-course clear and exact original parity remain unverified.
+
+
 ## 2026-09-28 Measured AI usage comparison (Issue #5574)
 
 - Add browser-only condition comparison of measured token components, request counts and reported model/run costs. Preserve the archived 18-trial provenance; no model calls, telemetry or secret handling.
