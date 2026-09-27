@@ -18,6 +18,7 @@ class _JevMarioViewState extends State<JevMarioView> {
   late final JSFunction _listener;
   late final String _viewId;
   bool _pending = false;
+  bool _rankingPending = false;
 
   @override
   void initState() {
@@ -40,6 +41,8 @@ class _JevMarioViewState extends State<JevMarioView> {
         _send({'type': 'jev-mario-ready'});
       } else if (data['type'] == 'jev-mario-request') {
         _request(data);
+      } else if (data['type'] == 'jev-mario-ranking') {
+        _ranking(data);
       }
     }).toJS;
     web.window.addEventListener('message', _listener);
@@ -105,6 +108,62 @@ class _JevMarioViewState extends State<JevMarioView> {
       fail('通信できませんでした。接続を確認して再試行してください。');
     } finally {
       _pending = false;
+    }
+  }
+
+  Future<void> _ranking(Map<dynamic, dynamic> data) async {
+    final id = data['id'];
+    if (id is! num || !id.isFinite) return;
+    void reply({dynamic result, String? error}) => _send({
+          'type': 'jev-mario-ranking-response',
+          'id': id,
+          if (error != null) 'error': error,
+          if (error == null) 'result': result,
+        });
+    if (_rankingPending) {
+      reply(error: '前のランキング操作の完了をお待ちください。');
+      return;
+    }
+    final action = data['action'];
+    if (!['submit', 'list', 'mine'].contains(action) ||
+        jsonEncode(data).length > 3500) {
+      reply(error: '記録の形式を確認できません。');
+      return;
+    }
+    _rankingPending = true;
+    try {
+      final client = Supabase.instance.client;
+      final user = client.auth.currentUser;
+      if (user == null || user.isAnonymous) {
+        reply(error: '共有履歴・ランキングはログイン後に利用できます。');
+        return;
+      }
+      final result = await client.rpc('jev_mario_runs', params: {
+        'p_action': action,
+        'p_data': action == 'submit'
+            ? data['run']
+            : {
+                'course': data['course'],
+                'controller': data['controller'],
+                'power': data['power'],
+              },
+      }).timeout(const Duration(seconds: 10));
+      if (!mounted || client.auth.currentUser?.id != user.id) {
+        reply(error: 'ログイン状態が変わりました。再読み込みしてください。');
+        return;
+      }
+      reply(result: result);
+    } on PostgrestException catch (e) {
+      reply(
+        error: e.message.contains('rate_limit') ||
+                e.message.contains('daily_limit')
+            ? '共有の頻度上限に達しました。時間をおいて再試行してください。'
+            : '共有記録を取得・保存できません。ログイン状態と接続を確認してください。',
+      );
+    } catch (_) {
+      reply(error: '通信できませんでした。端末履歴は残っています。再試行してください。');
+    } finally {
+      _rankingPending = false;
     }
   }
 
