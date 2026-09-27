@@ -32,7 +32,7 @@ export function drawPresentation(ctx,screen,{world,decision={},running=false,rec
  line(267);text('Controller probabilities',868,290,14,'#edf2f5');
  ACTIONS.forEach((a,i)=>{const y=314+i*29,v=d.probabilities?.[i];text(a.replaceAll('_',' '),868,y,12);text(v===undefined?'—':(v*100).toFixed(1)+'%',1210,y,12);ctx.fillStyle='#1d282e';ctx.fillRect(868,y+5,386,5);if(v!==undefined){ctx.fillStyle=a===d.proposal?'#91d4e8':'#51636e';ctx.fillRect(868,y+5,386*v,5);}});
  line(516);text('Situation',868,540,14,'#edf2f5');
- const p=world.p;const pose=p.crouching?'crouching':p.grounded?(Math.abs(p.vx)>.1?'moving':'standing'):p.vy<0?'jumping':'falling';
+ const p=world.p;const pose=p.climbing?'climbing':world.enemies.some(e=>e.carried&&!e.dead)?'carrying':p.crouching?'crouching':p.grounded?(Math.abs(p.vx)>.1?'moving':'standing'):p.vy<0?'jumping':'falling';
  text(`Position  ${Math.round(p.x)}, ${Math.round(p.y)}`,868,566,14,'#b2bdc4','monospace');
  text(`Motion    ${pose} ${(p.facing??1)<0?'left':'right'}`,868,589,14,'#b2bdc4','monospace');
  text(`Time ${world.time}  Score ${world.score}  Lives ${world.lives}`,868,612,14,'#b2bdc4','monospace');

@@ -1,0 +1,4 @@
+{
+  "source": { "includePattern": ".+\\.m?js$" },
+  "sourceType": "module"
+}

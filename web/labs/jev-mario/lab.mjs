@@ -19,7 +19,7 @@ const isGame = () => isRom() || isRecreation();
 const world = new World11();
 const audio = new GameAudio();
 const stageName=()=>courseInfo(world.stage).label;
-$('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。'+(world.stage>=9?'ピーチの登場と追加敵の配置は原作と異なるアレンジです。':'')+'手動プレイはAPI不要です。';};
+$('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。'+([9,10,11].includes(world.stage)?'ピーチの登場と追加敵の配置は原作と異なるアレンジです。':'')+'手動プレイはAPI不要です。';};
 const student = new StudentSession();
 const presentation=$('presentation'),presentationContext=presentation.getContext('2d');
 let decision={},effectiveAction='noop',watchMode=false,transition=null;
@@ -76,7 +76,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopRecordi
 window.addEventListener('pagehide',()=>{stopRecording();if(recordUrl)URL.revokeObjectURL(recordUrl);});
 
 drawWorld(context, world);
-function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':world.stage===6&&world.phase==='playing'?'泳ぐ':pose==='climb'?'旗を降りる':pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
+function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':world.stage===6&&world.phase==='playing'?'泳ぐ':pose==='climb'?(world.p.climbing?'つるを登る':'旗を降りる'):pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
 showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
@@ -189,8 +189,8 @@ $('export').onclick = () => {
     browser_rtt: summarize(samples.filter(s => s.ok).map(s => s.rtt_ms)) };
   downloadJson(data, 'jev-mario-measurement.json');
 };
-const keys = { ArrowRight: 7, ArrowLeft: 6, KeyX: 0, Space: 0, KeyZ: 1, Enter: 3, ArrowDown: 5 };
-const inputNames = {7:'right',6:'left',0:'jump',1:'run',5:'down'};
+const keys = { ArrowRight: 7, ArrowLeft: 6, KeyX: 0, Space: 0, KeyZ: 1, Enter: 3, ArrowDown: 5, ArrowUp: 4, KeyC: 8 };
+const inputNames = {7:'right',6:'left',0:'jump',1:'run',5:'down',4:'up',8:'carry'};
 function manualKey(code,pressed) { if(loop.active||student.active) return; if(isRecreation()) { const key=inputNames[code]; if(key) world.input[key]=pressed; } else if(nes) nes[pressed?'buttonDown':'buttonUp'](1,code); }
 window.addEventListener('keydown', e => { if (e.target.matches('input,select,button') || !gameRunning || loop.active || student.active || !(e.code in keys)) return; e.preventDefault(); manualKey(keys[e.code],true); });
 window.addEventListener('keyup', e => { if(e.code in keys) manualKey(keys[e.code],false); });
@@ -205,7 +205,7 @@ window.addEventListener('pagehide', () => stop());
 function finishStage(){
  const retry=world.phase==='dead'&&world.lives>0;
  const resume=(retry||world.phase==='won'&&world.stage<LAST_COURSE)?{retry,kind:student.active?'student':loop.active?'api':'manual',remaining:loop.limit-loop.attempts,deadline:loop.deadline,cadence:loop.cadence,maxAge:loop.maxAge}:null;
- const result={course_id:world.stage,...courseInfo(world.stage),phase:world.phase,frames:world.frames,score:world.score,lives:world.lives,deaths:world.deaths,fireworks:world.fireworksTotal,student:student.active?structuredClone(student.stats):undefined};
+ const result={course_id:world.stage,...courseInfo(world.stage),phase:world.phase,frames:world.frames,score:world.score,lives:world.lives,deaths:world.deaths,fireworks:world.fireworksTotal,items_collected:{...world.pickups},student:student.active?structuredClone(student.stats):undefined};
  metadata.stage_results??=[];metadata.stage_results.push(result);
  stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス！残り${world.lives}機。同じステージの最初から再開します`:'ゲームオーバー。最初から再挑戦できます');
  transition=resume;
