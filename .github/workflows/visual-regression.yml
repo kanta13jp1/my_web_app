@@ -224,6 +224,7 @@ jobs:
             test-results/
             api-reference-results/
             chat-replay-results/
+            hiragana-results/
             test/e2e/visual_regression.spec.ts-snapshots/
             .ci-logs/visual-regression-server.log
           if-no-files-found: warn
