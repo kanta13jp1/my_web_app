@@ -37,7 +37,7 @@ Widget host(String memo, {JevClient? client}) => MaterialApp(
       ),
     );
 
-void main() {
+void main({Future<void> Function(String name)? capture}) {
   testWidgets(
       'Cloud candidates require explicit action and recover after quota failure',
       (tester) async {
@@ -90,14 +90,24 @@ void main() {
     expect(find.textContaining('100%（正答率ではありません）'), findsOneWidget);
     expect(find.text('要確認'), findsOneWidget);
     expect(find.textContaining('自動で変更しません'), findsOneWidget);
+    await capture?.call('confidence-collapsed');
     await tester.tap(find.text('確信度の読み方'));
     await tester.pumpAndSettle();
     expect(find.textContaining('正解や保存の許可を意味しません'), findsOneWidget);
+    await capture?.call('confidence-expanded');
+    await tester.binding.setSurfaceSize(const Size(320, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await capture?.call('confidence-narrow-320');
+    await tester.binding.setSurfaceSize(null);
+    await tester.pumpAndSettle();
     expect(requests, 1);
     await tester.pumpWidget(host('水道代', client: client));
     expect(find.text('候補：水道・光熱費'), findsOneWidget);
     expect(find.text('確信度の読み方'), findsNothing);
     expect(find.textContaining('100%'), findsNothing);
+    await capture?.call('confidence-edited');
     expect(requests, 1);
   });
 
