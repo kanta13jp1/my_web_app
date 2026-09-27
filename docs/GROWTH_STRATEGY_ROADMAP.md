@@ -33673,3 +33673,8 @@ Added a read-only anonymous production measurement audit and actual service tran
 ## 2026-09-27 Jev Mario World 7 and visible campaign ranking (Issue #5565)
 
 Add independent 7-1..7-4, five-voice original arrangements, automatic ranking loading/filter refresh/post-share refresh. Extend course and version constraints only; preserve the approved authenticated automatic sharing model, retention, quotas, pseudonyms and historical records. Cloud tests cover water physics, progression, rescue, audio headroom, ranking responses and denied access. No exact original parity or natural model clear claim. CLOUD_REQUIRED, frontier/high lead, no workers.
+
+
+## 2026-09-27 World 8 and repeated autoplay failures (Issue #5571)
+
+Add 8-1..8-4, six original pitched voices, bounded live-state collision assistance and per-play failure memory for LightGBM + search. Preserve cumulative campaign ranking, authenticated automatic sharing, retry/lives/items/fireworks and old records. Extend only course/revision limits. Validate delayed worker delivery separately from tree inference and original-game fidelity. CLOUD_REQUIRED, Jev recommends frontier/xhigh; lead execution retained, no local workers or heavy runs.

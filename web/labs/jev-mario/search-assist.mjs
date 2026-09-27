@@ -5,19 +5,20 @@ import {World11} from './world11.mjs?v=student-1';
 export function clone(g){return Object.assign(Object.create(World11.prototype),structuredClone(g));}
 export function edge(g,a){return g.p.grounded&&g.wasJump&&a.includes('jump')?(a==='jump'?'noop':a.replace('_jump','')):a;}
 export function advance(g,a,n){for(let i=0;i<n&&g.phase==='playing';i++){g.buttons(edge(g,a));g.step();g.drainSounds();}return g;}
-function score(g,start){
+function score(g,start,failures){
  if(g.phase==='dead')return -1e6+g.p.x;
  if(g.phase==='won')return 1e6-g.frames;
  const collected=Object.keys(g.pickups).reduce((n,k)=>n+(g.pickups[k]-start.pickups[k])*(k==='life'?140:90),0);
- return collected+Math.max(0,g.power-start.power)*60+itemPotential(g)-itemPotential(start)+g.p.x-start.p.x+(192-g.p.y)*.12+g.p.vx*2-(g.power<start.power?80:0)-(g.p.y>208?(g.p.y-208)*8:0);
+ const repeat=failures.some(f=>f.stage===g.stage&&f.room===g.room&&Math.abs(g.p.x-f.x)<48&&Math.abs(g.p.y-f.y)<20)?70:0;
+ return -repeat+collected+Math.max(0,g.power-start.power)*60+itemPotential(g)-itemPotential(start)+g.p.x-start.p.x+(192-g.p.y)*.12+g.p.vx*2-(g.power<start.power?80:0)-(g.p.y>208?(g.p.y-208)*8:0);
 }
-export function plan(g,raw=null){
+export function plan(g,raw=null,failures=[]){
  const actions=[...new Set([...(itemTargets(g).some(t=>t.x<g.p.x)?['left']:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
  let beam=[{g,first:null,value:0}],byFirst={};
  for(let depth=0;depth<8;depth++){
   const expanded=[];
   for(const b of beam)for(const a of actions){
-   const next=advance(clone(b.g),a,8),first=b.first??a,value=score(next,g);
+   const next=advance(clone(b.g),a,8),first=b.first??a,value=score(next,g,failures);
    expanded.push({g:next,first,value});
   }
   expanded.sort((a,b)=>b.value-a.value);
