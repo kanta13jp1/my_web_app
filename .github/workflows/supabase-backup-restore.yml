@@ -184,6 +184,12 @@ jobs:
               --variable ON_ERROR_STOP=1 \
               --file /tmp/storage-compat.sql
           '
+          echo "139969ce1a32e6385979f5d86fea78f2ba14a23342ece274122bbbd9a863be78  scripts/sql/supabase_storage_lifecycle_0068_0069.sql" | sha256sum --check
+          docker cp scripts/sql/supabase_storage_lifecycle_0068_0069.sql "$db_container:/tmp/storage-lifecycle.sql"
+          docker exec "$db_container" sh -c '
+            export PGPASSWORD="$POSTGRES_PASSWORD"
+            exec psql --host 127.0.0.1 --username supabase_storage_admin --dbname postgres --variable ON_ERROR_STOP=1 --file /tmp/storage-lifecycle.sql
+          '
           docker exec "$db_container" psql \
             --username postgres \
             --dbname postgres \
