@@ -13,7 +13,7 @@ test('retry memory persists bounded clusters and rejects corrupt or foreign reco
  assert.equal(m.records.length,1);assert.equal(new RetryMemory(s).records[0].count,12);
  for(let i=0;i<80;i++){g.p.x=500+i*60;m.record(g);}assert.equal(m.records.length,64);
  s.setItem(MEMORY_KEY,JSON.stringify([{stage:99,room:'overworld',x:2,y:2,count:1}]));assert.deepEqual(new RetryMemory(s).records,[]);
- s.setItem(MEMORY_KEY,'{bad');assert.deepEqual(new RetryMemory(s).records,[]);
+ s.setItem(MEMORY_KEY,'{bad');const corrupt=new RetryMemory(s);assert.deepEqual(corrupt.records,[]);corrupt.clear();assert.equal(s.getItem(MEMORY_KEY),undefined);corrupt.record(g);assert.equal(new RetryMemory(s).records.length,1);
  m.clear();assert.deepEqual(new RetryMemory(s).records,[]);
  const denied=new RetryMemory({getItem(){throw Error();}});denied.record(g);assert.equal(denied.records.length,1);assert.equal(denied.saved,false);
 });
