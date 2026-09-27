@@ -6,7 +6,7 @@ import { StudentSession } from './student-session.mjs?v=student-1';
 import { ReactionAssist, hazards, prediction } from './reaction.mjs?v=student-1';
 import { GameRecording } from './recording.mjs?v=student-1';
 import { GameAudio } from './audio.mjs?v=student-1';
-import { World11, drawWorld, playerPose, courseInfo, LAST_COURSE } from './world11.mjs?v=student-1';
+import { World11, drawWorld, playerPose, courseInfo, LAST_COURSE, isWater } from './world11.mjs?v=student-1';
 import { BUTTONS, DecisionLoop, fixture, readState, summarize, validateRom } from './core.mjs?v=student-1';
 const $ = id => document.getElementById(id);
 let connected = false, pendingBridge = null, seq = 0, samples = [], nes = null, romBytes = null;
@@ -82,7 +82,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopRecordi
 window.addEventListener('pagehide',()=>{stopRecording();if(recordUrl)URL.revokeObjectURL(recordUrl);});
 
 drawWorld(context, world);
-function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':world.stage===6&&world.phase==='playing'?'泳ぐ':pose==='climb'?(world.p.climbing?'つるを登る':'旗を降りる'):pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
+function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':isWater(world.stage)&&world.phase==='playing'?'泳ぐ':pose==='climb'?(world.p.climbing?'つるを登る':'旗を降りる'):pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
 showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
