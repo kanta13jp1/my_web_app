@@ -109,14 +109,19 @@ class _ChatReplayPageState extends State<ChatReplayPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            Semantics(
+                              header: true,
+                              child: Text(
                               message == null
                                   ? (total == 0 ? '再生する会話がありません' : '準備ができました')
                                   : (message.isUser ? 'あなた' : 'AIの保存済み回答'),
                               style: Theme.of(context).textTheme.titleMedium,
+                              ),
                             ),
                             const SizedBox(height: 16),
-                            SelectableText(
+                            Semantics(
+                              container: true,
+                              child: Text(
                               message?.text ??
                                   (total == 0
                                       ? '終了して、履歴から会話を選んでください。'
@@ -124,6 +129,7 @@ class _ChatReplayPageState extends State<ChatReplayPage> {
                                           '\n一度に一件ずつ表示します。'),
                               key: ValueKey('chat_replay_message_$_position'),
                               style: const TextStyle(fontSize: 22, height: 1.6),
+                              ),
                             ),
                           ],
                         ),

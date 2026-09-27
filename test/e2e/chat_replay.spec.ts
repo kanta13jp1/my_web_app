@@ -14,7 +14,7 @@ test('saved history presents, rewinds and exits without requests', async ({ page
   page.on('response', r => { if (r.status() >= 500) errors.push(r.url()); });
   await page.getByRole('button', { name: /^発表用サンプル 最終更新/ }).click();
   await page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true }).click();
-  await expect(page.getByText('準備ができました', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '準備ができました', exact: true })).toBeVisible();
   await expect(page.getByText('会話を一件ずつ紹介したいです。', { exact: true })).not.toBeVisible();
   const calls: string[] = [];
   page.on('request', r => calls.push(`${r.method()} ${r.url()}`));
@@ -33,7 +33,7 @@ test('saved history presents, rewinds and exits without requests', async ({ page
   await expect(page.getByRole('button', { name: '次へ', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: '前へ', exact: true }).click();
   await page.getByRole('button', { name: '最初に戻す', exact: true }).click();
-  await expect(page.getByText('準備ができました', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '準備ができました', exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true })).toBeVisible();
   expect(calls).toEqual([]);
@@ -57,5 +57,5 @@ test('failed read cannot present; reselecting recovers', async ({ page }) => {
   if (await back.isVisible()) await back.click();
   await page.getByRole('button', { name: /^発表用サンプル 最終更新/ }).first().click();
   await page.getByRole('button', { name: '読み込み済みの会話を発表', exact: true }).click();
-  await expect(page.getByText('準備ができました', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '準備ができました', exact: true })).toBeVisible();
 });
