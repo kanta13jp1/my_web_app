@@ -6,24 +6,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'platform_release_checklist_v1': jsonEncode(<String, Object>{
+        'sharedScope': '',
+        'notes': <String, String>{'Web': 'Chrome で確認'},
+        'statuses': <String, String>{'Web': 'passed'},
+      }),
+    });
   });
 
-  testWidgets('clearing and undoing restores the selected platform status', (
+  testWidgets('loading, clearing, and undoing restores a saved platform status', (
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: PlatformReleaseChecklistPage(
-          initialChecklist: PlatformReleaseChecklist(
-            notes: <String, String>{'Web': 'Chrome で確認'},
-            statuses: <String, PlatformCheckStatus>{
-              'Web': PlatformCheckStatus.passed,
-            },
-          ),
-        ),
-      ),
+      const MaterialApp(home: PlatformReleaseChecklistPage()),
     );
+    await tester.pumpAndSettle();
 
     expect(find.text('確認済み'), findsOneWidget);
     await tester.tap(find.byTooltip('確認内容を空にする'));
@@ -36,3 +34,4 @@ void main() {
     expect(find.text('Chrome で確認'), findsOneWidget);
   });
 }
+import 'dart:convert';

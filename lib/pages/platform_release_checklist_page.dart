@@ -7,14 +7,9 @@ import 'package:my_web_app/models/platform_release_checklist.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PlatformReleaseChecklistPage extends StatefulWidget {
-  const PlatformReleaseChecklistPage({
-    super.key,
-    this.initialChecklist,
-  });
+  const PlatformReleaseChecklistPage({super.key});
 
   static const routeName = '/platform-release-checklist';
-
-  final PlatformReleaseChecklist? initialChecklist;
 
   @override
   State<PlatformReleaseChecklistPage> createState() =>
@@ -39,13 +34,7 @@ class _PlatformReleaseChecklistPageState
       for (final platform in PlatformReleaseChecklist.platforms)
         platform: TextEditingController(),
     };
-    final initialChecklist = widget.initialChecklist;
-    if (initialChecklist == null) {
-      _load();
-    } else {
-      _setChecklist(initialChecklist, persist: false);
-      _loading = false;
-    }
+    _load();
   }
 
   Future<void> _load() async {
