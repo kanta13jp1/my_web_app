@@ -10,6 +10,7 @@ class _FakeHistoryRepository implements AssetChatHistoryRepository {
 
   final List<AssetChatThreadSummary> _threads;
   final List<String> deletedIds = [];
+  int messageReads = 0;
 
   @override
   Future<AssetChatThreadPage> fetchThreads({
@@ -37,6 +38,7 @@ class _FakeHistoryRepository implements AssetChatHistoryRepository {
     int offset = 0,
     int limit = 100,
   }) async {
+    messageReads++;
     return AssetChatMessagePage(
       items: [
         AssetChatStoredMessage(
@@ -87,6 +89,29 @@ Widget _app(_FakeHistoryRepository repository) {
 }
 
 void main() {
+  testWidgets('presentation does not fetch again or delete saved history', (tester) async {
+    final repository = _FakeHistoryRepository(threads: [_thread('thread-1', '発表用')]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('asset_chat_thread_thread-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('asset_chat_history_present')));
+    await tester.pumpAndSettle();
+    expect(find.text('0 / 2 件'), findsOneWidget);
+    expect(find.text('今月の支払いを確認して'), findsNothing);
+    await tester.tap(find.text('次へ'));
+    await tester.pumpAndSettle();
+    expect(find.text('今月の支払いを確認して'), findsOneWidget);
+    await tester.tap(find.text('次へ'));
+    await tester.pumpAndSettle();
+    expect(find.text('未払い予定を先に確認してください。'), findsOneWidget);
+    await tester.tap(find.byTooltip('発表を終了'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('asset_chat_history_detail')), findsOneWidget);
+    expect(repository.messageReads, 1);
+    expect(repository.deletedIds, isEmpty);
+  });
+
   testWidgets('shows thread list and message detail in a wide layout', (
     tester,
   ) async {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/asset_chat.dart';
+import 'chat_replay_page.dart';
 import '../services/asset_chat_history_repository.dart';
 import '../view_models/asset_chat_history_view_model.dart';
 import '../widgets/critical_action_dialog.dart';
@@ -300,6 +301,27 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
                   _viewModel.isDeleting ? null : () => _confirmDelete(thread),
               icon: const Icon(Icons.delete_outline),
             ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: OutlinedButton.icon(
+            key: const Key('asset_chat_history_present'),
+            onPressed: _viewModel.isLoadingMessages ||
+                    _viewModel.isDeleting ||
+                    _viewModel.messages.isEmpty
+                ? null
+                : () {
+                    final replay = ChatReplayPage(
+                      messages: _viewModel.messages,
+                      hasOlderMessages: _viewModel.hasOlderMessages,
+                    );
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute(builder: (_) => replay),
+                    );
+                  },
+            icon: const Icon(Icons.slideshow),
+            label: const Text('読み込み済みの会話を発表'),
           ),
         ),
         const Divider(height: 1),
