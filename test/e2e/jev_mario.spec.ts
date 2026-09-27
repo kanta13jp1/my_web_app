@@ -541,7 +541,7 @@ test('stop during death cancels retry; local AI can retry with a fresh worker',a
  await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.die();};});
  await expect(lab.locator('#status')).toContainText('残り2機');await lab.locator('#watch-stop').click();await page.waitForTimeout(3300);await expect(lab.locator('#status')).toContainText('停止しました');await expect(lab.locator('#decision-summary')).not.toContainText('LIVE');
  await lab.locator('#watch-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
- await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');let died=false;World11.prototype.step=function(){if(!died){died=true;this.die();}else this.frames++;};});
+ await frame.evaluate(async()=>{const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const original=StudentSession.prototype.tick;let died=false;StudentSession.prototype.tick=function(world){if(!died){died=true;world.die();return 'noop';}return original.call(this,world);};});
  await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:10000});await expect(lab.locator('#progress')).toContainText('残り2機');await expect(lab.locator('#student-status')).toContainText('モデル案採用');await lab.locator('#stop').click();
 });
 
@@ -726,7 +726,7 @@ test('run history survives reload, sharing errors recover and ranking renders sa
  await lab.locator('#rank-course').selectOption('17');await lab.locator('#ranking-load').click();await expect(lab.locator('#ranking-rows')).toContainText('Player-test');await expect(lab.locator('#ranking-rows')).toContainText('15.0秒');await lab.locator('#ranking-rows').locator('..').screenshot({path:info.outputPath('history-ranking.png')});await lab.locator('#rank-course').locator('..').screenshot({path:info.outputPath('history-ranking-filters.png')});
 });
 
-test('six-voice audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
+test('seven-part audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
  const result=await frame.evaluate(async()=>{const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const all:number[]=[],metrics:any[]=[];
   for(const room of ['overworld','underground','underwater','castle']){
@@ -765,4 +765,14 @@ test('delayed LightGBM worker keeps live collision assistance and exports its co
  await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});await expect(lab.locator('#student-status')).toContainText('衝突回避',{timeout:15000});await page.waitForTimeout(8000);await lab.locator('#stop').click();
  const d=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await d).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();const data=JSON.parse(raw);expect(data.student.decisions).toBeGreaterThan(1);expect(data.student.control).toContain('live collision guard');expect(data.student.samples.some((s:any)=>s.worker_round_trip_ms>=300)).toBe(true);
  await (await import('node:fs/promises')).writeFile(info.outputPath('delayed-worker.json'),raw);await lab.locator('#presentation').screenshot({path:info.outputPath('delayed-worker.png')});
+});
+
+
+test('local retry experience survives reload and can be cleared; Luigi is selectable',async({page},info)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/test/e2e/jev_mario_harness.html');let frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await frame.evaluate(async()=>{const {RetryMemory}=await import('/web/labs/jev-mario/retry-memory.mjs?v=student-1');const m=new RetryMemory();m.record({phase:'dead',stage:1,room:'overworld',p:{x:300,y:192}});});
+ await page.reload();const lab=page.frameLocator('iframe');await expect(lab.locator('#retry-status')).toContainText('1か所');
+ await lab.locator('#character').selectOption('luigi');await lab.locator('#watch-manual').click();await lab.locator('#stop').click();await lab.locator('#presentation').screenshot({path:info.outputPath('luigi-retry.png')});
+ await lab.locator('#clear-retry').click();await expect(lab.locator('#retry-status')).toContainText('0か所');await page.reload();await expect(lab.locator('#retry-status')).toContainText('0か所');expect(errors).toEqual([]);
 });
