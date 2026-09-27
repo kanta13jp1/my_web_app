@@ -33663,3 +33663,8 @@ Add independently arranged 5-1..5-4, three-voice original chiptune arrangements 
 ## 2026-09-27 Jev Mario World 6 and campaign ranking (Issue #5561)
 
 Add 6-1..6-4, four musical voices, and one automatic record per play across life retries and stage transitions. Rank by reached course, course cleared, total score, then wall-clock duration, grouped by starting course/controller/power/revision. Keep authenticated self-reported sharing, generated player names, bounded retention and owner-only history. Preserve legacy records. Cloud CI and concrete DB/auth owner review pending before production. No new-course natural AI clear or original ROM/music parity claim. Resource routing CLOUD_REQUIRED; lead frontier/high, no workers.
+
+
+## 2026-09-27: acquisition measurement audit (#5563)
+
+Added a read-only anonymous production measurement audit and actual service transport fault tests. Added finalized Search Console daily collection/validation with timezone and missing-day preservation. See docs/evidence/seo-measurement-20260927/PROTOCOL.md and docs/SEARCH_CONSOLE_MEASUREMENT.md. Google property/authorization and prospective causal evidence remain pending.
