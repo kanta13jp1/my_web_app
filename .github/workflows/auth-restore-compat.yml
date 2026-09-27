@@ -5,10 +5,14 @@ on:
       - .github/workflows/supabase-backup-restore.yml
       - .github/workflows/auth-restore-compat.yml
       - scripts/sql/supabase_auth_recovery_codes_20260824.sql
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: auth-restore-compat-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   validate:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
