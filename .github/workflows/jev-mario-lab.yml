@@ -59,6 +59,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260921051931_jev_mario_quota.sql
           python3 test/web/jev_mario_quota.py
           psql -v ON_ERROR_STOP=1 -f test/web/jev_mario_ranking.sql
+          psql -v ON_ERROR_STOP=1 -f test/web/jev_mario_campaigns.sql
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 15
