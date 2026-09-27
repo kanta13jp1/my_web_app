@@ -1,8 +1,8 @@
 export const HISTORY_KEY='jev-mario-campaigns-v1';
-export const RUN_REVISION='world6-1';
+export const RUN_REVISION='world7-1';
 export const CONTROLLERS={manual:'手動',jev_only:'Jevのみ',jev_plus_local:'Jev＋ローカル補助',lightgbm_plus_search:'LightGBM＋探索'};
 const integer=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max;
-export function validRun(r){return !!r&&typeof r.id==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(r.id)&&r.revision===RUN_REVISION&&integer(r.course,1,24)&&integer(r.reached,r.course,24)&&integer(r.cleared,r.course-1,r.reached)&&Object.hasOwn(CONTROLLERS,r.controller)&&['won','dead','stopped'].includes(r.outcome)&&integer(r.score,0,10000000)&&integer(r.elapsed_ms,1,86400000)&&integer(r.power,0,2)&&typeof r.eligible==='boolean'&&typeof r.created_at==='string'&&Number.isFinite(Date.parse(r.created_at));}
+export function validRun(r){return !!r&&typeof r.id==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(r.id)&&['world6-1',RUN_REVISION].includes(r.revision)&&integer(r.course,1,28)&&integer(r.reached,r.course,28)&&integer(r.cleared,r.course-1,r.reached)&&Object.hasOwn(CONTROLLERS,r.controller)&&['won','dead','stopped'].includes(r.outcome)&&integer(r.score,0,10000000)&&integer(r.elapsed_ms,1,86400000)&&integer(r.power,0,2)&&typeof r.eligible==='boolean'&&typeof r.created_at==='string'&&Number.isFinite(Date.parse(r.created_at));}
 export class Campaign{
  constructor(clock=()=>performance.now(),uuid=()=>crypto.randomUUID()){this.clock=clock;this.uuid=uuid;this.active=null;}
  begin(world,controller){if(this.active)return;this.started=this.clock();this.active={id:this.uuid(),revision:RUN_REVISION,course:world.stage,reached:world.stage,cleared:world.stage-1,controller,power:world.power,eligible:world.frames===0&&world.p.x===32,created_at:new Date().toISOString()};}
