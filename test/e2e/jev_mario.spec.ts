@@ -10,6 +10,11 @@ test('LightGBM worker plays without consent or API; records assistance and stops
  if(info.project.name==='desktop')await expect(lab.locator('#status')).toContainText('1-1クリア！',{timeout:60000});
  await screenshot(page,info.outputPath('world11-student.png'));await lab.locator('#stop').click();
  const before=await lab.locator('#progress').textContent();await page.waitForTimeout(350);await expect(lab.locator('#progress')).toHaveText(before!);
+ if(info.project.name==='desktop'){
+  const pending=page.waitForEvent('download');await lab.locator('#export').click();const d=await pending;await d.saveAs(info.outputPath('world11-student.json'));
+  const stream=await d.createReadStream();let raw='';for await(const b of stream!)raw+=b.toString();const data=JSON.parse(raw);
+  const clear=data.stage_results.find((r:any)=>r.course_id===1&&r.phase==='won');expect(clear).toBeTruthy();expect(Object.values(clear.items_collected).reduce((n:number,v:any)=>n+Number(v),0)).toBeGreaterThan(0);
+ }
  await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');await expect(lab.locator('#consent')).not.toBeChecked();expect(errors).toEqual([]);
 });
 test('keyboard and touch crouch recover; walk and jump poses render',async({page},info)=>{
@@ -25,7 +30,7 @@ test('keyboard and touch crouch recover; walk and jump poses render',async({page
  await page.keyboard.up('Space');await page.keyboard.up('ArrowRight');
  await lab.locator('#restart-local').click();await lab.locator('#play-local').click();
  const down=lab.getByRole('button',{name:'しゃがむ・土管に入る'});
- const box=await down.boundingBox();expect(box).not.toBeNull();
+ await down.scrollIntoViewIfNeeded();const box=await down.boundingBox();expect(box).not.toBeNull();
  await page.mouse.move(box!.x+box!.width/2,box!.y+box!.height/2);await page.mouse.down();
  await expect(lab.locator('#posture')).toContainText('しゃがみ');
  await page.mouse.up();await expect(lab.locator('#posture')).toContainText('待機');
@@ -400,10 +405,10 @@ test('2-1 direct selection, API world-stage payload, terminal finish and exporte
  await lab.locator('#consent').check();await lab.locator('#start').click();await expect.poll(()=>page.evaluate(()=>(window as any).worldRequests.length)).toBeGreaterThan(0);
  await lab.locator('#stop').click();expect(await page.evaluate(()=>(window as any).worldRequests[0])).toEqual({world:2,stage:1});
  await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
- await expect(lab.locator('#status')).toContainText('2-1クリア！ 全ステージ終了');await page.waitForTimeout(3200);await expect(lab.locator('#stage')).toHaveValue('5');
+ await expect(lab.locator('#status')).toContainText('2-1クリア！ 次のステージへ進みます');await expect(lab.locator('#stage')).toHaveValue('6',{timeout:7000});
  await lab.locator('#presentation').screenshot({path:info.outputPath('world21-clear.png')});
  const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await (await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();const data=JSON.parse(raw);expect(data.world).toBe(2);expect(data.stage).toBe(1);expect(data.stage_results.at(-1)).toMatchObject({world:2,stage:1,label:'2-1',course_id:5});
- await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('2-1をリセット');
+ await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('2-2をリセット');
 });
 test('2-1 terrain and reference-style pipe silhouettes render across camera clipping',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');
@@ -413,4 +418,377 @@ test('2-1 terrain and reference-style pipe silhouettes render across camera clip
   for(const x of [32,500,740,3100]){const g=new World11(5);g.camera=Math.max(0,x-96);g.p.x=x;const c=document.createElement('canvas');c.width=256;c.height=240;board.append(c);drawWorld(c.getContext('2d'),g);}
  });
  await page.locator('#world21-scenes').screenshot({path:info.outputPath('world21-scenes.png')});
+});
+
+
+test('local autoplay survives elapsed benchmark time and continues into the next course',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ // Hold a safe scene while advancing wall time; this is lifecycle coverage, not AI clear evidence.
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');(window as any).originalStep=World11.prototype.step;World11.prototype.step=function(){this.frames++;};});
+ await lab.locator('#watch-student').click();await expect(lab.locator('#student-status')).toContainText('探索変更',{timeout:20000});
+ await frame.evaluate(()=>{const original=performance.now.bind(performance);Object.defineProperty(performance,'now',{configurable:true,value:()=>original()+65000});});
+ const before=await lab.locator('#progress').textContent();await expect(lab.locator('#progress')).not.toHaveText(before!);
+ await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');World11.prototype.step=function(){if(this.stage===1){this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;(window as any).originalStep.call(this);this.presentation=179;}else this.frames++;};});
+ await expect(lab.locator('#stage')).toHaveValue('2',{timeout:10000});await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中');
+ await lab.locator('#presentation').screenshot({path:info.outputPath('continuous-local.png')});
+ await lab.locator('#stop').click();const stopped=await lab.locator('#progress').textContent();await page.waitForTimeout(200);await expect(lab.locator('#progress')).toHaveText(stopped!);await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');
+});
+
+test('visible blur releases manual keys but preserves play and recording',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#watch-manual').click();await page.keyboard.down('ArrowRight');await expect(lab.locator('#posture')).toContainText('歩く');
+ await lab.locator('#record-start').click();await expect(lab.locator('#record-status')).toContainText('録画中');
+ await frame.evaluate(()=>window.dispatchEvent(new Event('blur')));await page.keyboard.up('ArrowRight');
+ await expect(lab.locator('#action')).toHaveText('操作: noop');await expect(lab.locator('#status')).toContainText('手動プレイ中');await expect(lab.locator('#record-status')).toContainText('録画中');
+ await lab.locator('#stop').click();await expect(lab.locator('#record-result')).toBeVisible();
+});
+
+test('autoplay ignores visible blur but hidden page stops and can restart',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#watch-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
+ await frame.evaluate(()=>window.dispatchEvent(new Event('blur')));await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中');
+ await frame.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
+ await expect(lab.locator('#status')).toContainText('バックグラウンド');const stopped=await lab.locator('#progress').textContent();await page.waitForTimeout(200);await expect(lab.locator('#progress')).toHaveText(stopped!);
+ await frame.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+ await lab.locator('#watch-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});await lab.locator('#stop').click();
+});
+
+
+test('2-2 swimming controls, underwater audio, stop/reset and terminal export',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('6');await expect(lab.locator('#restart-local')).toHaveText('2-2を最初から');await lab.locator('#watch-manual').click();
+ await page.keyboard.press('Space');await expect(lab.locator('#posture')).toContainText('泳ぐ');await expect(lab.locator('#audio-status')).toContainText('音声ON');
+ await lab.locator('#presentation').screenshot({path:info.outputPath('world22-swim.png')});
+ await lab.locator('#stop').click();await expect(lab.locator('#status')).toContainText('停止');await lab.locator('#restart-local').click();await expect(lab.locator('#stage')).toHaveValue('6');
+ await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=196*16;this.p.y=180;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('2-2クリア！ 次のステージへ進みます');await expect(lab.locator('#stage')).toHaveValue('7',{timeout:7000});
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:2,stage:2,course_id:6,phase:'won'});
+});
+
+
+test('2-3 selection, bridge/fish scenes, reset and final campaign result',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('7');await expect(lab.locator('#restart-local')).toHaveText('2-3を最初から');await lab.locator('#watch-manual').click();await expect(lab.locator('#audio-status')).toContainText('音声ON');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=400;this.p.y=176;this.camera=304;this.invincible=300;original.call(this);};});
+ await page.waitForTimeout(400);await lab.locator('#presentation').screenshot({path:info.outputPath('world23-bridge.png')});
+ await lab.locator('#restart-local').click();await expect(lab.locator('#stage')).toHaveValue('7');await expect(lab.locator('#progress')).toContainText('2-3をリセット');
+ await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('2-3クリア！ 次のステージへ進みます');await expect(lab.locator('#stage')).toHaveValue('8',{timeout:7000});
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:2,stage:3,course_id:7,phase:'won'});
+});
+
+
+test('2-4 boss scene, axe rescue, final result and reset',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('8');await expect(lab.locator('#restart-local')).toHaveText('2-4を最初から');await lab.locator('#watch-manual').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=184*16;this.p.y=176;this.camera=180*16;original.call(this);};});
+ await page.waitForTimeout(150);await lab.locator('#presentation').screenshot({path:info.outputPath('world24-boss.png')});
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=196*16;this.p.y=176;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('2-4クリア！ 次のステージへ進みます');await page.waitForTimeout(1800);await lab.locator('#presentation').screenshot({path:info.outputPath('world24-rescue.png')});await expect(lab.locator('#stage')).toHaveValue('9',{timeout:7000});
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:2,stage:4,course_id:8,phase:'won'});
+ await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('3-1をリセット');
+});
+
+
+test('3-1 night scene, Peach bonus ending, export and reset',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('9');await expect(lab.locator('#mode-note')).toContainText('原作と異なるアレンジ');await expect(lab.locator('#restart-local')).toHaveText('3-1を最初から');await lab.locator('#watch-manual').click();await expect(lab.locator('#audio-status')).toContainText('音声ON');
+ await lab.locator('#presentation').screenshot({path:info.outputPath('world31-night.png')});
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('3-1クリア！ 次のステージへ進みます');await page.waitForTimeout(2500);await lab.locator('#presentation').screenshot({path:info.outputPath('world31-peach.png')});await expect(lab.locator('#stage')).toHaveValue('10',{timeout:7000});
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:3,stage:1,course_id:9,phase:'won'});
+ await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('3-2をリセット');
+});
+
+
+test('3-2 projectile scene, final Peach ending and reset',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('10');await expect(lab.locator('#restart-local')).toHaveText('3-2を最初から');await expect(lab.locator('#mode-note')).toContainText('原作と異なるアレンジ');await lab.locator('#watch-manual').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=736;this.p.y=192;this.camera=640;original.call(this);};});
+ await page.waitForTimeout(150);await lab.locator('#presentation').screenshot({path:info.outputPath('world32-enemies.png')});
+ await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('3-2をリセット');await lab.locator('#watch-manual').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('3-2クリア！ 次のステージへ進みます');await expect(lab.locator('#stage')).toHaveValue('11',{timeout:7000});await lab.locator('#presentation').screenshot({path:info.outputPath('world32-peach.png')});
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:3,stage:2,course_id:10,phase:'won'});
+});
+
+
+test('3-3 Lakitu scene and six fireworks finish before final recording and export',async({page},info)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('11');await expect(lab.locator('#restart-local')).toHaveText('3-3を最初から');await lab.locator('#watch-manual').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.p.x=384;this.p.y=176;this.camera=288;original.call(this);};});
+ await page.waitForTimeout(300);await lab.locator('#presentation').screenshot({path:info.outputPath('world33-lakitu.png')});
+ await lab.locator('#restart-local').click();await lab.locator('#watch-manual').click();await lab.locator('#watch-record').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;(window as any).observedWorld=this;this.frames=(400-336)*24-1;this.p.x=198*16;this.p.y=160;this.p.vx=0;this.p.vy=0;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('3-3クリア！ 次のステージへ進みます');
+ await expect.poll(()=>frame.evaluate(()=>(window as any).observedWorld.fireworks.length)).toBeGreaterThan(0);
+ await expect(lab.locator('#record-status')).toContainText('録画中');await lab.locator('#presentation').screenshot({path:info.outputPath('world33-fireworks.png')});
+ await expect(lab.locator('#stage')).toHaveValue('12',{timeout:10000});await expect(lab.locator('#record-status')).toContainText('録画中');await lab.locator('#stop').click();await expect(lab.locator('#record-result')).toBeVisible();
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:3,stage:3,course_id:11,phase:'won',fireworks:6,finalized:true});expect(errors).toEqual([]);
+});
+
+test('remaining lives restart the same course and recording continues until game over',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('11');await lab.locator('#watch-manual').click();await lab.locator('#watch-record').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.score=2500;this.coins=7;this.p.x=600;this.p.y=260;original.call(this);};});
+ await expect(lab.locator('#status')).toContainText('残り2機');await page.waitForTimeout(1600);await lab.locator('#presentation').screenshot({path:info.outputPath('world33-retry.png')});
+ await expect(lab.locator('#status')).toContainText('3-3 手動プレイ中',{timeout:7000});await expect(lab.locator('#progress')).toContainText('x=32');await expect(lab.locator('#progress')).toContainText('残り2機');await expect(lab.locator('#record-status')).toContainText('録画中');await expect(lab.locator('#stage')).toHaveValue('11');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.lives=1;this.die();};});
+ await expect(lab.locator('#status')).toContainText('ゲームオーバー');await expect(lab.locator('#record-result')).toBeVisible({timeout:7000});await expect(lab.locator('#progress')).toContainText('残り0機');await expect(lab.locator('#decision-summary')).toContainText('GAME OVER');await lab.locator('#presentation').screenshot({path:info.outputPath('world33-game-over.png')});await page.waitForTimeout(500);await expect(lab.locator('#status')).toContainText('ゲームオーバー');
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();const results=JSON.parse(raw).stage_results;expect(results.map((r:any)=>r.course_id)).toEqual([11,11]);expect(results[0]).toMatchObject({lives:2,score:2500,deaths:1});expect(results[1]).toMatchObject({lives:0,score:2500,deaths:2});
+});
+
+test('stop during death cancels retry; local AI can retry with a fresh worker',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.die();};});
+ await expect(lab.locator('#status')).toContainText('残り2機');await lab.locator('#watch-stop').click();await page.waitForTimeout(3300);await expect(lab.locator('#status')).toContainText('停止しました');await expect(lab.locator('#decision-summary')).not.toContainText('LIVE');
+ await lab.locator('#watch-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
+ await frame.evaluate(async()=>{const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const original=StudentSession.prototype.tick;let died=false;StudentSession.prototype.tick=function(world){if(!died){died=true;world.die();return 'noop';}return original.call(this,world);};});
+ await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:10000});await expect(lab.locator('#progress')).toContainText('残り2機');await expect(lab.locator('#student-status')).toContainText('モデル案採用');await lab.locator('#stop').click();
+});
+
+test('cloud retry discards the dead-life response and retains the request budget',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html?slow');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await page.evaluate(()=>{(window as any).retryRequests=0;window.addEventListener('message',e=>{if(e.data?.type==='jev-mario-request')(window as any).retryRequests++;});});
+ await lab.locator('#count').evaluate((el:HTMLSelectElement)=>el.add(new Option('2','2')));await lab.locator('#count').selectOption('2');await lab.locator('#consent').check();await lab.locator('#start').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const original=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=original;this.die();};});
+ await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('Jev測定完了',{timeout:10000});expect(await page.evaluate(()=>(window as any).retryRequests)).toBe(2);await expect(lab.locator('#sample-detail')).toContainText('停止時キャンセル 1件');
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();const data=JSON.parse(raw);expect(data.samples[0]).toMatchObject({cancelled:true});expect(data.samples[1].observation.context.lives).toBe(2);expect(data.counts.applied).toBe(1);await expect(lab.locator('#stage')).toHaveValue('1');
+});
+
+
+for(const stage of [4,8,12])test(`castle ${stage} boss, Toad rescue and end result`,async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const label=`${stage/4}-4`;await lab.locator('#stage').selectOption(String(stage));await expect(lab.locator('#restart-local')).toHaveText(`${label}を最初から`);await lab.locator('#watch-manual').click();await expect(lab.locator('#audio-status')).toContainText('音声ON');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;this.p.x=184*16;this.p.y=176;this.camera=180*16;this.invincible=90;step.call(this);};});
+ await page.waitForTimeout(150);await lab.locator('#presentation').screenshot({path:info.outputPath(`world${stage}-boss.png`)});
+ await lab.locator('#watch-record').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).castleWorld=this;this.p.x=196*16;this.p.y=176;this.p.vx=0;this.p.vy=0;step.call(this);};});
+ await expect(lab.locator('#status')).toContainText(`${label}クリア！ 次のステージへ進みます`);
+ await expect.poll(()=>frame.evaluate(()=>(window as any).castleWorld.rescued)).toBe(true);await lab.locator('#presentation').screenshot({path:info.outputPath(`world${stage}-toad.png`)});
+ await expect(lab.locator('#stage')).toHaveValue(String(stage+1),{timeout:7000});await expect(lab.locator('#record-status')).toContainText('録画中');await lab.locator('#stop').click();await expect(lab.locator('#record-result')).toBeVisible();
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({course_id:stage,phase:'won',fireworks:0,finalized:true});
+ await lab.locator('#stage').selectOption(String(stage));await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText(`${label}をリセット`);
+});
+
+test('underground beetle and pipe plant render, retract near player and reset',async({page},info)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('2');await lab.locator('#watch-manual').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).plantWorld=this;this.p.x=340;this.p.y=192;this.camera=244;this.invincible=120;const plant=this.enemies.find(e=>e.kind==='piranha');plant.age=70;step.call(this);};});
+ await page.waitForTimeout(150);await lab.locator('#presentation').screenshot({path:info.outputPath('world12-plant-beetle.png')});
+ await frame.evaluate(()=>{const w=(window as any).plantWorld,e=w.enemies.find(e=>e.kind==='piranha');e.age=0;w.p.x=e.x;w.p.y=e.pipeY-w.p.h;w.p.vx=0;w.p.vy=0;w.input={};});await page.waitForTimeout(350);
+ expect(await frame.evaluate(()=>{const w=(window as any).plantWorld,e=w.enemies.find(e=>e.kind==='piranha');return {hidden:e.hidden,age:e.age,phase:w.phase};})).toEqual({hidden:true,age:0,phase:'playing'});
+ await lab.locator('#presentation').screenshot({path:info.outputPath('world12-plant-hidden.png')});await lab.locator('#stop').click();await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('1-2をリセット');expect(errors).toEqual([]);
+});
+
+
+test('clear and death presentation keep Mario visible despite a frozen damage blink',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const checks=await frame.evaluate(async()=>{const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const canvas=document.createElement('canvas');canvas.width=256;canvas.height=240;const ctx=canvas.getContext('2d')!;return ['won','dead'].map(phase=>{const g=new World11(12);g.phase=phase;g.frames=3;g.presentation=100;g.p.x=201*16;g.p.y=192;g.camera=193*16;g.invincible=0;drawWorld(ctx,g);const expected=ctx.getImageData(128,192,16,16).data.slice();g.invincible=90;drawWorld(ctx,g);const actual=ctx.getImageData(128,192,16,16).data;return actual.every((v,i)=>v===expected[i]);});});
+ expect(checks).toEqual([true,true]);
+});
+
+
+test('4-1 Lakitu, same-course life retry and terminal fireworks recording',async({page},info)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('13');await expect(lab.locator('#restart-local')).toHaveText('4-1を最初から');await lab.locator('#watch-manual').click();await expect(lab.locator('#audio-status')).toContainText('音声ON');await lab.locator('#watch-record').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).world41=this;this.p.x=384;this.camera=288;this.invincible=300;step.call(this);};});
+ await expect.poll(()=>frame.evaluate(()=>(window as any).world41?.enemies.some(e=>e.kind==='spiny-egg'))).toBe(true);await lab.locator('#presentation').screenshot({path:info.outputPath('world41-lakitu.png')});
+ await frame.evaluate(()=>(window as any).world41.die());await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('4-1 手動プレイ中',{timeout:7000});await expect(lab.locator('#progress')).toContainText('x=32');await expect(lab.locator('#stage')).toHaveValue('13');await expect(lab.locator('#record-status')).toContainText('録画中');
+ await frame.evaluate(()=>{const g=(window as any).world41;g.frames=(400-336)*24-1;g.p.x=198*16;g.p.y=160;g.p.vx=0;g.p.vy=0;});await expect(lab.locator('#status')).toContainText('4-1クリア！ 次のステージへ進みます');
+ await expect.poll(()=>frame.evaluate(()=>(window as any).world41.fireworks.length)).toBeGreaterThan(0);await lab.locator('#presentation').screenshot({path:info.outputPath('world41-fireworks.png')});await expect(lab.locator('#stage')).toHaveValue('14',{timeout:10000});await expect(lab.locator('#record-status')).toContainText('録画中');await lab.locator('#stop').click();await expect(lab.locator('#record-result')).toBeVisible();
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:4,stage:1,course_id:13,phase:'won',lives:2,fireworks:6,finalized:true});expect(errors).toEqual([]);
+});
+
+test('castle lava fireball rising and falling visual fixtures are deterministic',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const board=document.createElement('div');board.id='lava-scenes';board.style.cssText='display:grid;grid-template-columns:256px 256px;gap:8px;background:#101020;width:max-content';document.body.replaceChildren(board);return [4,8,12].flatMap(stage=>[20,50].map(age=>{const g=new World11(stage),f=g.lavaBubbles[0];g.p.x=f.x-80;g.camera=f.x-100;f.timer=1;for(let i=0;i<age;i++)g.lavaBubbleStep();const before=JSON.stringify(g.snapshot());const canvas=document.createElement('canvas');canvas.width=256;canvas.height=240;board.append(canvas);drawWorld(canvas.getContext('2d'),g);return {active:f.active,visible:f.y<220,falling:f.vy>0,unchanged:before===JSON.stringify(g.snapshot())};}));});
+ expect(result.map(r=>r.falling)).toEqual([false,true,false,true,false,true]);expect(result.every(r=>r.active&&r.visible&&r.unchanged)).toBe(true);await frame.locator('#lava-scenes').screenshot({path:info.outputPath('castle-lava-fireballs.png')});
+});
+
+
+test('4-2 vertical lift carries Mario and keyboard jump leaves it; stop and reset restore the course',async({page},info)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('14');await expect(lab.locator('#restart-local')).toHaveText('4-2を最初から');await lab.locator('#watch-manual').click();await expect(lab.locator('#audio-status')).toContainText('音声ON');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).world42=this;const l=this.lifts[0];this.p.x=l.x+8;this.p.y=l.y-this.p.h;this.p.vy=0;this.p.grounded=true;this.p.liftId=l.id;this.camera=this.p.x-96;step.call(this);};});
+ await expect.poll(()=>frame.evaluate(()=>(window as any).world42?.p.liftId)).toBe(0);const y=await frame.evaluate(()=>(window as any).world42.p.y);await expect.poll(()=>frame.evaluate(()=>(window as any).world42.p.y)).toBeLessThan(y-4);await lab.locator('#presentation').screenshot({path:info.outputPath('world42-lift.png')});
+ await lab.locator('#screen').focus();await page.keyboard.down('Space');await expect(lab.locator('#posture')).toContainText('上昇');expect(await frame.evaluate(()=>(window as any).world42.p.liftId)).toBeUndefined();await page.keyboard.up('Space');await lab.locator('#stop').click();await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('4-2をリセット');expect(await frame.evaluate(()=>(window as any).world42.lifts[0].y)).toBe(176);expect(errors).toEqual([]);
+});
+
+test('4-2 remaining life HUD, same-course restart and final underground recording',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;await lab.locator('#stage').selectOption('14');await lab.locator('#watch-manual').click();await lab.locator('#watch-record').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).world42=this;this.die();};});
+ await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('4-2 手動プレイ中',{timeout:7000});await expect(lab.locator('#progress')).toContainText('x=32');await expect(lab.locator('#progress')).toContainText('残り2機');await expect(lab.locator('#record-status')).toContainText('録画中');await lab.locator('#presentation').screenshot({path:info.outputPath('world42-lives-retry.png')});
+ await frame.evaluate(()=>{const g=(window as any).world42;g.p.x=196*16;g.p.y=180;g.p.vx=0;g.p.vy=0;});await expect(lab.locator('#status')).toContainText('4-2クリア！ 次のステージへ進みます');await expect(lab.locator('#stage')).toHaveValue('15',{timeout:7000});await expect(lab.locator('#record-status')).toContainText('録画中');await lab.locator('#stop').click();await expect(lab.locator('#record-result')).toBeVisible();await lab.locator('#presentation').screenshot({path:info.outputPath('world42-clear.png')});
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();expect(JSON.parse(raw).stage_results.at(-1)).toMatchObject({world:4,stage:2,course_id:14,phase:'won',lives:2,fireworks:0,finalized:true});
+});
+
+test('wing animation and live life-counter render independently of physics',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const g=new World11(14);g.camera=560;g.p.x=592;g.enemies=g.enemies.filter(e=>e.kind==='paratroopa');const canvas=document.createElement('canvas');canvas.width=256;canvas.height=240;canvas.style.cssText='width:min(100%,512px);image-rendering:pixelated';canvas.id='wing-fixture';document.body.replaceChildren(canvas);const ctx=canvas.getContext('2d')!;g.frames=0;drawWorld(ctx,g);const a=ctx.getImageData(77,192,20,16).data.slice(),lives=ctx.getImageData(24,4,72,8).data.slice();g.frames=8;g.lives=2;const before=JSON.stringify(g.snapshot());drawWorld(ctx,g);const b=ctx.getImageData(77,192,20,16).data,counter=ctx.getImageData(24,4,72,8).data;return {wingChanged:b.some((v,i)=>v!==a[i]),counterChanged:counter.some((v,i)=>v!==lives[i]),unchanged:JSON.stringify(g.snapshot())===before};});
+ expect(result).toEqual({wingChanged:true,counterChanged:true,unchanged:true});await frame.locator('#wing-fixture').screenshot({path:info.outputPath('world42-winged-koopa-hud.png')});
+});
+
+
+test('4-3 beanstalk keyboard climb, jump release and reset',async({page},info)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await lab.locator('#stage').selectOption('15');await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).w43=this;this.enemies=[];this.hitBlock(12,9);for(let i=0;i<120;i++)this.vineStep();Object.assign(this.p,{x:192,y:104,vx:0,vy:0,grounded:false});this.input.up=true;step.call(this);};});
+ await expect(lab.locator('#posture')).toContainText('つるを登る');await lab.locator('#screen').focus();await page.keyboard.down('ArrowUp');await expect.poll(()=>frame.evaluate(()=>(window as any).w43.p.y)).toBeLessThan(80);await page.keyboard.up('ArrowUp');await lab.locator('#presentation').screenshot({path:info.outputPath('world43-vine.png')});await page.keyboard.down('Space');await expect(lab.locator('#posture')).toContainText('上昇');await page.keyboard.up('Space');await lab.locator('#restart-local').click();await expect(lab.locator('#progress')).toContainText('4-3をリセット');expect(await frame.evaluate(()=>(window as any).w43.vines.length)).toBe(0);expect(errors).toEqual([]);
+});
+test('shell carry touch control and keyboard throw operate without damaging Mario',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;await lab.locator('#watch-manual').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).shellWorld=this;this.enemies=[{x:50,y:192,w:14,h:16,vx:0,vy:0,kind:'shell',dead:0}];step.call(this);};});
+ const control=lab.locator('[data-key="carry"]');await control.scrollIntoViewIfNeeded();const box=(await control.boundingBox())!;await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await expect.poll(()=>frame.evaluate(()=>(window as any).shellWorld?.enemies[0].carried)).toBe(true);await lab.locator('#presentation').screenshot({path:info.outputPath('shell-held.png')});await page.mouse.up();await expect.poll(()=>frame.evaluate(()=>(window as any).shellWorld.enemies[0].vx)).toBe(4);expect(await frame.evaluate(()=>(window as any).shellWorld.phase)).toBe('playing');await lab.locator('#stop').click();
+});
+test('4-3 fireworks advance to 4-4, retry preserves lives and final castle rescue records terminal outcome',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;await lab.locator('#stage').selectOption('15');await lab.locator('#watch-manual').click();await lab.locator('#watch-record').click();
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).campaign=this;this.frames=(400-331)*24-1;Object.assign(this.p,{x:198*16,y:160,vx:0,vy:0});step.call(this);};});
+ await expect(lab.locator('#status')).toContainText('4-3クリア！ 次のステージへ進みます');await frame.waitForFunction(()=>(window as any).campaign.fireworks.length>0,null,{polling:'raf'});await lab.locator('#presentation').screenshot({path:info.outputPath('world43-fireworks.png')});await expect(lab.locator('#stage')).toHaveValue('16',{timeout:10000});await expect(lab.locator('#record-status')).toContainText('録画中');await frame.evaluate(()=>(window as any).campaign.die());await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('4-4 手動プレイ中',{timeout:7000});
+ await frame.evaluate(()=>{const g=(window as any).campaign;g.p.x=184*16;g.p.y=176;g.camera=180*16;g.invincible=300;});await expect.poll(()=>frame.evaluate(()=>(window as any).campaign.bossFlames.length)).toBeGreaterThan(0);await lab.locator('#presentation').screenshot({path:info.outputPath('world44-boss.png')});await frame.evaluate(()=>{const g=(window as any).campaign;g.p.x=196*16;g.p.y=176;g.p.vx=0;g.p.vy=0;});await expect(lab.locator('#status')).toContainText('4-4クリア！ 次のステージへ進みます');await expect.poll(()=>frame.evaluate(()=>(window as any).campaign.rescued)).toBe(true);await lab.locator('#presentation').screenshot({path:info.outputPath('world44-toad.png')});await expect(lab.locator('#stage')).toHaveValue('17',{timeout:7000});await lab.locator('#stop').click();await expect(lab.locator('#record-result')).toBeVisible({timeout:7000});
+ const download=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await download).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();const results=JSON.parse(raw).stage_results;expect(results.at(-1)).toMatchObject({world:4,stage:4,lives:2,phase:'won',fireworks:0,finalized:true});expect(results.map((r:any)=>r.course_id)).toEqual([15,16,16]);expect(results[0]).toMatchObject({fireworks:1,finalized:true});
+});
+
+test('world 5 course selection, life restart, progression and final rescue',async({page},info)=>{
+ test.setTimeout(60000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ for(const id of [17,18,19,20]){
+  await lab.locator('#stage').selectOption(String(id));await lab.locator('#watch-manual').click();
+  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+  await frame.waitForFunction((id)=>(window as any).fifth?.stage===id,id);if(id===18)expect(await frame.evaluate(()=>Array.from((document.getElementById('screen') as HTMLCanvasElement).getContext('2d')!.getImageData(0,0,1,1).data))).toEqual([8,16,40,255]);await lab.locator('#presentation').screenshot({path:info.outputPath(`world5-${id-16}.png`)});
+  if(id===18){await frame.evaluate(()=>(window as any).fifth.die());await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('5-2 手動プレイ中',{timeout:7000});
+   // Retry constructs a new world: target the live instance, never the dead fixture.
+   await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+   await frame.waitForFunction(()=>(window as any).fifth.phase==='playing');
+  }
+  await frame.evaluate(()=>{const g=(window as any).fifth;Object.assign(g.p,{x:(g.stage===20?196:198)*16,y:g.stage===20?176:160,vx:0,vy:0});g.frames=(400-330)*24-1;g.invincible=1000;});
+  await expect(lab.locator('#status')).toContainText(`5-${id-16}クリア！`);
+  await expect(lab.locator('#stage')).toHaveValue(String(id+1),{timeout:7000});
+ }
+ expect(errors).toEqual([]);
+});
+
+test('world 6 course selection, life restart, progression and final rescue',async({page},info)=>{
+ test.setTimeout(60000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ for(const id of [21,22,23,24]){
+  await lab.locator('#stage').selectOption(String(id));await lab.locator('#watch-manual').click();
+  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+  await frame.waitForFunction((id)=>(window as any).fifth?.stage===id,id);if(id===22)expect(await frame.evaluate(()=>Array.from((document.getElementById('screen') as HTMLCanvasElement).getContext('2d')!.getImageData(0,0,1,1).data))).toEqual([8,16,40,255]);await lab.locator('#presentation').screenshot({path:info.outputPath(`world6-${id-20}.png`)});
+  if(id===22){await frame.evaluate(()=>(window as any).fifth.die());await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('6-2 手動プレイ中',{timeout:7000});
+   // Retry constructs a new world: target the live instance, never the dead fixture.
+   await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+   await frame.waitForFunction(()=>(window as any).fifth.phase==='playing');
+  }
+  await frame.evaluate(()=>{const g=(window as any).fifth;Object.assign(g.p,{x:(g.stage===24?196:198)*16,y:g.stage===24?176:160,vx:0,vy:0});g.frames=(400-330)*24-1;g.invincible=1000;});
+  await expect(lab.locator('#status')).toContainText(`6-${id-20}クリア！`);
+  await expect(lab.locator('#stage')).toHaveValue(String(id+1),{timeout:7000});
+ }
+ expect(errors).toEqual([]);
+});
+
+test('world 7 course selection, life restart, progression and final rescue',async({page},info)=>{
+ test.setTimeout(60000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ for(const id of [25,26,27,28]){
+  await lab.locator('#stage').selectOption(String(id));await lab.locator('#watch-manual').click();
+  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+  await frame.waitForFunction((id)=>(window as any).fifth?.stage===id,id);if(id===26)expect(await frame.evaluate(()=>Array.from((document.getElementById('screen') as HTMLCanvasElement).getContext('2d')!.getImageData(0,0,1,1).data))).toEqual([32,72,160,255]);await lab.locator('#presentation').screenshot({path:info.outputPath(`world7-${id-24}.png`)});
+  if(id===26){await frame.evaluate(()=>(window as any).fifth.die());await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('7-2 手動プレイ中',{timeout:7000});
+   // Retry constructs a new world: target the live instance, never the dead fixture.
+   await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+   await frame.waitForFunction(()=>(window as any).fifth.phase==='playing');
+  }
+  await frame.evaluate(()=>{const g=(window as any).fifth;Object.assign(g.p,{x:([26,28].includes(g.stage)?196:198)*16,y:[26,28].includes(g.stage)?176:160,vx:0,vy:0});g.frames=(400-330)*24-1;g.invincible=1000;});
+  await expect(lab.locator('#status')).toContainText(`7-${id-24}クリア！`);
+  await expect(lab.locator('#stage')).toHaveValue(String(id+1),{timeout:7000});
+ }
+ expect(errors).toEqual([]);
+});
+
+test('world 8 course selection, life restart, progression and final rescue',async({page},info)=>{
+ test.setTimeout(60000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ for(const id of [29,30,31,32]){
+  await lab.locator('#stage').selectOption(String(id));await lab.locator('#watch-manual').click();
+  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+  await frame.waitForFunction((id)=>(window as any).fifth?.stage===id,id);await lab.locator('#presentation').screenshot({path:info.outputPath(`world8-${id-28}.png`)});
+  if(id===30){await frame.evaluate(()=>(window as any).fifth.die());await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('8-2 手動プレイ中',{timeout:7000});
+   // Retry constructs a new world: target the live instance, never the dead fixture.
+   await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).fifth=this;step.call(this);};});
+   await frame.waitForFunction(()=>(window as any).fifth.phase==='playing');
+  }
+  await frame.evaluate(()=>{const g=(window as any).fifth;Object.assign(g.p,{x:(g.stage===32?196:198)*16,y:g.stage===32?176:160,vx:0,vy:0});g.frames=(400-330)*24-1;g.invincible=1000;});
+  await expect(lab.locator('#status')).toContainText(`8-${id-28}クリア！`);
+  if(id<32)await expect(lab.locator('#stage')).toHaveValue(String(id+1),{timeout:7000});
+  else{await expect(lab.locator('#status')).toContainText('全ステージ終了');await frame.waitForFunction(()=>(window as any).fifth.peachRescued);await expect.poll(()=>frame.evaluate(()=>{const p=(document.getElementById('screen') as HTMLCanvasElement).getContext('2d')!.getImageData(0,0,256,240).data;let n=0;for(let i=0;i<p.length;i+=4)if(p[i]===248&&p[i+1]===120&&p[i+2]===184)n++;return n;})).toBeGreaterThan(20);await lab.locator('#presentation').screenshot({path:info.outputPath('world84-rescue.png')});await expect(lab.locator('#history-rows')).toContainText('クリア',{timeout:7000});}
+ }
+ expect(errors).toEqual([]);
+});
+
+test('run history survives reload, sharing errors recover and ranking renders safe text',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');let lab=page.frameLocator('iframe');await lab.locator('#stage').selectOption('17');await lab.locator('#watch-manual').click();await page.waitForTimeout(150);await lab.locator('#stop').click();await expect(lab.locator('#history-rows')).toContainText('途中停止');
+ await page.reload();lab=page.frameLocator('iframe');await expect(lab.locator('#history-rows')).toContainText('5-1');
+ await page.evaluate(()=>{let failed=false;window.addEventListener('message',e=>{if(e.data?.type!=='jev-mario-ranking')return;const data=e.data;if(data.action==='submit'&&!failed){failed=true;(e.source as Window).postMessage({type:'jev-mario-ranking-response',id:data.id,error:'共有履歴・ランキングはログイン後に利用できます。'},location.origin);return;}(e.source as Window).postMessage({type:'jev-mario-ranking-response',id:data.id,result:data.action==='list'?[{player:'Player-test',score:1200,reached:18,cleared:17,elapsed_ms:15000,outcome:'won'}]:{saved:true}},location.origin);});});
+ await lab.locator('#history-rows button').first().click();await expect(lab.locator('#history-status')).toContainText('ログイン');await lab.locator('#history-rows button').first().click();await expect(lab.locator('#history-status')).toContainText('共有しました');
+ await lab.locator('#rank-course').selectOption('17');await lab.locator('#ranking-load').click();await expect(lab.locator('#ranking-rows')).toContainText('Player-test');await expect(lab.locator('#ranking-rows')).toContainText('15.0秒');await lab.locator('#ranking-rows').locator('..').screenshot({path:info.outputPath('history-ranking.png')});await lab.locator('#rank-course').locator('..').screenshot({path:info.outputPath('history-ranking-filters.png')});
+});
+
+test('eight-part audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const all:number[]=[],metrics:any[]=[];
+  for(const room of ['overworld','underground','underwater','castle']){
+   const c=new OfflineAudioContext(1,48000*2,48000);let now=0;const proxy=new Proxy(c,{get(target,key){if(key==='state')return 'running';if(key==='currentTime')return now;if(key==='resume')return async()=>{};const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v;}});
+   const a=new GameAudio(()=>proxy);await a.enable(true);a.setVolume(1);for(now=0;now<1.35;now+=.1)a.tick(room);a.effect('coin');const b=await c.startRendering(),samples=b.getChannelData(0);let peak=0,sum=0;for(const x of samples){peak=Math.max(peak,Math.abs(x));sum+=x*x;all.push(x);}metrics.push({room,peak,rms:Math.sqrt(sum/samples.length)});
+  }
+  const bytes=new Uint8Array(44+all.length*2),v=new DataView(bytes.buffer);const text=(at,s)=>{for(let i=0;i<s.length;i++)v.setUint8(at+i,s.charCodeAt(i));};text(0,'RIFF');v.setUint32(4,bytes.length-8,true);text(8,'WAVE');text(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,48000,true);v.setUint32(28,96000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);text(36,'data');v.setUint32(40,all.length*2,true);all.forEach((x,i)=>v.setInt16(44+i*2,Math.round(Math.max(-1,Math.min(1,x))*32767),true));let base64='';for(let i=0;i<bytes.length;i+=16384)base64+=String.fromCharCode(...bytes.subarray(i,i+16384));return {metrics,wav:btoa(base64)};
+ });
+ for(const m of result.metrics){expect(m.peak).toBeLessThan(1);expect(m.rms).toBeGreaterThan(.001);}
+ await (await import('node:fs/promises')).writeFile(info.outputPath('world8-audio-preview.wav'),Buffer.from(result.wav,'base64'));
+ await (await import('node:fs/promises')).writeFile(info.outputPath('world8-audio-metrics.json'),JSON.stringify(result.metrics));
+ await info.attach('world8-audio-preview.wav',{body:Buffer.from(result.wav,'base64'),contentType:'audio/wav'});
+ await info.attach('world8-audio-metrics.json',{body:Buffer.from(JSON.stringify(result.metrics)),contentType:'application/json'});
+});
+
+test('automatic campaign share spans retry and advancement without per-stage rows',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await page.evaluate(()=>{(window as any).campaignShares=[];window.addEventListener('message',e=>{if(e.data?.type!=='jev-mario-ranking'||e.data.action!=='submit')return;(window as any).campaignShares.push(e.data.run);(e.source as Window).postMessage({type:'jev-mario-ranking-response',id:e.data.id,result:{saved:true}},location.origin);});});
+ await lab.locator('#watch-manual').click();await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).wholeRun=this;this.score=500;this.die();};});
+ await expect(lab.locator('#status')).toContainText('残り2機');await expect(lab.locator('#status')).toContainText('1-1 手動プレイ中',{timeout:7000});await expect(lab.locator('#history-rows tr')).toHaveCount(0);
+ await frame.evaluate(()=>{const w=(window as any).wholeRun;w.p.x=198*16;w.p.y=160;w.invincible=1000;w.frames=(400-330)*24-1;});await expect(lab.locator('#stage')).toHaveValue('2',{timeout:7000});await expect(lab.locator('#history-rows tr')).toHaveCount(0);await lab.locator('#stop').click();await expect(lab.locator('#history-rows tr')).toHaveCount(1);await expect(lab.locator('#history-status')).toContainText('自動共有しました');
+ const rows=await page.evaluate(()=>(window as any).campaignShares);expect(rows).toHaveLength(1);expect(rows[0]).toMatchObject({course:1,reached:2,cleared:1,controller:'manual',outcome:'stopped',eligible:true});expect(rows[0].elapsed_ms).toBeGreaterThan(4000);expect(rows[0].score).toBeGreaterThan(500);
+});
+
+test('shared ranking loads automatically, refreshes conditions and ignores obsolete responses',async({page},info)=>{
+ await page.addInitScript(()=>{window.addEventListener('message',e=>{if(e.data?.type!=='jev-mario-ranking')return;const d=e.data;setTimeout(()=>(e.source as Window).postMessage({type:'jev-mario-ranking-response',id:d.id,result:d.action==='list'?[{player:'Player-'+d.course,score:1500,reached:d.course,cleared:d.course-1,elapsed_ms:14000}]:{saved:true}},location.origin),d.course===25?700:15);});});
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');await expect(lab.locator('#ranking-rows')).toContainText('Player-1');await expect(lab.locator('a[href="#shared-ranking"]')).toBeVisible();
+ await lab.locator('#rank-course').selectOption('25');await page.waitForTimeout(250);await lab.locator('#rank-course').selectOption('26');await expect(lab.locator('#ranking-rows')).toContainText('Player-26');await page.waitForTimeout(800);await expect(lab.locator('#ranking-rows')).not.toContainText('Player-25');await lab.locator('#shared-ranking').screenshot({path:info.outputPath('shared-ranking-auto.png')});
+});
+
+
+test('delayed LightGBM worker keeps live collision assistance and exports its contribution',async({page},info)=>{
+ test.setTimeout(45000);
+ await page.addInitScript(()=>{const Original=window.Worker;window.Worker=class extends Original{set onmessage(fn){super.onmessage=e=>{if(e.data?.type==='decision')setTimeout(()=>fn?.call(this,e),350);else fn?.call(this,e);};}};});
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');await lab.locator('#play-student').click();
+ await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});await expect(lab.locator('#student-status')).toContainText('衝突回避',{timeout:15000});await page.waitForTimeout(8000);await lab.locator('#stop').click();
+ const d=page.waitForEvent('download');await lab.locator('#export').click();const stream=await(await d).createReadStream();let raw='';for await(const chunk of stream!)raw+=chunk.toString();const data=JSON.parse(raw);expect(data.student.decisions).toBeGreaterThan(1);expect(data.student.control).toContain('live collision guard');expect(data.student.samples.some((s:any)=>s.worker_round_trip_ms>=300)).toBe(true);
+ await (await import('node:fs/promises')).writeFile(info.outputPath('delayed-worker.json'),raw);await lab.locator('#presentation').screenshot({path:info.outputPath('delayed-worker.png')});
+});
+
+
+test('local retry experience survives reload and can be cleared; Luigi is selectable',async({page},info)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/test/e2e/jev_mario_harness.html');let frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await frame.evaluate(async()=>{const {RetryMemory}=await import('/web/labs/jev-mario/retry-memory.mjs?v=student-1');const m=new RetryMemory();m.record({phase:'dead',stage:1,room:'overworld',p:{x:300,y:192}});});
+ await page.reload();const lab=page.frameLocator('iframe');await expect(lab.locator('#retry-status')).toContainText('1か所');
+ await lab.locator('#character').selectOption('luigi');await lab.locator('#watch-manual').click();await lab.locator('#stop').click();await lab.locator('#presentation').screenshot({path:info.outputPath('luigi-retry.png')});
+ await lab.locator('#clear-retry').click();await expect(lab.locator('#retry-status')).toContainText('0か所');await page.reload();await expect(lab.locator('#retry-status')).toContainText('0か所');expect(errors).toEqual([]);
+});
+
+
+test('LightGBM worker completes 2-2 and advances to 2-3 without going offscreen',async({page},info)=>{
+ test.setTimeout(120000);
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await lab.locator('#stage').selectOption('6');await lab.locator('#watch-student').click();
+ await expect(lab.locator('#status')).toContainText('2-2クリア！',{timeout:100000});
+ await lab.locator('#presentation').screenshot({path:info.outputPath('water-autoplay-clear.png')});
+ await expect(lab.locator('#stage')).toHaveValue('7',{timeout:15000});await lab.locator('#stop').click();
+ const download=page.waitForEvent('download');await lab.locator('#export').click();await(await download).saveAs(info.outputPath('water-autoplay.json'));
 });

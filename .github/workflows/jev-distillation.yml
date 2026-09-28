@@ -39,7 +39,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:

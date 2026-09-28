@@ -308,6 +308,7 @@ const List<String> kAllAppRoutes = <String>[
   '/sitemap-analytics',
   '/slack-notifications',
   '/smart-inbox',
+  '/platform-release-checklist',
   '/sobriety-campaign',
   '/social-feed',
   '/social-media-scheduler',

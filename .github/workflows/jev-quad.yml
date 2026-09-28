@@ -87,7 +87,7 @@ jobs:
       - name: Install checked branch game after fixed student training
         if: inputs.stage != '1'
         run: |
-          for module in world11 reaction pixel-art audio; do
+          for module in world11 reaction pixel-art audio item-goal; do
             cp web/labs/jev-mario/$module.mjs out/lightgbm/frozen/$module.mjs
           done
       - name: Assisted and unassisted wall-clock trials
@@ -138,10 +138,10 @@ jobs:
           sources={r['source'] for r in runs}
           assert len(runs)==4 and len(sources)==1
           source=sources.pop();assert re.fullmatch('[0-9a-f]{40}',source)
-          for module in ['world11','reaction','audio','pixel-art']:
+          for module in ['world11','reaction','audio','pixel-art','item-goal']:
               try:data=subprocess.check_output(['git','show',source+':web/labs/jev-mario/'+module+'.mjs'],stderr=subprocess.DEVNULL)
               except subprocess.CalledProcessError:
-                  assert module=='pixel-art';continue
+                  assert module in ('pixel-art','item-goal');continue
               pathlib.Path('out/lightgbm/frozen/'+module+'.mjs').write_bytes(data)
           PY
           python -m pip install playwright==1.55.0
