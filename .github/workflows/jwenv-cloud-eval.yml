@@ -1,0 +1,82 @@
+name: Jwenv cloud evaluation
+# Runs the pre-registered method A/B evaluation (docs/JWENV_DECISION_METHOD.md) on all 34 memos in
+# software WebGPU, one memo per job, when the PR gets the `jwenv-cloud-eval` label. Used instead of a
+# local run when the development PC lacks memory; the timings are CPU emulation, not GPU speed.
+on:
+  pull_request:
+    types: [labeled]
+permissions: {}
+concurrency:
+  group: jwenv-cloud-eval-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.event.label.name == 'jwenv-cloud-eval'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: {contents: read}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: {persist-credentials: false}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: /tmp/jwenv.gguf
+          key: jwenv-0.6b-poc-q8_0-293ef32a06953c06d1ba9a9bbd23cf734ece3fb94ad1a360faa9ca3c86294a95
+      - name: Download (if not cached) and verify size and sha256
+        run: python scripts/jwenv_lab/run_lab.py download --dest /tmp/jwenv.gguf
+
+  shard:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions: {contents: read}
+    strategy:
+      fail-fast: false
+      # Leaves runner capacity for other workflows in the account.
+      max-parallel: 8
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: {persist-credentials: false}
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: /tmp/jwenv.gguf
+          key: jwenv-0.6b-poc-q8_0-293ef32a06953c06d1ba9a9bbd23cf734ece3fb94ad1a360faa9ca3c86294a95
+          fail-on-cache-miss: true
+      - name: Verify the cached model
+        run: python scripts/jwenv_lab/run_lab.py download --dest /tmp/jwenv.gguf
+      - name: Methods A and B on one memo
+        run: |
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+          python scripts/jwenv_lab/run_lab.py measure --model /tmp/jwenv.gguf --suite shard --shard ${{ matrix.shard }} --of 34 --out out/shards
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: jwenv-shard-${{ matrix.shard }}
+          path: out/shards/
+          retention-days: 30
+
+  merge:
+    needs: [prepare, shard]
+    if: always() && needs.prepare.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {contents: read}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: {persist-credentials: false}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: jwenv-shard-*
+          path: out/shards
+          merge-multiple: true
+      - name: Merge shards and compute the pre-registered metrics
+        run: node scripts/jwenv_lab/merge_shards.mjs out/shards out/cloud/results-cloud.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: jwenv-cloud-eval-${{ github.run_id }}
+          path: out/
+          retention-days: 30

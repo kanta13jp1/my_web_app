@@ -22,7 +22,8 @@ jobs:
         with: {persist-credentials: false}
       - run: |
           (cd scripts/jwenv_lab && python -B -m unittest discover -p 'test_*.py' -v)
-          node --test scripts/jwenv_lab/core.test.mjs
+          node --test scripts/jwenv_lab/core.test.mjs scripts/jwenv_lab/merge.test.mjs
+          node --check scripts/jwenv_lab/merge_shards.mjs
           for f in web/labs/jwenv/*.mjs; do node --check "$f"; done
           python -m pip install playwright==1.55.0
           python -m playwright install --with-deps chromium

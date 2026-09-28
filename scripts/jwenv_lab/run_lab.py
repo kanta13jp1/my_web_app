@@ -5,6 +5,8 @@
     python scripts/jwenv_lab/run_lab.py measure --model /tmp/jwenv.gguf --suite smoke
     # Local real GPU: installed Chrome, all 34 memos (needs >= 4 GiB free memory, AGENTS.md)
     python scripts/jwenv_lab/run_lab.py measure --model jwenv.gguf --suite full --browser chrome
+    # Cloud: one slice of the 34 memos per job (merged by merge_shards.mjs)
+    python scripts/jwenv_lab/run_lab.py measure --model /tmp/jwenv.gguf --suite shard --shard 3 --of 34
 
 `measure` drives web/labs/jwenv/ through the same functions as its buttons and writes the
 record, screenshots and the browser console. It never retries a failed inference.
@@ -24,7 +26,7 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from common import ROOT, core_constant, free_memory_gib, inputs_sha256, manifest, sha256_file  # noqa: E402
+from common import HOLDOUT, REFERENCE, ROOT, core_constant, free_memory_gib, inputs_sha256, manifest, sha256_file  # noqa: E402
 
 MODEL = core_constant('MODEL')
 ENGINE = core_constant('ENGINE')
@@ -38,6 +40,15 @@ SWIFTSHADER_FLAG_SETS = [
      '--enable-unsafe-swiftshader'],
     ['--enable-unsafe-webgpu', '--enable-unsafe-swiftshader'],
 ]
+
+
+def sample_ids():
+    """The 34 memos in page order: the 14 original memos, then the 20 holdout memos."""
+    original = [s['id'] for s in json.loads(REFERENCE.read_text(encoding='utf-8'))['samples']]
+    holdout = [s['id'] for s in json.loads(HOLDOUT.read_text(encoding='utf-8'))['samples']]
+    ids = original + holdout
+    assert len(ids) == 34 and len(set(ids)) == 34, 'expected 34 unique memo ids'
+    return ids
 
 
 def download(dest):
@@ -114,7 +125,7 @@ def open_page(p, browser_name, url, console, requests):
     raise SystemExit('no WebGPU adapter')
 
 
-def measure(model_path, out, suite, browser_name, allow_low_memory):
+def measure(model_path, out, suite, browser_name, allow_low_memory, shard=None, of=None):
     from playwright.sync_api import sync_playwright
 
     if browser_name != 'chromium':
@@ -149,6 +160,27 @@ def measure(model_path, out, suite, browser_name, allow_low_memory):
             print(f'{name}: {time.time() - t:.1f}s', flush=True)
             return value
 
+        if suite == 'shard':
+            chosen = sample_ids()[shard::of]
+            methods = step(f'methods A/B shard {shard}/{of} {chosen}',
+                           f"window.jwenvLab.runMethods({{ sampleIds: {json.dumps(chosen)} }})")
+            version = browser.version
+            browser.close()
+            server.shutdown()
+            record = {'schema_version': 2, 'suite': 'shard', 'shard': shard, 'of': of, 'sample_ids': chosen,
+                      'synthetic': True, 'recorded_at': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                      'run_id': os.environ.get('GITHUB_RUN_ID'), 'app_revision': os.environ.get('GITHUB_SHA') or git_head(),
+                      'inputs_sha256': inputs_sha256(), 'engine': {**ENGINE, 'vendored_files': len(manifest()['files'])},
+                      'model': {**MODEL, 'verified_sha256': True},
+                      'environment': {'browser': f'{browser_name} {version}', 'flags': flags, 'adapter': snapshot['adapter'],
+                                      'adapter_info': adapter, 'runner': runner_info(), 'headless': browser_name == 'chromium'},
+                      'network': network_summary(requests, server.server_port), 'load_ms': snapshot['load_ms'],
+                      'rows': methods['rows']}
+            (out / f'results-shard-{shard:02d}.json').write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+            (out / f'console-shard-{shard:02d}.log').write_text('\n'.join(console), encoding='utf-8')
+            print(json.dumps({'shard': shard, 'rows': [{k: r[k] for k in ('id', 'stage1_ms', 'stage2_ms')} | {'a': r['a']['choice'], 'b': r['b']['choice']}
+                                                       for r in methods['rows']]}, ensure_ascii=False))
+            return
         example = step('article example', 'window.jwenvLab.runExample()')
         limit = step('limit check', 'window.jwenvLab.runLimit()')
         slices = [step('slice check (article)', 'window.jwenvLab.verifySlice()')]
@@ -221,14 +253,18 @@ def main():
     m = sub.add_parser('measure')
     m.add_argument('--model', required=True)
     m.add_argument('--out', default=str(ROOT / 'out/jwenv-lab'))
-    m.add_argument('--suite', choices=['smoke', 'full'], default='smoke')
+    m.add_argument('--suite', choices=['smoke', 'full', 'shard'], default='smoke')
+    m.add_argument('--shard', type=int, help='with --suite shard: this job\'s index, 0-based')
+    m.add_argument('--of', type=int, help='with --suite shard: number of jobs')
     m.add_argument('--browser', choices=['chromium', 'chrome', 'msedge'], default='chromium')
     m.add_argument('--allow-low-memory', action='store_true')
     a = ap.parse_args()
     if a.cmd == 'download':
         download(a.dest)
     else:
-        measure(a.model, a.out, a.suite, a.browser, a.allow_low_memory)
+        if a.suite == 'shard' and (a.shard is None or not a.of or not 0 <= a.shard < a.of):
+            ap.error('--suite shard needs --shard K --of N with 0 <= K < N')
+        measure(a.model, a.out, a.suite, a.browser, a.allow_low_memory, a.shard, a.of)
 
 
 if __name__ == '__main__':

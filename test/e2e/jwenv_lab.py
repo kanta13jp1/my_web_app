@@ -103,6 +103,8 @@ try:
 
             page.route('**/labs/jwenv/results.json', saved_route)
             page.route('**/labs/jwenv/results-gpu.json', gpu_route)
+            # The cloud record shares the renderer checked above through the GPU fixture; here only its empty state.
+            page.route('**/labs/jwenv/results-cloud.json', lambda route: route.fulfill(status=404, body=''))
             page.route('**/labs/expense-comparison/results.json', reference_route)
 
             # Normal load: saved record renders, model-dependent actions stay disabled.
@@ -117,6 +119,7 @@ try:
             assert 'GitHub Actions 実行' in page.locator('#saved-status').inner_text()
             assert page.locator('#gpu-saved-methods-original tbody tr').count() == 14
             assert '実機GPU' in page.locator('#gpu-saved-status').inner_text()
+            assert 'クラウド評価の保存済み実測はまだありません' in page.locator('#cloud-saved-status').inner_text()
 
             # The 8-option limit is enforced by the vendored validator even without a model.
             page.locator('#run-limit').click()

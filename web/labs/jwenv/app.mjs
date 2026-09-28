@@ -139,10 +139,13 @@ function runLimit() {
 }
 
 /** Methods A and B (docs/JWENV_DECISION_METHOD.md) on the selected memo sets; B reuses A's stage-1 request. */
-async function runMethods({ sets = ['original', 'holdout'], limit = Infinity, onProgress = () => {} } = {}) {
+async function runMethods({ sets = ['original', 'holdout'], limit = Infinity, sampleIds = null, onProgress = () => {} } = {}) {
   const cats = state.ref.categories;
   const ids = Object.keys(cats);
-  const samples = state.ref.samples.filter((s) => sets.includes(s.set)).slice(0, limit);
+  const samples = state.ref.samples
+    .filter((s) => sets.includes(s.set) && (!sampleIds || sampleIds.includes(s.id)))
+    .slice(0, limit);
+  if (sampleIds && samples.length !== sampleIds.length) throw Error(`unknown sample id in ${sampleIds.join(',')}`);
   const rows = [];
   for (const s of samples) {
     const t0 = performance.now();
@@ -357,8 +360,8 @@ function renderSaved(d) {
     el('p', {}, run, ' · ', el('a', { href: 'results.json', download: '' }, '記録を保存')));
 }
 
-// ------------------------------------------------------------ saved real-GPU measurement (methods A and B)
-function validateSavedGpu(d) {
+// ------------------------------------------------------------ saved method A/B records (real GPU, cloud shards)
+function validateSavedMethods(d) {
   if (d?.schema_version !== 2 || d.mode !== 'saved_browser_webgpu_measurement' || d.synthetic !== true ||
       d.model?.sha256 !== MODEL.sha256 || d.engine?.revision !== ENGINE.revision || typeof d.environment?.adapter !== 'string' ||
       !Array.isArray(d.methods?.rows) || !d.methods.rows.length || !d.methods.summary) {
@@ -367,16 +370,38 @@ function validateSavedGpu(d) {
   return d;
 }
 
-function renderSavedGpu(d) {
-  byId('gpu-saved-status').textContent = `${d.recorded_at} にローカルPCの実機GPUで記録した実測です。`;
-  byId('gpu-saved').replaceChildren(
-    el('ul', { class: 'facts' },
-      el('li', {}, `WebGPUアダプタ：${d.environment.adapter}`),
-      el('li', {}, `ブラウザ：${d.environment.browser}`),
-      el('li', {}, `モデル読込：${fmtMs(d.load_ms)}（${MODEL.file}、sha256確認済み）`),
-      el('li', {}, `記事の入力例：${d.article_example.response.answers.category.choice}（${fmtMs(d.article_example.ms)}）`)),
-    methodsBlock(d.methods, 'gpu-saved'),
-    el('p', {}, el('a', { href: 'results-gpu.json', download: '' }, '記録を保存')));
+const SAVED_METHODS = {
+  gpu: { file: 'results-gpu.json', status: 'gpu-saved-status', box: 'gpu-saved', name: '実機GPU',
+         lead: (d) => `${d.recorded_at} にローカルPCの実機GPUで記録した実測です。` },
+  cloud: { file: 'results-cloud.json', status: 'cloud-saved-status', box: 'cloud-saved', name: 'クラウド評価',
+           lead: (d) => `GitHub Actions 実行 ${d.run_id}（${d.environment.jobs}ジョブに分割、${d.recorded_at}）の記録です。時間はCPU上のソフトウェアWebGPUのもので、GPUの速度ではありません。` },
+};
+
+function renderSavedMethods(kind, d) {
+  const c = SAVED_METHODS[kind];
+  byId(c.status).textContent = c.lead(d);
+  const facts = [
+    el('li', {}, `WebGPUアダプタ：${d.environment.adapter}`),
+    el('li', {}, `ブラウザ：${d.environment.browser}`),
+    el('li', {}, `モデル読込：${fmtMs(d.load_ms)}（${MODEL.file}、sha256確認済み）`),
+  ];
+  const ex = d.article_example?.response?.answers?.category;
+  if (ex) facts.push(el('li', {}, `記事の入力例：${ex.choice}（${fmtMs(d.article_example.ms)}）`));
+  byId(c.box).replaceChildren(
+    el('ul', { class: 'facts' }, ...facts),
+    methodsBlock(d.methods, c.box),
+    el('p', {}, el('a', { href: c.file, download: '' }, '記録を保存')));
+}
+
+async function loadSavedMethods(kind) {
+  const c = SAVED_METHODS[kind];
+  try {
+    const d = await fetchJson(c.file);
+    if (!d) byId(c.status).textContent = `${c.name}の保存済み実測はまだありません。`;
+    else renderSavedMethods(kind, validateSavedMethods(d));
+  } catch {
+    byId(c.status).textContent = `${c.name}の保存済み実測を読み込めません（記録の形式が正しくありません）。`;
+  }
 }
 
 // ------------------------------------------------------------ boot
@@ -436,13 +461,7 @@ async function boot() {
   } catch {
     byId('saved-status').textContent = '保存済みの実測を読み込めません（記録の形式が正しくありません）。';
   }
-  try {
-    const gpu = await fetchJson('results-gpu.json');
-    if (!gpu) byId('gpu-saved-status').textContent = '実機GPUの保存済み実測はまだありません。';
-    else renderSavedGpu(validateSavedGpu(gpu));
-  } catch {
-    byId('gpu-saved-status').textContent = '実機GPUの保存済み実測を読み込めません（記録の形式が正しくありません）。';
-  }
+  await Promise.all([loadSavedMethods('gpu'), loadSavedMethods('cloud')]);
 }
 
 // Automation hook for scripts/jwenv_lab/run_lab.py; it drives the same functions as the buttons.

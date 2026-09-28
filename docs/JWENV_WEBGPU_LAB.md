@@ -83,3 +83,14 @@ now run both methods on the same stage-1 request.
 python scripts/jwenv_lab/run_lab.py download --dest $env:TEMP\jwenv.gguf
 python scripts/jwenv_lab/run_lab.py measure --model $env:TEMP\jwenv.gguf --suite full --browser chrome --out out/jwenv-gpu
 ```
+
+## Cloud evaluation of methods A and B (2026-09-28)
+
+The development PC often has under 2 GiB of free memory, so the full 34-memo evaluation also runs
+in the cloud. Adding the `jwenv-cloud-eval` label to the PR starts `.github/workflows/jwenv-cloud-eval.yml`:
+a `prepare` job caches the pinned GGUF, 34 `shard` jobs (at most 8 at a time) each run methods A and B
+on one memo with `run_lab.py measure --suite shard --shard K --of 34`, and `merge` joins them with
+`scripts/jwenv_lab/merge_shards.mjs`, which recomputes the pre-registered metrics and adoption rule with
+the page's `core.mjs`. The merge fails on a missing shard, a duplicated memo, mismatched inputs, or any
+external request. Its `results-cloud.json` renders in section 06 of the page. Shard timings come from
+different CPU runners in software WebGPU and are not GPU timings.
