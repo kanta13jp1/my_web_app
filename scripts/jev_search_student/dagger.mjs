@@ -5,7 +5,9 @@ import os from 'node:os';
 import {Worker} from 'node:worker_threads';
 import {execFileSync} from 'node:child_process';
 import {FEATURE_COUNT,FEATURE_VERSION} from '../../web/labs/jev-mario/student2-features.mjs';
-const OUT=process.env.OUT??'out/search_student',SCOPE=process.env.SCOPE??'campaign',ROUNDS=Number(process.env.ROUNDS??8);
+const OUT=process.env.OUT??'out/search_student',SCOPE=process.env.SCOPE??'campaign';
+// ROUNDS='teacher:8,12' evaluates only the search teacher at those look-ahead depths (8-frame steps).
+const TEACHER_ONLY=String(process.env.ROUNDS??'').startsWith('teacher'),ROUNDS=TEACHER_ONLY?0:Number(process.env.ROUNDS??8);
 const WORKERS=Math.max(1,Math.min(Number(process.env.WORKERS??os.availableParallelism()),8));
 fs.mkdirSync(OUT,{recursive:true});
 const TRAIN=[0,1,2,3,4,5,6,7,8,9,10,11],HELD_OUT=Array.from({length:20},(_,i)=>101+i),VALIDATION=[201,202,203,204,205,206,207,208];
@@ -26,6 +28,12 @@ function run(tasks,modelPath){
  });
 }
 const summary=rs=>({episodes:rs.length,clears:rs.filter(r=>r.result.clear).length,results:rs.map(r=>r.result)});
+if(TEACHER_ONLY){
+ const depths=String(process.env.ROUNDS).split(':')[1]?.split(',').map(Number)??[8],tasks=[{course:1,lastCourse:2,seed:0},...HELD_OUT.map(seed=>({course:1,lastCourse:2,seed})),{course:2,lastCourse:2,seed:0},...HELD_OUT.slice(0,10).map(seed=>({course:2,lastCourse:2,seed:seed+50}))];
+ const report={scope:'teacher-only',held_out_seeds:HELD_OUT,depths:{}};
+ for(const d of depths){report.depths[d]=summary(await run(tasks.map(t=>({...t,policy:'teacher',teacherDepth:d})),null));console.log(JSON.stringify({depth:d,clears:report.depths[d].clears,of:tasks.length}));}
+ fs.writeFileSync(`${OUT}/teacher-eval.json`,JSON.stringify(report,null,1));process.exit(0);
+}
 const chunks=[],labels=[],rounds=[],modelPath=`${OUT}/model.json`;
 for(let round=0;round<=ROUNDS;round++){
  const beta=round===0?1:round<4?.5**round:0,started=performance.now();

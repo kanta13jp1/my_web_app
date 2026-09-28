@@ -12,10 +12,10 @@ function score(g,start){
  if(g.phase==='won')return 1e6-g.frames;
  return g.p.x-start.p.x+(192-g.p.y)*.12+g.p.vx*2-(g.power<start.power?80:0)-(g.p.y>208?(g.p.y-208)*8:0);
 }
-export function plan(g){
+export function plan(g,depthLimit=8){
  const actions=['right_run','right_run_jump','right','right_jump','jump','noop'];
  let beam=[{g,first:null,value:0}];
- for(let depth=0;depth<8;depth++){
+ for(let depth=0;depth<depthLimit;depth++){
   const expanded=[];
   for(const b of beam)for(const a of actions){const next=advance(clone(b.g),a,8);expanded.push({g:next,first:b.first??a,value:score(next,g)});}
   expanded.sort((a,b)=>b.value-a.value);
