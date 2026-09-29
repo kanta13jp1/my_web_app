@@ -3918,5 +3918,46 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #4901: card statement reconciliation displays revolving badge for revolving cards',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        await tester.binding.setSurfaceSize(const Size(1200, 5000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          const <String, AssetLiabilityRevolvingCreditConfig>{
+            'aupay_card': AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 10000,
+              creditLimit: 500000,
+            ),
+          },
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugRevolvingConfigsMirror: mirrorValue,
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 50000,
+                  'auPayカード': -120000,
+                  '三井住友カード': -50000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // 照合テーブルが存在し、「リボ」バッジが表示される
+        expect(find.text('リボ'), findsWidgets);
+
+        await _unmount(tester);
+      },
+    );
   });
 }
