@@ -2022,6 +2022,30 @@ class AssetManagementInsightPromptBuilder {
         )
         ..writeln('  - 問題点: ${insight.problem}')
         ..writeln('  - 翌月アクション: ${insight.nextMonthAction}');
+
+      final debtRow = report.workbook.debtMasterRows
+          .where((r) => r.id == insight.accountId)
+          .firstOrNull;
+      final revolving = debtRow?.revolvingBilling;
+      if (revolving != null) {
+        if (revolving.hasImportedStatement && revolving.usageItems.isNotEmpty) {
+          buffer.writeln(
+            '  - 新規利用内訳(${revolving.usageItems.length}件 / 合計${_formatAmount(revolving.newUsageAmount)}):',
+          );
+          for (final item in revolving.usageItems) {
+            final dateStr = item.postedAt == null
+                ? ''
+                : '${_formatNullableDate(item.postedAt)} ';
+            buffer.writeln(
+              '    - $dateStr${item.description}: ${_formatAmount(item.amount)} [${item.statusLabel}]',
+            );
+          }
+        } else {
+          buffer.writeln(
+            '  - 新規利用明細: カード明細の取り込みが未実施（手入力設定値: ${_formatAmount(revolving.newUsageAmount)}）',
+          );
+        }
+      }
     }
     return buffer.toString();
   }
@@ -2069,6 +2093,25 @@ class AssetManagementInsightPromptBuilder {
           '残高:${_formatAmount(violation.currentBalance)}',
         )
         ..writeln('  - 対応: 明細・支払実績との照合が必要。違反として断定しない。');
+      if (violation.type == AssetDebtDisciplineViolationType.revolvingCard) {
+        if (violation.hasImportedStatement && violation.usageItems.isNotEmpty) {
+          buffer.writeln(
+            '  - 新規利用明細根拠(${violation.usageItems.length}件 / 合計${_formatAmount(violation.newUsageAmount ?? 0)}):',
+          );
+          for (final item in violation.usageItems) {
+            final dateStr = item.postedAt == null
+                ? ''
+                : '${_formatNullableDate(item.postedAt)} ';
+            buffer.writeln(
+              '    - $dateStr${item.description}: ${_formatAmount(item.amount)} [${item.statusLabel}]',
+            );
+          }
+        } else {
+          buffer.writeln(
+            '  - カード明細取込: 未実施（手入力設定額に基づく判定、明細取込が必要）',
+          );
+        }
+      }
     }
     return buffer.toString();
   }
