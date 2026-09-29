@@ -7,6 +7,8 @@ on:
       - 'lib/services/jev*'
       - 'lib/widgets/expense_classification_review.dart'
       - '.github/workflows/jev-expense-contract.yml'
+      - 'integration_test/jev_expense_review*'
+      - 'test_driver/jev_expense_screenshots.dart'
   workflow_dispatch:
 permissions: {}
 concurrency:
@@ -93,7 +95,7 @@ jobs:
             sleep 1
           done
           set -o pipefail
-          flutter drive --driver=test_driver/asset_ai_integration.dart \
+          flutter drive --driver=test_driver/jev_expense_screenshots.dart \
             --target=integration_test/jev_expense_review_test.dart \
             -d web-server --browser-name=chrome --headless 2>&1 | tee .ci-logs/jev-browser.log
       - name: Preserve browser evidence
@@ -101,6 +103,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: jev-browser-${{ github.run_id }}
-          path: .ci-logs/jev-*.log
+          path: |
+            .ci-logs/jev-*.log
+            .ci-logs/jev-screenshots/*.png
           retention-days: 3
           include-hidden-files: true
