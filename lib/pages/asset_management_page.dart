@@ -26811,7 +26811,45 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           for (final group in reconciliation.groups)
             DataRow(
               cells: [
-                DataCell(Text(group.billingAccountName)),
+                DataCell(
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(group.billingAccountName),
+                      if (group.isRevolving) ...[
+                        const SizedBox(width: 6),
+                        Tooltip(
+                          message: 'リボ払いカード: 請求額は「リボ設定額＋限度超過分」で確定するため、'
+                              '明細内訳との不一致アラートを抑止しています。',
+                          child: Container(
+                            key: Key(
+                              'asset_card_recon_revolving_badge_${group.billingAccountId}',
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: const Color(0xFF3B82F6),
+                              ),
+                            ),
+                            child: const Text(
+                              'リボ',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1D4ED8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
                 DataCell(Text(_formatManagementYen(group.billedAmount))),
                 DataCell(Text(_formatManagementYen(group.statementLineTotal))),
                 DataCell(
