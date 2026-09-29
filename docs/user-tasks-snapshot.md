@@ -12,12 +12,12 @@ NotebookLM に source として追加し、「具体的手順」「詰まりポ�
 
 ## タスク一覧
 
-### 🟡 🔧 [Issue #2492] [追加要望][P2][資産管理][第2弾G] 確定申告export (CSV+e-Tax形式)
+### 🟢 ✅ [Issue #2492] [追加要望][P2][資産管理][第2弾G] 確定申告export (CSV+e-Tax形式)
 
 - **id**: `c188e792-6c81-4973-b667-396a7ddcb046`
 - **category**: GitHub Issue / Feature Request
-- **progress**: 55%
-- **status**: in_progress
+- **progress**: 100%
+- **status**: completed
 - **priority**: medium
 - **deadline**: 2026-10-09
 
