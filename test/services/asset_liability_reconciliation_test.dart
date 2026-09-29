@@ -73,7 +73,8 @@ void main() {
         expect(
           famipayGroup.alerts,
           contains(
-              AssetLiabilityPlanningService.cardStatementMissingImportAlert),
+            AssetLiabilityPlanningService.cardStatementMissingImportAlert,
+          ),
         );
       },
     );
