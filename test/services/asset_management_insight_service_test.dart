@@ -1018,7 +1018,7 @@ void main() {
       expect(zeroItem.severity, AssetManagementInsightSeverity.critical);
       expect(zeroItem.title, contains('じぶんローンが利息スパイラル状態です（元金返済0円）'));
       expect(zeroItem.description, contains('月利息11,949円が発生'));
-      expect(zeroItem.description, contains('残高が増加'));
+      expect(zeroItem.description, contains('増加し続けます'));
       expect(zeroItem.suggestedAction, contains('24ヶ月完済目標額'));
 
       final slowItem = spiralWarnings.firstWhere(
