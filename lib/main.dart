@@ -1,4 +1,5 @@
 import 'package:my_web_app/pages/jev_mario_lab_page.dart';
+import 'package:my_web_app/pages/jwenv_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
@@ -543,6 +544,11 @@ Route<dynamic> generateAppRoute(
     case '/jev-mario-lab':
       return MaterialPageRoute(
         builder: (_) => const JevMarioLabPage(),
+        settings: settings,
+      );
+    case '/jwenv-lab':
+      return MaterialPageRoute(
+        builder: (_) => const JwenvLabPage(),
         settings: settings,
       );
     case '/agi-fireworks':

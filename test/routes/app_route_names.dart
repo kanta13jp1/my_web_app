@@ -19,6 +19,7 @@ const List<String> kAllAppRoutes = <String>[
   '/admin/maintenance',
   '/lumen-path',
   '/jev-mario-lab',
+  '/jwenv-lab',
   '/sound-bloom',
   '/aero-lab',
   '/affiliate-marketing',
