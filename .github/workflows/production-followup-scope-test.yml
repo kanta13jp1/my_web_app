@@ -1,0 +1,29 @@
+name: Production follow-up scope tests
+on:
+  pull_request:
+    paths:
+      - .github/workflows/production-followup-scope*.yml
+      - .github/workflows/deploy-prod.yml
+      - .github/workflows/minimal-e2e-gate.yml
+      - .github/workflows/blog-news-prod-smoke.yml
+      - .github/workflows/release-readiness.yml
+      - .github/workflows/ga-readiness-gate.yml
+      - scripts/production_followup_scope_test.cjs
+permissions: {}
+concurrency:
+  group: production-followup-scope-test-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+      - run: node --test scripts/production_followup_scope_test.cjs

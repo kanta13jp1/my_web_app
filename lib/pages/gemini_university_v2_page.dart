@@ -7345,26 +7345,31 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
     _loadFsrsStats(providerId);
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildProviderHeader(providerId, m, rows),
-        const SizedBox(height: 12),
-        _buildRlhfCard(providerId, m),
-        const SizedBox(height: 12),
-        if (rows != null && rows.isNotEmpty)
-          ...rows.map((row) => _buildContentCard(row, isDark, surface))
-        else
-          _buildFallbackCard(providerId, surface),
-        const SizedBox(height: 16),
-        _buildQuizCard(providerId, m),
-        if (_fsrsStats.containsKey(providerId) &&
-            _fsrsStats[providerId]!.totalReviews > 0) ...[
+    return LayoutBuilder(
+      builder: (context, viewport) => ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildProviderHeader(providerId, m, rows),
           const SizedBox(height: 12),
-          _buildFsrsStatsCard(providerId, m),
+          _buildRlhfCard(providerId, m),
+          const SizedBox(height: 12),
+          if (rows != null && rows.isNotEmpty)
+            ...rows.map(
+              (row) =>
+                  _buildContentCard(row, isDark, surface, viewport.maxHeight),
+            )
+          else
+            _buildFallbackCard(providerId, surface),
+          const SizedBox(height: 16),
+          _buildQuizCard(providerId, m),
+          if (_fsrsStats.containsKey(providerId) &&
+              _fsrsStats[providerId]!.totalReviews > 0) ...[
+            const SizedBox(height: 12),
+            _buildFsrsStatsCard(providerId, m),
+          ],
+          const SizedBox(height: 32),
         ],
-        const SizedBox(height: 32),
-      ],
+      ),
     );
   }
 
@@ -7931,6 +7936,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     Map<String, dynamic> row,
     bool isDark,
     Color surface,
+    double videoViewportHeight,
   ) {
     final category = row['category'] as String? ?? '';
     final provider = row['provider'] as String? ?? '';
@@ -8153,6 +8159,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   AiUniversityYoutubeEmbed(
                     videoId: youtubeVideoId,
                     title: title,
+                    maxPlayerHeight:
+                        (videoViewportHeight - 96).clamp(0.0, 720.0),
                     onOpen: () => _launchUrl(sourceUrl ?? ''),
                   ),
                 ],

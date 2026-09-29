@@ -335,6 +335,8 @@ class AssetLiabilityPlanningService {
     // リボカードの新規利用額は取込明細を正とする。明細が無いカードだけ設定の
     // 手入力値へフォールバックし、同じ利用額を二重加算しない。
     final cardStatementTotalsByBillingId = <String, double>{};
+    final cardStatementLinesByBillingId =
+        <String, List<AssetLiabilityCardStatementLine>>{};
     for (final line in cardStatementLines) {
       final billingAccountId = line.billingAccountId.trim();
       if (billingAccountId.isEmpty) {
@@ -345,6 +347,12 @@ class AssetLiabilityPlanningService {
         (current) => current + line.amount,
         ifAbsent: () => line.amount,
       );
+      cardStatementLinesByBillingId
+          .putIfAbsent(
+            billingAccountId,
+            () => <AssetLiabilityCardStatementLine>[],
+          )
+          .add(line);
     }
 
     final debtMasterRows = accounts
@@ -364,6 +372,7 @@ class AssetLiabilityPlanningService {
             cardBillingAccountIds: cardBillingAccountIds,
             revolvingConfigs: revolvingConfigs,
             cardStatementTotalsByBillingId: cardStatementTotalsByBillingId,
+            cardStatementLinesByBillingId: cardStatementLinesByBillingId,
             accountsById: accountsById,
           ),
         )
@@ -796,6 +805,8 @@ class AssetLiabilityPlanningService {
     required Map<String, String> cardBillingAccountIds,
     required Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs,
     required Map<String, double> cardStatementTotalsByBillingId,
+    Map<String, List<AssetLiabilityCardStatementLine>> cardStatementLinesByBillingId =
+        const <String, List<AssetLiabilityCardStatementLine>>{},
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
     final principal = account.liabilityBalance;
@@ -826,6 +837,10 @@ class AssetLiabilityPlanningService {
       account: account,
       revolvingConfigs: revolvingConfigs,
     );
+    final importedLines = cardStatementLinesByBillingId[account.id] ??
+        cardStatementLinesByBillingId[account.name.trim()];
+    final hasImportedStatement =
+        importedLines != null && importedLines.isNotEmpty;
     final importedNewUsage = cardStatementTotalsByBillingId[account.id] ??
         cardStatementTotalsByBillingId[account.name.trim()];
     final revolvingBilling = revolvingConfig == null
@@ -834,6 +849,9 @@ class AssetLiabilityPlanningService {
             balance: principal,
             config: revolvingConfig,
             newUsageAmount: importedNewUsage,
+            statementLines: importedLines,
+            hasImportedStatement: hasImportedStatement,
+            scheduledPayment: manualPayment,
           );
     final scheduledPayment =
         revolvingBilling?.billedAmount ?? manualPayment ?? minimumPayment;
@@ -1276,8 +1294,13 @@ class AssetLiabilityPlanningService {
       // リボ払いカードは最低返済額へ新規利用額を全額上乗せする。明細がある場合は
       // その合計が上乗せ額の正となるため、一括払い前提の不一致アラートは抑止し、
       // 内訳は revolvingBilling で説明する。
+      // また、アコムショッピング等のショッピング債務 (shoppingDebt) はリボ契約であり、
+      // 個別内訳と請求額の一致を前提とする一括払い照合の不一致アラートからは除外する。
       final revolvingBilling = billingRow?.revolvingBilling;
-      final isRevolving = revolvingBilling != null;
+      final isShoppingDebt =
+          billingRow?.kind == AssetLiabilityAccountKind.shoppingDebt ||
+              billingRow?.id == acomShoppingAccountId;
+      final isRevolving = revolvingBilling != null || isShoppingDebt;
       final alerts = <String>[];
       // アラートは「何がずれているか」しか伝えないため、対応する修正
       // アクション（何をすれば解消するか＋差分金額）を同時に算出する。

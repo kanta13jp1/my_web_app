@@ -398,6 +398,13 @@ jobs:
           fi
         continue-on-error: false  # migration 構文エラーはCIブロック
 
+      - name: Verify acquisition measurement audit
+        run: |
+          python -m unittest discover -s test/scripts -p 'test_seo_measurement_audit.py'
+          python -m unittest discover -s test/scripts -p 'test_search_console_measurement.py'
+          python scripts/seo_measurement_audit.py docs/evidence/seo-measurement-20260927/observations.json --output /tmp/seo-audit.json
+          diff -u docs/evidence/seo-measurement-20260927/report.json /tmp/seo-audit.json
+
       - name: Check GitHub Actions Node runtime floor
         run: |
           python -m unittest discover \

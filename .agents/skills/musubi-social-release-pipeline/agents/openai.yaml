@@ -1,0 +1,4 @@
+interface:
+  display_name: "MUSUBI Social Release Pipeline"
+  short_description: "MUSUBIの実装・検証・段階リリースを安全に進行"
+  default_prompt: "Use $musubi-social-release-pipeline to implement, validate, stage, and safely release the next MUSUBI social feature."
