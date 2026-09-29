@@ -358,9 +358,11 @@ void main() {
 
         final initialReport = monitor.evaluate(workbook: workbook);
         expect(initialReport.revolvingCardViolations, hasLength(1));
+        expect(initialReport.unresolvedViolationCount, equals(1));
         final initialViolation = initialReport.revolvingCardViolations.single;
         expect(initialViolation.payoffIn24MonthsPayment, isNotNull);
         expect(initialViolation.payoffIn24MonthsPayment! > 0, isTrue);
+        expect(initialViolation.oneShotChangeCompleted, isFalse);
 
         final reducedReport = monitor.evaluate(
           workbook: workbook,
@@ -368,8 +370,13 @@ void main() {
             'famipay_card': AssetCardUsagePolicy(enforceOneShot: true),
           },
         );
-        expect(reducedReport.revolvingCardViolations, isEmpty);
-        expect(reducedReport.newUsageRepaymentAchieved, isTrue);
+        expect(reducedReport.revolvingCardViolations, hasLength(1));
+        expect(
+          reducedReport.revolvingCardViolations.single.oneShotChangeCompleted,
+          isTrue,
+        );
+        expect(reducedReport.unresolvedViolationCount, equals(0));
+        expect(reducedReport.unresolvedViolations, isEmpty);
       },
     );
 

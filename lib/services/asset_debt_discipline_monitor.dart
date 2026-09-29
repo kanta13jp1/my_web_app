@@ -134,6 +134,14 @@ class AssetDebtDisciplineReport {
         ...revolvingCardViolations,
       ];
 
+  /// カード会社での「今後一括に固定」完了済みを除く未対応違反一覧。
+  /// ワンタップで意思記録すると次回レポートの未対応違反カウントが減少する。
+  List<AssetDebtDisciplineViolation> get unresolvedViolations =>
+      allViolations.where((v) => !v.oneShotChangeCompleted).toList();
+
+  /// 未対応の違反件数。
+  int get unresolvedViolationCount => unresolvedViolations.length;
+
   bool get isCompliant => allViolations.isEmpty;
 
   /// 誓約①「追加借入ゼロ」を達成しているか。
@@ -274,14 +282,6 @@ class AssetDebtDisciplineMonitor {
         if (shortfall >= _epsilon || !paydayAligned) {
           final oneShotChangeCompleted =
               cardUsagePolicies[row.id]?.enforceOneShot == true;
-          if (oneShotChangeCompleted) {
-            // 『今後一括に固定』をオンにすると、次回レポートの違反数が減少する。
-            // 新規利用遮断の意思決定が完了した口座は規律違反カウントから除外。
-            if (row.revolvingBilling != null) {
-              revolvingBillings[row.id] = row.revolvingBilling!;
-            }
-            continue;
-          }
           final monthlyRate = row.annualRate / 12;
           final escapePayment = AssetDebtTrendAnalyzer.paymentToClearIn(
             balance,

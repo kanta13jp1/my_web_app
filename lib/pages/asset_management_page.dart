@@ -23703,7 +23703,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '違反 ${report.allViolations.length}件',
+                    '違反 ${report.unresolvedViolationCount}件',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
