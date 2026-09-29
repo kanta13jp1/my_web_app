@@ -603,6 +603,37 @@ class AssetRecurringFixedCost {
   }
 }
 
+/// リボ払いカードの新規利用明細行と返済カバー状況ステータス。
+enum AssetLiabilityRevolvingUsageStatus {
+  /// リボ残高に組み入れられ、今月の返済額でカバーされる
+  covered,
+
+  /// リボ残高に組み入れられ、今月の返済額でカバーされず翌月へ繰り越される（返済不足分）
+  uncoveredShortfall,
+
+  /// リボ残高に組み入れ（返済状況未定、または基本ステータス）
+  revolvingIncorporated,
+}
+
+/// リボ払いカードの当月新規利用明細項目。
+class AssetLiabilityRevolvingUsageItem {
+  final String id;
+  final String description;
+  final double amount;
+  final DateTime? postedAt;
+  final AssetLiabilityRevolvingUsageStatus status;
+  final String statusLabel;
+
+  const AssetLiabilityRevolvingUsageItem({
+    required this.id,
+    required this.description,
+    required this.amount,
+    this.postedAt,
+    required this.status,
+    required this.statusLabel,
+  });
+}
+
 /// リボ残高に対して算出した今月の請求内訳。
 class AssetLiabilityRevolvingCreditBilling {
   /// リボ残高 (= 当月時点の負債残高)。
@@ -629,6 +660,12 @@ class AssetLiabilityRevolvingCreditBilling {
   /// 今月返済予定額 = [monthlyAmount] + [newUsageAmount]。
   final double billedAmount;
 
+  /// 当月の新規利用明細一覧（取り込み明細または内訳）。
+  final List<AssetLiabilityRevolvingUsageItem> usageItems;
+
+  /// カード明細データが取り込まれているか。
+  final bool hasImportedStatement;
+
   const AssetLiabilityRevolvingCreditBilling({
     required this.balance,
     required this.creditLimit,
@@ -638,6 +675,8 @@ class AssetLiabilityRevolvingCreditBilling {
     required this.paymentDay,
     required this.overLimitAmount,
     required this.billedAmount,
+    this.usageItems = const <AssetLiabilityRevolvingUsageItem>[],
+    this.hasImportedStatement = false,
   });
 
   /// 旧限度額超過ルールが有効か。現行ルールでは常に false。
