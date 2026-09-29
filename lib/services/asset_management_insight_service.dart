@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../models/asset_liability_workbook.dart';
 import '../models/daily_todo.dart';
 import '../models/user_profile.dart';
@@ -18,6 +20,7 @@ enum AssetManagementInsightActionType {
   cardBillingConfiguration,
   doubleCountingRisk,
   accountShortfallRisk,
+  debtSpiralWarning,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -526,6 +529,88 @@ class AssetManagementInsightService {
                     '「支払原資口座の未設定」一覧から今月だけ上書き、または既定で設定してください。',
           ),
         );
+      }
+
+      if (!row.fullPaymentEstimate &&
+          row.balance.abs() > 1000 &&
+          row.annualRate > 0 &&
+          row.monthlyInterestEstimate > 0) {
+        final balance = row.balance.abs();
+        final monthlyRate = (row.annualRate / 100.0) / 12.0;
+        final isZeroPrincipal = row.scheduledPaymentAmount <= 0 ||
+            row.principalPaymentEstimate <= 0;
+        final isInterestExceedsPrincipal =
+            row.principalPaymentEstimate <= row.monthlyInterestEstimate;
+
+        if (isZeroPrincipal || isInterestExceedsPrincipal) {
+          final compound = math.pow(1.0 + monthlyRate, 24).toDouble();
+          final target24Payment = monthlyRate > 0 && compound > 1.0
+              ? (balance * monthlyRate * compound / (compound - 1.0))
+                  .ceilToDouble()
+              : (balance / 24.0).ceilToDouble();
+
+          final baseDoubleCandidate = math.max(
+            row.minimumPaymentEstimate,
+            row.scheduledPaymentAmount,
+          );
+          final doublePayment = baseDoubleCandidate > 0
+              ? (baseDoubleCandidate * 2).ceilToDouble()
+              : target24Payment;
+
+          final String title;
+          final String description;
+          final String suggestedAction;
+
+          if (isZeroPrincipal) {
+            title = '${row.name}が利息スパイラル状態です（元金返済0円）';
+            description =
+                '今月の元金返済見込みが0円に対し、月利息${_formatYen(row.monthlyInterestEstimate)}が発生しています。'
+                '返済を行わない場合、利息が元金に組み込まれ残高（現在${_formatYen(balance)}）が増加し続けます。';
+            suggestedAction =
+                '24ヶ月完済目標額${_formatYen(target24Payment)}（または最低返済額以上の支払い）を設定し、利息スパイラルを脱出してください。';
+          } else {
+            var simBalance = balance;
+            var totalInterest = 0.0;
+            var months = 0;
+            const maxMonths = 1200;
+            while (simBalance > 0 && months < maxMonths) {
+              final interest = simBalance * monthlyRate;
+              totalInterest += interest;
+              final principal = row.scheduledPaymentAmount - interest;
+              if (principal <= 0) {
+                months = maxMonths;
+                break;
+              }
+              simBalance -= principal;
+              months++;
+            }
+
+            final years = (months / 12.0).toStringAsFixed(1);
+            final durationText = months >= maxMonths
+                ? '完済不能（元金が増加）'
+                : '完済まで約$monthsヶ月（約$years年）、追加利息は約${_formatYen(totalInterest)}';
+
+            title = '${row.name}の利息負担が元金返済を上回っています';
+            description =
+                '月返済${_formatYen(row.scheduledPaymentAmount)}のうち、利息が${_formatYen(row.monthlyInterestEstimate)}を占め、'
+                '元金返済は${_formatYen(row.principalPaymentEstimate)}に留まります。現行ペースでは$durationText発生します。';
+            suggestedAction =
+                '24ヶ月完済目標額${_formatYen(target24Payment)}（または月${_formatYen(doublePayment)}への増額）を検討し、総利息を大幅に圧縮してください。';
+          }
+
+          actions.add(
+            AssetManagementInsightActionItem(
+              type: AssetManagementInsightActionType.debtSpiralWarning,
+              severity: AssetManagementInsightSeverity.critical,
+              title: title,
+              description: description,
+              relatedAccountId: row.id,
+              dueDate: _paymentDateFor(row, workbook.baseDate),
+              paymentDay: row.paymentDay,
+              suggestedAction: suggestedAction,
+            ),
+          );
+        }
       }
     }
 
@@ -1305,6 +1390,10 @@ class AssetManagementInsightService {
 
     if (item.type == AssetManagementInsightActionType.overduePayment) {
       return 1;
+    }
+
+    if (item.type == AssetManagementInsightActionType.debtSpiralWarning) {
+      return 2;
     }
 
     final isHighInterestLoan = relatedRow != null &&
@@ -2129,6 +2218,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.cardBillingConfiguration => 'カード請求設定の確認',
       AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
+      AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
     };
   }
 
