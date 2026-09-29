@@ -195,6 +195,7 @@ String? assetManagementActionJumpLabel(AssetManagementInsightActionItem item) {
     AssetManagementInsightActionType.overduePayment => '支払済みチェックへ移動',
     AssetManagementInsightActionType.upcomingPayment => '支払予定を確認する',
     AssetManagementInsightActionType.cashShortageRisk => '支払予定を確認する',
+    AssetManagementInsightActionType.debtSpiralWarning => '返済計画・金利を確認する',
     _ => null,
   };
 }
@@ -25336,6 +25337,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.difference_outlined,
       AssetManagementInsightActionType.accountShortfallRisk =>
         Icons.account_balance_wallet_outlined,
+      AssetManagementInsightActionType.debtSpiralWarning =>
+        Icons.trending_up_rounded,
     };
   }
 
