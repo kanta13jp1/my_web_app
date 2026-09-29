@@ -27,6 +27,9 @@ function saveAttempt(outcome){if(internalTransition)return;const row=campaign.fi
 const stageName=()=>courseInfo(world.stage).label;
 $('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。'+([9,10,11].includes(world.stage)?'ピーチの登場と追加敵の配置は原作と異なるアレンジです。':'')+'手動プレイはAPI不要です。';};
 const student = new StudentSession();
+// Search-taught LightGBM alone: main-thread trees every frame; no worker, search, safety check or API.
+// Not a ranking controller: its plays are not saved to history or shared.
+let rawStudent=null,rawToken=0;
 function showRetryMemory(){const count=student.failures.reduce((n,r)=>n+r.count,0);$('retry-status').textContent=`このブラウザの攻略経験: ${student.failures.length}か所・失敗／停滞${count}回。再挑戦時はその手前の予測を長くします。モデルの再学習ではなく探索の補助です。`;}
 $('clear-retry').onclick=()=>{if(gameRunning)return status('プレイを停止してから攻略経験を消去してください');student.clearFailures();showRetryMemory();};
 showRetryMemory();
@@ -97,7 +100,7 @@ function controls(action) {
   }
   $('action').textContent = `操作: ${action}`;
 }
-function stop(reason = '停止しました') { if(!internalTransition&&campaign.active&&isRecreation())saveAttempt(world.phase==='dead'&&world.lives===0?'dead':'stopped'); if(!gameRunning&&isRecreation()&&world.phase!=='playing')finalizeStageResult();if(gameRunning&&isRecreation()&&world.phase==='playing')saveAttempt('stopped');transition=null; if(student.active)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,...student.stats};student.stop();audio.stop(); loop.stop(reason); gameRunning = false; controls('noop'); status(reason); }
+function stop(reason = '停止しました') { if(!internalTransition&&campaign.active&&isRecreation())saveAttempt(world.phase==='dead'&&world.lives===0?'dead':'stopped'); if(!gameRunning&&isRecreation()&&world.phase!=='playing')finalizeStageResult();if(gameRunning&&isRecreation()&&world.phase==='playing')saveAttempt('stopped');transition=null; rawToken++; if(rawStudent)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,controller:'search_taught_lightgbm_only',decisions:rawStudent.decisions}; rawStudent=null; if(student.active)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,...student.stats};student.stop();audio.stop(); loop.stop(reason); gameRunning = false; controls('noop'); status(reason); }
 function state() {
   const value = isRecreation() ? world.telemetry(lastResponse) : isRom() ? readState(nes.cpu.mem, lastResponse) : fixture();
   if(isRecreation()&&metadata.input_profile==='prediction_v1')value.prediction=prediction(world,lastResponse);
@@ -175,6 +178,20 @@ function startStudent(continuing=false){
   $('last-error').textContent='';void unlockAudio();status('学習済みモデルを読み込んでいます…');
   student.start({ready:()=>{if(!campaign.active)beginAttempt('lightgbm_plus_search');gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{showRetryMemory();decision={source:'LightGBM + search | Jev teacher',proposal:student.latest.raw,probabilities:student.latest.probabilities,latency:student.latest.inferenceMs,latencyKind:'Local tree inference only (search excluded)',count:stats.decisions,accepted:stats.accepted,overrides:stats.overrides};$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / 衝突回避 ${stats.live_guard} / 経験による回避 ${stats.retry_assists} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{saveAttempt('stopped');gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
 };
+$('play-student-raw').onclick=()=>void startRawStudent();
+async function startRawStudent(continuing=false){
+  if(!isRecreation())return status('再現ゲームを選んでください');
+  if(loop.pending||pendingBridge)return status('API応答の終了を待ってから開始してください');
+  if(!continuing){stop();world.reset();frameCount=0;samples=[];interventions=[];metadata={lab_revision:'stage-3',course_id:world.stage,...courseInfo(world.stage),controller:'search_taught_lightgbm_only',play_policy:'continuous_until_terminal_or_user_stop',mode:'recreation',started_at:new Date().toISOString(),timing:'Main-thread tree inference every frame; no search, safety check, rewind or API requests'};}
+  update();$('last-error').textContent='';void unlockAudio();status('学習済みモデルを読み込んでいます…');
+  const token=++rawToken;
+  try{
+    const [{default:model},{features2},{predict2}]=await Promise.all([import('./student2-model.mjs?v=student-1'),import('./student2-features.mjs?v=student-1'),import('./student2-predict.mjs?v=student-1')]);
+    if(token!==rawToken)return;
+    rawStudent={model,features2,predict2,next:0,action:'noop',decisions:0};
+    gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('探索教師LightGBM単体でプレイ中（探索・補助・API呼び出しなし）');
+  }catch{if(token===rawToken){gameRunning=false;controls('noop');status('モデルを読み込めませんでした。再読み込みして再試行してください。');}}
+}
 $('start').onclick = () => {
   if(student.active)return status('ローカルプレイを停止してからJev測定を開始してください');
   $('last-error').textContent = '';
@@ -201,11 +218,11 @@ $('export').onclick = () => {
 };
 const keys = { ArrowRight: 7, ArrowLeft: 6, KeyX: 0, Space: 0, KeyZ: 1, Enter: 3, ArrowDown: 5, ArrowUp: 4, KeyC: 8 };
 const inputNames = {7:'right',6:'left',0:'jump',1:'run',5:'down',4:'up',8:'carry'};
-function manualKey(code,pressed) { if(loop.active||student.active) return; if(isRecreation()) { const key=inputNames[code]; if(key) world.input[key]=pressed; } else if(nes) nes[pressed?'buttonDown':'buttonUp'](1,code); }
-window.addEventListener('keydown', e => { if (e.target.matches('input,select,button') || !gameRunning || loop.active || student.active || !(e.code in keys)) return; e.preventDefault(); manualKey(keys[e.code],true); });
+function manualKey(code,pressed) { if(loop.active||student.active||rawStudent) return; if(isRecreation()) { const key=inputNames[code]; if(key) world.input[key]=pressed; } else if(nes) nes[pressed?'buttonDown':'buttonUp'](1,code); }
+window.addEventListener('keydown', e => { if (e.target.matches('input,select,button') || !gameRunning || loop.active || student.active || rawStudent || !(e.code in keys)) return; e.preventDefault(); manualKey(keys[e.code],true); });
 window.addEventListener('keyup', e => { if(e.code in keys) manualKey(keys[e.code],false); });
 for(const button of document.querySelectorAll('[data-key]')) {
-  button.addEventListener('pointerdown', e => { if(!gameRunning||loop.active||student.active)return; e.preventDefault(); button.setPointerCapture(e.pointerId);world.input[button.dataset.key]=true; });
+  button.addEventListener('pointerdown', e => { if(!gameRunning||loop.active||student.active||rawStudent)return; e.preventDefault(); button.setPointerCapture(e.pointerId);world.input[button.dataset.key]=true; });
   for(const event of ['pointerup','pointercancel','lostpointercapture']) button.addEventListener(event,()=>{world.input[button.dataset.key]=false;});
 }
 // Losing focus must release held manual keys, not terminate visible autoplay.
@@ -215,7 +232,7 @@ window.addEventListener('pagehide', () => stop());
 function finishStage(){
  const retry=world.phase==='dead'&&world.lives>0;
  if(student.active&&world.phase==='dead'){student.noteFailure(world);showRetryMemory();}
- const resume=(retry||world.phase==='won'&&world.stage<LAST_COURSE)?{retry,kind:student.active?'student':loop.active?'api':'manual',remaining:loop.limit-loop.attempts,deadline:loop.deadline,cadence:loop.cadence,maxAge:loop.maxAge}:null;
+ const resume=(retry||world.phase==='won'&&world.stage<LAST_COURSE)?{retry,kind:rawStudent?'student-raw':student.active?'student':loop.active?'api':'manual',remaining:loop.limit-loop.attempts,deadline:loop.deadline,cadence:loop.cadence,maxAge:loop.maxAge}:null;
  const result={course_id:world.stage,...courseInfo(world.stage),phase:world.phase,frames:world.frames,score:world.score,lives:world.lives,deaths:world.deaths,fireworks:world.fireworksTotal,items_collected:{...world.pickups},student:student.active?structuredClone(student.stats):undefined};
  metadata.stage_results??=[];metadata.stage_results.push(result);
  internalTransition=true;stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス！残り${world.lives}機。同じステージの最初から再開します`:'ゲームオーバー。最初から再挑戦できます');
@@ -227,7 +244,9 @@ function continueStage(){
  $('stage').value=String(world.stage);$('restart-local').textContent=stageName()+'を最初から';
  frameBudget=0;presentationBudget=0;frameCount=0;assist.reset();proposedAction='noop';resetDecision();
  beginAttempt(metadata.controller||'manual');drawWorld(context,world);showPose();$('progress').textContent='World '+stageName();metadata.current_course_id=world.stage;metadata.current_stage=courseInfo(world.stage);
- if(resume.kind==='student'){
+ if(resume.kind==='student-raw'){
+  void startRawStudent(true);
+ }else if(resume.kind==='student'){
   startStudent(true);
  }else if(resume.kind==='api'){
   const duration=resume.deadline-performance.now();
@@ -243,6 +262,12 @@ function frame(now) {
       while (frameBudget >= 1000 / 60 && gameRunning) {
         if(isRecreation()) {
           if(student.active){const action=student.tick(world);world.buttons(action);effectiveAction=action;$('action').textContent=`操作: ${action}`;}
+          else if(rawStudent){
+            if(world.phase==='playing'&&world.frames>=rawStudent.next){const t=performance.now(),p=rawStudent.predict2(rawStudent.model,rawStudent.features2(world));rawStudent.action=p.action;rawStudent.next=world.frames+1;rawStudent.decisions++;
+              decision={source:'Search-taught LightGBM only | no search',proposal:p.action,probabilities:p.probabilities,latency:performance.now()-t,latencyKind:'Main-thread tree inference (no search)',count:rawStudent.decisions,accepted:rawStudent.decisions,overrides:0,note:'Search-taught LightGBM alone; no search at play time'};
+              if(rawStudent.decisions%30===1)$('student-status').textContent=`探索教師LightGBM単体：判断 ${rawStudent.decisions}回。探索・安全確認・ジャンプ押し直し補助なし。履歴・ランキングには記録しません。`;}
+            world.buttons(rawStudent.action);effectiveAction=rawStudent.action;$('action').textContent=`操作: ${rawStudent.action}`;
+          }
           if(loop.active&&assistanceEnabled()){
             const decision=assist.decide(world,proposedAction);world.buttons(decision.action);effectiveAction=decision.action;
             const key=decision.reason+':'+decision.action;
@@ -264,7 +289,7 @@ function frame(now) {
   } else {frameBudget=0;if(!document.hidden&&isRecreation()&&world.phase!=='playing'&&world.presentation<world.presentationLength()){presentationBudget+=delta;while(presentationBudget>=1000/60){world.presentationStep();for(const sound of world.drainSounds())audio.effect(sound);presentationBudget-=1000/60;}drawWorld(context,world);showPose();}}
   if(transition&&world.presentation>=world.presentationLength()&&!loop.pending&&!pendingBridge)continueStage();
   if(!transition&&isRecreation()&&world.phase!=='playing'&&world.presentation>=world.presentationLength()){finalizeStageResult();recording.stop('ゲーム終了で録画を停止しました');}
-  if(gameRunning&&isRecreation()&&!student.active&&!loop.active){const k=world.input;effectiveAction=k.left?'left':k.right?(k.run?'right_run':'right')+(k.jump?'_jump':''):k.jump?'jump':k.down?'crouch':'noop';}
+  if(gameRunning&&isRecreation()&&!student.active&&!rawStudent&&!loop.active){const k=world.input;effectiveAction=k.left?'left':k.right?(k.run?'right_run':'right')+(k.jump?'_jump':''):k.jump?'jump':k.down?'crouch':'noop';}
   drawPresentation(presentationContext,canvas,{world,decision:{...decision,action:effectiveAction},running:gameRunning,recording:recording.active,fixture:!isGame()});
   const summary=`${decision.source||'手動 / 待機'} · ${world.phase==='won'?'WORLD CLEAR':world.phase==='dead'?(world.lives>0?'LIFE LOST':'GAME OVER'):gameRunning?'LIVE':'PAUSED'} · 操作 ${effectiveAction} · 判断 ${decision.count??0}`;
   if($('decision-summary').textContent!==summary)$('decision-summary').textContent=summary;
