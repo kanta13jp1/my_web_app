@@ -336,5 +336,73 @@ void main() {
         isFalse,
       );
     });
+
+    test(
+      'enforcing one-shot card policy reduces revolving card violation count (#4902)',
+      () {
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 500000,
+            'ファミペイ': -150000,
+          },
+          baseDate: baseDate,
+          revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 20000,
+            ),
+          },
+          actualPaymentAmounts: const <String, double>{'famipay_card': 10000},
+          paidAccountNames: const <String>{'famipay_card'},
+        );
+
+        final initialReport = monitor.evaluate(workbook: workbook);
+        expect(initialReport.revolvingCardViolations, hasLength(1));
+        final initialViolation = initialReport.revolvingCardViolations.single;
+        expect(initialViolation.payoffIn24MonthsPayment, isNotNull);
+        expect(initialViolation.payoffIn24MonthsPayment! > 0, isTrue);
+
+        final reducedReport = monitor.evaluate(
+          workbook: workbook,
+          cardUsagePolicies: const <String, AssetCardUsagePolicy>{
+            'famipay_card': AssetCardUsagePolicy(enforceOneShot: true),
+          },
+        );
+        expect(reducedReport.revolvingCardViolations, isEmpty);
+        expect(reducedReport.newUsageRepaymentAchieved, isTrue);
+      },
+    );
+
+    test(
+      'revolving violation includes balanceDelta and 24-month payoff line (#4902)',
+      () {
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 500000,
+            'ファミペイ': -207446,
+          },
+          baseDate: baseDate,
+          revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 107446,
+            ),
+          },
+          actualPaymentAmounts: const <String, double>{'famipay_card': 10000},
+          paidAccountNames: const <String>{'famipay_card'},
+        );
+
+        final report = monitor.evaluate(
+          workbook: workbook,
+          priorBalancesByAccountId: const <String, double>{
+            'famipay_card': 100000,
+          },
+        );
+        expect(report.revolvingCardViolations, hasLength(1));
+        final violation = report.revolvingCardViolations.single;
+        expect(violation.balanceDelta, closeTo(107446, 1.0));
+        expect(violation.payoffIn24MonthsPayment, isNotNull);
+      },
+    );
   });
 }
