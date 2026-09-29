@@ -50,6 +50,15 @@ class AssetDebtDisciplineViolation {
   /// この記録だけを返済実績とは見なさず、true でも不足判定と返済月額目標を維持する。
   final bool oneShotChangeCompleted;
 
+  /// リボ払い新規利用の内訳明細リスト。
+  final List<AssetLiabilityRevolvingUsageItem> usageItems;
+
+  /// カード明細が取り込まれているか（未取り込みなら手入力推定値）。
+  final bool hasImportedStatement;
+
+  /// 当月の新規利用額。
+  final double? newUsageAmount;
+
   const AssetDebtDisciplineViolation({
     required this.type,
     required this.severity,
@@ -65,6 +74,9 @@ class AssetDebtDisciplineViolation {
     this.currentPlanPayoffMonths,
     this.currentPlanTotalInterest,
     this.oneShotChangeCompleted = false,
+    this.usageItems = const <AssetLiabilityRevolvingUsageItem>[],
+    this.hasImportedStatement = false,
+    this.newUsageAmount,
   });
 
   /// 具体的な脱却プラン（月額×期間）を提示できるか。
@@ -90,6 +102,10 @@ class AssetDebtDisciplineReport {
   /// 0 のときは監視対象が無い＝モニター自体を表示しない判断に使う。
   final int monitoredAccountCount;
 
+  /// 誓約②の根拠となるリボ払いカードの請求・明細内訳（達成・違反問わず保持）。
+  final Map<String, AssetLiabilityRevolvingCreditBilling>
+      revolvingBillingsByAccountId;
+
   const AssetDebtDisciplineReport({
     required this.newBorrowingViolations,
     required this.revolvingCardViolations,
@@ -97,6 +113,8 @@ class AssetDebtDisciplineReport {
     required this.totalNewBorrowing,
     required this.totalCarriedOver,
     required this.monitoredAccountCount,
+    this.revolvingBillingsByAccountId =
+        const <String, AssetLiabilityRevolvingCreditBilling>{},
   });
 
   /// 表示対象か（監視すべき借入系口座が 1 件以上あるか）。
@@ -174,6 +192,7 @@ class AssetDebtDisciplineMonitor {
   }) {
     final newBorrowing = <AssetDebtDisciplineViolation>[];
     final revolving = <AssetDebtDisciplineViolation>[];
+    final revolvingBillings = <String, AssetLiabilityRevolvingCreditBilling>{};
     var hasPrior = false;
     var totalNew = 0.0;
     var totalCarried = 0.0;
@@ -306,8 +325,16 @@ class AssetDebtDisciplineMonitor {
               currentPlanTotalInterest:
                   currentPlanMonths == null ? null : currentPlan!.totalInterest,
               oneShotChangeCompleted: oneShotChangeCompleted,
+              usageItems: revolvingBilling?.usageItems ??
+                  const <AssetLiabilityRevolvingUsageItem>[],
+              hasImportedStatement:
+                  revolvingBilling?.hasImportedStatement ?? false,
+              newUsageAmount: newUsage,
             ),
           );
+        }
+        if (row.revolvingBilling != null) {
+          revolvingBillings[row.id] = row.revolvingBilling!;
         }
       }
     }
@@ -326,6 +353,10 @@ class AssetDebtDisciplineMonitor {
       totalNewBorrowing: totalNew,
       totalCarriedOver: totalCarried,
       monitoredAccountCount: monitoredCount,
+      revolvingBillingsByAccountId:
+          Map<String, AssetLiabilityRevolvingCreditBilling>.unmodifiable(
+        revolvingBillings,
+      ),
     );
   }
 

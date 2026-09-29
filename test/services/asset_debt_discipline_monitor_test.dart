@@ -231,6 +231,44 @@ void main() {
 
       expect(report.revolvingCardViolations.single.amount, 1);
     });
+
+    test('revolving violation includes imported usage items and import status',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -150000,
+        },
+        baseDate: baseDate,
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'famipay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 5000,
+          ),
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_1',
+            billingAccountId: 'famipay_card',
+            billingAccountName: 'ファミペイ',
+            postedAt: null,
+            description: '買い物A',
+            amount: 20000,
+          ),
+        ],
+        actualPaymentAmounts: const <String, double>{'famipay_card': 10000},
+        paidAccountNames: const <String>{'famipay_card'},
+      );
+
+      final report = monitor.evaluate(workbook: workbook);
+      expect(report.revolvingCardViolations, hasLength(1));
+      final violation = report.revolvingCardViolations.single;
+      expect(violation.hasImportedStatement, isTrue);
+      expect(violation.usageItems, hasLength(1));
+      expect(
+        report.revolvingBillingsByAccountId.containsKey('famipay_card'),
+        isTrue,
+      );
+    });
   });
 
   group('AssetDebtDisciplineMonitor — 統合', () {
