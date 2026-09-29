@@ -35,7 +35,7 @@ void main() {
     test(
       'Issue #4901: revolving card suppresses mismatch alerts and flags isRevolving',
       () {
-        final planner = AssetLiabilityPlanningService();
+        const planner = AssetLiabilityPlanningService();
         final baseDate = DateTime(2026, 8, 26);
         final workbook = planner.buildWorkbook(
           latestSnapshot: const <String, double>{
@@ -70,7 +70,11 @@ void main() {
         );
         expect(famipayGroup.isRevolving, isFalse);
         // 非リボカードは明細未取込時にアラートが出る
-        expect(famipayGroup.alerts, contains(cardStatementMissingImportAlert));
+        expect(
+          famipayGroup.alerts,
+          contains(
+              AssetLiabilityPlanningService.cardStatementMissingImportAlert),
+        );
       },
     );
   });
