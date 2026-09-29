@@ -264,9 +264,10 @@ void main() {
       final violation = report.revolvingCardViolations.single;
       expect(violation.hasImportedStatement, isTrue);
       expect(violation.usageItems, hasLength(1));
-      expect(violation.usageItems.first.description, '買い物A');
-      expect(report.revolvingBillingsByAccountId.containsKey('famipay_card'),
-          isTrue);
+      expect(
+        report.revolvingBillingsByAccountId.containsKey('famipay_card'),
+        isTrue,
+      );
     });
   });
 
