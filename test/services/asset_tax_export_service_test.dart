@@ -240,7 +240,7 @@ void main() {
             paymentMethod: AssetLiabilityPaymentMethod.direct,
             paymentMethodLabel: 'Direct',
             paymentMethodSettingSource:
-                AssetLiabilityPaymentMethodSettingSource.inferred,
+                AssetLiabilityPaymentMethodSettingSource.builtInDefault,
             billingAccountId: null,
             billingAccountName: null,
             includedInBillingAccount: false,
@@ -251,7 +251,7 @@ void main() {
             overdue: false,
             cashBeforePayment: 100000,
             cashAfterPayment: 50000,
-            riskLevel: AssetLiabilityCashRiskLevel.safe,
+            riskLevel: AssetLiabilityCashRiskLevel.normal,
           ),
           AssetLiabilityCashflowRow(
             eventType: AssetLiabilityCashflowEventType.payment,
@@ -266,7 +266,7 @@ void main() {
             paymentMethod: AssetLiabilityPaymentMethod.direct,
             paymentMethodLabel: 'Direct',
             paymentMethodSettingSource:
-                AssetLiabilityPaymentMethodSettingSource.inferred,
+                AssetLiabilityPaymentMethodSettingSource.builtInDefault,
             billingAccountId: null,
             billingAccountName: null,
             includedInBillingAccount: false,
@@ -277,7 +277,7 @@ void main() {
             overdue: false,
             cashBeforePayment: 50000,
             cashAfterPayment: 35000,
-            riskLevel: AssetLiabilityCashRiskLevel.safe,
+            riskLevel: AssetLiabilityCashRiskLevel.normal,
           ),
         ],
         incomePlans: [
@@ -295,15 +295,16 @@ void main() {
         accountCashflowSummaries: const [],
         transferSuggestions: const [],
         cardBillingReview: const AssetLiabilityCardBillingReviewData(
-          unreconciledCount: 0,
-          pendingAmountTotal: 0,
-          flags: [],
+          directPaymentItems: [],
+          cardBillingGroups: [],
+          missingBillingAccountItems: [],
+          needsReviewItems: [],
+          doubleCountingRiskItems: [],
         ),
         cardStatementReconciliation:
             const AssetLiabilityCardStatementReconciliationData(
-          items: [],
-          totalStatementAmount: 0,
-          totalReconciledAmount: 0,
+          groups: [],
+          unmatchedStatementLines: [],
         ),
         cashLikeTotal: 100000,
         securitiesTotal: 0,
@@ -338,12 +339,14 @@ void main() {
       expect(income.title, '業務委託報酬');
 
       final furusato = extracted.firstWhere(
-          (r) => r.category == AssetTaxRecordCategory.furusatoTaxDonation);
+        (r) => r.category == AssetTaxRecordCategory.furusatoTaxDonation,
+      );
       expect(furusato.amount, 50000);
       expect(furusato.kind, AssetTaxRecordKind.deduction);
 
       final expense = extracted.firstWhere(
-          (r) => r.category == AssetTaxRecordCategory.businessExpense);
+        (r) => r.category == AssetTaxRecordCategory.businessExpense,
+      );
       expect(expense.amount, 15000);
       expect(expense.title, 'サーバー代');
     });
