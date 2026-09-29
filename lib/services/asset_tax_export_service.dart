@@ -137,8 +137,7 @@ class AssetTaxExportService {
       if (targetYear != null && _jstDate(occurredOn).year != targetYear) {
         continue;
       }
-      final effectiveAmount =
-          row.actualPaymentAmount ?? row.paymentAmount;
+      final effectiveAmount = row.actualPaymentAmount ?? row.paymentAmount;
       if (effectiveAmount <= 0) continue;
 
       if (row.isIncome) {
@@ -158,8 +157,8 @@ class AssetTaxExportService {
         }
       } else if (row.isPayment) {
         final titleLower = row.accountName.toLowerCase();
-        final isFurusato = titleLower.contains('ふるさと') ||
-            titleLower.contains('furusato');
+        final isFurusato =
+            titleLower.contains('ふるさと') || titleLower.contains('furusato');
         records.add(
           AssetTaxRecord(
             id: 'cashflow-exp-$i',

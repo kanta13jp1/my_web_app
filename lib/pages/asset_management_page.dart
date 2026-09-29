@@ -2871,7 +2871,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.primary)),
                             const SizedBox(height: 6),
-                            for (final line in preview.confirmation.summaryLines)
+                            for (final line
+                                in preview.confirmation.summaryLines)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 2),
                                 child: Text('• $line',
@@ -2909,7 +2910,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               ),
                               const SizedBox(height: 4),
                               for (final w in preview.warnings.take(3))
-                                Text('• $w', style: const TextStyle(fontSize: 11)),
+                                Text('• $w',
+                                    style: const TextStyle(fontSize: 11)),
                               if (preview.warnings.length > 3)
                                 Text(
                                   '…他 ${preview.warnings.length - 3} 件',
@@ -2942,9 +2944,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     downloadCsvFile(
                         bundle.csv, 'tax_return_${selectedYear}_$stamp.csv');
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content:
-                              Text('$selectedYear年分 確定申告CSVを出力しました')),
+                      SnackBar(content: Text('$selectedYear年分 確定申告CSVを出力しました')),
                     );
                   },
                   icon: const Icon(Icons.table_chart_outlined, size: 16),
@@ -2962,8 +2962,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         'e_tax_${selectedYear}_$stamp.xml');
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                          content: Text(
-                              '$selectedYear年分 e-Tax XMLスケルトンを出力しました')),
+                          content:
+                              Text('$selectedYear年分 e-Tax XMLスケルトンを出力しました')),
                     );
                   },
                   icon: const Icon(Icons.code_rounded, size: 16),

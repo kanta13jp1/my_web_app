@@ -219,7 +219,8 @@ void main() {
       );
     });
 
-    test('extracts tax records from workbook income plans and cashflow rows', () {
+    test('extracts tax records from workbook income plans and cashflow rows',
+        () {
       final workbook = AssetLiabilityWorkbook(
         baseDate: DateTime(2026, 6, 1),
         accounts: const [],
