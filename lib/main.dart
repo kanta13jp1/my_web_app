@@ -1,4 +1,5 @@
 import 'package:my_web_app/pages/jev_mario_lab_page.dart';
+import 'package:my_web_app/pages/jwenv_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
@@ -187,6 +188,7 @@ import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
 import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
+import 'package:my_web_app/pages/platform_release_checklist_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
 import 'package:my_web_app/pages/sobriety_campaign_page.dart';
 import 'package:my_web_app/pages/family_sharing_manager_page.dart';
@@ -542,6 +544,11 @@ Route<dynamic> generateAppRoute(
     case '/jev-mario-lab':
       return MaterialPageRoute(
         builder: (_) => const JevMarioLabPage(),
+        settings: settings,
+      );
+    case '/jwenv-lab':
+      return MaterialPageRoute(
+        builder: (_) => const JwenvLabPage(),
         settings: settings,
       );
     case '/agi-fireworks':
@@ -1280,6 +1287,10 @@ Route<dynamic> generateAppRoute(
     case '/smart-inbox':
       return MaterialPageRoute(
         builder: (_) => const SmartInboxTriagePage(),
+      );
+    case '/platform-release-checklist':
+      return MaterialPageRoute(
+        builder: (_) => const PlatformReleaseChecklistPage(),
       );
     case '/carbon-footprint':
       return MaterialPageRoute(

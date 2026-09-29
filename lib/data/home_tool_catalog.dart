@@ -2202,6 +2202,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const SmartInboxTriagePage()),
     ),
     HomeToolEntry(
+      id: 'platform-release-checklist',
+      sectionId: 'knowledge',
+      title: 'プラットフォーム別リリース確認',
+      subtitle: 'Web・iOS・Androidの確認状態とメモを分けて記録',
+      icon: Icons.fact_check_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>[
+        'リリース',
+        'platform',
+        'iOS',
+        'Android',
+        'Web',
+        '確認',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/platform-release-checklist'),
+    ),
+    HomeToolEntry(
       id: 'form-builder',
       sectionId: 'knowledge',
       title: 'フォームビルダー',
@@ -3026,6 +3044,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF168A75),
       keywords: const <String>['Jev', 'Mario', 'マリオ', '応答速度', 'ベンチマーク'],
       onOpen: (context) => Navigator.of(context).pushNamed('/jev-mario-lab'),
+    ),
+    HomeToolEntry(
+      id: 'jwenv-lab',
+      sectionId: 'ai',
+      title: 'Jwenv WebGPU Lab',
+      subtitle: 'WebGPUによるブラウザ内ローカル軽量LLM・判断判定デモ（Qwen 2.5 0.5B / Jev）',
+      icon: Icons.memory,
+      color: const Color(0xFF2F6FDB),
+      keywords: const <String>[
+        'Jwenv',
+        'WebGPU',
+        'Jev',
+        'Qwen',
+        'ローカルLLM',
+        'ブラウザ内推論',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/jwenv-lab'),
     ),
     HomeToolEntry(
       id: 'agi-fireworks',

@@ -1,10 +1,12 @@
+import {setupHistory} from './history-ui.mjs?v=student-1';
+import {Campaign} from './history.mjs?v=student-1';
 import { downloadJson } from '../shared/download-json.mjs?v=student-1';
 import {drawPresentation} from './presentation.mjs?v=student-1';
 import { StudentSession } from './student-session.mjs?v=student-1';
 import { ReactionAssist, hazards, prediction } from './reaction.mjs?v=student-1';
 import { GameRecording } from './recording.mjs?v=student-1';
 import { GameAudio } from './audio.mjs?v=student-1';
-import { World11, drawWorld, playerPose, courseInfo, LAST_COURSE } from './world11.mjs?v=student-1';
+import { World11, drawWorld, playerPose, courseInfo, LAST_COURSE, isWater } from './world11.mjs?v=student-1';
 import { BUTTONS, DecisionLoop, fixture, readState, summarize, validateRom } from './core.mjs?v=student-1';
 const $ = id => document.getElementById(id);
 let connected = false, pendingBridge = null, seq = 0, samples = [], nes = null, romBytes = null;
@@ -18,9 +20,17 @@ const isRecreation = () => $('mode').value === 'recreation';
 const isGame = () => isRom() || isRecreation();
 const world = new World11();
 const audio = new GameAudio();
+const runHistory=setupHistory(),campaign=new Campaign();let internalTransition=false;
+function beginAttempt(controller){campaign.begin(world,controller);campaign.observe(world);}
+function saveAttempt(outcome){if(internalTransition)return;const row=campaign.finish(world,outcome);if(row)runHistory.add(row);}
+
 const stageName=()=>courseInfo(world.stage).label;
 $('stage').onchange=()=>{stop('ステージを変更しました');world.stage=Number($('stage').value);world.reset();frameCount=0;samples=[];metadata={};interventions=[];update();drawWorld(context,world);showPose();$('restart-local').textContent=stageName()+'を最初から';$('progress').textContent=stageName()+' 再現ゲーム';$('mode-note').textContent=stageName()+'を参考にした独立実装です。'+([9,10,11].includes(world.stage)?'ピーチの登場と追加敵の配置は原作と異なるアレンジです。':'')+'手動プレイはAPI不要です。';};
 const student = new StudentSession();
+function showRetryMemory(){const count=student.failures.reduce((n,r)=>n+r.count,0);$('retry-status').textContent=`このブラウザの攻略経験: ${student.failures.length}か所・失敗／停滞${count}回。再挑戦時はその手前の予測を長くします。モデルの再学習ではなく探索の補助です。`;}
+$('clear-retry').onclick=()=>{if(gameRunning)return status('プレイを停止してから攻略経験を消去してください');student.clearFailures();showRetryMemory();};
+showRetryMemory();
+$('character').onchange=()=>{stop('キャラクターを変更しました');world.character=$('character').value;drawWorld(context,world);};
 const presentation=$('presentation'),presentationContext=presentation.getContext('2d');
 let decision={},effectiveAction='noop',watchMode=false,transition=null;
 function resetDecision(){decision={};effectiveAction='noop';}
@@ -76,7 +86,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopRecordi
 window.addEventListener('pagehide',()=>{stopRecording();if(recordUrl)URL.revokeObjectURL(recordUrl);});
 
 drawWorld(context, world);
-function showPose(){const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':world.stage===6&&world.phase==='playing'?'泳ぐ':pose==='climb'?'旗を降りる':pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
+function showPose(){const counts=world.pickups;const text=`このステージの取得: キノコ ${counts.mushroom} / フラワー ${counts.flower} / 1UP ${counts.life} / スター ${counts.star}`;if($('pickup-status').textContent!==text)$('pickup-status').textContent=text;const pose=playerPose(world);$('posture').textContent='姿勢: '+(pose==='dead'?'ミス':isWater(world.stage)&&world.phase==='playing'?'泳ぐ':pose==='climb'?(world.p.climbing?'つるを登る':'旗を降りる'):pose==='skid'?'ブレーキ':pose==='crouch'?'しゃがみ':pose==='jump'?'上昇':pose==='fall'?'下降':pose==='idle'?'待機':world.input.run?'走る':'歩く')+' ／ '+((world.p.facing??1)<0?'左向き':'右向き');}
 showPose();
 $('progress').textContent = '1-1 再現ゲーム · 手動またはJev操作で開始';
 function controls(action) {
@@ -87,7 +97,7 @@ function controls(action) {
   }
   $('action').textContent = `操作: ${action}`;
 }
-function stop(reason = '停止しました') { transition=null; if(student.active)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,...student.stats};student.stop();audio.stop(); loop.stop(reason); gameRunning = false; controls('noop'); status(reason); }
+function stop(reason = '停止しました') { if(!internalTransition&&campaign.active&&isRecreation())saveAttempt(world.phase==='dead'&&world.lives===0?'dead':'stopped'); if(!gameRunning&&isRecreation()&&world.phase!=='playing')finalizeStageResult();if(gameRunning&&isRecreation()&&world.phase==='playing')saveAttempt('stopped');transition=null; if(student.active)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,...student.stats};student.stop();audio.stop(); loop.stop(reason); gameRunning = false; controls('noop'); status(reason); }
 function state() {
   const value = isRecreation() ? world.telemetry(lastResponse) : isRom() ? readState(nes.cpu.mem, lastResponse) : fixture();
   if(isRecreation()&&metadata.input_profile==='prediction_v1')value.prediction=prediction(world,lastResponse);
@@ -127,7 +137,7 @@ const loop = new DecisionLoop({ request, state, observe:()=>isRecreation()?{...w
   record: s => { samples.push({ index: samples.length + 1, ...s }); lastResponse = s.rtt_ms;
     if(s.ok)decision={source:'Cloud Jev',proposal:s.choice,probabilities:s.probabilities,latency:s.rtt_ms,latencyKind:'Browser round trip (not pure inference)',count:samples.length,note:s.stale?'Stale response: not applied':'Cloud response'};
     if (!s.ok) $('last-error').textContent = s.error; update(); },
-  done: reason => { audio.stop(); gameRunning = false; status(reason==='測定完了'?'Jev測定完了（回数または時間の上限）。続けるには測定を再開してください。':reason==='時間上限で停止'?'Jev測定は60秒上限で停止しました。続けるには測定を再開してください。':reason); },
+  done: reason => {if(isRecreation()&&world.phase==='playing')saveAttempt('stopped'); audio.stop(); gameRunning = false; status(reason==='測定完了'?'Jev測定完了（回数または時間の上限）。続けるには測定を再開してください。':reason==='時間上限で停止'?'Jev測定は60秒上限で停止しました。続けるには測定を再開してください。':reason); },
 });
 parent.postMessage({ type: 'jev-mario-hello' }, origin);
 setTimeout(() => { if (!connected&&!student.active) status('my_web_appの「Jev Mario Lab」から開いてください。このページ単独ではAPIを呼び出せません。'); }, 3000);
@@ -155,7 +165,7 @@ $('rom').addEventListener('change', async e => {
 });
 $('manual').onclick = () => { stop(); if (!nes) return status('先にROMを選んでください'); gameRunning = true; status('手動操作中。EnterでSTART、Xでジャンプ、Zでダッシュ。'); };
 $('reset').onclick = () => { stop(); if (nes && romBytes) { nes.loadROM(romBytes); frameCount = 0; status('リセットしました'); } };
-$('play-local').onclick = () => { stop(); if(world.phase !== 'playing') world.reset(); gameRunning=true; void unlockAudio(); canvas.focus(); status('手動プレイ中（API呼び出しなし）'); };
+$('play-local').onclick = () => { stop(); if(world.phase !== 'playing') world.reset(); metadata.controller='manual';beginAttempt('manual');gameRunning=true; void unlockAudio(); canvas.focus(); status('手動プレイ中（API呼び出しなし）'); };
 $('restart-local').onclick = () => { stop(); world.reset(); {drawWorld(context,world);showPose();} $('progress').textContent=stageName()+'をリセットしました'; };
 $('play-student').onclick=()=>startStudent();
 function startStudent(continuing=false){
@@ -163,7 +173,7 @@ function startStudent(continuing=false){
   if(loop.pending||pendingBridge)return status('API応答の終了を待ってから開始してください');
   if(!continuing){stop();world.reset();frameCount=0;samples=[];interventions=[];metadata={lab_revision:'stage-3',course_id:world.stage,...courseInfo(world.stage),controller:'lightgbm_plus_search',play_policy:'continuous_until_terminal_or_user_stop',mode:'recreation',started_at:new Date().toISOString(),timing:'Browser rendering and asynchronous local search; no API requests'};}update();
   $('last-error').textContent='';void unlockAudio();status('学習済みモデルを読み込んでいます…');
-  student.start({ready:()=>{gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{decision={source:'LightGBM + search | Jev teacher',proposal:student.latest.raw,probabilities:student.latest.probabilities,latency:student.latest.inferenceMs,latencyKind:'Local tree inference only (search excluded)',count:stats.decisions,accepted:stats.accepted,overrides:stats.overrides};$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
+  student.start({ready:()=>{if(!campaign.active)beginAttempt('lightgbm_plus_search');gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('LightGBM＋探索でプレイ中（API呼び出しなし）');},update:stats=>{showRetryMemory();decision={source:'LightGBM + search | Jev teacher',proposal:student.latest.raw,probabilities:student.latest.probabilities,latency:student.latest.inferenceMs,latencyKind:'Local tree inference only (search excluded)',count:stats.decisions,accepted:stats.accepted,overrides:stats.overrides};$('student-status').textContent=`モデル案採用 ${stats.accepted} / 探索変更 ${stats.overrides} / 衝突回避 ${stats.live_guard} / 経験による回避 ${stats.retry_assists} / ジャンプ押し直し ${stats.jump_releases}。JSONに内訳を保存できます。`;},error:()=>{saveAttempt('stopped');gameRunning=false;audio.stop();controls('noop');status('ローカルモデルを開始・継続できませんでした。再読み込みして再試行してください。');}});
 };
 $('start').onclick = () => {
   if(student.active)return status('ローカルプレイを停止してからJev測定を開始してください');
@@ -176,7 +186,7 @@ $('start').onclick = () => {
   samples = []; lastResponse = 0; interventions=[];lastIntervention='';assist.reset();update(); metadata = { lab_revision: 'stage-3', course_id:isRecreation()?world.stage:1,...courseInfo(isRecreation()?world.stage:1), controller:isRecreation()?$('controller').value:'jev_only', input_profile:isRecreation()?$('input-profile').value:'baseline', started_at: new Date().toISOString(), mode: $('mode').value,
     cadence_ms: Number($('cadence').value), max_calls: Number($('count').value), max_duration_ms: 60000, max_age_ms: Number($('max-age').value),
     emulator: isRecreation() ? 'independent-world11-v5' : 'jsnes@2.1.0', timing: 'browser RTT includes proxy/auth/quota; upstream HTTP is not pure inference', user_agent: navigator.userAgent };
-  gameRunning = isGame(); status(isGame() ? 'Jev操作を計測中。通信待ち中もゲームは進みます。' : '固定状態でAPI往復を測定中（実プレイではありません）');
+  if(isRecreation()){saveAttempt('stopped');beginAttempt(metadata.controller);}gameRunning = isGame(); status(isGame() ? 'Jev操作を計測中。通信待ち中もゲームは進みます。' : '固定状態でAPI往復を測定中（実プレイではありません）');
   if (isRecreation()) void unlockAudio();
   loop.start({ count: metadata.max_calls, cadence: metadata.cadence_ms, maxAge: metadata.max_age_ms });
 };
@@ -189,8 +199,8 @@ $('export').onclick = () => {
     browser_rtt: summarize(samples.filter(s => s.ok).map(s => s.rtt_ms)) };
   downloadJson(data, 'jev-mario-measurement.json');
 };
-const keys = { ArrowRight: 7, ArrowLeft: 6, KeyX: 0, Space: 0, KeyZ: 1, Enter: 3, ArrowDown: 5 };
-const inputNames = {7:'right',6:'left',0:'jump',1:'run',5:'down'};
+const keys = { ArrowRight: 7, ArrowLeft: 6, KeyX: 0, Space: 0, KeyZ: 1, Enter: 3, ArrowDown: 5, ArrowUp: 4, KeyC: 8 };
+const inputNames = {7:'right',6:'left',0:'jump',1:'run',5:'down',4:'up',8:'carry'};
 function manualKey(code,pressed) { if(loop.active||student.active) return; if(isRecreation()) { const key=inputNames[code]; if(key) world.input[key]=pressed; } else if(nes) nes[pressed?'buttonDown':'buttonUp'](1,code); }
 window.addEventListener('keydown', e => { if (e.target.matches('input,select,button') || !gameRunning || loop.active || student.active || !(e.code in keys)) return; e.preventDefault(); manualKey(keys[e.code],true); });
 window.addEventListener('keyup', e => { if(e.code in keys) manualKey(keys[e.code],false); });
@@ -204,24 +214,25 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) stop(
 window.addEventListener('pagehide', () => stop());
 function finishStage(){
  const retry=world.phase==='dead'&&world.lives>0;
+ if(student.active&&world.phase==='dead'){student.noteFailure(world);showRetryMemory();}
  const resume=(retry||world.phase==='won'&&world.stage<LAST_COURSE)?{retry,kind:student.active?'student':loop.active?'api':'manual',remaining:loop.limit-loop.attempts,deadline:loop.deadline,cadence:loop.cadence,maxAge:loop.maxAge}:null;
- const result={course_id:world.stage,...courseInfo(world.stage),phase:world.phase,frames:world.frames,score:world.score,lives:world.lives,deaths:world.deaths,fireworks:world.fireworksTotal,student:student.active?structuredClone(student.stats):undefined};
+ const result={course_id:world.stage,...courseInfo(world.stage),phase:world.phase,frames:world.frames,score:world.score,lives:world.lives,deaths:world.deaths,fireworks:world.fireworksTotal,items_collected:{...world.pickups},student:student.active?structuredClone(student.stats):undefined};
  metadata.stage_results??=[];metadata.stage_results.push(result);
- stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス！残り${world.lives}機。同じステージの最初から再開します`:'ゲームオーバー。最初から再挑戦できます');
- transition=resume;
+ internalTransition=true;stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス！残り${world.lives}機。同じステージの最初から再開します`:'ゲームオーバー。最初から再挑戦できます');
+ internalTransition=false;transition=resume;
 }
-function finalizeStageResult(){const r=metadata.stage_results?.at(-1);if(r&&!r.finalized){r.score=world.score;r.fireworks=world.fireworksFired;r.finalized=true;}}
+function finalizeStageResult(){const r=metadata.stage_results?.at(-1);if(r&&!r.finalized){r.score=world.score;r.fireworks=world.fireworksFired;r.finalized=true;campaign.observe(world);if(!transition)saveAttempt(world.phase);}}
 function continueStage(){
- const resume=transition;transition=null;finalizeStageResult();if(!(resume.retry?world.restartLife():world.advanceStage()))return;
+ const resume=transition;finalizeStageResult();transition=null;if(!(resume.retry?world.restartLife():world.advanceStage()))return;
  $('stage').value=String(world.stage);$('restart-local').textContent=stageName()+'を最初から';
  frameBudget=0;presentationBudget=0;frameCount=0;assist.reset();proposedAction='noop';resetDecision();
- drawWorld(context,world);showPose();$('progress').textContent='World '+stageName();metadata.current_course_id=world.stage;metadata.current_stage=courseInfo(world.stage);
+ beginAttempt(metadata.controller||'manual');drawWorld(context,world);showPose();$('progress').textContent='World '+stageName();metadata.current_course_id=world.stage;metadata.current_stage=courseInfo(world.stage);
  if(resume.kind==='student'){
   startStudent(true);
  }else if(resume.kind==='api'){
   const duration=resume.deadline-performance.now();
   if(resume.remaining>0&&duration>0&&$('consent').checked){gameRunning=true;loop.start({count:resume.remaining,duration,cadence:resume.cadence,maxAge:resume.maxAge});status(stageName()+' Jev操作を継続中');}
-  else status((resume.retry?'ステージの先頭へ戻りました。':'次のステージへ移動しました。')+'測定上限のためプレイ停止');
+  else {saveAttempt('stopped');status((resume.retry?'ステージの先頭へ戻りました。':'次のステージへ移動しました。')+'測定上限のためプレイ停止');}
  }else{gameRunning=true;status(stageName()+' 手動プレイ中');}
 }
 function frame(now) {

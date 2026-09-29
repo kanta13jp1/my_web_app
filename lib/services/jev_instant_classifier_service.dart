@@ -22,7 +22,7 @@ class ExpenseCategoryPrediction {
     this.scores = const <String, double>{},
   });
 
-  /// 確信度が 0.80 (80%) 以上であれば自動確定・高確信度サジェストが可能
+  /// 数値が0.80以上かだけを判定する。正答率や自動確定の許可ではない。
   bool get isHighConfidence => confidence >= 0.80;
 
   Map<String, dynamic> toJson() {
@@ -44,9 +44,9 @@ class ExpenseCategoryPrediction {
 
 /// TypeSafe AI（Jev）を活用したリアルタイム即時カテゴリ分類サービス。
 ///
-/// 取引メモや品目テキストから、最大256個の支出カテゴリを数十〜数百msで
-/// 確率スコアリングする。API未設定時や通信障害時は完全な Fail-Open 設計により
-/// ローカルのルールベース辞書へ瞬時にフォールバックする。
+/// 取引メモや品目テキストから支出カテゴリの候補を返す。
+/// API未設定時や通信障害時はローカルのキーワード辞書を使う。
+/// 候補の表示と保存の判断は別であり、精度や応答時間は保証しない。
 class JevInstantClassifierService {
   /// 標準の支出カテゴリ定義一覧
   static const List<JevChoice> defaultCategories = <JevChoice>[

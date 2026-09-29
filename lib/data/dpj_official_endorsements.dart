@@ -6,10 +6,10 @@ import '../models/election_intelligence.dart';
 
 const String dpjOfficialEndorsementSourceUrl =
     'https://new-kokumin.jp/local-election-list';
-const String dpjOfficialEndorsementSourceAsOf = '2026-09-21';
+const String dpjOfficialEndorsementSourceAsOf = '2026-09-28';
 const String dpjOfficialEndorsementSourceDocumentSha256 =
-    '07a86ccdc6789358ee92802ea1d48a13128c0a9f4d079149913a62632f41810b';
-const int dpjOfficialRecommendationEntryCount = 10;
+    '3718dc89f425ecfefba97bf740ca372482fe04fcc453785a17fb6e216e6e6b25';
+const int dpjOfficialRecommendationEntryCount = 9;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     <OfficialEndorsementPrefecture>[

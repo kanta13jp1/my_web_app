@@ -58,6 +58,7 @@ import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
+import 'package:my_web_app/services/asset_tax_export_service.dart';
 import 'package:my_web_app/services/fx_rate_service.dart';
 import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
@@ -194,6 +195,7 @@ String? assetManagementActionJumpLabel(AssetManagementInsightActionItem item) {
     AssetManagementInsightActionType.overduePayment => '支払済みチェックへ移動',
     AssetManagementInsightActionType.upcomingPayment => '支払予定を確認する',
     AssetManagementInsightActionType.cashShortageRisk => '支払予定を確認する',
+    AssetManagementInsightActionType.debtSpiralWarning => '返済計画・金利を確認する',
     _ => null,
   };
 }
@@ -931,6 +933,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetLiabilityAnnualRateEvidenceService();
   final AssetLiabilityHistoryService _assetLiabilityHistoryService =
       const AssetLiabilityHistoryService();
+  final AssetTaxExportService _assetTaxExportService =
+      const AssetTaxExportService();
   final AssetLiabilityMonthlyReportService _assetLiabilityMonthlyReportService =
       const AssetLiabilityMonthlyReportService();
   final AssetManagementInsightService _assetManagementInsightService =
@@ -2787,6 +2791,190 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const SnackBar(
         content: Text('Asset liability CSV bundle exported (5 files)'),
       ),
+    );
+  }
+
+  void _showAssetTaxExportDialog(AssetLiabilityWorkbook workbook) {
+    int selectedYear = _now.year;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final records = _assetTaxExportService.extractRecordsFromWorkbook(
+              workbook: workbook,
+              targetYear: selectedYear,
+            );
+            final preview = _assetTaxExportService.buildPreview(
+              taxYear: selectedYear,
+              records: records,
+            );
+            final theme = Theme.of(context);
+
+            return AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.receipt_long_outlined, size: 22),
+                  SizedBox(width: 8),
+                  Text('確定申告エクスポート', style: TextStyle(fontSize: 18)),
+                ],
+              ),
+              content: SizedBox(
+                width: 440,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ワークブックの収入予定・支払実績から確定申告用データを生成します（CSV + e-Tax XML形式）。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Text('対象年度: ',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 8),
+                          DropdownButton<int>(
+                            value: selectedYear,
+                            items: [
+                              for (int y = _now.year; y >= _now.year - 2; y--)
+                                DropdownMenuItem(value: y, child: Text('$y年分')),
+                            ],
+                            onChanged: (year) {
+                              if (year != null) {
+                                setDialogState(() => selectedYear = year);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: theme.colorScheme.outlineVariant),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('【プレビュー概要】',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary)),
+                            const SizedBox(height: 6),
+                            for (final line
+                                in preview.confirmation.summaryLines)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: Text('• $line',
+                                    style: const TextStyle(fontSize: 12)),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (preview.warnings.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber.shade700),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.warning_amber_rounded,
+                                      size: 16, color: Colors.amber.shade900),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '検証・注意点 (${preview.warnings.length}件)',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.amber.shade900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              for (final w in preview.warnings.take(3))
+                                Text('• $w',
+                                    style: const TextStyle(fontSize: 11)),
+                              if (preview.warnings.length > 3)
+                                Text(
+                                  '…他 ${preview.warnings.length - 3} 件',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('閉じる'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    final bundle = _assetTaxExportService.buildExportBundle(
+                      taxYear: selectedYear,
+                      records: records,
+                    );
+                    final stamp =
+                        DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+                    downloadCsvFile(
+                        bundle.csv, 'tax_return_${selectedYear}_$stamp.csv');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('$selectedYear年分 確定申告CSVを出力しました')),
+                    );
+                  },
+                  icon: const Icon(Icons.table_chart_outlined, size: 16),
+                  label: const Text('CSV出力'),
+                ),
+                FilledButton.icon(
+                  onPressed: () {
+                    final bundle = _assetTaxExportService.buildExportBundle(
+                      taxYear: selectedYear,
+                      records: records,
+                    );
+                    final stamp =
+                        DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+                    downloadCsvFile(bundle.eTaxXmlSkeleton,
+                        'e_tax_${selectedYear}_$stamp.xml');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content:
+                              Text('$selectedYear年分 e-Tax XMLスケルトンを出力しました')),
+                    );
+                  },
+                  icon: const Icon(Icons.code_rounded, size: 16),
+                  label: const Text('e-Tax XML出力'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -22200,7 +22388,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetManagementEmergencyAdviceList(report.emergencyAdvices),
             const SizedBox(height: 12),
           ],
-          _buildAssetManagementMonthlyDebtTrendList(report.debtTrendInsights),
+          _buildAssetManagementMonthlyDebtTrendList(
+            report.debtTrendInsights,
+            report.workbook,
+          ),
           const SizedBox(height: 12),
           if (report.disciplineReport?.isRelevant ?? false) ...[
             _buildAssetManagementDisciplineCard(report.disciplineReport!),
@@ -23541,7 +23732,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ),
           const SizedBox(height: 8),
-          if (compliant)
+          if (compliant) ...[
             Text(
               report.hasPriorMonthData
                   ? '🎉 今月は「カード以外の追加借入ゼロ」と「新規利用分を25日に全額返済」を達成しています。'
@@ -23549,8 +23740,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   : 'カード新規利用分の25日返済ルールは守れています。'
                       'カード以外の追加借入判定は来月以降の履歴蓄積後に有効化されます。',
               style: const TextStyle(fontSize: 12, height: 1.5),
-            )
-          else
+            ),
+            if (report.revolvingBillingsByAccountId.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              _buildDisciplineAchievedRevolvingEvidence(report),
+            ],
+          ] else
             for (final violation in report.allViolations.take(
               violationDisplayLimit,
             ))
@@ -23704,9 +23899,232 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
             ],
           ),
+          if (violation.type ==
+              AssetDebtDisciplineViolationType.revolvingCard) ...[
+            const SizedBox(height: 8),
+            _buildDisciplineRevolvingUsageBreakdown(violation),
+          ],
         ],
       ),
     );
+  }
+
+  Widget _buildDisciplineAchievedRevolvingEvidence(
+    AssetDebtDisciplineReport report,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: const Color(0xFF0D9488).withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '誓約②の判定根拠（新規利用と返済の連動）:',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F766E),
+            ),
+          ),
+          const SizedBox(height: 2),
+          for (final entry in report.revolvingBillingsByAccountId.entries) ...[
+            Text(
+              entry.value.hasImportedStatement
+                  ? '・${entry.key}: 新規利用 ${_formatManagementYen(entry.value.newUsageAmount)}（明細 ${entry.value.usageItems.length}件）を今月返済で全額カバー'
+                  : '・${entry.key}: 新規利用 ${_formatManagementYen(entry.value.newUsageAmount)}（手入力設定）を今月返済でカバー（カード明細未取込）',
+              style: const TextStyle(fontSize: 11, color: Color(0xFF134E4A)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisciplineRevolvingUsageBreakdown(
+    AssetDebtDisciplineViolation violation,
+  ) {
+    if (violation.hasImportedStatement && violation.usageItems.isNotEmpty) {
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            key: Key('discipline_usage_breakdown_${violation.accountId}'),
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+            childrenPadding:
+                const EdgeInsets.only(left: 10, right: 10, bottom: 8),
+            title: Row(
+              children: [
+                const Icon(
+                  Icons.receipt_long_outlined,
+                  size: 16,
+                  color: Color(0xFF475569),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '判定根拠: 新規利用明細 (${violation.usageItems.length}件 / 合計 ${_formatManagementYen(violation.newUsageAmount ?? 0)})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            children: [
+              for (final item in violation.usageItems)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      if (item.postedAt != null)
+                        Text(
+                          '${item.postedAt!.month}/${item.postedAt!.day} ',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          item.description,
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatManagementYen(item.amount),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: item.status ==
+                                  AssetLiabilityRevolvingUsageStatus.covered
+                              ? const Color(0xFFECFDF5)
+                              : const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: item.status ==
+                                    AssetLiabilityRevolvingUsageStatus.covered
+                                ? const Color(0xFF0D9488).withValues(alpha: 0.3)
+                                : const Color(0xFFB91C1C)
+                                    .withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          item.statusLabel,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: item.status ==
+                                    AssetLiabilityRevolvingUsageStatus.covered
+                                ? const Color(0xFF0D9488)
+                                : const Color(0xFFB91C1C),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.info_outline, size: 15, color: Color(0xFFD97706)),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '判定根拠: カード明細の取り込みが未実施です',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFB45309),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '手入力設定額 ${_formatManagementYen(violation.newUsageAmount ?? 0)} に基づいて誓約違反を判定しています。明細を取り込むと、正確な利用項目ごとにリボ残高組み入れや返済不足を把握できます。',
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1.4,
+                color: Color(0xFF78350F),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: Key(
+                  'discipline_import_statement_prompt_${violation.accountId}',
+                ),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  foregroundColor: const Color(0xFFD97706),
+                ),
+                icon: const Icon(Icons.upload_file, size: 14),
+                label: const Text(
+                  'カード明細を取り込む',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _selectedCardStatementBillingAccountId =
+                        violation.accountId;
+                    _cardStatementImportMessage =
+                        '${violation.accountName}を選択しました。カード明細を貼り付けて「明細を取り込む」を押してください。';
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   String _assetDebtTrendCategoryLabel(AssetDebtTrendCategory category) {
@@ -24331,8 +24749,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildAssetManagementMonthlyDebtTrendList(
-    List<AssetDebtTrendInsight> insights,
-  ) {
+    List<AssetDebtTrendInsight> insights, [
+    AssetLiabilityWorkbook? workbook,
+  ]) {
     _scheduleHouseholdTrackerSnapshotSync(insights);
     final hasCritical = insights.any(
       (insight) => insight.severity == AssetDebtTrendSeverity.critical,
@@ -24342,6 +24761,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         : hasCritical
             ? const Color(0xFFB91C1C)
             : const Color(0xFFD97706);
+    final debtRowsById = <String, AssetLiabilityDebtRow>{
+      if (workbook != null)
+        for (final row in workbook.debtMasterRows) row.id: row,
+    };
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(10),
@@ -24425,7 +24848,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           for (final insight in insights.take(5))
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _buildAssetManagementMonthlyDebtTrendTile(insight),
+              child: _buildAssetManagementMonthlyDebtTrendTile(
+                insight,
+                debtRow: debtRowsById[insight.accountId],
+              ),
             ),
           if (insights.length > 5)
             Text(
@@ -24441,12 +24867,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildAssetManagementMonthlyDebtTrendTile(
-    AssetDebtTrendInsight insight,
-  ) {
+    AssetDebtTrendInsight insight, {
+    AssetLiabilityDebtRow? debtRow,
+  }) {
     final color = _assetDebtTrendSeverityColor(insight.severity);
     final payoffValue = insight.estimatedPayoffMonths == null
         ? 'この返済額では完済不能'
         : '約${insight.estimatedPayoffMonths}ヶ月';
+    final revolving = debtRow?.revolvingBilling;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(8),
@@ -24535,9 +24963,198 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ],
           ),
+          if (revolving != null) ...[
+            const SizedBox(height: 8),
+            _buildRevolvingUsageBreakdownWidget(
+              accountId: insight.accountId,
+              accountName: insight.accountName,
+              revolving: revolving,
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Widget _buildRevolvingUsageBreakdownWidget({
+    required String accountId,
+    required String accountName,
+    required AssetLiabilityRevolvingCreditBilling revolving,
+  }) {
+    if (revolving.hasImportedStatement && revolving.usageItems.isNotEmpty) {
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            key: Key('revolving_usage_breakdown_$accountId'),
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+            childrenPadding:
+                const EdgeInsets.only(left: 10, right: 10, bottom: 8),
+            title: Row(
+              children: [
+                const Icon(
+                  Icons.receipt_long_outlined,
+                  size: 16,
+                  color: Color(0xFF475569),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '当月の新規利用内訳 (${revolving.usageItems.length}件 / 合計 ${_formatManagementYen(revolving.newUsageAmount)})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            children: [
+              for (final item in revolving.usageItems)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      if (item.postedAt != null)
+                        Text(
+                          '${item.postedAt!.month}/${item.postedAt!.day} ',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          item.description,
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatManagementYen(item.amount),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: item.status ==
+                                  AssetLiabilityRevolvingUsageStatus.covered
+                              ? const Color(0xFFECFDF5)
+                              : const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: item.status ==
+                                    AssetLiabilityRevolvingUsageStatus.covered
+                                ? const Color(0xFF0D9488).withValues(alpha: 0.3)
+                                : const Color(0xFFB91C1C)
+                                    .withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          item.statusLabel,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: item.status ==
+                                    AssetLiabilityRevolvingUsageStatus.covered
+                                ? const Color(0xFF0D9488)
+                                : const Color(0xFFB91C1C),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.info_outline, size: 15, color: Color(0xFFD97706)),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'カード明細の取り込みが未実施です',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFB45309),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              revolving.newUsageAmount > 0
+                  ? '手入力設定額 ${_formatManagementYen(revolving.newUsageAmount)} で計算中。明細を取り込むと、何にいくら使われたかの具体的な内訳と返済カバー状況を確認できます。'
+                  : '明細を取り込むと、当月の新規利用明細とリボ残高への影響・返済カバー状況を自動照合できます。',
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1.4,
+                color: Color(0xFF78350F),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: Key('import_statement_prompt_$accountId'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  foregroundColor: const Color(0xFFD97706),
+                ),
+                icon: const Icon(Icons.upload_file, size: 14),
+                label: const Text(
+                  'カード明細を取り込む',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _selectedCardStatementBillingAccountId = accountId;
+                    _cardStatementImportMessage =
+                        '$accountNameを選択しました。カード明細を貼り付けて「明細を取り込む」を押してください。';
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _buildAssetManagementEmergencyAdviceList(
@@ -25149,6 +25766,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.difference_outlined,
       AssetManagementInsightActionType.accountShortfallRisk =>
         Icons.account_balance_wallet_outlined,
+      AssetManagementInsightActionType.debtSpiralWarning =>
+        Icons.trending_up_rounded,
     };
   }
 
@@ -28227,13 +28846,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     icon: const Icon(Icons.download_outlined),
                     label: const Text('CSV出力'),
                   ),
+                  OutlinedButton.icon(
+                    onPressed: () => _showAssetTaxExportDialog(workbook),
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    label: const Text('確定申告出力'),
+                  ),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            '保存値は月末確定ではなく保存時点の値です。月次履歴・支払予定・収入予定・口座別資金繰りをCSV出力できます。',
+            '保存値は月末確定ではなく保存時点の値です。月次履歴・支払予定・収入予定・口座別資金繰り・確定申告用データ（CSV+e-Tax）を出力できます。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
