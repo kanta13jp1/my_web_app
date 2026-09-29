@@ -58,6 +58,7 @@ import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
+import 'package:my_web_app/services/asset_tax_export_service.dart';
 import 'package:my_web_app/services/fx_rate_service.dart';
 import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
@@ -931,6 +932,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetLiabilityAnnualRateEvidenceService();
   final AssetLiabilityHistoryService _assetLiabilityHistoryService =
       const AssetLiabilityHistoryService();
+  final AssetTaxExportService _assetTaxExportService =
+      const AssetTaxExportService();
   final AssetLiabilityMonthlyReportService _assetLiabilityMonthlyReportService =
       const AssetLiabilityMonthlyReportService();
   final AssetManagementInsightService _assetManagementInsightService =
@@ -2787,6 +2790,190 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const SnackBar(
         content: Text('Asset liability CSV bundle exported (5 files)'),
       ),
+    );
+  }
+
+  void _showAssetTaxExportDialog(AssetLiabilityWorkbook workbook) {
+    int selectedYear = _now.year;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final records = _assetTaxExportService.extractRecordsFromWorkbook(
+              workbook: workbook,
+              targetYear: selectedYear,
+            );
+            final preview = _assetTaxExportService.buildPreview(
+              taxYear: selectedYear,
+              records: records,
+            );
+            final theme = Theme.of(context);
+
+            return AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.receipt_long_outlined, size: 22),
+                  SizedBox(width: 8),
+                  Text('確定申告エクスポート', style: TextStyle(fontSize: 18)),
+                ],
+              ),
+              content: SizedBox(
+                width: 440,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ワークブックの収入予定・支払実績から確定申告用データを生成します（CSV + e-Tax XML形式）。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Text('対象年度: ',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 8),
+                          DropdownButton<int>(
+                            value: selectedYear,
+                            items: [
+                              for (int y = _now.year; y >= _now.year - 2; y--)
+                                DropdownMenuItem(value: y, child: Text('$y年分')),
+                            ],
+                            onChanged: (year) {
+                              if (year != null) {
+                                setDialogState(() => selectedYear = year);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: theme.colorScheme.outlineVariant),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('【プレビュー概要】',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary)),
+                            const SizedBox(height: 6),
+                            for (final line in preview.confirmation.summaryLines)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: Text('• $line',
+                                    style: const TextStyle(fontSize: 12)),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (preview.warnings.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber.shade700),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.warning_amber_rounded,
+                                      size: 16, color: Colors.amber.shade900),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '検証・注意点 (${preview.warnings.length}件)',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.amber.shade900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              for (final w in preview.warnings.take(3))
+                                Text('• $w', style: const TextStyle(fontSize: 11)),
+                              if (preview.warnings.length > 3)
+                                Text(
+                                  '…他 ${preview.warnings.length - 3} 件',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('閉じる'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    final bundle = _assetTaxExportService.buildExportBundle(
+                      taxYear: selectedYear,
+                      records: records,
+                    );
+                    final stamp =
+                        DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+                    downloadCsvFile(
+                        bundle.csv, 'tax_return_${selectedYear}_$stamp.csv');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content:
+                              Text('$selectedYear年分 確定申告CSVを出力しました')),
+                    );
+                  },
+                  icon: const Icon(Icons.table_chart_outlined, size: 16),
+                  label: const Text('CSV出力'),
+                ),
+                FilledButton.icon(
+                  onPressed: () {
+                    final bundle = _assetTaxExportService.buildExportBundle(
+                      taxYear: selectedYear,
+                      records: records,
+                    );
+                    final stamp =
+                        DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+                    downloadCsvFile(bundle.eTaxXmlSkeleton,
+                        'e_tax_${selectedYear}_$stamp.xml');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text(
+                              '$selectedYear年分 e-Tax XMLスケルトンを出力しました')),
+                    );
+                  },
+                  icon: const Icon(Icons.code_rounded, size: 16),
+                  label: const Text('e-Tax XML出力'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -28227,13 +28414,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     icon: const Icon(Icons.download_outlined),
                     label: const Text('CSV出力'),
                   ),
+                  OutlinedButton.icon(
+                    onPressed: () => _showAssetTaxExportDialog(workbook),
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    label: const Text('確定申告出力'),
+                  ),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            '保存値は月末確定ではなく保存時点の値です。月次履歴・支払予定・収入予定・口座別資金繰りをCSV出力できます。',
+            '保存値は月末確定ではなく保存時点の値です。月次履歴・支払予定・収入予定・口座別資金繰り・確定申告用データ（CSV+e-Tax）を出力できます。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,

@@ -1,3 +1,5 @@
+import '../models/asset_liability_workbook.dart';
+
 enum AssetTaxRecordKind { income, expense, deduction }
 
 enum AssetTaxRecordCategory {
@@ -98,6 +100,87 @@ class AssetTaxExportService {
   static const String _spreadsheetFormulaPrefixes = '=+-@\t\r\n';
 
   const AssetTaxExportService();
+
+  /// Extracts deterministic tax-record candidates from workbook income plans
+  /// and cashflow rows, filtering by target tax year when specified.
+  List<AssetTaxRecord> extractRecordsFromWorkbook({
+    required AssetLiabilityWorkbook workbook,
+    int? targetYear,
+  }) {
+    final records = <AssetTaxRecord>[];
+
+    // 1. Income plans
+    for (var i = 0; i < workbook.incomePlans.length; i++) {
+      final plan = workbook.incomePlans[i];
+      final occurredOn = plan.date;
+      if (targetYear != null && _jstDate(occurredOn).year != targetYear) {
+        continue;
+      }
+      records.add(
+        AssetTaxRecord(
+          id: 'income-plan-${plan.id.isNotEmpty ? plan.id : i}',
+          occurredOn: occurredOn,
+          kind: AssetTaxRecordKind.income,
+          category: AssetTaxRecordCategory.businessIncome,
+          amount: plan.amount,
+          title: plan.name,
+          counterparty: plan.destinationAccountName ?? '',
+          source: 'income_plans',
+        ),
+      );
+    }
+
+    // 2. Cashflow rows (payments / deductions / miscellaneous income)
+    for (var i = 0; i < workbook.cashflowRows.length; i++) {
+      final row = workbook.cashflowRows[i];
+      final occurredOn = row.paymentDate;
+      if (targetYear != null && _jstDate(occurredOn).year != targetYear) {
+        continue;
+      }
+      final effectiveAmount =
+          row.actualPaymentAmount ?? row.paymentAmount;
+      if (effectiveAmount <= 0) continue;
+
+      if (row.isIncome) {
+        if (!workbook.incomePlans.any((p) => p.name == row.accountName)) {
+          records.add(
+            AssetTaxRecord(
+              id: 'cashflow-inc-$i',
+              occurredOn: occurredOn,
+              kind: AssetTaxRecordKind.income,
+              category: AssetTaxRecordCategory.miscIncome,
+              amount: effectiveAmount,
+              title: row.accountName,
+              counterparty: row.paymentSourceAccountName ?? '',
+              source: 'cashflow_rows',
+            ),
+          );
+        }
+      } else if (row.isPayment) {
+        final titleLower = row.accountName.toLowerCase();
+        final isFurusato = titleLower.contains('ふるさと') ||
+            titleLower.contains('furusato');
+        records.add(
+          AssetTaxRecord(
+            id: 'cashflow-exp-$i',
+            occurredOn: occurredOn,
+            kind: isFurusato
+                ? AssetTaxRecordKind.deduction
+                : AssetTaxRecordKind.expense,
+            category: isFurusato
+                ? AssetTaxRecordCategory.furusatoTaxDonation
+                : AssetTaxRecordCategory.businessExpense,
+            amount: effectiveAmount,
+            title: row.accountName,
+            counterparty: row.destinationAccountName ?? '',
+            source: 'cashflow_rows',
+          ),
+        );
+      }
+    }
+
+    return records;
+  }
 
   AssetTaxExportBundle buildExportBundle({
     required int taxYear,
