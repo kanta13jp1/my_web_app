@@ -7263,6 +7263,11 @@ serve(async (req: Request) => {
         }
 
         // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        // action_access_policy により userId か service role のどちらかが必須。
+        // userId が無いのは内部 EF (service role) 呼び出しのみ。
+        if (!userId && !isServiceRoleRequest(req)) {
+          return json({ error: "Unauthorized" }, 401);
+        }
         if (userId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),
@@ -7529,6 +7534,10 @@ serve(async (req: Request) => {
         }
 
         // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        // action_access_policy により userId か service role のどちらかが必須。
+        if (!userId && !isServiceRoleRequest(req)) {
+          return json({ error: "Unauthorized" }, 401);
+        }
         if (routingUserId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),

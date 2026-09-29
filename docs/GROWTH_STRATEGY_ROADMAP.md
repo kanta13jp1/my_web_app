@@ -33702,3 +33702,12 @@ Persist capped device-local failure clusters and extend search/collision foresig
 - Search for reachable power-ups, including block reveals, with a longer horizon. Preserve local retry memory and shared campaign rankings.
 - Add a quiet eighth bell part; original synthesized arrangement, not the reference soundtrack.
 - Cloud tests cover complete water courses, overshot-exit recovery, pickups and browser/audio regressions; final outcomes are recorded in the PR.
+
+### daily-development セッション記録 (2026-09-28 / Claude Code Win版)
+
+- メインの作業チェックアウトは今回 `fix/asset-ai-card-discipline-reconcile` (origin/main から689コミット遅れ・未コミット2件) だったため触れず、origin/main から独立した worktree (`daily-dev-20260928`) で作業し main へ直接 landing した。
+- `/parking` ([lib/pages/parking_reservation_page.dart](../lib/pages/parking_reservation_page.dart)) の「新規予約」ボタンは「新規予約機能は準備中です」と表示するだけだったが、`lifestyle-hub` の `parking.reserve` action はサーバー側に実装済みで、UI からの実行経路だけが欠けた行き止まりだった。駐車場名・区画・開始/終了日時・ナンバー・料金の入力ダイアログを追加して接続し、保存後に一覧を再取得する。
+- EF 側は入力を無検証で `hub_data` に保存するため、駐車場名必須・終了>開始・料金0以上の整数の検証を純関数 `ParkingReservationDraft` ([lib/models/parking_reservation_entry.dart](../lib/models/parking_reservation_entry.dart)) に置いた。送信 body を一覧モデル `ParkingReservationEntry` で読み戻す往復テストで、書き込み側と読み取り側のキー不一致を検出できるようにした。
+- 駐車場事業者への実予約ではなく「予約内容の記録」であることをダイアログに明記 (成功を装わない)。
+- 同種の「サーバー実装済み・UI準備中」候補として `loyalty.redeem` (ポイント交換) と `wallet.pay` (送金) も確認したが、残高を減らす金銭系操作のため今回は着手せず人間レビュー前提で持ち越す。`/meal-log` の AI 栄養推定はサーバー側 (`food_analysis`) が未実装で、UI 文言に内部メモ「Codex#2準備中」が露出している点を次回候補とする。
+- 実績は migration `20260928090000_seed_achievements_daily_dev_20260928.sql` に記録。ブログ下書きキューは2030年分まで埋まっているため手動追加は見送り。
