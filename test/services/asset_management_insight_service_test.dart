@@ -907,7 +907,7 @@ void main() {
     test(
         'detects debt spiral warning when principal payment is zero or below interest',
         () {
-      final zeroPrincipalDebt = AssetLiabilityDebtRow(
+      const zeroPrincipalDebt = AssetLiabilityDebtRow(
         id: 'jibun_loan',
         name: 'じぶんローン',
         kind: AssetLiabilityAccountKind.cardLoan,
@@ -937,7 +937,7 @@ void main() {
         requiresAction: true,
       );
 
-      final spiralDebt = AssetLiabilityDebtRow(
+      const spiralDebt = AssetLiabilityDebtRow(
         id: 'au_pay_card',
         name: 'auPAYカード',
         kind: AssetLiabilityAccountKind.creditCard,
@@ -967,7 +967,7 @@ void main() {
         requiresAction: true,
       );
 
-      final healthyDebt = AssetLiabilityDebtRow(
+      const healthyDebt = AssetLiabilityDebtRow(
         id: 'healthy_loan',
         name: '奨学金',
         kind: AssetLiabilityAccountKind.otherLiability,
