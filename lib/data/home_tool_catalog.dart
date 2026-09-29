@@ -3058,7 +3058,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'Jev',
         'Qwen',
         'ローカルLLM',
-        'ブラウザ内推論'
+        'ブラウザ内推論',
       ],
       onOpen: (context) => Navigator.of(context).pushNamed('/jwenv-lab'),
     ),
