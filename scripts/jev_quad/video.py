@@ -65,7 +65,7 @@ try:
     return {data,mode,frames,campaign,replayParity:true,results:runs.map(r=>({lane:r.lane,student:r.student,clear:r.clear,final_course:r.final_course,stage_results:r.stage_results,x:r.x,frames:r.frames,wall_ms:r.wall_ms,accepted:r.accepted,overrides:r.overrides,apiCalls:r.apiCalls})),label:'Measured parallel trials aligned to t=0; action replay, not live capture'};
    }''',mode)
    (out/f'four-lane-{mode}.webm').write_bytes(base64.b64decode(result.pop('data')))
-   subprocess.run(['ffmpeg','-y','-loglevel','error','-i',str(out/f'four-lane-{mode}.webm'),'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart',str(out/f'four-lane-{mode}.mp4')],check=True)
+   subprocess.run(['ffmpeg','-y','-loglevel','error','-i',str(out/f'four-lane-{mode}.webm'),'-vf','fps=30','-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart',str(out/f'four-lane-{mode}.mp4')],check=True)
    (out/f'{mode}.json').write_text(json.dumps(result,indent=2))
    page.locator('canvas').screenshot(path=str(out/f'{mode}.png'));page.close()
   browser.close()
