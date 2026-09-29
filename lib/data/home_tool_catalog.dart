@@ -3052,7 +3052,14 @@ List<HomeToolEntry> buildHomeToolCatalog({
       subtitle: 'WebGPUによるブラウザ内ローカル軽量LLM・判断判定デモ（Qwen 2.5 0.5B / Jev）',
       icon: Icons.memory,
       color: const Color(0xFF2F6FDB),
-      keywords: const <String>['Jwenv', 'WebGPU', 'Jev', 'Qwen', 'ローカルLLM', 'ブラウザ内推論'],
+      keywords: const <String>[
+        'Jwenv',
+        'WebGPU',
+        'Jev',
+        'Qwen',
+        'ローカルLLM',
+        'ブラウザ内推論'
+      ],
       onOpen: (context) => Navigator.of(context).pushNamed('/jwenv-lab'),
     ),
     HomeToolEntry(
