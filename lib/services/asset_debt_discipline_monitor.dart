@@ -59,6 +59,12 @@ class AssetDebtDisciplineViolation {
   /// 当月の新規利用額。
   final double? newUsageAmount;
 
+  /// 前月末からの残高変動（前月比増加額）。履歴がない場合は null。
+  final double? balanceDelta;
+
+  /// 24ヶ月完済ラインの目安月額。
+  final double? payoffIn24MonthsPayment;
+
   const AssetDebtDisciplineViolation({
     required this.type,
     required this.severity,
@@ -77,6 +83,8 @@ class AssetDebtDisciplineViolation {
     this.usageItems = const <AssetLiabilityRevolvingUsageItem>[],
     this.hasImportedStatement = false,
     this.newUsageAmount,
+    this.balanceDelta,
+    this.payoffIn24MonthsPayment,
   });
 
   /// 具体的な脱却プラン（月額×期間）を提示できるか。
@@ -125,6 +133,14 @@ class AssetDebtDisciplineReport {
         ...newBorrowingViolations,
         ...revolvingCardViolations,
       ];
+
+  /// カード会社での「今後一括に固定」完了済みを除く未対応違反一覧。
+  /// ワンタップで意思記録すると次回レポートの未対応違反カウントが減少する。
+  List<AssetDebtDisciplineViolation> get unresolvedViolations =>
+      allViolations.where((v) => !v.oneShotChangeCompleted).toList();
+
+  /// 未対応の違反件数。
+  int get unresolvedViolationCount => unresolvedViolations.length;
 
   bool get isCompliant => allViolations.isEmpty;
 
@@ -238,6 +254,7 @@ class AssetDebtDisciplineMonitor {
               kind: row.kind,
               amount: inferredNewUsage,
               currentBalance: balance,
+              balanceDelta: balanceDiff,
               problem: '${row.name}で今月 約${_yen(inferredNewUsage)}の新規借入が発生しました。'
                   '「追加の借金をしない」誓約に反しています。',
               action: '翌月はこのローン・借入の新規利用を止め、既存の返済計画を優先してください。',
@@ -270,6 +287,11 @@ class AssetDebtDisciplineMonitor {
             balance,
             monthlyRate,
             escapeTargetMonths,
+          );
+          final payoff24Payment = AssetDebtTrendAnalyzer.paymentToClearIn(
+            balance,
+            monthlyRate,
+            24,
           );
           final currentPlan = payment > 0
               ? AssetDebtTrendAnalyzer.estimatePayoff(
@@ -305,6 +327,7 @@ class AssetDebtDisciplineMonitor {
               '既存残高${_yen(balance)}の一括返済は求めません。'
               '無理のない範囲で残高圧縮を続ける場合、月${_yen(escapePayment)}なら'
               '約$escapeTargetMonthsヶ月で完済できる目安です。$currentPlanText';
+          final balanceDelta = prior != null ? balance - prior : null;
           revolving.add(
             AssetDebtDisciplineViolation(
               type: AssetDebtDisciplineViolationType.revolvingCard,
@@ -330,6 +353,8 @@ class AssetDebtDisciplineMonitor {
               hasImportedStatement:
                   revolvingBilling?.hasImportedStatement ?? false,
               newUsageAmount: newUsage,
+              balanceDelta: balanceDelta,
+              payoffIn24MonthsPayment: payoff24Payment,
             ),
           );
         }

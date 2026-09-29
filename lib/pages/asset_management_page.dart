@@ -23703,7 +23703,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '違反 ${report.allViolations.length}件',
+                    '違反 ${report.unresolvedViolationCount}件',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -23771,11 +23771,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String label, {
     required bool achieved,
     required bool evaluated,
+    String? unevaluatedLabel,
   }) {
     final color = !evaluated
         ? const Color(0xFF6B7280)
         : (achieved ? const Color(0xFF0D9488) : const Color(0xFFB91C1C));
-    final status = !evaluated ? '判定保留' : (achieved ? '達成' : '違反');
+    final status = !evaluated
+        ? (unevaluatedLabel ?? '判定保留（前月データ欠損・今月のみの推定）')
+        : (achieved ? '達成' : '違反');
     final icon = !evaluated
         ? Icons.hourglass_empty
         : (achieved ? Icons.check_circle_outline : Icons.cancel_outlined);
@@ -23885,6 +23888,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 value: _formatManagementYen(violation.currentBalance),
                 color: const Color(0xFF6B7280),
               ),
+              if (violation.balanceDelta != null)
+                _buildAssetLiabilitySyncChip(
+                  label: '前月比',
+                  value: _formatManagementDeltaYen(violation.balanceDelta),
+                  color: color,
+                ),
+              if (violation.payoffIn24MonthsPayment case final p24?)
+                _buildAssetLiabilitySyncChip(
+                  label: '24ヶ月完済ライン',
+                  value: _formatManagementYen(p24),
+                  color: const Color(0xFF0D9488),
+                ),
               if (violation.hasEscapePlan)
                 _buildAssetLiabilitySyncChip(
                   label: '${violation.escapeMonths}ヶ月脱却の月額',
@@ -23901,6 +23916,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           if (violation.type ==
               AssetDebtDisciplineViolationType.revolvingCard) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: CheckboxListTile(
+                key: Key('violation_one_shot_toggle_${violation.accountId}'),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                controlAffinity: ListTileControlAffinity.leading,
+                value:
+                    _cardUsagePolicies[violation.accountId]?.enforceOneShot ==
+                        true,
+                title: const Text(
+                  'カード会社で「今後一括に固定」を完了済みにする（次回違反から除外）',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                onChanged: (val) {
+                  _toggleCardOneShotCompleted(
+                    violation.accountId,
+                    val ?? false,
+                  );
+                },
+              ),
+            ),
             const SizedBox(height: 8),
             _buildDisciplineRevolvingUsageBreakdown(violation),
           ],
