@@ -1,3 +1,4 @@
+import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_tax_export_service.dart';
 import 'package:test/test.dart';
 
@@ -216,6 +217,139 @@ void main() {
           'Record bad-1 is furusato tax but is not marked as deduction.',
         ),
       );
+    });
+
+    test('extracts tax records from workbook income plans and cashflow rows',
+        () {
+      final workbook = AssetLiabilityWorkbook(
+        baseDate: DateTime(2026, 6, 1),
+        accounts: const [],
+        debtMasterRows: const [],
+        repaymentPriorityRows: const [],
+        paymentDayRisks: const [],
+        cashflowRows: [
+          AssetLiabilityCashflowRow(
+            eventType: AssetLiabilityCashflowEventType.payment,
+            accountId: 'act-1',
+            accountName: 'ふるさと納税 寄付金',
+            paymentDay: 15,
+            paymentDate: DateTime(2026, 6, 15),
+            paymentSourceAccountId: 'bank-1',
+            paymentSourceAccountName: 'Bank',
+            destinationAccountId: 'furusato',
+            destinationAccountName: 'Municipality',
+            paymentMethod: AssetLiabilityPaymentMethod.direct,
+            paymentMethodLabel: 'Direct',
+            paymentMethodSettingSource:
+                AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+            billingAccountId: null,
+            billingAccountName: null,
+            includedInBillingAccount: false,
+            paymentAmount: 50000,
+            paymentAmountEstimated: false,
+            paid: true,
+            received: false,
+            overdue: false,
+            cashBeforePayment: 100000,
+            cashAfterPayment: 50000,
+            riskLevel: AssetLiabilityCashRiskLevel.normal,
+          ),
+          AssetLiabilityCashflowRow(
+            eventType: AssetLiabilityCashflowEventType.payment,
+            accountId: 'act-2',
+            accountName: 'サーバー代',
+            paymentDay: 20,
+            paymentDate: DateTime(2026, 6, 20),
+            paymentSourceAccountId: 'card-1',
+            paymentSourceAccountName: 'Card',
+            destinationAccountId: 'cloud',
+            destinationAccountName: 'Cloud Provider',
+            paymentMethod: AssetLiabilityPaymentMethod.direct,
+            paymentMethodLabel: 'Direct',
+            paymentMethodSettingSource:
+                AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+            billingAccountId: null,
+            billingAccountName: null,
+            includedInBillingAccount: false,
+            paymentAmount: 15000,
+            paymentAmountEstimated: false,
+            paid: true,
+            received: false,
+            overdue: false,
+            cashBeforePayment: 50000,
+            cashAfterPayment: 35000,
+            riskLevel: AssetLiabilityCashRiskLevel.normal,
+          ),
+        ],
+        incomePlans: [
+          AssetLiabilityIncomePlan(
+            id: 'inc-1',
+            date: DateTime(2026, 6, 25),
+            name: '業務委託報酬',
+            amount: 400000,
+            destinationAccountId: 'bank-1',
+            destinationAccountName: 'Main Bank',
+            received: true,
+          ),
+        ],
+        transferTasks: const [],
+        accountCashflowSummaries: const [],
+        transferSuggestions: const [],
+        cardBillingReview: const AssetLiabilityCardBillingReviewData(
+          directPaymentItems: [],
+          cardBillingGroups: [],
+          missingBillingAccountItems: [],
+          needsReviewItems: [],
+          doubleCountingRiskItems: [],
+        ),
+        cardStatementReconciliation:
+            const AssetLiabilityCardStatementReconciliationData(
+          groups: [],
+          unmatchedStatementLines: [],
+        ),
+        cashLikeTotal: 100000,
+        securitiesTotal: 0,
+        positiveAssetTotal: 100000,
+        liabilityTotal: 0,
+        netWorth: 100000,
+        monthlyMinimumPaymentEstimateTotal: 0,
+        monthlyScheduledPaymentTotal: 65000,
+        monthlyActualPaymentTotal: 65000,
+        monthlyPaymentDifferenceTotal: 0,
+        monthlyUnpaidPaymentTotal: 0,
+        monthlyUnreceivedIncomeTotal: 0,
+        cashAfterMinimumPayments: 100000,
+        cashAfterScheduledPayments: 35000,
+        debtToAssetRatio: 0,
+        topFourDebtShare: 0,
+        manualPaymentCount: 0,
+        estimatedPaymentCount: 0,
+        subscriptionFixedCostAccountIds: const {},
+        cardUsagePolicies: const {},
+      );
+
+      final extracted = service.extractRecordsFromWorkbook(
+        workbook: workbook,
+        targetYear: 2026,
+      );
+
+      expect(extracted.length, 3);
+      final income =
+          extracted.firstWhere((r) => r.kind == AssetTaxRecordKind.income);
+      expect(income.amount, 400000);
+      expect(income.title, '業務委託報酬');
+
+      final furusato = extracted.firstWhere(
+        (r) => r.category == AssetTaxRecordCategory.furusatoTaxDonation,
+      );
+      expect(furusato.amount, 50000);
+      expect(furusato.kind, AssetTaxRecordKind.deduction);
+
+      final expense = extracted.firstWhere(
+        (r) => r.category == AssetTaxRecordCategory.businessExpense,
+      );
+      expect(expense.amount, 15000);
+      expect(expense.title, 'サーバー代');
     });
   });
 }
