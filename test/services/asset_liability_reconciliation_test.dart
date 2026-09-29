@@ -40,23 +40,29 @@ void main() {
         final workbook = planner.buildWorkbook(
           latestSnapshot: const <String, double>{
             'bank': 500000,
-            'auPAYカード': -120000,
+            'auPayカード': -120000,
+            'au': -30000,
             'ファミペイ': -30000,
+            'ファミペイ利用': -15000,
           },
           baseDate: baseDate,
           revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
-            'au_pay_card': AssetLiabilityRevolvingCreditConfig(
+            'aupay_card': AssetLiabilityRevolvingCreditConfig(
               monthlyAmount: 10000,
-              newUsageAmount: 50000,
+              creditLimit: 500000,
             ),
+          },
+          cardBillingAccountIds: const <String, String>{
+            'au': 'aupay_card',
+            'ファミペイ利用': 'famipay_card',
           },
         );
 
         final reconciliation = workbook.cardStatementReconciliation;
         final auPayGroup = reconciliation.groups.firstWhere(
           (g) =>
-              g.billingAccountName.contains('auPAY') ||
-              g.billingAccountId == 'au_pay_card',
+              g.billingAccountId == 'aupay_card' ||
+              g.billingAccountName.contains('auPay'),
         );
         expect(auPayGroup.isRevolving, isTrue);
         // リボ払いカードは明細合計と請求額の不一致アラートが抑止される
@@ -65,8 +71,8 @@ void main() {
 
         final famipayGroup = reconciliation.groups.firstWhere(
           (g) =>
-              g.billingAccountName.contains('ファミペイ') ||
-              g.billingAccountId == 'famipay_card',
+              g.billingAccountId == 'famipay_card' ||
+              g.billingAccountName.contains('ファミペイ'),
         );
         expect(famipayGroup.isRevolving, isFalse);
         // 非リボカードは明細未取込時にアラートが出る
