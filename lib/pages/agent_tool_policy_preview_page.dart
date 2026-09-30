@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:my_web_app/services/agent_tool_policy_preview_service.dart';
 
 class AgentToolPolicyPreviewPage extends StatefulWidget {
-  const AgentToolPolicyPreviewPage({super.key});
+  const AgentToolPolicyPreviewPage({super.key, this.preview});
+
+  final Future<Map<String, dynamic>> Function(String, String)? preview;
 
   @override
   State<AgentToolPolicyPreviewPage> createState() =>
@@ -31,7 +33,7 @@ class _AgentToolPolicyPreviewPageState
       _error = null;
     });
     try {
-      final result = await _service.preview(_role, _scopes.text);
+      final result = await (widget.preview ?? _service.preview)(_role, _scopes.text);
       if (mounted) setState(() => _result = result);
     } catch (_) {
       if (mounted) {
