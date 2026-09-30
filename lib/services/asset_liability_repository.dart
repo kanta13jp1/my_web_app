@@ -306,6 +306,9 @@ abstract class AssetLiabilityRepository {
 
   bool get supabaseWritesEnabled => false;
 
+  /// Whether the current month's restored state is confirmed for AI input.
+  bool isMonthVerifiedForAi(DateTime month) => true;
+
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month);
 
   Future<void> saveMonth({
@@ -571,7 +574,19 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     return load;
   }
 
+  final Map<String, String> _verifiedMonthUsers = <String, String>{};
+
+  @override
+  bool isMonthVerifiedForAi(DateTime month) {
+    if (!syncEnabled) return localRepository.isMonthVerifiedForAi(month);
+    final userId = _userIdOrNull();
+    final key = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    return userId != null && _verifiedMonthUsers[key] == userId;
+  }
+
   Future<AssetLiabilityMonthlyState> _loadMonthOnce(DateTime month) async {
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    _verifiedMonthUsers.remove(monthKey);
     final local = await localRepository.loadMonth(month);
     final remote = _remoteOrNull();
     final userId = _userIdOrNull();
@@ -579,9 +594,20 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return local;
     }
 
-    final remoteState = await _tryRemote(
-      () => remote.loadMonth(userId: userId, month: month),
-    );
+    AssetLiabilityMonthlyState? remoteState;
+    try {
+      remoteState = await remote.loadMonth(userId: userId, month: month);
+    } catch (error, stackTrace) {
+      if (onSyncError != null) {
+        onSyncError!(error, stackTrace);
+      } else {
+        debugPrint('Asset liability monthly read failed: $error');
+      }
+      // Keep offline display, but never upload or generate from an unverified read.
+      return local;
+    }
+    if (_userIdOrNull() != userId) return local;
+    _verifiedMonthUsers[monthKey] = userId;
     if (remoteState == null || remoteState.isEmpty) {
       if (!local.isEmpty && supabaseWritesEnabled) {
         await _tryRemote(
