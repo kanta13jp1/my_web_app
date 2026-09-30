@@ -727,7 +727,7 @@ void main() {
           aiAnalysisHistoryService: _EmptyHistory(),
           debugNow: DateTime(2026, 9, 6, 12),
           debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[
-            cost
+            cost,
           ],
           debugInitialAssetData: const <String, Map<String, double>>{
             '2026-09-06': <String, double>{'bank': 30000},
