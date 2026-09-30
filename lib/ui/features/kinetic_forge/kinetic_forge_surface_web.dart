@@ -12,7 +12,8 @@ class KineticForgeSurface extends StatefulWidget {
   State<KineticForgeSurface> createState() => _KineticForgeSurfaceState();
 }
 
-class _KineticForgeSurfaceState extends State<KineticForgeSurface> with RouteAware {
+class _KineticForgeSurfaceState extends State<KineticForgeSurface>
+    with RouteAware {
   web.HTMLIFrameElement? _frame;
   bool _visible = true;
 
