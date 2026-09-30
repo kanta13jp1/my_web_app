@@ -24,6 +24,19 @@ class ProviderReportTest(unittest.TestCase):
         first = upsert("", "1", "first")
         self.assertIn("first", upsert(first, "2", "second"))
 
+    def test_reject_nested_crossed_and_other_run_reversed_markers(self):
+        def marker(run, kind):
+            return f"<!-- ai-university-run:{run}:{kind} -->"
+        cases = (
+            [("1", "start"), ("2", "start"), ("2", "end"), ("1", "end")],
+            [("1", "start"), ("2", "start"), ("1", "end"), ("2", "end")],
+            [("2", "end"), ("2", "start")],
+        )
+        for parts in cases:
+            text = "\n".join(marker(run, kind) for run, kind in parts)
+            with self.subTest(parts=parts), self.assertRaises(ValueError):
+                upsert(text, "1", "replacement")
+
     def test_duplicate_keys_fail(self):
         block = upsert("", "1", "x")
         with self.assertRaises(ValueError):

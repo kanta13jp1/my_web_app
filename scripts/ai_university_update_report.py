@@ -46,6 +46,19 @@ def upsert(text, key, section):
     ends = re.findall(r"<!-- ai-university-run:(\d+):end -->", text)
     if len(starts) != len(set(starts)) or sorted(starts) != sorted(ends):
         raise ValueError("duplicate/malformed report run keys")
+    markers = re.findall(r"<!-- ai-university-run:(\d+):(start|end) -->", text)
+    active = None
+    for run_id, kind in markers:
+        if kind == "start":
+            if active is not None:
+                raise ValueError("nested report markers")
+            active = run_id
+        else:
+            if active != run_id:
+                raise ValueError("crossed/reversed report markers")
+            active = None
+    if active is not None:
+        raise ValueError("unclosed report markers")
     block = f"{start}\n{section.rstrip()}\n{end}"
     if key in starts:
         a, b = text.index(start), text.index(end)
