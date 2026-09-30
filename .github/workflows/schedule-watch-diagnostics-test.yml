@@ -5,10 +5,14 @@ on:
       - scripts/schedule_resilience_watch.py
       - scripts/schedule_resilience_watch_test.py
       - .github/workflows/schedule-watch-diagnostics-test.yml
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: schedule-watch-diagnostics-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
