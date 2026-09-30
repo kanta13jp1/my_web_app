@@ -73,8 +73,10 @@ void main() {
       expect(p.hasDelta, isFalse);
       expect(p.deltaAmount, isNull);
       expect(p.deltaPercent, isNull);
-      expect(p.sparkline.map((point) => point.monthKey),
-          ['2026-05', '2026-09']);
+      expect(
+        p.sparkline.map((point) => point.monthKey),
+        ['2026-05', '2026-09'],
+      );
     });
 
     test('January compares December of the previous year', () {
