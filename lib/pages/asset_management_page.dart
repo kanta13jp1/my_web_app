@@ -30663,6 +30663,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return SizedBox(
       width: 220,
       child: DropdownButton<String>(
+        key: ValueKey('card-billing-method:${row.id}'),
         value: validSelected
             ? selected
             : AssetLiabilityPlanningService.directPaymentMethodId,

@@ -292,6 +292,33 @@ void main() {
     );
     expect(repository.state.paymentOverrides[providerId], 20000);
     ai.complete(1, 'Synthetic discrepancy resolved');
+    final methodInput = find.byKey(
+      const ValueKey('card-billing-method:$providerId'),
+    );
+    await tester.ensureVisible(methodInput);
+    await tester.tap(methodInput);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(AssetLiabilityPlanningService.directPaymentLabel).last);
+    await _pumpUntil(tester, () => ai.requests.length == 3);
+    final detached = ai.requests.last.workbook.cardStatementReconciliation.groups
+        .singleWhere((group) => group.billingAccountId == 'paypay_card');
+    expect(detached.configuredDetailTotal, 0);
+    expect(repository.state.cardBillingAccountIds[providerId],
+        AssetLiabilityPlanningService.directPaymentMethodId);
+    expect(repository.state.paymentOverrides[providerId], 20000);
+    ai.complete(2, 'Synthetic detail detached without deleting the payment');
+    await tester.ensureVisible(methodInput);
+    await tester.tap(methodInput);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byWidgetPredicate((widget) =>
+        widget is DropdownMenuItem<String> && widget.value == 'paypay_card').last);
+    await _pumpUntil(tester, () => ai.requests.length == 4);
+    final reattached = ai.requests.last.workbook.cardStatementReconciliation.groups
+        .singleWhere((group) => group.billingAccountId == 'paypay_card');
+    expect(reattached.configuredDetailTotal, 20000);
+    expect(reattached.hasConfiguredMismatchFix, isFalse);
+    expect(repository.state.cardBillingAccountIds[providerId], 'paypay_card');
+    ai.complete(3, 'Synthetic detail reattached');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpWidget(
@@ -311,7 +338,7 @@ void main() {
         ),
       ),
     );
-    await _pumpUntil(tester, () => ai.requests.length == 3);
+    await _pumpUntil(tester, () => ai.requests.length == 5);
     final restored = ai
         .requests.last.workbook.cardStatementReconciliation.groups
         .singleWhere((group) => group.billingAccountId == 'paypay_card');
@@ -321,7 +348,7 @@ void main() {
       restored.alerts,
       contains(AssetLiabilityPlanningService.cardStatementMissingImportAlert),
     );
-    ai.complete(2, 'Restored synthetic discrepancy remains resolved');
+    ai.complete(4, 'Restored synthetic discrepancy remains resolved');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });
