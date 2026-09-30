@@ -34,9 +34,10 @@ class _AgentToolPolicyPreviewPageState
       final result = await _service.preview(_role, _scopes.text);
       if (mounted) setState(() => _result = result);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() =>
-            _error = '確認できませんでした。ログイン状態と通信を確認して、再試行してください。操作を許可した扱いにはしません。');
+            _error = '確認できませんでした。ログイン状態と通信を確認して、再試行してください。操作を許可した扱いにはしません。',);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -63,7 +64,7 @@ class _AgentToolPolicyPreviewPageState
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                      'AIに頼む操作が、役割の既定の権限で認められるかを確認します。ログインが必要です。入力や結果は保存せず、操作も実行しません。実際の利用者の権限を変更・付与する画面ではありません。'),
+                      'AIに頼む操作が、役割の既定の権限で認められるかを確認します。ログインが必要です。入力や結果は保存せず、操作も実行しません。実際の利用者の権限を変更・付与する画面ではありません。',),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _role,
@@ -85,20 +86,20 @@ class _AgentToolPolicyPreviewPageState
                     controller: _scopes,
                     enabled: !_loading,
                     decoration: const InputDecoration(
-                        labelText: '操作名（複数はカンマで区切る）', hintText: 'read, send'),
+                        labelText: '操作名（複数はカンマで区切る）', hintText: 'read, send',),
                     onChanged: (_) => setState(() => _result = null),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                      'read＝読む、suggest＝提案、create＝作成、update＝更新、delete＝削除、send＝送信、purchase＝購入、discount＝値引き、external_share＝外部共有。削除・送信・購入・値引き・外部共有は人の承認が必要です。'),
+                      'read＝読む、suggest＝提案、create＝作成、update＝更新、delete＝削除、send＝送信、purchase＝購入、discount＝値引き、external_share＝外部共有。削除・送信・購入・値引き・外部共有は人の承認が必要です。',),
                   const SizedBox(height: 16),
                   FilledButton(
                       onPressed: _loading ? null : _preview,
-                      child: Text(_loading ? '確認中…' : '保存せずに確認')),
+                      child: Text(_loading ? '確認中…' : '保存せずに確認'),),
                   if (_error != null)
                     Padding(
                         padding: const EdgeInsets.only(top: 16),
-                        child: Text(_error!)),
+                        child: Text(_error!),),
                   if (_result != null)
                     Padding(
                         padding: const EdgeInsets.only(top: 16),
@@ -109,9 +110,9 @@ class _AgentToolPolicyPreviewPageState
                                 _result!['allowed'] == true
                                     ? '試し判定：要求を満たします'
                                     : '試し判定：操作を止めます',
-                                style: Theme.of(context).textTheme.titleMedium),
+                                style: Theme.of(context).textTheme.titleMedium,),
                             Text(_explain(
-                                _result!['blocked_reason'] as String?)),
+                                _result!['blocked_reason'] as String?,),),
                             const Text('これは試し判定です。実行時には別途権限を確認します。'),
                           ],
                         ),
