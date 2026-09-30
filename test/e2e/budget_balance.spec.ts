@@ -26,6 +26,7 @@ test('annual costs and allocations show the actual remainder', async ({ page }, 
   await example(page);
   await calculate(page);
   await expect(result(page, '配分後の残り 30,000円')).toBeVisible();
+  await result(page, '配分後の残り 30,000円').scrollIntoViewIfNeeded();
   await expect(result(page, '配分後の残り 30,000円')).toContainText('年間支出の月割り：10,000円');
   await page.screenshot({ path: info.outputPath('allocation-normal.png') });
 });
@@ -44,6 +45,7 @@ test('unknown and malformed costs are not zero; correcting the field recovers', 
   await amount(page, 2, '0');
   await calculate(page);
   await expect(result(page, '配分後の残り 40,000円')).toBeVisible();
+  await result(page, '配分後の残り 40,000円').scrollIntoViewIfNeeded();
   await page.screenshot({ path: info.outputPath('allocation-recovered.png') });
 });
 
@@ -56,6 +58,7 @@ test('changed input invalidates old result, deficit is explicit, reload forgets 
   await expect(result(page, '配分後の残り 30,000円')).toHaveCount(0);
   await calculate(page);
   await expect(result(page, '毎月 70,000円の不足')).toBeVisible();
+  await result(page, '毎月 70,000円の不足').scrollIntoViewIfNeeded();
   await page.evaluate(async () => {
     await Promise.all(document.getAnimations({ subtree: true }).filter(a =>
       a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {})));
