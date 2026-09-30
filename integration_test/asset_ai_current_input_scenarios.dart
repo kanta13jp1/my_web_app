@@ -50,6 +50,11 @@ class _DelayedMonthlyRepository extends _MonthlyRepository {
   int loads = 0;
 
   @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
+    return <String, int>{'synthetic debt': 5};
+  }
+
+  @override
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
     loads++;
     return await restored.future;
