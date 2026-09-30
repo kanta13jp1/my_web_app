@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_persistence.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
@@ -12,9 +14,50 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
+    test('AI and display loads share one remote read and Future', () async {
+      final month = DateTime(2026, 5);
+      final local = _GatedMonthlyRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'synthetic-user',
+      );
+      final first = repository.loadMonth(month);
+      final second = repository.loadMonth(DateTime(2026, 5, 31));
+      final aiRead = repository.loadMonthForAi(month);
+      expect(identical(first, second), isTrue);
+      local.gate.complete();
+      await Future.wait(<Future<AssetLiabilityMonthlyState>>[first, second]);
+      expect((await aiRead).canGenerateAi, isTrue);
+      expect(
+        remote.calls.where((call) => call.startsWith('loadMonth:')).length,
+        1,
+      );
+    });
+
+    test('user change during local restoration cannot verify another user', () async {
+      final local = _GatedMonthlyRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      var user = 'original-user';
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => user,
+      );
+      final pending = repository.loadMonthForAi(DateTime(2026, 5));
+      user = 'another-user';
+      local.gate.complete();
+      final result = await pending;
+      expect(result.canGenerateAi, isFalse);
+      expect(result.source, AssetLiabilityMonthReadSource.remoteUnavailable);
+      expect(remote.calls, isEmpty);
+    });
+
     for (final hasLocalData in <bool>[false, true]) {
-      test('failed remote read never confirms fallback: $hasLocalData',
-          () async {
+      test('failed remote read never confirms fallback: $hasLocalData', () async {
         final month = DateTime(2026, 5);
         final local = _FakeAssetLiabilityRepository();
         if (hasLocalData) {
@@ -39,10 +82,14 @@ void main() {
         final failed = await repository.loadMonthForAi(month);
         expect(failed.source, AssetLiabilityMonthReadSource.remoteUnavailable);
         expect(failed.canGenerateAi, isFalse);
-        expect(failed.state.paidAccountNames.contains('synthetic debt'),
-            hasLocalData);
-        expect((await local.loadMonth(month)).paidAccountNames,
-            failed.state.paidAccountNames);
+        expect(
+          failed.state.paidAccountNames.contains('synthetic debt'),
+          hasLocalData,
+        );
+        expect(
+          (await local.loadMonth(month)).paidAccountNames,
+          failed.state.paidAccountNames,
+        );
         remote.failMonthReads = false;
         final recovered = await repository.loadMonthForAi(month);
         expect(recovered.source, AssetLiabilityMonthReadSource.remoteConfirmed);
@@ -50,8 +97,7 @@ void main() {
       });
     }
 
-    test('successful empty read and explicit local-only remain distinct',
-        () async {
+    test('successful empty read and explicit local-only remain distinct', () async {
       final month = DateTime(2026, 5);
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
@@ -75,7 +121,9 @@ void main() {
       expect(localOnly.source, AssetLiabilityMonthReadSource.localOnly);
       expect(localOnly.canGenerateAi, isTrue);
       expect(
-          remote.calls.where((call) => call.startsWith('saveMonth:')), isEmpty);
+        remote.calls.where((call) => call.startsWith('saveMonth:')),
+        isEmpty,
+      );
     });
 
     test('saves and restores monthly state through local repository', () async {
@@ -2044,6 +2092,16 @@ void main() {
       );
     });
   });
+}
+
+class _GatedMonthlyRepository extends _FakeAssetLiabilityRepository {
+  final gate = Completer<void>();
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    await gate.future;
+    return super.loadMonth(month);
+  }
 }
 
 class _FakeAssetLiabilityRepository extends AssetLiabilityRepository {

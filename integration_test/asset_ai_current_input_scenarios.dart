@@ -50,6 +50,18 @@ class _DelayedMonthlyRepository extends _MonthlyRepository {
   int loads = 0;
   int failures = 0;
   bool failRestoration = false;
+  bool unverifiedRestoration = false;
+
+  @override
+  Future<AssetLiabilityMonthRead> loadMonthForAi(DateTime month) async {
+    return AssetLiabilityMonthRead(
+      state: await loadMonth(month),
+      monthKey: AssetLiabilityMonthlyStateStore.formatMonthKey(month),
+      source: unverifiedRestoration
+          ? AssetLiabilityMonthReadSource.remoteUnavailable
+          : AssetLiabilityMonthReadSource.localOnly,
+    );
+  }
 
   @override
   Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
@@ -205,11 +217,15 @@ void main() {
     );
   });
 
-  for (final failRestoration in <bool>[false, true]) {
+  for (final restorationMode in <int>[0, 1, 2]) {
+    final failRestoration = restorationMode == 1;
+    final unverifiedRestoration = restorationMode == 2;
     testWidgets(
         failRestoration
             ? 'failed monthly restoration never generates or saves AI input'
-            : 'slow monthly restoration blocks automatic and manual AI input',
+            : unverifiedRestoration
+                ? 'offline fallback never generates or saves confirmed AI input'
+                : 'slow monthly restoration blocks automatic and manual AI input',
         (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_management_display_mode_v1': 'full',
@@ -218,7 +234,8 @@ void main() {
       AssetRecurringTombstoneSyncService.resetSharedForTest();
       await tester.binding.setSurfaceSize(const Size(1600, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      final repository = _DelayedMonthlyRepository();
+      final repository = _DelayedMonthlyRepository()
+        ..unverifiedRestoration = unverifiedRestoration;
       final ai = _ControlledAi();
       final history = _CountingHistory();
       await tester.pumpWidget(
@@ -250,15 +267,15 @@ void main() {
         matching: find.byType(OutlinedButton),
       );
       expect(tester.widget<OutlinedButton>(updateButton).onPressed, isNull);
-      if (failRestoration) {
+      if (failRestoration || unverifiedRestoration) {
         // Raise the error in the requesting widget's error zone. A failed
         // Completer created in the test zone cannot cross error-zone boundaries.
-        repository.failRestoration = true;
+        repository.failRestoration = failRestoration;
         repository.restored.complete(const AssetLiabilityMonthlyState());
         for (var frame = 0; frame < 60; frame++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
-        expect(repository.failures, 1);
+        expect(repository.failures, failRestoration ? 1 : 0);
         expect(ai.requests, isEmpty);
         expect(history.reads, 0);
         expect(history.saves, 0);
