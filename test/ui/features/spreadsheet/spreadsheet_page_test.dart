@@ -148,14 +148,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('spreadsheet-xlsx-confirm')));
     await tester.pumpAndSettle();
-    expect(find.text('商品'), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const Key('spreadsheet-cell-A1')),
+        matching: find.text('商品')), findsOneWidget);
     await tester.tap(find.byKey(const Key('spreadsheet-export-xlsx')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('spreadsheet-xlsx-confirm')));
     await tester.pumpAndSettle();
     expect(gateway.savedName, endsWith('-export.xlsx'));
     expect(
-        const SpreadsheetXlsxCodec().decode(gateway.savedBytes!), hasLength(2));
+      const SpreadsheetXlsxCodec().decode(gateway.savedBytes!),
+      hasLength(2),
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -235,8 +238,10 @@ class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
   Future<SpreadsheetPickedCsv?> pickXlsx() async => picked;
 
   @override
-  Future<bool> saveXlsx(
-          {required String suggestedName, required Uint8List bytes}) =>
+  Future<bool> saveXlsx({
+    required String suggestedName,
+    required Uint8List bytes,
+  }) =>
       saveCsv(suggestedName: suggestedName, bytes: bytes);
 
   @override

@@ -285,6 +285,9 @@ class SpreadsheetViewModel extends ChangeNotifier {
       if (picked == null) return false;
       final imported = _xlsxCodec.decode(picked.bytes);
       final current = _document!;
+      if (current.sheets.length + imported.length > 20) {
+        throw const FormatException('追加後のシート数は20枚までです。');
+      }
       final names = current.sheets.map((s) => s.name.toLowerCase()).toSet();
       if (imported.any((s) => names.contains(s.name.toLowerCase()))) {
         throw const FormatException('同名シートがあります。既存シートの名前を変更してから読み込んでください。');
@@ -338,9 +341,10 @@ class SpreadsheetViewModel extends ChangeNotifier {
         suggestedName: _safeFileName('${current.title}-export.xlsx'),
         bytes: _xlsxCodec.encode(current),
       );
-      if (saved)
+      if (saved) {
         _noticeMessage =
             'XLSXを書き出しました。${SpreadsheetXlsxCodec.compatibilityNotice}';
+      }
       return saved;
     } on FormatException catch (error) {
       _errorMessage = error.message.toString();

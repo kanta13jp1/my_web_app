@@ -12,8 +12,11 @@ const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 const rels =
     'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
-Uint8List fixture(String cells,
-    {String target = 'worksheets/custom.xml', String? strings}) {
+Uint8List fixture(
+  String cells, {
+  String target = 'worksheets/custom.xml',
+  String? strings,
+}) {
   final files = <String, String>{
     'xl/workbook.xml':
         '<workbook xmlns="$ns" xmlns:r="$rels"><sheets><sheet name="売上" sheetId="7" r:id="rId42"/></sheets></workbook>',
@@ -69,13 +72,17 @@ void main() {
     final sheet = codec
         .decode(fixture('<c r="A1" t="inlineStr"><is><t>=1+2</t></is></c>'))
         .single;
-    final document = SpreadsheetDocument.fromJson(SpreadsheetDocument.blank()
-        .copyWith(sheets: [sheet], activeSheetId: sheet.id).toJson());
+    final document = SpreadsheetDocument.fromJson(
+      SpreadsheetDocument.blank()
+          .copyWith(sheets: [sheet], activeSheetId: sheet.id).toJson(),
+    );
     expect(
-        const EvaluateSpreadsheetFormulaUseCase()(
-                document, const CellAddress(row: 0, column: 0))
-            .displayValue,
-        '=1+2');
+      const EvaluateSpreadsheetFormulaUseCase()(
+        document,
+        const CellAddress(row: 0, column: 0),
+      ).displayValue,
+      '=1+2',
+    );
     final decoded = codec.decode(codec.encode(document)).single;
     expect(decoded.textCells, ['0:0']);
     expect(decoded.cells['0:0'], '=1+2');
@@ -88,20 +95,25 @@ void main() {
     final doc = SpreadsheetDocument.blank()
         .copyWith(sheets: [sheet], activeSheetId: 'a');
     expect(
-        const EvaluateSpreadsheetFormulaUseCase()(
-                doc, const CellAddress(row: 2, column: 0))
-            .displayValue,
-        '5');
+      const EvaluateSpreadsheetFormulaUseCase()(
+        doc,
+        const CellAddress(row: 2, column: 0),
+      ).displayValue,
+      '5',
+    );
   });
   test('rejects excessive formula range work', () {
     final doc = SpreadsheetDocument.blank().replaceSheet(
-        SpreadsheetSheet.blank(id: 'sheet-1', name: 'a')
-            .copyWith(cells: {'0:0': '=SUM(A2:A1000000)'}));
+      SpreadsheetSheet.blank(id: 'sheet-1', name: 'a')
+          .copyWith(cells: {'0:0': '=SUM(A2:A1000000)'}),
+    );
     expect(
-        const EvaluateSpreadsheetFormulaUseCase()(
-                doc, const CellAddress(row: 0, column: 0))
-            .displayValue,
-        '#NUM!');
+      const EvaluateSpreadsheetFormulaUseCase()(
+        doc,
+        const CellAddress(row: 0, column: 0),
+      ).displayValue,
+      '#NUM!',
+    );
   });
   for (final cell in [
     '<c r="A1" t="s"><v>99</v></c>',
@@ -117,8 +129,10 @@ void main() {
     });
   }
   test('rejects traversal relationships', () {
-    expect(() => codec.decode(fixture('', target: '../other.xml')),
-        throwsFormatException);
+    expect(
+      () => codec.decode(fixture('', target: '../other.xml')),
+      throwsFormatException,
+    );
   });
   test('rejects oversized central directory before decompression', () {
     final bytes = fixture('');
@@ -132,15 +146,17 @@ void main() {
     expect(() => codec.decode(bytes), throwsFormatException);
   });
   test('rejects invalid output names and XML controls', () {
+    // This fixture is synthetic; no customer files are used in CI.
     for (final sheet in [
       SpreadsheetSheet.blank(id: 'a', name: 'invalid/name'),
       SpreadsheetSheet.blank(id: 'a', name: 'valid')
           .copyWith(cells: {'0:0': '\u0000'}),
     ]) {
       expect(
-          () => codec
-              .encode(SpreadsheetDocument.blank().copyWith(sheets: [sheet])),
-          throwsFormatException);
+        () =>
+            codec.encode(SpreadsheetDocument.blank().copyWith(sheets: [sheet])),
+        throwsFormatException,
+      );
     }
   });
   test('rejects duplicate names case-insensitively', () {
@@ -151,6 +167,31 @@ void main() {
       ],
     );
     expect(() => codec.encode(doc), throwsFormatException);
+  });
+  test('rejects a CRC mismatch even when ZIP metadata otherwise parses', () {
+    final bytes = fixture('<c r="A1"><v>1</v></c>');
+    final data = ByteData.sublistView(bytes);
+    for (var i = 0; i < bytes.length - 46; i++) {
+      final signature = data.getUint32(i, Endian.little);
+      if (signature == 0x04034b50) data.setUint32(i+14, 0, Endian.little);
+      if (signature == 0x02014b50) data.setUint32(i+16, 0, Endian.little);
+    }
+    expect(() => codec.decode(bytes), throwsFormatException);
+  });
+  test('bounds actual inflation when ZIP sizes are forged', () {
+    final bytes = fixture('<c r="A1" t="inlineStr"><is><t>${'x' * (9*1024*1024)}</t></is></c>');
+    final data = ByteData.sublistView(bytes);
+    for (var i = 0; i < bytes.length - 46; i++) {
+      final signature = data.getUint32(i, Endian.little);
+      if (signature == 0x04034b50 && data.getUint32(i+22, Endian.little) > 8*1024*1024) {
+        data.setUint32(i+22, 1, Endian.little);
+      }
+      if (signature == 0x02014b50 && data.getUint32(i+24, Endian.little) > 8*1024*1024) {
+        data.setUint32(i+24, 1, Endian.little);
+      }
+    }
+    expect(() => codec.decode(bytes), throwsA(isA<FormatException>().having(
+        (error) => error.message, 'message', contains('展開サイズ'))));
   });
   test('independent openpyxl input and output interoperability in cloud', () {
     final directory = Platform.environment['XLSX_INTEROP_DIR'];

@@ -477,18 +477,22 @@ class _SpreadsheetPageState extends State<SpreadsheetPage> {
     if (result != null) viewModel.renameSheet(sheet.id, result);
   }
 
-  Future<void> _confirmXlsx(SpreadsheetViewModel viewModel,
-      {required bool importing}) async {
+  Future<void> _confirmXlsx(
+    SpreadsheetViewModel viewModel, {
+    required bool importing,
+  }) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(importing ? 'XLSXの読み込み範囲' : 'XLSXの書き出し範囲'),
         content: const SingleChildScrollView(
-            child: Text(SpreadsheetXlsxCodec.compatibilityNotice)),
+          child: Text(SpreadsheetXlsxCodec.compatibilityNotice),
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
           FilledButton(
             key: const Key('spreadsheet-xlsx-confirm'),
             onPressed: () => Navigator.pop(context, true),

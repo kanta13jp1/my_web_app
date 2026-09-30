@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 
@@ -12,8 +14,10 @@ abstract interface class SpreadsheetFileGateway {
   Future<SpreadsheetPickedCsv?> pickCsv();
   Future<SpreadsheetPickedCsv?> pickXlsx();
 
-  Future<bool> saveXlsx(
-      {required String suggestedName, required Uint8List bytes});
+  Future<bool> saveXlsx({
+    required String suggestedName,
+    required Uint8List bytes,
+  });
 
   Future<bool> saveCsv({
     required String suggestedName,
@@ -30,18 +34,31 @@ class FilePickerSpreadsheetFileGateway implements SpreadsheetFileGateway {
       dialogTitle: 'XLSXを読み込む',
       type: FileType.custom,
       allowedExtensions: const ['xlsx'],
-      withData: true,
+      withData: false,
+      withReadStream: true,
       lockParentWindow: true,
     );
     if (result == null || result.files.isEmpty) return null;
     final file = result.files.single;
-    if (file.bytes == null) throw StateError('XLSXファイルを読み込めませんでした。');
-    return SpreadsheetPickedCsv(name: file.name, bytes: file.bytes!);
+    const limit = 16 * 1024 * 1024;
+    if (file.size > limit) throw const FormatException('XLSXは16MBまで対応しています。');
+    final stream = file.readStream;
+    if (stream == null) throw StateError('XLSXファイルを読み込めませんでした。');
+    final content = BytesBuilder(copy: false);
+    await for (final chunk in stream) {
+      if (content.length + chunk.length > limit) {
+        throw const FormatException('XLSXは16MBまで対応しています。');
+      }
+      content.add(chunk);
+    }
+    return SpreadsheetPickedCsv(name: file.name, bytes: content.takeBytes());
   }
 
   @override
-  Future<bool> saveXlsx(
-      {required String suggestedName, required Uint8List bytes}) async {
+  Future<bool> saveXlsx({
+    required String suggestedName,
+    required Uint8List bytes,
+  }) async {
     final path = await FilePicker.saveFile(
       dialogTitle: 'XLSXを別名で書き出す',
       fileName: suggestedName,

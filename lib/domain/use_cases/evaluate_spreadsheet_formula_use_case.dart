@@ -32,7 +32,7 @@ class EvaluateSpreadsheetFormulaUseCase {
     }
 
     try {
-      final value = _evaluateNumeric(document, address, <CellAddress>{});
+      final value = _evaluateNumeric(document, address, <CellAddress>{}, <int>[0]);
       return SpreadsheetFormulaResult(
         displayValue: _formatNumber(value),
         numericValue: value,
@@ -49,7 +49,9 @@ class EvaluateSpreadsheetFormulaUseCase {
     SpreadsheetDocument document,
     CellAddress address,
     Set<CellAddress> visiting,
+    List<int> work,
   ) {
+    if (++work[0] > 10000) throw const _FormulaException('#NUM!');
     if (visiting.length >= 100) throw const _FormulaException('#NUM!');
     if (!visiting.add(address)) {
       throw const _FormulaException('#CYCLE!');
@@ -71,7 +73,7 @@ class EvaluateSpreadsheetFormulaUseCase {
       final parser = _FormulaParser(
         input.substring(1),
         resolveCell: (referencedAddress) =>
-            _evaluateNumeric(document, referencedAddress, visiting),
+            _evaluateNumeric(document, referencedAddress, visiting, work),
         resolveRange: (start, end) {
           final values = <double>[];
           final firstRow = start.row < end.row ? start.row : end.row;
@@ -95,7 +97,7 @@ class EvaluateSpreadsheetFormulaUseCase {
                 if (value != null) values.add(value);
                 continue;
               }
-              values.add(_evaluateNumeric(document, cell, visiting));
+              values.add(_evaluateNumeric(document, cell, visiting, work));
             }
           }
           return values;

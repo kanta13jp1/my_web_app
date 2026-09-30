@@ -85,12 +85,14 @@ class SpreadsheetXlsxCodec {
       final names = <String>{};
       var totalCells = 0;
       for (final sheet in _elements(workbook, 'sheet')) {
-        if (result.length >= 20)
+        if (result.length >= 20) {
           throw const FormatException('XLSXは20シートまで対応しています。');
+        }
         final name = sheet.getAttribute('name') ?? '';
         _checkName(name);
-        if (!names.add(name.toLowerCase()))
+        if (!names.add(name.toLowerCase())) {
           throw const FormatException('シート名が重複しています。');
+        }
         final path = relationships[sheet.getAttribute('id', namespace: _rels)];
         if (path == null) throw const FormatException('シートの参照が見つかりません。');
         final worksheet = read(path);
@@ -104,18 +106,21 @@ class SpreadsheetXlsxCodec {
         var rows = 30;
         var columns = 12;
         for (final cell in _elements(worksheet, 'c')) {
-          if (++totalCells > 50000)
+          if (++totalCells > 50000) {
             throw const FormatException('XLSXのセル数が上限を超えています。');
+          }
           final address = CellAddress.tryParse(cell.getAttribute('r') ?? '');
           if (address == null || address.row >= 1000 || address.column >= 100) {
             throw const FormatException('XLSXは1000行・100列まで対応しています。');
           }
-          if (!seen.add(address.key))
+          if (!seen.add(address.key)) {
             throw const FormatException('セルの参照が重複しています。');
+          }
           if (address.row + 1 > rows) rows = address.row + 1;
           if (address.column + 1 > columns) columns = address.column + 1;
-          if (rows * columns > 20000)
+          if (rows * columns > 20000) {
             throw const FormatException('1シートの表示範囲は20000セルまでです。');
+          }
           final formula = _child(cell, 'f');
           final type = cell.getAttribute('t') ?? 'n';
           var value = _child(cell, 'v')?.innerText ?? '';
@@ -179,7 +184,8 @@ class SpreadsheetXlsxCodec {
     var totalBytes = 0;
     void add(String name, String xml) {
       final content = utf8.encode(
-          '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>$xml');
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>$xml',
+      );
       totalBytes += content.length;
       if (content.length > _maxPart || totalBytes > _maxExpanded) {
         throw const FormatException('XLSXのサイズが上限を超えています。');
@@ -195,20 +201,27 @@ class SpreadsheetXlsxCodec {
     for (var i = 0; i < document.sheets.length; i++) {
       final sheet = document.sheets[i];
       _checkName(sheet.name);
-      if (!names.add(sheet.name.toLowerCase()))
+      if (!names.add(sheet.name.toLowerCase())) {
         throw const FormatException('書き出すシート名が重複しています。');
+      }
       final n = i + 1;
       sheets.write(
-          '<sheet name="${_escape(sheet.name)}" sheetId="$n" r:id="rId$n"/>');
+        '<sheet name="${_escape(sheet.name)}" sheetId="$n" r:id="rId$n"/>',
+      );
       rels.write(
-          '<Relationship Id="rId$n" Type="$_rels/worksheet" Target="worksheets/sheet$n.xml"/>');
+        '<Relationship Id="rId$n" Type="$_rels/worksheet" Target="worksheets/sheet$n.xml"/>',
+      );
       overrides.write(
-          '<Override PartName="/xl/worksheets/sheet$n.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>');
+        '<Override PartName="/xl/worksheets/sheet$n.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>',
+      );
       final byRow = <int, Map<int, String>>{};
+      var maxRow = 30;
+      var maxColumn = 12;
       for (final entry in sheet.cells.entries) {
         if (entry.value.isEmpty) continue;
-        if (++cellCount > 50000)
+        if (++cellCount > 50000) {
           throw const FormatException('XLSXのセル数が上限を超えています。');
+        }
         final coordinates = entry.key.split(':');
         final row =
             coordinates.length == 2 ? int.tryParse(coordinates[0]) : null;
@@ -224,6 +237,11 @@ class SpreadsheetXlsxCodec {
           throw const FormatException('書き出すセル範囲が上限を超えています。');
         }
         _checkText(entry.value);
+        if (row + 1 > maxRow) maxRow = row + 1;
+        if (col + 1 > maxColumn) maxColumn = col + 1;
+        if (maxRow * maxColumn > 20000) {
+          throw const FormatException('1シートの表示範囲は20000セルまでです。');
+        }
         final address = CellAddress(row: row, column: col);
         final value = entry.value;
         String cell;
@@ -247,22 +265,34 @@ class SpreadsheetXlsxCodec {
       for (final row in rows) {
         final columns = byRow[row]!.keys.toList()..sort();
         body.write(
-            '<row r="${row + 1}">${columns.map((c) => byRow[row]![c]).join()}</row>');
+          '<row r="${row + 1}">${columns.map((c) => byRow[row]![c]).join()}</row>',
+        );
       }
-      add('xl/worksheets/sheet$n.xml',
-          '<worksheet xmlns="$_ns"><sheetData>$body</sheetData></worksheet>');
+      add(
+        'xl/worksheets/sheet$n.xml',
+        '<worksheet xmlns="$_ns"><sheetData>$body</sheetData></worksheet>',
+      );
     }
-    add('xl/workbook.xml',
-        '<workbook xmlns="$_ns" xmlns:r="$_rels"><sheets>$sheets</sheets><calcPr calcId="0" fullCalcOnLoad="1" forceFullCalc="1"/></workbook>');
-    add('xl/_rels/workbook.xml.rels',
-        '<Relationships xmlns="$_package">$rels</Relationships>');
-    add('_rels/.rels',
-        '<Relationships xmlns="$_package"><Relationship Id="rId1" Type="$_rels/officeDocument" Target="xl/workbook.xml"/></Relationships>');
-    add('[Content_Types].xml',
-        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>$overrides</Types>');
+    add(
+      'xl/workbook.xml',
+      '<workbook xmlns="$_ns" xmlns:r="$_rels"><sheets>$sheets</sheets><calcPr calcId="0" fullCalcOnLoad="1" forceFullCalc="1"/></workbook>',
+    );
+    add(
+      'xl/_rels/workbook.xml.rels',
+      '<Relationships xmlns="$_package">$rels</Relationships>',
+    );
+    add(
+      '_rels/.rels',
+      '<Relationships xmlns="$_package"><Relationship Id="rId1" Type="$_rels/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+    );
+    add(
+      '[Content_Types].xml',
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>$overrides</Types>',
+    );
     final bytes = Uint8List.fromList(ZipEncoder().encode(archive));
-    if (bytes.length > _maxBytes)
+    if (bytes.length > _maxBytes) {
       throw const FormatException('XLSXは16MBまで対応しています。');
+    }
     return bytes;
   }
 
@@ -305,8 +335,9 @@ class SpreadsheetXlsxCodec {
 
   /// Check central-directory sizes before any decompression (no ZIP64/encryption).
   static void _checkZip(Uint8List bytes) {
-    if (bytes.length < 22 || bytes.length > _maxBytes)
+    if (bytes.length < 22 || bytes.length > _maxBytes) {
       throw const FormatException('XLSXは16MBまで対応しています。');
+    }
     final data = ByteData.sublistView(bytes);
     int u16(int p) => data.getUint16(p, Endian.little);
     int u32(int p) => data.getUint32(p, Endian.little);
@@ -320,20 +351,23 @@ class SpreadsheetXlsxCodec {
     if (end < 0 ||
         u16(end + 4) != 0 ||
         u16(end + 6) != 0 ||
-        u16(end + 8) != u16(end + 10))
+        u16(end + 8) != u16(end + 10)) {
       throw const FormatException('通常のZIP形式のXLSXではありません。');
+    }
     final count = u16(end + 10);
     var position = u32(end + 16);
     final directoryEnd = position + u32(end + 12);
-    if (count == 0 || count > 512 || directoryEnd != end)
+    if (count == 0 || count > 512 || directoryEnd != end) {
       throw const FormatException('XLSX内のファイル数またはZIP形式が未対応です。');
+    }
     var total = 0;
     final names = <String>{};
     for (var i = 0; i < count; i++) {
       if (position + 46 > directoryEnd ||
           u32(position) != 0x02014b50 ||
-          (u16(position + 8) & 1) != 0)
+          (u16(position + 8) & 1) != 0) {
         throw const FormatException('XLSXが破損しているか、暗号化されています。');
+      }
       final size = u32(position + 24);
       if (((u32(position + 38) >> 16) & 0xf000) == 0xa000 ||
           (u16(position + 10) != 0 && u16(position + 10) != 8)) {
@@ -345,13 +379,15 @@ class SpreadsheetXlsxCodec {
         throw const FormatException('XLSXのファイル名が不正または重複しています。');
       }
       total += size;
-      if (size > _maxPart || total > _maxExpanded)
+      if (size > _maxPart || total > _maxExpanded) {
         throw const FormatException('XLSX展開サイズが上限を超えています。');
+      }
       position +=
           46 + u16(position + 28) + u16(position + 30) + u16(position + 32);
     }
-    if (position != directoryEnd)
+    if (position != directoryEnd) {
       throw const FormatException('XLSXのZIP情報が不正です。');
+    }
   }
 }
 

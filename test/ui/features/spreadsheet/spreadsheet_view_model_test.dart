@@ -125,13 +125,16 @@ void main() {
     final source = SpreadsheetDocument.blank().copyWith(
       sheets: [
         SpreadsheetSheet.blank(id: 'one', name: '売上').copyWith(
-            cells: {'0:0': '001', '0:1': '=A2*2'}, textCells: ['0:0']),
+          cells: {'0:0': '001', '0:1': '=A2*2'},
+          textCells: ['0:0'],
+        ),
         SpreadsheetSheet.blank(id: 'two', name: '予算'),
       ],
     );
     fileGateway.xlsxPicked = SpreadsheetPickedCsv(
-        name: 'import.xlsx',
-        bytes: const SpreadsheetXlsxCodec().encode(source));
+      name: 'import.xlsx',
+      bytes: const SpreadsheetXlsxCodec().encode(source),
+    );
     expect(await viewModel.importXlsx(), isTrue);
     expect(viewModel.sheets, hasLength(3));
     expect(viewModel.selectedCellInput, '001');
@@ -172,9 +175,9 @@ void main() {
     await viewModel.load();
     final before = viewModel.document;
     fileGateway.xlsxPicked = SpreadsheetPickedCsv(
-        name: 'same.xlsx',
-        bytes:
-            const SpreadsheetXlsxCodec().encode(SpreadsheetDocument.blank()));
+      name: 'same.xlsx',
+      bytes: const SpreadsheetXlsxCodec().encode(SpreadsheetDocument.blank()),
+    );
     expect(await viewModel.importXlsx(), isFalse);
     expect(viewModel.document, same(before));
     expect(viewModel.errorMessage, contains('同名'));
@@ -221,8 +224,10 @@ class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
   Future<SpreadsheetPickedCsv?> pickXlsx() async => xlsxPicked;
 
   @override
-  Future<bool> saveXlsx(
-          {required String suggestedName, required Uint8List bytes}) =>
+  Future<bool> saveXlsx({
+    required String suggestedName,
+    required Uint8List bytes,
+  }) =>
       saveCsv(suggestedName: suggestedName, bytes: bytes);
 
   @override
