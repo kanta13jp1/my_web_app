@@ -67,6 +67,8 @@ jobs:
           flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
           npm ci --ignore-scripts
           npx playwright install --with-deps chromium
+      - name: Validate browser test syntax
+        run: npx playwright test test/e2e/flow_city_route.spec.ts test/e2e/flow_city_lifecycle.spec.ts --list
       - name: Integrated desktop and mobile route checks
         shell: bash
         run: |
@@ -79,6 +81,20 @@ jobs:
             sleep 1
           done
           E2E_BASE_URL=http://127.0.0.1:7357 npx playwright test test/e2e/flow_city_route.spec.ts --workers=1 --retries=0
+      - name: Build real surface lifecycle fixture
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/flow_city_lifecycle_app.dart --output=build/flow-city-lifecycle
+      - name: Verify covering route, return and disposal
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/flutter_spa_server.py --directory build/flow-city-lifecycle --port 7358 > flow-city-lifecycle-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 PLAYWRIGHT_TEST_OUTPUT_DIR=lifecycle-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/lifecycle-results.json npx playwright test test/e2e/flow_city_lifecycle.spec.ts --workers=1 --retries=0
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
@@ -87,4 +103,6 @@ jobs:
             test-results/
             playwright-report/
             flow-city-server.log
+            flow-city-lifecycle-server.log
+            lifecycle-results/
           retention-days: 7

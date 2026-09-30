@@ -68,6 +68,18 @@ test('same inputs stay equal; signal candidate resets and runs visibly', async (
   await expect(page.frameLocator('iframe[title="FLOW CITY 信号条件の比較実験"]').locator('#difference')).not.toHaveText('比較を開始すると結果が出ます');
   expect(await page.frameLocator('iframe[title="FLOW CITY 信号条件の比較実験"]').locator('html').evaluate((element: HTMLElement) => element.scrollWidth <= element.clientWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('comparison.png'), fullPage: true });
+  const city = page.frameLocator('iframe[title="FLOW CITY 信号条件の比較実験"]');
+  const clockBeforeFocus = await city.locator('#clock').innerText();
+  await city.getByRole('button', { name: '比較に集中', exact: true }).click();
+  await expect(city.locator('#focus')).toHaveAttribute('aria-pressed', 'true');
+  await expect(city.locator('#clock')).toHaveText(clockBeforeFocus);
+  await expect(city.locator('#summaryA b')).toHaveText(await city.locator('#metricsA b').allTextContents());
+  await expect(city.locator('#summaryB b')).toHaveText(await city.locator('#metricsB b').allTextContents());
+  await city.locator('.comparison-summary').screenshot({ path: testInfo.outputPath('comparison-summary.png') });
+  await page.screenshot({ path: testInfo.outputPath('focused-comparison.png'), fullPage: true });
+  await city.getByRole('button', { name: '通常表示へ', exact: true }).click();
+  await expect(city.locator('#focus')).toHaveAttribute('aria-pressed', 'false');
+
 });
 
 test('storage failure is explained and comparison remains usable', async ({ page }) => {
@@ -95,4 +107,3 @@ test('empty restore, saved preset reload, and reset are recoverable', async ({ p
   await expect(page.frameLocator('iframe[title="FLOW CITY 信号条件の比較実験"]').locator('#metricsB b')).toHaveText(['0', '0', '0']);
   await page.screenshot({ path: testInfo.outputPath('reset.png'), fullPage: true });
 });
-

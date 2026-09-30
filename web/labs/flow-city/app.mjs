@@ -13,7 +13,7 @@ function reset(message = '条件をそろえてリセットしました。') {
   announce(message); update();
 }
 function update() {
-  for (const [world, id] of [[a, 'metricsA'], [b, 'metricsB']]) {
+  for (const [world, id] of [[a, 'metricsA'], [b, 'metricsB'], [a, 'summaryA'], [b, 'summaryB']]) {
     const m = metrics(world), container = $(id); container.replaceChildren();
     for (const [label, value] of [['到着 / 台', m.arrived], ['累積待機 / 台·tick', m.waiting], ['未到着 / 台', m.onRoad + m.outside]]) {
       const item = document.createElement('div'); item.className = 'metric';
@@ -51,6 +51,7 @@ function draw(canvas, ctx, world) {
   for (let row=0; row<4; row++) for (let col=0; col<4; col++) {
     const x=col*8+2, y=row*8+2, z=1.8+((row*7+col*3)%6)*.75;
     objects.push({ depth:x+y+6, paint:()=>{
+      ctx.globalAlpha = document.body.classList.contains('focus-view') ? .35 : 1;
       poly([[x,y],[x+4,y],[x+4,y+4],[x,y+4]], '#24404c');
       poly([[x,y+4],[x+4,y+4],[x+4,y+4,z],[x,y+4,z]], '#254556', '#446374');
       poly([[x+4,y],[x+4,y+4],[x+4,y+4,z],[x+4,y,z]], '#183746', '#365567');
@@ -58,14 +59,15 @@ function draw(canvas, ctx, world) {
       for(let level=.6;level<z-.3;level+=.85) for(let n=.5;n<3.8;n+=.85) {
         poly([[x+n,y+4+.01,level],[x+n+.35,y+4+.01,level],[x+n+.35,y+4+.01,level+.35],[x+n,y+4+.01,level+.35]], (row+col)%3===0?'#d9b481':'#71adbb');
       }
-      const [px,py]=p(x+2,y+2,z+.1);ctx.fillStyle='#718f9b';ctx.fillRect(px-3,py-2,6,3);
+      const [px,py]=p(x+2,y+2,z+.1);ctx.fillStyle='#718f9b';ctx.fillRect(px-3,py-2,6,3);ctx.globalAlpha=1;
     }});
   }
   for(const car of world.cars) {
     const [x,y]=position(car), color=car.stopped?'#ff7b79':car.axis==='E'?'#92e9da':'#ffd094';
     objects.push({depth:x+y,paint:()=>{
       const [px,py]=p(x,y,.35);ctx.shadowColor=color;ctx.shadowBlur=car.stopped?4:7;
-      poly([[x-.3,y-.22,.2],[x+.3,y-.22,.2],[x+.3,y+.22,.2],[x-.3,y+.22,.2]],color);
+      const size=document.body.classList.contains('focus-view') ? .5 : .3;
+      poly([[x-size,y-size*.7,.2],[x+size,y-size*.7,.2],[x+size,y+size*.7,.2],[x-size,y+size*.7,.2]],color);
       ctx.shadowBlur=0;ctx.fillStyle='#eafff8';ctx.fillRect(px,py,1.2,1.2);
     }});
   }
@@ -93,6 +95,7 @@ $('play').onclick=()=>{
   announce(running?'同じ需要で比較中です。':'一時停止中です。');
 };
 $('reset').onclick=()=>reset();
+$('focus').onclick=()=>{const focused=document.body.classList.toggle('focus-view');$('focus').setAttribute('aria-pressed',String(focused));$('focus').textContent=focused?'通常表示へ':'比較に集中';};
 $('wave').onclick=()=>{settings={...settings,green:26,offset:8};reset('東行優先の候補を設定しました。南行への影響も比較してください。');};
 for(const key of ['green','offset','demand','seed']) $(key).addEventListener('change',()=>{
   try{settings=validate({...settings,[key]:Number($(key).value)});reset();}catch(error){announce(error.message);$(key).value=settings[key];}
