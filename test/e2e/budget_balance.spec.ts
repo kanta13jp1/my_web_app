@@ -2,20 +2,33 @@ import { test, expect, type Page } from '@playwright/test';
 
 const labels = ['毎月の手取り', '必須生活費・返済', '年払い・臨時支出', '現金の予備費積立', '今の楽しみ', '投資積立'];
 const balanceCard = (page: Page) => page.getByRole('group', { name: /^今と将来の配分チェック / });
-const result = (page: Page, title: string) => page.getByText(new RegExp(`^${title}(?:\\s|$)`));
+const result = (page: Page, title: string) => balanceCard(page).getByText(new RegExp(`^${title}(?:\\s|$)`));
 const input = (page: Page, i: number) => page.getByRole('textbox', { name: new RegExp(`^${labels[i]}`) });
+async function rendered(page: Page) {
+  await page.evaluate(() => new Promise<void>(resolve =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+}
 async function amount(page: Page, i: number, value: string) {
-  await input(page, i).click();
   await input(page, i).focus();
+  await rendered(page);
   await expect(input(page, i)).toBeFocused();
-  await input(page, i).fill(value);
+  await input(page, i).press('ControlOrMeta+A');
+  await input(page, i).press('Backspace');
+  if (value) await input(page, i).pressSequentially(value, { delay: 40 });
+  await rendered(page);
   await expect(input(page, i)).toHaveValue(value);
 }
 async function example(page: Page) {
   const values = ['230000', '110000', '120000', '10000', '20000', '50000'];
   for (let i = 0; i < values.length; i++) await amount(page, i, values[i]);
+  for (let i = 0; i < values.length; i++) await expect(input(page, i)).toHaveValue(values[i]);
 }
 const calculate = (page: Page) => page.getByRole('button', { name: '配分を確認する', exact: true }).click();
+test.afterEach(async ({ page }, info) => {
+  if (info.status !== info.expectedStatus) {
+    await info.attach('visible-dom', { body: await page.content(), contentType: 'text/html' });
+  }
+});
 test.beforeEach(async ({ page }) => {
   await page.goto('/budget-financial-planner?tab=simulation');
   await expect(balanceCard(page)).toBeVisible({ timeout: 20000 });
@@ -35,12 +48,12 @@ test('unknown and malformed costs are not zero; correcting the field recovers', 
   await example(page);
   await amount(page, 2, '');
   await calculate(page);
-  await expect(page.getByText('未確認です。金額を確認し、支出がない場合は0を入力してください', { exact: true })).toBeVisible();
+  await expect(balanceCard(page).getByText('未確認です。金額を確認し、支出がない場合は0を入力してください', { exact: true })).toBeVisible();
   await expect(result(page, '配分後の残り 30,000円')).toHaveCount(0);
   await amount(page, 2, '-1');
-  await expect(page.getByText('未確認です。金額を確認し、支出がない場合は0を入力してください', { exact: true })).toHaveCount(0);
+  await expect(balanceCard(page).getByText('未確認です。金額を確認し、支出がない場合は0を入力してください', { exact: true })).toHaveCount(0);
   await calculate(page);
-  await expect(page.getByText('0以上の整数で入力してください（例：230000）', { exact: true })).toBeVisible();
+  await expect(balanceCard(page).getByText('0以上の整数で入力してください（例：230000）', { exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('allocation-invalid.png') });
   await amount(page, 2, '0');
   await calculate(page);
