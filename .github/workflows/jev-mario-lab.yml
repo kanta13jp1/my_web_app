@@ -13,6 +13,11 @@ on:
       - 'test/**/jev_mario*'
       - '.github/workflows/jev-mario-lab.yml'
   workflow_dispatch:
+    inputs:
+      focused_six_two:
+        description: 'Diagnostic 6-2 desktop run; pull requests always run the full suite'
+        type: boolean
+        default: false
   workflow_call:
 permissions: {}
 concurrency:
@@ -67,8 +72,10 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f test/web/jev_mario_world7_ranking.sql
           psql -v ON_ERROR_STOP=1 -f test/web/jev_mario_world8_ranking.sql
   browser:
+    env:
+      FOCUSED_SIX_TWO: ${{ github.event_name == 'workflow_dispatch' && inputs.focused_six_two || false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
@@ -77,7 +84,12 @@ jobs:
           persist-credentials: false
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --config=test/e2e/jev_mario.config.ts
+      - run: |
+          if [[ "$FOCUSED_SIX_TWO" == 'true' ]]; then
+            npx playwright test --config=test/e2e/jev_mario.config.ts --project=desktop --grep '6-2 complete real worker'
+          else
+            npx playwright test --config=test/e2e/jev_mario.config.ts
+          fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:

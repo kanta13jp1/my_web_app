@@ -63,7 +63,7 @@ test('lead and accompaniment cache distinct pulse duties and skid remains bounde
 
 test('effects duck music only and disabling audio restores its level',async()=>{
  const c=context(),a=new GameAudio(()=>c);await a.enable(true);const values=[];a.musicGain.gain.cancelScheduledValues=t=>values.push(['cancel',t]);a.musicGain.gain.setValueAtTime=(v,t)=>values.push(['set',v,t]);a.musicGain.gain.linearRampToValueAtTime=(v,t)=>values.push(['ramp',v,t]);
- a.effect('coin');assert.ok(values.some(v=>v[0]==='set'&&v[1]===.35));assert.ok(values.some(v=>v[0]==='ramp'&&v[1]===1));assert.equal(a.master.gain.value,.75);a.effect('impact');await a.enable(false);assert.equal(a.musicGain.gain.value,1);assert.equal(a.nodes.size,0);
+ a.effect('coin');assert.ok(values.some(v=>v[0]==='set'&&v[1]===.35));assert.ok(values.some(v=>v[0]==='ramp'&&v[1]===1));assert.equal(a.master.gain.value,.95);a.effect('impact');await a.enable(false);assert.equal(a.musicGain.gain.value,1);assert.equal(a.nodes.size,0);
 });
 
 test('late animation frames resume music without replaying a burst of overdue beats',async()=>{
@@ -90,6 +90,11 @@ test('seventh answer part enters on the offbeat and releases on mute',async()=>{
 
 test('eighth bell answers the phrase with a quiet bounded voice',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick('underwater');const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=6;a.next=c.currentTime;a.tick('underwater');const n=musicStep('underwater',6);assert.ok(scheduled.some(x=>x[0]===n.bell&&x[3]==='sine'&&x[4]<=.014));await a.enable(false);assert.equal(a.nodes.size,0);});
 
-test('ninth chord accent is short, restrained and default volume is seventy-five percent',async()=>{const c=context(),a=new GameAudio(()=>c);assert.equal(a.volume,.75);await a.enable(true);a.tick();const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=3;a.next=c.currentTime;a.tick();const n=musicStep('overworld',3);assert.ok(scheduled.some(x=>x[0]===n.accent&&x[3]==='square'&&x[4]<=.010&&x[2]<n.step));await a.enable(false);assert.equal(a.nodes.size,0);});
+test('ninth chord accent is short, restrained and default volume is ninety-five percent',async()=>{const c=context(),a=new GameAudio(()=>c);assert.equal(a.volume,.95);await a.enable(true);a.tick();const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=3;a.next=c.currentTime;a.tick();const n=musicStep('overworld',3);assert.ok(scheduled.some(x=>x[0]===n.accent&&x[3]==='square'&&x[4]<=.010&&x[2]<n.step));await a.enable(false);assert.equal(a.nodes.size,0);});
 
 test('eleventh transition voice stays short and bounded',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick();const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=15;a.next=c.currentTime;a.tick();const n=musicStep('overworld',15);assert.ok(n.echo>0&&n.turn>0);assert.ok(scheduled.some(x=>x[0]===n.turn&&x[3]==='triangle'&&x[4]<=.007&&x[2]<n.step));await a.enable(false);assert.equal(a.nodes.size,0);});
+
+test('twelfth pickup voice is quiet and short',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick();const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=13;a.next=c.currentTime;a.tick();const n=musicStep('overworld',13);assert.ok(scheduled.some(x=>x[0]===n.pickup&&x[3]==='sine'&&x[4]<=.006&&x[2]<n.step));});
+
+
+test('sixteen-part arrangement staggers the four new voices and mute releases them',async()=>{for(const [key,beat,type,gain]of [['reply',9,'triangle',.006],['lowAnswer',5,'triangle',.010],['spark',21,'sine',.004],['cadence',29,'sine',.006]]){const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick();const calls=[];a.tone=(...args)=>calls.push(args);a.beat=beat;a.next=c.currentTime;a.tick();const n=musicStep('overworld',beat);assert.ok(calls.some(x=>x[0]===n[key]&&x[3]===type&&x[4]===gain&&x[1]>c.currentTime&&x[2]<n.step));await a.enable(false);assert.equal(a.nodes.size,0);}});

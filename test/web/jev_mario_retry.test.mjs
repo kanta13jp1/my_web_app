@@ -37,7 +37,7 @@ test('item priorities adapt to small/fire form and low lives',()=>{const g=new W
 
 test('running session discovers a stalled pipe and reuses its experience after a new start',()=>{
  const store=storage(),g=new World11();let worker;
- const session=new StudentSession(()=>worker={terminate(){},postMessage(m){this.onmessage({data:{type:'decision',action:'right_run',raw:'right_run',accepted:true,issued:m.issued,frame:m.state.frames,inferenceMs:0,probabilities:[]}});}},()=>g.frames*1000/60,store);
+ const session=new StudentSession(()=>worker={terminate(){},postMessage(m){this.onmessage({data:{type:'decision',requestId:m.requestId,action:'right_run',raw:'right_run',accepted:true,issued:m.issued,frame:m.state.frames,inferenceMs:0,probabilities:[]}});}},()=>g.frames*1000/60,store);
  const callbacks={ready(){},update(){},error(){assert.fail();}};session.start(callbacks);worker.onmessage({data:{type:'ready'}});
  let furthest=0;for(let i=0;i<900&&g.phase==='playing';i++){g.buttons(session.tick(g));g.step();g.drainSounds();furthest=Math.max(furthest,g.p.x);}
  assert.ok(session.failures.some(f=>f.kind==='stalled'));assert.ok(session.stats.retry_assists>0);assert.ok(furthest>470);
