@@ -415,14 +415,18 @@ void main() {
     ai.complete(0, 'Synthetic empty detail');
     final addButton = find.descendant(
       of: find.byType(RecurringFixedCostCard),
-      matching: find.widgetWithText(TextButton, '追加'),
+      matching: find.ancestor(
+        of: find.text('追加'),
+        matching: find.byWidgetPredicate((widget) => widget is TextButton),
+      ),
     );
     expect(addButton, findsOneWidget);
     await tester.ensureVisible(addButton);
     await tester.tap(addButton);
     await tester.pump(const Duration(milliseconds: 400));
     Finder field(String label) => find.byWidgetPredicate(
-          (widget) => widget is TextField && widget.decoration?.labelText == label,
+          (widget) =>
+              widget is TextField && widget.decoration?.labelText == label,
         );
     await tester.enterText(field('名称'), 'Synthetic card detail');
     await tester.enterText(field('月額 (円)'), '1000');
@@ -440,10 +444,13 @@ void main() {
     await tester.tap(methodInput);
     await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is DropdownMenuItem<String> && widget.value == 'paypay_card',
-      ).last,
+      find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is DropdownMenuItem<String> &&
+                widget.value == 'paypay_card',
+          )
+          .last,
     );
     await _pumpUntil(tester, () => ai.requests.length == 3);
     final group = ai.requests.last.workbook.cardStatementReconciliation.groups
