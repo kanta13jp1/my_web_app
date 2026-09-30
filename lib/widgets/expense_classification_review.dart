@@ -160,11 +160,12 @@ class _ExpenseClassificationReviewState
               'モデルの確信度：${(_prediction.confidence * 100).toStringAsFixed(0)}%'
               '（正答率ではありません）',
             ),
-          if (ai)
-            const ExpansionTile(
+          if (!empty)
+            ExpansionTile(
+              key: ValueKey(widget.memo),
               tilePadding: EdgeInsets.zero,
-              title: Text('確信度の読み方'),
-              children: [
+              title: const Text('確信度の読み方'),
+              children: const [
                 Padding(
                   padding: EdgeInsets.only(bottom: 8),
                   child: Text(
