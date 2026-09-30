@@ -1,3 +1,4 @@
+import {pipeRoute} from './pipe-route.mjs?v=student-1';
 // Explicit model-based search assistance, NOT learned inference.
 // Hypothetical clones never replace or rewind the real simulation.
 import {retryLevel} from './retry-memory.mjs?v=student-1';
@@ -26,6 +27,7 @@ function score(g,start,failures,target){
  return -repeat+collected*2+pursuit+Math.max(0,g.power-start.power)*60+itemPotential(g)-itemPotential(start)+(g.p.x-start.p.x)*(target ? .25 : 1)+(192-g.p.y)*.12+g.p.vx*2-(g.power<start.power?80:0)-(g.p.y>208?(g.p.y-208)*8:0);
 }
 export function plan(g,raw=null,failures=[],itemAvoidance=[]){
+ const route=pipeRoute(g);if(route)return {retry_level:retryLevel(g,failures),search_depth:0,action:route,accepted:false,score:null,raw_score:null};
  // Big players use a momentum-preserving crouch slide through a one-tile tunnel.
  // Explicit geometry assistance, not a learned model action.
  const p=g.p,col=Math.floor((p.x+p.w)/16),foot=Math.floor((p.y+p.h-1)/16);
@@ -36,7 +38,7 @@ export function plan(g,raw=null,failures=[],itemAvoidance=[]){
   return {retry_level:retryLevel(g,failures),search_depth:0,action,accepted:false,score:null,raw_score:null};
  }
  const target=isWater(g.stage)?null:itemTargets(g).filter(t=>{if(g.room!=='castle'||!t.block||g.power===0)return true;const [x,y]=t.key.split(',').map(Number);return ![x-1,x+1].some(c=>g.solid(c,y+2));}).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
- const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left',...(g.room==='castle'?['left_jump']:[])]:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
+ const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left','left_jump']:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
  let beam=[{g,first:null,value:0}],byFirst={};
  for(let depth=0;depth<depthLimit;depth++){
   const expanded=[];
@@ -46,7 +48,7 @@ export function plan(g,raw=null,failures=[],itemAvoidance=[]){
   }
   expanded.sort((a,b)=>b.value-a.value);
   const seen=new Set();beam=[];
-  for(const b of expanded){const p=b.g.p,k=[Math.round(p.x/3),Math.round(p.y/3),Math.round(p.vx),Math.round(p.vy),+b.g.wasJump,b.g.power,b.g.lives,b.g.star>0,+!!b.g.p.climbing,JSON.stringify(b.g.pickups),b.first].join(':');if(!seen.has(k)){seen.add(k);beam.push(b);}if(beam.length===12)break;}
+  for(const b of expanded){const p=b.g.p,k=[Math.round(p.x/3),Math.round(p.y/3),Math.round(p.vx),Math.round(p.vy),+b.g.wasJump,b.g.power,b.g.lives,b.g.star>0,+!!b.g.p.climbing,JSON.stringify(b.g.pickups),b.g.room,b.first].join(':');if(!seen.has(k)){seen.add(k);beam.push(b);}if(beam.length===12)break;}
   if(depth===depthLimit-1)for(const b of expanded)byFirst[b.first]=Math.max(byFirst[b.first]??-Infinity,b.value);
  }
  const best=beam[0];

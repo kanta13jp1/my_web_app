@@ -1,3 +1,4 @@
+import {pipeRoute} from './pipe-route.mjs?v=student-1';
 // Bounded live-state collision check. Assistance, never learned model inference.
 import {retryLevel} from './retry-memory.mjs?v=student-1';
 import {clone,advance,edge} from './search-assist.mjs?v=student-1';
@@ -6,6 +7,7 @@ export class LiveGuard {
  reset(){this.next=0;this.action=null;this.interventions=0;this.lastReason=null;}
  decide(world,proposed,failures=[]){
   if(!world.cells||world.phase!=='playing')return proposed;
+  const route=pipeRoute(world);if(route){this.interventions++;this.lastReason='pipe_geometry_route';return edge(world,route);}
   const level=retryLevel(world,failures);
   if(world.frames<this.next&&proposed===this.proposed&&level===this.level)return edge(world,this.action??proposed);
   this.level=level;this.proposed=proposed;this.next=world.frames+6;this.lastReason=null;
@@ -13,7 +15,7 @@ export class LiveGuard {
   let best=evaluate(proposed);
   // Keep a safe model/search command intact. Only imminent death/damage triggers alternatives.
   if(best.g.phase==='dead'||best.g.power<world.power||best.g.p.y>224||(level&&world.p.grounded&&proposed.includes('right')&&best.g.p.x-world.p.x<2)){
-   for(const action of ['right_jump','right_run_jump','jump','noop','left',...(world.room==='castle'?['left_jump']:[])]){const candidate=evaluate(action);if(candidate.value>best.value)best=candidate;}
+   for(const action of ['right_jump','right_run_jump','jump','noop','left','left_jump']){const candidate=evaluate(action);if(candidate.value>best.value)best=candidate;}
    if(best.action!==proposed){this.interventions++;this.lastReason=level?'retry_lookahead':'live_collision_guard';}
   }
   this.action=best.action;return edge(world,best.action);

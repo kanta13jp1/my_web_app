@@ -17,12 +17,12 @@ export const arrangements={
 };
 export function musicStep(track,beat,hurry=false){
  const a=arrangements[track]??arrangements.overworld,chord=a.chords[Math.floor(beat/16)%a.chords.length],step=a.step*(hurry?.78:1);
- return {step,lead:scores[track]?.[beat%scores[track].length]??0,harmony:chord[[0,2,1,2][beat%4]]+12,bass:chord[beat%4===2?2:0]-(track==='star'?12:0),counter:chord[beat%8<4?1:2]+(track==='castle'?0:12),pad:chord[0]+(track==='castle'||track==='underground'?19:24),fifth:chord[2]+12,answer:chord[(Math.floor(beat/2)+1)%3]+24,bell:chord[(Math.floor(beat/4)+2)%3]+36,accent:chord[1]+24,echo:chord[2]+19,turn:chord[0]+12,duty:a.duty};
+ return {step,lead:scores[track]?.[beat%scores[track].length]??0,harmony:chord[[0,2,1,2][beat%4]]+12,bass:chord[beat%4===2?2:0]-(track==='star'?12:0),counter:chord[beat%8<4?1:2]+(track==='castle'?0:12),pad:chord[0]+(track==='castle'||track==='underground'?19:24),fifth:chord[2]+12,answer:chord[(Math.floor(beat/2)+1)%3]+24,bell:chord[(Math.floor(beat/4)+2)%3]+36,accent:chord[1]+24,echo:chord[2]+19,turn:chord[0]+12,pickup:chord[1]+19,duty:a.duty};
 }
 export const effects={firework:[48,36],swim:[60,67],bridge:[43,38,31,24],impact:[42,30],skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
 export class GameAudio{
  constructor(factory=()=>new(globalThis.AudioContext||globalThis.webkitAudioContext)()){
-  this.factory=factory;this.enabled=false;this.volume=.75;this.nodes=new Set();this.music=new Set();this.beat=0;this.next=0;this.track='';this.musicUntil=0;
+  this.factory=factory;this.enabled=false;this.volume=.85;this.nodes=new Set();this.music=new Set();this.beat=0;this.next=0;this.track='';this.musicUntil=0;
  }
  async enable(value){this.enabled=!!value;if(!value){this.stop();return true;}try{
   if(!this.context){this.context=this.factory();this.master=this.context.createGain();if(this.context.createDynamicsCompressor){this.limiter=this.context.createDynamicsCompressor();this.limiter.threshold.value=-10;this.limiter.knee.value=8;this.limiter.ratio.value=12;this.master.connect(this.limiter);this.limiter.connect(this.context.destination);}else this.master.connect(this.context.destination);this.musicGain=this.context.createGain();this.musicGain.gain.value=1;this.musicGain.connect(this.master);}
@@ -64,7 +64,7 @@ export class GameAudio{
   // Do not bunch late beats together after a stalled browser frame.
   if(this.next<now)this.next=now;
   while(this.next<now+.08){
-   const {step,lead,harmony,bass,counter,pad,fifth,answer,bell,accent,echo,turn,duty}=musicStep(track,this.beat,hurry),t=this.next;
+   const {step,lead,harmony,bass,counter,pad,fifth,answer,bell,accent,echo,turn,pickup,duty}=musicStep(track,this.beat,hurry),t=this.next;
    this.tone(lead,t,step*(this.beat%4===3?.55:.82),'square',.040,true,0,duty);
    // Offbeat comping and broken triads keep the lead audible without dense chords.
    if(this.beat%2===0||track==='star')this.tone(harmony,t+step*.08,step*.65,'square',track==='underwater'?.013:.018,true,0,.5);
