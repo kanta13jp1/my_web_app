@@ -39,7 +39,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-            route == '/import' ? 'Import destination' : 'Manual destination'),
+          route == '/import' ? 'Import destination' : 'Manual destination',
+        ),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
