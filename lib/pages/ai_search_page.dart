@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -5,82 +7,113 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// OpenAI 設定時: AI ランキング検索
 /// OpenAI 未設定時: ILIKE ベースの全文検索にフォールバック
 class AiSearchPage extends StatefulWidget {
-  const AiSearchPage({super.key});
+  const AiSearchPage({super.key, this.search});
+
+  /// Optional data source for embedding and controlled UI tests.
+  final Future<Object?> Function(String query)? search;
 
   @override
   State<AiSearchPage> createState() => _AiSearchPageState();
 }
 
 class _AiSearchPageState extends State<AiSearchPage> {
-  final _supabase = Supabase.instance.client;
   final _controller = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
   List<Map<String, dynamic>> _results = [];
   String _searchMode = ''; // 'ai', 'text', 'text_fallback'
+  int _requestId = 0;
+  String? _pendingQuery;
+  String? _resultQuery;
+  String? _failedQuery;
 
   @override
   void dispose() {
+    _requestId++;
     _controller.dispose();
     super.dispose();
   }
 
-  Future<void> _search(String query) async {
-    final trimmed = query.trim();
-    if (trimmed.isEmpty) return;
-    if (_supabase.auth.currentUser == null) {
-      setState(() => _errorMessage = 'この機能はログインが必要です');
-      return;
+  Future<Object?> _request(String query) async {
+    final client = Supabase.instance.client;
+    if (client.auth.currentUser == null) {
+      throw StateError('この機能はログインが必要です');
     }
+    final response = await client.functions.invoke(
+      'ai-hub',
+      body: {
+        'action': 'search.query',
+        'query': query,
+        'limit': 20,
+        'mode': 'auto',
+      },
+    );
+    return response.data;
+  }
 
+  void _clear() {
+    _requestId++;
+    _controller.clear();
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _isLoading = false;
+      _pendingQuery = null;
+      _resultQuery = null;
+      _failedQuery = null;
       _results = [];
       _searchMode = '';
+      _errorMessage = null;
     });
+  }
 
+  Future<void> _search(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty || (_isLoading && _pendingQuery == trimmed)) return;
+    final requestId = ++_requestId;
+    setState(() {
+      _isLoading = true;
+      _pendingQuery = trimmed;
+      _errorMessage = null;
+      _failedQuery = null;
+    });
     try {
-      // ai-search EF は ai-hub:search.query に統合済み (Windowsアプリ版#92)
-      final response = await _supabase.functions.invoke(
-        'ai-hub',
-        body: {
-          'action': 'search.query',
-          'query': trimmed,
-          'limit': 20,
-          'mode': 'auto',
-        },
-      );
-
-      final data = response.data;
-      if (data is Map<String, dynamic>) {
-        final results = data['results'];
-        setState(() {
-          _results = results is List
-              ? List<Map<String, dynamic>>.from(
-                  results.map((e) => Map<String, dynamic>.from(e as Map)),
-                )
-              : [];
-          _searchMode = (data['searchMode'] as String? ?? '');
-        });
+      final data = await (widget.search ?? _request)(trimmed)
+          .timeout(const Duration(seconds: 30));
+      if (!mounted || requestId != _requestId) return;
+      final Object? rawResults;
+      final String searchMode;
+      if (data is Map<String, dynamic> && data['results'] is List) {
+        rawResults = data['results'];
+        searchMode = data['searchMode']?.toString() ?? '';
       } else if (data is List) {
-        setState(() {
-          _results = List<Map<String, dynamic>>.from(
-            data.map((e) => Map<String, dynamic>.from(e as Map)),
-          );
-        });
+        rawResults = data;
+        searchMode = '';
       } else {
-        setState(() => _results = []);
+        throw const FormatException('Invalid search response');
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = '検索に失敗しました: $e';
-        });
-      }
+      final results = (rawResults as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      setState(() {
+        _results = results;
+        _searchMode = searchMode;
+        _resultQuery = trimmed;
+      });
+    } catch (error) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _failedQuery = trimmed;
+        _errorMessage = error is StateError
+            ? error.message.toString()
+            : error is TimeoutException
+                ? '検索に時間がかかっています。もう一度お試しください。'
+                : '検索できませんでした。通信状態を確認して再試行してください。';
+      });
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      if (mounted && requestId == _requestId) {
+        setState(() {
+          _isLoading = false;
+          _pendingQuery = null;
+        });
       }
     }
   }
@@ -129,19 +162,14 @@ class _AiSearchPageState extends State<AiSearchPage> {
                 TextField(
                   controller: _controller,
                   decoration: InputDecoration(
+                    labelText: 'ノートの検索語',
                     hintText: '自然言語で検索（例: 先月の振り返りメモ）',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _controller.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _controller.clear();
-                              setState(() {
-                                _results = [];
-                                _errorMessage = null;
-                                _searchMode = '';
-                              });
-                            },
+                            tooltip: '検索をクリア',
+                            onPressed: _clear,
                           )
                         : null,
                     border: OutlineInputBorder(
@@ -154,8 +182,64 @@ class _AiSearchPageState extends State<AiSearchPage> {
                   ),
                   textInputAction: TextInputAction.search,
                   onSubmitted: _search,
-                  onChanged: (_) => setState(() {}),
+                  onChanged: (value) {
+                    if (value.trim().isEmpty) {
+                      _clear();
+                    } else {
+                      setState(() {});
+                    }
+                  },
                 ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: _controller.text.trim().isEmpty ||
+                          (_isLoading &&
+                              _pendingQuery == _controller.text.trim())
+                      ? null
+                      : () => _search(_controller.text),
+                  icon: const Icon(Icons.search),
+                  label: const Text('検索'),
+                ),
+                if (_isLoading) ...[
+                  const SizedBox(height: 8),
+                  const LinearProgressIndicator(),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      '「$_pendingQuery」を検索中…',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+                if (_resultQuery != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    (_isLoading || _controller.text.trim() != _resultQuery)
+                        ? '前の結果:「$_resultQuery」（${_results.length}件）'
+                        : '「$_resultQuery」の結果（${_results.length}件）',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      '「$_failedQuery」の検索: $_errorMessage',
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _search(_failedQuery!),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('再試行'),
+                  ),
+                ],
                 if (_searchMode.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Row(
@@ -211,52 +295,6 @@ class _AiSearchPageState extends State<AiSearchPage> {
   }
 
   Widget _buildBody(bool isDark) {
-    if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('検索中...'),
-          ],
-        ),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 48,
-                color: Color(0xFFE57373),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFFEF5350),
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () => _search(_controller.text),
-                icon: const Icon(Icons.refresh),
-                label: const Text('再試行'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     if (_results.isEmpty) {
       return Center(
         child: Column(
@@ -269,7 +307,11 @@ class _AiSearchPageState extends State<AiSearchPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              _controller.text.isEmpty ? 'キーワードを入力して検索' : '該当するノートが見つかりませんでした',
+              _resultQuery == null
+                  ? (_isLoading ? '最初の検索結果を待っています' : '検索語を入力して検索してください')
+                  : '「$_resultQuery」に該当するノートはありません',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 14,
