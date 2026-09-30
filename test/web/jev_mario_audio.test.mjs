@@ -63,7 +63,7 @@ test('lead and accompaniment cache distinct pulse duties and skid remains bounde
 
 test('effects duck music only and disabling audio restores its level',async()=>{
  const c=context(),a=new GameAudio(()=>c);await a.enable(true);const values=[];a.musicGain.gain.cancelScheduledValues=t=>values.push(['cancel',t]);a.musicGain.gain.setValueAtTime=(v,t)=>values.push(['set',v,t]);a.musicGain.gain.linearRampToValueAtTime=(v,t)=>values.push(['ramp',v,t]);
- a.effect('coin');assert.ok(values.some(v=>v[0]==='set'&&v[1]===.35));assert.ok(values.some(v=>v[0]==='ramp'&&v[1]===1));assert.equal(a.master.gain.value,.25);a.effect('impact');await a.enable(false);assert.equal(a.musicGain.gain.value,1);assert.equal(a.nodes.size,0);
+ a.effect('coin');assert.ok(values.some(v=>v[0]==='set'&&v[1]===.35));assert.ok(values.some(v=>v[0]==='ramp'&&v[1]===1));assert.equal(a.master.gain.value,.5);a.effect('impact');await a.enable(false);assert.equal(a.musicGain.gain.value,1);assert.equal(a.nodes.size,0);
 });
 
 test('late animation frames resume music without replaying a burst of overdue beats',async()=>{
@@ -78,9 +78,9 @@ test('fireworks synthesize a bounded burst and mute releases it',async()=>{
  const c=context(),a=new GameAudio(()=>c);await a.enable(true);let bursts=0;a.noise=(_t,duration)=>{bursts++;assert.equal(duration,.16);};a.effect('firework');assert.equal(bursts,1);assert.equal(c.oscillators.length,1);await a.enable(false);assert.equal(a.nodes.size,0);
 });
 
-test('every room has independent eight-part harmony, stable tempo and retained mute',async()=>{
+test('every room has independent nine-part harmony, stable tempo and retained mute',async()=>{
  for(const track of Object.keys(arrangements)){
-  const a=musicStep(track,0),b=musicStep(track,16);assert.ok(a.lead>0&&a.harmony>0&&a.bass>0&&a.counter>0&&a.pad>0&&a.fifth>0&&a.answer>0&&a.bell>0);assert.notEqual(a.bass,b.bass);assert.ok(musicStep(track,0,true).step<a.step);
+  const a=musicStep(track,0),b=musicStep(track,16);assert.ok(a.lead>0&&a.harmony>0&&a.bass>0&&a.counter>0&&a.pad>0&&a.fifth>0&&a.answer>0&&a.bell>0&&a.accent>0);assert.notEqual(a.bass,b.bass);assert.ok(musicStep(track,0,true).step<a.step);
   const c=context(),audio=new GameAudio(()=>c);await audio.enable(true);audio.tick(track,{star:track==='star'});assert.ok(c.oscillators.length>=6,track);audio.stop();assert.equal(audio.nodes.size,0);
  }
  assert.notDeepEqual(arrangements.castle.chords,arrangements.overworld.chords);
@@ -89,3 +89,5 @@ test('every room has independent eight-part harmony, stable tempo and retained m
 test('seventh answer part enters on the offbeat and releases on mute',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick('overworld');const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=2;a.next=c.currentTime;a.tick('overworld');const note=musicStep('overworld',2);assert.ok(scheduled.some(x=>x[0]===note.answer&&x[1]>c.currentTime&&x[3]==='triangle'));await a.enable(false);assert.equal(a.nodes.size,0);});
 
 test('eighth bell answers the phrase with a quiet bounded voice',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick('underwater');const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=6;a.next=c.currentTime;a.tick('underwater');const n=musicStep('underwater',6);assert.ok(scheduled.some(x=>x[0]===n.bell&&x[3]==='sine'&&x[4]<=.014));await a.enable(false);assert.equal(a.nodes.size,0);});
+
+test('ninth chord accent is short, restrained and default volume is fifty percent',async()=>{const c=context(),a=new GameAudio(()=>c);assert.equal(a.volume,.5);await a.enable(true);a.tick();const scheduled=[];a.tone=(...args)=>scheduled.push(args);a.beat=3;a.next=c.currentTime;a.tick();const n=musicStep('overworld',3);assert.ok(scheduled.some(x=>x[0]===n.accent&&x[3]==='square'&&x[4]<=.010&&x[2]<n.step));await a.enable(false);assert.equal(a.nodes.size,0);});
