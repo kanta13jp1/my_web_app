@@ -1,4 +1,11 @@
-enum BudgetBalanceField { income, essential, annual, reserve, enjoyment, investment }
+enum BudgetBalanceField {
+  income,
+  essential,
+  annual,
+  reserve,
+  enjoyment,
+  investment
+}
 
 class BudgetBalanceResult {
   const BudgetBalanceResult({
@@ -37,7 +44,8 @@ class BudgetBalanceCalculator {
       amounts[field] = int.parse(input.trim().replaceAll(',', ''));
     }
     final annual = (amounts[BudgetBalanceField.annual]! + 11) ~/ 12;
-    final allocated = amounts[BudgetBalanceField.essential]! + annual +
+    final allocated = amounts[BudgetBalanceField.essential]! +
+        annual +
         amounts[BudgetBalanceField.reserve]! +
         amounts[BudgetBalanceField.enjoyment]! +
         amounts[BudgetBalanceField.investment]!;
