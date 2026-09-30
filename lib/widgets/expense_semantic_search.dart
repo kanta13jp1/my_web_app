@@ -202,9 +202,11 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
             child: const Text('語句で探す（送信なし）'),
           ),
         ),
-        Text(_client.isLocalMode
-            ? 'AI確認は選んだ1件のメモと条件を設定済みのローカル接続先へ送ります。接続先によって外部AIを利用する場合があります。'
-            : 'AI確認は選んだ1件のメモと条件をTypeSafe AIへ送ります。下のメモを確認してから押してください。'),
+        Text(
+          _client.isLocalMode
+              ? 'AI確認は選んだ1件のメモと条件を設定済みのローカル接続先へ送ります。接続先によって外部AIを利用する場合があります。'
+              : 'AI確認は選んだ1件のメモと条件をTypeSafe AIへ送ります。下のメモを確認してから押してください。',
+        ),
         const Text('AI確認は1件ずつ、除外条件を含め最大2回の判定です。既存の利用回数枠を使います。'),
         if (!_client.isConfigured) const Text('AI確認にはログインが必要です。語句検索は送信せず使えます。'),
         if (items.isEmpty) const Text('この月の支出メモはありません。'),
@@ -218,17 +220,20 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
                 children: [
                   Text(items[i]['title'] as String),
                   if (_results[i] case final result?) ...[
-                    Text(result.source == 'jev'
-                        ? 'AI判定・要確認'
-                        : result.source == 'empty_query'
-                            ? '条件なし・全件表示'
-                            : '語句一致・AI判定ではありません'),
+                    Text(
+                      result.source == 'jev'
+                          ? 'AI判定・要確認'
+                          : result.source == 'empty_query'
+                              ? '条件なし・全件表示'
+                              : '語句一致・AI判定ではありません',
+                    ),
                     Text(result.isMatch ? '条件に合う候補' : '条件に合わない候補'),
                     if (result.source == 'jev')
                       const Text('AIは誤ることがあります。メモと条件を照合してください。')
                     else if (result.source == 'local_fallback')
                       const Text(
-                          '単語での判定です。意味の判定やAIの確信度ではありません。AIが使えない場合もこの方式になります。'),
+                        '単語での判定です。意味の判定やAIの確信度ではありません。AIが使えない場合もこの方式になります。',
+                      ),
                   ] else
                     const Text('未確認'),
                   Align(

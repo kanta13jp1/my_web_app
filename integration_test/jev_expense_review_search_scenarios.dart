@@ -33,7 +33,7 @@ Widget host(
             sessionIdentities: sessionIdentities,
             items: [
               {'title': memo, 'amount': 123456789, 'date': 'private-date'},
-              {'title': '人工例：返金完了。'},
+              const {'title': '人工例：返金完了。'},
             ],
           ),
         ),
@@ -46,6 +46,7 @@ Future<void> expand(WidgetTester tester) async {
 }
 
 Future<void> ask(WidgetTester tester) async {
+  await tester.pumpAndSettle();
   final button = find.byKey(const Key('expense_search_ai_0'));
   await tester.ensureVisible(button);
   await tester.tap(button);
@@ -69,9 +70,13 @@ void main({Future<void> Function(String name)? capture}) {
     await tester.pumpWidget(host(client));
     await expand(tester);
     await tester.enterText(
-        find.byKey(const Key('expense_search_query')), '返金要求');
+      find.byKey(const Key('expense_search_query')),
+      '返金要求',
+    );
     await tester.enterText(
-        find.byKey(const Key('expense_search_exclude')), '完了');
+      find.byKey(const Key('expense_search_exclude')),
+      '完了',
+    );
     expect(sent, isEmpty);
     expect(find.textContaining('TypeSafe AIへ送ります'), findsOneWidget);
     await ask(tester);
@@ -145,11 +150,13 @@ void main({Future<void> Function(String name)? capture}) {
     expect(calls, 0);
     expect(find.text('語句一致・AI判定ではありません'), findsNWidgets(2));
     expect(
-        tester
-            .widget<OutlinedButton>(
-                find.byKey(const Key('expense_search_ai_0')))
-            .onPressed,
-        isNull);
+      tester
+          .widget<OutlinedButton>(
+            find.byKey(const Key('expense_search_ai_0')),
+          )
+          .onPressed,
+      isNull,
+    );
   });
 
   testWidgets(
@@ -170,7 +177,9 @@ void main({Future<void> Function(String name)? capture}) {
     await tester.tap(button);
     await tester.pump();
     await tester.enterText(
-        find.byKey(const Key('expense_search_query')), '交通費');
+      find.byKey(const Key('expense_search_query')),
+      '交通費',
+    );
     pending.complete(searchAnswer(1));
     await tester.pumpAndSettle();
     expect(find.text('AI判定・要確認'), findsNothing);
@@ -190,11 +199,12 @@ void main({Future<void> Function(String name)? capture}) {
     await expand(tester);
     expect(find.text('AI判定・要確認'), findsNothing);
     expect(
-        tester
-            .widget<TextField>(find.byKey(const Key('expense_search_query')))
-            .controller!
-            .text,
-        isEmpty);
+      tester
+          .widget<TextField>(find.byKey(const Key('expense_search_query')))
+          .controller!
+          .text,
+      isEmpty,
+    );
   });
   testWidgets(
       'Account events clear displayed AI results and disable previous memos',
