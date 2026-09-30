@@ -9,7 +9,8 @@ async function rendered(page: Page) {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
 }
 async function amount(page: Page, i: number, value: string) {
-  await input(page, i).focus();
+  await input(page, i).scrollIntoViewIfNeeded();
+  await input(page, i).click();
   await rendered(page);
   await expect(input(page, i)).toBeFocused();
   await input(page, i).press('ControlOrMeta+A');
