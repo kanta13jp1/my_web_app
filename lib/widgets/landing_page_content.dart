@@ -4682,7 +4682,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '入力例と提案サンプル',
             style: TextStyle(
-              color: heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8),
+              color:
+                  heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8),
               fontSize: 11,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4693,7 +4694,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             Text(
               '入力例: 「$samplePrompt」',
               style: TextStyle(
-                color: heroMode ? const Color(0xFFBCC6CE) : const Color(0xFF64748B),
+                color: heroMode
+                    ? const Color(0xFFBCC6CE)
+                    : const Color(0xFF64748B),
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4704,7 +4707,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '提案例: 止まっている案件を1つ選ぶ',
             style: TextStyle(
-              color: heroMode ? const Color(0xFFF6F0E5) : const Color(0xFF172033),
+              color:
+                  heroMode ? const Color(0xFFF6F0E5) : const Color(0xFF172033),
               fontSize: compact ? 13 : 14,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4715,7 +4719,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             Text(
               '次の一手例: 確認先を1人決め、連絡文の下書きを作る',
               style: TextStyle(
-                color: heroMode ? const Color(0xFFBCC6CE) : const Color(0xFF475569),
+                color: heroMode
+                    ? const Color(0xFFBCC6CE)
+                    : const Color(0xFF475569),
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4725,7 +4731,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '実際の提案は、入力内容によって変わります。',
             style: TextStyle(
-              color: heroMode ? const Color(0xFFBCC6CE) : const Color(0xFF64748B),
+              color:
+                  heroMode ? const Color(0xFFBCC6CE) : const Color(0xFF64748B),
               fontSize: compact ? 10 : 11,
               height: 1.45,
             ),
@@ -4763,9 +4770,14 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               icon: const Icon(Icons.bolt, size: 17),
               label: const Text('この入力例でAIに提案させる'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1F7AE0),
+                foregroundColor: heroMode
+                    ? const Color(0xFFF0E5D0)
+                    : const Color(0xFF1F7AE0),
                 minimumSize: const Size.fromHeight(44),
-                side: BorderSide(color: heroMode ? const Color(0xFF70818D) : const Color(0xFF93C5FD)),
+                side: BorderSide(
+                    color: heroMode
+                        ? const Color(0xFF70818D)
+                        : const Color(0xFF93C5FD)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
