@@ -300,17 +300,29 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await _pumpUntil(
       tester,
-      () => find.text(AssetLiabilityPlanningService.directPaymentLabel)
-          .hitTestable().evaluate().isNotEmpty,
+      () => find
+          .text(AssetLiabilityPlanningService.directPaymentLabel)
+          .hitTestable()
+          .evaluate()
+          .isNotEmpty,
     );
     await tester.tap(
-      find.text(AssetLiabilityPlanningService.directPaymentLabel).hitTestable().last,
+      find
+          .text(AssetLiabilityPlanningService.directPaymentLabel)
+          .hitTestable()
+          .last,
     );
     await _pumpUntil(tester, () => ai.requests.length == 3);
-    final detached = ai
-        .requests.last.workbook.cardStatementReconciliation.groups
-        .singleWhere((group) => group.billingAccountId == 'paypay_card');
-    expect(detached.configuredDetailTotal, 0);
+    final detachedWorkbook = ai.requests.last.workbook;
+    expect(
+      detachedWorkbook.cardStatementReconciliation.groups
+          .where((group) => group.billingAccountId == 'paypay_card'),
+      isEmpty,
+    );
+    final directPayment = detachedWorkbook.cardBillingReview.directPaymentItems
+        .singleWhere((item) => item.accountId == providerId);
+    expect(directPayment.amount, 20000);
+    expect(directPayment.includedInBillingAccount, isFalse);
     expect(
       repository.state.cardBillingAccountIds[providerId],
       AssetLiabilityPlanningService.directPaymentMethodId,
@@ -324,7 +336,8 @@ void main() {
       find
           .byWidgetPredicate(
             (widget) =>
-                widget is DropdownMenuItem<String> && widget.value == 'paypay_card',
+                widget is DropdownMenuItem<String> &&
+                widget.value == 'paypay_card',
           )
           .last,
     );
