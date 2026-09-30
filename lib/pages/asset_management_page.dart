@@ -823,7 +823,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetLiabilityBootStateLoaded &&
       !_assetLiabilityMonthlyStateLoadFailed &&
       _assetLiabilityMonthlyStateInFlight == null &&
-      _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now);
+      _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now) &&
+      _assetLiabilityRepository.isMonthVerifiedForAi(
+        _assetLiabilityStateMonth(_now),
+      );
   // 同一サイクル月の月次stateロードが並行して複数走らないよう束ねる in-flight
   // ガード。起動時は eager ロードと給料日/リセットマーカーのミラー復元が相次いで
   // _loadAssetLiabilityMonthlyState を呼び、同じ月を 2-3 回フル取得 (各 7 往復)
