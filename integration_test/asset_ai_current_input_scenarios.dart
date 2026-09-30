@@ -726,7 +726,7 @@ void main() {
           aiSummaryService: ai,
           aiAnalysisHistoryService: _EmptyHistory(),
           debugNow: DateTime(2026, 9, 6, 12),
-          debugInitialRecurringFixedCosts: <AssetRecurringFixedCost>[cost],
+          debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[cost],
           debugInitialAssetData: const <String, Map<String, double>>{
             '2026-09-06': <String, double>{'bank': 30000},
           },
@@ -743,7 +743,11 @@ void main() {
     final edit = find.byTooltip('Synthetic recurring bill を編集');
     await tester.ensureVisible(edit);
     await tester.tap(edit);
-    await tester.pumpAndSettle();
+    await _pumpUntil(
+      tester,
+      () => find.byKey(const Key('recurring_last_billing_date')).evaluate().isNotEmpty,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
     final date = find.byKey(const Key('recurring_last_billing_date'));
     await tester.enterText(date, '2026-08-20');
     await tester.tap(find.widgetWithText(FilledButton, '保存'));
@@ -761,7 +765,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     await tester.ensureVisible(edit);
     await tester.tap(edit);
-    await tester.pumpAndSettle();
+    await _pumpUntil(
+      tester,
+      () => find.byKey(const Key('recurring_last_billing_date')).evaluate().isNotEmpty,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
     expect(tester.widget<TextFormField>(date).controller!.text, '2026-08-20');
     await tester.enterText(date, '');
     await tester.tap(find.widgetWithText(FilledButton, '保存'));
