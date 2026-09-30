@@ -66,7 +66,8 @@ class MoneyForwardPage extends StatelessWidget {
             child: Text(
               'MoneyForward は個人向けの公開連携 API を提供していないため、'
               'ワンクリックでの口座自動同期は現時点で実装できません。\n'
-              '下記の方法で CSV エクスポートを取り込めば、今すぐ収支データを反映できます。',
+              'エクスポートした内容はノートとして取り込めます。'
+              '資産管理の残高・日付・金額・取引を復元する機能ではありません。',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.black54,
@@ -92,7 +93,7 @@ class MoneyForwardPage extends StatelessWidget {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'CSV インポートの手順',
+                        'ノート取り込みの手順',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF16A34A),
@@ -110,7 +111,10 @@ class MoneyForwardPage extends StatelessWidget {
                   ),
                   _StepItem(text: '期間を指定してダウンロード'),
                   _StepItem(
-                    text: 'この下の「CSVをインポートする」からダウンロードした CSV を選択',
+                    text: 'CSVをXLSXへ変換し、内容をノートにしたい列の見出しを「内容」にします。元のCSVは保持してください。',
+                  ),
+                  _StepItem(
+                    text: '「インポート画面を開く」からExcel (XLSX)を選び、プレビューでノート内容を確認してから取り込みます。',
                   ),
                 ],
               ),
@@ -120,7 +124,7 @@ class MoneyForwardPage extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () => Navigator.of(context).pushNamed('/import'),
             icon: const Icon(Icons.upload_file),
-            label: const Text('CSVをインポートする'),
+            label: const Text('インポート画面を開く'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF00B900),
               foregroundColor: Colors.white,
