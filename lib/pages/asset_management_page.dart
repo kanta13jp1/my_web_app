@@ -22742,6 +22742,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final inputRevision = _assetManagementAiInputRevision;
+    final inputOwnership = _assetLiabilityRepository.captureMonthAiOwnership(
+      _assetLiabilityStateMonth(_now),
+    );
     final key = requestKey ?? _assetManagementAiSummaryKey(report);
     if (_assetManagementAiSummaryInFlightKey == key) {
       return;
@@ -22780,7 +22783,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         reusable = null;
       }
       if (!mounted ||
-          _assetManagementAiInputRevision != inputRevision ||
+          !inputOwnership() || !_assetManagementAiInputReady ||
+        _assetManagementAiInputRevision != inputRevision ||
           _assetManagementAiSummaryInFlightKey != key) {
         return;
       }
@@ -22813,7 +22817,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         report.workbook.baseDate,
       );
       if (!mounted ||
-          _assetManagementAiInputRevision != inputRevision ||
+          !inputOwnership() || !_assetManagementAiInputReady ||
+        _assetManagementAiInputRevision != inputRevision ||
           _assetManagementAiSummaryInFlightKey != key) {
         return;
       }
@@ -22838,6 +22843,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       previousAnalyses = const <AssetManagementAiAnalysisHistoryEntry>[];
     }
     if (!mounted ||
+        !inputOwnership() || !_assetManagementAiInputReady ||
         _assetManagementAiInputRevision != inputRevision ||
         _assetManagementAiSummaryInFlightKey != key) {
       return;
@@ -22846,6 +22852,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 空のままAIへ渡り再掲抑止が効かないため、照合完了を待つ。
     await _ensureExistingDeveloperIssuesLoaded(report.developerRequests);
     if (!mounted ||
+        !inputOwnership() || !_assetManagementAiInputReady ||
         _assetManagementAiInputRevision != inputRevision ||
         _assetManagementAiSummaryInFlightKey != key) {
       return;
@@ -22870,6 +22877,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // Restoration may have invalidated this request while the provider ran.
     // Check ownership before saving history, not only before displaying it.
     if (!mounted ||
+        !inputOwnership() || !_assetManagementAiInputReady ||
         _assetManagementAiInputRevision != inputRevision ||
         _assetManagementAiSummaryInFlightKey != key) {
       return;
@@ -22899,7 +22907,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted) {
       return;
     }
-    if (_assetManagementAiInputRevision != inputRevision ||
+    if (!inputOwnership() || !_assetManagementAiInputReady ||
+        _assetManagementAiInputRevision != inputRevision ||
         _assetManagementAiSummaryInFlightKey != key) {
       return;
     }

@@ -309,6 +309,9 @@ abstract class AssetLiabilityRepository {
   /// Whether the current month's restored state is confirmed for AI input.
   bool isMonthVerifiedForAi(DateTime month) => true;
 
+  bool Function() captureMonthAiOwnership(DateTime month) =>
+      () => isMonthVerifiedForAi(month);
+
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month);
 
   Future<void> saveMonth({
@@ -577,6 +580,12 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   final Map<String, String> _verifiedMonthUsers = <String, String>{};
 
   @override
+  bool Function() captureMonthAiOwnership(DateTime month) {
+    final userId = _userIdOrNull();
+    return () => _userIdOrNull() == userId && isMonthVerifiedForAi(month);
+  }
+
+  @override
   bool isMonthVerifiedForAi(DateTime month) {
     if (!syncEnabled) {
       return localRepository.isMonthVerifiedForAi(month);
@@ -589,9 +598,14 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   Future<AssetLiabilityMonthlyState> _loadMonthOnce(DateTime month) async {
     final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
     _verifiedMonthUsers.remove(monthKey);
+    final userId = _userIdOrNull();
     final local = await localRepository.loadMonth(month);
     final remote = _remoteOrNull();
-    final userId = _userIdOrNull();
+    // The local result belongs to the user who began this operation.
+    // Never combine it with a newly signed-in user's remote state.
+    if (_userIdOrNull() != userId) {
+      return local;
+    }
     if (remote == null || userId == null) {
       return local;
     }
