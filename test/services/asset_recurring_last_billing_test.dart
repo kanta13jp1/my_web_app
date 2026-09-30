@@ -2,6 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_management_fixed_cost_summary_service.dart';
+import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
+import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
+import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 
 void main() {
@@ -68,5 +71,30 @@ void main() {
     );
     expect(summary.recurringEntryCount, 0);
     expect(summary.legacyUnpaidTotal, 600);
+  });
+  test('date-only contract edits invalidate AI even when current totals match', () {
+    const planner = AssetLiabilityPlanningService();
+    const insights = AssetManagementInsightService();
+    final ai = AssetManagementAiSummaryService();
+    AssetManagementInsightReport report(DateTime last) => insights.buildReport(
+      workbook: planner.buildWorkbook(
+        latestSnapshot: const {'bank': 30000.0}, baseDate: DateTime(2026, 2, 1),
+        recurringFixedCosts: [original.copyWith(lastBillingDate: last)],
+      ),
+    );
+    final before = report(DateTime(2026, 2, 28));
+    final after = report(DateTime(2026, 3, 31));
+    expect(before.workbook.monthlyScheduledPaymentTotal,
+      after.workbook.monthlyScheduledPaymentTotal);
+    final oldKey = ai.buildRequestFingerprint(before);
+    final newKey = ai.buildRequestFingerprint(after);
+    expect(newKey, isNot(oldKey));
+    expect(AssetManagementAiSummaryRefresh.canReusePersisted(
+      currentKey: newKey, cachedKey: oldKey,
+    ), isFalse);
+    final contract = (ai.buildPayload(before)['recurring_contracts'] as List).single as Map;
+    expect(contract['lastBillingDate'], '2026-02-28');
+    expect(contract['planned_for_cycle'], isTrue);
+    expect(contract['is_current_debt'], isFalse);
   });
 }

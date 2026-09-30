@@ -390,6 +390,22 @@ class AssetManagementAiSummaryService {
       'response_policy_version': 3,
       'user_profile': _profileToDetailedJson(report.userProfile),
       'workbook': _workbookToDetailedJson(report.workbook),
+      // Contract lifecycle is not a debt balance or a confirmed invoice.
+      'recurring_contracts': <Map<String, dynamic>>[
+        for (final cost in report.workbook.recurringFixedCosts)
+          <String, dynamic>{
+            'id': cost.id,
+            ...cost.toJson(),
+            'billing_date': report.workbook.recurringBillingDates[cost.id]
+                ?.toIso8601String(),
+            'planned_for_cycle':
+                report.workbook.recurringBillingDates[cost.id] != null &&
+                    cost.appliesToPaymentDate(
+                      report.workbook.recurringBillingDates[cost.id]!,
+                    ),
+            'is_current_debt': false,
+          },
+      ],
       'available_money': <String, dynamic>{
         'today': _availableToJson(report.todayAvailable),
         'week': _availableToJson(report.weekAvailable),

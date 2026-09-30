@@ -1479,6 +1479,9 @@ class AssetLiabilityCsvExportBundle {
 
 class AssetLiabilityWorkbook {
   final DateTime baseDate;
+  /// 終了済みを含む契約情報。現在負債とは区別してAIへ渡す。
+  final List<AssetRecurringFixedCost> recurringFixedCosts;
+  final Map<String, DateTime> recurringBillingDates;
   final List<AssetLiabilityAccount> accounts;
   final List<AssetLiabilityDebtRow> debtMasterRows;
   final List<AssetLiabilityDebtRow> repaymentPriorityRows;
@@ -1529,6 +1532,8 @@ class AssetLiabilityWorkbook {
 
   const AssetLiabilityWorkbook({
     required this.baseDate,
+    this.recurringFixedCosts = const <AssetRecurringFixedCost>[],
+    this.recurringBillingDates = const <String, DateTime>{},
     required this.accounts,
     required this.debtMasterRows,
     required this.repaymentPriorityRows,
@@ -1737,6 +1742,8 @@ class AssetLiabilityWorkbook {
 
   AssetLiabilityWorkbook copyWith({
     DateTime? baseDate,
+    List<AssetRecurringFixedCost>? recurringFixedCosts,
+    Map<String, DateTime>? recurringBillingDates,
     List<AssetLiabilityAccount>? accounts,
     List<AssetLiabilityDebtRow>? debtMasterRows,
     List<AssetLiabilityDebtRow>? repaymentPriorityRows,
@@ -1771,6 +1778,8 @@ class AssetLiabilityWorkbook {
   }) {
     return AssetLiabilityWorkbook(
       baseDate: baseDate ?? this.baseDate,
+      recurringFixedCosts: recurringFixedCosts ?? this.recurringFixedCosts,
+      recurringBillingDates: recurringBillingDates ?? this.recurringBillingDates,
       accounts: accounts ?? this.accounts,
       debtMasterRows: debtMasterRows ?? this.debtMasterRows,
       repaymentPriorityRows:
