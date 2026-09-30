@@ -41,12 +41,12 @@ test.beforeEach(async ({ page }) => {
   await expect(iframe).toHaveAttribute('src', '/labs/flow-city/index.html');
   await expect(page.frameLocator('iframe[title="FLOW CITY 信号条件の比較実験"]').getByRole('heading', { level: 1 })).toContainText('街の流れを');
   // Each test reports runtime errors as an additional assertion, not just a log.
-  page.frameLocator('iframe[title="FLOW CITY 信号条件の比較実験"]')Errors = errors;
+  (page as any).__flowErrors = errors;
 });
 
 test.afterEach(async ({ page }, testInfo) => {
-  await testInfo.attach('runtime-errors', { body: JSON.stringify(page.frameLocator('iframe[title="FLOW CITY 信号条件の比較実験"]')Errors), contentType: 'application/json' });
-  expect(page.frameLocator('iframe[title="FLOW CITY 信号条件の比較実験"]')Errors).toEqual([]);
+  await testInfo.attach('runtime-errors', { body: JSON.stringify((page as any).__flowErrors), contentType: 'application/json' });
+  expect((page as any).__flowErrors).toEqual([]);
 });
 
 test('same inputs stay equal; signal candidate resets and runs visibly', async ({ page }, testInfo) => {
