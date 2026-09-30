@@ -51,7 +51,6 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
     _watchSession();
   }
 
-
   void _watchSession() {
     Stream<String?>? identities = widget.sessionIdentities;
     String? previous;
@@ -61,7 +60,8 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
         final auth = Supabase.instance.client.auth;
         previous = auth.currentUser?.id;
         initialized = true;
-        identities = auth.onAuthStateChange.map((event) => event.session?.user.id);
+        identities =
+            auth.onAuthStateChange.map((event) => event.session?.user.id);
       } catch (_) {
         return;
       }
@@ -137,7 +137,8 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
           // The service sorts results; recover input positions without relying
           // on memo uniqueness (two transactions may have identical memos).
           for (var i = 0; i < items.length; i++) {
-            _results[i] = results.firstWhere((r) => identical(r.item, items[i]));
+            _results[i] =
+                results.firstWhere((r) => identical(r.item, items[i]));
           }
         }
       });
@@ -205,8 +206,7 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
             ? 'AI確認は選んだ1件のメモと条件を設定済みのローカル接続先へ送ります。接続先によって外部AIを利用する場合があります。'
             : 'AI確認は選んだ1件のメモと条件をTypeSafe AIへ送ります。下のメモを確認してから押してください。'),
         const Text('AI確認は1件ずつ、除外条件を含め最大2回の判定です。既存の利用回数枠を使います。'),
-        if (!_client.isConfigured)
-          const Text('AI確認にはログインが必要です。語句検索は送信せず使えます。'),
+        if (!_client.isConfigured) const Text('AI確認にはログインが必要です。語句検索は送信せず使えます。'),
         if (items.isEmpty) const Text('この月の支出メモはありません。'),
         if (_busy) const LinearProgressIndicator(),
         for (var i = 0; i < items.length; i++)
@@ -227,14 +227,16 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
                     if (result.source == 'jev')
                       const Text('AIは誤ることがあります。メモと条件を照合してください。')
                     else if (result.source == 'local_fallback')
-                      const Text('単語での判定です。意味の判定やAIの確信度ではありません。AIが使えない場合もこの方式になります。'),
+                      const Text(
+                          '単語での判定です。意味の判定やAIの確信度ではありません。AIが使えない場合もこの方式になります。'),
                   ] else
                     const Text('未確認'),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: OutlinedButton(
                       key: Key('expense_search_ai_$i'),
-                      onPressed: _busy || !canAsk ? null : () => _search(aiIndex: i),
+                      onPressed:
+                          _busy || !canAsk ? null : () => _search(aiIndex: i),
                       child: const Text('このメモをAIに送って確認'),
                     ),
                   ),

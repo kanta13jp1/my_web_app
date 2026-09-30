@@ -16,12 +16,14 @@ Map<String, dynamic> searchAnswer(double score) => {
       },
     };
 
-Widget host(JevExpenseProxyClient client, {
+Widget host(
+  JevExpenseProxyClient client, {
   String memo = '人工例：返金を依頼した。まだ未完了。',
   String period = '2026年10月',
   Key? accountKey,
   Stream<String?>? sessionIdentities,
-}) => MaterialApp(
+}) =>
+    MaterialApp(
       home: Scaffold(
         body: SingleChildScrollView(
           child: ExpenseSemanticSearch(
@@ -51,7 +53,8 @@ Future<void> ask(WidgetTester tester) async {
 }
 
 void main({Future<void> Function(String name)? capture}) {
-  testWidgets('Search sends one selected memo only after explicit action, AND NOT is visible',
+  testWidgets(
+      'Search sends one selected memo only after explicit action, AND NOT is visible',
       (tester) async {
     final sent = <Map<String, dynamic>>[];
     final client = JevExpenseProxyClient(
@@ -65,8 +68,10 @@ void main({Future<void> Function(String name)? capture}) {
     addTearDown(client.dispose);
     await tester.pumpWidget(host(client));
     await expand(tester);
-    await tester.enterText(find.byKey(const Key('expense_search_query')), '返金要求');
-    await tester.enterText(find.byKey(const Key('expense_search_exclude')), '完了');
+    await tester.enterText(
+        find.byKey(const Key('expense_search_query')), '返金要求');
+    await tester.enterText(
+        find.byKey(const Key('expense_search_exclude')), '完了');
     expect(sent, isEmpty);
     expect(find.textContaining('TypeSafe AIへ送ります'), findsOneWidget);
     await ask(tester);
@@ -87,7 +92,8 @@ void main({Future<void> Function(String name)? capture}) {
     await capture?.call('semantic-search-ai-exclusion');
   });
 
-  testWidgets('Search failure is word matching, recovers, and remains readable at 320 pixels',
+  testWidgets(
+      'Search failure is word matching, recovers, and remains readable at 320 pixels',
       (tester) async {
     var calls = 0;
     final client = JevExpenseProxyClient(
@@ -124,7 +130,10 @@ void main({Future<void> Function(String name)? capture}) {
     final client = JevExpenseProxyClient(
       semanticSearch: true,
       signedIn: () => false,
-      invoke: (_) async { calls++; return searchAnswer(1); },
+      invoke: (_) async {
+        calls++;
+        return searchAnswer(1);
+      },
     );
     addTearDown(client.dispose);
     await tester.pumpWidget(host(client));
@@ -135,10 +144,16 @@ void main({Future<void> Function(String name)? capture}) {
     await tester.pumpAndSettle();
     expect(calls, 0);
     expect(find.text('語句一致・AI判定ではありません'), findsNWidgets(2));
-    expect(tester.widget<OutlinedButton>(find.byKey(const Key('expense_search_ai_0'))).onPressed, isNull);
+    expect(
+        tester
+            .widget<OutlinedButton>(
+                find.byKey(const Key('expense_search_ai_0')))
+            .onPressed,
+        isNull);
   });
 
-  testWidgets('Changing query, memo, month or account discards late results and cached views',
+  testWidgets(
+      'Changing query, memo, month or account discards late results and cached views',
       (tester) async {
     var pending = Completer<Map<String, dynamic>>();
     final client = JevExpenseProxyClient(
@@ -154,7 +169,8 @@ void main({Future<void> Function(String name)? capture}) {
     await tester.ensureVisible(button);
     await tester.tap(button);
     await tester.pump();
-    await tester.enterText(find.byKey(const Key('expense_search_query')), '交通費');
+    await tester.enterText(
+        find.byKey(const Key('expense_search_query')), '交通費');
     pending.complete(searchAnswer(1));
     await tester.pumpAndSettle();
     expect(find.text('AI判定・要確認'), findsNothing);
@@ -169,12 +185,19 @@ void main({Future<void> Function(String name)? capture}) {
     pending = Completer<Map<String, dynamic>>()..complete(searchAnswer(1));
     await ask(tester);
     expect(find.text('AI判定・要確認'), findsOneWidget);
-    await tester.pumpWidget(host(client, accountKey: const ValueKey('another-user')));
+    await tester
+        .pumpWidget(host(client, accountKey: const ValueKey('another-user')));
     await expand(tester);
     expect(find.text('AI判定・要確認'), findsNothing);
-    expect(tester.widget<TextField>(find.byKey(const Key('expense_search_query'))).controller!.text, isEmpty);
+    expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('expense_search_query')))
+            .controller!
+            .text,
+        isEmpty);
   });
-  testWidgets('Account events clear displayed AI results and disable previous memos',
+  testWidgets(
+      'Account events clear displayed AI results and disable previous memos',
       (tester) async {
     final identities = StreamController<String?>();
     addTearDown(identities.close);
@@ -182,7 +205,10 @@ void main({Future<void> Function(String name)? capture}) {
     final client = JevExpenseProxyClient(
       semanticSearch: true,
       signedIn: () => true,
-      invoke: (_) async { calls++; return searchAnswer(1); },
+      invoke: (_) async {
+        calls++;
+        return searchAnswer(1);
+      },
     );
     addTearDown(client.dispose);
     await tester.pumpWidget(host(client, sessionIdentities: identities.stream));
@@ -199,5 +225,4 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.textContaining('画面を開き直す'), findsOneWidget);
     expect(calls, 1);
   });
-
 }
