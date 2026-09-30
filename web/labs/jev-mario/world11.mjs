@@ -329,7 +329,7 @@ export class World11 {
   defeat(enemy){if(enemy.dead)return;enemy.dead=1;this.score+=100;this.popup(100,enemy.x,enemy.y);this.sound('kick');this.effects.push({x:enemy.x,y:enemy.y,kind:'debris',life:25,vx:1,vy:-3});}
   collectCoin(){this.sound('coin');this.coins++;this.score+=200;if(this.coins>=100){this.coins-=100;this.lives++;this.sound('life');}}
   drainSounds(){return this.sounds.splice(0);}
-  buttons(action){this.input={right:action.startsWith('right'),left:action==='left',jump:action.includes('jump'),run:action.includes('run')};}
+  buttons(action){this.input={right:action.startsWith('right'),left:action.startsWith('left'),jump:action.includes('jump'),run:action.includes('run')};}
   tile(x,y){return this.cells.get(`${x},${y}`);}
   solid(x,y){const t=this.tile(x,y);return !!t&&t!=='hidden';}
   hitBlock(x,y){const key=`${x},${y}`,t=this.cells.get(key);if(!t||t==='used'||t.includes('pipe')||t==='stone'||t==='ground'||t==='castle'||t==='bridge'||t==='cannon')return;

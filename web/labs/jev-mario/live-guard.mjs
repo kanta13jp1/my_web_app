@@ -13,7 +13,7 @@ export class LiveGuard {
   let best=evaluate(proposed);
   // Keep a safe model/search command intact. Only imminent death/damage triggers alternatives.
   if(best.g.phase==='dead'||best.g.power<world.power||best.g.p.y>224||(level&&world.p.grounded&&proposed.includes('right')&&best.g.p.x-world.p.x<2)){
-   for(const action of ['right_jump','right_run_jump','jump','noop','left']){const candidate=evaluate(action);if(candidate.value>best.value)best=candidate;}
+   for(const action of ['right_jump','right_run_jump','jump','noop','left','left_jump']){const candidate=evaluate(action);if(candidate.value>best.value)best=candidate;}
    if(best.action!==proposed){this.interventions++;this.lastReason=level?'retry_lookahead':'live_collision_guard';}
   }
   this.action=best.action;return edge(world,best.action);

@@ -27,7 +27,7 @@ function score(g,start,failures,target){
 }
 export function plan(g,raw=null,failures=[],itemAvoidance=[]){
  const target=isWater(g.stage)?null:itemTargets(g).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
- const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left']:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
+ const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left','left_jump']:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
  let beam=[{g,first:null,value:0}],byFirst={};
  for(let depth=0;depth<depthLimit;depth++){
   const expanded=[];
