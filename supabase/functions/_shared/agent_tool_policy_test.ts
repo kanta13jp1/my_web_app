@@ -143,3 +143,35 @@ Deno.test("generated UI sandbox cannot be widened by approval metadata", () => {
   assertEquals(decision.missingScopes, ["send", "external_share"]);
   assertEquals(decision.highRiskScopes, ["send", "external_share"]);
 });
+
+Deno.test("mixed known and unknown requested operations are rejected", () => {
+  for (const requestedScopes of [["read", "unknown"], ["unknown"], ["read", ""]]) {
+    const result = evaluateAgentToolPolicy({
+      actorRole: "ceo",
+      toolName: "preview.only",
+      requestedScopes,
+    });
+    assertEquals(result.allowed, false);
+    assertEquals(result.blockedReason, "invalid_requested_scope");
+  }
+});
+
+Deno.test("malformed requested scope values return a rejection", () => {
+  for (const value of [null, "read", ["read", 42], ["read", {}]]) {
+    const result = evaluateAgentToolPolicy({
+      toolName: "preview.only",
+      requestedScopes: value as unknown as readonly string[],
+    });
+    assertEquals(result.allowed, false);
+    assertEquals(result.blockedReason, "invalid_requested_scope");
+  }
+});
+
+Deno.test("known scope normalization and empty requests retain behavior", () => {
+  const allowed = evaluateAgentToolPolicy({toolName: "preview.only", requestedScopes: [" READ ", "read"]});
+  assertEquals(allowed.allowed, true);
+  assertEquals(allowed.auditPayload.requested_scopes, ["read"]);
+  const empty = evaluateAgentToolPolicy({toolName: "preview.only", requestedScopes: []});
+  assertEquals(empty.allowed, false);
+  assertEquals(empty.blockedReason, "empty_requested_scope");
+});
