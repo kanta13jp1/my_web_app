@@ -23,7 +23,8 @@ class EvaluateSpreadsheetFormulaUseCase {
     if (input.isEmpty) {
       return const SpreadsheetFormulaResult(displayValue: '');
     }
-    if (!input.startsWith('=') || document.activeSheet.textCells.contains(address.key)) {
+    if (!input.startsWith('=') ||
+        document.activeSheet.textCells.contains(address.key)) {
       return SpreadsheetFormulaResult(
         displayValue: input,
         numericValue: double.tryParse(input),
@@ -57,7 +58,8 @@ class EvaluateSpreadsheetFormulaUseCase {
     try {
       final input = document.inputAt(address).trim();
       if (input.isEmpty) return 0;
-      if (input.startsWith('=') && document.activeSheet.textCells.contains(address.key)) {
+      if (input.startsWith('=') &&
+          document.activeSheet.textCells.contains(address.key)) {
         throw const _FormulaException('#VALUE!');
       }
       if (!input.startsWith('=')) {
@@ -78,7 +80,8 @@ class EvaluateSpreadsheetFormulaUseCase {
               start.column < end.column ? start.column : end.column;
           final lastColumn =
               start.column > end.column ? start.column : end.column;
-          if ((lastRow - firstRow + 1) * (lastColumn - firstColumn + 1) > 20000) {
+          if ((lastRow - firstRow + 1) * (lastColumn - firstColumn + 1) >
+              20000) {
             throw const _FormulaException('#NUM!');
           }
           for (var row = firstRow; row <= lastRow; row++) {

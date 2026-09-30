@@ -118,16 +118,24 @@ void main() {
     );
   });
 
-  testWidgets('XLSX toolbar warns before import and exports all sheets', (tester) async {
+  testWidgets('XLSX toolbar warns before import and exports all sheets',
+      (tester) async {
     tester.view.physicalSize = const Size(1200, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final source = SpreadsheetDocument.blank().copyWith(sheets: [
-      SpreadsheetSheet.blank(id: 'import', name: '売上').copyWith(cells: {'0:0': '商品'}),
-    ]);
-    final gateway = _MemorySpreadsheetFileGateway(picked: SpreadsheetPickedCsv(
-      name: '売上.xlsx', bytes: const SpreadsheetXlsxCodec().encode(source)));
+    final source = SpreadsheetDocument.blank().copyWith(
+      sheets: [
+        SpreadsheetSheet.blank(id: 'import', name: '売上')
+            .copyWith(cells: {'0:0': '商品'}),
+      ],
+    );
+    final gateway = _MemorySpreadsheetFileGateway(
+      picked: SpreadsheetPickedCsv(
+        name: '売上.xlsx',
+        bytes: const SpreadsheetXlsxCodec().encode(source),
+      ),
+    );
     await tester.pumpWidget(_app(fileGateway: gateway));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('spreadsheet-import-xlsx')));
@@ -146,7 +154,8 @@ void main() {
     await tester.tap(find.byKey(const Key('spreadsheet-xlsx-confirm')));
     await tester.pumpAndSettle();
     expect(gateway.savedName, endsWith('-export.xlsx'));
-    expect(const SpreadsheetXlsxCodec().decode(gateway.savedBytes!), hasLength(2));
+    expect(
+        const SpreadsheetXlsxCodec().decode(gateway.savedBytes!), hasLength(2));
     expect(tester.takeException(), isNull);
   });
 
@@ -226,7 +235,8 @@ class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
   Future<SpreadsheetPickedCsv?> pickXlsx() async => picked;
 
   @override
-  Future<bool> saveXlsx({required String suggestedName, required Uint8List bytes}) =>
+  Future<bool> saveXlsx(
+          {required String suggestedName, required Uint8List bytes}) =>
       saveCsv(suggestedName: suggestedName, bytes: bytes);
 
   @override

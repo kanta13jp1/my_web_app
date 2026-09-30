@@ -117,8 +117,12 @@ class SpreadsheetViewModel extends ChangeNotifier {
     }
     _commit(
       current.replaceSheet(
-        activeSheet.copyWith(cells: nextCells,
-          textCells: activeSheet.textCells.where((key) => key != _selectedCell.key).toList()),
+        activeSheet.copyWith(
+          cells: nextCells,
+          textCells: activeSheet.textCells
+              .where((key) => key != _selectedCell.key)
+              .toList(),
+        ),
         updatedAt: _clock(),
       ),
     );
@@ -288,13 +292,27 @@ class SpreadsheetViewModel extends ChangeNotifier {
       final sheets = <SpreadsheetSheet>[...current.sheets];
       for (final sheet in imported) {
         final id = _nextSheetId(current.copyWith(sheets: sheets));
-        sheets.add(SpreadsheetSheet(id: id, name: sheet.name, rowCount: sheet.rowCount,
-            columnCount: sheet.columnCount, cells: sheet.cells, textCells: sheet.textCells));
+        sheets.add(
+          SpreadsheetSheet(
+            id: id,
+            name: sheet.name,
+            rowCount: sheet.rowCount,
+            columnCount: sheet.columnCount,
+            cells: sheet.cells,
+            textCells: sheet.textCells,
+          ),
+        );
       }
       _selectedCell = const CellAddress(row: 0, column: 0);
-      _commit(current.copyWith(sheets: sheets,
-          activeSheetId: sheets[current.sheets.length].id, updatedAt: _clock()));
-      _noticeMessage = '${picked.name} の${imported.length}シートを追加しました。${SpreadsheetXlsxCodec.compatibilityNotice}';
+      _commit(
+        current.copyWith(
+          sheets: sheets,
+          activeSheetId: sheets[current.sheets.length].id,
+          updatedAt: _clock(),
+        ),
+      );
+      _noticeMessage =
+          '${picked.name} の${imported.length}シートを追加しました。${SpreadsheetXlsxCodec.compatibilityNotice}';
       return true;
     } on FormatException catch (error) {
       _errorMessage = error.message.toString();
@@ -320,7 +338,9 @@ class SpreadsheetViewModel extends ChangeNotifier {
         suggestedName: _safeFileName('${current.title}-export.xlsx'),
         bytes: _xlsxCodec.encode(current),
       );
-      if (saved) _noticeMessage = 'XLSXを書き出しました。${SpreadsheetXlsxCodec.compatibilityNotice}';
+      if (saved)
+        _noticeMessage =
+            'XLSXを書き出しました。${SpreadsheetXlsxCodec.compatibilityNotice}';
       return saved;
     } on FormatException catch (error) {
       _errorMessage = error.message.toString();
