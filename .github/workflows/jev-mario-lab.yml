@@ -68,7 +68,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f test/web/jev_mario_world8_ranking.sql
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:

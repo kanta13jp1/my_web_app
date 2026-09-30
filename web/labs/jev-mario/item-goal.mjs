@@ -25,7 +25,10 @@ export function itemApproach(g,target){
  if(!target.block||g.p.y>=target.y-2)return target;
  const [col,row]=target.key.split(',').map(Number),left=g.p.x+g.p.w/2<target.x;
  let edge=col;
- while(g.solid(edge+(left?-1:1),row)&&Math.abs(edge-col)<12)edge+=left?-1:1;
+ // A lower supporting row may extend beyond the reward block itself.
+ // Leave that support too; stopping just outside the reward would never descend.
+ const foot=Math.floor((g.p.y+g.p.h+1)/16);
+ while((g.solid(edge+(left?-1:1),row)||g.solid(edge+(left?-1:1),foot))&&Math.abs(edge-col)<12)edge+=left?-1:1;
  return {x:left?edge*16-g.p.w/2-2:(edge+1)*16+g.p.w/2+2,y:target.y+20};
 }
 
