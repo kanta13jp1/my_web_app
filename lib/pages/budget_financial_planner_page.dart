@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'asset_management_page.dart';
 import '../models/budget_entry.dart';
+import '../widgets/budget_balance_card.dart';
 import '../models/kgi_csf_kpi.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
@@ -301,6 +302,7 @@ $breakdown
       appBar: AppBar(
         title: const Text('予算・財務プランナー'),
         bottom: TabBar(
+          isScrollable: true,
           controller: _tabController,
           tabs: const [
             Tab(icon: Icon(Icons.dashboard), text: '概要'),
@@ -945,6 +947,8 @@ $breakdown
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const BudgetBalanceCard(),
+          const SizedBox(height: 16),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
