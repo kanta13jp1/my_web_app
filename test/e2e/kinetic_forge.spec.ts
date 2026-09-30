@@ -37,3 +37,38 @@ test('every sample level reaches its own goal',async({page})=>{
     await expect(page.locator('#sample')).toBeEnabled();
   }
 });
+test('touch drag creates a playable course without scrolling',async({page,context},info)=>{
+  test.skip(info.project.name!=='mobile-chrome','Touch-capable mobile project');
+  const board=page.locator('#board');await board.scrollIntoViewIfNeeded();
+  const box=await board.boundingBox();if(!box)throw new Error('No board');
+  const scroll=await page.evaluate(()=>scrollY);
+  const session=await context.newCDPSession(page);
+  const point=(x:number,y:number)=>({x:box.x+x/900*box.width,y:box.y+y/540*box.height});
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point(80,180)]});
+  for(let i=1;i<=12;i++)await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[point(80+680*i/12,180+260*i/12)]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await session.detach();
+  await expect(page.locator('#line-count')).toContainText('1 /');
+  expect(await page.evaluate(()=>scrollY)).toBe(scroll);
+  await page.locator('#play').click();
+  await expect(page.locator('#phase')).toHaveText('ARRIVED',{timeout:20000});
+});
+test('hidden document pauses and resumes only by explicit action',async({page})=>{
+  await page.locator('#sample').click();await page.locator('#play').click();
+  await page.waitForTimeout(200);
+  // Controlled lifecycle input: not evidence of an OS-level background tab.
+  await page.evaluate(()=>{
+    Object.defineProperty(document,'hidden',{configurable:true,value:true});
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.locator('#phase')).toHaveText('PAUSED');
+  const clock=await page.locator('#clock').innerText();await page.waitForTimeout(250);
+  await expect(page.locator('#clock')).toHaveText(clock);
+  await page.evaluate(()=>{
+    Object.defineProperty(document,'hidden',{configurable:true,value:false});
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.locator('#phase')).toHaveText('PAUSED');
+  await page.locator('#play').click();
+  await expect(page.locator('#phase')).toHaveText('ARRIVED',{timeout:20000});
+});
