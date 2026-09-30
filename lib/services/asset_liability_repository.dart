@@ -629,8 +629,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     final load = loadMonth(month);
     final receipt = _monthReadReceipts[load]!;
     final state = await load;
-    final sameUser = requestingUser == receipt.userId &&
-        requestingUser == _userIdOrNull();
+    final sameUser =
+        requestingUser == receipt.userId && requestingUser == _userIdOrNull();
     return AssetLiabilityMonthRead(
       state: state,
       monthKey: AssetLiabilityMonthlyStateStore.formatMonthKey(month),

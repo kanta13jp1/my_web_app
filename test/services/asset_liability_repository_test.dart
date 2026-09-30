@@ -13,7 +13,8 @@ void main() {
     });
 
     for (final hasLocalData in <bool>[false, true]) {
-      test('failed remote read never confirms fallback: $hasLocalData', () async {
+      test('failed remote read never confirms fallback: $hasLocalData',
+          () async {
         final month = DateTime(2026, 5);
         final local = _FakeAssetLiabilityRepository();
         if (hasLocalData) {
@@ -38,7 +39,8 @@ void main() {
         final failed = await repository.loadMonthForAi(month);
         expect(failed.source, AssetLiabilityMonthReadSource.remoteUnavailable);
         expect(failed.canGenerateAi, isFalse);
-        expect(failed.state.paidAccountNames.contains('synthetic debt'), hasLocalData);
+        expect(failed.state.paidAccountNames.contains('synthetic debt'),
+            hasLocalData);
         expect((await local.loadMonth(month)).paidAccountNames,
             failed.state.paidAccountNames);
         remote.failMonthReads = false;
@@ -48,7 +50,8 @@ void main() {
       });
     }
 
-    test('successful empty read and explicit local-only remain distinct', () async {
+    test('successful empty read and explicit local-only remain distinct',
+        () async {
       final month = DateTime(2026, 5);
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
@@ -71,7 +74,8 @@ void main() {
       final localOnly = await local.loadMonthForAi(month);
       expect(localOnly.source, AssetLiabilityMonthReadSource.localOnly);
       expect(localOnly.canGenerateAi, isTrue);
-      expect(remote.calls.where((call) => call.startsWith('saveMonth:')), isEmpty);
+      expect(
+          remote.calls.where((call) => call.startsWith('saveMonth:')), isEmpty);
     });
 
     test('saves and restores monthly state through local repository', () async {
