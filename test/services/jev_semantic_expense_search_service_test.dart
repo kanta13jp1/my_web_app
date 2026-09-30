@@ -158,7 +158,8 @@ void main() {
 
     test('Jev API で肯定と除外の質問を別々に判定する', () async {
       final List<String> queries = <String>[];
-      final MockClient mockHttpClient = MockClient((http.Request request) async {
+      final MockClient mockHttpClient =
+          MockClient((http.Request request) async {
         final String query = _queryFrom(request);
         queries.add(query);
         return _response(query == 'カード関連' ? 0.92 : 0.90);
@@ -240,7 +241,8 @@ void main() {
         final SemanticSearchResult fallback = (await service.search(
           items: items,
           meaningQuery: 'coffee',
-        )).single;
+        ))
+            .single;
         expect(fallback.source, 'local_fallback');
         expect(fallback.isMatch, isTrue);
         expect(fallback.score, 0.90);
@@ -248,14 +250,16 @@ void main() {
         final SemanticSearchResult recovered = (await service.search(
           items: items,
           meaningQuery: 'coffee',
-        )).single;
+        ))
+            .single;
         expect(recovered.source, 'jev');
         expect(recovered.isMatch, isFalse);
         expect(recovered.score, 0.20);
         final SemanticSearchResult cached = (await service.search(
           items: items,
           meaningQuery: 'coffee',
-        )).single;
+        ))
+            .single;
         expect(cached.toJson(), recovered.toJson());
         expect(requests, 2);
       });
@@ -282,7 +286,8 @@ void main() {
         items: <Map<String, dynamic>>[testExpenses.last],
         meaningQuery: 'カード',
         excludeQuery: '完了',
-      )).single;
+      ))
+          .single;
       expect(fallback.source, 'local_fallback');
       expect(fallback.score, 0.90);
       expect(fallback.isMatch, isFalse);
@@ -290,7 +295,8 @@ void main() {
         items: <Map<String, dynamic>>[testExpenses.last],
         meaningQuery: 'カード',
         excludeQuery: '完了',
-      )).single;
+      ))
+          .single;
       expect(recovered.source, 'jev');
       expect(recovered.score, 0.85);
       expect(recovered.isMatch, isTrue);
@@ -314,11 +320,13 @@ void main() {
             items: <Map<String, dynamic>>[testExpenses.last],
             meaningQuery: 'カード',
             excludeQuery: '完了',
-          )).single;
+          ))
+              .single;
           expect(result.source, 'jev');
           expect(result.score, positive);
           expect(result.isMatch, positive >= 0.50 && exclusion < 0.60);
-          expect(queries, positive < 0.50 ? <String>['カード'] : <String>['カード', '完了']);
+          expect(queries,
+              positive < 0.50 ? <String>['カード'] : <String>['カード', '完了']);
         });
       }
     }
