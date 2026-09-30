@@ -47,10 +47,13 @@ class _MonthlyRepository extends SharedPreferencesAssetLiabilityRepository {
 
 class _DelayedMonthlyRepository extends _MonthlyRepository {
   final restored = Completer<AssetLiabilityMonthlyState>();
+  int loads = 0;
 
   @override
-  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) =>
-      restored.future;
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    loads++;
+    return await restored.future;
+  }
 }
 
 class _CountingHistory extends _EmptyHistory {
@@ -222,6 +225,7 @@ void main() {
           ),
         ),
       );
+      await _pumpUntil(tester, () => repository.loads > 0);
       // Longer than the old 2.5-second debounce, with an unresolved loader.
       for (var frame = 0; frame < 60; frame++) {
         await tester.pump(const Duration(milliseconds: 100));
@@ -247,6 +251,7 @@ void main() {
       } else {
         repository.restored.complete(
           const AssetLiabilityMonthlyState(
+            paymentOverrides: <String, double>{'synthetic debt': 1000},
             paidAccountNames: <String>{'synthetic debt'},
             actualPaymentAmounts: <String, double>{'synthetic debt': 1000},
           ),
