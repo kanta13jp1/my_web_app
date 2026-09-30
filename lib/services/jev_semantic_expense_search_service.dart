@@ -7,7 +7,7 @@ class SemanticSearchResult {
   final Map<String, dynamic> item;
   final double score;
   final bool isMatch;
-  final String source; // 'jev' or 'local_fallback'
+  final String source; // 'jev', 'local_fallback', or 'empty_query'
   final String matchedQuery;
 
   const SemanticSearchResult({
@@ -45,7 +45,7 @@ class SemanticSearchResult {
 class JevSemanticExpenseSearchService {
   final JevClient _client;
 
-  // メモ × クエリの判定結果キャッシュ
+  // メモ × クエリのAPI判定結果のみをキャッシュする。代替検索は再試行を妨げない。
   final Map<String, double> _scoreCache = <String, double>{};
 
   JevSemanticExpenseSearchService({
@@ -105,14 +105,35 @@ class JevSemanticExpenseSearchService {
       final List<SemanticSearchResult> results = <SemanticSearchResult>[];
 
       for (final Map<String, dynamic> item in items) {
-        final double score = await _evaluateItem(item, query);
+        final double? score = await _evaluateItem(item, query);
+        if (score == null) {
+          results.add(
+            _localFallbackSearch(
+              items: <Map<String, dynamic>>[item],
+              query: query,
+              excludeQuery: excludeQuery,
+            ).single,
+          );
+          continue;
+        }
 
         bool isMatch = score >= threshold;
 
         // 除外クエリ（AND NOT）が存在する場合
         if (isMatch && excludeQuery != null && excludeQuery.trim().isNotEmpty) {
-          final double excludeScore =
+          final double? excludeScore =
               await _evaluateItem(item, excludeQuery.trim());
+          if (excludeScore == null) {
+            // 条件の一部だけがAPI由来の結果を「jev」と表示しない。
+            results.add(
+              _localFallbackSearch(
+                items: <Map<String, dynamic>>[item],
+                query: query,
+                excludeQuery: excludeQuery,
+              ).single,
+            );
+            continue;
+          }
           // 除外命題の成立スコアが高い（>= 0.60）場合は除外
           if (excludeScore >= 0.60) {
             isMatch = false;
@@ -152,7 +173,7 @@ class JevSemanticExpenseSearchService {
   }
 
   /// 1件の支出アイテムとクエリの命題成立確率を評価（キャッシュ付き）
-  Future<double> _evaluateItem(Map<String, dynamic> item, String query) async {
+  Future<double?> _evaluateItem(Map<String, dynamic> item, String query) async {
     final String text = _extractItemSummary(item);
     final String cacheKey = '$text:::$query';
 
@@ -170,23 +191,19 @@ class JevSemanticExpenseSearchService {
         context: '個人財務管理の支出履歴に対するセマンティック検索フィルタリング',
       );
 
-      if (res == null) {
-        final double fallbackScore = _evaluateLocalWordMatch(text, query);
-        _scoreCache[cacheKey] = fallbackScore;
-        return fallbackScore;
-      }
+      if (res == null || res.fallback) return null;
 
-      final double score = res.scores['match'] ??
-          (res.bestChoiceId == 'match' ? res.confidence : 1.0 - res.confidence);
+      final double? score = res.scores['match'];
+      if (score == null || !score.isFinite || score < 0.0 || score > 1.0) {
+        return null;
+      }
       _scoreCache[cacheKey] = score;
       return score;
     } catch (e) {
       debugPrint(
         '[JevSemanticSearch] Item eval error: $e',
       );
-      final double fallbackScore = _evaluateLocalWordMatch(text, query);
-      _scoreCache[cacheKey] = fallbackScore;
-      return fallbackScore;
+      return null;
     }
   }
 
