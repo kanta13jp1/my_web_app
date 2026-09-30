@@ -299,6 +299,38 @@ class AssetLiabilityDefaultPaymentSettings {
         );
 }
 
+enum AssetLiabilityMonthReadSource {
+  localOnly,
+  remoteConfirmed,
+  remoteUnavailable,
+}
+
+class AssetLiabilityMonthRead {
+  final AssetLiabilityMonthlyState state;
+  final String monthKey;
+  final AssetLiabilityMonthReadSource source;
+  final bool Function()? isStillCurrent;
+
+  const AssetLiabilityMonthRead({
+    required this.state,
+    required this.monthKey,
+    required this.source,
+    this.isStillCurrent,
+  });
+
+  bool get canGenerateAi =>
+      source != AssetLiabilityMonthReadSource.remoteUnavailable &&
+      (isStillCurrent?.call() ?? true);
+}
+
+// One receipt belongs to one shared load Future, never to the whole repository.
+class _AssetLiabilityMonthReadReceipt {
+  final String? userId;
+  AssetLiabilityMonthReadSource source;
+
+  _AssetLiabilityMonthReadReceipt(this.userId, this.source);
+}
+
 abstract class AssetLiabilityRepository {
   const AssetLiabilityRepository();
 
@@ -307,6 +339,16 @@ abstract class AssetLiabilityRepository {
   bool get supabaseWritesEnabled => false;
 
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month);
+
+  Future<AssetLiabilityMonthRead> loadMonthForAi(DateTime month) async {
+    return AssetLiabilityMonthRead(
+      state: await loadMonth(month),
+      monthKey: AssetLiabilityMonthlyStateStore.formatMonthKey(month),
+      source: supabaseSyncEnabled
+          ? AssetLiabilityMonthReadSource.remoteUnavailable
+          : AssetLiabilityMonthReadSource.localOnly,
+    );
+  }
 
   Future<void> saveMonth({
     required DateTime month,
@@ -524,6 +566,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   final Map<String, Future<AssetLiabilityMonthlyState>> _inFlightMonthLoads =
       <String, Future<AssetLiabilityMonthlyState>>{};
 
+  final Expando<_AssetLiabilityMonthReadReceipt> _monthReadReceipts =
+      Expando<_AssetLiabilityMonthReadReceipt>();
+
   FeatureFlaggedAssetLiabilityRepository({
     required this.localRepository,
     required this.remoteStore,
@@ -562,16 +607,44 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
 
     late final Future<AssetLiabilityMonthlyState> load;
-    load = _loadMonthOnce(month).whenComplete(() {
+    final receipt = _AssetLiabilityMonthReadReceipt(
+      _userIdOrNull(),
+      syncEnabled
+          ? AssetLiabilityMonthReadSource.remoteUnavailable
+          : AssetLiabilityMonthReadSource.localOnly,
+    );
+    load = _loadMonthOnce(month, receipt).whenComplete(() {
       if (identical(_inFlightMonthLoads[monthKey], load)) {
         _inFlightMonthLoads.remove(monthKey);
       }
     });
+    _monthReadReceipts[load] = receipt;
     _inFlightMonthLoads[monthKey] = load;
     return load;
   }
 
-  Future<AssetLiabilityMonthlyState> _loadMonthOnce(DateTime month) async {
+  @override
+  Future<AssetLiabilityMonthRead> loadMonthForAi(DateTime month) async {
+    final requestingUser = _userIdOrNull();
+    final load = loadMonth(month);
+    final receipt = _monthReadReceipts[load]!;
+    final state = await load;
+    final sameUser = requestingUser == receipt.userId &&
+        requestingUser == _userIdOrNull();
+    return AssetLiabilityMonthRead(
+      state: state,
+      monthKey: AssetLiabilityMonthlyStateStore.formatMonthKey(month),
+      source: sameUser
+          ? receipt.source
+          : AssetLiabilityMonthReadSource.remoteUnavailable,
+      isStillCurrent: () => requestingUser == _userIdOrNull(),
+    );
+  }
+
+  Future<AssetLiabilityMonthlyState> _loadMonthOnce(
+    DateTime month,
+    _AssetLiabilityMonthReadReceipt receipt,
+  ) async {
     final local = await localRepository.loadMonth(month);
     final remote = _remoteOrNull();
     final userId = _userIdOrNull();
@@ -579,9 +652,17 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return local;
     }
 
-    final remoteState = await _tryRemote(
-      () => remote.loadMonth(userId: userId, month: month),
-    );
+    if (userId != receipt.userId) {
+      receipt.source = AssetLiabilityMonthReadSource.remoteUnavailable;
+      return local;
+    }
+    final remoteState = await _tryRemote(() async {
+      final state = await remote.loadMonth(userId: userId, month: month);
+      // A successful empty read differs from an exception. Later fallback
+      // uploads must never turn a failed read into confirmed provenance.
+      receipt.source = AssetLiabilityMonthReadSource.remoteConfirmed;
+      return state;
+    });
     if (remoteState == null || remoteState.isEmpty) {
       if (!local.isEmpty && supabaseWritesEnabled) {
         await _tryRemote(

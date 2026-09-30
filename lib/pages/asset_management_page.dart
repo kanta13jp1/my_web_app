@@ -816,12 +816,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _loadedAssetLiabilityMonthKey;
   bool _assetLiabilityBootStateLoaded = false;
   bool _assetLiabilityMonthlyStateLoadFailed = false;
+  AssetLiabilityMonthRead? _assetLiabilityMonthReadForAi;
   int _assetManagementAiInputRevision = 0;
 
   // A quiet debounce window is not proof that financial state has restored.
   bool get _assetManagementAiInputReady =>
       _assetLiabilityBootStateLoaded &&
       !_assetLiabilityMonthlyStateLoadFailed &&
+      (_assetLiabilityMonthReadForAi?.canGenerateAi ?? false) &&
       _assetLiabilityMonthlyStateInFlight == null &&
       _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now);
   // 同一サイクル月の月次stateロードが並行して複数走らないよう束ねる in-flight
@@ -2092,6 +2094,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _assetManagementAiSummaryDebounce?.cancel();
     setState(() {
       _assetManagementAiInputRevision++;
+      _assetLiabilityMonthReadForAi = null;
       _assetManagementAiSummaryRequestKey = null;
       _assetManagementAiSummaryInFlightKey = null;
       _assetManagementAiSummaryResult = null;
@@ -2125,7 +2128,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     int inputRevision,
   ) async {
     try {
-      final state = await _assetLiabilityRepository.loadMonth(targetMonth);
+      final monthRead =
+          await _assetLiabilityRepository.loadMonthForAi(targetMonth);
+      final state = monthRead.state;
       final defaultPaymentSettings =
           await _assetLiabilityRepository.loadDefaultPaymentSettings();
       final defaultSources = defaultPaymentSettings.paymentSourceAccountIds;
@@ -2174,6 +2179,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       setState(() {
         _assetLiabilityMonthlyStateLoadFailed = false;
+        _assetLiabilityMonthReadForAi =
+            monthRead.monthKey == monthKey ? monthRead : null;
         _monthlyPaymentOverrides = Map<String, double>.from(
           state.paymentOverrides,
         );

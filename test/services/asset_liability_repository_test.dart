@@ -12,6 +12,68 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
+    for (final hasLocalData in <bool>[false, true]) {
+      test('failed remote read never confirms fallback: $hasLocalData', () async {
+        final month = DateTime(2026, 5);
+        final local = _FakeAssetLiabilityRepository();
+        if (hasLocalData) {
+          await local.saveMonth(
+            month: month,
+            state: const AssetLiabilityMonthlyState(
+              actualPaymentAmounts: <String, double>{'synthetic debt': 1000},
+              paidAccountNames: <String>{'synthetic debt'},
+            ),
+          );
+        }
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..failMonthReads = true;
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'synthetic-user',
+          onSyncError: (_, __) {},
+        );
+        final failed = await repository.loadMonthForAi(month);
+        expect(failed.source, AssetLiabilityMonthReadSource.remoteUnavailable);
+        expect(failed.canGenerateAi, isFalse);
+        expect(failed.state.paidAccountNames.contains('synthetic debt'), hasLocalData);
+        expect((await local.loadMonth(month)).paidAccountNames,
+            failed.state.paidAccountNames);
+        remote.failMonthReads = false;
+        final recovered = await repository.loadMonthForAi(month);
+        expect(recovered.source, AssetLiabilityMonthReadSource.remoteConfirmed);
+        expect(recovered.canGenerateAi, isTrue);
+      });
+    }
+
+    test('successful empty read and explicit local-only remain distinct', () async {
+      final month = DateTime(2026, 5);
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      String? user = 'synthetic-user';
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => user,
+      );
+      final read = await repository.loadMonthForAi(month);
+      expect(read.state.isEmpty, isTrue);
+      expect(read.source, AssetLiabilityMonthReadSource.remoteConfirmed);
+      expect(read.canGenerateAi, isTrue);
+      user = 'another-user';
+      expect(read.canGenerateAi, isFalse);
+      user = null;
+      final unauthenticated = await repository.loadMonthForAi(month);
+      expect(unauthenticated.canGenerateAi, isFalse);
+      final localOnly = await local.loadMonthForAi(month);
+      expect(localOnly.source, AssetLiabilityMonthReadSource.localOnly);
+      expect(localOnly.canGenerateAi, isTrue);
+      expect(remote.calls.where((call) => call.startsWith('saveMonth:')), isEmpty);
+    });
+
     test('saves and restores monthly state through local repository', () async {
       const repository = SharedPreferencesAssetLiabilityRepository();
       final month = DateTime(2026, 5, 14);
@@ -2094,6 +2156,7 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
   bool _hasMonthlySnapshots = false;
   bool _hasMonthlyReports = false;
   bool failSaves = false;
+  bool failMonthReads = false;
 
   Map<String, String> get defaultPaymentSources =>
       Map<String, String>.from(_defaultPaymentSources);
@@ -2164,6 +2227,7 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
   }) async {
     final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
     calls.add('loadMonth:$userId:$monthKey');
+    if (failMonthReads) throw StateError('remote read failed');
     return _states[monthKey];
   }
 
