@@ -26,3 +26,14 @@ test('pointer course, level switch and mobile fit',async({page},info)=>{
   await page.screenshot({path:info.outputPath('design.png'),fullPage:true});
   await page.reload();await expect(page.locator('#title')).toHaveText('一筆の坂');
 });
+test('every sample level reaches its own goal',async({page})=>{
+  for(const level of ['0','1','2']){
+    await page.locator('#level').selectOption(level);
+    await page.locator('#sample').click();
+    await page.locator('#play').click();
+    await expect(page.locator('#phase')).toHaveText('ARRIVED',{timeout:20000});
+    await page.locator('#retry').click();
+    await expect(page.locator('#clock')).toHaveText('0.00 s');
+    await expect(page.locator('#sample')).toBeEnabled();
+  }
+});
