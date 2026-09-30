@@ -6,7 +6,7 @@ test('LightGBM worker plays without consent or API; records assistance and stops
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
  await lab.locator('#screen').evaluate(()=>localStorage.setItem('jev-mario-retry-world8-v1',JSON.stringify([280,440,640,1350].map(x=>({stage:1,room:'overworld',x,y:192,count:12,kind:'stalled'})))));
  await page.reload();
- await expect(lab.locator('#volume')).toHaveValue('85');await expect(lab.locator('#volume-value')).toHaveText('85%');
+ await expect(lab.locator('#volume')).toHaveValue('95');await expect(lab.locator('#volume-value')).toHaveText('95%');
  await expect(lab.locator('#consent')).not.toBeChecked();await lab.locator('#play-student').click();
  await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
  await expect(lab.locator('#student-status')).toContainText('探索変更',{timeout:15000});

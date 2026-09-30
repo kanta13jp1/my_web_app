@@ -218,6 +218,9 @@ export function world61Level(){
 }
 export function world62Level(){
  const g=world52Level();
+ // Replace the inherited two-tile pipe before placing the taller entrance.
+ // Overlapping rims otherwise create a second plant and a false landing step.
+ for(let x=61;x<=62;x++)for(let y=10;y<13;y++)if(['pipe','pipe-top'].includes(g.cells.get(`${x},${y}`)))g.cells.delete(`${x},${y}`);
  for(const [x,h]of [[62,3],[100,4],[138,2]])for(let y=13-h;y<13;y++)for(let d=0;d<2;d++)g.cells.set(`${x+d},${y}`,y===13-h?'pipe-top':'pipe');
  g.contents.set('35,9','vine');
  g.lifts.push({id:1,x:163*16,y:184,previousY:184,w:40,h:8,minY:120,maxY:192,speed:.5,direction:-1});

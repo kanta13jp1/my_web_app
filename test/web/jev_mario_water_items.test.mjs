@@ -52,3 +52,8 @@ test('6-2 pipe room preserves course and restores geometry and score',()=>{const
 
 import {pipeRoute} from '../../web/labs/jev-mario/pipe-route.mjs';
 test('shortcut pipe does not skip uncollected power items',()=>{const g=new World11();Object.assign(g.p,{x:57*16+8,y:128,grounded:true});assert.equal(pipeRoute(g),null);g.contents.clear();assert.equal(pipeRoute(g),'down');});
+
+
+import {LiveGuard} from '../../web/labs/jev-mario/live-guard.mjs';
+test('6-2 first entrance has one continuous rim and one plant',()=>{const g=new World11(22);assert.equal(g.tile(61,11),null);assert.equal(g.tile(62,10),'pipe-top');assert.equal(g.tile(63,10),'pipe-top');assert.equal(g.enemies.filter(e=>e.kind==='piranha'&&e.x>=61*16&&e.x<64*16).length,1);});
+test('6-2 small player passes the first pipe with active enemies and saved retry experience',()=>{const g=new World11(22),guard=new LiveGuard();Object.assign(g.p,{x:900,y:192,vx:0,vy:0,grounded:true});g.camera=804;const failures=[{stage:22,room:'overworld',x:988,y:160,kind:'death',count:4}];const trace=[];let action='right_jump';for(let i=0;i<900&&g.phase==='playing'&&!(g.room==='overworld'&&g.p.x>=1100);i++){if(i%8===0)action=plan(g,ACTIONS[predict(model,features(g)).index],failures).action;g.buttons(guard.decide(g,action,failures));g.step();g.drainSounds();if(i%12===0)trace.push([i,g.room,g.p.x,g.p.y,g.phase]);}mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-water-six-two.json',JSON.stringify({x:g.p.x,room:g.room,phase:g.phase,power:g.power,lives:g.lives,visited:g.visitedPipes,trace}));assert.equal(g.phase,'playing',JSON.stringify(trace.slice(-10)));assert.ok(g.p.x>=1100&&g.room==='overworld',JSON.stringify(trace.slice(-10)));assert.equal(g.deaths,0);});
