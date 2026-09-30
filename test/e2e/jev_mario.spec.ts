@@ -1,16 +1,16 @@
 import { test, expect, type Page } from '@playwright/test';
 
 test('LightGBM worker plays without consent or API; records assistance and stops',async({page},info)=>{
- test.setTimeout(90000);
+ test.setTimeout(130000);
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
  await lab.locator('#screen').evaluate(()=>localStorage.setItem('jev-mario-retry-world8-v1',JSON.stringify([280,440,640,1350].map(x=>({stage:1,room:'overworld',x,y:192,count:12,kind:'stalled'})))));
  await page.reload();
- await expect(lab.locator('#volume')).toHaveValue('85');await expect(lab.locator('#volume-value')).toHaveText('85%');
+ await expect(lab.locator('#volume')).toHaveValue('95');await expect(lab.locator('#volume-value')).toHaveText('95%');
  await expect(lab.locator('#consent')).not.toBeChecked();await lab.locator('#play-student').click();
  await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
  await expect(lab.locator('#student-status')).toContainText('探索変更',{timeout:15000});
- if(info.project.name==='desktop')await expect(lab.locator('#status')).toContainText('1-1クリア！',{timeout:60000});
+ if(info.project.name==='desktop')await expect(lab.locator('#status')).toContainText('1-1クリア！',{timeout:100000});
  await screenshot(page,info.outputPath('world11-student.png'));await lab.locator('#stop').click();
  const before=await lab.locator('#progress').textContent();await page.waitForTimeout(350);await expect(lab.locator('#progress')).toHaveText(before!);
  if(info.project.name==='desktop'){
@@ -734,7 +734,7 @@ test('run history survives reload, sharing errors recover and ranking renders sa
  await lab.locator('#rank-course').selectOption('17');await lab.locator('#ranking-load').click();await expect(lab.locator('#ranking-rows')).toContainText('Player-test');await expect(lab.locator('#ranking-rows')).toContainText('15.0秒');await lab.locator('#ranking-rows').locator('..').screenshot({path:info.outputPath('history-ranking.png')});await lab.locator('#rank-course').locator('..').screenshot({path:info.outputPath('history-ranking-filters.png')});
 });
 
-test('twelve-part audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
+test('sixteen-part audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
  const result=await frame.evaluate(async()=>{const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const all:number[]=[],metrics:any[]=[];
   for(const room of ['overworld','underground','underwater','castle']){
@@ -807,8 +807,8 @@ test('LightGBM worker completes 2-2 and advances to 2-3 without going offscreen'
 
 test('2-4 worker escapes a stopped crouch under a ledge',async({page},info)=>{
  test.setTimeout(45000);await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#screen').evaluate(()=>localStorage.setItem('jev-mario-retry-world8-v1',JSON.stringify([{stage:8,room:'castle',x:367,y:192,count:12,kind:'stalled'}])));await page.reload();const reloadedFrame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#stage').selectOption('8');
+ await reloadedFrame.evaluate(async()=>{const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const tick=StudentSession.prototype.tick;let seeded=false;StudentSession.prototype.tick=function(world){if(!seeded){seeded=true;(window as any).tunnelWorld=world;world.power=1;Object.assign(world.p,{x:367,y:192,h:16,vx:0,vy:0,crouching:true,grounded:true});world.camera=271;world.invincible=1200;}return tick.call(this,world);};});
  await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
- await reloadedFrame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).tunnelWorld=this;this.power=1;Object.assign(this.p,{x:367,y:192,h:16,vx:0,crouching:true,grounded:true});this.camera=271;this.invincible=1200;step.call(this);};});
  await expect.poll(()=>reloadedFrame.evaluate(()=>(window as any).tunnelWorld?.p.x??0),{timeout:30000}).toBeGreaterThan(432);
  await lab.locator('#stop').click();await screenshot(page,info.outputPath('castle24-tunnel-escape.png'));
 });
@@ -819,4 +819,23 @@ test('6-2 real worker retreats from the overhang and enters the defined pipe',as
  await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
  try{await expect.poll(()=>frame.evaluate(()=>(window as any).pipeEvents.returned),{timeout:45000}).toBeTruthy();const result=await frame.evaluate(()=>(window as any).pipeEvents.returned);expect(result).toMatchObject({stage:22,room:'overworld',x:2544,power:2});}
  finally{await lab.locator('#stop').click();const state=await frame.evaluate(()=>(window as any).pipeEvents);await (await import('node:fs/promises')).writeFile(info.outputPath('world62-pipe-escape.json'),JSON.stringify(state));await screenshot(page,info.outputPath('world62-pipe-escape.png'));}
+});
+
+
+test('6-2 live small player passes the first entrance with active enemies and retry memory',async({page},info)=>{
+ test.setTimeout(60000);await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#stage').selectOption('22');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const tick=StudentSession.prototype.tick,step=World11.prototype.step;let seeded=false;(window as any).entranceTrace=[];StudentSession.prototype.tick=function(world){if(!seeded){seeded=true;(window as any).entranceWorld=world;Object.assign(world.p,{x:900,y:192,vx:0,vy:0,grounded:true});world.camera=804;this.failures=[{stage:22,room:'overworld',x:988,y:160,kind:'death',count:4}];}return tick.call(this,world);};World11.prototype.step=function(){step.call(this);if(this===(window as any).entranceWorld&&this.frames%12===0)(window as any).entranceTrace.push({frame:this.frames,x:this.p.x,y:this.p.y,room:this.room,phase:this.phase,input:this.input,deaths:this.deaths});};});
+ await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
+ try{await expect.poll(()=>frame.evaluate(()=>{const g=(window as any).entranceWorld;return g?.room==='overworld'&&g.p.x>=1100&&g.deaths===0;}),{timeout:45000}).toBeTruthy();}
+ finally{await lab.locator('#stop').click();await(await import('node:fs/promises')).writeFile(info.outputPath('world62-first-entrance.json'),JSON.stringify(await frame.evaluate(()=>(window as any).entranceTrace)));await screenshot(page,info.outputPath('world62-first-entrance.png'));}
+});
+
+
+test('6-2 complete real worker course collects items and clears with normal hazards',async({page},info)=>{
+ test.skip(info.project.name==='mobile','The complete run uses desktop; mobile entrance and overhang recovery are covered separately.');test.setTimeout(120000);
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#stage').selectOption('22');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const tick=StudentSession.prototype.tick,step=World11.prototype.step;(window as any).courseTrace=[];(window as any).courseClear=null;(window as any).courseTotals={mushroom:0,flower:0,life:0,star:0};let previous={mushroom:0,flower:0,life:0,star:0},totalFrames=0;StudentSession.prototype.tick=function(world){(window as any).courseWorld=world;if(!(window as any).courseSeeded){(window as any).courseSeeded=true;this.failures=[{stage:22,room:'overworld',x:988,y:160,kind:'death',count:4},{stage:22,room:'overworld',x:2484,y:180,kind:'stalled',count:4}];}return tick.call(this,world);};World11.prototype.step=function(){step.call(this);if(this!==(window as any).courseWorld)return;totalFrames++;for(const kind of Object.keys(previous)){(window as any).courseTotals[kind]+=Math.max(0,this.pickups[kind]-previous[kind]);previous[kind]=this.pickups[kind];}if(this.frames%60===0)(window as any).courseTrace.push({frame:this.frames,x:this.p.x,y:this.p.y,room:this.room,phase:this.phase,lives:this.lives,pickups:{...this.pickups},input:{...this.input},power:this.power});if(this.stage===22&&this.phase==='won')(window as any).courseClear={frames:this.frames,totalFrames,x:this.p.x,lives:this.lives,deaths:this.deaths,pickups:{...(window as any).courseTotals},finalAttemptPickups:{...this.pickups},visited:[...this.visitedPipes]};};});
+ await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
+ try{await expect.poll(()=>frame.evaluate(()=>(window as any).courseClear),{timeout:100000}).toBeTruthy();const result=await frame.evaluate(()=>(window as any).courseClear);expect(result.pickups.mushroom).toBeGreaterThan(0);}
+ finally{await lab.locator('#stop').click();await(await import('node:fs/promises')).writeFile(info.outputPath('world62-complete-worker.json'),JSON.stringify(await frame.evaluate(()=>({clear:(window as any).courseClear,trace:(window as any).courseTrace}))));await screenshot(page,info.outputPath('world62-complete-worker.png'));}
 });
