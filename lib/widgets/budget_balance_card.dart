@@ -121,11 +121,13 @@ class _BudgetBalanceCardState extends State<BudgetBalanceCard> {
                   ),
                   if (_model.needsRecalculation)
                     Semantics(
+                      container: true,
                       liveRegion: true,
                       child: const Text('金額を変更しました。配分をもう一度確認してください。'),
                     ),
                   if (result != null)
                     Semantics(
+                      container: true,
                       liveRegion: true,
                       child: Container(
                         padding: const EdgeInsets.all(16),
