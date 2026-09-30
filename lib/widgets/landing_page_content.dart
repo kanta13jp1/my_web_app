@@ -4337,7 +4337,15 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       minLines: heroMode ? 1 : 2,
                       maxLines: heroMode ? 2 : 3,
                       decoration: InputDecoration(
-                        labelText: '例: 今日いちばん詰まっていることを簡単に書く',
+                        labelText: compactHero
+                            ? 'いま詰まっていること'
+                            : '例: 今日いちばん詰まっていることを簡単に書く',
+                        hintText: compactHero
+                            ? '例: 何から始めるか決められない'
+                            : null,
+                        hintStyle: compactHero
+                            ? const TextStyle(fontSize: 12)
+                            : null,
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.bolt),
                         isDense: compactHero,

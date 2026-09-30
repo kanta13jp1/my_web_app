@@ -1,6 +1,14 @@
 import { expect, test } from '@playwright/test';
 
 test('hero remains readable and actionable at narrow and wide widths', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  const layoutErrors: string[] = [];
+  page.on('pageerror', (error) => layoutErrors.push(error.message));
+  page.on('console', (message) => {
+    if (/RenderFlex overflowed|EXCEPTION CAUGHT BY RENDERING/.test(message.text())) {
+      layoutErrors.push(message.text());
+    }
+  });
   const sizes = [{ width: 390, height: 844 }, { width: 1280, height: 900 }, { width: 1440, height: 1000 }];
   for (const size of sizes) {
     await page.setViewportSize(size);
@@ -14,6 +22,7 @@ test('hero remains readable and actionable at narrow and wide widths', async ({ 
     expect(bounds?.height).toBeGreaterThanOrEqual(44);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     expect(overflow).toBeFalsy();
+    expect(layoutErrors).toEqual([]);
     await page.screenshot({ path: testInfo.outputPath(`hero-${size.width}.png`) });
   }
 });
