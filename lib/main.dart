@@ -1,3 +1,4 @@
+import 'package:my_web_app/pages/agent_tool_policy_preview_page.dart';
 import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'package:my_web_app/pages/jwenv_lab_page.dart';
 import 'dart:async';
@@ -1805,6 +1806,8 @@ Route<dynamic> generateAppRoute(
       );
     case '/app-hub':
       return MaterialPageRoute(builder: (_) => const AppHubPage());
+    case '/agent-tool-policy-preview':
+      return MaterialPageRoute(builder: (_) => const AgentToolPolicyPreviewPage());
     case '/agent-hub':
       return MaterialPageRoute(builder: (_) => const AgentHubPage());
     case '/admin-notifications':
