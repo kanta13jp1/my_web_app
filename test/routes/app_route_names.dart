@@ -27,6 +27,7 @@ const List<String> kAllAppRoutes = <String>[
   '/agent-department-manager',
   '/agent-gpa-dashboard',
   '/agent-hub',
+  '/agent-tool-policy-preview',
   '/agent-performance-monitor',
   '/agents',
   '/ai-assistant-chat',
