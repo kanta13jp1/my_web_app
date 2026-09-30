@@ -734,22 +734,26 @@ void main() {
         () => find
             .text('Synthetic initial rate', findRichText: true)
             .evaluate()
-            .isNotEmpty);
+            .isNotEmpty,
+    );
     final rateField = find.byWidgetPredicate((widget) =>
         widget is TextField &&
-        widget.decoration?.helperText == '契約書の年利を入力（証跡は任意）');
+        widget.decoration?.helperText == '契約書の年利を入力（証跡は任意）',
+    );
     expect(rateField, findsOneWidget);
     await tester.ensureVisible(rateField);
     await tester.enterText(rateField, '12');
     await _pumpUntil(
-        tester, () => repository.state.annualRateOverrides['mobit'] == 0.12);
+        tester, () => repository.state.annualRateOverrides['mobit'] == 0.12,
+    );
     await _pumpUntil(tester, () => ai.requests.length == 2);
     final updatedDebt = ai.requests.last.workbook.debtMasterRows
         .singleWhere((row) => row.id == 'mobit');
     expect(updatedDebt.annualRate, 0.12);
     expect(updatedDebt.monthlyInterestEstimate, closeTo(1200, 0.001));
     expect(
-        find.text('Synthetic initial rate', findRichText: true), findsNothing);
+        find.text('Synthetic initial rate', findRichText: true), findsNothing,
+    );
     ai.complete(1, 'Synthetic confirmed rate');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
