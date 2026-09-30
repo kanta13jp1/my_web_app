@@ -486,7 +486,7 @@ export class World11 {
     if(intended)p.facing=intended;
     const skidding=p.grounded&&!p.crouching&&intended&&Math.abs(p.vx)>.4&&Math.sign(p.vx)!==intended;
     if(skidding&&!this.wasSkidding)this.sound('skid');this.wasSkidding=!!skidding;
-    const dir=p.crouching?0:intended,max=isWater(this.stage)?1.4:k.run?2.6:1.55;
+    const dir=p.crouching&&k.down?0:intended,max=p.crouching?.65:isWater(this.stage)?1.4:k.run?2.6:1.55;
     p.vx=dir?Math.max(-max,Math.min(max,p.vx+dir*.13)):Math.abs(p.vx)<.08?0:p.vx-Math.sign(p.vx)*(p.crouching?.04:.08);
     if(isWater(this.stage)){
       if(k.jump&&!this.wasJump){this.sound('swim');p.vy=-2.4;}
