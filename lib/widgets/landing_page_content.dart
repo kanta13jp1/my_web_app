@@ -4669,17 +4669,20 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       key: const Key('landing_h11_answer_preview'),
       width: double.infinity,
       padding: EdgeInsets.all(compact ? 10 : 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF6FAFE),
-        border: Border(left: BorderSide(color: Color(0xFF1F7AE0), width: 3)),
+      decoration: BoxDecoration(
+        color: heroMode ? const Color(0xFF0B1823) : const Color(0xFFF6FAFE),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: heroMode ? const Color(0xFF41505C) : const Color(0xFFDCE7F2),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             '入力例と提案サンプル',
             style: TextStyle(
-              color: Color(0xFF1D4ED8),
+              color: heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8),
               fontSize: 11,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4687,10 +4690,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           if (!compact) ...[
             const SizedBox(height: 4),
-            const Text(
+            Text(
               '入力例: 「$samplePrompt」',
               style: TextStyle(
-                color: Color(0xFF64748B),
+                color: heroMode ? const Color(0xFFBCC6CE) : const Color(0xFF64748B),
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4701,7 +4704,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '提案例: 止まっている案件を1つ選ぶ',
             style: TextStyle(
-              color: const Color(0xFF172033),
+              color: heroMode ? const Color(0xFFF6F0E5) : const Color(0xFF172033),
               fontSize: compact ? 13 : 14,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4709,10 +4712,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           if (!compact) ...[
             const SizedBox(height: 2),
-            const Text(
+            Text(
               '次の一手例: 確認先を1人決め、連絡文の下書きを作る',
               style: TextStyle(
-                color: Color(0xFF475569),
+                color: heroMode ? const Color(0xFFBCC6CE) : const Color(0xFF475569),
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4722,7 +4725,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '実際の提案は、入力内容によって変わります。',
             style: TextStyle(
-              color: const Color(0xFF64748B),
+              color: heroMode ? const Color(0xFFBCC6CE) : const Color(0xFF64748B),
               fontSize: compact ? 10 : 11,
               height: 1.45,
             ),
@@ -4738,7 +4741,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         recordHeroCta: heroMode,
                       ),
               icon: const Icon(Icons.bolt, size: 17),
-              label: const Text('1タップで「今日やる1件」を出す'),
+              label: Text('1タップで「今日やる1件」を出す'),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF1F7AE0),
                 foregroundColor: Colors.white,
@@ -4758,11 +4761,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         recordHeroCta: heroMode,
                       ),
               icon: const Icon(Icons.bolt, size: 17),
-              label: const Text('この入力例でAIに提案させる'),
+              label: Text('この入力例でAIに提案させる'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1F7AE0),
-                minimumSize: Size.fromHeight(compact ? 40 : 44),
-                side: const BorderSide(color: Color(0xFF93C5FD)),
+                foregroundColor: heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1F7AE0),
+                minimumSize: const Size.fromHeight(44),
+                side: BorderSide(color: heroMode ? const Color(0xFF70818D) : const Color(0xFF93C5FD)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -6408,8 +6411,7 @@ class _WorkflowLandingHero extends StatelessWidget {
               ),
             ],
           ),
-          maxLines: condensed ? 3 : null,
-          overflow: condensed ? TextOverflow.ellipsis : null,
+          softWrap: true,
         ),
         SizedBox(height: condensed ? 10 : (compact ? 20 : 26)),
         ConstrainedBox(
@@ -6424,8 +6426,7 @@ class _WorkflowLandingHero extends StatelessWidget {
               height: condensed ? 1.45 : 1.8,
               fontWeight: FontWeight.w400,
             ),
-            maxLines: condensed ? 2 : null,
-            overflow: condensed ? TextOverflow.ellipsis : null,
+            softWrap: true,
           ),
         ),
         if (achievementCount > 0 && !condensed) ...[
@@ -6517,10 +6518,14 @@ class _WorkflowLandingHero extends StatelessWidget {
           compactTrial ? 12 : (compact ? 20 : 64),
           compactTrial ? 32 : (compact ? 46 : 70),
         );
-        final heroCopy = _buildHeroCopy(
-          compact: compact,
-          condensed: compactTrial,
-          headingSize: headingSize,
+        final heroCopy = LayoutBuilder(
+          builder: (context, copyConstraints) => _buildHeroCopy(
+            compact: compact,
+            condensed: compactTrial,
+            headingSize: compact
+                ? headingSize
+                : (copyConstraints.maxWidth / 11.5).clamp(0.0, headingSize),
+          ),
         );
 
         return Container(
