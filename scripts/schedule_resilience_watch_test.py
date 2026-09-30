@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import io
+import json
 import os
+import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -12,6 +14,9 @@ from unittest.mock import patch
 
 from schedule_resilience_watch import (
     GitHubClient,
+    RepositoryRunsInvalid,
+    RepositoryPaginationIncomplete,
+    PrimaryLatestUnconfirmed,
     TARGETS,
     WorkflowTarget,
     evaluate_target,
@@ -21,6 +26,7 @@ from schedule_resilience_watch import (
     merge_revalidated_runs,
     repository_revalidation_start,
     render_summary,
+    verification_error_code,
 )
 
 
@@ -307,6 +313,49 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         created_after = repository_revalidation_start(TARGET, [], NOW)
 
         self.assertEqual(created_after, NOW - timedelta(hours=24))
+
+    def test_ancient_primary_revalidation_is_bounded_and_uses_repository_success(self) -> None:
+        stale = run(id=1, created_at=(NOW - timedelta(days=25)).isoformat())
+        fresh = run(id=2)
+        start = repository_revalidation_start(TARGET, [stale], NOW)
+        self.assertEqual(start, NOW - timedelta(hours=24))
+        merged = merge_revalidated_runs([stale], [fresh], created_after=start)
+        result = evaluate_target(TARGET, merged, NOW, max_attempts=2)
+        self.assertEqual(result["run_id"], 2)
+        self.assertEqual(result["action"], "healthy")
+
+    def test_ancient_primary_success_cannot_hide_new_repository_failure(self) -> None:
+        stale = run(id=1, created_at=(NOW - timedelta(days=25)).isoformat())
+        failed = run(id=2, conclusion="failure", run_attempt=2)
+        start = repository_revalidation_start(TARGET, [stale], NOW)
+        merged = merge_revalidated_runs([stale], [failed], created_after=start)
+        result = evaluate_target(TARGET, merged, NOW, max_attempts=2)
+        self.assertEqual(result["run_id"], 2)
+        self.assertEqual(result["action"], "alert")
+
+    def test_ancient_primary_alone_is_not_healthy(self) -> None:
+        stale = run(id=1, created_at=(NOW - timedelta(days=25)).isoformat())
+        start = repository_revalidation_start(TARGET, [stale], NOW)
+        merged = merge_revalidated_runs([stale], [], created_after=start)
+        self.assertEqual(merged, [])
+        result = evaluate_target(TARGET, merged, NOW, max_attempts=2)
+        self.assertEqual(result["action"], "alert")
+
+    def test_bounded_start_preserves_bootstrap_192_hour_window(self) -> None:
+        target = WorkflowTarget("backup", "backup.yml", 192, require_bootstrap_success=True)
+        stale = run(created_at=(NOW - timedelta(days=25)).isoformat())
+        self.assertEqual(repository_revalidation_start(target, [stale], NOW), NOW - timedelta(hours=192))
+
+    def test_bounded_start_preserves_event_driven_30_day_window(self) -> None:
+        target = WorkflowTarget("deploy", "deploy-prod.yml", 0, "push")
+        stale = run(created_at=(NOW - timedelta(days=40)).isoformat())
+        self.assertEqual(repository_revalidation_start(target, [stale], NOW), NOW - timedelta(days=30))
+
+    def test_bounded_start_respects_workflow_introduction(self) -> None:
+        introduced = NOW - timedelta(hours=2)
+        target = WorkflowTarget("new", "new.yml", 192, introduced_at=introduced)
+        stale = run(created_at=(NOW - timedelta(days=25)).isoformat())
+        self.assertEqual(repository_revalidation_start(target, [stale], NOW), introduced)
 
     def test_fresh_primary_must_be_confirmed_by_repository_listing(self) -> None:
         fresh = run(id=7)
@@ -664,6 +713,49 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         self.assertIn("Schedule Resilience Watch", summary)
         self.assertIn("failed-attempt-1", summary)
         self.assertIn("[run](u)", summary)
+
+
+class VerificationDiagnosticsTest(unittest.TestCase):
+    def test_real_failure_sites_have_distinct_fixed_codes(self):
+        client = GitHubClient("owner/repo", "token")
+        with patch.object(client, "request", return_value={"workflow_runs": "secret"}):
+            with self.assertRaises(RepositoryRunsInvalid):
+                client.repository_workflow_runs("cs-check.yml", event="schedule", created_after=NOW)
+        with patch.object(client, "request", return_value={"workflow_runs": [{}] * 100}):
+            with self.assertRaises(RepositoryPaginationIncomplete):
+                client.repository_workflow_runs("cs-check.yml", event="schedule", created_after=NOW)
+        with self.assertRaises(PrimaryLatestUnconfirmed):
+            merge_revalidated_runs([run()], [], created_after=NOW - timedelta(days=1))
+
+    def test_artifact_and_summary_keep_codes_without_messages_or_writes(self):
+        for error, code in (
+            (RepositoryRunsInvalid, "repository-runs-invalid"),
+            (RepositoryPaginationIncomplete, "repository-pagination-incomplete"),
+            (PrimaryLatestUnconfirmed, "primary-latest-unconfirmed"),
+        ):
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "report.json"
+                summary = Path(directory) / "summary.md"
+                with (
+                    patch.dict(os.environ, {"GITHUB_TOKEN": "test-token"}),
+                    patch("schedule_resilience_watch.TARGETS", (TARGET,)),
+                    patch("schedule_resilience_watch.GitHubClient") as factory,
+                    patch("sys.stdout", new_callable=io.StringIO),
+                ):
+                    client = factory.return_value
+                    client.workflow_runs.return_value = []
+                    client.repository_workflow_runs.side_effect = error("secret-do-not-publish")
+                    result = main(["--output", str(output), "--github-step-summary", str(summary)])
+                report = json.loads(output.read_text(encoding="utf-8"))
+                self.assertEqual(result, 1)
+                self.assertEqual(report["results"][0]["verification_error"], code)
+                self.assertEqual(report["results"][0]["action"], "observe")
+                self.assertIn(code, summary.read_text(encoding="utf-8"))
+                self.assertNotIn("secret-do-not-publish", output.read_text(encoding="utf-8") + summary.read_text(encoding="utf-8"))
+                client.rerun_failed_jobs.assert_not_called()
+                client.open_or_update_issue.assert_not_called()
+                client.close_recovered_issues.assert_not_called()
+        self.assertEqual(verification_error_code(RuntimeError("secret")), "RuntimeError")
 
 
 if __name__ == "__main__":
