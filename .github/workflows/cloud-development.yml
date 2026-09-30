@@ -156,11 +156,11 @@ jobs:
 
       - name: Analyze in cloud
         if: env.CLOUD_PROFILE == 'analyze' || env.CLOUD_PROFILE == 'full'
-        run: flutter analyze lib/widgets/landing_page_content.dart lib/widgets/landing_story_journey.dart
+        run: flutter analyze
 
       - name: Test in cloud
         if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
-        run: flutter test test/pages/landing_page_conversion_test.dart test/pages/landing_page_structure_test.dart test/widgets/landing_story_journey_test.dart --concurrency=2
+        run: flutter test --concurrency=2
 
       - name: Build Flutter Web in cloud
         id: web_build
@@ -239,7 +239,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/landing_story_journey.spec.ts test/e2e/lp_first_user_acquisition.spec.ts test/e2e/landing_hero_quality.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/platform_release_checklist.spec.ts test/e2e/landing_story_journey.spec.ts test/e2e/lp_first_user_acquisition.spec.ts test/e2e/landing_hero_quality.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
       - name: Upload checklist E2E report
         if: always()

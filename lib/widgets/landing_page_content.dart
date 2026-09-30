@@ -4741,7 +4741,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         recordHeroCta: heroMode,
                       ),
               icon: const Icon(Icons.bolt, size: 17),
-              label: Text('1タップで「今日やる1件」を出す'),
+              label: const Text('1タップで「今日やる1件」を出す'),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF1F7AE0),
                 foregroundColor: Colors.white,
@@ -4761,7 +4761,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         recordHeroCta: heroMode,
                       ),
               icon: const Icon(Icons.bolt, size: 17),
-              label: Text('この入力例でAIに提案させる'),
+              label: const Text('この入力例でAIに提案させる'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1F7AE0),
                 minimumSize: const Size.fromHeight(44),
