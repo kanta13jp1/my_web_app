@@ -32,7 +32,8 @@ class EvaluateSpreadsheetFormulaUseCase {
     }
 
     try {
-      final value = _evaluateNumeric(document, address, <CellAddress>{}, <int>[0]);
+      final value =
+          _evaluateNumeric(document, address, <CellAddress>{}, <int>[0]);
       return SpreadsheetFormulaResult(
         displayValue: _formatNumber(value),
         numericValue: value,

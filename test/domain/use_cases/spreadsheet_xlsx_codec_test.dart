@@ -128,6 +128,12 @@ void main() {
       expect(() => codec.decode(fixture(cell)), throwsFormatException);
     });
   }
+  test('untrusted cell addresses cannot overflow integer parsing', () {
+    expect(CellAddress.tryParse('A${'9' * 1000}'), isNull);
+    expect(CellAddress.tryParse('${'Z' * 1000}1'), isNull);
+    expect(CellAddress.tryParse('XFD1048576'), isNotNull);
+    expect(CellAddress.tryParse('XFE1'), isNull);
+  });
   test('rejects traversal relationships', () {
     expect(
       () => codec.decode(fixture('', target: '../other.xml')),
@@ -173,25 +179,34 @@ void main() {
     final data = ByteData.sublistView(bytes);
     for (var i = 0; i < bytes.length - 46; i++) {
       final signature = data.getUint32(i, Endian.little);
-      if (signature == 0x04034b50) data.setUint32(i+14, 0, Endian.little);
-      if (signature == 0x02014b50) data.setUint32(i+16, 0, Endian.little);
+      if (signature == 0x04034b50) data.setUint32(i + 14, 0, Endian.little);
+      if (signature == 0x02014b50) data.setUint32(i + 16, 0, Endian.little);
     }
     expect(() => codec.decode(bytes), throwsFormatException);
   });
   test('bounds actual inflation when ZIP sizes are forged', () {
-    final bytes = fixture('<c r="A1" t="inlineStr"><is><t>${'x' * (9*1024*1024)}</t></is></c>');
+    final bytes = fixture(
+      '<c r="A1" t="inlineStr"><is><t>${'x' * (9 * 1024 * 1024)}</t></is></c>',
+    );
     final data = ByteData.sublistView(bytes);
     for (var i = 0; i < bytes.length - 46; i++) {
       final signature = data.getUint32(i, Endian.little);
-      if (signature == 0x04034b50 && data.getUint32(i+22, Endian.little) > 8*1024*1024) {
-        data.setUint32(i+22, 1, Endian.little);
+      if (signature == 0x04034b50 &&
+          data.getUint32(i + 22, Endian.little) > 8 * 1024 * 1024) {
+        data.setUint32(i + 22, 1, Endian.little);
       }
-      if (signature == 0x02014b50 && data.getUint32(i+24, Endian.little) > 8*1024*1024) {
-        data.setUint32(i+24, 1, Endian.little);
+      if (signature == 0x02014b50 &&
+          data.getUint32(i + 24, Endian.little) > 8 * 1024 * 1024) {
+        data.setUint32(i + 24, 1, Endian.little);
       }
     }
-    expect(() => codec.decode(bytes), throwsA(isA<FormatException>().having(
-        (error) => error.message, 'message', contains('展開サイズ'))));
+    expect(
+      () => codec.decode(bytes),
+      throwsA(
+        isA<FormatException>()
+            .having((error) => error.message, 'message', contains('展開サイズ')),
+      ),
+    );
   });
   test('independent openpyxl input and output interoperability in cloud', () {
     final directory = Platform.environment['XLSX_INTEROP_DIR'];

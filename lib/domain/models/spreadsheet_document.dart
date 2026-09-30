@@ -16,11 +16,15 @@ class CellAddress {
     ).firstMatch(value.trim());
     if (match == null) return null;
 
+    final row = int.tryParse(match.group(2)!);
+    if (row == null || row > 1048576) return null;
+
     var column = 0;
     for (final unit in match.group(1)!.toUpperCase().codeUnits) {
       column = (column * 26) + unit - 64;
+      if (column > 16384) return null;
     }
-    return CellAddress(row: int.parse(match.group(2)!) - 1, column: column - 1);
+    return CellAddress(row: row - 1, column: column - 1);
   }
 
   static String columnLabel(int column) {

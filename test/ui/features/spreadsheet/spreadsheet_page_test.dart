@@ -148,8 +148,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('spreadsheet-xlsx-confirm')));
     await tester.pumpAndSettle();
-    expect(find.descendant(of: find.byKey(const Key('spreadsheet-cell-A1')),
-        matching: find.text('商品')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('spreadsheet-cell-A1')),
+        matching: find.text('商品'),
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(const Key('spreadsheet-export-xlsx')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('spreadsheet-xlsx-confirm')));
