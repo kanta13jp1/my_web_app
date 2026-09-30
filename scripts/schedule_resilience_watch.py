@@ -36,6 +36,28 @@ REPOSITORY_RUNS_MAX_PAGES = 10
 REPOSITORY_REVALIDATION_MIN_HOURS = 24
 
 
+class RepositoryRunsInvalid(RuntimeError):
+    code = "repository-runs-invalid"
+
+
+class RepositoryPaginationIncomplete(RuntimeError):
+    code = "repository-pagination-incomplete"
+
+
+class PrimaryLatestUnconfirmed(RuntimeError):
+    code = "primary-latest-unconfirmed"
+
+
+def verification_error_code(exc: Exception) -> str:
+    # Only fixed, locally defined codes are public; exception messages may contain secrets.
+    codes = {
+        RepositoryRunsInvalid: RepositoryRunsInvalid.code,
+        RepositoryPaginationIncomplete: RepositoryPaginationIncomplete.code,
+        PrimaryLatestUnconfirmed: PrimaryLatestUnconfirmed.code,
+    }
+    return codes.get(type(exc), type(exc).__name__)
+
+
 @dataclass(frozen=True)
 class WorkflowTarget:
     key: str
@@ -149,7 +171,7 @@ def merge_revalidated_runs(
             if primary_id is None or not any(
                 candidate.get("id") == primary_id for candidate in repository_runs
             ):
-                raise RuntimeError("Repository run listing did not confirm the primary latest run")
+                raise PrimaryLatestUnconfirmed("Repository run listing did not confirm the primary latest run")
             return merge_runs(primary_runs, repository_runs)
     return repository_runs
 
@@ -470,7 +492,7 @@ class GitHubClient:
             payload = self.request("GET", f"/repos/{self.repo}/actions/runs?{query}")
             page_runs = payload.get("workflow_runs", []) if isinstance(payload, dict) else []
             if not isinstance(page_runs, list):
-                raise RuntimeError("Repository workflow runs response is invalid")
+                raise RepositoryRunsInvalid("Repository workflow runs response is invalid")
             matches.extend(
                 run
                 for run in page_runs
@@ -478,7 +500,7 @@ class GitHubClient:
             )
             if len(page_runs) < REPOSITORY_RUNS_PER_PAGE:
                 return sort_runs_newest(matches)
-        raise RuntimeError("Repository workflow runs pagination was incomplete")
+        raise RepositoryPaginationIncomplete("Repository workflow runs pagination was incomplete")
 
     def workflow_state(self, workflow_file: str) -> str:
         path = f"/repos/{self.repo}/actions/workflows/{quote(workflow_file)}"
@@ -629,14 +651,15 @@ def render_summary(results: list[dict[str, Any]]) -> str:
     lines = [
         "## Schedule Resilience Watch",
         "",
-        "| Target | Action | Reason | Run |",
-        "|---|---|---|---|",
+        "| Target | Action | Reason | Verification error | Run |",
+        "|---|---|---|---|---|",
     ]
     for result in results:
         run = result.get("url") or ""
         run_cell = f"[run]({run})" if run else "-"
         lines.append(
-            f"| `{result['target']}` | `{result['action']}` | `{result['reason']}` | {run_cell} |"
+            f"| `{result['target']}` | `{result['action']}` | `{result['reason']}` | "
+            f"{result.get('verification_error') or '-'} | {run_cell} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -710,7 +733,7 @@ def main(argv: list[str]) -> int:
                     "workflow_file": target.workflow_file,
                     "action": "observe",
                     "reason": "freshness-unverified",
-                    "verification_error": type(exc).__name__,
+                    "verification_error": verification_error_code(exc),
                 }
             )
             continue

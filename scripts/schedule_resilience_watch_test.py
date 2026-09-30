@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import io
+import json
 import os
+import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -12,6 +14,9 @@ from unittest.mock import patch
 
 from schedule_resilience_watch import (
     GitHubClient,
+    RepositoryRunsInvalid,
+    RepositoryPaginationIncomplete,
+    PrimaryLatestUnconfirmed,
     TARGETS,
     WorkflowTarget,
     evaluate_target,
@@ -21,6 +26,7 @@ from schedule_resilience_watch import (
     merge_revalidated_runs,
     repository_revalidation_start,
     render_summary,
+    verification_error_code,
 )
 
 
@@ -664,6 +670,49 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         self.assertIn("Schedule Resilience Watch", summary)
         self.assertIn("failed-attempt-1", summary)
         self.assertIn("[run](u)", summary)
+
+
+class VerificationDiagnosticsTest(unittest.TestCase):
+    def test_real_failure_sites_have_distinct_fixed_codes(self):
+        client = GitHubClient("owner/repo", "token")
+        with patch.object(client, "request", return_value={"workflow_runs": "secret"}):
+            with self.assertRaises(RepositoryRunsInvalid):
+                client.repository_workflow_runs("cs-check.yml", event="schedule", created_after=NOW)
+        with patch.object(client, "request", return_value={"workflow_runs": [{}] * 100}):
+            with self.assertRaises(RepositoryPaginationIncomplete):
+                client.repository_workflow_runs("cs-check.yml", event="schedule", created_after=NOW)
+        with self.assertRaises(PrimaryLatestUnconfirmed):
+            merge_revalidated_runs([run()], [], created_after=NOW - timedelta(days=1))
+
+    def test_artifact_and_summary_keep_codes_without_messages_or_writes(self):
+        for error, code in (
+            (RepositoryRunsInvalid, "repository-runs-invalid"),
+            (RepositoryPaginationIncomplete, "repository-pagination-incomplete"),
+            (PrimaryLatestUnconfirmed, "primary-latest-unconfirmed"),
+        ):
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "report.json"
+                summary = Path(directory) / "summary.md"
+                with (
+                    patch.dict(os.environ, {"GITHUB_TOKEN": "test-token"}),
+                    patch("schedule_resilience_watch.TARGETS", (TARGET,)),
+                    patch("schedule_resilience_watch.GitHubClient") as factory,
+                    patch("sys.stdout", new_callable=io.StringIO),
+                ):
+                    client = factory.return_value
+                    client.workflow_runs.return_value = []
+                    client.repository_workflow_runs.side_effect = error("secret-do-not-publish")
+                    result = main(["--output", str(output), "--github-step-summary", str(summary)])
+                report = json.loads(output.read_text(encoding="utf-8"))
+                self.assertEqual(result, 1)
+                self.assertEqual(report["results"][0]["verification_error"], code)
+                self.assertEqual(report["results"][0]["action"], "observe")
+                self.assertIn(code, summary.read_text(encoding="utf-8"))
+                self.assertNotIn("secret-do-not-publish", output.read_text(encoding="utf-8") + summary.read_text(encoding="utf-8"))
+                client.rerun_failed_jobs.assert_not_called()
+                client.open_or_update_issue.assert_not_called()
+                client.close_recovered_issues.assert_not_called()
+        self.assertEqual(verification_error_code(RuntimeError("secret")), "RuntimeError")
 
 
 if __name__ == "__main__":
