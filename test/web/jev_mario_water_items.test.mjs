@@ -49,3 +49,6 @@ test('6-2 overhang route escapes the reported pipe position in both big forms',(
  }
 });
 test('6-2 pipe room preserves course and restores geometry and score',()=>{const g=new World11(22);const cells=g.cells,lifts=g.lifts;g.score=900;g.power=2;Object.assign(g.p,{x:62*16+8,y:160-28,h:28,grounded:true});assert.equal(g.enterRoom(),true);assert.equal(g.room,'underground');assert.equal(g.width,256);assert.equal(g.lifts.length,0);g.collectCoin();assert.equal(g.exitRoom(),true);assert.equal(g.stage,22);assert.equal(g.cells,cells);assert.equal(g.lifts,lifts);assert.equal(g.p.x,65*16);assert.equal(g.score,1100);assert.equal(g.power,2);assert.ok(g.visitedPipes.includes('22:62'));});
+
+import {pipeRoute} from '../../web/labs/jev-mario/pipe-route.mjs';
+test('shortcut pipe does not skip uncollected power items',()=>{const g=new World11();Object.assign(g.p,{x:57*16+8,y:128,grounded:true});assert.equal(pipeRoute(g),null);g.contents.clear();assert.equal(pipeRoute(g),'down');});
