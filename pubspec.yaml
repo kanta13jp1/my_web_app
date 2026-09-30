@@ -29,7 +29,7 @@ dependencies:
   shared_preferences: ^2.3.3       # 簡易ストレージ（端末内保存）
   provider: ^6.1.2                 # 状態管理
   file_picker: ^11.0.0             # ファイル選択（Web含む）
-  archive: ^4.3.0                  # ZIP解凍（XLSX/DOCXインポート）
+  archive: ^4.0.9                  # ZIP解凍（XLSX/DOCXインポート）
   xml: ^6.6.1                      # XMLパース（XLSX/DOCXインポート）
   mime: ^2.1.0                     # MIMEタイプ判定
   path: ^1.9.0                     # パス操作
