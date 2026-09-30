@@ -9,8 +9,8 @@ export function itemTargets(g){
 export function itemPotential(g){
  return itemTargets(g).reduce((best,t)=>Math.max(best,itemValue(g,t.kind)*.15-Math.abs(t.x-g.p.x-g.p.w/2)*.25-Math.abs(t.y-g.p.y)*.08),0);
 }
-export function itemIntent(g){
- const t=itemTargets(g)[0],p=g.p;if(!t||!p.grounded)return null;
+export function itemIntent(g,t=itemTargets(g)[0]){
+ const p=g.p;if(!t||!p.grounded)return null;
  const dx=t.x-p.x-p.w/2;
  // Do not chase beyond visible terrain or across a hole.
  for(let x=Math.floor(Math.min(p.x,t.x)/16);x<=Math.floor(Math.max(p.x+p.w,t.x)/16);x++)if(!g.solid(x,Math.floor((p.y+p.h+1)/16))&&!g.solid(x,Math.floor((p.y+p.h+1)/16)+1))return null;

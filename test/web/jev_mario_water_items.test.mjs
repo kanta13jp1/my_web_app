@@ -69,3 +69,5 @@ test('live item assistance jumps toward a flower above the left shoulder',()=>{c
 
 
 test('overworld pickup assistance never interrupts a castle tunnel slide',()=>{const g=new World11(8),guard=new LiveGuard();g.power=1;Object.assign(g.p,{x:367,y:192,h:16,crouching:true,grounded:true});g.camera=271;g.invincible=1200;g.contents.set('23,9','mushroom');g.cells.set('23,9','question');assert.equal(guard.decide(g,'right_run_down'),'right_run_down');});
+
+test('live pickup yields after a stalled acquisition and resumes after avoidance expires',()=>{const g=new World11(22),guard=new LiveGuard();Object.assign(g.p,{x:218,y:192,vx:0,grounded:true});const avoidance=[{stage:22,room:'overworld',x:218,until:240}];assert.equal(guard.decide(g,'noop',[],avoidance),'noop');assert.equal(guard.lastReason,null);g.frames=241;assert.equal(guard.decide(g,'noop',[],avoidance),'jump');assert.equal(guard.lastReason,'item_pickup_route');});

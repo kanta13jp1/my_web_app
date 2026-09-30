@@ -1,14 +1,15 @@
 import {pipeRoute} from './pipe-route.mjs?v=student-1';
-import {itemIntent,itemDescent} from './item-goal.mjs?v=student-1';
+import {itemIntent,itemDescent,itemTargets} from './item-goal.mjs?v=student-1';
 // Bounded live-state collision check. Assistance, never learned model inference.
 import {retryLevel} from './retry-memory.mjs?v=student-1';
 import {clone,advance,edge} from './search-assist.mjs?v=student-1';
 export class LiveGuard {
  constructor(){this.reset();}
  reset(){this.pickupAction=null;this.pickupUntil=0;this.next=0;this.action=null;this.interventions=0;this.lastReason=null;}
- decide(world,proposed,failures=[]){
+ decide(world,proposed,failures=[],itemAvoidance=[]){
   if(!world.cells||world.phase!=='playing')return proposed;
-  const pipe=pipeRoute(world),item=pipe||world.room!=='overworld'?null:(itemDescent(world)??(this.pickupUntil>world.frames&&!world.p.grounded&&world.p.vy<0?this.pickupAction:itemIntent(world))),route=pipe??item;if(route)proposed=route;
+  const target=itemTargets(world).find(t=>!itemAvoidance.some(r=>r.stage===world.stage&&r.room===world.room&&r.until>world.frames&&Math.abs(t.x-r.x)<128));
+  const pipe=pipeRoute(world),item=!target||pipe||world.room!=='overworld'?null:(itemDescent(world,target)??(this.pickupUntil>world.frames&&!world.p.grounded&&world.p.vy<0?this.pickupAction:itemIntent(world,target))),route=pipe??item;if(route)proposed=route;
   const level=retryLevel(world,failures);
   if(world.frames<this.next&&proposed===this.proposed&&level===this.level)return edge(world,this.action??proposed);
   this.level=level;this.proposed=proposed;this.next=world.frames+(route?1:6);this.lastReason=pipe?'pipe_geometry_route':item?'item_pickup_route':null;

@@ -31,7 +31,7 @@ export class StudentSession{
   }
   this.itemAvoidance=this.itemAvoidance.filter(r=>r.stage===world.stage&&r.room===world.room&&r.until>world.frames).slice(-8);
   if(!this.pending&&world.frames>=this.next){this.pending=true;this.next=world.frames+6;this.worker.postMessage({state:world,effective:this.guard.action??this.action,issued:this.clock(),failures:this.failures,itemAvoidance:this.itemAvoidance,forecastFrames:Math.max(1,Math.min(36,Math.round(this.age*.06)))});}
-  const before=this.guard.interventions,action=this.guard.decide(world,this.action,this.failures);this.stats.live_guard=this.guard.interventions;
+  const before=this.guard.interventions,action=this.guard.decide(world,this.action,this.failures,this.itemAvoidance);this.stats.live_guard=this.guard.interventions;
   if(before!==this.guard.interventions&&this.guard.lastReason==='retry_lookahead')this.stats.retry_assists++;
   if(before!==this.guard.interventions&&this.stats.guard_events.length<600)this.stats.guard_events.push({frame:world.frames,proposed:this.action,action,reason:this.guard.lastReason});
   const release=world.p.grounded&&world.wasJump&&this.action.includes('jump');if(release)this.stats.jump_releases++;
