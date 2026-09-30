@@ -74,3 +74,6 @@ test('live pickup yields after a stalled acquisition and resumes after avoidance
 
 
 test('6-2 reward descent leaves the wider support instead of stopping beside the upper block',()=>{const g=new World11(22),guard=new LiveGuard();g.enemies=[];g.power=1;Object.assign(g.p,{x:1172,y:68,h:28,vx:0,vy:0,grounded:true});g.camera=1076;assert.equal(guard.decide(g,'noop'),'left');for(let i=0;i<120&&g.phase==='playing';i++){g.buttons(guard.decide(g,'noop'));g.step();g.drainSounds();}assert.equal(g.phase,'playing');assert.ok(g.p.y>100,JSON.stringify(g.p));});
+
+
+test('6-2 fractional edge position clears the whole body before descent stops',()=>{const g=new World11(22),guard=new LiveGuard();g.enemies=[];g.power=1;Object.assign(g.p,{x:1910.74,y:116,h:28,vx:0,vy:0,grounded:true});g.camera=1814.74;assert.equal(guard.decide(g,'noop'),'left');for(let i=0;i<100&&g.phase==='playing';i++){g.buttons(guard.decide(g,'noop'));g.step();g.drainSounds();}assert.equal(g.phase,'playing');assert.ok(g.p.y>150,JSON.stringify(g.p));});

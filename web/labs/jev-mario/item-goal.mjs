@@ -29,7 +29,8 @@ export function itemApproach(g,target){
  // Leave that support too; stopping just outside the reward would never descend.
  const foot=Math.floor((g.p.y+g.p.h+1)/16);
  while((g.solid(edge+(left?-1:1),row)||g.solid(edge+(left?-1:1),foot))&&Math.abs(edge-col)<12)edge+=left?-1:1;
- return {x:left?edge*16-g.p.w/2-2:(edge+1)*16+g.p.w/2+2,y:target.y+20};
+ // Eight pixels of clearance exceed the descent steering tolerance for the whole body.
+ return {x:left?edge*16-g.p.w/2-8:(edge+1)*16+g.p.w/2+8,y:target.y+20};
 }
 
 // Complete a safe descent before attempting to open a reward block from below.
