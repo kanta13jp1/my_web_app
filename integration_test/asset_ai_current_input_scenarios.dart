@@ -48,6 +48,8 @@ class _MonthlyRepository extends SharedPreferencesAssetLiabilityRepository {
 class _DelayedMonthlyRepository extends _MonthlyRepository {
   final restored = Completer<AssetLiabilityMonthlyState>();
   int loads = 0;
+  int failures = 0;
+  bool failRestoration = false;
 
   @override
   Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
@@ -57,7 +59,12 @@ class _DelayedMonthlyRepository extends _MonthlyRepository {
   @override
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
     loads++;
-    return await restored.future;
+    final state = await restored.future;
+    if (failRestoration) {
+      failures++;
+      throw StateError('synthetic restore failed');
+    }
+    return state;
   }
 }
 
@@ -244,11 +251,14 @@ void main() {
       );
       expect(tester.widget<OutlinedButton>(updateButton).onPressed, isNull);
       if (failRestoration) {
-        repository.restored
-            .completeError(StateError('synthetic restore failed'));
+        // Raise the error in the requesting widget's error zone. A failed
+        // Completer created in the test zone cannot cross error-zone boundaries.
+        repository.failRestoration = true;
+        repository.restored.complete(const AssetLiabilityMonthlyState());
         for (var frame = 0; frame < 60; frame++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
+        expect(repository.failures, 1);
         expect(ai.requests, isEmpty);
         expect(history.reads, 0);
         expect(history.saves, 0);
