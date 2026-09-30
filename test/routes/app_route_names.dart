@@ -17,6 +17,7 @@ const List<String> kAllAppRoutes = <String>[
   '/admin/blog/edit',
   '/admin/blog/new',
   '/admin/maintenance',
+  '/flow-city',
   '/lumen-path',
   '/jev-mario-lab',
   '/jwenv-lab',
@@ -388,3 +389,4 @@ const List<String> kAllAppRoutes = <String>[
   '/workflow-templates',
   '/youtube-stats',
 ];
+
