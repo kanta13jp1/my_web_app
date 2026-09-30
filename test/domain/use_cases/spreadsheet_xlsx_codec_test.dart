@@ -63,7 +63,7 @@ void main() {
     final decoded = codec.decode(
       fixture(
         '<c r="A1" t="s"><v>0</v></c><c r="B1" t="inlineStr"><is><t>001</t></is></c><c r="C1"><f>A2+1</f><v>3</v></c>',
-        strings: '<si><r><t>日</t></r><r><t>本語</t></r></si>',
+        strings: '<si><r><t>日</t></r><r><t>本語</t></r><rPh sb="0" eb="3"><t>ニホンゴ</t></rPh></si>',
       ),
     );
     expect(decoded.first.cells, {'0:0': '日本語', '0:1': '001', '0:2': '=A2+1'});
@@ -139,6 +139,16 @@ void main() {
       () => codec.decode(fixture('', target: '../other.xml')),
       throwsFormatException,
     );
+  });
+  test('preserves literal OOXML escapes and carriage returns', () {
+    final sheet = codec.decode(fixture(
+      '<c r="A1" t="inlineStr"><is><t>_x005F_x0041_</t></is></c>'
+      '<c r="B1" t="inlineStr"><is><t>first_x000D_second</t></is></c>',
+    )).single;
+    expect(sheet.cells['0:0'], '_x0041_');
+    expect(sheet.cells['0:1'], 'first\rsecond');
+    final doc = SpreadsheetDocument.blank().copyWith(sheets: [sheet], activeSheetId: sheet.id);
+    expect(codec.decode(codec.encode(doc)).single.cells, sheet.cells);
   });
   test('rejects oversized central directory before decompression', () {
     final bytes = fixture('');
