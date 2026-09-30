@@ -12,11 +12,14 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
-    test('failed remote month read keeps offline state unverified without upload', () async {
+    test(
+        'failed remote month read keeps offline state unverified without upload',
+        () async {
       const local = SharedPreferencesAssetLiabilityRepository();
       final month = DateTime(2026, 5);
       await local.saveMonth(month: month, state: _sampleMonthlyState());
-      final remote = _RecordingAssetLiabilityRemoteStore()..failMonthReads = true;
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..failMonthReads = true;
       final repository = FeatureFlaggedAssetLiabilityRepository(
         localRepository: local,
         remoteStore: remote,
@@ -30,14 +33,17 @@ void main() {
       final offline = await repository.loadMonth(month);
       expect(offline.paidAccountNames, isNotEmpty);
       expect(repository.isMonthVerifiedForAi(month), isFalse);
-      expect(remote.calls.where((call) => call.startsWith('saveMonth:')), isEmpty);
+      expect(
+          remote.calls.where((call) => call.startsWith('saveMonth:')), isEmpty);
 
       remote.failMonthReads = false;
       await repository.loadMonth(month);
       expect(repository.isMonthVerifiedForAi(month), isTrue);
     });
 
-    test('successful empty remote month is verified and user changes invalidate it', () async {
+    test(
+        'successful empty remote month is verified and user changes invalidate it',
+        () async {
       var userId = 'test-user';
       final repository = FeatureFlaggedAssetLiabilityRepository(
         localRepository: const SharedPreferencesAssetLiabilityRepository(),
