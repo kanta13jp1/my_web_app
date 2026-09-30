@@ -22604,8 +22604,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               OutlinedButton.icon(
                 onPressed: enabled &&
-                          _assetManagementAiInputReady &&
-                          !_isGeneratingAssetManagementAiSummary
+                        _assetManagementAiInputReady &&
+                        !_isGeneratingAssetManagementAiSummary
                     ? () =>
                         _generateAssetManagementAiSummary(report, force: true)
                     : null,
@@ -22835,16 +22835,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       previousAnalyses = const <AssetManagementAiAnalysisHistoryEntry>[];
     }
     if (!mounted ||
-          _assetManagementAiInputRevision != inputRevision ||
-          _assetManagementAiSummaryInFlightKey != key) {
+        _assetManagementAiInputRevision != inputRevision ||
+        _assetManagementAiSummaryInFlightKey != key) {
       return;
     }
     // 初回自動生成が既存Issue照合より先に走ると already_issued が
     // 空のままAIへ渡り再掲抑止が効かないため、照合完了を待つ。
     await _ensureExistingDeveloperIssuesLoaded(report.developerRequests);
     if (!mounted ||
-          _assetManagementAiInputRevision != inputRevision ||
-          _assetManagementAiSummaryInFlightKey != key) {
+        _assetManagementAiInputRevision != inputRevision ||
+        _assetManagementAiSummaryInFlightKey != key) {
       return;
     }
     final existingIssuesByTitle = <String, Map<String, dynamic>>{};

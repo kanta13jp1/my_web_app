@@ -49,7 +49,8 @@ class _DelayedMonthlyRepository extends _MonthlyRepository {
   final restored = Completer<AssetLiabilityMonthlyState>();
 
   @override
-  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) => restored.future;
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) =>
+      restored.future;
 }
 
 class _CountingHistory extends _EmptyHistory {
@@ -234,7 +235,8 @@ void main() {
       );
       expect(tester.widget<OutlinedButton>(updateButton).onPressed, isNull);
       if (failRestoration) {
-        repository.restored.completeError(StateError('synthetic restore failed'));
+        repository.restored
+            .completeError(StateError('synthetic restore failed'));
         for (var frame = 0; frame < 60; frame++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
