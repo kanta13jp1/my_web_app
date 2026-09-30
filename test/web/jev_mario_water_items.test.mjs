@@ -28,6 +28,6 @@ test('item detour avoidance expires and is reset by a new attempt',()=>{const wo
 // Reported 4-4 position: fire Mario underneath an item block, beside a ledge.
 test('castle item alcove permits retreating jump rather than permanent right input',()=>{
  const g=new World11(16);g.power=2;Object.assign(g.p,{x:676,y:180,h:28,grounded:true});g.camera=580;g.invincible=5000;
- for(let i=0;i<75&&g.phase==='playing'&&g.p.x<760;i++){const result=plan(g,'right');advance(g,result.action,8);}
- assert.ok(g.p.x>736,`alcove remained blocked: ${g.p.x}, ${g.p.y}`);
+ const trace=[];for(let i=0;i<75&&g.phase==='playing'&&g.p.x<760;i++){const result=plan(g,'right');advance(g,result.action,8);if(i%5===0)trace.push([i,result.action,Math.round(g.p.x),Math.round(g.p.y)]);}
+ assert.ok(g.p.x>736,`alcove remained blocked: ${g.p.x}, ${g.p.y}; ${JSON.stringify(trace)}`);
 });

@@ -32,7 +32,7 @@ export function plan(g,raw=null,failures=[],itemAvoidance=[]){
  const wall=[col,col+1,col+2].some(c=>g.solid(c,foot-1)),head=[Math.floor(p.x/16),Math.floor((p.x+p.w-0.01)/16)].some(c=>g.solid(c,Math.floor(p.y/16)-2));
  if(!isWater(g.stage)&&p.grounded&&wall&&head&&p.x>g.camera+20)return {retry_level:retryLevel(g,failures),search_depth:0,action:'left',accepted:false,score:null,raw_score:null};
  if(!isWater(g.stage)&&p.grounded&&wall&&!head)return {retry_level:retryLevel(g,failures),search_depth:0,action:edge(g,'right_jump'),accepted:false,score:null,raw_score:null};
- const target=isWater(g.stage)?null:itemTargets(g).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
+ const target=isWater(g.stage)?null:itemTargets(g).filter(t=>{if(!t.block||g.power===0)return true;const [x,y]=t.key.split(',').map(Number);return ![x-1,x+1].some(c=>g.solid(c,y+2));}).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
  const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left',...(!isWater(g.stage)?['left_jump']:[])]:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
  let beam=[{g,first:null,value:0}],byFirst={};
  for(let depth=0;depth<depthLimit;depth++){
