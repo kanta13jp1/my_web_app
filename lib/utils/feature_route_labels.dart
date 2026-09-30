@@ -126,4 +126,3 @@ void recordFeatureRouteNavigation(String? routeName) {
     recordFeatureTap(canonicalPath, featureLabelForRoute(canonicalPath)),
   );
 }
-

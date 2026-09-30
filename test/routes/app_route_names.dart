@@ -389,4 +389,3 @@ const List<String> kAllAppRoutes = <String>[
   '/workflow-templates',
   '/youtube-stats',
 ];
-
