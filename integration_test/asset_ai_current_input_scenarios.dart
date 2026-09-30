@@ -726,7 +726,9 @@ void main() {
           aiSummaryService: ai,
           aiAnalysisHistoryService: _EmptyHistory(),
           debugNow: DateTime(2026, 9, 6, 12),
-          debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[cost],
+          debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[
+            cost
+          ],
           debugInitialAssetData: const <String, Map<String, double>>{
             '2026-09-06': <String, double>{'bank': 30000},
           },
@@ -745,7 +747,10 @@ void main() {
     await tester.tap(edit);
     await _pumpUntil(
       tester,
-      () => find.byKey(const Key('recurring_last_billing_date')).evaluate().isNotEmpty,
+      () => find
+          .byKey(const Key('recurring_last_billing_date'))
+          .evaluate()
+          .isNotEmpty,
     );
     await tester.pump(const Duration(milliseconds: 300));
     final date = find.byKey(const Key('recurring_last_billing_date'));
@@ -767,7 +772,10 @@ void main() {
     await tester.tap(edit);
     await _pumpUntil(
       tester,
-      () => find.byKey(const Key('recurring_last_billing_date')).evaluate().isNotEmpty,
+      () => find
+          .byKey(const Key('recurring_last_billing_date'))
+          .evaluate()
+          .isNotEmpty,
     );
     await tester.pump(const Duration(milliseconds: 300));
     expect(tester.widget<TextFormField>(date).controller!.text, '2026-08-20');
