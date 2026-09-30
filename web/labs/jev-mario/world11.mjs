@@ -477,8 +477,8 @@ export class World11 {
   enterRoom(){const p=this.p,pipe=this.usablePipes().find(t=>p.grounded&&p.x+p.w/2>=t.x&&p.x+p.w/2<=t.x+32&&Math.abs(p.y+p.h-t.y)<1);
     if(!pipe)return false;
     this.visitedPipes.push(pipe.id);
-    this.saved={cells:this.cells,contents:this.contents,enemies:this.enemies,width:this.width,lifts:this.lifts,vines:this.vines,items:this.items,shots:this.shots,camera:this.camera};this.pipeReturn=pipe;
-    this.cells=new Map();this.contents=new Map();this.enemies=[];this.lifts=[];this.vines=[];this.items=[];this.shots=[];this.width=256;
+    this.saved={cells:this.cells,contents:this.contents,enemies:this.enemies,width:this.width,lifts:this.lifts,vines:this.vines,items:this.items,shots:this.shots,hammers:this.hammers,cannons:this.cannons,camera:this.camera};this.pipeReturn=pipe;
+    this.cells=new Map();this.contents=new Map();this.enemies=[];this.lifts=[];this.vines=[];this.items=[];this.shots=[];this.hammers=[];this.cannons=[];this.width=256;
     this.sound('pipe');this.room='underground';this.camera=0;p.x=32;p.y=32;p.vx=0;p.vy=0;p.grounded=false;this.wasJump=false;
     for(let x=0;x<16;x++){this.cells.set(`${x},13`,'brick');this.cells.set(`${x},14`,'brick');if(x<13)this.cells.set(`${x},1`,'brick');}
     for(let x=4;x<11;x++)for(let y=7;y<10;y++)if(!(y===7&&(x===4||x===10)))this.contents.set(`${x},${y}`,'loose');

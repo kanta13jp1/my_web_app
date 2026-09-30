@@ -812,3 +812,13 @@ test('2-4 worker escapes a stopped crouch under a ledge',async({page},info)=>{
  await expect.poll(()=>reloadedFrame.evaluate(()=>(window as any).tunnelWorld?.p.x??0),{timeout:30000}).toBeGreaterThan(432);
  await lab.locator('#stop').click();await screenshot(page,info.outputPath('castle24-tunnel-escape.png'));
 });
+
+test('6-2 real worker retreats from the overhang and enters the defined pipe',async({page},info)=>{
+ test.setTimeout(60000);await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#stage').selectOption('22');
+ await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).pipeWorld=this;this.power=2;Object.assign(this.p,{x:2484,y:180,h:28,grounded:true});this.camera=2388;this.invincible=5000;step.call(this);};});
+ await expect.poll(()=>frame.evaluate(()=>(window as any).pipeWorld?.visitedPipes.includes('22:156')??false),{timeout:40000}).toBe(true);
+ await expect.poll(()=>frame.evaluate(()=>{const g=(window as any).pipeWorld;return g?.room==='overworld'&&g.p.x>=2544;}),{timeout:15000}).toBe(true);
+ await lab.locator('#stop').click();await screenshot(page,info.outputPath('world62-pipe-escape.png'));
+ const state=await frame.evaluate(()=>{const g=(window as any).pipeWorld;return {stage:g.stage,x:g.p.x,y:g.p.y,room:g.room,pipes:g.visitedPipes,frames:g.frames,power:g.power};});await (await import('node:fs/promises')).writeFile(info.outputPath('world62-pipe-escape.json'),JSON.stringify(state));
+});
