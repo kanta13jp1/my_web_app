@@ -38,6 +38,32 @@ Widget host(String memo, {JevClient? client}) => MaterialApp(
     );
 
 void main({Future<void> Function(String name)? capture}) {
+  testWidgets('Confidence help is available before any AI request', (
+    tester,
+  ) async {
+    var calls = 0;
+    final client = JevClient(
+      endpoint: 'http://127.0.0.1:8081/v1/systemone',
+      httpClient: MockClient((request) async {
+        calls++;
+        return answer('food');
+      }),
+    );
+    addTearDown(client.dispose);
+    await tester.pumpWidget(host('電気代', client: client));
+    await tester.tap(find.text('確信度の読み方'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('100%でも'), findsOneWidget);
+    expect(find.textContaining('モデルの確信度：'), findsNothing);
+    expect(calls, 0);
+    if (capture != null) await capture('confidence-before-request');
+    await tester.pumpWidget(host('水道代', client: client));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('100%でも'), findsNothing);
+    expect(find.text('確信度の読み方'), findsOneWidget);
+    expect(calls, 0);
+  });
+
   testWidgets(
       'Cloud candidates require explicit action and recover after quota failure',
       (tester) async {
@@ -105,7 +131,7 @@ void main({Future<void> Function(String name)? capture}) {
     expect(requests, 1);
     await tester.pumpWidget(host('水道代', client: client));
     expect(find.text('候補：水道・光熱費'), findsOneWidget);
-    expect(find.text('確信度の読み方'), findsNothing);
+    expect(find.text('確信度の読み方'), findsOneWidget);
     expect(find.textContaining('100%'), findsNothing);
     await capture?.call('confidence-edited');
     expect(requests, 1);
@@ -131,7 +157,7 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.text('端末内ルール'), findsOneWidget);
     expect(find.text('候補：水道・光熱費'), findsOneWidget);
     expect(find.textContaining('取得できなかった'), findsOneWidget);
-    expect(find.text('確信度の読み方'), findsNothing);
+    expect(find.text('確信度の読み方'), findsOneWidget);
     await tester.tap(find.text('AIにも候補を聞く'));
     await tester.pumpAndSettle();
     expect(find.text('AI候補'), findsOneWidget);
@@ -261,6 +287,9 @@ void main({Future<void> Function(String name)? capture}) {
     );
     expect(find.text('候補：カフェ・間食'), findsOneWidget);
     expect(find.text('AIにも候補を聞く'), findsNothing);
+    await tester.tap(find.text('確信度の読み方'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('100%でも'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
