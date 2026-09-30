@@ -50,6 +50,10 @@ class _DelayedMonthlyRepository extends _MonthlyRepository {
   int loads = 0;
   int failures = 0;
   bool failRestoration = false;
+  bool ownershipCurrent = true;
+
+  @override
+  bool isMonthVerifiedForAi(DateTime month) => ownershipCurrent;
 
   @override
   Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
@@ -205,11 +209,15 @@ void main() {
     );
   });
 
-  for (final failRestoration in <bool>[false, true]) {
+  for (final mode in <int>[0, 1, 2]) {
+    final failRestoration = mode == 1;
+    final ownershipChanges = mode == 2;
     testWidgets(
         failRestoration
             ? 'failed monthly restoration never generates or saves AI input'
-            : 'slow monthly restoration blocks automatic and manual AI input',
+            : ownershipChanges
+                ? 'changed user never displays or saves an in-flight AI response'
+                : 'slow monthly restoration blocks automatic and manual AI input',
         (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_management_display_mode_v1': 'full',
@@ -277,8 +285,20 @@ void main() {
             .singleWhere((row) => row.name == 'synthetic debt');
         expect(debt.paid, isTrue);
         expect(ai.requests.single.workbook.monthlyActualPaymentTotal, 1000);
+        if (ownershipChanges) repository.ownershipCurrent = false;
         ai.complete(0, 'Restored synthetic payment is paid');
-        await _pumpUntil(tester, () => history.saves == 1);
+        if (ownershipChanges) {
+          for (var frame = 0; frame < 60; frame++) {
+            await tester.pump(const Duration(milliseconds: 100));
+          }
+          expect(history.saves, 0);
+          expect(
+            find.textContaining('Restored synthetic payment is paid'),
+            findsNothing,
+          );
+        } else {
+          await _pumpUntil(tester, () => history.saves == 1);
+        }
       }
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));

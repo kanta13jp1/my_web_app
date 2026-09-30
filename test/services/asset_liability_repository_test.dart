@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_persistence.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
@@ -60,6 +62,44 @@ void main() {
       expect(repository.isMonthVerifiedForAi(DateTime(2026, 6)), isFalse);
       userId = 'other-user';
       expect(repository.isMonthVerifiedForAi(month), isFalse);
+    });
+
+    test('new user verification does not revive the old AI owner', () async {
+      var user = 'original-user';
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: _FakeAssetLiabilityRepository(),
+        remoteStore: _RecordingAssetLiabilityRemoteStore(),
+        syncEnabled: true,
+        userIdProvider: () => user,
+      );
+      final month = DateTime(2026, 5);
+      await repository.loadMonth(month);
+      final ownsInput = repository.captureMonthAiOwnership(month);
+      expect(ownsInput(), isTrue);
+      user = 'another-user';
+      await repository.loadMonth(month);
+      expect(repository.isMonthVerifiedForAi(month), isTrue);
+      expect(ownsInput(), isFalse);
+    });
+
+    test('user change during local restoration cannot verify remote state',
+        () async {
+      final local = _GatedMonthlyRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      var user = 'original-user';
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => user,
+      );
+      final month = DateTime(2026, 5);
+      final pending = repository.loadMonth(month);
+      user = 'another-user';
+      local.gate.complete();
+      await pending;
+      expect(repository.isMonthVerifiedForAi(month), isFalse);
+      expect(remote.calls, isEmpty);
     });
 
     test('saves and restores monthly state through local repository', () async {
@@ -2028,6 +2068,16 @@ void main() {
       );
     });
   });
+}
+
+class _GatedMonthlyRepository extends _FakeAssetLiabilityRepository {
+  final gate = Completer<void>();
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    await gate.future;
+    return super.loadMonth(month);
+  }
 }
 
 class _FakeAssetLiabilityRepository extends AssetLiabilityRepository {
