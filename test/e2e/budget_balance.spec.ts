@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const labels = ['毎月の手取り', '必須生活費・返済', '年払い・臨時支出', '現金の予備費積立', '今の楽しみ', '投資積立'];
+const balanceCard = (page: Page) => page.getByRole('group', { name: /^今と将来の配分チェック / });
+const result = (page: Page, title: string) => page.getByRole('group', { name: new RegExp(`^${title}(?:\\s|$)`) });
 const input = (page: Page, i: number) => page.getByRole('textbox', { name: new RegExp(`^${labels[i]}`) });
 async function amount(page: Page, i: number, value: string) {
   await input(page, i).focus();
@@ -14,14 +16,14 @@ async function example(page: Page) {
 const calculate = (page: Page) => page.getByRole('button', { name: '配分を確認する', exact: true }).click();
 test.beforeEach(async ({ page }) => {
   await page.goto('/budget-financial-planner?tab=simulation');
-  await expect(page.getByText('今と将来の配分チェック', { exact: true })).toBeVisible({ timeout: 60000 });
+  await expect(balanceCard(page)).toBeVisible({ timeout: 20000 });
 });
 
 test('annual costs and allocations show the actual remainder', async ({ page }, info) => {
   await example(page);
   await calculate(page);
-  await expect(page.getByText('配分後の残り 30,000円', { exact: true })).toBeVisible();
-  await expect(page.getByText('年間支出の月割り：10,000円', { exact: true })).toBeVisible();
+  await expect(result(page, '配分後の残り 30,000円')).toBeVisible();
+  await expect(result(page, '配分後の残り 30,000円')).toHaveAccessibleName(/年間支出の月割り：10,000円/);
   await page.screenshot({ path: info.outputPath('allocation-normal.png') });
 });
 
@@ -30,14 +32,14 @@ test('unknown and malformed costs are not zero; correcting the field recovers', 
   await amount(page, 2, '');
   await calculate(page);
   await expect(page.getByText('未確認です。金額を確認し、支出がない場合は0を入力してください', { exact: true })).toBeVisible();
-  await expect(page.getByText('配分後の残り 30,000円', { exact: true })).toHaveCount(0);
+  await expect(result(page, '配分後の残り 30,000円')).toHaveCount(0);
   await amount(page, 2, '-1');
   await calculate(page);
   await expect(page.getByText('0以上の整数で入力してください（例：230000）', { exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('allocation-invalid.png') });
   await amount(page, 2, '0');
   await calculate(page);
-  await expect(page.getByText('配分後の残り 40,000円', { exact: true })).toBeVisible();
+  await expect(result(page, '配分後の残り 40,000円')).toBeVisible();
   await page.screenshot({ path: info.outputPath('allocation-recovered.png') });
 });
 
@@ -47,9 +49,9 @@ test('changed input invalidates old result, deficit is explicit, reload forgets 
   await example(page);
   await calculate(page);
   await amount(page, 5, '150000');
-  await expect(page.getByText('配分後の残り 30,000円', { exact: true })).toHaveCount(0);
+  await expect(result(page, '配分後の残り 30,000円')).toHaveCount(0);
   await calculate(page);
-  await expect(page.getByText('毎月 70,000円の不足', { exact: true })).toBeVisible();
+  await expect(result(page, '毎月 70,000円の不足')).toBeVisible();
   await page.evaluate(async () => {
     await Promise.all(document.getAnimations({ subtree: true }).filter(a =>
       a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {})));
@@ -59,9 +61,9 @@ test('changed input invalidates old result, deficit is explicit, reload forgets 
     await page.waitForTimeout(250);
   }
   await page.reload();
-  await expect(page.getByText('今と将来の配分チェック', { exact: true })).toBeVisible({ timeout: 60000 });
+  await expect(balanceCard(page)).toBeVisible({ timeout: 20000 });
   await input(page, 0).focus();
   await expect(input(page, 0)).toHaveValue('');
-  await expect(page.getByText('毎月 70,000円の不足', { exact: true })).toHaveCount(0);
+  await expect(result(page, '毎月 70,000円の不足')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
