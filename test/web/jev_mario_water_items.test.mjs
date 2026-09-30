@@ -41,3 +41,14 @@ test('2-4 stopped crouching players exit the low tunnel in either power state',(
 test('manual release under a ceiling allows slow movement without standing through tiles',()=>{const g=new World11(8);g.power=1;Object.assign(g.p,{x:367,y:192,h:16,crouching:true,grounded:true});g.invincible=1200;g.buttons('right');g.step();assert.equal(g.p.h,16);assert.ok(g.p.x>367);for(let i=0;i<60;i++)g.step();assert.ok(g.p.x>384);assert.equal(g.p.h,28);});
 
 test("running crouch crawls into a castle ledge without alternating standing",()=>{const g=new World11(16);g.power=2;Object.assign(g.p,{x:676,y:180,h:28,grounded:true});g.invincible=5000;g.buttons("right_run_down");for(let i=0;i<100;i++)g.step();assert.ok(g.p.x>736);assert.equal(g.p.h,16);});
+
+test('6-2 overhang route escapes the reported pipe position in both big forms',()=>{
+ for(const power of [1,2]){const g=new World11(22);g.power=power;Object.assign(g.p,{x:2484,y:180,h:28,grounded:true});g.camera=2388;g.invincible=5000;
+  const trace=[];for(let i=0;i<140&&g.phase==='playing'&&g.p.x<2544;i++){const a=plan(g,'right_jump').action;advance(g,a,8);if(i%5===0)trace.push([a,g.room,Math.round(g.p.x),Math.round(g.p.y)]);}
+  assert.ok(g.p.x>=2544,JSON.stringify(trace));
+ }
+});
+test('6-2 pipe room preserves course and restores geometry and score',()=>{const g=new World11(22);const cells=g.cells,lifts=g.lifts;g.score=900;g.power=2;Object.assign(g.p,{x:62*16+8,y:160-28,h:28,grounded:true});assert.equal(g.enterRoom(),true);assert.equal(g.room,'underground');assert.equal(g.width,256);assert.equal(g.lifts.length,0);g.collectCoin();assert.equal(g.exitRoom(),true);assert.equal(g.stage,22);assert.equal(g.cells,cells);assert.equal(g.lifts,lifts);assert.equal(g.p.x,65*16);assert.equal(g.score,1100);assert.equal(g.power,2);assert.ok(g.visitedPipes.includes('22:62'));});
+
+import {pipeRoute} from '../../web/labs/jev-mario/pipe-route.mjs';
+test('shortcut pipe does not skip uncollected power items',()=>{const g=new World11();Object.assign(g.p,{x:57*16+8,y:128,grounded:true});assert.equal(pipeRoute(g),null);g.contents.clear();assert.equal(pipeRoute(g),'down');});

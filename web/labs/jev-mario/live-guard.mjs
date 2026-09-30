@@ -1,3 +1,4 @@
+import {pipeRoute} from './pipe-route.mjs?v=student-1';
 // Bounded live-state collision check. Assistance, never learned model inference.
 import {retryLevel} from './retry-memory.mjs?v=student-1';
 import {clone,advance,edge} from './search-assist.mjs?v=student-1';
@@ -6,6 +7,7 @@ export class LiveGuard {
  reset(){this.next=0;this.action=null;this.interventions=0;this.lastReason=null;}
  decide(world,proposed,failures=[]){
   if(!world.cells||world.phase!=='playing')return proposed;
+  const route=pipeRoute(world);if(route){this.action=route;this.next=world.frames;this.interventions++;this.lastReason='pipe_geometry_route';return edge(world,route);}
   const level=retryLevel(world,failures);
   if(world.frames<this.next&&proposed===this.proposed&&level===this.level)return edge(world,this.action??proposed);
   this.level=level;this.proposed=proposed;this.next=world.frames+6;this.lastReason=null;
