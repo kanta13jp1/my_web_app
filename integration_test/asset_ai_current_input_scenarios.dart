@@ -297,23 +297,40 @@ void main() {
     );
     await tester.ensureVisible(methodInput);
     await tester.tap(methodInput);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(AssetLiabilityPlanningService.directPaymentLabel).last);
+    await tester.pump(const Duration(milliseconds: 400));
+    await _pumpUntil(
+      tester,
+      () => find.text(AssetLiabilityPlanningService.directPaymentLabel)
+          .hitTestable().evaluate().isNotEmpty,
+    );
+    await tester.tap(
+      find.text(AssetLiabilityPlanningService.directPaymentLabel).hitTestable().last,
+    );
     await _pumpUntil(tester, () => ai.requests.length == 3);
-    final detached = ai.requests.last.workbook.cardStatementReconciliation.groups
+    final detached = ai
+        .requests.last.workbook.cardStatementReconciliation.groups
         .singleWhere((group) => group.billingAccountId == 'paypay_card');
     expect(detached.configuredDetailTotal, 0);
-    expect(repository.state.cardBillingAccountIds[providerId],
-        AssetLiabilityPlanningService.directPaymentMethodId);
+    expect(
+      repository.state.cardBillingAccountIds[providerId],
+      AssetLiabilityPlanningService.directPaymentMethodId,
+    );
     expect(repository.state.paymentOverrides[providerId], 20000);
     ai.complete(2, 'Synthetic detail detached without deleting the payment');
     await tester.ensureVisible(methodInput);
     await tester.tap(methodInput);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byWidgetPredicate((widget) =>
-        widget is DropdownMenuItem<String> && widget.value == 'paypay_card').last);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(
+      find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is DropdownMenuItem<String> && widget.value == 'paypay_card',
+          )
+          .last,
+    );
     await _pumpUntil(tester, () => ai.requests.length == 4);
-    final reattached = ai.requests.last.workbook.cardStatementReconciliation.groups
+    final reattached = ai
+        .requests.last.workbook.cardStatementReconciliation.groups
         .singleWhere((group) => group.billingAccountId == 'paypay_card');
     expect(reattached.configuredDetailTotal, 20000);
     expect(reattached.hasConfiguredMismatchFix, isFalse);
