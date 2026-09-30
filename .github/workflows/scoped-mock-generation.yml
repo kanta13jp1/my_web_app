@@ -1,0 +1,53 @@
+name: Scoped mock generation evidence
+on:
+  push:
+    branches: ['dependabot/pub/flutter-dependencies-c5eeeac817']
+    paths: ['.github/workflows/scoped-mock-generation.yml']
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        required: true
+        type: string
+permissions: {}
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Verify exact source
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha || github.sha }}
+        run: |
+          [[ "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Generate mocks using the repository toolchain
+        run: dart run build_runner build --delete-conflicting-outputs --build-filter='test/**.mocks.dart'
+      - name: Preserve scoped generated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p mock-generation-output/files
+          git rev-parse HEAD > mock-generation-output/head-sha.txt
+          git diff --name-only -- '*.mocks.dart' > mock-generation-output/manifest.txt
+          test -s mock-generation-output/manifest.txt
+          while IFS= read -r file; do
+            [[ "$file" == test/*.mocks.dart ]]
+            mkdir -p "mock-generation-output/files/$(dirname "$file")"
+            cp "$file" "mock-generation-output/files/$file"
+          done < mock-generation-output/manifest.txt
+          git diff --binary -- '*.mocks.dart' > mock-generation-output/generated.patch
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: scoped-mocks-${{ github.run_id }}
+          path: mock-generation-output
+          if-no-files-found: error
+          retention-days: 1
