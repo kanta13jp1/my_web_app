@@ -16,21 +16,25 @@ void main() {
       paymentDay: 5,
     );
     var saves = 0;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
         home: Scaffold(
-            body: Builder(
-      builder: (context) => TextButton(
-        onPressed: () async {
-          final result =
-              await showRecurringFixedCostEditor(context, existing: cost);
-          if (result != null) {
-            cost = result;
-            saves++;
-          }
-        },
-        child: const Text('Edit synthetic contract'),
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                final result =
+                    await showRecurringFixedCostEditor(context, existing: cost);
+                if (result != null) {
+                  cost = result;
+                  saves++;
+                }
+              },
+              child: const Text('Edit synthetic contract'),
+            ),
+          ),
+        ),
       ),
-    ),),),);
+    );
     Future<void> open() async {
       await tester.tap(find.text('Edit synthetic contract'));
       await tester.pumpAndSettle();
