@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_persistence.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
@@ -10,6 +12,94 @@ void main() {
   group('AssetLiabilityRepository', () {
     setUp(() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
+    });
+
+    test(
+        'failed remote month read keeps offline state unverified without upload',
+        () async {
+      const local = SharedPreferencesAssetLiabilityRepository();
+      final month = DateTime(2026, 5);
+      await local.saveMonth(month: month, state: _sampleMonthlyState());
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..failMonthReads = true;
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'test-user',
+        onSyncError: (_, __) {},
+      );
+
+      expect(repository.isMonthVerifiedForAi(month), isFalse);
+      final offline = await repository.loadMonth(month);
+      expect(offline.paidAccountNames, isNotEmpty);
+      expect(repository.isMonthVerifiedForAi(month), isFalse);
+      expect(
+        remote.calls.where((call) => call.startsWith('saveMonth:')),
+        isEmpty,
+      );
+
+      remote.failMonthReads = false;
+      await repository.loadMonth(month);
+      expect(repository.isMonthVerifiedForAi(month), isTrue);
+    });
+
+    test(
+        'successful empty remote month is verified and user changes invalidate it',
+        () async {
+      var userId = 'test-user';
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: const SharedPreferencesAssetLiabilityRepository(),
+        remoteStore: _RecordingAssetLiabilityRemoteStore(),
+        syncEnabled: true,
+        userIdProvider: () => userId,
+      );
+      final month = DateTime(2026, 5);
+      final state = await repository.loadMonth(month);
+      expect(state.isEmpty, isTrue);
+      expect(repository.isMonthVerifiedForAi(month), isTrue);
+      expect(repository.isMonthVerifiedForAi(DateTime(2026, 6)), isFalse);
+      userId = 'other-user';
+      expect(repository.isMonthVerifiedForAi(month), isFalse);
+    });
+
+    test('new user verification does not revive the old AI owner', () async {
+      var user = 'original-user';
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: _FakeAssetLiabilityRepository(),
+        remoteStore: _RecordingAssetLiabilityRemoteStore(),
+        syncEnabled: true,
+        userIdProvider: () => user,
+      );
+      final month = DateTime(2026, 5);
+      await repository.loadMonth(month);
+      final ownsInput = repository.captureMonthAiOwnership(month);
+      expect(ownsInput(), isTrue);
+      user = 'another-user';
+      await repository.loadMonth(month);
+      expect(repository.isMonthVerifiedForAi(month), isTrue);
+      expect(ownsInput(), isFalse);
+    });
+
+    test('user change during local restoration cannot verify remote state',
+        () async {
+      final local = _GatedMonthlyRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      var user = 'original-user';
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => user,
+      );
+      final month = DateTime(2026, 5);
+      final pending = repository.loadMonth(month);
+      user = 'another-user';
+      local.gate.complete();
+      await pending;
+      expect(repository.isMonthVerifiedForAi(month), isFalse);
+      expect(remote.calls, isEmpty);
     });
 
     test('saves and restores monthly state through local repository', () async {
@@ -1980,6 +2070,16 @@ void main() {
   });
 }
 
+class _GatedMonthlyRepository extends _FakeAssetLiabilityRepository {
+  final gate = Completer<void>();
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    await gate.future;
+    return super.loadMonth(month);
+  }
+}
+
 class _FakeAssetLiabilityRepository extends AssetLiabilityRepository {
   final Map<String, AssetLiabilityMonthlyState> _states =
       <String, AssetLiabilityMonthlyState>{};
@@ -2076,6 +2176,7 @@ class _FakeAssetLiabilityRepository extends AssetLiabilityRepository {
 }
 
 class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
+  bool failMonthReads = false;
   final List<String> calls = <String>[];
   final Map<String, AssetLiabilityMonthlyState> _states =
       <String, AssetLiabilityMonthlyState>{};
@@ -2164,6 +2265,7 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
   }) async {
     final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
     calls.add('loadMonth:$userId:$monthKey');
+    if (failMonthReads) throw StateError('remote read failed');
     return _states[monthKey];
   }
 

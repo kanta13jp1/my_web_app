@@ -6,7 +6,7 @@ export const scores={
  underground:[48,60,0,51,63,0,53,65,0,51,63,0,46,58,0,48,60,0,55,67,0,53,65,0,51,63,0,46,58,0,48,0],
  star:[84,79,88,84,91,88,86,83,89,86,93,89,88,84,91,88,86,81,89,86,88,83,91,88,84,79,88,84,83,79,86,83]
 };
-// Eight arranged pitched parts (not eight notes on every beat): pulse lead, chord arpeggio, soft counterline, high pad, soft chord fifth, syncopated answer, high bell, triangle bass; noise is percussion.
+// Ten arranged pitched parts (not ten notes on every beat): pulse lead, chord arpeggio, soft counterline, high pad, soft chord fifth, syncopated answer, high bell, short chord accent, triangle bass; noise is percussion.
 // Each room has its own harmonic progression rather than a shared major-key backing.
 export const arrangements={
  overworld:{step:.145,chords:[[48,52,55],[45,48,52],[53,57,60],[43,47,50]],duty:.25},
@@ -17,12 +17,12 @@ export const arrangements={
 };
 export function musicStep(track,beat,hurry=false){
  const a=arrangements[track]??arrangements.overworld,chord=a.chords[Math.floor(beat/16)%a.chords.length],step=a.step*(hurry?.78:1);
- return {step,lead:scores[track]?.[beat%scores[track].length]??0,harmony:chord[[0,2,1,2][beat%4]]+12,bass:chord[beat%4===2?2:0]-(track==='star'?12:0),counter:chord[beat%8<4?1:2]+(track==='castle'?0:12),pad:chord[0]+(track==='castle'||track==='underground'?19:24),fifth:chord[2]+12,answer:chord[(Math.floor(beat/2)+1)%3]+24,bell:chord[(Math.floor(beat/4)+2)%3]+36,duty:a.duty};
+ return {step,lead:scores[track]?.[beat%scores[track].length]??0,harmony:chord[[0,2,1,2][beat%4]]+12,bass:chord[beat%4===2?2:0]-(track==='star'?12:0),counter:chord[beat%8<4?1:2]+(track==='castle'?0:12),pad:chord[0]+(track==='castle'||track==='underground'?19:24),fifth:chord[2]+12,answer:chord[(Math.floor(beat/2)+1)%3]+24,bell:chord[(Math.floor(beat/4)+2)%3]+36,accent:chord[1]+24,echo:chord[2]+19,duty:a.duty};
 }
 export const effects={firework:[48,36],swim:[60,67],bridge:[43,38,31,24],impact:[42,30],skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
 export class GameAudio{
  constructor(factory=()=>new(globalThis.AudioContext||globalThis.webkitAudioContext)()){
-  this.factory=factory;this.enabled=false;this.volume=.25;this.nodes=new Set();this.music=new Set();this.beat=0;this.next=0;this.track='';this.musicUntil=0;
+  this.factory=factory;this.enabled=false;this.volume=.65;this.nodes=new Set();this.music=new Set();this.beat=0;this.next=0;this.track='';this.musicUntil=0;
  }
  async enable(value){this.enabled=!!value;if(!value){this.stop();return true;}try{
   if(!this.context){this.context=this.factory();this.master=this.context.createGain();if(this.context.createDynamicsCompressor){this.limiter=this.context.createDynamicsCompressor();this.limiter.threshold.value=-10;this.limiter.knee.value=8;this.limiter.ratio.value=12;this.master.connect(this.limiter);this.limiter.connect(this.context.destination);}else this.master.connect(this.context.destination);this.musicGain=this.context.createGain();this.musicGain.gain.value=1;this.musicGain.connect(this.master);}
@@ -64,10 +64,12 @@ export class GameAudio{
   // Do not bunch late beats together after a stalled browser frame.
   if(this.next<now)this.next=now;
   while(this.next<now+.08){
-   const {step,lead,harmony,bass,counter,pad,fifth,answer,bell,duty}=musicStep(track,this.beat,hurry),t=this.next;
+   const {step,lead,harmony,bass,counter,pad,fifth,answer,bell,accent,echo,duty}=musicStep(track,this.beat,hurry),t=this.next;
    this.tone(lead,t,step*(this.beat%4===3?.55:.82),'square',.040,true,0,duty);
    // Offbeat comping and broken triads keep the lead audible without dense chords.
    if(this.beat%2===0||track==='star')this.tone(harmony,t+step*.08,step*.65,'square',track==='underwater'?.013:.018,true,0,.5);
+   if(this.beat%16===11)this.tone(echo,t+step*.6,step*.7,'triangle',.008,true);
+   if(this.beat%8===3)this.tone(accent,t+step*.35,step*.5,'square',track==='castle'?.006:.010,true,0,.125);
    if(this.beat%8===6)this.tone(bell,t+step*.60,step*1.2,'sine',track==='underwater'?.014:.009,true);
    if(this.beat%4===2)this.tone(answer,t+step*.45,step*.40,'triangle',track==='castle'?.009:.014,true);
    if(this.beat%8===0)this.tone(fifth,t+step*.3,step*5.5,'sine',.012,true);
