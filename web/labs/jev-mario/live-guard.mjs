@@ -8,7 +8,7 @@ export class LiveGuard {
  reset(){this.pickupAction=null;this.pickupUntil=0;this.next=0;this.action=null;this.interventions=0;this.lastReason=null;}
  decide(world,proposed,failures=[]){
   if(!world.cells||world.phase!=='playing')return proposed;
-  const pipe=pipeRoute(world),item=pipe?null:(itemDescent(world)??(this.pickupUntil>world.frames&&!world.p.grounded&&world.p.vy<0?this.pickupAction:itemIntent(world))),route=pipe??item;if(route)proposed=route;
+  const pipe=pipeRoute(world),item=pipe||world.room!=='overworld'?null:(itemDescent(world)??(this.pickupUntil>world.frames&&!world.p.grounded&&world.p.vy<0?this.pickupAction:itemIntent(world))),route=pipe??item;if(route)proposed=route;
   const level=retryLevel(world,failures);
   if(world.frames<this.next&&proposed===this.proposed&&level===this.level)return edge(world,this.action??proposed);
   this.level=level;this.proposed=proposed;this.next=world.frames+(route?1:6);this.lastReason=pipe?'pipe_geometry_route':item?'item_pickup_route':null;

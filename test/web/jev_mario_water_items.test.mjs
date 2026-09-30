@@ -66,3 +66,6 @@ test('live guard jumps below an actual power block even when a delayed proposal 
 
 
 test('live item assistance jumps toward a flower above the left shoulder',()=>{const g=new World11(),guard=new LiveGuard();g.contents.clear();g.items=[{kind:'flower',x:84,y:144,w:14,h:16,emerging:0,vx:0,vy:0}];Object.assign(g.p,{x:96,y:192,vx:0,vy:0,grounded:true});assert.equal(guard.decide(g,'right_run'),'left_jump');});
+
+
+test('overworld pickup assistance never interrupts a castle tunnel slide',()=>{const g=new World11(8),guard=new LiveGuard();g.power=1;Object.assign(g.p,{x:367,y:192,h:16,crouching:true,grounded:true});g.camera=271;g.invincible=1200;g.contents.set('23,9','mushroom');g.cells.set('23,9','question');assert.equal(guard.decide(g,'right_run_down'),'right_run_down');});
