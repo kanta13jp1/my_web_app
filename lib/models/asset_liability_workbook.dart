@@ -1479,6 +1479,7 @@ class AssetLiabilityCsvExportBundle {
 
 class AssetLiabilityWorkbook {
   final DateTime baseDate;
+
   /// 終了済みを含む契約情報。現在負債とは区別してAIへ渡す。
   final List<AssetRecurringFixedCost> recurringFixedCosts;
   final Map<String, DateTime> recurringBillingDates;
@@ -1779,7 +1780,8 @@ class AssetLiabilityWorkbook {
     return AssetLiabilityWorkbook(
       baseDate: baseDate ?? this.baseDate,
       recurringFixedCosts: recurringFixedCosts ?? this.recurringFixedCosts,
-      recurringBillingDates: recurringBillingDates ?? this.recurringBillingDates,
+      recurringBillingDates:
+          recurringBillingDates ?? this.recurringBillingDates,
       accounts: accounts ?? this.accounts,
       debtMasterRows: debtMasterRows ?? this.debtMasterRows,
       repaymentPriorityRows:

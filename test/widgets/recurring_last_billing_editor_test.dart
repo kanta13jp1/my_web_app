@@ -4,18 +4,29 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 
 void main() {
-  testWidgets('editor validates, saves, restores and explicitly clears last billing', (tester) async {
+  testWidgets(
+      'editor validates, saves, restores and explicitly clears last billing',
+      (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     var cost = const AssetRecurringFixedCost(
-      id: 'synthetic', name: 'Synthetic contract', amount: 1000, paymentDay: 5,
+      id: 'synthetic',
+      name: 'Synthetic contract',
+      amount: 1000,
+      paymentDay: 5,
     );
     var saves = 0;
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: Builder(
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: Builder(
       builder: (context) => TextButton(
         onPressed: () async {
-          final result = await showRecurringFixedCostEditor(context, existing: cost);
-          if (result != null) { cost = result; saves++; }
+          final result =
+              await showRecurringFixedCostEditor(context, existing: cost);
+          if (result != null) {
+            cost = result;
+            saves++;
+          }
         },
         child: const Text('Edit synthetic contract'),
       ),
@@ -24,6 +35,7 @@ void main() {
       await tester.tap(find.text('Edit synthetic contract'));
       await tester.pumpAndSettle();
     }
+
     final field = find.byKey(const Key('recurring_last_billing_date'));
     await open();
     await tester.enterText(field, '2026-02-30');
