@@ -33321,15 +33321,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       _recentFlowsOwnerId != _supabase.auth.currentUser?.id)
                   ? const []
                   : visibleFlows
-                  .where((flow) => flow['action_type'] == 'expense')
-                  .take(5)
-                  .map((flow) => <String, dynamic>{
-                        'title': _parseFlowDescription(
-                          flow['description']?.toString() ?? '',
-                          actionType: 'expense',
-                        ).memo,
-                      })
-                  .toList(),
+                      .where((flow) => flow['action_type'] == 'expense')
+                      .take(5)
+                      .map((flow) => <String, dynamic>{
+                            'title': _parseFlowDescription(
+                              flow['description']?.toString() ?? '',
+                              actionType: 'expense',
+                            ).memo,
+                          })
+                      .toList(),
             ),
             const SizedBox(height: 8),
             if (visibleFlows.isEmpty)
