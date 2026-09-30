@@ -37,7 +37,9 @@ jobs:
           set -euo pipefail
           mkdir -p mock-generation-output/files
           git rev-parse HEAD > mock-generation-output/head-sha.txt
-          git diff --name-only -- '*.mocks.dart' > mock-generation-output/manifest.txt
+          git diff --name-only --diff-filter=ACM -- '*.mocks.dart' > mock-generation-output/manifest.txt
+          git diff --name-only --diff-filter=D -- '*.mocks.dart' > mock-generation-output/deleted-manifest.txt
+          cp pubspec.lock mock-generation-output/resolved-pubspec.lock
           test -s mock-generation-output/manifest.txt
           while IFS= read -r file; do
             [[ "$file" == test/*.mocks.dart ]]
