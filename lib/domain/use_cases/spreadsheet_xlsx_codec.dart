@@ -321,13 +321,16 @@ class SpreadsheetXlsxCodec {
     // rPh contains pronunciation metadata, not the visible cell value.
     return text.toString();
   }
+
   static String _decodeExcelText(String value) => value.replaceAllMapped(
         RegExp(r'_x([0-9a-fA-F]{4})_'),
         (match) => String.fromCharCode(int.parse(match.group(1)!, radix: 16)),
       );
   static String _encodeExcelText(String value) => value
-      .replaceAllMapped(RegExp(r'_x[0-9a-fA-F]{4}_'),
-          (match) => '_x005F_${match.group(0)!.substring(1)}')
+      .replaceAllMapped(
+        RegExp(r'_x[0-9a-fA-F]{4}_'),
+        (match) => '_x005F_${match.group(0)!.substring(1)}',
+      )
       .replaceAll('\r', '_x000D_');
   static String _escape(String value) => value
       .replaceAll('&', '&amp;')
