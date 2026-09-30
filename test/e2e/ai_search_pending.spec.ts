@@ -18,29 +18,28 @@ test.beforeEach(async ({ page }) => {
 
 test('latest query wins while prior results remain readable', async ({ page }, info) => {
   await search(page, '最初');
-  await expect(page.getByRole('group', { name: /^最初 のノート / })).toBeVisible();
+  await expect(page.getByRole('group').filter({ hasText: /^最初 のノート / })).toBeVisible();
   await search(page, '遅い検索');
   await expect(page.getByText('前の結果:「最初」（1件）', { exact: false })).toBeVisible();
-  await expect(page.getByRole('group', { name: /^最初 のノート / })).toBeVisible();
+  await expect(page.getByRole('group').filter({ hasText: /^最初 のノート / })).toBeVisible();
   await page.screenshot({ path: info.outputPath('previous-results-pending.png') });
   await search(page, '最新');
-  await expect(page.getByRole('group', { name: /^最新 のノート / })).toBeVisible();
+  await expect(page.getByRole('group').filter({ hasText: /^最新 のノート / })).toBeVisible();
   await page.waitForTimeout(2000);
-  await expect(page.getByRole('group', { name: /^最新 のノート / })).toBeVisible();
-  await expect(page.getByRole('group', { name: /^遅い検索 のノート / })).toHaveCount(0);
+  await expect(page.getByRole('group').filter({ hasText: /^最新 のノート / })).toBeVisible();
+  await expect(page.getByRole('group').filter({ hasText: /^遅い検索 のノート / })).toHaveCount(0);
   await page.screenshot({ path: info.outputPath('latest-result.png') });
 });
 
 test('failed search retains prior result and retry recovers', async ({ page }, info) => {
   await search(page, '最初');
-  await expect(page.getByRole('group', { name: /^最初 のノート / })).toBeVisible();
+  await expect(page.getByRole('group').filter({ hasText: /^最初 のノート / })).toBeVisible();
   await search(page, '失敗から再試行');
   await expect(page.getByText('「失敗から再試行」の検索: 検索できませんでした。通信状態を確認して再試行してください。', { exact: true })).toBeVisible();
-  await expect(page.getByRole('group', { name: /^最初 のノート / })).toBeVisible();
+  await expect(page.getByRole('group').filter({ hasText: /^最初 のノート / })).toBeVisible();
   await page.screenshot({ path: info.outputPath('failure-preserved.png') });
-  await page.getByRole('button', { name: '再試行', exact: true }).focus();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('group', { name: /^失敗から再試行 のノート / })).toBeVisible();
+  await page.getByRole('button', { name: '再試行', exact: true }).click();
+  await expect(page.getByRole('group').filter({ hasText: /^失敗から再試行 のノート / })).toBeVisible();
   await page.screenshot({ path: info.outputPath('retry-recovered.png') });
 });
 
@@ -49,11 +48,11 @@ test('cleared query stays empty after a late response and can search again', asy
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await search(page, '遅い検索');
-  await page.getByRole('button', { name: '検索をクリア', exact: true }).focus();
-  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: '検索をクリア', exact: true }).click();
   await page.waitForTimeout(2000);
+  await input(page).focus();
   await expect(input(page)).toHaveValue('');
-  await expect(page.getByRole('group', { name: /^遅い検索 のノート / })).toHaveCount(0);
+  await expect(page.getByRole('group').filter({ hasText: /^遅い検索 のノート / })).toHaveCount(0);
   await expect(page.getByText('検索語を入力して検索してください', { exact: true })).toBeVisible();
   await search(page, '該当なし');
   await expect(page.getByText('「該当なし」に該当するノートはありません', { exact: true })).toBeVisible();

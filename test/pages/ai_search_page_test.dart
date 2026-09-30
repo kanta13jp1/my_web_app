@@ -191,7 +191,9 @@ void main() {
       await submit(tester, 'query');
       await tester.pump(const Duration(seconds: 31));
       expect(
-          find.text('「query」の検索: 検索に時間がかかっています。もう一度お試しください。'), findsOneWidget);
+        find.text('「query」の検索: 検索に時間がかかっています。もう一度お試しください。'),
+        findsOneWidget,
+      );
       await tester.tap(find.text('再試行'));
       await tester.pump();
       request.complete(result('タイムアウトした結果'));
