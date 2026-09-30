@@ -27030,10 +27030,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         dataRowMaxHeight: 120,
         columns: const [
           DataColumn(label: SizedBox(width: 140, child: Text('請求先カード'))),
-          DataColumn(label: SizedBox(width: 112, child: Text('請求額')), numeric: true),
-          DataColumn(label: SizedBox(width: 112, child: Text('明細合計')), numeric: true),
-          DataColumn(label: SizedBox(width: 140, child: Text('設定内訳合計')), numeric: true),
-          DataColumn(label: SizedBox(width: 112, child: Text('差額')), numeric: true),
+          DataColumn(
+              label: SizedBox(width: 112, child: Text('請求額')), numeric: true),
+          DataColumn(
+              label: SizedBox(width: 112, child: Text('明細合計')), numeric: true),
+          DataColumn(
+              label: SizedBox(width: 140, child: Text('設定内訳合計')),
+              numeric: true),
+          DataColumn(
+              label: SizedBox(width: 112, child: Text('差額')), numeric: true),
           DataColumn(label: SizedBox(width: 280, child: Text('確認事項'))),
         ],
         rows: [
@@ -30754,6 +30759,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return SizedBox(
       width: 150,
       child: TextField(
+        key: ValueKey('monthly-payment:${row.id}'),
         controller: controller,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9,]'))],

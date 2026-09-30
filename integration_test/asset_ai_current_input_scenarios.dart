@@ -252,9 +252,11 @@ void main() {
     expect(before.hasConfiguredMismatchFix, isTrue);
     expect(
       before.fixActions
-          .singleWhere((action) =>
-              action.kind ==
-              AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown,
+          .singleWhere(
+            (action) =>
+                action.kind ==
+                AssetLiabilityCardStatementFixActionKind
+                    .adjustConfiguredBreakdown,
           )
           .amount,
       -14236,
@@ -273,21 +275,11 @@ void main() {
     await tester.ensureVisible(editButton);
     await tester.tap(editButton);
     await tester.pump(const Duration(milliseconds: 400));
-    final providerCard = find.ancestor(
-      of: find.byKey(const ValueKey('annual-rate:$providerId')),
-      matching: find.byWidgetPredicate((widget) =>
-          widget.key is GlobalKey &&
-          widget.key.toString().contains('debt_master_card_$providerId'),
-      ),
-    );
-    expect(providerCard, findsOneWidget);
-    final amountInput = find.descendant(
-      of: providerCard,
-      matching: find.byWidgetPredicate((widget) =>
-          widget is TextField && widget.controller?.text == '5764',
-      ),
+    final amountInput = find.byKey(
+      const ValueKey('monthly-payment:$providerId'),
     );
     expect(amountInput, findsOneWidget);
+    expect(tester.widget<TextField>(amountInput).controller?.text, '5764');
     await tester.ensureVisible(amountInput);
     await tester.enterText(amountInput, '20000');
     await _pumpUntil(tester, () => ai.requests.length == 2);
