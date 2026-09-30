@@ -11,7 +11,7 @@ test.describe('LP first-user acquisition', () => {
   }) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialInput = page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ });
     const trialAction = page.getByRole('button', {
       name: '今やる1件を試す',
       exact: true,
@@ -42,7 +42,7 @@ test.describe('LP first-user acquisition', () => {
   }) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialInput = page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ });
     const sampleAction = page.getByRole('button', {
       name: 'この入力例でAIに提案させる',
       exact: true,
@@ -88,7 +88,7 @@ test.describe('LP first-user acquisition', () => {
   }, testInfo) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialInput = page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ });
     const trialAction = page.getByRole('button', {
       name: '今やる1件を試す',
       exact: true,
@@ -267,7 +267,7 @@ test.describe('LP first-user acquisition', () => {
     await expect(magicLinkAction).toBeVisible();
     await expect(lowerTrial).toBeVisible();
     await expect(
-      page.getByRole('textbox', { name: /登録なしで試す/ }),
+      page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ }),
     ).toHaveCount(0);
 
     const authBox = await googleAction.boundingBox();

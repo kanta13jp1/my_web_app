@@ -34,7 +34,7 @@ test.describe('Landing story journey', () => {
     await story.getByRole('button', { name: '登録なしで1件試す' }).click();
 
     await expect(
-      page.getByRole('textbox', { name: /登録なしで試す/ }),
+      page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ }),
     ).toBeInViewport();
     await expect(
       page.getByRole('button', { name: '今やる1件を試す', exact: true }),
@@ -77,6 +77,7 @@ async function openLanding(page: Page) {
     '自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ',
     { timeout: 60_000 },
   );
+  await expect(page.locator('#seo-shell')).toBeHidden({ timeout: 30000 });
 }
 
 async function focusStory(page: Page) {

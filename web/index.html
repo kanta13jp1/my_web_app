@@ -1332,6 +1332,21 @@
       var seoShell = document.getElementById('seo-shell');
       if (!seoShell) return;
 
+      var revealed = false;
+      function revealFlutter() {
+        if (revealed) return;
+        revealed = true;
+        seoShell.setAttribute('data-flutter-ready', 'true');
+        seoShell.setAttribute('aria-hidden', 'true');
+        window.setTimeout(function () {
+          if (seoShell.isConnected) seoShell.remove();
+        }, 150);
+      }
+      // Painted-frame callbacks can stall in background tabs. Once Flutter has
+      // produced its first frame, never let the loading overlay block controls
+      // indefinitely. Keep the usual font warmup path and a bounded fallback.
+      window.setTimeout(revealFlutter, 2500);
+
       // flutter-first-frame can fire while the web renderer is still warming
       // the bundled Japanese font and glyph atlas. Removing the readable SEO
       // shell immediately exposed a blank frame followed by tofu glyphs in the
@@ -1352,13 +1367,7 @@
                   return;
                 }
 
-                seoShell.setAttribute('data-flutter-ready', 'true');
-                seoShell.setAttribute('aria-hidden', 'true');
-                window.setTimeout(function () {
-                  if (seoShell.isConnected) {
-                    seoShell.remove();
-                  }
-                }, 150);
+                revealFlutter();
               });
             }
             revealAfterStableFrames();

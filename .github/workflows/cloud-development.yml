@@ -232,6 +232,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node --test scripts/landing_shell_handoff_test.mjs
           python3 scripts/serve_spa.py build/web --port 7358 > checklist-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT
@@ -291,6 +292,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node --test scripts/landing_shell_handoff_test.mjs
           python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT

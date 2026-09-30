@@ -13,6 +13,7 @@ test('hero remains readable and actionable at narrow and wide widths', async ({ 
   for (const size of sizes) {
     await page.setViewportSize(size);
     await page.goto('/?lp_qa=1&lp_hypothesis=h03&lp_variant=treatment');
+    await expect(page.locator('#seo-shell')).toBeHidden({ timeout: 30000 });
     const trial = page.getByRole('button', { name: '今やる1件を試す', exact: true });
     await expect(trial).toBeVisible({ timeout: 60000 });
     await expect(trial).toBeInViewport();
@@ -23,6 +24,6 @@ test('hero remains readable and actionable at narrow and wide widths', async ({ 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     expect(overflow).toBeFalsy();
     expect(layoutErrors).toEqual([]);
-    await page.screenshot({ path: testInfo.outputPath(`hero-${size.width}.png`) });
+    await page.screenshot({ path: testInfo.outputPath(`hero-${size.width}.png`), scale: 'css' });
   }
 });
