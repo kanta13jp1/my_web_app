@@ -63,3 +63,6 @@ test('6-2 complete assisted course retains active hazards and collects power-ups
 
 
 test('live guard jumps below an actual power block even when a delayed proposal runs past it',()=>{const g=new World11(22),guard=new LiveGuard();Object.assign(g.p,{x:218,y:192,vx:1.55,grounded:true});const action=guard.decide(g,'right_run');assert.equal(action,'jump');assert.equal(guard.lastReason,'item_pickup_route');g.buttons(action);g.step();assert.ok(g.p.vy<0);for(let i=0;i<18;i++){g.buttons(guard.decide(g,'right_run'));g.step();g.drainSounds();}assert.ok(!g.contents.has('14,9'));assert.ok(g.items.some(i=>i.kind==='mushroom'));});
+
+
+test('live item assistance jumps toward a flower above the left shoulder',()=>{const g=new World11(),guard=new LiveGuard();g.contents.clear();g.items=[{kind:'flower',x:84,y:144,w:14,h:16,emerging:0,vx:0,vy:0}];Object.assign(g.p,{x:96,y:192,vx:0,vy:0,grounded:true});assert.equal(guard.decide(g,'right_run'),'left_jump');});

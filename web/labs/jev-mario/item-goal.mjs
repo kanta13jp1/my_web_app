@@ -16,7 +16,7 @@ export function itemIntent(g){
  for(let x=Math.floor(Math.min(p.x,t.x)/16);x<=Math.floor(Math.max(p.x+p.w,t.x)/16);x++)if(!g.solid(x,Math.floor((p.y+p.h+1)/16))&&!g.solid(x,Math.floor((p.y+p.h+1)/16)+1))return null;
  if(t.block&&t.y<=p.y+4&&p.y-t.y<64)return Math.abs(dx)<15?'jump':dx<0?'left':'right';
  if(!t.block&&Math.abs(t.y-p.y)<22&&dx<0&&dx>-24)return 'left';
- if(!t.block&&t.y<p.y-10&&Math.abs(dx)<24)return 'right_jump';
+ if(!t.block&&t.y<p.y-10&&Math.abs(dx)<24)return dx<0?'left_jump':'right_jump';
  return null;
 }
 
