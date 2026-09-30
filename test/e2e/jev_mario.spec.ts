@@ -6,7 +6,7 @@ test('LightGBM worker plays without consent or API; records assistance and stops
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
  await lab.locator('#screen').evaluate(()=>localStorage.setItem('jev-mario-retry-world8-v1',JSON.stringify([280,440,640,1350].map(x=>({stage:1,room:'overworld',x,y:192,count:12,kind:'stalled'})))));
  await page.reload();
- await expect(lab.locator('#volume')).toHaveValue('65');await expect(lab.locator('#volume-value')).toHaveText('65%');
+ await expect(lab.locator('#volume')).toHaveValue('75');await expect(lab.locator('#volume-value')).toHaveText('75%');
  await expect(lab.locator('#consent')).not.toBeChecked();await lab.locator('#play-student').click();
  await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
  await expect(lab.locator('#student-status')).toContainText('探索変更',{timeout:15000});
@@ -734,12 +734,12 @@ test('run history survives reload, sharing errors recover and ranking renders sa
  await lab.locator('#rank-course').selectOption('17');await lab.locator('#ranking-load').click();await expect(lab.locator('#ranking-rows')).toContainText('Player-test');await expect(lab.locator('#ranking-rows')).toContainText('15.0秒');await lab.locator('#ranking-rows').locator('..').screenshot({path:info.outputPath('history-ranking.png')});await lab.locator('#rank-course').locator('..').screenshot({path:info.outputPath('history-ranking-filters.png')});
 });
 
-test('nine-part audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
+test('eleven-part audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
  const result=await frame.evaluate(async()=>{const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const all:number[]=[],metrics:any[]=[];
   for(const room of ['overworld','underground','underwater','castle']){
    const c=new OfflineAudioContext(1,48000*2,48000);let now=0;const proxy=new Proxy(c,{get(target,key){if(key==='state')return 'running';if(key==='currentTime')return now;if(key==='resume')return async()=>{};const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v;}});
-   const a=new GameAudio(()=>proxy);await a.enable(true);a.setVolume(1);for(now=0;now<1.35;now+=.1)a.tick(room);a.effect('coin');const b=await c.startRendering(),samples=b.getChannelData(0);let peak=0,sum=0;for(const x of samples){peak=Math.max(peak,Math.abs(x));sum+=x*x;all.push(x);}metrics.push({room,peak,rms:Math.sqrt(sum/samples.length)});
+   const a=new GameAudio(()=>proxy);await a.enable(true);a.setVolume(1);a.tick(room);a.beat=11;a.next=.12;for(now=.1;now<1.35;now+=.1)a.tick(room);a.effect('coin');const b=await c.startRendering(),samples=b.getChannelData(0);let peak=0,sum=0;for(const x of samples){peak=Math.max(peak,Math.abs(x));sum+=x*x;all.push(x);}metrics.push({room,peak,rms:Math.sqrt(sum/samples.length)});
   }
   const bytes=new Uint8Array(44+all.length*2),v=new DataView(bytes.buffer);const text=(at,s)=>{for(let i=0;i<s.length;i++)v.setUint8(at+i,s.charCodeAt(i));};text(0,'RIFF');v.setUint32(4,bytes.length-8,true);text(8,'WAVE');text(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,48000,true);v.setUint32(28,96000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);text(36,'data');v.setUint32(40,all.length*2,true);all.forEach((x,i)=>v.setInt16(44+i*2,Math.round(Math.max(-1,Math.min(1,x))*32767),true));let base64='';for(let i=0;i<bytes.length;i+=16384)base64+=String.fromCharCode(...bytes.subarray(i,i+16384));return {metrics,wav:btoa(base64)};
  });
@@ -804,3 +804,11 @@ test('LightGBM worker completes 2-2 and advances to 2-3 without going offscreen'
   await expect.poll(()=>frame.evaluate(()=>(window as any).alcoveWorld?.p.x??0),{timeout:30000}).toBeGreaterThan(736);
   await lab.locator('#stop').click();await screenshot(page,info.outputPath('castle-alcove-escape.png'));
  });
+
+test('2-4 worker escapes a stopped crouch under a ledge',async({page},info)=>{
+ test.setTimeout(45000);await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#screen').evaluate(()=>localStorage.setItem('jev-mario-retry-world8-v1',JSON.stringify([{stage:8,room:'castle',x:367,y:192,count:12,kind:'stalled'}])));await page.reload();const reloadedFrame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#stage').selectOption('8');
+ await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
+ await reloadedFrame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).tunnelWorld=this;this.power=1;Object.assign(this.p,{x:367,y:192,h:16,vx:0,crouching:true,grounded:true});this.camera=271;this.invincible=1200;step.call(this);};});
+ await expect.poll(()=>reloadedFrame.evaluate(()=>(window as any).tunnelWorld?.p.x??0),{timeout:30000}).toBeGreaterThan(432);
+ await lab.locator('#stop').click();await screenshot(page,info.outputPath('castle24-tunnel-escape.png'));
+});
