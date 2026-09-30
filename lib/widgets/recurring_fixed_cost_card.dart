@@ -48,6 +48,10 @@ class RecurringFixedCostCard extends StatelessWidget {
     final buffer = StringBuffer(
       '${cadenceLabel(cost.cadence)}${cost.paymentDay}日 / ¥${_yen.format(cost.amount)}',
     );
+    final lastBilling = cost.lastBillingDate;
+    if (lastBilling != null) {
+      buffer.write(' / 最終請求: ${AssetRecurringFixedCost.billingDateLabel(lastBilling)}');
+    }
     final sourceId = cost.sourceAccountId;
     if (sourceId != null && sourceId.isNotEmpty) {
       final name = sourceAccountNames[sourceId];

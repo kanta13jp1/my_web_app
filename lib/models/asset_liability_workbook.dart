@@ -410,6 +410,10 @@ class AssetRecurringFixedCost {
   /// 振替日 (1-31)。
   final int paymentDay;
 
+  /// 最後に支払対象となる請求日（当日を含む）。未設定は従来どおり。
+  /// 解約希望とは独立し、過去の確定請求や実負債を削除しない。
+  final DateTime? lastBillingDate;
+
   /// 発生周期 (毎月 / 隔月偶数月 / 隔月奇数月)。
   final AssetRecurringFixedCostCadence cadence;
 
@@ -440,6 +444,7 @@ class AssetRecurringFixedCost {
     required this.name,
     required this.amount,
     required this.paymentDay,
+    this.lastBillingDate,
     this.cadence = AssetRecurringFixedCostCadence.monthly,
     this.sourceAccountId,
     this.category = AssetRecurringFixedCostCategory.utility,
@@ -475,11 +480,44 @@ class AssetRecurringFixedCost {
     }
   }
 
+  /// 実際の請求日で周期と最終請求日を判定する（時刻は比較しない）。
+  bool appliesToPaymentDate(DateTime paymentDate) {
+    if (!appliesToMonth(paymentDate.month)) return false;
+    final last = lastBillingDate;
+    if (last == null) return true;
+    return !DateTime(paymentDate.year, paymentDate.month, paymentDate.day)
+        .isAfter(DateTime(last.year, last.month, last.day));
+  }
+
+  /// 月末を超える振替日はその月の最終日に丸める。
+  bool appliesToBillingMonth(DateTime month) {
+    final lastDay = DateTime(month.year, month.month + 1, 0).day;
+    return appliesToPaymentDate(
+      DateTime(month.year, month.month, paymentDay.clamp(1, lastDay).toInt()),
+    );
+  }
+
+  static DateTime? parseBillingDate(String? value) {
+    if (value == null || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
+      return null;
+    }
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null || billingDateLabel(parsed) != value) return null;
+    return DateTime(parsed.year, parsed.month, parsed.day);
+  }
+
+  static String billingDateLabel(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
   AssetRecurringFixedCost copyWith({
     String? id,
     String? name,
     double? amount,
     int? paymentDay,
+    DateTime? lastBillingDate,
+    bool clearLastBillingDate = false,
     AssetRecurringFixedCostCadence? cadence,
     String? sourceAccountId,
     bool clearSourceAccountId = false,
@@ -495,6 +533,9 @@ class AssetRecurringFixedCost {
       name: name ?? this.name,
       amount: amount ?? this.amount,
       paymentDay: paymentDay ?? this.paymentDay,
+      lastBillingDate: clearLastBillingDate
+          ? null
+          : (lastBillingDate ?? this.lastBillingDate),
       cadence: cadence ?? this.cadence,
       sourceAccountId: clearSourceAccountId
           ? null
@@ -515,6 +556,8 @@ class AssetRecurringFixedCost {
       'name': name,
       'amount': amount,
       'paymentDay': paymentDay,
+      if (lastBillingDate != null)
+        'lastBillingDate': billingDateLabel(lastBillingDate!),
       'cadence': cadence.name,
       if (sourceAccountId != null && sourceAccountId!.isNotEmpty)
         'sourceAccountId': sourceAccountId,
@@ -591,6 +634,7 @@ class AssetRecurringFixedCost {
       name: name,
       amount: amount,
       paymentDay: paymentDay,
+      lastBillingDate: parseBillingDate(json['lastBillingDate']?.toString()),
       cadence: cadence,
       sourceAccountId:
           rawSource == null || rawSource.isEmpty ? null : rawSource,
