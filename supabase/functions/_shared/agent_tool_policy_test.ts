@@ -5,6 +5,7 @@ import {
   GENERATED_UI_SANDBOX_ACTOR_ROLE,
   getDefaultAgentRoleScopes,
   normalizeAgentToolScopes,
+  parseAgentToolRequestedScopes,
   requiresCeoApproval,
 } from "./agent_tool_policy.ts";
 
@@ -174,4 +175,18 @@ Deno.test("known scope normalization and empty requests retain behavior", () => 
   const empty = evaluateAgentToolPolicy({toolName: "preview.only", requestedScopes: []});
   assertEquals(empty.allowed, false);
   assertEquals(empty.blockedReason, "empty_requested_scope");
+});
+
+Deno.test("API scope parsing preserves invalid requests for rejection", () => {
+  for (const value of [["read", 42], ["read", {}], ["read", ["send"]], ["read", ""], ["read", "unknown"]]) {
+    const decision = evaluateAgentToolPolicy({
+      actorRole: "ceo",
+      toolName: "preview.only",
+      requestedScopes: parseAgentToolRequestedScopes(value),
+    });
+    assertEquals(decision.allowed, false);
+    assertEquals(decision.blockedReason, "invalid_requested_scope");
+  }
+  assertEquals(parseAgentToolRequestedScopes("read, suggest"), ["read", "suggest"]);
+  assertEquals(parseAgentToolRequestedScopes(undefined), []);
 });

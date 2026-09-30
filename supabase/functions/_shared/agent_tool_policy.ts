@@ -161,3 +161,16 @@ export function evaluateGeneratedUiSandboxToolPolicy(
 function isAgentToolScope(scope: string): scope is AgentToolScope {
   return (AGENT_TOOL_SCOPES as readonly string[]).includes(scope);
 }
+
+// Preserve invalid array members so the evaluator rejects the entire request.
+// String input is retained for existing comma/space-separated API clients.
+export function parseAgentToolRequestedScopes(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+  if (typeof value === "string") {
+    return value.split(/[,\s]+/).map((scope) => scope.trim()).filter(Boolean);
+  }
+  if (!Array.isArray(value) || value.some((scope) => typeof scope !== "string")) {
+    return [""];
+  }
+  return [...value];
+}

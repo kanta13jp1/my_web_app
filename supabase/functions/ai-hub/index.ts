@@ -28,6 +28,7 @@ import {
   type AgentToolApproval,
   type AgentToolPolicyDecision,
   evaluateAgentToolPolicy,
+  parseAgentToolRequestedScopes,
 } from "../_shared/agent_tool_policy.ts";
 import {
   selectClaudeModelForEffort,
@@ -3489,7 +3490,7 @@ async function evaluateAgentToolGate(
   );
   const actorRole = normalizeActorRole(body.actor_role ?? body.actorRole) ??
     await loadAgentRole(admin, userId, actorAgentId);
-  const requestedScopes = asStringArray(
+  const requestedScopes = parseAgentToolRequestedScopes(
     body.requested_scopes ?? body.requestedScopes ?? body.scopes,
   );
   const allowedScopesRaw = body.allowed_scopes ?? body.allowedScopes;
