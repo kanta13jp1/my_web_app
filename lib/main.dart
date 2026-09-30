@@ -1808,7 +1808,8 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const AppHubPage());
     case '/agent-tool-policy-preview':
       return MaterialPageRoute(
-          builder: (_) => const AgentToolPolicyPreviewPage(),);
+        builder: (_) => const AgentToolPolicyPreviewPage(),
+      );
     case '/agent-hub':
       return MaterialPageRoute(builder: (_) => const AgentHubPage());
     case '/admin-notifications':
