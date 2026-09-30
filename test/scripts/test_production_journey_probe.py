@@ -202,6 +202,9 @@ class ProductionJourneyProbeTest(unittest.TestCase):
         output.mkdir()
         shutil.copyfile(repo_root / "web" / "index.html", output / "index.html")
 
+        catalog = self.root / "ai-university-catalog.json"
+        catalog.write_text('{"provider_count": 3}', encoding="utf-8")
+
         exit_code = prerender_main(
             [
                 "--template",
@@ -212,6 +215,8 @@ class ProductionJourneyProbeTest(unittest.TestCase):
                 str(repo_root / "web" / "seo" / "comparison-routes.json"),
                 "--public-routes",
                 str(repo_root / "web" / "seo" / "public-routes.json"),
+                "--ai-university-catalog",
+                str(catalog),
             ]
         )
 
