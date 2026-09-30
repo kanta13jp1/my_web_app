@@ -814,6 +814,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isRefreshingMonthlyReports = false;
   String? _monthlyReportMessage;
   String? _loadedAssetLiabilityMonthKey;
+  bool _assetLiabilityBootStateLoaded = false;
+  bool _assetLiabilityMonthlyStateLoadFailed = false;
+  int _assetManagementAiInputRevision = 0;
+
+  // A quiet debounce window is not proof that financial state has restored.
+  bool get _assetManagementAiInputReady =>
+      _assetLiabilityBootStateLoaded &&
+      !_assetLiabilityMonthlyStateLoadFailed &&
+      _assetLiabilityMonthlyStateInFlight == null &&
+      _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now);
   // 同一サイクル月の月次stateロードが並行して複数走らないよう束ねる in-flight
   // ガード。起動時は eager ロードと給料日/リセットマーカーのミラー復元が相次いで
   // _loadAssetLiabilityMonthlyState を呼び、同じ月を 2-3 回フル取得 (各 7 往復)
@@ -2063,6 +2073,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     await _loadAssetLiabilityMonthlyState();
+    if (mounted) {
+      setState(() => _assetLiabilityBootStateLoaded = true);
+    }
   }
 
   /// 月次stateロードの入口。同一サイクル月のロードが進行中ならその Future を
@@ -2074,23 +2087,44 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _assetLiabilityMonthlyStateInFlightMonthKey == monthKey) {
       return inFlight;
     }
-    final future = _loadAssetLiabilityMonthlyStateInner();
+    // Invalidate scheduled and in-flight reports before restoring another state.
+    // An old response must not be saved or displayed under the new month.
+    _assetManagementAiSummaryDebounce?.cancel();
+    setState(() {
+      _assetManagementAiInputRevision++;
+      _assetManagementAiSummaryRequestKey = null;
+      _assetManagementAiSummaryInFlightKey = null;
+      _assetManagementAiSummaryResult = null;
+      _assetManagementAiSummaryResultKey = null;
+      _isGeneratingAssetManagementAiSummary = false;
+    });
+    final future = _loadAssetLiabilityMonthlyStateInner(
+      _assetLiabilityStateMonth(_now),
+      monthKey,
+      _assetManagementAiInputRevision,
+    );
     _assetLiabilityMonthlyStateInFlight = future;
     _assetLiabilityMonthlyStateInFlightMonthKey = monthKey;
     return future.whenComplete(() {
       // 自分が最新の in-flight であるときだけクリアする (対象月が変わって別の
       // ロードに差し替わっている場合は触らない)。
       if (identical(_assetLiabilityMonthlyStateInFlight, future)) {
-        _assetLiabilityMonthlyStateInFlight = null;
-        _assetLiabilityMonthlyStateInFlightMonthKey = null;
+        if (mounted) {
+          setState(() {
+            _assetLiabilityMonthlyStateInFlight = null;
+            _assetLiabilityMonthlyStateInFlightMonthKey = null;
+          });
+        }
       }
     });
   }
 
-  Future<void> _loadAssetLiabilityMonthlyStateInner() async {
+  Future<void> _loadAssetLiabilityMonthlyStateInner(
+    DateTime targetMonth,
+    String monthKey,
+    int inputRevision,
+  ) async {
     try {
-      final targetMonth = _assetLiabilityStateMonth(_now);
-      final monthKey = _assetLiabilityStateMonthKey(_now);
       final state = await _assetLiabilityRepository.loadMonth(targetMonth);
       final defaultPaymentSettings =
           await _assetLiabilityRepository.loadDefaultPaymentSettings();
@@ -2133,8 +2167,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
       final generatedTemplatePlans =
           incomePlansWithTemplates.length != state.incomePlans.length;
-      if (!mounted) return;
+      if (!mounted ||
+          inputRevision != _assetManagementAiInputRevision ||
+          monthKey != _assetLiabilityStateMonthKey(_now)) {
+        return;
+      }
       setState(() {
+        _assetLiabilityMonthlyStateLoadFailed = false;
         _monthlyPaymentOverrides = Map<String, double>.from(
           state.paymentOverrides,
         );
@@ -2230,6 +2269,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _maybeDetectSalaryDeposit();
       _reconcileAndSaveSalaryIncomePlansIfPending();
     } catch (e) {
+      if (mounted &&
+          inputRevision == _assetManagementAiInputRevision &&
+          monthKey == _assetLiabilityStateMonthKey(_now)) {
+        setState(() => _assetLiabilityMonthlyStateLoadFailed = true);
+      }
       debugPrint('Error loading asset liability monthly state: $e');
     }
   }
@@ -22559,7 +22603,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 label: const Text('分析結果をコピー'),
               ),
               OutlinedButton.icon(
-                onPressed: enabled && !_isGeneratingAssetManagementAiSummary
+                onPressed: enabled &&
+                          _assetManagementAiInputReady &&
+                          !_isGeneratingAssetManagementAiSummary
                     ? () =>
                         _generateAssetManagementAiSummary(report, force: true)
                     : null,
@@ -22689,6 +22735,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String? requestKey,
     bool force = false,
   }) async {
+    if (!_assetManagementAiInputReady) {
+      return;
+    }
+    final inputRevision = _assetManagementAiInputRevision;
     final key = requestKey ?? _assetManagementAiSummaryKey(report);
     if (_assetManagementAiSummaryInFlightKey == key) {
       return;
@@ -22726,7 +22776,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       } catch (_) {
         reusable = null;
       }
-      if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
+      if (!mounted ||
+          _assetManagementAiInputRevision != inputRevision ||
+          _assetManagementAiSummaryInFlightKey != key) {
         return;
       }
       if (reusable != null) {
@@ -22757,7 +22809,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final sinceLastAttempt = await _sinceLastAssetManagementAiSummaryAttempt(
         report.workbook.baseDate,
       );
-      if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
+      if (!mounted ||
+          _assetManagementAiInputRevision != inputRevision ||
+          _assetManagementAiSummaryInFlightKey != key) {
         return;
       }
       if (AssetManagementAiSummaryRefresh.shouldThrottleFailedRetry(
@@ -22780,13 +22834,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (_) {
       previousAnalyses = const <AssetManagementAiAnalysisHistoryEntry>[];
     }
-    if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
+    if (!mounted ||
+          _assetManagementAiInputRevision != inputRevision ||
+          _assetManagementAiSummaryInFlightKey != key) {
       return;
     }
     // 初回自動生成が既存Issue照合より先に走ると already_issued が
     // 空のままAIへ渡り再掲抑止が効かないため、照合完了を待つ。
     await _ensureExistingDeveloperIssuesLoaded(report.developerRequests);
-    if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
+    if (!mounted ||
+          _assetManagementAiInputRevision != inputRevision ||
+          _assetManagementAiSummaryInFlightKey != key) {
       return;
     }
     final existingIssuesByTitle = <String, Map<String, dynamic>>{};
@@ -22806,6 +22864,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       previousAnalyses: previousAnalyses,
       existingDeveloperIssuesByTitle: existingIssuesByTitle,
     );
+    // Restoration may have invalidated this request while the provider ran.
+    // Check ownership before saving history, not only before displaying it.
+    if (!mounted ||
+        _assetManagementAiInputRevision != inputRevision ||
+        _assetManagementAiSummaryInFlightKey != key) {
+      return;
+    }
     if (result.usedExternalAi) {
       // 成功は失敗リトライのクールダウン対象にしない。データ指紋が変わったら
       // 直ちに最新値で再生成できるよう、過去の失敗時刻も消す。
@@ -22831,7 +22896,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted) {
       return;
     }
-    if (_assetManagementAiSummaryInFlightKey != key) {
+    if (_assetManagementAiInputRevision != inputRevision ||
+        _assetManagementAiSummaryInFlightKey != key) {
       return;
     }
     setState(() {
@@ -22929,7 +22995,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void _requestAssetManagementAiSummaryIfNeeded(
     AssetManagementInsightReport report,
   ) {
-    if (!_assetManagementAiSummaryService.aiEnabled ||
+    if (!_assetManagementAiInputReady ||
+        !_assetManagementAiSummaryService.aiEnabled ||
         _isGeneratingAssetManagementAiSummary) {
       return;
     }
