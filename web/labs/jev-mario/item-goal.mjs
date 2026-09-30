@@ -14,7 +14,7 @@ export function itemIntent(g){
  const dx=t.x-p.x-p.w/2;
  // Do not chase beyond visible terrain or across a hole.
  for(let x=Math.floor(Math.min(p.x,t.x)/16);x<=Math.floor(Math.max(p.x+p.w,t.x)/16);x++)if(!g.solid(x,Math.floor((p.y+p.h+1)/16))&&!g.solid(x,Math.floor((p.y+p.h+1)/16)+1))return null;
- if(t.block&&t.y<=p.y+4&&p.y-t.y<64&&Math.abs(dx)<15)return 'jump';
+ if(t.block&&t.y<=p.y+4&&p.y-t.y<64)return Math.abs(dx)<15?'jump':dx<0?'left':'right';
  if(!t.block&&Math.abs(t.y-p.y)<22&&dx<0&&dx>-24)return 'left';
  if(!t.block&&t.y<p.y-10&&Math.abs(dx)<24)return 'right_jump';
  return null;
@@ -27,4 +27,14 @@ export function itemApproach(g,target){
  let edge=col;
  while(g.solid(edge+(left?-1:1),row)&&Math.abs(edge-col)<12)edge+=left?-1:1;
  return {x:left?edge*16-g.p.w/2-2:(edge+1)*16+g.p.w/2+2,y:target.y+20};
+}
+
+// Complete a safe descent before attempting to open a reward block from below.
+export function itemDescent(g,target=itemTargets(g)[0]){
+ const p=g.p;
+ if(!target?.block||g.room!=='overworld'||p.climbing||p.vy<0||p.y>=target.y-2)return null;
+ const approach=itemApproach(g,target),landing=Math.floor(approach.x/16);
+ if(approach.x<g.camera+p.w/2||!g.solid(landing,13))return null;
+ const dx=approach.x-p.x-p.w/2;
+ return Math.abs(dx)<5?'noop':dx<0?'left':'right';
 }
