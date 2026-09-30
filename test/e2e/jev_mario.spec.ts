@@ -799,8 +799,8 @@ test('LightGBM worker completes 2-2 and advances to 2-3 without going offscreen'
  test('4-4 worker escapes the reported fire-Mario alcove',async({page},info)=>{
   test.setTimeout(45000);await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;
   await lab.locator('#stage').selectOption('16');
+  await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
   await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).alcoveWorld=this;this.power=2;Object.assign(this.p,{x:676,y:180,h:28,grounded:true});this.camera=580;this.invincible=5000;step.call(this);};});
-  await lab.locator('#play-student').click();
   await expect.poll(()=>frame.evaluate(()=>(window as any).alcoveWorld?.p.x??0),{timeout:30000}).toBeGreaterThan(736);
   await lab.locator('#stop').click();await screenshot(page,info.outputPath('castle-alcove-escape.png'));
  });
