@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math' show Random;
 import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -11,9 +12,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web_api;
+
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_university_agentless_lab_analytics.dart';
+import '../services/ai_university_agentverse_lab_analytics.dart';
 import '../services/ai_university_catalog.dart';
 import '../services/ai_university_content_analytics.dart';
 import '../services/ai_university_fuyu_lab_analytics.dart';
@@ -27,15 +30,19 @@ import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
 import '../widgets/ai_university_latest_info_task_card.dart';
 import '../widgets/ai_university_firefly_api_task_card.dart';
+import '../widgets/ai_university_firefly_latest_info_task_card.dart';
 import '../widgets/ai_university_fuyu_lab_task_card.dart';
 import '../widgets/ai_university_agentless_lab_task_card.dart';
+import '../widgets/ai_university_agentverse_lab_task_card.dart';
 import '../widgets/ai_university_llm_mechanics_task_card.dart';
 import '../widgets/ai_university_model_selection_task_card.dart';
+import '../widgets/ai_university_yi_introduction_task_card.dart';
 import '../widgets/ai_university_published_video_banner.dart';
 import '../widgets/ai_university_youtube_embed.dart';
 import '../widgets/ai_university_youtube_viewer_route.dart';
 import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
+
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -5656,7 +5663,9 @@ class AiUniversityPage extends StatefulWidget {
     this.contentAnalytics,
     this.learningOutcomeAnalytics,
     this.modelSelectionLearningOutcomeAnalytics,
+    this.yiIntroductionLearningOutcomeAnalytics,
     this.fireflyApiLearningOutcomeAnalytics,
+    this.fireflyLatestInfoLearningOutcomeAnalytics,
     this.fuyuLabAnalytics,
     this.agentlessLabAnalytics,
   });
@@ -5667,7 +5676,11 @@ class AiUniversityPage extends StatefulWidget {
   final AiUniversityLearningOutcomeAnalytics?
       modelSelectionLearningOutcomeAnalytics;
   final AiUniversityLearningOutcomeAnalytics?
+      yiIntroductionLearningOutcomeAnalytics;
+  final AiUniversityLearningOutcomeAnalytics?
       fireflyApiLearningOutcomeAnalytics;
+  final AiUniversityLearningOutcomeAnalytics?
+      fireflyLatestInfoLearningOutcomeAnalytics;
   final AiUniversityFuyuLabAnalytics? fuyuLabAnalytics;
   final AiUniversityAgentlessLabAnalytics? agentlessLabAnalytics;
 
@@ -5692,11 +5705,16 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   late final AiUniversityLearningOutcomeAnalytics
       _modelSelectionLearningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
+      _yiIntroductionLearningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
       _fireflyApiLearningOutcomeAnalytics;
+  late final AiUniversityLearningOutcomeAnalytics
+      _fireflyLatestInfoLearningOutcomeAnalytics;
   late final AiUniversityLearningOutcomeAnalytics
       _llmMechanicsLearningOutcomeAnalytics;
   late final AiUniversityFuyuLabAnalytics _fuyuLabAnalytics;
   late final AiUniversityAgentlessLabAnalytics _agentlessLabAnalytics;
+  late final AiUniversityAgentVerseLabAnalytics _agentVerseLabAnalytics;
 
   List<String> _providers = [];
   Map<String, List<Map<String, dynamic>>> _content = {};
@@ -5743,11 +5761,23 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               _supabase,
               task: AiUniversityLearningOutcomeTask.modelSelection,
             );
+    _yiIntroductionLearningOutcomeAnalytics =
+        widget.yiIntroductionLearningOutcomeAnalytics ??
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.yiIntroduction,
+            );
     _fireflyApiLearningOutcomeAnalytics =
         widget.fireflyApiLearningOutcomeAnalytics ??
             AiUniversityLearningOutcomeAnalytics.supabase(
               _supabase,
               task: AiUniversityLearningOutcomeTask.fireflyApi,
+            );
+    _fireflyLatestInfoLearningOutcomeAnalytics =
+        widget.fireflyLatestInfoLearningOutcomeAnalytics ??
+            AiUniversityLearningOutcomeAnalytics.supabase(
+              _supabase,
+              task: AiUniversityLearningOutcomeTask.fireflyLatestInfo,
             );
     _llmMechanicsLearningOutcomeAnalytics =
         AiUniversityLearningOutcomeAnalytics.supabase(
@@ -5758,6 +5788,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         AiUniversityFuyuLabAnalytics.supabase(_supabase);
     _agentlessLabAnalytics = widget.agentlessLabAnalytics ??
         AiUniversityAgentlessLabAnalytics.supabase(_supabase);
+    _agentVerseLabAnalytics = AiUniversityAgentVerseLabAnalytics.supabase(
+      _supabase,
+    );
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
@@ -5987,14 +6020,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       final message = result.posted
           ? '$account にAI大学の学習ログを投稿しました'
           : 'X投稿文を作成しました。SupabaseのX API secret設定を確認してください';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('AI X投稿に失敗しました: $error')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('AI X投稿に失敗しました: $error')));
     } finally {
       if (mounted) {
         setState(() => _xPostSubmitting = false);
@@ -6236,9 +6267,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       a.click();
       a.remove();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('画像を保存しました')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('画像を保存しました')));
       }
     } catch (e) {
       if (mounted) {
@@ -6395,9 +6425,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final topics = <AiUniversityVideoLessonTopic>[];
     for (final rows in _content.values) {
       topics.addAll(
-        AiUniversityVideoLessonService.topicsFromRows(
-          rows,
-        ).where((topic) => topic.youtubeVideoId != null),
+        AiUniversityVideoLessonService.topicsFromRows(rows)
+            .where((topic) => topic.youtubeVideoId != null),
       );
     }
     topics.sort((a, b) => a.title.compareTo(b.title));
@@ -7338,26 +7367,31 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
     _loadFsrsStats(providerId);
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildProviderHeader(providerId, m, rows),
-        const SizedBox(height: 12),
-        _buildRlhfCard(providerId, m),
-        const SizedBox(height: 12),
-        if (rows != null && rows.isNotEmpty)
-          ...rows.map((row) => _buildContentCard(row, isDark, surface))
-        else
-          _buildFallbackCard(providerId, surface),
-        const SizedBox(height: 16),
-        _buildQuizCard(providerId, m),
-        if (_fsrsStats.containsKey(providerId) &&
-            _fsrsStats[providerId]!.totalReviews > 0) ...[
+    return LayoutBuilder(
+      builder: (context, viewport) => ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildProviderHeader(providerId, m, rows),
           const SizedBox(height: 12),
-          _buildFsrsStatsCard(providerId, m),
+          _buildRlhfCard(providerId, m),
+          const SizedBox(height: 12),
+          if (rows != null && rows.isNotEmpty)
+            ...rows.map(
+              (row) =>
+                  _buildContentCard(row, isDark, surface, viewport.maxHeight),
+            )
+          else
+            _buildFallbackCard(providerId, surface),
+          const SizedBox(height: 16),
+          _buildQuizCard(providerId, m),
+          if (_fsrsStats.containsKey(providerId) &&
+              _fsrsStats[providerId]!.totalReviews > 0) ...[
+            const SizedBox(height: 12),
+            _buildFsrsStatsCard(providerId, m),
+          ],
+          const SizedBox(height: 32),
         ],
-        const SizedBox(height: 32),
-      ],
+      ),
     );
   }
 
@@ -7924,6 +7958,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     Map<String, dynamic> row,
     bool isDark,
     Color surface,
+    double videoViewportHeight,
   ) {
     final category = row['category'] as String? ?? '';
     final provider = row['provider'] as String? ?? '';
@@ -7947,21 +7982,32 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     );
     final isLatestInfoTask = provider == '01ai' && category == 'news';
     final isModelSelectionTask = provider == '01ai' && category == 'models';
+    final isYiIntroductionTask =
+        row['id']?.toString() == 'e1712bb5-2bca-4fc0-8347-0529513411d3';
     final isFireflyApiTask = provider == 'adobe_firefly' && category == 'api';
+    final isFireflyLatestInfoTask =
+        provider == 'adobe_firefly' && category == 'news';
     final isLlmMechanicsTask =
         provider == 'academic' && category == 'llm_mechanics';
     final isFuyuLab = provider == 'adept' && category == 'api';
     final isAgentlessLab = provider == 'agentless' && category == 'overview';
-    final learningOutcomeAnalytics = isLlmMechanicsTask
-        ? _llmMechanicsLearningOutcomeAnalytics
-        : isFireflyApiTask
-            ? _fireflyApiLearningOutcomeAnalytics
-            : isModelSelectionTask
-                ? _modelSelectionLearningOutcomeAnalytics
-                : _learningOutcomeAnalytics;
+    final isAgentVerseLab = provider == 'agentverse' && category == 'overview';
+    final learningOutcomeAnalytics = isYiIntroductionTask
+        ? _yiIntroductionLearningOutcomeAnalytics
+        : isLlmMechanicsTask
+            ? _llmMechanicsLearningOutcomeAnalytics
+            : isFireflyLatestInfoTask
+                ? _fireflyLatestInfoLearningOutcomeAnalytics
+                : isFireflyApiTask
+                    ? _fireflyApiLearningOutcomeAnalytics
+                    : isModelSelectionTask
+                        ? _modelSelectionLearningOutcomeAnalytics
+                        : _learningOutcomeAnalytics;
     final hasLearningOutcomeTask = isLatestInfoTask ||
         isModelSelectionTask ||
+        isYiIntroductionTask ||
         isFireflyApiTask ||
+        isFireflyLatestInfoTask ||
         isLlmMechanicsTask;
     final taskViewKey = row['id']?.toString() ?? '$provider:$category';
 
@@ -8072,6 +8118,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     onSubmit: _learningOutcomeAnalytics.recordCompleted,
                   ),
                 ],
+                if (isYiIntroductionTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityYiIntroductionTaskCard(
+                    onSubmit: _yiIntroductionLearningOutcomeAnalytics
+                        .recordYiIntroductionCompleted,
+                  ),
+                ],
                 if (isModelSelectionTask) ...[
                   const SizedBox(height: 16),
                   AiUniversityModelSelectionTaskCard(
@@ -8084,6 +8137,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   AiUniversityFireflyApiTaskCard(
                     onSubmit: _fireflyApiLearningOutcomeAnalytics
                         .recordFireflyCompleted,
+                  ),
+                ],
+                if (isFireflyLatestInfoTask) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityFireflyLatestInfoTaskCard(
+                    onSubmit: _fireflyLatestInfoLearningOutcomeAnalytics
+                        .recordFireflyLatestInfoCompleted,
                   ),
                 ],
                 if (isLlmMechanicsTask) ...[
@@ -8107,11 +8167,22 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     onSubmit: _agentlessLabAnalytics.recordCompleted,
                   ),
                 ],
+                if (isAgentVerseLab) ...[
+                  const SizedBox(height: 16),
+                  AiUniversityAgentVerseLabTaskCard(
+                    onStart: _agentVerseLabAnalytics.recordStarted,
+                    onImportChecked:
+                        _agentVerseLabAnalytics.recordImportChecked,
+                    onSubmit: _agentVerseLabAnalytics.recordCompleted,
+                  ),
+                ],
                 if (youtubeVideoId != null) ...[
                   const SizedBox(height: 16),
                   AiUniversityYoutubeEmbed(
                     videoId: youtubeVideoId,
                     title: title,
+                    maxPlayerHeight:
+                        (videoViewportHeight - 96).clamp(0.0, 720.0),
                     onOpen: () => _launchUrl(sourceUrl ?? ''),
                   ),
                 ],

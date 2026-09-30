@@ -1,4 +1,10 @@
+import 'package:my_web_app/pages/jev_mario_lab_page.dart';
+import 'package:my_web_app/pages/jwenv_lab_page.dart';
 import 'dart:async';
+
+import 'package:my_web_app/pages/aero_lab_page.dart';
+import 'package:my_web_app/pages/sound_bloom_page.dart';
+import 'package:my_web_app/pages/lumen_path_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:my_web_app/services/version_check_service.dart';
@@ -16,6 +22,7 @@ import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/agent_board_page.dart';
 import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
+import 'package:my_web_app/pages/micro_mentor_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/agi_fireworks_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
@@ -88,6 +95,7 @@ import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/eval_approval_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/price_tracker_page.dart';
+import 'package:my_web_app/pages/process_quality_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_observability_page.dart';
 import 'package:my_web_app/pages/ai_router_cost_dashboard_page.dart';
 import 'package:my_web_app/pages/task_budget_assistant_page.dart';
@@ -126,6 +134,7 @@ import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/corporate_bank_account_simulator_page.dart';
+import 'package:my_web_app/pages/corporate_site_readiness_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
 import 'package:my_web_app/pages/api_playground_page.dart';
 import 'package:my_web_app/pages/categories_page.dart';
@@ -179,6 +188,7 @@ import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
 import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
+import 'package:my_web_app/pages/platform_release_checklist_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
 import 'package:my_web_app/pages/sobriety_campaign_page.dart';
 import 'package:my_web_app/pages/family_sharing_manager_page.dart';
@@ -223,6 +233,7 @@ import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
+import 'package:my_web_app/ui/features/palm_reading/palm_reading_feature.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
 import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
@@ -530,6 +541,16 @@ Route<dynamic> generateAppRoute(
           signupCompletionService: signupCompletionService,
         ),
       );
+    case '/jev-mario-lab':
+      return MaterialPageRoute(
+        builder: (_) => const JevMarioLabPage(),
+        settings: settings,
+      );
+    case '/jwenv-lab':
+      return MaterialPageRoute(
+        builder: (_) => const JwenvLabPage(),
+        settings: settings,
+      );
     case '/agi-fireworks':
       return MaterialPageRoute(
         builder: (_) => const AgiFireworksPage(),
@@ -569,6 +590,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const HomePage());
     case '/agents':
       return MaterialPageRoute(builder: (_) => AgentOrgPage());
+    case '/micro-mentors':
+      return MaterialPageRoute(
+        builder: (_) => MicroMentorDashboardPage(),
+        settings: const RouteSettings(name: '/micro-mentors'),
+      );
     // ホームカタログ (home_tool_catalog.dart) は `/autonomous-ops-console` で
     // 開くため、その URL でもリロード/共有が復元できるよう別名も登録する。
     case '/autonomous-ops':
@@ -660,7 +686,10 @@ Route<dynamic> generateAppRoute(
       );
     case '/manual':
     case '/user-manual':
-      return MaterialPageRoute(builder: (_) => const UserManualPage());
+      return MaterialPageRoute(
+        builder: (_) => const UserManualPage(),
+        settings: settings,
+      );
     case '/site-guide-ai':
       final argumentQuestion =
           settings.arguments is String ? settings.arguments as String : null;
@@ -699,8 +728,11 @@ Route<dynamic> generateAppRoute(
         settings: settings,
       );
     case '/philosophy':
+      final initialStep = uri.queryParameters['step'] == 'quick-inventory'
+          ? PhilosophyInitialStep.quickInventory
+          : PhilosophyInitialStep.overview;
       return MaterialPageRoute(
-        builder: (_) => const PhilosophyPage(),
+        builder: (_) => PhilosophyPage(initialStep: initialStep),
         settings: settings,
       );
     case '/privacy':
@@ -904,6 +936,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const PurchaseLogPage());
     case '/price-tracker':
       return MaterialPageRoute(builder: (_) => const PriceTrackerPage());
+    case '/process-quality-dashboard':
+      return MaterialPageRoute(
+        builder: (_) => const ProcessQualityDashboardPage(),
+      );
     case '/ai-observability':
       return MaterialPageRoute(
         builder: (_) => const AiObservabilityPage(),
@@ -1002,6 +1038,8 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => PersonalityTestResultPage(testId: resultTestId),
       );
+    case '/palm-reading':
+      return MaterialPageRoute(builder: (_) => const PalmReadingPage());
     case '/iq-test':
       return MaterialPageRoute(builder: (_) => const IqTestPage());
     // 出題中のテストは testId と seed が無いと復元できない (再開もできない)。
@@ -1045,6 +1083,10 @@ Route<dynamic> generateAppRoute(
     case '/corporate-bank-account-cost':
       return MaterialPageRoute(
         builder: (_) => const CorporateBankAccountSimulatorPage(),
+      );
+    case '/corporate-site-readiness':
+      return MaterialPageRoute(
+        builder: (_) => const CorporateSiteReadinessPage(),
       );
     case '/ai-secretary':
       return MaterialPageRoute(builder: (_) => const AISecretaryPage());
@@ -1246,6 +1288,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const SmartInboxTriagePage(),
       );
+    case '/platform-release-checklist':
+      return MaterialPageRoute(
+        builder: (_) => const PlatformReleaseChecklistPage(),
+      );
     case '/carbon-footprint':
       return MaterialPageRoute(
         builder: (_) => const CarbonFootprintTrackerPage(),
@@ -1378,6 +1424,21 @@ Route<dynamic> generateAppRoute(
       );
     case '/landing-ab-test':
       return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
+    case '/lumen-path':
+      return MaterialPageRoute(
+        builder: (_) => const LumenPathPage(),
+        settings: settings,
+      );
+    case '/sound-bloom':
+      return MaterialPageRoute(
+        builder: (_) => const SoundBloomPage(),
+        settings: settings,
+      );
+    case '/aero-lab':
+      return MaterialPageRoute(
+        builder: (_) => const AeroLabPage(),
+        settings: settings,
+      );
     case '/video-studio':
       return MaterialPageRoute(
         builder: (_) => VideoStudioFeature(initialUri: uri),

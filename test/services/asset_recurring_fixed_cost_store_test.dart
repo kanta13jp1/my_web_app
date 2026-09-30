@@ -330,6 +330,66 @@ void main() {
       );
       expect(decoded.map((c) => c.id), ['fc_denki']);
     });
+
+    test(
+        'normalizeCost migrates legacy Claude subscription to Claude Pro 3,000 yen',
+        () {
+      const legacy = AssetRecurringFixedCost(
+        id: 'card_statement_claude_ai_subscription',
+        name: 'Claude AI SUBSCRIPTION',
+        amount: 36418,
+        paymentDay: 26,
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      final normalized = AssetRecurringFixedCostStore.normalizeCost(legacy);
+      expect(normalized.name, 'Claude Pro');
+      expect(normalized.amount, 3000);
+      expect(normalized.currency, AssetRecurringFixedCostCurrency.jpy);
+      expect(normalized.usdAmount, isNull);
+      expect(normalized.category, AssetRecurringFixedCostCategory.subscription);
+      expect(normalized.paymentDay, 26);
+
+      // 他のサブスク（ChatGPT Pro等）は影響を受けない
+      const chatGpt = AssetRecurringFixedCost(
+        id: 'card_statement_chatgpt_pro',
+        name: 'ChatGPT Pro 20s',
+        amount: 30000,
+        paymentDay: 20,
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      final chatGptNormalized =
+          AssetRecurringFixedCostStore.normalizeCost(chatGpt);
+      expect(chatGptNormalized.name, 'ChatGPT Pro 20s');
+      expect(chatGptNormalized.amount, 30000);
+    });
+
+    test('decodeMirrorValue automatically migrates legacy Claude subscription',
+        () {
+      final decoded =
+          AssetRecurringFixedCostStore.decodeMirrorValue(<String, dynamic>{
+        'claude_sub': <String, dynamic>{
+          'name': 'Claude AI SUBSCRIPTION',
+          'amount': 36418,
+          'paymentDay': 26,
+          'category': 'subscription',
+        },
+        'google_cloud': <String, dynamic>{
+          'name': 'Google Cloud',
+          'amount': 8087,
+          'paymentDay': 1,
+          'category': 'subscription',
+        },
+      });
+      expect(decoded.length, 2);
+      final claude = decoded.firstWhere((c) => c.id == 'claude_sub');
+      expect(claude.name, 'Claude Pro');
+      expect(claude.amount, 3000);
+      expect(claude.currency, AssetRecurringFixedCostCurrency.jpy);
+
+      final gcp = decoded.firstWhere((c) => c.id == 'google_cloud');
+      expect(gcp.name, 'Google Cloud');
+      expect(gcp.amount, 8087);
+    });
   });
 }
 

@@ -26,5 +26,9 @@ void main() {
     expect(policy, contains('決済顧客情報、関連DBデータ、Storage、Supabase Auth'));
     expect(policy, contains('発行済みアクセストークンの失効を最大65分待って'));
     expect(policy, contains('メールアカウントはパスワード'));
+    expect(policy, contains('### 2.4 Google ユーザーデータの取扱い'));
+    expect(policy, contains('表示名、メールアドレス、プロフィール画像 URL'));
+    expect(policy, contains('Gmail、Google カレンダー、Google Drive'));
+    expect(policy, contains('Supabase Auth と本サービスのデータベース'));
   });
 }

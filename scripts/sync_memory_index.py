@@ -51,8 +51,8 @@ def normalize_embedding(values: list[float]) -> list[float]:
 def embedding_text_for(row: dict) -> str:
     parts = [
         str(row.get("title") or ""),
-        str(row.get("file_path") or ""),
-        str(row.get("snippet") or ""),
+        str(row.get("file_path") or row.get("source_id") or ""),
+        str(row.get("snippet") or row.get("excerpt") or ""),
         str(row.get("content") or ""),
     ]
     return "\n".join(part for part in parts if part).strip()[:3500]
@@ -126,8 +126,9 @@ def embed_rows(rows: list[dict], api_key: str, batch_size: int = 16) -> None:
         for row, embedding in zip(chunk, embeddings):
             values = embedding.get("values") or []
             if len(values) != EMBEDDING_DIMENSION:
+                row_id = row.get("file_path") or row.get("source_id") or "unknown"
                 raise RuntimeError(
-                    f"Gemini embedding dimension mismatch for {row['file_path']}: "
+                    f"Gemini embedding dimension mismatch for {row_id}: "
                     f"{len(values)} != {EMBEDDING_DIMENSION}"
                 )
             row["embedding"] = normalize_embedding([float(value) for value in values])
