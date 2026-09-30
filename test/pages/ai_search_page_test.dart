@@ -18,7 +18,8 @@ Future<void> submit(WidgetTester tester, String query) async {
 }
 
 void main() {
-  testWidgets('keeps prior results and only the newest response wins', (tester) async {
+  testWidgets('keeps prior results and only the newest response wins',
+      (tester) async {
     final requests = <String, Completer<Object?>>{};
     await tester.pumpWidget(MaterialApp(home: AiSearchPage(search: (query) {
       final request = Completer<Object?>();
@@ -42,7 +43,8 @@ void main() {
     expect(find.byType(LinearProgressIndicator), findsNothing);
   });
 
-  testWidgets('old failure cannot clear a newer pending request', (tester) async {
+  testWidgets('old failure cannot clear a newer pending request',
+      (tester) async {
     final requests = <String, Completer<Object?>>{};
     await tester.pumpWidget(MaterialApp(home: AiSearchPage(search: (query) {
       return (requests[query] = Completer<Object?>()).future;
@@ -58,7 +60,8 @@ void main() {
     expect(find.text('新しい結果'), findsOneWidget);
   });
 
-  testWidgets('deduplicates pending query and invalidates on clear', (tester) async {
+  testWidgets('deduplicates pending query and invalidates on clear',
+      (tester) async {
     var calls = 0;
     final request = Completer<Object?>();
     await tester.pumpWidget(MaterialApp(home: AiSearchPage(search: (_) {
@@ -76,9 +79,11 @@ void main() {
     expect(find.text('検索語を入力して検索してください'), findsOneWidget);
   });
 
-  testWidgets('keeps last success after failure and retries the failed query', (tester) async {
+  testWidgets('keeps last success after failure and retries the failed query',
+      (tester) async {
     final queries = <String>[];
-    await tester.pumpWidget(MaterialApp(home: AiSearchPage(search: (query) async {
+    await tester
+        .pumpWidget(MaterialApp(home: AiSearchPage(search: (query) async {
       queries.add(query);
       if (queries.length == 2) throw Exception('offline');
       return result(query == 'first' ? '前のノート' : '回復したノート');
@@ -95,8 +100,10 @@ void main() {
     expect(find.text('前の結果:「retry」（1件）'), findsOneWidget);
   });
 
-  testWidgets('empty results and unsubmitted text are distinguished', (tester) async {
-    await tester.pumpWidget(MaterialApp(home: AiSearchPage(search: (_) async => {'results': []})));
+  testWidgets('empty results and unsubmitted text are distinguished',
+      (tester) async {
+    await tester.pumpWidget(
+        MaterialApp(home: AiSearchPage(search: (_) async => {'results': []})));
     await tester.enterText(find.byType(TextField), 'draft');
     await tester.pump();
     expect(find.text('検索語を入力して検索してください'), findsOneWidget);
@@ -107,7 +114,8 @@ void main() {
     expect(find.text('前の結果:「empty」（0件）'), findsOneWidget);
   });
 
-  testWidgets('malformed response is recoverable and does not erase results', (tester) async {
+  testWidgets('malformed response is recoverable and does not erase results',
+      (tester) async {
     var calls = 0;
     await tester.pumpWidget(MaterialApp(home: AiSearchPage(search: (_) async {
       return ++calls == 2 ? {'unexpected': true} : result('確定ノート');
@@ -118,7 +126,8 @@ void main() {
     expect(find.text('再試行'), findsOneWidget);
   });
 
-  testWidgets('timeout permits retry and ignores the timed out completion', (tester) async {
+  testWidgets('timeout permits retry and ignores the timed out completion',
+      (tester) async {
     final request = Completer<Object?>();
     var calls = 0;
     await tester.pumpWidget(MaterialApp(home: AiSearchPage(search: (_) {
@@ -126,7 +135,7 @@ void main() {
     })));
     await submit(tester, 'query');
     await tester.pump(const Duration(seconds: 31));
-    expect(find.text('検索に時間がかかっています。もう一度お試しください。'), findsOneWidget);
+    expect(find.text('「query」の検索: 検索に時間がかかっています。もう一度お試しください。'), findsOneWidget);
     await tester.tap(find.text('再試行'));
     await tester.pump();
     request.complete(result('タイムアウトした結果'));
@@ -135,9 +144,11 @@ void main() {
     expect(find.text('タイムアウトした結果'), findsNothing);
   });
 
-  testWidgets('completion after disposal cannot update the removed page', (tester) async {
+  testWidgets('completion after disposal cannot update the removed page',
+      (tester) async {
     final request = Completer<Object?>();
-    await tester.pumpWidget(MaterialApp(home: AiSearchPage(search: (_) => request.future)));
+    await tester.pumpWidget(
+        MaterialApp(home: AiSearchPage(search: (_) => request.future)));
     await submit(tester, 'query');
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
     request.complete(result('late'));

@@ -203,7 +203,14 @@ class _AiSearchPageState extends State<AiSearchPage> {
                 if (_isLoading) ...[
                   const SizedBox(height: 8),
                   const LinearProgressIndicator(),
-                  Text('「$_pendingQuery」を検索中…'),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      '「$_pendingQuery」を検索中…',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
                 if (_resultQuery != null) ...[
                   const SizedBox(height: 8),
@@ -211,6 +218,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
                     (_isLoading || _controller.text.trim() != _resultQuery)
                         ? '前の結果:「$_resultQuery」（${_results.length}件）'
                         : '「$_resultQuery」の結果（${_results.length}件）',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
                 if (_errorMessage != null) ...[
@@ -218,8 +227,11 @@ class _AiSearchPageState extends State<AiSearchPage> {
                   Semantics(
                     liveRegion: true,
                     child: Text(
-                      _errorMessage!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      '「$_failedQuery」の検索: $_errorMessage',
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
                     ),
                   ),
                   TextButton.icon(
@@ -298,6 +310,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
               _resultQuery == null
                   ? (_isLoading ? '最初の検索結果を待っています' : '検索語を入力して検索してください')
                   : '「$_resultQuery」に該当するノートはありません',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 14,
