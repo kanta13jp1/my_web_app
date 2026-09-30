@@ -28,6 +28,7 @@ function score(g,start,failures,target){
 export function plan(g,raw=null,failures=[],itemAvoidance=[]){
  // Retreat from a low item-block ceiling before trying to jump over its adjacent ledge.
  // This is explicit geometric assistance; no model score is presented as an escape prediction.
+ if(g.room==='castle'&&!g.p.grounded&&g.wasJump&&g.p.vy<0)return {retry_level:retryLevel(g,failures),search_depth:0,action:'right_jump',accepted:false,score:null,raw_score:null};
  const p=g.p,col=Math.floor((p.x+p.w)/16),foot=Math.floor((p.y+p.h-1)/16);
  const wall=[col,col+1,col+2].some(c=>g.solid(c,foot-1)),head=[Math.floor(p.x/16),Math.floor((p.x+p.w-0.01)/16)].some(c=>g.solid(c,Math.floor(p.y/16)-2));
  if(!isWater(g.stage)&&p.grounded&&wall&&head&&p.x>g.camera+20)return {retry_level:retryLevel(g,failures),search_depth:0,action:'left',accepted:false,score:null,raw_score:null};
