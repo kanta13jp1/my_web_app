@@ -44,3 +44,64 @@ jobs:
             test-results/
             playwright-report/
           retention-days: 14
+
+  integrated:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: |
+          flutter pub get
+          flutter test test/widgets/kinetic_forge_page_test.dart
+          flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Validate browser test syntax
+        run: npx playwright test test/e2e/kinetic_forge_route.spec.ts test/e2e/kinetic_forge_lifecycle.spec.ts --list
+      - name: Integrated desktop and mobile route checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/flutter_spa_server.py --directory build/web --port 7357 > kinetic-forge-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7357/kinetic-forge > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7357 npx playwright test test/e2e/kinetic_forge_route.spec.ts --workers=1 --retries=0
+      - name: Build real surface lifecycle fixture
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/kinetic_forge_lifecycle_app.dart --output=build/kinetic-forge-lifecycle
+      - name: Verify covering route, return and disposal
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/flutter_spa_server.py --directory build/kinetic-forge-lifecycle --port 7358 > kinetic-forge-lifecycle-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 PLAYWRIGHT_TEST_OUTPUT_DIR=lifecycle-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/lifecycle-results.json npx playwright test test/e2e/kinetic_forge_lifecycle.spec.ts --workers=1 --retries=0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: kinetic-forge-integrated-evidence
+          path: |
+            test-results/
+            playwright-report/
+            kinetic-forge-server.log
+            kinetic-forge-lifecycle-server.log
+            lifecycle-results/
+          retention-days: 7
