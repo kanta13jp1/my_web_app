@@ -820,3 +820,12 @@ test('6-2 real worker retreats from the overhang and enters the defined pipe',as
  try{await expect.poll(()=>frame.evaluate(()=>(window as any).pipeEvents.returned),{timeout:45000}).toBeTruthy();const result=await frame.evaluate(()=>(window as any).pipeEvents.returned);expect(result).toMatchObject({stage:22,room:'overworld',x:2544,power:2});}
  finally{await lab.locator('#stop').click();const state=await frame.evaluate(()=>(window as any).pipeEvents);await (await import('node:fs/promises')).writeFile(info.outputPath('world62-pipe-escape.json'),JSON.stringify(state));await screenshot(page,info.outputPath('world62-pipe-escape.png'));}
 });
+
+
+test('6-2 live small player passes the first entrance with active enemies and retry memory',async({page},info)=>{
+ test.setTimeout(60000);await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#stage').selectOption('22');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const tick=StudentSession.prototype.tick,step=World11.prototype.step;let seeded=false;(window as any).entranceTrace=[];StudentSession.prototype.tick=function(world){if(!seeded){seeded=true;(window as any).entranceWorld=world;Object.assign(world.p,{x:900,y:192,vx:0,vy:0,grounded:true});world.camera=804;this.failures=[{stage:22,room:'overworld',x:988,y:160,kind:'death',count:4}];}return tick.call(this,world);};World11.prototype.step=function(){step.call(this);if(this===(window as any).entranceWorld&&this.frames%12===0)(window as any).entranceTrace.push({frame:this.frames,x:this.p.x,y:this.p.y,room:this.room,phase:this.phase,input:this.input,deaths:this.deaths});};});
+ await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
+ try{await expect.poll(()=>frame.evaluate(()=>{const g=(window as any).entranceWorld;return g?.room==='overworld'&&g.p.x>=1100&&g.deaths===0;}),{timeout:45000}).toBeTruthy();}
+ finally{await lab.locator('#stop').click();await(await import('node:fs/promises')).writeFile(info.outputPath('world62-first-entrance.json'),JSON.stringify(await frame.evaluate(()=>(window as any).entranceTrace)));await screenshot(page,info.outputPath('world62-first-entrance.png'));}
+});
