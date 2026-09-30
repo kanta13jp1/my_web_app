@@ -29,8 +29,9 @@ export function plan(g,raw=null,failures=[],itemAvoidance=[]){
  // Retreat from a low item-block ceiling before trying to jump over its adjacent ledge.
  // This is explicit geometric assistance; no model score is presented as an escape prediction.
  const p=g.p,col=Math.floor((p.x+p.w)/16),foot=Math.floor((p.y+p.h-1)/16);
- const wall=[col,col+1,col+2].some(c=>g.solid(c,foot-1)),head=g.solid(Math.floor((p.x+p.w/2)/16),Math.floor(p.y/16)-2);
+ const wall=[col,col+1,col+2].some(c=>g.solid(c,foot-1)),head=[Math.floor(p.x/16),Math.floor((p.x+p.w-0.01)/16)].some(c=>g.solid(c,Math.floor(p.y/16)-2));
  if(!isWater(g.stage)&&p.grounded&&wall&&head&&p.x>g.camera+20)return {retry_level:retryLevel(g,failures),search_depth:0,action:'left',accepted:false,score:null,raw_score:null};
+ if(!isWater(g.stage)&&p.grounded&&wall&&!head)return {retry_level:retryLevel(g,failures),search_depth:0,action:edge(g,'right_jump'),accepted:false,score:null,raw_score:null};
  const target=isWater(g.stage)?null:itemTargets(g).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
  const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left',...(!isWater(g.stage)?['left_jump']:[])]:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
  let beam=[{g,first:null,value:0}],byFirst={};
