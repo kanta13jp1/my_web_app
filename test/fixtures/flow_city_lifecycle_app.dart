@@ -17,15 +17,15 @@ class _Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: ElevatedButton(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const _Lab()),
+        body: Center(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const _Lab()),
+            ),
+            child: const Text('実験室を開く'),
+          ),
         ),
-        child: const Text('実験室を開く'),
-      ),
-    ),
-  );
+      );
 }
 
 class _Lab extends StatelessWidget {
@@ -33,23 +33,23 @@ class _Lab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('表示ライフサイクル検証'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const _Cover()),
-          ),
-          child: const Text('覆う画面を開く'),
+        appBar: AppBar(
+          title: const Text('表示ライフサイクル検証'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const _Cover()),
+              ),
+              child: const Text('覆う画面を開く'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('実験室を閉じる'),
+            ),
+          ],
         ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('実験室を閉じる'),
-        ),
-      ],
-    ),
-    body: const FlowCitySurface(),
-  );
+        body: const FlowCitySurface(),
+      );
 }
 
 class _Cover extends StatelessWidget {
@@ -57,11 +57,11 @@ class _Cover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: ElevatedButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('実験室へ戻る'),
-      ),
-    ),
-  );
+        body: Center(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('実験室へ戻る'),
+          ),
+        ),
+      );
 }

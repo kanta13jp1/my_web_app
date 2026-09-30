@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [codex/flow-city-prototype-20260906]
-    paths: ['web/labs/flow-city/**', 'test/e2e/flow_city.spec.ts', '.github/workflows/flow-city-checks.yml', 'lib/pages/flow_city_page.dart', 'lib/ui/features/flow_city/**', 'test/e2e/flow_city_route.spec.ts', 'lib/data/home_tool_catalog.dart', 'lib/main.dart', 'test/widgets/flow_city_page_test.dart']
+    paths: ['web/labs/flow-city/**', 'test/e2e/flow_city.spec.ts', '.github/workflows/flow-city-checks.yml', 'lib/pages/flow_city_page.dart', 'lib/ui/features/flow_city/**', 'test/e2e/flow_city_route.spec.ts', 'lib/data/home_tool_catalog.dart', 'lib/main.dart', 'test/widgets/flow_city_page_test.dart', 'test/fixtures/flow_city_lifecycle_app.dart', 'test/e2e/flow_city_lifecycle.spec.ts']
 permissions: {}
 concurrency:
   group: flow-city-${{ github.ref }}
