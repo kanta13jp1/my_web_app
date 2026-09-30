@@ -6972,7 +6972,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     }
 
     final providerCount = aiUniversityProviderCountForDisplay(
-      liveProviderCount: _providers.length,
+      liveProviderCount: _error == null ? _content.length : 0,
     );
     return Scaffold(
       appBar: AppBar(
