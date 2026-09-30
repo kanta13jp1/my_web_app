@@ -312,7 +312,8 @@ void main() {
       ),
     );
     await _pumpUntil(tester, () => ai.requests.length == 3);
-    final restored = ai.requests.last.workbook.cardStatementReconciliation.groups
+    final restored = ai
+        .requests.last.workbook.cardStatementReconciliation.groups
         .singleWhere((group) => group.billingAccountId == 'paypay_card');
     expect(restored.configuredDetailTotal, 20000);
     expect(restored.hasConfiguredMismatchFix, isFalse);
