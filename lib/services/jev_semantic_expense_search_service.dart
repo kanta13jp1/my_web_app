@@ -193,8 +193,9 @@ class JevSemanticExpenseSearchService {
 
       if (res == null || res.fallback) return null;
 
-      final double? score = res.scores['match'];
-      if (score == null || !score.isFinite || score < 0.0 || score > 1.0) {
+      final double score = res.scores['match'] ??
+          (res.bestChoiceId == 'match' ? res.confidence : 1.0 - res.confidence);
+      if (!score.isFinite || score < 0.0 || score > 1.0) {
         return null;
       }
       _scoreCache[cacheKey] = score;
