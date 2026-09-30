@@ -32,7 +32,7 @@ export function plan(g,raw=null,failures=[],itemAvoidance=[]){
  const tunnel=[col,col+1,col+2,col+3,col+4,col+5].find(c=>g.solid(c,foot-1)&&!g.solid(c,foot)&&g.solid(c,foot+1));
  if(g.room==='castle'&&g.power&&p.grounded&&tunnel!==undefined){
   const near=tunnel*16-p.x-p.w<20;
-  const action=p.crouching?'right_run':near?'right_run_down':'right_run';
+  const action=p.crouching||near?'right_run_down':'right_run';
   return {retry_level:retryLevel(g,failures),search_depth:0,action,accepted:false,score:null,raw_score:null};
  }
  const target=isWater(g.stage)?null:itemTargets(g).filter(t=>{if(g.room!=='castle'||!t.block||g.power===0)return true;const [x,y]=t.key.split(',').map(Number);return ![x-1,x+1].some(c=>g.solid(c,y+2));}).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
