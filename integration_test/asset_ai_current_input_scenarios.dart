@@ -14,6 +14,8 @@ import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
+import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -379,6 +381,103 @@ void main() {
       contains(AssetLiabilityPlanningService.cardStatementMissingImportAlert),
     );
     ai.complete(4, 'Restored synthetic discrepancy remains resolved');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('new card detail can be created and deleted without resurrection',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _MonthlyRepository()
+      ..state = const AssetLiabilityMonthlyState(
+        paymentOverrides: <String, double>{'paypay_card': 1000},
+      );
+    final ai = _ControlledAi();
+    Widget page() => MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repository,
+            aiSummaryService: ai,
+            aiAnalysisHistoryService: _EmptyHistory(),
+            debugNow: DateTime(2026, 9, 6, 12),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-09-06': <String, double>{'cash': 50000, 'PayPay': -1000},
+            },
+          ),
+        );
+    await tester.pumpWidget(page());
+    await _pumpUntil(tester, () => ai.requests.length == 1);
+    ai.complete(0, 'Synthetic empty detail');
+    final addButton = find.descendant(
+      of: find.byType(RecurringFixedCostCard),
+      matching: find.widgetWithText(TextButton, '追加'),
+    );
+    expect(addButton, findsOneWidget);
+    await tester.ensureVisible(addButton);
+    await tester.tap(addButton);
+    await tester.pump(const Duration(milliseconds: 400));
+    Finder field(String label) => find.byWidgetPredicate(
+          (widget) => widget is TextField && widget.decoration?.labelText == label,
+        );
+    await tester.enterText(field('名称'), 'Synthetic card detail');
+    await tester.enterText(field('月額 (円)'), '1000');
+    await tester.enterText(field('振替日 (1〜31)'), '15');
+    await tester.tap(find.widgetWithText(FilledButton, '保存'));
+    await _pumpUntil(tester, () => ai.requests.length == 2);
+    final row = ai.requests.last.workbook.debtMasterRows
+        .singleWhere((item) => item.name == 'Synthetic card detail');
+    expect(row.scheduledPaymentAmount, 1000);
+    final saved = await const AssetRecurringFixedCostStore().load();
+    expect(saved.singleWhere((item) => item.name == row.name).amount, 1000);
+    ai.complete(1, 'Synthetic detail created');
+    final methodInput = find.byKey(ValueKey('card-billing-method:${row.id}'));
+    await tester.ensureVisible(methodInput);
+    await tester.tap(methodInput);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is DropdownMenuItem<String> && widget.value == 'paypay_card',
+      ).last,
+    );
+    await _pumpUntil(tester, () => ai.requests.length == 3);
+    final group = ai.requests.last.workbook.cardStatementReconciliation.groups
+        .singleWhere((item) => item.billingAccountId == 'paypay_card');
+    expect(group.configuredDetailTotal, 1000);
+    expect(group.hasConfiguredMismatchFix, isFalse);
+    ai.complete(2, 'Synthetic new detail reconciled');
+    final deleteButton = find.byTooltip('Synthetic card detail を削除');
+    await tester.ensureVisible(deleteButton);
+    await tester.tap(deleteButton);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.widgetWithText(FilledButton, '削除'));
+    await _pumpUntil(tester, () => ai.requests.length == 4);
+    expect(
+      ai.requests.last.workbook.debtMasterRows
+          .where((item) => item.name == 'Synthetic card detail'),
+      isEmpty,
+    );
+    expect(
+      (await const AssetRecurringFixedCostStore().load())
+          .where((item) => item.name == 'Synthetic card detail'),
+      isEmpty,
+    );
+    ai.complete(3, 'Synthetic detail deleted');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(page());
+    await _pumpUntil(tester, () => ai.requests.length == 5);
+    expect(
+      ai.requests.last.workbook.debtMasterRows
+          .where((item) => item.name == 'Synthetic card detail'),
+      isEmpty,
+    );
+    ai.complete(4, 'Deleted synthetic detail stays deleted');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });
