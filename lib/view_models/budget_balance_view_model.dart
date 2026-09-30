@@ -3,7 +3,7 @@ import '../services/budget_balance_calculator.dart';
 
 class BudgetBalanceViewModel extends ChangeNotifier {
   BudgetBalanceViewModel(
-      {BudgetBalanceCalculator calculator = const BudgetBalanceCalculator()})
+      {BudgetBalanceCalculator calculator = const BudgetBalanceCalculator(),})
       : _calculator = calculator;
 
   final BudgetBalanceCalculator _calculator;

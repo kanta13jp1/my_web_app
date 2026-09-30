@@ -42,7 +42,7 @@ void main() {
       'Infinity',
       '1e5',
       '1,23',
-      '1000000001'
+      '1000000001',
     ]) {
       expect(calculator.validate(invalid), isNotNull, reason: invalid);
     }

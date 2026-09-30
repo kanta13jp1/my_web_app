@@ -56,42 +56,45 @@ class _BudgetBalanceCardState extends State<BudgetBalanceCard> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text('今と将来の配分チェック',
-                      style: Theme.of(context).textTheme.titleLarge),
+                      style: Theme.of(context).textTheme.titleLarge,),
                   const SizedBox(height: 8),
                   const Text('生活費、今の楽しみ、将来への備えを一緒に並べて、毎月の収支を確かめます。'),
                   const SizedBox(height: 8),
                   const Text(
-                      '金額はこの画面での試算だけに使い、保存・送信しません。空欄は未確認として扱います。支出がないと確認できた欄は0を入力してください。'),
+                      '金額はこの画面での試算だけに使い、保存・送信しません。空欄は未確認として扱います。支出がないと確認できた欄は0を入力してください。',),
                   const SizedBox(height: 20),
-                  LayoutBuilder(builder: (context, constraints) {
-                    final width = constraints.maxWidth >= 640
-                        ? (constraints.maxWidth - 16) / 2
-                        : constraints.maxWidth;
-                    return Wrap(
-                      spacing: 16,
-                      runSpacing: 20,
-                      children: [
-                        for (final field in BudgetBalanceField.values)
-                          SizedBox(
-                            width: width,
-                            child: TextField(
-                              key: ValueKey('balance-${field.name}'),
-                              controller: _controllers[field],
-                              keyboardType: TextInputType.number,
-                              onChanged: (value) => _model.update(field, value),
-                              decoration: InputDecoration(
-                                labelText: _labels[field],
-                                helperText: _hints[field],
-                                helperMaxLines: 4,
-                                errorText: _model.errorFor(field),
-                                errorMaxLines: 4,
-                                border: const OutlineInputBorder(),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth >= 640
+                          ? (constraints.maxWidth - 16) / 2
+                          : constraints.maxWidth;
+                      return Wrap(
+                        spacing: 16,
+                        runSpacing: 20,
+                        children: [
+                          for (final field in BudgetBalanceField.values)
+                            SizedBox(
+                              width: width,
+                              child: TextField(
+                                key: ValueKey('balance-${field.name}'),
+                                controller: _controllers[field],
+                                keyboardType: TextInputType.number,
+                                onChanged: (value) =>
+                                    _model.update(field, value),
+                                decoration: InputDecoration(
+                                  labelText: _labels[field],
+                                  helperText: _hints[field],
+                                  helperMaxLines: 4,
+                                  errorText: _model.errorFor(field),
+                                  errorMaxLines: 4,
+                                  border: const OutlineInputBorder(),
+                                ),
                               ),
                             ),
-                          ),
-                      ],
-                    );
-                  },),
+                        ],
+                      );
+                    },
+                  ),
                   const SizedBox(height: 20),
                   FilledButton.icon(
                     onPressed: _model.calculate,
@@ -111,8 +114,9 @@ class _BudgetBalanceCardState extends State<BudgetBalanceCard> {
                   ),
                   if (_model.needsRecalculation)
                     Semantics(
-                        liveRegion: true,
-                        child: const Text('金額を変更しました。配分をもう一度確認してください。'),),
+                      liveRegion: true,
+                      child: const Text('金額を変更しました。配分をもう一度確認してください。'),
+                    ),
                   if (result != null)
                     Semantics(
                       liveRegion: true,
@@ -126,28 +130,31 @@ class _BudgetBalanceCardState extends State<BudgetBalanceCard> {
                         ),
                         child: DefaultTextStyle(
                           style: TextStyle(
-                              color: result.remaining < 0
-                                  ? cs.onErrorContainer
-                                  : cs.onSurface,),
+                            color: result.remaining < 0
+                                ? cs.onErrorContainer
+                                : cs.onSurface,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                  result.remaining < 0
-                                      ? '毎月 ${_format.format(-result.remaining)}円の不足'
-                                      : '配分後の残り ${_format.format(result.remaining)}円',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20,),),
+                                result.remaining < 0
+                                    ? '毎月 ${_format.format(-result.remaining)}円の不足'
+                                    : '配分後の残り ${_format.format(result.remaining)}円',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
+                              ),
                               const SizedBox(height: 8),
                               Text(
-                                  '年間支出の月割り：${_format.format(result.monthlyAnnualProvision)}円'),
+                                  '年間支出の月割り：${_format.format(result.monthlyAnnualProvision)}円',),
                               Text(
-                                  '配分の合計：${_format.format(result.allocated)}円／月'),
+                                  '配分の合計：${_format.format(result.allocated)}円／月',),
                               const SizedBox(height: 8),
                               Text(result.remaining < 0
                                   ? '配分の合計が手取りを超えています。費用の重複・漏れと、それぞれの金額を見直してください。'
-                                  : '入力した範囲での差額です。費用の漏れがないか確認してください。残額の投資を勧めるものではありません。'),
+                                  : '入力した範囲での差額です。費用の漏れがないか確認してください。残額の投資を勧めるものではありません。',),
                             ],
                           ),
                         ),
@@ -155,7 +162,7 @@ class _BudgetBalanceCardState extends State<BudgetBalanceCard> {
                     ),
                   const SizedBox(height: 12),
                   const Text(
-                      '年間支出は12で割り、1円未満を切り上げます。支払日の残高や運用益は計算しません。本人の満足度や積立額の適否は、この差額だけでは判断できません。'),
+                      '年間支出は12で割り、1円未満を切り上げます。支払日の残高や運用益は計算しません。本人の満足度や積立額の適否は、この差額だけでは判断できません。',),
                 ],
               ),
             ),
