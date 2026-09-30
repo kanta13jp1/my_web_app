@@ -34,7 +34,9 @@ void main() {
       expect(offline.paidAccountNames, isNotEmpty);
       expect(repository.isMonthVerifiedForAi(month), isFalse);
       expect(
-          remote.calls.where((call) => call.startsWith('saveMonth:')), isEmpty);
+        remote.calls.where((call) => call.startsWith('saveMonth:')),
+        isEmpty,
+      );
 
       remote.failMonthReads = false;
       await repository.loadMonth(month);
