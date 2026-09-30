@@ -135,22 +135,23 @@ def repository_revalidation_start(
     runs: list[dict[str, Any]],
     now: datetime,
 ) -> datetime:
-    if runs:
-        newest = sort_runs_newest(runs)[0]
-        created_at = parse_time(str(newest.get("created_at") or ""))
-        if created_at is None:
-            raise ValueError("Workflow run is missing created_at")
-        return created_at - timedelta(seconds=1)
-
     window_hours = (
         max(target.max_age_hours, REPOSITORY_REVALIDATION_MIN_HOURS)
         if target.max_age_hours > 0
         else 24 * 30
     )
     window_start = now - timedelta(hours=window_hours)
-    if target.introduced_at is None:
-        return window_start
-    return max(target.introduced_at, window_start)
+    if target.introduced_at is not None:
+        window_start = max(target.introduced_at, window_start)
+    if runs:
+        newest = sort_runs_newest(runs)[0]
+        created_at = parse_time(str(newest.get("created_at") or ""))
+        if created_at is None:
+            raise ValueError("Workflow run is missing created_at")
+        # A stale per-workflow response must not expand the repository query
+        # beyond the monitoring window and exhaust its fail-closed page cap.
+        return max(created_at - timedelta(seconds=1), window_start)
+    return window_start
 
 
 def merge_revalidated_runs(

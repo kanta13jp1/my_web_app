@@ -314,6 +314,49 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
 
         self.assertEqual(created_after, NOW - timedelta(hours=24))
 
+    def test_ancient_primary_revalidation_is_bounded_and_uses_repository_success(self) -> None:
+        stale = run(id=1, created_at=(NOW - timedelta(days=25)).isoformat())
+        fresh = run(id=2)
+        start = repository_revalidation_start(TARGET, [stale], NOW)
+        self.assertEqual(start, NOW - timedelta(hours=24))
+        merged = merge_revalidated_runs([stale], [fresh], created_after=start)
+        result = evaluate_target(TARGET, merged, NOW, max_attempts=2)
+        self.assertEqual(result["run_id"], 2)
+        self.assertEqual(result["action"], "healthy")
+
+    def test_ancient_primary_success_cannot_hide_new_repository_failure(self) -> None:
+        stale = run(id=1, created_at=(NOW - timedelta(days=25)).isoformat())
+        failed = run(id=2, conclusion="failure", run_attempt=2)
+        start = repository_revalidation_start(TARGET, [stale], NOW)
+        merged = merge_revalidated_runs([stale], [failed], created_after=start)
+        result = evaluate_target(TARGET, merged, NOW, max_attempts=2)
+        self.assertEqual(result["run_id"], 2)
+        self.assertEqual(result["action"], "alert")
+
+    def test_ancient_primary_alone_is_not_healthy(self) -> None:
+        stale = run(id=1, created_at=(NOW - timedelta(days=25)).isoformat())
+        start = repository_revalidation_start(TARGET, [stale], NOW)
+        merged = merge_revalidated_runs([stale], [], created_after=start)
+        self.assertEqual(merged, [])
+        result = evaluate_target(TARGET, merged, NOW, max_attempts=2)
+        self.assertEqual(result["action"], "alert")
+
+    def test_bounded_start_preserves_bootstrap_192_hour_window(self) -> None:
+        target = WorkflowTarget("backup", "backup.yml", 192, require_bootstrap_success=True)
+        stale = run(created_at=(NOW - timedelta(days=25)).isoformat())
+        self.assertEqual(repository_revalidation_start(target, [stale], NOW), NOW - timedelta(hours=192))
+
+    def test_bounded_start_preserves_event_driven_30_day_window(self) -> None:
+        target = WorkflowTarget("deploy", "deploy-prod.yml", 0, "push")
+        stale = run(created_at=(NOW - timedelta(days=40)).isoformat())
+        self.assertEqual(repository_revalidation_start(target, [stale], NOW), NOW - timedelta(days=30))
+
+    def test_bounded_start_respects_workflow_introduction(self) -> None:
+        introduced = NOW - timedelta(hours=2)
+        target = WorkflowTarget("new", "new.yml", 192, introduced_at=introduced)
+        stale = run(created_at=(NOW - timedelta(days=25)).isoformat())
+        self.assertEqual(repository_revalidation_start(target, [stale], NOW), introduced)
+
     def test_fresh_primary_must_be_confirmed_by_repository_listing(self) -> None:
         fresh = run(id=7)
         created_after = repository_revalidation_start(TARGET, [fresh], NOW)
