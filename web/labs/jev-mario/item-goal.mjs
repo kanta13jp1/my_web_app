@@ -21,9 +21,9 @@ export function itemIntent(g,t=itemTargets(g)[0]){
 }
 
 // Approach a block from below, rather than rewarding a jump over its top.
-export function itemApproach(g,target){
+export function itemApproach(g,target,side=null){
  if(!target.block||g.p.y>=target.y-2)return target;
- const [col,row]=target.key.split(',').map(Number),left=g.p.x+g.p.w/2<target.x;
+ const [col,row]=target.key.split(',').map(Number),left=side?side==='left':g.p.x+g.p.w/2<target.x;
  let edge=col;
  // A lower supporting row may extend beyond the reward block itself.
  // Leave that support too; stopping just outside the reward would never descend.
@@ -34,10 +34,10 @@ export function itemApproach(g,target){
 }
 
 // Complete a safe descent before attempting to open a reward block from below.
-export function itemDescent(g,target=itemTargets(g)[0]){
+export function itemDescent(g,target=itemTargets(g)[0],side=null){
  const p=g.p;
  if(!target?.block||g.room!=='overworld'||p.climbing||p.vy<0||p.y>=target.y-2)return null;
- const approach=itemApproach(g,target),landing=Math.floor(approach.x/16);
+ const approach=itemApproach(g,target,side),landing=Math.floor(approach.x/16);
  if(approach.x<g.camera+p.w/2||!g.solid(landing,13))return null;
  const dx=approach.x-p.x-p.w/2;
  return Math.abs(dx)<5?'noop':dx<0?'left':'right';
