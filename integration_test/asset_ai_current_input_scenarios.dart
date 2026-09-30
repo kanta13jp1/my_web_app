@@ -8,6 +8,7 @@ import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_management_ai_analysis_history_service.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
@@ -207,6 +208,97 @@ void main() {
       publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
+  });
+
+  testWidgets('card discrepancy edit resolves mismatch but keeps import alert',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    const providerId = AssetLiabilityPlanningService.kddiProviderAccountId;
+    final repository = _MonthlyRepository()
+      ..state = const AssetLiabilityMonthlyState(
+        paymentOverrides: <String, double>{
+          providerId: 5764,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: <String, String>{providerId: 'paypay_card'},
+      );
+    final ai = _ControlledAi();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          aiSummaryService: ai,
+          aiAnalysisHistoryService: _EmptyHistory(),
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{
+              'cash': 50000,
+              'KDDI': -5764,
+              'PayPay': -20000,
+            },
+          },
+        ),
+      ),
+    );
+    await _pumpUntil(tester, () => ai.requests.isNotEmpty);
+    final before = ai.requests.first.workbook.cardStatementReconciliation.groups
+        .singleWhere((group) => group.billingAccountId == 'paypay_card');
+    expect(before.hasConfiguredMismatchFix, isTrue);
+    expect(
+      before.fixActions
+          .singleWhere((action) =>
+              action.kind ==
+              AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown)
+          .amount,
+      -14236,
+    );
+    ai.complete(0, 'Synthetic card discrepancy');
+    final importButton = find.byKey(
+      const Key('asset_card_recon_fix_importStatement_paypay_card'),
+    );
+    await tester.ensureVisible(importButton);
+    await tester.tap(importButton);
+    await tester.pump();
+    expect(find.textContaining('を選択しました。カード明細を貼り付けて'), findsOneWidget);
+    final editButton = find.byKey(
+      const Key('asset_card_recon_fix_adjustConfiguredBreakdown_paypay_card'),
+    );
+    await tester.ensureVisible(editButton);
+    await tester.tap(editButton);
+    await tester.pump(const Duration(milliseconds: 400));
+    final providerCard = find.ancestor(
+      of: find.byKey(const ValueKey('annual-rate:$providerId')),
+      matching: find.byWidgetPredicate((widget) =>
+          widget.key is GlobalKey &&
+          widget.key.toString().contains('debt_master_card_$providerId')),
+    );
+    expect(providerCard, findsOneWidget);
+    final amountInput = find.descendant(
+      of: providerCard,
+      matching: find.byWidgetPredicate((widget) =>
+          widget is TextField && widget.controller?.text == '5764'),
+    );
+    expect(amountInput, findsOneWidget);
+    await tester.ensureVisible(amountInput);
+    await tester.enterText(amountInput, '20000');
+    await _pumpUntil(tester, () => ai.requests.length == 2);
+    final after = ai.requests.last.workbook.cardStatementReconciliation.groups
+        .singleWhere((group) => group.billingAccountId == 'paypay_card');
+    expect(after.hasConfiguredMismatchFix, isFalse);
+    expect(
+      after.alerts,
+      contains(AssetLiabilityPlanningService.cardStatementMissingImportAlert),
+    );
+    expect(repository.state.paymentOverrides[providerId], 20000);
+    ai.complete(1, 'Synthetic discrepancy resolved');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
   });
 
   for (final mode in <int>[0, 1, 2]) {
