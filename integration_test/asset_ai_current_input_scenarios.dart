@@ -45,6 +45,55 @@ class _MonthlyRepository extends SharedPreferencesAssetLiabilityRepository {
   }
 }
 
+class _DelayedMonthlyRepository extends _MonthlyRepository {
+  final restored = Completer<AssetLiabilityMonthlyState>();
+  int loads = 0;
+  int failures = 0;
+  bool failRestoration = false;
+  bool ownershipCurrent = true;
+
+  @override
+  bool isMonthVerifiedForAi(DateTime month) => ownershipCurrent;
+
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
+    return <String, int>{'synthetic debt': 5};
+  }
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    loads++;
+    final state = await restored.future;
+    if (failRestoration) {
+      failures++;
+      throw StateError('synthetic restore failed');
+    }
+    return state;
+  }
+}
+
+class _CountingHistory extends _EmptyHistory {
+  int reads = 0;
+  int saves = 0;
+
+  @override
+  Future<AssetManagementAiAnalysisHistoryEntry?> loadLatestForBaseDate({
+    required String reportBaseDate,
+  }) async {
+    reads++;
+    return null;
+  }
+
+  @override
+  Future<void> saveResult({
+    required AssetManagementAiSummaryResult result,
+    required AssetManagementInsightReport report,
+    required String requestFingerprint,
+  }) async {
+    saves++;
+  }
+}
+
 class _EmptyHistory extends AssetManagementAiAnalysisHistoryService {
   @override
   Future<List<AssetManagementAiAnalysisHistoryEntry>> loadRecent({
@@ -159,6 +208,102 @@ void main() {
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
   });
+
+  for (final mode in <int>[0, 1, 2]) {
+    final failRestoration = mode == 1;
+    final ownershipChanges = mode == 2;
+    testWidgets(
+        failRestoration
+            ? 'failed monthly restoration never generates or saves AI input'
+            : ownershipChanges
+                ? 'changed user never displays or saves an in-flight AI response'
+                : 'slow monthly restoration blocks automatic and manual AI input',
+        (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': 'full',
+      });
+      AssetSyncDirtyKeysStore.resetWriteLockForTest();
+      AssetRecurringTombstoneSyncService.resetSharedForTest();
+      await tester.binding.setSurfaceSize(const Size(1600, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repository = _DelayedMonthlyRepository();
+      final ai = _ControlledAi();
+      final history = _CountingHistory();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repository,
+            aiSummaryService: ai,
+            aiAnalysisHistoryService: history,
+            debugNow: DateTime(2026, 9, 6, 12),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-09-06': <String, double>{
+                'bank': 30000,
+                'synthetic debt': -10000,
+              },
+            },
+          ),
+        ),
+      );
+      await _pumpUntil(tester, () => repository.loads > 0);
+      // Longer than the old 2.5-second debounce, with an unresolved loader.
+      for (var frame = 0; frame < 60; frame++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(ai.requests, isEmpty);
+      expect(history.reads, 0);
+      expect(history.saves, 0);
+      final updateButton = find.ancestor(
+        of: find.text('AI要約を更新'),
+        matching: find.byType(OutlinedButton),
+      );
+      expect(tester.widget<OutlinedButton>(updateButton).onPressed, isNull);
+      if (failRestoration) {
+        // Raise the error in the requesting widget's error zone. A failed
+        // Completer created in the test zone cannot cross error-zone boundaries.
+        repository.failRestoration = true;
+        repository.restored.complete(const AssetLiabilityMonthlyState());
+        for (var frame = 0; frame < 60; frame++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        expect(repository.failures, 1);
+        expect(ai.requests, isEmpty);
+        expect(history.reads, 0);
+        expect(history.saves, 0);
+        expect(tester.widget<OutlinedButton>(updateButton).onPressed, isNull);
+      } else {
+        repository.restored.complete(
+          const AssetLiabilityMonthlyState(
+            paymentOverrides: <String, double>{'synthetic debt': 1000},
+            paidAccountNames: <String>{'synthetic debt'},
+            actualPaymentAmounts: <String, double>{'synthetic debt': 1000},
+          ),
+        );
+        await _pumpUntil(tester, () => ai.requests.isNotEmpty);
+        expect(ai.requests, hasLength(1));
+        final debt = ai.requests.single.workbook.debtMasterRows
+            .singleWhere((row) => row.name == 'synthetic debt');
+        expect(debt.paid, isTrue);
+        expect(ai.requests.single.workbook.monthlyActualPaymentTotal, 1000);
+        if (ownershipChanges) repository.ownershipCurrent = false;
+        ai.complete(0, 'Restored synthetic payment is paid');
+        if (ownershipChanges) {
+          for (var frame = 0; frame < 60; frame++) {
+            await tester.pump(const Duration(milliseconds: 100));
+          }
+          expect(history.saves, 0);
+          expect(
+            find.textContaining('Restored synthetic payment is paid'),
+            findsNothing,
+          );
+        } else {
+          await _pumpUntil(tester, () => history.saves == 1);
+        }
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 3));
+    });
+  }
 
   testWidgets('received income removes old AI prose before regeneration',
       (tester) async {
