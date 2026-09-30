@@ -145,8 +145,8 @@ void main() {
     final sheet = codec
         .decode(
           fixture(
-          '<c r="A1" t="inlineStr"><is><t>_x005F_x0041_</t></is></c>'
-          '<c r="B1" t="inlineStr"><is><t>first_x000D_second</t></is></c>',
+            '<c r="A1" t="inlineStr"><is><t>_x005F_x0041_</t></is></c>'
+            '<c r="B1" t="inlineStr"><is><t>first_x000D_second</t></is></c>',
           ),
         )
         .single;
