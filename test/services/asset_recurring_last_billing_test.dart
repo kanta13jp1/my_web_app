@@ -30,7 +30,7 @@ void main() {
     expect(cost.appliesToBillingMonth(DateTime(2026, 3)), isFalse);
     expect(cost.appliesToBillingMonth(DateTime(2026, 1)), isTrue);
     final odd = cost.copyWith(
-        cadence: AssetRecurringFixedCostCadence.bimonthlyOddMonth);
+        cadence: AssetRecurringFixedCostCadence.bimonthlyOddMonth,);
     expect(odd.appliesToBillingMonth(DateTime(2026, 2)), isFalse);
     expect(odd.appliesToBillingMonth(DateTime(2026, 1)), isTrue);
   });
@@ -42,14 +42,14 @@ void main() {
     ).single;
     expect(restored.lastBillingDate, DateTime(2026, 12, 31));
     expect(
-        restored.copyWith(amount: 2000).lastBillingDate, cost.lastBillingDate);
+        restored.copyWith(amount: 2000).lastBillingDate, cost.lastBillingDate,);
     expect(
-        restored.copyWith(clearLastBillingDate: true).lastBillingDate, isNull);
+        restored.copyWith(clearLastBillingDate: true).lastBillingDate, isNull,);
   });
   test('salary cycle uses actual billing year and keeps direct unpaid debt',
       () {
     final cost = original.copyWith(
-        paymentDay: 5, lastBillingDate: DateTime(2026, 12, 5));
+        paymentDay: 5, lastBillingDate: DateTime(2026, 12, 5),);
     const service = AssetLiabilityPlanningService();
     final prior = service.buildWorkbook(
       latestSnapshot: const {'bank': 30000.0},
@@ -80,7 +80,7 @@ void main() {
     expect(
         service
             .build(month: DateTime(2026, 2), recurringFixedCosts: [cost]).total,
-        1000);
+        1000,);
     final summary = service.build(
       month: DateTime(2026, 3),
       recurringFixedCosts: [cost],
@@ -90,7 +90,7 @@ void main() {
           'price': 600,
           'due_date': '2026-03-05',
           'is_paid': false
-        },
+        ,},
       ],
     );
     expect(summary.recurringEntryCount, 0);
@@ -111,7 +111,7 @@ void main() {
     final before = report(DateTime(2026, 2, 28));
     final after = report(DateTime(2026, 3, 31));
     expect(before.workbook.monthlyScheduledPaymentTotal,
-        after.workbook.monthlyScheduledPaymentTotal);
+        after.workbook.monthlyScheduledPaymentTotal,);
     final oldKey = ai.buildRequestFingerprint(before);
     final newKey = ai.buildRequestFingerprint(after);
     expect(newKey, isNot(oldKey));
@@ -120,7 +120,7 @@ void main() {
           currentKey: newKey,
           cachedKey: oldKey,
         ),
-        isFalse);
+        isFalse,);
     final contract =
         (ai.buildPayload(before)['recurring_contracts'] as List).single as Map;
     expect(contract['lastBillingDate'], '2026-02-28');

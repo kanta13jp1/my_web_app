@@ -51,7 +51,7 @@ class RecurringFixedCostCard extends StatelessWidget {
     final lastBilling = cost.lastBillingDate;
     if (lastBilling != null) {
       buffer.write(
-          ' / 最終請求: ${AssetRecurringFixedCost.billingDateLabel(lastBilling)}');
+          ' / 最終請求: ${AssetRecurringFixedCost.billingDateLabel(lastBilling)}',);
     }
     final sourceId = cost.sourceAccountId;
     if (sourceId != null && sourceId.isNotEmpty) {

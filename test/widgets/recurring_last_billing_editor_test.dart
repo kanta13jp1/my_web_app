@@ -30,7 +30,7 @@ void main() {
         },
         child: const Text('Edit synthetic contract'),
       ),
-    ))));
+    ),),),);
     Future<void> open() async {
       await tester.tap(find.text('Edit synthetic contract'));
       await tester.pumpAndSettle();
