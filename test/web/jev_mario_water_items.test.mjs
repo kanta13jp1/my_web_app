@@ -31,3 +31,13 @@ test('castle item alcove permits retreating jump rather than permanent right inp
  const trace=[];for(let i=0;i<75&&g.phase==='playing'&&g.p.x<760;i++){const result=plan(g,'right');advance(g,result.action,8);if(i%5===0)trace.push([i,result.action,Math.round(g.p.x),Math.round(g.p.y)]);}
  assert.ok(g.p.x>736,`alcove remained blocked: ${g.p.x}, ${g.p.y}; ${JSON.stringify(trace)}`);
 });
+
+test('2-4 stopped crouching players exit the low tunnel in either power state',()=>{
+ for(const power of [1,2])for(const vx of [-.4,0,.4]){const g=new World11(8);g.power=power;Object.assign(g.p,{x:367,y:192,h:16,vx,crouching:true,grounded:true});g.camera=271;g.invincible=1200;
+  for(let i=0;i<40&&g.p.x<432;i++)advance(g,plan(g,'right_run',[{stage:8,room:'castle',x:367,y:192,count:12,kind:'stalled'}]).action,8);
+  assert.ok(g.p.x>400,`2-4 still blocked: ${g.p.x}`);assert.equal(g.p.h,28);assert.equal(g.power,power);
+ }
+});
+test('manual release under a ceiling allows slow movement without standing through tiles',()=>{const g=new World11(8);g.power=1;Object.assign(g.p,{x:367,y:192,h:16,crouching:true,grounded:true});g.invincible=1200;g.buttons('right');g.step();assert.equal(g.p.h,16);assert.ok(g.p.x>367);for(let i=0;i<60;i++)g.step();assert.ok(g.p.x>384);assert.equal(g.p.h,28);});
+
+test("running crouch crawls into a castle ledge without alternating standing",()=>{const g=new World11(16);g.power=2;Object.assign(g.p,{x:676,y:180,h:28,grounded:true});g.invincible=5000;g.buttons("right_run_down");for(let i=0;i<100;i++)g.step();assert.ok(g.p.x>736);assert.equal(g.p.h,16);});
