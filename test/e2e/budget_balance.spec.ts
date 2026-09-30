@@ -17,6 +17,7 @@ const calculate = (page: Page) => page.getByRole('button', { name: '配分を確
 test.beforeEach(async ({ page }) => {
   await page.goto('/budget-financial-planner?tab=simulation');
   await expect(balanceCard(page)).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole('button', { name: '記録追加', exact: true })).toHaveCount(0);
 });
 
 test('annual costs and allocations show the actual remainder', async ({ page }, info) => {

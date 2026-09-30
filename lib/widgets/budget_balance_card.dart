@@ -103,10 +103,14 @@ class _BudgetBalanceCardState extends State<BudgetBalanceCard> {
                     onPressed: _model.calculate,
                     icon: const Icon(Icons.balance),
                     label: const Text('配分を確認する'),
-                    style:
-                        FilledButton.styleFrom(minimumSize: const Size(48, 48)),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      backgroundColor: cs.onSurface,
+                      foregroundColor: cs.surface,
+                    ),
                   ),
                   TextButton(
+                    style: TextButton.styleFrom(foregroundColor: cs.onSurface),
                     onPressed: () {
                       for (final controller in _controllers.values) {
                         controller.clear();

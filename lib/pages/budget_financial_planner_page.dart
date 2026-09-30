@@ -354,7 +354,12 @@ $breakdown
                 _buildSimulationTab(cs),
               ],
             ),
-      floatingActionButton: _buildFab(),
+      floatingActionButton: ListenableBuilder(
+        listenable: _tabController,
+        builder: (context, _) => _tabController.index == 3
+            ? const SizedBox.shrink()
+            : _buildFab(),
+      ),
     );
   }
 
