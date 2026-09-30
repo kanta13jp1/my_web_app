@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/money_forward_page.dart';
 
 void main() {
-  testWidgets('discloses note-only import without promising account restoration', (
+  testWidgets(
+      'discloses note-only import without promising account restoration', (
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: MoneyForwardPage()));
@@ -25,7 +26,8 @@ void main() {
           home: const MoneyForwardPage(),
           routes: {
             '/import': (_) => const Scaffold(body: Text('Import destination')),
-            '/user-manual': (_) => const Scaffold(body: Text('Manual destination')),
+            '/user-manual': (_) =>
+                const Scaffold(body: Text('Manual destination')),
           },
         ),
       );
@@ -36,7 +38,8 @@ void main() {
       await tester.tap(button);
       await tester.pumpAndSettle();
       expect(
-        find.text(route == '/import' ? 'Import destination' : 'Manual destination'),
+        find.text(
+            route == '/import' ? 'Import destination' : 'Manual destination'),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);

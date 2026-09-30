@@ -111,10 +111,12 @@ class MoneyForwardPage extends StatelessWidget {
                   ),
                   _StepItem(text: '期間を指定してダウンロード'),
                   _StepItem(
-                    text: 'CSVをXLSXへ変換し、内容をノートにしたい列の見出しを「内容」にします。元のCSVは保持してください。',
+                    text:
+                        'CSVをXLSXへ変換し、内容をノートにしたい列の見出しを「内容」にします。元のCSVは保持してください。',
                   ),
                   _StepItem(
-                    text: '「インポート画面を開く」からExcel (XLSX)を選び、プレビューでノート内容を確認してから取り込みます。',
+                    text:
+                        '「インポート画面を開く」からExcel (XLSX)を選び、プレビューでノート内容を確認してから取り込みます。',
                   ),
                 ],
               ),
