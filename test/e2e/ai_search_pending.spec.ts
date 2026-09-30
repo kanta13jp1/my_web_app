@@ -41,7 +41,7 @@ test('failed search retains prior result and retry recovers', async ({ page }, i
   await search(page, '最初');
   await expect(page.getByRole('group').filter({ hasText: '最初 のノート' })).toBeVisible();
   await search(page, '失敗から再試行');
-  await expect(page.getByText('「失敗から再試行」の検索: 検索できませんでした。通信状態を確認して再試行してください。', { exact: true })).toBeVisible();
+  await expect(page.locator('flt-semantics').getByText('「失敗から再試行」の検索: 検索できませんでした。通信状態を確認して再試行してください。', { exact: true })).toBeVisible();
   await expect(page.getByRole('group').filter({ hasText: '最初 のノート' })).toBeVisible();
   await page.screenshot({ path: info.outputPath('failure-preserved.png') });
   await page.getByRole('button', { name: '再試行', exact: true }).click();
