@@ -353,8 +353,10 @@ void main() {
           expect(result.source, 'jev');
           expect(result.score, positive);
           expect(result.isMatch, positive >= 0.50 && exclusion < 0.60);
-          expect(queries,
-              positive < 0.50 ? <String>['カード'] : <String>['カード', '完了']);
+          expect(
+            queries,
+            positive < 0.50 ? <String>['カード'] : <String>['カード', '完了'],
+          );
         });
       }
     }
