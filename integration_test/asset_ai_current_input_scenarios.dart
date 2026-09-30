@@ -294,6 +294,35 @@ void main() {
     ai.complete(1, 'Synthetic discrepancy resolved');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          aiSummaryService: ai,
+          aiAnalysisHistoryService: _EmptyHistory(),
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{
+              'cash': 50000,
+              'KDDI': -5764,
+              'PayPay': -20000,
+            },
+          },
+        ),
+      ),
+    );
+    await _pumpUntil(tester, () => ai.requests.length == 3);
+    final restored = ai.requests.last.workbook.cardStatementReconciliation.groups
+        .singleWhere((group) => group.billingAccountId == 'paypay_card');
+    expect(restored.configuredDetailTotal, 20000);
+    expect(restored.hasConfiguredMismatchFix, isFalse);
+    expect(
+      restored.alerts,
+      contains(AssetLiabilityPlanningService.cardStatementMissingImportAlert),
+    );
+    ai.complete(2, 'Restored synthetic discrepancy remains resolved');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
   });
 
   for (final mode in <int>[0, 1, 2]) {
