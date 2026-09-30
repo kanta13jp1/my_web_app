@@ -72,3 +72,13 @@ test('hidden document pauses and resumes only by explicit action',async({page})=
   await page.locator('#play').click();
   await expect(page.locator('#phase')).toHaveText('ARRIVED',{timeout:20000});
 });
+test('coordinate input supports keyboard course and validation',async({page})=>{
+  await page.locator('summary').focus();await page.keyboard.press('Enter');
+  await page.locator('#x1').fill('-1');await page.locator('#add-line').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('#status')).toContainText('0〜900');
+  await expect(page.locator('#line-count')).toContainText('0 /');
+  await page.locator('#x1').fill('80');await page.locator('#add-line').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('#line-count')).toContainText('1 /');
+  await page.locator('#play').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('#phase')).toHaveText('ARRIVED',{timeout:20000});
+});

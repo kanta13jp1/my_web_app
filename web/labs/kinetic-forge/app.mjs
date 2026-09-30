@@ -7,6 +7,7 @@ function sync(message){
   $('phase').textContent=mode==='design'?'DESIGN MODE':mode==='running'?'LIVE':mode==='paused'?'PAUSED':sim.status==='won'?'ARRIVED':'TRY AGAIN';
   $('play').textContent=mode==='running'?'一時停止':mode==='paused'?'続ける':'球を放つ';$('play').disabled=mode==='done';
   $('undo').disabled=!ready()||lines.length===0;$('clear').disabled=!ready()||lines.length===0;$('sample').disabled=!ready();
+  $('add-line').disabled=!ready();
   $('line-count').textContent=`${lines.length} / ${MAX_LINES} LINES`;$('clock').textContent=`${(sim.tick*DT).toFixed(2)} s`;
   if(message)$('status').textContent=message;
 }
@@ -40,6 +41,14 @@ $('retry').onclick=()=>reset();$('undo').onclick=()=>{if(ready()){lines.pop();re
 $('clear').onclick=()=>{if(ready()){lines=[];reset('線を消しました。新しい道を描こう。');}};
 $('sample').onclick=()=>{if(ready()){lines=LEVELS[level].sample.map(l=>[...l]);reset('見本のコースを置きました。消して描き直すこともできます。');}};
 $('level').onchange=()=>load(Number($('level').value));
+$('add-line').onclick=()=>{
+  if(!ready())return;
+  if(lines.length>=MAX_LINES){sync('40本に達しました。一筆戻すか線を消してください。');return;}
+  const values=['x1','y1','x2','y2'].map(id=>$(id).valueAsNumber);
+  if(values.some((v,i)=>!Number.isFinite(v)||v<0||v>(i%2?H:W))){sync('横は0〜900、縦は0〜540の数値で入力してください。');return;}
+  if(Math.hypot(values[2]-values[0],values[3]-values[1])<4){sync('始点と終点を4以上離してください。');return;}
+  lines.push(values);reset('座標で線を追加しました。「球を放つ」で実験。');
+};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='running'){mode='paused';sync('画面が隠れたため一時停止しました。');}});
 window.addEventListener('pagehide',()=>cancelAnimationFrame(raf));
 load(0);raf=requestAnimationFrame(frame);
