@@ -6,7 +6,7 @@ test('LightGBM worker plays without consent or API; records assistance and stops
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
  await lab.locator('#screen').evaluate(()=>localStorage.setItem('jev-mario-retry-world8-v1',JSON.stringify([280,440,640,1350].map(x=>({stage:1,room:'overworld',x,y:192,count:12,kind:'stalled'})))));
  await page.reload();
- await expect(lab.locator('#volume')).toHaveValue('65');await expect(lab.locator('#volume-value')).toHaveText('50%');
+ await expect(lab.locator('#volume')).toHaveValue('65');await expect(lab.locator('#volume-value')).toHaveText('65%');
  await expect(lab.locator('#consent')).not.toBeChecked();await lab.locator('#play-student').click();
  await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
  await expect(lab.locator('#student-status')).toContainText('探索変更',{timeout:15000});
@@ -795,3 +795,12 @@ test('LightGBM worker completes 2-2 and advances to 2-3 without going offscreen'
  await expect(lab.locator('#stage')).toHaveValue('7',{timeout:15000});await lab.locator('#stop').click();
  const download=page.waitForEvent('download');await lab.locator('#export').click();await(await download).saveAs(info.outputPath('water-autoplay.json'));
 });
+
+ test('4-4 worker escapes the reported fire-Mario alcove',async({page},info)=>{
+  test.setTimeout(45000);await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;
+  await lab.locator('#stage').selectOption('16');
+  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).alcoveWorld=this;this.power=2;Object.assign(this.p,{x:676,y:180,h:28,grounded:true});this.camera=580;this.invincible=5000;step.call(this);};});
+  await lab.locator('#play-student').click();
+  await expect.poll(()=>frame.evaluate(()=>(window as any).alcoveWorld?.p.x??0),{timeout:30000}).toBeGreaterThan(736);
+  await lab.locator('#stop').click();await screenshot(page,info.outputPath('castle-alcove-escape.png'));
+ });
