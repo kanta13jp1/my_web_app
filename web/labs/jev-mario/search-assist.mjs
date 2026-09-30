@@ -26,13 +26,15 @@ function score(g,start,failures,target){
  return -repeat+collected*2+pursuit+Math.max(0,g.power-start.power)*60+itemPotential(g)-itemPotential(start)+(g.p.x-start.p.x)*(target ? .25 : 1)+(192-g.p.y)*.12+g.p.vx*2-(g.power<start.power?80:0)-(g.p.y>208?(g.p.y-208)*8:0);
 }
 export function plan(g,raw=null,failures=[],itemAvoidance=[]){
- // Retreat from a low item-block ceiling before trying to jump over its adjacent ledge.
- // This is explicit geometric assistance; no model score is presented as an escape prediction.
- if(g.room==='castle'&&!g.p.grounded&&g.wasJump&&g.p.vy<0)return {retry_level:retryLevel(g,failures),search_depth:0,action:'right_run_jump',accepted:false,score:null,raw_score:null};
+ // Big players use a momentum-preserving crouch slide through a one-tile tunnel.
+ // Explicit geometry assistance, not a learned model action.
  const p=g.p,col=Math.floor((p.x+p.w)/16),foot=Math.floor((p.y+p.h-1)/16);
- const wall=[col,col+1,col+2,col+3,col+4,col+5].some(c=>g.solid(c,foot-1)),head=[Math.floor(p.x/16),Math.floor((p.x+p.w-0.01)/16)].some(c=>[1,2,3,4,5,6].some(d=>g.solid(c,Math.floor(p.y/16)-d)));
- if(g.room==='castle'&&p.grounded&&wall&&head&&p.x>g.camera+20)return {retry_level:retryLevel(g,failures),search_depth:0,action:'left_run',accepted:false,score:null,raw_score:null};
- if(g.room==='castle'&&p.grounded&&wall&&!head)return {retry_level:retryLevel(g,failures),search_depth:0,action:p.vx>1.6?edge(g,'right_run_jump'):'right_run',accepted:false,score:null,raw_score:null};
+ const tunnel=[col,col+1,col+2,col+3,col+4,col+5].find(c=>g.solid(c,foot-1)&&!g.solid(c,foot)&&g.solid(c,foot+1));
+ if(g.room==='castle'&&g.power&&p.grounded&&tunnel!==undefined){
+  const near=tunnel*16-p.x-p.w<20;
+  const action=p.crouching&&p.vx>0?'right_run_down':near?(p.vx>1.6?'right_run_down':'left_run'):'right_run';
+  return {retry_level:retryLevel(g,failures),search_depth:0,action,accepted:false,score:null,raw_score:null};
+ }
  const target=isWater(g.stage)?null:itemTargets(g).filter(t=>{if(!t.block||g.power===0)return true;const [x,y]=t.key.split(',').map(Number);return ![x-1,x+1].some(c=>g.solid(c,y+2));}).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
  const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left',...(!isWater(g.stage)?['left_jump']:[])]:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
  let beam=[{g,first:null,value:0}],byFirst={};
