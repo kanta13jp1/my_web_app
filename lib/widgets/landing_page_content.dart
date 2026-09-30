@@ -4775,9 +4775,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                     : const Color(0xFF1F7AE0),
                 minimumSize: const Size.fromHeight(44),
                 side: BorderSide(
-                    color: heroMode
-                        ? const Color(0xFF70818D)
-                        : const Color(0xFF93C5FD)),
+                  color: heroMode
+                      ? const Color(0xFF70818D)
+                      : const Color(0xFF93C5FD),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
