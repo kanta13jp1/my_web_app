@@ -23,14 +23,14 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-    env:
-      XLSX_INTEROP_DIR: ${{ runner.temp }}/xlsx-interop
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
+      - name: Set isolated interoperability directory
+        run: echo "XLSX_INTEROP_DIR=$RUNNER_TEMP/xlsx-interop" >> "$GITHUB_ENV"
       - name: Format changed feature files and preserve patch
         run: |
           dart format lib/domain/models/spreadsheet_document.dart lib/domain/use_cases/evaluate_spreadsheet_formula_use_case.dart lib/domain/use_cases/spreadsheet_xlsx_codec.dart lib/data/services/spreadsheet_file_gateway.dart lib/ui/features/spreadsheet/view_models/spreadsheet_view_model.dart lib/ui/features/spreadsheet/views/spreadsheet_page.dart test/domain/use_cases/spreadsheet_xlsx_codec_test.dart test/ui/features/spreadsheet/spreadsheet_view_model_test.dart test/ui/features/spreadsheet/spreadsheet_page_test.dart test/main_spreadsheet_windows_test.dart
