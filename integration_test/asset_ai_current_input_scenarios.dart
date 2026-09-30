@@ -254,7 +254,8 @@ void main() {
       before.fixActions
           .singleWhere((action) =>
               action.kind ==
-              AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown)
+              AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown,
+          )
           .amount,
       -14236,
     );
@@ -276,13 +277,15 @@ void main() {
       of: find.byKey(const ValueKey('annual-rate:$providerId')),
       matching: find.byWidgetPredicate((widget) =>
           widget.key is GlobalKey &&
-          widget.key.toString().contains('debt_master_card_$providerId')),
+          widget.key.toString().contains('debt_master_card_$providerId'),
+      ),
     );
     expect(providerCard, findsOneWidget);
     final amountInput = find.descendant(
       of: providerCard,
       matching: find.byWidgetPredicate((widget) =>
-          widget is TextField && widget.controller?.text == '5764'),
+          widget is TextField && widget.controller?.text == '5764',
+      ),
     );
     expect(amountInput, findsOneWidget);
     await tester.ensureVisible(amountInput);
