@@ -5,6 +5,7 @@ async function search(page: Page, query: string) {
   await input(page).focus();
   await expect(input(page)).toBeFocused();
   await input(page).fill(query);
+  await expect(input(page)).toHaveValue(query);
   await input(page).press('Enter');
 }
 async function open(page: Page) {
