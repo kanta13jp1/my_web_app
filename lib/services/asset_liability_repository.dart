@@ -578,7 +578,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
 
   @override
   bool isMonthVerifiedForAi(DateTime month) {
-    if (!syncEnabled) return localRepository.isMonthVerifiedForAi(month);
+    if (!syncEnabled) {
+      return localRepository.isMonthVerifiedForAi(month);
+    }
     final userId = _userIdOrNull();
     final key = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
     return userId != null && _verifiedMonthUsers[key] == userId;
@@ -606,7 +608,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       // Keep offline display, but never upload or generate from an unverified read.
       return local;
     }
-    if (_userIdOrNull() != userId) return local;
+    if (_userIdOrNull() != userId) {
+      return local;
+    }
     _verifiedMonthUsers[monthKey] = userId;
     if (remoteState == null || remoteState.isEmpty) {
       if (!local.isEmpty && supabaseWritesEnabled) {
