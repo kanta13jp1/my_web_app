@@ -61,6 +61,34 @@ void main() {
       expect(p.isImproved, isTrue);
     });
 
+    test('missing calendar month does not compare an older snapshot', () {
+      final p = service.build(
+        snapshots: [
+          _snap('2026-05', netWorth: 100),
+          _snap('2026-09', netWorth: 200),
+        ],
+      );
+      expect(p.netWorth, 200);
+      expect(p.previousNetWorth, isNull);
+      expect(p.hasDelta, isFalse);
+      expect(p.deltaAmount, isNull);
+      expect(p.deltaPercent, isNull);
+      expect(p.sparkline.map((point) => point.monthKey),
+          ['2026-05', '2026-09']);
+    });
+
+    test('January compares December of the previous year', () {
+      final p = service.build(
+        snapshots: [
+          _snap('2025-12', netWorth: 100),
+          _snap('2026-01', netWorth: 150),
+        ],
+      );
+      expect(p.previousNetWorth, 100);
+      expect(p.deltaAmount, 50);
+      expect(p.deltaPercent, 50);
+    });
+
     test('negative delta is reported with a negative percent', () {
       final p = service.build(
         snapshots: [
