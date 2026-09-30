@@ -82,7 +82,8 @@ void main() {
       expect(ownsInput(), isFalse);
     });
 
-    test('user change during local restoration cannot verify remote state', () async {
+    test('user change during local restoration cannot verify remote state',
+        () async {
       final local = _GatedMonthlyRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
       var user = 'original-user';
