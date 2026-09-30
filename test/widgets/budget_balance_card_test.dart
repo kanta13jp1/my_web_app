@@ -4,8 +4,11 @@ import 'package:my_web_app/services/budget_balance_calculator.dart';
 import 'package:my_web_app/widgets/budget_balance_card.dart';
 
 void main() {
-  Future<void> mount(WidgetTester tester,
-      {double width = 1000, double scale = 1,}) async {
+  Future<void> mount(
+    WidgetTester tester, {
+    double width = 1000,
+    double scale = 1,
+  }) async {
     tester.view.physicalSize = Size(width, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -15,7 +18,8 @@ void main() {
         home: MediaQuery(
           data: MediaQueryData(textScaler: TextScaler.linear(scale)),
           child: const Scaffold(
-              body: SingleChildScrollView(child: BudgetBalanceCard()),),
+            body: SingleChildScrollView(child: BudgetBalanceCard()),
+          ),
         ),
       ),
     );
@@ -25,8 +29,9 @@ void main() {
     final values = ['230000', '110000', '120000', '10000', '20000', '50000'];
     for (var i = 0; i < values.length; i++) {
       await tester.enterText(
-          find.byKey(ValueKey('balance-${BudgetBalanceField.values[i].name}')),
-          values[i],);
+        find.byKey(ValueKey('balance-${BudgetBalanceField.values[i].name}')),
+        values[i],
+      );
     }
   }
 
@@ -57,7 +62,9 @@ void main() {
     await fill(tester);
     await calculate(tester);
     await tester.enterText(
-        find.byKey(const ValueKey('balance-investment')), '150000',);
+      find.byKey(const ValueKey('balance-investment')),
+      '150000',
+    );
     await tester.pump();
     expect(find.text('配分後の残り 30,000円'), findsNothing);
     await calculate(tester);

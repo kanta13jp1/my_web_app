@@ -55,13 +55,16 @@ class _BudgetBalanceCardState extends State<BudgetBalanceCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('今と将来の配分チェック',
-                      style: Theme.of(context).textTheme.titleLarge,),
+                  Text(
+                    '今と将来の配分チェック',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 8),
                   const Text('生活費、今の楽しみ、将来への備えを一緒に並べて、毎月の収支を確かめます。'),
                   const SizedBox(height: 8),
                   const Text(
-                      '金額はこの画面での試算だけに使い、保存・送信しません。空欄は未確認として扱います。支出がないと確認できた欄は0を入力してください。',),
+                    '金額はこの画面での試算だけに使い、保存・送信しません。空欄は未確認として扱います。支出がないと確認できた欄は0を入力してください。',
+                  ),
                   const SizedBox(height: 20),
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -148,13 +151,17 @@ class _BudgetBalanceCardState extends State<BudgetBalanceCard> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                  '年間支出の月割り：${_format.format(result.monthlyAnnualProvision)}円',),
+                                '年間支出の月割り：${_format.format(result.monthlyAnnualProvision)}円',
+                              ),
                               Text(
-                                  '配分の合計：${_format.format(result.allocated)}円／月',),
+                                '配分の合計：${_format.format(result.allocated)}円／月',
+                              ),
                               const SizedBox(height: 8),
-                              Text(result.remaining < 0
-                                  ? '配分の合計が手取りを超えています。費用の重複・漏れと、それぞれの金額を見直してください。'
-                                  : '入力した範囲での差額です。費用の漏れがないか確認してください。残額の投資を勧めるものではありません。',),
+                              Text(
+                                result.remaining < 0
+                                    ? '配分の合計が手取りを超えています。費用の重複・漏れと、それぞれの金額を見直してください。'
+                                    : '入力した範囲での差額です。費用の漏れがないか確認してください。残額の投資を勧めるものではありません。',
+                              ),
                             ],
                           ),
                         ),
@@ -162,7 +169,8 @@ class _BudgetBalanceCardState extends State<BudgetBalanceCard> {
                     ),
                   const SizedBox(height: 12),
                   const Text(
-                      '年間支出は12で割り、1円未満を切り上げます。支払日の残高や運用益は計算しません。本人の満足度や積立額の適否は、この差額だけでは判断できません。',),
+                    '年間支出は12で割り、1円未満を切り上げます。支払日の残高や運用益は計算しません。本人の満足度や積立額の適否は、この差額だけでは判断できません。',
+                  ),
                 ],
               ),
             ),
