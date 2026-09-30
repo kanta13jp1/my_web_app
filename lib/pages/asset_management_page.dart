@@ -33312,7 +33312,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             const SizedBox(height: 8),
             ExpenseSemanticSearch(
-              key: ValueKey('expense-search-${_supabase.auth.currentUser?.id}-$visibleMonthLabel'),
+              key: ValueKey(
+                  'expense-search-${_supabase.auth.currentUser?.id}-$visibleMonthLabel'),
               periodLabel: visibleMonthLabel,
               items: visibleFlows
                   .where((flow) => flow['action_type'] == 'expense')

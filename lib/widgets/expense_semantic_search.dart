@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/jev_client.dart';
 import '../services/jev_expense_proxy_client.dart';
 import '../services/jev_semantic_expense_search_service.dart';
@@ -8,12 +11,14 @@ class ExpenseSemanticSearch extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final String periodLabel;
   final JevClient? client;
+  final Stream<String?>? sessionIdentities;
 
   const ExpenseSemanticSearch({
     super.key,
     required this.items,
     required this.periodLabel,
     this.client,
+    this.sessionIdentities,
   });
 
   @override
@@ -32,6 +37,8 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
   final Map<int, SemanticSearchResult> _results = {};
   bool _busy = false;
   int _revision = 0;
+  StreamSubscription<String?>? _authSubscription;
+  bool _sessionChanged = false;
 
   List<Map<String, dynamic>> get _items => widget.items.take(5).map((item) {
         return <String, dynamic>{'title': item['title']?.toString() ?? ''};
@@ -41,6 +48,40 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
   void initState() {
     super.initState();
     _configure();
+    _watchSession();
+  }
+
+
+  void _watchSession() {
+    Stream<String?>? identities = widget.sessionIdentities;
+    String? previous;
+    var initialized = false;
+    if (identities == null && widget.client == null) {
+      try {
+        final auth = Supabase.instance.client.auth;
+        previous = auth.currentUser?.id;
+        initialized = true;
+        identities = auth.onAuthStateChange.map((event) => event.session?.user.id);
+      } catch (_) {
+        return;
+      }
+    }
+    _authSubscription = identities?.listen((identity) {
+      if (!initialized) {
+        previous = identity;
+        initialized = true;
+        return;
+      }
+      if (identity == previous || !mounted) return;
+      previous = identity;
+      setState(() {
+        _revision++;
+        _results.clear();
+        _service.clearCache();
+        // Do not reuse the previous account's already loaded memo list.
+        _sessionChanged = true;
+      });
+    });
   }
 
   void _configure() {
@@ -73,7 +114,7 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
   }
 
   Future<void> _search({int? aiIndex}) async {
-    if (_busy) return;
+    if (_busy || _sessionChanged) return;
     final revision = ++_revision;
     final items = _items;
     final query = _query.text.trim();
@@ -108,6 +149,7 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
   @override
   void dispose() {
     _revision++;
+    _authSubscription?.cancel();
     _query.dispose();
     _exclude.dispose();
     _localClient.dispose();
@@ -117,6 +159,12 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
 
   @override
   Widget build(BuildContext context) {
+    if (_sessionChanged) {
+      return const Padding(
+        padding: EdgeInsets.all(12),
+        child: Text('アカウントが切り替わりました。この画面を開き直すと支出メモを検索できます。'),
+      );
+    }
     final items = _items;
     final canAsk = _client.isConfigured && _query.text.trim().isNotEmpty;
     return ExpansionTile(

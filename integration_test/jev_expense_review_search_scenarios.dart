@@ -20,6 +20,7 @@ Widget host(JevExpenseProxyClient client, {
   String memo = '人工例：返金を依頼した。まだ未完了。',
   String period = '2026年10月',
   Key? accountKey,
+  Stream<String?>? sessionIdentities,
 }) => MaterialApp(
       home: Scaffold(
         body: SingleChildScrollView(
@@ -27,6 +28,7 @@ Widget host(JevExpenseProxyClient client, {
             key: accountKey,
             periodLabel: period,
             client: client,
+            sessionIdentities: sessionIdentities,
             items: [
               {'title': memo, 'amount': 123456789, 'date': 'private-date'},
               {'title': '人工例：返金完了。'},
@@ -172,4 +174,30 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.text('AI判定・要確認'), findsNothing);
     expect(tester.widget<TextField>(find.byKey(const Key('expense_search_query'))).controller!.text, isEmpty);
   });
+  testWidgets('Account events clear displayed AI results and disable previous memos',
+      (tester) async {
+    final identities = StreamController<String?>();
+    addTearDown(identities.close);
+    var calls = 0;
+    final client = JevExpenseProxyClient(
+      semanticSearch: true,
+      signedIn: () => true,
+      invoke: (_) async { calls++; return searchAnswer(1); },
+    );
+    addTearDown(client.dispose);
+    await tester.pumpWidget(host(client, sessionIdentities: identities.stream));
+    identities.add('first-user');
+    await tester.pump();
+    await expand(tester);
+    await tester.enterText(find.byKey(const Key('expense_search_query')), '返金');
+    await ask(tester);
+    expect(find.text('AI判定・要確認'), findsOneWidget);
+    identities.add('second-user');
+    await tester.pumpAndSettle();
+    expect(find.text('AI判定・要確認'), findsNothing);
+    expect(find.byKey(const Key('expense_search_ai_0')), findsNothing);
+    expect(find.textContaining('画面を開き直す'), findsOneWidget);
+    expect(calls, 1);
+  });
+
 }
