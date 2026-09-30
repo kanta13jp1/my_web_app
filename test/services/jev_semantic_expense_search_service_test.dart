@@ -207,6 +207,34 @@ void main() {
       expect(match.isMatch, isTrue);
       expect(match.source, 'local_fallback');
     });
+    test('旧endpointの空scoresは従来どおりconfidenceで補完する', () async {
+      final MockClient mock = MockClient((http.Request request) async {
+        return http.Response(
+          jsonEncode(<String, dynamic>{
+            'best_choice_id': 'match',
+            'confidence': 0.85,
+            'scores': <String, double>{},
+          }),
+          200,
+        );
+      });
+      final JevSemanticExpenseSearchService service =
+          JevSemanticExpenseSearchService(
+        client: JevClient(
+          apiKey: 'test-api-key',
+          endpoint: 'https://example.test/classify',
+          httpClient: mock,
+        ),
+      );
+      final List<SemanticSearchResult> results = await service.search(
+        items: <Map<String, dynamic>>[testExpenses.last],
+        meaningQuery: 'カード',
+      );
+      expect(results.single.source, 'jev');
+      expect(results.single.score, 0.85);
+      expect(results.single.isMatch, isTrue);
+    });
+
     for (final String failure in <String>[
       'HTTP 503',
       '空の応答',
