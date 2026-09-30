@@ -34,7 +34,7 @@ test('castle item alcove permits retreating jump rather than permanent right inp
 
 test('2-4 stopped crouching players exit the low tunnel in either power state',()=>{
  for(const power of [1,2])for(const vx of [-.4,0,.4]){const g=new World11(8);g.power=power;Object.assign(g.p,{x:367,y:192,h:16,vx,crouching:true,grounded:true});g.camera=271;g.invincible=1200;
-  for(let i=0;i<40&&g.p.x<432;i++)advance(g,plan(g,'right_run').action,8);
+  for(let i=0;i<40&&g.p.x<432;i++)advance(g,plan(g,'right_run',[{stage:8,room:'castle',x:367,y:192,count:12,kind:'stalled'}]).action,8);
   assert.ok(g.p.x>400,`2-4 still blocked: ${g.p.x}`);assert.equal(g.p.h,28);assert.equal(g.power,power);
  }
 });
