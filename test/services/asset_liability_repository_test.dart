@@ -37,7 +37,8 @@ void main() {
       );
     });
 
-    test('user change during local restoration cannot verify another user', () async {
+    test('user change during local restoration cannot verify another user',
+        () async {
       final local = _GatedMonthlyRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
       var user = 'original-user';
@@ -57,7 +58,8 @@ void main() {
     });
 
     for (final hasLocalData in <bool>[false, true]) {
-      test('failed remote read never confirms fallback: $hasLocalData', () async {
+      test('failed remote read never confirms fallback: $hasLocalData',
+          () async {
         final month = DateTime(2026, 5);
         final local = _FakeAssetLiabilityRepository();
         if (hasLocalData) {
@@ -97,7 +99,8 @@ void main() {
       });
     }
 
-    test('successful empty read and explicit local-only remain distinct', () async {
+    test('successful empty read and explicit local-only remain distinct',
+        () async {
       final month = DateTime(2026, 5);
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
