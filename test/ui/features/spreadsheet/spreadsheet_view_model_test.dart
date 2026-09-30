@@ -7,6 +7,7 @@ import 'package:my_web_app/data/services/spreadsheet_file_gateway.dart';
 import 'package:my_web_app/domain/models/spreadsheet_document.dart';
 import 'package:my_web_app/domain/use_cases/evaluate_spreadsheet_formula_use_case.dart';
 import 'package:my_web_app/domain/use_cases/spreadsheet_csv_codec.dart';
+import 'package:my_web_app/domain/use_cases/spreadsheet_xlsx_codec.dart';
 import 'package:my_web_app/services/auto_save_service.dart';
 import 'package:my_web_app/ui/features/spreadsheet/view_models/spreadsheet_view_model.dart';
 
@@ -118,6 +119,56 @@ void main() {
     expect(viewModel.noticeMessage, contains('新しいシート'));
   });
 
+  test('XLSX import keeps existing sheets and can be undone', () async {
+    await viewModel.load();
+    viewModel.updateSelectedCell('existing');
+    final source = SpreadsheetDocument.blank().copyWith(sheets: [
+      SpreadsheetSheet.blank(id: 'one', name: '売上').copyWith(cells: {'0:0': '001', '0:1': '=A2*2'}, textCells: ['0:0']),
+      SpreadsheetSheet.blank(id: 'two', name: '予算'),
+    ]);
+    fileGateway.xlsxPicked = SpreadsheetPickedCsv(name: 'import.xlsx', bytes: const SpreadsheetXlsxCodec().encode(source));
+    expect(await viewModel.importXlsx(), isTrue);
+    expect(viewModel.sheets, hasLength(3));
+    expect(viewModel.selectedCellInput, '001');
+    expect(viewModel.document!.activeSheet.textCells, contains('0:0'));
+    viewModel.undo();
+    expect(viewModel.sheets, hasLength(1));
+    expect(viewModel.selectedCellInput, 'existing');
+  });
+
+  test('XLSX cancellation and corruption do not change the workbook', () async {
+    await viewModel.load();
+    final before = viewModel.document;
+    expect(await viewModel.importXlsx(), isFalse);
+    expect(viewModel.document, same(before));
+    fileGateway.xlsxPicked = SpreadsheetPickedCsv(name: 'broken.xlsx', bytes: Uint8List(25));
+    expect(await viewModel.importXlsx(), isFalse);
+    expect(viewModel.document, same(before));
+    expect(viewModel.errorMessage, isNotNull);
+    expect(viewModel.isImporting, isFalse);
+  });
+
+  test('XLSX exports all sheets and preserves literal formula-like text', () async {
+    await viewModel.load();
+    viewModel.updateSelectedCell('10');
+    viewModel.addSheet();
+    viewModel.updateSelectedCell('=1+2');
+    expect(await viewModel.exportXlsx(), isTrue);
+    final sheets = const SpreadsheetXlsxCodec().decode(fileGateway.savedBytes!);
+    expect(sheets, hasLength(2));
+    expect(sheets.last.cells['0:0'], '=1+2');
+    expect(fileGateway.savedName, endsWith('-export.xlsx'));
+  });
+
+  test('duplicate XLSX sheet names fail without overwriting existing data', () async {
+    await viewModel.load();
+    final before = viewModel.document;
+    fileGateway.xlsxPicked = SpreadsheetPickedCsv(name: 'same.xlsx', bytes: const SpreadsheetXlsxCodec().encode(SpreadsheetDocument.blank()));
+    expect(await viewModel.importXlsx(), isFalse);
+    expect(viewModel.document, same(before));
+    expect(viewModel.errorMessage, contains('同名'));
+  });
+
   test('exports the active sheet as UTF-8 CSV with formulas preserved',
       () async {
     await viewModel.load();
@@ -148,11 +199,19 @@ class _MemorySpreadsheetRepository implements SpreadsheetRepository {
 
 class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
   SpreadsheetPickedCsv? picked;
+  SpreadsheetPickedCsv? xlsxPicked;
   String? savedName;
   Uint8List? savedBytes;
 
   @override
   Future<SpreadsheetPickedCsv?> pickCsv() async => picked;
+
+  @override
+  Future<SpreadsheetPickedCsv?> pickXlsx() async => xlsxPicked;
+
+  @override
+  Future<bool> saveXlsx({required String suggestedName, required Uint8List bytes}) =>
+      saveCsv(suggestedName: suggestedName, bytes: bytes);
 
   @override
   Future<bool> saveCsv({

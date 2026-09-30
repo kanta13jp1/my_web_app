@@ -50,6 +50,7 @@ class SpreadsheetSheet {
     required this.rowCount,
     required this.columnCount,
     required this.cells,
+    this.textCells = const <String>[],
   });
 
   factory SpreadsheetSheet.blank({
@@ -76,6 +77,9 @@ class SpreadsheetSheet {
       rowCount: _positiveInt(json['rowCount'], fallback: 30),
       columnCount: _positiveInt(json['columnCount'], fallback: 12),
       cells: _readCells(json['cells']),
+      textCells: List<String>.unmodifiable(
+        (json['textCells'] as List?)?.whereType<String>() ?? const <String>[],
+      ),
     );
   }
 
@@ -84,6 +88,8 @@ class SpreadsheetSheet {
   final int rowCount;
   final int columnCount;
   final Map<String, String> cells;
+  // XLSX literal strings must not become formulas or lose leading zeros.
+  final List<String> textCells;
 
   String inputAt(CellAddress address) => cells[address.key] ?? '';
 
@@ -92,6 +98,7 @@ class SpreadsheetSheet {
     int? rowCount,
     int? columnCount,
     Map<String, String>? cells,
+    List<String>? textCells,
   }) {
     return SpreadsheetSheet(
       id: id,
@@ -99,6 +106,7 @@ class SpreadsheetSheet {
       rowCount: rowCount ?? this.rowCount,
       columnCount: columnCount ?? this.columnCount,
       cells: Map<String, String>.unmodifiable(cells ?? this.cells),
+      textCells: List<String>.unmodifiable(textCells ?? this.textCells),
     );
   }
 
@@ -109,6 +117,7 @@ class SpreadsheetSheet {
       'rowCount': rowCount,
       'columnCount': columnCount,
       'cells': cells,
+      'textCells': textCells,
     };
   }
 

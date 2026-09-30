@@ -10,6 +10,9 @@ class SpreadsheetPickedCsv {
 
 abstract interface class SpreadsheetFileGateway {
   Future<SpreadsheetPickedCsv?> pickCsv();
+  Future<SpreadsheetPickedCsv?> pickXlsx();
+
+  Future<bool> saveXlsx({required String suggestedName, required Uint8List bytes});
 
   Future<bool> saveCsv({
     required String suggestedName,
@@ -19,6 +22,28 @@ abstract interface class SpreadsheetFileGateway {
 
 class FilePickerSpreadsheetFileGateway implements SpreadsheetFileGateway {
   const FilePickerSpreadsheetFileGateway();
+
+  @override
+  Future<SpreadsheetPickedCsv?> pickXlsx() async {
+    final result = await FilePicker.pickFiles(
+      dialogTitle: 'XLSXを読み込む', type: FileType.custom,
+      allowedExtensions: const ['xlsx'], withData: true, lockParentWindow: true,
+    );
+    if (result == null || result.files.isEmpty) return null;
+    final file = result.files.single;
+    if (file.bytes == null) throw StateError('XLSXファイルを読み込めませんでした。');
+    return SpreadsheetPickedCsv(name: file.name, bytes: file.bytes!);
+  }
+
+  @override
+  Future<bool> saveXlsx({required String suggestedName, required Uint8List bytes}) async {
+    final path = await FilePicker.saveFile(
+      dialogTitle: 'XLSXを別名で書き出す', fileName: suggestedName,
+      type: FileType.custom, allowedExtensions: const ['xlsx'],
+      bytes: bytes, lockParentWindow: true,
+    );
+    return kIsWeb || path != null;
+  }
 
   @override
   Future<SpreadsheetPickedCsv?> pickCsv() async {
