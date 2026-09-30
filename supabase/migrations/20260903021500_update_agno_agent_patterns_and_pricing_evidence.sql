@@ -1,7 +1,8 @@
+-- Repair unapplied schema typo; target stable provider/category, preserving newer revisions.
 -- Issue #5142: Agno エージェント設計パターン & 料金コースのエビデンス契約・Agent/Team/Workflow選定・料金TCO更新
-UPDATE ai_university_contents
+UPDATE public.ai_university_content
 SET
-  description = $md$
+  content = $md$
 # Agno エージェント設計パターン & プラットフォーム料金体系 (2026)
 
 **Agno (旧 phidata)** は、Python-native な超高速マルチエージェント基盤です。
@@ -40,4 +41,5 @@ SET
 $md$,
   source_url = 'https://docs.agno.com/',
   published_at = '2026-09-02'
-WHERE provider_id = 'agno' AND (title LIKE '%エージェント設計パターン%' OR id = '6dba658f-c89c-4a8e-86c6-750c26d51fa2' OR sort_order = 2);
+WHERE provider = 'agno' AND category = 'models'
+  AND (published_at IS NULL OR published_at <= DATE '2026-09-02');

@@ -10,6 +10,23 @@ void main() {
     const service = AssetManagementInsightService();
     const planner = AssetLiabilityPlanningService();
 
+    test('does not present inferred discipline results as facts', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000},
+        baseDate: DateTime(2026, 9, 6),
+      );
+      final report = service.buildReport(workbook: workbook);
+      final prompt = const AssetManagementInsightPromptBuilder()
+          .buildDetailedAdvicePrompt(report);
+
+      expect(prompt, contains('判定保留（取引証拠との照合が必要）'));
+      expect(prompt, isNot(contains('違反あり')));
+      expect(prompt, isNot(contains('今月は両誓約を守れています')));
+      expect(prompt, contains('「期限超過:いいえ」は支払完了を意味しません'));
+      expect(prompt, contains('引落確認待ちは未払い確定ではありません'));
+      expect(prompt, contains('支払予定0円だけで返済なし'));
+    });
+
     test('marks missing payment day as an action item', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
@@ -880,9 +897,145 @@ void main() {
       expect(prompt.contains('負債マスタ詳細'), true);
       expect(prompt.contains('現実装コンテキスト'), true);
       expect(prompt.contains('asset_management_page.dart'), true);
+      expect(prompt.contains('Claude（Claude AI SUBSCRIPTION）の扱い'), true);
+      expect(prompt.contains('Claude Pro'), true);
       expect(prompt.contains('開発者向け改善提案候補'), true);
       expect(prompt.contains('受け入れ条件'), true);
       expect(prompt.contains(report.actionItems.first.title), true);
+    });
+
+    test(
+        'detects debt spiral warning when principal payment is zero or below interest',
+        () {
+      const zeroPrincipalDebt = AssetLiabilityDebtRow(
+        id: 'jibun_loan',
+        name: 'じぶんローン',
+        kind: AssetLiabilityAccountKind.cardLoan,
+        balance: -1000827,
+        paymentDay: 10,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 14.5,
+        minimumPaymentEstimate: 15000,
+        manualPaymentAmount: 0,
+        scheduledPaymentAmount: 0,
+        monthlyInterestEstimate: 11949,
+        principalPaymentEstimate: 0,
+        balanceAfterPaymentEstimate: -1000827,
+        liabilityShare: 0.6,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+      );
+
+      const spiralDebt = AssetLiabilityDebtRow(
+        id: 'au_pay_card',
+        name: 'auPAYカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -525792,
+        paymentDay: 10,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 15.0,
+        minimumPaymentEstimate: 10000,
+        manualPaymentAmount: 10000,
+        scheduledPaymentAmount: 10000,
+        monthlyInterestEstimate: 6572,
+        principalPaymentEstimate: 3428,
+        balanceAfterPaymentEstimate: -522364,
+        liabilityShare: 0.4,
+        priorityLabel: '中金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+      );
+
+      const healthyDebt = AssetLiabilityDebtRow(
+        id: 'healthy_loan',
+        name: '奨学金',
+        kind: AssetLiabilityAccountKind.otherLiability,
+        balance: -200000,
+        paymentDay: 20,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 1.0,
+        minimumPaymentEstimate: 10000,
+        manualPaymentAmount: 10000,
+        scheduledPaymentAmount: 10000,
+        monthlyInterestEstimate: 167,
+        principalPaymentEstimate: 9833,
+        balanceAfterPaymentEstimate: -190167,
+        liabilityShare: 0.1,
+        priorityLabel: '低金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+      );
+
+      final workbook = _workbook(
+        debtRows: [zeroPrincipalDebt, spiralDebt, healthyDebt],
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final spiralWarnings = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.debtSpiralWarning,
+          )
+          .toList();
+
+      expect(spiralWarnings.length, 2);
+
+      final zeroItem = spiralWarnings.firstWhere(
+        (item) => item.relatedAccountId == 'jibun_loan',
+      );
+      expect(zeroItem.severity, AssetManagementInsightSeverity.critical);
+      expect(zeroItem.title, contains('じぶんローンが利息スパイラル状態です（元金返済0円）'));
+      expect(zeroItem.description, contains('月利息11,949円が発生'));
+      expect(zeroItem.description, contains('増加し続けます'));
+      expect(zeroItem.suggestedAction, contains('24ヶ月完済目標額'));
+
+      final slowItem = spiralWarnings.firstWhere(
+        (item) => item.relatedAccountId == 'au_pay_card',
+      );
+      expect(slowItem.severity, AssetManagementInsightSeverity.critical);
+      expect(slowItem.title, contains('auPAYカードの利息負担が元金返済を上回っています'));
+      expect(slowItem.description, contains('利息が6,572円を占め'));
+      expect(slowItem.description, contains('元金返済は3,428円'));
+      expect(slowItem.description, contains('完済まで約'));
+      expect(slowItem.description, contains('追加利息'));
+      expect(slowItem.suggestedAction, contains('24ヶ月完済目標額'));
+
+      expect(
+        spiralWarnings.any((item) => item.relatedAccountId == 'healthy_loan'),
+        false,
+      );
     });
   });
 }

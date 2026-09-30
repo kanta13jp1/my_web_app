@@ -227,4 +227,63 @@ void main() {
       );
     });
   });
+
+  group('与信（あと払い）口座の二重計上防止', () {
+    test('翌月払い等の与信名はプリペイド扱いにしない', () {
+      for (final name in <String>[
+        'FamiPay翌月払い',
+        'ファミペイ あと払い',
+        'PayPayあと払い',
+        'メルペイスマート払い',
+        'ファミペイ後払い',
+        'PayPay残高リボ',
+      ]) {
+        expect(
+          AssetUnknownExpenseRuleService.isPrepaidLikeType(name),
+          isFalse,
+          reason: '$name は与信取引なので支出の自動記録対象にしない',
+        );
+      }
+    });
+
+    test('負債マスタ管理下の口座は残高悪化を支出として記録しない', () {
+      // 実際に起きた不具合: 口座名は「ファミペイ」だが実体は FamiPay翌月払い。
+      // リボ残高への組み入れ 1,994 円が使途不明金として二重計上されていた。
+      expect(
+        AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
+          assetType: 'ファミペイ',
+          previousAmount: -287851,
+          currentAmount: -289845,
+          isManagedLiability: true,
+        ),
+        isFalse,
+      );
+    });
+
+    test('負債マスタ管理下でなければ従来どおりプリペイドとして記録する', () {
+      expect(
+        AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
+          assetType: 'ファミペイ',
+          previousAmount: -1000,
+          currentAmount: -3000,
+          isManagedLiability: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test('負債マスタ管理下でも現金の減少は従来どおり記録する', () {
+      // 現金は返済スケジュールを持たないため isManagedLiability は立たない想定だが、
+      // 万一立っても支出計上を止める副作用が現金へ及ばないことを明示する。
+      expect(
+        AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
+          assetType: '現金',
+          previousAmount: 30000,
+          currentAmount: 28000,
+          isManagedLiability: false,
+        ),
+        isTrue,
+      );
+    });
+  });
 }

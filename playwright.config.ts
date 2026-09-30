@@ -6,9 +6,16 @@ const jsonOutputFile =
 
 export default defineConfig({
   testDir: './test/e2e',
+  outputDir: process.env.PLAYWRIGHT_TEST_OUTPUT_DIR ?? 'test-results',
   timeout: 30_000,
   expect: {
     timeout: 7_500,
+    toHaveScreenshot: {
+      animations: 'disabled',
+      caret: 'hide',
+      maxDiffPixelRatio: 0.002,
+      scale: 'css',
+    },
   },
   fullyParallel: false,
   workers: 1,
@@ -16,10 +23,10 @@ export default defineConfig({
   reporter: process.env.CI
     ? [
         ['list'],
-        ['html', { open: 'never' }],
+        ['html', { open: 'never', outputFolder: 'playwright-report/html' }],
         ['json', { outputFile: jsonOutputFile }],
       ]
-    : [['list'], ['html', { open: 'never' }]],
+    : [['list'], ['html', { open: 'never', outputFolder: 'playwright-report/html' }]],
   use: {
     baseURL,
     trace: 'on-first-retry',

@@ -25,6 +25,10 @@ on:
       - 'scripts/pre_commit_quality_gate.py'
       - 'scripts/pre_commit_quality_gate_test.py'
       - 'scripts/check_ga_readiness_gate.py'
+      - 'playwright.config.ts'
+      - 'scripts/summarize_playwright_results.mjs'
+      - 'scripts/summarize_playwright_results_test.mjs'
+      - 'scripts/playwright_report_persistence_test.mjs'
       - 'assets/data/tiger_*'
   workflow_dispatch:
     inputs:
@@ -98,8 +102,18 @@ jobs:
           set -euo pipefail
           git init .
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --tags --prune origin "+${GITHUB_REF}:refs/remotes/origin/checkout"
-          git checkout --force refs/remotes/origin/checkout
+          # Keep source, event change scope, release metadata, and tags on one SHA.
+          # A queued run must not silently build a newer moving branch head.
+          if [[ ! "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Deployment requires a full immutable event SHA."
+            exit 1
+          fi
+          git fetch --tags --prune origin "$GITHUB_SHA"
+          git checkout --force --detach FETCH_HEAD
+          if [ "$(git rev-parse HEAD)" != "$GITHUB_SHA" ]; then
+            echo "::error::Deployment checkout does not match the event SHA."
+            exit 1
+          fi
 
       - name: Collect pushed files
         if: github.event_name == 'push'
@@ -879,7 +893,7 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.changes.outputs.web == 'true'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
@@ -926,6 +940,18 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"action\":\"notification.broadcast_release\",\"version\":\"${{ steps.version.outputs.version }}\",\"commit\":\"${{ github.sha }}\",\"releaseUrl\":\"https://github.com/kanta13jp1/my_web_app/releases/tag/${{ steps.version.outputs.tag }}\"}" \
             || true
+
+      # Positive evidence only; missing/unknown classifier outputs never suppress gates.
+      - name: Confirmed production no-op
+        if: >-
+          success() &&
+          github.event_name == 'push' &&
+          steps.changes.outputs.deployable == 'false' &&
+          steps.changes.outputs.web == 'false' &&
+          steps.changes.outputs.edge == 'false' &&
+          steps.changes.outputs.migration == 'false' &&
+          steps.db_edge_smoke.outputs.required == 'false'
+        run: echo "No production deployment or DB/Edge smoke was required for this exact run."
 
       - name: Job Summary
         if: always()
@@ -1025,3 +1051,4 @@ jobs:
               commit_sha: context.sha,
               body: 'Production deployment completed.\n\n- **Web**: ${{ needs.deploy.outputs.web }}\n- **Edge Functions**: ${{ needs.deploy.outputs.edge }}\n- **Migrations**: ${{ needs.deploy.outputs.migration }}\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
             })
+

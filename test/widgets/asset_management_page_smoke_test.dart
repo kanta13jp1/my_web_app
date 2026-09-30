@@ -1688,6 +1688,64 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets(
+        'typed revolving field values survive the rebuild their own '
+        'onChanged triggers', (tester) async {
+      // 最低返済額/新規利用額/利用限度額はTextFormField(initialValue:)ではなく
+      // 永続的なTextEditingControllerを使う（他の支払入力欄と同じパターン）。
+      // 複数回の入力の後も直前の値が表示され続けることを確認する。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 0,
+            newUsageAmount: 0,
+            creditLimit: 0,
+          ),
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugRevolvingConfigsMirror: mirrorValue,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final minimumPaymentField =
+          find.byKey(const ValueKey('revolving:aupay_card:最低返済額'));
+      expect(minimumPaymentField, findsOneWidget);
+
+      // 1文字ずつ入力し、onChangedのたびにsetStateで再構築が起きても
+      // それまでに入力した文字が消えないことを確認する（実機での再現条件）。
+      await tester.enterText(minimumPaymentField, '1');
+      await tester.pump();
+      await tester.enterText(minimumPaymentField, '15');
+      await tester.pump();
+      await tester.enterText(minimumPaymentField, '150');
+      await tester.pump();
+      await tester.enterText(minimumPaymentField, '15000');
+      await tester.pump();
+
+      expect(find.text('15000'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
     testWidgets('safety balance setting persists and updates availability', (
       tester,
     ) async {
@@ -1726,17 +1784,34 @@ void main() {
     testWidgets('living expense priority toggle immediately reorders actions', (
       tester,
     ) async {
-      final now = DateTime.now();
+      // The action list displays only its first eight entries. Keep the
+      // fixture date stable so later overdue payments cannot displace it.
+      final now = DateTime(2026, 9, 1);
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await tester.binding.setSurfaceSize(const Size(1200, 3200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
+      // Isolate the two actions under test from date-dependent default bills.
+      // The page only renders eight actions; unrelated bills must not decide
+      // whether either target action is present in this ordering test.
+      final defaultBills = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{},
+        baseDate: now,
+        includeDefaultFixedPayments: true,
+      );
+
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
+            debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
               <String, int>{'mobit': now.day},
+              monthlyState: AssetLiabilityMonthlyState(
+                paidAccountNames: <String>{
+                  for (final row in defaultBills.cashflowRows) row.accountName,
+                },
+              ),
             ),
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
@@ -1769,7 +1844,11 @@ void main() {
 
       expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
       expect(livingExpense, findsOneWidget);
-      expect(overdue, findsNothing);
+      expect(overdue, findsOneWidget);
+      expect(
+        tester.getTopLeft(livingExpense).dy,
+        lessThan(tester.getTopLeft(overdue).dy),
+      );
 
       await tester.tap(toggle);
       await tester.pump(const Duration(milliseconds: 100));

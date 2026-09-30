@@ -55,9 +55,15 @@ requires a valid VAT/tax identifier. The sanitized response summary is recorded
 in [#2846](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5511613768).
 
 Do not substitute a third party's VAT ID, Paddle's own tax number, or an
-unverified example. The real B2B job must remain guarded and skipped unless the
+unverified example. The B2B scenario must remain guarded and skipped unless the
 Owner has a legitimate identifier for the matching buyer country and address
 and explicitly authorizes its use in the sandbox-only Actions secret.
+
+The basic cancel/decline/success matrix is independent of VAT:
+`run_real_sandbox_e2e=true`, `run_b2b_vat_e2e=false`. B2B-prefixed settings
+are required and exposed to the real-job environment only when the second flag
+is explicitly enabled. Existing B2B settings alone never enable that scenario.
+See the [basic checkout guide](PADDLE_SANDBOX_CHECKOUT_VERIFICATION.md).
 
 Create these repository secrets. Never paste their values into an Issue, PR,
 artifact, log, or screenshot:
@@ -89,11 +95,14 @@ runner.
 1. In Paddle sandbox, confirm the product, price, default payment link, generic
    Customer Portal URL, and an Owner-controlled valid B2B
    country/address/VAT-ID scenario. If no such scenario is available, leave the
-   real B2B job disabled.
+   `run_b2b_vat_e2e=false`; the basic matrix can still run.
 2. Set the secrets and variables above.
 3. In GitHub Actions, run **Paddle Sandbox Checkout Cloud Validation** with
-   **Run the real Paddle sandbox checkout and B2B VAT matrix** enabled.
-4. Confirm the serial, retry-free Playwright job is green.
+   both `run_real_sandbox_e2e=true` and `run_b2b_vat_e2e=true`.
+   The shared preflight fails before checkout if either opt-in or any required
+   configuration is missing.
+4. Confirm the serial, retry-free Playwright job is green and the B2B case
+   actually passed, not skipped. A basic-only green result is not VAT evidence.
 5. Download the 14-day evidence artifact. Confirm that the B2B event log shows:
    a pre-VAT financial snapshot; `hasBusiness: true` and
    `hasTaxIdentifier: true`; the expected final tax; a changed tax or total;
@@ -110,7 +119,7 @@ evidence artifact.
 | 2026-08-30 | Receipt email and attached PDF | Paddle is the issuer and a paid PDF invoice is retrievable | Passed for the #2845 sandbox checkout: USD 1.00 subtotal + USD 0.09 sales tax = USD 1.09 total. This does not prove B2B VAT or Customer Portal access. | [Owner screenshot review](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5468736129); source images were not persisted because they contain personal and sandbox transaction data. |
 | 2026-08-31 | Customer Portal invoice path | Purchase-email magic-link login exposes payment history and an invoice action for a completed transaction | Passed: the Owner authenticated through the generic sandbox portal, saw four paid USD 1.09 payments, opened one payment detail, and reached **View invoice**. The detail showed the expected product and USD 1.00 subtotal + USD 0.09 sales tax = USD 1.09 total. | [Owner screenshot review](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5468736129); source images were not persisted because they contain sandbox transaction data. |
 | Blocked | B2B VAT recalculation | Confirmed expected tax and changed tax/total | Not run: Paddle does not provide a sandbox-specific identifier, and no Owner-controlled valid scenario was authorized | [Paddle Support summary](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5511613768) |
-| Blocked | Valid card completion | Completed transaction ID | Not run: the guarded B2B scenario requires a valid VAT/Tax ID | [Paddle Support summary](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5511613768) |
+| Blocked | B2B valid card completion | Completed transaction ID | Not run: the guarded B2B scenario requires a valid VAT/Tax ID | [Paddle Support summary](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5511613768) |
 | Blocked | B2B invoice portal | The B2B transaction is visible through the already-verified portal path and exposes its invoice | Not run: no completed B2B VAT sandbox transaction exists | [Paddle Support summary](https://github.com/kanta13jp1/my_web_app/issues/2846#issuecomment-5511613768) |
 
 ## Invoice retrieval UX check

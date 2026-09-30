@@ -7,10 +7,10 @@ const args = process.argv.slice(2);
 const outIndex = args.indexOf('--out');
 const outputPath = outIndex >= 0 ? args[outIndex + 1] : undefined;
 const inputPaths = args.filter((arg, index) => {
-  return arg !== '--out' && index !== outIndex + 1;
+  return arg !== '--out' && !(outIndex >= 0 && index === outIndex + 1);
 });
 
-if (inputPaths.length === 0) {
+if (inputPaths.length === 0 || (outIndex >= 0 && !outputPath)) {
   console.error(
     'Usage: node scripts/summarize_playwright_results.mjs <results.json>... [--out <summary.md>]',
   );
@@ -25,21 +25,24 @@ const totals = summaries.reduce(
     acc.failed += summary.failed;
     acc.skipped += summary.skipped;
     acc.flaky += summary.flaky;
+    acc.evidenceErrors += summary.evidenceErrors;
     return acc;
   },
-  { total: 0, passed: 0, failed: 0, skipped: 0, flaky: 0 },
+  { total: 0, passed: 0, failed: 0, skipped: 0, flaky: 0, evidenceErrors: 0 },
 );
+const failed = totals.failed > 0 || totals.evidenceErrors > 0;
 
 const lines = [
   '# Playwright Evidence Summary',
   '',
-  `Status: ${totals.failed === 0 ? 'PASS' : 'FAIL'}`,
+  `Status: ${failed ? 'FAIL' : 'PASS'}`,
   `Total: ${totals.total} / Passed: ${totals.passed} / Failed: ${totals.failed} / Flaky: ${totals.flaky} / Skipped: ${totals.skipped}`,
+  `Evidence errors: ${totals.evidenceErrors}`,
   '',
   '## Result Files',
   ...summaries.map(
     (summary) =>
-      `- ${summary.path}: ${summary.total} total, ${summary.failed} failed`,
+      `- ${summary.path}: ${summary.total} total, ${summary.failed} failed, ${summary.evidenceErrors} evidence errors`,
   ),
 ];
 
@@ -68,30 +71,31 @@ if (outputPath) {
 }
 
 process.stdout.write(output);
+process.exitCode = failed ? 1 : 0;
 
 function readSummary(path) {
   if (!existsSync(path)) {
-    return {
-      path,
-      total: 0,
-      passed: 0,
-      failed: 1,
-      skipped: 0,
-      flaky: 0,
-      failures: [
-        {
-          project: 'unknown',
-          title: path,
-          status: 'missing',
-          error: 'Playwright JSON result file was not found.',
-        },
-      ],
-    };
+    return evidenceError(path, 'missing', 'Playwright JSON result file was not found.');
   }
 
-  const report = JSON.parse(readFileSync(path, 'utf8'));
+  let report;
+  try {
+    report = JSON.parse(readFileSync(path, 'utf8'));
+    if (!Array.isArray(report?.suites)) throw new Error('Expected a suites array.');
+  } catch (error) {
+    return evidenceError(path, 'invalid', `Invalid Playwright JSON report: ${error.message}`);
+  }
   const tests = [];
-  collectTests(report.suites || [], tests);
+  collectTests(report.suites, tests);
+  if (tests.length === 0) {
+    return evidenceError(path, 'empty', 'Playwright report contains no tests.');
+  }
+  const reportErrors = (report.errors || []).map((error) => ({
+    project: 'runner',
+    title: path,
+    status: 'error',
+    error: error.message || JSON.stringify(error),
+  }));
 
   return {
     path,
@@ -100,14 +104,23 @@ function readSummary(path) {
     failed: tests.filter((test) => test.outcome === 'unexpected').length,
     skipped: tests.filter((test) => test.outcome === 'skipped').length,
     flaky: tests.filter((test) => test.outcome === 'flaky').length,
-    failures: tests
+    evidenceErrors: reportErrors.length,
+    failures: [...reportErrors, ...tests
       .filter((test) => test.outcome === 'unexpected')
       .map((test) => ({
         project: test.project,
         title: test.title,
         status: test.status,
         error: test.error,
-      })),
+      }))],
+  };
+}
+
+function evidenceError(path, status, error) {
+  return {
+    path, total: 0, passed: 0, failed: 0, skipped: 0, flaky: 0,
+    evidenceErrors: 1,
+    failures: [{ project: 'report', title: path, status, error }],
   };
 }
 

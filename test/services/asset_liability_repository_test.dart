@@ -1369,6 +1369,229 @@ void main() {
       },
     );
 
+    test(
+      'does not resurrect a recurring income template deleted just before '
+      'the remote delete could land',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        await local.saveRecurringIncomeTemplates(
+          <AssetLiabilityRecurringIncomeTemplate>[
+            _sampleRecurringIncomeTemplate(),
+          ],
+        );
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedRecurringIncomeTemplates(
+            <AssetLiabilityRecurringIncomeTemplate>[
+              _sampleRecurringIncomeTemplate(),
+            ],
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+
+        // The user deletes the template, but the remote delete races with
+        // (and loses to) something else -- e.g. offline, a transient
+        // Supabase error, or the page reloading before the fire-and-forget
+        // save lands. Remote is left stale on purpose here.
+        remote.failSaves = true;
+        await repository.saveRecurringIncomeTemplates(
+          const <AssetLiabilityRecurringIncomeTemplate>[],
+        );
+        remote.failSaves = false;
+
+        // The very next load (e.g. the reload that raced with the delete)
+        // must not treat "local is empty" as "never synced, restore from
+        // remote" -- that is exactly the bug that kept regenerating a
+        // duplicate ¥450,000 salary row every day.
+        final templates = await repository.loadRecurringIncomeTemplates();
+
+        expect(templates, isEmpty);
+        expect(await local.loadRecurringIncomeTemplates(), isEmpty);
+      },
+    );
+
+    test(
+      'still restores a recurring income template from remote when it was '
+      'never deleted locally',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedRecurringIncomeTemplates(
+            <AssetLiabilityRecurringIncomeTemplate>[
+              _sampleRecurringIncomeTemplate(),
+            ],
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+
+        final templates = await repository.loadRecurringIncomeTemplates();
+
+        expect(templates.single.id, 'salary');
+        expect(
+          (await local.loadRecurringIncomeTemplates()).single.id,
+          'salary',
+        );
+      },
+    );
+
+    test(
+      'manual sync does not resurrect a recurring income template deleted '
+      'just before the remote delete could land',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        await local.saveRecurringIncomeTemplates(
+          <AssetLiabilityRecurringIncomeTemplate>[
+            _sampleRecurringIncomeTemplate(),
+          ],
+        );
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedRecurringIncomeTemplates(
+            <AssetLiabilityRecurringIncomeTemplate>[
+              _sampleRecurringIncomeTemplate(),
+            ],
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+
+        // Same race as the automatic-load bug above, but triggered by the
+        // user tapping "手動同期" (manual sync) instead of a page reload.
+        // Remote is left stale on purpose.
+        remote.failSaves = true;
+        await repository.saveRecurringIncomeTemplates(
+          const <AssetLiabilityRecurringIncomeTemplate>[],
+        );
+        remote.failSaves = false;
+
+        final result = await repository.syncMonth(month);
+
+        expect(result.status, AssetLiabilityManualSyncStatus.success);
+        expect(await local.loadRecurringIncomeTemplates(), isEmpty);
+        expect(remote.recurringIncomeTemplates, isEmpty);
+      },
+    );
+
+    test(
+      'manual sync still restores a recurring income template from remote '
+      'when it was never deleted locally',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedRecurringIncomeTemplates(
+            <AssetLiabilityRecurringIncomeTemplate>[
+              _sampleRecurringIncomeTemplate(),
+            ],
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+
+        final result = await repository.syncMonth(month);
+
+        expect(result.status, AssetLiabilityManualSyncStatus.success);
+        expect(
+          (await local.loadRecurringIncomeTemplates()).single.id,
+          'salary',
+        );
+      },
+    );
+
+    test('restores missing months into a partially populated device', () async {
+      final local = _FakeAssetLiabilityRepository();
+      await local.saveMonthlySnapshot(_sampleSnapshot('2026-09'));
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..seedMonthlySnapshots([
+          _sampleSnapshot('2026-06'),
+          _sampleSnapshot('2026-07'),
+          _sampleSnapshot('2026-08'),
+        ]);
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+
+      expect(
+        (await repository.loadMonthlySnapshots()).map((s) => s.monthKey),
+        ['2026-09', '2026-08', '2026-07', '2026-06'],
+      );
+      expect(await local.loadMonthlySnapshots(), hasLength(4));
+      expect(await repository.loadMonthlySnapshots(), hasLength(4));
+      expect(
+        remote.calls.where((c) => c.startsWith('saveMonthlySnapshot')),
+        isEmpty,
+      );
+    });
+
+    test('does not upload snapshots when the server read is unavailable',
+        () async {
+      final local = _FakeAssetLiabilityRepository();
+      await local.saveMonthlySnapshot(_sampleSnapshot('2026-09'));
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+
+      expect(await repository.loadMonthlySnapshots(), hasLength(1));
+      expect(
+        remote.calls.where((c) => c.startsWith('saveMonthlySnapshot')),
+        isEmpty,
+      );
+    });
+
+    test('snapshot conflicts retain the newer version per month', () async {
+      final older = _sampleSnapshot('2026-08');
+      final newer = _sampleSnapshot(
+        '2026-08',
+        savedAt: DateTime.utc(2026, 9, 1),
+      );
+      for (final remoteIsNewer in [true, false]) {
+        final local = _FakeAssetLiabilityRepository();
+        await local.saveMonthlySnapshot(remoteIsNewer ? older : newer);
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedMonthlySnapshots([remoteIsNewer ? newer : older]);
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+
+        expect((await repository.loadMonthlySnapshots()).single, newer);
+        expect((await local.loadMonthlySnapshots()).single, newer);
+        expect(
+          remote.calls.where((c) => c.startsWith('saveMonthlySnapshot')),
+          isEmpty,
+        );
+      }
+    });
+
     test('loads generated monthly reports from remote store', () async {
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore()
@@ -2148,10 +2371,13 @@ AssetLiabilityRecurringIncomeTemplate _sampleRecurringIncomeTemplate() {
   );
 }
 
-AssetLiabilityMonthlySnapshot _sampleSnapshot(String monthKey) {
+AssetLiabilityMonthlySnapshot _sampleSnapshot(
+  String monthKey, {
+  DateTime? savedAt,
+}) {
   return AssetLiabilityMonthlySnapshot(
     monthKey: monthKey,
-    savedAt: DateTime.utc(2026, 5, 31, 12),
+    savedAt: savedAt ?? DateTime.utc(2026, 5, 31, 12),
     positiveAssetTotal: 120000,
     liabilityTotal: -7200000,
     netWorth: -7080000,
