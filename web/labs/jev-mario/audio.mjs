@@ -68,6 +68,7 @@ export class GameAudio{
    this.tone(lead,t,step*(this.beat%4===3?.55:.82),'square',.040,true,0,duty);
    // Offbeat comping and broken triads keep the lead audible without dense chords.
    if(this.beat%2===0||track==='star')this.tone(harmony,t+step*.08,step*.65,'square',track==='underwater'?.013:.018,true,0,.5);
+   if(this.beat%16===13)this.tone(pickup,t+step*.35,step*.45,'sine',.006,true);
    if(this.beat%16===15)this.tone(turn,t+step*.55,step*.45,'triangle',.007,true);
    if(this.beat%16===11)this.tone(echo,t+step*.6,step*.7,'triangle',.008,true);
    if(this.beat%8===3)this.tone(accent,t+step*.35,step*.5,'square',track==='castle'?.006:.010,true,0,.125);
