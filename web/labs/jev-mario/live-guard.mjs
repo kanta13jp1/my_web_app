@@ -19,6 +19,13 @@ export class LiveGuard {
   const evaluate=action=>{const g=advance(clone(world),action,Math.max(24+level*16,descent?72:0));return {action,g,value:(g.phase==='dead'?-100000:0)+(g.power<world.power?-300:0)+(g.phase==='won'?100000:0)+g.p.x-world.p.x-Math.max(0,g.p.y-208)*8-penalty(action)};};
   let best=evaluate(proposed);
   const repeatedStall=penalty(proposed)>0&&Math.abs(best.g.p.x-world.p.x)<4;
+  // A short retreat can create space for a safe jump; a single long left action cannot.
+  // Forecast the whole recovery, then apply only its first input to the real world.
+  if(repeatedStall)for(const action of ['left','left_jump']){
+   const g=advance(clone(world),action,8),end=advance(g,'right_run_jump',24+level*16);
+   const value=(end.phase==='dead'?-100000:0)+(end.power<world.power?-300:0)+(end.phase==='won'?100000:0)+end.p.x-world.p.x-Math.max(0,end.p.y-208)*8-penalty(action);
+   if(value>best.value)best={action,g:end,value};
+  }
   // Commit to the other edge when the nearest descent would land on an enemy.
   // Keeping that side until below the reward prevents safe/unsafe oscillation.
   if(descent&&!this.descentSide&&(best.g.phase==='dead'||best.g.power<world.power||best.g.p.y>224)){
