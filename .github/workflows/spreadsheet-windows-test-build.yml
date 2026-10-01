@@ -1,6 +1,9 @@
 name: Spreadsheet Windows Test Build
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/spreadsheet-xlsx-20261001]
+    paths: [.github/workflows/spreadsheet-windows-test-build.yml]
 permissions:
   contents: read
 jobs:
