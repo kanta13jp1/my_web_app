@@ -4,10 +4,11 @@ on:
   push:
     branches: [codex/spreadsheet-xlsx-20261001]
     paths: [.github/workflows/spreadsheet-windows-test-build.yml]
-permissions:
-  contents: read
+permissions: {}
 jobs:
   windows:
+    permissions:
+      contents: read
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
