@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
+import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 
 AssetLiabilityAccount _account(
@@ -91,6 +92,33 @@ void main() {
   });
 
   group('AssetCashflowForecastInputs.fromAssetData', () {
+    test(
+        'deduplicates clamped February occurrences without losing distinct March dates',
+        () {
+      final inputs = AssetCashflowForecastInputs.fromAssetData(
+        accounts: const [],
+        debtRows: [_fixedCostRow(day: 31)],
+        recurringIncomeTemplates: const [],
+        inflowRules: const [],
+        oneTimeInflows: const [],
+        subscriptions: const [
+          {
+            'service_name': 'synthetic utility',
+            'price': 1105,
+            'due_date': '2027-02-28'
+          },
+        ],
+      );
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2027, 2, 1),
+        startingBalance: 10000,
+        horizonMonths: 2,
+        recurringOutflow: inputs.recurringOutflow,
+      );
+      expect(forecast.months[0].outflowTotal, 1105);
+      expect(forecast.months[1].outflowTotal, 2210);
+    });
+
     test('deduplicates a fixed cost already represented by a workbook row', () {
       final inputs = AssetCashflowForecastInputs.fromAssetData(
         accounts: const [],
@@ -102,17 +130,17 @@ void main() {
           {
             'service_name': ' Synthetic Utility ',
             'price': 1105,
-            'due_date': '2026-10-10'
+            'due_date': '2026-10-10',
           },
           {
             'service_name': 'separate charge',
             'price': 1105,
-            'due_date': '2026-10-10'
+            'due_date': '2026-10-10',
           },
           {
             'service_name': 'synthetic utility',
             'price': 1105,
-            'due_date': '2026-10-11'
+            'due_date': '2026-10-11',
           },
         ],
       );
@@ -135,7 +163,7 @@ void main() {
           {
             'service_name': 'synthetic utility',
             'price': 1105,
-            'due_date': '2026-10-10'
+            'due_date': '2026-10-10',
           },
         ],
         paymentDayOverrides: const {'utility': 10},

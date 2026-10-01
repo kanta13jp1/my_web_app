@@ -28,51 +28,69 @@ void main() {
     AssetRecurringTombstoneSyncService.resetSharedForTest();
   });
 
-  testWidgets(
-      'pending salary does not label retained paid state as current cashflow',
-      (tester) async {
-    SharedPreferences.setMockInitialValues(<String, Object>{
-      AssetSalaryResetMarkerStore.prefsKey: '2026-08',
-    });
-    const store = AssetLiabilityMonthlyStateStore();
-    await store.saveMonth(
-      month: DateTime(2026, 8),
-      state: const AssetLiabilityMonthlyState(
-        paidAccountNames: {'rent'},
-        actualPaymentAmounts: {'rent': 63000},
-      ),
-    );
-    await tester.binding.setSurfaceSize(const Size(1200, 2400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AssetManagementPage(
-          debugNow: DateTime(2026, 10, 2),
-          debugInitialAssetData: const {
-            '2026-10-02': {'現金': 61505, '家賃': -63000}
-          },
+  for (final pending in [true, false]) {
+    testWidgets(
+        'retained paid state is not labeled current while pending=$pending',
+        (tester) async {
+      final marker = pending ? '2026-08' : '2026-09';
+      final stateMonth = DateTime(2026, pending ? 8 : 9);
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetSalaryResetMarkerStore.prefsKey: marker,
+      });
+      const store = AssetLiabilityMonthlyStateStore();
+      await store.saveMonth(
+        month: stateMonth,
+        state: AssetLiabilityMonthlyState(
+          paidAccountNames: const {'rent'},
+          actualPaymentAmounts: const {'rent': 63000},
+          incomePlans: [
+            AssetLiabilityIncomePlan(
+              id: 'synthetic_salary',
+              name: '給料',
+              date: DateTime(2026, 9, 25),
+              amount: 416709,
+              destinationAccountId: null,
+              destinationAccountName: null,
+              received: true,
+            ),
+          ],
         ),
-      ),
-    );
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('給料の入金を確認できません'), findsOneWidget);
-    expect(
-      find.byKey(const Key('asset_cashflow_statement_current')),
-      findsNothing,
-    );
-    expect(await const AssetSalaryResetMarkerStore().load(), '2026-08');
-    expect(
-      (await store.loadMonth(DateTime(2026, 8))).paidAccountNames,
-      contains('rent'),
-    );
-    expect(
-      (await store.loadMonth(DateTime(2026, 8))).actualPaymentAmounts['rent'],
-      63000,
-    );
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
-  });
+      );
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 10, 2),
+            debugInitialAssetData: const {
+              '2026-10-02': {'現金': 61505, '家賃': -63000},
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        find.text('給料の入金を確認できません'),
+        pending ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.byKey(const Key('asset_cashflow_statement_current')),
+        pending ? findsNothing : findsOneWidget,
+      );
+      expect(await const AssetSalaryResetMarkerStore().load(), marker);
+      expect(
+        (await store.loadMonth(stateMonth)).paidAccountNames,
+        contains('rent'),
+      );
+      expect(
+        (await store.loadMonth(stateMonth)).actualPaymentAmounts['rent'],
+        63000,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    });
+  }
 
   for (final dirty in [false, true]) {
     testWidgets(

@@ -123,6 +123,12 @@ class AssetCashflowForecastInputs {
           dayOfMonth: day,
           amount: row.scheduledPaymentAmount,
           label: row.name,
+          isFixedCostRow: row.kind == AssetLiabilityAccountKind.utility ||
+              row.fullPaymentEstimate,
+          fixedCostMatchKey: row.kind == AssetLiabilityAccountKind.utility ||
+                  row.fullPaymentEstimate
+              ? _fixedCostMatchKey(row.name, row.scheduledPaymentAmount)
+              : null,
         ),
       );
       if (row.kind == AssetLiabilityAccountKind.utility ||
@@ -158,6 +164,11 @@ class AssetCashflowForecastInputs {
     );
   }
 
+  static String _fixedCostMatchKey(String name, double amount) {
+    final normalized = name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
+    return '$normalized|${amount.toStringAsFixed(2)}';
+  }
+
   /// 固定費(subscription)1 件を繰り返し支出エントリへ変換する。
   /// 価格が無効(null/非正)なら null。支払日は due_date の日、名前が空なら「固定費」。
   static AssetCashflowRecurringEntry? subscriptionRecurringEntry(
@@ -175,6 +186,7 @@ class AssetCashflowForecastInputs {
       dayOfMonth: dueDate?.day ?? 1,
       amount: price,
       label: name.isEmpty ? '固定費' : name,
+      fixedCostMatchKey: _fixedCostMatchKey(name.isEmpty ? '固定費' : name, price),
     );
   }
 }
