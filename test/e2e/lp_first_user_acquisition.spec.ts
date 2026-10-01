@@ -101,7 +101,7 @@ test.describe('LP first-user acquisition', () => {
     );
     await page.keyboard.insertText('今日の最優先タスクを1件に絞りたい');
     await trialAction.click();
-    await completeGuidedTrial(page);
+    await completeGuidedTrial(page, testInfo.project.name === 'mobile-chrome');
 
     const trialResultCard = page.getByRole('group', {
       name: /登録なしで試す.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
@@ -127,9 +127,15 @@ test.describe('LP first-user acquisition', () => {
         triggerBoxAfterResult!.y + triggerBoxAfterResult!.height,
       ).toBeLessThan(viewport!.height * 0.7);
     }
-    await expect(
-      page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
-    ).toHaveCount(0);
+    const resultEmail = trialResultCard.getByRole('textbox', {
+      name: 'メールアドレス', exact: true,
+    });
+    if (testInfo.project.name === 'mobile-chrome') {
+      await expect(resultEmail).toHaveCount(0);
+    } else {
+      await expect(resultEmail).toBeVisible();
+      await expect(resultEmail).not.toBeFocused();
+    }
   });
 
   test('H04 treatment reveals Google save and Magic Link fallback after value', async ({
@@ -295,7 +301,7 @@ test.describe('LP first-user acquisition', () => {
   });
 });
 
-async function completeGuidedTrial(page: Page) {
+async function completeGuidedTrial(page: Page, compact: boolean) {
   for (let step = 0; step < 5; step += 1) {
     await expect(
       page.getByRole('textbox', {
@@ -306,19 +312,14 @@ async function completeGuidedTrial(page: Page) {
     await expect(quickAnswer).toBeVisible();
     await quickAnswer.click();
     const next = page.getByRole('button', {
-      name: step === 4 ? '送る内容を確認' : '次の質問へ',
+      name: step === 4 ? (compact ? '内容を確認' : '送る内容を確認') : '次の質問へ',
       exact: true,
     });
     await expect(next).toBeEnabled();
     await next.click();
   }
-  await expect(
-    page.getByRole('textbox', {
-      name: /登録なしで試す.*AIに送る内容を確認/,
-    }),
-  ).toBeVisible();
   const submit = page.getByRole('button', {
-    name: 'この内容でAIに提案してもらう',
+    name: compact ? 'AIに提案してもらう' : 'この内容でAIに提案してもらう',
     exact: true,
   });
   await expect(submit).toBeVisible();
@@ -333,6 +334,16 @@ async function openLanding(page: Page, path: string) {
       contentType: 'application/json',
       headers: isRead ? { 'content-range': '0-0/0' } : undefined,
       body: isRead ? '[]' : '',
+    });
+  });
+
+  await page.route('**/functions/v1/schedule-hub', async (route) => {
+    const body = JSON.parse(route.request().postData() ?? '{}');
+    expect(body.action).toBe('maintenance.list_active');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, windows: [] }),
     });
   });
 
