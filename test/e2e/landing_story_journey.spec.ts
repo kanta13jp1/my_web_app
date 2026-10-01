@@ -26,12 +26,14 @@ test.describe('Landing story journey', () => {
     }
 
     const originalViewport = page.viewportSize()!;
-    await page.setViewportSize({ width: 768, height: 1024 });
-    for (const [index, label] of [[1, '分散'], [4, '実行']] as const) {
-      await activateChapter(page, label);
-      await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
-      await page.waitForTimeout(650);
-      await page.screenshot({ path: testInfo.outputPath(`story-tablet-${index}.png`), scale: 'css' });
+    for (const width of [768, 1024]) {
+      await page.setViewportSize({ width, height: 1024 });
+      for (const [index, label] of [[1, '分散'], [4, '実行']] as const) {
+        await activateChapter(page, label);
+        await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
+        await page.waitForTimeout(650);
+        await page.screenshot({ path: testInfo.outputPath(`story-${width}-${index}.png`), scale: 'css' });
+      }
     }
     await page.setViewportSize(originalViewport);
     await page.emulateMedia({ reducedMotion: 'reduce' });
