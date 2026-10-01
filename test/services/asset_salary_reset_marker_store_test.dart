@@ -100,6 +100,19 @@ void main() {
       );
     });
 
+    test('future acknowledgement does not send a device to the previous cycle',
+        () {
+      expect(
+          AssetSalaryResetMarkerStore.isResetPending(
+            dateCycleKey: '2026-09',
+            ackedCycleKey: '2026-10',
+          ),
+          isFalse);
+      expect(AssetSalaryResetMarkerStore.mergeLater('2026-13', '2026-09'),
+          '2026-09');
+      expect(AssetSalaryResetMarkerStore.mergeLater('2026-00', null), isNull);
+    });
+
     test('mergeLater never regresses past a null/invalid side', () {
       expect(
         AssetSalaryResetMarkerStore.mergeLater(null, '2026-06'),
