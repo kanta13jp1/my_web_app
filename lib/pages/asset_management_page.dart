@@ -1,3 +1,4 @@
+import 'package:my_web_app/widgets/expense_semantic_search.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:my_web_app/widgets/asset_interest_history_card.dart';
 import 'package:my_web_app/services/asset_interest_repository.dart';
@@ -906,6 +907,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final TextEditingController _flowMemoController = TextEditingController();
   final TextEditingController _flowAmountController = TextEditingController();
   List<Map<String, dynamic>> _recentFlows = []; // 収支履歴
+  String? _recentFlowsOwnerId;
 
   // --- サブスク（固定費）用変数 ---
   DateTime _selectedSubscriptionHistoryMonth = DateTime(
@@ -8172,8 +8174,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         },
       );
 
-      if (mounted) {
+      if (mounted && _supabase.auth.currentUser?.id == userId) {
         setState(() {
+          _recentFlowsOwnerId = userId;
           _recentFlows = List<Map<String, dynamic>>.from(data);
         });
         unawaited(
@@ -33405,6 +33408,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
             ],
+            const SizedBox(height: 8),
+            ExpenseSemanticSearch(
+              key: ValueKey(
+                  'expense-search-${_supabase.auth.currentUser?.id}-$visibleMonthLabel'),
+              periodLabel: visibleMonthLabel,
+              items: (_recentFlowsOwnerId == null ||
+                      _recentFlowsOwnerId != _supabase.auth.currentUser?.id)
+                  ? const []
+                  : visibleFlows
+                      .where((flow) => flow['action_type'] == 'expense')
+                      .take(5)
+                      .map((flow) => <String, dynamic>{
+                            'title': _parseFlowDescription(
+                              flow['description']?.toString() ?? '',
+                              actionType: 'expense',
+                            ).memo,
+                          })
+                      .toList(),
+            ),
             const SizedBox(height: 8),
             if (visibleFlows.isEmpty)
               Padding(
