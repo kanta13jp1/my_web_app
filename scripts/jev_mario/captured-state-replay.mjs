@@ -35,8 +35,8 @@ for(const entry of await fs.readdir(root,{recursive:true})){
  const replay=guardReplay(g,snapshot);assert.deepEqual(guardReplay(g,snapshot),replay);
  const single=['right','right_run','right_jump','right_run_jump','jump','noop','left','left_jump'].map(action=>({commands:[[action,72]],...sequence(g,[[action,72]])}));
  const candidates=[];
- for(const approach of ['left','left_run','noop','right_run'])for(const wait of [0,6,12,18,24,36])for(const leap of ['right_jump','right_run_jump'])for(const held of [6,12,18,24,36]){
-  const commands=[[approach,wait],[leap,held],['right_run',60]],outcome=sequence(g,commands);
+ for(const approach of ['left','left_run'])for(const retreat of [0,6,12,24])for(let wait=0;wait<=240;wait+=12)for(const leap of ['right_jump','right_run_jump'])for(const held of [12,24,36]){
+  const commands=[[approach,retreat],['noop',wait],[leap,held],['right_run',60]],outcome=sequence(g,commands);
   if(outcome.phase!=='dead'&&outcome.power>=g.power)candidates.push({commands,...outcome});
  }
  candidates.sort((a,b)=>b.delta-a.delta);
