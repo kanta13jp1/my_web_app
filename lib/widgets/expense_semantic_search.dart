@@ -36,11 +36,19 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
   late JevSemanticExpenseSearchService _service;
   final Map<int, SemanticSearchResult> _results = {};
   bool _busy = false;
+  bool _usingExamples = false;
   int _revision = 0;
   StreamSubscription<String?>? _authSubscription;
   bool _sessionChanged = false;
 
-  List<Map<String, dynamic>> get _items => widget.items.take(5).map((item) {
+  static const _examples = <Map<String, dynamic>>[
+    {'title': '例：商品の不具合があり、代金の返金を依頼しています。'},
+    {'title': '例：返金手続きが完了し、入金を確認しました。'},
+    {'title': '例：商品の交換だけを希望しています。返金は求めていません。'},
+  ];
+
+  List<Map<String, dynamic>> get _items =>
+      (_usingExamples ? _examples : widget.items).take(5).map((item) {
         return <String, dynamic>{'title': item['title']?.toString() ?? ''};
       }).toList();
 
@@ -171,10 +179,31 @@ class _ExpenseSemanticSearchState extends State<ExpenseSemanticSearch> {
     return ExpansionTile(
       key: const Key('expense_semantic_search'),
       title: const Text('支出メモを条件で探す'),
-      subtitle: Text('${widget.periodLabel}の支出 ${items.length}件（先頭5件まで）'),
+      subtitle: Text(
+        _usingExamples
+            ? '保存しない操作例 ${items.length}件'
+            : '${widget.periodLabel}の支出 ${items.length}件（先頭5件まで）',
+      ),
       childrenPadding: const EdgeInsets.all(12),
       children: [
-        const Text('取得済みの支出メモだけを確認します。記録や金額は変更しません。'),
+        SwitchListTile(
+          key: const Key('expense_search_examples'),
+          title: const Text('例で試す（保存しません）'),
+          value: _usingExamples,
+          onChanged: _busy
+              ? null
+              : (value) => setState(() {
+                    _usingExamples = value;
+                    _revision++;
+                    _results.clear();
+                    _service.clearCache();
+                  }),
+        ),
+        Text(
+          _usingExamples
+              ? '表示中の3件は架空の操作例です。実際の支出記録は使用せず、例も保存しません。AIへ送るには下の確認ボタンを押してください。'
+              : '取得済みの支出メモだけを確認します。記録や金額は変更しません。',
+        ),
         TextField(
           key: const Key('expense_search_query'),
           controller: _query,

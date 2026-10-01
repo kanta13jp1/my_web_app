@@ -235,4 +235,42 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.textContaining('画面を開き直す'), findsOneWidget);
     expect(calls, 1);
   });
+  testWidgets('Examples stay separate from private memos and require explicit sending',
+      (tester) async {
+    final sent = <Map<String, dynamic>>[];
+    final client = JevExpenseProxyClient(
+      semanticSearch: true,
+      signedIn: () => true,
+      invoke: (body) async {
+        sent.add(body);
+        return searchAnswer(0.9);
+      },
+    );
+    addTearDown(client.dispose);
+    await tester.pumpWidget(host(client, memo: '非公開の支出メモ'));
+    await expand(tester);
+    expect(find.text('非公開の支出メモ'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('expense_search_examples')));
+    await tester.pumpAndSettle();
+    expect(find.text('非公開の支出メモ'), findsNothing);
+    expect(find.text('保存しない操作例 3件'), findsOneWidget);
+    expect(sent, isEmpty);
+    await tester.enterText(
+      find.byKey(const Key('expense_search_query')),
+      '返金を求めている',
+    );
+    await ask(tester);
+    expect(sent.length, 1);
+    expect(sent.single['memo'], contains('例：商品の不具合'));
+    expect(sent.single['memo'], isNot(contains('非公開')));
+    expect(find.text('AI判定・要確認'), findsOneWidget);
+    await capture?.call('semantic-search-examples');
+    await tester.ensureVisible(find.byKey(const Key('expense_search_examples')));
+    await tester.tap(find.byKey(const Key('expense_search_examples')));
+    await tester.pumpAndSettle();
+    expect(find.text('非公開の支出メモ'), findsOneWidget);
+    expect(find.text('AI判定・要確認'), findsNothing);
+    expect(sent.length, 1);
+  });
+
 }
