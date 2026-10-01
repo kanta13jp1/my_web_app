@@ -7,13 +7,18 @@ test.describe('Landing story journey', () => {
 
   test('moves from the scattered state to the final actionable chapter', async ({
     page,
-  }) => {
+  }, testInfo) => {
     await openLanding(page);
     const story = await focusStory(page);
 
     await expect(story).toHaveAccessibleName(/1 \/ 4/);
 
-    await activateChapter(page, '実行');
+    for (const [index, label] of ['分散', '集約', '整理', '実行'].entries()) {
+      await activateChapter(page, label);
+      await expect(story).toHaveAccessibleName(new RegExp(`${index + 1} / 4`));
+      await page.waitForTimeout(650);
+      await page.screenshot({ path: testInfo.outputPath(`story-${index + 1}.png`), scale: 'css' });
+    }
 
     await expect(story).toHaveAccessibleName(/4 \/ 4/);
     await expect(
