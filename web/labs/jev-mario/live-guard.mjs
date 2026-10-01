@@ -17,7 +17,7 @@ export class LiveGuard {
   const target=itemTargets(world).find(t=>!itemAvoidance.some(r=>r.stage===world.stage&&r.room===world.room&&r.until>world.frames&&Math.abs(t.x-r.x)<128));
   const descentKey=target?.block&&world.room==='overworld'&&world.p.y<target.y-2?world.stage+':'+target.key:null;if(descentKey!==this.descentKey){this.descentKey=descentKey;this.descentSide=null;}
   const descent=target?itemDescent(world,target,this.descentSide):null;
-  const pipe=pipeRoute(world);let item=!target||pipe||!['overworld','castle'].includes(world.room)?null:(descent??(this.pickupUntil>world.frames&&!world.p.grounded&&world.p.vy<0?this.pickupAction:itemIntent(world,target))),route=pipe??item;if(route)proposed=route;
+  const pipe=pipeRoute(world);let item=!target||pipe||!['overworld','castle'].includes(world.room)||(world.room==='castle'&&world.power&&(world.p.crouching||proposed.includes('down')))?null:(descent??(this.pickupUntil>world.frames&&!world.p.grounded&&world.p.vy<0?this.pickupAction:itemIntent(world,target))),route=pipe??item;if(route)proposed=route;
   const level=retryLevel(world,failures);
   if(world.frames<this.next&&proposed===this.proposed&&level===this.level)return edge(world,this.action??proposed);
   this.level=level;this.proposed=proposed;this.next=world.frames+(route?1:6);this.lastReason=pipe?'pipe_geometry_route':item?'item_pickup_route':null;
