@@ -1,16 +1,18 @@
 // Explicit clone-based escape assistance; never learned inference or a world rewind.
 import {clone, advance} from './search-assist.mjs?v=student-1';
 
-const ACTIONS = new Set(['right_run', 'right_run_jump']);
+const ACTIONS = new Set(['right_run', 'right_run_jump', 'noop']);
 export function normalizeEscapeSequence(value) {
-  if (!Array.isArray(value) || !value.length || value.length > 3) return null;
+  if (!Array.isArray(value) || !value.length || value.length > (value[0]?.action === 'noop' ? 4 : 3)) return null;
   let total = 0;
+  const wait = value[0]?.action === 'noop' ? value[0].frames : 0;
   const result = [];
   for (const command of value) {
     if (!command || !ACTIONS.has(command.action) || !Number.isInteger(command.frames) ||
         command.frames < 1 || command.frames > 60) return null;
+    if (command.action === 'noop' && (result.length || command.frames > 36)) return null;
     total += command.frames;
-    if (total > 80) return null;
+    if (total > 80 + wait) return null;
     result.push({action: command.action, frames: command.frames});
   }
   return result;
@@ -47,10 +49,16 @@ export function findEscapeSequence(g, failures = []) {
     g.p.x >= r.x - 48 && g.p.x <= r.x + 24 &&
     ((r.failedActions?.jump ?? 0) + (r.failedActions?.noop ?? 0)) > 0);
   if (!repeated) return null;
+  const settled = clone(g); let waiting = 0;
+  while (!settled.p.grounded && waiting < 36) {
+    advance(settled, 'noop', 1); waiting++;
+    if (settled.phase !== 'playing' || settled.power < g.power || settled.lives < g.lives) return null;
+  }
+  if (!settled.p.grounded) return null;
   let best = null;
   for (let approach = 0; approach <= 8; approach++) {
     for (let held = 1; held <= 12; held++) {
-      const commands = [...(approach ? [{action: 'right_run', frames: approach}] : []),
+      const commands = [...(waiting ? [{action: 'noop', frames: waiting}] : []), ...(approach ? [{action: 'right_run', frames: approach}] : []),
         {action: 'right_run_jump', frames: held}, {action: 'right_run', frames: 60}];
       const outcome = evaluateEscapeSequence(g, commands);
       if (!outcome?.grounded || outcome.progress < 48) continue;
