@@ -15626,7 +15626,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '給料の入金を確認できません',
+                      '給与の口座入金は未確認です',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: scheme.onTertiaryContainer,
@@ -15638,10 +15638,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                '新しい給料サイクルに入りましたが、メインバンクへの給料振込をまだ'
-                '検知できていません。支払済みチェックは前サイクルのまま保持しています。'
-                'メイン口座の残高を更新すると入金を検知し、新しいサイクルへ自動で'
-                '切り替わります(チェックがリセットされます)。',
+                '給与明細から収入に計上された金額と、口座への入金確認は別です。'
+                '現在、メイン口座への給与振込を自動検知できていません。'
+                '支払済みチェックは前サイクルのまま保持しています。'
+                '口座の入出金明細を確認し、残高を更新してください。'
+                '入金を検知すると新しいサイクルへ切り替わります。'
+                '入金後の支出などで検知できない場合は、入金を確認したうえで'
+                '「給料を受け取った（リセット）」を選んでください。',
                 style: TextStyle(
                   fontSize: 12,
                   height: 1.5,
@@ -16612,6 +16615,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       inflowRules: _expectedInflowRules,
       oneTimeInflows: _expectedInflows,
       subscriptions: _subscriptions,
+      paymentDayOverrides: _debtPaymentDayOverrides,
     );
     if (!inputs.hasData) {
       return const SizedBox.shrink();
@@ -17811,14 +17815,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     }
     // 給与明細(payslips/salary_incomes)でのみ管理している給料も収入へ合算する。
-    totalIncome += _cycleSalaryIncomeTotal(_now, flows);
+    final salaryIncome = _cycleSalaryIncomeTotal(_now, flows);
+    totalIncome += salaryIncome;
 
     final net = totalIncome - totalExpense;
     // フローが無くても給与明細の給料収入があれば「未記録」とは扱わない。
     final hasNoData = flows.isEmpty && totalIncome == 0;
     final statusText = hasNoData
         ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
-        : 'このサイクルの収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
+        : 'このサイクルの記録上の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。現在残高や今後の支払後に使える額とは異なります。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -17904,6 +17909,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ],
             ),
+            if (salaryIncome > 0) ...[
+              const SizedBox(height: 10),
+              Text(
+                '給与明細・受取済み収入予定から計上した '
+                '¥${NumberFormat('#,###').format(salaryIncome)} を含みます。'
+                '口座への入金状況は入出金明細で確認してください。',
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             if (totalIncome == 0) ...[
               const SizedBox(height: 14),
               Container(
@@ -24542,6 +24560,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       inflowRules: _expectedInflowRules,
       oneTimeInflows: _expectedInflows,
       subscriptions: _subscriptions,
+      paymentDayOverrides: _debtPaymentDayOverrides,
     );
     if (!inputs.hasData) return null;
     return AssetCashflowForecastService.project(
