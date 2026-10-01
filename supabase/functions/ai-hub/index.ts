@@ -1,3 +1,4 @@
+import { previewAgentToolPolicy } from "./agent_tool_policy_preview.ts";
 import { decideMario, MarioError } from "./jev_mario.ts";
 import { classifyJevExpense, JevExpenseError } from "./jev_expense.ts";
 // ai-hub — AI・エージェント・AI大学統合EF
@@ -28,6 +29,7 @@ import {
   type AgentToolApproval,
   type AgentToolPolicyDecision,
   evaluateAgentToolPolicy,
+  parseAgentToolRequestedScopes,
 } from "../_shared/agent_tool_policy.ts";
 import {
   selectClaudeModelForEffort,
@@ -3489,7 +3491,7 @@ async function evaluateAgentToolGate(
   );
   const actorRole = normalizeActorRole(body.actor_role ?? body.actorRole) ??
     await loadAgentRole(admin, userId, actorAgentId);
-  const requestedScopes = asStringArray(
+  const requestedScopes = parseAgentToolRequestedScopes(
     body.requested_scopes ?? body.requestedScopes ?? body.scopes,
   );
   const allowedScopesRaw = body.allowed_scopes ?? body.allowedScopes;
@@ -4933,6 +4935,10 @@ serve(async (req: Request) => {
           status: "active",
         });
         return json({ success: true, agent: item });
+      }
+
+      case "agent.tool_policy.preview": {
+        return json({ success: true, preview: previewAgentToolPolicy(body) });
       }
 
       case "agent.tool_policy.evaluate": {
