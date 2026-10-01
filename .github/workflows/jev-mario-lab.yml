@@ -1,29 +1,32 @@
-name: Issue 5661 worker observation
+name: Issue 5661 captured-state replay
 on: workflow_dispatch
 permissions: {}
 concurrency:
-  group: issue5661-observation-${{ github.ref }}
+  group: issue5661-replay-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  observe:
+  replay:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     permissions:
       contents: read
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - name: Record observed source
+      - name: Record source
         run: git rev-parse HEAD
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - name: Observe three independent normal-start attempts without retries
-        run: npx playwright test --config=test/e2e/jev_mario.config.ts --project=desktop --grep '8-4 complete real worker castle' --repeat-each=3 --workers=1 --retries=0
+      - name: Retrieve only the small captured-state artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 36920514591 --repo kanta13jp1/my_web_app --name issue5661-worker-observation-edd43f3bc985b4d1eed7591f3dd26d0a0ba73af3 --dir test-results/source-observation
+      - name: Compare deterministic hypothetical clone trajectories
+        run: node scripts/jev_mario/captured-state-replay.mjs
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: issue5661-worker-observation-${{ github.sha }}
-          path: test-results/**/world84-complete-worker.json
+          name: issue5661-snapshot-replay-${{ github.sha }}
+          path: test-results/issue5661-snapshot-replay.json
           retention-days: 7
           if-no-files-found: error
