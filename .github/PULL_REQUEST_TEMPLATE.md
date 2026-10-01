@@ -27,6 +27,19 @@
   - [ ] Generated image was used and the prompt, intended use, asset path, rights statement, and verification note are included.
 - [ ] Generated imagery is not being used as proof of the actual product state.
 
+## Design Accessibility Audit
+
+- Reference: `docs/DESIGN_ACCESSIBILITY_AUDIT.md`
+- Scope: <!-- routes=...; components=...; states=...; viewports=... -->
+- Surface-Type: <!-- checkout-form — reason | other — reason -->
+- Design-Plugin-Status: <!-- pass; UI changes cannot use pending or not-applicable -->
+- Design-Plugin-Reviewed-At: <!-- YYYY-MM-DD of the final re-review -->
+- Design-Plugin-Evidence: <!-- HTTPS URL, PR comment #, artifact:name, or repository evidence file -->
+- WCAG-2.1-AA-Findings: <!-- result=pass; unresolved-high=0; summary/remaining risks -->
+- Remediation: <!-- resolved=<count>; changes after plugin review, or why none was required -->
+- Deterministic-Evidence: <!-- tests=...; keyboard-contrast=...; AT=result or not-run owner/follow-up -->
+- Error-Microcopy-Review: <!-- reviewed — result; or not-applicable — specific reason when no checkout/form error state exists -->
+
 ## 📝 変更内容
 <!-- このPRで実施した変更内容を簡潔に説明してください -->
 

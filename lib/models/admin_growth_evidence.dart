@@ -198,6 +198,34 @@ class AdminPaidConversionMetrics {
       _safeRate(paidCustomers, totalUsers);
 }
 
+/// Builds the human-reviewed default text for the admin X-post dialog.
+///
+/// MRR is explicitly labelled as the active Pro/Team list-price calculation;
+/// it is not collected revenue. Measured zero values remain visible instead of
+/// being dropped as falsy values.
+String buildAdminDailyXPostDraft({
+  required Map<String, dynamic> digest,
+  required AdminPaidConversionMetrics billing,
+}) {
+  final users = digest['users'] is Map
+      ? Map<String, dynamic>.from(digest['users'] as Map)
+      : <String, dynamic>{};
+  final featureRequests = digest['featureRequests'] is Map
+      ? Map<String, dynamic>.from(digest['featureRequests'] as Map)
+      : <String, dynamic>{};
+  final totalUsers = _toNonNegativeInt(users['total']);
+  final newToday = _toNonNegativeInt(featureRequests['newToday']);
+  final openCount = _toNonNegativeInt(featureRequests['openCount']);
+  final paidCustomers = billing.paidCustomers < 0 ? 0 : billing.paidCustomers;
+  final mrrYen = billing.mrrYen < 0 ? 0 : billing.mrrYen;
+
+  return '今日の自分株式会社\n'
+      '総ユーザー$totalUsers人、新規要望$newToday件、未対応要望$openCount件。\n'
+      '課金ユーザー$paidCustomers人、MRR ${_formatYen(mrrYen)}'
+      '（active Pro/Teamの定価換算）。\n'
+      'https://my-web-app-b67f4.web.app/ #buildinpublic #FlutterWeb #Supabase';
+}
+
 class AdminBillingFunnelMetrics {
   final int billingViews;
   final int upgradeClicks;
@@ -224,3 +252,17 @@ double? _safeRate(int? numerator, int? denominator) {
 }
 
 bool _isNonNegative(double? value) => value != null && value >= 0;
+
+int _toNonNegativeInt(dynamic value) {
+  final parsed = value is int ? value : int.tryParse(value?.toString() ?? '');
+  return parsed == null || parsed < 0 ? 0 : parsed;
+}
+
+String _formatYen(int value) {
+  final digits = value.toString();
+  final formatted = digits.replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (_) => ',',
+  );
+  return '¥$formatted';
+}

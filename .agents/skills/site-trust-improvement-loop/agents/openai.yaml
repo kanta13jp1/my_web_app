@@ -1,0 +1,6 @@
+interface:
+  display_name: "Site Trust Improvement Loop"
+  short_description: "Fix and verify the site's top user-trust risk"
+  default_prompt: "Use $site-trust-improvement-loop to review the live site, fix its highest-priority trust-eroding defect, and carry the authorized work through production verification."
+policy:
+  allow_implicit_invocation: true

@@ -267,6 +267,26 @@ void main() {
       );
     });
 
+    test('save and load retain evidence-based Claude amount, day and source',
+        () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final prefs = await SharedPreferences.getInstance();
+      const cost = AssetRecurringFixedCost(
+        id: 'fc_1781980533253000',
+        name: 'Claude',
+        amount: 3574,
+        paymentDay: 3,
+        sourceAccountId: 'custom_ab350028',
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      await store.save(const [cost], prefs: prefs);
+      final loaded = (await store.load(prefs: prefs)).single;
+      expect(loaded.name, 'Claude');
+      expect(loaded.amount, 3574);
+      expect(loaded.paymentDay, 3);
+      expect(loaded.sourceAccountId, 'custom_ab350028');
+    });
+
     test('returns empty list when nothing stored', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final prefs = await SharedPreferences.getInstance();
@@ -329,6 +349,63 @@ void main() {
         },
       );
       expect(decoded.map((c) => c.id), ['fc_denki']);
+    });
+
+    test('normalizeCost preserves user-entered Claude billing details', () {
+      const legacy = AssetRecurringFixedCost(
+        id: 'card_statement_claude_ai_subscription',
+        name: 'Claude AI SUBSCRIPTION',
+        amount: 36418,
+        paymentDay: 26,
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      final normalized = AssetRecurringFixedCostStore.normalizeCost(legacy);
+      expect(normalized.name, 'Claude AI SUBSCRIPTION');
+      expect(normalized.amount, 36418);
+      expect(normalized.currency, AssetRecurringFixedCostCurrency.jpy);
+      expect(normalized.usdAmount, isNull);
+      expect(normalized.category, AssetRecurringFixedCostCategory.subscription);
+      expect(normalized.paymentDay, 26);
+
+      // 他のサブスク（ChatGPT Pro等）は影響を受けない
+      const chatGpt = AssetRecurringFixedCost(
+        id: 'card_statement_chatgpt_pro',
+        name: 'ChatGPT Pro 20s',
+        amount: 30000,
+        paymentDay: 20,
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      final chatGptNormalized =
+          AssetRecurringFixedCostStore.normalizeCost(chatGpt);
+      expect(chatGptNormalized.name, 'ChatGPT Pro 20s');
+      expect(chatGptNormalized.amount, 30000);
+    });
+
+    test('decodeMirrorValue preserves Claude billing evidence', () {
+      final decoded =
+          AssetRecurringFixedCostStore.decodeMirrorValue(<String, dynamic>{
+        'claude_sub': <String, dynamic>{
+          'name': 'Claude AI SUBSCRIPTION',
+          'amount': 36418,
+          'paymentDay': 26,
+          'category': 'subscription',
+        },
+        'google_cloud': <String, dynamic>{
+          'name': 'Google Cloud',
+          'amount': 8087,
+          'paymentDay': 1,
+          'category': 'subscription',
+        },
+      });
+      expect(decoded.length, 2);
+      final claude = decoded.firstWhere((c) => c.id == 'claude_sub');
+      expect(claude.name, 'Claude AI SUBSCRIPTION');
+      expect(claude.amount, 36418);
+      expect(claude.currency, AssetRecurringFixedCostCurrency.jpy);
+
+      final gcp = decoded.firstWhere((c) => c.id == 'google_cloud');
+      expect(gcp.name, 'Google Cloud');
+      expect(gcp.amount, 8087);
     });
   });
 }

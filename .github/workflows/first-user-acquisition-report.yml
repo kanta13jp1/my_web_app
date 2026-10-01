@@ -249,11 +249,11 @@ jobs:
             jq '.cohorts' "${growth}"
             echo '```'
             echo
-            echo "### Top route evidence"
+            echo "### Route evidence: ranking withheld"
             echo
-            echo '```json'
-            jq '.routes[:20]' "${growth}"
-            echo '```'
+            echo "Route ranking is unavailable until approved operator/synthetic exclusions, eligible denominators, minimum sample and maturity gates are implemented."
+            echo "Raw route aggregates in the artifact are diagnostic only, not customer-demand or new-paid-conversion evidence."
+            echo "Snapshot paid users must not be interpreted as newly acquired paid users or attributed revenue."
             echo
             echo "### Plan economics readiness"
             echo

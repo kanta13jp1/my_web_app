@@ -1,13 +1,13 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-09-02",
+    "date": "2026-10-01",
     "users": {
       "total": 61
     },
     "featureRequests": {
       "newToday": 0,
-      "openCount": 140,
+      "openCount": 149,
       "newTodayList": [],
       "topOpen": [
         {
@@ -34,27 +34,37 @@
     },
     "recentAchievements": [
       {
-        "title": "Codex #4: tax export deterministic core (#2492)",
-        "completed_at": "2026-07-13T00:00:00+00:00"
+        "title": "『今日やることトリアージ』に出金/移動テンプレ（1万/2万）を実装し、生活費先取りをワンタップ化 (#4903)",
+        "completed_at": "2026-09-29T19:37:29.231904+00:00"
       },
       {
-        "title": "自分API v1 (Notion Developer Platform 対抗)",
-        "completed_at": "2026-07-12T00:00:00+00:00"
+        "title": "リボカード照合のUI分岐と説明強化（不一致アラート抑止＋確定額ロジック明示） (#4901)",
+        "completed_at": "2026-09-29T18:47:55.109426+00:00"
       },
       {
-        "title": "XLSX/DOCXインポート対応 (Notion移行0ステップ強化)",
-        "completed_at": "2026-07-12T00:00:00+00:00"
+        "title": "『借金しない宣言モニター』に違反根拠と脱却目安額（24ヶ月ライン）を同画面表示 (#4902)",
+        "completed_at": "2026-09-29T18:01:17.273664+00:00"
       },
       {
-        "title": "構造化タスク管理 (GitHub Issue Fields相当)",
-        "completed_at": "2026-07-12T00:00:00+00:00"
+        "title": "リボ払い新規利用の内訳可視化と誓約達成状況の連動 (#5372)",
+        "completed_at": "2026-09-29T15:11:20.039582+00:00"
       },
       {
-        "title": "AI大学 FinTech/Trading AI 掲載コンテンツの日本語化",
-        "completed_at": "2026-06-21T00:00:00+00:00"
+        "title": "利息が元金返済額を上回る負債に対する早期警告と対策提案機能 (#5366)",
+        "completed_at": "2026-09-29T08:38:55.697557+00:00"
       }
-    ]
+    ],
+    "revenue": {
+      "mrrYen": 980,
+      "currency": "JPY",
+      "basis": "active_list_price"
+    },
+    "paid": {
+      "total": 1,
+      "pro": 1,
+      "team": 0
+    }
   },
-  "fetched_at": "2026-09-02T09:25:43+09:00",
-  "report_date": "2026-09-02"
+  "fetched_at": "2026-10-01T10:26:00+09:00",
+  "report_date": "2026-10-01"
 }

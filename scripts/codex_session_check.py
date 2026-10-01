@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,17 @@ RESOURCE_RAM_USED_WARN_PCT = 85.0
 RESOURCE_RAM_FREE_WARN_GB = 2.0
 RESOURCE_DISK_FREE_WARN_GB = 26.0
 RESOURCE_WORKTREE_REVIEW_COUNT = 50
+REMOTE_CONTROL_FEATURE_FLAG_BLOCKERS = (
+    "DISABLE_TELEMETRY",
+    "DO_NOT_TRACK",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    "DISABLE_GROWTHBOOK",
+)
+REMOTE_CONTROL_PROVIDER_BLOCKERS = (
+    "CLAUDE_CODE_USE_BEDROCK",
+    "CLAUDE_CODE_USE_VERTEX",
+    "CLAUDE_CODE_USE_FOUNDRY",
+)
 
 
 @dataclass(frozen=True)
@@ -305,6 +317,8 @@ def is_remote_control_flag_path(path: list[str]) -> bool:
     normalized = normalized_key_path(path)
     if "remotecontrol" not in normalized:
         return False
+    if normalized.endswith("remotecontrolatstartup"):
+        return True
     return any(
         token in normalized
         for token in [
@@ -334,9 +348,47 @@ def collect_remote_control_flags(
     return flags
 
 
+def _enabled_environment_value(value: str | None) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() not in {"", "0", "false", "no", "off"}
+
+
+def remote_control_environment_audit(
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """Report blocker names without copying potentially sensitive values."""
+
+    source = os.environ if environ is None else environ
+    feature_flag_blockers = [
+        name
+        for name in REMOTE_CONTROL_FEATURE_FLAG_BLOCKERS
+        if _enabled_environment_value(source.get(name))
+    ]
+    provider_blockers = [
+        name
+        for name in REMOTE_CONTROL_PROVIDER_BLOCKERS
+        if _enabled_environment_value(source.get(name))
+    ]
+
+    base_url = source.get("ANTHROPIC_BASE_URL", "").strip().lower().rstrip("/")
+    if base_url and base_url not in {
+        "api.anthropic.com",
+        "https://api.anthropic.com",
+    }:
+        provider_blockers.append("ANTHROPIC_BASE_URL")
+
+    return {
+        "feature_flag_blockers": sorted(feature_flag_blockers),
+        "provider_blockers": sorted(set(provider_blockers)),
+        "values_redacted": True,
+    }
+
+
 def analyze_claude_remote_control(
     root: Path,
     settings_path: Path | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     path = settings_path or default_claude_settings_path()
     version = claude_code_version(root)
@@ -367,6 +419,8 @@ def analyze_claude_remote_control(
             settings_state = "unreadable"
             evidence = f"Could not read Claude settings: {exc}"
 
+    environment_audit = remote_control_environment_audit(environ)
+
     return {
         "version": version,
         "settings_path": str(path),
@@ -374,15 +428,44 @@ def analyze_claude_remote_control(
         "all_sessions_status": status,
         "flag_path": flag_path,
         "evidence": evidence,
+        "policy_decision": "owner-security-review-required",
+        "environment_audit": environment_audit,
+        "data_flow_note": (
+            "Execution and filesystem access stay local, but the synchronized "
+            "transcript, responses, and tool activity are stored by Anthropic "
+            "while Remote Control is connected."
+        ),
+        "compliance_note": (
+            "Do not enable for a Zero Data Retention organization. Remote Control "
+            "is not covered by Anthropic's BAA; confirm the applicable contract "
+            "and retention policy before use."
+        ),
         "manual_steps": [
-            "Open Claude Code locally.",
-            "Run `/config`.",
-            "Set `Enable Remote Control for all sessions` to `true`.",
-            "Start a normal interactive session and verify it appears in `claude.ai/code`.",
+            (
+                "Have the organization Owner and security/legal owner approve the "
+                "data flow, retention, and contract fit."
+            ),
+            (
+                "For Team/Enterprise, enable Remote Control in Claude Code admin "
+                "settings and require Trusted Devices where supported."
+            ),
+            (
+                "Run `claude`, use `/login` for the eligible claude.ai OAuth "
+                "account, then start one test session with `/remote-control`."
+            ),
+            (
+                "Verify the expected account/device can connect, then disconnect "
+                "and confirm the device/session revocation procedure."
+            ),
+            (
+                "Only after that review, choose whether `remoteControlAtStartup` "
+                "should be enabled in user or managed settings."
+            ),
         ],
         "admin_note": (
-            "Team/Enterprise plans also require an admin to enable the Remote Control "
-            "toggle in Claude Code admin settings."
+            "Team/Enterprise plans are off by default until an Owner enables the "
+            "admin toggle. Trusted Devices is organization-wide and does not "
+            "retroactively protect sessions that were already running."
         ),
     }
 
@@ -684,11 +767,31 @@ def analyze(cwd: Path) -> dict[str, Any]:
     parsed_claude_version = parse_semver(claude_version)
     if claude_version == "unavailable":
         warnings.append("Claude Code CLI is unavailable on PATH; Remote Control cannot be verified")
-    elif parsed_claude_version and parsed_claude_version < (2, 1, 79):
-        warnings.append("Claude Code is older than 2.1.79; Remote Control slash command support is not ready")
-    if claude_remote_control["all_sessions_status"] != "enabled":
+    elif parsed_claude_version and parsed_claude_version < (2, 1, 51):
         warnings.append(
-            "Claude Code Remote Control all-sessions mode is not verified as enabled; run `/config` in Claude Code"
+            "Claude Code is older than 2.1.51; current Remote Control support is not ready"
+        )
+    remote_environment = claude_remote_control["environment_audit"]
+    if remote_environment["feature_flag_blockers"]:
+        warnings.append(
+            "Claude Code Remote Control feature-flag evaluation is blocked by "
+            f"{', '.join(remote_environment['feature_flag_blockers'])}; do not unset "
+            "organization privacy controls without owner approval"
+        )
+    if remote_environment["provider_blockers"]:
+        warnings.append(
+            "Claude Code Remote Control is unavailable with the detected endpoint/provider "
+            f"configuration: {', '.join(remote_environment['provider_blockers'])}"
+        )
+    if claude_remote_control["all_sessions_status"] == "enabled":
+        warnings.append(
+            "Claude Code Remote Control auto-connect is enabled; verify organization "
+            "retention, ZDR/BAA fit, and Trusted Devices before using sensitive data"
+        )
+    else:
+        warnings.append(
+            "Claude Code Remote Control auto-connect is not enabled or cannot be verified; "
+            "enable it only after organization Owner and security/legal review"
         )
     if managed_mcp["validation_errors"]:
         warnings.append("managed MCP policy validation failed")
@@ -776,13 +879,19 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- Settings: `{remote['settings_path']}` ({remote['settings_state']})",
             f"- All-session Remote Control: `{remote['all_sessions_status']}`",
             f"- Evidence: {remote['evidence']}",
+            f"- Policy decision: `{remote['policy_decision']}`",
+            "- Feature-flag blockers: `"
+            f"{', '.join(remote['environment_audit']['feature_flag_blockers']) or 'none detected'}`",
+            "- Endpoint/provider blockers: `"
+            f"{', '.join(remote['environment_audit']['provider_blockers']) or 'none detected'}`",
+            f"- Data flow: {remote['data_flow_note']}",
+            f"- Compliance: {remote['compliance_note']}",
         ]
     )
-    if remote["all_sessions_status"] != "enabled":
-        lines.append("- Required manual steps:")
-        for step in remote["manual_steps"]:
-            lines.append(f"  - {step}")
-        lines.append(f"- Team/Enterprise note: {remote['admin_note']}")
+    lines.append("- Required manual review steps:")
+    for step in remote["manual_steps"]:
+        lines.append(f"  - {step}")
+    lines.append(f"- Team/Enterprise note: {remote['admin_note']}")
 
     managed_mcp = report["managed_mcp"]
     lines.extend(

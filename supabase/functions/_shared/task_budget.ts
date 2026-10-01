@@ -45,8 +45,12 @@ const MODEL_PRICE_TABLE: Record<string, ModelPrice> = {
   "gpt-5.4-mini": { input_usd_per_million: 0.15, output_usd_per_million: 0.60 },
   "gpt-5.4": { input_usd_per_million: 2.50, output_usd_per_million: 10.00 },
   "claude-haiku-4-5": {
-    input_usd_per_million: 0.80,
-    output_usd_per_million: 4.00,
+    input_usd_per_million: 1.00,
+    output_usd_per_million: 5.00,
+  },
+  "claude-sonnet-5": {
+    input_usd_per_million: 2.00,
+    output_usd_per_million: 10.00,
   },
   "claude-sonnet-4-6": {
     input_usd_per_million: 3.00,

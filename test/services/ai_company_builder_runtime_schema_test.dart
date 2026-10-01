@@ -4,15 +4,22 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _migrationPath =
     'supabase/migrations/20260815165819_company_agent_runtime.sql';
+const _watchdogMigrationPath =
+    'supabase/migrations/20260903090000_company_agent_runtime_watchdog.sql';
 const _aiHubPath = 'supabase/functions/ai-hub/index.ts';
 
 void main() {
   group('AI Company Builder durable runtime', () {
     late final String sql;
+    late final String watchdogSql;
     late final String aiHub;
 
     setUpAll(() {
       sql = File(_migrationPath)
+          .readAsStringSync()
+          .replaceAll('\r\n', '\n')
+          .toLowerCase();
+      watchdogSql = File(_watchdogMigrationPath)
           .readAsStringSync()
           .replaceAll('\r\n', '\n')
           .toLowerCase();
@@ -84,6 +91,22 @@ void main() {
       ]) {
         expect(aiHub, contains(action));
       }
+    });
+
+    test('expires stale tasks and preserves timeout audit evidence', () {
+      expect(watchdogSql, contains("interval '5 minutes'"));
+      expect(watchdogSql, contains('runtime_deadline_at'));
+      expect(watchdogSql, contains('timed_out_at'));
+      expect(watchdogSql, contains('expire_stale_company_agent_tasks'));
+      expect(watchdogSql, contains("'task_timed_out'"));
+      expect(watchdogSql, contains("'task_late_result_discarded'"));
+      expect(watchdogSql, contains("'company_agent_runtime_watchdog_1m'"));
+      expect(watchdogSql, contains('for update of task skip locked'));
+      expect(
+        aiHub,
+        contains('const taskTimedOut = finish.timed_out === true;'),
+      );
+      expect(aiHub, contains('if (!taskCancelled && !taskTimedOut)'));
     });
 
     test('exposes cited research and the A2A 1.0 HTTP surface', () {

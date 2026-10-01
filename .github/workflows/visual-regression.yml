@@ -1,0 +1,241 @@
+name: Flutter Visual Regression
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/actions/setup-flutter-sdk/**
+      - .github/workflows/visual-regression.yml
+      - lib/**
+      - web/**
+      - pubspec.yaml
+      - pubspec.lock
+      - package.json
+      - package-lock.json
+      - playwright.config.ts
+      - scripts/flutter_spa_server.py
+      - test/e2e/**
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: Generate reviewed baseline candidates instead of comparing
+        required: true
+        default: false
+        type: boolean
+
+permissions: {}
+
+concurrency:
+  group: visual-regression-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  compare:
+    name: Compare reviewed Flutter baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      E2E_BASE_URL: http://127.0.0.1:7357
+      PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-regression-results.json
+      UPDATE_SNAPSHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.update_snapshots && 'true' || 'false' }}
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked dependencies and Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Verify saved chat presentation without requests
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/chat-replay-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: chat-replay-results
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs
+          flutter test test/pages/chat_replay_page_test.dart test/pages/asset_chat_history_page_test.dart
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/chat_replay_app.dart --output=build/replay-fixture
+          python3 scripts/flutter_spa_server.py --directory build/replay-fixture --port 7359 > .ci-logs/replay-fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7359/ > /dev/null; then break; fi
+            sleep 1
+          done
+          npx playwright test test/e2e/chat_replay.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Build isolated Flutter Web fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build web --release --pwa-strategy=none \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+
+      - name: Start short-lived SPA server
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs
+          python3 scripts/flutter_spa_server.py \
+            --directory build/web \
+            --port 7357 \
+            > .ci-logs/visual-regression-server.log 2>&1 &
+          echo "$!" > .ci-logs/visual-regression-server.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:7357/privacy \
+              --output .ci-logs/visual-regression-health.html \
+              && grep --quiet '<title>' \
+              .ci-logs/visual-regression-health.html; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo '::error::The temporary Flutter Web server did not become ready.'
+          exit 1
+
+      - name: Compare or generate reviewed baselines
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_args=()
+          if [[ "$UPDATE_SNAPSHOTS" == 'true' ]]; then
+            snapshot_args+=(--update-snapshots)
+          fi
+          npm run e2e:visual:regression -- \
+            --project=chromium \
+            --project=mobile-chrome \
+            --retries=0 \
+            "${snapshot_args[@]}"
+
+      - name: Verify monthly budget allocation and recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/budget-balance-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: budget-balance-results
+        run: |
+          flutter test test/services/budget_balance_calculator_test.dart test/widgets/budget_balance_card_test.dart
+          npx playwright test test/e2e/budget_balance.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify integrated Lumen Path route
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lumen-route-results.json
+        run: |
+          npx playwright test test/e2e/lumen_path_route.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify hiragana tracing and recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/hiragana-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: hiragana-results
+        run: |
+          node --test test/hiragana/model.test.mjs
+          npx playwright test test/e2e/hiragana_garden.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify Blur Studio controls and fallbacks
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/blur-studio-results.json
+        run: |
+          npx playwright test test/e2e/blur_studio.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify shared JSON download consumers
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lab-json-download-results.json
+        run: |
+          npx playwright test test/e2e/lab_json_download.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify generated API reference usability
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lab-api-reference-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: api-reference-results
+        run: |
+          npx playwright test test/e2e/lab_api_reference.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify Inbox platform dismissal and save recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/inbox-adaptive-results.json
+        run: |
+          set -euo pipefail
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/inbox_adaptive_app.dart --output=build/inbox-fixture
+          python3 scripts/flutter_spa_server.py --directory build/inbox-fixture --port 7358 > .ci-logs/inbox-fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          npx playwright test test/e2e/inbox_adaptive.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Stop short-lived SPA server
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f .ci-logs/visual-regression-server.pid ]]; then
+            kill "$(cat .ci-logs/visual-regression-server.pid)" 2>/dev/null || true
+          fi
+
+      - name: Write visual comparison summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Flutter visual regression'
+            echo
+            echo "- mode: \`${UPDATE_SNAPSHOTS}\` (true generates candidates; false compares)"
+            echo '- source: exact PR/branch Flutter Web build served only on runner localhost'
+            echo '- surfaces: landing, privacy, terms'
+            echo '- viewports: desktop Chromium and mobile Chromium'
+            echo '- threshold: maxDiffPixelRatio = 0.002'
+            echo '- production smoke remains separate in `e2e-smoke.yml` / `minimal-e2e-gate.yml`'
+            echo "- actual / expected / diff evidence: [workflow artifacts](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}#artifacts)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload actual, expected, diff, and candidate evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: visual-regression-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            api-reference-results/
+            chat-replay-results/
+            hiragana-results/
+            budget-balance-results/
+            test/e2e/visual_regression.spec.ts-snapshots/
+            .ci-logs/visual-regression-server.log
+          if-no-files-found: warn
+          retention-days: 14

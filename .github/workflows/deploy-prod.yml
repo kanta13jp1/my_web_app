@@ -25,8 +25,21 @@ on:
       - 'scripts/pre_commit_quality_gate.py'
       - 'scripts/pre_commit_quality_gate_test.py'
       - 'scripts/check_ga_readiness_gate.py'
+      - 'playwright.config.ts'
+      - 'scripts/summarize_playwright_results.mjs'
+      - 'scripts/summarize_playwright_results_test.mjs'
+      - 'scripts/playwright_report_persistence_test.mjs'
       - 'assets/data/tiger_*'
   workflow_dispatch:
+    inputs:
+      deploy_scope:
+        description: "Deployment scope (use web_only for asset-only releases)"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - web_only
 
 concurrency:
   group: deploy-prod
@@ -89,8 +102,18 @@ jobs:
           set -euo pipefail
           git init .
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --tags --prune origin "+${GITHUB_REF}:refs/remotes/origin/checkout"
-          git checkout --force refs/remotes/origin/checkout
+          # Keep source, event change scope, release metadata, and tags on one SHA.
+          # A queued run must not silently build a newer moving branch head.
+          if [[ ! "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Deployment requires a full immutable event SHA."
+            exit 1
+          fi
+          git fetch --tags --prune origin "$GITHUB_SHA"
+          git checkout --force --detach FETCH_HEAD
+          if [ "$(git rev-parse HEAD)" != "$GITHUB_SHA" ]; then
+            echo "::error::Deployment checkout does not match the event SHA."
+            exit 1
+          fi
 
       - name: Collect pushed files
         if: github.event_name == 'push'
@@ -114,10 +137,14 @@ jobs:
         id: changes
         shell: bash
         env:
-          FORCE_ALL: ${{ github.event_name != 'push' }}
+          FORCE_ALL: ${{ github.event_name != 'push' && inputs.deploy_scope != 'web_only' }}
+          WEB_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_scope == 'web_only' }}
         run: |
           mkdir -p .deploy-logs
           touch .deploy-logs/changed-files.txt
+          if [ "$WEB_ONLY" = "true" ]; then
+            printf 'web/index.html\n' >> .deploy-logs/changed-files.txt
+          fi
           args=()
           if [ "$FORCE_ALL" = "true" ]; then
             args+=(--all)
@@ -131,7 +158,7 @@ jobs:
         id: db_edge_smoke
         shell: bash
         env:
-          FORCE_ALL: ${{ github.event_name != 'push' }}
+          FORCE_ALL: ${{ github.event_name != 'push' && inputs.deploy_scope != 'web_only' }}
         run: |
           if [ "$FORCE_ALL" = "true" ] || grep -Eq \
             '^(supabase/(migrations|functions)/|scripts/(testcontainers_supabase_smoke.py|requirements-testcontainers.txt)|test/fixtures/testcontainers/|test/scripts/test_testcontainers_supabase_smoke.py)' \
@@ -710,6 +737,17 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
 
+      - name: Resolve normalized AI University provider catalog
+        id: ai_university_catalog
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          mkdir -p .ci-generated
+          provider_count=$(python3 scripts/ai_university_provider_catalog.py \
+            --output .ci-generated/ai-university-catalog.json)
+          echo "provider_count=$provider_count" >> "$GITHUB_OUTPUT"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
       - name: Build Flutter Web (Production)
         if: steps.changes.outputs.web == 'true'
         run: |
@@ -723,6 +761,7 @@ jobs:
             --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
+            --dart-define=AI_UNIVERSITY_PROVIDER_COUNT=${{ steps.ai_university_catalog.outputs.provider_count }} \
             --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
             --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
@@ -747,6 +786,7 @@ jobs:
         run: |
           echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
           cp web/release-notes.json build/web/release-notes.json
+          cp .ci-generated/ai-university-catalog.json build/web/ai-university-catalog.json
 
       - name: Cache-bust OGP image URLs
         if: steps.changes.outputs.web == 'true'
@@ -764,7 +804,8 @@ jobs:
             --template build/web/index.html \
             --outdir build/web \
             --routes web/seo/comparison-routes.json \
-            --public-routes web/seo/public-routes.json
+            --public-routes web/seo/public-routes.json \
+            --ai-university-catalog .ci-generated/ai-university-catalog.json
           # 実在ルートのみの sitemap を当日 lastmod で再生成 (build 済みへ出力)
           python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
@@ -866,7 +907,7 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.changes.outputs.web == 'true'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
@@ -913,6 +954,18 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"action\":\"notification.broadcast_release\",\"version\":\"${{ steps.version.outputs.version }}\",\"commit\":\"${{ github.sha }}\",\"releaseUrl\":\"https://github.com/kanta13jp1/my_web_app/releases/tag/${{ steps.version.outputs.tag }}\"}" \
             || true
+
+      # Positive evidence only; missing/unknown classifier outputs never suppress gates.
+      - name: Confirmed production no-op
+        if: >-
+          success() &&
+          github.event_name == 'push' &&
+          steps.changes.outputs.deployable == 'false' &&
+          steps.changes.outputs.web == 'false' &&
+          steps.changes.outputs.edge == 'false' &&
+          steps.changes.outputs.migration == 'false' &&
+          steps.db_edge_smoke.outputs.required == 'false'
+        run: echo "No production deployment or DB/Edge smoke was required for this exact run."
 
       - name: Job Summary
         if: always()
@@ -1012,3 +1065,4 @@ jobs:
               commit_sha: context.sha,
               body: 'Production deployment completed.\n\n- **Web**: ${{ needs.deploy.outputs.web }}\n- **Edge Functions**: ${{ needs.deploy.outputs.edge }}\n- **Migrations**: ${{ needs.deploy.outputs.migration }}\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
             })
+

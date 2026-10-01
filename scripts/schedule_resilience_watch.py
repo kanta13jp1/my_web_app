@@ -36,6 +36,28 @@ REPOSITORY_RUNS_MAX_PAGES = 10
 REPOSITORY_REVALIDATION_MIN_HOURS = 24
 
 
+class RepositoryRunsInvalid(RuntimeError):
+    code = "repository-runs-invalid"
+
+
+class RepositoryPaginationIncomplete(RuntimeError):
+    code = "repository-pagination-incomplete"
+
+
+class PrimaryLatestUnconfirmed(RuntimeError):
+    code = "primary-latest-unconfirmed"
+
+
+def verification_error_code(exc: Exception) -> str:
+    # Only fixed, locally defined codes are public; exception messages may contain secrets.
+    codes = {
+        RepositoryRunsInvalid: RepositoryRunsInvalid.code,
+        RepositoryPaginationIncomplete: RepositoryPaginationIncomplete.code,
+        PrimaryLatestUnconfirmed: PrimaryLatestUnconfirmed.code,
+    }
+    return codes.get(type(exc), type(exc).__name__)
+
+
 @dataclass(frozen=True)
 class WorkflowTarget:
     key: str
@@ -48,7 +70,9 @@ class WorkflowTarget:
 
 TARGETS = (
     WorkflowTarget("daily-report", "daily-report.yml", 30),
-    WorkflowTarget("cs-check", "cs-check.yml", 3),
+    # A two-hour GitHub schedule may be delayed or drop an individual run.
+    # Require two missed delivery opportunities before opening a high-priority alert.
+    WorkflowTarget("cs-check", "cs-check.yml", 6),
     WorkflowTarget("competitor-monitoring", "competitor-monitoring.yml", 30),
     # A two-hour GitHub schedule may be delayed or drop an individual run.
     # Require two missed delivery opportunities before opening a high-priority alert.
@@ -111,22 +135,23 @@ def repository_revalidation_start(
     runs: list[dict[str, Any]],
     now: datetime,
 ) -> datetime:
-    if runs:
-        newest = sort_runs_newest(runs)[0]
-        created_at = parse_time(str(newest.get("created_at") or ""))
-        if created_at is None:
-            raise ValueError("Workflow run is missing created_at")
-        return created_at - timedelta(seconds=1)
-
     window_hours = (
         max(target.max_age_hours, REPOSITORY_REVALIDATION_MIN_HOURS)
         if target.max_age_hours > 0
         else 24 * 30
     )
     window_start = now - timedelta(hours=window_hours)
-    if target.introduced_at is None:
-        return window_start
-    return max(target.introduced_at, window_start)
+    if target.introduced_at is not None:
+        window_start = max(target.introduced_at, window_start)
+    if runs:
+        newest = sort_runs_newest(runs)[0]
+        created_at = parse_time(str(newest.get("created_at") or ""))
+        if created_at is None:
+            raise ValueError("Workflow run is missing created_at")
+        # A stale per-workflow response must not expand the repository query
+        # beyond the monitoring window and exhaust its fail-closed page cap.
+        return max(created_at - timedelta(seconds=1), window_start)
+    return window_start
 
 
 def merge_revalidated_runs(
@@ -147,7 +172,7 @@ def merge_revalidated_runs(
             if primary_id is None or not any(
                 candidate.get("id") == primary_id for candidate in repository_runs
             ):
-                raise RuntimeError("Repository run listing did not confirm the primary latest run")
+                raise PrimaryLatestUnconfirmed("Repository run listing did not confirm the primary latest run")
             return merge_runs(primary_runs, repository_runs)
     return repository_runs
 
@@ -468,7 +493,7 @@ class GitHubClient:
             payload = self.request("GET", f"/repos/{self.repo}/actions/runs?{query}")
             page_runs = payload.get("workflow_runs", []) if isinstance(payload, dict) else []
             if not isinstance(page_runs, list):
-                raise RuntimeError("Repository workflow runs response is invalid")
+                raise RepositoryRunsInvalid("Repository workflow runs response is invalid")
             matches.extend(
                 run
                 for run in page_runs
@@ -476,7 +501,7 @@ class GitHubClient:
             )
             if len(page_runs) < REPOSITORY_RUNS_PER_PAGE:
                 return sort_runs_newest(matches)
-        raise RuntimeError("Repository workflow runs pagination was incomplete")
+        raise RepositoryPaginationIncomplete("Repository workflow runs pagination was incomplete")
 
     def workflow_state(self, workflow_file: str) -> str:
         path = f"/repos/{self.repo}/actions/workflows/{quote(workflow_file)}"
@@ -627,14 +652,15 @@ def render_summary(results: list[dict[str, Any]]) -> str:
     lines = [
         "## Schedule Resilience Watch",
         "",
-        "| Target | Action | Reason | Run |",
-        "|---|---|---|---|",
+        "| Target | Action | Reason | Verification error | Run |",
+        "|---|---|---|---|---|",
     ]
     for result in results:
         run = result.get("url") or ""
         run_cell = f"[run]({run})" if run else "-"
         lines.append(
-            f"| `{result['target']}` | `{result['action']}` | `{result['reason']}` | {run_cell} |"
+            f"| `{result['target']}` | `{result['action']}` | `{result['reason']}` | "
+            f"{result.get('verification_error') or '-'} | {run_cell} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -708,7 +734,7 @@ def main(argv: list[str]) -> int:
                     "workflow_file": target.workflow_file,
                     "action": "observe",
                     "reason": "freshness-unverified",
-                    "verification_error": type(exc).__name__,
+                    "verification_error": verification_error_code(exc),
                 }
             )
             continue

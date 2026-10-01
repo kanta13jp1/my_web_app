@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "generated_at": "2026-09-02T22:10:05.309844+00:00",
+  "generated_at": "2026-09-03T04:39:30.166633+00:00",
   "disclaimer": "公開情報から構築した証拠付きシミュレーションです。本人による実レビュー、発言、推薦を示すものではありません。",
   "lane": "course_review",
   "publication_state": "latest_review",
@@ -11,12 +11,12 @@
     "schedule": "毎時50分（1時間ごと）"
   },
   "pool": {
-    "total": 26,
-    "eligible": 26,
-    "provisional": 24,
+    "total": 27,
+    "eligible": 27,
+    "provisional": 25,
     "division_1": 0,
     "division_2": 0,
-    "division_3": 25,
+    "division_3": 26,
     "division_4": 1,
     "division_5": 0
   },
@@ -28,27 +28,27 @@
     "learner_evidence": 15
   },
   "latest_review": {
-    "cycle_id": "20260903T070419+0900",
-    "started_at": "2026-09-03T07:04:19+09:00",
+    "cycle_id": "20260903T122333+0900",
+    "started_at": "2026-09-03T12:23:33+09:00",
     "source_format": "course_review",
     "surface": {
-      "slug": "course-a11d6e8d-014b-4622-a1ea-6bc6281b63dd",
-      "url": "https://docs.aleph-alpha.com/docs/introduction/luminous/"
+      "slug": "course-4dc668e4-1cc0-4d0c-9bab-f926b84d6ec1",
+      "url": "https://allenai.org/olmo"
     },
     "reviewer": {
       "seat": 12,
       "name": "迫 佑樹",
-      "selection_score": 71.4434,
+      "selection_score": 72.1034,
       "division": 1,
-      "cycle_utility": 93.5,
-      "aggregate_utility": 88.74
+      "cycle_utility": 93.58,
+      "aggregate_utility": 91.83
     },
     "status": "review_only",
     "validation": "passed",
     "finding_count": 3,
     "top_findings": [
       {
-        "summary": "2026年モデル一覧なのに対象開発者、観察可能な選定成果、確認方法、根拠URL、確認日時がすべて未設定",
+        "summary": "対象者、観察可能なモデル選定成果、確認方法、根拠URL、確認日時がすべて未設定",
         "severity": "p1",
         "business_dimensions": [
           "market_demand",
@@ -57,7 +57,7 @@
         ]
       },
       {
-        "summary": "設定済みLuminous URLがPhariaAI HOMEへ転送され、一覧のモデル名・文脈長・推奨状態を検証できない",
+        "summary": "公開講座がOLMo-1/2中心のまま、公式ページのOLMo 3/3.1系を反映していない",
         "severity": "p1",
         "business_dimensions": [
           "trust_risk",
@@ -66,12 +66,12 @@
         ]
       },
       {
-        "summary": "モデル一覧とAtMan再生問題だけでは、用途・品質・速度・コスト・説明可能性のトレードオフを選べない",
+        "summary": "用語再生クイズでは用途・品質・速度・計算資源のトレードオフを選べない",
         "severity": "p2",
         "business_dimensions": [
           "market_demand",
           "unit_economics",
-          "customer_pain"
+          "scalability"
         ]
       }
     ],
@@ -90,56 +90,146 @@
       "focus_dimension": "evidence",
       "overall_delta": null,
       "next_focus_dimension": "complete",
-      "next_cycle_experiment": "After a curator publishes a dated availability source and credential-safe workload fixture, compare source reachability, shortlist accuracy, decision completion time, support contacts, and follow-on conversion for four weeks."
+      "next_cycle_experiment": "After curator-verified OLMo 3 and 3.1 metadata plus a fixed workload rubric are published, measure source reachability, current-model coverage, valid shortlist rate, task completion time, compute estimate quality, and seven-day follow-on learning."
     },
     "countermeasure": {
       "state": "issue_tracking",
-      "label": "対策待ち・Issue #5283",
-      "detail": "Correcting model availability and the evidence contract mutates production course data and requires curator verification of current provider documentation; it is outside the bounded automatic repair boundary.",
+      "label": "対策待ち・Issue #5301",
+      "detail": "Correcting the production course catalog requires current provider-source curation and production-data mutation, outside the bounded automatic repair boundary.",
       "summary": "",
       "files": [],
       "lines_changed": 0,
       "resolved_finding_ids": [],
       "validation_status": "passed",
       "validation_messages": [
-        "passed: clean dedicated branch at origin/main c8d1f419ce800ec7361e9f60ac11f497446cee0b",
-        "passed: 125 roster profiles and 125 personas",
+        "passed: clean dedicated branch at origin/main d914f0d847624b766d7493e2719580327bccc8d2",
         "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
-        "executed once successfully: Aleph Alpha model-list course selected from 538 eligible courses",
+        "executed once successfully: Allen AI model-list course selected from 538 eligible courses",
         "passed: no comparable baseline, focus_dimension=evidence",
-        "passed: configured URL redirected to PhariaAI HOME; seed and provider quiz inspected",
+        "passed: official page HTTP 200; OLMo 3/3.1 markers compared with April seed and provider quiz",
         "executed once successfully against course history: 125 profiles, seat 12",
         "not run: report-only cloud-first review"
       ],
       "issue": {
-        "number": 5283,
-        "url": "https://github.com/kanta13jp1/my_web_app/issues/5283",
+        "number": 5301,
+        "url": "https://github.com/kanta13jp1/my_web_app/issues/5301",
         "status": "created",
         "github_state": "OPEN",
-        "dedupe_key": "tiger-course-review:20260903T070419+0900:a11d6e8d-014b-4622-a1ea-6bc6281b63dd",
+        "dedupe_key": "tiger-course-review:20260903T122333+0900:4dc668e4-1cc0-4d0c-9bab-f926b84d6ec1",
         "remediation_state": null,
         "queue_status": null,
         "synced_at": null
       },
       "implementation": null,
       "findings_without_individual_trace": [
-        "course-aleph-alpha-model-evidence-contract-gap",
-        "course-aleph-alpha-model-source-staleness",
-        "course-aleph-alpha-model-decision-rubric-gap"
+        "course-allenai-model-evidence-contract-gap",
+        "course-allenai-olmo-version-staleness",
+        "course-allenai-workload-decision-rubric-gap"
       ]
     },
     "course": {
-      "content_id": "a11d6e8d-014b-4622-a1ea-6bc6281b63dd",
-      "provider": "aleph_alpha",
-      "title": "Aleph Alpha — 利用可能モデル (2026)",
-      "source_url": "https://docs.aleph-alpha.com/docs/introduction/luminous/",
-      "reason": "The fresh catalog proves the selected model-list course is active, but all five evidence-contract fields are null. Its configured Luminous URL redirects to the broad PhariaAI HOME documentation root, while the tracked seed still claims specific Pharia and Luminous models, context limits, and positioning from 2026-04-12. The public UI offers a provider summary and an AtMan recall quiz rather than a current availability check or workload-based model decision. Practical actionability, source freshness, and learning clarity are weak; no learner outcome evidence was available, so learner evidence remains neutral at 50.",
-      "cycle_utility": 34.25,
-      "aggregate_utility": 34.25,
+      "content_id": "4dc668e4-1cc0-4d0c-9bab-f926b84d6ec1",
+      "provider": "allenai",
+      "title": "Allen AI モデル一覧",
+      "source_url": "https://allenai.org/olmo",
+      "reason": "The fresh public catalog proves the course is active but exposes no complete evidence contract. The review will verify the named official source and bounded tracked course references; absent learner analytics remains neutral at 50.",
+      "cycle_utility": 46.6,
+      "aggregate_utility": 46.6,
       "division": 3
     }
   },
   "history": [
+    {
+      "cycle_id": "20260903T122333+0900",
+      "started_at": "2026-09-03T12:23:33+09:00",
+      "source_format": "course_review",
+      "subject": {
+        "kind": "course",
+        "id": "4dc668e4-1cc0-4d0c-9bab-f926b84d6ec1",
+        "title": "Allen AI モデル一覧",
+        "url": "https://allenai.org/olmo"
+      },
+      "reviewer": {
+        "seat": 12,
+        "name": "迫 佑樹",
+        "selection_score": 72.1034
+      },
+      "status": "issue_tracking",
+      "review_status": "review_only",
+      "validation_status": "passed",
+      "quality": {
+        "framework": "TCE+CLEAR",
+        "overall_score": 100.0,
+        "scores": {
+          "complete": 100,
+          "logical": 100,
+          "evidence": 100,
+          "audience": 100,
+          "relevant": 100
+        },
+        "gate_passed": true,
+        "baseline_cycle_id": null,
+        "focus_dimension": "evidence",
+        "overall_delta": null,
+        "next_focus_dimension": "complete",
+        "next_cycle_experiment": "After curator-verified OLMo 3 and 3.1 metadata plus a fixed workload rubric are published, measure source reachability, current-model coverage, valid shortlist rate, task completion time, compute estimate quality, and seven-day follow-on learning."
+      },
+      "findings": [
+        {
+          "finding_id": "course-allenai-model-evidence-contract-gap",
+          "summary": "対象者、観察可能なモデル選定成果、確認方法、根拠URL、確認日時がすべて未設定",
+          "severity": "p1",
+          "suggested_action": "対象者と代表ワークロードを定め、現行モデル、根拠URL、確認日時、比較課題を一括公開する。"
+        },
+        {
+          "finding_id": "course-allenai-olmo-version-staleness",
+          "summary": "公開講座がOLMo-1/2中心のまま、公式ページのOLMo 3/3.1系を反映していない",
+          "severity": "p1",
+          "suggested_action": "公式ページから現行・旧版の状態を確認し、モデル一覧、context、license、benchmarkを確認日付きで更新して月次リンク検証する。"
+        },
+        {
+          "finding_id": "course-allenai-workload-decision-rubric-gap",
+          "summary": "用語再生クイズでは用途・品質・速度・計算資源のトレードオフを選べない",
+          "severity": "p2",
+          "suggested_action": "秘密情報を使わない固定fixtureで、小規模と大規模の2ワークロードについて品質、速度、必要VRAM、概算費用、go/no-goを記録する課題へ置き換える。"
+        }
+      ],
+      "countermeasure": {
+        "state": "issue_tracking",
+        "label": "対策待ち・Issue #5301",
+        "detail": "Correcting the production course catalog requires current provider-source curation and production-data mutation, outside the bounded automatic repair boundary.",
+        "summary": "",
+        "files": [],
+        "lines_changed": 0,
+        "resolved_finding_ids": [],
+        "validation_status": "passed",
+        "validation_messages": [
+          "passed: clean dedicated branch at origin/main d914f0d847624b766d7493e2719580327bccc8d2",
+          "passed: active=1083, reviewable=538, excluded_missing_source_url=536, evidence_complete=6",
+          "executed once successfully: Allen AI model-list course selected from 538 eligible courses",
+          "passed: no comparable baseline, focus_dimension=evidence",
+          "passed: official page HTTP 200; OLMo 3/3.1 markers compared with April seed and provider quiz",
+          "executed once successfully against course history: 125 profiles, seat 12",
+          "not run: report-only cloud-first review"
+        ],
+        "issue": {
+          "number": 5301,
+          "url": "https://github.com/kanta13jp1/my_web_app/issues/5301",
+          "status": "created",
+          "github_state": "OPEN",
+          "dedupe_key": "tiger-course-review:20260903T122333+0900:4dc668e4-1cc0-4d0c-9bab-f926b84d6ec1",
+          "remediation_state": null,
+          "queue_status": null,
+          "synced_at": null
+        },
+        "implementation": null,
+        "findings_without_individual_trace": [
+          "course-allenai-model-evidence-contract-gap",
+          "course-allenai-olmo-version-staleness",
+          "course-allenai-workload-decision-rubric-gap"
+        ]
+      }
+    },
     {
       "cycle_id": "20260903T070419+0900",
       "started_at": "2026-09-03T07:04:19+09:00",
@@ -2959,6 +3049,20 @@
       "completed_cycles": 1,
       "last_cycle_utility": 47.75,
       "last_reviewed_at": "2026-08-27T14:28:59+00:00",
+      "reason": "講座レビュー実績が2回未満のため暫定3部"
+    },
+    {
+      "content_id": "4dc668e4-1cc0-4d0c-9bab-f926b84d6ec1",
+      "provider": "allenai",
+      "title": "Allen AI モデル一覧",
+      "source_url": "https://allenai.org/olmo",
+      "division": 3,
+      "provisional": true,
+      "eligible": true,
+      "utility_score": 46.6,
+      "completed_cycles": 1,
+      "last_cycle_utility": 46.6,
+      "last_reviewed_at": "2026-09-03T03:23:33+00:00",
       "reason": "講座レビュー実績が2回未満のため暫定3部"
     },
     {

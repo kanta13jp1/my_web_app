@@ -61,7 +61,8 @@ void main() {
     );
 
     expect(find.text('今月 無制限'), findsOneWidget);
-    expect(find.text('プラン管理'), findsOneWidget);
+    expect(find.text('プラン'), findsOneWidget);
+    expect(find.byKey(const Key('home_billing_compact')), findsOneWidget);
     expect(find.byKey(const Key('home_ai_usage_progress')), findsNothing);
     expect(tester.takeException(), isNull);
   });

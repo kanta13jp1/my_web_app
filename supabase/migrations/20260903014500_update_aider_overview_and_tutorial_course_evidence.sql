@@ -1,7 +1,8 @@
+-- Repair unapplied schema typo; target stable provider/category, preserving newer revisions.
 -- Issues #5165 & #5160: Aider 概要・入門コースのエビデンス契約・複数ファイルGitワークフロー・更新日付の強化
-UPDATE ai_university_contents
+UPDATE public.ai_university_content
 SET
-  description = $md$
+  content = $md$
 # Aider — AI Pair Programming in Your Terminal
 
 **Paul Gauthier** が開発するオープンソース (Apache 2.0 / GitHub 22,000+ Stars) の CLI ベース AI ペアプログラマー。
@@ -42,11 +43,12 @@ aider> /undo
 $md$,
   source_url = 'https://aider.chat/',
   published_at = '2026-09-02'
-WHERE provider_id = 'aider' AND (title LIKE '%Aider — AI ペアプログラマー%' OR id = '2240c679-a2bc-4322-8643-7499385a1bde' OR sort_order = 1);
+WHERE provider = 'aider' AND category = 'overview'
+  AND (published_at IS NULL OR published_at <= DATE '2026-09-02');
 
-UPDATE ai_university_contents
+UPDATE public.ai_university_content
 SET
-  description = $md$
+  content = $md$
 # Aider 入門 — インストール・基本操作・Git 連携ワークフロー
 
 Aider のインストールから初期設定、日常開発での Git 連携ワークフローを網羅した実践チュートリアルです。
@@ -84,4 +86,5 @@ brew install aider
 $md$,
   source_url = 'https://aider.chat/docs/usage/tutorial.html',
   published_at = '2026-09-02'
-WHERE provider_id = 'aider' AND (title LIKE '%Aider 入門%' OR sort_order = 3);
+WHERE provider = 'aider' AND category = 'api'
+  AND (published_at IS NULL OR published_at <= DATE '2026-09-02');
