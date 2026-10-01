@@ -371,14 +371,19 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('search opens the saved note in the real editor without overwriting it', (tester) async {
+  testWidgets(
+      'search opens the saved note in the real editor without overwriting it',
+      (tester) async {
     final client = _RecordingSupabaseClient(noteRow: _noteRow());
     await tester.pumpWidget(ChangeNotifierProvider<ThemeService>(
       create: (_) => ThemeService(),
-      child: MaterialApp(home: AiSearchPage(
+      child: MaterialApp(
+          home: AiSearchPage(
         supabaseClient: client,
         search: (_) async => {
-          'results': [{'id': 429, 'title': '検索の抜粋', 'content': '短縮された内容'}],
+          'results': [
+            {'id': 429, 'title': '検索の抜粋', 'content': '短縮された内容'}
+          ],
           'searchMode': 'text',
         },
       )),
@@ -388,7 +393,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('検索の抜粋'));
     await tester.pumpAndSettle();
-    expect(tester.widget<NoteEditorPage>(find.byType(NoteEditorPage)).noteId, '429');
+    expect(tester.widget<NoteEditorPage>(find.byType(NoteEditorPage)).noteId,
+        '429');
     expect(_contentController(tester).text, _noteRow()['content']);
     expect(client.inserts, isEmpty);
     expect(client.updates, isEmpty);

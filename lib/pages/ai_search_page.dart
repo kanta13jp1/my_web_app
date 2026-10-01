@@ -144,7 +144,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
   Future<void> _search(String query) async {
     final trimmed = query.trim();
     if (_requiresLogin ||
-        trimmed.isEmpty || (_isLoading && _pendingQuery == trimmed)) return;
+        trimmed.isEmpty ||
+        (_isLoading && _pendingQuery == trimmed)) return;
     final requestId = ++_requestId;
     setState(() {
       _isLoading = true;
@@ -153,7 +154,9 @@ class _AiSearchPageState extends State<AiSearchPage> {
       _failedQuery = null;
     });
     try {
-      final data = await (_demo ? NoteSearchDemo.search : widget.search ?? _request)(trimmed)
+      final data = await (_demo
+              ? NoteSearchDemo.search
+              : widget.search ?? _request)(trimmed)
           .timeout(const Duration(seconds: 30));
       if (!mounted || requestId != _requestId) return;
       final Object? rawResults;
@@ -234,170 +237,173 @@ class _AiSearchPageState extends State<AiSearchPage> {
       ),
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: Container(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_requiresLogin || _demo) ...[
-                  Text(_demo
-                      ? 'サンプル: 架空の3ノートを検索します。保存・送信はしません。'
-                      : '保存済みノートの検索にはログインが必要です。'),
-                  if (_demo)
-                    const Text('例: 買い物、Flutter、学習。待機表示の体験用に0.6秒待ちます。'),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      if (_requiresLogin)
-                        FilledButton.icon(
-                          onPressed: () => Navigator.of(context).pushNamed('/login'),
-                          icon: const Icon(Icons.login),
-                          label: const Text('ログインして検索'),
+          SliverToBoxAdapter(
+            child: Container(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_requiresLogin || _demo) ...[
+                    Text(_demo
+                        ? 'サンプル: 架空の3ノートを検索します。保存・送信はしません。'
+                        : '保存済みノートの検索にはログインが必要です。'),
+                    if (_demo)
+                      const Text('例: 買い物、Flutter、学習。待機表示の体験用に0.6秒待ちます。'),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        if (_requiresLogin)
+                          FilledButton.icon(
+                            onPressed: () =>
+                                Navigator.of(context).pushNamed('/login'),
+                            icon: const Icon(Icons.login),
+                            label: const Text('ログインして検索'),
+                          ),
+                        TextButton(
+                          onPressed: () => _setDemo(!_demo),
+                          child: Text(_demo ? '自分のノートに戻る' : 'サンプルで試す'),
                         ),
-                      TextButton(
-                        onPressed: () => _setDemo(!_demo),
-                        child: Text(_demo ? '自分のノートに戻る' : 'サンプルで試す'),
-                      ),
-                    ],
-                  ),
-                  if (_requiresLogin)
-                    const Text('ログイン後にこのノート検索を開いてください。'),
-                  const SizedBox(height: 8),
-                ] else
-                  TextButton(
-                    onPressed: () => _setDemo(true),
-                    child: const Text('サンプルで試す'),
-                  ),
-                TextField(
-                  controller: _controller,
-                  decoration: InputDecoration(
-                    labelText: 'ノートの検索語',
-                    hintText: '自然言語で検索（例: 先月の振り返りメモ）',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _controller.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            tooltip: '検索をクリア',
-                            onPressed: _clear,
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      ],
                     ),
-                    filled: true,
-                    fillColor: isDark
-                        ? const Color(0xFF0F172A)
-                        : const Color(0xFFF1F5F9),
+                    if (_requiresLogin) const Text('ログイン後にこのノート検索を開いてください。'),
+                    const SizedBox(height: 8),
+                  ] else
+                    TextButton(
+                      onPressed: () => _setDemo(true),
+                      child: const Text('サンプルで試す'),
+                    ),
+                  TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      labelText: 'ノートの検索語',
+                      hintText: '自然言語で検索（例: 先月の振り返りメモ）',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _controller.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              tooltip: '検索をクリア',
+                              onPressed: _clear,
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF0F172A)
+                          : const Color(0xFFF1F5F9),
+                    ),
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: _search,
+                    onChanged: (value) {
+                      if (value.trim().isEmpty) {
+                        _clear();
+                      } else {
+                        setState(() {});
+                      }
+                    },
                   ),
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: _search,
-                  onChanged: (value) {
-                    if (value.trim().isEmpty) {
-                      _clear();
-                    } else {
-                      setState(() {});
-                    }
-                  },
-                ),
-                const SizedBox(height: 8),
-                FilledButton.icon(
-                  onPressed: _requiresLogin || _controller.text.trim().isEmpty ||
-                          (_isLoading &&
-                              _pendingQuery == _controller.text.trim())
-                      ? null
-                      : () => _search(_controller.text),
-                  icon: const Icon(Icons.search),
-                  label: const Text('検索'),
-                ),
-                if (_isLoading) ...[
                   const SizedBox(height: 8),
-                  const LinearProgressIndicator(),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      '「$_pendingQuery」を検索中…',
+                  FilledButton.icon(
+                    onPressed: _requiresLogin ||
+                            _controller.text.trim().isEmpty ||
+                            (_isLoading &&
+                                _pendingQuery == _controller.text.trim())
+                        ? null
+                        : () => _search(_controller.text),
+                    icon: const Icon(Icons.search),
+                    label: const Text('検索'),
+                  ),
+                  if (_isLoading) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        '「$_pendingQuery」を検索中…',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                  if (_resultQuery != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      (_isLoading || _controller.text.trim() != _resultQuery)
+                          ? '前の結果:「$_resultQuery」（${_results.length}件）'
+                          : '「$_resultQuery」の結果（${_results.length}件）',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-                if (_resultQuery != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    (_isLoading || _controller.text.trim() != _resultQuery)
-                        ? '前の結果:「$_resultQuery」（${_results.length}件）'
-                        : '「$_resultQuery」の結果（${_results.length}件）',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 8),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      '「$_failedQuery」の検索: $_errorMessage',
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style:
-                          TextStyle(color: Theme.of(context).colorScheme.error),
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => _search(_failedQuery!),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('再試行'),
-                  ),
-                ],
-                if (_searchMode.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        _searchMode == 'ai'
-                            ? Icons.auto_awesome
-                            : Icons.text_fields,
-                        size: 13,
-                        color: _searchMode == 'ai'
-                            ? const Color(0xFF6366F1)
-                            : const Color(0xFF9E9E9E),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _searchMode == 'sample'
-                            ? 'サンプルの語句検索'
-                            : _searchMode == 'ai'
-                            ? 'AI 検索'
-                            : _searchMode == 'text_fallback'
-                                ? 'テキスト検索（AIフォールバック）'
-                                : 'テキスト検索',
+                  ],
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 8),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        '「$_failedQuery」の検索: $_errorMessage',
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                            color: Theme.of(context).colorScheme.error),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _search(_failedQuery!),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('再試行'),
+                    ),
+                  ],
+                  if (_searchMode.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          _searchMode == 'ai'
+                              ? Icons.auto_awesome
+                              : Icons.text_fields,
+                          size: 13,
                           color: _searchMode == 'ai'
                               ? const Color(0xFF6366F1)
                               : const Color(0xFF9E9E9E),
-                          height: 1.5,
                         ),
-                      ),
-                      if (_results.isNotEmpty) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 4),
                         Text(
-                          '${_results.length}件',
+                          _searchMode == 'sample'
+                              ? 'サンプルの語句検索'
+                              : _searchMode == 'ai'
+                                  ? 'AI 検索'
+                                  : _searchMode == 'text_fallback'
+                                      ? 'テキスト検索（AIフォールバック）'
+                                      : 'テキスト検索',
                           style: TextStyle(
                             fontSize: 11,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: _searchMode == 'ai'
+                                ? const Color(0xFF6366F1)
+                                : const Color(0xFF9E9E9E),
                             height: 1.5,
                           ),
                         ),
+                        if (_results.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '${_results.length}件',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
           ),
           const SliverToBoxAdapter(child: Divider(height: 1)),
           if (_results.isEmpty)
@@ -405,7 +411,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
           else
             SliverPadding(
               padding: const EdgeInsets.all(12),
-              sliver: SliverList(delegate: SliverChildBuilderDelegate(
+              sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
                 (context, index) => _buildNoteCard(_results[index], isDark),
                 childCount: _results.length,
               )),
@@ -416,37 +423,38 @@ class _AiSearchPageState extends State<AiSearchPage> {
   }
 
   Widget _buildEmptyBody() {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.manage_search,
-              size: 64,
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.manage_search,
+            size: 64,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _requiresLogin
+                ? 'ログイン、またはサンプルで検索を試せます'
+                : _resultQuery == null
+                    ? (_isLoading
+                        ? '最初の検索結果を待っています'
+                        : _errorMessage != null
+                            ? '検索が完了しませんでした。上の再試行からやり直せます。'
+                            : '検索語を入力して検索してください')
+                    : '「$_resultQuery」に該当するノートはありません',
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 14,
+              height: 1.5,
             ),
-            const SizedBox(height: 12),
-            Text(
-              _requiresLogin
-                  ? 'ログイン、またはサンプルで検索を試せます'
-                  : _resultQuery == null
-                  ? (_isLoading ? '最初の検索結果を待っています'
-                      : _errorMessage != null ? '検索が完了しませんでした。上の再試行からやり直せます。'
-                      : '検索語を入力して検索してください')
-                  : '「$_resultQuery」に該当するノートはありません',
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildNoteCard(Map<String, dynamic> note, bool isDark) {
     final title = _noteTitle(note);
@@ -470,71 +478,71 @@ class _AiSearchPageState extends State<AiSearchPage> {
             : null,
         borderRadius: BorderRadius.circular(10),
         child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // タイトル
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
-                height: 1.5,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (excerpt.isNotEmpty) ...[
-              const SizedBox(height: 6),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // タイトル
               Text(
-                excerpt,
+                title,
                 style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  height: 1.4,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  height: 1.5,
                 ),
-                maxLines: 3,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-            ],
-            if (tags.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: tags.map((tag) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withAlpha(20),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      tag,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF6366F1),
-                        height: 1.5,
+              if (excerpt.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  excerpt,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              if (tags.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: tags.map((tag) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
                       ),
-                    ),
-                  );
-                }).toList(),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1).withAlpha(20),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        tag,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF6366F1),
+                          height: 1.5,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                (note['id']?.toString().trim().isNotEmpty ?? false)
+                    ? 'ノートを開く →'
+                    : 'この結果は開けません。もう一度検索してください。',
               ),
             ],
-            const SizedBox(height: 8),
-            Text(
-              (note['id']?.toString().trim().isNotEmpty ?? false)
-                  ? 'ノートを開く →'
-                  : 'この結果は開けません。もう一度検索してください。',
-            ),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }

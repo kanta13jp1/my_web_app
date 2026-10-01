@@ -20,7 +20,9 @@ Future<void> submit(WidgetTester tester, String query) async {
 }
 
 void main() {
-  testWidgets('guest and sample controls scroll at 320px with large text and keyboard', (tester) async {
+  testWidgets(
+      'guest and sample controls scroll at 320px with large text and keyboard',
+      (tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -35,7 +37,8 @@ void main() {
         ),
         child: child!,
       ),
-      home: AiSearchPage(supabaseClient: client, search: (_) async => result('private')),
+      home: AiSearchPage(
+          supabaseClient: client, search: (_) async => result('private')),
     ));
     expect(tester.takeException(), isNull);
     await tester.ensureVisible(find.text('サンプルで試す'));
@@ -48,13 +51,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('opens the result id and returns to the retained query', (tester) async {
+  testWidgets('opens the result id and returns to the retained query',
+      (tester) async {
     String? opened;
-    await tester.pumpWidget(MaterialApp(home: AiSearchPage(
+    await tester.pumpWidget(MaterialApp(
+        home: AiSearchPage(
       search: (_) async => result('開けるノート'),
       notePageBuilder: (id) {
         opened = id;
-        return Scaffold(appBar: AppBar(title: const Text('開いたノート')), body: Text('本文 $id'));
+        return Scaffold(
+            appBar: AppBar(title: const Text('開いたノート')), body: Text('本文 $id'));
       },
     )));
     await submit(tester, 'メモ');
@@ -69,16 +75,22 @@ void main() {
     expect(find.text('開けるノート'), findsOneWidget);
   });
 
-  testWidgets('guest has a login action and sample search opens read-only notes', (tester) async {
+  testWidgets(
+      'guest has a login action and sample search opens read-only notes',
+      (tester) async {
     final client = _SessionClient();
     addTearDown(client.auth.events.close);
     var requests = 0;
     await tester.pumpWidget(MaterialApp(
-      routes: {'/login': (_) => Scaffold(appBar: AppBar(title: const Text('ログイン入口')))},
-      home: AiSearchPage(supabaseClient: client, search: (_) async {
-        requests++;
-        return result('private');
-      }),
+      routes: {
+        '/login': (_) => Scaffold(appBar: AppBar(title: const Text('ログイン入口')))
+      },
+      home: AiSearchPage(
+          supabaseClient: client,
+          search: (_) async {
+            requests++;
+            return result('private');
+          }),
     ));
     expect(find.text('ログインして検索'), findsOneWidget);
     expect(find.text('再試行'), findsNothing);
@@ -108,14 +120,17 @@ void main() {
     expect(find.text('ログインして検索'), findsOneWidget);
   });
 
-  testWidgets('logout clears results and rejects an old-account completion', (tester) async {
+  testWidgets('logout clears results and rejects an old-account completion',
+      (tester) async {
     final client = _SessionClient();
     client.auth.user = _user('account-a');
     addTearDown(client.auth.events.close);
     final pending = Completer<Object?>();
-    await tester.pumpWidget(MaterialApp(home: AiSearchPage(
+    await tester.pumpWidget(MaterialApp(
+        home: AiSearchPage(
       supabaseClient: client,
-      search: (q) => q == 'first' ? Future.value(result('以前のノート')) : pending.future,
+      search: (q) =>
+          q == 'first' ? Future.value(result('以前のノート')) : pending.future,
     )));
     await submit(tester, 'first');
     await submit(tester, 'slow');
@@ -129,9 +144,13 @@ void main() {
     expect(find.text('ログインして検索'), findsOneWidget);
   });
 
-  testWidgets('expired session offers login instead of repeating a failing request', (tester) async {
-    await tester.pumpWidget(MaterialApp(home: AiSearchPage(
-      search: (_) async => throw const FunctionException(status: 401, details: 'Unauthorized'),
+  testWidgets(
+      'expired session offers login instead of repeating a failing request',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+        home: AiSearchPage(
+      search: (_) async =>
+          throw const FunctionException(status: 401, details: 'Unauthorized'),
     )));
     await submit(tester, 'メモ');
     expect(find.text('ログインして検索'), findsOneWidget);
@@ -139,11 +158,20 @@ void main() {
     expect(find.text('検索語を入力して検索してください'), findsNothing);
   });
 
-  testWidgets('result without an id cannot accidentally create a new note', (tester) async {
+  testWidgets('result without an id cannot accidentally create a new note',
+      (tester) async {
     var opened = false;
-    await tester.pumpWidget(MaterialApp(home: AiSearchPage(
-      search: (_) async => {'results': [{'title': 'IDなし', 'content': '抜粋'}]},
-      notePageBuilder: (_) { opened = true; return const SizedBox(); },
+    await tester.pumpWidget(MaterialApp(
+        home: AiSearchPage(
+      search: (_) async => {
+        'results': [
+          {'title': 'IDなし', 'content': '抜粋'}
+        ]
+      },
+      notePageBuilder: (_) {
+        opened = true;
+        return const SizedBox();
+      },
     )));
     await submit(tester, 'メモ');
     await tester.tap(find.text('IDなし'));
@@ -380,7 +408,12 @@ void main() {
   );
 }
 
-User _user(String id) => User(id: id, appMetadata: const {}, userMetadata: const {}, aud: 'authenticated', createdAt: '2026-10-02');
+User _user(String id) => User(
+    id: id,
+    appMetadata: const {},
+    userMetadata: const {},
+    aud: 'authenticated',
+    createdAt: '2026-10-02');
 
 class _SessionClient extends Fake implements SupabaseClient {
   @override

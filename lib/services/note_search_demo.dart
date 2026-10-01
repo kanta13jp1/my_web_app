@@ -26,11 +26,14 @@ class NoteSearchDemo {
     await Future<void>.delayed(const Duration(milliseconds: 600));
     final terms = query.trim().toLowerCase().split(RegExp(r'\s+'));
     return {
-      'results': notes.where((note) {
-        final text = '${note['title']} ${note['content']} ${note['tags']}'
-            .toLowerCase();
-        return terms.every(text.contains);
-      }).map(Map<String, dynamic>.from).toList(),
+      'results': notes
+          .where((note) {
+            final text = '${note['title']} ${note['content']} ${note['tags']}'
+                .toLowerCase();
+            return terms.every(text.contains);
+          })
+          .map(Map<String, dynamic>.from)
+          .toList(),
       'searchMode': 'sample',
     };
   }
