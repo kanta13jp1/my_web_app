@@ -22,7 +22,7 @@ export class LiveGuard {
   if(world.frames<this.next&&proposed===this.proposed&&level===this.level)return edge(world,this.action??proposed);
   this.level=level;this.proposed=proposed;this.next=world.frames+(route?1:6);this.lastReason=pipe?'pipe_geometry_route':item?'item_pickup_route':null;
   const penalty=action=>stalledActionPenalty(world,failures,action);
-  const evaluate=action=>{const g=advance(clone(world),action,Math.max(24+level*16,descent?72:0));return {action,g,value:(g.phase==='dead'?-100000:0)+(g.power<world.power?-300:0)+(g.phase==='won'?100000:0)+g.p.x-world.p.x-Math.max(0,g.p.y-208)*8-penalty(action)};};
+  const evaluate=action=>{const g=advance(clone(world),action,Math.max(24+level*16,(descent||(item&&world.room==='castle'))?72:0));return {action,g,value:(g.phase==='dead'?-100000:0)+(g.power<world.power?-300:0)+(g.phase==='won'?100000:0)+g.p.x-world.p.x-Math.max(0,g.p.y-208)*8-penalty(action)};};
   let best=evaluate(proposed);
   const repeatedStall=penalty(proposed)>0&&Math.abs(best.g.p.x-world.p.x)<4;
   // Commit to the other edge when the nearest descent would land on an enemy.
