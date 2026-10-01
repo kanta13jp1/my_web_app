@@ -59,10 +59,10 @@ class _SlideNumberCheckCardState extends State<SlideNumberCheckCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('原稿に書く前に数字を検算',
-                style: Theme.of(context).textTheme.titleMedium),
+                style: Theme.of(context).textTheme.titleMedium,),
             const SizedBox(height: 8),
             const Text(
-                '同じ単位の2つの値を入力します。入力は送信・保存しません。原稿から自動抽出せず、元の資料と照らして入力してください。'),
+                '同じ単位の2つの値を入力します。入力は送信・保存しません。原稿から自動抽出せず、元の資料と照らして入力してください。',),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('割合（%）どうしを比べる'),
@@ -96,7 +96,7 @@ class _SlideNumberCheckCardState extends State<SlideNumberCheckCard> {
             if (result != null) ...[
               const SizedBox(height: 8),
               Text('増加率: ${result.growthPercent.toStringAsFixed(2)}%',
-                  key: const Key('slide-number-result')),
+                  key: const Key('slide-number-result'),),
               if (_rates)
                 Text('ポイント差: ${result.pointDifference.toStringAsFixed(2)}ポイント'),
               const Text('増加率 =（比較値 − 基準値）÷ 基準値 × 100。表示は小数第2位に丸めています。'),
@@ -105,7 +105,7 @@ class _SlideNumberCheckCardState extends State<SlideNumberCheckCard> {
             ],
             const SizedBox(height: 8),
             const Text(
-                '根拠が足りない場合は資料を取りに戻ります。この計算だけでは、元の数字・指標・期間が正しいかや、変更が増加の原因かは判断できません。'),
+                '根拠が足りない場合は資料を取りに戻ります。この計算だけでは、元の数字・指標・期間が正しいかや、変更が増加の原因かは判断できません。',),
           ],
         ),
       ),

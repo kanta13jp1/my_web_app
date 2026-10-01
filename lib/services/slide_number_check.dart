@@ -1,6 +1,6 @@
 class SlideNumberCheck {
   const SlideNumberCheck(
-      {required this.growthPercent, required this.pointDifference});
+      {required this.growthPercent, required this.pointDifference,});
 
   final double growthPercent;
   final double pointDifference;
@@ -23,6 +23,6 @@ class SlideNumberCheck {
       throw const FormatException('値の差が大きすぎて計算できません。');
     }
     return SlideNumberCheck(
-        growthPercent: growth, pointDifference: after - before);
+        growthPercent: growth, pointDifference: after - before,);
   }
 }
