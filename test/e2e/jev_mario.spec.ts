@@ -6,7 +6,7 @@ test('LightGBM worker plays without consent or API; records assistance and stops
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
  await lab.locator('#screen').evaluate(()=>localStorage.setItem('jev-mario-retry-world8-v1',JSON.stringify([280,440,640,1350].map(x=>({stage:1,room:'overworld',x,y:192,count:12,kind:'stalled'})))));
  await page.reload();
- await expect(lab.locator('#volume')).toHaveValue('95');await expect(lab.locator('#volume-value')).toHaveText('95%');
+ await expect(lab.locator('#volume')).toHaveValue('100');await expect(lab.locator('#volume-value')).toHaveText('100%');
  await expect(lab.locator('#consent')).not.toBeChecked();await lab.locator('#play-student').click();
  await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:20000});
  await expect(lab.locator('#student-status')).toContainText('探索変更',{timeout:15000});
@@ -734,7 +734,7 @@ test('run history survives reload, sharing errors recover and ranking renders sa
  await lab.locator('#rank-course').selectOption('17');await lab.locator('#ranking-load').click();await expect(lab.locator('#ranking-rows')).toContainText('Player-test');await expect(lab.locator('#ranking-rows')).toContainText('15.0秒');await lab.locator('#ranking-rows').locator('..').screenshot({path:info.outputPath('history-ranking.png')});await lab.locator('#rank-course').locator('..').screenshot({path:info.outputPath('history-ranking-filters.png')});
 });
 
-test('sixteen-part audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
+test('32-voice audio renders audible non-clipping room arrangements and effect tails',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
  const result=await frame.evaluate(async()=>{const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const all:number[]=[],metrics:any[]=[];
   for(const room of ['overworld','underground','underwater','castle']){
