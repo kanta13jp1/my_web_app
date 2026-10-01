@@ -225,6 +225,8 @@ void main({Future<void> Function(String name)? capture}) {
     identities.add('first-user');
     await tester.pump();
     await expand(tester);
+    await tester.tap(find.byKey(const Key('expense_search_examples')));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('expense_search_query')), '返金');
     await ask(tester);
     expect(find.text('AI判定・要確認'), findsOneWidget);
@@ -233,6 +235,7 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.text('AI判定・要確認'), findsNothing);
     expect(find.byKey(const Key('expense_search_ai_0')), findsNothing);
     expect(find.textContaining('画面を開き直す'), findsOneWidget);
+    expect(find.text('保存しない操作例 3件'), findsNothing);
     expect(calls, 1);
   });
   testWidgets('Examples stay separate from private memos and require explicit sending',
