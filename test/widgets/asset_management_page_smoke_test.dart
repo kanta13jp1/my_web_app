@@ -603,6 +603,11 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                DateFormat('yyyy-MM-dd').format(now): <String, double>{
+                  '現金': 50000,
+                },
+              },
               // 収支フロー(wealth_struggles)は空。
               debugInitialRecentFlows: const <Map<String, dynamic>>[],
               // 給料は salary_incomes にのみ存在 (給与明細のみ管理)。
