@@ -604,7 +604,7 @@ void main() {
           MaterialApp(
             home: AssetManagementPage(
               debugInitialAssetData: <String, Map<String, double>>{
-                DateFormat('yyyy-MM-dd').format(now): <String, double>{
+                DateFormat('yyyy-MM-dd').format(now): const <String, double>{
                   '現金': 50000,
                 },
               },
