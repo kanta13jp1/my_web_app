@@ -383,18 +383,18 @@ void main() {
         search: (_) async => {
           'results': [
             {'id': 429, 'title': '検索の抜粋', 'content': '短縮された内容'}
-          ],,
+          ,],
           'searchMode': 'text',
         },
-      )),,
-    )),;
+      ),),
+    ),);
     await tester.enterText(find.byType(TextField), '読書');
     await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pumpAndSettle();
     await tester.tap(find.text('検索の抜粋'));
     await tester.pumpAndSettle();
     expect(tester.widget<NoteEditorPage>(find.byType(NoteEditorPage)).noteId,
-        '429'),;
+        '429',);
     expect(_contentController(tester).text, _noteRow()['content']);
     expect(client.inserts, isEmpty);
     expect(client.updates, isEmpty);
