@@ -15,11 +15,8 @@ export class LiveGuard {
   const level=retryLevel(world,failures);
   if(world.frames<this.next&&proposed===this.proposed&&level===this.level)return edge(world,this.action??proposed);
   this.level=level;this.proposed=proposed;this.next=world.frames+(route?1:6);this.lastReason=pipe?'pipe_geometry_route':item?'item_pickup_route':null;
-  // High platforms need enough time to see a fall before leaving the takeoff edge.
-  const foot=Math.floor((world.p.y+world.p.h)/16),col=Math.floor((world.p.x+world.p.w)/16);
-  const gapAhead=world.room==='overworld'&&foot<13&&world.p.grounded&&Array.from({length:6},(_,i)=>col+i+1).some(x=>!Array.from({length:Math.max(0,16-foot)},(_,i)=>foot+i).some(y=>world.solid(x,y)));
   const penalty=action=>stalledActionPenalty(world,failures,action);
-  const evaluate=action=>{const g=advance(clone(world),action,Math.max(24+level*16,descent||gapAhead?72:0));return {action,g,value:(g.phase==='dead'?-100000:0)+(g.power<world.power?-300:0)+(g.phase==='won'?100000:0)+g.p.x-world.p.x-Math.max(0,g.p.y-208)*8-penalty(action)};};
+  const evaluate=action=>{const g=advance(clone(world),action,Math.max(24+level*16,descent?72:0));return {action,g,value:(g.phase==='dead'?-100000:0)+(g.power<world.power?-300:0)+(g.phase==='won'?100000:0)+g.p.x-world.p.x-Math.max(0,g.p.y-208)*8-penalty(action)};};
   let best=evaluate(proposed);
   const repeatedStall=penalty(proposed)>0&&world.p.grounded&&Math.abs(best.g.p.x-world.p.x)<4;
   // Commit to the other edge when the nearest descent would land on an enemy.
