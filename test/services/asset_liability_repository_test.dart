@@ -1557,7 +1557,9 @@ void main() {
       expect(restored.paymentOverrides['mobit'], 70000);
       expect(remote.monthState('2026-05'), isNull);
       expect(
-          remote.calls.where((call) => call.startsWith('saveMonth:')), isEmpty);
+        remote.calls.where((call) => call.startsWith('saveMonth:')),
+        isEmpty,
+      );
 
       await repository.syncMonth(month);
       expect(remote.monthState('2026-05')?.paymentOverrides['mobit'], 70000);
