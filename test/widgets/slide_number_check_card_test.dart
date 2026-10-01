@@ -5,10 +5,14 @@ import 'package:my_web_app/widgets/slide_number_check_card.dart';
 
 void main() {
   test('growth uses baseline and rejects missing or invalid evidence', () {
-    expect(SlideNumberCheck.calculate('80', '100').growthPercent,
-        closeTo(25, 1e-9),);
-    expect(SlideNumberCheck.calculate('100', '80').growthPercent,
-        closeTo(-20, 1e-9),);
+    expect(
+      SlideNumberCheck.calculate('80', '100').growthPercent,
+      closeTo(25, 1e-9),
+    );
+    expect(
+      SlideNumberCheck.calculate('100', '80').growthPercent,
+      closeTo(-20, 1e-9),
+    );
     final rates = SlideNumberCheck.calculate('10', '15');
     expect(rates.growthPercent, closeTo(50, 1e-9));
     expect(rates.pointDifference, 5);
@@ -19,18 +23,24 @@ void main() {
       ['abc', '100'],
       ['NaN', '1'],
       ['1', 'Infinity'],
-      ['1', '-1']
-    ,]) {
-      expect(() => SlideNumberCheck.calculate(pair[0], pair[1]),
-          throwsFormatException,);
+      ['1', '-1'],
+    ]) {
+      expect(
+        () => SlideNumberCheck.calculate(pair[0], pair[1]),
+        throwsFormatException,
+      );
     }
   });
 
   testWidgets('invalid value clears result and can be corrected',
       (tester) async {
-    await tester.pumpWidget(const MaterialApp(
+    await tester.pumpWidget(
+      const MaterialApp(
         home: Scaffold(
-            body: SingleChildScrollView(child: SlideNumberCheckCard()),),),);
+          body: SingleChildScrollView(child: SlideNumberCheckCard()),
+        ),
+      ),
+    );
     await tester.tap(find.text('数字を確認する'));
     await tester.pump();
     expect(find.text('増加率: 25.00%'), findsOneWidget);
