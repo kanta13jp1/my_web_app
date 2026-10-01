@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GameAudio, effects, musicStep, arrangements, MAX_VOICES, MAX_MUSIC_VOICES } from '../../web/labs/jev-mario/audio.mjs';
+import { GameAudio, effects, musicStep, arrangements, MAX_VOICES, MAX_MUSIC_VOICES, scores, MOTIF } from '../../web/labs/jev-mario/audio.mjs';
 import { World11 } from '../../web/labs/jev-mario/world11.mjs';
 test('noise percussion reuses one buffer and stops with music or mute',async()=>{
  const c=context();let buffers=0;const sources=[];c.sampleRate=48000;
@@ -102,4 +102,6 @@ test('sixteen-part arrangement staggers the four new voices and mute releases th
 
 test('64 voice budget reserves sixteen effect voices and displaces music instead of dropping an effect',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);for(let i=0;i<80;i++)a.tone(60,1,1,'triangle',.01,true);assert.equal(a.music.size,MAX_MUSIC_VOICES);for(let i=0;i<16;i++)a.tone(80,1,.1,'square',.03,false);assert.equal(a.nodes.size,MAX_VOICES);const music=[...a.music];a.tone(84,1,.1,'square',.03,false);assert.equal(a.nodes.size,64);assert.equal(a.music.size,47);assert.ok(music[0].stopped);await a.enable(false);assert.equal(a.nodes.size,0);assert.equal(a.music.size,0);});
 
-test('fixed preamp raises the default output while slider mute still controls the master',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);assert.equal(a.preamp.gain.value,1.5);assert.equal(a.master.gain.value,1);a.setVolume(0);assert.equal(a.master.gain.value,0);a.setVolume(.4);assert.equal(a.master.gain.value,.4);assert.equal(a.preamp.gain.value,1.5);await a.enable(false);assert.equal(a.nodes.size,0);});
+test('fixed preamp raises the default output while slider mute still controls the master',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);assert.equal(a.preamp.gain.value,1.8);assert.equal(a.master.gain.value,1);a.setVolume(0);assert.equal(a.master.gain.value,0);a.setVolume(.4);assert.equal(a.master.gain.value,.4);assert.equal(a.preamp.gain.value,1.8);await a.enable(false);assert.equal(a.nodes.size,0);});
+
+test('four-note hook repeats at new register with alternating lead instruments',()=>{assert.deepEqual(MOTIF,[0,3,5,3]);for(const track of Object.keys(scores)){const first=scores[track].slice(0,4);assert.deepEqual(first.map(n=>n-first[0]),MOTIF);assert.deepEqual(scores[track].slice(8,12),first.map(n=>n+12));assert.deepEqual(scores[track].slice(16,20),first);assert.notEqual(musicStep(track,0).leadType,musicStep(track,16).leadType);assert.notDeepEqual(scores[track].slice(12,16),scores[track].slice(28,32));}});
