@@ -533,12 +533,24 @@ class _JourneyExample extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            '相談の例',
-            style: TextStyle(
-              color: Color(0xFFBCC6CE),
-              fontSize: 11,
-              letterSpacing: 1.2,
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFF0B1823),
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                child: Text(
+                  '相談の例',
+                  style: TextStyle(
+                    color: Color(0xFFBCC6CE),
+                    fontSize: 11,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 10),
