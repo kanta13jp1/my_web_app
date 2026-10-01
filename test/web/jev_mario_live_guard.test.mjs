@@ -18,3 +18,22 @@ test('guard preserves safe commands and bounded intervention history',()=>{const
 
 
 test('normal 3-3 treetop ledge looks past the fall before takeoff',()=>{const g=new World11(11),guard=new LiveGuard();g.power=1;Object.assign(g.p,{x:832,y:148,h:28,vx:0,vy:0,grounded:true});g.camera=736;let furthest=g.p.x;for(let i=0;i<150&&g.phase==='playing'&&furthest<=1000;i++){g.buttons(guard.decide(g,plan(g,'right_run').action));g.step();g.drainSounds();furthest=Math.max(furthest,g.p.x);}assert.ok(furthest>1000,JSON.stringify({furthest,phase:g.phase,x:g.p.x,y:g.p.y}));assert.equal(g.phase,'playing');});
+
+test('castle guard opens an available reward below the block despite stale noop',()=>{
+ const g=new World11(32),guard=new LiveGuard();
+ Object.assign(g.p,{x:197.88,y:192,vx:0,vy:0,grounded:true});g.frames=180;
+ assert.equal(g.contents.get('12,9'),'mushroom');
+ const before=JSON.stringify(g.snapshot());assert.equal(guard.decide(g,'noop'),'jump');
+ assert.equal(JSON.stringify(g.snapshot()),before,'guard cannot replace actual world');
+ assert.equal(guard.lastReason,'item_pickup_route');
+ for(let i=0;i<36&&g.phase==='playing';i++){g.buttons(guard.decide(g,'noop'));g.step();g.drainSounds();}
+ assert.equal(g.phase,'playing');assert.equal(g.lives,3);
+ assert.equal(g.contents.has('12,9'),false,'the reward must actually be revealed');
+ assert.ok(g.items.some(i=>i.kind==='mushroom'));
+});
+test('castle reward avoidance remains bounded and respected',()=>{
+ const g=new World11(32),guard=new LiveGuard();
+ Object.assign(g.p,{x:197.88,y:192,vx:0,vy:0,grounded:true});g.frames=180;
+ assert.equal(guard.decide(g,'noop',[],[{stage:32,room:'castle',x:197.88,until:300}]),'noop');
+ assert.notEqual(guard.lastReason,'item_pickup_route');
+});
