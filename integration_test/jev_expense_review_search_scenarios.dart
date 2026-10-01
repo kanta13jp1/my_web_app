@@ -238,7 +238,8 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.text('保存しない操作例 3件'), findsNothing);
     expect(calls, 1);
   });
-  testWidgets('Examples stay separate from private memos and require explicit sending',
+  testWidgets(
+      'Examples stay separate from private memos and require explicit sending',
       (tester) async {
     final sent = <Map<String, dynamic>>[];
     final client = JevExpenseProxyClient(
@@ -268,12 +269,12 @@ void main({Future<void> Function(String name)? capture}) {
     expect(sent.single['memo'], isNot(contains('非公開')));
     expect(find.text('AI判定・要確認'), findsOneWidget);
     await capture?.call('semantic-search-examples');
-    await tester.ensureVisible(find.byKey(const Key('expense_search_examples')));
+    await tester
+        .ensureVisible(find.byKey(const Key('expense_search_examples')));
     await tester.tap(find.byKey(const Key('expense_search_examples')));
     await tester.pumpAndSettle();
     expect(find.text('非公開の支出メモ'), findsOneWidget);
     expect(find.text('AI判定・要確認'), findsNothing);
     expect(sent.length, 1);
   });
-
 }
