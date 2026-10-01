@@ -38,6 +38,10 @@ test.describe('Landing story journey', () => {
     await page.setViewportSize(originalViewport);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+    // Start the reduced-motion journey after Flutter mounts at the restored size.
+    // Resizing a pinned story mid-scroll changes its geometry asynchronously.
+    await openLanding(page);
+    await expect(await focusStory(page)).toHaveAccessibleName(/1 \/ 4/);
     for (const [index, label] of [[1, '分散'], [4, '実行']] as const) {
       await activateChapter(page, label);
       await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
