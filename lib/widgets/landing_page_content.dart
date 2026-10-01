@@ -5760,7 +5760,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         final title = Semantics(
           header: true,
           child: const Text(
-            '迷いを、判断に変えるための4章。',
+            '試してから、\n続けるか決める。',
             style: TextStyle(
               color: Color(0xFF111D2B),
               fontSize: 38,
@@ -5771,7 +5771,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
         );
         const copy = Text(
-          '機能を並べるのではなく、理解して、1件で試し、続ける理由を確かめ、最後に不安を解消する順番で案内します。',
+          '登録前に1件試し、役立つと感じたら保存。使い方と、始める前に確認したいことをまとめました。',
           style: TextStyle(
             color: Color(0xFF52606D),
             fontSize: 15,
@@ -5787,7 +5787,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'THE DECISION JOURNEY',
+                'YOUR NEXT STEP',
                 style: TextStyle(
                   color: Color(0xFFB45F42),
                   fontSize: 11,
