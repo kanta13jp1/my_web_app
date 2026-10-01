@@ -104,7 +104,7 @@ test.describe('LP first-user acquisition', () => {
     await completeGuidedTrial(page);
 
     const trialResultCard = page.getByRole('group', {
-      name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+      name: /登録なしで試す.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
     const viewport = page.viewportSize();
@@ -145,7 +145,7 @@ test.describe('LP first-user acquisition', () => {
       .click();
 
     const trialResultCard = page.getByRole('group', {
-      name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+      name: /登録なしで試す.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
     if (testInfo.project.name === 'mobile-chrome') {
@@ -293,8 +293,8 @@ test.describe('LP first-user acquisition', () => {
 async function completeGuidedTrial(page: Page) {
   for (let step = 0; step < 5; step += 1) {
     await expect(
-      page.getByRole('group', {
-        name: new RegExp(`登録なしで試す:.*質問 ${step + 1} / 5`),
+      page.getByRole('textbox', {
+        name: new RegExp(`登録なしで試す.*質問 ${step + 1} / 5`),
       }),
     ).toBeVisible();
     const quickAnswer = page.getByRole('button', { name: /迷ったら/ });
@@ -309,7 +309,7 @@ async function completeGuidedTrial(page: Page) {
   }
   await expect(
     page.getByRole('group', {
-      name: /登録なしで試す:.*AIに送る内容を確認/,
+      name: /登録なしで試す.*AIに送る内容を確認/,
     }),
   ).toBeVisible();
   const submit = page.getByRole('button', {
@@ -321,7 +321,7 @@ async function completeGuidedTrial(page: Page) {
 }
 
 async function openLanding(page: Page, path: string) {
-  await page.route('**/rest/v1/app_analytics*', async (route) => {
+  await page.route('**/rest/v1/**', async (route) => {
     const isRead = route.request().method() === 'GET';
     await route.fulfill({
       status: isRead ? 200 : 204,

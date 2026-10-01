@@ -214,6 +214,7 @@ jobs:
           flutter pub get
           flutter build web --release --pwa-strategy=none \
             --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true \
             --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
 
@@ -274,6 +275,7 @@ jobs:
           flutter pub get
           flutter build web --release --pwa-strategy=none --target=test/fixtures/ai_search_app.dart \
             --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true \
             --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
 

@@ -4340,12 +4340,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         labelText: compactHero
                             ? 'いま詰まっていること'
                             : '例: 今日いちばん詰まっていることを簡単に書く',
-                        hintText: compactHero
-                            ? '例: 何から始めるか決められない'
-                            : null,
-                        hintStyle: compactHero
-                            ? const TextStyle(fontSize: 12)
-                            : null,
+                        hintText: compactHero ? '例: 何から始めるか決められない' : null,
+                        hintStyle:
+                            compactHero ? const TextStyle(fontSize: 12) : null,
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.bolt),
                         isDense: compactHero,
@@ -4922,45 +4919,52 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
 
     if (compact && !_showCompactTrialSaveForm) {
-      return Container(
-        key: const Key('landing_h04_inline_magic_capture'),
-        decoration: decoration,
-        child: InkWell(
-          key: const Key('landing_h04_inline_save_expansion'),
-          borderRadius: BorderRadius.circular(8),
-          onTap: _showCompactTrialSaveOptions,
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(
-              children: [
-                Icon(Icons.bookmark_add_outlined, color: Color(0xFF172033)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'この提案を保存',
-                        style: TextStyle(
-                          color: Color(0xFF172033),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          height: 1.4,
+      return Semantics(
+        button: true,
+        label: 'この提案を保存',
+        hint: '必要なときだけ無料登録（カード不要）',
+        onTap: _showCompactTrialSaveOptions,
+        excludeSemantics: true,
+        child: Container(
+          key: const Key('landing_h04_inline_magic_capture'),
+          decoration: decoration,
+          child: InkWell(
+            key: const Key('landing_h04_inline_save_expansion'),
+            borderRadius: BorderRadius.circular(8),
+            onTap: _showCompactTrialSaveOptions,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              child: Row(
+                children: [
+                  Icon(Icons.bookmark_add_outlined, color: Color(0xFF172033)),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'この提案を保存',
+                          style: TextStyle(
+                            color: Color(0xFF172033),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '必要なときだけ無料登録（カード不要）',
-                        style: TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 11,
-                          height: 1.35,
+                        Text(
+                          '必要なときだけ無料登録（カード不要）',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 11,
+                            height: 1.35,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Icon(Icons.expand_more, color: Color(0xFF172033)),
-              ],
+                  Icon(Icons.expand_more, color: Color(0xFF172033)),
+                ],
+              ),
             ),
           ),
         ),
