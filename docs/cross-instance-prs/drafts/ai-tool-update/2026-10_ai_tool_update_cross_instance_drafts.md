@@ -97,10 +97,10 @@ Canonical flow:
 
 ### 13. 0.159.3 (rust-v0.159.3, 2026-09-30)
 
-- Issue title: `[ai-tool-update] 0.159.3 (rust-v0.159.3, 2026-09-30)`
-- Claude Code #1 decision: adopt / defer / ignore.
-- Codex #1 implementation trigger: start only after the decision is clear.
-- Expected PR shape: narrow docs/workflow/script update with deterministic checks.
+- Issue title: `[ai-tool-update] 0.159.3 (rust-v0.159.3, 2026-09-30)` (#5648)
+- Decision: **adopted** (Antigravity & Codex #1, completed 2026-10-01).
+- Resolution: Adopted Windows background console window suppression (#49385) and GPT-6.1 Sol catalog integration. Recorded in migration `20261001193000_wbs_complete_ai_tool_update_codex_01593.sql`.
+- Status: Completed.
 
 ### 14. What's New in Cursor
 
