@@ -31,7 +31,8 @@ export class StudentSession{
   }
   this.lastWorld=world;this.lastStage=world.stage;this.lastRoom=world.room;this.lastFrame=world.frames;
   if(world.cells&&world.phase==='playing'){
-   if(!this.progress||this.progress.stage!==world.stage||this.progress.room!==world.room||world.p.x-this.progress.x>12)this.progress={stage:world.stage,room:world.room,x:world.p.x,frame:world.frames};
+   const objective=JSON.stringify([world.contents.size,world.visitedPipes.length,world.pickups]);
+   if(!this.progress||this.progress.stage!==world.stage||this.progress.room!==world.room||world.p.x-this.progress.x>12||this.progress.objective!==objective)this.progress={stage:world.stage,room:world.room,x:world.p.x,frame:world.frames,objective};
    else if(world.frames-this.progress.frame>=180){this.noteFailure(world,'stalled');this.itemAvoidance.push({stage:world.stage,room:world.room,x:world.p.x,until:world.frames+240});this.progress.frame=world.frames;}
   }
   this.itemAvoidance=this.itemAvoidance.filter(r=>r.stage===world.stage&&r.room===world.room&&r.until>world.frames).slice(-8);
