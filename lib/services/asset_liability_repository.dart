@@ -760,10 +760,12 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(
           _pendingMonthBaseKey(userId, monthKey),
-          jsonEncode(AssetLiabilityMonthlyStatePayload.fromState(
-            monthKey: monthKey,
-            state: base,
-          ).toSupabaseJson(userId: userId)),
+          jsonEncode(
+            AssetLiabilityMonthlyStatePayload.fromState(
+              monthKey: monthKey,
+              state: base,
+            ).toSupabaseJson(userId: userId),
+          ),
         );
       } catch (error, stackTrace) {
         // Journal corruption must block uploads, not lose the latest edit.
@@ -774,7 +776,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           onSyncError!(error, stackTrace);
         } else {
           debugPrint(
-              'Monthly recovery journal failed; local edit retained: $error');
+            'Monthly recovery journal failed; local edit retained: $error',
+          );
         }
         return;
       }
@@ -1165,9 +1168,11 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     final userId = _userIdOrNull();
     return _runMonthMutation<AssetLiabilityManualSyncResult>(month, userId, () {
       if (_userIdOrNull() != userId) {
-        return Future.value(AssetLiabilityManualSyncResult.failure(
-          message: 'The signed-in account changed before synchronization.',
-        ));
+        return Future.value(
+          AssetLiabilityManualSyncResult.failure(
+            message: 'The signed-in account changed before synchronization.',
+          ),
+        );
       }
       return _syncMonthOnce(month);
     });
@@ -1604,7 +1609,10 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           final currentLocal = await localRepository.loadMonth(month);
           if (_userIdOrNull() != userId) return 0;
           await remote.saveMonth(
-              userId: userId, month: month, state: currentLocal);
+            userId: userId,
+            month: month,
+            state: currentLocal,
+          );
           await _clearPendingMonthBase(userId, month);
           return 1;
         });
