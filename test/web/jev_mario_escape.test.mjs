@@ -27,3 +27,15 @@ test('escape responses reject stale, rewound, damaged, and changed worlds', () =
   assert.equal(escapeOriginMatches(g, {...origin, x: NaN}), false);
   assert.equal(escapeOriginMatches(g, null), false);
 });
+
+test('landing wait is limited to the first phase and 36 frames',()=>{
+ const valid=[{action:'noop',frames:36},{action:'right_run',frames:8},
+  {action:'right_run_jump',frames:12},{action:'right_run',frames:60}];
+ assert.deepEqual(normalizeEscapeSequence(valid),valid);
+ for(const bad of [[{action:'noop',frames:37}],
+  [{action:'right_run',frames:1},{action:'noop',frames:1}],
+  [{action:'noop',frames:1},{action:'noop',frames:1}],
+  [{action:'noop',frames:36},{action:'right_run',frames:60},{action:'right_run',frames:21}],
+  [{action:'noop',frames:36},...Array(4).fill({action:'right_run',frames:1})]])
+  assert.equal(normalizeEscapeSequence(bad),null);
+});
