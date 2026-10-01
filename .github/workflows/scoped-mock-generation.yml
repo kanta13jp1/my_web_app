@@ -10,6 +10,9 @@ on:
         required: true
         type: string
 permissions: {}
+concurrency:
+  group: scoped-mock-generation-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   generate:
     runs-on: ubuntu-latest
