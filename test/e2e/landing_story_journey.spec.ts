@@ -71,12 +71,13 @@ test.describe('Landing story journey', () => {
     await openLanding(page);
     await focusStory(page);
     await activateChapter(page, '実行');
+    await expect(await focusStory(page)).toHaveAccessibleName(/4 \/ 4/);
     const heading = page.getByText('最初に、3つの成果から始める', { exact: true });
     for (let step = 0; step < 50; step++) {
       const bounds = await heading.boundingBox();
       if (bounds && bounds.y > 80 && bounds.y < 220) break;
       await page.mouse.move(180, 320);
-      await page.mouse.wheel(0, bounds && bounds.y < 80 ? -180 : 240);
+      await page.mouse.wheel(0, bounds ? Math.max(-240, Math.min(240, bounds.y - 120)) : 240);
       await page.waitForTimeout(180);
     }
     await expect(heading).toBeInViewport();
