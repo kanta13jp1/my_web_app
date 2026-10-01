@@ -73,17 +73,17 @@ test.describe('Landing story journey', () => {
     await activateChapter(page, '実行');
     await expect(await focusStory(page)).toHaveAccessibleName(/4 \/ 4/);
     const heading = page.getByText('最初に、3つの成果から始める', { exact: true });
-    for (let step = 0; step < 50; step++) {
+    for (let step = 0; step < 100; step++) {
       const bounds = await heading.boundingBox();
-      if (bounds && bounds.y > 80 && bounds.y < 220) break;
+      if (bounds && bounds.y > 80 && bounds.y + bounds.height < page.viewportSize()!.height - 120) break;
       await page.mouse.move(180, 320);
-      await page.mouse.wheel(0, bounds ? Math.max(-240, Math.min(240, bounds.y - 120)) : 240);
+      await page.mouse.wheel(0, 400);
       await page.waitForTimeout(180);
     }
     await expect(heading).toBeInViewport();
     await page.screenshot({ path: testInfo.outputPath('lower-outcomes.png'), scale: 'css' });
     const trial = page.getByRole('button', { name: '登録なしで1件試す', exact: true }).last();
-    for (let step = 0; step < 12; step++) {
+    for (let step = 0; step < 24; step++) {
       const bounds = await trial.boundingBox();
       if (bounds && bounds.y > 90 && bounds.y + bounds.height < page.viewportSize()!.height - 100) break;
       await page.mouse.wheel(0, 180);
