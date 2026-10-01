@@ -1,7 +1,7 @@
 import {pipeRoute} from './pipe-route.mjs?v=student-1';
 // Explicit model-based search assistance, NOT learned inference.
 // Hypothetical clones never replace or rewind the real simulation.
-import {retryLevel} from './retry-memory.mjs?v=student-1';
+import {retryLevel,stalledActionPenalty} from './retry-memory.mjs?v=student-1';
 import {itemPotential,itemTargets,itemValue,itemApproach,itemDescent} from './item-goal.mjs?v=student-1';
 import {World11,isWater} from './world11.mjs?v=student-1';
 export function clone(g){return Object.assign(Object.create(World11.prototype),structuredClone(g));}
@@ -37,14 +37,14 @@ export function plan(g,raw=null,failures=[],itemAvoidance=[]){
   const action=p.crouching||near?'right_run_down':'right_run';
   return {retry_level:retryLevel(g,failures),search_depth:0,action,accepted:false,score:null,raw_score:null};
  }
- const target=isWater(g.stage)?null:itemTargets(g).filter(t=>{if(g.room!=='castle'||!t.block||g.power===0)return true;const [x,y]=t.key.split(',').map(Number);return ![x-1,x+1].some(c=>g.solid(c,y+2));}).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2);
+ const target=isWater(g.stage)?null:itemTargets(g).filter(t=>{if(g.room!=='castle'||!t.block||g.power===0)return true;const [x,y]=t.key.split(',').map(Number);return ![x-1,x+1].some(c=>g.solid(c,y+2));}).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2,g.room==='overworld'&&p.grounded&&foot<12?14:0);
  const descent=itemDescent(g,target);if(descent)return {retry_level:level,search_depth:0,action:descent,accepted:false,score:null,raw_score:null};
  const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left',...(g.room==='castle'||(!isWater(g.stage)&&level>=2)?['left_jump']:[])]:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
  let beam=[{g,first:null,value:0}],byFirst={};
  for(let depth=0;depth<depthLimit;depth++){
   const expanded=[];
   for(const b of beam)for(const a of actions){
-   const next=advance(clone(b.g),a,8),first=b.first??a,value=score(next,g,failures,target);
+   const next=advance(clone(b.g),a,8),first=b.first??a,value=score(next,g,failures,target)-stalledActionPenalty(g,failures,first);
    expanded.push({g:next,first,value});
   }
   expanded.sort((a,b)=>b.value-a.value);

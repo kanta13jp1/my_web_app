@@ -1219,6 +1219,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
+          onSyncError: (error, stackTrace) {
+            debugPrint(
+                'Asset monthly sync retained the local recovery copy: $error');
+            if (!mounted) return;
+            setState(() {
+              _assetLiabilitySyncStatus =
+                  AssetLiabilityManualSyncStatus.failure;
+              _assetLiabilitySyncMessage =
+                  'この端末の変更は保持しています。別端末との競合または通信エラーのため、同期内容を確認してください。';
+            });
+            unawaited(_refreshSyncSources());
+          },
         );
     _investmentAssetRepository = widget.investmentAssetRepository ??
         SupabaseInvestmentAssetRepository(client: _supabase);
@@ -1270,7 +1282,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 内 / review #1 restore↔pull レース対策)。
     // 期限切れ・上限超過のトゥームストーンを自動掃除 (#part296 肥大化抑制)。
     unawaited(_pruneTombstonesOnBoot());
-    _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _deadlineTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (!mounted) return;
       final previousNow = _now;
       // Keep the injected clock stable across periodic date checks in tests.
@@ -2078,6 +2090,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     await _loadAssetLiabilityMonthlyState();
     if (mounted) {
       setState(() => _assetLiabilityBootStateLoaded = true);
+      _maybeDetectSalaryDeposit();
     }
   }
 
@@ -2327,6 +2340,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _persistAssetLiabilityMonthlyState() async {
+    // Never save the previous cycle's in-memory paid flags under a new key.
+    if (_loadedAssetLiabilityMonthKey != _assetLiabilityStateMonthKey(_now)) {
+      return;
+    }
     await _assetLiabilityRepository.saveMonth(
       month: _assetLiabilityStateMonth(_now),
       state: _currentAssetLiabilityMonthlyState(),
@@ -10405,12 +10422,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Error loading salary reset marker: $e');
     }
     await _restoreSalaryResetMarkerFromMirror();
-    if (_ackedResetCycleKey == null) {
-      await _acknowledgeSalaryReset(
-        _currentSalaryCycleKey(),
-        reloadMonthlyState: false,
-      );
-    }
+    // Opening a new device is not evidence of a salary deposit.
   }
 
   /// サーバミラー (pref_key: salary_reset_ack_cycle) を max-merge で採用する。
@@ -10451,11 +10463,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 給料リセット承認マーカーを `asset_pref_mirror` へ 1 行 upsert する。
   Future<void> _mirrorSalaryResetMarker() async {
     final userId = _supabase.auth.currentUser?.id;
-    final marker = _ackedResetCycleKey;
+    var marker = _ackedResetCycleKey;
     if (userId == null || marker == null) {
       return;
     }
     try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select('value')
+          .eq('user_id', userId)
+          .eq('pref_key', _salaryResetMarkerMirrorKey)
+          .limit(1);
+      if (_supabase.auth.currentUser?.id != userId) return;
+      marker = AssetSalaryResetMarkerStore.mergeLater(
+        marker,
+        rows.isEmpty
+            ? null
+            : AssetSalaryResetMarkerStore.decodeMirrorValue(
+                rows.first['value']),
+      );
+      if (marker == null) return;
       await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
         'user_id': userId,
         'pref_key': _salaryResetMarkerMirrorKey,
@@ -10479,6 +10506,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cycleKey,
     );
     if (merged == _ackedResetCycleKey) {
+      // Explicit confirmation also repairs a previously local-only marker.
+      await _mirrorSalaryResetMarker();
+      if (reloadMonthlyState) await _loadAssetLiabilityMonthlyState();
       return;
     }
     if (mounted) {
@@ -10497,11 +10527,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 当日サイクルが未承認のときだけ給料振込を検知し、検知できたらリセットを承認する。
-  /// build からではなくイベント(月次stateロード後 / フロー取得後 / 残高更新後 / 1秒
+  /// build からではなくイベント(月次stateロード後 / フロー取得後 / 残高更新後 / 1分
   /// タイマー)から呼ぶ。未承認でない通常時はワークブックも作らず即 return(軽量)。
   /// 冪等(承認後はマーカー一致でこの分岐に入らない / `_pendingSalaryResetAck` で多重防止)。
   void _maybeDetectSalaryDeposit() {
-    if (!_salaryResetPending) {
+    if (!_salaryResetPending || !_assetLiabilityBootStateLoaded) {
       return;
     }
     final currentCycleKey = _currentSalaryCycleKey();
@@ -10517,9 +10547,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     _pendingSalaryResetAck = currentCycleKey;
-    _reconcileAndSaveSalaryIncomePlansIfPending(forceSalaryReceived: true);
     unawaited(
-      _acknowledgeSalaryReset(currentCycleKey).whenComplete(() {
+      _acknowledgeSalaryReset(currentCycleKey).then((_) {
+        if (mounted && _loadedAssetLiabilityMonthKey == currentCycleKey) {
+          _reconcileAndSaveSalaryIncomePlansIfPending(
+              forceSalaryReceived: true);
+        }
+      }).whenComplete(() {
         _pendingSalaryResetAck = null;
       }),
     );
@@ -10713,7 +10747,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     return [
       for (final plan in reconciledWithPayslips)
-        if (_isSalaryIncomePlan(plan) && !plan.received)
+        if (_isSalaryIncomePlan(plan) &&
+            !plan.received &&
+            AssetLiabilityMonthlyStateStore.formatMonthKey(
+                  AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+                    plan.date,
+                    salaryDay: _salaryDay,
+                  ),
+                ) ==
+                _currentSalaryCycleKey())
           AssetLiabilityIncomePlan(
             id: plan.id,
             date: plan.date,
@@ -10788,8 +10830,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (confirmed != true || !mounted) {
       return;
     }
-    _reconcileAndSaveSalaryIncomePlansIfPending(forceSalaryReceived: true);
     await _acknowledgeSalaryReset(_currentSalaryCycleKey());
+    if (mounted && _loadedAssetLiabilityMonthKey == _currentSalaryCycleKey()) {
+      _reconcileAndSaveSalaryIncomePlansIfPending(forceSalaryReceived: true);
+    }
   }
 
   /// 給料日を更新して永続化 + ミラー + 月次state再読込(サイクル基準が変わる)。
@@ -11498,14 +11542,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final serverConfigs = <String, AssetRecurringFixedCost>{
         for (final cost in serverList) cost.id: cost,
       };
-      final adoptConflicts = await _shouldAdoptMirror(
-        prefKey: _recurringFixedCostsMirrorKey,
-        hasLocal: hasLocal,
-        mirrorUpdatedAt: mirrorUpdatedAt,
+      final adoptConflicts = resolveMirrorRead(
+            hasLocal: hasLocal,
+            hasMirror: true,
+            localUpdatedAt: await _syncTimestampStore.loadTimestamp(
+              _recurringFixedCostsMirrorKey,
+            ),
+            mirrorUpdatedAt: mirrorUpdatedAt,
+          ) ==
+          AssetMirrorAdoption.adoptMirror;
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _recurringFixedCostsMirrorKey,
       );
+      if (!mounted) return;
       final normalizedLocal = <String, AssetRecurringFixedCost>{
-        for (final entry in localBefore.entries)
-          entry.key: AssetRecurringFixedCostStore.normalizeCost(entry.value),
+        for (final cost in _recurringFixedCosts) cost.id: cost,
       };
       final merged = Map<String, AssetRecurringFixedCost>.from(normalizedLocal);
       var changed = localBefore.entries.any(
@@ -11519,9 +11570,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         return false;
       });
-      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
-        _recurringFixedCostsMirrorKey,
-      );
       serverConfigs.forEach((key, cost) {
         if (tombstoned.contains(key)) {
           return;
@@ -11586,22 +11634,70 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _mirrorRecurringFixedCostsNow({
     bool throwOnFailure = false,
   }) async {
-    unawaited(_syncTimestampStore.markChanged(_recurringFixedCostsMirrorKey));
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      return;
-    }
+    if (userId == null) return;
     try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select('value')
+          .eq('user_id', userId)
+          .eq('pref_key', _recurringFixedCostsMirrorKey)
+          .limit(1);
+      if (_supabase.auth.currentUser?.id != userId) return;
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _recurringFixedCostsMirrorKey,
+      );
+      final tombstoned = _recurringFixedCostTombstones.activeIds(
+        await SharedPreferences.getInstance(),
+      );
+      final current = <String, AssetRecurringFixedCost>{
+        if (rows.isNotEmpty)
+          for (final cost in AssetRecurringFixedCostStore.decodeMirrorValue(
+            rows.first['value'],
+          ))
+            cost.id: cost,
+      };
+      final localSnapshot = AssetRecurringFixedCostStore.encodeMirrorValue(
+        _recurringFixedCosts,
+      );
+      for (final cost in _recurringFixedCosts) {
+        if (!current.containsKey(cost.id) || dirtyKeys.contains(cost.id)) {
+          current[cost.id] = cost;
+        }
+      }
+      current.removeWhere((key, _) => tombstoned.contains(key));
+      if (_supabase.auth.currentUser?.id != userId) return;
+      final uploadedAt = DateTime.now().toUtc();
       await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
         'user_id': userId,
         'pref_key': _recurringFixedCostsMirrorKey,
         'value': AssetRecurringFixedCostStore.encodeMirrorValue(
-          _recurringFixedCosts,
+          current.values.toList(),
         ),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
+        'updated_at': uploadedAt.toIso8601String(),
       });
-      // 全量 upsert 成功 = 全 id 同期済み → dirty クリア。
-      await _syncDirtyKeysStore.clearDomain(_recurringFixedCostsMirrorKey);
+      // Edits made while the request was in flight must stay dirty.
+      if (jsonEncode(localSnapshot) ==
+          jsonEncode(AssetRecurringFixedCostStore.encodeMirrorValue(
+            _recurringFixedCosts,
+          ))) {
+        final accepted = current.values.toList()
+          ..sort(_compareRecurringFixedCostsByPaymentDay);
+        if (mounted) setState(() => _recurringFixedCosts = accepted);
+        await _recurringFixedCostStore.save(accepted);
+        if (jsonEncode(
+                AssetRecurringFixedCostStore.encodeMirrorValue(accepted)) !=
+            jsonEncode(AssetRecurringFixedCostStore.encodeMirrorValue(
+              _recurringFixedCosts,
+            ))) {
+          return;
+        }
+        await _syncDirtyKeysStore.clearDomain(_recurringFixedCostsMirrorKey);
+        await _syncTimestampStore.markChanged(
+          _recurringFixedCostsMirrorKey,
+          at: uploadedAt,
+        );
+      }
     } catch (e, stackTrace) {
       debugPrint('recurring fixed cost mirror upsert failed: $e');
       if (throwOnFailure) {
