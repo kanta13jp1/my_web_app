@@ -799,8 +799,9 @@ test('LightGBM worker completes 2-2 and advances to 2-3 without going offscreen'
  test('4-4 worker escapes the reported fire-Mario alcove',async({page},info)=>{
   test.setTimeout(45000);await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;
   await lab.locator('#stage').selectOption('16');
+  await frame.evaluate(async()=>{const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const tick=StudentSession.prototype.tick;StudentSession.prototype.tick=function(world){StudentSession.prototype.tick=tick;(window as any).alcoveWorld=world;world.power=2;Object.assign(world.p,{x:676,y:180,h:28,grounded:true});world.camera=580;world.invincible=5000;return tick.call(this,world);};});
+  // Seed before the first worker observation; do not race a reply from the start position.
   await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
-  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){World11.prototype.step=step;(window as any).alcoveWorld=this;this.power=2;Object.assign(this.p,{x:676,y:180,h:28,grounded:true});this.camera=580;this.invincible=5000;step.call(this);};});
   await expect.poll(()=>frame.evaluate(()=>(window as any).alcoveWorld?.p.x??0),{timeout:30000}).toBeGreaterThan(736);
   await lab.locator('#stop').click();await screenshot(page,info.outputPath('castle-alcove-escape.png'));
  });
@@ -838,4 +839,13 @@ test('6-2 complete real worker course collects items and clears with normal haza
  await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
  try{await expect.poll(()=>frame.evaluate(()=>(window as any).courseClear),{timeout:100000}).toBeTruthy();const result=await frame.evaluate(()=>(window as any).courseClear);expect(result.pickups.mushroom).toBeGreaterThan(0);}
  finally{await lab.locator('#stop').click();await(await import('node:fs/promises')).writeFile(info.outputPath('world62-complete-worker.json'),JSON.stringify(await frame.evaluate(()=>({clear:(window as any).courseClear,trace:(window as any).courseTrace}))));await screenshot(page,info.outputPath('world62-complete-worker.png'));}
+});
+
+test('8-4 complete real worker castle collects items and clears with normal hazards',async({page},info)=>{
+ test.skip(info.project.name==='mobile','The complete run uses desktop; mobile entrance and overhang recovery are covered separately.');test.setTimeout(180000);
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#stage').selectOption('32');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const tick=StudentSession.prototype.tick,step=World11.prototype.step;(window as any).courseTrace=[];(window as any).courseClear=null;(window as any).courseTotals={mushroom:0,flower:0,life:0,star:0};let previous={mushroom:0,flower:0,life:0,star:0},totalFrames=0;StudentSession.prototype.tick=function(world){(window as any).courseWorld=world;return tick.call(this,world);};World11.prototype.step=function(){step.call(this);if(this!==(window as any).courseWorld)return;totalFrames++;for(const kind of Object.keys(previous)){(window as any).courseTotals[kind]+=Math.max(0,this.pickups[kind]-previous[kind]);previous[kind]=this.pickups[kind];}if(this.frames%60===0)(window as any).courseTrace.push({frame:this.frames,x:this.p.x,y:this.p.y,room:this.room,phase:this.phase,lives:this.lives,pickups:{...this.pickups},input:{...this.input},power:this.power});if(this.stage===32&&this.phase==='won')(window as any).courseClear={frames:this.frames,totalFrames,x:this.p.x,lives:this.lives,deaths:this.deaths,pickups:{...(window as any).courseTotals},finalAttemptPickups:{...this.pickups},visited:[...this.visitedPipes]};};});
+ await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
+ try{await expect.poll(()=>frame.evaluate(()=>(window as any).courseClear),{timeout:160000}).toBeTruthy();const result=await frame.evaluate(()=>(window as any).courseClear);expect(result.pickups.mushroom).toBeGreaterThan(0);}
+ finally{await lab.locator('#stop').click();await(await import('node:fs/promises')).writeFile(info.outputPath('world84-complete-worker.json'),JSON.stringify(await frame.evaluate(()=>({clear:(window as any).courseClear,trace:(window as any).courseTrace}))));await screenshot(page,info.outputPath('world84-complete-worker.png'));}
 });
