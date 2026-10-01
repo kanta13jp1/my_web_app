@@ -3623,27 +3623,37 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
     Widget outcomeRow({
       required Key key,
-      required IconData icon,
-      required Color color,
+      required String number,
       required String title,
       required String description,
     }) {
       return Padding(
         key: key,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFFE7DED0),
+                borderRadius: BorderRadius.circular(99),
               ),
-              child: Icon(icon, size: 20, color: color),
+              child: ExcludeSemantics(
+                child: Center(
+                  child: Text(
+                    number,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF654A35),
+                    ),
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3651,17 +3661,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 22,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF172033),
-                      height: 1.45,
+                      height: 1.35,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 8),
                   Text(
                     description,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       color: Color(0xFF526174),
                       height: 1.55,
                     ),
@@ -3683,7 +3693,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           const Text(
             '最初に、3つの成果から始める',
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
               color: Color(0xFF172033),
               height: 1.4,
@@ -3691,9 +3701,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           const SizedBox(height: 8),
           const Text(
-            '悩みを1文入力すると、AIが最初の一手を提案します。実行するかはあなたが決め、役立つ提案だけ登録後に引き継げます。',
+            '困っていることを1文に。AIの提案から、あなたが次の一手を選べます。',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               color: Color(0xFF526174),
               height: 1.6,
             ),
@@ -3701,38 +3711,35 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           const SizedBox(height: 10),
           outcomeRow(
             key: const Key('landing_h15_outcome_work'),
-            icon: Icons.task_alt,
-            color: const Color(0xFF1F6FEB),
+            number: '01',
             title: '仕事を1件に絞る',
             description: '散らかったタスクから、今日動かす1件の候補と次の一手を提案します。',
           ),
-          const Divider(height: 1, color: Color(0xFFDDE4EE)),
+          const Divider(height: 1, color: Color(0xFFD6CFC4)),
           outcomeRow(
             key: const Key('landing_h15_outcome_money'),
-            icon: Icons.savings_outlined,
-            color: const Color(0xFF0B7A53),
+            number: '02',
             title: '見直す支出を1件決める',
             description: '家計の悩みから、最初に確認する固定費や明細の候補を具体化します。',
           ),
-          const Divider(height: 1, color: Color(0xFFDDE4EE)),
+          const Divider(height: 1, color: Color(0xFFD6CFC4)),
           outcomeRow(
             key: const Key('landing_h15_outcome_learning'),
-            icon: Icons.school_outlined,
-            color: const Color(0xFF9A5A00),
+            number: '03',
             title: '今日の復習を1件決める',
             description: '学びたい内容から、今日取り組む復習や練習の候補を提案します。',
           ),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            height: 46,
+            height: 48,
             child: FilledButton.icon(
               key: const Key('landing_h15_try_without_signup'),
               onPressed: () {
                 unawaited(_recordConversionStage('feature_outcome_trial'));
                 _scrollToTrialSection();
               },
-              icon: const Icon(Icons.bolt, size: 18),
+              icon: const Icon(Icons.arrow_forward, size: 18),
               label: const Text(
                 '登録なしで1件試す',
                 style: TextStyle(
@@ -3742,9 +3749,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1F6FEB),
+                backgroundColor: const Color(0xFF101D2B),
+                foregroundColor: const Color(0xFFF0E5D0),
+                visualDensity: VisualDensity.standard,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
@@ -3790,6 +3799,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               TextButton.icon(
                 key: const Key('landing_h15_pricing_link'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF172033),
+                  minimumSize: const Size(44, 44),
+                  visualDensity: VisualDensity.standard,
+                ),
                 onPressed: () => Navigator.of(context).pushNamed('/billing'),
                 icon: const Icon(Icons.payments_outlined, size: 17),
                 label: const Text('料金を見る'),
@@ -6083,7 +6097,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 number: 3,
                 eyebrow: 'Build continuity',
                 title: '続ける理由を、具体で比べる。',
-                description: '始め方、得られる価値、料金を同じ章に集約。登録後の生活がどう変わるかを判断できます。',
+                description: '仕事、お金、学び。いま困っていることから試し、続ける前に始め方と料金を確認。',
                 children: [
                   _buildUniqueValueSection(),
                   _buildGetStartedStepsSection(),
