@@ -11689,7 +11689,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 AssetRecurringFixedCostStore.encodeMirrorValue(accepted)) !=
             jsonEncode(AssetRecurringFixedCostStore.encodeMirrorValue(
               _recurringFixedCosts,
-            ))) return;
+            ))) {
+          return;
+        }
         await _syncDirtyKeysStore.clearDomain(_recurringFixedCostsMirrorKey);
         await _syncTimestampStore.markChanged(
           _recurringFixedCostsMirrorKey,

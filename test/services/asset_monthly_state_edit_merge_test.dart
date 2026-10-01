@@ -30,23 +30,28 @@ void main() {
       base: const AssetLiabilityMonthlyState(paidAccountNames: {'rent'}),
       edited: const AssetLiabilityMonthlyState(),
       remote: const AssetLiabilityMonthlyState(
-          paidAccountNames: {'rent', 'paypay'}),
+        paidAccountNames: {'rent', 'paypay'},
+      ),
     );
     expect(merged.paidAccountNames, {'paypay'});
   });
 
   test('same-field amount conflict stops instead of overwriting', () {
     expect(
-        () => mergeAssetMonthlyStateEdits(
-              monthKey: '2026-09',
-              base: const AssetLiabilityMonthlyState(
-                  paymentOverrides: {'claude': 3000}),
-              edited: const AssetLiabilityMonthlyState(
-                  paymentOverrides: {'claude': 3500}),
-              remote: const AssetLiabilityMonthlyState(
-                  paymentOverrides: {'claude': 3574}),
-            ),
-        throwsStateError);
+      () => mergeAssetMonthlyStateEdits(
+        monthKey: '2026-09',
+        base: const AssetLiabilityMonthlyState(
+          paymentOverrides: {'claude': 3000},
+        ),
+        edited: const AssetLiabilityMonthlyState(
+          paymentOverrides: {'claude': 3500},
+        ),
+        remote: const AssetLiabilityMonthlyState(
+          paymentOverrides: {'claude': 3574},
+        ),
+      ),
+      throwsStateError,
+    );
   });
 
   test('receiving one salary does not remove another remote income plan', () {
@@ -84,8 +89,10 @@ void main() {
       remote: AssetLiabilityMonthlyState(incomePlans: [salary, bonus]),
     );
     expect(merged.incomePlans.length, 2);
-    expect(merged.incomePlans.firstWhere((p) => p.id == 'salary').received,
-        isTrue);
+    expect(
+      merged.incomePlans.firstWhere((p) => p.id == 'salary').received,
+      isTrue,
+    );
   });
 
   test('new-cycle saves contain no previous-cycle paid flags', () {

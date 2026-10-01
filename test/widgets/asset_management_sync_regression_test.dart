@@ -53,26 +53,32 @@ void main() {
             jsonEncode(AssetRecurringFixedCostStore.encodeMirrorValue([stale])),
         if (dirty)
           AssetSyncDirtyKeysStore.prefsKey: jsonEncode({
-            'recurring_fixed_costs': [id]
+            'recurring_fixed_costs': [id],
           }),
       });
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(MaterialApp(
+      await tester.pumpWidget(
+        MaterialApp(
           home: AssetManagementPage(
-        debugNow: DateTime(2026, 10, 1),
-        debugMirrorReadsAuthoritative: false,
-        debugRecurringFixedCostsMirror:
-            AssetRecurringFixedCostStore.encodeMirrorValue([current]),
-      )));
+            debugNow: DateTime(2026, 10, 1),
+            debugMirrorReadsAuthoritative: false,
+            debugRecurringFixedCostsMirror:
+                AssetRecurringFixedCostStore.encodeMirrorValue([current]),
+          ),
+        ),
+      );
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
       final loaded = (await const AssetRecurringFixedCostStore().load()).single;
       expect(loaded.amount, dirty ? 3000 : 3574);
       expect(loaded.paymentDay, dirty ? 26 : 3);
       expect(loaded.sourceAccountId, dirty ? 'aupay' : 'custom_ab350028');
-      expect(await const AssetSalaryResetMarkerStore().load(), isNull,
-          reason: 'opening a page must not acknowledge an unconfirmed salary');
+      expect(
+        await const AssetSalaryResetMarkerStore().load(),
+        isNull,
+        reason: 'opening a page must not acknowledge an unconfirmed salary',
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
     });

@@ -732,8 +732,9 @@ void main() {
       final read = repository.loadMonth(month);
       await remote.started.future;
       final save = repository.saveMonth(
-          month: month,
-          state: const AssetLiabilityMonthlyState(paidAccountNames: {'rent'}));
+        month: month,
+        state: const AssetLiabilityMonthlyState(paidAccountNames: {'rent'}),
+      );
       remote.release.complete();
       await read;
       await save;
@@ -745,7 +746,9 @@ void main() {
         () async {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
-          'asset_monthly_state_pending_base_v1:user-1:2026-09', 'broken');
+        'asset_monthly_state_pending_base_v1:user-1:2026-09',
+        'broken',
+      );
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
       final errors = <Object>[];
@@ -759,8 +762,9 @@ void main() {
       );
       final month = DateTime(2026, 9);
       await repository.saveMonth(
-          month: month,
-          state: const AssetLiabilityMonthlyState(paidAccountNames: {'rent'}));
+        month: month,
+        state: const AssetLiabilityMonthlyState(paidAccountNames: {'rent'}),
+      );
       expect((await local.loadMonth(month)).paidAccountNames, {'rent'});
       expect(remote.calls, isNot(contains('saveMonth:user-1:2026-09')));
       expect(errors, hasLength(1));
@@ -771,10 +775,11 @@ void main() {
       final remote = _RecordingAssetLiabilityRemoteStore();
       final month = DateTime(2026, 9);
       remote.seedMonth(
-          month,
-          const AssetLiabilityMonthlyState(
-            paidAccountNames: {'rent'},
-          ));
+        month,
+        const AssetLiabilityMonthlyState(
+          paidAccountNames: {'rent'},
+        ),
+      );
       FeatureFlaggedAssetLiabilityRepository createRepository() =>
           FeatureFlaggedAssetLiabilityRepository(
             localRepository: local,
@@ -792,18 +797,21 @@ void main() {
       );
       await first.saveMonth(month: month, state: edited);
       remote.seedMonth(
-          month,
-          AssetLiabilityMonthlyState(
-            paidAccountNames: const {'rent', 'paypay'},
-            updatedAt: DateTime.utc(2026, 10, 1),
-          ));
+        month,
+        AssetLiabilityMonthlyState(
+          paidAccountNames: const {'rent', 'paypay'},
+          updatedAt: DateTime.utc(2026, 10, 1),
+        ),
+      );
       remote.failSaves = false;
       final second = createRepository();
       expect((await second.loadMonth(month)).paymentOverrides['other'], 1200);
       await second.saveMonth(month: month, state: edited);
       expect(remote.monthState('2026-09')!.paymentOverrides['other'], 1200);
       expect(
-          remote.monthState('2026-09')!.paidAccountNames, {'rent', 'paypay'});
+        remote.monthState('2026-09')!.paidAccountNames,
+        {'rent', 'paypay'},
+      );
     });
 
     test('newer empty remote month propagates an explicit last uncheck',
@@ -812,16 +820,18 @@ void main() {
       final remote = _RecordingAssetLiabilityRemoteStore();
       final month = DateTime(2026, 9);
       await local.saveMonth(
-          month: month,
-          state: AssetLiabilityMonthlyState(
-            paidAccountNames: const {'rent'},
-            updatedAt: DateTime.utc(2026, 9, 25),
-          ));
+        month: month,
+        state: AssetLiabilityMonthlyState(
+          paidAccountNames: const {'rent'},
+          updatedAt: DateTime.utc(2026, 9, 25),
+        ),
+      );
       remote.seedMonth(
-          month,
-          AssetLiabilityMonthlyState(
-            updatedAt: DateTime.utc(2026, 10, 1),
-          ));
+        month,
+        AssetLiabilityMonthlyState(
+          updatedAt: DateTime.utc(2026, 10, 1),
+        ),
+      );
       final repository = FeatureFlaggedAssetLiabilityRepository(
         localRepository: local,
         remoteStore: remote,
@@ -839,15 +849,16 @@ void main() {
       final remote = _RecordingAssetLiabilityRemoteStore();
       final month = DateTime(2026, 9);
       remote.seedMonth(
-          month,
-          const AssetLiabilityMonthlyState(
-            paidAccountNames: {'rent', 'famipay', 'paypay'},
-            actualPaymentAmounts: {
-              'rent': 63000,
-              'famipay': 11000,
-              'paypay': 17080
-            },
-          ));
+        month,
+        const AssetLiabilityMonthlyState(
+          paidAccountNames: {'rent', 'famipay', 'paypay'},
+          actualPaymentAmounts: {
+            'rent': 63000,
+            'famipay': 11000,
+            'paypay': 17080,
+          },
+        ),
+      );
       final repository = FeatureFlaggedAssetLiabilityRepository(
         localRepository: local,
         remoteStore: remote,
@@ -856,10 +867,11 @@ void main() {
         userIdProvider: () => 'user-1',
       );
       await repository.saveMonth(
-          month: month,
-          state: const AssetLiabilityMonthlyState(
-            paymentOverrides: {'other': 1200},
-          ));
+        month: month,
+        state: const AssetLiabilityMonthlyState(
+          paymentOverrides: {'other': 1200},
+        ),
+      );
       final saved = remote.monthState('2026-09')!;
       expect(saved.paidAccountNames, {'rent', 'famipay', 'paypay'});
       expect(saved.actualPaymentAmounts['paypay'], 17080);
