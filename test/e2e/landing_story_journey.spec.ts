@@ -8,6 +8,11 @@ test.describe('Landing story journey', () => {
   test('moves from the scattered state to the final actionable chapter', async ({
     page,
   }, testInfo) => {
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
     await openLanding(page);
     const story = await focusStory(page);
 
@@ -19,6 +24,25 @@ test.describe('Landing story journey', () => {
       await page.waitForTimeout(650);
       await page.screenshot({ path: testInfo.outputPath(`story-${index + 1}.png`), scale: 'css' });
     }
+
+    const originalViewport = page.viewportSize()!;
+    await page.setViewportSize({ width: 768, height: 1024 });
+    for (const [index, label] of [[1, '分散'], [4, '実行']] as const) {
+      await activateChapter(page, label);
+      await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
+      await page.waitForTimeout(650);
+      await page.screenshot({ path: testInfo.outputPath(`story-tablet-${index}.png`), scale: 'css' });
+    }
+    await page.setViewportSize(originalViewport);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+    for (const [index, label] of [[1, '分散'], [4, '実行']] as const) {
+      await activateChapter(page, label);
+      await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
+      await page.waitForTimeout(650);
+      await page.screenshot({ path: testInfo.outputPath(`story-reduced-${index}.png`), scale: 'css' });
+    }
+    expect(layoutIssues).toEqual([]);
 
     await expect(story).toHaveAccessibleName(/4 \/ 4/);
     await expect(

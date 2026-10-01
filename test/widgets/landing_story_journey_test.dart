@@ -9,6 +9,7 @@ void main() {
     VoidCallback? onPrimaryAction,
     VoidCallback? onSecondaryAction,
     bool disableAnimations = false,
+    double textScale = 1,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -23,7 +24,10 @@ void main() {
           builder: (context) => MediaQuery(
             data: MediaQuery.of(
               context,
-            ).copyWith(disableAnimations: disableAnimations),
+            ).copyWith(
+              disableAnimations: disableAnimations,
+              textScaler: TextScaler.linear(textScale),
+            ),
             child: Scaffold(
               body: SingleChildScrollView(
                 controller: controller,
@@ -109,6 +113,17 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('landing_story_media_3')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('enlarged mobile text keeps final actions reachable', (tester) async {
+    await pumpJourney(tester, size: const Size(390, 844), disableAnimations: true, textScale: 1.3);
+    await tester.tap(find.byKey(const Key('landing_story_dot_3')));
+    await tester.pump();
+    final primary = find.byKey(const Key('landing_story_primary_cta'));
+    final secondary = find.byKey(const Key('landing_story_secondary_cta'));
+    expect(tester.getRect(primary).top, greaterThanOrEqualTo(0));
+    expect(tester.getRect(secondary).bottom, lessThanOrEqualTo(844));
     expect(tester.takeException(), isNull);
   });
 
