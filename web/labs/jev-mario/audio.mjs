@@ -1,5 +1,5 @@
 // Original scores and synthesized effects; no sampled Nintendo soundtrack.
-export const MAX_VOICES=32,MAX_MUSIC_VOICES=24;
+export const MAX_VOICES=64,MAX_MUSIC_VOICES=48;
 export const scores={
  underwater:[72,76,79,84,79,76,74,77,81,86,81,77,71,74,79,83,79,74,72,76,79,84,0,79],
  overworld:[76,0,79,81,0,79,76,72,74,0,77,79,0,76,74,71,72,76,79,0,84,81,79,76,74,77,81,79,76,74,72,0,79,0,76,72,74,77,79,0,81,84,83,79,76,79,74,0,72,74,76,79,81,0,77,74,79,76,72,74,71,0,72,0],
@@ -26,13 +26,13 @@ export class GameAudio{
   this.factory=factory;this.enabled=false;this.volume=1;this.nodes=new Set();this.music=new Set();this.beat=0;this.next=0;this.track='';this.musicUntil=0;
  }
  async enable(value){this.enabled=!!value;if(!value){this.stop();return true;}try{
-  if(!this.context){this.context=this.factory();this.master=this.context.createGain();if(this.context.createDynamicsCompressor){this.limiter=this.context.createDynamicsCompressor();this.limiter.threshold.value=-10;this.limiter.knee.value=8;this.limiter.ratio.value=12;this.master.connect(this.limiter);this.limiter.connect(this.context.destination);}else this.master.connect(this.context.destination);this.musicGain=this.context.createGain();this.musicGain.gain.value=1;this.musicGain.connect(this.master);}
+  if(!this.context){this.context=this.factory();this.master=this.context.createGain();this.preamp=this.context.createGain();this.preamp.gain.value=1.5;this.master.connect(this.preamp);if(this.context.createDynamicsCompressor){this.limiter=this.context.createDynamicsCompressor();this.limiter.threshold.value=-10;this.limiter.knee.value=8;this.limiter.ratio.value=12;this.preamp.connect(this.limiter);this.limiter.connect(this.context.destination);}else this.preamp.connect(this.context.destination);this.musicGain=this.context.createGain();this.musicGain.gain.value=1;this.musicGain.connect(this.master);}
   this.master.gain.value=this.volume;await this.context.resume();return this.context.state==='running';
  }catch{this.enabled=false;this.stop();return false;}}
  captureOutput(){
   if(!this.enabled||!this.context||!this.master)return null;
-  const destination=this.context.createMediaStreamDestination();(this.limiter||this.master).connect(destination);
-  return {stream:destination.stream,release:()=>{(this.limiter||this.master).disconnect(destination);destination.stream.getTracks().forEach(t=>t.stop());}};
+  const destination=this.context.createMediaStreamDestination();(this.limiter||this.preamp).connect(destination);
+  return {stream:destination.stream,release:()=>{(this.limiter||this.preamp).disconnect(destination);destination.stream.getTracks().forEach(t=>t.stop());}};
  }
  setVolume(v){this.volume=Math.max(0,Math.min(1,Number(v)||0));if(this.master)this.master.gain.value=this.volume;}
  reserveVoice(music){
@@ -96,6 +96,8 @@ export class GameAudio{
    else if(track==='underground'&&this.beat%8===6)this.noise(t,.022,.009,true);
    // A quiet phrase response adds articulation without stacking a dense chord.
    if(this.beat%16===7||this.beat%16===14){this.tone(harmony+12,t+step*.72,step*.28,'triangle',.006,true);}
+   // Short broken triad answers the phrase instead of sustaining a dense chord.
+   if(this.beat%32===30)for(const [i,n]of [bass+12,harmony,fifth].entries())this.tone(n,t+step*(.12+i*.25),step*.35,'triangle',.010,true);
    this.next+=step;this.beat++;
   }
 

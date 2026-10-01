@@ -21,7 +21,7 @@ test('audio is opt-in, bounded, muted and reusable after stop',async()=>{
   a.tick();a.effect('jump');assert.equal(created,0);
   await a.enable(true);a.tick();a.effect('coin');assert.ok(ctx.oscillators.length>=4);
   a.setVolume(999);assert.equal(a.master.gain.value,1);a.setVolume(0);assert.equal(a.master.gain.value,0);
-  for(let i=0;i<100;i++)a.effect('clear');assert.ok(a.nodes.size<=32);
+  for(let i=0;i<100;i++)a.effect('clear');assert.ok(a.nodes.size<=MAX_VOICES);
   await a.enable(false);assert.equal(a.nodes.size,0);assert.ok(ctx.oscillators.every(o=>o.stopped));
   const count=ctx.oscillators.length;a.tick();a.effect('jump');assert.equal(ctx.oscillators.length,count);
   await a.enable(true);a.tick();assert.equal(created,1);assert.ok(a.nodes.size>0);
@@ -100,4 +100,6 @@ test('twelfth pickup voice is quiet and short',async()=>{const c=context(),a=new
 test('sixteen-part arrangement staggers the four new voices and mute releases them',async()=>{for(const [key,beat,type,gain]of [['reply',9,'triangle',.006],['lowAnswer',5,'triangle',.010],['spark',21,'sine',.004],['cadence',29,'sine',.006]]){const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick();const calls=[];a.tone=(...args)=>calls.push(args);a.beat=beat;a.next=c.currentTime;a.tick();const n=musicStep('overworld',beat);assert.ok(calls.some(x=>x[0]===n[key]&&x[3]===type&&x[4]===gain&&x[1]>c.currentTime&&x[2]<n.step));await a.enable(false);assert.equal(a.nodes.size,0);}});
 
 
-test('32 voice budget reserves eight effect voices and displaces music instead of dropping an effect',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);for(let i=0;i<40;i++)a.tone(60,1,1,'triangle',.01,true);assert.equal(a.music.size,MAX_MUSIC_VOICES);for(let i=0;i<8;i++)a.tone(80,1,.1,'square',.03,false);assert.equal(a.nodes.size,MAX_VOICES);const music=[...a.music];a.tone(84,1,.1,'square',.03,false);assert.equal(a.nodes.size,32);assert.equal(a.music.size,23);assert.ok(music[0].stopped);await a.enable(false);assert.equal(a.nodes.size,0);assert.equal(a.music.size,0);});
+test('64 voice budget reserves sixteen effect voices and displaces music instead of dropping an effect',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);for(let i=0;i<80;i++)a.tone(60,1,1,'triangle',.01,true);assert.equal(a.music.size,MAX_MUSIC_VOICES);for(let i=0;i<16;i++)a.tone(80,1,.1,'square',.03,false);assert.equal(a.nodes.size,MAX_VOICES);const music=[...a.music];a.tone(84,1,.1,'square',.03,false);assert.equal(a.nodes.size,64);assert.equal(a.music.size,47);assert.ok(music[0].stopped);await a.enable(false);assert.equal(a.nodes.size,0);assert.equal(a.music.size,0);});
+
+test('fixed preamp raises the default output while slider mute still controls the master',async()=>{const c=context(),a=new GameAudio(()=>c);await a.enable(true);assert.equal(a.preamp.gain.value,1.5);assert.equal(a.master.gain.value,1);a.setVolume(0);assert.equal(a.master.gain.value,0);a.setVolume(.4);assert.equal(a.master.gain.value,.4);assert.equal(a.preamp.gain.value,1.5);await a.enable(false);assert.equal(a.nodes.size,0);});
