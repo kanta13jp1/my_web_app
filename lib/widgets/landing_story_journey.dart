@@ -48,7 +48,7 @@ class LandingStoryJourney extends StatefulWidget {
       label: '整理',
       eyebrow: '03 · AIが優先順位をつくる',
       title: '複雑さを、\n今日の優先順位へ。',
-      body: 'AIが状況を整理し、最初の確認先を提案。最後に決めるのは、あなたです。',
+      body: 'AIが状況を整理し、最初の確認先を提案。\n最後に決めるのは、あなたです。',
       note: '整理 · 提案 · 最終判断',
       assetPath: 'assets/landing_journey/03-prioritized.webp',
     ),
@@ -56,7 +56,7 @@ class LandingStoryJourney extends StatefulWidget {
       label: '実行',
       eyebrow: '04 · 今日の1件',
       title: 'いま動かす、\n1件だけが見える。',
-      body: '短時間で着手できる一手から始め、結果を保存して明日へつなぎます。',
+      body: 'いま着手できる1件から始め、\n結果を保存して明日へつなぎます。',
       note: '登録前に体験 · 無料登録時カード不要',
       assetPath: 'assets/landing_journey/04-action.webp',
     ),
@@ -821,6 +821,7 @@ class _JourneyCopy extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFFF0E5D0),
                       foregroundColor: const Color(0xFF101A24),
+                      visualDensity: VisualDensity.standard,
                       minimumSize: const Size(184, 48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(999),
@@ -835,6 +836,7 @@ class _JourneyCopy extends StatelessWidget {
                     label: const Text('登録なしで1件試す'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
+                      visualDensity: VisualDensity.standard,
                       minimumSize: const Size(184, 48),
                       side: const BorderSide(color: Color(0x80FFFFFF)),
                       shape: RoundedRectangleBorder(

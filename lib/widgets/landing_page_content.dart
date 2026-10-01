@@ -5771,7 +5771,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
         );
         const copy = Text(
-          '登録前に1件試し、役立つと感じたら保存。使い方と、始める前に確認したいことをまとめました。',
+          'まず1件試し、役立ったら保存。\n使い方と、始める前の疑問を確認。',
           style: TextStyle(
             color: Color(0xFF52606D),
             fontSize: 15,

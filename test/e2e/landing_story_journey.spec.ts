@@ -53,6 +53,14 @@ test.describe('Landing story journey', () => {
     await expect(
       story.getByRole('button', { name: '登録なしで1件試す' }),
     ).toBeVisible();
+    for (const name of ['無料で保存を始める', '登録なしで1件試す']) {
+      const action = story.getByRole('button', { name, exact: true });
+      await expect(action).toBeInViewport();
+      const bounds = await action.boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(bounds!.height).toBeGreaterThanOrEqual(44);
+    }
+
   });
 
   test('connects the final chapter to the existing no-signup trial', async ({
