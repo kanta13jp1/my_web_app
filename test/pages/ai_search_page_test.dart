@@ -38,8 +38,8 @@ void main() {
         child: child!,
       ),
       home: AiSearchPage(
-          supabaseClient: client, search: (_) async => result('private')),
-    ));
+          supabaseClient: client, search: (_) async => result('private')),,
+    )),;
     expect(tester.takeException(), isNull);
     await tester.ensureVisible(find.text('サンプルで試す'));
     await tester.tap(find.text('サンプルで試す'));
@@ -60,9 +60,9 @@ void main() {
       notePageBuilder: (id) {
         opened = id;
         return Scaffold(
-            appBar: AppBar(title: const Text('開いたノート')), body: Text('本文 $id'));
+            appBar: AppBar(title: const Text('開いたノート')), body: Text('本文 $id')),;
       },
-    )));
+    )),),;
     await submit(tester, 'メモ');
     await tester.tap(find.text('開けるノート'));
     await tester.pumpAndSettle();
@@ -84,14 +84,14 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       routes: {
         '/login': (_) => Scaffold(appBar: AppBar(title: const Text('ログイン入口')))
-      },
+      },,
       home: AiSearchPage(
           supabaseClient: client,
           search: (_) async {
             requests++;
             return result('private');
-          }),
-    ));
+          }),,
+    )),;
     expect(find.text('ログインして検索'), findsOneWidget);
     expect(find.text('再試行'), findsNothing);
     await submit(tester, 'メモ');
@@ -131,11 +131,11 @@ void main() {
       supabaseClient: client,
       search: (q) =>
           q == 'first' ? Future.value(result('以前のノート')) : pending.future,
-    )));
+    )),),;
     await submit(tester, 'first');
     await submit(tester, 'slow');
     client.auth.user = null;
-    client.auth.events.add(AuthState(AuthChangeEvent.signedOut, null));
+    client.auth.events.add(const AuthState(AuthChangeEvent.signedOut, null));
     await tester.pump();
     pending.complete(result('遅れてきた非公開ノート'));
     await tester.pump();
@@ -151,7 +151,7 @@ void main() {
         home: AiSearchPage(
       search: (_) async =>
           throw const FunctionException(status: 401, details: 'Unauthorized'),
-    )));
+    )),),;
     await submit(tester, 'メモ');
     expect(find.text('ログインして検索'), findsOneWidget);
     expect(find.text('再試行'), findsNothing);
@@ -166,13 +166,13 @@ void main() {
       search: (_) async => {
         'results': [
           {'title': 'IDなし', 'content': '抜粋'}
-        ]
-      },
+        ],
+      },,
       notePageBuilder: (_) {
         opened = true;
         return const SizedBox();
       },
-    )));
+    )),),;
     await submit(tester, 'メモ');
     await tester.tap(find.text('IDなし'));
     await tester.pump();
@@ -413,7 +413,7 @@ User _user(String id) => User(
     appMetadata: const {},
     userMetadata: const {},
     aud: 'authenticated',
-    createdAt: '2026-10-02');
+    createdAt: '2026-10-02'),;
 
 class _SessionClient extends Fake implements SupabaseClient {
   @override

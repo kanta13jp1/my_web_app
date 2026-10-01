@@ -83,6 +83,8 @@ test('a result opens its note and back preserves the search', async ({ page }, i
   await page.screenshot({ path: info.outputPath('opened-note.png') });
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await expect(page.getByText('「最初」の結果（1件）', { exact: true })).toBeVisible();
+  // Flutter synchronizes the native editing element when it receives focus.
+  await input(page).focus();
   await expect(input(page)).toHaveValue('最初');
 });
 
