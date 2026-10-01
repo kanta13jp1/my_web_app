@@ -1,17 +1,19 @@
 name: Jev Mario lab
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 permissions:
   contents: read
+  actions: read
 jobs:
-  planner-contract:
+  planner-snapshot:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: 0298514176db548d23a20b496b09898a615c7846
           persist-credentials: false
-      - name: Verify exact source
-        run: test "$(git rev-parse HEAD)" = 0298514176db548d23a20b496b09898a615c7846
       - run: node --test test/web/jev_mario_escape.test.mjs
+      - name: Retrieve captured source only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 36920514591 --repo kanta13jp1/my_web_app --name issue5661-worker-observation-edd43f3bc985b4d1eed7591f3dd26d0a0ba73af3 --dir test-results/source-observation
+      - run: node scripts/jev_mario/escape-snapshot-check.mjs
