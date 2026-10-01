@@ -8,7 +8,7 @@ self.onmessage=({data})=>{
  try{
   const state=clone(data.state),start=performance.now(),prediction=predict(model,features(state)),raw=ACTIONS[prediction.index],inferenceMs=performance.now()-start;
   const future=advance(clone(state),data.effective,data.forecastFrames);
-  const escape=findEscapeSequence(future.phase==='playing'?future:state,data.failures??[]);
+  const escape=null; // Diagnostic ablation only; never product source
   const result=escape?{action:escape.commands[0].action,accepted:false,retry_level:3,search_depth:0,escapeSequence:escape.commands,escapeOrigin:{stage:state.stage,room:state.room,frame:state.frames,x:state.p.x,power:state.power,lives:state.lives}}:plan(future.phase==='playing'?future:state,raw,data.failures??[],data.itemAvoidance??[]);
   self.postMessage({type:'decision',requestId:data.requestId,...result,raw,probabilities:prediction.probabilities,inferenceMs,issued:data.issued,frame:data.state.frames});
  }catch{self.postMessage({type:'error'});}
