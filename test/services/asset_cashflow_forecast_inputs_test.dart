@@ -116,18 +116,22 @@ void main() {
         4100,
       );
       expect(
-        _projectOutflow(_billInputs(
-          debt: _debt(kind: AssetLiabilityAccountKind.cardLoan),
-        )),
+        _projectOutflow(
+          _billInputs(
+            debt: _debt(kind: AssetLiabilityAccountKind.cardLoan),
+          ),
+        ),
         4000,
       );
       expect(
-        _projectOutflow(_billInputs(
-          debt: _debt(
-            kind: AssetLiabilityAccountKind.cardLoan,
-            fullPaymentEstimate: true,
+        _projectOutflow(
+          _billInputs(
+            debt: _debt(
+              kind: AssetLiabilityAccountKind.cardLoan,
+              fullPaymentEstimate: true,
+            ),
           ),
-        )),
+        ),
         2000,
       );
     });
@@ -146,7 +150,8 @@ void main() {
       expect(_projectOutflow(byId), 4000);
     });
 
-    test('deduplication compares each actual date after month-end clamping', () {
+    test('deduplication compares each actual date after month-end clamping',
+        () {
       final inputs = _billInputs(
         debt: _debt(day: 31),
         dueDate: '2026-01-30',

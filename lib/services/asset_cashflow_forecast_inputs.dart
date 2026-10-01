@@ -6,8 +6,8 @@ import 'asset_payment_calendar_service.dart';
 /// 資産管理ページの状態(口座・負債・繰り返し収入テンプレ・入金ルール・固定費)から
 /// [AssetCashflowForecastService.project] へ渡す入力を導出する純関数の置き場。
 ///
-/// 元々ページの `_buildCashflowForecastCard` 内にインラインで書かれていたロジックを
-/// 抽出し、build メソッドから切り離してユニットテスト可能にしたもの(振る舞いは不変)。
+/// ページの build から切り離し、カレンダーと共通の支払日設定と
+/// 固定費の重複判定に必要な情報をテスト可能な形で組み立てる。
 class AssetCashflowForecastInputs {
   const AssetCashflowForecastInputs({
     required this.startingBalance,

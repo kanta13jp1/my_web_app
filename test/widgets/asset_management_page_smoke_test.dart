@@ -650,6 +650,10 @@ void main() {
           previousCycleKey,
           reason: '給与明細だけでは口座入金と判定して支払チェックをリセットしない',
         );
+        await tester.binding.setSurfaceSize(const Size(390, 1200));
+        await tester.pump();
+        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        expect(tester.takeException(), isNull);
         // 収入があるので「未記録」の空状態文言は出ない。
         expect(
           find.descendant(
