@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
@@ -25,6 +26,52 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
     AssetRecurringTombstoneSyncService.resetSharedForTest();
+  });
+
+  testWidgets(
+      'pending salary does not label retained paid state as current cashflow',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      AssetSalaryResetMarkerStore.prefsKey: '2026-08',
+    });
+    const store = AssetLiabilityMonthlyStateStore();
+    await store.saveMonth(
+      month: DateTime(2026, 8),
+      state: const AssetLiabilityMonthlyState(
+        paidAccountNames: {'rent'},
+        actualPaymentAmounts: {'rent': 63000},
+      ),
+    );
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 10, 2),
+          debugInitialAssetData: const {
+            '2026-10-02': {'現金': 61505, '家賃': -63000}
+          },
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('給料の入金を確認できません'), findsOneWidget);
+    expect(
+      find.byKey(const Key('asset_cashflow_statement_current')),
+      findsNothing,
+    );
+    expect(await const AssetSalaryResetMarkerStore().load(), '2026-08');
+    expect(
+      (await store.loadMonth(DateTime(2026, 8))).paidAccountNames,
+      contains('rent'),
+    );
+    expect(
+      (await store.loadMonth(DateTime(2026, 8))).actualPaymentAmounts['rent'],
+      63000,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 
   for (final dirty in [false, true]) {

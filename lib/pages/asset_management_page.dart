@@ -16612,6 +16612,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       inflowRules: _expectedInflowRules,
       oneTimeInflows: _expectedInflows,
       subscriptions: _subscriptions,
+      paymentDayOverrides: _debtPaymentDayOverrides,
     );
     if (!inputs.hasData) {
       return const SizedBox.shrink();
@@ -16713,9 +16714,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// キャッシュフローパネルの中身。データが無ければ null (グリッドから除外される)。
   Widget? _cashflowStatementPanelChild(AssetLiabilityWorkbook? workbook) {
-    // ライブの当月スナップショットを履歴サービスで生成し、未保存でも当月CFを反映する。
+    // 前サイクルの支払済みを保持中は、当月ラベルの実績として再集計しない。
+    // 履歴と現在の収支記録は変更せず、確認済みの月次stateだけをライブ集計する。
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
-    if (workbook != null) {
+    if (workbook != null &&
+        _assetLiabilityBootStateLoaded &&
+        !_salaryResetPending &&
+        _loadedAssetLiabilityMonthKey == _currentSalaryCycleKey()) {
       final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
         DateTime.now(),
       );
@@ -17816,9 +17821,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final net = totalIncome - totalExpense;
     // フローが無くても給与明細の給料収入があれば「未記録」とは扱わない。
     final hasNoData = flows.isEmpty && totalIncome == 0;
+    final hasRecordedExpense =
+        flows.any((flow) => flow['action_type'] == 'expense');
     final statusText = hasNoData
         ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
-        : 'このサイクルの収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
+        : !hasRecordedExpense
+            ? '支出はまだ記録されていません。表示の差額は記録済み収入だけの集計です。支払済みチェックや支払予定の集計とは異なります。'
+            : 'このサイクルの収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -24542,6 +24551,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       inflowRules: _expectedInflowRules,
       oneTimeInflows: _expectedInflows,
       subscriptions: _subscriptions,
+      paymentDayOverrides: _debtPaymentDayOverrides,
     );
     if (!inputs.hasData) return null;
     return AssetCashflowForecastService.project(

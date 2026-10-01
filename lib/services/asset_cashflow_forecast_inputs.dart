@@ -43,6 +43,7 @@ class AssetCashflowForecastInputs {
     required List<AssetExpectedInflowRule> inflowRules,
     required List<AssetExpectedInflow> oneTimeInflows,
     required List<Map<String, dynamic>> subscriptions,
+    Map<String, int> paymentDayOverrides = const <String, int>{},
   }) {
     var startingBalance = 0.0;
     for (final account in accounts) {
@@ -96,21 +97,45 @@ class AssetCashflowForecastInputs {
       }
     }
 
-    final recurringOutflow = <AssetCashflowRecurringEntry>[
-      for (final row in debtRows)
-        if (row.isDirectCashflowTarget &&
-            row.balance < 0 &&
-            (row.paymentDay ?? 0) > 0 &&
-            row.scheduledPaymentAmount > 0)
-          AssetCashflowRecurringEntry(
-            dayOfMonth: row.paymentDay!,
-            amount: row.scheduledPaymentAmount,
-            label: row.name,
-          ),
-    ];
+    // Match the calendar's duplicate policy only for fixed-cost rows.
+    // Card/loan repayments are distinct obligations even at the same amount.
+    String fixedCostKey(String name, int day, double amount) {
+      final normalized =
+          name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
+      return '$normalized|$day|${amount.toStringAsFixed(2)}';
+    }
+
+    final recurringOutflow = <AssetCashflowRecurringEntry>[];
+    final fixedCostKeys = <String>{};
+    for (final row in debtRows) {
+      final day = paymentDayOverrides[row.id] ??
+          paymentDayOverrides[row.name] ??
+          row.paymentDay;
+      if (!row.isDirectCashflowTarget ||
+          row.balance >= 0 ||
+          day == null ||
+          day <= 0 ||
+          row.scheduledPaymentAmount <= 0) {
+        continue;
+      }
+      recurringOutflow.add(
+        AssetCashflowRecurringEntry(
+          dayOfMonth: day,
+          amount: row.scheduledPaymentAmount,
+          label: row.name,
+        ),
+      );
+      if (row.kind == AssetLiabilityAccountKind.utility ||
+          row.fullPaymentEstimate) {
+        fixedCostKeys
+            .add(fixedCostKey(row.name, day, row.scheduledPaymentAmount));
+      }
+    }
     for (final subscription in subscriptions) {
       final entry = subscriptionRecurringEntry(subscription);
-      if (entry != null) {
+      if (entry == null) continue;
+      final key = fixedCostKey(entry.label, entry.dayOfMonth, entry.amount);
+      if (!fixedCostKeys.contains(key)) {
         recurringOutflow.add(entry);
       }
     }

@@ -16,6 +16,38 @@ AssetLiabilityAccount _account(
   );
 }
 
+AssetLiabilityDebtRow _fixedCostRow({int day = 10}) {
+  return AssetLiabilityDebtRow(
+    id: 'utility',
+    name: 'synthetic utility',
+    kind: AssetLiabilityAccountKind.utility,
+    balance: -1105,
+    paymentDay: day,
+    paymentSourceAccountId: null,
+    paymentSourceAccountName: null,
+    paymentMethod: AssetLiabilityPaymentMethod.direct,
+    paymentMethodLabel: null,
+    paymentMethodSettingSource:
+        AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+    billingAccountId: null,
+    billingAccountName: null,
+    includedInBillingAccount: false,
+    annualRate: 0,
+    minimumPaymentEstimate: 1105,
+    manualPaymentAmount: null,
+    scheduledPaymentAmount: 1105,
+    monthlyInterestEstimate: 0,
+    principalPaymentEstimate: 1105,
+    balanceAfterPaymentEstimate: 0,
+    liabilityShare: 0,
+    priorityLabel: '',
+    paymentAmountEstimated: false,
+    billingConfirmed: true,
+    paid: false,
+    requiresAction: true,
+  );
+}
+
 void main() {
   group('AssetCashflowForecastInputs.subscriptionRecurringEntry', () {
     test('maps a valid subscription to a recurring entry', () {
@@ -59,6 +91,59 @@ void main() {
   });
 
   group('AssetCashflowForecastInputs.fromAssetData', () {
+    test('deduplicates a fixed cost already represented by a workbook row', () {
+      final inputs = AssetCashflowForecastInputs.fromAssetData(
+        accounts: const [],
+        debtRows: [_fixedCostRow()],
+        recurringIncomeTemplates: const [],
+        inflowRules: const [],
+        oneTimeInflows: const [],
+        subscriptions: const [
+          {
+            'service_name': ' Synthetic Utility ',
+            'price': 1105,
+            'due_date': '2026-10-10'
+          },
+          {
+            'service_name': 'separate charge',
+            'price': 1105,
+            'due_date': '2026-10-10'
+          },
+          {
+            'service_name': 'synthetic utility',
+            'price': 1105,
+            'due_date': '2026-10-11'
+          },
+        ],
+      );
+      expect(inputs.recurringOutflow, hasLength(3));
+      expect(
+        inputs.recurringOutflow
+            .fold<double>(0, (sum, entry) => sum + entry.amount),
+        3315,
+      );
+    });
+    test('forecast uses the same user payment-day override as the calendar',
+        () {
+      final inputs = AssetCashflowForecastInputs.fromAssetData(
+        accounts: const [],
+        debtRows: [_fixedCostRow(day: 1)],
+        recurringIncomeTemplates: const [],
+        inflowRules: const [],
+        oneTimeInflows: const [],
+        subscriptions: const [
+          {
+            'service_name': 'synthetic utility',
+            'price': 1105,
+            'due_date': '2026-10-10'
+          },
+        ],
+        paymentDayOverrides: const {'utility': 10},
+      );
+      expect(inputs.recurringOutflow, hasLength(1));
+      expect(inputs.recurringOutflow.single.dayOfMonth, 10);
+    });
+
     test(
         'Issue #5191: deduplicates duplicate salary in recurringIncomeTemplates and inflowRules on the same day',
         () {
