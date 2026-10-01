@@ -97,7 +97,7 @@ class _FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
 
 class _FakeStreamBuilder extends Fake implements SupabaseStreamFilterBuilder {
   @override
-  SupabaseStreamBuilder eq(String column, Object value) => this;
+  SupabaseStreamFilterBuilder eq(String column, Object value) => this;
 
   @override
   Stream<S> map<S>(S Function(List<Map<String, dynamic>> event) convert) {

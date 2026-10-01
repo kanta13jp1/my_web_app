@@ -1,4 +1,5 @@
 name: Scoped mock generation evidence
+# Include the restored ThemeService-only annotation; retain legacy file until regenerated.
 on:
   push:
     branches: ['dependabot/pub/flutter-dependencies-c5eeeac817']
@@ -30,7 +31,7 @@ jobs:
           flutter-version: '3.38.x'
       - run: flutter pub get
       - name: Generate mocks using the repository toolchain
-        run: dart run build_runner build --force-jit --delete-conflicting-outputs --build-filter='test/**.mocks.dart'
+        run: dart run build_runner build --force-jit --build-filter='test/**.mocks.dart'
       - name: Preserve scoped generated files
         shell: bash
         run: |

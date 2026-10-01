@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 import 'package:my_web_app/domain/models/photo_action_advice.dart';
 import 'package:my_web_app/pages/real_world_danshari_page.dart';
 import 'package:my_web_app/services/photo_action_advisor_service.dart';
@@ -44,6 +45,7 @@ const _advice = PhotoActionAdvice(
   safetyNote: '異臭や液漏れがある場合は無理に触らないでください。',
 );
 
+@GenerateNiceMocks([MockSpec<ThemeService>()])
 void main() {
   late MockThemeService themeService;
 
