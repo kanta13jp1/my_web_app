@@ -6096,8 +6096,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               _buildEditorialChapter(
                 number: 3,
                 eyebrow: 'Build continuity',
-                title: '続ける理由を、具体で比べる。',
-                description: '仕事、お金、学び。いま困っていることから試し、続ける前に始め方と料金を確認。',
+                title: '続ける理由を、\n暮らしの中に。',
+                description: '仕事、お金、学び。\nいま困っていることから試せます。',
                 children: [
                   _buildUniqueValueSection(),
                   _buildGetStartedStepsSection(),
