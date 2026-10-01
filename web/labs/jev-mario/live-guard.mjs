@@ -5,18 +5,9 @@ import {retryLevel,stalledActionPenalty} from './retry-memory.mjs?v=student-1';
 import {clone,advance,edge} from './search-assist.mjs?v=student-1';
 export class LiveGuard {
  constructor(){this.reset();}
- reset(){this.recovery=null;this.descentKey=null;this.descentSide=null;this.pickupAction=null;this.pickupUntil=0;this.next=0;this.action=null;this.interventions=0;this.lastReason=null;}
+ reset(){this.descentKey=null;this.descentSide=null;this.pickupAction=null;this.pickupUntil=0;this.next=0;this.action=null;this.interventions=0;this.lastReason=null;}
  decide(world,proposed,failures=[],itemAvoidance=[]){
   if(!world.cells||world.phase!=='playing')return proposed;
-  if(this.recovery){
-   const r=this.recovery;
-   if(r.stage!==world.stage||r.room!==world.room||world.frames>=r.until)this.recovery=null;
-   else{const action=world.frames<r.turn?r.retreat:'right_run_jump',g=advance(clone(world),action,8);
-    if(g.phase!=='dead'&&g.power>=world.power){this.action=action;this.lastReason='retry_recovery';this.interventions++;return edge(world,action);}
-    this.recovery=null;
-   }
-  }
-
   const target=itemTargets(world).find(t=>!itemAvoidance.some(r=>r.stage===world.stage&&r.room===world.room&&r.until>world.frames&&Math.abs(t.x-r.x)<128));
   const descentKey=target?.block&&world.room==='overworld'&&world.p.y<target.y-2?world.stage+':'+target.key:null;if(descentKey!==this.descentKey){this.descentKey=descentKey;this.descentSide=null;}
   const descent=target?itemDescent(world,target,this.descentSide):null;
@@ -28,13 +19,6 @@ export class LiveGuard {
   const evaluate=action=>{const g=advance(clone(world),action,Math.max(24+level*16,descent?72:0));return {action,g,value:(g.phase==='dead'?-100000:0)+(g.power<world.power?-300:0)+(g.phase==='won'?100000:0)+g.p.x-world.p.x-Math.max(0,g.p.y-208)*8-penalty(action)};};
   let best=evaluate(proposed);
   const repeatedStall=penalty(proposed)>0&&Math.abs(best.g.p.x-world.p.x)<4;
-  // A short retreat can create space for a safe jump; a single long left action cannot.
-  // Forecast the whole recovery, then apply only its first input to the real world.
-  if(repeatedStall)for(const action of ['left','left_jump']){
-   const g=advance(clone(world),action,8),end=advance(g,'right_run_jump',24+level*16);
-   const value=(end.phase==='dead'?-100000:0)+(end.power<world.power?-300:0)+(end.phase==='won'?100000:0)+end.p.x-world.p.x-Math.max(0,end.p.y-208)*8-penalty(action);
-   if(value>best.value)best={action,g:end,value,recovery:true};
-  }
   // Commit to the other edge when the nearest descent would land on an enemy.
   // Keeping that side until below the reward prevents safe/unsafe oscillation.
   if(descent&&!this.descentSide&&(best.g.phase==='dead'||best.g.power<world.power||best.g.p.y>224)){
@@ -47,7 +31,6 @@ export class LiveGuard {
    if(best.action!==proposed){this.interventions++;this.lastReason=repeatedStall?'retry_escape':level?'retry_lookahead':'live_collision_guard';}
   }
   if(route&&best.action===route){this.interventions++;if(item?.includes('jump')&&world.p.grounded){this.pickupUntil=world.frames+18;this.pickupAction=item;}}
-  if(best.recovery)this.recovery={stage:world.stage,room:world.room,turn:world.frames+8,until:world.frames+32+level*16,retreat:best.action};
   this.action=best.action;return edge(world,best.action);
  }
 }
