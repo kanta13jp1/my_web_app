@@ -6,8 +6,8 @@ async function open(page: Page) {
 async function enter(page: Page, index: number, value: string) {
   const input = page.getByRole('textbox').nth(index);
   await input.click();
-  await input.press('ControlOrMeta+A');
-  await input.pressSequentially(value);
+  await expect(input).toBeFocused();
+  await input.fill(value);
   await expect(input).toHaveValue(value);
 }
 async function check(page: Page) {
