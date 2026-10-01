@@ -4920,6 +4920,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
     if (compact && !_showCompactTrialSaveForm) {
       return Semantics(
+        container: true,
         button: true,
         label: 'この提案を保存',
         hint: '必要なときだけ無料登録（カード不要）',

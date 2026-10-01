@@ -150,7 +150,7 @@ test.describe('LP first-user acquisition', () => {
     await expect(trialResultCard).toBeVisible();
     if (testInfo.project.name === 'mobile-chrome') {
       await expect(
-        page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+        trialResultCard.getByRole('textbox', { name: 'メールアドレス', exact: true }),
       ).toHaveCount(0);
       await page.getByRole('button', { name: /この提案を保存/ }).click();
     }
@@ -161,7 +161,7 @@ test.describe('LP first-user acquisition', () => {
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+      trialResultCard.getByRole('textbox', { name: 'メールアドレス', exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole('button', {
@@ -182,6 +182,9 @@ test.describe('LP first-user acquisition', () => {
       if (message.type() === 'error') {
         browserIssues.push(`console: ${message.text()}`);
       }
+    });
+    page.on('requestfailed', (request) => {
+      browserIssues.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText}`);
     });
     page.on('pageerror', (error) => {
       browserIssues.push(`pageerror: ${error.message}`);
@@ -266,9 +269,11 @@ test.describe('LP first-user acquisition', () => {
     await expect(googleAction).toBeVisible();
     await expect(magicLinkAction).toBeVisible();
     await expect(lowerTrial).toBeVisible();
-    await expect(
-      page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ }),
-    ).toHaveCount(0);
+    const lowerInput = await page.getByRole('textbox', {
+      name: /例: 今日いちばん詰まっていること|いま詰まっていること/,
+    }).boundingBox();
+    expect(lowerInput).not.toBeNull();
+    expect(lowerInput!.y).toBeGreaterThanOrEqual(page.viewportSize()!.height);
 
     const authBox = await googleAction.boundingBox();
     const trialBox = await lowerTrial.boundingBox();
@@ -308,7 +313,7 @@ async function completeGuidedTrial(page: Page) {
     await next.click();
   }
   await expect(
-    page.getByRole('group', {
+    page.getByRole('textbox', {
       name: /登録なしで試す.*AIに送る内容を確認/,
     }),
   ).toBeVisible();
