@@ -1,4 +1,22 @@
 import { test, expect, type Page } from '@playwright/test';
+
+test.use({ trace: 'retain-on-failure' });
+test.afterEach(async ({ page }, info) => {
+  if (info.status === info.expectedStatus) return;
+  await info.attach('input-state', {
+    body: JSON.stringify(await page.locator('input, textarea').evaluateAll(elements =>
+      elements.map(element => ({
+        tag: element.tagName,
+        className: element.className,
+        label: element.getAttribute('aria-label'),
+        value: (element as HTMLInputElement).value,
+        focused: element === document.activeElement,
+        parent: element.parentElement?.tagName,
+      }))), null, 2),
+    contentType: 'application/json',
+  });
+});
+
 async function open(page: Page) {
   await page.goto('/');
   await expect(page.getByRole('button', { name: '数字を確認する', exact: true })).toBeVisible({ timeout: 30000 });
