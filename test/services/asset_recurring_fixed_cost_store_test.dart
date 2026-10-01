@@ -267,6 +267,26 @@ void main() {
       );
     });
 
+    test('save and load retain evidence-based Claude amount, day and source',
+        () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final prefs = await SharedPreferences.getInstance();
+      const cost = AssetRecurringFixedCost(
+        id: 'fc_1781980533253000',
+        name: 'Claude',
+        amount: 3574,
+        paymentDay: 3,
+        sourceAccountId: 'custom_ab350028',
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      await store.save(const [cost], prefs: prefs);
+      final loaded = (await store.load(prefs: prefs)).single;
+      expect(loaded.name, 'Claude');
+      expect(loaded.amount, 3574);
+      expect(loaded.paymentDay, 3);
+      expect(loaded.sourceAccountId, 'custom_ab350028');
+    });
+
     test('returns empty list when nothing stored', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final prefs = await SharedPreferences.getInstance();
@@ -331,9 +351,7 @@ void main() {
       expect(decoded.map((c) => c.id), ['fc_denki']);
     });
 
-    test(
-        'normalizeCost migrates legacy Claude subscription to Claude Pro 3,000 yen',
-        () {
+    test('normalizeCost preserves user-entered Claude billing details', () {
       const legacy = AssetRecurringFixedCost(
         id: 'card_statement_claude_ai_subscription',
         name: 'Claude AI SUBSCRIPTION',
@@ -342,8 +360,8 @@ void main() {
         category: AssetRecurringFixedCostCategory.subscription,
       );
       final normalized = AssetRecurringFixedCostStore.normalizeCost(legacy);
-      expect(normalized.name, 'Claude Pro');
-      expect(normalized.amount, 3000);
+      expect(normalized.name, 'Claude AI SUBSCRIPTION');
+      expect(normalized.amount, 36418);
       expect(normalized.currency, AssetRecurringFixedCostCurrency.jpy);
       expect(normalized.usdAmount, isNull);
       expect(normalized.category, AssetRecurringFixedCostCategory.subscription);
@@ -363,8 +381,7 @@ void main() {
       expect(chatGptNormalized.amount, 30000);
     });
 
-    test('decodeMirrorValue automatically migrates legacy Claude subscription',
-        () {
+    test('decodeMirrorValue preserves Claude billing evidence', () {
       final decoded =
           AssetRecurringFixedCostStore.decodeMirrorValue(<String, dynamic>{
         'claude_sub': <String, dynamic>{
@@ -382,8 +399,8 @@ void main() {
       });
       expect(decoded.length, 2);
       final claude = decoded.firstWhere((c) => c.id == 'claude_sub');
-      expect(claude.name, 'Claude Pro');
-      expect(claude.amount, 3000);
+      expect(claude.name, 'Claude AI SUBSCRIPTION');
+      expect(claude.amount, 36418);
       expect(claude.currency, AssetRecurringFixedCostCurrency.jpy);
 
       final gcp = decoded.firstWhere((c) => c.id == 'google_cloud');

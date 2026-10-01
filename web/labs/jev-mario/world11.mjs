@@ -117,7 +117,8 @@ export function nightLevel(){
  for(let x=0;x<212;x++)if(![[48,50],[96,98],[143,145]].some(([a,b])=>x>=a&&x<=b))for(let y=13;y<15;y++)set(x,y,'ground');
  for(const[x,h]of [[26,2],[39,3],[61,2],[111,3],[156,3],[173,2]])for(let c=0;c<2;c++)for(let y=13-h;y<13;y++)set(x+c,y,y===13-h?'pipe-top':'pipe');
  for(const a of [12,33,69,82,120,132,163]){for(let x=a;x<a+5;x++)set(x,9,x===a+2?'question':'brick',x===a+2?(a===12||a===120?'mushroom':'coin'):null);for(let x=a;x<a+4;x++)contents.set(`${x},6`,'loose');}
- for(let x=71;x<77;x++)set(x,6);set(74,5,'question','star');
+ // Leave two tiles of headroom for a big player to strike the floating reward.
+ for(let x=71;x<77;x++)set(x,6);set(74,3,'question','star');
  for(const start of [86,102])for(let k=0;k<4;k++)for(let y=12-k;y<13;y++)set(start+k,y,'stone');
  for(let k=0;k<8;k++)for(let y=12-k;y<13;y++)set(181+k,y,'stone');for(let y=5;y<13;y++)set(189,y,'stone');set(198,12,'stone');
  return {cells,contents,width:212*16};
@@ -218,6 +219,9 @@ export function world61Level(){
 }
 export function world62Level(){
  const g=world52Level();
+ // Replace the inherited two-tile pipe before placing the taller entrance.
+ // Overlapping rims otherwise create a second plant and a false landing step.
+ for(let x=61;x<=62;x++)for(let y=10;y<13;y++)if(['pipe','pipe-top'].includes(g.cells.get(`${x},${y}`)))g.cells.delete(`${x},${y}`);
  for(const [x,h]of [[62,3],[100,4],[138,2]])for(let y=13-h;y<13;y++)for(let d=0;d<2;d++)g.cells.set(`${x+d},${y}`,y===13-h?'pipe-top':'pipe');
  g.contents.set('35,9','vine');
  g.lifts.push({id:1,x:163*16,y:184,previousY:184,w:40,h:8,minY:120,maxY:192,speed:.5,direction:-1});
