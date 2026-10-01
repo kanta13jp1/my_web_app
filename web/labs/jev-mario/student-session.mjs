@@ -3,7 +3,7 @@ import {LiveGuard} from './live-guard.mjs?v=student-1';
 export class StudentSession{
  constructor(factory=()=>new Worker(new URL('./student-worker.mjs?v=student-1',import.meta.url),{type:'module'}),clock=()=>performance.now(),storage=undefined){this.factory=factory;this.clock=clock;this.token=0;this.active=false;this.action='noop';this.stats={};this.guard=new LiveGuard();this.memory=new RetryMemory(storage);this.failures=this.memory.records;}
  clearFailures(){this.memory.clear();this.failures=this.memory.records;this.guard.reset();}
- noteFailure(world,kind='death'){this.memory.record(world,kind);this.failures=this.memory.records;this.stats.failures=structuredClone(this.failures);}
+ noteFailure(world,kind='death'){this.memory.record(world,kind,this.guard.action??this.action);this.failures=this.memory.records;this.stats.failures=structuredClone(this.failures);}
  start({ready,update,error}){
   this.stop();this.guard.reset();const token=++this.token;this.active=true;this.ready=false;this.pending=false;this.next=0;this.age=100;this.started=this.clock();this.action='noop';this.latest=null;this.progress=null;this.itemAvoidance=[];this.requestId=0;this.pendingId=null;this.lastWorld=null;this.lastFrame=0;
   this.stats={model:'jev-student-166-v1',teacher:'jev-1.13.0',control:'LightGBM + search + live collision guard + retry memory',decisions:0,accepted:0,overrides:0,jump_releases:0,live_guard:0,retry_assists:0,retry_memory:'device-local world8-v1; not model training',failures:structuredClone(this.failures),guard_events:[],samples:[]};
@@ -37,7 +37,7 @@ export class StudentSession{
   this.itemAvoidance=this.itemAvoidance.filter(r=>r.stage===world.stage&&r.room===world.room&&r.until>world.frames).slice(-8);
   if(!this.pending&&world.frames>=this.next){this.pending=true;this.pendingId=++this.requestId;this.next=world.frames+6;this.worker.postMessage({requestId:this.pendingId,state:world,effective:this.guard.action??this.action,issued:this.clock(),failures:this.failures,itemAvoidance:this.itemAvoidance,forecastFrames:Math.max(1,Math.min(36,Math.round(this.age*.06)))});}
   const before=this.guard.interventions,action=this.guard.decide(world,this.action,this.failures,this.itemAvoidance);this.stats.live_guard=this.guard.interventions;
-  if(before!==this.guard.interventions&&this.guard.lastReason==='retry_lookahead')this.stats.retry_assists++;
+  if(before!==this.guard.interventions&&this.guard.lastReason?.startsWith('retry_'))this.stats.retry_assists++;
   if(before!==this.guard.interventions&&this.stats.guard_events.length<600)this.stats.guard_events.push({frame:world.frames,proposed:this.action,action,reason:this.guard.lastReason});
   const release=world.p.grounded&&world.wasJump&&this.action.includes('jump');if(release)this.stats.jump_releases++;
   return release&&action===this.action?(action==='jump'?'noop':action.replace('_jump','')):action;

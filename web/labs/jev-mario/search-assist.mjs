@@ -1,7 +1,7 @@
 import {pipeRoute} from './pipe-route.mjs?v=student-1';
 // Explicit model-based search assistance, NOT learned inference.
 // Hypothetical clones never replace or rewind the real simulation.
-import {retryLevel} from './retry-memory.mjs?v=student-1';
+import {retryLevel,stalledActionPenalty} from './retry-memory.mjs?v=student-1';
 import {itemPotential,itemTargets,itemValue,itemApproach,itemDescent} from './item-goal.mjs?v=student-1';
 import {World11,isWater} from './world11.mjs?v=student-1';
 export function clone(g){return Object.assign(Object.create(World11.prototype),structuredClone(g));}
@@ -44,7 +44,7 @@ export function plan(g,raw=null,failures=[],itemAvoidance=[]){
  for(let depth=0;depth<depthLimit;depth++){
   const expanded=[];
   for(const b of beam)for(const a of actions){
-   const next=advance(clone(b.g),a,8),first=b.first??a,value=score(next,g,failures,target);
+   const next=advance(clone(b.g),a,8),first=b.first??a,value=score(next,g,failures,target)-stalledActionPenalty(g,failures,first);
    expanded.push({g:next,first,value});
   }
   expanded.sort((a,b)=>b.value-a.value);
