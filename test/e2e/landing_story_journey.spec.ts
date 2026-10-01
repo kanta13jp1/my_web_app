@@ -67,6 +67,33 @@ test.describe('Landing story journey', () => {
 
   });
 
+  test('keeps the lower outcomes readable and connects them to the trial', async ({ page }, testInfo) => {
+    await openLanding(page);
+    await focusStory(page);
+    await activateChapter(page, '実行');
+    const heading = page.getByText('最初に、3つの成果から始める', { exact: true });
+    for (let step = 0; step < 50; step++) {
+      const bounds = await heading.boundingBox();
+      if (bounds && bounds.y > 80 && bounds.y < 220) break;
+      await page.mouse.move(180, 320);
+      await page.mouse.wheel(0, bounds && bounds.y < 80 ? -180 : 240);
+      await page.waitForTimeout(180);
+    }
+    await expect(heading).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath('lower-outcomes.png'), scale: 'css' });
+    const trial = page.getByRole('button', { name: '登録なしで1件試す', exact: true }).last();
+    for (let step = 0; step < 12; step++) {
+      const bounds = await trial.boundingBox();
+      if (bounds && bounds.y > 90 && bounds.y + bounds.height < page.viewportSize()!.height - 100) break;
+      await page.mouse.wheel(0, 180);
+      await page.waitForTimeout(180);
+    }
+    await expect(trial).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath('lower-outcomes-action.png'), scale: 'css' });
+    await trial.click();
+    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+  });
+
   test('connects the final chapter to the existing no-signup trial', async ({
     page,
   }) => {
