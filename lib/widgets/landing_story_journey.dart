@@ -387,7 +387,8 @@ class _JourneyStage extends StatelessWidget {
                   child: _JourneyExample(
                     chapterIndex: activeChapter,
                     compact: compact,
-                    availableWidth: compact ? availableSize.width - 74 : exampleWidth,
+                    availableWidth:
+                        compact ? availableSize.width - 74 : exampleWidth,
                   ),
                 ),
               ),
@@ -510,11 +511,14 @@ class _JourneyExample extends StatelessWidget {
         border: Border.all(color: const Color(0xFF41505C)),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(text,
-          style: TextStyle(
-              color: const Color(0xFFE8EEF2),
-              fontSize: compact ? 12 : 14,
-              height: 1.5,),),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: const Color(0xFFE8EEF2),
+          fontSize: compact ? 12 : 14,
+          height: 1.5,
+        ),
+      ),
     );
   }
 
@@ -529,26 +533,34 @@ class _JourneyExample extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('相談の例',
-              style: TextStyle(
-                  color: Color(0xFFBCC6CE), fontSize: 11, letterSpacing: 1.2,),),
+          const Text(
+            '相談の例',
+            style: TextStyle(
+              color: Color(0xFFBCC6CE),
+              fontSize: 11,
+              letterSpacing: 1.2,
+            ),
+          ),
           const SizedBox(height: 10),
           if (chapterIndex == 0)
-            LayoutBuilder(builder: (context, constraints) {
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (var index = 0; index < concerns.length; index++)
-                    SizedBox(
-                      width: (constraints.maxWidth - 10) / 2,
-                      child: Transform.rotate(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (var index = 0; index < concerns.length; index++)
+                      SizedBox(
+                        width: (constraints.maxWidth - 10) / 2,
+                        child: Transform.rotate(
                           angle: index.isEven ? -0.035 : 0.035,
-                          child: _note(concerns[index]),),
-                    ),
-                ],
-              );
-            },)
+                          child: _note(concerns[index]),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            )
           else
             Container(
               padding: EdgeInsets.all(compact ? 14 : 24),
@@ -556,9 +568,10 @@ class _JourneyExample extends StatelessWidget {
                 color: const Color(0xF20B1823),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                    color: finalChapter
-                        ? const Color(0xFFF0E5D0)
-                        : const Color(0xFF41505C),),
+                  color: finalChapter
+                      ? const Color(0xFFF0E5D0)
+                      : const Color(0xFF41505C),
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -572,9 +585,10 @@ class _JourneyExample extends StatelessWidget {
                               ? '先に動かすことを絞る'
                               : '今日の1件',
                       style: TextStyle(
-                          color: const Color(0xFFF0E5D0),
-                          fontSize: compact ? 13 : 16,
-                          fontWeight: FontWeight.w700,),
+                        color: const Color(0xFFF0E5D0),
+                        fontSize: compact ? 13 : 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     SizedBox(height: compact ? 10 : 18),
                   ],
@@ -582,45 +596,63 @@ class _JourneyExample extends StatelessWidget {
                     for (final concern in concerns)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 3),
-                        child: Text(concern,
-                            style: TextStyle(
-                                color: const Color(0xFFBCC6CE),
-                                fontSize: compact ? 12 : 14,
-                                height: 1.4,),),
+                        child: Text(
+                          concern,
+                          style: TextStyle(
+                            color: const Color(0xFFBCC6CE),
+                            fontSize: compact ? 12 : 14,
+                            height: 1.4,
+                          ),
+                        ),
                       )
                   else if (chapterIndex == 2) ...[
-                    Text('01  案件の確認先を決める',
-                        style: TextStyle(
-                            color: const Color(0xFFF0E5D0),
-                            fontSize: compact ? 14 : 18,
-                            fontWeight: FontWeight.w700,
-                            height: 1.5,),),
+                    Text(
+                      '01  案件の確認先を決める',
+                      style: TextStyle(
+                        color: const Color(0xFFF0E5D0),
+                        fontSize: compact ? 14 : 18,
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Text('02  明日の予定を確認する',
-                        style: TextStyle(
-                            color: const Color(0xFFBCC6CE),
-                            fontSize: compact ? 12 : 14,
-                            height: 1.5,),),
+                    Text(
+                      '02  明日の予定を確認する',
+                      style: TextStyle(
+                        color: const Color(0xFFBCC6CE),
+                        fontSize: compact ? 12 : 14,
+                        height: 1.5,
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    Text('03  資料と支出を確認する',
-                        style: TextStyle(
-                            color: const Color(0xFFBCC6CE),
-                            fontSize: compact ? 12 : 14,
-                            height: 1.5,),),
+                    Text(
+                      '03  資料と支出を確認する',
+                      style: TextStyle(
+                        color: const Color(0xFFBCC6CE),
+                        fontSize: compact ? 12 : 14,
+                        height: 1.5,
+                      ),
+                    ),
                   ] else ...[
-                    Text(compact ? '確認先を1人決める' : '止まっている案件の\n確認先を1人決める',
-                        style: TextStyle(
-                            color: const Color(0xFFF6F0E5),
-                            fontSize: titleSize,
-                            fontWeight: FontWeight.w700,
-                            height: 1.4,),),
+                    Text(
+                      compact ? '確認先を1人決める' : '止まっている案件の\n確認先を1人決める',
+                      style: TextStyle(
+                        color: const Color(0xFFF6F0E5),
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
                     if (!compact) ...[
                       const SizedBox(height: 18),
-                      const Text('まずは連絡文の下書きから',
-                          style: TextStyle(
-                              color: Color(0xFFBCC6CE),
-                              fontSize: 13,
-                              height: 1.5,),),
+                      const Text(
+                        'まずは連絡文の下書きから',
+                        style: TextStyle(
+                          color: Color(0xFFBCC6CE),
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                      ),
                     ],
                   ],
                 ],

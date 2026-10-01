@@ -118,8 +118,12 @@ void main() {
 
   testWidgets('enlarged mobile text keeps final actions reachable',
       (tester) async {
-    await pumpJourney(tester,
-        size: const Size(390, 844), disableAnimations: true, textScale: 1.3,);
+    await pumpJourney(
+      tester,
+      size: const Size(390, 844),
+      disableAnimations: true,
+      textScale: 1.3,
+    );
     await tester.tap(find.byKey(const Key('landing_story_dot_3')));
     await tester.pump();
     final primary = find.byKey(const Key('landing_story_primary_cta'));
