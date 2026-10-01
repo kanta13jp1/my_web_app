@@ -26,10 +26,10 @@ async function enter(page: Page, index: number, value: string) {
   await input.click();
   await expect(input).toBeFocused();
   const previous = await input.inputValue();
-  await input.press('End');
-  for (let i = 0; i < previous.length; i++) await input.press('Backspace');
+  await page.keyboard.press('End');
+  for (let i = 0; i < previous.length; i++) await page.keyboard.press('Backspace');
   await expect(input).toHaveValue('');
-  await input.pressSequentially(value);
+  await page.keyboard.type(value);
   await expect(input).toHaveValue(value);
 }
 async function check(page: Page) {
