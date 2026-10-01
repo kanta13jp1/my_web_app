@@ -4,17 +4,23 @@ import 'jev_client.dart';
 /// Authenticated server-side Jev. No TypeSafe key is ever sent to the browser.
 class JevExpenseProxyClient extends JevClient {
   final bool Function() signedIn;
+  final bool semanticSearch;
   final Future<dynamic> Function(Map<String, dynamic>) invoke;
 
-  JevExpenseProxyClient({required this.signedIn, required this.invoke});
+  JevExpenseProxyClient({
+    required this.signedIn,
+    required this.invoke,
+    this.semanticSearch = false,
+  });
 
-  static JevClient forCurrentSession() {
+  static JevClient forCurrentSession({bool semanticSearch = false}) {
     final direct = JevClient();
     if (direct.isLocalMode) {
       return direct;
     }
     direct.dispose();
     return JevExpenseProxyClient(
+      semanticSearch: semanticSearch,
       signedIn: () {
         try {
           final user = Supabase.instance.client.auth.currentUser;
@@ -56,7 +62,7 @@ class JevExpenseProxyClient extends JevClient {
     final clock = Stopwatch()..start();
     try {
       final dynamic response = await invoke({
-        'action': 'expense.jev_suggest',
+        'action': semanticSearch ? 'expense.jev_search' : 'expense.jev_suggest',
         'memo': input.trim(),
         'consent': true,
       }).timeout(const Duration(seconds: 8));

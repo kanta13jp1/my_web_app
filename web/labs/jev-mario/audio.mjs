@@ -1,4 +1,5 @@
 // Original scores and synthesized effects; no sampled Nintendo soundtrack.
+export const MAX_VOICES=64,MAX_MUSIC_VOICES=48;
 export const scores={
  underwater:[72,76,79,84,79,76,74,77,81,86,81,77,71,74,79,83,79,74,72,76,79,84,0,79],
  overworld:[76,0,79,81,0,79,76,72,74,0,77,79,0,76,74,71,72,76,79,0,84,81,79,76,74,77,81,79,76,74,72,0,79,0,76,72,74,77,79,0,81,84,83,79,76,79,74,0,72,74,76,79,81,0,77,74,79,76,72,74,71,0,72,0],
@@ -22,20 +23,26 @@ export function musicStep(track,beat,hurry=false){
 export const effects={firework:[48,36],swim:[60,67],bridge:[43,38,31,24],impact:[42,30],skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
 export class GameAudio{
  constructor(factory=()=>new(globalThis.AudioContext||globalThis.webkitAudioContext)()){
-  this.factory=factory;this.enabled=false;this.volume=.95;this.nodes=new Set();this.music=new Set();this.beat=0;this.next=0;this.track='';this.musicUntil=0;
+  this.factory=factory;this.enabled=false;this.volume=1;this.nodes=new Set();this.music=new Set();this.beat=0;this.next=0;this.track='';this.musicUntil=0;
  }
  async enable(value){this.enabled=!!value;if(!value){this.stop();return true;}try{
-  if(!this.context){this.context=this.factory();this.master=this.context.createGain();if(this.context.createDynamicsCompressor){this.limiter=this.context.createDynamicsCompressor();this.limiter.threshold.value=-10;this.limiter.knee.value=8;this.limiter.ratio.value=12;this.master.connect(this.limiter);this.limiter.connect(this.context.destination);}else this.master.connect(this.context.destination);this.musicGain=this.context.createGain();this.musicGain.gain.value=1;this.musicGain.connect(this.master);}
+  if(!this.context){this.context=this.factory();this.master=this.context.createGain();this.preamp=this.context.createGain();this.preamp.gain.value=1.5;this.master.connect(this.preamp);if(this.context.createDynamicsCompressor){this.limiter=this.context.createDynamicsCompressor();this.limiter.threshold.value=-10;this.limiter.knee.value=8;this.limiter.ratio.value=12;this.preamp.connect(this.limiter);this.limiter.connect(this.context.destination);}else this.preamp.connect(this.context.destination);this.musicGain=this.context.createGain();this.musicGain.gain.value=1;this.musicGain.connect(this.master);}
   this.master.gain.value=this.volume;await this.context.resume();return this.context.state==='running';
  }catch{this.enabled=false;this.stop();return false;}}
  captureOutput(){
   if(!this.enabled||!this.context||!this.master)return null;
-  const destination=this.context.createMediaStreamDestination();(this.limiter||this.master).connect(destination);
-  return {stream:destination.stream,release:()=>{(this.limiter||this.master).disconnect(destination);destination.stream.getTracks().forEach(t=>t.stop());}};
+  const destination=this.context.createMediaStreamDestination();(this.limiter||this.preamp).connect(destination);
+  return {stream:destination.stream,release:()=>{(this.limiter||this.preamp).disconnect(destination);destination.stream.getTracks().forEach(t=>t.stop());}};
  }
  setVolume(v){this.volume=Math.max(0,Math.min(1,Number(v)||0));if(this.master)this.master.gain.value=this.volume;}
+ reserveVoice(music){
+  if(music&&this.music.size>=MAX_MUSIC_VOICES)return false;
+  if(this.nodes.size<MAX_VOICES)return true;
+  if(music||!this.music.size)return false;
+  const oldest=this.music.values().next().value;try{oldest.stop();}catch{}oldest.disconnect();this.nodes.delete(oldest);this.music.delete(oldest);return true;
+ }
  tone(note,time,duration,type='square',gain=.09,music=false,slide=0,duty=.25){
-  if(!note||!this.enabled||this.context?.state!=='running'||this.nodes.size>=48)return;
+  if(!note||!this.enabled||this.context?.state!=='running'||!this.reserveVoice(music))return;
   const osc=this.context.createOscillator(),env=this.context.createGain();osc.type=type;
   // Band-limited 25% pulse gives a second NES-like voice, with square fallback.
   if(type==='square'&&this.context.createPeriodicWave&&osc.setPeriodicWave){
@@ -49,7 +56,7 @@ export class GameAudio{
   osc.onended=()=>{osc.disconnect();env.disconnect();this.nodes.delete(osc);this.music.delete(osc);};osc.start(time);osc.stop(time+duration+.01);
  }
  noise(time,duration=.04,gain=.025,music=false){
-  if(!this.enabled||this.context?.state!=='running'||!this.context.createBuffer||!this.context.createBufferSource||this.nodes.size>=48)return;
+  if(!this.enabled||this.context?.state!=='running'||!this.context.createBuffer||!this.context.createBufferSource||!this.reserveVoice(music))return;
   if(!this.noiseBuffer){const n=Math.ceil(this.context.sampleRate*.08);this.noiseBuffer=this.context.createBuffer(1,n,this.context.sampleRate);const data=this.noiseBuffer.getChannelData(0);let state=1;for(let i=0;i<n;i++){state=(state>>1)|(((state^(state>>1))&1)<<14);data[i]=(state&1)?1:-1;}}
   const source=this.context.createBufferSource(),env=this.context.createGain();source.buffer=this.noiseBuffer;source.loop=true;
   env.gain.setValueAtTime(gain,time);env.gain.exponentialRampToValueAtTime(.0001,time+duration);source.connect(env);env.connect(music?this.musicGain:this.master);
@@ -65,7 +72,7 @@ export class GameAudio{
   if(this.next<now)this.next=now;
   while(this.next<now+.08){
    const {step,lead,harmony,bass,counter,pad,fifth,answer,bell,accent,echo,turn,pickup,reply,lowAnswer,spark,cadence,duty}=musicStep(track,this.beat,hurry),t=this.next;
-   this.tone(lead,t,step*(this.beat%4===3?.55:.82),'square',.040,true,0,duty);
+   this.tone(lead,t,step*(this.beat%4===3?.55:.82),'square',.052,true,0,duty);
    // Offbeat comping and broken triads keep the lead audible without dense chords.
    if(this.beat%2===0||track==='star')this.tone(harmony,t+step*.08,step*.65,'square',track==='underwater'?.013:.018,true,0,.5);
    if(this.beat%32===9)this.tone(reply,t+step*.65,step*.55,'triangle',.006,true);
@@ -81,12 +88,16 @@ export class GameAudio{
    if(this.beat%8===0)this.tone(fifth,t+step*.3,step*5.5,'sine',.012,true);
    if(this.beat%8===0)this.tone(pad,t+step*.20,step*6.5,'triangle',track==='castle'?.009:.012,true);
    if(this.beat%4===0)this.tone(counter,t+step*.16,step*3.2,'triangle',track==='underwater'?.023:.017,true);
-   if(this.beat%2===0)this.tone(bass,t,step*1.55,'triangle',.085,true);
+   if(this.beat%2===0)this.tone(bass,t,step*1.55,'triangle',.105,true);
    if(track==='overworld'||track==='star'){
     if(this.beat%4===0)this.tone(32,t,.035,'triangle',.055,true,-12);
     if(this.beat%2===1)this.noise(t,this.beat%4===3?.045:.018,this.beat%4===3?.018:.009,true);
    }else if(track==='castle'&&this.beat%4===2)this.noise(t,.055,.016,true);
    else if(track==='underground'&&this.beat%8===6)this.noise(t,.022,.009,true);
+   // A quiet phrase response adds articulation without stacking a dense chord.
+   if(this.beat%16===7||this.beat%16===14){this.tone(harmony+12,t+step*.72,step*.28,'triangle',.006,true);}
+   // Short broken triad answers the phrase instead of sustaining a dense chord.
+   if(this.beat%32===30)for(const [i,n]of [bass+12,harmony,fifth].entries())this.tone(n,t+step*(.12+i*.25),step*.35,'triangle',.010,true);
    this.next+=step;this.beat++;
   }
 

@@ -1,7 +1,7 @@
 // Explicit geometry/pipe assistance. It never changes the actual player's position.
 export function pipeRoute(g){
  if(g.room==='underground')return g.p.x>=160?'right_jump':null;
- const p=g.p,entries=g.usablePipes().filter(t=>!g.visitedPipes.includes(t.id)&&!(t.exit-t.x>128&&[...g.contents].some(([key,kind])=>Number(key.split(',')[0])*16<t.exit&&['mushroom','flower','life','star'].includes(kind))));
+ const p=g.p,entries=g.usablePipes().filter(t=>!g.visitedPipes.includes(t.id)&&!(t.exit-t.x>128&&[...g.contents].some(([key,kind])=>Number(key.split(',')[0])*16>=Math.max(g.camera,p.x-80)&&Number(key.split(',')[0])*16<t.exit&&['mushroom','flower','life','star'].includes(kind))));
  const entry=entries.find(t=>Math.abs(t.x+16-p.x-p.w/2)<12&&Math.abs(p.y+p.h-t.y)<1&&p.grounded);
  if(entry)return 'down';
  // An overhang adjoining a pipe needs a jump from outside its left edge.
