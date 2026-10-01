@@ -162,3 +162,66 @@ Deno.test("requires authentication and a positive integer note id", async () => 
     "positive note_id",
   );
 });
+
+
+function faultDb(rows: Row[], failures: Set<number>, beforeFailure?: () => void) {
+  let calls = 0;
+  return {
+    from(_table: string): NoteClassificationQuery {
+      const query: NoteClassificationQuery = new FakeQuery(rows);
+      const run = query.maybeSingle.bind(query);
+      query.maybeSingle = () => {
+        if (failures.has(++calls)) {
+          beforeFailure?.();
+          return Promise.resolve({ data: null, error: { message: "synthetic DB fault" } });
+        }
+        return run();
+      };
+      return query;
+    },
+  };
+}
+
+Deno.test("lookup failure marks only the owner's pending Inbox row failed", async () => {
+  const rows = [inboxRow(), inboxRow({ user_id: "user-b" }),
+    inboxRow({ capture_source: "editor" })];
+  await assertRejects(() => handleNoteClassificationAction({
+    db: faultDb(rows, new Set([1])), body: { note_id: 42 }, userId: "user-a",
+  }), NoteClassificationError, "Unable to load Inbox note");
+  assertEquals(rows.map((row) => row.classification_status), ["failed", "pending", "pending"]);
+});
+
+Deno.test("classification write failure can be retried successfully", async () => {
+  const rows = [inboxRow()];
+  await assertRejects(() => handleNoteClassificationAction({
+    db: faultDb(rows, new Set([2])), body: { note_id: 42 }, userId: "user-a",
+  }), NoteClassificationError, "Unable to persist Inbox classification");
+  assertEquals(rows[0].classification_status, "failed");
+  await handleNoteClassificationAction({ db: fakeDb(rows), body: { note_id: 42 }, userId: "user-a" });
+  assertEquals(rows[0].classification_status, "classified");
+});
+
+Deno.test("failure marker never overwrites a concurrent classified result", async () => {
+  const rows = [inboxRow()];
+  await assertRejects(() => handleNoteClassificationAction({
+    db: faultDb(rows, new Set([2]), () => { rows[0].classification_status = "classified"; }),
+    body: { note_id: 42 }, userId: "user-a",
+  }), NoteClassificationError);
+  assertEquals(rows[0].classification_status, "classified");
+});
+
+Deno.test("missing or deleted notes are not recreated by failure handling", async () => {
+  const rows: Row[] = [];
+  await assertRejects(() => handleNoteClassificationAction({
+    db: fakeDb(rows), body: { note_id: 42 }, userId: "user-a",
+  }), NoteClassificationError, "Inbox note not found");
+  assertEquals(rows.length, 0);
+});
+
+Deno.test("failure-marker outage preserves original error and pending state", async () => {
+  const rows = [inboxRow()];
+  await assertRejects(() => handleNoteClassificationAction({
+    db: faultDb(rows, new Set([1, 2])), body: { note_id: 42 }, userId: "user-a",
+  }), NoteClassificationError, "Unable to load Inbox note");
+  assertEquals(rows[0].classification_status, "pending");
+});

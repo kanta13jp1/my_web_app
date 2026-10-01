@@ -253,87 +253,106 @@ export async function handleNoteClassificationAction(options: {
     throw new NoteClassificationError("A positive note_id is required", 400);
   }
 
-  const { data, error } = await options.db.from("notes")
-    .select(
-      "id,title,content,tags,capture_source,classification_status,classification_category,classification_source",
-    )
-    .eq("id", noteId)
-    .eq("user_id", options.userId)
-    .eq("capture_source", "quick_inbox")
-    .maybeSingle();
-  if (error) {
-    console.warn("notes.classify lookup failed", error.message);
-    throw new NoteClassificationError("Unable to load Inbox note", 500);
-  }
-  const note = asRecord(data);
-  if (!note) {
-    throw new NoteClassificationError("Inbox note not found", 404);
-  }
+  try {
+    const { data, error } = await options.db.from("notes")
+      .select(
+        "id,title,content,tags,capture_source,classification_status,classification_category,classification_source",
+      )
+      .eq("id", noteId)
+      .eq("user_id", options.userId)
+      .eq("capture_source", "quick_inbox")
+      .maybeSingle();
+    if (error) {
+      console.warn("notes.classify lookup failed", error.message);
+      throw new NoteClassificationError("Unable to load Inbox note", 500);
+    }
+    const note = asRecord(data);
+    if (!note) {
+      throw new NoteClassificationError("Inbox note not found", 404);
+    }
 
-  if (note.classification_status === "classified") {
+    if (note.classification_status === "classified") {
+      return {
+        status: "classified",
+        note_id: noteId,
+        category: readString(note.classification_category) || "メモ",
+        tags: mergeTags(note.tags, []),
+        source: note.classification_source === "gemini"
+          ? "gemini"
+          : note.classification_source === "existing"
+          ? "existing"
+          : "heuristic_fallback",
+      };
+    }
+
+    const title = readString(note.title);
+    const content = readString(note.content);
+    const fallback = classifyNoteDeterministically(title, content);
+    let classification = fallback;
+    let source: "gemini" | "heuristic_fallback" = "heuristic_fallback";
+    if (options.generate) {
+      try {
+        const raw = await options.generate(
+          buildNoteClassificationPrompt(title, content),
+        );
+        const generated = normalizeGeneratedClassification(raw, fallback);
+        classification = generated;
+        if (generated !== fallback) source = "gemini";
+      } catch (error) {
+        console.warn(
+          "notes.classify provider fallback",
+          error instanceof Error ? error.message : "unknown error",
+        );
+      }
+    }
+
+    const tags = mergeTags(note.tags, classification.tags);
+    const classifiedAt = (options.now ?? (() => new Date()))().toISOString();
+    const { data: updated, error: updateError } = await options.db.from("notes")
+      .update({
+        tags,
+        classification_status: "classified",
+        classification_category: classification.category,
+        classification_source: source,
+        classified_at: classifiedAt,
+        updated_at: classifiedAt,
+      })
+      .eq("id", noteId)
+      .eq("user_id", options.userId)
+      .eq("capture_source", "quick_inbox")
+      .select("id")
+      .maybeSingle();
+    if (updateError || !updated) {
+      console.warn("notes.classify update failed", updateError?.message);
+      throw new NoteClassificationError(
+        "Unable to persist Inbox classification",
+        500,
+      );
+    }
+
     return {
       status: "classified",
       note_id: noteId,
-      category: readString(note.classification_category) || "メモ",
-      tags: mergeTags(note.tags, []),
-      source: note.classification_source === "gemini"
-        ? "gemini"
-        : note.classification_source === "existing"
-        ? "existing"
-        : "heuristic_fallback",
-    };
-  }
-
-  const title = readString(note.title);
-  const content = readString(note.content);
-  const fallback = classifyNoteDeterministically(title, content);
-  let classification = fallback;
-  let source: "gemini" | "heuristic_fallback" = "heuristic_fallback";
-  if (options.generate) {
-    try {
-      const raw = await options.generate(
-        buildNoteClassificationPrompt(title, content),
-      );
-      const generated = normalizeGeneratedClassification(raw, fallback);
-      classification = generated;
-      if (generated !== fallback) source = "gemini";
-    } catch (error) {
-      console.warn(
-        "notes.classify provider fallback",
-        error instanceof Error ? error.message : "unknown error",
-      );
-    }
-  }
-
-  const tags = mergeTags(note.tags, classification.tags);
-  const classifiedAt = (options.now ?? (() => new Date()))().toISOString();
-  const { data: updated, error: updateError } = await options.db.from("notes")
-    .update({
+      category: classification.category,
       tags,
-      classification_status: "classified",
-      classification_category: classification.category,
-      classification_source: source,
-      classified_at: classifiedAt,
-      updated_at: classifiedAt,
-    })
-    .eq("id", noteId)
-    .eq("user_id", options.userId)
-    .eq("capture_source", "quick_inbox")
-    .select("id")
-    .maybeSingle();
-  if (updateError || !updated) {
-    console.warn("notes.classify update failed", updateError?.message);
-    throw new NoteClassificationError(
-      "Unable to persist Inbox classification",
-      500,
-    );
+      source,
+    };
+  } catch (classificationError) {
+    // Best effort only: a DB outage can prevent even the failure marker.
+    // Never recreate deleted rows or overwrite a concurrently completed result.
+    try {
+      const { error: markerError } = await options.db.from("notes")
+        .update({ classification_status: "failed" })
+        .eq("id", noteId)
+        .eq("user_id", options.userId)
+        .eq("capture_source", "quick_inbox")
+        .eq("classification_status", "pending")
+        .select("id")
+        .maybeSingle();
+      if (markerError) console.warn("notes.classify failure marker unavailable");
+    } catch {
+      console.warn("notes.classify failure marker unavailable");
+    }
+    throw classificationError;
   }
-
-  return {
-    status: "classified",
-    note_id: noteId,
-    category: classification.category,
-    tags,
-    source,
-  };
 }
