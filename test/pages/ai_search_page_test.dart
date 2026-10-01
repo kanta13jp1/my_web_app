@@ -167,7 +167,9 @@ void main() {
       MaterialApp(
         home: AiSearchPage(
           search: (_) async => throw const FunctionException(
-              status: 401, details: 'Unauthorized'),
+            status: 401,
+            details: 'Unauthorized',
+          ),
         ),
       ),
     );
