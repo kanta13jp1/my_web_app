@@ -2,15 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/note_search_demo.dart';
+import 'note_editor_page.dart';
 
-/// AI 自然言語ノート検索ページ
-/// OpenAI 設定時: AI ランキング検索
-/// OpenAI 未設定時: ILIKE ベースの全文検索にフォールバック
+/// Saved-note search with retained results and an account-free sample.
 class AiSearchPage extends StatefulWidget {
-  const AiSearchPage({super.key, this.search});
+  const AiSearchPage({
+    super.key,
+    this.search,
+    this.supabaseClient,
+    this.notePageBuilder,
+  });
 
   /// Optional data source for embedding and controlled UI tests.
   final Future<Object?> Function(String query)? search;
+  final SupabaseClient? supabaseClient;
+  final Widget Function(String noteId)? notePageBuilder;
 
   @override
   State<AiSearchPage> createState() => _AiSearchPageState();
@@ -26,16 +33,47 @@ class _AiSearchPageState extends State<AiSearchPage> {
   String? _pendingQuery;
   String? _resultQuery;
   String? _failedQuery;
+  SupabaseClient? _client;
+  StreamSubscription<AuthState>? _authSubscription;
+  String? _accountId;
+  bool _demo = false;
+  bool _loginExpired = false;
+
+  bool get _requiresLogin =>
+      !_demo && (_loginExpired || (_client != null && _accountId == null));
+
+  @override
+  void initState() {
+    super.initState();
+    _client = widget.supabaseClient ??
+        (widget.search == null ? Supabase.instance.client : null);
+    _accountId = _client?.auth.currentUser?.id;
+    _authSubscription = _client?.auth.onAuthStateChange.listen(
+      (event) {
+        final nextAccount = event.session?.user.id;
+        if (!mounted || (nextAccount == _accountId && !_loginExpired)) return;
+        _accountId = nextAccount;
+        _loginExpired = false;
+        // Neither a previous account's rows nor a late response may survive.
+        _clear();
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        // Search failures have their own recovery UI; avoid unhandled errors
+        // from an offline token refresh.
+      },
+    );
+  }
 
   @override
   void dispose() {
     _requestId++;
+    _authSubscription?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   Future<Object?> _request(String query) async {
-    final client = Supabase.instance.client;
+    final client = _client!;
     if (client.auth.currentUser == null) {
       throw StateError('この機能はログインが必要です');
     }
@@ -49,6 +87,44 @@ class _AiSearchPageState extends State<AiSearchPage> {
       },
     );
     return response.data;
+  }
+
+  void _setDemo(bool enabled) {
+    _demo = enabled;
+    _clear();
+  }
+
+  Future<void> _openNote(Map<String, dynamic> note) async {
+    final noteId = note['id']?.toString().trim() ?? '';
+    if (noteId.isEmpty || _requiresLogin) return;
+    final isSample = _demo;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        settings: RouteSettings(
+          name: isSample ? '/sample-note' : '/note-editor',
+        ),
+        builder: (_) => isSample
+            ? Scaffold(
+                appBar: AppBar(title: const Text('サンプルノート')),
+                body: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('架空のノート・閲覧専用'),
+                      const SizedBox(height: 16),
+                      Text(_noteTitle(note),
+                          style: Theme.of(context).textTheme.headlineSmall),
+                      const SizedBox(height: 16),
+                      SelectableText(note['content']?.toString() ?? ''),
+                    ],
+                  ),
+                ),
+              )
+            : widget.notePageBuilder?.call(noteId) ??
+                NoteEditorPage(noteId: noteId, supabaseClient: _client),
+      ),
+    );
   }
 
   void _clear() {
@@ -67,7 +143,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
 
   Future<void> _search(String query) async {
     final trimmed = query.trim();
-    if (trimmed.isEmpty || (_isLoading && _pendingQuery == trimmed)) return;
+    if (_requiresLogin ||
+        trimmed.isEmpty || (_isLoading && _pendingQuery == trimmed)) return;
     final requestId = ++_requestId;
     setState(() {
       _isLoading = true;
@@ -76,7 +153,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
       _failedQuery = null;
     });
     try {
-      final data = await (widget.search ?? _request)(trimmed)
+      final data = await (_demo ? NoteSearchDemo.search : widget.search ?? _request)(trimmed)
           .timeout(const Duration(seconds: 30));
       if (!mounted || requestId != _requestId) return;
       final Object? rawResults;
@@ -100,6 +177,11 @@ class _AiSearchPageState extends State<AiSearchPage> {
       });
     } catch (error) {
       if (!mounted || requestId != _requestId) return;
+      if (error is FunctionException && error.status == 401) {
+        _clear();
+        setState(() => _loginExpired = true);
+        return;
+      }
       setState(() {
         _failedQuery = trimmed;
         _errorMessage = error is StateError
@@ -150,15 +232,43 @@ class _AiSearchPageState extends State<AiSearchPage> {
         foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
         elevation: 0,
       ),
-      body: Column(
-        children: [
-          // 検索バー
-          Container(
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: Container(
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (_requiresLogin || _demo) ...[
+                  Text(_demo
+                      ? 'サンプル: 架空の3ノートを検索します。保存・送信はしません。'
+                      : '保存済みノートの検索にはログインが必要です。'),
+                  if (_demo)
+                    const Text('例: 買い物、Flutter、学習。待機表示の体験用に0.6秒待ちます。'),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      if (_requiresLogin)
+                        FilledButton.icon(
+                          onPressed: () => Navigator.of(context).pushNamed('/login'),
+                          icon: const Icon(Icons.login),
+                          label: const Text('ログインして検索'),
+                        ),
+                      TextButton(
+                        onPressed: () => _setDemo(!_demo),
+                        child: Text(_demo ? '自分のノートに戻る' : 'サンプルで試す'),
+                      ),
+                    ],
+                  ),
+                  if (_requiresLogin)
+                    const Text('ログイン後にこのノート検索を開いてください。'),
+                  const SizedBox(height: 8),
+                ] else
+                  TextButton(
+                    onPressed: () => _setDemo(true),
+                    child: const Text('サンプルで試す'),
+                  ),
                 TextField(
                   controller: _controller,
                   decoration: InputDecoration(
@@ -192,7 +302,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                 ),
                 const SizedBox(height: 8),
                 FilledButton.icon(
-                  onPressed: _controller.text.trim().isEmpty ||
+                  onPressed: _requiresLogin || _controller.text.trim().isEmpty ||
                           (_isLoading &&
                               _pendingQuery == _controller.text.trim())
                       ? null
@@ -255,7 +365,9 @@ class _AiSearchPageState extends State<AiSearchPage> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _searchMode == 'ai'
+                        _searchMode == 'sample'
+                            ? 'サンプルの語句検索'
+                            : _searchMode == 'ai'
                             ? 'AI 検索'
                             : _searchMode == 'text_fallback'
                                 ? 'テキスト検索（AIフォールバック）'
@@ -286,16 +398,24 @@ class _AiSearchPageState extends State<AiSearchPage> {
               ],
             ),
           ),
-          const Divider(height: 1),
-          // コンテンツ
-          Expanded(child: _buildBody(isDark)),
+          ),
+          const SliverToBoxAdapter(child: Divider(height: 1)),
+          if (_results.isEmpty)
+            SliverFillRemaining(hasScrollBody: false, child: _buildEmptyBody())
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(12),
+              sliver: SliverList(delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildNoteCard(_results[index], isDark),
+                childCount: _results.length,
+              )),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildBody(bool isDark) {
-    if (_results.isEmpty) {
+  Widget _buildEmptyBody() {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -307,8 +427,12 @@ class _AiSearchPageState extends State<AiSearchPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              _resultQuery == null
-                  ? (_isLoading ? '最初の検索結果を待っています' : '検索語を入力して検索してください')
+              _requiresLogin
+                  ? 'ログイン、またはサンプルで検索を試せます'
+                  : _resultQuery == null
+                  ? (_isLoading ? '最初の検索結果を待っています'
+                      : _errorMessage != null ? '検索が完了しませんでした。上の再試行からやり直せます。'
+                      : '検索語を入力して検索してください')
                   : '「$_resultQuery」に該当するノートはありません',
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
@@ -323,15 +447,6 @@ class _AiSearchPageState extends State<AiSearchPage> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: _results.length,
-      itemBuilder: (context, index) {
-        final note = _results[index];
-        return _buildNoteCard(note, isDark);
-      },
-    );
-  }
 
   Widget _buildNoteCard(Map<String, dynamic> note, bool isDark) {
     final title = _noteTitle(note);
@@ -349,7 +464,12 @@ class _AiSearchPageState extends State<AiSearchPage> {
           color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
       ),
-      child: Padding(
+      child: InkWell(
+        onTap: (note['id']?.toString().trim().isNotEmpty ?? false)
+            ? () => _openNote(note)
+            : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,8 +526,15 @@ class _AiSearchPageState extends State<AiSearchPage> {
                 }).toList(),
               ),
             ],
+            const SizedBox(height: 8),
+            Text(
+              (note['id']?.toString().trim().isNotEmpty ?? false)
+                  ? 'ノートを開く →'
+                  : 'この結果は開けません。もう一度検索してください。',
+            ),
           ],
         ),
+      ),
       ),
     );
   }

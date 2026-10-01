@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
+import 'package:my_web_app/pages/note_editor_page.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 Object result(String title) => {
       'results': [
-        {'title': title, 'content': '合成ノート', 'tags': <String>[]},
+        {'id': 42, 'title': title, 'content': '合成ノート', 'tags': <String>[]},
       ],
       'searchMode': 'text',
     };
@@ -18,6 +20,138 @@ Future<void> submit(WidgetTester tester, String query) async {
 }
 
 void main() {
+  testWidgets('guest and sample controls scroll at 320px with large text and keyboard', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final client = _SessionClient();
+    addTearDown(client.auth.events.close);
+    await tester.pumpWidget(MaterialApp(
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: const TextScaler.linear(2),
+          viewInsets: const EdgeInsets.only(bottom: 220),
+        ),
+        child: child!,
+      ),
+      home: AiSearchPage(supabaseClient: client, search: (_) async => result('private')),
+    ));
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text('サンプルで試す'));
+    await tester.tap(find.text('サンプルで試す'));
+    await tester.pump();
+    await tester.ensureVisible(find.byType(TextField));
+    await submit(tester, 'Flutter');
+    await tester.pump(const Duration(milliseconds: 601));
+    await tester.ensureVisible(find.text('Flutter学習メモ'));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('opens the result id and returns to the retained query', (tester) async {
+    String? opened;
+    await tester.pumpWidget(MaterialApp(home: AiSearchPage(
+      search: (_) async => result('開けるノート'),
+      notePageBuilder: (id) {
+        opened = id;
+        return Scaffold(appBar: AppBar(title: const Text('開いたノート')), body: Text('本文 $id'));
+      },
+    )));
+    await submit(tester, 'メモ');
+    await tester.tap(find.text('開けるノート'));
+    await tester.pumpAndSettle();
+    expect(opened, '42');
+    expect(find.text('本文 42'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('「メモ」の結果（1件）'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'メモ'), findsOneWidget);
+    expect(find.text('開けるノート'), findsOneWidget);
+  });
+
+  testWidgets('guest has a login action and sample search opens read-only notes', (tester) async {
+    final client = _SessionClient();
+    addTearDown(client.auth.events.close);
+    var requests = 0;
+    await tester.pumpWidget(MaterialApp(
+      routes: {'/login': (_) => Scaffold(appBar: AppBar(title: const Text('ログイン入口')))},
+      home: AiSearchPage(supabaseClient: client, search: (_) async {
+        requests++;
+        return result('private');
+      }),
+    ));
+    expect(find.text('ログインして検索'), findsOneWidget);
+    expect(find.text('再試行'), findsNothing);
+    await submit(tester, 'メモ');
+    expect(requests, 0);
+    await tester.tap(find.text('ログインして検索'));
+    await tester.pumpAndSettle();
+    expect(find.text('ログイン入口'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('サンプルで試す'));
+    await tester.pump();
+    await submit(tester, '買い物');
+    await tester.pump(const Duration(milliseconds: 601));
+    expect(find.text('週末の買い物'), findsOneWidget);
+    await tester.tap(find.text('週末の買い物'));
+    await tester.pumpAndSettle();
+    expect(find.text('架空のノート・閲覧専用'), findsOneWidget);
+    expect(find.byType(NoteEditorPage), findsNothing);
+    expect(requests, 0);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('「買い物」の結果（1件）'), findsOneWidget);
+    await tester.tap(find.text('自分のノートに戻る'));
+    await tester.pump();
+    expect(find.text('週末の買い物'), findsNothing);
+    expect(find.text('ログインして検索'), findsOneWidget);
+  });
+
+  testWidgets('logout clears results and rejects an old-account completion', (tester) async {
+    final client = _SessionClient();
+    client.auth.user = _user('account-a');
+    addTearDown(client.auth.events.close);
+    final pending = Completer<Object?>();
+    await tester.pumpWidget(MaterialApp(home: AiSearchPage(
+      supabaseClient: client,
+      search: (q) => q == 'first' ? Future.value(result('以前のノート')) : pending.future,
+    )));
+    await submit(tester, 'first');
+    await submit(tester, 'slow');
+    client.auth.user = null;
+    client.auth.events.add(AuthState(AuthChangeEvent.signedOut, null));
+    await tester.pump();
+    pending.complete(result('遅れてきた非公開ノート'));
+    await tester.pump();
+    expect(find.text('以前のノート'), findsNothing);
+    expect(find.text('遅れてきた非公開ノート'), findsNothing);
+    expect(find.text('ログインして検索'), findsOneWidget);
+  });
+
+  testWidgets('expired session offers login instead of repeating a failing request', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: AiSearchPage(
+      search: (_) async => throw const FunctionException(status: 401, details: 'Unauthorized'),
+    )));
+    await submit(tester, 'メモ');
+    expect(find.text('ログインして検索'), findsOneWidget);
+    expect(find.text('再試行'), findsNothing);
+    expect(find.text('検索語を入力して検索してください'), findsNothing);
+  });
+
+  testWidgets('result without an id cannot accidentally create a new note', (tester) async {
+    var opened = false;
+    await tester.pumpWidget(MaterialApp(home: AiSearchPage(
+      search: (_) async => {'results': [{'title': 'IDなし', 'content': '抜粋'}]},
+      notePageBuilder: (_) { opened = true; return const SizedBox(); },
+    )));
+    await submit(tester, 'メモ');
+    await tester.tap(find.text('IDなし'));
+    await tester.pump();
+    expect(opened, isFalse);
+    expect(find.text('この結果は開けません。もう一度検索してください。'), findsOneWidget);
+  });
+
   testWidgets(
     'keeps prior results and only the newest response wins',
     (tester) async {
@@ -244,4 +378,20 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+}
+
+User _user(String id) => User(id: id, appMetadata: const {}, userMetadata: const {}, aud: 'authenticated', createdAt: '2026-10-02');
+
+class _SessionClient extends Fake implements SupabaseClient {
+  @override
+  final _SessionAuth auth = _SessionAuth();
+}
+
+class _SessionAuth extends Fake implements GoTrueClient {
+  final events = StreamController<AuthState>.broadcast();
+  User? user;
+  @override
+  User? get currentUser => user;
+  @override
+  Stream<AuthState> get onAuthStateChange => events.stream;
 }
