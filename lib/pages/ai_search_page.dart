@@ -113,8 +113,10 @@ class _AiSearchPageState extends State<AiSearchPage> {
                     children: [
                       const Text('架空のノート・閲覧専用'),
                       const SizedBox(height: 16),
-                      Text(_noteTitle(note),
-                          style: Theme.of(context).textTheme.headlineSmall,),
+                      Text(
+                        _noteTitle(note),
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                       const SizedBox(height: 16),
                       SelectableText(note['content']?.toString() ?? ''),
                     ],
@@ -247,9 +249,11 @@ class _AiSearchPageState extends State<AiSearchPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_requiresLogin || _demo) ...[
-                    Text(_demo
-                        ? 'サンプル: 架空の3ノートを検索します。保存・送信はしません。'
-                        : '保存済みノートの検索にはログインが必要です。',),
+                    Text(
+                      _demo
+                          ? 'サンプル: 架空の3ノートを検索します。保存・送信はしません。'
+                          : '保存済みノートの検索にはログインが必要です。',
+                    ),
                     if (_demo)
                       const Text('例: 買い物、Flutter、学習。待機表示の体験用に0.6秒待ちます。'),
                     Wrap(
@@ -348,7 +352,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,),
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
                     ),
                     TextButton.icon(
@@ -414,10 +419,11 @@ class _AiSearchPageState extends State<AiSearchPage> {
             SliverPadding(
               padding: const EdgeInsets.all(12),
               sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildNoteCard(_results[index], isDark),
-                childCount: _results.length,
-              ),),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildNoteCard(_results[index], isDark),
+                  childCount: _results.length,
+                ),
+              ),
             ),
         ],
       ),
