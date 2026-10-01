@@ -1,3 +1,4 @@
+import {pipeRoute} from '../../web/labs/jev-mario/pipe-route.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
@@ -50,3 +51,6 @@ test('repeated stalled commands are persisted and penalized only at their own lo
 
 
 test('live retry escapes a stationary learned command without changing the world or inventing immunity',()=>{const g=new World11(),guard=new LiveGuard();g.enemies=[];g.contents.clear();g.p.x=300;const old={x:g.p.x,y:g.p.y,lives:g.lives,power:g.power},records=[{stage:1,room:'overworld',x:300,y:192,count:3,kind:'stalled',failedActions:{noop:3}}];const action=guard.decide(g,'noop',records);assert.notEqual(action,'noop');assert.equal(guard.lastReason,'retry_escape');assert.deepEqual({x:g.p.x,y:g.p.y,lives:g.lives,power:g.power},old);for(let i=0;i<30&&g.phase==='playing';i++){g.buttons(guard.decide(g,'noop',records));g.step();}assert.ok(g.p.x>old.x+8);assert.equal(g.phase,'playing');});
+
+test('power-up acquisition resets stall observation but stationary play still records failure',()=>{const g=new World11();let worker;const s=new StudentSession(()=>worker={terminate(){},postMessage(){}},()=>g.frames*1000/60,null);s.start({ready(){},update(){},error(){assert.fail();}});worker.onmessage({data:{type:'ready'}});s.guard.decide=()=> 'noop';s.tick(g);g.frames=179;s.tick(g);assert.equal(s.failures.length,0);g.frames=180;g.pickups.mushroom++;s.tick(g);assert.equal(s.failures.length,0);g.frames=359;s.tick(g);assert.equal(s.failures.length,0);g.frames=360;s.tick(g);assert.equal(s.failures.length,1);assert.equal(s.failures[0].kind,'stalled');s.stop();});
+test('unreachable reward behind camera does not block a usable pipe, reachable reward ahead does',()=>{const g=new World11();g.usablePipes=()=>[{id:'test',x:1600,y:160,exit:2000}];Object.assign(g.p,{x:1604,y:144,grounded:true});g.camera=1500;g.contents.clear();g.contents.set('16,9','flower');assert.equal(pipeRoute(g),'down');g.contents.set('110,9','star');assert.equal(pipeRoute(g),null);});
