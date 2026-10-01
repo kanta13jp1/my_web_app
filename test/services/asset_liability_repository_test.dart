@@ -1539,7 +1539,7 @@ void main() {
       },
     );
 
-    test('uploads local monthly state when remote is empty', () async {
+    test('missing remote month stays read-only until explicit sync', () async {
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
       final repository = FeatureFlaggedAssetLiabilityRepository(
@@ -1555,6 +1555,11 @@ void main() {
       final restored = await repository.loadMonth(month);
 
       expect(restored.paymentOverrides['mobit'], 70000);
+      expect(remote.monthState('2026-05'), isNull);
+      expect(
+          remote.calls.where((call) => call.startsWith('saveMonth:')), isEmpty);
+
+      await repository.syncMonth(month);
       expect(remote.monthState('2026-05')?.paymentOverrides['mobit'], 70000);
     });
 
