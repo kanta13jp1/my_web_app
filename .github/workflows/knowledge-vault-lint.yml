@@ -10,11 +10,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
       - run: python -m pip install codespell==2.4.3 markdown-it-py==4.0.0 markdown-it-py==4.0.0
       - run: python scripts/documentation_links_test.py
+      - run: python scripts/documentation_quality_gate_test.py
+      - run: python scripts/documentation_quality_gate.py --base cd0fbbcee074a6100fe2a20806ebf9f46c9c5ec2
       - run: python scripts/issue2625_doc_baseline.py
       - name: Diagnose local Markdown targets
         run: |
