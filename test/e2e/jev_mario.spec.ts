@@ -203,9 +203,12 @@ test('audio defaults on but starts after play; mute, waveform and stop lifecycle
 });
 
 test('loss presentation and retry remain usable with sound enabled',async({page},info)=>{
- await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){(window as any).lossWorld=this;return step.call(this);};});
  await lab.locator('#sound').check();await lab.locator('#play-local').click();
  await lab.locator('#screen').focus();await page.keyboard.down('ArrowRight');
+ await expect.poll(()=>frame.evaluate(()=>(window as any).lossWorld?.p.x),{timeout:5000}).toBe(148);
+ await page.keyboard.down('Space');await expect.poll(()=>frame.evaluate(()=>(window as any).lossWorld?.p.x),{timeout:3000}).toBeGreaterThan(180);await page.keyboard.up('Space');
  await expect(lab.locator('#posture')).toContainText('ミス',{timeout:10000});await page.keyboard.up('ArrowRight');
  await page.waitForTimeout(500);await screenshot(page,info.outputPath('world11-death-motion.png'));
  await page.waitForTimeout(2600);await screenshot(page,info.outputPath('world11-try-again.png'));
@@ -904,4 +907,30 @@ test('contrasting backing timbres render distinct non-clipping browser waveforms
  for(const voice of result){expect(voice.rms).toBeGreaterThan(.001);expect(voice.peak).toBeLessThan(1);}
  for(let i=0;i<result.length;i++)for(let j=i+1;j<result.length;j++){const delta=result[i].samples.reduce((v,x,k)=>v+Math.abs(x-result[j].samples[k]),0)/480;expect(delta).toBeGreaterThan(.001);}
  await(await import('node:fs/promises')).writeFile(info.outputPath('contrasting-timbres.json'),JSON.stringify(result));
+});
+
+
+test('the opening step teaches a real jump without a tutorial overlay',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){(window as any).openingWorld=this;return step.call(this);};});
+ await lab.locator('#watch-manual').click();await lab.locator('#screen').focus();await page.keyboard.down('ArrowRight');
+ await expect.poll(()=>frame.evaluate(()=>(window as any).openingWorld?.p.x),{timeout:5000}).toBe(148);
+ await page.keyboard.down('Space');await expect.poll(()=>frame.evaluate(()=>(window as any).openingWorld?.p.x),{timeout:3000}).toBeGreaterThan(180);
+ await page.keyboard.up('Space');await page.keyboard.up('ArrowRight');expect(await frame.evaluate(()=>(window as any).openingWorld.phase)).toBe('playing');await lab.locator('#stop').click();
+ await lab.locator('#presentation').screenshot({path:info.outputPath('opening-step.png')});
+});
+test('nearby boss octave lead renders within the voice budget and without clipping',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{
+  const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const c=new OfflineAudioContext(1,96000,48000);let now=0;
+  const proxy=new Proxy(c,{get(t,k){if(k==='state')return 'running';if(k==='currentTime')return now;if(k==='resume')return async()=>{};const v=Reflect.get(t,k,t);return typeof v==='function'?v.bind(t):v;}});
+  const a=new GameAudio(()=>proxy);await a.enable(true);const calls:any[]=[],tone=a.tone.bind(a);let peakVoices=0;
+  a.tone=(...args)=>{calls.push(args);tone(...args);peakVoices=Math.max(peakVoices,a.nodes.size);};
+  for(now=0;now<1;now+=.025)a.tick('castle',{boss:true});const b=await c.startRendering();let peak=0,sum=0;for(const x of b.getChannelData(0)){peak=Math.max(peak,Math.abs(x));sum+=x*x;}
+  return {calls,peakVoices,peak,rms:Math.sqrt(sum/b.length)};
+ });
+ const lead=result.calls.find(x=>x[4]===.052&&x[0]>0);expect(lead).toBeTruthy();
+ for(const [offset,gain]of [[12,.018],[-12,.012]])expect(result.calls.some(x=>x[0]===lead[0]+offset&&x[1]===lead[1]&&x[2]===lead[2]&&x[4]===gain)).toBeTruthy();
+ expect(result.peakVoices).toBeLessThanOrEqual(64);expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);
+ await(await import('node:fs/promises')).writeFile(info.outputPath('boss-octave-audio.json'),JSON.stringify(result));
 });

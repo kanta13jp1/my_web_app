@@ -134,3 +134,9 @@ test('a last-moment jump used for a stomp consumes the buffer instead of queuing
  assert.equal(g.enemies[0].dead,1);assert.equal(g.jumpBuffer,0);assert.equal(g.coyote,0);assert.equal(g.p.vy,-5.2);
  assert.equal(g.drainSounds().filter(n=>n==='stomp').length,1);g.step();assert.equal(g.drainSounds().filter(n=>n==='jump').length,0);
 });
+
+
+test('the opening low step is crossed by ordinary jump before the first enemy and gap',()=>{
+ const g=new World11();g.input={right:true};for(let i=0;i<180;i++)g.step();assert.equal(g.phase,'playing');assert.equal(g.p.x,148);assert.ok(g.p.grounded);
+ g.input={right:true,jump:true};for(let i=0;i<32;i++)g.step();assert.equal(g.phase,'playing');assert.ok(g.p.x>180);assert.ok(g.score===0);assert.ok(g.enemies.every(e=>!e.dead));
+});
