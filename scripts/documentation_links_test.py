@@ -33,7 +33,17 @@ class LinksTest(unittest.TestCase):
         self.assertEqual(self.check("[bad](../outside.md)")[0]["reason"], "outside_repository")
 
     def test_external_private_urls_are_never_fetched(self):
-        self.assertEqual(self.check("[external](https://127.0.0.1/private) [mail](mailto:x@example.invalid) [anchor](#heading)"), [])
+        self.assertEqual(self.check("# Heading\n[external](https://127.0.0.1/private) [mail](mailto:x@example.invalid) [anchor](#heading)"), [])
+
+    def test_missing_anchor_and_repeated_heading(self):
+        self.assertEqual(self.check('# Intro\n# Intro\n[ok](#intro-1)'), [])
+        self.assertEqual(self.check('[bad](exists.md#absent)')[0]['reason'], 'missing_markdown_anchor')
+
+    def test_unicode_formatted_and_explicit_anchors(self):
+        self.assertEqual(self.check('# **日本語** `見出し`!\n[ok](#日本語-見出し)\n<a id="custom"></a>\n[explicit](#custom)'), [])
+
+    def test_code_block_heading_is_not_anchor(self):
+        self.assertEqual(self.check('```md\n# Fake\n```\n[bad](#fake)')[0]['reason'], 'missing_markdown_anchor')
 
     def test_application_routes_are_not_file_links(self):
         self.assertEqual(self.check("[privacy](/privacy) [legal](/tokusho?lang=ja)"), [])
