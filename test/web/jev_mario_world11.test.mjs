@@ -126,3 +126,11 @@ test('jumping off a vine consumes buffered input and edge grace exactly once',()
  const g=controlFloor();Object.assign(g.p,{y:100,grounded:false,climbing:true});g.coyote=3;g.input={jump:true};g.step();assert.equal(g.jumpBuffer,0);assert.equal(g.coyote,0);assert.equal(g.drainSounds().filter(n=>n==='jump').length,1);
  g.step();assert.equal(g.drainSounds().filter(n=>n==='jump').length,0);assert.ok(g.p.vy<0);
 });
+
+
+test('a last-moment jump used for a stomp consumes the buffer instead of queuing another jump',()=>{
+ const g=controlFloor();Object.assign(g.p,{x:100,y:175,vy:2,grounded:false});g.input={jump:true};
+ g.enemies=[{x:100,y:192,w:14,h:16,vx:0,vy:0,kind:'goomba',dead:0}];g.step();
+ assert.equal(g.enemies[0].dead,1);assert.equal(g.jumpBuffer,0);assert.equal(g.coyote,0);assert.equal(g.p.vy,-5.2);
+ assert.equal(g.drainSounds().filter(n=>n==='stomp').length,1);g.step();assert.equal(g.drainSounds().filter(n=>n==='jump').length,0);
+});

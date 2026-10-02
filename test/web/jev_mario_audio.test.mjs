@@ -166,3 +166,17 @@ test('bass groove answers an octave up, rests, and approaches the next root',()=
  assert.ok(bassStep('underwater',2)[0].duration>musicStep('underwater',2).step);
  assert.deepEqual(bassStep('underwater',3),[]);
 });
+
+
+test('contrasting bass and pluck cache distinct spectra and release within the voice budget',async()=>{
+ const c=context(),spectra=[];c.createPeriodicWave=(r,i)=>{spectra.push([...i]);return {id:spectra.length};};
+ const old=c.createOscillator.bind(c);c.createOscillator=()=>Object.assign(old(),{setPeriodicWave(w){this.wave=w;}});
+ const a=new GameAudio(()=>c);await a.enable(true);
+ for(let i=0;i<80;i++)a.tone(48,1,.3,i%2?'bass':'pluck',.01,true);
+ assert.equal(spectra.length,2);assert.notDeepEqual(spectra[0],spectra[1]);assert.equal(a.music.size,MAX_MUSIC_VOICES);
+ a.effect('coin');assert.ok(a.nodes.size<=MAX_VOICES);await a.enable(false);assert.equal(a.nodes.size,0);
+});
+test('the pulse lead remains the principal voice while backing uses contrasting timbres',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.track='overworld';a.next=c.currentTime;const calls=[];a.tone=(...args)=>calls.push(args);a.tick();
+ assert.ok(calls.some(x=>x[3]==='square'&&x[4]===.052));assert.ok(calls.some(x=>x[3]==='bass'&&x[4]===.105));assert.ok(calls.some(x=>x[3]==='pluck'&&x[4]<.052));
+});

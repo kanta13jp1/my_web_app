@@ -67,7 +67,12 @@ export class GameAudio{
  }
  tone(note,time,duration,type='square',gain=.09,music=false,slide=0,duty=.25){
   if(!note||!this.enabled||this.context?.state!=='running'||!this.reserveVoice(music))return;
-  const osc=this.context.createOscillator(),env=this.context.createGain();osc.type=type;
+  const osc=this.context.createOscillator(),env=this.context.createGain();osc.type=['bass','pluck'].includes(type)?'triangle':type;
+  // Contrasting voices use one band-limited oscillator, not stacked nodes.
+  if(['bass','pluck'].includes(type)&&this.context.createPeriodicWave&&osc.setPeriodicWave){
+    this.timbres??=new Map();if(!this.timbres.has(type)){const real=new Float32Array(33),imag=new Float32Array(33);for(let n=1;n<33;n++)imag[n]=type==='bass'?(n===1?1:n%2?.22/(n*n):0):Math.sin(n*1.3)/Math.pow(n,1.7);this.timbres.set(type,this.context.createPeriodicWave(real,imag));}
+    osc.setPeriodicWave(this.timbres.get(type));
+  }
   // Band-limited 25% pulse gives a second NES-like voice, with square fallback.
   if(type==='square'&&this.context.createPeriodicWave&&osc.setPeriodicWave){
     this.pulses??=new Map();if(!this.pulses.has(duty)){const real=new Float32Array(33),imag=new Float32Array(33);for(let n=1;n<33;n++){real[n]=2*Math.sin(2*Math.PI*n*duty)/(Math.PI*n);imag[n]=2*(1-Math.cos(2*Math.PI*n*duty))/(Math.PI*n);}this.pulses.set(duty,this.context.createPeriodicWave(real,imag));}
@@ -115,9 +120,9 @@ export class GameAudio{
    if(this.beat%4===2)this.tone(answer,t+step*.45,step*.40,'triangle',track==='castle'?.009:.014,true);
    if(this.beat%8===0)this.tone(fifth,t+step*.3,step*5.5,'sine',.012,true);
    if(this.beat%8===0)this.tone(pad,t+step*.20,step*6.5,'triangle',track==='castle'?.009:.012,true);
-   if(this.beat%4===0)this.tone(counter,t+step*.16,step*3.2,'triangle',track==='underwater'?.023:.017,true);
+   if(this.beat%4===0)this.tone(counter,t+step*.16,step*3.2,'pluck',track==='underwater'?.023:.017,true);
    // Keep percussion on its grid; bass anticipates alternate quarter notes.
-   for(const n of bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'triangle',.105,true);
+   for(const n of bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'bass',.105,true);
    if(track==='overworld'||track==='star'){
     if(this.beat%4===0)this.tone(32,t,.035,'triangle',.055,true,-12);
     if(this.beat%2===1)this.noise(t,this.beat%4===3?.045:.018,this.beat%4===3?.018:.009,true);
