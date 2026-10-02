@@ -26,10 +26,14 @@ void main() {
       }
 
       final first = cache.lookup(
-          scopeKey: 'user', requests: [request('a'), request('b')], load: load,
+        scopeKey: 'user',
+        requests: [request('a'), request('b')],
+        load: load,
       );
-      final second =
-          cache.lookup(scopeKey: 'user', requests: [request('b')], load: load,
+      final second = cache.lookup(
+        scopeKey: 'user',
+        requests: [request('b')],
+        load: load,
       );
       final checks = Future.wait([
         expectLater(first, throwsStateError),
@@ -39,12 +43,12 @@ void main() {
       await checks;
       expect(calls, 1);
       expect(
-          await cache.lookup(
-              scopeKey: 'user',
-              requests: [request('b')],
-              load: (_) async => {'b': issue('b')},
-          ),
-          {'b': issue('b')},
+        await cache.lookup(
+          scopeKey: 'user',
+          requests: [request('b')],
+          load: (_) async => {'b': issue('b')},
+        ),
+        {'b': issue('b')},
       );
     });
 
@@ -52,31 +56,31 @@ void main() {
       final cache = AssetDeveloperIssueLookupCache();
       final response = Completer<Map<String, Map<String, dynamic>>>();
       final pending = cache.lookup(
-          scopeKey: 'user',
-          requests: [request('a')],
-          load: (_) => response.future,
+        scopeKey: 'user',
+        requests: [request('a')],
+        load: (_) => response.future,
       );
       final checked = expectLater(pending, throwsStateError);
       final revision = cache.revision;
       cache.invalidate();
       expect(cache.revision, greaterThan(revision));
       expect(
-          await cache.lookup(
-              scopeKey: 'user',
-              requests: [request('a')],
-              load: (_) async => {'a': issue('new')},
-          ),
-          {'a': issue('new')},
+        await cache.lookup(
+          scopeKey: 'user',
+          requests: [request('a')],
+          load: (_) async => {'a': issue('new')},
+        ),
+        {'a': issue('new')},
       );
       response.complete({'a': issue('old')});
       await checked;
       expect(
-          await cache.lookup(
-              scopeKey: 'user',
-              requests: [request('a')],
-              load: (_) => throw StateError('No request expected'),
-          ),
-          {'a': issue('new')},
+        await cache.lookup(
+          scopeKey: 'user',
+          requests: [request('a')],
+          load: (_) => throw StateError('No request expected'),
+        ),
+        {'a': issue('new')},
       );
     });
 
@@ -101,9 +105,15 @@ void main() {
         await cache.lookup(scopeKey: 'user', requests: [base, ai], load: load),
         {'base': issue('base'), 'ai': issue('ai')},
       );
-      await cache.lookup(scopeKey: 'user', requests: [base], load: load,
+      await cache.lookup(
+        scopeKey: 'user',
+        requests: [base],
+        load: load,
       );
-      await cache.lookup(scopeKey: 'user', requests: [ai, base], load: load,
+      await cache.lookup(
+        scopeKey: 'user',
+        requests: [ai, base],
+        load: load,
       );
       expect(calls, [
         ['base'],
@@ -312,10 +322,14 @@ void main() {
         {'a': issue('a'), 'b': issue('b'), 'c': issue('c')},
       );
       await cache.lookup(
-          scopeKey: 'user', requests: [request('b')], load: load,
+        scopeKey: 'user',
+        requests: [request('b')],
+        load: load,
       );
       await cache.lookup(
-          scopeKey: 'user', requests: [request('a')], load: load,
+        scopeKey: 'user',
+        requests: [request('a')],
+        load: load,
       );
       expect(calls, [
         ['a', 'b', 'c'],
@@ -366,7 +380,10 @@ void main() {
         return {};
       }
 
-      await cache.lookup(scopeKey: 'user', requests: [], load: load,
+      await cache.lookup(
+        scopeKey: 'user',
+        requests: [],
+        load: load,
       );
       await cache.lookup(
         scopeKey: 'user',

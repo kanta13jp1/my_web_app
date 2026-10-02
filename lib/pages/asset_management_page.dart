@@ -23214,8 +23214,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           if (!mounted ||
               _supabase.auth.currentUser?.id != userId ||
               _developerRequestExistingIssueLookupKey != lookupKey) {
-        return;
-      }
+            return;
+          }
           unawaited(_loadExistingDeveloperIssues(
             lookupKey: lookupKey,
             requests: payload,
