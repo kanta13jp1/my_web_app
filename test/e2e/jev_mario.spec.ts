@@ -203,9 +203,12 @@ test('audio defaults on but starts after play; mute, waveform and stop lifecycle
 });
 
 test('loss presentation and retry remain usable with sound enabled',async({page},info)=>{
- await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step;World11.prototype.step=function(){(window as any).lossWorld=this;return step.call(this);};});
  await lab.locator('#sound').check();await lab.locator('#play-local').click();
  await lab.locator('#screen').focus();await page.keyboard.down('ArrowRight');
+ await expect.poll(()=>frame.evaluate(()=>(window as any).lossWorld?.p.x),{timeout:5000}).toBe(148);
+ await page.keyboard.down('Space');await expect.poll(()=>frame.evaluate(()=>(window as any).lossWorld?.p.x),{timeout:3000}).toBeGreaterThan(180);await page.keyboard.up('Space');
  await expect(lab.locator('#posture')).toContainText('ミス',{timeout:10000});await page.keyboard.up('ArrowRight');
  await page.waitForTimeout(500);await screenshot(page,info.outputPath('world11-death-motion.png'));
  await page.waitForTimeout(2600);await screenshot(page,info.outputPath('world11-try-again.png'));
