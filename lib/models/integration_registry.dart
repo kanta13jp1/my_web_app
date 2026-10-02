@@ -354,11 +354,13 @@ class IntegrationCodeMappingCsvParser {
     String quote(String value) => '"${value.replaceAll('"', '""')}"';
     return <String>[
       'old_code,new_code,description',
-      ...entries.map((entry) => <String>[
-            entry.oldCode,
-            entry.newCode,
-            entry.description,
-          ].map(quote).join(',')),
+      ...entries.map(
+        (entry) => <String>[
+          entry.oldCode,
+          entry.newCode,
+          entry.description,
+        ].map(quote).join(','),
+      ),
     ].join('\n');
   }
 
