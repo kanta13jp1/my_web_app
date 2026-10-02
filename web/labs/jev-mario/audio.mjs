@@ -32,6 +32,18 @@ export function ostinatoStep(track,beat,hurry=false){
  const step=a.step*(hurry?.78:1),slow=track==='underwater',pattern=[0,2,1,2,0,1,2,1];
  return Array.from({length:slow?1:2},(_,i)=>({note:chord[pattern[(beat*2+i)%8]]+12,offset:i*step/2,duration:step*(slow?.70:.36),type:Math.floor(beat/16)%2?'triangle':'square',gain:slow?.008:(i===1||beat%2===1)?.010:.006,duty:.125}));
 }
+// A low register groove: octave answer, space, and chromatic approach
+// into the next harmony. Underwater retains its gentler sustained bass.
+export function bassStep(track,beat,hurry=false){
+ const a=arrangements[track]??arrangements.overworld,step=a.step*(hurry?.78:1),chord=a.chords[Math.floor(beat/16)%a.chords.length];
+ const root=chord[0]-(track==='star'?12:0),event=(note,offset,duration)=>({note,offset:offset*step,duration:duration*step});
+ if(track==='underwater')return beat%2===0?[event(root,0,1.55)]:[];
+ if(beat===0)return [event(root,0,1.55)];
+ if(beat%8===2)return [event(root+12,0,.70)];
+ if(beat%16===14){const target=a.chords[(Math.floor(beat/16)+1)%a.chords.length][0]-(track==='star'?12:0);return [event(target+(root>target?1:-1),.45,.30)];}
+ if(beat%4===3){const next=musicStep(track,beat+1,hurry);return [event(next.bass,.72,1.15)];}
+ return [];
+}
 export const effects={firework:[48,36],swim:[60,67],bridge:[43,38,31,24],impact:[42,30],skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
 export class GameAudio{
  constructor(factory=()=>new(globalThis.AudioContext||globalThis.webkitAudioContext)()){
@@ -105,8 +117,7 @@ export class GameAudio{
    if(this.beat%8===0)this.tone(pad,t+step*.20,step*6.5,'triangle',track==='castle'?.009:.012,true);
    if(this.beat%4===0)this.tone(counter,t+step*.16,step*3.2,'triangle',track==='underwater'?.023:.017,true);
    // Keep percussion on its grid; bass anticipates alternate quarter notes.
-   if(water&&this.beat%2===0||!water&&(this.beat===0||this.beat%4===2))this.tone(bass,t,step*1.55,'triangle',.105,true);
-   if(!water&&this.beat%4===3)this.tone(musicStep(track,this.beat+1,hurry).bass,t+step*.72,step*1.15,'triangle',.105,true);
+   for(const n of bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'triangle',.105,true);
    if(track==='overworld'||track==='star'){
     if(this.beat%4===0)this.tone(32,t,.035,'triangle',.055,true,-12);
     if(this.beat%2===1)this.noise(t,this.beat%4===3?.045:.018,this.beat%4===3?.018:.009,true);

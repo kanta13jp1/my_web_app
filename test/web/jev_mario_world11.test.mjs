@@ -101,3 +101,28 @@ test('a fireball defeats at most one overlapping enemy, and wall impact expires'
  g.enemies=[];g.shots=[{x:444,y:180,w:4,h:4,vx:3.5,vy:0}];g.camera=300;g.p.x=330;g.step();assert.ok(g.drainSounds().includes('impact'));assert.ok(g.effects.some(f=>f.kind==='burst'));
  for(let i=0;i<50;i++)g.step();assert.ok(!g.effects.some(f=>f.kind==='burst'||f.kind==='score'));
 });
+
+
+function controlFloor(){const g=new World11();g.enemies=[];g.cells=new Map();g.contents=new Map();for(let x=0;x<30;x++)g.cells.set(`${x},13`,'ground');return g;}
+test('a jump pressed just before landing buffers once but a held jump does not repeat',()=>{
+ const g=controlFloor();Object.assign(g.p,{y:188,vy:2,grounded:false});g.input={jump:true};g.step();assert.ok(g.p.vy>0);
+ let jumped=false;for(let i=0;i<5;i++){g.step();if(g.drainSounds().includes('jump'))jumped=true;}assert.ok(jumped);assert.ok(g.p.vy<0);
+ let more=0;for(let i=0;i<90;i++){g.step();more+=g.drainSounds().filter(n=>n==='jump').length;}assert.equal(more,0);assert.ok(g.p.grounded);
+});
+test('edge grace permits an intended late jump and expires rather than granting an air jump',()=>{
+ function ledge(){const g=controlFloor();for(let x=6;x<30;x++)g.cells.delete(`${x},13`);Object.assign(g.p,{x:90,vx:1.55});g.input={right:true};while(g.p.grounded)g.step();return g;}
+ const early=ledge();early.input={right:true,jump:true};early.step();assert.ok(early.p.vy<0);assert.ok(early.drainSounds().includes('jump'));
+ const late=ledge();for(let i=0;i<4;i++)late.step();late.input={right:true,jump:true};late.step();assert.ok(late.p.vy>0);assert.ok(!late.drainSounds().includes('jump'));
+ late.reset();assert.equal(late.jumpBuffer,0);assert.equal(late.coyote,0);
+});
+test('ground braking and opposite direction respond promptly without changing top speed',()=>{
+ const g=controlFloor();g.input={right:true};for(let i=0;i<20;i++)g.step();assert.equal(g.p.vx,1.55);g.input={};let stop=0;while(g.p.vx&&stop<30){g.step();stop++;}assert.ok(stop<=16);assert.equal(g.p.vx,0);
+ g.input={right:true};for(let i=0;i<20;i++)g.step();g.input={left:true};for(let i=0;i<8;i++)g.step();assert.ok(g.p.vx<0);assert.ok(g.drainSounds().includes('skid'));
+ g.input={right:true,run:true};for(let i=0;i<50;i++)g.step();assert.equal(g.p.vx,2.6);
+});
+
+
+test('jumping off a vine consumes buffered input and edge grace exactly once',()=>{
+ const g=controlFloor();Object.assign(g.p,{y:100,grounded:false,climbing:true});g.coyote=3;g.input={jump:true};g.step();assert.equal(g.jumpBuffer,0);assert.equal(g.coyote,0);assert.equal(g.drainSounds().filter(n=>n==='jump').length,1);
+ g.step();assert.equal(g.drainSounds().filter(n=>n==='jump').length,0);assert.ok(g.p.vy<0);
+});
