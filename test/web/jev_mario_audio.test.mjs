@@ -138,3 +138,14 @@ test('offbeat accompaniment accents repeat while water keeps its softer regular 
  assert.ok(ostinatoStep('overworld',1)[0].gain>notes[0].gain);
  assert.equal(ostinatoStep('underwater',0)[0].gain,ostinatoStep('underwater',1)[0].gain);
 });
+
+
+test('castle moves Em C D B major and resolves D sharp to E on the loop',()=>{
+ assert.deepEqual(arrangements.castle.chords,[[40,43,47],[36,40,43],[38,42,45],[35,39,42]]);
+ assert.deepEqual(scores.castle.slice(0,4),[64,67,69,67]);
+ assert.equal(musicStep('castle',62).lead,63);
+ assert.equal(musicStep('castle',64).lead,64);
+ assert.deepEqual([0,16,32,48,64].map(b=>musicStep('castle',b).bass),[40,36,38,35,40]);
+ assert.equal(ostinatoStep('castle',48)[0].note,47);
+ assert.ok(Array.from({length:8},(_,i)=>ostinatoStep('castle',48+i)).flat().some(e=>e.note===51));
+});

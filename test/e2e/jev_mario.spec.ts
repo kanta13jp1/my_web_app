@@ -849,3 +849,19 @@ test('8-4 complete real worker castle collects items and clears with normal haza
  try{await expect.poll(()=>frame.evaluate(()=>(window as any).courseClear),{timeout:160000}).toBeTruthy();const result=await frame.evaluate(()=>(window as any).courseClear);expect(result.pickups.mushroom).toBeGreaterThan(0);}
  finally{await lab.locator('#stop').click();await(await import('node:fs/promises')).writeFile(info.outputPath('world84-complete-worker.json'),JSON.stringify(await frame.evaluate(()=>({clear:(window as any).courseClear,trace:(window as any).courseTrace}))));await screenshot(page,info.outputPath('world84-complete-worker.png'));}
 });
+
+
+test('castle dominant resolves to the minor hook in rendered browser audio',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{
+  const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const c=new OfflineAudioContext(1,48000*2,48000);let now=0;
+  const proxy=new Proxy(c,{get(target,key){if(key==='state')return 'running';if(key==='currentTime')return now;if(key==='resume')return async()=>{};const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v;}});
+  const a=new GameAudio(()=>proxy);await a.enable(true);a.track='castle';a.beat=62;a.next=0;const lead:any[]=[];const tone=a.tone.bind(a);
+  a.tone=(...args)=>{if(args[0]&&args[4]===.052)lead.push({note:args[0],time:args[1]});return tone(...args);};
+  for(now=0;now<.4;now+=.025)a.tick('castle');const buffer=await c.startRendering(),samples=buffer.getChannelData(0);let peak=0,sum=0;for(const x of samples){peak=Math.max(peak,Math.abs(x));sum+=x*x;}
+  return {lead,peak,rms:Math.sqrt(sum/samples.length),maxVoices:a.nodes.size};
+ });
+ expect(result.lead.slice(0,2).map(n=>n.note)).toEqual([63,64]);expect(result.lead[1].time).toBeGreaterThan(result.lead[0].time);expect(result.lead[1].time).toBeLessThan(.26);
+ expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);expect(result.maxVoices).toBeLessThanOrEqual(64);
+ await (await import('node:fs/promises')).writeFile(info.outputPath('castle-minor-cadence.json'),JSON.stringify(result));
+});
