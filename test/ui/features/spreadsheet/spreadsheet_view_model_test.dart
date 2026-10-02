@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -31,6 +32,46 @@ void main() {
 
   tearDown(() => viewModel.dispose());
 
+  for (final outcome in ['success', 'cancel', 'error']) {
+    test('XLSX import ignores $outcome after disposal', () async {
+      await viewModel.load();
+      final before = viewModel.document;
+      final pending = Completer<SpreadsheetPickedCsv?>();
+      fileGateway.pendingPick = pending.future;
+      final operation = viewModel.importXlsx();
+      viewModel.dispose();
+      if (outcome == 'error') {
+        pending.completeError(StateError('picker failed'));
+      } else {
+        pending.complete(outcome == 'cancel'
+            ? null
+            : SpreadsheetPickedCsv(
+                name: 'import.xlsx',
+                bytes: const SpreadsheetXlsxCodec().encode(
+                  SpreadsheetDocument.blank().copyWith(sheets: [
+                    SpreadsheetSheet.blank(id: 'new', name: 'Imported'),
+                  ]),
+                ),
+              ));
+      }
+      expect(await operation, isFalse);
+      expect(viewModel.document, same(before));
+    });
+    test('XLSX export ignores $outcome after disposal', () async {
+      await viewModel.load();
+      final pending = Completer<bool>();
+      fileGateway.pendingSave = pending.future;
+      final operation = viewModel.exportXlsx();
+      viewModel.dispose();
+      if (outcome == 'error') {
+        pending.completeError(StateError('save failed'));
+      } else {
+        pending.complete(outcome == 'success');
+      }
+      expect(await operation, isFalse);
+      expect(viewModel.noticeMessage, isNull);
+    });
+  }
   test('creates a blank workbook and calculates edited cells', () async {
     await viewModel.load();
 
@@ -214,6 +255,8 @@ class _MemorySpreadsheetRepository implements SpreadsheetRepository {
 class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
   SpreadsheetPickedCsv? picked;
   SpreadsheetPickedCsv? xlsxPicked;
+  Future<SpreadsheetPickedCsv?>? pendingPick;
+  Future<bool>? pendingSave;
   String? savedName;
   Uint8List? savedBytes;
 
@@ -221,14 +264,14 @@ class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
   Future<SpreadsheetPickedCsv?> pickCsv() async => picked;
 
   @override
-  Future<SpreadsheetPickedCsv?> pickXlsx() async => xlsxPicked;
+  Future<SpreadsheetPickedCsv?> pickXlsx() async => pendingPick == null ? xlsxPicked : await pendingPick!;
 
   @override
   Future<bool> saveXlsx({
     required String suggestedName,
     required Uint8List bytes,
   }) =>
-      saveCsv(suggestedName: suggestedName, bytes: bytes);
+      pendingSave ?? saveCsv(suggestedName: suggestedName, bytes: bytes);
 
   @override
   Future<bool> saveCsv({

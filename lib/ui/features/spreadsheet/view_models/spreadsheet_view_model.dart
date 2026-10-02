@@ -47,6 +47,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
   CellAddress _selectedCell = const CellAddress(row: 0, column: 0);
   String? _errorMessage;
   String? _noticeMessage;
+  bool _disposed = false;
   bool _isImporting = false;
   bool _isExporting = false;
   int _historyIndex = -1;
@@ -275,14 +276,14 @@ class SpreadsheetViewModel extends ChangeNotifier {
   }
 
   Future<bool> importXlsx() async {
-    if (_isImporting || _isExporting || _document == null) return false;
+    if (_disposed || _isImporting || _isExporting || _document == null) return false;
     _isImporting = true;
     _errorMessage = null;
     _noticeMessage = null;
     notifyListeners();
     try {
       final picked = await _fileGateway.pickXlsx();
-      if (picked == null) return false;
+      if (_disposed || picked == null) return false;
       final imported = _xlsxCodec.decode(picked.bytes);
       final current = _document!;
       if (current.sheets.length + imported.length > 20) {
@@ -318,19 +319,21 @@ class SpreadsheetViewModel extends ChangeNotifier {
           '${picked.name} の${imported.length}シートを追加しました。${SpreadsheetXlsxCodec.compatibilityNotice}';
       return true;
     } on FormatException catch (error) {
+      if (_disposed) return false;
       _errorMessage = error.message.toString();
       return false;
     } catch (_) {
+      if (_disposed) return false;
       _errorMessage = 'XLSXファイルを読み込めませんでした。';
       return false;
     } finally {
       _isImporting = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
   Future<bool> exportXlsx() async {
-    if (_isImporting || _isExporting || _document == null) return false;
+    if (_disposed || _isImporting || _isExporting || _document == null) return false;
     _isExporting = true;
     _errorMessage = null;
     _noticeMessage = null;
@@ -341,20 +344,23 @@ class SpreadsheetViewModel extends ChangeNotifier {
         suggestedName: _safeFileName('${current.title}-export.xlsx'),
         bytes: _xlsxCodec.encode(current),
       );
+      if (_disposed) return false;
       if (saved) {
         _noticeMessage =
             'XLSXを書き出しました。${SpreadsheetXlsxCodec.compatibilityNotice}';
       }
       return saved;
     } on FormatException catch (error) {
+      if (_disposed) return false;
       _errorMessage = error.message.toString();
       return false;
     } catch (_) {
+      if (_disposed) return false;
       _errorMessage = 'XLSXファイルを書き出せませんでした。';
       return false;
     } finally {
       _isExporting = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
@@ -473,6 +479,8 @@ class SpreadsheetViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     _autoSaveService.removeListener(_handleSaveStateChanged);
     _autoSaveService.dispose();
     super.dispose();
