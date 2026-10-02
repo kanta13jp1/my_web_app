@@ -265,7 +265,8 @@ void main() {
     await tester.tap(find.byKey(const Key('import-mapping-button')));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('mapping-name-field')), 'Updated codes',
+      find.byKey(const Key('mapping-name-field')),
+      'Updated codes',
     );
     final previewButton = find.byKey(const Key('preview-mapping-csv-button'));
     await tester.ensureVisible(previewButton);
