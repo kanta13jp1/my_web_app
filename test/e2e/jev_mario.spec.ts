@@ -887,3 +887,21 @@ test('manual movement brakes after release and holding jump does not auto-bounce
  await page.keyboard.down('Space');await expect(lab.locator('#posture')).toContainText('上昇');await page.waitForTimeout(1800);expect(await frame.evaluate(()=>(window as any).jumpCount)).toBe(1);expect(await frame.evaluate(()=>(window as any).controlWorld.p.grounded)).toBe(true);
  await page.keyboard.up('Space');await lab.locator('#stop').click();await lab.locator('#presentation').screenshot({path:info.outputPath('manual-control-response.png')});
 });
+
+
+test('contrasting backing timbres render distinct non-clipping browser waveforms',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{
+  const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const rendered:any[]=[];
+  for(const type of ['square','bass','pluck']){
+   const c=new OfflineAudioContext(1,24000,48000),proxy=new Proxy(c,{get(t,k){if(k==='state')return 'running';if(k==='resume')return async()=>{};const v=Reflect.get(t,k,t);return typeof v==='function'?v.bind(t):v;}});
+   const a=new GameAudio(()=>proxy);await a.enable(true);a.tone(48,0,.35,type,.08,true);
+   const b=await c.startRendering(),data=b.getChannelData(0);let peak=0,sum=0;for(const x of data){peak=Math.max(peak,Math.abs(x));sum+=x*x;}
+   rendered.push({type,peak,rms:Math.sqrt(sum/data.length),samples:[...data.slice(480,960)]});
+  }
+  return rendered;
+ });
+ for(const voice of result){expect(voice.rms).toBeGreaterThan(.001);expect(voice.peak).toBeLessThan(1);}
+ for(let i=0;i<result.length;i++)for(let j=i+1;j<result.length;j++){const delta=result[i].samples.reduce((v,x,k)=>v+Math.abs(x-result[j].samples[k]),0)/480;expect(delta).toBeGreaterThan(.001);}
+ await(await import('node:fs/promises')).writeFile(info.outputPath('contrasting-timbres.json'),JSON.stringify(result));
+});
