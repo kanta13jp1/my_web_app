@@ -107,8 +107,10 @@ void main() {
     expect(find.byTooltip('AIシェア'), findsNothing);
     await tester.tap(find.byTooltip('Inboxへメモ'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('inbox_quick_capture_text_field')),
-        findsOneWidget);
+    expect(
+      find.byKey(const Key('inbox_quick_capture_text_field')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
