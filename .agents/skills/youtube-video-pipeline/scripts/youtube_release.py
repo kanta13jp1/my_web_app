@@ -16,21 +16,25 @@ import time
 from pathlib import Path
 from typing import Any
 
-try:
-    from google.auth.exceptions import RefreshError
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    from googleapiclient.discovery import build
-    from googleapiclient.errors import HttpError
-    from googleapiclient.http import MediaFileUpload
-except ImportError as exc:  # pragma: no cover - exercised by dependency check
-    print(
-        "Missing Google API packages. Install google-api-python-client, "
-        "google-auth-oauthlib, and google-auth-httplib2.",
-        file=sys.stderr,
-    )
-    raise SystemExit(2) from exc
+def load_google_dependencies() -> None:
+    """Load API dependencies only for an operation; --help stays offline."""
+    global RefreshError, Request, Credentials, InstalledAppFlow
+    global build, HttpError, MediaFileUpload
+    try:
+        from google.auth.exceptions import RefreshError
+        from google.auth.transport.requests import Request
+        from google.oauth2.credentials import Credentials
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        from googleapiclient.discovery import build
+        from googleapiclient.errors import HttpError
+        from googleapiclient.http import MediaFileUpload
+    except ImportError as exc:
+        print(
+            "Missing Google API packages. Install google-api-python-client, "
+            "google-auth-oauthlib, and google-auth-httplib2.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2) from exc
 
 
 MANAGE_SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
@@ -437,6 +441,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    load_google_dependencies()
     try:
         args.func(args)
     except (ReleaseError, HttpError) as exc:

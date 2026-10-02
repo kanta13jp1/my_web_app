@@ -73,7 +73,8 @@ void main() {
         ),
       );
 
-      expect(find.textContaining('まだ登録がありません'), findsOneWidget);
+      expect(find.textContaining('通常の固定費（家賃・光熱費など）は未登録'), findsOneWidget);
+      expect(find.textContaining('同じ請求を両方へ登録しない'), findsOneWidget);
     });
   });
 

@@ -1,0 +1,34 @@
+# AI context exclusion baseline for Gemini Code Assist.
+# Syntax follows .gitignore. This is defense in depth, not a replacement for
+# access control, secret scanning, or provider data-control settings.
+
+# Environment files and local agent/MCP overrides
+**/.env
+**/.env.*
+**/.mcp.json
+**/.claude/settings.local.json
+**/.gemini/settings.local.json
+
+# Private keys, signing material, and credential bundles
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/*.jks
+**/*.keystore
+**/*serviceAccountKey*.json
+**/*service-account*.json
+**/client_secret*.json
+**/credentials.json
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Local Supabase state and database exports
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+supabase/.env.*
+**/*.dump
+**/*.sql.gz
+**/*.sqlite
+**/*.sqlite3

@@ -44,6 +44,11 @@ const Map<String, String> kCanonicalFeatureRouteAliases = <String, String>{
 };
 
 const Map<String, String> _consolidatedFeatureLabels = <String, String>{
+  '/palm-reading': '手相AI占い',
+  '/flow-city': '交通実験室 · FLOW CITY',
+  '/lumen-path': '光の道 · LUMEN PATH',
+  '/sound-bloom': '音と光の庭 · SOUND BLOOM',
+  '/aero-lab': '3D実験室 · AERO LAB',
   '/ai-writing-assistant': 'AI文章・要約アシスタント',
   '/ai-university-toeic': 'AI大学 TOEIC対策',
   '/art-museums': '全国の美術館',
@@ -66,6 +71,7 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/travel-planner': '旅行プランナー',
   '/viral-ad-generator': 'バイラル広告ジェネレーター',
   '/digest-queue': '消化してから次へ',
+  '/jwenv-lab': 'Jwenv WebGPU Lab',
 };
 
 /// 別名 route を、履歴・おすすめ・表示名で共通利用する正規 route に変換する。

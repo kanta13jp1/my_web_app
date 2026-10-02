@@ -1,3 +1,5 @@
+import { decideMario, MarioError } from "./jev_mario.ts";
+import { classifyJevExpense, JevExpenseError } from "./jev_expense.ts";
 // ai-hub — AI・エージェント・AI大学統合EF
 // Merges (16 EFs): daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
 //   ai-summarizer, agent-hub, virtual-organization, my-ai-agent,
@@ -15,6 +17,7 @@ import {
 } from "./action_access_policy.ts";
 import {
   AI_CHARACTER_PREAMBLE,
+  buildAiSystemPrompt,
   prependCharacter,
 } from "../_shared/ai_character_preamble.ts";
 import {
@@ -26,7 +29,10 @@ import {
   type AgentToolPolicyDecision,
   evaluateAgentToolPolicy,
 } from "../_shared/agent_tool_policy.ts";
-import { selectEffort } from "../_shared/effort_router.ts";
+import {
+  selectClaudeModelForEffort,
+  selectEffort,
+} from "../_shared/effort_router.ts";
 import { requestTraceId } from "../_shared/trace_context.ts";
 import {
   calculateApiCost,
@@ -128,6 +134,12 @@ import {
   sha256Hex,
 } from "./company_research.ts";
 import {
+  CORPORATE_SITE_READINESS_DISCLAIMER,
+  generateCorporateSiteHtml,
+  reviewCorporateSiteDocument,
+  validateCorporateSiteProfile,
+} from "./corporate_site_readiness.ts";
+import {
   assertA2AVersion,
   buildCompanyAgentCard,
   COMPANY_A2A_CONTENT_TYPE,
@@ -143,6 +155,12 @@ import {
   buildSubscriptionStatementPrompt,
   parseSubscriptionStatementResponse,
 } from "./subscription_statement_scan.ts";
+import {
+  buildPalmReadingPrompt,
+  decodePalmImageBase64,
+  normalizePalmHandSide,
+  parsePalmReadingResponse,
+} from "./palm_reading.ts";
 import {
   createWriterKnowledgeGraphGateway,
   handleWriterKnowledgeGraphAction,
@@ -691,8 +709,35 @@ function effortToTier(effort: "low" | "medium" | "high" | "xhigh"): Tier {
   }
 }
 
+function routedClaudeModel(effort: "low" | "medium" | "high" | "xhigh") {
+  return selectClaudeModelForEffort(effort, {
+    haikuModel: Deno.env.get("CLAUDE_ROUTER_HAIKU_MODEL"),
+    sonnetModel: Deno.env.get("CLAUDE_ROUTER_SONNET_MODEL"),
+  });
+}
+
 function estimateTokensFromChars(chars: number): number {
   return Math.max(1, Math.ceil(Math.max(0, chars) / 4));
+}
+
+function providerUsageTokens(data: unknown): {
+  inputTokens?: number;
+  outputTokens?: number;
+} {
+  const input = pick(data, "usage", "input_tokens") ??
+    pick(data, "usage", "prompt_tokens") ??
+    pick(data, "usageMetadata", "promptTokenCount");
+  const output = pick(data, "usage", "output_tokens") ??
+    pick(data, "usage", "completion_tokens") ??
+    pick(data, "usageMetadata", "candidatesTokenCount");
+  const normalize = (value: unknown): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) && value >= 0
+      ? Math.round(value)
+      : undefined;
+  return {
+    inputTokens: normalize(input),
+    outputTokens: normalize(output),
+  };
 }
 
 function normalizeMaxTokens(value: unknown): number | undefined {
@@ -741,6 +786,8 @@ async function callSingleProvider(
     ok: boolean;
     text?: string;
     modelUsed?: string;
+    inputTokens?: number;
+    outputTokens?: number;
     error?: string;
     isRetriable: boolean;
   }
@@ -831,7 +878,15 @@ async function callSingleProvider(
       (typeof (data as Record<string, unknown>)?.model === "string"
         ? (data as Record<string, unknown>).model
         : model ?? cfg.defaultModel) as string;
-    return { ok: true, text: content, modelUsed, isRetriable: false };
+    const usage = providerUsageTokens(data);
+    return {
+      ok: true,
+      text: content,
+      modelUsed,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      isRetriable: false,
+    };
   } catch (e) {
     return { ok: false, error: String(e), isRetriable: true };
   }
@@ -2848,9 +2903,10 @@ async function runCompanyRuntimeWorker(
   const finish = asRecord(rawFinish) ?? {};
   const finalTaskStatus = asString(finish.task_status);
   const taskCancelled = finalTaskStatus === "cancelled";
+  const taskTimedOut = finish.timed_out === true;
 
   let persistedRoutingProfile = nextRoutingProfile;
-  if (!taskCancelled) {
+  if (!taskCancelled && !taskTimedOut) {
     try {
       persistedRoutingProfile = await persistCompanyRoutingOutcome(
         admin,
@@ -2922,6 +2978,7 @@ async function runCompanyRuntimeWorker(
     company_id: message.companyId,
     task_id: taskId,
     task_status: asString(finish.task_status),
+    timed_out: taskTimedOut,
     continue: shouldContinue,
   };
 }
@@ -5157,6 +5214,82 @@ serve(async (req: Request) => {
         }
       }
 
+      case "corporate_site.readiness": {
+        const mode = asString(body.mode).toLowerCase();
+        if (mode !== "review" && mode !== "generate") {
+          return json({ error: "mode must be review or generate" }, 400);
+        }
+        const profile = {
+          companyName: asString(body.company_name),
+          representativeName: asString(body.representative_name),
+          registeredAddress: asString(body.registered_address),
+          businessPlanSummary: asString(body.business_plan_summary),
+          virtualOffice: body.virtual_office === true,
+        };
+
+        try {
+          validateCorporateSiteProfile(profile);
+          if (mode === "generate") {
+            const rawMilestones = Array.isArray(body.wbs_milestones)
+              ? body.wbs_milestones
+              : asString(body.wbs_milestones).split(/\r?\n/);
+            const html = generateCorporateSiteHtml({
+              ...profile,
+              contact: asString(body.contact),
+              wbsMilestones: rawMilestones.map(asString).filter(Boolean),
+            });
+            return json({
+              success: true,
+              mode,
+              html,
+              disclaimer: CORPORATE_SITE_READINESS_DISCLAIMER,
+            });
+          }
+
+          const sourceUrl = asString(body.url);
+          if (!sourceUrl) return json({ error: "url required" }, 400);
+          const document = await fetchPublicResearchDocument(sourceUrl);
+          const result = reviewCorporateSiteDocument(
+            document.markdown,
+            profile,
+          );
+          return json({
+            success: true,
+            mode,
+            source: {
+              canonical_url: document.canonicalUrl,
+              title: document.title,
+              http_status: document.httpStatus,
+            },
+            result: {
+              ready_for_document_review: result.readyForDocumentReview,
+              score: result.score,
+              checks: result.checks,
+              missing_required_items: result.missingRequiredItems,
+              manual_review_items: result.manualReviewItems,
+              disclaimer: result.disclaimer,
+            },
+          });
+        } catch (error) {
+          const message = error instanceof Error
+            ? error.message
+            : String(error);
+          const normalized = message.toLowerCase();
+          const invalidInput = normalized.includes("required") ||
+            normalized.includes("characters or fewer") ||
+            normalized.includes("source url") ||
+            normalized.includes("private") ||
+            normalized.includes("local network") ||
+            normalized.includes("not allowed") ||
+            normalized.includes("only http");
+          return json({
+            success: false,
+            status: invalidInput ? "invalid_request" : "site_fetch_failed",
+            message,
+          }, invalidInput ? 400 : 422);
+        }
+      }
+
       case "company_builder.list": {
         const companies = await listItems(
           admin,
@@ -6422,6 +6555,221 @@ serve(async (req: Request) => {
         });
       }
 
+      case "palm_reading.analyze": {
+        const handSide = normalizePalmHandSide(
+          body.hand_side ?? body.handSide,
+        );
+        if (!handSide) {
+          return json({ error: "hand_side must be left or right" }, 400);
+        }
+        const requestId = asString(body.request_id ?? body.requestId);
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(requestId)
+        ) {
+          return json({ error: "valid request_id required" }, 400);
+        }
+        const parsedImage = parseInlineImage(body);
+        if (parsedImage.error) {
+          return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        }
+        const image = parsedImage.image;
+        if (!image) {
+          return json({ error: "imageBase64 required" }, 400);
+        }
+        if (
+          !["image/png", "image/jpeg", "image/webp"].includes(image.mimeType)
+        ) {
+          return json({ error: "PNG, JPEG, or WebP image required" }, 400);
+        }
+
+        const { data: existing, error: existingError } = await admin
+          .from("palm_readings")
+          .select(
+            "id,request_id,hand_side,image_path,image_mime_type,analysis,comparison,provider,model,schema_version,quality_score,created_at",
+          )
+          .eq("user_id", userId!)
+          .eq("request_id", requestId)
+          .maybeSingle();
+        if (existingError) throw new Error(existingError.message);
+        if (existing) {
+          return json({
+            success: true,
+            idempotent_replay: true,
+            image_persisted: true,
+            reading: existing,
+          });
+        }
+
+        const imageBytes = decodePalmImageBase64(
+          image.base64,
+          image.mimeType,
+        );
+        if (!imageBytes) {
+          return json({
+            error: "imageBase64 is invalid or does not match mimeType",
+          }, 400);
+        }
+
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "palm_reading.analyze",
+              provider: "google",
+            }),
+            409,
+          );
+        }
+
+        const { data: previousRows, error: previousError } = await admin
+          .from("palm_readings")
+          .select("id,analysis,created_at")
+          .eq("user_id", userId!)
+          .eq("hand_side", handSide)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(1);
+        if (previousError) throw new Error(previousError.message);
+        const previous = previousRows?.[0] as
+          | Record<string, unknown>
+          | undefined;
+
+        const usage = await checkAndRecordAiUsage(
+          supabaseUsageStore(admin),
+          userId!,
+        );
+        if (!usage.allowed) {
+          return json({
+            success: false,
+            status: "freeLimitReached",
+            error: "usageLimitReached",
+            message: "AIの無料利用上限に達しました。",
+          }, 402);
+        }
+        const budget = await checkBudget("ef", "ai-hub");
+        if (!budget.ok) {
+          return json({
+            success: false,
+            status: "budgetExceeded",
+            error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+            message:
+              "AIの予算上限に達しました。時間をおいて再試行してください。",
+          }, 429);
+        }
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({
+            success: false,
+            status: "apiKeyRequired",
+            secret_needed: "GEMINI_API_KEY",
+            message: "Supabase Secret GEMINI_API_KEY is required.",
+          });
+        }
+
+        const raw = await callGemini(
+          buildPalmReadingPrompt(handSide, previous?.analysis),
+          geminiKey,
+          image,
+        );
+        const payload = parsePalmReadingResponse(raw, Boolean(previous));
+        if (!payload) {
+          return json({
+            success: false,
+            status: "invalidAiResponse",
+            message: "AI鑑定結果を安全な形式に整えられませんでした。",
+          }, 502);
+        }
+        if (!payload.analysis.photo_quality.is_usable) {
+          return json({
+            success: false,
+            status: "imageNeedsRetake",
+            message: payload.analysis.photo_quality.feedback,
+            photo_quality: payload.analysis.photo_quality,
+          });
+        }
+
+        const readingId = crypto.randomUUID();
+        const extension = image.mimeType === "image/png"
+          ? "png"
+          : image.mimeType === "image/webp"
+          ? "webp"
+          : "jpg";
+        const imagePath = `${userId}/${readingId}.${extension}`;
+        const { error: uploadError } = await admin.storage
+          .from("palm-readings")
+          .upload(imagePath, imageBytes, {
+            contentType: image.mimeType,
+            upsert: false,
+          });
+        if (uploadError) throw new Error(uploadError.message);
+
+        const { data: reading, error: insertError } = await admin
+          .from("palm_readings")
+          .insert({
+            id: readingId,
+            request_id: requestId,
+            user_id: userId!,
+            hand_side: handSide,
+            image_path: imagePath,
+            image_mime_type: image.mimeType,
+            analysis: payload.analysis,
+            comparison: payload.comparison,
+            provider: "google",
+            model: "gemini-2.5-flash",
+            schema_version: 1,
+            quality_score: payload.analysis.photo_quality.score,
+          })
+          .select(
+            "id,request_id,hand_side,image_path,image_mime_type,analysis,comparison,provider,model,schema_version,quality_score,created_at",
+          )
+          .single();
+        if (insertError) {
+          await admin.storage.from("palm-readings").remove([imagePath]);
+          throw new Error(insertError.message);
+        }
+
+        return json({
+          success: true,
+          idempotent_replay: false,
+          image_persisted: true,
+          reading,
+        });
+      }
+
+      case "palm_reading.delete": {
+        const readingId = asString(body.reading_id ?? body.readingId);
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(readingId)
+        ) {
+          return json({ error: "valid reading_id required" }, 400);
+        }
+        const { data: ownedReading, error: lookupError } = await admin
+          .from("palm_readings")
+          .select("id,image_path")
+          .eq("id", readingId)
+          .eq("user_id", userId!)
+          .maybeSingle();
+        if (lookupError) throw new Error(lookupError.message);
+        if (!ownedReading) return json({ error: "reading not found" }, 404);
+
+        const imagePath = asString(ownedReading.image_path);
+        if (imagePath) {
+          const { error: removeError } = await admin.storage
+            .from("palm-readings")
+            .remove([imagePath]);
+          if (removeError) throw new Error(removeError.message);
+        }
+        const { error: deleteError } = await admin
+          .from("palm_readings")
+          .delete()
+          .eq("id", readingId)
+          .eq("user_id", userId!);
+        if (deleteError) throw new Error(deleteError.message);
+        return json({ success: true, deleted_id: readingId });
+      }
+
       case "payslip.parse":
       case "parse-payslip": {
         if (!isPayslipIngestionAction(action)) {
@@ -6450,6 +6798,66 @@ serve(async (req: Request) => {
           },
         });
         return json({ success: true, ...result });
+      }
+
+      case "mario.jev_decide": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, { action, provider: "typesafe" }), 409);
+        }
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          return json(await decideMario({
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            allowedUsers: (Deno.env.get("JEV_MARIO_USER_IDS") ?? "").split(",").map(s => s.trim()).filter(Boolean),
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "", body,
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_mario_call", { p_user_id: id });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          }));
+        } catch (error) {
+          if (error instanceof MarioError) return json({ error: error.code }, error.status);
+          return json({ error: "provider_unavailable" }, 503);
+        }
+      }
+
+      case "expense.jev_search":
+      case "expense.jev_suggest": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, {
+            action, provider: "typesafe",
+          }), 409);
+        }
+        // Re-read the authenticated account; anonymous sessions must not spend.
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          const result = await classifyJevExpense({
+            semanticSearch: action === "expense.jev_search",
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            body,
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "",
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_expense_call", {
+                p_user_id: id,
+              });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          });
+          return json(result);
+        } catch (error) {
+          if (error instanceof JevExpenseError) {
+            return json({ error: error.code }, error.status);
+          }
+          return json({ error: "provider_unavailable" }, 503);
+        }
       }
 
       case "expense.classify":
@@ -6857,6 +7265,11 @@ serve(async (req: Request) => {
         }
 
         // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        // action_access_policy により userId か service role のどちらかが必須。
+        // userId が無いのは内部 EF (service role) 呼び出しのみ。
+        if (!userId && !isServiceRoleRequest(req)) {
+          return json({ error: "Unauthorized" }, 401);
+        }
         if (userId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),
@@ -7091,6 +7504,7 @@ serve(async (req: Request) => {
 
       case "provider.chat_auto": {
         const effortSelection = await selectEffort("provider.chat_auto", body);
+        const claudeRoute = routedClaudeModel(effortSelection.effort);
         const internalUsageUserId = isServiceRoleRequest(req)
           ? nullableUuid(body.internal_user_id)
           : null;
@@ -7122,6 +7536,10 @@ serve(async (req: Request) => {
         }
 
         // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        // action_access_policy により userId か service role のどちらかが必須。
+        if (!userId && !isServiceRoleRequest(req)) {
+          return json({ error: "Unauthorized" }, 401);
+        }
         if (routingUserId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),
@@ -7171,6 +7589,8 @@ serve(async (req: Request) => {
         let usedProvider: string | undefined;
         let usedTier: Tier | undefined;
         let usedModel: string | undefined;
+        let usedInputTokens: number | undefined;
+        let usedOutputTokens: number | undefined;
 
         // リクエスト全体の時間予算。実障害(2026-07-06): 予算なしで遅延プロバイダを
         // 順に待つと edge の wall-clock を超え、gateway 502 でクライアントに
@@ -7193,7 +7613,10 @@ serve(async (req: Request) => {
             const result = await callSingleProvider(
               manualPreference.provider,
               finalMessages,
-              manualPreference.model ?? undefined,
+              manualPreference.model ??
+                (manualPreference.provider === "anthropic"
+                  ? claudeRoute.model
+                  : undefined),
               undefined,
               {
                 maxTokens: requestedMaxTokens,
@@ -7209,6 +7632,8 @@ serve(async (req: Request) => {
               usedProvider = manualPreference.provider;
               usedTier = providerTier(manualPreference.provider) ?? routedTier;
               usedModel = result.modelUsed;
+              usedInputTokens = result.inputTokens;
+              usedOutputTokens = result.outputTokens;
             } else {
               const attemptMs = Math.round(
                 performance.now() - attemptStartedAt,
@@ -7244,7 +7669,7 @@ serve(async (req: Request) => {
               const result = await callSingleProvider(
                 pid,
                 finalMessages,
-                undefined,
+                pid === "anthropic" ? claudeRoute.model : undefined,
                 undefined,
                 {
                   maxTokens: requestedMaxTokens,
@@ -7260,6 +7685,8 @@ serve(async (req: Request) => {
                 usedProvider = pid;
                 usedTier = tier;
                 usedModel = result.modelUsed;
+                usedInputTokens = result.inputTokens;
+                usedOutputTokens = result.outputTokens;
                 break outerLoop;
               }
               const attemptMs = Math.round(
@@ -7299,6 +7726,8 @@ serve(async (req: Request) => {
                   : "")).slice(0, 500),
               action: "provider.chat_auto",
               status_code: 503,
+              routing_effort: effortSelection.effort,
+              routing_source: effortSelection.source,
               provider_choice_reason: providerChoiceReason,
               routing_use_case: routingUseCase,
             });
@@ -7324,10 +7753,14 @@ serve(async (req: Request) => {
             .map((m) => typeof m.content === "string" ? m.content.length : 0)
             .reduce((a, b) => a + b, 0);
           const outputChars = resultText?.length ?? 0;
+          const inputTokens = usedInputTokens ??
+            estimateTokensFromChars(inputChars);
+          const outputTokens = usedOutputTokens ??
+            estimateTokensFromChars(outputChars);
           const estimatedCost = calculateApiCost(
             usedModel ?? usedProvider,
-            estimateTokensFromChars(inputChars),
-            estimateTokensFromChars(outputChars),
+            inputTokens,
+            outputTokens,
           );
           await admin.from("ai_hub_chat_logs").insert({
             provider: usedProvider,
@@ -7340,8 +7773,12 @@ serve(async (req: Request) => {
             session_id: sessionId,
             input_chars: inputChars,
             output_chars: outputChars,
+            input_tokens: inputTokens,
+            output_tokens: outputTokens,
             action: "provider.chat_auto",
             status_code: 200,
+            routing_effort: effortSelection.effort,
+            routing_source: effortSelection.source,
             provider_choice_reason: providerChoiceReason,
             routing_use_case: routingUseCase,
           });
@@ -7355,6 +7792,7 @@ serve(async (req: Request) => {
           model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
           effort: effortSelection.effort,
           effort_source: effortSelection.source,
+          claude_route: usedProvider === "anthropic" ? claudeRoute : null,
           status: "implemented",
           text: resultText,
           provider_choice_reason: providerChoiceReason,
@@ -7364,6 +7802,7 @@ serve(async (req: Request) => {
 
       case "edge_llm.invoke": {
         const effortSelection = await selectEffort("edge_llm.invoke", body);
+        const claudeRoute = routedClaudeModel(effortSelection.effort);
         const offlinePolicy = parseOfflineSecureModePolicy(body);
         const requestedTier = normalizeProviderTier(body.tier);
         const providerId = asString(body.provider) || undefined;
@@ -7394,8 +7833,11 @@ serve(async (req: Request) => {
           }, 429);
         }
 
-        const responseFormat = asString(body.response_format) === "json"
+        const requestedResponseFormat = asString(body.response_format);
+        const responseFormat = requestedResponseFormat === "json"
           ? "json"
+          : requestedResponseFormat === "markdown"
+          ? "markdown"
           : "text";
         const contextPayload = body.context_data ?? body.context ?? null;
         const contextText = contextPayload == null
@@ -7416,14 +7858,21 @@ serve(async (req: Request) => {
           "\n# Output instructions",
           responseFormat === "json"
             ? "Return valid JSON only. Do not add markdown fences or commentary."
+            : responseFormat === "markdown"
+            ? "Respond in concise Japanese Markdown. Put code snippets in fenced code blocks and include the language tag."
             : "Respond in concise Japanese plain text.",
         );
         const finalMessages = [];
-        // [AI-CHARACTER-24] Prepend common character preamble to ensure
-        // consistent persona across all edge_llm.invoke callers.
-        const composedSystemPrompt = systemPrompt.length > 0
-          ? `${AI_CHARACTER_PREAMBLE}\n\n${systemPrompt}`
-          : AI_CHARACTER_PREAMBLE;
+        // Keep the stable character/application prefix before the request-time
+        // UTC context so prompt caches can still reuse the longest prefix.
+        const composedSystemPrompt = buildAiSystemPrompt({
+          applicationInstructions: systemPrompt,
+          outputFormat: responseFormat === "json"
+            ? "json"
+            : responseFormat === "markdown"
+            ? "markdown"
+            : "plain_text",
+        });
         finalMessages.push({
           role: "system",
           content: composedSystemPrompt,
@@ -7448,6 +7897,8 @@ serve(async (req: Request) => {
         let usedProvider: string | undefined;
         let usedTier: Tier | undefined;
         let usedModel: string | undefined;
+        let usedInputTokens: number | undefined;
+        let usedOutputTokens: number | undefined;
         let failureDetail: string | undefined;
 
         if (providerId) {
@@ -7471,7 +7922,8 @@ serve(async (req: Request) => {
           const result = await callSingleProvider(
             providerId,
             finalMessages,
-            explicitModel,
+            explicitModel ??
+              (providerId === "anthropic" ? claudeRoute.model : undefined),
           );
           if (result.ok && result.text) {
             resultText = result.text;
@@ -7479,6 +7931,8 @@ serve(async (req: Request) => {
             usedTier = providerTier(providerId) ?? requestedTier ??
               "performance";
             usedModel = result.modelUsed;
+            usedInputTokens = result.inputTokens;
+            usedOutputTokens = result.outputTokens;
           } else if (result.isRetriable) {
             // Quota/rate-limit: try fallback chain (anthropic → google → openai)
             const fallbackChain = ["anthropic", "google", "openai"].filter(
@@ -7488,7 +7942,7 @@ serve(async (req: Request) => {
               const fbResult = await callSingleProvider(
                 fbPid,
                 finalMessages,
-                undefined,
+                fbPid === "anthropic" ? claudeRoute.model : undefined,
               );
               if (fbResult.ok && fbResult.text) {
                 console.warn(
@@ -7498,6 +7952,8 @@ serve(async (req: Request) => {
                 usedProvider = fbPid;
                 usedTier = providerTier(fbPid) ?? "performance";
                 usedModel = fbResult.modelUsed;
+                usedInputTokens = fbResult.inputTokens;
+                usedOutputTokens = fbResult.outputTokens;
                 break;
               }
             }
@@ -7525,13 +7981,18 @@ serve(async (req: Request) => {
             const result = await callSingleProvider(
               manualPreference.provider,
               finalMessages,
-              manualPreference.model ?? undefined,
+              manualPreference.model ??
+                (manualPreference.provider === "anthropic"
+                  ? claudeRoute.model
+                  : undefined),
             );
             if (result.ok && result.text) {
               resultText = result.text;
               usedProvider = manualPreference.provider;
               usedTier = providerTier(manualPreference.provider) ?? routedTier;
               usedModel = result.modelUsed;
+              usedInputTokens = result.inputTokens;
+              usedOutputTokens = result.outputTokens;
             } else {
               failureDetail = `manual preference failed: ${
                 result.error ?? manualPreference.provider
@@ -7550,13 +8011,16 @@ serve(async (req: Request) => {
                 const result = await callSingleProvider(
                   pid,
                   finalMessages,
-                  explicitModel,
+                  explicitModel ??
+                    (pid === "anthropic" ? claudeRoute.model : undefined),
                 );
                 if (result.ok && result.text) {
                   resultText = result.text;
                   usedProvider = pid;
                   usedTier = tier;
                   usedModel = result.modelUsed;
+                  usedInputTokens = result.inputTokens;
+                  usedOutputTokens = result.outputTokens;
                   break outerLoop;
                 }
               }
@@ -7586,6 +8050,8 @@ serve(async (req: Request) => {
               error_message: failureDetail ?? "edge_llm.invoke failed",
               action: "edge_llm.invoke",
               status_code: 502,
+              routing_effort: effortSelection.effort,
+              routing_source: effortSelection.source,
               routing_use_case: routingUseCase,
             });
           } catch {
@@ -7601,10 +8067,14 @@ serve(async (req: Request) => {
         }
 
         const outputChars = resultText.length;
+        const inputTokens = usedInputTokens ??
+          estimateTokensFromChars(inputChars);
+        const outputTokens = usedOutputTokens ??
+          estimateTokensFromChars(outputChars);
         const estimatedCost = calculateApiCost(
           usedModel ?? usedProvider,
-          estimateTokensFromChars(inputChars),
-          estimateTokensFromChars(outputChars),
+          inputTokens,
+          outputTokens,
         );
         let parsedJson: unknown = null;
         let parseError: string | undefined;
@@ -7629,8 +8099,12 @@ serve(async (req: Request) => {
             session_id: sessionId,
             input_chars: inputChars,
             output_chars: outputChars,
+            input_tokens: inputTokens,
+            output_tokens: outputTokens,
             action: "edge_llm.invoke",
             status_code: 200,
+            routing_effort: effortSelection.effort,
+            routing_source: effortSelection.source,
             routing_use_case: routingUseCase,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
@@ -7646,6 +8120,7 @@ serve(async (req: Request) => {
           model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
           effort: effortSelection.effort,
           effort_source: effortSelection.source,
+          claude_route: usedProvider === "anthropic" ? claudeRoute : null,
           text: resultText,
           response_format: responseFormat,
           parsed_json: parsedJson,

@@ -3,12 +3,35 @@ name: Cloud Development Checks
 on:
   pull_request:
     paths:
+      - .agents/skills/site-trust-improvement-loop/**
       - .devcontainer/**
       - .github/workflows/cloud-development.yml
+      - lib/widgets/slide_number_check_card.dart
+      - lib/services/slide_number_check.dart
+      - test/fixtures/slide_number_check_app.dart
+      - test/e2e/slide_number_check.spec.ts
+      - lib/pages/ai_search_page.dart
+      - test/pages/ai_search_page_test.dart
+      - test/fixtures/ai_search_app.dart
+      - test/e2e/ai_search_pending.spec.ts
+      - lib/models/platform_release_checklist.dart
+      - lib/pages/platform_release_checklist_page.dart
+      - test/e2e/platform_release_checklist.spec.ts
+      - scripts/cloud_ci_handoff.py
+      - scripts/cloud_ci_handoff_test.py
+      - scripts/cloud_first_route.py
+      - scripts/cloud_first_route_test.py
+      - scripts/serve_spa.py
+      - docs/CLOUD_FIRST_DEVELOPMENT.md
       - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
+      - docs/CLAUDE_CODE_SETUP_RUNBOOK.md
       - AGENTS.md
   workflow_dispatch:
     inputs:
+      expected_head_sha:
+        description: Exact 40-character pushed HEAD that this run must validate
+        required: true
+        type: string
       profile:
         description: Cloud validation profile
         required: true
@@ -23,6 +46,11 @@ on:
           - full
   workflow_call:
     inputs:
+      expected_head_sha:
+        description: Optional exact HEAD assertion for reusable callers
+        required: false
+        default: ''
+        type: string
       profile:
         description: Cloud validation profile
         required: false
@@ -44,12 +72,29 @@ jobs:
       contents: read
     env:
       CLOUD_PROFILE: ${{ inputs.profile || 'full' }}
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha || '' }}
 
     steps:
       - name: Checkout shallow source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
+
+      - name: Verify exact cloud handoff SHA
+        if: env.EXPECTED_HEAD_SHA != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Cloud handoff mismatch: expected $EXPECTED_HEAD_SHA, checked out $actual_head_sha."
+            exit 1
+          fi
+          echo "Verified exact cloud handoff SHA: $actual_head_sha"
 
       - name: Validate cloud workspace descriptors
         shell: bash
@@ -147,6 +192,184 @@ jobs:
             echo "| profile | \`${CLOUD_PROFILE}\` |"
             echo "| ref | \`${GITHUB_REF}\` |"
             echo "| commit | \`${GITHUB_SHA}\` |"
+            echo "| expected commit | \`${EXPECTED_HEAD_SHA:-event SHA}\` |"
             echo '| local Flutter/Dart work | none |'
             echo '| artifact retention | 1 day when a web build or formatter output runs |'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  platform-release-checklist-e2e:
+    name: Platform release checklist E2E
+    if: github.event_name == 'pull_request' || inputs.profile == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Resolve dependencies and build Flutter Web
+        run: |
+          flutter pub get
+          flutter build web --release --pwa-strategy=none \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Playwright Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run platform release checklist E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7358 > checklist-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/platform_release_checklist.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Upload checklist E2E report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: platform-release-checklist-e2e-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            checklist-server.log
+          if-no-files-found: ignore
+
+  ai-search-pending-e2e:
+    name: Note search pending E2E
+    if: github.event_name == 'pull_request' || inputs.profile == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Resolve dependencies and build Flutter Web
+        run: |
+          flutter pub get
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/ai_search_app.dart \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Playwright Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run note search pending E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/ai_search_pending.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Upload note search E2E report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ai-search-pending-e2e-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            search-server.log
+          if-no-files-found: ignore
+
+  slide-number-check-e2e:
+    name: Slide number check E2E
+    if: github.event_name == 'pull_request' || inputs.profile == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Resolve dependencies and build Flutter Web
+        run: |
+          flutter pub get
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/slide_number_check_app.dart \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Playwright Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run note search pending E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/slide_number_check.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Upload note search E2E report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: slide-number-check-e2e-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            search-server.log
+          if-no-files-found: ignore

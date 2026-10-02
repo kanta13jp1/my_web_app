@@ -18,6 +18,7 @@ import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
+import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
@@ -201,6 +202,32 @@ void main() {
   });
 
   group('AssetManagementPage smoke', () {
+    testWidgets('mobile chat reserves space outside the scrolling content', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await _pumpAssetPage(tester);
+      final dock = find.byKey(const Key('asset_chat_docked_bar'));
+      expect(dock, findsOneWidget);
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.floatingActionButton, isNull);
+      expect(
+        tester.getRect(find.byWidget(scaffold.body!)).bottom,
+        lessThanOrEqualTo(tester.getRect(dock).top),
+      );
+      await tester.tap(find.byKey(const Key('asset_chat_open_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_panel')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byKey(const Key('asset_chat_close_button')));
+      await tester.pump();
+      expect(find.byKey(const Key('asset_chat_open_button')), findsOneWidget);
+      await _unmount(tester);
+    });
+
     testWidgets('sticky asset chat entry opens and closes the panel', (
       tester,
     ) async {
@@ -472,6 +499,86 @@ void main() {
     );
 
     testWidgets(
+      'cycle summary and salary breakdown exclude an unreceived income plan',
+      (tester) async {
+        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+          DateTime.now(),
+          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
+        );
+        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
+        final repo = _FakeDebtOverrideRepository(
+          const <String, int>{},
+          monthlyState: AssetLiabilityMonthlyState(
+            incomePlans: <AssetLiabilityIncomePlan>[
+              AssetLiabilityIncomePlan(
+                id: 'unreceived_salary',
+                date: cycleStart,
+                name: '給料予定',
+                amount: 450000,
+                destinationAccountId: null,
+                destinationAccountName: null,
+                received: false,
+              ),
+            ],
+          ),
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1': 'full',
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              assetLiabilityRepository: repo,
+              debugInitialRecentFlows: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'action_type': 'expense',
+                  'amount': 175110,
+                  'description': '使途不明金（残高差分から自動記録）',
+                  'occurred_at': cycleStart.toIso8601String(),
+                },
+              ],
+              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'pay_date': payDate,
+                  'amount': 421277,
+                  'description': '給料',
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        for (final key in <String>[
+          'asset_monthly_flow_priority_card',
+          'asset_salary_spending_breakdown_card',
+        ]) {
+          final card = find.byKey(Key(key));
+          expect(card, findsOneWidget);
+          expect(
+            find.descendant(of: card, matching: find.text('¥421,277')),
+            findsOneWidget,
+          );
+          expect(
+            find.descendant(of: card, matching: find.textContaining('871,277')),
+            findsNothing,
+          );
+          expect(
+            find.descendant(of: card, matching: find.text('+¥246,167')),
+            findsOneWidget,
+          );
+        }
+        expect(find.text('期間支出（未照合含む）'), findsOneWidget);
+        expect(find.textContaining('全額が消費や浪費とは限りません'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
       'monthly flow card counts payslip salary income when no conquer flow exists',
       (tester) async {
         // 給料を給与明細(payslips/salary_incomes)でのみ管理しているユーザーは、
@@ -483,6 +590,12 @@ void main() {
           salaryDay: AssetSalaryDayStore.defaultSalaryDay,
         );
         final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
+        final previousCycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+          DateTime(cycleStart.year, cycleStart.month - 1),
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetSalaryResetMarkerStore.prefsKey: previousCycleKey,
+        });
 
         await tester.binding.setSurfaceSize(const Size(1200, 2400));
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -490,6 +603,11 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                DateFormat('yyyy-MM-dd').format(now): const <String, double>{
+                  '現金': 50000,
+                },
+              },
               // 収支フロー(wealth_struggles)は空。
               debugInitialRecentFlows: const <Map<String, dynamic>>[],
               // 給料は salary_incomes にのみ存在 (給与明細のみ管理)。
@@ -516,6 +634,31 @@ void main() {
           find.descendant(of: card, matching: find.text('¥280,000')),
           findsOneWidget,
         );
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.textContaining('給与明細・受取済み収入予定から計上した'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.textContaining('現在残高や今後の支払後に使える額とは異なります'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        final prefs = await SharedPreferences.getInstance();
+        expect(
+          prefs.getString(AssetSalaryResetMarkerStore.prefsKey),
+          previousCycleKey,
+          reason: '給与明細だけでは口座入金と判定して支払チェックをリセットしない',
+        );
+        await tester.binding.setSurfaceSize(const Size(390, 1200));
+        await tester.pump();
+        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        expect(tester.takeException(), isNull);
         // 収入があるので「未記録」の空状態文言は出ない。
         expect(
           find.descendant(
@@ -1401,7 +1544,7 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('回避ライン'), findsOneWidget);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
       expect(
         find.byKey(const Key('asset_shift_payment_mobit')),
         findsOneWidget,
@@ -1424,7 +1567,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('回避ライン'), findsNothing);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -1467,7 +1610,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('回避ライン'), findsNothing);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -1582,6 +1725,64 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets(
+        'typed revolving field values survive the rebuild their own '
+        'onChanged triggers', (tester) async {
+      // 最低返済額/新規利用額/利用限度額はTextFormField(initialValue:)ではなく
+      // 永続的なTextEditingControllerを使う（他の支払入力欄と同じパターン）。
+      // 複数回の入力の後も直前の値が表示され続けることを確認する。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 0,
+            newUsageAmount: 0,
+            creditLimit: 0,
+          ),
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugRevolvingConfigsMirror: mirrorValue,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final minimumPaymentField =
+          find.byKey(const ValueKey('revolving:aupay_card:最低返済額'));
+      expect(minimumPaymentField, findsOneWidget);
+
+      // 1文字ずつ入力し、onChangedのたびにsetStateで再構築が起きても
+      // それまでに入力した文字が消えないことを確認する（実機での再現条件）。
+      await tester.enterText(minimumPaymentField, '1');
+      await tester.pump();
+      await tester.enterText(minimumPaymentField, '15');
+      await tester.pump();
+      await tester.enterText(minimumPaymentField, '150');
+      await tester.pump();
+      await tester.enterText(minimumPaymentField, '15000');
+      await tester.pump();
+
+      expect(find.text('15000'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
     testWidgets('safety balance setting persists and updates availability', (
       tester,
     ) async {
@@ -1620,17 +1821,34 @@ void main() {
     testWidgets('living expense priority toggle immediately reorders actions', (
       tester,
     ) async {
-      final now = DateTime.now();
+      // The action list displays only its first eight entries. Keep the
+      // fixture date stable so later overdue payments cannot displace it.
+      final now = DateTime(2026, 9, 1);
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await tester.binding.setSurfaceSize(const Size(1200, 3200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
+      // Isolate the two actions under test from date-dependent default bills.
+      // The page only renders eight actions; unrelated bills must not decide
+      // whether either target action is present in this ordering test.
+      final defaultBills = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{},
+        baseDate: now,
+        includeDefaultFixedPayments: true,
+      );
+
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
+            debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
               <String, int>{'mobit': now.day},
+              monthlyState: AssetLiabilityMonthlyState(
+                paidAccountNames: <String>{
+                  for (final row in defaultBills.cashflowRows) row.accountName,
+                },
+              ),
             ),
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
@@ -1663,7 +1881,11 @@ void main() {
 
       expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
       expect(livingExpense, findsOneWidget);
-      expect(overdue, findsNothing);
+      expect(overdue, findsOneWidget);
+      expect(
+        tester.getTopLeft(livingExpense).dy,
+        lessThan(tester.getTopLeft(overdue).dy),
+      );
 
       await tester.tap(toggle);
       await tester.pump(const Duration(milliseconds: 100));
@@ -2039,10 +2261,10 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('回避ライン'), findsOneWidget);
+      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
       // ただし26日へ移せば次回支払は 7/26 = 次サイクル(給料日後)扱いになり、
       // 当サイクルの支払が消えるため事前判定が「回避できます」。
-      expect(find.textContaining('を26日へ(回避できます)'), findsOneWidget);
+      expect(find.textContaining('の設定を26日へ(試算上の不足なし)'), findsOneWidget);
 
       await _unmount(tester);
     });
