@@ -224,6 +224,37 @@ Deno.test("mapping import removes invalid and duplicate entries", async () => {
   assertEquals(data.mapping.entries[0].new_code, "A100");
 });
 
+Deno.test("mapping import preserves distinct separator-containing pairs", async () => {
+  const store = new FakeIntegrationRegistryStore([
+    row("system-1", INTEGRATION_REGISTRY_SOURCES.system, {
+      system_key: "legacy", name: "Legacy", version: 1,
+    }),
+    row("system-2", INTEGRATION_REGISTRY_SOURCES.system, {
+      system_key: "next", name: "Next", version: 1,
+    }),
+  ]);
+  const response = await handleIntegrationRegistryAction({
+    action: "integration.registry.mapping.import",
+    userId: "user-1",
+    store,
+    body: {
+      mapping_key: "account-codes", name: "Account codes",
+      source_system_key: "legacy", target_system_key: "next",
+      entries: [
+        { old_code: "A^@B", new_code: "C" },
+        { old_code: "A", new_code: "B^@C" },
+        { old_code: "A^@B", new_code: "C" },
+      ],
+    },
+  });
+  assertEquals(response?.status, 201);
+  const data = await response!.json();
+  assertEquals(data.mapping.entry_count, 2);
+  assertEquals(data.mapping.entries.map((entry: Record<string, unknown>) => [
+    entry.old_code, entry.new_code,
+  ]), [["A^@B", "C"], ["A", "B^@C"]]);
+});
+
 Deno.test("mapping import rejects entry lists above the limit", async () => {
   const store = new FakeIntegrationRegistryStore([
     row("system-1", INTEGRATION_REGISTRY_SOURCES.system, {

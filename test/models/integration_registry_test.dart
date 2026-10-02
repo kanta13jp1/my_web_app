@@ -19,6 +19,21 @@ old_code,new_code,description
       expect(entries.first.description, 'Revenue, domestic');
     });
 
+    test('preserves distinct pairs containing the dedup separator', () {
+      final entries = parser.parse('''
+old_code,new_code
+A^@B,C
+A,B^@C
+A^@B,C
+''');
+
+      expect(entries, hasLength(2));
+      expect(entries[0].oldCode, 'A^@B');
+      expect(entries[0].newCode, 'C');
+      expect(entries[1].oldCode, 'A');
+      expect(entries[1].newCode, 'B^@C');
+    });
+
     test('accepts source and target header aliases', () {
       final entries = parser.parse('''
 source_code,target_code,note

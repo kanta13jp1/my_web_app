@@ -176,7 +176,7 @@ function sanitizeMappingEntries(value: unknown): Record<string, unknown>[] {
       200,
     );
     if (oldCode === "" || newCode === "") continue;
-    const duplicateKey = `${oldCode}\u0000${newCode}`;
+    const duplicateKey = JSON.stringify([oldCode, newCode]);
     if (seen.has(duplicateKey)) continue;
     seen.add(duplicateKey);
     entries.push({

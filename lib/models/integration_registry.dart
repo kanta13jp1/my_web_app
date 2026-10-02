@@ -379,7 +379,7 @@ class IntegrationCodeMappingCsvParser {
       required: false,
     );
     final entries = <IntegrationCodeMappingEntry>[];
-    final seen = <String>{};
+    final seen = <(String, String)>{};
     for (var rowIndex = 1; rowIndex < rows.length; rowIndex++) {
       final row = rows[rowIndex];
       if (row.every((cell) => cell.trim().isEmpty)) continue;
@@ -390,7 +390,7 @@ class IntegrationCodeMappingCsvParser {
           'Row ${rowIndex + 1} requires old_code and new_code.',
         );
       }
-      final key = '$oldCode\u0000$newCode';
+      final key = (oldCode, newCode);
       if (!seen.add(key)) continue;
       entries.add(
         IntegrationCodeMappingEntry(
