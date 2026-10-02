@@ -547,7 +547,7 @@ export class World11 {
       if(e.kind==='spiny-egg'&&e.grounded){e.kind='spiny';e.vx=e.direction*.6;}
       if(e.y>270||(e.kind!=='leaping-fish'&&e.y>250)){e.dead=1;continue;}if(e.ownerGrace)e.ownerGrace--;if(overlap(p,e)&&!e.ownerGrace&&this.phase==='playing'){
         if(this.star){this.defeat(e);}
-        else if(!isWater(this.stage)&&!['spiny','spiny-egg','piranha'].includes(e.kind)&&p.vy>=0&&beforeY+p.h<=e.y+6){this.sound('stomp');p.y=e.y-p.h;p.vy=k.jump?-5.2:-3.5;p.grounded=false;this.score+=100;this.popup(100,e.x,e.y);if(e.kind==='paratroopa'){e.kind='koopa';e.vy=0;e.vx=-.5;}else if(e.kind==='koopa'||e.kind==='beetle'){e.kind='shell';e.vx=0;}else if(e.kind==='shell'){e.vx=e.vx?0:(p.x<e.x?4:-4);}else{e.dead=1;this.effects.push({x:e.x,y:e.y+12,kind:'squash',life:20});}}
+        else if(!isWater(this.stage)&&!['spiny','spiny-egg','piranha'].includes(e.kind)&&p.vy>=0&&beforeY+p.h<=e.y+6){this.sound('stomp');this.jumpBuffer=0;this.coyote=0;p.y=e.y-p.h;p.vy=k.jump?-5.2:-3.5;p.grounded=false;this.score+=100;this.popup(100,e.x,e.y);if(e.kind==='paratroopa'){e.kind='koopa';e.vy=0;e.vx=-.5;}else if(e.kind==='koopa'||e.kind==='beetle'){e.kind='shell';e.vx=0;}else if(e.kind==='shell'){e.vx=e.vx?0:(p.x<e.x?4:-4);}else{e.dead=1;this.effects.push({x:e.x,y:e.y+12,kind:'squash',life:20});}}
         else if(e.kind==='shell'&&!e.vx){this.sound('kick');e.vx=p.x<e.x?4:-4;e.x+=Math.sign(e.vx)*10;}else this.hurt();
       }
       if(e.kind==='shell'&&e.vx)for(const other of this.enemies)if(other!==e&&!other.dead&&!other.hidden&&!other.carried&&overlap(e,other)){this.defeat(other);}
