@@ -12,6 +12,7 @@ class _FakeIntegrationRegistryService
   int savedSystems = 0;
   int publishedInterfaces = 0;
   int importedMappings = 0;
+  IntegrationMappingImportDraft? lastImportedMapping;
   int impactCalls = 0;
 
   final IntegrationRegistrySnapshot snapshot =
@@ -159,6 +160,7 @@ class _FakeIntegrationRegistryService
     IntegrationMappingImportDraft draft,
   ) async {
     importedMappings++;
+    lastImportedMapping = draft;
     return IntegrationCodeMappingSet(
       id: 'new-mapping',
       mappingKey: draft.mappingKey,
@@ -254,6 +256,36 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.importedMappings, 1);
+  });
+
+  testWidgets('imports current CSV after editing a preview', (tester) async {
+    final service = _FakeIntegrationRegistryService();
+    await _pumpPage(tester, service);
+    await _tapTab(tester, 'Code mappings');
+    await tester.tap(find.byKey(const Key('import-mapping-button')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('mapping-name-field')), 'Updated codes',
+    );
+    final previewButton = find.byKey(const Key('preview-mapping-csv-button'));
+    await tester.ensureVisible(previewButton);
+    await tester.tap(previewButton);
+    await tester.pumpAndSettle();
+    expect(find.text('2 valid mapping rows'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('mapping-csv-field')),
+      'old_code,new_code\nLATEST,NEWEST',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('2 valid mapping rows'), findsNothing);
+    final importButton = find.byKey(const Key('import-mapping-dialog-button'));
+    await tester.ensureVisible(importButton);
+    await tester.tap(importButton);
+    await tester.pumpAndSettle();
+    expect(service.importedMappings, 1);
+    expect(service.lastImportedMapping!.entries, hasLength(1));
+    expect(service.lastImportedMapping!.entries.single.oldCode, 'LATEST');
+    expect(service.lastImportedMapping!.entries.single.newCode, 'NEWEST');
   });
 
   testWidgets('decodes a Shift_JIS mapping file and shows its preview', (

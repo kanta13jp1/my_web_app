@@ -443,13 +443,7 @@ Content-Type: application/json
     final csv = TextEditingController(
       text: existing == null
           ? 'old_code,new_code,description\n100,A100,Revenue\n200,A200,Expense'
-          : [
-              'old_code,new_code,description',
-              ...existing.entries.map(
-                (entry) =>
-                    '${entry.oldCode},${entry.newCode},${entry.description}',
-              ),
-            ].join('\n'),
+          : _csvParser.encode(existing.entries),
     );
     var sourceKey =
         existing?.sourceSystemKey ?? _snapshot.systems.first.systemKey;
@@ -571,6 +565,10 @@ Content-Type: application/json
                   TextField(
                     key: const Key('mapping-csv-field'),
                     controller: csv,
+                    onChanged: (_) => setDialogState(() {
+                      preview = <IntegrationCodeMappingEntry>[];
+                      parseError = null;
+                    }),
                     minLines: 5,
                     maxLines: 10,
                     decoration: const InputDecoration(
@@ -621,7 +619,7 @@ Content-Type: application/json
             FilledButton.icon(
               key: const Key('import-mapping-dialog-button'),
               onPressed: () async {
-                if (preview.isEmpty) parsePreview(setDialogState);
+                parsePreview(setDialogState);
                 if (name.text.trim().isEmpty ||
                     sourceKey == targetKey ||
                     preview.isEmpty) {

@@ -350,6 +350,18 @@ class IntegrationMappingImportDraft {
 class IntegrationCodeMappingCsvParser {
   const IntegrationCodeMappingCsvParser();
 
+  String encode(List<IntegrationCodeMappingEntry> entries) {
+    String quote(String value) => '"${value.replaceAll('"', '""')}"';
+    return <String>[
+      'old_code,new_code,description',
+      ...entries.map((entry) => <String>[
+            entry.oldCode,
+            entry.newCode,
+            entry.description,
+          ].map(quote).join(',')),
+    ].join('\n');
+  }
+
   List<IntegrationCodeMappingEntry> parse(String csvText) {
     final rows = _parseRows(csvText);
     if (rows.length < 2) {

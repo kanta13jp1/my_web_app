@@ -34,6 +34,21 @@ A^@B,C
       expect(entries[1].newCode, 'B^@C');
     });
 
+    test('CSV encoding preserves delimiters quotes and line breaks', () {
+      const original = <IntegrationCodeMappingEntry>[
+        IntegrationCodeMappingEntry(
+          oldCode: 'OLD,1',
+          newCode: 'NEW"1',
+          description: 'first\nsecond, "quoted"',
+        ),
+      ];
+      final restored = parser.parse(parser.encode(original));
+      expect(restored, hasLength(1));
+      expect(restored.single.oldCode, original.single.oldCode);
+      expect(restored.single.newCode, original.single.newCode);
+      expect(restored.single.description, original.single.description);
+    });
+
     test('accepts source and target header aliases', () {
       final entries = parser.parse('''
 source_code,target_code,note
