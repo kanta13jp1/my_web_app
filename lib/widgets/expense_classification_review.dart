@@ -155,6 +155,13 @@ class _ExpenseClassificationReviewState
                       ? 'キーワード一致による候補です。店名だけでは用途を確定できません。'
                       : 'ルールに一致しません。品目や用途を追記して確認してください。',
             ),
+          if (ai) ...[
+            Text(
+              '接続先：${_client.isLocalMode ? 'ローカルAI' : 'クラウドAI'}',
+            ),
+            Text('応答時間：${_prediction.latencyMs} ms（要求全体）'),
+            const Text('通信と返答の処理を含みます。モデル内部の推論時間ではありません。'),
+          ],
           if (ai)
             Text(
               'モデルの確信度：${(_prediction.confidence * 100).toStringAsFixed(0)}%'
