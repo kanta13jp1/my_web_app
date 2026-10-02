@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_developer_issue_lookup_cache.dart';
 
-Map<String, String> request(String key, {String description = 'description'}) => {
+Map<String, String> request(String key, {String description = 'description'}) =>
+    {
       'key': key,
       'title': 'Title $key',
       'description': description,
@@ -23,10 +24,11 @@ void main() {
         calls++;
         return response.future;
       }
-      final first = cache.lookup(scopeKey: 'user',
-          requests: [request('a'), request('b')], load: load);
-      final second = cache.lookup(scopeKey: 'user',
-          requests: [request('b')], load: load);
+
+      final first = cache.lookup(
+          scopeKey: 'user', requests: [request('a'), request('b')], load: load);
+      final second =
+          cache.lookup(scopeKey: 'user', requests: [request('b')], load: load);
       final checks = Future.wait([
         expectLater(first, throwsStateError),
         expectLater(second, throwsStateError),
@@ -34,25 +36,38 @@ void main() {
       response.completeError(StateError('Unavailable'));
       await checks;
       expect(calls, 1);
-      expect(await cache.lookup(scopeKey: 'user', requests: [request('b')],
-          load: (_) async => {'b': issue('b')}), {'b': issue('b')});
+      expect(
+          await cache.lookup(
+              scopeKey: 'user',
+              requests: [request('b')],
+              load: (_) async => {'b': issue('b')}),
+          {'b': issue('b')});
     });
 
     test('same-account invalidation rejects in-flight result', () async {
       final cache = AssetDeveloperIssueLookupCache();
       final response = Completer<Map<String, Map<String, dynamic>>>();
-      final pending = cache.lookup(scopeKey: 'user', requests: [request('a')],
+      final pending = cache.lookup(
+          scopeKey: 'user',
+          requests: [request('a')],
           load: (_) => response.future);
       final checked = expectLater(pending, throwsStateError);
       final revision = cache.revision;
       cache.invalidate();
       expect(cache.revision, greaterThan(revision));
-      expect(await cache.lookup(scopeKey: 'user', requests: [request('a')],
-          load: (_) async => {'a': issue('new')}), {'a': issue('new')});
+      expect(
+          await cache.lookup(
+              scopeKey: 'user',
+              requests: [request('a')],
+              load: (_) async => {'a': issue('new')}),
+          {'a': issue('new')});
       response.complete({'a': issue('old')});
       await checked;
-      expect(await cache.lookup(scopeKey: 'user', requests: [request('a')],
-          load: (_) => throw StateError('No request expected')),
+      expect(
+          await cache.lookup(
+              scopeKey: 'user',
+              requests: [request('a')],
+              load: (_) => throw StateError('No request expected')),
           {'a': issue('new')});
     });
 
@@ -243,7 +258,8 @@ void main() {
       var created = false;
       Future<Map<String, Map<String, dynamic>>> load(
         List<Map<String, String>> requests,
-      ) async => created ? {'base': issue('base')} : {};
+      ) async =>
+          created ? {'base': issue('base')} : {};
 
       expect(
         await cache.lookup(
@@ -284,8 +300,10 @@ void main() {
         ),
         {'a': issue('a'), 'b': issue('b'), 'c': issue('c')},
       );
-      await cache.lookup(scopeKey: 'user', requests: [request('b')], load: load);
-      await cache.lookup(scopeKey: 'user', requests: [request('a')], load: load);
+      await cache.lookup(
+          scopeKey: 'user', requests: [request('b')], load: load);
+      await cache.lookup(
+          scopeKey: 'user', requests: [request('a')], load: load);
       expect(calls, [
         ['a', 'b', 'c'],
         ['a'],

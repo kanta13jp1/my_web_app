@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-typedef AssetDeveloperIssueLookupLoader = Future<Map<String, Map<String, dynamic>>>
-    Function(List<Map<String, String>> requests);
+typedef AssetDeveloperIssueLookupLoader
+    = Future<Map<String, Map<String, dynamic>>> Function(
+        List<Map<String, String>> requests);
 
 /// Session-only cache shared by the display and pre-generation lookup paths.
 /// Full payload identities keep changed descriptions distinct. Null entries mean
@@ -104,9 +105,8 @@ class AssetDeveloperIssueLookupCache {
       final results = <String, Map<String, dynamic>?>{};
       for (final entry in requests.entries) {
         final issue = fetched[entry.value['key']];
-        results[entry.key] = issue == null
-            ? null
-            : Map<String, dynamic>.unmodifiable(issue);
+        results[entry.key] =
+            issue == null ? null : Map<String, dynamic>.unmodifiable(issue);
       }
       if (_generation == generation) {
         for (final entry in results.entries) {

@@ -23241,7 +23241,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         requests: payload,
         load: _fetchExistingDeveloperIssues,
       );
-      if (!mounted || _supabase.auth.currentUser?.id != userId ||
+      if (!mounted ||
+          _supabase.auth.currentUser?.id != userId ||
           _developerIssueLookupCache.revision != revision) return;
       setState(() {
         for (final request in payload) {
@@ -23252,7 +23253,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (_) {
       // Preserve the existing soft-failure behavior. Failures are not cached,
       // so the next pre-generation request can retry.
-      if (!mounted || _supabase.auth.currentUser?.id != userId ||
+      if (!mounted ||
+          _supabase.auth.currentUser?.id != userId ||
           _developerIssueLookupCache.revision != revision) return;
       setState(() {
         for (final request in payload) {
@@ -23502,11 +23504,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return false;
       setState(() {
         _developerRequestIssueResults[issueKey] = data;
-      final createdIssue = _assetManagementDynamicMap(data['githubIssue']);
-      if ((createdIssue['html_url']?.toString() ?? '').isNotEmpty) {
-        _developerIssueLookupCache.invalidate();
-        _developerRequestExistingIssueLookupKey = null;
-      }
+        final createdIssue = _assetManagementDynamicMap(data['githubIssue']);
+        if ((createdIssue['html_url']?.toString() ?? '').isNotEmpty) {
+          _developerIssueLookupCache.invalidate();
+          _developerRequestExistingIssueLookupKey = null;
+        }
       });
 
       final githubIssue = _assetManagementDynamicMap(data['githubIssue']);
