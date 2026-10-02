@@ -17,6 +17,13 @@ export function musicStep(track,beat,hurry=false){
  const a=arrangements[track]??arrangements.overworld,chord=a.chords[Math.floor(beat/16)%a.chords.length],step=a.step*(hurry?.78:1);
  return {leadType:Math.floor(beat/16)%2?'triangle':'square',step,lead:scores[track]?.[beat%scores[track].length]??0,harmony:chord[[0,2,1,2][beat%4]]+12,bass:chord[beat%4===2?2:0]-(track==='star'?12:0),counter:chord[beat%8<4?1:2]+(track==='castle'?0:12),pad:chord[0]+(track==='castle'||track==='underground'?19:24),fifth:chord[2]+12,answer:chord[(Math.floor(beat/2)+1)%3]+24,bell:chord[(Math.floor(beat/4)+2)%3]+36,accent:chord[1]+24,echo:chord[2]+19,turn:chord[0]+12,pickup:chord[1]+19,reply:chord[2]+24,lowAnswer:chord[1],spark:chord[0]+36,cadence:chord[2]+19,duty:a.duty};
 }
+// step is an eighth note: two subdivisions form sixteenths. Underwater
+// keeps an eighth-note accompaniment below a slower quarter-note melody.
+export function ostinatoStep(track,beat,hurry=false){
+ const a=arrangements[track]??arrangements.overworld,chord=a.chords[Math.floor(beat/16)%a.chords.length];
+ const step=a.step*(hurry?.78:1),slow=track==='underwater',pattern=[0,2,1,2,0,1,2,1];
+ return Array.from({length:slow?1:2},(_,i)=>({note:chord[pattern[(beat*2+i)%8]]+12,offset:i*step/2,duration:step*(slow?.70:.36),type:Math.floor(beat/16)%2?'triangle':'square',gain:slow?.008:.006,duty:.125}));
+}
 export const effects={firework:[48,36],swim:[60,67],bridge:[43,38,31,24],impact:[42,30],skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
 export class GameAudio{
  constructor(factory=()=>new(globalThis.AudioContext||globalThis.webkitAudioContext)()){
@@ -69,7 +76,8 @@ export class GameAudio{
   if(this.next<now)this.next=now;
   while(this.next<now+.08){
    const {step,lead,leadType,harmony,bass,counter,pad,fifth,answer,bell,accent,echo,turn,pickup,reply,lowAnswer,spark,cadence,duty}=musicStep(track,this.beat,hurry),t=this.next;
-   this.tone(lead,t,step*(this.beat%4===3?.55:.82),leadType,.052,true,0,duty);
+   if(track!=='underwater'||this.beat%2===0)this.tone(track==='underwater'?scores.underwater[Math.floor(this.beat/2)%scores.underwater.length]:lead,t,step*(track==='underwater'?1.7:this.beat%4===3?.55:.82),leadType,.052,true,0,duty);
+   for(const n of ostinatoStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,n.type,n.gain,true,0,n.duty);
    // Offbeat comping and broken triads keep the lead audible without dense chords.
    if(this.beat%2===0||track==='star')this.tone(harmony,t+step*.08,step*.65,'square',track==='underwater'?.013:.018,true,0,.5);
    if(this.beat%32===9)this.tone(reply,t+step*.65,step*.55,'triangle',.006,true);
