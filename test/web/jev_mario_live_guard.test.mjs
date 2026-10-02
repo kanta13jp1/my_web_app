@@ -37,3 +37,11 @@ test('castle reward avoidance remains bounded and respected',()=>{
  assert.equal(guard.decide(g,'noop',[],[{stage:32,room:'castle',x:197.88,until:300}]),'noop');
  assert.notEqual(guard.lastReason,'item_pickup_route');
 });
+
+test('castle failure recovery takes priority locally without disabling ordinary rewards',()=>{
+ const run=records=>{const g=new World11(32),guard=new LiveGuard();Object.assign(g.p,{x:197.88,y:192,vx:0,vy:0,grounded:true});g.frames=180;const before=JSON.stringify(g.snapshot()),action=guard.decide(g,'noop',records);assert.equal(JSON.stringify(g.snapshot()),before);return {action,reason:guard.lastReason};};
+ const failure={stage:32,room:'castle',x:300,y:192,count:1,kind:'death',failedActions:{right_run:1}};
+ assert.equal(run([failure]).action,'noop');assert.notEqual(run([failure]).reason,'item_pickup_route');
+ for(const record of [{...failure,stage:28},{...failure,room:'overworld'},{...failure,x:500},{...failure,x:170}]){assert.equal(run([record]).action,'jump');assert.equal(run([record]).reason,'item_pickup_route');}
+ assert.equal(run([]).action,'jump');
+});
