@@ -1,5 +1,7 @@
 import unittest
-from documentation_quality_gate import new_findings
+import tempfile
+from pathlib import Path
+from documentation_quality_gate import collect, new_findings
 
 
 class DeltaTest(unittest.TestCase):
@@ -14,6 +16,15 @@ class DeltaTest(unittest.TestCase):
 
     def test_fixed_findings_do_not_block(self):
         self.assertEqual(new_findings([], [{'reason': 'missing_local_target'}]), [])
+
+    def test_actual_spelling_and_link_detectors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            file = root / 'fixture.md'
+            file.write_text('This documentation is correct.\n', encoding='utf-8')
+            self.assertEqual(collect(root, ['fixture.md']), [])
+            file.write_text('This is teh documentation. [missing](missing.md)\n', encoding='utf-8')
+            self.assertEqual({item['kind'] for item in collect(root, ['fixture.md'])}, {'spelling', 'local_link'})
 
 
 if __name__ == '__main__':

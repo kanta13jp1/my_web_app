@@ -67,12 +67,16 @@ def main():
                 subprocess.run(['git', 'worktree', 'remove', directory], check=True, capture_output=True)
     added = new_findings(current, previous)
     args.output.mkdir(parents=True, exist_ok=True)
-    report = {'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'base': args.base, 'all_findings': current, 'new_findings': added, 'external_urls': 'not_checked', 'anchors': 'not_checked', 'app_routes': 'not_checked'}
+    report = {'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'base': args.base, 'all_findings': current, 'new_findings': added, 'external_urls': 'not_checked', 'anchors': 'CommonMark headings and explicit HTML IDs', 'app_routes': 'not_checked'}
     (args.output / 'findings.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
-    lines = ['# 文書品質検査', '', f'既存を含む指摘: {len(current)}', f'新規指摘: {len(added)}', '', '内部ファイル参照と英語の既知スペル誤りを検査。外部URL・アンカー・アプリURL・日本語文法は対象外。', '', '修正: 対象パスを確認しリンク先を復旧、または誤記を修正してください。誤検出は根拠と狭い例外をレビューします。', '', '全指摘はfindings.jsonに保存しています。']
+    lines = ['# 文書品質検査', '', f'既存を含む指摘: {len(current)}', f'新規指摘: {len(added)}', '', '内部ファイル参照・Markdown見出しとHTML IDのアンカー・英語の既知スペル誤りを検査。外部URL・アプリURL・日本語文法は対象外。', '', '修正: 対象パスを確認しリンク先を復旧、または誤記を修正してください。誤検出は根拠と狭い例外をレビューします。', '', '全指摘はfindings.jsonに保存しています。']
     lines.extend(f'- {item}' for item in added[:50])
     (args.output / 'summary.md').write_text('\n'.join(lines), encoding='utf-8')
     print(json.dumps({'all_findings': len(current), 'new_findings': len(added)}))
+    for item in added[:50]:
+        print('DOCUMENTATION_FINDING ' + json.dumps(item, ensure_ascii=False))
+    if added:
+        print('DOCUMENTATION_REPAIR: verify local target paths or spelling; full details in documentation-quality-evidence/findings.json')
     return 1 if added else 0
 
 
