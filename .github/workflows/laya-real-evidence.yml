@@ -1,0 +1,28 @@
+name: Laya bounded real model evidence
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: laya-real-model-evidence
+  cancel-in-progress: false
+jobs:
+  cpu-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install CPU runtime and fixed SDK
+        run: |
+          python3 -m pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+          python3 -m pip install transformers==4.45.2 numpy==1.26.4 huggingface_hub==0.25.2 safetensors==0.4.5
+          python3 -m pip install --no-deps git+https://github.com/NandhaKishorM/laya.git@42626c348753fbb17572a813127df2278a1ec527
+      - name: Measure six synthetic inputs with fixed multilingual weights
+        run: python3 -B scripts/laya_real_expense_evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: laya-real-expense-evidence
+          path: laya-real-results.json
+          if-no-files-found: warn
+          retention-days: 14
