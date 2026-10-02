@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GameAudio, effects, musicStep, arrangements, MAX_VOICES, MAX_MUSIC_VOICES, scores, MOTIF, ostinatoStep } from '../../web/labs/jev-mario/audio.mjs';
+import { GameAudio, effects, musicStep, arrangements, MAX_VOICES, MAX_MUSIC_VOICES, scores, MOTIF, ostinatoStep, bassStep } from '../../web/labs/jev-mario/audio.mjs';
 import { World11 } from '../../web/labs/jev-mario/world11.mjs';
 test('noise percussion reuses one buffer and stops with music or mute',async()=>{
  const c=context();let buffers=0;const sources=[];c.sampleRate=48000;
@@ -150,4 +150,19 @@ test('castle moves Em C D B major and resolves D sharp to E on the loop',()=>{
  assert.deepEqual([0,16,32,48,64].map(b=>musicStep('castle',b).bass),[40,36,38,35,40]);
  assert.equal(ostinatoStep('castle',48)[0].note,47);
  assert.ok(Array.from({length:8},(_,i)=>ostinatoStep('castle',48+i)).flat().some(e=>e.note===51));
+});
+
+
+test('bass groove answers an octave up, rests, and approaches the next root',()=>{
+ assert.equal(bassStep('castle',0)[0].note,40);
+ assert.equal(bassStep('castle',2)[0].note,52);
+ assert.ok(bassStep('castle',2)[0].duration<musicStep('castle',2).step);
+ assert.deepEqual(bassStep('castle',6),[]);
+ assert.equal(bassStep('castle',62)[0].note,39);
+ assert.equal(bassStep('castle',63)[0].note,40);
+ assert.ok(bassStep('castle',62)[0].offset<bassStep('castle',63)[0].offset);
+ assert.ok(bassStep('overworld',3,true)[0].offset<bassStep('overworld',3)[0].offset);
+ assert.equal(bassStep('underwater',2)[0].note,48);
+ assert.ok(bassStep('underwater',2)[0].duration>musicStep('underwater',2).step);
+ assert.deepEqual(bassStep('underwater',3),[]);
 });

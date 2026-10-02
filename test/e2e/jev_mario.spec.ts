@@ -865,3 +865,25 @@ test('castle dominant resolves to the minor hook in rendered browser audio',asyn
  expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);expect(result.maxVoices).toBeLessThanOrEqual(64);
  await (await import('node:fs/promises')).writeFile(info.outputPath('castle-minor-cadence.json'),JSON.stringify(result));
 });
+
+
+test('bass and drums alone render an octave groove with audible space',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{
+  const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const c=new OfflineAudioContext(1,48000*2,48000);let now=0;
+  const proxy=new Proxy(c,{get(target,key){if(key==='state')return 'running';if(key==='currentTime')return now;if(key==='resume')return async()=>{};const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v;}});
+  const a=new GameAudio(()=>proxy);await a.enable(true);const bass:any[]=[];const tone=a.tone.bind(a);
+  a.tone=(...args)=>{if(args[4]===.105){bass.push({note:args[0],time:args[1],duration:args[2]});return tone(...args);}if(args[4]===.055)return tone(...args);};
+  for(now=0;now<1.3;now+=.025)a.tick('overworld');const b=await c.startRendering(),samples=b.getChannelData(0);let peak=0,sum=0;for(const x of samples){peak=Math.max(peak,Math.abs(x));sum+=x*x;}return {bass,peak,rms:Math.sqrt(sum/samples.length)};
+ });
+ expect(result.bass.slice(0,2).map(n=>n.note)).toEqual([48,60]);expect(result.bass[1].duration).toBeLessThan(.145);expect(result.bass[3].time-result.bass[2].time-result.bass[2].duration).toBeGreaterThan(.3);
+ expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);await (await import('node:fs/promises')).writeFile(info.outputPath('bass-drums-groove.json'),JSON.stringify(result));
+});
+
+test('manual movement brakes after release and holding jump does not auto-bounce',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const step=World11.prototype.step,sound=World11.prototype.sound;(window as any).jumpCount=0;World11.prototype.step=function(){if(!(window as any).controlWorld){(window as any).controlWorld=this;this.enemies=[];this.cells=new Map();this.contents=new Map();for(let x=0;x<30;x++)this.cells.set(`${x},13`,'ground');}return step.call(this);};World11.prototype.sound=function(name){if(name==='jump')(window as any).jumpCount++;return sound.call(this,name);};});
+ await lab.locator('#watch-manual').click();await lab.locator('#screen').focus();await page.keyboard.down('ArrowRight');await page.waitForTimeout(300);await page.keyboard.up('ArrowRight');await expect.poll(()=>frame.evaluate(()=>(window as any).controlWorld?.p.vx),{timeout:3000}).toBe(0);
+ await page.keyboard.down('Space');await expect(lab.locator('#posture')).toContainText('上昇');await page.waitForTimeout(1800);expect(await frame.evaluate(()=>(window as any).jumpCount)).toBe(1);expect(await frame.evaluate(()=>(window as any).controlWorld.p.grounded)).toBe(true);
+ await page.keyboard.up('Space');await lab.locator('#stop').click();await lab.locator('#presentation').screenshot({path:info.outputPath('manual-control-response.png')});
+});
