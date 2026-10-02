@@ -88,6 +88,62 @@ void main() {
     expect(find.byTooltip('AIシェアボタン設定'), findsNothing);
   });
 
+  testWidgets('mobile asset Inbox stays clear of the right-hand chat action',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    universalAiShareRouteObserver.currentPage.value =
+        UniversalSharePageContext.fromRouteName('/asset-management');
+
+    await tester.pumpWidget(_buildShell(isLoggedInOverride: true));
+    await tester.pump();
+
+    final inbox = tester.getRect(
+      find.byKey(const Key('universal_inbox_capture_button')),
+    );
+    expect(inbox.right, lessThan(100));
+    expect(find.byTooltip('AIシェア'), findsNothing);
+    await tester.tap(find.byTooltip('Inboxへメモ'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('inbox_quick_capture_text_field')),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  test('asset mobile placement override preserves other routes and preferences',
+      () {
+    for (final width in [320.0, 390.0, 599.0, 600.0, 1024.0]) {
+      expect(
+        resolveAiShareFabPosition(
+          preferred: AiShareButtonPosition.bottomRight,
+          routePath: '/asset-management',
+          screenWidth: width,
+        ),
+        width < 600
+            ? AiShareButtonPosition.bottomLeft
+            : AiShareButtonPosition.bottomRight,
+      );
+    }
+    expect(
+      resolveAiShareFabPosition(
+        preferred: AiShareButtonPosition.topRight,
+        routePath: '/asset-management',
+        screenWidth: 390,
+      ),
+      AiShareButtonPosition.topRight,
+    );
+    expect(
+      resolveAiShareFabPosition(
+        preferred: AiShareButtonPosition.bottomRight,
+        routePath: '/notes',
+        screenWidth: 390,
+      ),
+      AiShareButtonPosition.bottomRight,
+    );
+  });
+
   testWidgets('settings sheet opens from the overlay-hosted share button',
       (tester) async {
     await tester.pumpWidget(_buildShell());
