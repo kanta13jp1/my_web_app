@@ -19,13 +19,13 @@ class SpreadsheetViewModel extends ChangeNotifier {
     required AutoSaveService autoSaveService,
     SpreadsheetXlsxCodec xlsxCodec = const SpreadsheetXlsxCodec(),
     DateTime Function()? clock,
-  }) : _repository = repository,
-       _evaluateFormula = evaluateFormula,
-       _csvCodec = csvCodec,
-       _xlsxCodec = xlsxCodec,
-       _fileGateway = fileGateway,
-       _autoSaveService = autoSaveService,
-       _clock = clock ?? DateTime.now {
+  })  : _repository = repository,
+        _evaluateFormula = evaluateFormula,
+        _csvCodec = csvCodec,
+        _xlsxCodec = xlsxCodec,
+        _fileGateway = fileGateway,
+        _autoSaveService = autoSaveService,
+        _clock = clock ?? DateTime.now {
     _autoSaveService.addListener(_handleSaveStateChanged);
   }
 

@@ -285,7 +285,8 @@ class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
   Future<bool> saveXlsx({
     required String suggestedName,
     required Uint8List bytes,
-  }) => pendingSave ?? saveCsv(suggestedName: suggestedName, bytes: bytes);
+  }) =>
+      pendingSave ?? saveCsv(suggestedName: suggestedName, bytes: bytes);
 
   @override
   Future<bool> saveCsv({
