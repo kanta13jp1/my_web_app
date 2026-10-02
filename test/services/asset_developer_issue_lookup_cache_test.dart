@@ -26,9 +26,11 @@ void main() {
       }
 
       final first = cache.lookup(
-          scopeKey: 'user', requests: [request('a'), request('b')], load: load);
+          scopeKey: 'user', requests: [request('a'), request('b')], load: load,
+      );
       final second =
-          cache.lookup(scopeKey: 'user', requests: [request('b')], load: load);
+          cache.lookup(scopeKey: 'user', requests: [request('b')], load: load,
+      );
       final checks = Future.wait([
         expectLater(first, throwsStateError),
         expectLater(second, throwsStateError),
@@ -40,8 +42,10 @@ void main() {
           await cache.lookup(
               scopeKey: 'user',
               requests: [request('b')],
-              load: (_) async => {'b': issue('b')}),
-          {'b': issue('b')});
+              load: (_) async => {'b': issue('b')},
+          ),
+          {'b': issue('b')},
+      );
     });
 
     test('same-account invalidation rejects in-flight result', () async {
@@ -50,7 +54,8 @@ void main() {
       final pending = cache.lookup(
           scopeKey: 'user',
           requests: [request('a')],
-          load: (_) => response.future);
+          load: (_) => response.future,
+      );
       final checked = expectLater(pending, throwsStateError);
       final revision = cache.revision;
       cache.invalidate();
@@ -59,16 +64,20 @@ void main() {
           await cache.lookup(
               scopeKey: 'user',
               requests: [request('a')],
-              load: (_) async => {'a': issue('new')}),
-          {'a': issue('new')});
+              load: (_) async => {'a': issue('new')},
+          ),
+          {'a': issue('new')},
+      );
       response.complete({'a': issue('old')});
       await checked;
       expect(
           await cache.lookup(
               scopeKey: 'user',
               requests: [request('a')],
-              load: (_) => throw StateError('No request expected')),
-          {'a': issue('new')});
+              load: (_) => throw StateError('No request expected'),
+          ),
+          {'a': issue('new')},
+      );
     });
 
     test('deterministic, combined, deterministic fetch only new AI payload',
@@ -92,8 +101,10 @@ void main() {
         await cache.lookup(scopeKey: 'user', requests: [base, ai], load: load),
         {'base': issue('base'), 'ai': issue('ai')},
       );
-      await cache.lookup(scopeKey: 'user', requests: [base], load: load);
-      await cache.lookup(scopeKey: 'user', requests: [ai, base], load: load);
+      await cache.lookup(scopeKey: 'user', requests: [base], load: load,
+      );
+      await cache.lookup(scopeKey: 'user', requests: [ai, base], load: load,
+      );
       expect(calls, [
         ['base'],
         ['ai'],
@@ -301,9 +312,11 @@ void main() {
         {'a': issue('a'), 'b': issue('b'), 'c': issue('c')},
       );
       await cache.lookup(
-          scopeKey: 'user', requests: [request('b')], load: load);
+          scopeKey: 'user', requests: [request('b')], load: load,
+      );
       await cache.lookup(
-          scopeKey: 'user', requests: [request('a')], load: load);
+          scopeKey: 'user', requests: [request('a')], load: load,
+      );
       expect(calls, [
         ['a', 'b', 'c'],
         ['a'],
@@ -353,7 +366,8 @@ void main() {
         return {};
       }
 
-      await cache.lookup(scopeKey: 'user', requests: [], load: load);
+      await cache.lookup(scopeKey: 'user', requests: [], load: load,
+      );
       await cache.lookup(
         scopeKey: 'user',
         requests: [request('base'), request('base')],

@@ -23213,7 +23213,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted ||
               _supabase.auth.currentUser?.id != userId ||
-              _developerRequestExistingIssueLookupKey != lookupKey) return;
+              _developerRequestExistingIssueLookupKey != lookupKey) {
+        return;
+      }
           unawaited(_loadExistingDeveloperIssues(
             lookupKey: lookupKey,
             requests: payload,
@@ -23243,7 +23245,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
       if (!mounted ||
           _supabase.auth.currentUser?.id != userId ||
-          _developerIssueLookupCache.revision != revision) return;
+          _developerIssueLookupCache.revision != revision) {
+        return;
+      }
       setState(() {
         for (final request in payload) {
           _developerRequestExistingIssueResults.remove(request['key']);
@@ -23255,7 +23259,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // so the next pre-generation request can retry.
       if (!mounted ||
           _supabase.auth.currentUser?.id != userId ||
-          _developerIssueLookupCache.revision != revision) return;
+          _developerIssueLookupCache.revision != revision) {
+        return;
+      }
       setState(() {
         for (final request in payload) {
           _developerRequestExistingIssueResults.remove(request['key']);
@@ -23314,7 +23320,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted ||
           _supabase.auth.currentUser?.id != userId ||
           _developerIssueLookupCache.revision != revision ||
-          _developerRequestExistingIssueLookupKey != lookupKey) return;
+          _developerRequestExistingIssueLookupKey != lookupKey) {
+        return;
+      }
       setState(() {
         _developerRequestExistingIssueResults
           ..clear()
@@ -23325,7 +23333,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted ||
           _supabase.auth.currentUser?.id != userId ||
           _developerIssueLookupCache.revision != revision ||
-          _developerRequestExistingIssueLookupKey != lookupKey) return;
+          _developerRequestExistingIssueLookupKey != lookupKey) {
+        return;
+      }
       setState(() {
         _developerRequestExistingIssueResults.clear();
         _isCheckingExistingDeveloperRequestIssues = false;

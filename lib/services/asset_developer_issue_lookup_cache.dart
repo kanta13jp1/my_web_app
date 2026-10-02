@@ -3,7 +3,8 @@ import 'dart:convert';
 
 typedef AssetDeveloperIssueLookupLoader
     = Future<Map<String, Map<String, dynamic>>> Function(
-        List<Map<String, String>> requests);
+        List<Map<String, String>> requests,
+      );
 
 /// Session-only cache shared by the display and pre-generation lookup paths.
 /// Full payload identities keep changed descriptions distinct. Null entries mean
