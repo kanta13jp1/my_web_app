@@ -35,6 +35,10 @@ class LinksTest(unittest.TestCase):
     def test_external_private_urls_are_never_fetched(self):
         self.assertEqual(self.check("[external](https://127.0.0.1/private) [mail](mailto:x@example.invalid) [anchor](#heading)"), [])
 
+    def test_application_routes_are_not_file_links(self):
+        self.assertEqual(self.check("[privacy](/privacy) [legal](/tokusho?lang=ja)"), [])
+        self.assertEqual(len(self.check("[file](/missing.md)")), 1)
+
     def test_nested_source_and_source_escape(self):
         folder = self.root / "nested"
         folder.mkdir()
