@@ -271,8 +271,9 @@ class SpreadsheetViewModel extends ChangeNotifier {
   }
 
   Future<bool> importXlsx() async {
-    if (_disposed || _isImporting || _isExporting || _document == null)
+    if (_disposed || _isImporting || _isExporting || _document == null) {
       return false;
+    }
     _isImporting = true;
     _errorMessage = null;
     _noticeMessage = null;
@@ -329,8 +330,9 @@ class SpreadsheetViewModel extends ChangeNotifier {
   }
 
   Future<bool> exportXlsx() async {
-    if (_disposed || _isImporting || _isExporting || _document == null)
+    if (_disposed || _isImporting || _isExporting || _document == null) {
       return false;
+    }
     _isExporting = true;
     _errorMessage = null;
     _noticeMessage = null;
