@@ -19,13 +19,13 @@ class SpreadsheetViewModel extends ChangeNotifier {
     required AutoSaveService autoSaveService,
     SpreadsheetXlsxCodec xlsxCodec = const SpreadsheetXlsxCodec(),
     DateTime Function()? clock,
-  })  : _repository = repository,
-        _evaluateFormula = evaluateFormula,
-        _csvCodec = csvCodec,
-        _xlsxCodec = xlsxCodec,
-        _fileGateway = fileGateway,
-        _autoSaveService = autoSaveService,
-        _clock = clock ?? DateTime.now {
+  }) : _repository = repository,
+       _evaluateFormula = evaluateFormula,
+       _csvCodec = csvCodec,
+       _xlsxCodec = xlsxCodec,
+       _fileGateway = fileGateway,
+       _autoSaveService = autoSaveService,
+       _clock = clock ?? DateTime.now {
     _autoSaveService.addListener(_handleSaveStateChanged);
   }
 
@@ -155,9 +155,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
     if (current == null) return;
     _commit(
       current.replaceSheet(
-        current.activeSheet.copyWith(
-          columnCount: current.columnCount + 1,
-        ),
+        current.activeSheet.copyWith(columnCount: current.columnCount + 1),
         updatedAt: _clock(),
       ),
     );
@@ -222,10 +220,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
       final imported = _csvCodec.decode(
         bytes: picked.bytes,
         sheetId: id,
-        sheetName: _sheetNameFromFile(
-          picked.name,
-          current.sheets.length + 1,
-        ),
+        sheetName: _sheetNameFromFile(picked.name, current.sheets.length + 1),
       );
       _selectedCell = const CellAddress(row: 0, column: 0);
       _commit(
@@ -276,7 +271,8 @@ class SpreadsheetViewModel extends ChangeNotifier {
   }
 
   Future<bool> importXlsx() async {
-    if (_disposed || _isImporting || _isExporting || _document == null) return false;
+    if (_disposed || _isImporting || _isExporting || _document == null)
+      return false;
     _isImporting = true;
     _errorMessage = null;
     _noticeMessage = null;
@@ -333,7 +329,8 @@ class SpreadsheetViewModel extends ChangeNotifier {
   }
 
   Future<bool> exportXlsx() async {
-    if (_disposed || _isImporting || _isExporting || _document == null) return false;
+    if (_disposed || _isImporting || _isExporting || _document == null)
+      return false;
     _isExporting = true;
     _errorMessage = null;
     _noticeMessage = null;
@@ -445,10 +442,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
 
   void _handleSaveStateChanged() => notifyListeners();
 
-  SpreadsheetSheet? _sheetById(
-    SpreadsheetDocument document,
-    String sheetId,
-  ) {
+  SpreadsheetSheet? _sheetById(SpreadsheetDocument document, String sheetId) {
     for (final sheet in document.sheets) {
       if (sheet.id == sheetId) return sheet;
     }

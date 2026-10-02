@@ -45,17 +45,17 @@ void main() {
       } else {
         pending.complete(
           outcome == 'cancel'
-            ? null
-            : SpreadsheetPickedCsv(
-                name: 'import.xlsx',
-                bytes: const SpreadsheetXlsxCodec().encode(
-                  SpreadsheetDocument.blank().copyWith(
-                    sheets: [
-                    SpreadsheetSheet.blank(id: 'new', name: 'Imported'),
-                    ],
+              ? null
+              : SpreadsheetPickedCsv(
+                  name: 'import.xlsx',
+                  bytes: const SpreadsheetXlsxCodec().encode(
+                    SpreadsheetDocument.blank().copyWith(
+                      sheets: [
+                        SpreadsheetSheet.blank(id: 'new', name: 'Imported'),
+                      ],
+                    ),
                   ),
                 ),
-              ),
         );
       }
       expect(await operation, isFalse);
@@ -70,8 +70,7 @@ void main() {
       if (outcome == 'error') {
         pending.completeError(StateError('save failed'));
       } else {
-        pending.complete(
-          outcome == 'success');
+        pending.complete(outcome == 'success');
       }
       expect(await operation, isFalse);
       expect(viewModel.noticeMessage, isNull);
@@ -170,10 +169,10 @@ void main() {
     viewModel.updateSelectedCell('existing');
     final source = SpreadsheetDocument.blank().copyWith(
       sheets: [
-        SpreadsheetSheet.blank(id: 'one', name: '売上').copyWith(
-          cells: {'0:0': '001', '0:1': '=A2*2'},
-          textCells: ['0:0'],
-        ),
+        SpreadsheetSheet.blank(
+          id: 'one',
+          name: '売上',
+        ).copyWith(cells: {'0:0': '001', '0:1': '=A2*2'}, textCells: ['0:0']),
         SpreadsheetSheet.blank(id: 'two', name: '予算'),
       ],
     );
@@ -195,54 +194,64 @@ void main() {
     final before = viewModel.document;
     expect(await viewModel.importXlsx(), isFalse);
     expect(viewModel.document, same(before));
-    fileGateway.xlsxPicked =
-        SpreadsheetPickedCsv(name: 'broken.xlsx', bytes: Uint8List(25));
+    fileGateway.xlsxPicked = SpreadsheetPickedCsv(
+      name: 'broken.xlsx',
+      bytes: Uint8List(25),
+    );
     expect(await viewModel.importXlsx(), isFalse);
     expect(viewModel.document, same(before));
     expect(viewModel.errorMessage, isNotNull);
     expect(viewModel.isImporting, isFalse);
   });
 
-  test('XLSX exports all sheets and preserves literal formula-like text',
-      () async {
-    await viewModel.load();
-    viewModel.updateSelectedCell('10');
-    viewModel.addSheet();
-    viewModel.updateSelectedCell('=1+2');
-    expect(await viewModel.exportXlsx(), isTrue);
-    final sheets = const SpreadsheetXlsxCodec().decode(fileGateway.savedBytes!);
-    expect(sheets, hasLength(2));
-    expect(sheets.last.cells['0:0'], '=1+2');
-    expect(fileGateway.savedName, endsWith('-export.xlsx'));
-  });
+  test(
+    'XLSX exports all sheets and preserves literal formula-like text',
+    () async {
+      await viewModel.load();
+      viewModel.updateSelectedCell('10');
+      viewModel.addSheet();
+      viewModel.updateSelectedCell('=1+2');
+      expect(await viewModel.exportXlsx(), isTrue);
+      final sheets = const SpreadsheetXlsxCodec().decode(
+        fileGateway.savedBytes!,
+      );
+      expect(sheets, hasLength(2));
+      expect(sheets.last.cells['0:0'], '=1+2');
+      expect(fileGateway.savedName, endsWith('-export.xlsx'));
+    },
+  );
 
-  test('duplicate XLSX sheet names fail without overwriting existing data',
-      () async {
-    await viewModel.load();
-    final before = viewModel.document;
-    fileGateway.xlsxPicked = SpreadsheetPickedCsv(
-      name: 'same.xlsx',
-      bytes: const SpreadsheetXlsxCodec().encode(SpreadsheetDocument.blank()),
-    );
-    expect(await viewModel.importXlsx(), isFalse);
-    expect(viewModel.document, same(before));
-    expect(viewModel.errorMessage, contains('同名'));
-  });
+  test(
+    'duplicate XLSX sheet names fail without overwriting existing data',
+    () async {
+      await viewModel.load();
+      final before = viewModel.document;
+      fileGateway.xlsxPicked = SpreadsheetPickedCsv(
+        name: 'same.xlsx',
+        bytes: const SpreadsheetXlsxCodec().encode(SpreadsheetDocument.blank()),
+      );
+      expect(await viewModel.importXlsx(), isFalse);
+      expect(viewModel.document, same(before));
+      expect(viewModel.errorMessage, contains('同名'));
+    },
+  );
 
-  test('exports the active sheet as UTF-8 CSV with formulas preserved',
-      () async {
-    await viewModel.load();
-    viewModel.updateSelectedCell('10');
-    viewModel.selectCell(const CellAddress(row: 0, column: 1));
-    viewModel.updateSelectedCell('=A1*2');
+  test(
+    'exports the active sheet as UTF-8 CSV with formulas preserved',
+    () async {
+      await viewModel.load();
+      viewModel.updateSelectedCell('10');
+      viewModel.selectCell(const CellAddress(row: 0, column: 1));
+      viewModel.updateSelectedCell('=A1*2');
 
-    expect(await viewModel.exportCsv(), isTrue);
+      expect(await viewModel.exportCsv(), isTrue);
 
-    expect(fileGateway.savedName, '無題のブック-シート1.csv');
-    expect(fileGateway.savedBytes!.take(3), <int>[0xEF, 0xBB, 0xBF]);
-    expect(utf8.decode(fileGateway.savedBytes!.sublist(3)), '10,=A1*2');
-    expect(viewModel.noticeMessage, 'CSVを書き出しました。');
-  });
+      expect(fileGateway.savedName, '無題のブック-シート1.csv');
+      expect(fileGateway.savedBytes!.take(3), <int>[0xEF, 0xBB, 0xBF]);
+      expect(utf8.decode(fileGateway.savedBytes!.sublist(3)), '10,=A1*2');
+      expect(viewModel.noticeMessage, 'CSVを書き出しました。');
+    },
+  );
 }
 
 class _MemorySpreadsheetRepository implements SpreadsheetRepository {
@@ -276,8 +285,7 @@ class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
   Future<bool> saveXlsx({
     required String suggestedName,
     required Uint8List bytes,
-  }) =>
-      pendingSave ?? saveCsv(suggestedName: suggestedName, bytes: bytes);
+  }) => pendingSave ?? saveCsv(suggestedName: suggestedName, bytes: bytes);
 
   @override
   Future<bool> saveCsv({
