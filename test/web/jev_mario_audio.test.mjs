@@ -126,7 +126,7 @@ test('syncopation anticipates the next chord bass and phrase lead, without dupli
  const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick('overworld');
  const calls=[];a.tone=(...args)=>calls.push(args);a.beat=15;a.next=c.currentTime;a.tick('overworld');
  const current=musicStep('overworld',15),next=musicStep('overworld',16);
- const bass=calls.find(x=>x[4]===.105),lead=calls.find(x=>x[4]===.052);
+ const bass=calls.find(x=>x[4]===.105),lead=calls.find(x=>x[4]===.052&&x[0]>0);
  assert.equal(bass[0],next.bass);assert.notEqual(bass[0],current.bass);
  assert.equal(lead[0],next.lead);assert.equal(lead[3],next.leadType);
  for(const n of [bass,lead]){assert.ok(n[1]>c.currentTime&&n[1]<c.currentTime+current.step);assert.ok(n[1]+n[2]>c.currentTime+current.step);}
