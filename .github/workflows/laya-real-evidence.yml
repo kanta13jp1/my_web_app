@@ -1,13 +1,14 @@
 name: Laya bounded real model evidence
 on:
   workflow_dispatch:
-permissions:
-  contents: read
+permissions: {}
 concurrency:
   group: laya-real-model-evidence
   cancel-in-progress: false
 jobs:
   cpu-evidence:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
