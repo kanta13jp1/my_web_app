@@ -105,7 +105,7 @@ void main() {
           {
             'service_name': 'synthetic utility',
             'price': 1105,
-            'due_date': '2027-02-28'
+            'due_date': '2027-02-28',
           },
         ],
       );
