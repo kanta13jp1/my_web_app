@@ -4,6 +4,9 @@ on:
   push:
     branches: [codex/spreadsheet-xlsx-20261001]
     paths: [.github/workflows/spreadsheet-windows-test-build.yml]
+concurrency:
+  group: spreadsheet-windows-test-${{ github.ref }}
+  cancel-in-progress: false
 permissions: {}
 jobs:
   windows:
