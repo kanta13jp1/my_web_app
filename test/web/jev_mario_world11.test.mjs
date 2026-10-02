@@ -120,3 +120,9 @@ test('ground braking and opposite direction respond promptly without changing to
  g.input={right:true};for(let i=0;i<20;i++)g.step();g.input={left:true};for(let i=0;i<8;i++)g.step();assert.ok(g.p.vx<0);assert.ok(g.drainSounds().includes('skid'));
  g.input={right:true,run:true};for(let i=0;i<50;i++)g.step();assert.equal(g.p.vx,2.6);
 });
+
+
+test('jumping off a vine consumes buffered input and edge grace exactly once',()=>{
+ const g=controlFloor();Object.assign(g.p,{y:100,grounded:false,climbing:true});g.coyote=3;g.input={jump:true};g.step();assert.equal(g.jumpBuffer,0);assert.equal(g.coyote,0);assert.equal(g.drainSounds().filter(n=>n==='jump').length,1);
+ g.step();assert.equal(g.drainSounds().filter(n=>n==='jump').length,0);assert.ok(g.p.vy<0);
+});

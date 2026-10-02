@@ -519,7 +519,7 @@ export class World11 {
       p.climbing=true;p.vx=0;p.vy=(k.down?1.4:0)-(k.up?1.4:0);p.grounded=false;
       p.y=Math.max(vine.top,Math.min(vine.base-p.h,p.y+p.vy));p.vy=0;
       if(intended){p.climbing=false;p.vx=intended*1.3;}
-    }else{if(p.climbing&&k.jump&&!this.wasJump){p.vy=-5.2;this.sound('jump');}p.climbing=false;}
+    }else{if(p.climbing&&k.jump&&!this.wasJump){p.vy=-5.2;this.jumpBuffer=0;this.coyote=0;this.sound('jump');}p.climbing=false;}
     this.wasJump=!!k.jump;const beforeY=p.y;this.move(p,true);this.landOnLift(beforeY);
     if(isWater(this.stage)&&p.y<40){p.y=40;p.vy=Math.max(0,p.vy);}
     p.x=Math.max(this.camera,Math.min(this.width-p.w,p.x));p.stride=(p.stride??0)+(p.grounded?Math.abs(p.vx):0);if(p.y>250)this.die();
