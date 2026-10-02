@@ -3,13 +3,21 @@ export const MAX_VOICES=64,MAX_MUSIC_VOICES=48;
 // Four-note hook: E-G-A-G. Transposition keeps its contour across rooms.
 export const MOTIF=[0,3,5,3];
 function theme(root){return [0,0,5,0].flatMap((shift,phrase)=>{const r=root+shift;return [...MOTIF.map(n=>r+n),0,0,r+7,0,...MOTIF.map(n=>r+12+n),0,r+(phrase%2?2:5),r,0];});}
-export const scores={overworld:theme(76),underwater:theme(72),underground:theme(48),castle:theme(48),star:theme(84)};
+// Castle: E minor hook, brighter C/D phrases, then B major's D-sharp
+// leading tone resolves up to E at the loop. Rest space preserves the rhythm.
+function castleTheme(){return [
+ 64,67,69,67,0,0,71,0,76,79,81,79,0,69,64,0,
+ 64,67,69,67,0,0,72,0,76,79,84,79,0,72,67,0,
+ 62,66,69,66,0,0,74,0,74,78,81,78,0,74,69,0,
+ 59,63,66,63,0,0,71,0,71,75,78,75,0,66,63,0
+];}
+export const scores={overworld:theme(76),underwater:theme(72),underground:theme(48),castle:castleTheme(),star:theme(84)};
 // Sixteen sparse pitched parts; staggered entries leave room for the melody and effects. Noise remains percussion, not a pitched part.
 // Each room has its own harmonic progression rather than a shared major-key backing.
 export const arrangements={
  overworld:{step:.145,chords:[[48,52,55],[45,48,52],[53,57,60],[43,47,50]],duty:.25},
  underground:{step:.18,chords:[[36,39,43],[34,38,41],[32,36,39],[31,35,38]],duty:.125},
- castle:{step:.13,chords:[[36,39,43],[35,38,42],[34,37,41],[31,34,38]],duty:.125},
+ castle:{step:.13,chords:[[40,43,47],[36,40,43],[38,42,45],[35,39,42]],duty:.125},
  underwater:{step:.22,chords:[[48,52,55],[50,53,57],[43,47,50],[48,52,55]],duty:.5},
  star:{step:.095,chords:[[60,64,67],[62,65,69],[64,67,71],[59,63,66]],duty:.25}
 };
