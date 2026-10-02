@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GameAudio, effects, musicStep, arrangements, MAX_VOICES, MAX_MUSIC_VOICES, scores, MOTIF, ostinatoStep } from '../../web/labs/jev-mario/audio.mjs';
+import { GameAudio, effects, musicStep, arrangements, MAX_VOICES, MAX_MUSIC_VOICES, scores, MOTIF, ostinatoStep, bassStep } from '../../web/labs/jev-mario/audio.mjs';
 import { World11 } from '../../web/labs/jev-mario/world11.mjs';
 test('noise percussion reuses one buffer and stops with music or mute',async()=>{
  const c=context();let buffers=0;const sources=[];c.sampleRate=48000;
@@ -120,4 +120,63 @@ test('water melody sustains above moving accompaniment; switching and mute relea
  const n=musicStep('underwater',2);assert.ok(calls.some(x=>x[0]===scores.underwater[1]&&x[2]>n.step));
  calls.length=0;a.beat=3;a.next=c.currentTime;a.tick('underwater');assert.ok(!calls.some(x=>x[0]===musicStep('underwater',3).lead&&x[4]===.052));
  await a.enable(false);assert.equal(a.nodes.size,0);
+});
+
+test('syncopation anticipates the next chord bass and phrase lead, without duplicate attacks',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.tick('overworld');
+ const calls=[];a.tone=(...args)=>calls.push(args);a.beat=15;a.next=c.currentTime;a.tick('overworld');
+ const current=musicStep('overworld',15),next=musicStep('overworld',16);
+ const bass=calls.find(x=>x[4]===.105),lead=calls.find(x=>x[4]===.052&&x[0]>0);
+ assert.equal(bass[0],next.bass);assert.notEqual(bass[0],current.bass);
+ assert.equal(lead[0],next.lead);assert.equal(lead[3],next.leadType);
+ for(const n of [bass,lead]){assert.ok(n[1]>c.currentTime&&n[1]<c.currentTime+current.step);assert.ok(n[1]+n[2]>c.currentTime+current.step);}
+ calls.length=0;a.beat=16;a.next=c.currentTime;a.tick('overworld');assert.ok(!calls.some(x=>x[4]===.105||x[4]===.052));
+ await a.enable(false);assert.equal(a.nodes.size,0);
+});
+test('offbeat accompaniment accents repeat while water keeps its softer regular rhythm',()=>{
+ const notes=ostinatoStep('overworld',0);assert.ok(notes[1].gain>notes[0].gain);assert.ok(notes[1].offset>0);
+ assert.ok(ostinatoStep('overworld',1)[0].gain>notes[0].gain);
+ assert.equal(ostinatoStep('underwater',0)[0].gain,ostinatoStep('underwater',1)[0].gain);
+});
+
+
+test('castle moves Em C D B major and resolves D sharp to E on the loop',()=>{
+ assert.deepEqual(arrangements.castle.chords,[[40,43,47],[36,40,43],[38,42,45],[35,39,42]]);
+ assert.deepEqual(scores.castle.slice(0,4),[64,67,69,67]);
+ assert.deepEqual(scores.castle.slice(32,36),[62,66,69,66]);
+ assert.deepEqual(scores.castle.slice(48,52),[59,63,66,63]);
+ assert.equal(musicStep('castle',62).lead,63);
+ assert.equal(musicStep('castle',64).lead,64);
+ assert.deepEqual([0,16,32,48,64].map(b=>musicStep('castle',b).bass),[40,36,38,35,40]);
+ assert.equal(ostinatoStep('castle',48)[0].note,47);
+ assert.ok(Array.from({length:8},(_,i)=>ostinatoStep('castle',48+i)).flat().some(e=>e.note===51));
+});
+
+
+test('bass groove answers an octave up, rests, and approaches the next root',()=>{
+ assert.equal(bassStep('castle',0)[0].note,40);
+ assert.equal(bassStep('castle',2)[0].note,52);
+ assert.ok(bassStep('castle',2)[0].duration<musicStep('castle',2).step);
+ assert.deepEqual(bassStep('castle',6),[]);
+ assert.equal(bassStep('castle',62)[0].note,39);
+ assert.equal(bassStep('castle',63)[0].note,40);
+ assert.ok(bassStep('castle',62)[0].offset<bassStep('castle',63)[0].offset);
+ assert.ok(bassStep('overworld',3,true)[0].offset<bassStep('overworld',3)[0].offset);
+ assert.equal(bassStep('underwater',2)[0].note,48);
+ assert.ok(bassStep('underwater',2)[0].duration>musicStep('underwater',2).step);
+ assert.deepEqual(bassStep('underwater',3),[]);
+});
+
+
+test('contrasting bass and pluck cache distinct spectra and release within the voice budget',async()=>{
+ const c=context(),spectra=[];c.createPeriodicWave=(r,i)=>{spectra.push([...i]);return {id:spectra.length};};
+ const old=c.createOscillator.bind(c);c.createOscillator=()=>Object.assign(old(),{setPeriodicWave(w){this.wave=w;}});
+ const a=new GameAudio(()=>c);await a.enable(true);
+ for(let i=0;i<80;i++)a.tone(48,1,.3,i%2?'bass':'pluck',.01,true);
+ assert.equal(spectra.length,2);assert.notDeepEqual(spectra[0],spectra[1]);assert.equal(a.music.size,MAX_MUSIC_VOICES);
+ a.effect('coin');assert.ok(a.nodes.size<=MAX_VOICES);await a.enable(false);assert.equal(a.nodes.size,0);
+});
+test('the pulse lead remains the principal voice while backing uses contrasting timbres',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.track='overworld';a.next=c.currentTime;const calls=[];a.tone=(...args)=>calls.push(args);a.tick();
+ assert.ok(calls.some(x=>x[3]==='square'&&x[4]===.052));assert.ok(calls.some(x=>x[3]==='bass'&&x[4]===.105));assert.ok(calls.some(x=>x[3]==='pluck'&&x[4]<.052));
 });

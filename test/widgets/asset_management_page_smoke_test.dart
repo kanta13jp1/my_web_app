@@ -18,6 +18,7 @@ import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
+import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
@@ -589,6 +590,12 @@ void main() {
           salaryDay: AssetSalaryDayStore.defaultSalaryDay,
         );
         final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
+        final previousCycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+          DateTime(cycleStart.year, cycleStart.month - 1),
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetSalaryResetMarkerStore.prefsKey: previousCycleKey,
+        });
 
         await tester.binding.setSurfaceSize(const Size(1200, 2400));
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -596,6 +603,11 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                DateFormat('yyyy-MM-dd').format(now): const <String, double>{
+                  '現金': 50000,
+                },
+              },
               // 収支フロー(wealth_struggles)は空。
               debugInitialRecentFlows: const <Map<String, dynamic>>[],
               // 給料は salary_incomes にのみ存在 (給与明細のみ管理)。
@@ -622,6 +634,31 @@ void main() {
           find.descendant(of: card, matching: find.text('¥280,000')),
           findsOneWidget,
         );
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.textContaining('給与明細・受取済み収入予定から計上した'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.textContaining('現在残高や今後の支払後に使える額とは異なります'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        final prefs = await SharedPreferences.getInstance();
+        expect(
+          prefs.getString(AssetSalaryResetMarkerStore.prefsKey),
+          previousCycleKey,
+          reason: '給与明細だけでは口座入金と判定して支払チェックをリセットしない',
+        );
+        await tester.binding.setSurfaceSize(const Size(390, 1200));
+        await tester.pump();
+        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        expect(tester.takeException(), isNull);
         // 収入があるので「未記録」の空状態文言は出ない。
         expect(
           find.descendant(
