@@ -6,6 +6,8 @@ on:
       - '**/*.md'
       - 'scripts/documentation_links*.py'
       - 'scripts/documentation_quality_gate*.py'
+      - 'scripts/documentation_quality_notify_test.cjs'
+      - '.github/workflows/documentation-quality-notify.yml'
       - '.github/workflows/documentation-quality.yml'
   schedule:
     - cron: '20 3 * * 1'
