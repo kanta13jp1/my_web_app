@@ -8570,9 +8570,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  bool _isRecordingFlow = false;
+
   Future<void> _recordFlow() async {
+    if (_isRecordingFlow) return;
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('記録にはログインが必要です。再ログインしてください。')),
+      );
+      return;
+    }
 
     final memo = _flowMemoController.text.trim();
     final amountStr = _flowAmountController.text.replaceAll(',', '');
@@ -8598,6 +8606,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final actionType = _flowLabelToActionType(_selectedFlowType);
+    setState(() => _isRecordingFlow = true);
 
     try {
       await _supabase.from('wealth_struggles').insert({
@@ -8635,6 +8644,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error recording flow: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(
+            e is PostgrestException && e.code == '23514' &&
+                    e.message.contains('wealth_struggles_action_type_check')
+                ? '振替を保存できません。サーバーの振替対応が未適用です。入力内容は保持しています。'
+                : '記録処理に失敗しました。履歴を確認してから再試行してください。',
+          )),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRecordingFlow = false);
     }
   }
 
@@ -33340,13 +33361,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: _recordFlow,
+                  onPressed: _isRecordingFlow ? null : _recordFlow,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF64748B),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: Text(isTransferSelected ? '振替を追加' : '追加'),
+                  child: Text(_isRecordingFlow
+                          ? '保存中…'
+                          : (isTransferSelected ? '振替を追加' : '追加')),
                 ),
               ],
             ),
