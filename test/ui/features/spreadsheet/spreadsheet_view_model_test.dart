@@ -43,16 +43,20 @@ void main() {
       if (outcome == 'error') {
         pending.completeError(StateError('picker failed'));
       } else {
-        pending.complete(outcome == 'cancel'
+        pending.complete(
+          outcome == 'cancel'
             ? null
             : SpreadsheetPickedCsv(
                 name: 'import.xlsx',
                 bytes: const SpreadsheetXlsxCodec().encode(
-                  SpreadsheetDocument.blank().copyWith(sheets: [
+                  SpreadsheetDocument.blank().copyWith(
+                    sheets: [
                     SpreadsheetSheet.blank(id: 'new', name: 'Imported'),
-                  ]),
+                    ],
+                  ),
                 ),
-              ));
+              ),
+        );
       }
       expect(await operation, isFalse);
       expect(viewModel.document, same(before));
@@ -66,7 +70,8 @@ void main() {
       if (outcome == 'error') {
         pending.completeError(StateError('save failed'));
       } else {
-        pending.complete(outcome == 'success');
+        pending.complete(
+          outcome == 'success');
       }
       expect(await operation, isFalse);
       expect(viewModel.noticeMessage, isNull);
@@ -264,7 +269,8 @@ class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
   Future<SpreadsheetPickedCsv?> pickCsv() async => picked;
 
   @override
-  Future<SpreadsheetPickedCsv?> pickXlsx() async => pendingPick == null ? xlsxPicked : await pendingPick!;
+  Future<SpreadsheetPickedCsv?> pickXlsx() async =>
+      pendingPick == null ? xlsxPicked : await pendingPick!;
 
   @override
   Future<bool> saveXlsx({
