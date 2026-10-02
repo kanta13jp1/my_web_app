@@ -7,9 +7,9 @@ function theme(root){return [0,0,5,0].flatMap((shift,phrase)=>{const r=root+shif
 // leading tone resolves up to E at the loop. Rest space preserves the rhythm.
 function castleTheme(){return [
  64,67,69,67,0,0,71,0,76,79,81,79,0,69,64,0,
- 64,67,69,67,0,0,68,0,76,79,80,79,0,68,63,0,
- 62,65,67,65,0,0,70,0,74,77,79,77,0,70,65,0,
- 59,62,64,62,0,0,67,0,71,74,76,74,0,62,63,0
+ 64,67,69,67,0,0,72,0,76,79,84,79,0,72,67,0,
+ 62,66,69,66,0,0,74,0,74,78,81,78,0,74,69,0,
+ 59,63,66,63,0,0,71,0,71,75,78,75,0,66,63,0
 ];}
 export const scores={overworld:theme(76),underwater:theme(72),underground:theme(48),castle:castleTheme(),star:theme(84)};
 // Sixteen sparse pitched parts; staggered entries leave room for the melody and effects. Noise remains percussion, not a pitched part.

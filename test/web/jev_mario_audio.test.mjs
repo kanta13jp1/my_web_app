@@ -143,6 +143,8 @@ test('offbeat accompaniment accents repeat while water keeps its softer regular 
 test('castle moves Em C D B major and resolves D sharp to E on the loop',()=>{
  assert.deepEqual(arrangements.castle.chords,[[40,43,47],[36,40,43],[38,42,45],[35,39,42]]);
  assert.deepEqual(scores.castle.slice(0,4),[64,67,69,67]);
+ assert.deepEqual(scores.castle.slice(32,36),[62,66,69,66]);
+ assert.deepEqual(scores.castle.slice(48,52),[59,63,66,63]);
  assert.equal(musicStep('castle',62).lead,63);
  assert.equal(musicStep('castle',64).lead,64);
  assert.deepEqual([0,16,32,48,64].map(b=>musicStep('castle',b).bass),[40,36,38,35,40]);
