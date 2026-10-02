@@ -7,8 +7,8 @@ import {plan} from '../../web/labs/jev-mario/search-assist.mjs';
 import {StudentSession} from '../../web/labs/jev-mario/student-session.mjs';
 
 test('live guard corrects repeated stale right commands before first enemy without changing world state',()=>{
- const run=guard=>{const g=new World11();let furthest=g.p.x;for(let i=0;i<240&&g.phase==='playing';i++){const before=JSON.stringify(g.snapshot()),action=guard?guard.decide(g,'right'):'right';assert.equal(JSON.stringify(g.snapshot()),before);g.buttons(action);g.step();g.drainSounds();furthest=Math.max(furthest,g.p.x);}return {phase:g.phase,x:g.p.x,furthest,frames:g.frames,interventions:guard?.interventions??0};};
- const baseline=run(null),assisted=run(new LiveGuard());mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-live-guard.json',JSON.stringify({scenario:'1-1 first enemy, repeated right command, 240-frame budget; deterministic assistance, no measured worker inference',baseline,assisted},null,2));
+ const run=guard=>{const g=new World11();g.p.x=192;let furthest=g.p.x;for(let i=0;i<240&&g.phase==='playing';i++){const before=JSON.stringify(g.snapshot()),action=guard?guard.decide(g,'right'):'right';assert.equal(JSON.stringify(g.snapshot()),before);g.buttons(action);g.step();g.drainSounds();furthest=Math.max(furthest,g.p.x);}return {phase:g.phase,x:g.p.x,furthest,frames:g.frames,interventions:guard?.interventions??0};};
+ const baseline=run(null),assisted=run(new LiveGuard());mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-live-guard.json',JSON.stringify({scenario:'1-1 after opening step (x192), first enemy, repeated right command, 240-frame budget; deterministic assistance, no measured worker inference',baseline,assisted},null,2));
  assert.equal(baseline.phase,'dead');assert.ok(assisted.furthest>baseline.furthest+40);assert.ok(assisted.interventions>0);
 });
 test('worker retries receive failure memory and manual new run can clear it',()=>{
