@@ -73,6 +73,10 @@ def main():
     lines.extend(f'- {item}' for item in added[:50])
     (args.output / 'summary.md').write_text('\n'.join(lines), encoding='utf-8')
     print(json.dumps({'all_findings': len(current), 'new_findings': len(added)}))
+    for item in added[:50]:
+        print('DOCUMENTATION_FINDING ' + json.dumps(item, ensure_ascii=False))
+    if added:
+        print('DOCUMENTATION_REPAIR: verify local target paths or spelling; full details in documentation-quality-evidence/findings.json')
     return 1 if added else 0
 
 
