@@ -1,0 +1,108 @@
+name: Flow City prototype checks
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/flow-city-prototype-20260906]
+    paths: ['web/labs/flow-city/**', 'test/e2e/flow_city.spec.ts', '.github/workflows/flow-city-checks.yml', 'lib/pages/flow_city_page.dart', 'lib/ui/features/flow_city/**', 'test/e2e/flow_city_route.spec.ts', 'lib/data/home_tool_catalog.dart', 'lib/main.dart', 'test/widgets/flow_city_page_test.dart', 'test/fixtures/flow_city_lifecycle_app.dart', 'test/e2e/flow_city_lifecycle.spec.ts']
+permissions: {}
+concurrency:
+  group: flow-city-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  model:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: node --test web/labs/flow-city/model.test.mjs
+      - run: node --check web/labs/flow-city/app.mjs
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Browser checks against candidate only
+        shell: bash
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory web &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8765/labs/flow-city/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/flow_city.spec.ts --workers=1 --retries=0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: flow-city-browser-evidence
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+
+  integrated:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: |
+          flutter pub get
+          flutter test test/widgets/flow_city_page_test.dart
+          flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Validate browser test syntax
+        run: npx playwright test test/e2e/flow_city_route.spec.ts test/e2e/flow_city_lifecycle.spec.ts --list
+      - name: Integrated desktop and mobile route checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/flutter_spa_server.py --directory build/web --port 7357 > flow-city-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7357/flow-city > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7357 npx playwright test test/e2e/flow_city_route.spec.ts --workers=1 --retries=0
+      - name: Build real surface lifecycle fixture
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/flow_city_lifecycle_app.dart --output=build/flow-city-lifecycle
+      - name: Verify covering route, return and disposal
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/flutter_spa_server.py --directory build/flow-city-lifecycle --port 7358 > flow-city-lifecycle-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 PLAYWRIGHT_TEST_OUTPUT_DIR=lifecycle-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/lifecycle-results.json npx playwright test test/e2e/flow_city_lifecycle.spec.ts --workers=1 --retries=0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: flow-city-integrated-evidence
+          path: |
+            test-results/
+            playwright-report/
+            flow-city-server.log
+            flow-city-lifecycle-server.log
+            lifecycle-results/
+          retention-days: 7

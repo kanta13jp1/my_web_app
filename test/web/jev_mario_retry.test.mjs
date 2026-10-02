@@ -1,7 +1,8 @@
+import {pipeRoute} from '../../web/labs/jev-mario/pipe-route.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
-import {RetryMemory,MEMORY_KEY,retryLevel} from '../../web/labs/jev-mario/retry-memory.mjs';
+import {RetryMemory,MEMORY_KEY,retryLevel,stalledActionPenalty} from '../../web/labs/jev-mario/retry-memory.mjs';
 import {World11} from '../../web/labs/jev-mario/world11.mjs';
 import {StudentSession} from '../../web/labs/jev-mario/student-session.mjs';
 import {LiveGuard} from '../../web/labs/jev-mario/live-guard.mjs';
@@ -37,10 +38,23 @@ test('item priorities adapt to small/fire form and low lives',()=>{const g=new W
 
 test('running session discovers a stalled pipe and reuses its experience after a new start',()=>{
  const store=storage(),g=new World11();let worker;
- const session=new StudentSession(()=>worker={terminate(){},postMessage(m){this.onmessage({data:{type:'decision',action:'right_run',raw:'right_run',accepted:true,issued:m.issued,frame:m.state.frames,inferenceMs:0,probabilities:[]}});}},()=>g.frames*1000/60,store);
+ const session=new StudentSession(()=>worker={terminate(){},postMessage(m){this.onmessage({data:{type:'decision',requestId:m.requestId,action:'right_run',raw:'right_run',accepted:true,issued:m.issued,frame:m.state.frames,inferenceMs:0,probabilities:[]}});}},()=>g.frames*1000/60,store);
  const callbacks={ready(){},update(){},error(){assert.fail();}};session.start(callbacks);worker.onmessage({data:{type:'ready'}});
  let furthest=0;for(let i=0;i<900&&g.phase==='playing';i++){g.buttons(session.tick(g));g.step();g.drainSounds();furthest=Math.max(furthest,g.p.x);}
  assert.ok(session.failures.some(f=>f.kind==='stalled'));assert.ok(session.stats.retry_assists>0);assert.ok(furthest>470);
  const remembered=structuredClone(session.failures);session.stop();session.start(callbacks);assert.deepEqual(session.failures,remembered);assert.deepEqual(new RetryMemory(store).records,remembered);
  mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-retry-session.json',JSON.stringify({scenario:'mock worker always right_run; automatic stall discovery in actual session, not model inference',furthest,phase:g.phase,memory:remembered},null,2));session.stop();
 });
+
+
+test('repeated stalled commands are persisted and penalized only at their own location',()=>{const store=storage(),m=new RetryMemory(store),g=new World11();g.p.x=300;for(let i=0;i<3;i++)m.record(g,'stalled','right_run');const loaded=new RetryMemory(store);assert.equal(loaded.records[0].failedActions.right_run,3);assert.equal(stalledActionPenalty(g,loaded.records,'right_run'),36);assert.equal(stalledActionPenalty(g,loaded.records,'right_jump'),0);g.p.x=400;assert.equal(stalledActionPenalty(g,loaded.records,'right_run'),0);g.p.x=300;g.stage=2;assert.equal(stalledActionPenalty(g,loaded.records,'right_run'),0);});
+
+
+test('live retry escapes a stationary learned command without changing the world or inventing immunity',()=>{const g=new World11(),guard=new LiveGuard();g.enemies=[];g.contents.clear();g.p.x=300;const old={x:g.p.x,y:g.p.y,lives:g.lives,power:g.power},records=[{stage:1,room:'overworld',x:300,y:192,count:3,kind:'stalled',failedActions:{noop:3}}];const action=guard.decide(g,'noop',records);assert.notEqual(action,'noop');assert.equal(guard.lastReason,'retry_escape');assert.deepEqual({x:g.p.x,y:g.p.y,lives:g.lives,power:g.power},old);for(let i=0;i<30&&g.phase==='playing';i++){g.buttons(guard.decide(g,'noop',records));g.step();}assert.ok(g.p.x>old.x+8);assert.equal(g.phase,'playing');});
+
+test('power-up acquisition resets stall observation but stationary play still records failure',()=>{const g=new World11();let worker;const s=new StudentSession(()=>worker={terminate(){},postMessage(){}},()=>g.frames*1000/60,null);s.start({ready(){},update(){},error(){assert.fail();}});worker.onmessage({data:{type:'ready'}});s.guard.decide=()=> 'noop';s.tick(g);g.frames=179;s.tick(g);assert.equal(s.failures.length,0);g.frames=180;g.pickups.mushroom++;s.tick(g);assert.equal(s.failures.length,0);g.frames=359;s.tick(g);assert.equal(s.failures.length,0);g.frames=360;s.tick(g);assert.equal(s.failures.length,1);assert.equal(s.failures[0].kind,'stalled');s.stop();});
+test('unreachable reward behind camera does not block a usable pipe, reachable reward ahead does',()=>{const g=new World11();g.usablePipes=()=>[{id:'test',x:1600,y:160,exit:2000}];Object.assign(g.p,{x:1604,y:144,grounded:true});g.camera=1500;g.contents.clear();g.contents.set('16,9','flower');assert.equal(pipeRoute(g),'down');g.contents.set('110,9','star');assert.equal(pipeRoute(g),null);});
+
+test('retry guard checks an airborne stationary jump loop without waiting for landing',()=>{const g=new World11();g.enemies=[];g.contents.clear();Object.assign(g.p,{x:300,y:180,vx:0,vy:-1,grounded:false});const records=[{stage:1,room:'overworld',x:300,y:180,count:12,kind:'stalled',failedActions:{jump:12}}];const guard=new LiveGuard();const old=structuredClone(g.p),action=guard.decide(g,'jump',records);assert.notEqual(action,'jump');assert.equal(guard.lastReason,'retry_escape');assert.deepEqual(g.p,old);});
+
+test('castle reward detours cannot indefinitely postpone forward stall recovery',()=>{const g=new World11(32);let worker;const session=new StudentSession(()=>worker={terminate(){},postMessage(){}},()=>g.frames*1000/60,null);session.start({ready(){},update(){},error(){assert.fail();}});worker.onmessage({data:{type:'ready'}});session.guard.decide=()=> 'noop';session.tick(g);for(const frame of [60,120,180]){g.frames=frame;g.pickups.life++;session.tick(g);}assert.equal(session.failures.length,1);assert.equal(session.failures[0].kind,'stalled');g.frames=181;g.p.x+=24;session.tick(g);assert.equal(session.progress.frame,181);session.stop();});

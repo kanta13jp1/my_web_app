@@ -3,6 +3,7 @@ import 'dart:async';
 import '../pages/aero_lab_page.dart';
 import '../pages/sound_bloom_page.dart';
 import '../pages/lumen_path_page.dart';
+import '../pages/flow_city_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -2410,6 +2411,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
     ),
     HomeToolEntry(
+      id: 'flow-city',
+      sectionId: 'growth',
+      title: '交通実験室 · FLOW CITY',
+      subtitle: '同じ需要で信号条件を変え、到着と待機を比較',
+      icon: Icons.traffic_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['交通', '信号', '比較', 'FLOW CITY', 'Astra'],
+      onOpen: (context) => _pushPage(context, const FlowCityPage()),
+    ),
+    HomeToolEntry(
       id: 'lumen-path',
       sectionId: 'growth',
       title: '光の道 · LUMEN PATH',
@@ -3065,6 +3076,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF168A75),
       keywords: const <String>['Jev', 'Mario', 'マリオ', '応答速度', 'ベンチマーク'],
       onOpen: (context) => Navigator.of(context).pushNamed('/jev-mario-lab'),
+    ),
+    HomeToolEntry(
+      id: 'jwenv-lab',
+      sectionId: 'ai',
+      title: 'Jwenv WebGPU Lab',
+      subtitle: 'WebGPUによるブラウザ内ローカル軽量LLM・判断判定デモ（Qwen 2.5 0.5B / Jev）',
+      icon: Icons.memory,
+      color: const Color(0xFF2F6FDB),
+      keywords: const <String>[
+        'Jwenv',
+        'WebGPU',
+        'Jev',
+        'Qwen',
+        'ローカルLLM',
+        'ブラウザ内推論',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/jwenv-lab'),
     ),
     HomeToolEntry(
       id: 'agi-fireworks',

@@ -1219,6 +1219,10 @@ class AssetManagementAiSummaryService {
                 AssetManagementInsightActionType.cardBillingConfiguration ||
             item.type == AssetManagementInsightActionType.doubleCountingRisk,
       ),
+      'has_debt_spiral': report.actionItems.any(
+        (item) =>
+            item.type == AssetManagementInsightActionType.debtSpiralWarning,
+      ),
       'has_cash_movement_candidate': report.movementSuggestions.isNotEmpty,
       'advice_focus': _adviceFocus(report),
     };
@@ -1281,6 +1285,11 @@ class AssetManagementAiSummaryService {
       return 'move_cash_before_due_dates';
     }
     if (report.actionItems.any(
+      (item) => item.type == AssetManagementInsightActionType.debtSpiralWarning,
+    )) {
+      return 'escape_debt_spiral';
+    }
+    if (report.actionItems.any(
       (item) =>
           item.type == AssetManagementInsightActionType.missingAnnualRate ||
           item.type == AssetManagementInsightActionType.missingInput,
@@ -1336,6 +1345,7 @@ class AssetManagementAiSummaryService {
       AssetManagementInsightActionType.cardBillingConfiguration => 'カード請求設定の確認',
       AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
+      AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
     };
   }
 

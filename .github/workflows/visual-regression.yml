@@ -132,6 +132,15 @@ jobs:
             --retries=0 \
             "${snapshot_args[@]}"
 
+      - name: Verify monthly budget allocation and recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/budget-balance-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: budget-balance-results
+        run: |
+          flutter test test/services/budget_balance_calculator_test.dart test/widgets/budget_balance_card_test.dart
+          npx playwright test test/e2e/budget_balance.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Verify integrated Lumen Path route
         shell: bash
         env:
@@ -225,6 +234,7 @@ jobs:
             api-reference-results/
             chat-replay-results/
             hiragana-results/
+            budget-balance-results/
             test/e2e/visual_regression.spec.ts-snapshots/
             .ci-logs/visual-regression-server.log
           if-no-files-found: warn
