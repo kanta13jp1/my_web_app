@@ -5,6 +5,7 @@ on:
     workflows:
       # CI / Deploy
       - "CI"
+      - "Documentation Quality Gate"
       - "Deploy to Production"
       - "Deploy to Staging"
       - "Deploy to Development"
