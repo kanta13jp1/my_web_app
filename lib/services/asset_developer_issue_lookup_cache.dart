@@ -64,21 +64,28 @@ class AssetDeveloperIssueLookupCache {
             !_pending.containsKey(entry.key))
           entry.key: entry.value,
     };
+    Completer<Map<String, Map<String, dynamic>?>>? batch;
     if (missing.isNotEmpty) {
-      final batch = Completer<Map<String, Map<String, dynamic>?>>();
+      final newBatch = Completer<Map<String, Map<String, dynamic>?>>();
+      batch = newBatch;
       for (final identity in missing.keys) {
-        _pending[identity] = batch.future.then((result) => result[identity]);
+        _pending[identity] = newBatch.future.then((result) => result[identity]);
       }
-      unawaited(_fetchBatch(generation, missing, load, batch));
     }
 
-    final results = await Future.wait<Map<String, dynamic>?>([
+    // Register every waiter before invoking a loader that may throw before
+    // returning its Future and remove pending entries in the catch path.
+    final waiting = Future.wait<Map<String, dynamic>?>([
       for (final identity in identities.keys)
         if (_completed.containsKey(identity))
           Future.value(_completed[identity])
         else
           _pending[identity]!,
     ]);
+    if (batch != null) {
+      unawaited(_fetchBatch(generation, missing, load, batch));
+    }
+    final results = await waiting;
     if (_generation != generation) {
       throw StateError('The lookup scope was invalidated');
     }

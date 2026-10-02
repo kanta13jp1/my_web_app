@@ -14,6 +14,27 @@ Map<String, dynamic> issue(String key) => {'key': key, 'number': key};
 
 void main() {
   group('Shared developer issue lookups', () {
+    test('synchronous loader failure reaches waiters and remains retryable',
+        () async {
+      final cache = AssetDeveloperIssueLookupCache();
+      await expectLater(
+        cache.lookup(
+          scopeKey: 'user',
+          requests: [request('a'), request('b')],
+          load: (_) => throw StateError('Synchronous failure'),
+        ),
+        throwsStateError,
+      );
+      expect(
+        await cache.lookup(
+          scopeKey: 'user',
+          requests: [request('a')],
+          load: (_) async => {'a': issue('a')},
+        ),
+        {'a': issue('a')},
+      );
+    });
+
     test('shared failures release all pending entries for one retry', () async {
       final cache = AssetDeveloperIssueLookupCache();
       final response = Completer<Map<String, Map<String, dynamic>>>();
