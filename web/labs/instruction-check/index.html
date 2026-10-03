@@ -14,7 +14,7 @@
 <p>Claude Codeは、プログラムを書く作業を手伝うAIです。<code>CLAUDE.md</code>や<code>AGENTS.md</code>は、AIに作業のルールを渡すための「指示メモ」です。</p>
 <p><strong>確かめたいのは、どの指示メモの内容が返答に現れるか。</strong>メモごとに別の目印を書き、AIに目印を答えてもらって比べます。</p>
 <p class="note">このページは、あなたが貼り付けた返答を照合する道具です。Claude Codeの起動やファイルの読み取りは行いません。下の練習例は、AIを使わずに試せます。</p>
-<a class="jump" href="#try">まず練習例を試す ↓</a>
+<a class="jump" href="#evidence">実際の実行記録を見る ↓</a> · <a href="#try">練習例を試す ↓</a>
 </header>
 <section aria-labelledby="why">
 <h2 id="why">1. 何を比べるの？</h2>
@@ -28,8 +28,29 @@
 <p class="warning"><strong>質問にはMARK_CやMARK_Aそのものを書きません。</strong>答えを質問に書いてしまうと、ファイルを使わず質問をまねただけでも正解できるためです。</p>
 <p>返答が<code>MARK_C</code>だけなら、「CLAUDE.md側の目印は返った。AGENTS.md側の目印は返らなかった」と読めます。<strong>返らなかったことだけで、そのファイルを読んでいないとは断定できません。</strong>読んでも答えから省く可能性があるためです。</p>
 </section>
+<section id="evidence" aria-labelledby="evidence-title">
+<h2 id="evidence-title">2. 実際の実行ログを証跡として見る</h2>
+<p>2026年9月22日にClaude Codeを動かした12試行の記録です。下の練習例とは異なり、<strong>保存された実行ログから取り出した開始・応答・終了イベント</strong>を表示します。このページを開いてもAIは実行されません。</p>
+<button type="button" id="load-evidence">実行記録12件を表示する</button>
+<label for="run-select">確認する版と配置条件</label>
+<select id="run-select" disabled><option>実行記録を読み込んでください</option></select>
+<p id="evidence-message" aria-live="polite">表示ボタンを押すと、公開用の記録を読み込みます。</p>
+<div id="evidence-panel" hidden>
+<h3>この試行の条件と結果</h3>
+<pre id="run-summary"></pre>
+<h3>実際に返った文章</h3><pre id="run-answer"></pre>
+<p id="run-comparison" class="log-lines"></p>
+<h3>ツール使用回数の根拠</h3><p id="run-tools" class="log-lines"></p>
+<p>この実験はツールを使えない設定で実行しました。0件は保存された記録上の値です。途中で記録されなかった操作がないことや、ログの真正性、ファイルの読み込み経路・安全性を証明するものではありません。</p>
+<details id="run-log-details"><summary>実行ログの抜粋を開く（開始 → 応答 → 終了）</summary>
+<p>元の各イベントから必要な項目だけを取り出しています。パス、セッション識別子、接続情報、利用枠通知などを除いた<strong>公開用の抜粋</strong>で、原本全文ではありません。行番号は元ログの位置です。tool_useはAIがツールを呼ぶイベントの種類名です。</p>
+<pre id="run-events"></pre></details>
+<details><summary>ファイルの内容・質問・実行設定を見る</summary><pre id="run-fixture"></pre></details>
+<p><a id="run-source" href="https://github.com/kanta13jp1/zenn-content">同じ試行の公開済み要約を見る</a> · <a href="evidence.json">12件の公開用ログ抜粋をJSONで開く</a></p>
+</div>
+</section>
 <section id="try" aria-labelledby="practice">
-<h2 id="practice">2. まずは例で結果の読み方を練習</h2>
+<h2 id="practice">3. まずは例で結果の読み方を練習</h2>
 <p>下のボタンで、説明用に作った入力と結果を表示します。実際にClaude Codeを動かした結果ではありません。</p>
 <div class="presets" aria-label="練習例">
 <button type="button" id="example" data-example="missing">例1：Cだけ返った</button>
@@ -54,17 +75,17 @@
 <p class="hint">空白・改行で区切った文字が完全に同じか比べます。<code>MARK_C_extra</code>や<code>MARK_C。</code>は<code>MARK_C</code>と一致しません。「未検出」なら句読点が付いていないかも確認してください。</p>
 </section>
 <section aria-labelledby="meaning">
-<h2 id="meaning">3. ツールの回数も見るのはなぜ？</h2>
+<h2 id="meaning">4. ツールの回数も見るのはなぜ？</h2>
 <p>知りたいのは、質問する前から指示メモの内容がAIへ渡されていたかです。しかし、質問のあとにAIがツールでファイルを開けば、その場で目印を探せます。</p>
 <ul>
 <li><strong>空欄（未確認）：</strong>目印の有無だけを比べます。途中でツールを使ったかは、ログで別に確認します。</li>
 <li><strong>使用回数0：</strong>入力した記録上は、途中でツールを使っていません。目印が返ったことは確認できますが、それだけで読み込みの仕組みまでは証明できません。</li>
 <li><strong>使用回数1以上：</strong>途中でファイルを開いて答えを見つけた可能性を、この画面では取り除けません。どのツールを何に使ったか、実行ログを確認します。</li>
 </ul>
-<p>回数はあなたが入力した値です。この画面はログの正しさや、指示をすべて守ったか、安全な操作だったかを判定しません。</p>
+<p>上の照合フォームの回数はあなたが入力した値です。実測エリアの回数は保存ログから取り出したイベントと照合しています。この画面はログの正しさや、指示をすべて守ったか、安全な操作だったかを判定しません。</p>
 </section>
 <section aria-labelledby="own-test">
-<h2 id="own-test">4. 自分の環境では、何を変えて試す？</h2>
+<h2 id="own-test">5. 自分の環境では、何を変えて試す？</h2>
 <ol>
 <li>作業用の空フォルダーを用意し、Claude Codeの版を<code>claude --version</code>で記録します。</li>
 <li>最初に指示ファイルなしで試し、次にCLAUDE.mdだけ、AGENTS.mdだけ、両方の順に配置を変えます。各条件は新しいセッションで試します。</li>

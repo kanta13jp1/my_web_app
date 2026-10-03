@@ -45,3 +45,6 @@ document.querySelectorAll('[data-example]').forEach(button => {
     form.requestSubmit();
   });
 });
+
+import {setupEvidence} from './evidence.mjs';
+setupEvidence();
