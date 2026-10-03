@@ -20,6 +20,11 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   contract:
     name: Core-hub deployment scope contract
@@ -45,10 +50,6 @@ jobs:
       name: production
     permissions:
       contents: read
-    concurrency:
-      group: deploy-prod
-      cancel-in-progress: false
-      queue: max
     steps:
       - name: Checkout immutable event source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
