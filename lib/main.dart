@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:my_web_app/pages/aero_lab_page.dart';
 import 'package:my_web_app/pages/sound_bloom_page.dart';
 import 'package:my_web_app/pages/lumen_path_page.dart';
+import 'package:my_web_app/pages/kinetic_forge_page.dart';
 import 'package:my_web_app/pages/flow_city_page.dart';
 
 import 'package:flutter/material.dart';
@@ -1428,6 +1429,11 @@ Route<dynamic> generateAppRoute(
     case '/flow-city':
       return MaterialPageRoute(
         builder: (_) => const FlowCityPage(),
+        settings: settings,
+      );
+    case '/kinetic-forge':
+      return MaterialPageRoute(
+        builder: (_) => const KineticForgePage(),
         settings: settings,
       );
     case '/lumen-path':

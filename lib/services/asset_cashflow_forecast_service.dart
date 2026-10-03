@@ -15,8 +15,8 @@ class AssetCashflowRecurringEntry {
   final double amount;
   final String label;
 
-  /// Same fixed-cost obligation represented in a workbook and legacy subscription.
-  /// Compare occurrence dates after month-end clamping, not nominal days.
+  /// 負債一覧と旧固定費一覧にある同一請求の照合キー。
+  /// 実際の発生日は月末への丸め後に比較する。
   final String? fixedCostMatchKey;
   final bool isFixedCostRow;
 }

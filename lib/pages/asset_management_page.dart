@@ -1,3 +1,4 @@
+import 'package:my_web_app/widgets/expense_semantic_search.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:my_web_app/widgets/asset_interest_history_card.dart';
 import 'package:my_web_app/services/asset_interest_repository.dart';
@@ -906,6 +907,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final TextEditingController _flowMemoController = TextEditingController();
   final TextEditingController _flowAmountController = TextEditingController();
   List<Map<String, dynamic>> _recentFlows = []; // 収支履歴
+  String? _recentFlowsOwnerId;
 
   // --- サブスク（固定費）用変数 ---
   DateTime _selectedSubscriptionHistoryMonth = DateTime(
@@ -8172,8 +8174,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         },
       );
 
-      if (mounted) {
+      if (mounted && _supabase.auth.currentUser?.id == userId) {
         setState(() {
+          _recentFlowsOwnerId = userId;
           _recentFlows = List<Map<String, dynamic>>.from(data);
         });
         unawaited(
@@ -8567,9 +8570,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  bool _isRecordingFlow = false;
+
   Future<void> _recordFlow() async {
+    if (_isRecordingFlow) return;
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('記録にはログインが必要です。再ログインしてください。')),
+      );
+      return;
+    }
 
     final memo = _flowMemoController.text.trim();
     final amountStr = _flowAmountController.text.replaceAll(',', '');
@@ -8595,6 +8606,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final actionType = _flowLabelToActionType(_selectedFlowType);
+    setState(() => _isRecordingFlow = true);
 
     try {
       await _supabase.from('wealth_struggles').insert({
@@ -8632,6 +8644,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error recording flow: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e is PostgrestException &&
+                      e.code == '23514' &&
+                      e.message.contains('wealth_struggles_action_type_check')
+                  ? '振替を保存できません。サーバーの振替対応が未適用です。入力内容は保持しています。'
+                  : '記録処理に失敗しました。履歴を確認してから再試行してください。',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRecordingFlow = false);
     }
   }
 
@@ -15626,7 +15653,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '給料の入金を確認できません',
+                      '給与の口座入金は未確認です',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: scheme.onTertiaryContainer,
@@ -15638,10 +15665,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                '新しい給料サイクルに入りましたが、メインバンクへの給料振込をまだ'
-                '検知できていません。支払済みチェックは前サイクルのまま保持しています。'
-                'メイン口座の残高を更新すると入金を検知し、新しいサイクルへ自動で'
-                '切り替わります(チェックがリセットされます)。',
+                '給与明細から収入に計上された金額と、口座への入金確認は別です。'
+                '現在、メイン口座への給与振込を自動検知できていません。'
+                '支払済みチェックは前サイクルのまま保持しています。'
+                '口座の入出金明細を確認し、残高を更新してください。'
+                '入金を検知すると新しいサイクルへ切り替わります。'
+                '入金後の支出などで検知できない場合は、入金を確認したうえで'
+                '「給料を受け取った（リセット）」を選んでください。',
                 style: TextStyle(
                   fontSize: 12,
                   height: 1.5,
@@ -16714,8 +16744,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// キャッシュフローパネルの中身。データが無ければ null (グリッドから除外される)。
   Widget? _cashflowStatementPanelChild(AssetLiabilityWorkbook? workbook) {
-    // 前サイクルの支払済みを保持中は、当月ラベルの実績として再集計しない。
-    // 履歴と現在の収支記録は変更せず、確認済みの月次stateだけをライブ集計する。
+    // 前サイクルの支払済みを当月の実績として再集計しない。
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
     if (workbook != null &&
         _assetLiabilityBootStateLoaded &&
@@ -17816,7 +17845,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     }
     // 給与明細(payslips/salary_incomes)でのみ管理している給料も収入へ合算する。
-    totalIncome += _cycleSalaryIncomeTotal(_now, flows);
+    final salaryIncome = _cycleSalaryIncomeTotal(_now, flows);
+    totalIncome += salaryIncome;
 
     final net = totalIncome - totalExpense;
     // フローが無くても給与明細の給料収入があれば「未記録」とは扱わない。
@@ -17826,8 +17856,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final statusText = hasNoData
         ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
         : !hasRecordedExpense
-            ? '支出はまだ記録されていません。表示の差額は記録済み収入だけの集計です。支払済みチェックや支払予定の集計とは異なります。'
-            : 'このサイクルの収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
+            ? '支出はまだ記録されていません。差額は記録済み収入だけの集計で、支払済みチェックや予定額とは異なります。'
+        : 'このサイクルの記録上の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。現在残高や今後の支払後に使える額とは異なります。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -17913,6 +17943,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ],
             ),
+            if (salaryIncome > 0) ...[
+              const SizedBox(height: 10),
+              Text(
+                '給与明細・受取済み収入予定から計上した '
+                '¥${NumberFormat('#,###').format(salaryIncome)} を含みます。'
+                '口座への入金状況は入出金明細で確認してください。',
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             if (totalIncome == 0) ...[
               const SizedBox(height: 14),
               Container(
@@ -33328,13 +33371,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: _recordFlow,
+                  onPressed: _isRecordingFlow ? null : _recordFlow,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF64748B),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: Text(isTransferSelected ? '振替を追加' : '追加'),
+                  child: Text(_isRecordingFlow
+                      ? '保存中…'
+                      : (isTransferSelected ? '振替を追加' : '追加')),
                 ),
               ],
             ),
@@ -33415,6 +33460,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
             ],
+            const SizedBox(height: 8),
+            ExpenseSemanticSearch(
+              key: ValueKey(
+                  'expense-search-${_supabase.auth.currentUser?.id}-$visibleMonthLabel'),
+              periodLabel: visibleMonthLabel,
+              items: (_recentFlowsOwnerId == null ||
+                      _recentFlowsOwnerId != _supabase.auth.currentUser?.id)
+                  ? const []
+                  : visibleFlows
+                      .where((flow) => flow['action_type'] == 'expense')
+                      .take(5)
+                      .map((flow) => <String, dynamic>{
+                            'title': _parseFlowDescription(
+                              flow['description']?.toString() ?? '',
+                              actionType: 'expense',
+                            ).memo,
+                          })
+                      .toList(),
+            ),
             const SizedBox(height: 8),
             if (visibleFlows.isEmpty)
               Padding(

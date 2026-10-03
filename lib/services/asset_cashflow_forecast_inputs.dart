@@ -1,12 +1,13 @@
 import '../models/asset_liability_workbook.dart';
 import 'asset_cashflow_forecast_service.dart';
 import 'asset_expected_inflow_store.dart';
+import 'asset_payment_calendar_service.dart';
 
 /// 資産管理ページの状態(口座・負債・繰り返し収入テンプレ・入金ルール・固定費)から
 /// [AssetCashflowForecastService.project] へ渡す入力を導出する純関数の置き場。
 ///
-/// 元々ページの `_buildCashflowForecastCard` 内にインラインで書かれていたロジックを
-/// 抽出し、build メソッドから切り離してユニットテスト可能にしたもの(振る舞いは不変)。
+/// ページの build から切り離し、カレンダーと共通の支払日設定と
+/// 固定費の重複判定に必要な情報をテスト可能な形で組み立てる。
 class AssetCashflowForecastInputs {
   const AssetCashflowForecastInputs({
     required this.startingBalance,
@@ -97,51 +98,33 @@ class AssetCashflowForecastInputs {
       }
     }
 
-    // Match the calendar's duplicate policy only for fixed-cost rows.
-    // Card/loan repayments are distinct obligations even at the same amount.
-    String fixedCostKey(String name, int day, double amount) {
-      final normalized =
-          name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
-      return '$normalized|$day|${amount.toStringAsFixed(2)}';
-    }
-
     final recurringOutflow = <AssetCashflowRecurringEntry>[];
-    final fixedCostKeys = <String>{};
     for (final row in debtRows) {
-      final day = paymentDayOverrides[row.id] ??
-          paymentDayOverrides[row.name] ??
-          row.paymentDay;
-      if (!row.isDirectCashflowTarget ||
-          row.balance >= 0 ||
-          day == null ||
-          day <= 0 ||
-          row.scheduledPaymentAmount <= 0) {
+      final debt = AssetCalendarDebtInput.fromDebtRow(
+        row,
+        paymentDayOverrides: paymentDayOverrides,
+      );
+      if (!debt.isDirectCashflowTarget ||
+          debt.balance >= 0 ||
+          (debt.paymentDay ?? 0) <= 0 ||
+          debt.scheduledPaymentAmount <= 0) {
         continue;
       }
       recurringOutflow.add(
         AssetCashflowRecurringEntry(
-          dayOfMonth: day,
-          amount: row.scheduledPaymentAmount,
-          label: row.name,
-          isFixedCostRow: row.kind == AssetLiabilityAccountKind.utility ||
-              row.fullPaymentEstimate,
-          fixedCostMatchKey: row.kind == AssetLiabilityAccountKind.utility ||
-                  row.fullPaymentEstimate
-              ? _fixedCostMatchKey(row.name, row.scheduledPaymentAmount)
+          dayOfMonth: debt.paymentDay!,
+          amount: debt.scheduledPaymentAmount,
+          label: debt.name,
+          isFixedCostRow: debt.isFixedCost,
+          fixedCostMatchKey: debt.isFixedCost
+              ? _fixedCostMatchKey(debt.name, debt.scheduledPaymentAmount)
               : null,
         ),
       );
-      if (row.kind == AssetLiabilityAccountKind.utility ||
-          row.fullPaymentEstimate) {
-        fixedCostKeys
-            .add(fixedCostKey(row.name, day, row.scheduledPaymentAmount));
-      }
     }
     for (final subscription in subscriptions) {
       final entry = subscriptionRecurringEntry(subscription);
-      if (entry == null) continue;
-      final key = fixedCostKey(entry.label, entry.dayOfMonth, entry.amount);
-      if (!fixedCostKeys.contains(key)) {
+      if (entry != null) {
         recurringOutflow.add(entry);
       }
     }
@@ -186,7 +169,7 @@ class AssetCashflowForecastInputs {
       dayOfMonth: dueDate?.day ?? 1,
       amount: price,
       label: name.isEmpty ? '固定費' : name,
-      fixedCostMatchKey: _fixedCostMatchKey(name.isEmpty ? '固定費' : name, price),
+      fixedCostMatchKey: _fixedCostMatchKey(name, price),
     );
   }
 }
