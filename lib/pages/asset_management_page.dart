@@ -27178,12 +27178,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         // 確認事項は長文になり得るため行高さを可変にし、上限120pxでセル側で折り返す。
         dataRowMaxHeight: 120,
         columns: const [
-          DataColumn(label: Text('請求先カード')),
-          DataColumn(label: Text('請求額'), numeric: true),
-          DataColumn(label: Text('明細合計'), numeric: true),
-          DataColumn(label: Text('設定内訳合計'), numeric: true),
-          DataColumn(label: Text('差額'), numeric: true),
-          DataColumn(label: Text('確認事項')),
+          DataColumn(label: SizedBox(width: 140, child: Text('請求先カード'))),
+          DataColumn(
+              label: SizedBox(width: 112, child: Text('請求額')), numeric: true),
+          DataColumn(
+              label: SizedBox(width: 112, child: Text('明細合計')), numeric: true),
+          DataColumn(
+              label: SizedBox(width: 140, child: Text('設定内訳合計')),
+              numeric: true),
+          DataColumn(
+              label: SizedBox(width: 112, child: Text('差額')), numeric: true),
+          DataColumn(label: SizedBox(width: 280, child: Text('確認事項'))),
         ],
         rows: [
           for (final group in reconciliation.groups)
@@ -30807,6 +30812,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return SizedBox(
       width: 220,
       child: DropdownButton<String>(
+        key: ValueKey('card-billing-method:${row.id}'),
         value: validSelected
             ? selected
             : AssetLiabilityPlanningService.directPaymentMethodId,
@@ -30903,6 +30909,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return SizedBox(
       width: 150,
       child: TextField(
+        key: ValueKey('monthly-payment:${row.id}'),
         controller: controller,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9,]'))],

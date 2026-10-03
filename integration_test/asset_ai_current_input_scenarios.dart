@@ -8,11 +8,14 @@ import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_management_ai_analysis_history_service.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
+import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -207,6 +210,283 @@ void main() {
       publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
+  });
+
+  testWidgets('card discrepancy edit resolves mismatch but keeps import alert',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    const providerId = AssetLiabilityPlanningService.kddiProviderAccountId;
+    final repository = _MonthlyRepository()
+      ..state = const AssetLiabilityMonthlyState(
+        paymentOverrides: <String, double>{
+          providerId: 5764,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: <String, String>{providerId: 'paypay_card'},
+      );
+    final ai = _ControlledAi();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          aiSummaryService: ai,
+          aiAnalysisHistoryService: _EmptyHistory(),
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{
+              'cash': 50000,
+              'KDDI': -5764,
+              'PayPay': -20000,
+            },
+          },
+        ),
+      ),
+    );
+    await _pumpUntil(tester, () => ai.requests.isNotEmpty);
+    final before = ai.requests.first.workbook.cardStatementReconciliation.groups
+        .singleWhere((group) => group.billingAccountId == 'paypay_card');
+    expect(before.hasConfiguredMismatchFix, isTrue);
+    expect(
+      before.fixActions
+          .singleWhere(
+            (action) =>
+                action.kind ==
+                AssetLiabilityCardStatementFixActionKind
+                    .adjustConfiguredBreakdown,
+          )
+          .amount,
+      -14236,
+    );
+    ai.complete(0, 'Synthetic card discrepancy');
+    final importButton = find.byKey(
+      const Key('asset_card_recon_fix_importStatement_paypay_card'),
+    );
+    await tester.ensureVisible(importButton);
+    await tester.tap(importButton);
+    await tester.pump();
+    expect(find.textContaining('を選択しました。カード明細を貼り付けて'), findsOneWidget);
+    final editButton = find.byKey(
+      const Key('asset_card_recon_fix_adjustConfiguredBreakdown_paypay_card'),
+    );
+    await tester.ensureVisible(editButton);
+    await tester.tap(editButton);
+    await tester.pump(const Duration(milliseconds: 400));
+    final amountInput = find.byKey(
+      const ValueKey('monthly-payment:$providerId'),
+    );
+    expect(amountInput, findsOneWidget);
+    expect(tester.widget<TextField>(amountInput).controller?.text, '5764');
+    await tester.ensureVisible(amountInput);
+    await tester.enterText(amountInput, '20000');
+    await _pumpUntil(tester, () => ai.requests.length == 2);
+    final after = ai.requests.last.workbook.cardStatementReconciliation.groups
+        .singleWhere((group) => group.billingAccountId == 'paypay_card');
+    expect(after.hasConfiguredMismatchFix, isFalse);
+    expect(
+      after.alerts,
+      contains(AssetLiabilityPlanningService.cardStatementMissingImportAlert),
+    );
+    expect(repository.state.paymentOverrides[providerId], 20000);
+    ai.complete(1, 'Synthetic discrepancy resolved');
+    final methodInput = find.byKey(
+      const ValueKey('card-billing-method:$providerId'),
+    );
+    await tester.ensureVisible(methodInput);
+    await tester.tap(methodInput);
+    await tester.pump(const Duration(milliseconds: 400));
+    await _pumpUntil(
+      tester,
+      () => find
+          .text(AssetLiabilityPlanningService.directPaymentLabel)
+          .hitTestable()
+          .evaluate()
+          .isNotEmpty,
+    );
+    await tester.tap(
+      find
+          .text(AssetLiabilityPlanningService.directPaymentLabel)
+          .hitTestable()
+          .last,
+    );
+    await _pumpUntil(tester, () => ai.requests.length == 3);
+    final detachedWorkbook = ai.requests.last.workbook;
+    expect(
+      detachedWorkbook.cardStatementReconciliation.groups
+          .where((group) => group.billingAccountId == 'paypay_card'),
+      isEmpty,
+    );
+    final directPayment = detachedWorkbook.cardBillingReview.directPaymentItems
+        .singleWhere((item) => item.accountId == providerId);
+    expect(directPayment.amount, 20000);
+    expect(directPayment.includedInBillingAccount, isFalse);
+    expect(
+      repository.state.cardBillingAccountIds[providerId],
+      AssetLiabilityPlanningService.directPaymentMethodId,
+    );
+    expect(repository.state.paymentOverrides[providerId], 20000);
+    ai.complete(2, 'Synthetic detail detached without deleting the payment');
+    await tester.ensureVisible(methodInput);
+    await tester.tap(methodInput);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(
+      find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is DropdownMenuItem<String> &&
+                widget.value == 'paypay_card',
+          )
+          .last,
+    );
+    await _pumpUntil(tester, () => ai.requests.length == 4);
+    final reattached = ai
+        .requests.last.workbook.cardStatementReconciliation.groups
+        .singleWhere((group) => group.billingAccountId == 'paypay_card');
+    expect(reattached.configuredDetailTotal, 20000);
+    expect(reattached.hasConfiguredMismatchFix, isFalse);
+    expect(repository.state.cardBillingAccountIds[providerId], 'paypay_card');
+    ai.complete(3, 'Synthetic detail reattached');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          aiSummaryService: ai,
+          aiAnalysisHistoryService: _EmptyHistory(),
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{
+              'cash': 50000,
+              'KDDI': -5764,
+              'PayPay': -20000,
+            },
+          },
+        ),
+      ),
+    );
+    await _pumpUntil(tester, () => ai.requests.length == 5);
+    final restored = ai
+        .requests.last.workbook.cardStatementReconciliation.groups
+        .singleWhere((group) => group.billingAccountId == 'paypay_card');
+    expect(restored.configuredDetailTotal, 20000);
+    expect(restored.hasConfiguredMismatchFix, isFalse);
+    expect(
+      restored.alerts,
+      contains(AssetLiabilityPlanningService.cardStatementMissingImportAlert),
+    );
+    ai.complete(4, 'Restored synthetic discrepancy remains resolved');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('new card detail can be created and deleted without resurrection',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _MonthlyRepository()
+      ..state = const AssetLiabilityMonthlyState(
+        paymentOverrides: <String, double>{'paypay_card': 1000},
+      );
+    final ai = _ControlledAi();
+    Widget page() => MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repository,
+            aiSummaryService: ai,
+            aiAnalysisHistoryService: _EmptyHistory(),
+            debugNow: DateTime(2026, 9, 6, 12),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-09-06': <String, double>{'cash': 50000, 'PayPay': -1000},
+            },
+          ),
+        );
+    await tester.pumpWidget(page());
+    await _pumpUntil(tester, () => ai.requests.length == 1);
+    ai.complete(0, 'Synthetic empty detail');
+    final addButton = find.descendant(
+      of: find.byType(RecurringFixedCostCard),
+      matching: find.ancestor(
+        of: find.text('追加'),
+        matching: find.byWidgetPredicate((widget) => widget is TextButton),
+      ),
+    );
+    expect(addButton, findsOneWidget);
+    await tester.ensureVisible(addButton);
+    await tester.tap(addButton);
+    await tester.pump(const Duration(milliseconds: 400));
+    Finder field(String label) => find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField && widget.decoration?.labelText == label,
+        );
+    await tester.enterText(field('名称'), 'Synthetic card detail');
+    await tester.enterText(field('月額 (円)'), '1000');
+    await tester.enterText(field('振替日 (1〜31)'), '15');
+    await tester.tap(find.widgetWithText(FilledButton, '保存'));
+    await _pumpUntil(tester, () => ai.requests.length == 2);
+    final row = ai.requests.last.workbook.debtMasterRows
+        .singleWhere((item) => item.name == 'Synthetic card detail');
+    expect(row.scheduledPaymentAmount, 1000);
+    final saved = await const AssetRecurringFixedCostStore().load();
+    expect(saved.singleWhere((item) => item.name == row.name).amount, 1000);
+    ai.complete(1, 'Synthetic detail created');
+    final methodInput = find.byKey(ValueKey('card-billing-method:${row.id}'));
+    await tester.ensureVisible(methodInput);
+    await tester.tap(methodInput);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(
+      find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is DropdownMenuItem<String> &&
+                widget.value == 'paypay_card',
+          )
+          .last,
+    );
+    await _pumpUntil(tester, () => ai.requests.length == 3);
+    final group = ai.requests.last.workbook.cardStatementReconciliation.groups
+        .singleWhere((item) => item.billingAccountId == 'paypay_card');
+    expect(group.configuredDetailTotal, 1000);
+    expect(group.hasConfiguredMismatchFix, isFalse);
+    ai.complete(2, 'Synthetic new detail reconciled');
+    final deleteButton = find.byTooltip('Synthetic card detail を削除');
+    await tester.ensureVisible(deleteButton);
+    await tester.tap(deleteButton);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.widgetWithText(FilledButton, '削除'));
+    await _pumpUntil(tester, () => ai.requests.length == 4);
+    expect(
+      ai.requests.last.workbook.debtMasterRows
+          .where((item) => item.name == 'Synthetic card detail'),
+      isEmpty,
+    );
+    expect(
+      (await const AssetRecurringFixedCostStore().load())
+          .where((item) => item.name == 'Synthetic card detail'),
+      isEmpty,
+    );
+    ai.complete(3, 'Synthetic detail deleted');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(page());
+    await _pumpUntil(tester, () => ai.requests.length == 5);
+    expect(
+      ai.requests.last.workbook.debtMasterRows
+          .where((item) => item.name == 'Synthetic card detail'),
+      isEmpty,
+    );
+    ai.complete(4, 'Deleted synthetic detail stays deleted');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
   });
 
   for (final mode in <int>[0, 1, 2]) {
