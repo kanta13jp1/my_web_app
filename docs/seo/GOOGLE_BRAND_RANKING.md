@@ -498,3 +498,35 @@ Amazonは実リンクの商品IDから短縮URLへ正規化。前回9/30と同�
 追跡2文書だけを既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)に追記し、重複PRは作らない。全JSONL解析、日付重複防止、1〜9連番、3位URL一致、9 URL集合一致を検証。文書のみでFlutterテスト・解析・release buildは未実施、新規生成HTMLなし。対象のFlutter起動後ブラウザ描画・site検索・完全一致・Search Consoleは未実施。
 
 session-start-checkとadaptive-model-routerを適用。空きディスク1.13 GiB、RAM使用91%前後につきremote-only編集、worker/worktree/重いtoolchainなし。ルールdriftなし、バージョン確認・AI tool watch実施。dirtyな元ツリーを保護。自動マージ・デプロイなし。次回は順位・タイトル・サイト名、必要に応じ基本理念の検索掲載を確認。順位維持や1位は保証しない。
+
+## 2026-10-03 日次監視：自然検索3位、同じ9 URL
+
+09:01 JST頃に実Chromeで検索（AI概要本文は09:02頃までに表示）。検索語 `自分株式会社`、hl=ja/gl=jp/pws=0。ログイン中、非パーソナライズ表示、府中市・東京都（IP由来）、CAPTCHAなし。全国共通順位とは扱わない。対象は自然検索3位/9件。AI概要・PAA・サイトリンクを除外し、対象が1ページ目にあるため100位までの調査不要。
+
+広告・強調スニペットは未表示。AI概要は生成中から本文表示へ変化。可視参照はIFAとmoto note（網羅ではない）。PAA、関連検索、Amazon価格・評価、サイトリンクあり。
+
+|順位|タイトル|URL / ドメイン|種別|主な意図|
+|---:|---|---|---|---|
+|1|「自分株式会社」という考え方と、この考え方を活用するために ...|[note.com](https://note.com/famous_knot742/n/n0c1a89bc7c77)|個人ブログ記事|概念の定義、参考情報、実践方法を知る|
+|2|“自分株式会社”という考え方|[ifa-japan.co.jp](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)|専門家ブログ記事|人的資本・資産形成として理解する|
+|3|自分株式会社とは？ ｜ 人生を経営するAIライフマネジメントアプリ|[my-web-app-b67f4.web.app](https://my-web-app-b67f4.web.app/)|サービスホーム|概念を理解し、AIによる日常管理を試す|
+|4|会社に依存しない「自分株式会社」の考え方｜moto（戸塚俊介）|[note.com](https://note.com/recruit_man_note/n/n1032c32fbc36)|著者ブログ記事|会社に依存しないキャリア設計と収支管理を学ぶ|
+|5|サラリーマンこそ自分株式会社をつくりなさい――1000万円 ...|[amazon.co.jp](https://www.amazon.co.jp/dp/4478067449)|書籍商品ページ|内容、著者、評価、購入条件を確認する|
+|6|経営支援サービスを総合的にサポートする ITベンダー M社|[solution.lmi.ne.jp](https://solution.lmi.ne.jp/hr_development/case/1180)|法人研修の導入事例|研修での活用例と成果を確認する|
+|7|「自分株式会社」を経営せよ。副業年収4000万円のmotoが ...|[r25.jp](https://r25.jp/articles/928885293145522178)|編集部記事・書籍抜粋|キャリアと副業の具体例を読む|
+|8|NewsPicks [ニューズピックス]|[x.com](https://x.com/newspicks/status/1449692163042856961)|SNS投稿|著名人の発言と反応を見る|
+|9|わたしブランド～自分株式会社を設立してみよう|[akikofujisaki.com](https://akikofujisaki.com/selfpromotion/)|専門家ブログ記事|自己ブランディングへ応用する|
+
+Amazonは実リンクの商品IDから短縮URLへ正規化。前回10/1と同じ9 URL。moto5→4、Amazon6→5、LMI4→6、他は同順位。10/2は未測定で補間しない。対象title末尾は今回は省略なし、snippetは同内容、サイト名は依然Google。表示差だけで再クロールや施策効果とは断定しない。
+
+### 分析と今回の判断
+
+[みおつくしnote](https://note.com/famous_knot742/n/n0c1a89bc7c77)の概念を示すH1、経験→定義→比較→実践・資料の構造、著者・日付・プロフィール導線を再確認。[IFA JAPAN](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)は概念・人的資本・長期自己経営、著者・書籍参照と会社/業務方針の導線を持つ。Web本文はキャッシュを含みうる。JSON-LD型等は10/1の監査を履歴として参照し、本日の再監査とは扱わない。
+
+[対象基本理念](https://my-web-app-b67f4.web.app/philosophy)のWeb取得本文に定義、P/L/B/S、人的資本、6部署、運用サイクル、架空例、FAQを確認。主要テーマを追加すべき新しい根拠は見つからず、アプリ改修は行わない。文章・画像の転用なし。
+
+### 記録・検証・次回
+
+追跡2文書のみ既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)へ追記。全JSONL解析、日付重複防止、1〜9連番、対象URL一致、同じ9 URL集合を検証。docs-onlyにつきFlutter test/analyze/release buildは未実施、新規生成HTMLなし。対象の起動後ブラウザ描画、完全一致、site検索、Search Console、本日のJSON-LD再監査は未実施。
+
+session-start-checkとadaptive-model-routerを適用しlead継続。元ツリー21 dirty pathsと48 commitsの遅れは変更しない。空きディスク約3 GiBでremote-only編集、新規worktree/worker/重いtoolchainなし。ルールdriftなし、tool watchの既存ルートは#1422等。自動マージ・デプロイなし。検索タブ閉鎖済み。次回は順位・タイトル・サイト名、必要に応じ基本理念の検索掲載を確認。順位維持や1位を保証しない。
