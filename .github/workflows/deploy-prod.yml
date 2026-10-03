@@ -17,6 +17,11 @@ on:
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
       - '.github/workflows/**'
+      - 'scripts/production_core_hub_scope.py'
+      - 'scripts/production_core_hub_scope_test.py'
+      - 'supabase/functions/core-hub/blog_view.ts'
+      - 'supabase/functions/core-hub/blog_view_test.ts'
+      - 'supabase/functions/core-hub/index_test.ts'
       - 'lefthook.yml'
       - 'scripts/classify_ci_changes.py'
       - 'scripts/classify_ci_changes_test.py'
@@ -51,6 +56,7 @@ concurrency:
   # するが、全 commit が必ず deploy される。
   # group が同じため同時並行はゼロ・GitHub Actions リソース消費は変わらない。
   cancel-in-progress: false
+  queue: max
 
 permissions: {}
 
@@ -117,21 +123,18 @@ jobs:
 
       - name: Collect pushed files
         if: github.event_name == 'push'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        with:
-          script: |
-            const fs = require('fs');
-            const comparison = await github.rest.repos.compareCommitsWithBasehead({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              basehead: `${context.payload.before}...${context.sha}`,
-              per_page: 100,
-            });
-            fs.mkdirSync('.deploy-logs', { recursive: true });
-            fs.writeFileSync(
-              '.deploy-logs/changed-files.txt',
-              (comparison.data.files || []).map((file) => file.filename).join('\n') + '\n',
-            );
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          [[ "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE_SHA" != 0000000000000000000000000000000000000000 ]]
+          git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
+          mkdir -p .deploy-logs
+          git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" > .deploy-logs/changed-files.txt
+
+      - name: Reject mixed public-blog deployments
+        if: github.event_name == 'push'
+        run: python scripts/production_core_hub_scope.py guard --changed-files .deploy-logs/changed-files.txt
 
       - name: Classify deploy scope
         id: changes
@@ -1065,4 +1068,3 @@ jobs:
               commit_sha: context.sha,
               body: 'Production deployment completed.\n\n- **Web**: ${{ needs.deploy.outputs.web }}\n- **Edge Functions**: ${{ needs.deploy.outputs.edge }}\n- **Migrations**: ${{ needs.deploy.outputs.migration }}\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
             })
-
