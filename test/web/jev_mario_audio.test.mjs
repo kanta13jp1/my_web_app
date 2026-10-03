@@ -191,3 +191,10 @@ test('octave layers share anticipated lead timing and silence its duplicate grid
  const lead=calls.find(x=>x[4]===.052&&x[0]>0);assert.ok(lead);for(const [offset,gain]of [[12,.018],[-12,.012]]){const layer=calls.find(x=>x[4]===gain&&x[0]===lead[0]+offset&&x[1]===lead[1]);assert.ok(layer);assert.equal(layer[2],lead[2]);}
  calls.length=0;a.beat=48;a.next=c.currentTime;a.tick('castle',{boss:true});assert.ok(!calls.some(x=>[.052,.018,.012].includes(x[4])&&x[1]===c.currentTime));
 });
+
+test('climax breath removes bass and percussion for one beat but preserves lead and return',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.track='overworld';const tones=[],drums=[];a.tone=(...x)=>tones.push(x);a.noise=(...x)=>drums.push(x);
+ for(const beat of [46,47]){tones.length=0;drums.length=0;a.beat=beat;a.next=c.currentTime;a.tick();assert.ok(!tones.some(x=>x[3]==='bass'||x[4]===.055));assert.equal(drums.length,0);assert.ok(tones.length>0);}
+ tones.length=0;a.beat=48;a.next=c.currentTime;a.tick();assert.ok(tones.some(x=>x[4]===.055));assert.ok(tones.some(x=>x[3]==='pluck'));
+ tones.length=0;a.effect('coin');assert.ok(tones.some(x=>x[5]!==true));
+});

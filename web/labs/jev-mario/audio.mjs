@@ -108,6 +108,7 @@ export class GameAudio{
   while(this.next<now+.08){
    const {step,lead,leadType,harmony,bass,counter,pad,fifth,answer,bell,accent,echo,turn,pickup,reply,lowAnswer,spark,cadence,duty}=musicStep(track,this.beat,hurry),t=this.next;
    // Phrase entries arrive just before their next grid beat, without a duplicate attack.
+   const retreat=track!=='underwater'&&this.beat%64>=46&&this.beat%64<48;
    const water=track==='underwater',anticipated=!water&&this.beat>0&&this.beat%8===0;
    const playLead=(note,time,duration,type,duty,beat)=>{this.tone(note,time,duration,type,.052,true,0,duty);if(note)for(const layer of leadLayers(track,beat,boss))this.tone(note+layer.interval,time,duration,layer.type,layer.gain,true);};
    if((water&&this.beat%2===0)||(!water&&!anticipated))playLead(water?scores.underwater[Math.floor(this.beat/2)%scores.underwater.length]:lead,t,step*(water?1.7:this.beat%4===3?.55:.82),leadType,duty,this.beat);
@@ -129,12 +130,12 @@ export class GameAudio{
    if(this.beat%8===0)this.tone(pad,t+step*.20,step*6.5,'triangle',track==='castle'?.009:.012,true);
    if(this.beat%4===0)this.tone(counter,t+step*.16,step*3.2,'pluck',track==='underwater'?.023:.017,true);
    // Keep percussion on its grid; bass anticipates alternate quarter notes.
-   for(const n of bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'bass',.105,true);
-   if(track==='overworld'||track==='star'){
+   for(const n of retreat?[]:bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'bass',.105,true);
+   if(!retreat&&(track==='overworld'||track==='star')){
     if(this.beat%4===0)this.tone(32,t,.035,'triangle',.055,true,-12);
     if(this.beat%2===1)this.noise(t,this.beat%4===3?.045:.018,this.beat%4===3?.018:.009,true);
-   }else if(track==='castle'&&this.beat%4===2)this.noise(t,.055,.016,true);
-   else if(track==='underground'&&this.beat%8===6)this.noise(t,.022,.009,true);
+   }else if(!retreat&&track==='castle'&&this.beat%4===2)this.noise(t,.055,.016,true);
+   else if(!retreat&&track==='underground'&&this.beat%8===6)this.noise(t,.022,.009,true);
    // A quiet phrase response adds articulation without stacking a dense chord.
    if(this.beat%16===7||this.beat%16===14){this.tone(harmony+12,t+step*.72,step*.28,'triangle',.006,true);}
    // Short broken triad answers the phrase instead of sustaining a dense chord.
