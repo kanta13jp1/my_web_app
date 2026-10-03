@@ -114,6 +114,33 @@ test.describe('Landing story journey', () => {
     await expect(page.getByRole('textbox', { name: 'メールアドレス', exact: true }).first()).toBeInViewport();
   });
 
+  test('opens and closes the primary decision questions after pricing', async ({ page }, testInfo) => {
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
+    await openLanding(page);
+    await activateChapter(page, '実行');
+    const question = page.getByText('AIが勝手に「やること」を決めるのですか?', { exact: true });
+    for (let step = 0; step < 120; step++) {
+      const bounds = await question.boundingBox();
+      if (bounds && bounds.y > 160 && bounds.y + bounds.height < page.viewportSize()!.height - 180) break;
+      await page.mouse.move(180, 320);
+      await page.mouse.wheel(0, 350);
+      await page.waitForTimeout(180);
+    }
+    await expect(question).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath('faq-closed.png'), scale: 'css' });
+    await question.click();
+    const answer = page.getByText('いいえ。AIは入力内容を整理して、次に動かす1件の候補と理由を提案します。実行するか、別の行動を選ぶかはユーザーが決めます。', { exact: true });
+    await expect(answer).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('faq-open.png'), scale: 'css' });
+    await question.click();
+    await expect(answer).toHaveCount(0);
+    expect(layoutIssues).toEqual([]);
+  });
+
   test('connects the final chapter to the existing no-signup trial', async ({
     page,
   }) => {
