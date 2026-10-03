@@ -6087,7 +6087,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               _buildEditorialChapter(
                 number: 4,
                 eyebrow: 'Decide with confidence',
-                title: '不安を残さず、始めるか決める。',
+                title: '疑問を確かめて、\n始めるか決める。',
                 description: 'AIの役割、登録、保存、料金について、実際の動作に沿って説明します。',
                 children: [_buildFaqSection(), _buildEditorialArchive()],
               ),

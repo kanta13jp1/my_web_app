@@ -107,27 +107,37 @@ class LandingFaqSection extends StatelessWidget {
     final additionalFaqs = faqs.skip(primaryFaqCount);
 
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      color: const Color(0xFFF7F1E7),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFD6CFC4)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'よくある質問',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
+                color: Color(0xFF101D2B),
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             const Text(
-              '気になることがあればお気軽にどうぞ。',
-              style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+              '始める前の疑問を、ここで確認できます。',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF596575),
+                height: 1.6,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             for (final faq in primaryFaqs) ...[
               _FaqItem(question: faq.q, answer: faq.a),
             ],
@@ -135,18 +145,18 @@ class LandingFaqSection extends StatelessWidget {
               Theme(
                 data: Theme.of(context).copyWith(
                   dividerColor: Colors.transparent,
-                  splashColor: const Color(0x143949AB),
+                  splashColor: const Color(0x14654A35),
                 ),
                 child: ExpansionTile(
                   key: const Key('landing_faq_more_toggle'),
                   tilePadding: const EdgeInsets.symmetric(horizontal: 4),
                   childrenPadding: EdgeInsets.zero,
-                  iconColor: const Color(0xFF3949AB),
-                  collapsedIconColor: const Color(0xFF64748B),
+                  iconColor: const Color(0xFF654A35),
+                  collapsedIconColor: const Color(0xFF596575),
                   title: Text(
                     'その他の質問を見る（${faqs.length - primaryFaqCount}件）',
                     style: const TextStyle(
-                      color: Color(0xFF27364A),
+                      color: Color(0xFF101D2B),
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                       height: 1.5,
@@ -155,7 +165,7 @@ class LandingFaqSection extends StatelessWidget {
                   subtitle: const Text(
                     '連携・AI構成・セキュリティなどの詳細',
                     style: TextStyle(
-                      color: Color(0xFF64748B),
+                      color: Color(0xFF596575),
                       fontSize: 12,
                       height: 1.5,
                     ),
@@ -190,11 +200,19 @@ class _FaqItemState extends State<_FaqItem> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () => setState(() => _expanded = !_expanded),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+        Semantics(
+          expanded: _expanded,
+          child: TextButton(
+            onPressed: () => setState(() => _expanded = !_expanded),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF101D2B),
+              minimumSize: const Size(0, 64),
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              visualDensity: VisualDensity.standard,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -202,15 +220,16 @@ class _FaqItemState extends State<_FaqItem> {
                     widget.question,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      height: 1.5,
+                      fontSize: 16,
+                      height: 1.6,
                     ),
                   ),
                 ),
+                const SizedBox(width: 16),
                 Icon(
-                  _expanded ? Icons.expand_less : Icons.expand_more,
-                  size: 20,
-                  color: const Color(0xFF64748B),
+                  _expanded ? Icons.remove : Icons.add,
+                  size: 22,
+                  color: const Color(0xFF654A35),
                 ),
               ],
             ),
@@ -218,17 +237,17 @@ class _FaqItemState extends State<_FaqItem> {
         ),
         if (_expanded)
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(right: 38, bottom: 22),
             child: Text(
               widget.answer,
               style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF64748B),
-                height: 1.6,
+                fontSize: 15,
+                color: Color(0xFF596575),
+                height: 1.8,
               ),
             ),
           ),
-        const Divider(height: 1),
+        const Divider(height: 1, color: Color(0xFFD6CFC4)),
       ],
     );
   }
