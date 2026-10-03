@@ -490,8 +490,8 @@ export class World11 {
     this.sound('pipe');this.room='underground';this.camera=0;p.x=32;p.y=32;p.vx=0;p.vy=0;p.grounded=false;this.wasJump=false;this.jumpBuffer=0;this.coyote=0;
     for(let x=0;x<16;x++){this.cells.set(`${x},13`,'brick');this.cells.set(`${x},14`,'brick');if(x<13)this.cells.set(`${x},1`,'brick');}
     for(let x=4;x<11;x++)for(let y=7;y<10;y++)if(!(y===7&&(x===4||x===10)))this.contents.set(`${x},${y}`,'loose');
-    // A visible reward distinguishes exploring the room from taking a shortcut.
-    this.cells.set('6,10','question');this.contents.set('6,10','mushroom');
+    // A floor reward leaves the coin room's jumping route unobstructed.
+    this.items.push({x:96,y:192,w:14,h:16,emerging:0,vx:1,vy:0,kind:this.power?'flower':'mushroom'});
     for(let y=10;y<13;y++)for(let x=13;x<16;x++)this.cells.set(`${x},${y}`,'pipe');return true;
   }
   exitRoom(){if(!this.saved)return false;const pipe=this.pipeReturn;this.sound('pipe');Object.assign(this,this.saved);this.saved=null;this.pipeReturn=null;this.room='overworld';this.p.x=pipe.exit;this.p.y=pipe.floor-this.p.h;this.p.vx=0;this.p.vy=0;this.p.grounded=false;this.camera=Math.max(this.camera,this.p.x-96);this.wasJump=false;this.jumpBuffer=0;this.coyote=0;return true;}
