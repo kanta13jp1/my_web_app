@@ -48,6 +48,26 @@ def run(**overrides):
 
 
 class ScheduleResilienceWatchTest(unittest.TestCase):
+    def test_main_push_confirmation_failure_performs_no_writes(self) -> None:
+        target = WorkflowTarget("deploy-prod", "deploy-prod.yml", 0, "push")
+        primary = run(created_at=(datetime.now(timezone.utc) - timedelta(hours=1)).isoformat())
+        with (
+            patch.dict(os.environ, {"GITHUB_TOKEN": "test-token"}),
+            patch("schedule_resilience_watch.GitHubClient") as factory,
+            patch("schedule_resilience_watch.TARGETS", (target,)),
+            patch("sys.stdout", new_callable=io.StringIO),
+        ):
+            client = factory.return_value
+            client.workflow_runs.return_value = [primary]
+            client.repository_workflow_runs.return_value = []
+            client.confirm_push_run.side_effect = PrimaryLatestUnconfirmed("mismatch")
+            result = main(["--repo", "owner/repo"])
+        self.assertEqual(result, 1)
+        client.confirm_push_run.assert_called_once()
+        client.rerun_failed_jobs.assert_not_called()
+        client.open_or_update_issue.assert_not_called()
+        client.close_recovered_issues.assert_not_called()
+
     def test_push_split_searches_older_half_only_when_newer_empty(self) -> None:
         client = GitHubClient("owner/repo", "token")
         item = run(created_at=(NOW - timedelta(hours=18)).isoformat(),
