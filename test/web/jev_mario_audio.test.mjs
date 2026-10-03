@@ -219,3 +219,7 @@ test('return thins ornaments and actual scheduler wraps without dropping the nex
  a.beat=192;a.next=c.currentTime;a.tick();const n=musicStep('overworld',192);assert.ok(!calls.some(x=>x[0]===n.pad&&x[3]==='triangle'));assert.ok(calls.some(x=>x[4]===.052));
  a.beat=255;a.next=c.currentTime;a.tick();assert.equal(a.beat,0);const next=a.next;calls.length=0;c.currentTime=next;a.tick();assert.equal(a.beat,1);assert.equal(a.next,next+musicStep('overworld',0).step);assert.ok(calls.some(x=>x[3]==='bass'));a.stop();assert.equal(a.nodes.size,0);
 });
+
+test('development answers the same hook with a contrasting lead timbre',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.track='overworld';a.beat=65;a.next=c.currentTime;const calls=[];a.tone=(...x)=>calls.push(x);a.tick();assert.ok(calls.some(x=>x[4]===.052&&x[3]==='pluck'));
+});

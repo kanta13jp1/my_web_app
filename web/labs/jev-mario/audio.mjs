@@ -114,7 +114,7 @@ export class GameAudio{
    const section=loopSection(this.beat);
    const retreat=track!=='underwater'&&this.beat%64>=46&&this.beat%64<48;
    const water=track==='underwater',anticipated=!water&&this.beat>0&&this.beat%8===0;
-   const playLead=(note,time,duration,type,duty,beat)=>{this.tone(note,time,duration,type,.052,true,0,duty);if(note)for(const layer of leadLayers(track,beat,boss))this.tone(note+layer.interval,time,duration,layer.type,layer.gain,true);};
+   const playLead=(note,time,duration,type,duty,beat)=>{this.tone(note,time,duration,section.name==='development'?'pluck':type,.052,true,0,duty);if(note)for(const layer of leadLayers(track,beat,boss))this.tone(note+layer.interval,time,duration,layer.type,layer.gain,true);};
    if((water&&this.beat%2===0)||(!water&&!anticipated))playLead(water?scores.underwater[Math.floor(this.beat/2)%scores.underwater.length]:lead,t,step*(water?1.7:this.beat%4===3?.55:.82),leadType,duty,this.beat);
    if(!water&&this.beat%8===7){const next=musicStep(track,this.beat+1,hurry);playLead(next.lead,t+step*.72,step*1.10,next.leadType,next.duty,this.beat+1);} 
    for(const n of ostinatoStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,n.type,n.gain*section.backing,true,0,n.duty);
