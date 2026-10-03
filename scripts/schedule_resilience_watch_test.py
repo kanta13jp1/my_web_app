@@ -188,26 +188,19 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
                     datetime.now(timezone.utc) - timedelta(days=1))
 
     def test_push_revalidation_stops_after_complete_newest_slice(self) -> None:
-        class Client(GitHubClient):
-            calls = 0
-
-            def request(self, method, path, body=None):
-                self.calls += 1
-                return {"total_count": 1, "workflow_runs": [run(
-                    created_at=datetime.now(timezone.utc).isoformat(),
-                    path=".github/workflows/deploy-prod.yml",
-                )]}
-
-        client = Client("owner/repo", "token")
+        client = GitHubClient("owner/repo", "token")
         with patch("schedule_resilience_watch.datetime") as clock:
             clock.now.return_value = NOW
             clock.fromisoformat.side_effect = datetime.fromisoformat
             # Keep fixture inside the bounded query.
             with patch.object(client, "request", return_value={"total_count": 1,
-                "workflow_runs": [run(path=".github/workflows/deploy-prod.yml")]}):
+                "workflow_runs": [run(path=".github/workflows/deploy-prod.yml")]}) as request:
                 found = client.repository_workflow_runs("deploy-prod.yml", event="push",
                     created_after=NOW - timedelta(days=30))
         self.assertEqual([item["id"] for item in found], [123])
+        request.assert_called_once()
+        self.assertEqual(request.call_args.args[0], "GET")
+        self.assertIn("event=push", request.call_args.args[1])
 
     def test_push_invalid_count_remains_fail_closed(self) -> None:
         client = GitHubClient("owner/repo", "token")
