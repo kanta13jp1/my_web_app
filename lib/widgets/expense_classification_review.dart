@@ -155,10 +155,34 @@ class _ExpenseClassificationReviewState
                       ? 'キーワード一致による候補です。店名だけでは用途を確定できません。'
                       : 'ルールに一致しません。品目や用途を追記して確認してください。',
             ),
+          if (ai) ...[
+            Text(
+              '接続先：${_client.isLocalMode ? 'ローカルAI' : 'クラウドAI'}',
+            ),
+            Text('応答時間：${_prediction.latencyMs} ms（要求全体）'),
+            const Text('通信と返答の処理を含みます。モデル内部の推論時間ではありません。'),
+          ],
           if (ai)
             Text(
               'モデルの確信度：${(_prediction.confidence * 100).toStringAsFixed(0)}%'
               '（正答率ではありません）',
+            ),
+          if (!empty)
+            ExpansionTile(
+              key: ValueKey(widget.memo),
+              tilePadding: EdgeInsets.zero,
+              title: const Text('確信度の読み方'),
+              children: const [
+                Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    '確信度は、モデルの判断が一つの候補にどれほど集中しているかを表します。'
+                    '100%でも、正解や保存の許可を意味しません。'
+                    '候補が違うときは、店名だけでなく品目・用途を明細と照らし合わせ、'
+                    '「内容」を書き直して確認してください。',
+                  ),
+                ),
+              ],
             ),
           if (_aiUnavailable) ...[
             const SizedBox(height: 8),

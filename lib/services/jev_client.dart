@@ -55,7 +55,7 @@ class JevClassificationResult {
     this.fallbackReason,
   });
 
-  /// 確信度が 0.96 (96%) 以上で確定採用可能
+  /// 数値が0.96以上かだけを判定する。正答率や自動採用の許可ではない。
   bool get isHighConfidence => confidence >= 0.96;
 
   /// 確信度が 0.40 (40%) 以下のため大型LLM（Gemini/Claude等）へのフォールバック推奨

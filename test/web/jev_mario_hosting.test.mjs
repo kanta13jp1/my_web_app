@@ -20,7 +20,8 @@ test('isolated game HTML resolves every local script and stylesheet to a real as
   const doc = new URL('web/labs/jev-mario/index.html', root);
   const html = readFileSync(doc, 'utf8');
   const refs = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
-    .map(m => m[1]).filter(ref => !/^https?:/.test(ref));
+    .map(m => m[1]).filter(ref => !/^(https?:|#)/.test(ref));
+  for (const [,id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(html.includes(`id="${id}"`), `missing anchor ${id}`);
   assert.ok(refs.includes('lab.mjs?v=student-1'));
   assert.ok(refs.includes('style.css?v=student-1'));
   for (const ref of refs) {
@@ -38,6 +39,11 @@ test('game documents and their dependency graph bypass old fresh caches and reva
   const cache = policy.headers.find(h => h.key.toLowerCase() === 'cache-control').value;
   assert.match(cache, /no-cache/);
   assert.match(cache, /must-revalidate/);
+  const sharedPolicy = hosting.headers.find(h => h.source === '/labs/shared/**');
+  assert.ok(sharedPolicy, 'shared dependencies also need to revalidate');
+  const sharedCache = sharedPolicy.headers.find(h => h.key.toLowerCase() === 'cache-control').value;
+  assert.match(sharedCache, /no-cache/);
+  assert.match(sharedCache, /must-revalidate/);
   const frame = read('lib/widgets/jev_mario_view_web.dart').match(/src = '([^']+)'/)[1];
   const doc = new URL(`web${frame}`, root);
   const revision = doc.searchParams.get('v');
