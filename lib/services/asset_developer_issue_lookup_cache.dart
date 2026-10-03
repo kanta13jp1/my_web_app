@@ -142,7 +142,9 @@ Map<String, Map<String, dynamic>> parseAssetDeveloperIssueLookupResponse(
   Object? data,
   List<Map<String, String>> requests,
 ) {
-  if (data is! Map || data['success'] != true || data['existingIssues'] is! List) {
+  if (data is! Map ||
+      data['success'] != true ||
+      data['existingIssues'] is! List) {
     throw const FormatException('Invalid existing issue lookup response');
   }
   final requested = requests.map((request) => request['key']).toSet();
@@ -152,7 +154,10 @@ Map<String, Map<String, dynamic>> parseAssetDeveloperIssueLookupResponse(
       throw const FormatException('Invalid existing issue entry');
     }
     final key = item['key'];
-    if (key is! String || key.isEmpty || !requested.contains(key) || result.containsKey(key)) {
+    if (key is! String ||
+        key.isEmpty ||
+        !requested.contains(key) ||
+        result.containsKey(key)) {
       throw const FormatException('Invalid existing issue key');
     }
     result[key] = Map<String, dynamic>.from(item);

@@ -416,25 +416,53 @@ void main() {
   });
 
   test('malformed lookup responses remain retryable', () async {
-    for (final malformed in <Object?>[null, 'bad', <String, dynamic>{}, {'key': 1}, {'key': 'unknown'}]) {
+    for (final malformed in <Object?>[
+      null,
+      'bad',
+      <String, dynamic>{},
+      {'key': 1},
+      {'key': 'unknown'}
+    ]) {
       final cache = AssetDeveloperIssueLookupCache();
       var calls = 0;
-      Future<Map<String, Map<String, dynamic>>> load(List<Map<String, String>> requests) async {
+      Future<Map<String, Map<String, dynamic>>> load(
+          List<Map<String, String>> requests) async {
         calls++;
-        return parseAssetDeveloperIssueLookupResponse({
-          'success': true,
-          'existingIssues': calls == 1 ? [malformed] : [issue('base')],
-        }, requests);
+        return parseAssetDeveloperIssueLookupResponse(
+          {
+            'success': true,
+            'existingIssues': calls == 1 ? [malformed] : [issue('base')],
+          },
+          requests,
+        );
       }
-      await expectLater(cache.lookup(scopeKey: 'user', requests: [request('base')], load: load), throwsFormatException);
-      expect(await cache.lookup(scopeKey: 'user', requests: [request('base')], load: load), {'base': issue('base')});
+
+      await expectLater(
+          cache.lookup(
+              scopeKey: 'user', requests: [request('base')], load: load),
+          throwsFormatException);
+      expect(
+          await cache.lookup(
+              scopeKey: 'user', requests: [request('base')], load: load),
+          {'base': issue('base')});
       expect(calls, 2);
     }
   });
   test('valid empty matches are accepted; failure and duplicates rejected', () {
     final requests = [request('base')];
-    expect(parseAssetDeveloperIssueLookupResponse({'success': true, 'existingIssues': []}, requests), isEmpty);
-    expect(() => parseAssetDeveloperIssueLookupResponse({'success': false, 'existingIssues': []}, requests), throwsFormatException);
-    expect(() => parseAssetDeveloperIssueLookupResponse({'success': true, 'existingIssues': [issue('base'), issue('base')]}, requests), throwsFormatException);
+    expect(
+        parseAssetDeveloperIssueLookupResponse(
+            {'success': true, 'existingIssues': []}, requests),
+        isEmpty);
+    expect(
+        () => parseAssetDeveloperIssueLookupResponse(
+            {'success': false, 'existingIssues': []}, requests),
+        throwsFormatException);
+    expect(
+        () => parseAssetDeveloperIssueLookupResponse({
+              'success': true,
+              'existingIssues': [issue('base'), issue('base')]
+            }, requests),
+        throwsFormatException);
   });
 }
