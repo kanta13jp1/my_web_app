@@ -98,6 +98,8 @@ test('historical records expose all twelve conditions and real event excerpts', 
   await page.screenshot({path: info.outputPath('historical-logs.png'), fullPage: true});
   await page.locator('#run-summary').scrollIntoViewIfNeeded();
   await page.screenshot({path: info.outputPath('historical-logs-detail.png')});
+  await page.locator('#run-log-details').scrollIntoViewIfNeeded();
+  await page.screenshot({path: info.outputPath('historical-events-detail.png')});
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
@@ -122,5 +124,7 @@ test('published article exposes historical log viewer and excerpt limits', async
   expect(await page.locator('table').count()).toBeGreaterThanOrEqual(4);
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({path:info.outputPath('zenn-logs-public.png'),fullPage:true});
+  await page.getByRole('heading', {name:'実行ログを画面で確かめる', exact:true}).scrollIntoViewIfNeeded();
+  await page.screenshot({path:info.outputPath('zenn-logs-detail.png')});
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
