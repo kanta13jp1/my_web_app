@@ -4041,19 +4041,19 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       (
         Icons.play_circle_outline,
         '1. 無料トライアル',
-        'まず登録なしで1件試す。AIが今日の最優先タスクを提案。',
+        '登録なしで1件試し、\nAIの提案から次の一手を選びます。',
         Color(0xFF654A35),
       ),
       (
         Icons.save_outlined,
         '2. 無料登録して保存',
-        'Google認証またはメールのログインリンクで登録し、今回の提案を引き継ぎます。',
+        'Google認証かメールで登録し、\n今回の提案を引き継ぎます。',
         Color(0xFF654A35),
       ),
       (
         Icons.upload_file_outlined,
         '3. 既存データを移行 (XLSX/DOCX/CSV/ENEX)',
-        '必要になったらインポート画面で対応形式と取り込み内容を確認します。',
+        '必要になったら対応形式を確認し、\nインポート画面から取り込みます。',
         Color(0xFF654A35),
       ),
     ];
@@ -4079,7 +4079,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           const SizedBox(height: 4),
           const Text(
-            '登録画面でカード情報は求めません。所要時間は認証方法や通信環境で変わります。',
+            '登録時のカード入力は不要です。\n所要時間は認証方法や通信環境で変わります。',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFF64748B),
