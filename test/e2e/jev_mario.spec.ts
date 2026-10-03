@@ -950,3 +950,18 @@ test('climax accompaniment breath renders audible lead and restores percussion',
  expect(result.tones.some(x=>x.beat===48&&x.args[4]===.055)).toBe(true);expect(result.rms).toBeGreaterThan(.001);expect(result.peak).toBeLessThan(1);
  await(await import('node:fs/promises')).writeFile(info.outputPath('climax-breath.json'),JSON.stringify(result));
 });
+
+
+test('boss grouped accents render each eighth without clipping and retain silent gaps',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{
+  const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const result:any[]=[];
+  for(let beat=0;beat<8;beat++){
+   const c=new OfflineAudioContext(1,24000,48000),proxy=new Proxy(c,{get(t,k){if(k==='state')return 'running';if(k==='resume')return async()=>{};const v=Reflect.get(t,k,t);return typeof v==='function'?v.bind(t):v;}});
+   const a=new GameAudio(()=>proxy);await a.enable(true);a.track='castle';a.beat=beat;const tone=a.tone.bind(a),calls:any[]=[];a.tone=(...x)=>{calls.push(x);tone(...x);};a.tick('castle',{boss:true});
+   const b=await c.startRendering();let peak=0,sum=0;for(const x of b.getChannelData(0)){peak=Math.max(peak,Math.abs(x));sum+=x*x;}result.push({beat,accent:calls.some(x=>x[4]===.020),peak,rms:Math.sqrt(sum/b.length)});
+  }return result;
+ });
+ expect(result.filter(x=>x.accent).map(x=>x.beat)).toEqual([0,3,6]);for(const row of result){expect(row.peak).toBeLessThan(1);expect(row.rms).toBeGreaterThan(.001);}
+ await(await import('node:fs/promises')).writeFile(info.outputPath('boss-grouped-accent.json'),JSON.stringify(result));
+});

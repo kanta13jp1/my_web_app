@@ -4,7 +4,7 @@ export function itemValue(g,kind){return kind==='life'?(g.lives<=1?180:120):kind
 export function itemTargets(g){
  const p=g.p,targets=g.items.filter(i=>!i.taken&&kinds.has(i.kind)).map(i=>({x:i.x+7,y:i.y,kind:i.kind,block:false}));
  for(const [key,kind]of g.contents)if(kinds.has(kind)){const [x,y]=key.split(',').map(Number);targets.push({x:x*16+8,y:y*16+16,kind:kind==='mushroom'&&g.power?'flower':kind,key,block:true});}
- return targets.filter(t=>t.x>=g.camera&&t.x>=p.x-80&&t.x<=p.x+160&&Math.abs(t.y-p.y)<160).sort((a,b)=>(Math.abs(a.x-p.x)-itemValue(g,a.kind)*.15)-(Math.abs(b.x-p.x)-itemValue(g,b.kind)*.15));
+ return targets.filter(t=>t.x>=g.camera&&t.x>=p.x-80&&t.x<=p.x+160&&Math.abs(t.y-p.y)<160).sort((a,b)=>(Math.abs(a.x-p.x)-itemValue(g,a.kind)*.15-(a.block?0:48))-(Math.abs(b.x-p.x)-itemValue(g,b.kind)*.15-(b.block?0:48)));
 }
 export function itemPotential(g){
  return itemTargets(g).reduce((best,t)=>Math.max(best,itemValue(g,t.kind)*.15-Math.abs(t.x-g.p.x-g.p.w/2)*.25-Math.abs(t.y-g.p.y)*.08),0);
