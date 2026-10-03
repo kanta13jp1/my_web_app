@@ -40,7 +40,7 @@ test('invalid markers clear results and examples recover', async ({page}) => {
     await expect(page.getByRole('status')).not.toContainText('：検出');
   }
   await page.getByRole('button', {name: '例1：Cだけ返った', exact: true}).click();
-  await expect(page.getByRole('alert')).toBeEmpty();
+  await expect(page.getByRole('alert')).toBeHidden();
   await expect(page.getByRole('status')).toContainText('2個中1個');
 });
 
