@@ -2421,12 +2421,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     final stats = [
       (
         icon: Icons.people_alt_outlined,
-        color: _totalUsers > 10
-            ? const Color(0xFFF0E5D0)
-            : const Color(0xFFF0E5D0),
-        bgColor: _totalUsers > 10
-            ? const Color(0xFFF0E5D0).withValues(alpha: 0.15)
-            : const Color(0xFFF0E5D0).withValues(alpha: 0.15),
+        color: const Color(0xFFF0E5D0),
+        bgColor: const Color(0xFFF0E5D0).withValues(alpha: 0.15),
         value: _totalUsers > 10 ? '$_totalUsers' : '募集中',
         label: _totalUsers > 10 ? '登録ユーザー数' : '初期ユーザー',
       ),
@@ -2453,7 +2449,6 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         color: const Color(0xFF101D2B),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
