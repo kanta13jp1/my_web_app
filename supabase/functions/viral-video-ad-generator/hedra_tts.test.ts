@@ -41,6 +41,20 @@ Deno.test("Hedra TTS generation includes valid configured model_id", () => {
   assertEquals(audioGeneration.model_id, modelId);
 });
 
+Deno.test("Hedra TTS generation keeps custom voice settings", () => {
+  const audioGeneration = buildHedraTextToSpeechAudioGeneration({
+    voiceId: "voice-1",
+    modelId: "d11481da-b973-4e72-ade0-7e8a86915bbf",
+    text: "Custom narration",
+    language: "English",
+    stability: 0.7,
+    speed: 1.1,
+  });
+
+  assertEquals(audioGeneration.stability, 0.7);
+  assertEquals(audioGeneration.speed, 1.1);
+});
+
 Deno.test("Hedra uploaded audio generation uses a public audio URL", () => {
   const audioGeneration = buildHedraUploadedAudioGeneration(
     "https://example.com/voice.mp3",
@@ -186,4 +200,13 @@ Deno.test("Hedra voice selection prefers Japanese female professional voices", (
   ], { lang: "ja", preferredVoice: null });
 
   assertEquals(voiceId, "female-ja");
+});
+
+Deno.test("Hedra voice selection follows an explicit male narrator setting", () => {
+  const voiceId = selectBestHedraVoiceId([
+    { id: "female-ja", name: "Japanese female narrator" },
+    { id: "male-ja", name: "Japanese male narrator" },
+  ], { lang: "ja", preferredVoice: "male_narrator" });
+
+  assertEquals(voiceId, "male-ja");
 });
