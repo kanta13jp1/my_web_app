@@ -934,3 +934,19 @@ test('nearby boss octave lead renders within the voice budget and without clippi
  expect(result.peakVoices).toBeLessThanOrEqual(64);expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);
  await(await import('node:fs/promises')).writeFile(info.outputPath('boss-octave-audio.json'),JSON.stringify(result));
 });
+
+
+test('climax accompaniment breath renders audible lead and restores percussion',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{
+  const {GameAudio}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const c=new OfflineAudioContext(1,48000,48000);let now=0;
+  const proxy=new Proxy(c,{get(t,k){if(k==='state')return 'running';if(k==='currentTime')return now;if(k==='resume')return async()=>{};const v=Reflect.get(t,k,t);return typeof v==='function'?v.bind(t):v;}});
+  const a=new GameAudio(()=>proxy);await a.enable(true);a.track='overworld';a.beat=46;const tones:any[]=[],drums:any[]=[],tone=a.tone.bind(a),noise=a.noise.bind(a);
+  a.tone=(...x)=>{tones.push({beat:a.beat,args:x});tone(...x);};a.noise=(...x)=>{drums.push({beat:a.beat,args:x});noise(...x);};
+  for(now=0;now<.6;now+=.025)a.tick();const b=await c.startRendering();let peak=0,sum=0;for(const x of b.getChannelData(0)){peak=Math.max(peak,Math.abs(x));sum+=x*x;}
+  return {tones,drums,peak,rms:Math.sqrt(sum/b.length)};
+ });
+ expect(result.tones.some(x=>[46,47].includes(x.beat)&&x.args[3]==='bass')).toBe(false);expect(result.drums.some(x=>[46,47].includes(x.beat))).toBe(false);
+ expect(result.tones.some(x=>x.beat===48&&x.args[4]===.055)).toBe(true);expect(result.rms).toBeGreaterThan(.001);expect(result.peak).toBeLessThan(1);
+ await(await import('node:fs/promises')).writeFile(info.outputPath('climax-breath.json'),JSON.stringify(result));
+});
