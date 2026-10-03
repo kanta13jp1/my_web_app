@@ -987,6 +987,6 @@ test('32-bar return joins the intro in actual rendered browser audio',async({pag
   for(now=0;now<.5;now+=.025)a.tick('castle');const buffer=await c.startRendering(),samples=buffer.getChannelData(0);let peak=0,sum=0;for(const x of samples){peak=Math.max(peak,Math.abs(x));sum+=x*x;}
   return {sections:[0,64,128,192,256].map(loopSection),leads,peak,rms:Math.sqrt(sum/samples.length),beat:a.beat,maxVoices:a.nodes.size};
  });
- expect(result.sections.map(s=>s.name)).toEqual(['intro','development','climax','return','intro']);expect(result.leads[0].note).toBe(64);expect(result.leads[0].time).toBeGreaterThan(0);expect(result.leads[0].time).toBeLessThan(.13);expect(result.beat).toBeLessThan(8);expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);expect(result.maxVoices).toBeLessThanOrEqual(64);
+ expect(result.sections.map(s=>s.name)).toEqual(['intro','development','climax','return','intro']);expect(result.leads[0].note).toBe(64);expect(result.leads[0].time).toBeGreaterThan(0);expect(result.leads[0].time).toBeLessThan(.13);expect(result.beat).toBeGreaterThan(256);expect(result.beat).toBeLessThan(264);expect(result.leads.filter(n=>Math.abs(n.time-.13)<.001)).toHaveLength(0);expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);expect(result.maxVoices).toBeLessThanOrEqual(64);
  await(await import('node:fs/promises')).writeFile(info.outputPath('loop-drama-seam.json'),JSON.stringify(result));
 });

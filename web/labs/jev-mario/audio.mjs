@@ -147,7 +147,8 @@ export class GameAudio{
    if(section.ornaments&&(this.beat%16===7||this.beat%16===14)){this.tone(harmony+12,t+step*.72,step*.28,'triangle',.006,true);}
    // Short broken triad answers the phrase instead of sustaining a dense chord.
    if(section.ornaments&&this.beat%32===30)for(const [i,n]of [bass+12,harmony,fifth].entries())this.tone(n,t+step*(.12+i*.25),step*.35,'triangle',.010,true);
-   this.next+=step;this.beat=(this.beat+1)%LOOP_STEPS;
+   // Keep the absolute beat: the last offbeat already anticipates the next intro.
+   this.next+=step;this.beat++;
   }
 
  }
