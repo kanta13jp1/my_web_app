@@ -72,3 +72,20 @@ test('local processing and responsive layout', async ({page}) => {
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+
+test('published article explains the comparison and links to the working tool', async ({page}, info) => {
+  test.skip(!process.env.E2E_BASE_URL, 'Public rendering is only checked after production deployment and article sync.');
+  await page.goto('https://zenn.dev/kanta13jp1/articles/claude-code-agents-md-loading-test', {waitUntil: 'domcontentloaded'});
+  await expect(page.getByRole('heading', {level: 1})).toContainText('目印で確かめる方法と比較結果');
+  await expect(page.getByRole('heading', {name: 'まず、何を検証しているのか', exact: true})).toBeVisible();
+  await expect(page.locator('strong').filter({hasText: '質問文には、答えになるMARK_CやMARK_Aを含めません。'})).toBeVisible();
+  expect(await page.locator('table').count()).toBeGreaterThanOrEqual(4);
+  await expect(page.getByRole('link', {name: '目印が返答にあるか確かめる画面', exact: true})).toHaveAttribute('href', 'https://my-web-app-b67f4.web.app/labs/instruction-check/index.html');
+  await expect(page.getByText('例3：途中でツールを使った', {exact: false}).first()).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({path: info.outputPath('zenn-public-full.png'), fullPage: true});
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({path: info.outputPath('zenn-public-intro.png')});
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
