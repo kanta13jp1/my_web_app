@@ -95,6 +95,25 @@ test.describe('Landing story journey', () => {
     await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
   });
 
+  test('shows the getting-started path before pricing without clipping its action', async ({ page }, testInfo) => {
+    await openLanding(page);
+    await activateChapter(page, '実行');
+    await expect(await focusStory(page)).toHaveAccessibleName(/4 \/ 4/);
+    const action = page.getByRole('button', { name: '無料登録へ進む', exact: true });
+    for (let step = 0; step < 100; step++) {
+      const bounds = await action.boundingBox();
+      if (bounds && bounds.y > 90 && bounds.y + bounds.height < page.viewportSize()!.height - 100) break;
+      await page.mouse.move(180, 320);
+      await page.mouse.wheel(0, 400);
+      await page.waitForTimeout(180);
+    }
+    await expect(action).toBeInViewport();
+    expect((await action.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await page.screenshot({ path: testInfo.outputPath('getting-started.png'), scale: 'css' });
+    await action.click();
+    await expect(page.getByRole('textbox', { name: 'メールアドレス', exact: true }).first()).toBeInViewport();
+  });
+
   test('connects the final chapter to the existing no-signup trial', async ({
     page,
   }) => {
