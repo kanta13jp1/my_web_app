@@ -136,3 +136,26 @@ class AssetDeveloperIssueLookupCache {
     }
   }
 }
+
+/// Reject malformed matches rather than caching them as successful no-matches.
+Map<String, Map<String, dynamic>> parseAssetDeveloperIssueLookupResponse(
+  Object? data,
+  List<Map<String, String>> requests,
+) {
+  if (data is! Map || data['success'] != true || data['existingIssues'] is! List) {
+    throw const FormatException('Invalid existing issue lookup response');
+  }
+  final requested = requests.map((request) => request['key']).toSet();
+  final result = <String, Map<String, dynamic>>{};
+  for (final item in data['existingIssues'] as List) {
+    if (item is! Map<String, dynamic>) {
+      throw const FormatException('Invalid existing issue entry');
+    }
+    final key = item['key'];
+    if (key is! String || key.isEmpty || !requested.contains(key) || result.containsKey(key)) {
+      throw const FormatException('Invalid existing issue key');
+    }
+    result[key] = Map<String, dynamic>.from(item);
+  }
+  return result;
+}

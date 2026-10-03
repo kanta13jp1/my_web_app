@@ -23291,17 +23291,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'requests': requests,
       },
     );
-    final rawData = response.data;
-    if (rawData is! Map || rawData['existingIssues'] is! List) {
-      throw const FormatException('Invalid existing issue lookup response');
-    }
-    final existingByKey = <String, Map<String, dynamic>>{};
-    for (final item in rawData['existingIssues'] as List) {
-      final issue = _assetManagementDynamicMap(item);
-      final key = issue['key']?.toString() ?? '';
-      if (key.isNotEmpty) existingByKey[key] = issue;
-    }
-    return existingByKey;
+    return parseAssetDeveloperIssueLookupResponse(response.data, requests);
   }
 
   Future<void> _loadExistingDeveloperIssues({
