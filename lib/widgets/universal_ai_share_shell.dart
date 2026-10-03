@@ -114,6 +114,21 @@ bool shouldShowUniversalAiShareFab({
       (routePath != '/' || isLoggedIn);
 }
 
+/// Keep the mobile asset page's right-hand chat action tappable.
+/// This is a route-local placement override, not a saved preference change.
+AiShareButtonPosition resolveAiShareFabPosition({
+  required AiShareButtonPosition preferred,
+  required String routePath,
+  required double screenWidth,
+}) {
+  if (routePath == '/asset-management' &&
+      screenWidth < kAiShareFabMinScreenWidth &&
+      preferred == AiShareButtonPosition.bottomRight) {
+    return AiShareButtonPosition.bottomLeft;
+  }
+  return preferred;
+}
+
 double resolveAiShareFabBottomOffset({
   required String routePath,
   required double screenWidth,
@@ -219,7 +234,11 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
           valueListenable: universalAiShareRouteObserver.currentPage,
           builder: (context, page, _) {
             return _positionedFab(
-              preferences.position,
+              resolveAiShareFabPosition(
+                preferred: preferences.position,
+                routePath: page.routePath,
+                screenWidth: MediaQuery.sizeOf(context).width,
+              ),
               SafeArea(
                 child: _UniversalAiShareFab(
                   page: page,

@@ -214,11 +214,13 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) stop(
 window.addEventListener('pagehide', () => stop());
 function finishStage(){
  const retry=world.phase==='dead'&&world.lives>0;
+ const failureReason=world.phase!=='dead'?null:world.time===0?'時間切れ':world.deathY>250?'落下':'敵・仕掛けとの接触';
  if(student.active&&world.phase==='dead'){student.noteFailure(world);showRetryMemory();}
  const resume=(retry||world.phase==='won'&&world.stage<LAST_COURSE)?{retry,kind:student.active?'student':loop.active?'api':'manual',remaining:loop.limit-loop.attempts,deadline:loop.deadline,cadence:loop.cadence,maxAge:loop.maxAge}:null;
  const result={course_id:world.stage,...courseInfo(world.stage),phase:world.phase,frames:world.frames,score:world.score,lives:world.lives,deaths:world.deaths,fireworks:world.fireworksTotal,items_collected:{...world.pickups},student:student.active?structuredClone(student.stats):undefined};
+ if(failureReason)result.failure_reason=failureReason;
  metadata.stage_results??=[];metadata.stage_results.push(result);
- internalTransition=true;stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス！残り${world.lives}機。同じステージの最初から再開します`:'ゲームオーバー。最初から再挑戦できます');
+ internalTransition=true;stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス（${failureReason}）。残り${world.lives}機。同じステージの最初から再開します`:`ゲームオーバー（${failureReason}）。最初から再挑戦できます`);
  internalTransition=false;transition=resume;
 }
 function finalizeStageResult(){const r=metadata.stage_results?.at(-1);if(r&&!r.finalized){r.score=world.score;r.fireworks=world.fireworksFired;r.finalized=true;campaign.observe(world);if(!transition)saveAttempt(world.phase);}}

@@ -366,3 +366,31 @@ test('world 8 courses preserve retry, stage transitions and final rescue',()=>{
  for(const id of [29,30,31,32]){const g=new World11(id);assert.equal(g.snapshot().label,`8-${id-28}`);assert.ok(g.enemies.every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)));assert.ok(g.contents.size);g.score=100;g.die();for(let f=0;f<180;f++)g.presentationStep();assert.equal(g.restartLife(),true);assert.equal(g.lives,2);assert.equal(g.score,100);assert.equal(g.stage,id);assert.equal(g.p.x,32);g.p.x=(id===32?196:198)*16;g.p.y=id===32?176:160;g.step();assert.equal(g.phase,'won');for(let f=0;f<300;f++)g.presentationStep();if(id===32){assert.equal(g.peachRescued,true);assert.equal(g.advanceStage(),false);}else{assert.equal(g.advanceStage(),true);assert.equal(g.stage,id+1);}}
  const a=new World11(29),b=new World11(30),c=new World11(31),d=new World11(32);assert.notDeepEqual([...a.cells],[...b.cells]);assert.ok(b.enemies.some(e=>e.kind==='lakitu'));assert.ok(c.enemies.some(e=>e.kind==='hammer-bro'));assert.ok(d.boss&&d.fireBars.length&&d.lavaBubbles.length);
 });
+
+
+// Compare planning labels with the actual block emission, rather than a mock reward.
+import {itemTargets} from '../../web/labs/jev-mario/item-goal.mjs';
+import {skyLevel} from '../../web/labs/jev-mario/world11.mjs';
+test('power-up block targets match the flower actually emitted for a big player',()=>{
+ for(const power of [0,1,2]){const g=new World11();g.power=power;g.p.x=21*16;g.camera=0;const target=itemTargets(g).find(t=>t.key==='21,9');assert.ok(target);assert.equal(target.kind,power?'flower':'mushroom');g.hitBlock(21,9);assert.equal(g.items.at(-1).kind,target.kind);}
+});
+test('first sky jumps progress from a wide landing to a narrower landing',()=>{
+ const g=skyLevel(),count=(a,b,y)=>Array.from({length:b-a+1},(_,i)=>g.cells.get(`${a+i},${y}`)).filter(Boolean).length;
+ assert.equal(count(20,29,12),10);assert.equal(count(32,41,10),8);assert.equal(g.cells.get('40,10'),undefined);assert.equal(g.cells.get('44,11'),'platform');
+});
+
+import {world21Level} from '../../web/labs/jev-mario/world11.mjs';
+test('optional gap rewards leave the lower crossing and pit intact',()=>{
+ const g=world21Level();for(const x of [44,45,46]){assert.equal(g.contents.get(`${x},8`),'loose');assert.equal(g.cells.get(`${x},8`),undefined);assert.equal(g.cells.get(`${x},13`),undefined);}
+ assert.equal(g.cells.get('43,13'),'ground');assert.equal(g.cells.get('47,13'),'ground');
+});
+test('an exposed flower outranks a nearby unopened power-up block',()=>{
+ const g=new World11();g.power=1;g.p.x=21*16;g.camera=0;g.items.push({x:g.p.x+35,y:g.p.y,kind:'flower',taken:false});assert.equal(itemTargets(g)[0].block,false);assert.equal(itemTargets(g)[0].kind,'flower');
+});
+
+test('3-3 elevated approach guards a fall beyond the former 24-frame horizon',async()=>{
+ const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const {LiveGuard}=await import('../../web/labs/jev-mario/live-guard.mjs');
+ const g=new World11(11);g.enemies=[];g.contents.clear();Object.assign(g.p,{x:1296,y:144,vx:2.3,vy:0,grounded:true});g.camera=1200;
+ assert.equal(advance(clone(g),'right',24).phase,'playing');assert.equal(advance(clone(g),'right',64).phase,'dead');
+ const before=JSON.stringify(g.snapshot()),guard=new LiveGuard(),action=guard.decide(g,'right');assert.notEqual(action,'right');assert.equal(JSON.stringify(g.snapshot()),before);assert.equal(advance(clone(g),action,64).phase,'playing');assert.equal(guard.lastReason,'live_collision_guard');
+});

@@ -56,7 +56,7 @@ export function skyLevel(){
  const cells=new Map(),contents=new Map(),set=(x,y,t='platform')=>cells.set(`${x},${y}`,t);
  for(let x=0;x<20;x++)for(let y=13;y<15;y++)set(x,y,'ground');
  for(let x=185;x<212;x++)for(let y=13;y<15;y++)set(x,y,'ground');
- const platforms=[[20,29,12],[32,41,10],[44,53,11],[56,65,9],[68,77,10],[80,89,8],[92,101,10],[104,113,11],[116,125,9],[128,137,10],[140,149,8],[152,161,10],[164,173,11],[176,184,12]];
+ const platforms=[[20,29,12],[32,39,10],[44,53,11],[56,65,9],[68,77,10],[80,89,8],[92,101,10],[104,113,11],[116,125,9],[128,137,10],[140,149,8],[152,161,10],[164,173,11],[176,184,12]];
  for(const [a,b,y] of platforms){for(let x=a;x<=b;x++)set(x,y);for(let x=a+2;x<b-1;x+=2)contents.set(`${x},${y-2}`,'loose');}
  cells.set('12,9','question');contents.set('12,9','mushroom');
  set(198,12,'stone');return {cells,contents,width:212*16};
@@ -87,6 +87,8 @@ export function world21Level(){
   for(let x=start;x<start+4;x++)contents.set(`${x},7`,'loose');
  }
  for(let x=68;x<73;x++)set(x,6);
+ // Optional high jump reward above the existing gap; no supporting tile is added.
+ for(const x of [44,45,46])contents.set(`${x},8`,'loose');
  set(135,5,'question','star');
  for(let k=0;k<8;k++)for(let y=12-k;y<13;y++)set(181+k,y,'stone');
  for(let y=5;y<13;y++)set(189,y,'stone');set(198,12,'stone');

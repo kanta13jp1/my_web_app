@@ -1,1 +1,99 @@
-<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>指示ファイルの読み込み確認</title><link rel="stylesheet" href="style.css"><main><a href="/">自分株式会社へ</a><h1>識別文字列で読み込みを確認する</h1><p>ファイルに置いた識別文字列と、AIが返した文字列を照合します。読み込み経路・指示の強制力・安全性を証明するものではありません。入力は送信・保存しません。</p><form><label for="expected">期待する識別文字列</label><textarea id="expected">MARK_C MARK_A</textarea><label for="response">実際の応答</label><textarea id="response">MARK_C</textarea><label for="calls">ログで確認したツール呼出数</label><input id="calls" type="number" min="0" step="1" value="0"><button>照合する</button></form><button id="example">合成例</button><p role="alert"></p><div role="status">照合してください。</div><h2>確認の手順</h2><ol><li>秘密値ではない識別文字列を指示ファイルに置きます。</li><li>値を質問文に書かず、読み込まれた識別文字列だけを返すよう依頼します。</li><li>応答とログのツール呼出数を入力します。</li><li>版・設定・配置を別に記録し、ファイルなしの条件とも比較します。</li></ol><p>照合は空白・改行で区切った文字列の完全一致です。文章中の部分一致は検出しません。ツール呼出数は自己申告であり、この画面が実行ログを監査する機能はありません。</p><a href="https://code.claude.com/docs/en/memory#agentsmd">Claude Code公式の読み込み条件</a></main><script type="module" src="app.mjs"></script></html>
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>指示ファイルの目印がAIの返答にあるか確かめる</title>
+<meta name="description" content="CLAUDE.mdとAGENTS.mdに置く目印を例に、何を比べるか、結果から何が分かるかを説明します。AIの返答を貼り付けて照合できます。">
+<link rel="stylesheet" href="style.css">
+</head>
+<body><main>
+<a href="/">自分株式会社へ</a>
+<header>
+<p class="eyebrow">Claude Codeの指示ファイルを確かめる練習</p>
+<h1>ファイルに書いた目印は、<br>AIの返答に出てくる？</h1>
+<p>Claude Codeは、プログラムを書く作業を手伝うAIです。<code>CLAUDE.md</code>や<code>AGENTS.md</code>は、AIに作業のルールを渡すための「指示メモ」です。</p>
+<p><strong>確かめたいのは、どの指示メモの内容が返答に現れるか。</strong>メモごとに別の目印を書き、AIに目印を答えてもらって比べます。</p>
+<p class="note">このページは、あなたが貼り付けた返答を照合する道具です。Claude Codeの起動やファイルの読み取りは行いません。下の練習例は、AIを使わずに試せます。</p>
+<a class="jump" href="#evidence">実際の実行記録を見る ↓</a> · <a href="#try">練習例を試す ↓</a>
+</header>
+<section aria-labelledby="why">
+<h2 id="why">1. 何を比べるの？</h2>
+<p>2枚のメモに、別々の目印を付けると考えてください。<strong>目印は秘密のパスワードではなく、どのメモの内容が返ったか見分けるための文字</strong>です。</p>
+<div class="cards">
+<div class="card"><h3>CLAUDE.mdに書く</h3><pre><code>LOADMARK: MARK_C</code></pre><p><code>MARK_C</code>がこのメモの目印です。</p></div>
+<div class="card"><h3>AGENTS.mdに書く</h3><pre><code>LOADMARK: MARK_A</code></pre><p><code>MARK_A</code>がもう1枚の目印です。</p></div>
+</div>
+<p><code>LOADMARK:</code>は目印の置き場所を示す、この実験用の見出しです。Claude Codeの特別な設定命令ではありません。</p>
+<p>続いてAIに「渡されている指示メモのLOADMARK行の値だけを返してください。なければNONE。推測しないでください」と質問します。</p>
+<p class="warning"><strong>質問にはMARK_CやMARK_Aそのものを書きません。</strong>答えを質問に書いてしまうと、ファイルを使わず質問をまねただけでも正解できるためです。</p>
+<p>返答が<code>MARK_C</code>だけなら、「CLAUDE.md側の目印は返った。AGENTS.md側の目印は返らなかった」と読めます。<strong>返らなかったことだけで、そのファイルを読んでいないとは断定できません。</strong>読んでも答えから省く可能性があるためです。</p>
+</section>
+<section id="evidence" aria-labelledby="evidence-title">
+<h2 id="evidence-title">2. 実際の実行ログを証跡として見る</h2>
+<p>2026年9月22日にClaude Codeを動かした12試行の記録です。下の練習例とは異なり、<strong>保存された実行ログから取り出した開始・応答・終了イベント</strong>を表示します。このページを開いてもAIは実行されません。</p>
+<button type="button" id="load-evidence">実行記録12件を表示する</button>
+<label for="run-select">確認する版と配置条件</label>
+<select id="run-select" disabled><option>実行記録を読み込んでください</option></select>
+<p id="evidence-message" aria-live="polite">表示ボタンを押すと、公開用の記録を読み込みます。</p>
+<div id="evidence-panel" hidden>
+<h3>この試行の条件と結果</h3>
+<pre id="run-summary"></pre>
+<h3>実際に返った文章</h3><pre id="run-answer"></pre>
+<p id="run-comparison" class="log-lines"></p>
+<h3>ツール使用回数の根拠</h3><p id="run-tools" class="log-lines"></p>
+<p>この実験はツールを使えない設定で実行しました。0件は保存された記録上の値です。途中で記録されなかった操作がないことや、ログの真正性、ファイルの読み込み経路・安全性を証明するものではありません。</p>
+<details id="run-log-details"><summary>実行ログの抜粋を開く（開始 → 応答 → 終了）</summary>
+<p>元の各イベントから必要な項目だけを取り出しています。パス、セッション識別子、接続情報、利用枠通知などを除いた<strong>公開用の抜粋</strong>で、原本全文ではありません。行番号は元ログの位置です。tool_useはAIがツールを呼ぶイベントの種類名です。</p>
+<pre id="run-events"></pre></details>
+<details><summary>ファイルの内容・質問・実行設定を見る</summary><pre id="run-fixture"></pre></details>
+<p><a id="run-source" href="https://github.com/kanta13jp1/zenn-content">同じ試行の公開済み要約を見る</a> · <a href="evidence.json">12件の公開用ログ抜粋をJSONで開く</a></p>
+</div>
+</section>
+<section id="try" aria-labelledby="practice">
+<h2 id="practice">3. まずは例で結果の読み方を練習</h2>
+<p>下のボタンで、説明用に作った入力と結果を表示します。実際にClaude Codeを動かした結果ではありません。</p>
+<div class="presets" aria-label="練習例">
+<button type="button" id="example" data-example="missing">例1：Cだけ返った</button>
+<button type="button" data-example="all">例2：両方返った</button>
+<button type="button" data-example="tools">例3：途中でツールを使った</button>
+</div>
+<h3>自分の返答もここで照合できます</h3>
+<p id="input-help">上の2枚なら、比べたい目印は<code>MARK_C MARK_A</code>です。「返答」はClaude Codeが実際に出したものに置き換えます。入力はこのページの照合処理から送信・保存しません。</p>
+<form aria-describedby="input-help">
+<label for="expected">ファイルに書いた目印（比べたいもの）</label>
+<p class="hint" id="expected-help">目印を空白か改行で区切ります。実験用の目印だけを入力してください。</p>
+<textarea id="expected" rows="2" aria-describedby="expected-help">MARK_C MARK_A</textarea>
+<label for="response">AIから返ってきた文章</label>
+<textarea id="response" rows="3" placeholder="ここに返答を貼り付けます"></textarea>
+<label for="calls">実行ログで確認したツール使用回数</label>
+<p class="hint" id="calls-help">ツールは、AIが途中でファイルを開くなどの操作をする機能です。ログは実行中の記録です。使わなかったと確認できたときだけ0を入力します。分からない場合は空欄でも、目印の有無だけ比べられます。不明な回数を0にせず、ログを確認してください。</p>
+<input id="calls" type="number" min="0" step="1" aria-describedby="calls-help" placeholder="例：0">
+<button type="submit">返答と目印を照合する</button>
+</form>
+<p id="error" role="alert"></p>
+<div id="result" role="status" aria-live="polite">練習例を選ぶか、自分の返答を入力して照合してください。</div>
+<p class="hint">空白・改行で区切った文字が完全に同じか比べます。<code>MARK_C_extra</code>や<code>MARK_C。</code>は<code>MARK_C</code>と一致しません。「未検出」なら句読点が付いていないかも確認してください。</p>
+</section>
+<section aria-labelledby="meaning">
+<h2 id="meaning">4. ツールの回数も見るのはなぜ？</h2>
+<p>知りたいのは、質問する前から指示メモの内容がAIへ渡されていたかです。しかし、質問のあとにAIがツールでファイルを開けば、その場で目印を探せます。</p>
+<ul>
+<li><strong>空欄（未確認）：</strong>目印の有無だけを比べます。途中でツールを使ったかは、ログで別に確認します。</li>
+<li><strong>使用回数0：</strong>入力した記録上は、途中でツールを使っていません。目印が返ったことは確認できますが、それだけで読み込みの仕組みまでは証明できません。</li>
+<li><strong>使用回数1以上：</strong>途中でファイルを開いて答えを見つけた可能性を、この画面では取り除けません。どのツールを何に使ったか、実行ログを確認します。</li>
+</ul>
+<p>上の照合フォームの回数はあなたが入力した値です。実測エリアの回数は保存ログから取り出したイベントと照合しています。この画面はログの正しさや、指示をすべて守ったか、安全な操作だったかを判定しません。</p>
+</section>
+<section aria-labelledby="own-test">
+<h2 id="own-test">5. 自分の環境では、何を変えて試す？</h2>
+<ol>
+<li>作業用の空フォルダーを用意し、Claude Codeの版を<code>claude --version</code>で記録します。</li>
+<li>最初に指示ファイルなしで試し、次にCLAUDE.mdだけ、AGENTS.mdだけ、両方の順に配置を変えます。各条件は新しいセッションで試します。</li>
+<li>ファイルに、普段の文章と紛れない目印を置きます。自分の試験では、この例と異なる目印にすると、例を覚えて答える影響を減らせます。</li>
+<li>質問に目印の値を含めず、返答とツール使用記録を保存します。起動時の設定も条件ごとに残します。</li>
+<li>このページへ目印・返答・確認済みの使用回数を入力し、同じ条件で比較します。</li>
+</ol>
+<p>版や配置、設定を一度に変えると、何が違いを生んだか分かりにくくなります。具体的な設定と2026年9月22日の結果は<a href="https://zenn.dev/kanta13jp1/articles/claude-code-agents-md-loading-test">CLAUDE.mdとAGENTS.mdを比べた検証記事</a>で説明しています。</p>
+<a href="https://code.claude.com/docs/en/memory#agentsmd">Claude Code公式の読み込み条件</a>
+</section>
+</main><script type="module" src="app.mjs"></script></body></html>
