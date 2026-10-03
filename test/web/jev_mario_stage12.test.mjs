@@ -366,3 +366,15 @@ test('world 8 courses preserve retry, stage transitions and final rescue',()=>{
  for(const id of [29,30,31,32]){const g=new World11(id);assert.equal(g.snapshot().label,`8-${id-28}`);assert.ok(g.enemies.every(e=>Number.isFinite(e.x)&&Number.isFinite(e.y)));assert.ok(g.contents.size);g.score=100;g.die();for(let f=0;f<180;f++)g.presentationStep();assert.equal(g.restartLife(),true);assert.equal(g.lives,2);assert.equal(g.score,100);assert.equal(g.stage,id);assert.equal(g.p.x,32);g.p.x=(id===32?196:198)*16;g.p.y=id===32?176:160;g.step();assert.equal(g.phase,'won');for(let f=0;f<300;f++)g.presentationStep();if(id===32){assert.equal(g.peachRescued,true);assert.equal(g.advanceStage(),false);}else{assert.equal(g.advanceStage(),true);assert.equal(g.stage,id+1);}}
  const a=new World11(29),b=new World11(30),c=new World11(31),d=new World11(32);assert.notDeepEqual([...a.cells],[...b.cells]);assert.ok(b.enemies.some(e=>e.kind==='lakitu'));assert.ok(c.enemies.some(e=>e.kind==='hammer-bro'));assert.ok(d.boss&&d.fireBars.length&&d.lavaBubbles.length);
 });
+
+
+// Compare planning labels with the actual block emission, rather than a mock reward.
+import {itemTargets} from '../../web/labs/jev-mario/item-goal.mjs';
+import {skyLevel} from '../../web/labs/jev-mario/world11.mjs';
+test('power-up block targets match the flower actually emitted for a big player',()=>{
+ for(const power of [0,1,2]){const g=new World11();g.power=power;g.p.x=21*16;g.camera=0;const target=itemTargets(g).find(t=>t.key==='21,9');assert.ok(target);assert.equal(target.kind,power?'flower':'mushroom');g.hitBlock(21,9);assert.equal(g.items.at(-1).kind,target.kind);}
+});
+test('first sky jumps progress from a wide landing to a narrower landing',()=>{
+ const g=skyLevel(),count=(a,b,y)=>Array.from({length:b-a+1},(_,i)=>g.cells.get(`${a+i},${y}`)).filter(Boolean).length;
+ assert.equal(count(20,29,12),10);assert.equal(count(32,41,10),8);assert.equal(g.cells.get('40,10'),undefined);assert.equal(g.cells.get('44,11'),'platform');
+});
