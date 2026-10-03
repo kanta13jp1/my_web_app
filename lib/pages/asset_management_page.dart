@@ -17856,7 +17856,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final statusText = hasNoData
         ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
         : !hasRecordedExpense
-            ? '支出はまだ記録されていません。差額は記録済み収入だけの集計で、支払済みチェックや予定額とは異なります。'
+            ? '支出はまだ記録されていません。差額は記録済み収入だけの集計で、支払済みチェックや予定額とは異なります。現在残高や今後の支払後に使える額とは異なります。'
             : 'このサイクルの記録上の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。現在残高や今後の支払後に使える額とは異なります。';
 
     return Card(
