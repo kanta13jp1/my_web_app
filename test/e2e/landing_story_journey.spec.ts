@@ -133,7 +133,7 @@ test.describe('Landing story journey', () => {
     await expect(question).toBeInViewport();
     await page.screenshot({ path: testInfo.outputPath('faq-closed.png'), scale: 'css' });
     await page.getByRole('button', { name: 'AIが勝手に「やること」を決めるのですか?', exact: true }).click();
-    const answer = page.getByText('いいえ。AIは入力内容を整理して、次に動かす1件の候補と理由を提案します。実行するか、別の行動を選ぶかはユーザーが決めます。', { exact: true });
+    const answer = page.getByRole('group', { name: /いいえ。AIは入力内容を整理して、次に動かす1件の候補と理由を提案します。実行するか、別の行動を選ぶかはユーザーが決めます。/ });
     await expect(answer).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('faq-open.png'), scale: 'css' });
     const toggle = page.getByRole('button', { name: 'AIが勝手に「やること」を決めるのですか?', exact: true });
