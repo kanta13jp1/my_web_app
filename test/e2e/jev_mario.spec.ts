@@ -990,3 +990,23 @@ test('32-bar return joins the intro in actual rendered browser audio',async({pag
  expect(result.sections.map(s=>s.name)).toEqual(['intro','development','climax','return','intro']);expect(result.leads[0].note).toBe(64);expect(result.leads[0].time).toBeGreaterThan(0);expect(result.leads[0].time).toBeLessThan(.13);expect(result.beat).toBeGreaterThan(256);expect(result.beat).toBeLessThan(264);expect(result.leads.filter(n=>Math.abs(n.time-.13)<.001)).toHaveLength(0);expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);expect(result.maxVoices).toBeLessThanOrEqual(64);
  await(await import('node:fs/promises')).writeFile(info.outputPath('loop-drama-seam.json'),JSON.stringify(result));
 });
+
+test('bonus pipe gives a visible reward and returns to the main course',async({page})=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');
+ const frame=page.frames().find(f=>f.url().includes('/web/labs/jev-mario/'))!;
+ const results=await frame.evaluate(async()=>{
+  const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');
+  const {pipeRoute}=await import('/web/labs/jev-mario/pipe-route.mjs?v=student-1');
+  const {advance}=await import('/web/labs/jev-mario/search-assist.mjs?v=student-1');
+  return [0,1].map(power=>{
+   const g=new World11();g.power=power;g.p.h=power?28:16;
+   Object.assign(g.p,{x:57*16+8,y:144-g.p.h,grounded:true});g.enterRoom();
+   const canvas=document.querySelector('#screen') as HTMLCanvasElement;
+   drawWorld(canvas.getContext('2d')!,g);
+   const roomImage=canvas.toDataURL();
+   for(let n=0;n<300&&g.room==='underground';n++)advance(g,pipeRoute(g)??'right_jump',8);
+   return {power,pickups:g.pickups,room:g.room,phase:g.phase,roomImage};
+  });
+ });
+ for(const r of results){expect(r.pickups[r.power?'flower':'mushroom']).toBe(1);expect(r.room).toBe('overworld');expect(r.phase).toBe('playing');expect(r.roomImage.length).toBeGreaterThan(1000);}
+});
