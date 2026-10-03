@@ -200,38 +200,40 @@ class _FaqItemState extends State<_FaqItem> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Semantics(
-          expanded: _expanded,
-          child: TextButton(
-            onPressed: () => setState(() => _expanded = !_expanded),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF101D2B),
-              minimumSize: const Size(0, 64),
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              visualDensity: VisualDensity.standard,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+        MergeSemantics(
+          child: Semantics(
+            expanded: _expanded,
+            child: TextButton(
+              onPressed: () => setState(() => _expanded = !_expanded),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF101D2B),
+                minimumSize: const Size(0, 64),
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                visualDensity: VisualDensity.standard,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.question,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      height: 1.6,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.question,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        height: 1.6,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Icon(
-                  _expanded ? Icons.remove : Icons.add,
-                  size: 22,
-                  color: const Color(0xFF654A35),
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  Icon(
+                    _expanded ? Icons.remove : Icons.add,
+                    size: 22,
+                    color: const Color(0xFF654A35),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
