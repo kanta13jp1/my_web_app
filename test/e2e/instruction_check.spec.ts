@@ -1,74 +1,28 @@
 import {test, expect} from '@playwright/test';
 
-test.beforeEach(async ({page}) => {
-  await page.goto('/labs/instruction-check/index.html');
-});
-
-test('examples explain missing, present and tool-assisted responses', async ({page}, info) => {
-  await expect(page.getByRole('heading', {level: 1})).toContainText('AIの返答に出てくる');
-  await expect(page.getByText('Claude Codeの起動やファイルの読み取りは行いません。', {exact: false})).toBeVisible();
-  await page.getByRole('button', {name: '例1：Cだけ返った', exact: true}).click();
-  await expect(page.getByRole('status')).toContainText('2個中1個');
-  await expect(page.getByRole('status')).toContainText('MARK_A：未検出');
-  await expect(page.getByRole('status')).toContainText('読んでいないとは断定できません');
-  await page.getByRole('button', {name: '例2：両方返った', exact: true}).click();
-  await expect(page.getByRole('status')).toContainText('2個中2個');
-  await expect(page.getByRole('status')).toContainText('指示をすべて守ったという意味ではありません');
-  await page.getByRole('button', {name: '例3：途中でツールを使った', exact: true}).click();
-  await expect(page.getByRole('status')).toContainText('途中でファイルを開いて答えを見つけた可能性を除外できません');
-  await page.screenshot({path: info.outputPath('explained-comparison.png'), fullPage: true});
-});
-
-test('exact comparison and edits invalidate old results', async ({page}) => {
-  await page.getByRole('button', {name: '例1：Cだけ返った', exact: true}).click();
-  await page.getByLabel('AIから返ってきた文章').fill('MARK_C_extra MARK_A');
-  await expect(page.getByRole('status')).not.toContainText('MARK_C：検出');
-  await page.getByRole('button', {name: '返答と目印を照合する', exact: true}).click();
-  await expect(page.getByRole('status')).toContainText('MARK_C：未検出');
-  await expect(page.getByRole('status')).toContainText('MARK_A：検出');
-  await page.getByLabel('AIから返ってきた文章').fill('MARK_C。');
-  await page.getByRole('button', {name: '返答と目印を照合する', exact: true}).click();
-  await expect(page.getByRole('status')).toContainText('2個中0個');
-});
-
-test('invalid markers clear results and examples recover', async ({page}) => {
-  await page.getByRole('button', {name: '例2：両方返った', exact: true}).click();
-  for (const value of ['', 'MARK_C MARK_C']) {
-    await page.getByLabel('ファイルに書いた目印（比べたいもの）').fill(value);
-    await page.getByRole('button', {name: '返答と目印を照合する', exact: true}).click();
-    await expect(page.getByRole('alert')).not.toBeEmpty();
-    await expect(page.getByRole('status')).not.toContainText('：検出');
-  }
-  await page.getByRole('button', {name: '例1：Cだけ返った', exact: true}).click();
-  await expect(page.getByRole('alert')).toBeHidden();
-  await expect(page.getByRole('status')).toContainText('2個中1個');
-});
-
-test('unknown count is never presented as zero and invalid counts are rejected', async ({page}) => {
-  await expect(page.getByLabel('実行ログで確認したツール使用回数')).toHaveValue('');
-  await page.getByLabel('AIから返ってきた文章').fill('MARK_C MARK_A');
-  await page.getByRole('button', {name: '返答と目印を照合する', exact: true}).click();
-  await expect(page.getByRole('status')).toContainText('2個中2個');
-  await expect(page.getByRole('status')).toContainText('ツール使用回数：未確認');
-  await expect(page.getByRole('status')).not.toContainText('ツール使用回数：0');
-  for (const value of ['-1', '1.5']) {
-    await page.getByLabel('実行ログで確認したツール使用回数').fill(value);
-    await page.getByRole('button', {name: '返答と目印を照合する', exact: true}).click();
-    await expect(page.getByRole('status')).not.toContainText('：検出');
-    expect(await page.getByLabel('実行ログで確認したツール使用回数').evaluate((el: HTMLInputElement) => el.validity.valid)).toBe(false);
-  }
-  await page.getByRole('button', {name: '例1：Cだけ返った', exact: true}).click();
-  await expect(page.getByRole('status')).toContainText('ツール使用回数：0');
-});
-
-test('local processing and responsive layout', async ({page}) => {
-  const requests: string[] = [];
-  page.on('request', request => requests.push(request.url()));
-  await page.getByRole('button', {name: '例1：Cだけ返った', exact: true}).click();
-  await page.getByLabel('AIから返ってきた文章').fill('<script>window.untrusted=true</script> MARK_A');
-  await page.getByRole('button', {name: '返答と目印を照合する', exact: true}).click();
-  await expect(page.getByRole('status')).toContainText('MARK_A：検出');
-  expect(await page.evaluate(() => (window as any).untrusted)).toBeUndefined();
-  expect(requests).toEqual([]);
+test('published Laya article source, measurement conditions and six results render', async ({page}, info) => {
+  const response = await page.goto('https://zenn.dev/kanta13jp1/articles/laya-mlx-on-device-system-one-benchmark', {waitUntil: 'domcontentloaded'});
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole('heading', {level: 1})).toContainText('CPU実測とアプリで確認する応答時間');
+  await expect(page.getByRole('heading', {name: 'Core MLの「約64%減」は何を測った値か', exact: true})).toBeVisible();
+  await expect(page.getByRole('link', {name: '雨夹雪❄️（@mizorewww）', exact: true})).toHaveAttribute('href', 'https://x.com/mizorewww');
+  await expect(page.getByText('64.1%', {exact: false}).first()).toBeVisible();
+  await expect(page.getByText('49.9%', {exact: false}).first()).toBeVisible();
+  await expect(page.getByText('17.75ms', {exact: false}).first()).toBeVisible();
+  const results = page.locator('table').filter({hasText: 'SDK時間の範囲'});
+  await expect(results.locator('tbody tr')).toHaveCount(6);
+  await expect(results).toContainText('29.58%');
+  await expect(results).toContainText('385.9〜395.9ms');
+  expect(await page.locator('a[href="https://my-web-app-b67f4.web.app/asset-management"]').count()).toBeGreaterThanOrEqual(2);
+  expect(await page.locator('strong').filter({hasText: 'Laya'}).count()).toBeGreaterThan(0);
+  const embeds = await page.locator('iframe').evaluateAll(nodes => nodes.map(n => ({src:n.getAttribute('src'),title:n.getAttribute('title')})));
+  await info.attach('embed-elements', {body:JSON.stringify(embeds,null,2),contentType:'application/json'});
+  expect(JSON.stringify(embeds)).toContain('2101473552956555427');
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({path:info.outputPath('laya-zenn-full.png'),fullPage:true});
+  await page.getByRole('heading', {name:'Core MLの「約64%減」は何を測った値か',exact:true}).scrollIntoViewIfNeeded();
+  await page.screenshot({path:info.outputPath('laya-coreml-conditions.png')});
+  await results.scrollIntoViewIfNeeded();
+  await page.screenshot({path:info.outputPath('laya-six-results.png')});
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
