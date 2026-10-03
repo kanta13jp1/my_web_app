@@ -128,6 +128,7 @@ export class GameAudio{
    if(this.beat%4===2)this.tone(answer,t+step*.45,step*.40,'triangle',track==='castle'?.009:.014,true);
    if(this.beat%8===0)this.tone(fifth,t+step*.3,step*5.5,'sine',.012,true);
    if(this.beat%8===0)this.tone(pad,t+step*.20,step*6.5,'triangle',track==='castle'?.009:.012,true);
+   if(track==='castle'&&boss&&!retreat&&bossAccent(this.beat))this.tone(counter,t,step*.45,'pluck',.020,true);
    if(this.beat%4===0)this.tone(counter,t+step*.16,step*3.2,'pluck',track==='underwater'?.023:.017,true);
    // Keep percussion on its grid; bass anticipates alternate quarter notes.
    for(const n of retreat?[]:bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'bass',.105,true);
@@ -171,3 +172,6 @@ export class GameAudio{
  }
  stop(){for(const o of this.nodes){try{o.stop();}catch{}o.disconnect();}this.nodes.clear();this.music.clear();this.beat=0;this.next=0;this.track='';this.musicUntil=0;if(this.musicGain){this.musicGain.gain.cancelScheduledValues?.(this.context.currentTime);this.musicGain.gain.value=1;}}
 }
+
+// Keep 4/4: grouped eighth-note attacks are spaced 3 + 3 + 2.
+export const bossAccent=beat=>[0,3,6].includes(beat%8);

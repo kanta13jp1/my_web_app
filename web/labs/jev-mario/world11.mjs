@@ -87,6 +87,8 @@ export function world21Level(){
   for(let x=start;x<start+4;x++)contents.set(`${x},7`,'loose');
  }
  for(let x=68;x<73;x++)set(x,6);
+ // Optional high jump reward above the existing gap; no supporting tile is added.
+ for(const x of [44,45,46])contents.set(`${x},8`,'loose');
  set(135,5,'question','star');
  for(let k=0;k<8;k++)for(let y=12-k;y<13;y++)set(181+k,y,'stone');
  for(let y=5;y<13;y++)set(189,y,'stone');set(198,12,'stone');

@@ -378,3 +378,12 @@ test('first sky jumps progress from a wide landing to a narrower landing',()=>{
  const g=skyLevel(),count=(a,b,y)=>Array.from({length:b-a+1},(_,i)=>g.cells.get(`${a+i},${y}`)).filter(Boolean).length;
  assert.equal(count(20,29,12),10);assert.equal(count(32,41,10),8);assert.equal(g.cells.get('40,10'),undefined);assert.equal(g.cells.get('44,11'),'platform');
 });
+
+import {world21Level} from '../../web/labs/jev-mario/world11.mjs';
+test('optional gap rewards leave the lower crossing and pit intact',()=>{
+ const g=world21Level();for(const x of [44,45,46]){assert.equal(g.contents.get(`${x},8`),'loose');assert.equal(g.cells.get(`${x},8`),undefined);assert.equal(g.cells.get(`${x},13`),undefined);}
+ assert.equal(g.cells.get('43,13'),'ground');assert.equal(g.cells.get('47,13'),'ground');
+});
+test('an exposed flower outranks a nearby unopened power-up block',()=>{
+ const g=new World11();g.power=1;g.p.x=21*16;g.camera=0;g.items.push({x:g.p.x+35,y:g.p.y,kind:'flower',taken:false});assert.equal(itemTargets(g)[0].block,false);assert.equal(itemTargets(g)[0].kind,'flower');
+});
