@@ -8647,13 +8647,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(
-            e is PostgrestException &&
-                    e.code == '23514' &&
-                    e.message.contains('wealth_struggles_action_type_check')
-                ? '振替を保存できません。サーバーの振替対応が未適用です。入力内容は保持しています。'
-                : '記録処理に失敗しました。履歴を確認してから再試行してください。',
-          )),
+            content: Text(
+              e is PostgrestException &&
+                      e.code == '23514' &&
+                      e.message.contains('wealth_struggles_action_type_check')
+                  ? '振替を保存できません。サーバーの振替対応が未適用です。入力内容は保持しています。'
+                  : '記録処理に失敗しました。履歴を確認してから再試行してください。',
+            ),
+          ),
         );
       }
     } finally {
