@@ -21,9 +21,8 @@ on:
 permissions: {}
 
 concurrency:
-  group: deploy-prod
+  group: ${{ github.event_name == 'push' && 'deploy-prod' || format('core-hub-contract-{0}', github.ref) }}
   cancel-in-progress: false
-  queue: max
 
 jobs:
   contract:

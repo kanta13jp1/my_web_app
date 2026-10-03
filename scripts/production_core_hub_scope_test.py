@@ -90,12 +90,16 @@ class RoutingTests(unittest.TestCase):
         self.assertNotIn("contents: write", workflow)
         self.assertNotIn("actions: write", workflow)
 
-    def test_no_mutual_cancel_and_multi_pending_queue(self):
+    def test_running_deploy_is_preserved_and_pr_queue_is_separate(self):
         for name in ["deploy-prod.yml", "deploy-core-hub.yml"]:
             workflow = (ROOT / ".github/workflows" / name).read_text(encoding="utf-8")
-            self.assertIn("group: deploy-prod", workflow)
             self.assertIn("cancel-in-progress: false", workflow)
-            self.assertIn("queue: max", workflow)
+            self.assertNotIn("queue:", workflow)
+        general = (ROOT / ".github/workflows/deploy-prod.yml").read_text(encoding="utf-8")
+        dedicated = (ROOT / ".github/workflows/deploy-core-hub.yml").read_text(encoding="utf-8")
+        self.assertIn("group: deploy-prod", general)
+        self.assertIn("github.event_name == 'push' && 'deploy-prod'", dedicated)
+        self.assertIn("format('core-hub-contract-{0}', github.ref)", dedicated)
 
 
 class ProbeTests(unittest.TestCase):

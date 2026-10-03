@@ -56,7 +56,6 @@ concurrency:
   # するが、全 commit が必ず deploy される。
   # group が同じため同時並行はゼロ・GitHub Actions リソース消費は変わらない。
   cancel-in-progress: false
-  queue: max
 
 permissions: {}
 
