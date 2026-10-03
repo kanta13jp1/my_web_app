@@ -965,3 +965,28 @@ test('boss grouped accents render each eighth without clipping and retain silent
  expect(result.filter(x=>x.accent).map(x=>x.beat)).toEqual([0,3,6]);for(const row of result){expect(row.peak).toBeLessThan(1);expect(row.rms).toBeGreaterThan(.001);}
  await(await import('node:fs/promises')).writeFile(info.outputPath('boss-grouped-accent.json'),JSON.stringify(result));
 });
+
+test('3-3 complete real worker treetops collects items and clears with normal hazards',async({page},info)=>{
+ test.skip(info.project.name==='mobile','The complete run uses desktop; mobile entrance and overhang recovery are covered separately.');test.setTimeout(180000);
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#stage').selectOption('11');
+ await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const tick=StudentSession.prototype.tick,step=World11.prototype.step;(window as any).courseTrace=[];(window as any).courseClear=null;(window as any).courseTotals={mushroom:0,flower:0,life:0,star:0};let previous={mushroom:0,flower:0,life:0,star:0},totalFrames=0;StudentSession.prototype.tick=function(world){(window as any).courseWorld=world;return tick.call(this,world);};World11.prototype.step=function(){step.call(this);if(this!==(window as any).courseWorld)return;totalFrames++;for(const kind of Object.keys(previous)){(window as any).courseTotals[kind]+=Math.max(0,this.pickups[kind]-previous[kind]);previous[kind]=this.pickups[kind];}if(this.frames%60===0)(window as any).courseTrace.push({frame:this.frames,x:this.p.x,y:this.p.y,room:this.room,phase:this.phase,lives:this.lives,pickups:{...this.pickups},input:{...this.input},power:this.power});if(this.stage===11&&this.phase==='won')(window as any).courseClear={frames:this.frames,totalFrames,x:this.p.x,lives:this.lives,deaths:this.deaths,pickups:{...(window as any).courseTotals},finalAttemptPickups:{...this.pickups},visited:[...this.visitedPipes]};};});
+ await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
+ try{await expect.poll(()=>frame.evaluate(()=>(window as any).courseClear),{timeout:160000}).toBeTruthy();const result=await frame.evaluate(()=>(window as any).courseClear);expect(result.lives).toBeGreaterThan(0);}
+ finally{await lab.locator('#stop').click();await(await import('node:fs/promises')).writeFile(info.outputPath('world33-complete-worker.json'),JSON.stringify(await frame.evaluate(()=>({clear:(window as any).courseClear,trace:(window as any).courseTrace}))));await screenshot(page,info.outputPath('world33-complete-worker.png'));}
+});
+
+
+
+test('32-bar return joins the intro in actual rendered browser audio',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;
+ const result=await frame.evaluate(async()=>{
+  const {GameAudio,loopSection}=await import('/web/labs/jev-mario/audio.mjs?v=student-1');const c=new OfflineAudioContext(1,48000,48000);let now=0;
+  const proxy=new Proxy(c,{get(target,key){if(key==='state')return 'running';if(key==='currentTime')return now;if(key==='resume')return async()=>{};const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v;}});
+  const a=new GameAudio(()=>proxy);await a.enable(true);a.track='castle';a.beat=255;a.next=0;const leads:any[]=[];const tone=a.tone.bind(a);
+  a.tone=(...args)=>{if(args[0]&&args[4]===.052)leads.push({note:args[0],time:args[1]});return tone(...args);};
+  for(now=0;now<.5;now+=.025)a.tick('castle');const buffer=await c.startRendering(),samples=buffer.getChannelData(0);let peak=0,sum=0;for(const x of samples){peak=Math.max(peak,Math.abs(x));sum+=x*x;}
+  return {sections:[0,64,128,192,256].map(loopSection),leads,peak,rms:Math.sqrt(sum/samples.length),beat:a.beat,maxVoices:a.nodes.size};
+ });
+ expect(result.sections.map(s=>s.name)).toEqual(['intro','development','climax','return','intro']);expect(result.leads[0].note).toBe(64);expect(result.leads[0].time).toBeGreaterThan(0);expect(result.leads[0].time).toBeLessThan(.13);expect(result.beat).toBeLessThan(8);expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);expect(result.maxVoices).toBeLessThanOrEqual(64);
+ await(await import('node:fs/promises')).writeFile(info.outputPath('loop-drama-seam.json'),JSON.stringify(result));
+});
