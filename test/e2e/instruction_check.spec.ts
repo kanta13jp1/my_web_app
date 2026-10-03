@@ -96,6 +96,8 @@ test('historical records expose all twelve conditions and real event excerpts', 
   await expect(page.locator('#run-events')).not.toContainText('session_id');
   await page.locator('#evidence').scrollIntoViewIfNeeded();
   await page.screenshot({path: info.outputPath('historical-logs.png'), fullPage: true});
+  await page.locator('#run-summary').scrollIntoViewIfNeeded();
+  await page.screenshot({path: info.outputPath('historical-logs-detail.png')});
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
@@ -108,4 +110,17 @@ test('unavailable evidence clears previous records and can recover', async ({pag
   await page.unroute('**/evidence.json');
   await page.getByRole('button', {name: '実行記録12件を表示する'}).click();
   await expect(page.locator('#evidence-panel')).toBeVisible();
+});
+
+test('published article exposes historical log viewer and excerpt limits', async ({page}, info) => {
+  test.skip(!process.env.E2E_BASE_URL, 'Production article check');
+  await page.goto('https://zenn.dev/kanta13jp1/articles/claude-code-agents-md-loading-test', {waitUntil:'domcontentloaded'});
+  await expect(page.getByRole('heading', {name:'実行ログを画面で確かめる', exact:true})).toBeVisible();
+  await expect(page.getByRole('link', {name:'12試行の実行ログを見る', exact:true})).toHaveAttribute('href','https://my-web-app-b67f4.web.app/labs/instruction-check/index.html#evidence');
+  await expect(page.locator('strong').filter({hasText:'表示するのは原本全文ではなく、個人情報を除いた公開用の抜粋です。'})).toBeVisible();
+  await expect(page.getByText('開始・応答・終了の36イベントを掲載', {exact:false})).toBeVisible();
+  expect(await page.locator('table').count()).toBeGreaterThanOrEqual(4);
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({path:info.outputPath('zenn-logs-public.png'),fullPage:true});
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
