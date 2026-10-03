@@ -5,11 +5,16 @@ on:
       - 'supabase/migrations/20261002150000_wealth_struggles_allow_transfer.sql'
       - 'scripts/sql/test_wealth_struggles_transfer.sql'
       - '.github/workflows/asset-transfer-regression.yml'
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: asset-transfer-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   postgres:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:17
@@ -20,7 +25,7 @@ jobs:
           --health-cmd pg_isready --health-interval 5s
           --health-timeout 5s --health-retries 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Verify transfer migration in isolated database
         env:
           PGPASSWORD: test-only
