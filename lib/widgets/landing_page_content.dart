@@ -2422,25 +2422,25 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       (
         icon: Icons.people_alt_outlined,
         color: _totalUsers > 10
-            ? const Color(0xFF7986CB)
-            : const Color(0xFFFFB74D),
+            ? const Color(0xFFF0E5D0)
+            : const Color(0xFFF0E5D0),
         bgColor: _totalUsers > 10
-            ? const Color(0xFF3D5AFE).withValues(alpha: 0.15)
-            : const Color(0xFFFF9800).withValues(alpha: 0.15),
+            ? const Color(0xFFF0E5D0).withValues(alpha: 0.15)
+            : const Color(0xFFF0E5D0).withValues(alpha: 0.15),
         value: _totalUsers > 10 ? '$_totalUsers' : '募集中',
         label: _totalUsers > 10 ? '登録ユーザー数' : '初期ユーザー',
       ),
       (
         icon: Icons.article_outlined,
-        color: const Color(0xFF4FC3F7),
-        bgColor: const Color(0xFF0284C7).withValues(alpha: 0.15),
+        color: const Color(0xFFF0E5D0),
+        bgColor: const Color(0xFFF0E5D0).withValues(alpha: 0.15),
         value: _publicMemoCount > 0 ? '$_publicMemoCount' : '–',
         label: '公開メモ数',
       ),
       (
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF81C784),
-        bgColor: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+        color: const Color(0xFFF0E5D0),
+        bgColor: const Color(0xFFF0E5D0).withValues(alpha: 0.15),
         value: _achievementCount > 0 ? '$_achievementCount' : '本番',
         label: _achievementCount > 0 ? '実装済み機能数' : 'サービス稼働',
       ),
@@ -2450,23 +2450,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       key: const Key('landing_social_proof_stats'),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF101D2B),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.bar_chart, color: Color(0xFF7986CB), size: 18),
+              const Icon(Icons.bar_chart, color: Color(0xFFF0E5D0), size: 18),
               const SizedBox(width: 8),
               const Text(
                 '現在の利用状況',
@@ -2481,7 +2475,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: const Color(0xFF263A42),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: const Text(
@@ -2489,7 +2483,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF15803D),
+                    color: Color(0xFFD6E6DF),
                     letterSpacing: 0.5,
                     height: 1.5,
                   ),
@@ -2509,7 +2503,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           height: 40,
                           decoration: BoxDecoration(
                             color: s.bgColor,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(18),
                           ),
                           child: Icon(s.icon, color: s.color, size: 20),
                         ),
@@ -2528,7 +2522,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           s.label,
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Color(0xFFB0B0B0),
+                            color: Color(0xFFBCC6CE),
                             height: 1.6,
                           ),
                           textAlign: TextAlign.center,
@@ -4053,39 +4047,28 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         Icons.play_circle_outline,
         '1. 無料トライアル',
         'まず登録なしで1件試す。AIが今日の最優先タスクを提案。',
-        Color(0xFF6366F1),
+        Color(0xFF654A35),
       ),
       (
         Icons.save_outlined,
         '2. 無料登録して保存',
         'Google認証またはメールのログインリンクで登録し、今回の提案を引き継ぎます。',
-        Color(0xFF10B981),
+        Color(0xFF654A35),
       ),
       (
         Icons.upload_file_outlined,
         '3. 既存データを移行 (XLSX/DOCX/CSV/ENEX)',
         '必要になったらインポート画面で対応形式と取り込み内容を確認します。',
-        Color(0xFFF59E0B),
+        Color(0xFF654A35),
       ),
     ];
 
-    final isDarkSteps = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDarkSteps ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color:
-              isDarkSteps ? const Color(0xFF2A2A2A) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: const Color(0xFFF7F1E7),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD6CFC4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4093,7 +4076,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           const Text(
             '3ステップで始める',
             style: TextStyle(
-              fontSize: 17,
+              fontSize: 22,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1E293B),
               height: 1.5,
@@ -4112,7 +4095,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ...steps.map((s) {
             final (icon, title, desc, color) = s;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.only(bottom: 22),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -4133,17 +4116,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         Text(
                           title,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1E293B),
                             height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 6),
                         Text(
                           desc,
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             color: Color(0xFF64748B),
                             height: 1.5,
                           ),
@@ -4161,7 +4144,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             height: 48,
             child: FilledButton.icon(
               onPressed: _showSignupAndScroll,
-              icon: const Icon(Icons.rocket_launch, size: 18),
+              icon: const Icon(Icons.arrow_forward, size: 18),
               label: const Text(
                 '無料登録へ進む',
                 style: TextStyle(
@@ -4171,9 +4154,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF3949AB),
+                backgroundColor: const Color(0xFF101D2B),
+                foregroundColor: const Color(0xFFF0E5D0),
+                visualDensity: VisualDensity.standard,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
