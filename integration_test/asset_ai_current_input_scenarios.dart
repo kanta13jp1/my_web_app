@@ -13,6 +13,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
+import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -694,6 +695,103 @@ void main() {
     );
     await _pumpUntil(tester, () => reloadedText.evaluate().isNotEmpty);
     expect(oldText, findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets(
+      'last billing edit persists, excludes plans and clear restores them',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    const cost = AssetRecurringFixedCost(
+      id: 'synthetic-billing',
+      name: 'Synthetic recurring bill',
+      amount: 600,
+      paymentDay: 20,
+      sourceAccountId: 'bank',
+    );
+    const store = AssetRecurringFixedCostStore();
+    final repository = _MonthlyRepository();
+    final ai = _ControlledAi();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          aiSummaryService: ai,
+          aiAnalysisHistoryService: _EmptyHistory(),
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[
+            cost,
+          ],
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{'bank': 30000},
+          },
+        ),
+      ),
+    );
+    await _pumpUntil(tester, () => ai.requests.isNotEmpty);
+    expect(
+      ai.requests.first.workbook.debtMasterRows.map((row) => row.name),
+      contains('Synthetic recurring bill'),
+    );
+    ai.complete(0, 'Synthetic bill is currently planned');
+    await tester.pump(const Duration(milliseconds: 100));
+    final edit = find.byTooltip('Synthetic recurring bill を編集');
+    await tester.ensureVisible(edit);
+    await tester.tap(edit);
+    await _pumpUntil(
+      tester,
+      () => find
+          .byKey(const Key('recurring_last_billing_date'))
+          .evaluate()
+          .isNotEmpty,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    final date = find.byKey(const Key('recurring_last_billing_date'));
+    await tester.enterText(date, '2026-08-20');
+    await tester.tap(find.widgetWithText(FilledButton, '保存'));
+    await _pumpUntil(tester, () => ai.requests.length == 2);
+    expect(
+      ai.requests.last.workbook.debtMasterRows.map((row) => row.name),
+      isNot(contains('Synthetic recurring bill')),
+    );
+    final saved = await store.load();
+    expect(
+      saved.singleWhere((row) => row.id == cost.id).lastBillingDate,
+      DateTime(2026, 8, 20),
+    );
+    ai.complete(1, 'Synthetic bill ended before this cycle');
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.ensureVisible(edit);
+    await tester.tap(edit);
+    await _pumpUntil(
+      tester,
+      () => find
+          .byKey(const Key('recurring_last_billing_date'))
+          .evaluate()
+          .isNotEmpty,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.widget<TextFormField>(date).controller!.text, '2026-08-20');
+    await tester.enterText(date, '');
+    await tester.tap(find.widgetWithText(FilledButton, '保存'));
+    await _pumpUntil(tester, () => ai.requests.length == 3);
+    expect(
+      ai.requests.last.workbook.debtMasterRows.map((row) => row.name),
+      contains('Synthetic recurring bill'),
+    );
+    final cleared = await store.load();
+    expect(
+      cleared.singleWhere((row) => row.id == cost.id).lastBillingDate,
+      isNull,
+    );
+    ai.complete(2, 'Synthetic planned billing restored');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });
