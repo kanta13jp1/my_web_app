@@ -72,3 +72,40 @@ test('local processing and responsive layout', async ({page}) => {
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+test('historical records expose all twelve conditions and real event excerpts', async ({page}, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.getByRole('button', {name: '実行記録12件を表示する'}).click();
+  await expect(page.locator('#run-select option')).toHaveCount(12);
+  for (const version of ['old', 'new']) for (const condition of ['N','C','A','B','I','E']) {
+    await page.locator('#run-select').selectOption(`${version}-${condition}`);
+    await expect(page.locator('#evidence-panel')).toBeVisible();
+    await expect(page.locator('#run-summary')).toContainText(`条件 ${condition}`);
+    await expect(page.locator('#run-tools')).toContainText('ツール使用イベント：0件');
+    await expect(page.locator('#run-tools')).toContainText('全4イベント');
+    await expect(page.locator('#run-source')).toHaveAttribute('href', new RegExp(`/results/${version}-${condition}\\.json$`));
+  }
+  await page.locator('#run-select').selectOption('new-A');
+  await expect(page.locator('#run-answer')).toHaveText('NONE');
+  await page.locator('#run-select').selectOption('new-E');
+  await expect(page.locator('#run-answer')).toContainText('LOADMARK_A_79bd0e31');
+  await page.locator('#run-log-details summary').click();
+  await expect(page.locator('#run-events')).toContainText('元ログ 4行目');
+  await expect(page.locator('#run-events')).toContainText('"subtype": "success"');
+  await expect(page.locator('#run-events')).not.toContainText('session_id');
+  await page.locator('#evidence').scrollIntoViewIfNeeded();
+  await page.screenshot({path: info.outputPath('historical-logs.png'), fullPage: true});
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});
+test('unavailable evidence clears previous records and can recover', async ({page}) => {
+  await page.route('**/evidence.json', route => route.fulfill({status: 503, body: 'unavailable'}));
+  await page.getByRole('button', {name: '実行記録12件を表示する'}).click();
+  await expect(page.locator('#evidence-message')).toContainText('取得できませんでした');
+  await expect(page.locator('#evidence-panel')).toBeHidden();
+  await expect(page.locator('#run-select')).toBeDisabled();
+  await page.unroute('**/evidence.json');
+  await page.getByRole('button', {name: '実行記録12件を表示する'}).click();
+  await expect(page.locator('#evidence-panel')).toBeVisible();
+});
