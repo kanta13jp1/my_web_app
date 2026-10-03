@@ -44,6 +44,12 @@ export function bassStep(track,beat,hurry=false){
  if(beat%4===3){const next=musicStep(track,beat+1,hurry);return [event(next.bass,.72,1.15)];}
  return [];
 }
+// Sparse octave reinforcement leaves the everyday lead exposed.
+export function leadLayers(track,beat,boss=false){
+ if(track==='underwater')return [];
+ if(track==='castle'&&boss)return [{interval:12,type:'pluck',gain:.018},{interval:-12,type:'triangle',gain:.012}];
+ return beat%64>=48?[{interval:12,type:'pluck',gain:.016}]:[];
+}
 export const effects={firework:[48,36],swim:[60,67],bridge:[43,38,31,24],impact:[42,30],skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
 export class GameAudio{
  constructor(factory=()=>new(globalThis.AudioContext||globalThis.webkitAudioContext)()){
@@ -92,7 +98,7 @@ export class GameAudio{
   this.nodes.add(source);if(music)this.music.add(source);source.onended=()=>{source.disconnect();env.disconnect();this.nodes.delete(source);this.music.delete(source);};source.start(time);source.stop(time+duration);
  }
  stopMusic(){for(const o of this.music){try{o.stop();}catch{}o.disconnect();this.nodes.delete(o);}this.music.clear();}
- tick(room='overworld',{star=false,hurry=false}={}){
+ tick(room='overworld',{star=false,hurry=false,boss=false}={}){
   if(!this.enabled||this.context?.state!=='running')return;
   const now=this.context.currentTime;if(now<this.musicUntil)return;
   const track=star?'star':room==='underwater'?'underwater':room==='castle'?'castle':(room==='underground'||room==='stage-underground')?'underground':'overworld';
@@ -102,9 +108,11 @@ export class GameAudio{
   while(this.next<now+.08){
    const {step,lead,leadType,harmony,bass,counter,pad,fifth,answer,bell,accent,echo,turn,pickup,reply,lowAnswer,spark,cadence,duty}=musicStep(track,this.beat,hurry),t=this.next;
    // Phrase entries arrive just before their next grid beat, without a duplicate attack.
+   const retreat=track!=='underwater'&&this.beat%64>=46&&this.beat%64<48;
    const water=track==='underwater',anticipated=!water&&this.beat>0&&this.beat%8===0;
-   if((water&&this.beat%2===0)||(!water&&!anticipated))this.tone(water?scores.underwater[Math.floor(this.beat/2)%scores.underwater.length]:lead,t,step*(water?1.7:this.beat%4===3?.55:.82),leadType,.052,true,0,duty);
-   if(!water&&this.beat%8===7){const next=musicStep(track,this.beat+1,hurry);this.tone(next.lead,t+step*.72,step*1.10,next.leadType,.052,true,0,next.duty);} 
+   const playLead=(note,time,duration,type,duty,beat)=>{this.tone(note,time,duration,type,.052,true,0,duty);if(note)for(const layer of leadLayers(track,beat,boss))this.tone(note+layer.interval,time,duration,layer.type,layer.gain,true);};
+   if((water&&this.beat%2===0)||(!water&&!anticipated))playLead(water?scores.underwater[Math.floor(this.beat/2)%scores.underwater.length]:lead,t,step*(water?1.7:this.beat%4===3?.55:.82),leadType,duty,this.beat);
+   if(!water&&this.beat%8===7){const next=musicStep(track,this.beat+1,hurry);playLead(next.lead,t+step*.72,step*1.10,next.leadType,next.duty,this.beat+1);} 
    for(const n of ostinatoStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,n.type,n.gain,true,0,n.duty);
    // Offbeat comping and broken triads keep the lead audible without dense chords.
    if(this.beat%2===0||track==='star')this.tone(harmony,t+step*.08,step*.65,'square',track==='underwater'?.013:.018,true,0,.5);
@@ -122,12 +130,12 @@ export class GameAudio{
    if(this.beat%8===0)this.tone(pad,t+step*.20,step*6.5,'triangle',track==='castle'?.009:.012,true);
    if(this.beat%4===0)this.tone(counter,t+step*.16,step*3.2,'pluck',track==='underwater'?.023:.017,true);
    // Keep percussion on its grid; bass anticipates alternate quarter notes.
-   for(const n of bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'bass',.105,true);
-   if(track==='overworld'||track==='star'){
+   for(const n of retreat?[]:bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'bass',.105,true);
+   if(!retreat&&(track==='overworld'||track==='star')){
     if(this.beat%4===0)this.tone(32,t,.035,'triangle',.055,true,-12);
     if(this.beat%2===1)this.noise(t,this.beat%4===3?.045:.018,this.beat%4===3?.018:.009,true);
-   }else if(track==='castle'&&this.beat%4===2)this.noise(t,.055,.016,true);
-   else if(track==='underground'&&this.beat%8===6)this.noise(t,.022,.009,true);
+   }else if(!retreat&&track==='castle'&&this.beat%4===2)this.noise(t,.055,.016,true);
+   else if(!retreat&&track==='underground'&&this.beat%8===6)this.noise(t,.022,.009,true);
    // A quiet phrase response adds articulation without stacking a dense chord.
    if(this.beat%16===7||this.beat%16===14){this.tone(harmony+12,t+step*.72,step*.28,'triangle',.006,true);}
    // Short broken triad answers the phrase instead of sustaining a dense chord.

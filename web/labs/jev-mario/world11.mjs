@@ -13,6 +13,8 @@ export function level() {
   const set = (x,y,t='brick',item) => { cells.set(`${x},${y}`,t); if(item) contents.set(`${x},${y}`,item); };
   for(let x=0;x<212;x++) if(!((x>=69&&x<=70)||(x>=86&&x<=88)||(x>=153&&x<=154))) for(let y=13;y<15;y++) set(x,y,'ground');
   for(const [x,h] of [[28,2],[38,3],[46,4],[57,4],[163,2],[179,2]]) for(let c=0;c<2;c++) for(let y=13-h;y<13;y++) set(x+c,y,y===13-h?'pipe-top':'pipe');
+  // A one-tile practice step precedes blocks and the first enemy on safe ground.
+  set(10,12,'stone');
   set(16,9,'question','coin');
   for(let x=20;x<=24;x++) set(x,9,x%2?'question':'brick',x===21?'mushroom':x===23?'coin':null);
   set(22,5,'question','coin');set(64,8,'hidden','life');
@@ -54,7 +56,7 @@ export function skyLevel(){
  const cells=new Map(),contents=new Map(),set=(x,y,t='platform')=>cells.set(`${x},${y}`,t);
  for(let x=0;x<20;x++)for(let y=13;y<15;y++)set(x,y,'ground');
  for(let x=185;x<212;x++)for(let y=13;y<15;y++)set(x,y,'ground');
- const platforms=[[20,29,12],[32,41,10],[44,53,11],[56,65,9],[68,77,10],[80,89,8],[92,101,10],[104,113,11],[116,125,9],[128,137,10],[140,149,8],[152,161,10],[164,173,11],[176,184,12]];
+ const platforms=[[20,29,12],[32,39,10],[44,53,11],[56,65,9],[68,77,10],[80,89,8],[92,101,10],[104,113,11],[116,125,9],[128,137,10],[140,149,8],[152,161,10],[164,173,11],[176,184,12]];
  for(const [a,b,y] of platforms){for(let x=a;x<=b;x++)set(x,y);for(let x=a+2;x<b-1;x+=2)contents.set(`${x},${y-2}`,'loose');}
  cells.set('12,9','question');contents.set('12,9','mushroom');
  set(198,12,'stone');return {cells,contents,width:212*16};

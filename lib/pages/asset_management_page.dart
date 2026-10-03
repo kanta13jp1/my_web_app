@@ -8570,9 +8570,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  bool _isRecordingFlow = false;
+
   Future<void> _recordFlow() async {
+    if (_isRecordingFlow) return;
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('記録にはログインが必要です。再ログインしてください。')),
+      );
+      return;
+    }
 
     final memo = _flowMemoController.text.trim();
     final amountStr = _flowAmountController.text.replaceAll(',', '');
@@ -8598,6 +8606,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final actionType = _flowLabelToActionType(_selectedFlowType);
+    setState(() => _isRecordingFlow = true);
 
     try {
       await _supabase.from('wealth_struggles').insert({
@@ -8635,6 +8644,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error recording flow: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e is PostgrestException &&
+                      e.code == '23514' &&
+                      e.message.contains('wealth_struggles_action_type_check')
+                  ? '振替を保存できません。サーバーの振替対応が未適用です。入力内容は保持しています。'
+                  : '記録処理に失敗しました。履歴を確認してから再試行してください。',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRecordingFlow = false);
     }
   }
 
@@ -16720,9 +16744,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// キャッシュフローパネルの中身。データが無ければ null (グリッドから除外される)。
   Widget? _cashflowStatementPanelChild(AssetLiabilityWorkbook? workbook) {
-    // ライブの当月スナップショットを履歴サービスで生成し、未保存でも当月CFを反映する。
+    // 前サイクルの支払済みを当月の実績として再集計しない。
     AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
-    if (workbook != null) {
+    if (workbook != null &&
+        _assetLiabilityBootStateLoaded &&
+        !_salaryResetPending &&
+        _loadedAssetLiabilityMonthKey == _currentSalaryCycleKey()) {
       final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
         DateTime.now(),
       );
@@ -17824,9 +17851,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final net = totalIncome - totalExpense;
     // フローが無くても給与明細の給料収入があれば「未記録」とは扱わない。
     final hasNoData = flows.isEmpty && totalIncome == 0;
+    final hasRecordedExpense =
+        flows.any((flow) => flow['action_type'] == 'expense');
     final statusText = hasNoData
         ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
-        : 'このサイクルの記録上の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。現在残高や今後の支払後に使える額とは異なります。';
+        : !hasRecordedExpense
+            ? '支出はまだ記録されていません。差額は記録済み収入だけの集計で、支払済みチェックや予定額とは異なります。現在残高や今後の支払後に使える額とは異なります。'
+            : 'このサイクルの記録上の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。現在残高や今後の支払後に使える額とは異なります。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -33340,13 +33371,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: _recordFlow,
+                  onPressed: _isRecordingFlow ? null : _recordFlow,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF64748B),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: Text(isTransferSelected ? '振替を追加' : '追加'),
+                  child: Text(_isRecordingFlow
+                      ? '保存中…'
+                      : (isTransferSelected ? '振替を追加' : '追加')),
                 ),
               ],
             ),
