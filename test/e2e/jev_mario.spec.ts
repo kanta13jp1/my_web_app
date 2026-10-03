@@ -991,7 +991,7 @@ test('32-bar return joins the intro in actual rendered browser audio',async({pag
  await(await import('node:fs/promises')).writeFile(info.outputPath('loop-drama-seam.json'),JSON.stringify(result));
 });
 
-test('bonus pipe gives a visible reward and returns to the main course',async({page})=>{
+test('bonus pipe gives a visible reward and returns to the main course',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');
  const frame=page.frames().find(f=>f.url().includes('/web/labs/jev-mario/'))!;
  const results=await frame.evaluate(async()=>{
@@ -1008,5 +1008,7 @@ test('bonus pipe gives a visible reward and returns to the main course',async({p
    return {power,pickups:g.pickups,room:g.room,phase:g.phase,roomImage};
   });
  });
+ await frame.locator('#screen').screenshot({path:info.outputPath('bonus-room.png')});
+ await(await import('node:fs/promises')).writeFile(info.outputPath('bonus-reward.json'),JSON.stringify(results.map(({roomImage,...r})=>r)));
  for(const r of results){expect(r.pickups[r.power?'flower':'mushroom']).toBe(1);expect(r.room).toBe('overworld');expect(r.phase).toBe('playing');expect(r.roomImage.length).toBeGreaterThan(1000);}
 });
