@@ -401,7 +401,7 @@ test('bonus room reward can be collected and the return preserves the main cours
  for(const power of [0,1]){
   const g=new World11();g.power=power;g.p.h=power?28:16;Object.assign(g.p,{x:57*16+8,y:144-g.p.h,grounded:true});
   const cells=g.cells,contents=g.contents;assert.equal(g.enterRoom(),true);
-  assert.equal(g.tile(6,10),'question');assert.equal(g.contents.get('6,10'),'mushroom');
+  assert.equal(g.items[0].kind,power?'flower':'mushroom');assert.equal(g.contents.size,19);
   for(let n=0;n<300&&g.room==='underground';n++)advance(g,pipeRoute(g)??'right_jump',8);
   assert.equal(g.pickups[power?'flower':'mushroom'],1);assert.equal(g.room,'overworld');
   assert.equal(g.cells,cells);assert.equal(g.contents,contents);assert.equal(g.phase,'playing');
