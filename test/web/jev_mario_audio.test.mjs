@@ -198,3 +198,12 @@ test('climax breath removes bass and percussion for one beat but preserves lead 
  tones.length=0;a.beat=48;a.next=c.currentTime;a.tick();assert.ok(tones.some(x=>x[4]===.055));assert.ok(tones.some(x=>x[3]==='pluck'));
  tones.length=0;a.effect('coin');assert.ok(tones.some(x=>x[5]!==true));
 });
+
+import {bossAccent} from '../../web/labs/jev-mario/audio.mjs';
+test('boss accents group eight eighths as three plus three plus two',()=>{
+ const hits=Array.from({length:17},(_,i)=>i).filter(bossAccent);assert.deepEqual(hits,[0,3,6,8,11,14,16]);assert.deepEqual(hits.slice(1).map((x,i)=>x-hits[i]),[3,3,2,3,3,2]);
+});
+test('grouped accents sound only near a boss and respect the phrase breath',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.track='castle';const notes=[];a.tone=(...x)=>notes.push(x);
+ for(const boss of [false,true])for(const beat of [0,1,3,6,46,47]){notes.length=0;a.beat=beat;a.next=c.currentTime;a.tick('castle',{boss});assert.equal(notes.some(x=>x[4]===.020),boss&&[0,3,6].includes(beat));}
+});
