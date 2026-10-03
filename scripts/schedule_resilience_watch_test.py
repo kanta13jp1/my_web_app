@@ -48,6 +48,167 @@ def run(**overrides):
 
 
 class ScheduleResilienceWatchTest(unittest.TestCase):
+    def test_main_push_confirmation_failure_performs_no_writes(self) -> None:
+        target = WorkflowTarget("deploy-prod", "deploy-prod.yml", 0, "push")
+        primary = run(created_at=(datetime.now(timezone.utc) - timedelta(hours=1)).isoformat())
+        with (
+            patch.dict(os.environ, {"GITHUB_TOKEN": "test-token"}),
+            patch("schedule_resilience_watch.GitHubClient") as factory,
+            patch("schedule_resilience_watch.TARGETS", (target,)),
+            patch("sys.stdout", new_callable=io.StringIO),
+        ):
+            client = factory.return_value
+            client.workflow_runs.return_value = [primary]
+            client.repository_workflow_runs.return_value = []
+            client.confirm_push_run.side_effect = PrimaryLatestUnconfirmed("mismatch")
+            result = main(["--repo", "owner/repo"])
+        self.assertEqual(result, 1)
+        client.confirm_push_run.assert_called_once()
+        client.rerun_failed_jobs.assert_not_called()
+        client.open_or_update_issue.assert_not_called()
+        client.close_recovered_issues.assert_not_called()
+
+    def test_push_split_searches_older_half_only_when_newer_empty(self) -> None:
+        client = GitHubClient("owner/repo", "token")
+        item = run(created_at=(NOW - timedelta(hours=18)).isoformat(),
+                   path=".github/workflows/deploy-prod.yml", conclusion="failure")
+        with patch("schedule_resilience_watch.datetime") as clock:
+            clock.now.return_value = NOW
+            clock.fromisoformat.side_effect = datetime.fromisoformat
+            with patch.object(client, "request", side_effect=[
+                {"total_count": 1000, "workflow_runs": []},
+                {"total_count": 0, "workflow_runs": []},
+                {"total_count": 1, "workflow_runs": [item]},
+            ]) as request:
+                found = client.latest_repository_push_runs("deploy-prod.yml", NOW - timedelta(days=1))
+        self.assertEqual(request.call_count, 3)
+        self.assertEqual(found[0]["conclusion"], "failure")
+
+    def test_push_changed_total_fails_closed(self) -> None:
+        client = GitHubClient("owner/repo", "token")
+        first = [run(id=i + 1, created_at=(NOW - timedelta(hours=1)).isoformat(),
+                     path=".github/workflows/other.yml") for i in range(100)]
+        with patch("schedule_resilience_watch.datetime") as clock:
+            clock.now.return_value = NOW
+            clock.fromisoformat.side_effect = datetime.fromisoformat
+            with patch.object(client, "request", side_effect=[
+                {"total_count": 101, "workflow_runs": first},
+                {"total_count": 102, "workflow_runs": []},
+            ]):
+                with self.assertRaises(RepositoryPaginationIncomplete):
+                    client.latest_repository_push_runs("deploy-prod.yml", NOW - timedelta(days=1))
+
+    def test_push_saturated_second_fails_closed(self) -> None:
+        client = GitHubClient("owner/repo", "token")
+        with patch("schedule_resilience_watch.datetime") as clock:
+            clock.now.return_value = NOW
+            clock.fromisoformat.side_effect = datetime.fromisoformat
+            with patch.object(client, "request", return_value={
+                "total_count": 1000, "workflow_runs": []
+            }):
+                with self.assertRaises(RepositoryPaginationIncomplete):
+                    client.latest_repository_push_runs("deploy-prod.yml", NOW)
+
+    def test_push_empty_history_has_bounded_request_budget(self) -> None:
+        client = GitHubClient("owner/repo", "token")
+        with patch("schedule_resilience_watch.datetime") as clock:
+            clock.now.return_value = NOW
+            clock.fromisoformat.side_effect = datetime.fromisoformat
+            with patch.object(client, "request", return_value={
+                "total_count": 0, "workflow_runs": []
+            }) as request:
+                with self.assertRaises(RepositoryPaginationIncomplete):
+                    client.latest_repository_push_runs("deploy-prod.yml", NOW - timedelta(days=60))
+                self.assertEqual(request.call_count, 40)
+
+    def test_push_inclusive_boundary_keeps_newer_failure(self) -> None:
+        client = GitHubClient("owner/repo", "token")
+        boundary = NOW - timedelta(days=1)
+        item = run(created_at=boundary.isoformat(), conclusion="failure",
+                   path=".github/workflows/deploy-prod.yml")
+        with patch("schedule_resilience_watch.datetime") as clock:
+            clock.now.return_value = NOW
+            clock.fromisoformat.side_effect = datetime.fromisoformat
+            with patch.object(client, "request", return_value={
+                "total_count": 1, "workflow_runs": [item]
+            }):
+                found = client.latest_repository_push_runs("deploy-prod.yml", boundary)
+        self.assertEqual(found[0]["conclusion"], "failure")
+
+    def test_independent_old_primary_keeps_newer_failure(self) -> None:
+        primary = run(id=1, head_sha="a" * 40)
+        confirmed = dict(primary, event="push", head_branch="main",
+                         path=".github/workflows/deploy-prod.yml")
+        client = GitHubClient("owner/repo", "token")
+        with patch.object(client, "request", return_value=confirmed):
+            old = client.confirm_push_run("deploy-prod.yml", primary)
+        newest = run(id=2, created_at=NOW.isoformat(), conclusion="failure")
+        merged = merge_revalidated_runs([primary], [old, newest],
+                                       created_after=NOW - timedelta(days=1))
+        self.assertEqual(merged[0]["id"], 2)
+        self.assertEqual(merged[0]["conclusion"], "failure")
+
+    def test_independent_primary_rejects_wrong_identity(self) -> None:
+        primary = run(head_sha="a" * 40)
+        confirmed = dict(primary, event="push", head_branch="main",
+                         path=".github/workflows/deploy-prod.yml")
+        client = GitHubClient("owner/repo", "token")
+        for field, value in (("head_sha", "b" * 40), ("head_branch", "other"),
+                             ("event", "workflow_dispatch"), ("id", 999)):
+            with self.subTest(field=field), patch.object(
+                client, "request", return_value=dict(confirmed, **{field: value})
+            ):
+                with self.assertRaises(PrimaryLatestUnconfirmed):
+                    client.confirm_push_run("deploy-prod.yml", primary)
+
+    def test_push_short_later_page_must_confirm_total(self) -> None:
+        timestamp = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        first = [run(id=i + 1, created_at=timestamp,
+                     path=".github/workflows/other.yml") for i in range(100)]
+        client = GitHubClient("owner/repo", "token")
+        with patch.object(client, "request", side_effect=[
+            {"total_count": 102, "workflow_runs": first},
+            {"total_count": 102, "workflow_runs": [run(id=101, created_at=timestamp)]},
+        ]):
+            with self.assertRaises(RepositoryPaginationIncomplete):
+                client.latest_repository_push_runs("deploy-prod.yml",
+                    datetime.now(timezone.utc) - timedelta(days=1))
+
+    def test_push_duplicate_page_cannot_prove_completeness(self) -> None:
+        timestamp = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        first = [run(id=i + 1, created_at=timestamp,
+                     path=".github/workflows/other.yml") for i in range(100)]
+        client = GitHubClient("owner/repo", "token")
+        with patch.object(client, "request", side_effect=[
+            {"total_count": 101, "workflow_runs": first},
+            {"total_count": 101, "workflow_runs": [first[0]]},
+        ]):
+            with self.assertRaises(RepositoryPaginationIncomplete):
+                client.latest_repository_push_runs("deploy-prod.yml",
+                    datetime.now(timezone.utc) - timedelta(days=1))
+
+    def test_push_revalidation_stops_after_complete_newest_slice(self) -> None:
+        client = GitHubClient("owner/repo", "token")
+        with patch("schedule_resilience_watch.datetime") as clock:
+            clock.now.return_value = NOW
+            clock.fromisoformat.side_effect = datetime.fromisoformat
+            # Keep fixture inside the bounded query.
+            with patch.object(client, "request", return_value={"total_count": 1,
+                "workflow_runs": [run(path=".github/workflows/deploy-prod.yml")]}) as request:
+                found = client.repository_workflow_runs("deploy-prod.yml", event="push",
+                    created_after=NOW - timedelta(days=30))
+        self.assertEqual([item["id"] for item in found], [123])
+        request.assert_called_once()
+        self.assertEqual(request.call_args.args[0], "GET")
+        self.assertIn("event=push", request.call_args.args[1])
+
+    def test_push_invalid_count_remains_fail_closed(self) -> None:
+        client = GitHubClient("owner/repo", "token")
+        with patch.object(client, "request", return_value={"workflow_runs": []}):
+            with self.assertRaises(RepositoryRunsInvalid):
+                client.repository_workflow_runs("deploy-prod.yml", event="push",
+                    created_after=NOW - timedelta(days=30))
+
     def test_success_recent_is_healthy(self) -> None:
         result = evaluate_target(TARGET, [run()], NOW, max_attempts=2)
         self.assertEqual(result["action"], "healthy")
