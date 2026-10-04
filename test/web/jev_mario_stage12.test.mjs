@@ -394,3 +394,16 @@ test('3-3 elevated approach guards a fall beyond the former 24-frame horizon',as
  assert.equal(advance(clone(g),'right',24).phase,'playing');assert.equal(advance(clone(g),'right',64).phase,'dead');
  const before=JSON.stringify(g.snapshot()),guard=new LiveGuard(),action=guard.decide(g,'right');assert.notEqual(action,'right');assert.equal(JSON.stringify(g.snapshot()),before);assert.equal(advance(clone(g),action,64).phase,'playing');assert.equal(guard.lastReason,'live_collision_guard');
 });
+
+import {pipeRoute} from '../../web/labs/jev-mario/pipe-route.mjs';
+test('bonus room reward can be collected and the return preserves the main course',async()=>{
+ const {advance}=await import('../../web/labs/jev-mario/search-assist.mjs');
+ for(const power of [0,1]){
+  const g=new World11();g.power=power;g.p.h=power?28:16;Object.assign(g.p,{x:57*16+8,y:144-g.p.h,grounded:true});
+  const cells=g.cells,contents=g.contents;assert.equal(g.enterRoom(),true);
+  assert.equal(g.items[0].kind,power?'flower':'mushroom');assert.equal(g.contents.size,19);assert.equal(g.tile(0,1),undefined);assert.equal(g.tile(0,4),'brick');assert.equal(g.p.y,80);
+  for(let n=0;n<300&&g.room==='underground';n++)advance(g,pipeRoute(g)??'right_jump',8);
+  assert.equal(g.pickups[power?'flower':'mushroom'],1);assert.equal(g.room,'overworld');
+  assert.equal(g.cells,cells);assert.equal(g.contents,contents);assert.equal(g.phase,'playing');
+ }
+});
