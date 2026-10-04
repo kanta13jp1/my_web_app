@@ -530,3 +530,43 @@ Amazonは実リンクの商品IDから短縮URLへ正規化。前回10/1と同�
 追跡2文書のみ既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)へ追記。全JSONL解析、日付重複防止、1〜9連番、対象URL一致、同じ9 URL集合を検証。docs-onlyにつきFlutter test/analyze/release buildは未実施、新規生成HTMLなし。対象の起動後ブラウザ描画、完全一致、site検索、Search Console、本日のJSON-LD再監査は未実施。
 
 session-start-checkとadaptive-model-routerを適用しlead継続。元ツリー21 dirty pathsと48 commitsの遅れは変更しない。空きディスク約3 GiBでremote-only編集、新規worktree/worker/重いtoolchainなし。ルールdriftなし、tool watchの既存ルートは#1422等。自動マージ・デプロイなし。検索タブ閉鎖済み。次回は順位・タイトル・サイト名、必要に応じ基本理念の検索掲載を確認。順位維持や1位を保証しない。
+
+## 2026-10-04 日次監視：条件変更、2ページ目2件目
+
+09:02〜09:03 JST頃、実アプリ内ブラウザで `自分株式会社` を検索。hl=ja/gl=jp/pws=0、未ログイン、府中市・東京都（IP由来）、CAPTCHAなし。Chrome接続がなく前回とブラウザ・ログイン条件が異なる。前回3位からの低下やSEO施策の効果とは断定しない。
+
+対象は1ページ目9件にはなく、2ページ目（start=10）の2件目。実測自然検索の通算11件目（9+2）で、ページ開始位置を使う12枠目と区別する。2ページ19件を確認し対象を検出したため100位までの継続調査は不要。タイトルは「自分株式会社とは？ | 人生を経営するAIライフマネジメント ...」、サイト名はGoogle。
+
+広告・強調スニペットなし。AI概要、PAA、関連検索、Amazon価格・評価、サイトリンクあり。AI概要の可視参照ラベルはnote、IFA JAPAN、新R25、パソナキャリア（網羅ではない）。
+
+### 1ページ目の自然検索一覧
+
+リンクは当日のhrefが不透明なため、下表は過去照合・候補の参照URL。正確な遷移先は未確定で、JSONLのurlはnullとしreference_urlと分離した。
+
+|順位|タイトル|参照URL / ドメイン|種別|主な意図|
+|---:|---|---|---|---|
+|1|「自分株式会社」という考え方と、この考え方を活用するために ...|[note.com](https://note.com/famous_knot742/n/n0c1a89bc7c77)|個人ブログ記事|概念の定義、参考情報、実践方法を知る|
+|2|サラリーマンこそ自分株式会社をつくりなさい――1000万円 ...|[amazon.co.jp](https://www.amazon.co.jp/dp/4478067449)|書籍商品ページ|内容、著者、評価、購入条件を確認する|
+|3|“自分株式会社”という考え方|[ifa-japan.co.jp](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)|専門家ブログ記事|人的資本・資産形成として理解する|
+|4|会社に依存しない「自分株式会社」の考え方｜moto（戸塚俊介）|[note.com](https://note.com/recruit_man_note/n/n1032c32fbc36)|著者ブログ記事|会社に依存しないキャリア設計と収支管理を学ぶ|
+|5|わたしブランド～自分株式会社を設立してみよう|[akikofujisaki.com](https://akikofujisaki.com/selfpromotion/)|専門家ブログ記事|自己ブランディングへ応用する|
+|6|NewsPicks [ニューズピックス]|[x.com](https://x.com/newspicks/status/1449692163042856961)|SNS投稿|著名人の発言と反応を見る|
+|7|「自分株式会社」を経営せよ。副業年収4000万円のmotoが ...|[r25.jp](https://r25.jp/articles/928885293145522178)|編集部記事・書籍抜粋|キャリアと副業の具体例を読む|
+|8|なぜ自分の会社をつくるのか？人生を楽しく生きるための2つの ...|[diamond.jp](https://diamond.jp/articles/-/78525?page=3)|書籍紹介・解説|個人の会社設立・生き方を理解|
+|9|株式会社自分|[jibun.co.jp](https://jibun.co.jp/)|企業ホームページ|企業・SaaS事業の案内|
+
+### 差分・分析・判断
+
+前回10/3と比べ、1ページ目の可視識別ではDiamondと株式会社自分が加わり、対象サイトとLMIが外れた。ただし条件が違い、厳密なURL集合や順位差は確定しない。
+
+[みおつくしnote](https://note.com/famous_knot742/n/n0c1a89bc7c77)は概念の定義、経験、比較、実践と参考資料、著者・日付・プロフィール導線を持つ。[株式会社自分](https://jibun.co.jp/)は企業名のH1、SaaS事業説明、会社概要・問い合わせ導線を持つ。概念解説と企業案内が混在するが、これだけでブランド混同や対策の必要性を断定しない。
+
+[対象の基本理念](https://my-web-app-b67f4.web.app/philosophy)には定義、人的資本、P/L・B/S、6部署、30日サイクル、架空例、FAQ、編集方針と関連リンクがある。本文はWeb取得でキャッシュを含む。構造化データは本日再監査していない。新規の不足テーマは特定せず、文章や画像の転用・アプリ改修なし。
+
+### 変更・検証・次回
+
+既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)の追跡2文書だけ更新。全行JSON解析、日付重複防止、1〜9連番、通算件数を検証。docs-onlyのためFlutter test/analyze/Web release build、新規生成HTML、対象アプリ起動後描画は未実施。ロールバックは今回の追記コミットをrevertする。自動マージ・デプロイなし。
+
+session-start-checkとadaptive-model-routerを適用。ディスク空き7.1 GiBのためremote-only。元ツリー21 dirty pathsを保護し、新規worktree・worker・重いtoolchainなし。ルールdriftなし、tool watchは既存#1422等のルートを参照。検索用タブ閉鎖済み。
+
+次回は同じ未ログイン条件での再観測を優先し、条件別に比較する。サイト名Google表示とタイトル、必要に応じ基本理念の掲載も確認。順位1位は保証しない。前回のDocumentation Quality Gate失敗は他文書由来で、今回のCI結果も別途確認する。
