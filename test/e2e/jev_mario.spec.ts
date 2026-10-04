@@ -1012,3 +1012,22 @@ test('bonus pipe gives a visible reward and returns to the main course',async({p
  await(await import('node:fs/promises')).writeFile(info.outputPath('bonus-reward.json'),JSON.stringify(results.map(({roomImage,...r})=>r)));
  for(const r of results){expect(r.pickups[r.power?'flower':'mushroom']).toBe(1);expect(r.room).toBe('overworld');expect(r.phase).toBe('playing');expect(r.roomImage.length).toBeGreaterThan(1000);}
 });
+
+test('1-1 offers a running coin breather after pipes and restores it on restart',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;await frame.waitForSelector('#screen');
+ const result=await frame.evaluate(async()=>{
+  const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');
+  const g=new World11();Object.assign(g.p,{x:59*16,y:192,vx:0,vy:0,grounded:true});
+  const canvas=document.querySelector('#screen') as HTMLCanvasElement;
+  g.camera=g.p.x-64;drawWorld(canvas.getContext('2d')!,g);
+  const before=canvas.toDataURL();g.buttons('right');for(let i=0;i<85;i++)g.step();
+  drawWorld(canvas.getContext('2d')!,g);
+  const result={coins:g.coins,score:g.score,lives:g.lives,deaths:g.deaths,phase:g.phase,x:g.p.x,grounded:g.p.grounded,before};
+  g.reset();return {...result,restartCoins:g.coins,restored:g.contents.get('60,12')};
+ });
+ await frame.locator('#screen').screenshot({path:info.outputPath('coin-breather.png')});
+ await(await import('node:fs/promises')).writeFile(info.outputPath('coin-breather.json'),JSON.stringify({...result,before:undefined}));
+ expect(result.coins).toBe(4);expect(result.score).toBe(800);expect(result.phase).toBe('playing');
+ expect(result.lives).toBe(3);expect(result.deaths).toBe(0);expect(result.grounded).toBe(true);
+ expect(result.x).toBeLessThan(69*16);expect(result.restartCoins).toBe(0);expect(result.restored).toBe('loose');
+});
