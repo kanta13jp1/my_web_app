@@ -39,7 +39,7 @@ setGameView('game');
 function resetDecision(){decision={};effectiveAction='noop';}
 for(const id of ['play-local','play-student','start','restart-local','reset'])$(id).addEventListener('click',()=>{resetDecision();if(['play-local','play-student','start'].includes(id))setGameView('game');});
 for(const id of ['stage','mode'])$(id).addEventListener('change',resetDecision);
-for(const [button,target] of [['watch-student','play-student'],['watch-manual','play-local'],['watch-stop','stop']])$(button).onclick=()=>{$(target).click();setGameView('dashboard');presentation.focus();};
+for(const [button,target] of [['watch-student','play-student'],['watch-manual','play-local'],['watch-stop','stop']])$(button).onclick=()=>{$(target).click();if(button!=='watch-stop')setGameView('dashboard');(watchMode?presentation:canvas).focus();};
 $('watch-record').onclick=()=>{if(recording.active||recordStarting)return; $('record-layout').value='dashboard';$('record-start').click();};
 const assist=new ReactionAssist();let proposedAction='noop',interventions=[],lastIntervention='';
 const assistanceEnabled=()=>isRecreation()&&metadata.controller==='jev_plus_local';
