@@ -121,7 +121,7 @@ jobs:
       - name: Verify model-free Jwenv input checks
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/jwenv-results.json
-          PLAYWRIGHT_TEST_OUTPUT_DIR: test-results/jwenv
+          PLAYWRIGHT_TEST_OUTPUT_DIR: jwenv-results
         run: |
           node --test test/web/jwenv_hosting.test.mjs test/web/jwenv_validation.test.mjs
           npx playwright test test/e2e/jwenv_lab.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
@@ -239,6 +239,7 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            jwenv-results/
             api-reference-results/
             chat-replay-results/
             hiragana-results/
