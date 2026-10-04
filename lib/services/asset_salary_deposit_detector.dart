@@ -72,6 +72,7 @@ class MainAccountBalanceWindow {
       currentBalance: peak,
     );
   }
+
   final double? previousCycleEndBalance;
   final double? currentBalance;
 
