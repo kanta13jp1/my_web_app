@@ -487,8 +487,8 @@ export class World11 {
     this.visitedPipes.push(pipe.id);
     this.saved={cells:this.cells,contents:this.contents,enemies:this.enemies,width:this.width,lifts:this.lifts,vines:this.vines,items:this.items,shots:this.shots,hammers:this.hammers,cannons:this.cannons,camera:this.camera};this.pipeReturn=pipe;
     this.cells=new Map();this.contents=new Map();this.enemies=[];this.lifts=[];this.vines=[];this.items=[];this.shots=[];this.hammers=[];this.cannons=[];this.width=256;
-    this.sound('pipe');this.room='underground';this.camera=0;p.x=32;p.y=32;p.vx=0;p.vy=0;p.grounded=false;this.wasJump=false;this.jumpBuffer=0;this.coyote=0;
-    for(let x=0;x<16;x++){this.cells.set(`${x},13`,'brick');this.cells.set(`${x},14`,'brick');if(x<13)this.cells.set(`${x},1`,'brick');}
+    this.sound('pipe');this.room='underground';this.camera=0;p.x=32;p.y=80;p.vx=0;p.vy=0;p.grounded=false;this.wasJump=false;this.jumpBuffer=0;this.coyote=0;
+    for(let x=0;x<16;x++){this.cells.set(`${x},13`,'brick');this.cells.set(`${x},14`,'brick');if(x<13)this.cells.set(`${x},4`,'brick');}
     for(let x=4;x<11;x++)for(let y=7;y<10;y++)if(!(y===7&&(x===4||x===10)))this.contents.set(`${x},${y}`,'loose');
     // A floor reward leaves the coin room's jumping route unobstructed.
     this.items.push({x:96,y:192,w:14,h:16,emerging:0,vx:1,vy:0,kind:this.power?'flower':'mushroom'});
