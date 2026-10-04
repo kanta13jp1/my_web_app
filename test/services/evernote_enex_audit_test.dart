@@ -168,7 +168,8 @@ void main() {
       expect(errors.toString(), isEmpty);
     });
 
-    test('suppresses partial reports and private parser error details', () async {
+    test('suppresses partial reports and private parser error details',
+        () async {
       final file = File('${temporaryDirectory.path}/private-synthetic.enex');
       const privateMarker = 'PRIVATE_SYNTHETIC_MARKER';
       await file.writeAsString(
