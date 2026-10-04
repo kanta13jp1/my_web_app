@@ -50,7 +50,7 @@ test('keeps the slow-start preview readable and carries the trial intent into Fl
     await page.screenshot({ path: testInfo.outputPath('slow-start-preview.png'), scale: 'css' });
     await trial.click();
     await expect(page).toHaveURL(/lp_intent=trial/);
-    await expect(shell.getByRole('status')).toContainText('体験');
+    await expect(shell.getByRole('status')).toContainText('入力画面へ自動で切り替わります');
     releaseApp();
     await expect(shell).toBeHidden({ timeout: 60_000 });
     await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport({ timeout: 60_000 });
