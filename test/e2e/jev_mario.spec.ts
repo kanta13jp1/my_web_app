@@ -1025,6 +1025,7 @@ test('1-1 offers a running coin breather after pipes and restores it on restart'
   const result={coins:g.coins,score:g.score,lives:g.lives,deaths:g.deaths,phase:g.phase,x:g.p.x,grounded:g.p.grounded,before};
   g.reset();return {...result,restartCoins:g.coins,restored:g.contents.get('60,12')};
  });
+ await(await import('node:fs/promises')).writeFile(info.outputPath('coin-breather-before.png'),Buffer.from(result.before.split(',')[1],'base64'));
  await frame.locator('#screen').screenshot({path:info.outputPath('coin-breather.png')});
  await(await import('node:fs/promises')).writeFile(info.outputPath('coin-breather.json'),JSON.stringify({...result,before:undefined}));
  expect(result.coins).toBe(4);expect(result.score).toBe(800);expect(result.phase).toBe('playing');
