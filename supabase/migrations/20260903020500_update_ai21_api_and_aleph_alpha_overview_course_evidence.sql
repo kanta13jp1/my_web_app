@@ -1,7 +1,8 @@
+-- Repair unapplied schema typo; target stable provider/category, preserving newer revisions.
 -- Issues #5144 & #5253: AI21 Labs API 入門 & Aleph Alpha 概要コースのエビデンス契約・検証ラボ・更新日付の強化
-UPDATE ai_university_contents
+UPDATE public.ai_university_content
 SET
-  description = $md$
+  content = $md$
 # AI21 Labs API 入門 — Jamba-Large / Mini 実践ラボ (2026)
 
 AI21 Labs の最新 SDK (`ai21>=3.0.0`) を使用し、SSM+Transformer ハイブリッド MoE モデル（`jamba-large`, `jamba-mini`）を呼び出すハンズオンチュートリアルです。
@@ -53,11 +54,12 @@ print(f"推定API費用: ${cost:.6f} USD")
 $md$,
   source_url = 'https://docs.ai21.com/reference/overview',
   published_at = '2026-09-02'
-WHERE provider_id = 'ai21' AND (title LIKE '%API 入門%' OR id = '363d108c-37e3-4bb5-a4a2-a34f65416938' OR sort_order = 3);
+WHERE provider = 'ai21' AND category = 'api'
+  AND (published_at IS NULL OR published_at <= DATE '2026-09-02');
 
-UPDATE ai_university_contents
+UPDATE public.ai_university_content
 SET
-  description = $md$
+  content = $md$
 # Aleph Alpha 概要 — 欧州 AI 主権・Pharia & 説明可能 AI (AtMan)
 
 **Aleph Alpha** はドイツ・ハイデルベルク発のエンタープライズ AI 企業。
@@ -82,4 +84,5 @@ EU AI 法 (AI Act) や GDPR に完全準拠した **データ主権 (Data Sovere
 $md$,
   source_url = 'https://aleph-alpha.com/',
   published_at = '2026-09-02'
-WHERE provider_id = 'aleph_alpha' AND (title LIKE '%Aleph Alpha 概要%' OR id = '183e7514-c5ac-487f-a78a-ddbbcbbd1088' OR sort_order = 1);
+WHERE provider = 'aleph_alpha' AND category = 'overview'
+  AND (published_at IS NULL OR published_at <= DATE '2026-09-02');

@@ -1,0 +1,27 @@
+name: Laya adapter contract
+on:
+  pull_request:
+    paths:
+      - 'scripts/laya_system_one_server.py'
+      - 'scripts/test_laya_system_one_server.py'
+      - '.github/workflows/laya-adapter-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/laya_system_one_server.py'
+      - 'scripts/test_laya_system_one_server.py'
+      - '.github/workflows/laya-adapter-check.yml'
+permissions: {}
+concurrency:
+  group: laya-adapter-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Test local HTTP contract without model downloads
+        run: python3 -B -m unittest discover -s scripts -p 'test_laya_system_one_server.py' -v

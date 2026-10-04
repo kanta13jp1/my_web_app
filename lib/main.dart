@@ -1,8 +1,12 @@
+import 'package:my_web_app/pages/jev_mario_lab_page.dart';
+import 'package:my_web_app/pages/jwenv_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
 import 'package:my_web_app/pages/sound_bloom_page.dart';
 import 'package:my_web_app/pages/lumen_path_page.dart';
+import 'package:my_web_app/pages/kinetic_forge_page.dart';
+import 'package:my_web_app/pages/flow_city_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:my_web_app/services/version_check_service.dart';
@@ -20,6 +24,7 @@ import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/agent_board_page.dart';
 import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
+import 'package:my_web_app/pages/micro_mentor_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/agi_fireworks_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
@@ -185,6 +190,7 @@ import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
 import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
+import 'package:my_web_app/pages/platform_release_checklist_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
 import 'package:my_web_app/pages/sobriety_campaign_page.dart';
 import 'package:my_web_app/pages/family_sharing_manager_page.dart';
@@ -229,6 +235,7 @@ import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
+import 'package:my_web_app/ui/features/palm_reading/palm_reading_feature.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
 import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
@@ -550,6 +557,16 @@ Route<dynamic> generateAppRoute(
           signupCompletionService: signupCompletionService,
         ),
       );
+    case '/jev-mario-lab':
+      return MaterialPageRoute(
+        builder: (_) => const JevMarioLabPage(),
+        settings: settings,
+      );
+    case '/jwenv-lab':
+      return MaterialPageRoute(
+        builder: (_) => const JwenvLabPage(),
+        settings: settings,
+      );
     case '/agi-fireworks':
       return MaterialPageRoute(
         builder: (_) => const AgiFireworksPage(),
@@ -589,6 +606,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const HomePage());
     case '/agents':
       return MaterialPageRoute(builder: (_) => AgentOrgPage());
+    case '/micro-mentors':
+      return MaterialPageRoute(
+        builder: (_) => MicroMentorDashboardPage(),
+        settings: const RouteSettings(name: '/micro-mentors'),
+      );
     // ホームカタログ (home_tool_catalog.dart) は `/autonomous-ops-console` で
     // 開くため、その URL でもリロード/共有が復元できるよう別名も登録する。
     case '/autonomous-ops':
@@ -1032,6 +1054,8 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => PersonalityTestResultPage(testId: resultTestId),
       );
+    case '/palm-reading':
+      return MaterialPageRoute(builder: (_) => const PalmReadingPage());
     case '/iq-test':
       return MaterialPageRoute(builder: (_) => const IqTestPage());
     // 出題中のテストは testId と seed が無いと復元できない (再開もできない)。
@@ -1280,6 +1304,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const SmartInboxTriagePage(),
       );
+    case '/platform-release-checklist':
+      return MaterialPageRoute(
+        builder: (_) => const PlatformReleaseChecklistPage(),
+      );
     case '/carbon-footprint':
       return MaterialPageRoute(
         builder: (_) => const CarbonFootprintTrackerPage(),
@@ -1412,6 +1440,16 @@ Route<dynamic> generateAppRoute(
       );
     case '/landing-ab-test':
       return MaterialPageRoute(builder: (_) => const LandingAbTestPage());
+    case '/flow-city':
+      return MaterialPageRoute(
+        builder: (_) => const FlowCityPage(),
+        settings: settings,
+      );
+    case '/kinetic-forge':
+      return MaterialPageRoute(
+        builder: (_) => const KineticForgePage(),
+        settings: settings,
+      );
     case '/lumen-path':
       return MaterialPageRoute(
         builder: (_) => const LumenPathPage(),

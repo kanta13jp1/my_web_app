@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../models/asset_liability_workbook.dart';
 import '../models/daily_todo.dart';
 import '../models/user_profile.dart';
@@ -18,6 +20,7 @@ enum AssetManagementInsightActionType {
   cardBillingConfiguration,
   doubleCountingRisk,
   accountShortfallRisk,
+  debtSpiralWarning,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -526,6 +529,88 @@ class AssetManagementInsightService {
                     '「支払原資口座の未設定」一覧から今月だけ上書き、または既定で設定してください。',
           ),
         );
+      }
+
+      if (!row.fullPaymentEstimate &&
+          row.balance.abs() > 1000 &&
+          row.annualRate > 0 &&
+          row.monthlyInterestEstimate > 0) {
+        final balance = row.balance.abs();
+        final monthlyRate = (row.annualRate / 100.0) / 12.0;
+        final isZeroPrincipal = row.scheduledPaymentAmount <= 0 ||
+            row.principalPaymentEstimate <= 0;
+        final isInterestExceedsPrincipal =
+            row.principalPaymentEstimate <= row.monthlyInterestEstimate;
+
+        if (isZeroPrincipal || isInterestExceedsPrincipal) {
+          final compound = math.pow(1.0 + monthlyRate, 24).toDouble();
+          final target24Payment = monthlyRate > 0 && compound > 1.0
+              ? (balance * monthlyRate * compound / (compound - 1.0))
+                  .ceilToDouble()
+              : (balance / 24.0).ceilToDouble();
+
+          final baseDoubleCandidate = math.max(
+            row.minimumPaymentEstimate,
+            row.scheduledPaymentAmount,
+          );
+          final doublePayment = baseDoubleCandidate > 0
+              ? (baseDoubleCandidate * 2).ceilToDouble()
+              : target24Payment;
+
+          final String title;
+          final String description;
+          final String suggestedAction;
+
+          if (isZeroPrincipal) {
+            title = '${row.name}が利息スパイラル状態です（元金返済0円）';
+            description =
+                '今月の元金返済見込みが0円に対し、月利息${_formatYen(row.monthlyInterestEstimate)}が発生しています。'
+                '返済を行わない場合、利息が元金に組み込まれ残高（現在${_formatYen(balance)}）が増加し続けます。';
+            suggestedAction =
+                '24ヶ月完済目標額${_formatYen(target24Payment)}（または最低返済額以上の支払い）を設定し、利息スパイラルを脱出してください。';
+          } else {
+            var simBalance = balance;
+            var totalInterest = 0.0;
+            var months = 0;
+            const maxMonths = 1200;
+            while (simBalance > 0 && months < maxMonths) {
+              final interest = simBalance * monthlyRate;
+              totalInterest += interest;
+              final principal = row.scheduledPaymentAmount - interest;
+              if (principal <= 0) {
+                months = maxMonths;
+                break;
+              }
+              simBalance -= principal;
+              months++;
+            }
+
+            final years = (months / 12.0).toStringAsFixed(1);
+            final durationText = months >= maxMonths
+                ? '完済不能（元金が増加）'
+                : '完済まで約$monthsヶ月（約$years年）、追加利息は約${_formatYen(totalInterest)}';
+
+            title = '${row.name}の利息負担が元金返済を上回っています';
+            description =
+                '月返済${_formatYen(row.scheduledPaymentAmount)}のうち、利息が${_formatYen(row.monthlyInterestEstimate)}を占め、'
+                '元金返済は${_formatYen(row.principalPaymentEstimate)}に留まります。現行ペースでは$durationText発生します。';
+            suggestedAction =
+                '24ヶ月完済目標額${_formatYen(target24Payment)}（または月${_formatYen(doublePayment)}への増額）を検討し、総利息を大幅に圧縮してください。';
+          }
+
+          actions.add(
+            AssetManagementInsightActionItem(
+              type: AssetManagementInsightActionType.debtSpiralWarning,
+              severity: AssetManagementInsightSeverity.critical,
+              title: title,
+              description: description,
+              relatedAccountId: row.id,
+              dueDate: _paymentDateFor(row, workbook.baseDate),
+              paymentDay: row.paymentDay,
+              suggestedAction: suggestedAction,
+            ),
+          );
+        }
       }
     }
 
@@ -1307,6 +1392,10 @@ class AssetManagementInsightService {
       return 1;
     }
 
+    if (item.type == AssetManagementInsightActionType.debtSpiralWarning) {
+      return 2;
+    }
+
     final isHighInterestLoan = relatedRow != null &&
         !relatedRow.fullPaymentEstimate &&
         relatedRow.kind == AssetLiabilityAccountKind.cardLoan &&
@@ -1513,9 +1602,14 @@ class AssetManagementInsightPromptBuilder {
         '現在アクティブなサブスクリプションのみを固定費削減の対象として助言してください。',
       )
       ..writeln(
-        '金利・残高の正確性: 各負債の年利（年利15.00%等）や残高（-7,519,280円等）は、過去の記憶や'
-        '一般的な貸金金利（18.0%）で推測せず、必ず「総合サマリー」「負債マスタ詳細」に記載されている確定値を'
-        'そのまま引用してください。',
+        'Claude（Claude AI SUBSCRIPTION）の扱い: Claudeは一度解約され、現在は月額3,000円の「Claude Pro」に変更済みです。'
+        '過去の明細や履歴にある旧金額（36,418円など）を現在の固定費として言及したり、過大なサブスク負担として批判してはいけません。'
+        '月額3,000円のProプランとして扱ってください。',
+      )
+      ..writeln(
+        '金利・残高の正確性: 各負債の年利（18.0%、15.0%、14.5%等）や残高は、過去の記憶や一般知識で推測・改変せず、'
+        '必ず下記「負債マスタ詳細」の各行に記載されている「年利:○○%」の確定数値をそのまま引用してください。'
+        'データに記載されている確定年利を勝手に別の数値に変更したり、食い違いを推測する注釈をつけてはいけません。',
       )
       ..writeln(
         '残高と支払額の区別: 各負債の「残高」は総借入残高であり、今月の延滞額・今月や今日に'
@@ -1928,6 +2022,30 @@ class AssetManagementInsightPromptBuilder {
         )
         ..writeln('  - 問題点: ${insight.problem}')
         ..writeln('  - 翌月アクション: ${insight.nextMonthAction}');
+
+      final debtRow = report.workbook.debtMasterRows
+          .where((r) => r.id == insight.accountId)
+          .firstOrNull;
+      final revolving = debtRow?.revolvingBilling;
+      if (revolving != null) {
+        if (revolving.hasImportedStatement && revolving.usageItems.isNotEmpty) {
+          buffer.writeln(
+            '  - 新規利用内訳(${revolving.usageItems.length}件 / 合計${_formatAmount(revolving.newUsageAmount)}):',
+          );
+          for (final item in revolving.usageItems) {
+            final dateStr = item.postedAt == null
+                ? ''
+                : '${_formatNullableDate(item.postedAt)} ';
+            buffer.writeln(
+              '    - $dateStr${item.description}: ${_formatAmount(item.amount)} [${item.statusLabel}]',
+            );
+          }
+        } else {
+          buffer.writeln(
+            '  - 新規利用明細: カード明細の取り込みが未実施（手入力設定値: ${_formatAmount(revolving.newUsageAmount)}）',
+          );
+        }
+      }
     }
     return buffer.toString();
   }
@@ -1975,6 +2093,25 @@ class AssetManagementInsightPromptBuilder {
           '残高:${_formatAmount(violation.currentBalance)}',
         )
         ..writeln('  - 対応: 明細・支払実績との照合が必要。違反として断定しない。');
+      if (violation.type == AssetDebtDisciplineViolationType.revolvingCard) {
+        if (violation.hasImportedStatement && violation.usageItems.isNotEmpty) {
+          buffer.writeln(
+            '  - 新規利用明細根拠(${violation.usageItems.length}件 / 合計${_formatAmount(violation.newUsageAmount ?? 0)}):',
+          );
+          for (final item in violation.usageItems) {
+            final dateStr = item.postedAt == null
+                ? ''
+                : '${_formatNullableDate(item.postedAt)} ';
+            buffer.writeln(
+              '    - $dateStr${item.description}: ${_formatAmount(item.amount)} [${item.statusLabel}]',
+            );
+          }
+        } else {
+          buffer.writeln(
+            '  - カード明細取込: 未実施（手入力設定額に基づく判定、明細取込が必要）',
+          );
+        }
+      }
     }
     return buffer.toString();
   }
@@ -2124,6 +2261,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.cardBillingConfiguration => 'カード請求設定の確認',
       AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
+      AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
     };
   }
 

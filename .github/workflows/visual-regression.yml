@@ -67,6 +67,25 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
+      - name: Verify saved chat presentation without requests
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/chat-replay-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: chat-replay-results
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs
+          flutter test test/pages/chat_replay_page_test.dart test/pages/asset_chat_history_page_test.dart
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/chat_replay_app.dart --output=build/replay-fixture
+          python3 scripts/flutter_spa_server.py --directory build/replay-fixture --port 7359 > .ci-logs/replay-fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7359/ > /dev/null; then break; fi
+            sleep 1
+          done
+          npx playwright test test/e2e/chat_replay.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Build isolated Flutter Web fixture
         shell: bash
         run: |
@@ -99,6 +118,14 @@ jobs:
           echo '::error::The temporary Flutter Web server did not become ready.'
           exit 1
 
+      - name: Verify model-free Jwenv input checks
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/jwenv-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: jwenv-results
+        run: |
+          node --test test/web/jwenv_hosting.test.mjs test/web/jwenv_validation.test.mjs
+          npx playwright test test/e2e/jwenv_lab.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Compare or generate reviewed baselines
         shell: bash
         run: |
@@ -113,6 +140,15 @@ jobs:
             --retries=0 \
             "${snapshot_args[@]}"
 
+      - name: Verify monthly budget allocation and recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/budget-balance-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: budget-balance-results
+        run: |
+          flutter test test/services/budget_balance_calculator_test.dart test/widgets/budget_balance_card_test.dart
+          npx playwright test test/e2e/budget_balance.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Verify integrated Lumen Path route
         shell: bash
         env:
@@ -120,6 +156,56 @@ jobs:
         run: |
           npx playwright test test/e2e/lumen_path_route.spec.ts \
             --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify hiragana tracing and recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/hiragana-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: hiragana-results
+        run: |
+          node --test test/hiragana/model.test.mjs
+          npx playwright test test/e2e/hiragana_garden.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify Blur Studio controls and fallbacks
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/blur-studio-results.json
+        run: |
+          npx playwright test test/e2e/blur_studio.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify shared JSON download consumers
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lab-json-download-results.json
+        run: |
+          npx playwright test test/e2e/lab_json_download.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify generated API reference usability
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/lab-api-reference-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: api-reference-results
+        run: |
+          npx playwright test test/e2e/lab_api_reference.spec.ts \
+            --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Verify Inbox platform dismissal and save recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/inbox-adaptive-results.json
+        run: |
+          set -euo pipefail
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/inbox_adaptive_app.dart --output=build/inbox-fixture
+          python3 scripts/flutter_spa_server.py --directory build/inbox-fixture --port 7358 > .ci-logs/inbox-fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          npx playwright test test/e2e/inbox_adaptive.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
       - name: Stop short-lived SPA server
         if: always()
@@ -153,6 +239,11 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            jwenv-results/
+            api-reference-results/
+            chat-replay-results/
+            hiragana-results/
+            budget-balance-results/
             test/e2e/visual_regression.spec.ts-snapshots/
             .ci-logs/visual-regression-server.log
           if-no-files-found: warn
