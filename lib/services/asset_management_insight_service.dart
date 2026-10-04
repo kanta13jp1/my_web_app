@@ -536,9 +536,13 @@ class AssetManagementInsightService {
           row.annualRate > 0 &&
           row.monthlyInterestEstimate > 0) {
         final balance = row.balance.abs();
-        final monthlyRate = (row.annualRate / 100.0) / 12.0;
-        final isZeroPrincipal = row.scheduledPaymentAmount <= 0 ||
-            row.principalPaymentEstimate <= 0;
+        // annualRate は小数 (0.146 = 年14.6%) で保持している
+        // (planning service の利息計算・負債トレンド分析と同じ単位)。
+        final monthlyRate = row.annualRate / 12.0;
+        // 支払済みで実支払額が記録されていれば実額を今月の返済額として扱う。
+        final payment = row.effectiveMonthlyPaymentAmount;
+        final isZeroPrincipal =
+            payment <= 0 || row.principalPaymentEstimate <= 0;
         final isInterestExceedsPrincipal =
             row.principalPaymentEstimate <= row.monthlyInterestEstimate;
 
@@ -551,7 +555,7 @@ class AssetManagementInsightService {
 
           final baseDoubleCandidate = math.max(
             row.minimumPaymentEstimate,
-            row.scheduledPaymentAmount,
+            payment,
           );
           final doublePayment = baseDoubleCandidate > 0
               ? (baseDoubleCandidate * 2).ceilToDouble()
@@ -576,7 +580,7 @@ class AssetManagementInsightService {
             while (simBalance > 0 && months < maxMonths) {
               final interest = simBalance * monthlyRate;
               totalInterest += interest;
-              final principal = row.scheduledPaymentAmount - interest;
+              final principal = payment - interest;
               if (principal <= 0) {
                 months = maxMonths;
                 break;
@@ -592,7 +596,7 @@ class AssetManagementInsightService {
 
             title = '${row.name}の利息負担が元金返済を上回っています';
             description =
-                '月返済${_formatYen(row.scheduledPaymentAmount)}のうち、利息が${_formatYen(row.monthlyInterestEstimate)}を占め、'
+                '月返済${_formatYen(payment)}のうち、利息が${_formatYen(row.monthlyInterestEstimate)}を占め、'
                 '元金返済は${_formatYen(row.principalPaymentEstimate)}に留まります。現行ペースでは$durationText発生します。';
             suggestedAction =
                 '24ヶ月完済目標額${_formatYen(target24Payment)}（または月${_formatYen(doublePayment)}への増額）を検討し、総利息を大幅に圧縮してください。';

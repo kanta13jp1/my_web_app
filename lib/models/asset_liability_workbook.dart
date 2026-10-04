@@ -767,6 +767,15 @@ class AssetLiabilityDebtRow {
   double get effectivePaidPaymentAmount =>
       paid ? actualPaymentAmount ?? scheduledPaymentAmount : 0;
 
+  /// 今月の返済額として元金・利息判定に使う金額。
+  ///
+  /// 支払済みで実支払額が記録されていれば実額を、それ以外は今月支払予定額を使う。
+  /// 予定額 0 円のまま実額を支払済み記録した月を「返済 0 円」と誤判定しない。
+  double get effectiveMonthlyPaymentAmount =>
+      paid && actualPaymentAmount != null
+          ? actualPaymentAmount!
+          : scheduledPaymentAmount;
+
   double? get paymentDifferenceAmount {
     if (!paid || actualPaymentAmount == null) {
       return null;

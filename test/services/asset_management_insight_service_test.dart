@@ -922,7 +922,7 @@ void main() {
         billingAccountId: null,
         billingAccountName: null,
         includedInBillingAccount: false,
-        annualRate: 14.5,
+        annualRate: 0.145,
         minimumPaymentEstimate: 15000,
         manualPaymentAmount: 0,
         scheduledPaymentAmount: 0,
@@ -952,7 +952,7 @@ void main() {
         billingAccountId: null,
         billingAccountName: null,
         includedInBillingAccount: false,
-        annualRate: 15.0,
+        annualRate: 0.15,
         minimumPaymentEstimate: 10000,
         manualPaymentAmount: 10000,
         scheduledPaymentAmount: 10000,
@@ -982,7 +982,7 @@ void main() {
         billingAccountId: null,
         billingAccountName: null,
         includedInBillingAccount: false,
-        annualRate: 1.0,
+        annualRate: 0.01,
         minimumPaymentEstimate: 10000,
         manualPaymentAmount: 10000,
         scheduledPaymentAmount: 10000,
@@ -1031,11 +1031,69 @@ void main() {
       expect(slowItem.description, contains('完済まで約'));
       expect(slowItem.description, contains('追加利息'));
       expect(slowItem.suggestedAction, contains('24ヶ月完済目標額'));
+      // 年利 0.15 (=15%) を小数のまま月利へ換算する。旧実装は /100 を重ねて
+      // 月利を 1/100 に過小評価し、24ヶ月完済額を約 21,900 円と誤算していた。
+      expect(slowItem.suggestedAction, contains('24ヶ月完済目標額25,4'));
 
       expect(
         spiralWarnings.any((item) => item.relatedAccountId == 'healthy_loan'),
         false,
       );
+    });
+
+    test(
+        'does not report zero principal when the payment was recorded as paid with an actual amount',
+        () {
+      // 今月支払予定額は 0 円のままだが、実際には 15,000 円を支払済みとして
+      // 記録した月。元金返済見込みは planning service が実額から算出する。
+      const paidJibunLoan = AssetLiabilityDebtRow(
+        id: 'jibun_loan',
+        name: 'じぶんローン',
+        kind: AssetLiabilityAccountKind.cardLoan,
+        balance: -988878,
+        paymentDay: 10,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.145,
+        minimumPaymentEstimate: 15000,
+        manualPaymentAmount: 0,
+        scheduledPaymentAmount: 0,
+        actualPaymentAmount: 15000,
+        monthlyInterestEstimate: 11949,
+        principalPaymentEstimate: 3051,
+        balanceAfterPaymentEstimate: -985827,
+        liabilityShare: 0.6,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: true,
+        requiresAction: false,
+      );
+
+      final report = service.buildReport(
+        workbook: _workbook(debtRows: const [paidJibunLoan]),
+      );
+      final warnings = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.debtSpiralWarning,
+          )
+          .toList();
+
+      expect(
+        warnings.any((item) => item.title.contains('元金返済0円')),
+        false,
+      );
+      final item = warnings.single;
+      expect(item.description, contains('月返済15,000円'));
+      expect(item.description, contains('元金返済は3,051円'));
     });
   });
 }

@@ -165,7 +165,8 @@ class AssetDebtTrendAnalyzer {
     }
 
     final interest = max(0.0, row.monthlyInterestEstimate);
-    final payment = max(0.0, row.scheduledPaymentAmount);
+    // 支払済みで実支払額が記録されていれば実額を今月の返済額として扱う。
+    final payment = max(0.0, row.effectiveMonthlyPaymentAmount);
     final monthlyRate = row.annualRate / 12;
     final priorBalance = priorBalances[row.id];
     final delta = priorBalance == null ? null : balance - priorBalance;

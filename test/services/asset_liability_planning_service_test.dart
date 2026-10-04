@@ -165,6 +165,51 @@ void main() {
       );
     });
 
+    test(
+        'uses the recorded actual payment for principal when the row is paid',
+        () {
+      // 今月支払予定額は 0 円のまま、実際には 15,000 円を支払済みとして記録した月。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{'mobit': 0.15},
+        monthlyPaymentOverrides: const <String, double>{'モビット': 0},
+        actualPaymentAmounts: const <String, double>{'モビット': 15000},
+        paidAccountNames: const <String>{'モビット'},
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.scheduledPaymentAmount, 0);
+      expect(mobit.monthlyInterestEstimate, closeTo(1250, 0.001));
+      expect(mobit.principalPaymentEstimate, closeTo(13750, 0.001));
+      expect(mobit.balanceAfterPaymentEstimate, closeTo(-86250, 0.001));
+      expect(mobit.effectiveMonthlyPaymentAmount, 15000);
+    });
+
+    test('keeps the scheduled payment for principal while unpaid', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{'mobit': 0.15},
+        monthlyPaymentOverrides: const <String, double>{'モビット': 5000},
+        actualPaymentAmounts: const <String, double>{'モビット': 15000},
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.principalPaymentEstimate, closeTo(3750, 0.001));
+      expect(mobit.effectiveMonthlyPaymentAmount, 5000);
+    });
+
     test('uses annual rate overrides for interest and priority signals', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
