@@ -67,6 +67,32 @@ test.describe('Landing story journey', () => {
 
   });
 
+  test('keeps story actions usable when every chapter image fails', async ({ page }, testInfo) => {
+    const failedAssets = new Set<string>();
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
+    await page.route('**/landing_journey/*.webp', async route => {
+      failedAssets.add(route.request().url());
+      await route.fulfill({ status: 404, body: '' });
+    });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openLanding(page);
+    const story = await focusStory(page);
+    for (const [index, label] of ['分散', '集約', '整理', '実行'].entries()) {
+      await activateChapter(page, label);
+      await expect(story).toHaveAccessibleName(new RegExp(`${index + 1} / 4`));
+    }
+    await expect.poll(() => failedAssets.size).toBe(4);
+    await expect(story.getByRole('button', { name: '無料で保存を始める', exact: true })).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath('story-without-images.png'), scale: 'css' });
+    await story.getByRole('button', { name: '登録なしで1件試す', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+    expect(layoutIssues).toEqual([]);
+  });
+
   test('keeps the lower outcomes readable and connects them to the trial', async ({ page }, testInfo) => {
     await openLanding(page);
     await focusStory(page);
