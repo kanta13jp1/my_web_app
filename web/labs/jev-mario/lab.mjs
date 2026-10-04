@@ -33,10 +33,13 @@ showRetryMemory();
 $('character').onchange=()=>{stop('キャラクターを変更しました');world.character=$('character').value;drawWorld(context,world);};
 const presentation=$('presentation'),presentationContext=presentation.getContext('2d');
 let decision={},effectiveAction='noop',watchMode=false,transition=null;
+function setGameView(value){watchMode=value==='dashboard';$('game-view').value=watchMode?'dashboard':'game';presentation.hidden=!watchMode;canvas.hidden=watchMode;}
+$('game-view').onchange=()=>{setGameView($('game-view').value);(watchMode?presentation:canvas).focus();};
+setGameView('game');
 function resetDecision(){decision={};effectiveAction='noop';}
-for(const id of ['play-local','play-student','start','restart-local','reset'])$(id).addEventListener('click',resetDecision);
+for(const id of ['play-local','play-student','start','restart-local','reset'])$(id).addEventListener('click',()=>{resetDecision();if(['play-local','play-student','start'].includes(id))setGameView('game');});
 for(const id of ['stage','mode'])$(id).addEventListener('change',resetDecision);
-for(const [button,target] of [['watch-student','play-student'],['watch-manual','play-local'],['watch-stop','stop']])$(button).onclick=()=>{watchMode=true;$(target).click();presentation.focus();};
+for(const [button,target] of [['watch-student','play-student'],['watch-manual','play-local'],['watch-stop','stop']])$(button).onclick=()=>{$(target).click();setGameView('dashboard');presentation.focus();};
 $('watch-record').onclick=()=>{if(recording.active||recordStarting)return; $('record-layout').value='dashboard';$('record-start').click();};
 const assist=new ReactionAssist();let proposedAction='noop',interventions=[],lastIntervention='';
 const assistanceEnabled=()=>isRecreation()&&metadata.controller==='jev_plus_local';
@@ -75,7 +78,7 @@ $('record-start').onclick=async()=>{
     recording.canvas=$('record-layout').value==='dashboard'?presentation:canvas;
     if(recording.start(output)){
       $('record-status').textContent='● 録画中（最大60秒）'+(output?'・ゲーム音あり':'・音声なし');
-      recording.canvas.focus();
+      (watchMode?presentation:canvas).focus();
     }
   }catch{ $('record-status').textContent='録画を開始できませんでした。再試行してください。'; }
   finally{recordStarting=false;recording.changed();}
@@ -165,7 +168,7 @@ $('rom').addEventListener('change', async e => {
 });
 $('manual').onclick = () => { stop(); if (!nes) return status('先にROMを選んでください'); gameRunning = true; status('手動操作中。EnterでSTART、Xでジャンプ、Zでダッシュ。'); };
 $('reset').onclick = () => { stop(); if (nes && romBytes) { nes.loadROM(romBytes); frameCount = 0; status('リセットしました'); } };
-$('play-local').onclick = () => { stop(); if(world.phase !== 'playing') world.reset(); metadata.controller='manual';beginAttempt('manual');gameRunning=true; void unlockAudio(); canvas.focus(); status('手動プレイ中（API呼び出しなし）'); };
+$('play-local').onclick = () => { setGameView('game'); stop(); if(world.phase !== 'playing') world.reset(); metadata.controller='manual';beginAttempt('manual');gameRunning=true; void unlockAudio(); canvas.focus(); status('手動プレイ中（API呼び出しなし）'); };
 $('restart-local').onclick = () => { stop(); world.reset(); {drawWorld(context,world);showPose();} $('progress').textContent=stageName()+'をリセットしました'; };
 $('play-student').onclick=()=>startStudent();
 function startStudent(continuing=false){
