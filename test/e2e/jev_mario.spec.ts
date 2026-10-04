@@ -1037,10 +1037,12 @@ test('one game view is visible and switching preserves a running manual play',as
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
  await expect(lab.locator('#screen')).toBeVisible();await expect(lab.locator('#presentation')).toBeHidden();
  await lab.locator('#play-local').click();await page.keyboard.down('ArrowRight');await page.waitForTimeout(150);await page.keyboard.up('ArrowRight');
+ await lab.locator('#record-layout').selectOption('game');await lab.locator('#record-start').click();await expect(lab.locator('#record-status')).toContainText('録画中');
  const before=await lab.locator('#progress').textContent();await lab.locator('#game-view').selectOption('dashboard');
  await expect(lab.locator('#screen')).toBeHidden();await expect(lab.locator('#presentation')).toBeVisible();await expect(lab.locator('#decision-summary')).toContainText('LIVE');
  await lab.locator('#presentation').screenshot({path:info.outputPath('single-view-dashboard.png')});
  await lab.locator('#game-view').selectOption('game');await expect(lab.locator('#screen')).toBeVisible();await expect(lab.locator('#presentation')).toBeHidden();await expect(lab.locator('#progress')).not.toHaveText(before!);
+ await expect(lab.locator('#record-status')).toContainText('録画中');await lab.locator('#record-stop').click();await expect(lab.locator('#record-result')).toBeVisible({timeout:7000});
  await lab.locator('#screen').screenshot({path:info.outputPath('single-view-game.png')});await lab.locator('#stop').click();
 });
 test('pickup feedback appears with sound and expires without changing earned state',async({page},info)=>{
