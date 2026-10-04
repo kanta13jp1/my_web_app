@@ -1,4 +1,4 @@
-const changes = {slash:'スラッシュコマンドを有効',tools:'通常のツールを有効',user:'空のユーザー設定を追加',no_strict:'MCPの厳密指定を除去',persist:'会話保存を有効',no_budget:'予算上限の引数を除去',chrome:'Chrome無効指定を除去',default_permission:'権限モードをdefaultに変更',ancestor:'上の階層にCLAUDE.mdを追加'};
+const changes = {interactive:'対話モードから入力',hooks_off:'ユーザー設定でdisableAllHooksを有効',plugins_off:'無関係な7プラグインを無効',old_first:'旧2.1.170の起動後に同じ設定で起動',slash:'スラッシュコマンドを有効',tools:'通常のツールを有効',user:'ユーザー設定を読み込み対象に追加',no_strict:'MCPの厳密指定を除去',persist:'会話保存を有効',no_budget:'予算上限の引数を除去',chrome:'Chrome無効指定を除去',default_permission:'権限モードをdefaultに変更',ancestor:'上の階層にCLAUDE.mdを追加'};
 export function validateCause(data) {
   if (data?.schema !== 1 || data.kind !== 'intercepted-request-no-model' || !Array.isArray(data.runs) || !data.runs.length) throw new Error('読み込み試験の記録形式を確認できません。');
   const ids = new Set();

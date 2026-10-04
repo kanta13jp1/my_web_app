@@ -114,7 +114,7 @@ test('captured inputs distinguish feature availability from both-file settings',
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.locator('#load-cause').click();
-  await expect(page.locator('#cause-select option')).toHaveCount(15);
+  await expect(page.locator('#cause-select option')).toHaveCount(23);
   for (const [id, text] of [
     ['windows-278-A-telemetry-on-cache-false','どちらの目印も入力にありませんでした'],
     ['windows-278-A-telemetry-on-cache-true','AGENTS.md側の目印'],
