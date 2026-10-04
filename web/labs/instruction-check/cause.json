@@ -1,0 +1,616 @@
+{
+  "schema": 1,
+  "kind": "intercepted-request-no-model",
+  "date": "2026-10-04",
+  "runs": [
+    {
+      "id": "windows-278-A-telemetry-on-cache-false",
+      "version": "2.1.278",
+      "platform": "Windows",
+      "condition": {
+        "id": "278-A-telemetry-on-cache-false",
+        "version": "2.1.278",
+        "gate": false,
+        "telemetry": true
+      },
+      "startedAt": "2026-10-04T01:24:21.243692+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": []
+          },
+          "request_sha256": "12047bc231c875b98a98d9e3b482e5a2e52527a739e2b5dd25e484768de011e8",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-windows-latest",
+        "file": "278-A-telemetry-on-cache-false.json",
+        "sha256": "ff7303c60060d235db7cbf15c4e83813b86d429cb19d8b697f40664a11cbbaff"
+      }
+    },
+    {
+      "id": "windows-278-A-telemetry-on-cache-true",
+      "version": "2.1.278",
+      "platform": "Windows",
+      "condition": {
+        "id": "278-A-telemetry-on-cache-true",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true
+      },
+      "startedAt": "2026-10-04T01:24:22.997983+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "6e33c4cbf8fda15be03533b6b332947df68210967767ca756f5f74941e80cbc3",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:23.785Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:23.787Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:23.911Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 7 directories",
+        "2026-10-04T01:24:23.927Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 7 directories",
+        "2026-10-04T01:24:23.928Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 68.8ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-windows-latest",
+        "file": "278-A-telemetry-on-cache-true.json",
+        "sha256": "c0e19d2f31a6c5c9afcbf55a6bf5bdad14eac4ed35ec848f469734f6d2dd4a5f"
+      }
+    },
+    {
+      "id": "windows-278-E-telemetry-on-cache-false",
+      "version": "2.1.278",
+      "platform": "Windows",
+      "condition": {
+        "id": "278-E-telemetry-on-cache-false",
+        "version": "2.1.278",
+        "gate": false,
+        "telemetry": true,
+        "mode": "claude-md-and-agents-md",
+        "claude": true
+      },
+      "startedAt": "2026-10-04T01:24:26.323463+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "C"
+            ]
+          },
+          "request_sha256": "b999ff8aa001d6a6efc1118e41886854be95182e154ec4860dd50aa7582bed73",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-windows-latest",
+        "file": "278-E-telemetry-on-cache-false.json",
+        "sha256": "55a14b01dc31ff2b26f59082d32fc6482e60a9f17a29e7316f2cffc71c8f2c60"
+      }
+    },
+    {
+      "id": "windows-278-E-telemetry-on-cache-true",
+      "version": "2.1.278",
+      "platform": "Windows",
+      "condition": {
+        "id": "278-E-telemetry-on-cache-true",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "mode": "claude-md-and-agents-md",
+        "claude": true
+      },
+      "startedAt": "2026-10-04T01:24:24.581734+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A",
+              "C"
+            ]
+          },
+          "request_sha256": "d0cad65010662942fd86495d422fda4eb9742df39672efa76faedfa307cd6f39",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:25.403Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:25.405Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:25.522Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 7 directories",
+        "2026-10-04T01:24:25.523Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 46.5ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-windows-latest",
+        "file": "278-E-telemetry-on-cache-true.json",
+        "sha256": "61782c4ffabae7a5af428dc3c93f2a47962bd016541b8aed8a0f832e4975709f"
+      }
+    },
+    {
+      "id": "windows-281-A-telemetry-off",
+      "version": "2.1.281",
+      "platform": "Windows",
+      "condition": {
+        "id": "281-A-telemetry-off",
+        "version": "2.1.281"
+      },
+      "startedAt": "2026-10-04T01:24:27.939800+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "8c8fadf7b4dd8c291a91b048390805c8e5a37c0bd6757498ebf41c4bbee2e36f",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:28.710Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:28.723Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:28.851Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 7 directories",
+        "2026-10-04T01:24:28.878Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 7 directories",
+        "2026-10-04T01:24:28.879Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 80.0ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-windows-latest",
+        "file": "281-A-telemetry-off.json",
+        "sha256": "aca80b6767da826752b23817f87bd38f738025ad11f6dbe9d921f834a821920d"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-ancestor",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-ancestor",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "ancestor": true
+      },
+      "startedAt": "2026-10-04T01:24:17.886276+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": []
+          },
+          "request_sha256": "411a562222ab85f90d0d284f1b41f2bcb1c2873295be51d19250e814b65c40c8",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:18.249Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:18.251Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:18.297Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 1.8ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-ancestor.json",
+        "sha256": "0d702b32f3632863d5f1b531104980aada2a984ba121e7cabab81c313d327c12"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-chrome",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-chrome",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "chrome": true
+      },
+      "startedAt": "2026-10-04T01:24:14.851099+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "5ea6e19a28389f50e99dd93ee6e605019cf30f67f46c447fcb9bb02ba4060a08",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:15.222Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:15.223Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:15.275Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 3 directories",
+        "2026-10-04T01:24:15.278Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 3 directories",
+        "2026-10-04T01:24:15.279Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 20.5ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-chrome.json",
+        "sha256": "bb1b615cf5f4ab1d0dc1aa24ab0696e9f23b1a0bf729633d2c4ef1dc541b2889"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-default_permission",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-default_permission",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "default_permission": true
+      },
+      "startedAt": "2026-10-04T01:24:15.859409+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "7495795ec34a504c11b624949faf0d0872f92cb2ac823e3c6457baca37297d51",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:16.228Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:16.230Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:16.284Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 3 directories",
+        "2026-10-04T01:24:16.287Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 3 directories",
+        "2026-10-04T01:24:16.288Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 21.4ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-default_permission.json",
+        "sha256": "8957bc9071e18f5c1aee2e9ccac7c76c92b282764dcd68de9e2fbf2321477169"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-explicit-fallback",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-explicit-fallback",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "mode": "claude-md-or-agents-md"
+      },
+      "startedAt": "2026-10-04T01:24:16.872090+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "9b1702bc060ad57b9650280328e4acac418536d2be0b08680380e35aa25d7e76",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:17.245Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:17.247Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:17.300Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 3 directories",
+        "2026-10-04T01:24:17.304Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 3 directories",
+        "2026-10-04T01:24:17.305Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 21.6ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-explicit-fallback.json",
+        "sha256": "ce5f142bdea6c048f261f2adb10413fba1feb33ec356aefa375df98ac2b06576"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-no_budget",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-no_budget",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "no_budget": true
+      },
+      "startedAt": "2026-10-04T01:24:13.845710+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "8e2c5e98becff7a4bceb26386a804afe16b79e648b4179d852f03011b3b48f1a",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:14.199Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:14.201Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:14.258Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 3 directories",
+        "2026-10-04T01:24:14.262Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 3 directories",
+        "2026-10-04T01:24:14.263Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 25.6ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-no_budget.json",
+        "sha256": "3f775d1fe122defa5f84f9bc41a6fba0fb4c2958078495968cc7a043486c519f"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-no_strict",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-no_strict",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "no_strict": true
+      },
+      "startedAt": "2026-10-04T01:24:11.802045+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "27ec232423c427dd54c0e308b475e2991cfae686d16944e4b776ab39ca1fffa8",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:12.172Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:12.174Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:12.230Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 3 directories",
+        "2026-10-04T01:24:12.234Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 3 directories",
+        "2026-10-04T01:24:12.235Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 24.5ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-no_strict.json",
+        "sha256": "0213f56cc8ce8219e557758818255a5bb2c2f4e9933c027b2da56c250907a795"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-persist",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-persist",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "persist": true
+      },
+      "startedAt": "2026-10-04T01:24:12.821115+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "8b2cbfcbb2294ec72a09479713f2949054761d03baedaa0e6860238cb0463e57",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:13.192Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:13.193Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:13.250Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 3 directories",
+        "2026-10-04T01:24:13.254Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 3 directories",
+        "2026-10-04T01:24:13.255Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 23.7ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-persist.json",
+        "sha256": "95d45dd9cd3994304c4bbc4dae61ee5b3a71f6ffe36b7ce7dfc794a09e5dacdd"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-slash",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-slash",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "slash": true
+      },
+      "startedAt": "2026-10-04T01:24:08.389179+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "e1608028195bf66655ed19b28fa4ad33e9690a4c739613d9e0bef26cd5a03df6",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:09.092Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:09.094Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:09.154Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 3 directories",
+        "2026-10-04T01:24:09.158Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 3 directories",
+        "2026-10-04T01:24:09.160Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 24.7ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-slash.json",
+        "sha256": "9307386c1b5a9e2d7a37abaac679ec8f6505e0b8275b5e9a8bd6d538cbb7f01e"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-tools",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-tools",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "tools": true
+      },
+      "startedAt": "2026-10-04T01:24:09.751454+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "c88ae12919456fdad7eee20d3b65898f4edbd7cf4cf401ec9508a555a610978a",
+          "tools_count": 20
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:10.134Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:10.136Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:10.183Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 3 directories",
+        "2026-10-04T01:24:10.188Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 3 directories",
+        "2026-10-04T01:24:10.190Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 22.3ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-tools.json",
+        "sha256": "9d289d5a9290ce0b0131dce29f66a929fad7d0fb89eaf20ce941e3f050b14914"
+      }
+    },
+    {
+      "id": "ubuntu-278-A-true-user",
+      "version": "2.1.278",
+      "platform": "Linux",
+      "condition": {
+        "id": "278-A-true-user",
+        "version": "2.1.278",
+        "gate": true,
+        "telemetry": true,
+        "user": true
+      },
+      "startedAt": "2026-10-04T01:24:10.806289+00:00",
+      "modelCalls": 0,
+      "observations": [
+        {
+          "path": "/v1/messages",
+          "model": "claude-sonnet-5",
+          "markers": {
+            "system": [],
+            "messages": [
+              "A"
+            ]
+          },
+          "request_sha256": "9714e998ada2035409b0961499761941260e233b878fa726c931c6208526d45f",
+          "tools_count": 0
+        }
+      ],
+      "loaderLog": [
+        "2026-10-04T01:24:11.165Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call",
+        "2026-10-04T01:24:11.167Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted",
+        "2026-10-04T01:24:11.219Z [DEBUG] $.fs.ancestors (agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 3 directories",
+        "2026-10-04T01:24:11.222Z [DEBUG] $.fs.ancestors (agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 3 directories",
+        "2026-10-04T01:24:11.223Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 20.5ms (native link, next() included)"
+      ],
+      "source": {
+        "run": "https://github.com/kanta13jp1/zenn-content/actions/runs/37167880817",
+        "head": "80da583c783acdf9741bd21416f3e3200440db81",
+        "artifact": "instruction-static-ubuntu-latest",
+        "file": "278-A-true-user.json",
+        "sha256": "d3b4fa73f4a946727a534e56e0247d9723296cda4b53b306a25848cc10d46c2c"
+      }
+    }
+  ]
+}

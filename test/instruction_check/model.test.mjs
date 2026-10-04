@@ -38,3 +38,21 @@ test('incomplete or inconsistent excerpts never produce a zero count', () => {
     assert.throws(() => inspectRecord(record, evidence.marks));
   }
 });
+
+import {validateCause} from '../../web/labs/instruction-check/cause.mjs';
+const cause = JSON.parse(readFileSync(new URL('../../web/labs/instruction-check/cause.json', import.meta.url)));
+test('captured inputs preserve the Windows one-variable contrast without model answers', () => {
+  validateCause(cause);
+  const markers = id => cause.runs.find(r => r.id === id).observations.flatMap(o => o.markers.messages);
+  assert.deepEqual(markers('windows-278-A-telemetry-on-cache-false'), []);
+  assert.deepEqual(markers('windows-278-A-telemetry-on-cache-true'), ['A']);
+  assert.deepEqual(markers('windows-278-E-telemetry-on-cache-false'), ['C']);
+  assert.deepEqual(markers('windows-278-E-telemetry-on-cache-true'), ['A','C']);
+  assert.doesNotMatch(JSON.stringify(cause), /session_id|request_id|apiKeySource|uuid|USERPROFILE|ANTHROPIC_API_KEY/);
+});
+test('missing observations and unknown tool definitions cannot turn into zero', () => {
+  for (const mutate of [r => r.observations = [], r => delete r.modelCalls, r => r.observations[0].tools_count = null, r => delete r.observations[0].markers, r => r.source.sha256 = 'missing']) {
+    const broken = structuredClone(cause); mutate(broken.runs[0]);
+    assert.throws(() => validateCause(broken));
+  }
+});

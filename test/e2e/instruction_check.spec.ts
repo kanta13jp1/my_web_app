@@ -109,3 +109,48 @@ test('unavailable evidence clears previous records and can recover', async ({pag
   await page.getByRole('button', {name: '実行記録12件を表示する'}).click();
   await expect(page.locator('#evidence-panel')).toBeVisible();
 });
+
+test('captured inputs distinguish feature availability from both-file settings', async ({page}, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-select option')).toHaveCount(15);
+  for (const [id, text] of [
+    ['windows-278-A-telemetry-on-cache-false','どちらの目印も入力にありませんでした'],
+    ['windows-278-A-telemetry-on-cache-true','AGENTS.md側の目印'],
+    ['windows-278-E-telemetry-on-cache-false','CLAUDE.md側の目印'],
+    ['windows-278-E-telemetry-on-cache-true','AGENTS.md側の目印・CLAUDE.md側の目印'],
+    ['windows-281-A-telemetry-off','AGENTS.md側の目印'],
+  ]) {
+    await page.locator('#cause-select').selectOption(id);
+    await expect(page.locator('#cause-result')).toContainText(text);
+    await expect(page.locator('#cause-result')).toContainText('AIの返答は生成していません');
+  }
+  await page.locator('#loading-cause details summary').click();
+  await expect(page.locator('#cause-log')).toContainText('prompt.context');
+  await expect(page.locator('#cause-source')).toContainText('元記録SHA-256');
+  await page.locator('#loading-cause').scrollIntoViewIfNeeded();
+  await page.screenshot({path: info.outputPath('loading-cause.png'), fullPage: false});
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('#load-evidence').click();
+  await page.locator('#run-select').selectOption('new-A');
+  await expect(page.locator('#run-answer')).toHaveText('NONE');
+  expect(errors).toEqual([]);
+});
+test('failed or incomplete captures clear previous results and recover', async ({page}) => {
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-panel')).toBeVisible();
+  await page.route('**/cause.json', route => route.fulfill({status:503,body:'unavailable'}));
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-panel')).toBeHidden();
+  await expect(page.locator('#cause-select')).toBeDisabled();
+  await expect(page.locator('#cause-message')).toContainText('取得できません');
+  await page.unroute('**/cause.json');
+  await page.route('**/cause.json', route => route.fulfill({json:{schema:1,kind:'intercepted-request-no-model',runs:[]}}));
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-panel')).toBeHidden();
+  await expect(page.locator('#cause-message')).toContainText('記録形式');
+  await page.unroute('**/cause.json');
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-panel')).toBeVisible();
+});

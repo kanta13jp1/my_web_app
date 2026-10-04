@@ -14,7 +14,7 @@
 <p>Claude Codeは、プログラムを書く作業を手伝うAIです。<code>CLAUDE.md</code>や<code>AGENTS.md</code>は、AIに作業のルールを渡すための「指示メモ」です。</p>
 <p><strong>確かめたいのは、どの指示メモの内容が返答に現れるか。</strong>メモごとに別の目印を書き、AIに目印を答えてもらって比べます。</p>
 <p class="note">このページは、あなたが貼り付けた返答を照合する道具です。Claude Codeの起動やファイルの読み取りは行いません。下の練習例は、AIを使わずに試せます。</p>
-<a class="jump" href="#evidence">実際の実行記録を見る ↓</a> · <a href="#try">練習例を試す ↓</a>
+<a class="jump" href="#loading-cause">読み込み原因の追加調査 ↓</a> · <a class="jump" href="#evidence">実際の実行記録を見る ↓</a> · <a href="#try">練習例を試す ↓</a>
 </header>
 <section aria-labelledby="why">
 <h2 id="why">1. 何を比べるの？</h2>
@@ -48,6 +48,24 @@
 <details><summary>ファイルの内容・質問・実行設定を見る</summary><pre id="run-fixture"></pre></details>
 <p><a id="run-source" href="https://github.com/kanta13jp1/zenn-content">同じ試行の公開済み要約を見る</a> · <a href="evidence.json">12件の公開用ログ抜粋をJSONで開く</a></p>
 </div>
+</section>
+<section id="loading-cause" aria-labelledby="cause-title">
+<h2 id="cause-title">追加調査：返答の前に、何が渡されるかを見る</h2>
+<p>2026年10月4日には、Claude Codeが<strong>AIへ送ろうとする入力</strong>を手元の受信サーバーで捕まえました。サーバーは受信後に400エラーで止め、AIを呼びません。下の記録はAIの返答ではなく、指示ファイルが入力に入ったかを確かめた試験です。</p>
+<p>2.1.278では、配信される機能の有効値が無効だとAGENTS.mdが入力に入らず、有効値だけを変えると入りました。「両方を読む」設定でも、機能自体が無効なら入りません。2.1.281では、利用状況を送る通信を止めた条件でも入りました。</p>
+<button type="button" id="load-cause">追加の読み込み試験を表示する</button>
+<label for="cause-select">確認する条件（9月22日のAI応答とは別の記録）</label>
+<select id="cause-select" disabled><option>表示ボタンを押してください</option></select>
+<p id="cause-message" aria-live="polite">同じWindows版で、機能の有効値だけを変えた結果を比較できます。</p>
+<div id="cause-panel" hidden>
+<h3>入力へ入った目印</h3><p id="cause-result" class="log-lines"></p>
+<h3>比較した条件</h3><pre id="cause-condition"></pre>
+<details><summary>受信記録と読み込みログの抜粋を見る</summary>
+<p>目印、受信回数、設定されたツール数、読み込み処理の記録を抜粋しました。ツール数は利用可能な道具の定義数で、呼び出し回数ではありません。受信サーバーはモデルに接続していません。</p>
+<pre id="cause-log"></pre><pre id="cause-source"></pre></details>
+</div>
+<p class="warning"><strong>この試験で分かったのは、読み込みを変える仕組みです。</strong>9月22日の試行では機能の有効値と読み込みログを保存していないため、当日の単独配置が返らなかった原因を、この結果だけで確定することはできません。後日の記録を当日の値として扱っていません。</p>
+<p>自分の環境では、<code>claude --version</code>に加え、<code>--debug</code>の読み込み記録、上の階層のCLAUDE.md、機能の設定を同じ起動ごとに残してください。<a href="https://code.claude.com/docs/en/memory#when-agentsmd-support-is-unavailable">公式の利用条件</a> · <a href="cause.json">追加試験の公開用記録</a></p>
 </section>
 <section id="try" aria-labelledby="practice">
 <h2 id="practice">3. まずは例で結果の読み方を練習</h2>

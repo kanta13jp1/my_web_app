@@ -48,3 +48,6 @@ document.querySelectorAll('[data-example]').forEach(button => {
 
 import {setupEvidence} from './evidence.mjs';
 setupEvidence();
+
+import {setupCause} from './cause.mjs';
+setupCause();
