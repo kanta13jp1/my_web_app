@@ -234,6 +234,14 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.textContaining('時間切れを区別できません'), findsOneWidget);
     expect(requests, 1);
     await capture?.call('local-connection-failure-help');
+    await tester.binding.setSurfaceSize(const Size(320, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await capture?.call('local-connection-failure-help-320');
+    await tester.binding.setSurfaceSize(null);
+    await tester.pumpAndSettle();
+    expect(requests, 1);
     await tester.tap(find.text('AIにも候補を聞く'));
     await tester.pumpAndSettle();
     expect(requests, 2);
