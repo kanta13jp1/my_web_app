@@ -27,3 +27,36 @@ test('hero remains readable and actionable at narrow and wide widths', async ({ 
     await page.screenshot({ path: testInfo.outputPath(`hero-${size.width}.png`), scale: 'css' });
   }
 });
+
+test('keeps the slow-start preview readable and carries the trial intent into Flutter', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  let releaseApp!: () => void;
+  const appGate = new Promise<void>(resolve => { releaseApp = resolve; });
+  let appRequests = 0;
+  await page.route('**/main.dart.js*', async route => {
+    appRequests++;
+    await appGate;
+    await route.continue();
+  });
+  try {
+    await page.goto('/?lp_qa=1&lp_hypothesis=h03&lp_variant=treatment', { waitUntil: 'domcontentloaded' });
+    const shell = page.locator('#seo-shell');
+    await expect(shell).toBeVisible();
+    await expect(shell.getByRole('heading', { name: '自分株式会社', exact: true })).toBeVisible();
+    const trial = shell.getByRole('link', { name: '登録なしで1件試す', exact: true });
+    await expect(trial).toBeInViewport();
+    expect((await trial.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+    await page.screenshot({ path: testInfo.outputPath('slow-start-preview.png'), scale: 'css' });
+    await trial.click();
+    await expect(page).toHaveURL(/lp_intent=trial/);
+    await expect(shell.getByRole('status')).toContainText('体験');
+    releaseApp();
+    await expect(shell).toBeHidden({ timeout: 60_000 });
+    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport({ timeout: 60_000 });
+    expect(appRequests).toBe(1);
+    await page.screenshot({ path: testInfo.outputPath('slow-start-trial-ready.png'), scale: 'css' });
+  } finally {
+    releaseApp();
+  }
+});
