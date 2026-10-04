@@ -110,6 +110,28 @@ test.describe('Landing story journey', () => {
     expect(layoutIssues).toEqual([]);
   });
 
+  test('keeps final story actions in view on landscape and short desktop screens', async ({ page }, testInfo) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    for (const size of [{ width: 844, height: 390 }, { width: 1280, height: 600 }]) {
+      await page.setViewportSize(size);
+      await openLanding(page);
+      const story = await focusStory(page);
+      await activateChapter(page, '実行');
+      await expect(story).toHaveAccessibleName(/4 \/ 4/);
+      await page.screenshot({ path: testInfo.outputPath(`short-story-${size.width}-${size.height}.png`), scale: 'css' });
+      for (const name of ['無料で保存を始める', '登録なしで1件試す']) {
+        const action = story.getByRole('button', { name, exact: true });
+        await expect(action).toBeInViewport();
+        const bounds = await action.boundingBox();
+        expect(bounds!.y).toBeGreaterThanOrEqual(60);
+        expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(size.height - 16);
+        expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      }
+      await story.getByRole('button', { name: '登録なしで1件試す', exact: true }).click();
+      await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+    }
+  });
+
   test('keeps story actions usable when every chapter image fails', async ({ page }, testInfo) => {
     const failedAssets = new Set<string>();
     const layoutIssues: string[] = [];
