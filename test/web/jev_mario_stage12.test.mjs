@@ -407,3 +407,16 @@ test('bonus room reward can be collected and the return preserves the main cours
   assert.equal(g.cells,cells);assert.equal(g.contents,contents);assert.equal(g.phase,'playing');
  }
 });
+
+test('1-1 pipe section is followed by a walkable coin breather before the next gap',()=>{
+ const g=new World11(),enemyCount=g.enemies.length;
+ for(let col=59;col<=68;col++)assert.equal(g.tile(col,13),'ground');
+ assert.equal(g.tile(69,13),undefined,'the following challenge remains a gap');
+ Object.assign(g.p,{x:59*16,y:192,vx:0,vy:0,grounded:true});g.buttons('right');
+ for(let i=0;i<85;i++)g.step();
+ assert.equal(g.coins,4);assert.equal(g.score,800);assert.equal(g.phase,'playing');
+ assert.equal(g.deaths,0);assert.equal(g.lives,3);assert.equal(g.invincible,0);
+ assert.equal(g.enemies.length,enemyCount);assert.ok(g.p.x<69*16);
+ assert.ok(g.p.grounded,'rewards require no jump');
+ g.reset();assert.equal(g.coins,0);assert.equal(g.contents.get('60,12'),'loose');
+});
