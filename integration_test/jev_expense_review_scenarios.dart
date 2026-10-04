@@ -90,6 +90,9 @@ void main({Future<void> Function(String name)? capture}) {
     await tester.tap(find.text('AIにも候補を聞く'));
     await tester.pumpAndSettle();
     expect(find.text('AI候補'), findsOneWidget);
+    expect(find.text('接続先：クラウドAI'), findsOneWidget);
+    expect(find.textContaining('応答時間：'), findsOneWidget);
+    expect(find.textContaining('モデル内部の推論時間ではありません'), findsOneWidget);
     expect(find.text('候補：食費・食材'), findsOneWidget);
     expect(find.text('要確認'), findsOneWidget);
     expect(find.textContaining('自動で変更しません'), findsOneWidget);
@@ -116,6 +119,8 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.textContaining('100%（正答率ではありません）'), findsOneWidget);
     expect(find.text('要確認'), findsOneWidget);
     expect(find.textContaining('自動で変更しません'), findsOneWidget);
+    expect(find.text('接続先：ローカルAI'), findsOneWidget);
+    expect(find.textContaining('応答時間：'), findsOneWidget);
     await capture?.call('confidence-collapsed');
     await tester.tap(find.text('確信度の読み方'));
     await tester.pumpAndSettle();
@@ -133,6 +138,7 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.text('候補：水道・光熱費'), findsOneWidget);
     expect(find.text('確信度の読み方'), findsOneWidget);
     expect(find.textContaining('100%'), findsNothing);
+    expect(find.textContaining('応答時間：'), findsNothing);
     await capture?.call('confidence-edited');
     expect(requests, 1);
   });
@@ -222,6 +228,20 @@ void main({Future<void> Function(String name)? capture}) {
     expect(requests, 1);
     expect(find.textContaining('取得できなかった'), findsOneWidget);
     expect(find.text('候補：カフェ・間食'), findsOneWidget);
+    await tester.tap(find.text('AIに接続できないとき'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('指定したモデルの準備'), findsOneWidget);
+    expect(find.textContaining('時間切れを区別できません'), findsOneWidget);
+    expect(requests, 1);
+    await capture?.call('local-connection-failure-help');
+    await tester.binding.setSurfaceSize(const Size(320, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await capture?.call('local-connection-failure-help-320');
+    await tester.binding.setSurfaceSize(null);
+    await tester.pumpAndSettle();
+    expect(requests, 1);
     await tester.tap(find.text('AIにも候補を聞く'));
     await tester.pumpAndSettle();
     expect(requests, 2);
@@ -230,6 +250,7 @@ void main({Future<void> Function(String name)? capture}) {
     expect(find.text('要確認'), findsOneWidget);
     expect(find.textContaining('96%（正答率ではありません）'), findsOneWidget);
     expect(find.textContaining('取得できなかった'), findsNothing);
+    expect(find.text('AIに接続できないとき'), findsNothing);
     expect(find.byType(TextField), findsNothing);
   });
 
