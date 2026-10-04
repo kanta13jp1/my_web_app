@@ -218,6 +218,7 @@ jobs:
           flutter pub get
           flutter build web --release --pwa-strategy=none \
             --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true \
             --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
 
@@ -236,6 +237,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node --test scripts/landing_shell_handoff_test.mjs
           python3 scripts/serve_spa.py build/web --port 7358 > checklist-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT
@@ -243,7 +245,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/platform_release_checklist.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/platform_release_checklist.spec.ts test/e2e/landing_story_journey.spec.ts test/e2e/lp_first_user_acquisition.spec.ts test/e2e/landing_hero_quality.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
       - name: Upload checklist E2E report
         if: always()
@@ -277,6 +279,7 @@ jobs:
           flutter pub get
           flutter build web --release --pwa-strategy=none --target=test/fixtures/ai_search_app.dart \
             --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true \
             --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
 
@@ -295,6 +298,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node --test scripts/landing_shell_handoff_test.mjs
           python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT
