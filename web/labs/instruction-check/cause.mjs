@@ -5,6 +5,7 @@ export function validateCause(data) {
   for (const r of data.runs) {
     if (typeof r.id !== 'string' || ids.has(r.id) || !['Windows','Linux'].includes(r.platform) || !['2.1.278','2.1.281'].includes(r.version) || r.modelCalls !== 0 || !r.condition || !Array.isArray(r.observations) || !r.observations.length || !Array.isArray(r.loaderLog) || r.loaderLog.some(x => typeof x !== 'string') || !/^[a-f0-9]{64}$/.test(r.source?.sha256 ?? '')) throw new Error('読み込み試験の根拠が不足しています。');
     ids.add(r.id);
+    if (typeof r.condition.telemetry !== 'boolean' || ![true,false,null].includes(r.condition.gate) || !/^[a-f0-9]{40}$/.test(r.source.head ?? '')) throw new Error('実行条件を確認できません。');
     for (const o of r.observations) {
       if (!o.markers || !['system','messages'].every(k => Array.isArray(o.markers[k]) && o.markers[k].every(m => ['A','C'].includes(m))) || !Number.isSafeInteger(o.tools_count) || o.tools_count < 0 || !/^[a-f0-9]{64}$/.test(o.request_sha256 ?? '')) throw new Error('受信記録を確認できません。');
     }
@@ -22,6 +23,7 @@ export function setupCause(root = document, fetcher = fetch) {
     root.querySelector('#cause-condition').textContent = [`${r.platform} / Claude Code ${r.version}`,`実行時刻：${r.startedAt}`,`利用状況の通信：${c.telemetry ? '有効（外部通信は試験用受信先で拒否）' : '無効'}`,`機能の有効値：${c.gate === true ? '有効' : c.gate === false ? '無効' : '保存値なし・配布版の既定値'}`,`配置：${c.claude ? 'CLAUDE.mdとAGENTS.md' : 'AGENTS.mdだけ'}`,`読み方：${c.mode ?? '明示設定なし'}`,...Object.entries(changes).filter(([k]) => c[k]).map(([,v]) => `変更：${v}`)].join('\n');
     root.querySelector('#cause-log').textContent = JSON.stringify({receivedRequests:r.observations.length,requests:r.observations,loaderLog:r.loaderLog},null,2);
     root.querySelector('#cause-source').textContent = `元記録：${r.source.artifact}/${r.source.file}\n元記録SHA-256：${r.source.sha256}\n試験コード：${r.source.head}\n公開用抜粋です。全通信内容や個人の設定は含めていません。`;
+    root.querySelector('#cause-code').href = `https://github.com/kanta13jp1/zenn-content/blob/${r.source.head}/experiments/agents-md-cause-20261004/cloud_probe.py`;
     panel.hidden = false;
   }
   select.addEventListener('change',show);

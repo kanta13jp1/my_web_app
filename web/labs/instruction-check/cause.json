@@ -163,7 +163,9 @@
       "platform": "Windows",
       "condition": {
         "id": "281-A-telemetry-off",
-        "version": "2.1.281"
+        "version": "2.1.281",
+        "telemetry": false,
+        "gate": null
       },
       "startedAt": "2026-10-04T01:24:27.939800+00:00",
       "modelCalls": 0,
@@ -877,7 +879,9 @@
       "platform": "Linux",
       "condition": {
         "id": "278-A-default",
-        "version": "2.1.278"
+        "version": "2.1.278",
+        "telemetry": false,
+        "gate": null
       },
       "startedAt": "2026-10-04T01:17:29.817795+00:00",
       "modelCalls": 0,
@@ -910,7 +914,9 @@
         "id": "278-E-explicit-both",
         "version": "2.1.278",
         "mode": "claude-md-and-agents-md",
-        "claude": true
+        "claude": true,
+        "telemetry": false,
+        "gate": null
       },
       "startedAt": "2026-10-04T01:17:32.814069+00:00",
       "modelCalls": 0,
