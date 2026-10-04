@@ -187,6 +187,32 @@ class _ExpenseClassificationReviewState
           if (_aiUnavailable) ...[
             const SizedBox(height: 8),
             const Text('AIの候補を取得できなかったため、端末内ルールで表示しています。'),
+            ExpansionTile(
+              key: const Key('expense_connection_help'),
+              tilePadding: EdgeInsets.zero,
+              title: const Text('AIに接続できないとき'),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    _client.isLocalMode
+                        ? 'ローカルAIの起動と、指定したモデルの準備を確認してください。'
+                            'サーバーが応答していても、ブラウザーからの接続が許可されていない場合があります。'
+                            '別のポートから接続する構成では、配信元と接続先の組み合わせを確認してください。'
+                            'この表示だけでは、接続拒否と時間切れを区別できません。'
+                            '接続を確認してから、必要な場合だけボタンで再試行してください。'
+                        : '通信状態やサービスの利用上限を確認し、しばらく待ってから'
+                            '必要な場合だけボタンで再試行してください。'
+                            'この表示だけでは失敗の原因を確定できません。',
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: Text('AIを使わずに内容を確認して記録できます。'
+                      '再試行は自動では行わず、入力や記録を変更しません。'),
+                ),
+              ],
+            ),
           ],
           const SizedBox(height: 8),
           const Text('候補は参考表示です。記録・金額・カテゴリを自動で変更しません。'),
