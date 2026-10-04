@@ -18,6 +18,8 @@ export function level() {
   set(16,9,'question','coin');
   for(let x=20;x<=24;x++) set(x,9,x%2?'question':'brick',x===21?'mushroom':x===23?'coin':null);
   set(22,5,'question','coin');set(64,8,'hidden','life');
+  // A walking-height reward trail gives a breather after the pipe section, before the first gap.
+  for(const x of [60,62,64,66])contents.set(`${x},12`,'loose');
   for(let x=77;x<=79;x++) set(x,9,x===78?'question':'brick',x===78?'mushroom':null);
   for(let x=80;x<=87;x++) set(x,5);
   for(let x=91;x<=93;x++) set(x,5);set(94,5,'question','coin');set(94,9,'brick','multi');
@@ -487,9 +489,11 @@ export class World11 {
     this.visitedPipes.push(pipe.id);
     this.saved={cells:this.cells,contents:this.contents,enemies:this.enemies,width:this.width,lifts:this.lifts,vines:this.vines,items:this.items,shots:this.shots,hammers:this.hammers,cannons:this.cannons,camera:this.camera};this.pipeReturn=pipe;
     this.cells=new Map();this.contents=new Map();this.enemies=[];this.lifts=[];this.vines=[];this.items=[];this.shots=[];this.hammers=[];this.cannons=[];this.width=256;
-    this.sound('pipe');this.room='underground';this.camera=0;p.x=32;p.y=32;p.vx=0;p.vy=0;p.grounded=false;this.wasJump=false;this.jumpBuffer=0;this.coyote=0;
-    for(let x=0;x<16;x++){this.cells.set(`${x},13`,'brick');this.cells.set(`${x},14`,'brick');if(x<13)this.cells.set(`${x},1`,'brick');}
+    this.sound('pipe');this.room='underground';this.camera=0;p.x=32;p.y=80;p.vx=0;p.vy=0;p.grounded=false;this.wasJump=false;this.jumpBuffer=0;this.coyote=0;
+    for(let x=0;x<16;x++){this.cells.set(`${x},13`,'brick');this.cells.set(`${x},14`,'brick');if(x<13)this.cells.set(`${x},4`,'brick');}
     for(let x=4;x<11;x++)for(let y=7;y<10;y++)if(!(y===7&&(x===4||x===10)))this.contents.set(`${x},${y}`,'loose');
+    // A floor reward leaves the coin room's jumping route unobstructed.
+    this.items.push({x:96,y:192,w:14,h:16,emerging:0,vx:1,vy:0,kind:this.power?'flower':'mushroom'});
     for(let y=10;y<13;y++)for(let x=13;x<16;x++)this.cells.set(`${x},${y}`,'pipe');return true;
   }
   exitRoom(){if(!this.saved)return false;const pipe=this.pipeReturn;this.sound('pipe');Object.assign(this,this.saved);this.saved=null;this.pipeReturn=null;this.room='overworld';this.p.x=pipe.exit;this.p.y=pipe.floor-this.p.h;this.p.vx=0;this.p.vy=0;this.p.grounded=false;this.camera=Math.max(this.camera,this.p.x-96);this.wasJump=false;this.jumpBuffer=0;this.coyote=0;return true;}
@@ -529,8 +533,9 @@ export class World11 {
     p.x=Math.max(this.camera,Math.min(this.width-p.w,p.x));p.stride=(p.stride??0)+(p.grounded?Math.abs(p.vx):0);if(p.y>250)this.die();
     if(k.down)this.enterRoom();
     if(this.power===2&&k.run&&!this.wasFire&&this.shots.length<2){this.sound('fire');const facing=p.facing??1;this.shots.push({x:facing<0?p.x-4:p.x+p.w,y:p.y+10,w:4,h:4,vx:facing*3.5,vy:1});}this.wasFire=!!k.run;
-    if(this.room==='underground'||this.stage>=2){
       for(const [key,item]of this.contents)if(item==='loose'){const[x,y]=key.split(',').map(Number);if(overlap(p,{x:x*16,y:y*16,w:12,h:16})){this.contents.delete(key);this.collectCoin();}}
+    if(this.room==='underground'||this.stage>=2){
+
       if(this.room==='underground'&&p.x>=12*16&&p.y+p.h<=160&&k.right)this.exitRoom();
       if(this.stage!==1)this.camera=Math.max(this.camera,Math.min(this.width-256,p.x-96));
     }else this.camera=Math.max(this.camera,Math.min(this.width-256,p.x-96));
@@ -630,7 +635,7 @@ export function drawWorld(ctx,g){const cam=Math.floor(g.camera),water=isWater(g.
     if(t==='castle'){ctx.fillStyle='#303038';ctx.fillRect(x,y,16,16);ctx.fillStyle='#909098';ctx.fillRect(x,y,16,1);ctx.fillRect(x,y+8,16,1);ctx.fillRect(x+8,y,1,8);ctx.fillRect(x,y+8,1,8);continue;}
     if(t==='bridge'){if(isBridge(g.stage)){ctx.fillStyle='#b89060';ctx.fillRect(x,y-12,16,2);ctx.fillRect(x+1,y-12,2,12);ctx.fillStyle='#583818';ctx.fillRect(x+6,y+8,4,240-y);}ctx.fillStyle='#904018';ctx.fillRect(x,y,16,8);ctx.fillStyle='#f8b850';ctx.fillRect(x,y,16,2);ctx.fillRect(x+3,y+2,2,6);continue;}
     if(t==='platform'){ctx.fillStyle=g.stage===11?'#987848':'#755035';ctx.fillRect(x+6,y+8,4,240-y);ctx.fillStyle=g.stage===11?'#d8e8e8':'#e07038';ctx.fillRect(x,y,16,8);ctx.fillStyle='#ffe4a8';ctx.fillRect(x+1,y+1,14,3);continue;}
-    if(t.startsWith('pipe')){if(g.tile(col-1,row)?.startsWith('pipe'))continue;let width=1;while(g.tile(col+width,row)?.startsWith('pipe'))width++;pixelPipe(ctx,x,y,width*16,t==='pipe-top');continue;}
+    if(t.startsWith('pipe')){if(g.tile(col-1,row)?.startsWith('pipe'))continue;let width=1;while(g.tile(col+width,row)?.startsWith('pipe'))width++;pixelPipe(ctx,x,y,width*16,t==='pipe-top');if(t==='pipe-top'&&g.usablePipes().some(p=>p.x===col*16&&!g.visitedPipes.includes(p.id))){ctx.fillStyle='#fff0a0';ctx.fillRect(x+6,y-5,2,2);ctx.fillRect(x+23,y-8+(Math.floor(g.frames/16)%2),2,2);}continue;}
     pixelTile(ctx,t,x,y,underground,g.frames);
   }
   for(const l of g.lifts){if(l.x+l.w<cam||l.x>cam+256)continue;const x=Math.round(l.x)-cam,y=Math.round(l.y);ctx.fillStyle='#a84800';ctx.fillRect(x,y,l.w,l.h);ctx.fillStyle='#ffe0b0';ctx.fillRect(x,y,l.w,2);ctx.fillRect(x,y+2,3,4);ctx.fillRect(x+l.w-3,y+2,3,4);ctx.fillStyle='#f88830';for(let c=6;c<l.w-3;c+=8)ctx.fillRect(x+c,y+3,4,3);}

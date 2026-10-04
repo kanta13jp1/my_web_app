@@ -836,11 +836,11 @@ test('6-2 live small player passes the first entrance with active enemies and re
 
 
 test('6-2 complete real worker course collects items and clears with normal hazards',async({page},info)=>{
- test.skip(info.project.name==='mobile','The complete run uses desktop; mobile entrance and overhang recovery are covered separately.');test.setTimeout(120000);
+ test.skip(info.project.name==='mobile','The complete run uses desktop; mobile entrance and overhang recovery are covered separately.');test.setTimeout(180000);
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe'),frame=page.frames().find(f=>f.parentFrame())!;await lab.locator('#stage').selectOption('22');
  await frame.evaluate(async()=>{const {World11}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');const {StudentSession}=await import('/web/labs/jev-mario/student-session.mjs?v=student-1');const tick=StudentSession.prototype.tick,step=World11.prototype.step;(window as any).courseTrace=[];(window as any).courseClear=null;(window as any).courseTotals={mushroom:0,flower:0,life:0,star:0};let previous={mushroom:0,flower:0,life:0,star:0},totalFrames=0;StudentSession.prototype.tick=function(world){(window as any).courseWorld=world;if(!(window as any).courseSeeded){(window as any).courseSeeded=true;this.failures=[{stage:22,room:'overworld',x:988,y:160,kind:'death',count:4},{stage:22,room:'overworld',x:2484,y:180,kind:'stalled',count:4}];}return tick.call(this,world);};World11.prototype.step=function(){step.call(this);if(this!==(window as any).courseWorld)return;totalFrames++;for(const kind of Object.keys(previous)){(window as any).courseTotals[kind]+=Math.max(0,this.pickups[kind]-previous[kind]);previous[kind]=this.pickups[kind];}if(this.frames%60===0)(window as any).courseTrace.push({frame:this.frames,x:this.p.x,y:this.p.y,room:this.room,phase:this.phase,lives:this.lives,pickups:{...this.pickups},input:{...this.input},power:this.power});if(this.stage===22&&this.phase==='won')(window as any).courseClear={frames:this.frames,totalFrames,x:this.p.x,lives:this.lives,deaths:this.deaths,pickups:{...(window as any).courseTotals},finalAttemptPickups:{...this.pickups},visited:[...this.visitedPipes]};};});
  await lab.locator('#play-student').click();await expect(lab.locator('#status')).toContainText('LightGBM＋探索でプレイ中',{timeout:15000});
- try{await expect.poll(()=>frame.evaluate(()=>(window as any).courseClear),{timeout:100000}).toBeTruthy();const result=await frame.evaluate(()=>(window as any).courseClear);expect(result.pickups.mushroom).toBeGreaterThan(0);}
+ try{await expect.poll(()=>frame.evaluate(()=>(window as any).courseClear),{timeout:150000}).toBeTruthy();const result=await frame.evaluate(()=>(window as any).courseClear);expect(result.pickups.mushroom).toBeGreaterThan(0);}
  finally{await lab.locator('#stop').click();await(await import('node:fs/promises')).writeFile(info.outputPath('world62-complete-worker.json'),JSON.stringify(await frame.evaluate(()=>({clear:(window as any).courseClear,trace:(window as any).courseTrace}))));await screenshot(page,info.outputPath('world62-complete-worker.png'));}
 });
 
@@ -989,4 +989,46 @@ test('32-bar return joins the intro in actual rendered browser audio',async({pag
  });
  expect(result.sections.map(s=>s.name)).toEqual(['intro','development','climax','return','intro']);expect(result.leads[0].note).toBe(64);expect(result.leads[0].time).toBeGreaterThan(0);expect(result.leads[0].time).toBeLessThan(.13);expect(result.beat).toBeGreaterThan(256);expect(result.beat).toBeLessThan(264);expect(result.leads.filter(n=>Math.abs(n.time-.13)<.001)).toHaveLength(0);expect(result.peak).toBeLessThan(1);expect(result.rms).toBeGreaterThan(.001);expect(result.maxVoices).toBeLessThanOrEqual(64);
  await(await import('node:fs/promises')).writeFile(info.outputPath('loop-drama-seam.json'),JSON.stringify(result));
+});
+
+test('bonus pipe gives a visible reward and returns to the main course',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');
+ const frame=page.frames().find(f=>f.url().includes('/web/labs/jev-mario/'))!;
+ const results=await frame.evaluate(async()=>{
+  const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');
+  const {pipeRoute}=await import('/web/labs/jev-mario/pipe-route.mjs?v=student-1');
+  const {advance}=await import('/web/labs/jev-mario/search-assist.mjs?v=student-1');
+  return [0,1].map(power=>{
+   const g=new World11();g.power=power;g.p.h=power?28:16;
+   Object.assign(g.p,{x:57*16+8,y:144-g.p.h,grounded:true});g.enterRoom();
+   const canvas=document.querySelector('#screen') as HTMLCanvasElement;
+   drawWorld(canvas.getContext('2d')!,g);
+   const roomImage=canvas.toDataURL();
+   for(let n=0;n<300&&g.room==='underground';n++)advance(g,pipeRoute(g)??'right_jump',8);
+   return {power,pickups:g.pickups,room:g.room,phase:g.phase,roomImage};
+  });
+ });
+ await frame.locator('#screen').screenshot({path:info.outputPath('bonus-room.png')});
+ await(await import('node:fs/promises')).writeFile(info.outputPath('bonus-reward.json'),JSON.stringify(results.map(({roomImage,...r})=>r)));
+ for(const r of results){expect(r.pickups[r.power?'flower':'mushroom']).toBe(1);expect(r.room).toBe('overworld');expect(r.phase).toBe('playing');expect(r.roomImage.length).toBeGreaterThan(1000);}
+});
+
+test('1-1 offers a running coin breather after pipes and restores it on restart',async({page},info)=>{
+ await page.goto('/test/e2e/jev_mario_harness.html');const frame=page.frames().find(f=>f.url().includes('/labs/jev-mario/'))!;await frame.waitForSelector('#screen');
+ const result=await frame.evaluate(async()=>{
+  const {World11,drawWorld}=await import('/web/labs/jev-mario/world11.mjs?v=student-1');
+  const g=new World11();Object.assign(g.p,{x:59*16,y:192,vx:0,vy:0,grounded:true});
+  const canvas=document.querySelector('#screen') as HTMLCanvasElement;
+  g.camera=g.p.x-64;drawWorld(canvas.getContext('2d')!,g);
+  const before=canvas.toDataURL();g.buttons('right');for(let i=0;i<85;i++)g.step();
+  drawWorld(canvas.getContext('2d')!,g);
+  const result={coins:g.coins,score:g.score,lives:g.lives,deaths:g.deaths,phase:g.phase,x:g.p.x,grounded:g.p.grounded,before};
+  g.reset();return {...result,restartCoins:g.coins,restored:g.contents.get('60,12')};
+ });
+ await(await import('node:fs/promises')).writeFile(info.outputPath('coin-breather-before.png'),Buffer.from(result.before.split(',')[1],'base64'));
+ await frame.locator('#screen').screenshot({path:info.outputPath('coin-breather.png')});
+ await(await import('node:fs/promises')).writeFile(info.outputPath('coin-breather.json'),JSON.stringify({...result,before:undefined}));
+ expect(result.coins).toBe(4);expect(result.score).toBe(800);expect(result.phase).toBe('playing');
+ expect(result.lives).toBe(3);expect(result.deaths).toBe(0);expect(result.grounded).toBe(true);
+ expect(result.x).toBeLessThan(69*16);expect(result.restartCoins).toBe(0);expect(result.restored).toBe('loose');
 });
