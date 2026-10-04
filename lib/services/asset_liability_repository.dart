@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:my_web_app/models/asset_liability_persistence.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_management_egress_policy.dart';
+import 'package:my_web_app/services/asset_monthly_state_edit_merge.dart';
 import 'package:my_web_app/services/mirror_tombstone_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -306,6 +309,12 @@ abstract class AssetLiabilityRepository {
 
   bool get supabaseWritesEnabled => false;
 
+  /// Whether the current month's restored state is confirmed for AI input.
+  bool isMonthVerifiedForAi(DateTime month) => true;
+
+  bool Function() captureMonthAiOwnership(DateTime month) =>
+      () => isMonthVerifiedForAi(month);
+
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month);
 
   Future<void> saveMonth({
@@ -556,38 +565,92 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   @override
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) {
     final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
-    final existing = _inFlightMonthLoads[monthKey];
+    final userId = _userIdOrNull();
+    final loadKey = '$userId:$monthKey';
+    final existing = _inFlightMonthLoads[loadKey];
     if (existing != null) {
       return existing;
     }
 
     late final Future<AssetLiabilityMonthlyState> load;
-    load = _loadMonthOnce(month).whenComplete(() {
-      if (identical(_inFlightMonthLoads[monthKey], load)) {
-        _inFlightMonthLoads.remove(monthKey);
+    load = _runMonthMutation<AssetLiabilityMonthlyState>(month, userId, () {
+      if (_userIdOrNull() != userId) {
+        return Future.value(const AssetLiabilityMonthlyState());
+      }
+      return _loadMonthOnce(month);
+    }).whenComplete(() {
+      if (identical(_inFlightMonthLoads[loadKey], load)) {
+        _inFlightMonthLoads.remove(loadKey);
       }
     });
-    _inFlightMonthLoads[monthKey] = load;
+    _inFlightMonthLoads[loadKey] = load;
     return load;
   }
 
+  final Map<String, String> _verifiedMonthUsers = <String, String>{};
+
+  @override
+  bool Function() captureMonthAiOwnership(DateTime month) {
+    final userId = _userIdOrNull();
+    return () => _userIdOrNull() == userId && isMonthVerifiedForAi(month);
+  }
+
+  @override
+  bool isMonthVerifiedForAi(DateTime month) {
+    if (!syncEnabled) {
+      return localRepository.isMonthVerifiedForAi(month);
+    }
+    final userId = _userIdOrNull();
+    final key = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    return userId != null && _verifiedMonthUsers[key] == userId;
+  }
+
   Future<AssetLiabilityMonthlyState> _loadMonthOnce(DateTime month) async {
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    _verifiedMonthUsers.remove(monthKey);
+    final userId = _userIdOrNull();
     final local = await localRepository.loadMonth(month);
     final remote = _remoteOrNull();
-    final userId = _userIdOrNull();
+    // The local result belongs to the user who began this operation.
+    // Never combine it with a newly signed-in user's remote state.
+    if (_userIdOrNull() != userId) {
+      return local;
+    }
     if (remote == null || userId == null) {
       return local;
     }
 
-    final remoteState = await _tryRemote(
-      () => remote.loadMonth(userId: userId, month: month),
-    );
-    if (remoteState == null || remoteState.isEmpty) {
-      if (!local.isEmpty && supabaseWritesEnabled) {
-        await _tryRemote(
-          () => remote.saveMonth(userId: userId, month: month, state: local),
-        );
+    AssetLiabilityMonthlyState? remoteState;
+    try {
+      remoteState = await remote.loadMonth(userId: userId, month: month);
+    } catch (error, stackTrace) {
+      if (onSyncError != null) {
+        onSyncError!(error, stackTrace);
+      } else {
+        debugPrint('Asset liability monthly read failed: $error');
       }
+      // Keep offline display, but never upload or generate from an unverified read.
+      return local;
+    }
+    if (_userIdOrNull() != userId) {
+      return local;
+    }
+    // An offline edit journal survives page/repository recreation. Do not
+    // replace its recovery copy with a newer server snapshot on reload.
+    try {
+      final pending = await _loadPendingMonthBase(userId, monthKey);
+      if (_userIdOrNull() != userId) return local;
+      if (pending != null) {
+        _pendingMonthBases['$userId:$monthKey'] = pending;
+        _verifiedMonthUsers[monthKey] = userId;
+        return local;
+      }
+    } catch (error, stackTrace) {
+      onSyncError?.call(error, stackTrace);
+      return local;
+    }
+    _verifiedMonthUsers[monthKey] = userId;
+    if (remoteState == null) {
       return local;
     }
 
@@ -608,11 +671,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         await localRepository.saveMonth(month: month, state: remoteState);
         return remoteState;
       }
-      if (supabaseWritesEnabled) {
-        await _tryRemote(
-          () => remote.saveMonth(userId: userId, month: month, state: local),
-        );
-      }
+      // Preserve offline edits locally; publish only explicit save deltas.
       return local;
     }
 
@@ -624,31 +683,122 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     if (merged.totalEntryCount > local.totalEntryCount) {
       await localRepository.saveMonth(month: month, state: merged);
     }
-    if (supabaseWritesEnabled &&
-        merged.totalEntryCount > remoteState.totalEntryCount) {
-      await _tryRemote(
-        () => remote.saveMonth(userId: userId, month: month, state: merged),
-      );
-    }
     return merged;
+  }
+
+  String _pendingMonthBaseKey(String userId, String monthKey) =>
+      'asset_monthly_state_pending_base_v1:$userId:$monthKey';
+
+  Future<AssetLiabilityMonthlyState?> _loadPendingMonthBase(
+    String userId,
+    String monthKey,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_pendingMonthBaseKey(userId, monthKey));
+    if (raw == null) return null;
+    // A corrupt journal is a sync error, not permission to replace the server.
+    return AssetLiabilityMonthlyStatePayload.fromSupabaseJson(
+      Map<String, Object?>.from(jsonDecode(raw) as Map),
+    ).toState();
+  }
+
+  final Map<String, AssetLiabilityMonthlyState> _pendingMonthBases =
+      <String, AssetLiabilityMonthlyState>{};
+
+  final Map<String, Future<void>> _monthSaves = <String, Future<void>>{};
+
+  Future<T> _runMonthMutation<T>(
+    DateTime month,
+    String? userId,
+    Future<T> Function() action,
+  ) {
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    final key = '$userId:$monthKey';
+    final previous = _monthSaves[key] ?? Future<void>.value();
+    final result = previous.then((_) => action());
+    late final Future<void> pending;
+    pending = result
+        .then<void>((_) {}, onError: (Object _, StackTrace __) {})
+        .whenComplete(() {
+      if (identical(_monthSaves[key], pending)) _monthSaves.remove(key);
+    });
+    _monthSaves[key] = pending;
+    return result;
+  }
+
+  Future<void> _clearPendingMonthBase(String userId, DateTime month) async {
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    _pendingMonthBases.remove('$userId:$monthKey');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_pendingMonthBaseKey(userId, monthKey));
   }
 
   @override
   Future<void> saveMonth({
     required DateTime month,
     required AssetLiabilityMonthlyState state,
-  }) async {
-    await localRepository.saveMonth(month: month, state: state);
-    final remote = _remoteOrNull();
+  }) {
     final userId = _userIdOrNull();
-    if (remote == null || userId == null) {
-      return;
-    }
-    if (supabaseWritesEnabled) {
-      await _tryRemote(
-        () => remote.saveMonth(userId: userId, month: month, state: state),
-      );
-    }
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    final key = '$userId:$monthKey';
+    return _runMonthMutation<void>(month, userId, () async {
+      if (_userIdOrNull() != userId) return;
+      final previousLocal = await localRepository.loadMonth(month);
+      if (_userIdOrNull() != userId) return;
+      final remote = _remoteOrNull();
+      if (remote == null || userId == null || !supabaseWritesEnabled) {
+        await localRepository.saveMonth(month: month, state: state);
+        return;
+      }
+      late final AssetLiabilityMonthlyState base;
+      try {
+        final journalBase = await _loadPendingMonthBase(userId, monthKey);
+        base = _pendingMonthBases.putIfAbsent(
+          key,
+          () => journalBase ?? previousLocal,
+        );
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          _pendingMonthBaseKey(userId, monthKey),
+          jsonEncode(
+            AssetLiabilityMonthlyStatePayload.fromState(
+              monthKey: monthKey,
+              state: base,
+            ).toSupabaseJson(userId: userId),
+          ),
+        );
+      } catch (error, stackTrace) {
+        // Journal corruption must block uploads, not lose the latest edit.
+        if (_userIdOrNull() == userId) {
+          await localRepository.saveMonth(month: month, state: state);
+        }
+        if (onSyncError != null) {
+          onSyncError!(error, stackTrace);
+        } else {
+          debugPrint(
+            'Monthly recovery journal failed; local edit retained: $error',
+          );
+        }
+        return;
+      }
+      if (_userIdOrNull() != userId) return;
+      await localRepository.saveMonth(month: month, state: state);
+      await _tryRemote(() async {
+        final current = await remote.loadMonth(userId: userId, month: month);
+        if (_userIdOrNull() != userId) return;
+        final merged = current == null
+            ? state
+            : mergeAssetMonthlyStateEdits(
+                monthKey: monthKey,
+                base: base,
+                edited: state,
+                remote: current,
+              );
+        await remote.saveMonth(userId: userId, month: month, state: merged);
+        await _clearPendingMonthBase(userId, month);
+        // Do not cache data the page has not seen as its next edit baseline.
+      });
+    });
   }
 
   @override
@@ -1014,7 +1164,21 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   }
 
   @override
-  Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) async {
+  Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) {
+    final userId = _userIdOrNull();
+    return _runMonthMutation<AssetLiabilityManualSyncResult>(month, userId, () {
+      if (_userIdOrNull() != userId) {
+        return Future.value(
+          AssetLiabilityManualSyncResult.failure(
+            message: 'The signed-in account changed before synchronization.',
+          ),
+        );
+      }
+      return _syncMonthOnce(month);
+    });
+  }
+
+  Future<AssetLiabilityManualSyncResult> _syncMonthOnce(DateTime month) async {
     final remote = _remoteOrNull();
     final userId = _userIdOrNull();
     if (remote == null) {
@@ -1076,6 +1240,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
             month: month,
             state: syncData.localMonth,
           );
+          await _clearPendingMonthBase(userId, month);
           uploaded++;
         } else {
           skippedRemoteWrites++;
@@ -1085,6 +1250,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           month: month,
           state: syncData.remoteMonth!,
         );
+        await _clearPendingMonthBase(userId, month);
         restored++;
       }
 
@@ -1438,15 +1604,18 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   }) async {
     switch (target) {
       case AssetLiabilitySyncTarget.monthlyState:
-        if (data.localMonth.isEmpty) {
-          return 0;
-        }
-        await remote.saveMonth(
-          userId: userId,
-          month: month,
-          state: data.localMonth,
-        );
-        return 1;
+        return _runMonthMutation<int>(month, userId, () async {
+          if (_userIdOrNull() != userId) return 0;
+          final currentLocal = await localRepository.loadMonth(month);
+          if (_userIdOrNull() != userId) return 0;
+          await remote.saveMonth(
+            userId: userId,
+            month: month,
+            state: currentLocal,
+          );
+          await _clearPendingMonthBase(userId, month);
+          return 1;
+        });
       case AssetLiabilitySyncTarget.paymentSourceSettings:
         if (data.localSources.isEmpty) {
           return 0;
@@ -1492,11 +1661,18 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   }) async {
     switch (target) {
       case AssetLiabilitySyncTarget.monthlyState:
-        if (_remoteMonthIsEmpty(data.remoteMonth)) {
-          return 0;
-        }
-        await localRepository.saveMonth(month: month, state: data.remoteMonth!);
-        return 1;
+        final userId = _userIdOrNull();
+        if (userId == null) return 0;
+        return _runMonthMutation<int>(month, userId, () async {
+          final currentRemote = await _remoteOrNull()?.loadMonth(
+            userId: userId,
+            month: month,
+          );
+          if (currentRemote == null || _userIdOrNull() != userId) return 0;
+          await localRepository.saveMonth(month: month, state: currentRemote);
+          await _clearPendingMonthBase(userId, month);
+          return 1;
+        });
       case AssetLiabilitySyncTarget.paymentSourceSettings:
         if (data.remoteSources?.isNotEmpty != true) {
           return 0;

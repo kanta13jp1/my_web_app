@@ -118,6 +118,14 @@ jobs:
           echo '::error::The temporary Flutter Web server did not become ready.'
           exit 1
 
+      - name: Verify model-free Jwenv input checks
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/jwenv-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: jwenv-results
+        run: |
+          node --test test/web/jwenv_hosting.test.mjs test/web/jwenv_validation.test.mjs
+          npx playwright test test/e2e/jwenv_lab.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Compare or generate reviewed baselines
         shell: bash
         run: |
@@ -131,6 +139,15 @@ jobs:
             --project=mobile-chrome \
             --retries=0 \
             "${snapshot_args[@]}"
+
+      - name: Verify monthly budget allocation and recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/budget-balance-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: budget-balance-results
+        run: |
+          flutter test test/services/budget_balance_calculator_test.dart test/widgets/budget_balance_card_test.dart
+          npx playwright test test/e2e/budget_balance.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
       - name: Verify integrated Lumen Path route
         shell: bash
@@ -222,9 +239,11 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            jwenv-results/
             api-reference-results/
             chat-replay-results/
             hiragana-results/
+            budget-balance-results/
             test/e2e/visual_regression.spec.ts-snapshots/
             .ci-logs/visual-regression-server.log
           if-no-files-found: warn

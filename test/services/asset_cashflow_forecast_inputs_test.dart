@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
+import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
+import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 
 AssetLiabilityAccount _account(
   String name,
@@ -16,7 +18,155 @@ AssetLiabilityAccount _account(
   );
 }
 
+AssetLiabilityDebtRow _debt({
+  int? day = 10,
+  AssetLiabilityAccountKind kind = AssetLiabilityAccountKind.utility,
+  bool fullPaymentEstimate = false,
+}) {
+  return AssetLiabilityDebtRow(
+    id: 'bill',
+    name: 'Service Fee',
+    kind: kind,
+    balance: -20000,
+    paymentDay: day,
+    paymentSourceAccountId: null,
+    paymentSourceAccountName: null,
+    paymentMethod: AssetLiabilityPaymentMethod.direct,
+    paymentMethodLabel: null,
+    paymentMethodSettingSource:
+        AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+    billingAccountId: null,
+    billingAccountName: null,
+    includedInBillingAccount: false,
+    annualRate: 0,
+    minimumPaymentEstimate: 2000,
+    manualPaymentAmount: null,
+    scheduledPaymentAmount: 2000,
+    monthlyInterestEstimate: 0,
+    principalPaymentEstimate: 2000,
+    balanceAfterPaymentEstimate: -18000,
+    liabilityShare: 1,
+    priorityLabel: '',
+    paymentAmountEstimated: false,
+    billingConfirmed: true,
+    paid: false,
+    requiresAction: true,
+    fullPaymentEstimate: fullPaymentEstimate,
+  );
+}
+
+AssetCashflowForecastInputs _billInputs({
+  required AssetLiabilityDebtRow debt,
+  Map<String, int> overrides = const {},
+  String dueDate = '2026-06-10',
+  double subscriptionAmount = 2000,
+}) {
+  return AssetCashflowForecastInputs.fromAssetData(
+    accounts: const [],
+    debtRows: [debt],
+    recurringIncomeTemplates: const [],
+    inflowRules: const [],
+    oneTimeInflows: const [],
+    subscriptions: [
+      {
+        'service_name': ' service fee ',
+        'due_date': dueDate,
+        'price': subscriptionAmount,
+      },
+    ],
+    paymentDayOverrides: overrides,
+  );
+}
+
+double _projectOutflow(AssetCashflowForecastInputs inputs) {
+  return AssetCashflowForecastService.project(
+    asOf: DateTime(2026, 6, 1),
+    startingBalance: 10000,
+    horizonMonths: 1,
+    recurringOutflow: inputs.recurringOutflow,
+  ).months.single.outflowTotal;
+}
+
 void main() {
+  group('forecast and calendar payment schedule agreement', () {
+    test('the same fixed cost in both sources is counted once', () {
+      final debt = _debt();
+      final inputs = _billInputs(debt: debt);
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 6),
+        flows: const [],
+        subscriptions: [
+          {
+            'service_name': ' service fee ',
+            'due_date': '2026-06-10',
+            'price': 2000,
+          },
+        ],
+        debts: [AssetCalendarDebtInput.fromDebtRow(debt)],
+        startingCashBalance: 10000,
+      );
+      expect(_projectOutflow(inputs), 2000);
+      expect(_projectOutflow(inputs), calendar.subscriptionTotal);
+    });
+
+    test('separate dates, amounts, and loan repayments remain separate', () {
+      expect(_projectOutflow(_billInputs(debt: _debt(day: 11))), 4000);
+      expect(
+        _projectOutflow(_billInputs(debt: _debt(), subscriptionAmount: 2100)),
+        4100,
+      );
+      expect(
+        _projectOutflow(
+          _billInputs(
+            debt: _debt(kind: AssetLiabilityAccountKind.cardLoan),
+          ),
+        ),
+        4000,
+      );
+      expect(
+        _projectOutflow(
+          _billInputs(
+            debt: _debt(
+              kind: AssetLiabilityAccountKind.cardLoan,
+              fullPaymentEstimate: true,
+            ),
+          ),
+        ),
+        2000,
+      );
+    });
+
+    test('payment day override uses ID first and legacy name as fallback', () {
+      final byId = _billInputs(
+        debt: _debt(),
+        overrides: {'bill': 26, 'Service Fee': 15},
+      );
+      final byName = _billInputs(
+        debt: _debt(day: null),
+        overrides: {'Service Fee': 15},
+      );
+      expect(byId.recurringOutflow.first.dayOfMonth, 26);
+      expect(byName.recurringOutflow.first.dayOfMonth, 15);
+      expect(_projectOutflow(byId), 4000);
+    });
+
+    test('deduplication compares each actual date after month-end clamping',
+        () {
+      final inputs = _billInputs(
+        debt: _debt(day: 31),
+        dueDate: '2026-01-30',
+      );
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 2, 1),
+        startingBalance: 10000,
+        horizonMonths: 2,
+        recurringOutflow: inputs.recurringOutflow,
+      );
+      expect(forecast.months[0].outflowTotal, 2000);
+      expect(forecast.months[1].outflowTotal, 4000);
+    });
+  });
+
   group('AssetCashflowForecastInputs.subscriptionRecurringEntry', () {
     test('maps a valid subscription to a recurring entry', () {
       final entry = AssetCashflowForecastInputs.subscriptionRecurringEntry(

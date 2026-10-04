@@ -56,6 +56,13 @@ jobs:
           PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/html/visual-evidence
           PLAYWRIGHT_TEST_OUTPUT_DIR: test-results/visual-evidence
 
+      - name: Verify production Jwenv input checks
+        run: npx playwright test test/e2e/jwenv_lab.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+        env:
+          E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results/jwenv.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: test-results/jwenv
+
       - name: Summarize Playwright evidence
         if: always()
         run: |
