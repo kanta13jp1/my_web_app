@@ -23,8 +23,17 @@ async function isolation(page: Page) {
   const calls: { path: string; method: string; status: number }[] = [];
   const blocked = new Set<string>();
   const pageErrors: string[] = [];
+  const auth = { requests: 0, responses: 0, failedRequests: 0,
+    clickStarted: false, clickCompleted: false, clickFailure: 'none', responseFailure: 'none' };
+  const tokenRequest = (url: string, method: string) => {
+    const u = new URL(url);
+    return u.origin === api && u.pathname === '/auth/v1/token' && method === 'POST';
+  };
+  page.on('request', r => { if (tokenRequest(r.url(), r.method())) auth.requests++; });
+  page.on('requestfailed', r => { if (tokenRequest(r.url(), r.method())) auth.failedRequests++; });
   page.on('pageerror', () => pageErrors.push('Unhandled browser exception (body intentionally omitted)'));
   page.on('response', r => {
+    if (tokenRequest(r.url(), r.request().method())) auth.responses++;
     const u = new URL(r.url());
     if (u.origin === api && (u.pathname.startsWith('/auth/v1/') ||
         u.pathname.includes('shop_product') || u.pathname.includes('shop_purchases'))) {
@@ -41,7 +50,7 @@ async function isolation(page: Page) {
     return route.abort('blockedbyclient');
   });
   const observed = { calls, blocked, pageErrors, phase: 'boot',
-    inputDiagnostics: [] as unknown[], inputFailure: 'none' };
+    inputDiagnostics: [] as unknown[], submitDiagnostics: [] as unknown[], inputFailure: 'none', auth };
   observations.set(page, observed);
   return observed;
 }
@@ -101,10 +110,29 @@ async function login(page: Page, name: string) {
     throw new Error(`Could not fill isolated ${field} input; credentials omitted`);
   }
   observations.get(page)!.phase = 'real-auth-submit';
+  const observed = observations.get(page)!;
+  const submit = page.getByRole('button', { name: 'メールでログイン', exact: true });
+  await submitDiagnostics(page, submit, 'before-click');
+  // Handle the response waiter immediately so its rejection cannot hide a
+  // pending pointer operation. Preserve both independent outcomes and bounds.
   const authResponse = page.waitForResponse(r => new URL(r.url()).origin === api &&
-    new URL(r.url()).pathname === '/auth/v1/token' && r.request().method() === 'POST');
-  await click(page, page.getByRole('button', { name: 'メールでログイン', exact: true }));
-  expect((await authResponse).status()).toBe(200);
+    new URL(r.url()).pathname === '/auth/v1/token' && r.request().method() === 'POST')
+    .then(r => ({ status: r.status(), failed: false }), error => {
+      observed.auth.responseFailure = safeFailure(error);
+      return { status: 0, failed: true };
+    });
+  observed.auth.clickStarted = true;
+  try {
+    await click(page, submit);
+    observed.auth.clickCompleted = true;
+  } catch (error) {
+    observed.auth.clickFailure = safeFailure(error);
+  }
+  await submitDiagnostics(page, submit, 'after-click');
+  const response = await authResponse;
+  expect(observed.auth.clickCompleted, 'Normal login pointer action completed').toBe(true);
+  expect(response.failed, 'Actual password Auth response received').toBe(false);
+  expect(response.status).toBe(200);
   await expect(page).toHaveURL(/\/shop\/product\?/);
   const location = new URL(page.url());
   expect(location.searchParams.get('product_id')).toBe('hexciv-win64');
@@ -112,6 +140,35 @@ async function login(page: Page, name: string) {
   expect(location.searchParams.get('utm_campaign')).toBe('real-auth-test');
   expect(location.searchParams.get('utm_content')).toBe('browser');
   observations.get(page)!.phase = 'product-after-login';
+}
+
+function safeFailure(error: unknown) {
+  const message = error instanceof Error ? error.message : '';
+  return message.includes('strict mode violation') ? 'non-unique-locator' :
+    /timeout/i.test(message) ? 'timeout' : 'other';
+}
+
+async function submitDiagnostics(page: Page, target: Locator, stage: string) {
+  // Only closed booleans and geometry: no values, arbitrary DOM/labels,
+  // request bodies, headers, credentials, validation text or login images.
+  const buttons = await target.evaluateAll(nodes => nodes.slice(0, 4).map(n => {
+    const rect = n.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+    return { connected: n.isConnected, disabled: n.getAttribute('aria-disabled') === 'true',
+      centerHitsTarget: hit === n || (hit !== null && n.contains(hit)),
+      rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height } };
+  })).catch(() => []);
+  const empty = await page.locator('input').evaluateAll(nodes => ({
+    emailEmpty: nodes.filter(n => n.getAttribute('aria-label') === 'メールアドレス')
+      .map(n => (n as HTMLInputElement).value.trim().length === 0),
+    passwordEmpty: nodes.filter(n => n.getAttribute('type') === 'password')
+      .map(n => (n as HTMLInputElement).value.trim().length === 0),
+  })).catch(() => ({ emailEmpty: [], passwordEmpty: [] }));
+  const missingInput = await page.getByText('メールアドレスとパスワードを入力してください。', { exact: true })
+    .isVisible().catch(() => false);
+  const unavailableAuth = await page.getByText('認証機能を初期化できませんでした。', { exact: true })
+    .isVisible().catch(() => false);
+  observations.get(page)!.submitDiagnostics.push({ stage, buttons, empty, missingInput, unavailableAuth });
 }
 
 async function passwordDiagnostics(page: Page, stage: string) {
@@ -167,7 +224,8 @@ test.afterEach(async ({ page }, info) => {
     contentType: 'application/json',
     body: JSON.stringify({ scope: 'Disposable actual Auth/REST; synthetic purchases; not production or payment proof',
       route: page.url(), phase: observed.phase, inputs, inputDiagnostics: observed.inputDiagnostics,
-      inputFailure: observed.inputFailure, calls: observed.calls,
+      inputFailure: observed.inputFailure, submitDiagnostics: observed.submitDiagnostics,
+      auth: observed.auth, calls: observed.calls,
       blocked: [...observed.blocked], pageErrors: observed.pageErrors }),
   });
   observations.delete(page);

@@ -95,6 +95,19 @@ existing deterministic callback-race widget tests remain separate.
 
 ## Evidence and interpretation
 
+The 2026-10-04 diagnosis records token request/response/failure counts and separate
+normal-click start/completion/error categories, plus empty-input booleans, button
+geometry/hit-test booleans and presence of two known validation messages. Values,
+request bodies, headers and arbitrary DOM text are never retained. Response-wait
+rejections are handled immediately; both pointer and response outcomes remain
+required. The original 20-second bounds and four acceptance scenarios remain.
+
+While PR #5397 conflicts with main, a narrowly filtered push trigger runs this
+existing disposable lane on its own branch source. Record the exact source SHA;
+this establishes branch behavior only. It cannot establish compatibility with the
+current main or replace the required integrated regression checks. The workflow
+uses the same runner, permissions, isolation guards and finalization as before.
+
 `shop-real-auth-{run_id}-{attempt}` retains environment metadata, completed/pass
 flags for API/prepare checks, a browser JSON report and explicit product-only PNGs.
 No automatic failure screenshot, trace, video, raw network request/response,

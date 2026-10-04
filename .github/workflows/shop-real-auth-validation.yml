@@ -1,6 +1,13 @@
 name: Shop Real Auth Validation
 
 on:
+  push:
+    branches: [codex/product-release-reviews-20260912]
+    paths:
+      - .github/workflows/shop-real-auth-validation.yml
+      - scripts/ci/shop_real_auth/**
+      - playwright.shop-real-auth.config.ts
+      - test/e2e-real-auth/**
   pull_request:
     branches: [main]
     paths:
