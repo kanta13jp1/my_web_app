@@ -20,6 +20,18 @@ test('LightGBM worker plays without consent or API; records assistance and stops
  }
  await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');await expect(lab.locator('#consent')).not.toBeChecked();expect(errors).toEqual([]);
 });
+test('search-taught LightGBM plays alone without search, consent, API or ranking',async({page},info)=>{
+ test.setTimeout(120000);
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
+ await expect(lab.locator('#consent')).not.toBeChecked();await lab.locator('#play-student-raw').click();
+ await expect(lab.locator('#status')).toContainText('探索教師LightGBM単体でプレイ中',{timeout:20000});
+ await expect(lab.locator('#student-status')).toContainText('履歴・ランキングには記録しません',{timeout:15000});
+ if(info.project.name==='desktop')await expect(lab.locator('#status')).toContainText('1-1クリア！',{timeout:60000});
+ await lab.locator('#stop').click();
+ const before=await lab.locator('#progress').textContent();await page.waitForTimeout(350);await expect(lab.locator('#progress')).toHaveText(before!);
+ await expect(lab.locator('#counts')).toHaveText('0 / 0 / 0');expect(errors).toEqual([]);
+});
 test('keyboard and touch crouch recover; walk and jump poses render',async({page},info)=>{
  await page.goto('/test/e2e/jev_mario_harness.html');const lab=page.frameLocator('iframe');
  await lab.locator('#play-local').click();
