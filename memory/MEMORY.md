@@ -3,6 +3,24 @@
 Master Brain のローカル索引。各ファイルは `memory/` 配下に置き、日付 + スコープで命名。
 NotebookLM Master Brain (jibun-master-brain ノートブック) にも同内容を蓄積する。
 
+## 2026-10-04 (WEB版 — PR #5523 地方選候補者集計 都道府県議会/市区町村議会内訳 マージ完了)
+
+- `feedback_success_20261004_local_election_assembly_breakdown.md` — 既存 assemblyCategory 命名再利用 / 3言語パイプライン後方互換拡張 / "dirty"のみ反応するPR babysitポリシー / auto-merge イベントでの監視密度調整+trigger即時削除。
+- `feedback_correction_20261004_send_later_classifier_retry.md` — send_later classifier一時エラー時はツール指示のリトライ上限を遵守し拒否と一時故障を区別して報告。
+- `project_20261004_web_pr5523_babysit.md` — このリポジトリは bot commit 高頻度で behind/unknown が定常状態・dirtyのみ実コンフリクト / WEB版の役割は機能継承(GitHub MCPのみ) / SUPABASE_ANON_KEY_PROD未設定によるWBS-SYNC skip理由。
+
+<!-- wrap-up 20261004
+未完了: 0 件 (PR #5523 は 2026-09-29 17:44 UTC squash merge 完了・main 反映済み)
+
+次回優先候補 (Step 6 参照):
+- 🟡 次回 update_kokumin_local_endorsements cron 実行後、prefecturalCount/municipalCount の実データが
+  正しく UI (election_victory_page) に反映されているか目視確認 (このセッションはFlutter/ブラウザ環境なし)
+- 🟡 test/models/election_intelligence_test.dart の新規2件・test/ui/.../official_endorsement_view_model_test.dart を
+  実際に `flutter test` で実行し green を確認 (このセッションでは未実行)
+- 🟢 Design Accessibility Audit (PR本文で未完了と明記) のレビュアー/自動エージェントによる正式チェック
+- 🟢 WEB版 PR babysit loop の "behind/unknown無視・dirtyのみ反応" ポリシーを docs/SUBAGENT_ORCHESTRATION_POLICY.md 等に明文化する価値があるか検討
+-->
+
 ## 2026-09-21 — Skill curation
 
 - [Agent skill curation completion](vault/decision_20260921_skill_curation_completion.md) — canonical adoption decisions, upstream integration, offline validation, and review handoff.

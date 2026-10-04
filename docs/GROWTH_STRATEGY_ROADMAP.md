@@ -67438,3 +67438,31 @@ Persist capped device-local failure clusters and extend search/collision foresig
 - 葉ルート `/kinetic-forge`、ホーム入口、表示名、ルート一覧を同時登録。認証・課金・DB・実行時AI APIは変更しない。
 - 固定刻みモデル、3課題、PC/スマホ、タッチと非表示停止をクラウド検証。本番・動画・X投稿は検証後に実施し、現時点で完了とはしない。
 - Claude Code設計確認は利用者が第5弾について例外を承認。レビュー実施を意味しない。
+
+## 2026-09-24〜09-29 (merged 2026-09-29): 地方選候補者集計に都道府県議会/市区町村議会の内訳を追加 (PR #5523, WEB版)
+
+- ユーザー要望「地方選候補者も集計できるようにしたい」に対し、参照サイトが到達不可だったため
+  AskUserQuestion で方向性を確認し「既存の都道府県別集計を拡張」を採用。既存の
+  `LocalElectionLegislatorProfile.assemblyCategory` / `isLocalAssemblyElection` 判定基準を再利用し、
+  党公式PDFの各候補行の選挙名から都道府県議会/市区町村議会を分類する `_assembly_category()` を追加。
+- Python (正本) → JSON/Dart (生成) → TypeScript (Edge Function 正規化) → Dart UI の3言語パイプライン
+  全てに `prefecturalCount`/`municipalCount` を optional・デフォルト0 で追加し、既存生成ファイルとの
+  後方互換を保ったまま拡張。`_hasSameValues` の差分検知漏れ (内訳だけ更新されても notifyListeners が
+  飛ばない不具合) も同時に修正。
+- PR作成後 5日間・高頻度自動コミットリポジトリ特有の mergeable_state="behind"/"unknown" 往復に対し
+  "dirtyのみ反応" ポリシーで一貫した babysit を実施、CI green のまま 2026-09-29 17:44 UTC に
+  auto-merge (squash) で main へマージ完了。
+- 残課題: Flutter/Dart SDK がこのセッションに無く `flutter test`/`flutter analyze` 未実行、
+  Design Accessibility Audit もレビュアーによる正式確認待ち (PR本文に明記済み)。
+
+### Philosophy Alignment (WEB版)
+
+- 主要な実装/改修: 地方選公認候補集計への都道府県議会/市区町村議会内訳軸追加 (PR #5523)
+- 該当する原則: 5 (商品=ユーザー価値: ユーザーが求めた分析軸をそのまま提供), 8 (KPI=昨日の自分: 既存の
+  都道府県別集計という「昨日の自分」を拡張するスコープ選定), 9 (ゴール=IPO/ウェルビーイング: 支援候補者の
+  実態をより正確に可視化)
+- 整合性スコア: 3/9 ✅ (機能自体は理念の中核 CEO 感/ミッション駆動よりも、既存データ集計の精度向上という
+  実務的改善が主)
+- 理念的貢献: ユーザーの具体要望に対し推測実装を避け AskUserQuestion で確認した判断は原則3 (伴走者) 的だが
+  今回は主に実務的なデータ拡張であり理念軸への直接貢献は限定的
+- 懸念: なし (理念ずれではなく、単純にスコープが小粒な実務改善であるため該当原則数が少ない)
