@@ -154,3 +154,17 @@ test('failed or incomplete captures clear previous results and recover', async (
   await page.locator('#load-cause').click();
   await expect(page.locator('#cause-panel')).toBeVisible();
 });
+
+test('published article shows input-side evidence, retained responses and full records', async ({page}, info) => {
+  await page.goto('https://zenn.dev/kanta13jp1/articles/claude-code-agents-md-loading-test');
+  await expect(page.getByRole('heading', {name:'追加調査：読み込みを止める条件を入力側で確かめる',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading', {name:'単独配置で返らなかった理由は未確定',exact:true})).toHaveCount(0);
+  await expect(page.getByText('60件の条件記録、旧版の先行起動1回を含むCLI起動61回、受信62件、モデル呼び出し0回です。',{exact:false})).toBeVisible();
+  await expect(page.getByRole('link', {name:'追加の読み込み試験を見る',exact:true})).toHaveAttribute('href','https://my-web-app-b67f4.web.app/labs/instruction-check/index.html#loading-cause');
+  await expect(page.getByRole('link', {name:'10月4日の条件・全結果・再計算コード',exact:true})).toHaveAttribute('href','https://github.com/kanta13jp1/zenn-content/tree/main/experiments/agents-md-cause-20261004');
+  await expect(page.locator('article strong').filter({hasText:'「両方を読む」設定は、無効な機能を有効にする指定ではありません。'})).toBeVisible();
+  await expect(page.locator('article table')).toHaveCount(6);
+  await page.getByRole('heading', {name:'追加調査：読み込みを止める条件を入力側で確かめる',exact:true}).scrollIntoViewIfNeeded();
+  await page.screenshot({path:info.outputPath('zenn-loading-cause.png'),fullPage:false});
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
