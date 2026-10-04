@@ -67,6 +67,49 @@ test.describe('Landing story journey', () => {
 
   });
 
+  test('reads every chapter forward and backward using native page scrolling', async ({ page }, testInfo) => {
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
+    await openLanding(page);
+    const story = await focusStory(page);
+    const scrollToChapter = async (index: number, direction: number) => {
+      const chapter = page.getByRole('group', { name: new RegExp(`${index} / 4`) });
+      for (let step = 0; step < 90; step++) {
+        if (await chapter.count()) break;
+        await page.mouse.move(180, 320);
+        await page.mouse.wheel(0, direction * 120);
+        await page.waitForTimeout(150);
+      }
+      await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
+    };
+    // Enter the stage through ordinary scrolling, without DOM click helpers.
+    const firstChapter = page.getByRole('button', { name: '分散の章へ移動', exact: true });
+    for (let step = 0; step < 30; step++) {
+      const bounds = await firstChapter.boundingBox();
+      if (bounds && bounds.y >= 80 && bounds.y + bounds.height < page.viewportSize()!.height - 100) break;
+      await page.mouse.move(180, 320);
+      await page.mouse.wheel(0, 120);
+      await page.waitForTimeout(150);
+    }
+    await expect(firstChapter).toBeInViewport();
+    for (const index of [1, 2, 3, 4]) {
+      await scrollToChapter(index, 1);
+      await page.waitForTimeout(450);
+      await page.screenshot({ path: testInfo.outputPath(`native-scroll-chapter-${index}.png`), scale: 'css' });
+    }
+    const trial = story.getByRole('button', { name: '登録なしで1件試す', exact: true });
+    await expect(trial).toBeInViewport();
+    for (const index of [3, 2, 1]) await scrollToChapter(index, -1);
+    await expect(story).toHaveAccessibleName(/1 \/ 4/);
+    for (const index of [2, 3, 4]) await scrollToChapter(index, 1);
+    await trial.click();
+    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+    expect(layoutIssues).toEqual([]);
+  });
+
   test('keeps story actions usable when every chapter image fails', async ({ page }, testInfo) => {
     const failedAssets = new Set<string>();
     const layoutIssues: string[] = [];
