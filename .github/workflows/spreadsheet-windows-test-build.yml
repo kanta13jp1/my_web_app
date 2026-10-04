@@ -1,21 +1,18 @@
 name: Spreadsheet Windows Test Build
+# Rebuild after main synchronization; retain unsigned bundle for local test signing.
 on:
   workflow_dispatch:
   push:
     branches: [codex/spreadsheet-xlsx-20261001]
     paths: [.github/workflows/spreadsheet-windows-test-build.yml]
-concurrency:
-  group: spreadsheet-windows-test-${{ github.ref }}
-  cancel-in-progress: false
-permissions: {}
+permissions:
+  contents: read
 jobs:
   windows:
-    permissions:
-      contents: read
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
@@ -38,7 +35,7 @@ jobs:
           Compress-Archive -Path "$distribution/*" -DestinationPath dist/JibunSpreadsheet-v1.0.1-test-unsigned.zip
           Get-FileHash dist/JibunSpreadsheet-v1.0.1-test-unsigned.zip -Algorithm SHA256
           git rev-parse HEAD
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: spreadsheet-windows-test-unsigned
           path: dist/JibunSpreadsheet-v1.0.1-test-unsigned.zip
