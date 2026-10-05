@@ -116,6 +116,9 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
   }
 
   double _stageHeight(Size viewport, double availableWidth) {
+    if (viewport.height < 560) {
+      return (viewport.height - 96).clamp(220.0, 480.0);
+    }
     final compact = availableWidth < _compactBreakpoint;
     final target = viewport.height * (compact ? 0.72 : 0.78);
     return target.clamp(compact ? 500.0 : 560.0, compact ? 660.0 : 720.0);
@@ -302,10 +305,15 @@ class _JourneyStage extends StatelessWidget {
     final chapter = LandingStoryJourney.chapters[activeChapter];
     final isFinal = activeChapter == LandingStoryJourney.chapters.length - 1;
     final visibleMediaIndices = _visibleMediaIndices();
-    final copyWidth = compact
+    final shortViewport = availableSize.height < 500;
+    var copyWidth = compact
         ? availableSize.width - 60
         : (availableSize.width * 0.40).clamp(300.0, 510.0);
-    final headingSize = compact ? 30.0 : (copyWidth / 9.9).clamp(30.0, 52.0);
+    var headingSize = compact ? 30.0 : (copyWidth / 9.9).clamp(30.0, 52.0);
+    if (shortViewport) {
+      copyWidth = availableSize.width - 96;
+      headingSize = 26;
+    }
     final exampleWidth = (availableSize.width * 0.30).clamp(220.0, 350.0);
     final showExample =
         !compact || MediaQuery.textScalerOf(context).scale(1) <= 1.15;
@@ -370,13 +378,18 @@ class _JourneyStage extends StatelessWidget {
                 ),
               ),
             ),
-            Positioned(
-              left: compact ? 18 : 36,
-              right: compact ? 18 : 36,
-              top: compact ? 16 : 24,
-              child: _JourneyTopBar(compact: compact),
-            ),
-            if (showExample)
+            if (shortViewport)
+              const Positioned.fill(
+                child: ColoredBox(color: Color(0xC0050C1D)),
+              ),
+            if (!shortViewport)
+              Positioned(
+                left: compact ? 18 : 36,
+                right: compact ? 18 : 36,
+                top: compact ? 16 : 24,
+                child: _JourneyTopBar(compact: compact),
+              ),
+            if (showExample && !shortViewport)
               Positioned(
                 left: compact ? 18 : null,
                 right: compact ? 56 : 144,
@@ -422,7 +435,7 @@ class _JourneyStage extends StatelessWidget {
                     key: ValueKey<int>(activeChapter),
                     chapter: chapter,
                     chapterIndex: activeChapter,
-                    compact: compact,
+                    compact: compact || shortViewport,
                     copyWidth: copyWidth,
                     headingSize: headingSize,
                     showActions: isFinal,
@@ -439,7 +452,7 @@ class _JourneyStage extends StatelessWidget {
               child: Center(
                 child: _JourneyRail(
                   activeChapter: activeChapter,
-                  compact: compact,
+                  compact: compact || shortViewport,
                   reduceMotion: reduceMotion,
                   onChapterSelected: onChapterSelected,
                 ),
