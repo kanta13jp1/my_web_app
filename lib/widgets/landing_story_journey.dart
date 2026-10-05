@@ -409,7 +409,7 @@ class _JourneyStage extends StatelessWidget {
               left: compact ? 18 : 48,
               right: compact ? 42 : 120,
               top: compact ? null : 0,
-              bottom: compact ? 58 : 0,
+              bottom: shortViewport ? 32 : (compact ? 58 : 0),
               child: Align(
                 alignment:
                     compact ? Alignment.bottomLeft : Alignment.centerLeft,
