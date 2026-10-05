@@ -269,7 +269,7 @@ jobs:
 
       - name: Setup Supabase CLI
         if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
-        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3
         with:
           version: 2.84.2
 
