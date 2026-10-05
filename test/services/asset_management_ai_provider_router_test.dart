@@ -15,12 +15,14 @@ void main() {
           'openai',
           'google',
           'google_flash_lite',
+          'nebius',
         ]);
         expect(route.candidates.map((candidate) => candidate.modelId), [
           'claude-opus-4-7',
           'gpt-5',
           'gemini-3.1-pro',
           'gemini-2.5-flash-lite',
+          'meta-llama/Llama-3.3-70B-Instruct',
         ]);
         expect(route.providerChoiceReason, contains(useCase.id));
         expect(route.providerChoiceReason, contains('local-deterministic'));
@@ -36,9 +38,12 @@ void main() {
       );
 
       // 別プロバイダID=独立クールダウンで、上位 google がレート制限中でも応答できる。
-      expect(route.candidates.last.providerId, 'google_flash_lite');
-      expect(route.candidates.last.modelId, 'gemini-2.5-flash-lite');
+      expect(route.candidates.last.providerId, 'nebius');
       expect(route.candidates.last.tier, 'fallback');
+      expect(
+        route.candidates.map((c) => c.providerId),
+        contains('google_flash_lite'),
+      );
     });
 
     test('keeps explicit provider overrides auditable', () {
