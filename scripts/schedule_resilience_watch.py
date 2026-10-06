@@ -479,6 +479,8 @@ class GitHubClient:
         event: str,
         created_after: datetime,
     ) -> list[dict[str, Any]]:
+        if event == "push":
+            return self.latest_repository_push_runs(workflow_file, created_after)
         matches: list[dict[str, Any]] = []
         for page in range(1, REPOSITORY_RUNS_MAX_PAGES + 1):
             query = urlencode(
@@ -502,6 +504,94 @@ class GitHubClient:
             if len(page_runs) < REPOSITORY_RUNS_PER_PAGE:
                 return sort_runs_newest(matches)
         raise RepositoryPaginationIncomplete("Repository workflow runs pagination was incomplete")
+
+    def latest_repository_push_runs(
+        self, workflow_file: str, created_after: datetime,
+    ) -> list[dict[str, Any]]:
+        """Prove complete newest time slices, not the entire busy 30-day history."""
+        end = datetime.now(timezone.utc).replace(microsecond=0)
+        start = created_after.astimezone(timezone.utc).replace(microsecond=0)
+        requests_left = 40
+
+        def fetch(lower: datetime, upper: datetime) -> list[dict[str, Any]]:
+            nonlocal requests_left
+            matches: list[dict[str, Any]] = []
+            seen_ids: set[int] = set()
+            expected_count: int | None = None
+            for page in range(1, REPOSITORY_RUNS_MAX_PAGES + 1):
+                if requests_left <= 0:
+                    raise RepositoryPaginationIncomplete("Time-slice request budget exhausted")
+                requests_left -= 1
+                query = urlencode({
+                    "branch": "main", "event": "push",
+                    "created": f"{lower.isoformat()}..{upper.isoformat()}",
+                    "per_page": str(REPOSITORY_RUNS_PER_PAGE), "page": str(page),
+                })
+                payload = self.request("GET", f"/repos/{self.repo}/actions/runs?{query}")
+                runs = payload.get("workflow_runs") if isinstance(payload, dict) else None
+                count = payload.get("total_count") if isinstance(payload, dict) else None
+                if not isinstance(runs, list) or type(count) is not int or count < 0:
+                    raise RepositoryRunsInvalid("Invalid time-slice listing")
+                if count >= 1000:
+                    if (upper - lower).total_seconds() < 2:
+                        raise RepositoryPaginationIncomplete("Unsplittable saturated time slice")
+                    midpoint = lower + timedelta(seconds=int((upper - lower).total_seconds()) // 2)
+                    # Inclusive overlap preserves same-second runs; IDs deduplicate.
+                    newer = fetch(midpoint, upper)
+                    if newer:
+                        return newer
+                    return fetch(lower, midpoint)
+                if expected_count is None:
+                    expected_count = count
+                elif count != expected_count:
+                    raise RepositoryPaginationIncomplete("Time-slice count changed during pagination")
+                for item in runs:
+                    if not isinstance(item, dict):
+                        raise RepositoryRunsInvalid("Invalid run in time slice")
+                    timestamp = parse_time(str(item.get("created_at") or ""))
+                    if timestamp is None or not lower <= timestamp <= upper:
+                        raise RepositoryRunsInvalid("Run outside requested time slice")
+                    run_id = item.get("id")
+                    if type(run_id) is not int or run_id <= 0:
+                        raise RepositoryRunsInvalid("Invalid time-slice run ID")
+                    if run_id in seen_ids:
+                        raise RepositoryPaginationIncomplete("Duplicate run during time-slice pagination")
+                    seen_ids.add(run_id)
+                    if workflow_path_matches(item.get("path"), workflow_file):
+                        matches.append(item)
+                if len(runs) < REPOSITORY_RUNS_PER_PAGE:
+                    if len(seen_ids) != expected_count:
+                        raise RepositoryPaginationIncomplete("Truncated time-slice listing")
+                    return merge_runs(matches)
+            raise RepositoryPaginationIncomplete("Time-slice pagination incomplete")
+
+        while end >= start:
+            lower = max(start, end - timedelta(hours=24))
+            matches = fetch(lower, end)
+            if matches:
+                return matches
+            if lower == start:
+                break
+            end = lower
+        return []
+
+    def confirm_push_run(self, workflow_file: str, primary: dict[str, Any]) -> dict[str, Any]:
+        """Independently confirm an older primary, without losing newer failures."""
+        run_id = primary.get("id")
+        if type(run_id) is not int or run_id <= 0:
+            raise PrimaryLatestUnconfirmed("Invalid primary ID")
+        candidate = self.request("GET", f"/repos/{self.repo}/actions/runs/{run_id}")
+        if (
+            not isinstance(candidate, dict)
+            or candidate.get("id") != run_id
+            or candidate.get("event") != "push"
+            or candidate.get("head_branch") != "main"
+            or not workflow_path_matches(candidate.get("path"), workflow_file)
+            or candidate.get("created_at") != primary.get("created_at")
+            or candidate.get("head_sha") != primary.get("head_sha")
+        ):
+            raise PrimaryLatestUnconfirmed("Primary identity not confirmed")
+        return candidate
 
     def workflow_state(self, workflow_file: str) -> str:
         path = f"/repos/{self.repo}/actions/workflows/{quote(workflow_file)}"
@@ -706,6 +796,15 @@ def main(argv: list[str]) -> int:
                 event=target.event,
                 created_after=created_after,
             )
+            if target.event == "push" and primary_runs:
+                primary = sort_runs_newest(primary_runs)[0]
+                timestamp = parse_time(str(primary.get("created_at") or ""))
+                if timestamp is not None and timestamp >= created_after and not any(
+                    item.get("id") == primary.get("id") for item in repository_runs
+                ):
+                    repository_runs = merge_runs(
+                        repository_runs, [client.confirm_push_run(target.workflow_file, primary)]
+                    )
             runs = merge_revalidated_runs(
                 primary_runs,
                 repository_runs,
