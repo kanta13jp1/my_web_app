@@ -17,9 +17,11 @@ void main() {
     final row = workbook.debtMasterRows.firstWhere(
       (r) => r.name == 'ファミペイ',
     );
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: RevolvingExtraPaymentDialog(row: row)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: RevolvingExtraPaymentDialog(row: row)),
+      ),
+    );
     await tester.enterText(
       find.byKey(const Key('revolving_extra_payment_input')),
       '5000',
