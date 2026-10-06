@@ -44,19 +44,26 @@ class MainAccountBalanceWindow {
   const MainAccountBalanceWindow({
     required this.previousCycleEndBalance,
     required this.currentBalance,
+    this.peakBalanceInCycle,
   });
 
   final double? previousCycleEndBalance;
   final double? currentBalance;
 
-  /// 前サイクル末 → 現在 の残高増減。特定できない場合は null。
+  /// 現サイクル内に記録された残高の最大値。入金直後に残高を更新していれば、
+  /// その後の支出で現在残高が減っても給料反映を検知できる。記録が無ければ null。
+  final double? peakBalanceInCycle;
+
+  /// 前サイクル末 → 現サイクル内の最大残高(現在残高を含む) の増減。
+  /// 特定できない場合は null。
   double? get delta {
     final prev = previousCycleEndBalance;
     final cur = currentBalance;
     if (prev == null || cur == null) {
       return null;
     }
-    return cur - prev;
+    final peak = peakBalanceInCycle;
+    return (peak != null && peak > cur ? peak : cur) - prev;
   }
 
   static const MainAccountBalanceWindow unknown = MainAccountBalanceWindow(

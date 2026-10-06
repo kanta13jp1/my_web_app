@@ -188,5 +188,28 @@ void main() {
         isFalse,
       );
     });
+
+    test('peak balance in cycle detects salary after later spending', () {
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const [],
+        balances: const MainAccountBalanceWindow(
+          previousCycleEndBalance: 100000,
+          currentBalance: 150000,
+          peakBalanceInCycle: 500000,
+        ),
+        expectedSalaryAmount: 400000,
+      );
+      expect(result.signal, SalaryDepositSignal.balanceJump);
+      expect(result.matchedAmount, 400000);
+    });
+
+    test('peak below current balance does not shrink the delta', () {
+      const window = MainAccountBalanceWindow(
+        previousCycleEndBalance: 100000,
+        currentBalance: 500000,
+        peakBalanceInCycle: 300000,
+      );
+      expect(window.delta, 400000);
+    });
   });
 }

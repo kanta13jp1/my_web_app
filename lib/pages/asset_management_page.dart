@@ -10664,7 +10664,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         cycleStart,
       ),
       currentBalance: mainAccount.balance,
+      peakBalanceInCycle: _peakAccountBalanceSince(
+        mainAccount.name,
+        cycleStart,
+      ),
     );
+  }
+
+  /// `_assetData` から [since] 以降(当日含む)に記録された残高の最大値を返す。
+  /// 記録が無ければ null。
+  double? _peakAccountBalanceSince(String accountName, DateTime since) {
+    final sinceKey = _dateOnly(since);
+    double? peak;
+    for (final entry in _assetData.entries) {
+      final balance = entry.value[accountName];
+      if (balance == null || entry.key.compareTo(sinceKey) < 0) {
+        continue;
+      }
+      if (peak == null || balance > peak) {
+        peak = balance;
+      }
+    }
+    return peak;
   }
 
   /// メインバンク = メイン口座指定があればそれ、無ければ残高最大の非現金資産口座。
