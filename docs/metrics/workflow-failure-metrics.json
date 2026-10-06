@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-10-05T01:08:45.370673+00:00",
+  "generated_at": "2026-10-06T02:26:16.191012+00:00",
   "tracked_count": 200,
   "open_count": 0,
   "closed_count": 200,
   "recovered_count": 200,
-  "avg_recovery_hours": 15.39,
+  "avg_recovery_hours": 15.43,
   "categories": {
-    "deno-lint": 166,
+    "deno-lint": 165,
     "generic-ci": 10,
     "migration-collision": 2,
     "supabase-push": 2,
-    "unclassified": 20
+    "unclassified": 21
   }
 }
