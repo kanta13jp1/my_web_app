@@ -148,5 +148,45 @@ void main() {
       );
       expect(result.signal, SalaryDepositSignal.flowAmountMatch);
     });
+
+    test('paid payslip is detected without flows or balance (registered)', () {
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const [],
+        balances: MainAccountBalanceWindow.unknown,
+        expectedSalaryAmount: 400000,
+        paidPayslipAmounts: [416709],
+      );
+      expect(result.signal, SalaryDepositSignal.payslipPaid);
+      expect(result.confidence, SalaryDepositConfidence.medium);
+    });
+
+    test('payslip far from registered salary is not detected', () {
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const [],
+        balances: MainAccountBalanceWindow.unknown,
+        expectedSalaryAmount: 400000,
+        paidPayslipAmounts: [50000],
+      );
+      expect(result.detected, isFalse);
+    });
+
+    test('paid payslip uses heuristic floor when salary is unregistered', () {
+      expect(
+        AssetSalaryDepositDetector.detect(
+          cycleIncomeFlows: const [],
+          balances: MainAccountBalanceWindow.unknown,
+          paidPayslipAmounts: [416709],
+        ).signal,
+        SalaryDepositSignal.payslipPaid,
+      );
+      expect(
+        AssetSalaryDepositDetector.detect(
+          cycleIncomeFlows: const [],
+          balances: MainAccountBalanceWindow.unknown,
+          paidPayslipAmounts: [99999],
+        ).detected,
+        isFalse,
+      );
+    });
   });
 }

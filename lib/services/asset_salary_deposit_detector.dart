@@ -20,6 +20,7 @@ enum SalaryDepositSignal {
   balanceJump,
   heuristicFlow,
   heuristicBalance,
+  payslipPaid,
 }
 
 /// サイクル窓内の収入フロー1件(金額は正の円、発生日時はローカル)。
@@ -99,6 +100,9 @@ class AssetSalaryDepositDetector {
   ///   - (C2) 残高が [heuristicFloor] 以上 **増加** → medium (heuristicBalance)
   /// - いずれも該当しなければ none(=未検知)。
   ///
+  /// - (D) 支給日を迎えた現サイクルの給与明細 → medium (payslipPaid)
+  ///   ([paidPayslipAmounts] は呼び出し側が pay_date <= 今日 で絞る)。
+  ///
   /// 残高の **減少** は給料振込のシグナルにならない(正の増分のみ採用)。
   /// 登録給料額がある場合は誤検知(部分入金などでの早すぎるリセット)を避けるため
   /// ヒューリスティックは使わない。取りこぼしは手動 override で救済する。
@@ -108,6 +112,7 @@ class AssetSalaryDepositDetector {
     double? expectedSalaryAmount,
     double amountTolerance = 0.15,
     double heuristicFloor = 100000,
+    List<double> paidPayslipAmounts = const [],
   }) {
     final hasExpected =
         expectedSalaryAmount != null && expectedSalaryAmount > 0;
@@ -133,6 +138,16 @@ class AssetSalaryDepositDetector {
           matchedAmount: delta,
         );
       }
+      // (D) 支給日を迎えた現サイクルの給与明細。口座残高を更新していなくても検知する。
+      for (final amount in paidPayslipAmounts) {
+        if (amount > 0 && (amount - expected).abs() <= tolerance) {
+          return SalaryDepositDetection(
+            confidence: SalaryDepositConfidence.medium,
+            signal: SalaryDepositSignal.payslipPaid,
+            matchedAmount: amount,
+          );
+        }
+      }
       return SalaryDepositDetection.none;
     }
 
@@ -153,6 +168,15 @@ class AssetSalaryDepositDetector {
         signal: SalaryDepositSignal.heuristicBalance,
         matchedAmount: delta,
       );
+    }
+    for (final amount in paidPayslipAmounts) {
+      if (amount >= heuristicFloor) {
+        return SalaryDepositDetection(
+          confidence: SalaryDepositConfidence.medium,
+          signal: SalaryDepositSignal.payslipPaid,
+          matchedAmount: amount,
+        );
+      }
     }
     return SalaryDepositDetection.none;
   }
