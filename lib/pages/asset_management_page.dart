@@ -24293,6 +24293,40 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ),
           if (violation.type ==
+              AssetDebtDisciplineViolationType.newBorrowing) ...[
+            const SizedBox(height: 6),
+            Container(
+              key: Key('asset_discipline_stop_usage_${violation.accountId}'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.lock_outline, color: Color(0xFFB91C1C), size: 16),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'このカードローンの利用停止を検討してください。'
+                      'カード会社の公式アプリの利用停止・ロック機能、または窓口で相談できます'
+                      '(連絡先はカード裏面か公式サイトで確認)。'
+                      '残高差分は推定のため、取引明細で新規借入かを確認した上で判断してください。',
+                      style: TextStyle(
+                        color: Color(0xFF7F1D1D),
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (violation.type ==
               AssetDebtDisciplineViolationType.revolvingCard) ...[
             const SizedBox(height: 6),
             Container(
