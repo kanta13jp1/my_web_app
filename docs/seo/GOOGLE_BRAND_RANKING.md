@@ -636,3 +636,35 @@ session-start-checkとadaptive-model-routerを適用しlead継続。空きディ
 追跡2文書のみ既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)へ追記。全JSONL、日付重複防止、1〜9連番、対象URL参照と3位、同じ参照URL集合を検証。docs-onlyにつきFlutter test/analyze/release build、新規生成HTMLと対象Flutter起動後描画は未実施。PR CIは別途確認。rollbackは当日追記コミットのrevert。自動マージ・デプロイなし。
 
 session-start-checkとadaptive-model-routerを適用、リソース制約でlead継続。ディスク23.28 GiBでcloud-required、元ツリーは別作業branchで5 dirty paths、変更せずremote-only。新規worktree/worker/重いtoolchainなし。ルールdriftなし、tool watchの既存#1422等を参照。検索タブ閉鎖。次回は同条件の順位・title・サイト名、必要に応じ基本理念の掲載を確認。順位1位は保証しない。
+
+## 2026-10-07 日次監視：対象は確認範囲内で未検出
+
+08:57 JST頃から実アプリ内ブラウザ、検索語 `自分株式会社`、hl=ja/gl=jp/pws=0、未ログイン、府中市東京都（IP由来）、CAPTCHAなし。昨日18:23頃との時刻差あり。1〜10ページ（start=0〜90、延べ99結果）で対象未検出。ただしページ間重複があり、100固有結果の確認ではないため「確認範囲外」とする。昨日3位との差幅や原因、100位圏外を断定しない。
+
+広告・強調スニペットなし。AI概要本文とmoto note・新R25・IFAの可視参照ラベル、PAA、関連検索、Amazon価格評価、サイトリンクあり。対象title/snippet/サイト名は本日取得できず。日次観測1回のみ。
+
+|順位|タイトル|参照URL / ドメイン|種別|主な意図|
+|---:|---|---|---|---|
+|1|「自分株式会社」という考え方と、この考え方を活用するために ...|[note.com](https://note.com/famous_knot742/n/n0c1a89bc7c77)|個人ブログ記事|概念の定義、参考情報、実践方法を知る|
+|2|サラリーマンこそ自分株式会社をつくりなさい――1000万円 ...|[amazon.co.jp](https://www.amazon.co.jp/dp/4478067449)|書籍商品ページ|内容、著者、評価、購入条件を確認する|
+|3|“自分株式会社”という考え方|[ifa-japan.co.jp](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)|専門家ブログ記事|人的資本・資産形成として理解する|
+|4|会社に依存しない「自分株式会社」の考え方｜moto（戸塚俊介）|[note.com](https://note.com/recruit_man_note/n/n1032c32fbc36)|著者ブログ記事|会社に依存しないキャリア設計と収支管理を学ぶ|
+|5|わたしブランド～自分株式会社を設立してみよう|[akikofujisaki.com](https://akikofujisaki.com/selfpromotion/)|専門家ブログ記事|自己ブランディングへ応用する|
+|6|NewsPicks [ニューズピックス]|[x.com](https://x.com/newspicks/status/1449692163042856961)|SNS投稿|著名人の発言と反応を見る|
+|7|「自分株式会社」を経営せよ。副業年収4000万円のmotoが ...|[r25.jp](https://r25.jp/articles/928885293145522178)|編集部記事・書籍抜粋|キャリアと副業の具体例を読む|
+|8|なぜ自分の会社をつくるのか？人生を楽しく生きるための2つの ...|[diamond.jp](https://diamond.jp/articles/-/78525?page=3)|解説記事|起業・人生設計の理解|
+|9|「自分株式会社」で棚卸ししてみる|[nokogiri-blog.com](https://nokogiri-blog.com/)|個人ブログ|自己棚卸しの実践|
+
+当日hrefは不透明な/gotoで遷移先未確定。表は過去の参照URL、Diamondは参照候補、nokogiriは確認済みドメインのrootで記事URLではない。JSONLでurl=nullとreference_urlを分離。対象・LMIが1ページ目から外れ、Diamond・nokogiriが入った。みおつくし4→1、Amazon5→2、IFA2→3、moto1→4、藤崎9→5、X8→6、R25は7。厳密な当日URL差分ではない。
+
+### 分析と変更判断
+
+上位のみおつくしnoteは経験、定義、マインド比較、価値・価格、実践と参考資料の構造、著者・日付・プロフィール導線を確認。IFAは人的資本と長期自己経営、書籍・会社・業務方針導線。対象基本理念には定義、P/L・B/S、人的資本、6部署、30日運用、架空例、FAQと編集方針が既存。本文はキャッシュを含む。文章・画像は転用しない。順位変動の原因や新たな不足テーマを特定できず、アプリ改修なし。
+
+上位note・IFA・対象home/philosophyのHTTP初期HTMLを当日取得しtitle/H1/canonical/内部リンク数/JSON-LDを解析、取得結果と失敗はJSONLに保存。初期HTML解析はFlutter起動後のブラウザ描画検証ではない。
+
+### 検証・PR・次回
+
+追跡2文書のみ既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)へ追記。全行JSON、日付重複防止、1〜9連番、対象rank=nullと過去値残存防止を検証。docs-onlyにつきFlutter test/analyze/release build、新規生成HTML、対象Flutter起動後描画は未実施。PR CIは別途報告、成功とは扱わない。rollbackは当日追記コミットのrevert。自動マージ・本番デプロイなし。
+
+session-start-check・adaptive-model-router適用。ディスク24.35 GiBでcloud-requiredのためlead継続、元作業ツリーは変更せずremote-only、新規worktree/worker/重いtoolchainなし。ルールdriftなし、tool watchは既存#1422等への対応候補を提示。次回は同じ可視条件で再観測し、対象の再出現とページ間重複を確認。Search Console情報は未確認、インデックス削除や施策因果関係を推測しない。順位1位は保証しない。
