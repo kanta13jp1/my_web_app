@@ -26,7 +26,9 @@ void main() {
             baseDate: baseDate,
             salaryDay: salaryDay,
             paymentDayOverrides: const <String, int>{'Custom Card': 31},
-            monthlyPaymentOverrides: const <String, double>{'Custom Card': 1000},
+            monthlyPaymentOverrides: const <String, double>{
+              'Custom Card': 1000
+            },
           );
           final debt = workbook.currentDebtRows.singleWhere(
             (row) => row.name == 'Custom Card',
@@ -42,9 +44,10 @@ void main() {
               '${date.month.toString().padLeft(2, '0')}/'
               '${date.day.toString().padLeft(2, '0')}';
           final detail = prompt.split('\n').singleWhere(
-            (line) => line.startsWith('- Custom Card / 種別:') &&
-                line.contains('今月支払予定日:'),
-          );
+                (line) =>
+                    line.startsWith('- Custom Card / 種別:') &&
+                    line.contains('今月支払予定日:'),
+              );
           expect(detail, contains('今月支払予定日:$formatted'));
           for (final action in report.actionItems.where(
             (item) => item.relatedAccountId == debt.id && item.dueDate != null,
@@ -66,7 +69,8 @@ void main() {
       );
       final report = service.buildReport(workbook: workbook);
       final warning = report.actionItems.singleWhere(
-        (item) => item.type == AssetManagementInsightActionType.debtSpiralWarning,
+        (item) =>
+            item.type == AssetManagementInsightActionType.debtSpiralWarning,
       );
       // 15% APR, monthly compounding, no new borrowing: 81 payments.
       expect(warning.description, contains('約81ヶ月'));
