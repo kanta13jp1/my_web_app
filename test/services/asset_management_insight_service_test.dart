@@ -10,6 +10,51 @@ void main() {
     const service = AssetManagementInsightService();
     const planner = AssetLiabilityPlanningService();
 
+    test('advice dates match the cashflow salary cycle across boundaries', () {
+      for (final baseDate in <DateTime>[
+        DateTime(2026, 10, 8),
+        DateTime(2026, 10, 25),
+        DateTime(2027, 1, 8),
+        DateTime(2026, 2, 26),
+      ]) {
+        for (final salaryDay in <int?>[null, 25]) {
+          final workbook = planner.buildWorkbook(
+            latestSnapshot: const <String, double>{
+              'bank': 50000,
+              'Custom Card': -10000,
+            },
+            baseDate: baseDate,
+            salaryDay: salaryDay,
+            paymentDayOverrides: const <String, int>{'Custom Card': 31},
+            monthlyPaymentOverrides: const <String, double>{'Custom Card': 1000},
+          );
+          final debt = workbook.currentDebtRows.singleWhere(
+            (row) => row.name == 'Custom Card',
+          );
+          final payment = workbook.cashflowRows.singleWhere(
+            (row) => row.isPayment && row.accountId == debt.id,
+          );
+          final report = service.buildReport(workbook: workbook);
+          final prompt = const AssetManagementInsightPromptBuilder()
+              .buildDetailedAdvicePrompt(report);
+          final date = payment.paymentDate;
+          final formatted = '${date.year}/'
+              '${date.month.toString().padLeft(2, '0')}/'
+              '${date.day.toString().padLeft(2, '0')}';
+          final detail = prompt.split('\n').singleWhere(
+            (line) => line.startsWith('- Custom Card / 種別:') &&
+                line.contains('今月支払予定日:'),
+          );
+          expect(detail, contains('今月支払予定日:$formatted'));
+          for (final action in report.actionItems.where(
+            (item) => item.relatedAccountId == debt.id && item.dueDate != null,
+          )) {
+            expect(action.dueDate, date);
+          }
+        }
+      }
+    });
+
     test('does not present inferred discipline results as facts', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000},

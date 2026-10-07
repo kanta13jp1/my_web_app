@@ -8,6 +8,21 @@ import 'asset_debt_trend_analyzer.dart';
 import 'asset_management_available_money.dart';
 import 'asset_triage_guide_service.dart';
 
+// Use the planner's resolved salary-cycle date throughout advice and prompts.
+// Rows omitted from cashflow (for example card-billed items) have no independent
+// payment date; inventing a calendar-month date can imply another payment.
+DateTime? _workbookPaymentDateFor(
+  AssetLiabilityDebtRow debt,
+  AssetLiabilityWorkbook workbook,
+) {
+  for (final event in workbook.cashflowRows) {
+    if (event.isPayment && event.accountId == debt.id) {
+      return event.paymentDate;
+    }
+  }
+  return null;
+}
+
 enum AssetManagementInsightActionType {
   missingInput,
   missingPaymentDay,
@@ -463,7 +478,7 @@ class AssetManagementInsightService {
             title: '${row.name}の今月支払予定額を確認',
             description: '実請求額が未入力のため、推定最低支払額で資金繰りに入っています。',
             relatedAccountId: row.id,
-            dueDate: _paymentDateFor(row, workbook.baseDate),
+            dueDate: _workbookPaymentDateFor(row, workbook),
             paymentDay: row.paymentDay,
             suggestedAction: '請求確定後に今月支払予定額を入力してください。',
           ),
@@ -491,7 +506,7 @@ class AssetManagementInsightService {
             title: '${row.name}の利率を確認',
             description: 'カードローン・カード系の金利が未入力のため、返済優先度の判断精度が落ちます。',
             relatedAccountId: row.id,
-            dueDate: _paymentDateFor(row, workbook.baseDate),
+            dueDate: _workbookPaymentDateFor(row, workbook),
             paymentDay: row.paymentDay,
             suggestedAction: '契約中の年利を確認し、負債マスタへ入力してください。',
           ),
@@ -518,7 +533,7 @@ class AssetManagementInsightService {
                 '今月予定${_formatYen(row.scheduledPaymentAmount)}が'
                 'どの口座の見込み残高からも差し引かれず、残高不足を先読みできない状態です。',
             relatedAccountId: row.id,
-            dueDate: _paymentDateFor(row, workbook.baseDate),
+            dueDate: _workbookPaymentDateFor(row, workbook),
             paymentDay: row.paymentDay,
             suggestedAction: candidate == null
                 ? '残高のある現金・預金口座が見つかりません。入金後に'
@@ -605,7 +620,7 @@ class AssetManagementInsightService {
               title: title,
               description: description,
               relatedAccountId: row.id,
-              dueDate: _paymentDateFor(row, workbook.baseDate),
+              dueDate: _workbookPaymentDateFor(row, workbook),
               paymentDay: row.paymentDay,
               suggestedAction: suggestedAction,
             ),
@@ -1418,13 +1433,6 @@ class AssetManagementInsightService {
     };
   }
 
-  DateTime? _paymentDateFor(AssetLiabilityDebtRow row, DateTime baseDate) {
-    if (row.paymentDay == null) {
-      return null;
-    }
-    return _paymentDateFromDay(baseDate, row.paymentDay!);
-  }
-
   DateTime _paymentDateFromDay(DateTime baseDate, int day) {
     final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
     return DateTime(baseDate.year, baseDate.month, day.clamp(1, lastDay));
@@ -1814,7 +1822,7 @@ class AssetManagementInsightPromptBuilder {
         '- ${row.name} / 種別:${row.kind.name} / 残高:${_formatAmount(row.balance)} / '
         '負債割合:${_formatPercent(row.liabilityShare)} / '
         '支払日:${row.paymentDay?.toString() ?? '未設定'} / '
-        '今月支払予定日:${_formatNullableDate(_paymentDateFor(row, workbook.baseDate))} / '
+        '今月支払予定日:${_formatNullableDate(_workbookPaymentDateFor(row, workbook))} / '
         '推定最低支払額:${_formatAmount(row.minimumPaymentEstimate)} / '
         '今月支払予定額:${_formatAmount(row.scheduledPaymentAmount)} / '
         '実支払額:${row.actualPaymentAmount == null ? '未入力' : _formatAmount(row.actualPaymentAmount!)} / '
@@ -2298,13 +2306,5 @@ class AssetManagementInsightPromptBuilder {
     return _formatPercent(value);
   }
 
-  DateTime? _paymentDateFor(AssetLiabilityDebtRow row, DateTime baseDate) {
-    if (row.paymentDay == null) return null;
-    final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
-    return DateTime(
-      baseDate.year,
-      baseDate.month,
-      row.paymentDay!.clamp(1, lastDay),
-    );
-  }
+
 }
