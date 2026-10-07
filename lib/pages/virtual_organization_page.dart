@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/models/virtual_org_agent.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 /// 仮想AI組織マネージャー
-/// 12部署20エージェントの仮想組織を管理する。
-/// virtual-organization Edge Function と連携。
+/// 部署ごとに自分のAIエージェントを登録・一覧する。
+/// `ai-hub` の `org.get` / `agent.create` と連携。
 class VirtualOrganizationPage extends StatefulWidget {
   const VirtualOrganizationPage({super.key});
 
@@ -16,8 +17,11 @@ class VirtualOrganizationPage extends StatefulWidget {
 class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
     with SingleTickerProviderStateMixin, TabRouteUrlSync {
   @override
-  List<String> get tabUrlSlugs =>
-      const <String>['departments', 'agents', 'tasks'];
+  List<String> get tabUrlSlugs => const <String>[
+    'departments',
+    'agents',
+    'tasks',
+  ];
 
   @override
   TabController get tabUrlController => _tabController;
@@ -26,11 +30,10 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
   late final TabController _tabController;
 
   bool _isLoading = false;
+  bool _isSaving = false;
   String? _errorMessage;
 
-  List<Map<String, dynamic>> _departments = [];
-  List<Map<String, dynamic>> _agents = [];
-  final List<Map<String, dynamic>> _tasks = [];
+  VirtualOrganization _organization = VirtualOrganization.empty;
 
   @override
   void initState() {
@@ -59,23 +62,9 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         'ai-hub',
         body: {'action': 'org.get'},
       );
-
-      final orgData = orgRes.data;
+      if (!mounted) return;
       setState(() {
-        if (orgData is Map<String, dynamic>) {
-          final org = orgData['org'] as Map<String, dynamic>? ?? {};
-          final deptList = org['departments'];
-          if (deptList is List) {
-            _departments = deptList.map((d) {
-              if (d is Map<String, dynamic>) return d;
-              return <String, dynamic>{'name': d.toString()};
-            }).toList();
-          }
-          final agentList = org['agents'];
-          if (agentList is List) {
-            _agents = agentList.map((a) => a as Map<String, dynamic>).toList();
-          }
-        }
+        _organization = VirtualOrganization.fromResponse(orgRes.data);
       });
     } catch (e) {
       if (!mounted) return;
@@ -85,46 +74,38 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
     }
   }
 
-  Future<void> _assignTask(String goal) async {
-    // org.assign action は未実装 (org.get のみ利用可能)
-    // タスク割り振り機能は今後追加予定
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('タスク割り振り機能は準備中です')),
+  Future<void> _createAgent(VirtualOrgAgentDraft draft) async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _supabase.functions.invoke('ai-hub', body: draft.toRequestBody());
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('${draft.name.trim()} を登録しました')),
       );
+      await _fetchOrganization();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('登録に失敗しました: $e')));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  void _showAssignTaskDialog() {
-    final controller = TextEditingController();
-    showDialog<void>(
+  Future<void> _showAddAgentDialog() async {
+    if (_supabase.auth.currentUser == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('エージェントの登録にはログインが必要です')));
+      return;
+    }
+    final draft = await showDialog<VirtualOrgAgentDraft>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('タスクをAIに割り振る'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: '例: ユーザー獲得施策を考えて実行する',
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final goal = controller.text.trim();
-              Navigator.pop(ctx);
-              if (goal.isNotEmpty) _assignTask(goal);
-            },
-            child: const Text('割り振る'),
-          ),
-        ],
-      ),
+      builder: (_) =>
+          VirtualOrgAgentDialog(departments: _organization.departments),
     );
+    if (draft != null) await _createAgent(draft);
   }
 
   @override
@@ -148,22 +129,22 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAssignTaskDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('タスク割振り'),
+        onPressed: _isSaving ? null : _showAddAgentDialog,
+        icon: const Icon(Icons.person_add_alt_1),
+        label: const Text('エージェント追加'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? _buildError()
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildDepartmentsTab(),
-                    _buildAgentsTab(),
-                    _buildTasksTab(),
-                  ],
-                ),
+          ? _buildError()
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildDepartmentsTab(),
+                _buildAgentsTab(),
+                _buildTasksTab(),
+              ],
+            ),
     );
   }
 
@@ -186,48 +167,33 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
   }
 
   Widget _buildDepartmentsTab() {
-    if (_departments.isEmpty) {
+    final departments = _organization.departments;
+    if (departments.isEmpty) {
       return const Center(
         child: Text(
-          '部署がまだありません\n仮想組織を初期化してください',
+          '部署を取得できませんでした\n右上の更新ボタンで再読み込みしてください',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFF9CA3AF),
-            height: 1.5,
-          ),
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
         ),
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: _departments.length,
+      itemCount: departments.length,
       itemBuilder: (ctx, i) {
-        final d = _departments[i];
-        final icon = d['icon'] as String? ?? '🏢';
-        final name = d['name'] as String? ?? '';
-        final desc = d['description'] as String? ?? '';
-        final agentCount = d['agentCount'] as int? ?? 0;
+        final name = departments[i];
+        final agentCount = _organization.agentCountOf(name);
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: Text(
-                icon,
-                style: const TextStyle(
-                  fontSize: 20,
-                  height: 1.5,
-                ),
-              ),
+              child: const Icon(Icons.apartment),
             ),
             title: Text(
               name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
-            subtitle: Text(desc),
             trailing: Chip(
               label: Text('$agentCount 人'),
               backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
@@ -239,27 +205,34 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
   }
 
   Widget _buildAgentsTab() {
-    if (_agents.isEmpty) {
-      return const Center(
-        child: Text(
-          'エージェントがいません',
-          style: TextStyle(
-            color: Color(0xFF9CA3AF),
-            height: 1.5,
-          ),
+    final agents = _organization.agents;
+    if (agents.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.smart_toy, size: 48, color: Color(0xFF9CA3AF)),
+            const SizedBox(height: 12),
+            const Text(
+              'エージェントがいません',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _isSaving ? null : _showAddAgentDialog,
+              icon: const Icon(Icons.person_add_alt_1),
+              label: const Text('最初のエージェントを登録する'),
+            ),
+          ],
         ),
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: _agents.length,
+      itemCount: agents.length,
       itemBuilder: (ctx, i) {
-        final a = _agents[i];
-        final name = a['name'] as String? ?? 'Agent ${i + 1}';
-        final role = a['role'] as String? ?? '';
-        final dept = a['department'] as String? ?? '';
-        final personality = a['personality'] as String? ?? '';
-        final status = a['status'] as String? ?? 'idle';
+        final a = agents[i];
+        final status = a.status.isEmpty ? 'idle' : a.status;
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
@@ -267,14 +240,14 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
               backgroundColor: _statusColor(status).withValues(alpha: 0.2),
               child: Icon(Icons.smart_toy, color: _statusColor(status)),
             ),
-            title: Text(name),
+            title: Text(a.name.isEmpty ? '(名前未設定)' : a.name),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$dept • $role'),
-                if (personality.isNotEmpty)
+                if (a.affiliationLabel.isNotEmpty) Text(a.affiliationLabel),
+                if (a.personality.isNotEmpty)
                   Text(
-                    personality,
+                    a.personality,
                     style: const TextStyle(
                       fontSize: 11,
                       color: Color(0xFF9CA3AF),
@@ -284,79 +257,39 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
               ],
             ),
             trailing: _statusChip(status),
-            isThreeLine: personality.isNotEmpty,
+            isThreeLine: a.personality.isNotEmpty,
           ),
         );
       },
     );
   }
 
+  /// タスクの自動実行はサーバー側に実行系が無い (`agent.run` は記録を
+  /// 積むだけで、読み出す処理も実行する処理も存在しない)。入力を受けて
+  /// 捨てる UI は置かず、未提供であることをそのまま伝える。
   Widget _buildTasksTab() {
-    if (_tasks.isEmpty) {
-      return Center(
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.assignment, size: 48, color: Color(0xFF9CA3AF)),
-            const SizedBox(height: 12),
-            const Text(
-              'タスクがありません',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
+            Icon(Icons.assignment, size: 48, color: Color(0xFF9CA3AF)),
+            SizedBox(height: 12),
+            Text(
+              'タスクの自動割り振りは未提供です',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _showAssignTaskDialog,
-              icon: const Icon(Icons.add),
-              label: const Text('最初のタスクを割り振る'),
+            SizedBox(height: 8),
+            Text(
+              'エージェントにタスクを実行させる仕組みはまだありません。\n'
+              '現在は「エージェント」タブで組織の構成を登録・確認できます。',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ],
         ),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: _tasks.length,
-      itemBuilder: (ctx, i) {
-        final t = _tasks[i];
-        final goal = t['goal'] as String? ?? '';
-        final dept = t['department'] as String? ?? '';
-        final status = t['status'] as String? ?? 'pending';
-        final assignedTo = t['assignedTo'] as String? ?? '';
-        final createdAt = t['createdAt'] as String? ?? '';
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: Icon(
-              _taskStatusIcon(status),
-              color: _statusColor(status),
-            ),
-            title: Text(goal),
-            subtitle: Text(
-              '$dept${assignedTo.isNotEmpty ? " → $assignedTo" : ""}',
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _statusChip(status),
-                if (createdAt.length >= 10)
-                  Text(
-                    createdAt.substring(0, 10),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF9CA3AF),
-                      height: 1.5,
-                    ),
-                  ),
-              ],
-            ),
-            isThreeLine: false,
-          ),
-        );
-      },
+      ),
     );
   }
 
@@ -392,30 +325,135 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
     return Chip(
       label: Text(
         labels[status] ?? status,
-        style: const TextStyle(
-          fontSize: 11,
-          height: 1.5,
-        ),
+        style: const TextStyle(fontSize: 11, height: 1.5),
       ),
       backgroundColor: _statusColor(status).withValues(alpha: 0.15),
       side: BorderSide(color: _statusColor(status).withValues(alpha: 0.4)),
       padding: EdgeInsets.zero,
     );
   }
+}
 
-  IconData _taskStatusIcon(String status) {
-    switch (status) {
-      case 'completed':
-      case 'done':
-        return Icons.check_circle;
-      case 'in_progress':
-      case 'running':
-        return Icons.play_circle;
-      case 'error':
-      case 'failed':
-        return Icons.error;
-      default:
-        return Icons.radio_button_unchecked;
+/// エージェント登録ダイアログ。検証を通った [VirtualOrgAgentDraft] を返す。
+class VirtualOrgAgentDialog extends StatefulWidget {
+  const VirtualOrgAgentDialog({super.key, required this.departments});
+
+  final List<String> departments;
+
+  @override
+  State<VirtualOrgAgentDialog> createState() => _VirtualOrgAgentDialogState();
+}
+
+class _VirtualOrgAgentDialogState extends State<VirtualOrgAgentDialog> {
+  final _nameController = TextEditingController();
+  final _roleController = TextEditingController();
+  final _personalityController = TextEditingController();
+  String? _department;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.departments.isNotEmpty) _department = widget.departments.first;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _roleController.dispose();
+    _personalityController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final draft = VirtualOrgAgentDraft(
+      name: _nameController.text,
+      department: _department ?? '',
+      role: _roleController.text,
+      personality: _personalityController.text,
+    );
+    final error = draft.validate();
+    if (error != null) {
+      setState(() => _error = error);
+      return;
     }
+    Navigator.pop(context, draft);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('エージェントを登録'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'エージェント名 *',
+                hintText: '例: マーケ担当AI',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _department,
+              decoration: const InputDecoration(
+                labelText: '部署 *',
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                for (final d in widget.departments)
+                  DropdownMenuItem(value: d, child: Text(d)),
+              ],
+              onChanged: (v) => setState(() => _department = v),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _roleController,
+              decoration: const InputDecoration(
+                labelText: '役割',
+                hintText: '例: SNS投稿の下書き',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _personalityController,
+              decoration: const InputDecoration(
+                labelText: '性格メモ',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '組織構成の記録です。登録したエージェントが自動でタスクを実行することはありません。',
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: const TextStyle(color: Color(0xFFE53935), height: 1.5),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('登録')),
+      ],
+    );
   }
 }
