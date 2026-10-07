@@ -26,9 +26,6 @@ void main() {
             baseDate: baseDate,
             salaryDay: salaryDay,
             paymentDayOverrides: const <String, int>{'Custom Card': 31},
-            monthlyPaymentOverrides: const <String, double>{
-              'Custom Card': 1000
-            },
           );
           final debt = workbook.currentDebtRows.singleWhere(
             (row) => row.name == 'Custom Card',
