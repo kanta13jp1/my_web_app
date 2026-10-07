@@ -3,10 +3,10 @@ import 'package:my_web_app/models/virtual_org_agent.dart';
 
 /// `ai-hub` の `org.get` が返す hub_data 行 (nested metadata) を模す。
 Map<String, dynamic> row(Map<String, dynamic> metadata, {String id = 'a1'}) => {
-  'id': id,
-  'created_at': '2026-10-07T00:00:00Z',
-  'metadata': {'user_id': 'u1', ...metadata},
-};
+      'id': id,
+      'created_at': '2026-10-07T00:00:00Z',
+      'metadata': {'user_id': 'u1', ...metadata},
+    };
 
 void main() {
   group('VirtualOrganization.fromResponse', () {

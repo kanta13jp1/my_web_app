@@ -18,10 +18,10 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
     with SingleTickerProviderStateMixin, TabRouteUrlSync {
   @override
   List<String> get tabUrlSlugs => const <String>[
-    'departments',
-    'agents',
-    'tasks',
-  ];
+        'departments',
+        'agents',
+        'tasks',
+      ];
 
   @override
   TabController get tabUrlController => _tabController;
@@ -136,15 +136,15 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-          ? _buildError()
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildDepartmentsTab(),
-                _buildAgentsTab(),
-                _buildTasksTab(),
-              ],
-            ),
+              ? _buildError()
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildDepartmentsTab(),
+                    _buildAgentsTab(),
+                    _buildTasksTab(),
+                  ],
+                ),
     );
   }
 
