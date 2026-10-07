@@ -50,6 +50,7 @@ import 'package:my_web_app/services/asset_account_balance_history_store.dart';
 import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
 import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
+import 'package:my_web_app/widgets/revolving_extra_payment_dialog.dart';
 import 'package:my_web_app/services/asset_advisory_briefing_service.dart';
 import 'package:my_web_app/services/advisory_briefing_share_service.dart';
 import 'package:my_web_app/services/household_tracker_share_service.dart';
@@ -30455,6 +30456,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               label: _revolvingPayoffChipLabel(row),
                               color: const Color(0xFFD97706),
                             ),
+                          ),
+                        if (row.isRevolving)
+                          TextButton.icon(
+                            key: Key('asset_revolving_simulate_${row.id}'),
+                            onPressed: () =>
+                                RevolvingExtraPaymentDialog.show(context, row),
+                            icon:
+                                const Icon(Icons.calculate_outlined, size: 16),
+                            label: const Text('返済シミュレーション'),
                           ),
                       ],
                     ),
