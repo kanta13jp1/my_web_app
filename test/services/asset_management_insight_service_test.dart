@@ -55,6 +55,24 @@ void main() {
       }
     });
 
+    test('repayment simulation uses fractional annual rates', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'auPAYカード': -505608,
+        },
+        baseDate: DateTime(2026, 10, 8),
+        monthlyPaymentOverrides: const <String, double>{'auPAYカード': 10000},
+      );
+      final report = service.buildReport(workbook: workbook);
+      final warning = report.actionItems.singleWhere(
+        (item) => item.type == AssetManagementInsightActionType.debtSpiralWarning,
+      );
+      // 15% APR, monthly compounding, no new borrowing: 81 payments.
+      expect(warning.description, contains('約81ヶ月'));
+      expect(warning.suggestedAction, contains('24ヶ月完済目標額24,516円'));
+    });
+
     test('does not present inferred discipline results as facts', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000},
@@ -967,7 +985,7 @@ void main() {
         billingAccountId: null,
         billingAccountName: null,
         includedInBillingAccount: false,
-        annualRate: 14.5,
+        annualRate: 0.145,
         minimumPaymentEstimate: 15000,
         manualPaymentAmount: 0,
         scheduledPaymentAmount: 0,
@@ -997,7 +1015,7 @@ void main() {
         billingAccountId: null,
         billingAccountName: null,
         includedInBillingAccount: false,
-        annualRate: 15.0,
+        annualRate: 0.15,
         minimumPaymentEstimate: 10000,
         manualPaymentAmount: 10000,
         scheduledPaymentAmount: 10000,
@@ -1027,7 +1045,7 @@ void main() {
         billingAccountId: null,
         billingAccountName: null,
         includedInBillingAccount: false,
-        annualRate: 1.0,
+        annualRate: 0.01,
         minimumPaymentEstimate: 10000,
         manualPaymentAmount: 10000,
         scheduledPaymentAmount: 10000,

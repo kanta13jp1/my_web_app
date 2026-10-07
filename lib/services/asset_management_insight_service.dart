@@ -551,7 +551,7 @@ class AssetManagementInsightService {
           row.annualRate > 0 &&
           row.monthlyInterestEstimate > 0) {
         final balance = row.balance.abs();
-        final monthlyRate = (row.annualRate / 100.0) / 12.0;
+        final monthlyRate = row.annualRate / 12.0;
         final isZeroPrincipal = row.scheduledPaymentAmount <= 0 ||
             row.principalPaymentEstimate <= 0;
         final isInterestExceedsPrincipal =
@@ -2305,6 +2305,4 @@ class AssetManagementInsightPromptBuilder {
   String _formatRate(double value) {
     return _formatPercent(value);
   }
-
-
 }
