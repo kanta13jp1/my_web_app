@@ -45,8 +45,9 @@ void main({Future<void> Function(String name)? capture}) {
       endpoint: 'http://127.0.0.1:8081/v1/systemone',
       httpClient: MockClient((request) async {
         calls++;
-        final categories = JevInstantClassifierService.defaultCategories;
-        return http.Response(jsonEncode({
+        const categories = JevInstantClassifierService.defaultCategories;
+        return http.Response(
+          jsonEncode({
           'answers': {
             'classification': {
               'type': 'choice',
@@ -58,7 +59,9 @@ void main({Future<void> Function(String name)? capture}) {
               },
             },
           },
-        }), 200);
+          }),
+          200,
+        );
       }),
     );
     addTearDown(client.dispose);
