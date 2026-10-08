@@ -502,6 +502,10 @@ jobs:
         run: flutter test --platform chrome test/web_import_smoke_test.dart
         continue-on-error: false
 
+      - name: Run Inbox list browser widget regressions
+        if: steps.changes.outputs.flutter == 'true'
+        run: flutter test --platform chrome test/pages/note_list_page_test.dart
+
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
       - name: Build web (production)
         id: web_build

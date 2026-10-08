@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/inbox_capture_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class _FakeSupabaseClient extends Fake implements SupabaseClient {}
 
 void main() {
   group('Inbox capture payload', () {
@@ -19,6 +22,10 @@ void main() {
       expect(payload['capture_status'], inboxCaptureStatus);
       expect(payload['capture_source'], inboxCaptureSource);
       expect(payload['inbox_saved_at'], savedAt.toIso8601String());
+      expect(payload['classification_status'], pendingClassificationStatus);
+      expect(payload['classification_category'], isNull);
+      expect(payload['classification_source'], isNull);
+      expect(payload['classified_at'], isNull);
       expect(payload['is_archived'], isFalse);
       expect(payload['is_pinned'], isFalse);
     });
@@ -41,6 +48,34 @@ void main() {
         ),
         throwsArgumentError,
       );
+    });
+
+    test('classification request exposes only the action and note id', () {
+      final request = buildInboxClassificationRequest(42);
+
+      expect(request, <String, dynamic>{
+        'action': 'notes.classify',
+        'note_id': 42,
+      });
+      expect(request, isNot(contains('content')));
+      expect(request, isNot(contains('title')));
+      expect(request, isNot(contains('user_id')));
+      expect(() => buildInboxClassificationRequest(0), throwsArgumentError);
+    });
+
+    test('classification launcher receives only the persisted note id',
+        () async {
+      int? launchedNoteId;
+      final service = InboxCaptureService(
+        _FakeSupabaseClient(),
+        classificationLauncher: (noteId) async {
+          launchedNoteId = noteId;
+        },
+      );
+
+      await service.requestClassification(42);
+
+      expect(launchedNoteId, 42);
     });
   });
 }

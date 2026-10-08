@@ -12,10 +12,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class _FakeSupabaseClient extends Fake implements SupabaseClient {
   _FakeSupabaseClient({
     required this.noteRows,
+    this.classificationFunctions,
   });
 
   @override
   final _FakeGoTrueClient auth = _FakeGoTrueClient();
+
+  final FunctionsClient? classificationFunctions;
+
+  @override
+  FunctionsClient get functions => classificationFunctions!;
 
   final List<Map<String, dynamic>> noteRows;
   final List<(int, int)> noteRanges = <(int, int)>[];
@@ -26,6 +32,29 @@ class _FakeSupabaseClient extends Fake implements SupabaseClient {
       return _FakeSupabaseQueryBuilder(rows: noteRows, ranges: noteRanges);
     }
     return _FakeSupabaseQueryBuilder(rows: <Map<String, dynamic>>[]);
+  }
+}
+
+class _ClassificationFunctions extends Fake implements FunctionsClient {
+  _ClassificationFunctions(this.onRequest);
+
+  final Future<void> Function() onRequest;
+  final List<Object?> requests = <Object?>[];
+  final List<Object?> names = <Object?>[];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #invoke) {
+      names.add(invocation.positionalArguments.first);
+      requests.add(invocation.namedArguments[#body]);
+      return _respond();
+    }
+    return super.noSuchMethod(invocation);
+  }
+
+  Future<FunctionResponse> _respond() async {
+    await onRequest();
+    return FunctionResponse(status: 200, data: <String, dynamic>{});
   }
 }
 
@@ -227,6 +256,8 @@ Map<String, dynamic> _noteRow({
   required String title,
   required bool isFavorite,
   String captureStatus = 'organized',
+  String classificationStatus = 'classified',
+  String? classificationCategory,
   String userId = 'test-user-id',
   List<String> tags = const <String>[],
 }) {
@@ -248,6 +279,13 @@ Map<String, dynamic> _noteRow({
     'capture_source': captureStatus == 'inbox' ? 'quick_inbox' : 'editor',
     'inbox_saved_at':
         captureStatus == 'inbox' ? '2026-03-18T09:00:00.000Z' : null,
+    'classification_status': classificationStatus,
+    'classification_category': classificationCategory,
+    'classification_source':
+        classificationStatus == 'classified' ? 'heuristic_fallback' : null,
+    'classified_at': classificationStatus == 'classified'
+        ? '2026-03-18T09:00:01.000Z'
+        : null,
   };
 }
 
@@ -324,6 +362,7 @@ void main() {
           title: 'Captured thought',
           isFavorite: false,
           captureStatus: 'inbox',
+          classificationStatus: 'pending',
         ),
         _noteRow(
           id: 'organized-note',
@@ -341,6 +380,7 @@ void main() {
     expect(find.text('Inbox（未整理）'), findsOneWidget);
     expect(find.text('Captured thought'), findsOneWidget);
     expect(find.text('Organized note'), findsOneWidget);
+    expect(find.text('AI整理中'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('note_list_page_inbox_filter')));
     await tester.pumpAndSettle();
@@ -353,6 +393,96 @@ void main() {
     expect(title.data, contains('Inbox'));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('reflects completed AI category and generated tags', (
+    WidgetTester tester,
+  ) async {
+    final client = _FakeSupabaseClient(
+      noteRows: <Map<String, dynamic>>[
+        _noteRow(
+          id: 'classified-inbox-note',
+          title: '来週の会議',
+          isFavorite: false,
+          captureStatus: 'inbox',
+          classificationCategory: '仕事',
+          tags: const <String>['仕事', '予定'],
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: NoteListPage(supabaseClient: client)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI: 仕事'), findsOneWidget);
+    expect(find.text('仕事'), findsOneWidget);
+    expect(find.text('予定'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final retryFails in <bool>[false, true]) {
+    testWidgets(
+      retryFails
+          ? 'failed Inbox retry keeps failure visible after transport error'
+          : 'failed Inbox retry refreshes category and tags after success',
+      (WidgetTester tester) async {
+        final row = _noteRow(
+          id: '42',
+          title: 'Retry this Inbox note',
+          isFavorite: false,
+          captureStatus: 'inbox',
+          classificationStatus: 'failed',
+        );
+        final functions = _ClassificationFunctions(() async {
+          if (retryFails) throw StateError('synthetic transport failure');
+          row['classification_status'] = 'classified';
+          row['classification_category'] = '仕事';
+          row['tags'] = <String>['inbox', '仕事', '予定'];
+        });
+        final client = _FakeSupabaseClient(
+          noteRows: <Map<String, dynamic>>[row],
+          classificationFunctions: functions,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(home: NoteListPage(supabaseClient: client)),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('AI整理失敗'), findsOneWidget);
+        expect(find.text('AI整理中'), findsNothing);
+
+        await tester.tap(
+          find.byWidgetPredicate((widget) => widget is PopupMenuButton).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('AI整理を再試行'));
+        await tester.pumpAndSettle();
+
+        expect(functions.names, <Object?>['ai-hub']);
+        expect(functions.requests, <Object?>[
+          <String, dynamic>{'action': 'notes.classify', 'note_id': 42},
+        ]);
+        if (retryFails) {
+          expect(find.text('AI整理失敗'), findsOneWidget);
+          expect(find.textContaining('AI整理の再実行に失敗しました'), findsOneWidget);
+          expect(row['classification_status'], 'failed');
+          await tester.tap(
+            find.byWidgetPredicate((widget) => widget is PopupMenuButton).first,
+          );
+          await tester.pumpAndSettle();
+          expect(find.text('AI整理を再試行'), findsOneWidget);
+        } else {
+          expect(find.text('AI整理失敗'), findsNothing);
+          expect(find.text('AI: 仕事'), findsOneWidget);
+          expect(find.text('仕事'), findsOneWidget);
+          expect(find.text('予定'), findsOneWidget);
+          expect(find.text('AI整理を再実行しました'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('moves an Inbox note to the organized list', (
     WidgetTester tester,
