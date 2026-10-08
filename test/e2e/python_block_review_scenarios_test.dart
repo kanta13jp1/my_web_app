@@ -6,8 +6,10 @@ void main() {
   const usage =
       '```python\ndef parse_duration(s):\n    return 1\n```\n```python\nprint(parse_duration("1s"))\n```';
   Widget host() => const MaterialApp(
-      home: Scaffold(
-          body: SingleChildScrollView(child: PythonBlockReviewCard()),),);
+        home: Scaffold(
+          body: SingleChildScrollView(child: PythonBlockReviewCard()),
+        ),
+      );
   testWidgets('usage after implementation warns about the last block',
       (tester) async {
     await tester.pumpWidget(host());
@@ -19,8 +21,10 @@ void main() {
   });
   testWidgets('multiple candidates stay ambiguous', (tester) async {
     await tester.pumpWidget(host());
-    await tester.enterText(find.byType(TextField).last,
-        '$usage\n```python\ndef parse_duration(s):\n    return 2\n```',);
+    await tester.enterText(
+      find.byType(TextField).last,
+      '$usage\n```python\ndef parse_duration(s):\n    return 2\n```',
+    );
     await tester.tap(find.text('コードの候補を確認する'));
     await tester.pump();
     expect(find.textContaining('候補を一意に選べません'), findsOneWidget);
