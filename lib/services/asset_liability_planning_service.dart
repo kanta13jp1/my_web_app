@@ -863,8 +863,16 @@ class AssetLiabilityPlanningService {
       account: account,
       paymentDifferenceReasons: paymentDifferenceReasons,
     );
-    final principalPayment = max(0.0, scheduledPayment - interest);
-    final afterPayment = -max(0.0, principal + interest - scheduledPayment);
+    final paid = paidAccountNames.contains(account.id) ||
+        paidAccountNames.contains(account.name.trim()) ||
+        paidAccountNames.contains(account.name);
+    // 支払済みで実支払額が記録されている月は、元金・支払後残高を実額で見積もる。
+    // 予定額 (0 円や推定額) のままだと、実際に返済した負債を「元金返済 0 円・
+    // 利息で残高増加」と誤判定し、AI 分析にも誤った警告が載る。
+    final effectivePayment =
+        paid && actualPayment != null ? actualPayment : scheduledPayment;
+    final principalPayment = max(0.0, effectivePayment - interest);
+    final afterPayment = -max(0.0, principal + interest - effectivePayment);
     final rawPaymentSourceAccountId = _lookupPaymentSourceAccountId(
       account: account,
       paymentSourceAccountIds: paymentSourceAccountIds,
@@ -894,9 +902,6 @@ class AssetLiabilityPlanningService {
       cardBillingAccountIds: cardBillingAccountIds,
       accountsById: accountsById,
     );
-    final paid = paidAccountNames.contains(account.id) ||
-        paidAccountNames.contains(account.name.trim()) ||
-        paidAccountNames.contains(account.name);
     final requiresAction = minimumPayment > 0 && scheduledPayment > 0 && !paid;
 
     return AssetLiabilityDebtRow(
