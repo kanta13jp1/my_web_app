@@ -38,6 +38,45 @@ Widget host(String memo, {JevClient? client}) => MaterialApp(
     );
 
 void main({Future<void> Function(String name)? capture}) {
+  testWidgets('Uniform AI response does not promote the first category',
+      (tester) async {
+    var calls = 0;
+    final client = JevClient(
+      endpoint: 'http://127.0.0.1:8081/v1/systemone',
+      httpClient: MockClient((request) async {
+        calls++;
+        final categories = JevInstantClassifierService.defaultCategories;
+        return http.Response(jsonEncode({
+          'answers': {
+            'classification': {
+              'type': 'choice',
+              'choice': 'food',
+              'confidence': 2.220446049250313e-16,
+              'probabilities': {
+                for (final category in categories)
+                  category.id: 1.0 / categories.length,
+              },
+            },
+          },
+        }), 200);
+      }),
+    );
+    addTearDown(client.dispose);
+    await tester.binding.setSurfaceSize(const Size(320, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(host('電車の切符を買った', client: client));
+    await tester.ensureVisible(find.text('AIにも候補を聞く'));
+    await tester.tap(find.text('AIにも候補を聞く'));
+    await tester.pumpAndSettle();
+    expect(find.text('候補を絞れませんでした'), findsOneWidget);
+    expect(find.text('候補：食費・食材'), findsNothing);
+    expect(find.textContaining('先頭の候補を表示していません'), findsOneWidget);
+    expect(find.textContaining('0%（正答率ではありません）'), findsOneWidget);
+    expect(calls, 1);
+    expect(tester.takeException(), isNull);
+    await capture?.call('uniform-ai-review');
+  });
+
   testWidgets('Confidence help is available before any AI request', (
     tester,
   ) async {

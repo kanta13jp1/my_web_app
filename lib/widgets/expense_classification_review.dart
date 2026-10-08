@@ -95,7 +95,10 @@ class _ExpenseClassificationReviewState
   Widget build(BuildContext context) {
     final empty = widget.memo.trim().isEmpty;
     final ai = _prediction.source == 'jev' && !_prediction.isFallback;
-    final hasCandidate = !empty && (ai || _prediction.source == 'local_rule');
+    // Uniform distributions can have a tiny floating-point entropy residue.
+    final unresolvedAi = ai && _prediction.confidence <= 1e-9;
+    final hasCandidate =
+        !empty && !unresolvedAi && (ai || _prediction.source == 'local_rule');
     final colors = Theme.of(context).colorScheme;
     final destination = Uri.tryParse(_client.endpoint)?.host ?? '';
     return Container(
@@ -149,8 +152,11 @@ class _ExpenseClassificationReviewState
           const SizedBox(height: 4),
           if (!empty)
             Text(
-              ai
-                  ? 'AIの提案です。用途や明細と照らして確認してください。'
+              unresolvedAi
+                  ? 'AIの判断が候補に分散しているため、先頭の候補を表示していません。'
+                      '明細や用途を確認してカテゴリを選んでください。'
+                  : ai
+                      ? 'AIの提案です。用途や明細と照らして確認してください。'
                   : hasCandidate
                       ? 'キーワード一致による候補です。店名だけでは用途を確定できません。'
                       : 'ルールに一致しません。品目や用途を追記して確認してください。',
