@@ -284,7 +284,9 @@ class AssetTriageGuideService {
           kind: AssetTriageStepKind.stopNewCardUsage,
           title: 'カードを財布から抜く',
           detail: '$namesを今日から使わないでください。$newBorrowingNote'
-              '「増やさない」が返済より先です。支払いは現金かデビットに切り替えてください。',
+              '「増やさない」が返済より先です。支払いは現金かデビットに切り替えてください。'
+              'カード会社の公式アプリにある利用停止・ロック機能、または窓口での利用停止の相談を'
+              '検討してください(連絡先はカード裏面か公式サイトで確認)。',
         ),
       );
     }
