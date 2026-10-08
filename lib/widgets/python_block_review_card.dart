@@ -46,6 +46,6 @@ class _PythonBlockReviewCardState extends State<PythonBlockReviewCard> {
           ],
         ],
       ],
-    )));
+    ),),);
   }
 }

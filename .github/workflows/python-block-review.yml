@@ -1,0 +1,35 @@
+name: Python block review evidence
+on:
+  pull_request:
+    paths:
+      - 'lib/services/python_block_review.dart'
+      - 'lib/widgets/python_block_review_card.dart'
+      - 'test/services/python_block_review_test.dart'
+      - 'integration_test/python_block_review_scenarios.dart'
+      - '.github/workflows/python-block-review.yml'
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.x'
+          cache: true
+      - run: flutter pub get
+      - name: Format the scoped files for review
+        run: dart format lib/services/python_block_review.dart lib/widgets/python_block_review_card.dart lib/pages/ai_dev_principles_page.dart test/services/python_block_review_test.dart integration_test/python_block_review_scenarios.dart
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-block-formatted
+          path: |
+            lib/services/python_block_review.dart
+            lib/widgets/python_block_review_card.dart
+            lib/pages/ai_dev_principles_page.dart
+            test/services/python_block_review_test.dart
+            integration_test/python_block_review_scenarios.dart
+      - name: Test service and user operations in Chrome
+        run: flutter test --platform chrome test/services/python_block_review_test.dart integration_test/python_block_review_scenarios.dart
