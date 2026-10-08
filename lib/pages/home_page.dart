@@ -8,7 +8,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
@@ -126,8 +125,6 @@ class _HomePageState extends State<HomePage> with RouteAware {
       const FeatureStrategyReportSnapshotService(
     snapshotRepository: SupabaseFeatureStrategyReportSnapshotRepository(),
   );
-  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
-
   // Gemini 429 対策: グローバル排他ロック + 最小呼び出し間隔 (60秒)
   static bool _nudgeCallInProgress = false;
   static DateTime? _lastNudgeCallTime;
@@ -1678,18 +1675,6 @@ class _HomePageState extends State<HomePage> with RouteAware {
     return 'gemini-2.5-flash';
   }
 
-  Future<String?> _loadHomeApiKey(SharedPreferences prefs) async {
-    final secureKey = await _secureStorage.read(key: 'gemini_api_key');
-    if (secureKey != null && secureKey.trim().isNotEmpty) {
-      return secureKey.trim();
-    }
-    final legacyKey = prefs.getString('gemini_api_key');
-    if (legacyKey != null && legacyKey.trim().isNotEmpty) {
-      return legacyKey.trim();
-    }
-    return null;
-  }
-
   String? _normalizeAiNudge(String? rawText) {
     final text = rawText?.replaceAll('\n', ' ').trim();
     if (text == null || text.isEmpty) {
@@ -1729,15 +1714,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
     }
 
     try {
-      final apiKey = await _loadHomeApiKey(prefs);
-      if (apiKey == null) {
-        return null;
-      }
-
       _nudgeCallInProgress = true;
       _lastNudgeCallTime = DateTime.now();
       final model = _resolveHomeModel(prefs);
-      final aiService = AIService(null, apiKey);
+      final aiService = AIService();
       final slipDetailsText = snapshot.abstinenceSlipDetails.isEmpty
           ? 'none'
           : snapshot.abstinenceSlipDetails.join(' / ');

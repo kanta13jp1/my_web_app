@@ -33,6 +33,9 @@ export const PUBLIC_AI_HUB_ACTIONS = new Set([
 ]);
 
 export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
+  "provider.models",
+  "provider.embed",
+  "provider.generate",
   "judgment.get",
   "judgment.get.legacy",
   "tags.suggest",
@@ -165,7 +168,12 @@ export function authorizeAiHubAction(
   }
   if (access === "public") return { allowed: true };
   if (access === "authenticated") {
-    return context.userId
+    // Only the new server-managed provider endpoints accept a machine caller.
+    // Existing authenticated actions retain their real-user identity boundary.
+    const providerMachineCaller = context.isServiceRole &&
+      (action === "provider.models" || action === "provider.generate" ||
+        action === "provider.embed");
+    return context.userId || providerMachineCaller
       ? { allowed: true }
       : { allowed: false, status: 401, error: "Unauthorized" };
   }
