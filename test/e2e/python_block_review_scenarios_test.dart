@@ -3,9 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/python_block_review_card.dart';
 
 void main() {
-  const usage = '```python\ndef parse_duration(s):\n    return 1\n```\n```python\nprint(parse_duration("1s"))\n```';
-  Widget host() => const MaterialApp(home: Scaffold(body: SingleChildScrollView(child: PythonBlockReviewCard())));
-  testWidgets('usage after implementation warns about the last block', (tester) async {
+  const usage =
+      '```python\ndef parse_duration(s):\n    return 1\n```\n```python\nprint(parse_duration("1s"))\n```';
+  Widget host() => const MaterialApp(
+      home: Scaffold(
+          body: SingleChildScrollView(child: PythonBlockReviewCard())));
+  testWidgets('usage after implementation warns about the last block',
+      (tester) async {
     await tester.pumpWidget(host());
     await tester.enterText(find.byType(TextField).last, usage);
     await tester.tap(find.text('コードの候補を確認する'));
@@ -15,12 +19,14 @@ void main() {
   });
   testWidgets('multiple candidates stay ambiguous', (tester) async {
     await tester.pumpWidget(host());
-    await tester.enterText(find.byType(TextField).last, '$usage\n```python\ndef parse_duration(s):\n    return 2\n```');
+    await tester.enterText(find.byType(TextField).last,
+        '$usage\n```python\ndef parse_duration(s):\n    return 2\n```');
     await tester.tap(find.text('コードの候補を確認する'));
     await tester.pump();
     expect(find.textContaining('候補を一意に選べません'), findsOneWidget);
   });
-  testWidgets('editing clears a previous result at narrow width', (tester) async {
+  testWidgets('editing clears a previous result at narrow width',
+      (tester) async {
     tester.view.physicalSize = const Size(320, 1200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);

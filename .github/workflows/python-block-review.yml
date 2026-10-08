@@ -5,7 +5,7 @@ on:
       - 'lib/services/python_block_review.dart'
       - 'lib/widgets/python_block_review_card.dart'
       - 'test/services/python_block_review_test.dart'
-      - 'integration_test/python_block_review_scenarios.dart'
+      - 'test/e2e/python_block_review_scenarios_test.dart'
       - '.github/workflows/python-block-review.yml'
 permissions:
   contents: read
@@ -14,15 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.38.x'
           cache: true
       - run: flutter pub get
       - name: Format the scoped files for review
-        run: dart format lib/services/python_block_review.dart lib/widgets/python_block_review_card.dart lib/pages/ai_dev_principles_page.dart test/services/python_block_review_test.dart integration_test/python_block_review_scenarios.dart
-      - uses: actions/upload-artifact@v4
+        run: dart format lib/services/python_block_review.dart lib/widgets/python_block_review_card.dart lib/pages/ai_dev_principles_page.dart test/services/python_block_review_test.dart test/e2e/python_block_review_scenarios_test.dart
+      - uses: actions/upload-artifact@v7
         with:
           name: python-block-formatted
           path: |
@@ -30,6 +30,8 @@ jobs:
             lib/widgets/python_block_review_card.dart
             lib/pages/ai_dev_principles_page.dart
             test/services/python_block_review_test.dart
-            integration_test/python_block_review_scenarios.dart
-      - name: Test service and user operations in Chrome
-        run: flutter test --platform chrome test/services/python_block_review_test.dart integration_test/python_block_review_scenarios.dart
+            test/e2e/python_block_review_scenarios_test.dart
+      - name: Test service in Chrome
+        run: flutter test --platform chrome test/services/python_block_review_test.dart
+      - name: Test user operations in Chrome
+        run: flutter test --platform chrome test/e2e/python_block_review_scenarios_test.dart
