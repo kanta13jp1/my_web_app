@@ -48,17 +48,17 @@ void main({Future<void> Function(String name)? capture}) {
         const categories = JevInstantClassifierService.defaultCategories;
         return http.Response(
           jsonEncode({
-          'answers': {
-            'classification': {
-              'type': 'choice',
-              'choice': 'food',
-              'confidence': 2.220446049250313e-16,
-              'probabilities': {
-                for (final category in categories)
-                  category.id: 1.0 / categories.length,
+            'answers': {
+              'classification': {
+                'type': 'choice',
+                'choice': 'food',
+                'confidence': 2.220446049250313e-16,
+                'probabilities': {
+                  for (final category in categories)
+                    category.id: 1.0 / categories.length,
+                },
               },
             },
-          },
           }),
           200,
         );
