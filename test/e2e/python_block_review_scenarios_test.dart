@@ -45,4 +45,20 @@ void main() {
     expect(find.text('候補 1'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('examples replace input and clear previous result', (tester) async {
+    await tester.pumpWidget(host());
+    await tester.tap(find.text('使用例が末尾にある例'));
+    await tester.pump();
+    await tester.tap(find.text('コードの候補を確認する'));
+    await tester.pump();
+    expect(find.textContaining('末尾ブロックと関数を含む候補が異なります'), findsOneWidget);
+    await tester.tap(find.text('実装が2つある例'));
+    await tester.pump();
+    expect(find.text('候補 1'), findsNothing);
+    await tester.tap(find.text('コードの候補を確認する'));
+    await tester.pump();
+    expect(find.textContaining('候補を一意に選べません'), findsOneWidget);
+    expect(find.text('候補 2'), findsOneWidget);
+  });
+
 }
