@@ -45,7 +45,8 @@ void main() {
     expect(find.text('候補 1'), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('examples replace input and clear previous result', (tester) async {
+  testWidgets('examples replace input and clear previous result',
+      (tester) async {
     await tester.pumpWidget(host());
     await tester.tap(find.text('使用例が末尾にある例'));
     await tester.pump();
@@ -60,5 +61,4 @@ void main() {
     expect(find.textContaining('候補を一意に選べません'), findsOneWidget);
     expect(find.text('候補 2'), findsOneWidget);
   });
-
 }
