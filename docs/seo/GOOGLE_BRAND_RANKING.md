@@ -700,3 +700,35 @@ session-start-check・adaptive-model-router適用。ディスク24.35 GiBでclou
 追跡2文書のみ既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)へ追記。全JSONL、日付重複防止、1〜9連番、対象3位とremote再読一致を検証。docs-onlyにつきFlutter test/analyze/release build、新規生成HTML、対象Flutter起動後描画は未実施。PR CIは別途報告し成功とは扱わない。rollbackは当日追記コミットのrevert。自動マージ・本番デプロイなし。
 
 session-start-check・adaptive-model-router適用。ディスク25.92 GiBでcloud-requiredのためlead継続、元の別作業branchの7 dirty pathsは変更せずremote-only、新規worktree/worker/重いtoolchainなし。ルールdriftなし、Codex CLI0.162.0、tool watchは既存#1422等への対応候補を提示。次回は同条件の順位・title・サイト名とAI概要の状態を確認。インデックス削除・全国共通順位・施策因果関係を推測しない。順位1位は保証しない。
+
+## 2026-10-09 日次監視：自然検索3位、9件の顔ぶれは同じ
+
+11:30 JST頃、実アプリ内ブラウザ、検索語 `自分株式会社`、hl=ja/gl=jp/pws=0、未ログイン、日本・府中市東京都（IP由来）、CAPTCHAなし。対象は自然検索3位/9件、昨日と同順位。昨日09:00頃との時刻差あり。1ページ目検出で100位まで追加確認不要、日次観測1回。
+
+広告・強調スニペットなし。AI概要は生成中から本文表示へ変化、moto note・IFAの可視ソースラベルを確認（全ソースではない）。昨日は生成不可。PAA、関連検索、Amazon価格・評価、サイトリンクあり。対象titleは末尾省略から全文表示へ変化、snippetは概念説明と登録前AI提案、サイト名Googleは同じ。
+
+|順位|タイトル|参照URL / ドメイン|種別|主な意図|
+|---:|---|---|---|---|
+|1|会社に依存しない「自分株式会社」の考え方｜moto（戸塚俊介）|[note.com](https://note.com/recruit_man_note/n/n1032c32fbc36)|著者ブログ記事|会社に依存しないキャリア設計と収支管理を学ぶ|
+|2|“自分株式会社”という考え方|[ifa-japan.co.jp](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)|専門家ブログ記事|人的資本・資産形成として理解する|
+|3|自分株式会社とは？ ｜ 人生を経営するAIライフマネジメントアプリ|[my-web-app-b67f4.web.app](https://my-web-app-b67f4.web.app/)|サービスホーム|概念を理解し、AIによる日常管理を試す|
+|4|「自分株式会社」という考え方と、この考え方を活用するために ...|[note.com](https://note.com/famous_knot742/n/n0c1a89bc7c77)|個人ブログ記事|概念の定義、参考情報、実践方法を知る|
+|5|サラリーマンこそ自分株式会社をつくりなさい――1000万円 ...|[amazon.co.jp](https://www.amazon.co.jp/dp/4478067449)|書籍商品ページ|内容、著者、評価、購入条件を確認する|
+|6|経営支援サービスを総合的にサポートする ITベンダー M社|[solution.lmi.ne.jp](https://solution.lmi.ne.jp/hr_development/case/1180)|法人研修の導入事例|研修での活用例と成果を確認する|
+|7|「自分株式会社」を経営せよ。副業年収4000万円のmotoが ...|[r25.jp](https://r25.jp/articles/928885293145522178)|編集部記事・書籍抜粋|キャリアと副業の具体例を読む|
+|8|NewsPicks [ニューズピックス]|[x.com](https://x.com/newspicks/status/1449692163042856961)|SNS投稿|著名人の発言と反応を見る|
+|9|わたしブランド～自分株式会社を設立してみよう|[akikofujisaki.com](https://akikofujisaki.com/selfpromotion/)|専門家ブログ記事|自己ブランディングへ応用する|
+
+当日hrefは不透明な/gotoで遷移先未確定。表は過去照合の参照URL、JSONLでurl=nullとreference_urlを分離。同じ9件、みおつくし5→4、Amazon6→5、LMI4→6、他同順位。厳密な当日URL集合比較ではない。順位維持・SEO施策因果関係を断定しない。
+
+### 分析・変更判断
+
+[moto note](https://note.com/recruit_man_note/n/n1032c32fbc36)は経験→定義→収支・資産→実践、著者・日付・書籍・プロフィール導線。[IFA JAPAN](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)は人的資本・長期自己経営、著者・参考書籍・会社・業務方針導線。本文はキャッシュを含む。[対象基本理念](https://my-web-app-b67f4.web.app/philosophy)には定義、P/L・B/S、人的資本、6部署、30日運用、架空例、FAQと編集方針が既存。新規不足テーマを特定せず、アプリ改修なし。文章・画像は転用しない。
+
+上位2ページと対象home/philosophyを当日HTTP取得しtitle/H1/canonical/内部リンク数/JSON-LDを解析、結果と取得失敗はJSONLへ保存。初期HTML解析はFlutter起動後の描画検証ではない。
+
+### 検証・PR・次回
+
+追跡2文書のみ既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)へ追記。全JSONL、日付重複防止、1〜9連番、対象3位、前回参照URL集合一致、remote再読一致を検証。docs-onlyにつきFlutter test/analyze/release build、新規生成HTML、対象Flutter起動後描画は未実施。PR CIは別途報告、成功とは扱わない。rollbackは当日追記コミットrevert。自動マージ・本番デプロイなし。
+
+session-start-check・adaptive-model-router適用。Jev推奨astra/mediumはadvisoryで、ディスク24.33 GiBのcloud-required制約によりlead継続（モデル切替なし）。元作業branch fix/salary-deposit-payslip-signal、HEAD c3e1d4607、upstream0/0、7 dirty pathsを保護、remote-only、新規worktree/worker/重いtoolchainなし。ルールdriftなし、tool watchは既存#1422等への対応候補提示。NotebookLM intake失敗は記録、本作業はNotebookLM非依存。次回は同条件で順位・title・サイト名・AI概要を確認。順位1位は保証しない。
