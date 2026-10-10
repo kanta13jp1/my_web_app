@@ -10606,7 +10606,44 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cycleIncomeFlows: incomeFlows,
       balances: _mainAccountBalanceWindow(workbook),
       expectedSalaryAmount: _registeredSalaryAmount(),
+      paidPayslipAmounts: _paidPayslipAmountsInCurrentCycle(),
     );
+  }
+
+  /// 支給日(pay_date)が今日以前で、現サイクルに属する給与明細の手取額。
+  List<double> _paidPayslipAmountsInCurrentCycle() {
+    final currentCycleKey = _currentSalaryCycleKey();
+    final today = DateTime(_now.year, _now.month, _now.day);
+    final amounts = <double>[];
+    void collect(List<Map<String, dynamic>> rows, List<String> amountKeys) {
+      for (final row in rows) {
+        final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+        if (payDate == null ||
+            DateTime(payDate.year, payDate.month, payDate.day).isAfter(today)) {
+          continue;
+        }
+        final cycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+          AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+            payDate,
+            salaryDay: _salaryDay,
+          ),
+        );
+        if (cycleKey != currentCycleKey) {
+          continue;
+        }
+        for (final key in amountKeys) {
+          final amount = (row[key] as num?)?.toDouble() ?? 0;
+          if (amount > 0) {
+            amounts.add(amount);
+            break;
+          }
+        }
+      }
+    }
+
+    collect(_payslipRows, const ['net_amount', 'amount']);
+    collect(_payslipSalaryIncomes, const ['amount']);
+    return amounts;
   }
 
   /// メインバンク口座の「前サイクル末 → 現在」の残高窓。残高更新だけでは入金フローが
@@ -10628,7 +10665,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         cycleStart,
       ),
       currentBalance: mainAccount.balance,
+      peakBalanceInCycle: _peakAccountBalanceSince(
+        mainAccount.name,
+        cycleStart,
+      ),
     );
+  }
+
+  /// `_assetData` から [since] 以降(当日含む)に記録された残高の最大値を返す。
+  /// 記録が無ければ null。
+  double? _peakAccountBalanceSince(String accountName, DateTime since) {
+    final sinceKey = _dateOnly(since);
+    double? peak;
+    for (final entry in _assetData.entries) {
+      final balance = entry.value[accountName];
+      if (balance == null || entry.key.compareTo(sinceKey) < 0) {
+        continue;
+      }
+      if (peak == null || balance > peak) {
+        peak = balance;
+      }
+    }
+    return peak;
   }
 
   /// メインバンク = メイン口座指定があればそれ、無ければ残高最大の非現金資産口座。

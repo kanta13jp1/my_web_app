@@ -579,6 +579,47 @@ void main() {
     );
 
     testWidgets(
+      'payslip with a future pay date keeps the salary deposit warning',
+      (tester) async {
+        final now = DateTime(2026, 9, 26, 12);
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetSalaryResetMarkerStore.prefsKey: '2026-08',
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              debugInitialAssetData: const <String, Map<String, double>>{
+                '2026-09-26': <String, double>{'現金': 50000},
+              },
+              debugInitialRecentFlows: const <Map<String, dynamic>>[],
+              debugInitialPayslipSalaryIncomes: const <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'pay_date': '2026-09-30',
+                  'amount': 280000,
+                  'description': 'Payslip: 自分株式会社',
+                  'source': 'payslip_auto',
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        final prefs = await SharedPreferences.getInstance();
+        expect(
+          prefs.getString(AssetSalaryResetMarkerStore.prefsKey),
+          '2026-08',
+          reason: '支給日前の給与明細では支払チェックをリセットしない',
+        );
+      },
+    );
+
+    testWidgets(
       'monthly flow card counts payslip salary income when no conquer flow exists',
       (tester) async {
         // 給料を給与明細(payslips/salary_incomes)でのみ管理しているユーザーは、
@@ -648,16 +689,23 @@ void main() {
           ),
           findsOneWidget,
         );
-        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        // 支給日を迎えた給与明細があれば新サイクルへ切り替え、警告は出さない。
+        // 口座入金が未照合であることは収支カードの注記(上)で伝える。
+        expect(find.text('給与の口座入金は未確認です'), findsNothing);
         final prefs = await SharedPreferences.getInstance();
         expect(
           prefs.getString(AssetSalaryResetMarkerStore.prefsKey),
-          previousCycleKey,
-          reason: '給与明細だけでは口座入金と判定して支払チェックをリセットしない',
+          AssetLiabilityMonthlyStateStore.formatMonthKey(
+            AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+              now,
+              salaryDay: AssetSalaryDayStore.defaultSalaryDay,
+            ),
+          ),
+          reason: '支給日を迎えた給与明細で支払チェックを新サイクルへ切り替える',
         );
         await tester.binding.setSurfaceSize(const Size(390, 1200));
         await tester.pump();
-        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        expect(find.text('給与の口座入金は未確認です'), findsNothing);
         expect(tester.takeException(), isNull);
         // 収入があるので「未記録」の空状態文言は出ない。
         expect(
