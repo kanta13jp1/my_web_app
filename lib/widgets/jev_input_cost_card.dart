@@ -59,11 +59,12 @@ class _JevInputCostCardState extends State<JevInputCostCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('入力を減らした場合の判断費用を比較',
-                  style: Theme.of(context).textTheme.titleMedium,
+              Text(
+                '入力を減らした場合の判断費用を比較',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               const Text(
-                  '入力トークン数はAPIのusageで確認します。文字数からは換算しません。単価は手動の仮定で、初期値は2026年10月10日確認のJev 1.13公開単価です。請求実額や速さ・精度は予測しません。入力は送信・保存しません。',
+                '入力トークン数はAPIのusageで確認します。文字数からは換算しません。単価は手動の仮定で、初期値は2026年10月10日確認のJev 1.13公開単価です。請求実額や速さ・精度は予測しません。入力は送信・保存しません。',
               ),
               _field('変更前の入力トークン / 1回', _before),
               _field('変更後の入力トークン / 1回', _after),
@@ -72,13 +73,13 @@ class _JevInputCostCardState extends State<JevInputCostCard> {
               const SizedBox(height: 12),
               FilledButton(onPressed: _calculate, child: const Text('概算費用を比較')),
               if (_error != null)
-                Text(_error!,
-                    style:
-                        TextStyle(color: Theme.of(context).colorScheme.error),
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               if (_result case final result?)
                 Text(
-                    '変更前 USD ${result.beforeUsd.toStringAsFixed(6)}\n変更後 USD ${result.afterUsd.toStringAsFixed(6)}\n変更後 − 変更前 USD ${result.differenceUsd.toStringAsFixed(6)}',
+                  '変更前 USD ${result.beforeUsd.toStringAsFixed(6)}\n変更後 USD ${result.afterUsd.toStringAsFixed(6)}\n変更後 − 変更前 USD ${result.differenceUsd.toStringAsFixed(6)}',
                 ),
             ],
           ),
