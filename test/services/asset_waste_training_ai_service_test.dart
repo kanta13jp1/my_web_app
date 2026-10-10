@@ -25,8 +25,7 @@ void main() {
     final service = AssetWasteTrainingAiService(
       now: () => DateTime(2026, 4, 22, 9, 15),
       invoker: (body) async {
-        expect(body['action'], 'provider.chat');
-        expect(body['provider'], 'deepinfra');
+        expect(body['action'], 'provider.chat_auto');
         expect(body['message'].toString(), contains('KGI'));
         expect(body['message'].toString(), contains('浪費抑制スコア'));
         return {
@@ -39,7 +38,7 @@ void main() {
     final review = await service.generateReview(snapshot);
 
     expect(review.isFallback, isFalse);
-    expect(review.source, contains('ai-hub provider.chat'));
+    expect(review.source, contains('ai-hub provider.chat_auto'));
     expect(review.summary, contains('判断力'));
   });
 
