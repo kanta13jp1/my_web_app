@@ -109,7 +109,17 @@ class AssetNetWorthPanelService {
 
     final keys = byMonth.keys.toList()..sort();
     final latest = byMonth[keys.last]!;
-    final previous = keys.length >= 2 ? byMonth[keys[keys.length - 2]] : null;
+    // 保存履歴の直前ではなく、暦上の前月だけを比較する。
+    // 欠月を飛び越えた差額を「前月比」と表示しない。
+    final latestMonth = DateTime.tryParse('${keys.last}-01');
+    final previousMonth = latestMonth == null
+        ? null
+        : DateTime(latestMonth.year, latestMonth.month - 1);
+    final previousKey = previousMonth == null
+        ? null
+        : '${previousMonth.year.toString().padLeft(4, '0')}-'
+            '${previousMonth.month.toString().padLeft(2, '0')}';
+    final previous = previousKey == null ? null : byMonth[previousKey];
 
     final delta = previous == null ? null : latest.netWorth - previous.netWorth;
     // 前月が正のときだけ変化率を出す (0 除算 / 負の基準での符号反転を回避)。
