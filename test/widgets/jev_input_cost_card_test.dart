@@ -4,8 +4,15 @@ import 'package:my_web_app/widgets/jev_input_cost_card.dart';
 
 void main() {
   Future<void> open(WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: SingleChildScrollView(child: JevInputCostCard()))));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(child: JevInputCostCard()),
+        ),
+      ),
+    );
   }
+
   testWidgets('normal comparison shows both USD estimates', (tester) async {
     await open(tester);
     await tester.tap(find.text('概算費用を比較'));
@@ -21,7 +28,8 @@ void main() {
     expect(find.textContaining('回数は1以上の整数'), findsOneWidget);
     expect(find.textContaining('変更前 USD'), findsNothing);
   });
-  testWidgets('editing clears the old quote and correction recovers', (tester) async {
+  testWidgets('editing clears the old quote and correction recovers',
+      (tester) async {
     await open(tester);
     await tester.tap(find.text('概算費用を比較'));
     await tester.pump();
