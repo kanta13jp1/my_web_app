@@ -45,6 +45,34 @@ class MainAccountBalanceWindow {
     required this.currentBalance,
   });
 
+  /// Preserve an observed deposit after subsequent spending.
+  /// Only same-account observations within the current cycle, through [asOf],
+  /// may supplement the current balance. Missing baselines remain unknown.
+  static MainAccountBalanceWindow fromHistory({
+    required double? previousCycleEndBalance,
+    required double? currentBalance,
+    required Map<DateTime, double> observations,
+    required DateTime cycleStart,
+    required DateTime asOf,
+  }) {
+    final start = DateTime(cycleStart.year, cycleStart.month, cycleStart.day);
+    final end = DateTime(asOf.year, asOf.month, asOf.day);
+    var peak = currentBalance?.isFinite == true ? currentBalance : null;
+    for (final entry in observations.entries) {
+      final date = DateTime(entry.key.year, entry.key.month, entry.key.day);
+      if (date.isBefore(start) || date.isAfter(end) || !entry.value.isFinite) {
+        continue;
+      }
+      if (peak == null || entry.value > peak) {
+        peak = entry.value;
+      }
+    }
+    return MainAccountBalanceWindow(
+      previousCycleEndBalance: previousCycleEndBalance,
+      currentBalance: peak,
+    );
+  }
+
   final double? previousCycleEndBalance;
   final double? currentBalance;
 
