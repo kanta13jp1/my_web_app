@@ -81,6 +81,7 @@ import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/models/daily_todo.dart';
 import 'package:my_web_app/services/daily_todo_store.dart';
 import 'package:my_web_app/services/asset_triage_guide_service.dart';
+import 'package:my_web_app/services/asset_developer_issue_lookup_cache.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_account_shortfall_basis_service.dart';
@@ -1135,6 +1136,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <String, Map<String, dynamic>>{};
   bool _isSubmittingAllDeveloperIssues = false;
   bool _isCheckingExistingDeveloperRequestIssues = false;
+  final _developerIssueLookupCache = AssetDeveloperIssueLookupCache();
   String? _developerRequestExistingIssueLookupKey;
   final Map<String, Map<String, dynamic>>
       _developerRequestExistingIssueResults = <String, Map<String, dynamic>>{};
@@ -23213,68 +23215,91 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return _assetManagementAiSummaryService.buildRequestFingerprint(report);
   }
 
+  void _resetExistingDeveloperIssueScope(String? userId) {
+    if (_developerIssueLookupCache.scopeKey == userId) return;
+    _developerIssueLookupCache.resetScope(userId);
+    _existingDeveloperIssueLookupDebounce?.cancel();
+    _developerRequestExistingIssueLookupKey = null;
+    _developerRequestExistingIssueResults.clear();
+    _isCheckingExistingDeveloperRequestIssues = false;
+  }
+
   void _requestExistingDeveloperIssuesIfNeeded(
     List<AssetManagementDeveloperRequest> requests,
   ) {
-    if (_supabase.auth.currentUser == null || requests.isEmpty) {
-      return;
-    }
+    final userId = _supabase.auth.currentUser?.id;
+    _resetExistingDeveloperIssueScope(userId);
+    if (userId == null || requests.isEmpty) return;
     final payload = requests
         .map(_developerRequestExistingIssuePayload)
         .toList(growable: false);
     final lookupKey = jsonEncode(payload);
-    if (_developerRequestExistingIssueLookupKey == lookupKey) {
-      return;
-    }
+    if (_developerRequestExistingIssueLookupKey == lookupKey) return;
     _developerRequestExistingIssueLookupKey = lookupKey;
     _isCheckingExistingDeveloperRequestIssues = true;
-    // デバウンス: 初期化時の連続リビルド (developer requests 変化) で core-hub の
-    // 既存Issue照合を連打しないよう、リビルドが静止した最後の 1 回だけ実行する。窓は
-    // 初期データロード (~2s) を上回る長さにして、部分データでの先行実行を避ける。
-    // AI 要約生成前は _ensureExistingDeveloperIssuesLoaded が必要時に強制ロードするため
-    // 注釈整合は保たれる。
     _existingDeveloperIssueLookupDebounce?.cancel();
     _existingDeveloperIssueLookupDebounce = Timer(
       const Duration(milliseconds: 2500),
       () {
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted ||
+              _supabase.auth.currentUser?.id != userId ||
               _developerRequestExistingIssueLookupKey != lookupKey) {
             return;
           }
-          unawaited(
-            _loadExistingDeveloperIssues(
-              lookupKey: lookupKey,
-              requests: payload,
-            ),
-          );
+          unawaited(_loadExistingDeveloperIssues(
+            lookupKey: lookupKey,
+            requests: payload,
+          ));
         });
       },
     );
   }
 
-  /// 既存Issue照合の完了を待つ。未取得・取得中の場合はその場で照合を実行する。
-  /// AI要約生成前に already_issued 注釈を確実に揃えるために使う。
+  /// Shares completed and in-flight entries with display lookups, without
+  /// replacing the combined display request key with the deterministic subset.
   Future<void> _ensureExistingDeveloperIssuesLoaded(
     List<AssetManagementDeveloperRequest> requests,
   ) async {
-    if (_supabase.auth.currentUser == null || requests.isEmpty) {
-      return;
-    }
+    final userId = _supabase.auth.currentUser?.id;
+    _resetExistingDeveloperIssueScope(userId);
+    if (userId == null || requests.isEmpty) return;
+    final revision = _developerIssueLookupCache.revision;
     final payload = requests
         .map(_developerRequestExistingIssuePayload)
         .toList(growable: false);
-    final lookupKey = jsonEncode(payload);
-    if (_developerRequestExistingIssueLookupKey == lookupKey &&
-        !_isCheckingExistingDeveloperRequestIssues) {
-      return;
+    try {
+      final existingByKey = await _developerIssueLookupCache.lookup(
+        scopeKey: userId,
+        requests: payload,
+        load: _fetchExistingDeveloperIssues,
+      );
+      if (!mounted ||
+          _supabase.auth.currentUser?.id != userId ||
+          _developerIssueLookupCache.revision != revision) {
+        return;
+      }
+      setState(() {
+        for (final request in payload) {
+          _developerRequestExistingIssueResults.remove(request['key']);
+        }
+        _developerRequestExistingIssueResults.addAll(existingByKey);
+      });
+    } catch (_) {
+      // Preserve the existing soft-failure behavior. Failures are not cached,
+      // so the next pre-generation request can retry.
+      if (!mounted ||
+          _supabase.auth.currentUser?.id != userId ||
+          _developerIssueLookupCache.revision != revision) {
+        return;
+      }
+      setState(() {
+        for (final request in payload) {
+          _developerRequestExistingIssueResults.remove(request['key']);
+        }
+      });
     }
-    _developerRequestExistingIssueLookupKey = lookupKey;
-    _isCheckingExistingDeveloperRequestIssues = true;
-    await _loadExistingDeveloperIssues(lookupKey: lookupKey, requests: payload);
   }
 
   Map<String, String> _developerRequestExistingIssuePayload(
@@ -23287,35 +23312,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     };
   }
 
+  Future<Map<String, Map<String, dynamic>>> _fetchExistingDeveloperIssues(
+    List<Map<String, String>> requests,
+  ) async {
+    final response = await _supabase.functions.invoke(
+      'core-hub',
+      body: {
+        'action': 'feature_request.existing_issues',
+        'source': 'asset_management_developer_request',
+        'requests': requests,
+      },
+    );
+    return parseAssetDeveloperIssueLookupResponse(response.data, requests);
+  }
+
   Future<void> _loadExistingDeveloperIssues({
     required String lookupKey,
     required List<Map<String, String>> requests,
   }) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    final revision = _developerIssueLookupCache.revision;
     try {
-      final response = await _supabase.functions.invoke(
-        'core-hub',
-        body: {
-          'action': 'feature_request.existing_issues',
-          'source': 'asset_management_developer_request',
-          'requests': requests,
-        },
+      final existingByKey = await _developerIssueLookupCache.lookup(
+        scopeKey: userId,
+        requests: requests,
+        load: _fetchExistingDeveloperIssues,
       );
-      if (!mounted || _developerRequestExistingIssueLookupKey != lookupKey) {
+      if (!mounted ||
+          _supabase.auth.currentUser?.id != userId ||
+          _developerIssueLookupCache.revision != revision ||
+          _developerRequestExistingIssueLookupKey != lookupKey) {
         return;
-      }
-      final rawData = response.data;
-      final existingByKey = <String, Map<String, dynamic>>{};
-      if (rawData is Map) {
-        final existingIssues = rawData['existingIssues'];
-        if (existingIssues is List) {
-          for (final item in existingIssues) {
-            final issue = _assetManagementDynamicMap(item);
-            final key = issue['key']?.toString() ?? '';
-            if (key.isNotEmpty) {
-              existingByKey[key] = issue;
-            }
-          }
-        }
       }
       setState(() {
         _developerRequestExistingIssueResults
@@ -23324,7 +23352,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isCheckingExistingDeveloperRequestIssues = false;
       });
     } catch (_) {
-      if (!mounted || _developerRequestExistingIssueLookupKey != lookupKey) {
+      if (!mounted ||
+          _supabase.auth.currentUser?.id != userId ||
+          _developerIssueLookupCache.revision != revision ||
+          _developerRequestExistingIssueLookupKey != lookupKey) {
         return;
       }
       setState(() {
@@ -23505,6 +23536,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return false;
       setState(() {
         _developerRequestIssueResults[issueKey] = data;
+        final createdIssue = _assetManagementDynamicMap(data['githubIssue']);
+        if ((createdIssue['html_url']?.toString() ?? '').isNotEmpty) {
+          _developerIssueLookupCache.invalidate();
+          _developerRequestExistingIssueLookupKey = null;
+        }
       });
 
       final githubIssue = _assetManagementDynamicMap(data['githubIssue']);
