@@ -15,10 +15,15 @@ class JevInputCostComparison {
     required int requests,
     required double usdPerMillionTokens,
   }) {
-    if (beforeTokens < 0 || afterTokens < 0 || requests < 1 ||
-        beforeTokens > 1000000000 || afterTokens > 1000000000 ||
-        requests > 1000000000 || !usdPerMillionTokens.isFinite ||
-        usdPerMillionTokens < 0 || usdPerMillionTokens > 1000000) {
+    if (beforeTokens < 0 ||
+        afterTokens < 0 ||
+        requests < 1 ||
+        beforeTokens > 1000000000 ||
+        afterTokens > 1000000000 ||
+        requests > 1000000000 ||
+        !usdPerMillionTokens.isFinite ||
+        usdPerMillionTokens < 0 ||
+        usdPerMillionTokens > 1000000) {
       throw ArgumentError('入力トークンは0以上、回数は1以上、単価は有限の0以上で指定してください。');
     }
     return JevInputCostComparison(

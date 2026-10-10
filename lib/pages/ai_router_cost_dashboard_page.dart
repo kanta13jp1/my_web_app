@@ -150,44 +150,44 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
         ],
       ),
       body: RefreshIndicator(
-              color: _orange,
-              onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  const JevInputCostCard(),
+        color: _orange,
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const JevInputCostCard(),
+            const SizedBox(height: 16),
+            if (_loading) const LinearProgressIndicator(),
+            if (_error != null) _errorBanner(_error!),
+            if (dashboard == null)
+              _emptyState()
+            else ...[
+              _summaryRow(dashboard),
+              const SizedBox(height: 16),
+              _roiSection(dashboard.roi),
+              const SizedBox(height: 16),
+              if (dashboard.tasks.isEmpty)
+                _emptyState()
+              else ...[
+                _taskSelector(dashboard),
+                const SizedBox(height: 16),
+                if (selected != null) ...[
+                  _recommendation(selected),
                   const SizedBox(height: 16),
-                  if (_loading) const LinearProgressIndicator(),
-                  if (_error != null) _errorBanner(_error!),
-                  if (dashboard == null)
-                    _emptyState()
-                  else ...[
-                    _summaryRow(dashboard),
-                    const SizedBox(height: 16),
-                    _roiSection(dashboard.roi),
-                    const SizedBox(height: 16),
-                    if (dashboard.tasks.isEmpty)
-                      _emptyState()
-                    else ...[
-                      _taskSelector(dashboard),
-                      const SizedBox(height: 16),
-                      if (selected != null) ...[
-                        _recommendation(selected),
-                        const SizedBox(height: 16),
-                        _chart(selected),
-                        const SizedBox(height: 16),
-                        ...selected.candidates.map(
-                          (candidate) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _candidateTile(selected!, candidate),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ],
+                  _chart(selected),
+                  const SizedBox(height: 16),
+                  ...selected.candidates.map(
+                    (candidate) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _candidateTile(selected!, candidate),
+                    ),
+                  ),
                 ],
-              ),
-            ),
+              ],
+            ],
+          ],
+        ),
+      ),
     );
   }
 
