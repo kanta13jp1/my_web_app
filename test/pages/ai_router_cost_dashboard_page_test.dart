@@ -152,6 +152,8 @@ void main() {
       find.byTooltip('Edit ROI assumptions for summary'),
       findsOneWidget,
     );
+    await tester.ensureVisible(find.byTooltip('Edit ROI assumptions for summary'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit ROI assumptions for summary'));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -166,6 +168,8 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.textContaining('openai / gpt-4o-mini'), findsWidgets);
+    await tester.ensureVisible(find.byTooltip('Apply').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Apply').last);
     await tester.pumpAndSettle();
 
