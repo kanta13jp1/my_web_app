@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/ai_router_cost_dashboard_service.dart';
+import '../widgets/jev_input_cost_card.dart';
 
 class AiRouterCostDashboardPage extends StatefulWidget {
   const AiRouterCostDashboardPage({
@@ -148,14 +149,15 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
           ),
         ],
       ),
-      body: _loading && dashboard == null
-          ? const Center(child: CircularProgressIndicator(color: _orange))
-          : RefreshIndicator(
+      body: RefreshIndicator(
               color: _orange,
               onRefresh: _load,
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  const JevInputCostCard(),
+                  const SizedBox(height: 16),
+                  if (_loading) const LinearProgressIndicator(),
                   if (_error != null) _errorBanner(_error!),
                   if (dashboard == null)
                     _emptyState()
