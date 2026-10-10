@@ -19,20 +19,20 @@ void main() {
       afterTokens: 0,
       requests: 1,
       usdPerMillionTokens: 0,
-    ).beforeUsd, 0);
+    ).beforeUsd, 0,);
     for (final rate in [double.nan, double.infinity, -1.0]) {
       expect(() => JevInputCostComparison.calculate(
         beforeTokens: 387,
         afterTokens: 5762,
         requests: 1000,
         usdPerMillionTokens: rate,
-      ), throwsArgumentError);
+      ), throwsArgumentError,);
     }
     expect(() => JevInputCostComparison.calculate(
       beforeTokens: 387,
       afterTokens: 5762,
       requests: 0,
       usdPerMillionTokens: 0.042,
-    ), throwsArgumentError);
+    ), throwsArgumentError,);
   });
 }
