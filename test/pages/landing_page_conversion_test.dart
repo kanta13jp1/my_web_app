@@ -1391,7 +1391,7 @@ void main() {
       );
       expect(find.textContaining('134機能'), findsNothing);
       expect(
-        find.text('悩みを1文入力すると、AIが最初の一手を提案します。実行するかはあなたが決め、役立つ提案だけ登録後に引き継げます。'),
+        find.text('困っていることを1文に。AIの提案から、あなたが次の一手を選べます。'),
         findsOneWidget,
       );
     },

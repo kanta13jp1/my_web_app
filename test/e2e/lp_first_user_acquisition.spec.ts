@@ -11,7 +11,7 @@ test.describe('LP first-user acquisition', () => {
   }) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialInput = page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ });
     const trialAction = page.getByRole('button', {
       name: '今やる1件を試す',
       exact: true,
@@ -42,7 +42,7 @@ test.describe('LP first-user acquisition', () => {
   }) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialInput = page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ });
     const sampleAction = page.getByRole('button', {
       name: 'この入力例でAIに提案させる',
       exact: true,
@@ -88,7 +88,7 @@ test.describe('LP first-user acquisition', () => {
   }, testInfo) => {
     await openLanding(page, treatmentPath);
 
-    const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
+    const trialInput = page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ });
     const trialAction = page.getByRole('button', {
       name: '今やる1件を試す',
       exact: true,
@@ -101,10 +101,10 @@ test.describe('LP first-user acquisition', () => {
     );
     await page.keyboard.insertText('今日の最優先タスクを1件に絞りたい');
     await trialAction.click();
-    await completeGuidedTrial(page);
+    await completeGuidedTrial(page, testInfo.project.name === 'mobile-chrome');
 
     const trialResultCard = page.getByRole('group', {
-      name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+      name: /登録なしで試す.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
     const viewport = page.viewportSize();
@@ -127,9 +127,15 @@ test.describe('LP first-user acquisition', () => {
         triggerBoxAfterResult!.y + triggerBoxAfterResult!.height,
       ).toBeLessThan(viewport!.height * 0.7);
     }
-    await expect(
-      page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
-    ).toHaveCount(0);
+    const resultEmail = trialResultCard.getByRole('textbox', {
+      name: 'メールアドレス', exact: true,
+    });
+    if (testInfo.project.name === 'mobile-chrome') {
+      await expect(resultEmail).toHaveCount(0);
+    } else {
+      await expect(resultEmail).toBeVisible();
+      await expect(resultEmail).not.toBeFocused();
+    }
   });
 
   test('H04 treatment reveals Google save and Magic Link fallback after value', async ({
@@ -145,12 +151,12 @@ test.describe('LP first-user acquisition', () => {
       .click();
 
     const trialResultCard = page.getByRole('group', {
-      name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+      name: /登録なしで試す.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
     if (testInfo.project.name === 'mobile-chrome') {
       await expect(
-        page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+        trialResultCard.getByRole('textbox', { name: 'メールアドレス', exact: true }),
       ).toHaveCount(0);
       await page.getByRole('button', { name: /この提案を保存/ }).click();
     }
@@ -161,7 +167,7 @@ test.describe('LP first-user acquisition', () => {
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+      trialResultCard.getByRole('textbox', { name: 'メールアドレス', exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole('button', {
@@ -182,6 +188,9 @@ test.describe('LP first-user acquisition', () => {
       if (message.type() === 'error') {
         browserIssues.push(`console: ${message.text()}`);
       }
+    });
+    page.on('requestfailed', (request) => {
+      browserIssues.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText}`);
     });
     page.on('pageerror', (error) => {
       browserIssues.push(`pageerror: ${error.message}`);
@@ -266,9 +275,11 @@ test.describe('LP first-user acquisition', () => {
     await expect(googleAction).toBeVisible();
     await expect(magicLinkAction).toBeVisible();
     await expect(lowerTrial).toBeVisible();
-    await expect(
-      page.getByRole('textbox', { name: /登録なしで試す/ }),
-    ).toHaveCount(0);
+    const lowerInput = await page.getByRole('textbox', {
+      name: /例: 今日いちばん詰まっていること|いま詰まっていること/,
+    }).boundingBox();
+    expect(lowerInput).not.toBeNull();
+    expect(lowerInput!.y).toBeGreaterThanOrEqual(page.viewportSize()!.height);
 
     const authBox = await googleAction.boundingBox();
     const trialBox = await lowerTrial.boundingBox();
@@ -290,30 +301,25 @@ test.describe('LP first-user acquisition', () => {
   });
 });
 
-async function completeGuidedTrial(page: Page) {
+async function completeGuidedTrial(page: Page, compact: boolean) {
   for (let step = 0; step < 5; step += 1) {
     await expect(
-      page.getByRole('group', {
-        name: new RegExp(`登録なしで試す:.*質問 ${step + 1} / 5`),
+      page.getByRole('textbox', {
+        name: new RegExp(`登録なしで試す.*質問 ${step + 1} / 5`),
       }),
     ).toBeVisible();
     const quickAnswer = page.getByRole('button', { name: /迷ったら/ });
     await expect(quickAnswer).toBeVisible();
     await quickAnswer.click();
     const next = page.getByRole('button', {
-      name: step === 4 ? '送る内容を確認' : '次の質問へ',
+      name: step === 4 ? (compact ? '内容を確認' : '送る内容を確認') : '次の質問へ',
       exact: true,
     });
     await expect(next).toBeEnabled();
     await next.click();
   }
-  await expect(
-    page.getByRole('group', {
-      name: /登録なしで試す:.*AIに送る内容を確認/,
-    }),
-  ).toBeVisible();
   const submit = page.getByRole('button', {
-    name: 'この内容でAIに提案してもらう',
+    name: compact ? 'AIに提案してもらう' : 'この内容でAIに提案してもらう',
     exact: true,
   });
   await expect(submit).toBeVisible();
@@ -321,13 +327,23 @@ async function completeGuidedTrial(page: Page) {
 }
 
 async function openLanding(page: Page, path: string) {
-  await page.route('**/rest/v1/app_analytics*', async (route) => {
+  await page.route('**/rest/v1/**', async (route) => {
     const isRead = route.request().method() === 'GET';
     await route.fulfill({
       status: isRead ? 200 : 204,
       contentType: 'application/json',
       headers: isRead ? { 'content-range': '0-0/0' } : undefined,
       body: isRead ? '[]' : '',
+    });
+  });
+
+  await page.route('**/functions/v1/schedule-hub', async (route) => {
+    const body = JSON.parse(route.request().postData() ?? '{}');
+    expect(body.action).toBe('maintenance.list_active');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, windows: [] }),
     });
   });
 
