@@ -152,7 +152,8 @@ void main() {
       find.byTooltip('Edit ROI assumptions for summary'),
       findsOneWidget,
     );
-    await tester.ensureVisible(find.byTooltip('Edit ROI assumptions for summary'));
+    await tester
+        .ensureVisible(find.byTooltip('Edit ROI assumptions for summary'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit ROI assumptions for summary'));
     await tester.pumpAndSettle();
