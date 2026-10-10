@@ -193,6 +193,7 @@ void main() {
       expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
       expect(message.contains('previous_ai_analyses'), true);
       expect(message.contains('これまでのAI分析履歴'), true);
+      expect(RegExp(r'"id":"history-1"').allMatches(message), hasLength(1));
       // 過去分析の本文(prose)は LLM へ渡さない (= 当時の期限超過/負の値を
       // 現在として再生産させないための物理除外)。
       expect(message.contains('前回は支払い確認と生活費確保'), false);
