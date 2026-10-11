@@ -73,13 +73,6 @@ jobs:
           flutter pub get
           dart format lib/data/services/reading_book_search.dart lib/widgets/reading_book_lookup.dart test/domain/reading_book_search_test.dart test/ui/reading_book_lookup_test.dart lib/pages/reading_list_page.dart lib/domain/models/philosophy_reading.dart lib/data/catalogs/philosophy_catalog.dart lib/data/repositories/reading_repository.dart lib/ui/features/reading test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart test/support/reading_fixture_repository.dart test/fixtures/reading_app.dart
       - name: Install repository-pinned Deno
-        # One-time formatter recovery; canonical output is returned as an artifact.
-        # Removed once the branch contains the canonical formatting.
-        # Scope fixes to trailing commas, preserving application behavior.
-        run: |
-          dart fix --apply --code=require_trailing_commas
-          dart format lib/data/services/reading_book_search.dart lib/widgets/reading_book_lookup.dart test/domain/reading_book_search_test.dart test/ui/reading_book_lookup_test.dart lib/pages/reading_list_page.dart
-      - name: Install repository-pinned Deno
         run: bash scripts/ci/install_deno_from_github.sh
       - name: Format scoped Edge Function files
         run: deno fmt supabase/functions/tools-hub/reading.ts supabase/functions/tools-hub/reading.test.ts supabase/functions/tools-hub/reading_test_client.ts test/fixtures/reading_server.ts
