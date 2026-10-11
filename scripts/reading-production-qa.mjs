@@ -20,7 +20,7 @@ async function req(path, token, data, method = 'POST') {
 async function user() {
   const email = `reading-qa-${randomUUID()}@example.invalid`;
   const password = randomUUID() + '!aA1';
-  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5735 production verification'}});
+  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5739 production verification'}});
   assert.equal(created.status,200,'Test user creation failed');
   users.push(created.body.id);
   const signed = await req('/auth/v1/token?grant_type=password', key, {email,password});
@@ -225,8 +225,8 @@ try {
   await capture(page,'curated-edition');
 
   const japaneseBooks = [
-    {label:'論語・岩波文庫（改訂新版）',publisher:'岩波書店',translator:'金谷治（訳注）',isbn:'9784003320211',volume:'岩波文庫・改訂新版',source:'https://ndlsearch.ndl.go.jp/books/R100000002-I000002845211',purchase:'https://www.kinokuniya.co.jp/f/dsg-01-9784003320211'},
-    {label:'論語・光文社古典新訳文庫（鶴ヶ谷真一訳）',publisher:'光文社',translator:'鶴ヶ谷真一（訳・注）',isbn:'9784334107741',volume:'光文社古典新訳文庫',source:'https://www.kotensinyaku.jp/books/book420/',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334107741'},
+    {label:'エティカ・中央公論新社（中公クラシックス ; W48）',publisher:'中央公論新社',translator:'工藤喜作・斎藤博',editor:'',isbn:'9784121600943',volume:'中公クラシックス ; W48',source:'https://ndlsearch.ndl.go.jp/books/R100000002-I000008440421',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784121600943'},
+    {label:'スピノザ全集. 3・岩波書店',publisher:'岩波書店',translator:'上野修（翻訳・解説）',editor:'上野修・鈴木泉（編）',isbn:'9784000928533',volume:'3',source:'https://ndlsearch.ndl.go.jp/books/R100000002-I032507023',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784000928533'},
   ];
   async function reveal(control) {
     for(let i=0;i<20 && await control.count()===0;i++) {
@@ -239,11 +239,11 @@ try {
     const cycle=page.getByRole('group',{name:new RegExp(`ISBN: ${book.isbn}`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
     const edit=cycle.getByRole('button',{name:'版を編集',exact:true});await reveal(edit);await edit.click();
   }
-  async function verifyBook(book,editor='') {
+  async function verifyBook(book,editor=book.editor) {
     for(const [name,value] of [[/^出版社/,book.publisher],[/^訳者/,book.translator],[/^ISBN/,book.isbn],[/^巻・版の名前/,book.volume],[/^編集者・編者/,editor],[/^版情報の出典URL/,book.source],[/^書籍・購入URL/,book.purchase]]) await restoredField(page,name,value);
   }
   const browserErrors=[];page.on('pageerror',e=>browserErrors.push(e.message));
-  await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'論語');
+  await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'エチカ');
   for(const book of japaneseBooks) {
     await page.getByRole('button',{name:/版・入手先/}).click();
     const card=page.getByRole('group',{name:`版候補: ${book.label}`,exact:true});
@@ -252,39 +252,45 @@ try {
     for(const link of ['この版の書誌出典を開く','Amazonで書籍を検索（ISBN）','楽天ブックスで検索（ISBN）','国立国会図書館で探す（ISBN）']) await expect(card.getByRole('button',{name:link,exact:true})).toHaveCount(1);
     const pop=page.waitForEvent('popup');await card.getByRole('button',{name:'Amazonで書籍を検索（ISBN）',exact:true}).click();
     const opened=await pop;await opened.waitForURL(/^https:\/\/www\.amazon\.co\.jp\/s\//);
-    assert.equal(new URL(opened.url()).searchParams.get('k'),book.isbn);bookLinks.push(opened.url());await opened.close();
+    assert.equal(new URL(opened.url()).searchParams.get('k'),book.isbn);bookLinks.push(opened.url());await opened.close();await reveal(start);
+    for(const [link,target] of [['この版の書誌出典を開く',book.source],['この版の出版社・書店を開く',book.purchase]]) {
+      await reveal(start);
+      const destinationPromise=page.waitForEvent('popup');await card.getByRole('button',{name:link,exact:true}).click();
+      const destination=await destinationPromise;await destination.waitForURL(target);bookLinks.push(destination.url());await destination.close();
+    }
+    await reveal(start);
     await start.click();await verifyBook(book);await page.getByRole('button',{name:'保存',exact:true}).click();
     await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
-    await page.getByRole('button',{name:/Back|戻る/}).click();await openWork(page,'論語');
+    await page.getByRole('button',{name:/Back|戻る/}).click();await openWork(page,'エチカ');
   }
   for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
-    await page.setViewportSize(size);await page.reload();await semantics(page);await openWork(page,'論語');
+    await page.setViewportSize(size);await page.reload();await semantics(page);await openWork(page,'エチカ');
     for(let i=0;i<japaneseBooks.length;i++) {
-      await editBook(japaneseBooks[i]);await verifyBook(japaneseBooks[i],i===0 && mode==='mobile'?'公開確認・desktop編者':'');
+      await editBook(japaneseBooks[i]);await verifyBook(japaneseBooks[i],i===0 && mode==='mobile'?'公開確認・desktop編者':japaneseBooks[i].editor);
       if(i===0) await field(page,/^編集者・編者/,`公開確認・${mode}編者`);
       await page.getByRole('button',{name:'保存',exact:true}).click();
     }
-    await page.reload();await semantics(page);await openWork(page,'論語');
+    await page.reload();await semantics(page);await openWork(page,'エチカ');
     for(let i=0;i<japaneseBooks.length;i++) {
-      await editBook(japaneseBooks[i]);await verifyBook(japaneseBooks[i],i===0?`公開確認・${mode}編者`:'');
+      await editBook(japaneseBooks[i]);await verifyBook(japaneseBooks[i],i===0?`公開確認・${mode}編者`:japaneseBooks[i].editor);
       await capture(page,`${mode}-japanese-restored-${japaneseBooks[i].isbn}`);
       await page.getByRole('button',{name:'保存',exact:true}).click();
     }
   }
   const japaneseRecords=await action(a.token,{action:'reading.list'});
-  const analects=japaneseRecords.items.find(x=>x.metadata.work?.id==='confucius:analects');
+  const analects=japaneseRecords.items.find(x=>x.metadata.work?.id==='spinoza:ethics');
   assert.equal(analects?.metadata.cycles.length,2,'Two Japanese editions must be separate cycles');
   for(let i=0;i<japaneseBooks.length;i++) {
     const edition=analects.metadata.cycles.find(c=>c.edition.isbn===japaneseBooks[i].isbn)?.edition;
     assert(edition);for(const property of ['publisher','translator','isbn','volume']) assert.equal(edition[property],japaneseBooks[i][property]);
     assert.equal(edition.source_url,japaneseBooks[i].source);assert.equal(edition.book_url,japaneseBooks[i].purchase);
-    assert.equal(edition.editor,i===0?'公開確認・mobile編者':'');
+    assert.equal(edition.editor,i===0?'公開確認・mobile編者':japaneseBooks[i].editor);
   }
   assert.deepEqual(browserErrors,[],'Published Japanese edition flow has browser errors');
   console.log('Published Japanese editions: desktop/mobile two translations, ISBN purchase destinations, prefill, registration, reload, independent editor changes and genuine API persistence passed.');
 
   await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
-  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed'},null,2));
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
 } finally {
   if(browser) await browser.close();
