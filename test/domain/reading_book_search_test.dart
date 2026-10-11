@@ -5,6 +5,12 @@ import 'package:http/testing.dart';
 import 'package:my_web_app/data/services/reading_book_search.dart';
 
 void main() {
+  test('ISBN-10 normalizes to ISBN-13; bad checksums never query the provider', () async {
+    final client = MockClient((_) => throw StateError('Network must not be used'));
+    final books = await const ReadingBookSearch().search('4-00-332021-2', client: client);
+    expect(books.single.edition.isbn, '9784003320211');
+    expect(await const ReadingBookSearch().search('9781234567890', client: client), isEmpty);
+  });
   test(
       'catalog title and ISBN return verified editions without a network request',
       () async {
