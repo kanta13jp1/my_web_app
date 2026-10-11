@@ -1670,6 +1670,50 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('reconciliation uses confirmed date and keeps revolving settings', (
+      tester,
+    ) async {
+      final now = DateTime(2026, 10, 11);
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+      );
+      await tester.binding.setSurfaceSize(const Size(1200, 3200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: now,
+            debugRevolvingConfigsMirror: mirrorValue,
+            assetLiabilityRepository: _FakeDebtOverrideRepository(
+              <String, int>{},
+              monthlyState: const AssetLiabilityMonthlyState(
+                paymentOverrides: <String, double>{'aupay_card': 77541},
+                confirmedPaymentDays: <String, double>{'aupay_card': 13},
+              ),
+            ),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('今回の返済予定: 13日 ¥77,541。'), findsOneWidget);
+      expect(find.textContaining('25日の返済予定'), findsNothing);
+      expect(find.textContaining('返済日: 毎月25日'), findsOneWidget);
+      expect(find.textContaining('リボ設定: 最低返済 ¥10,000'), findsOneWidget);
+      await _unmount(tester);
+    });
     testWidgets('revolving payoff chip and payday rule appear on debt cards', (
       tester,
     ) async {
