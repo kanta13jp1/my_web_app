@@ -33,3 +33,43 @@
 ## 検証契約
 
 目録IDの一意性・著者との対応・紀元前と世紀境界・東西／古代／現代の分類・HTTPS出典、版情報のJSON互換性と検索クエリをDartで検証。APIの実DB保存と所有権、URL拒否、PC／モバイルでの版取り込み・保存・再表示・ISBNリンク遷移を専用GitHub Actionsで確認する。購入処理は行わず、ブラウザテストの販売先はテストページに置き換える。
+
+## 日本語訳の版情報拡充（2026-10-11）
+
+日本語訳を27版追加。既存6版は保持し、計33版（うち日本語32版）を収録。著者56名・著作80件のIDと読書記録は変えない。別訳・別出版社・上下巻は別の候補として選ぶ。未確認の編集者は空欄を維持し、訳者を編集者として重複登録しない。翻訳の原文や解説を転載せず、書誌の事実と出典リンクのみ収録する。
+
+各候補には出典URLとISBNに基づく購入検索URLを登録。紙のISBNを使用し、電子版や全巻セットの識別子と混同しない。出版社サイトが在庫なしを示す本も書誌として掲載し、検索先で中古を含む入手可否を確認する。
+
+| 著作・読む版 | 出版社 | 訳者 | 年 | ISBN | 出典 | 購入検索 |
+| --- | --- | --- | --- | --- | --- | --- |
+| ニコマコス倫理学（下）・光文社古典新訳文庫 | 光文社 | 渡辺邦夫・立花幸司 | 2016 | 9784334753245 | [書誌](https://www.kotensinyaku.jp/books/book222/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334753245) |
+| 論語・光文社古典新訳文庫（鶴ヶ谷真一訳） | 光文社 | 鶴ヶ谷真一（訳・注） | 2025 | 9784334107741 | [書誌](https://www.kotensinyaku.jp/books/book420/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334107741) |
+| 自由論・光文社古典新訳文庫（斉藤悦則訳） | 光文社 | 斉藤悦則 | 2012 | 9784334752507 | [書誌](https://www.kotensinyaku.jp/books/book150/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752507) |
+| 社会契約論／ジュネーヴ草稿・光文社古典新訳文庫 | 光文社 | 中山元 | 2008 | 9784334751678 | [書誌](https://www.kotensinyaku.jp/books/book66/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334751678) |
+| ソクラテスの弁明・光文社古典新訳文庫 | 光文社 | 納富信留 | 2012 | 9784334752569 | [書誌](https://www.kotensinyaku.jp/books/book156/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752569) |
+| 純粋理性批判 1・光文社古典新訳文庫 | 光文社 | 中山元 | 2010 | 9784334751982 | [書誌](https://www.kotensinyaku.jp/books/book97/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334751982) |
+| 純粋理性批判 2・光文社古典新訳文庫 | 光文社 | 中山元 | 2010 | 9784334752040 | [書誌](https://www.kotensinyaku.jp/books/book104/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752040) |
+| 純粋理性批判 3・光文社古典新訳文庫 | 光文社 | 中山元 | 2010 | 9784334752132 | [書誌](https://www.kotensinyaku.jp/books/book112/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752132) |
+| 純粋理性批判 4・光文社古典新訳文庫 | 光文社 | 中山元 | 2011 | 9784334752231 | [書誌](https://www.kotensinyaku.jp/books/book120/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752231) |
+| 純粋理性批判 5・光文社古典新訳文庫 | 光文社 | 中山元 | 2011 | 9784334752293 | [書誌](https://www.kotensinyaku.jp/books/book127/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752293) |
+| 純粋理性批判 6・光文社古典新訳文庫 | 光文社 | 中山元 | 2011 | 9784334752354 | [書誌](https://www.kotensinyaku.jp/books/book133/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752354) |
+| 純粋理性批判 7・光文社古典新訳文庫 | 光文社 | 中山元 | 2012 | 9784334752439 | [書誌](https://www.kotensinyaku.jp/books/book141/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752439) |
+| 実践理性批判 1・光文社古典新訳文庫 | 光文社 | 中山元 | 2013 | 9784334752699 | [書誌](https://www.kotensinyaku.jp/books/book167/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752699) |
+| 実践理性批判 2・光文社古典新訳文庫 | 光文社 | 中山元 | 2013 | 9784334752736 | [書誌](https://www.kotensinyaku.jp/books/book172/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752736) |
+| ツァラトゥストラ（上）・光文社古典新訳文庫（丘沢静也訳） | 光文社 | 丘沢静也 | 2010 | 9784334752170 | [書誌](https://www.kotensinyaku.jp/books/book116/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752170) |
+| ツァラトゥストラ（下）・光文社古典新訳文庫（丘沢静也訳） | 光文社 | 丘沢静也 | 2011 | 9784334752224 | [書誌](https://www.kotensinyaku.jp/books/book121/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752224) |
+| 省察・筑摩書房（山田弘明訳） | 筑摩書房 | 山田弘明 | 2006 | 9784480089656 | [書誌](https://www.chikumashobo.co.jp/product/9784480089656/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784480089656) |
+| 方法序説・筑摩書房（山田弘明訳） | 筑摩書房 | 山田弘明 | 2010 | 9784480093066 | [書誌](https://www.chikumashobo.co.jp/product/9784480093066/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784480093066) |
+| ツァラトゥストラ（上）・筑摩書房（吉沢伝三郎訳） | 筑摩書房 | 吉沢伝三郎 | 1993 | 9784480080790 | [書誌](https://www.chikumashobo.co.jp/product/9784480080790/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784480080790) |
+| 自由論・日経BPクラシックス（山岡洋一訳） | 日経BP | 山岡洋一 | 2011 | 9784822248574 | [書誌](https://bookplus.nikkei.com/atcl/catalog/11/P48570/) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784822248574) |
+| 人間の条件・講談社学術文庫（牧野雅彦訳） | 講談社 | 牧野雅彦 | 2023 | 9784065314272 | [書誌](https://www.kodansha.co.jp/book/products/0000365277) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784065314272) |
+| 国家（上）・岩波文庫 | 岩波書店 | 藤澤令夫 | 1979 | 9784003360170 | [書誌](https://www.books.or.jp/book-details/9784003360170) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360170) |
+| 国家（下）・岩波文庫 | 岩波書店 | 藤澤令夫 | 1979 | 9784003360187 | [書誌](https://www.books.or.jp/book-details/9784003360187) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360187) |
+| 老子・岩波文庫（蜂屋邦夫訳注） | 岩波書店 | 蜂屋邦夫（訳注） | 2008 | 9784003320518 | [書誌](https://lib-opac.mc.beppu-u.ac.jp/webopac/catdbl.do?hidden_return_link=true&pkey=BB00112034) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784003320518) |
+| 中論（上）・レグルス文庫 | 第三文明社 | 三枝充悳（訳注） | 1984 | 9784476011586 | [書誌](https://www.daisanbunmei.co.jp/books/book.php?mt=0&no=01158) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784476011586) |
+| 中論（中）・レグルス文庫 | 第三文明社 | 三枝充悳（訳注） | 1984 | 9784476011593 | [書誌](https://www.daisanbunmei.co.jp/books/book.php?mt=0&no=01159) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784476011593) |
+| 中論（下）・レグルス文庫 | 第三文明社 | 三枝充悳（訳注） | 1984 | 9784476011609 | [書誌](https://www.daisanbunmei.co.jp/books/book.php?mt=0&no=01160) | [Amazon](https://www.amazon.co.jp/s/?i=stripbooks&k=9784476011609) |
+
+国家のISBNは刷・改版によるページ数差があるため総ページ数は空欄。老子は図書館の453pと出版社系書誌の420ページが一致しないため空欄。カントの7巻・2巻、ニーチェの上下巻、中論の3巻は巻ごとに選択し、単巻のページ数を全著作に合算しない。巻を読了すると既存の著作単位の読了集計に反映されるため、全巻を読了した段階で著作の読了を設定する運用を推奨。
+
+PC・モバイルE2Eは論語の既存岩波版と新規光文社版の両方を順に登録し、各ISBN・出版社・訳者・巻名・出典・購入URLが混ざらず再読み込み後も残ること、編集してももう一方の読書回が変わらないことを検証する。版選択だけでは著作を読了扱いにしない。
