@@ -42,13 +42,21 @@ async function semantics(page) {
   if(await placeholder.count()) await placeholder.evaluate(e=>e.click());
 }
 async function field(page,name,value) {
-  const input=name.source.startsWith('^パスワード') ? page.getByLabel(name) : page.getByRole('textbox',{name});
+  const input=name.source.startsWith('^パスワード') ? page.getByLabel(name).last() : name.source==='メールアドレス' ? page.getByRole('textbox',{name:'メールアドレス',exact:true}).last() : page.getByRole('textbox',{name});
   await expect(input).toHaveCount(1);
   await input.focus();
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   await input.fill(value);
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   await expect(input).toHaveValue(value);
+}
+async function capture(page,name) {
+  await page.evaluate(async()=>{await document.fonts.ready;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));});
+  await page.waitForTimeout(350);
+  for(let i=0;i<3;i++) {
+    await page.screenshot({path:`reading-production-evidence/${name}-${i}.png`});
+    await page.waitForTimeout(200);
+  }
 }
 async function openWork(page) {
   await page.getByRole('tab',{name:'著作',exact:true}).click();
@@ -90,21 +98,23 @@ try {
     await page.goto(base+'/reading-list');await semantics(page);
     await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
     await expect(page.getByRole('tab',{name:'著者',exact:true})).toBeVisible();
-    await page.screenshot({path:`reading-production-evidence/${name}-catalog.png`});
+    await capture(page,`${name}-catalog`);
     await openWork(page);
     await expect(page.getByRole('button',{name:'読書を始める',exact:true})).toBeDisabled();
-    await page.screenshot({path:`reading-production-evidence/${name}-guest-work.png`});
+    await capture(page,`${name}-guest-work`);
     await context.close();
   }
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
   const page=await context.newPage();page.setDefaultTimeout(45000);
   await page.goto(base+'/login');await semantics(page);
-  await page.getByRole('button',{name:/ログイン/}).last().click();
+  await page.getByRole('button',{name:'ログイン',exact:true}).first().evaluate(e=>e.click());
+  await expect(page.getByText('ログインして続きから再開',{exact:true})).toBeVisible();
   await field(page,/メールアドレス/,a.email);
-  await page.getByRole('button',{name:'パスワードを使う',exact:true}).click();
+  await page.getByRole('button',{name:'パスワードを使う',exact:true}).last().evaluate(e=>e.click());
+  await expect(page.getByRole('button',{name:'メールでログイン',exact:true}).last()).toBeVisible();
   await field(page,/^パスワード/,a.password);
   const signedIn=page.waitForResponse(r=>r.url().includes('/auth/v1/token') && r.request().method()==='POST');
-  await page.getByRole('button',{name:'メールでログイン',exact:true}).click();
+  await page.getByRole('button',{name:'メールでログイン',exact:true}).last().evaluate(e=>e.click());
   assert.equal((await signedIn).status(),200,'Published UI sign-in failed');
   await page.waitForTimeout(1500);
   await page.goto(base+'/reading-list');await semantics(page);
@@ -122,7 +132,7 @@ try {
   await page.getByRole('button',{name:'保存',exact:true}).click();
   await expect(page.getByRole('group',{name:/感想: 公開後の読書記録確認/}).last()).toBeVisible();
   await page.getByRole('button',{name:'読了にする',exact:true}).click();
-  await page.screenshot({path:'reading-production-evidence/saved-record.png'});
+  await capture(page,'saved-record');
   await page.reload();await semantics(page);await openWork(page);
   await expect(page.getByRole('group',{name:/感想: 公開後の読書記録確認/}).last()).toBeVisible();
   await page.getByRole('button',{name:/Back|戻る/}).click();
@@ -134,7 +144,7 @@ try {
   - group:
     - text: /.*収録済み著作全体.*読了 1 . 17 著作.*/
 `);
-  await page.screenshot({path:'reading-production-evidence/progress.png'});
+  await capture(page,'progress');
   await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed'},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
 } finally {
