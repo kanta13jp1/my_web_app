@@ -1699,6 +1699,7 @@ void main() {
               monthlyState: AssetLiabilityMonthlyState(
                 paymentOverrides: const <String, double>{'aupay_card': 77541},
                 confirmedPaymentDays: const <String, double>{'aupay_card': 13},
+                billingConfirmedAccountIds: const <String>{'aupay_card'},
                 cardStatementLines: <AssetLiabilityCardStatementLine>[
                   AssetLiabilityCardStatementLine(
                     id: 'confirmed_bill_line',
