@@ -44,6 +44,7 @@ async function semantics(page) {
 }
 async function field(page,name,value) {
   const input=page.getByRole('textbox',{name});
+  await expect(input).toHaveCount(1);
   await input.focus();
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   await input.fill(value);
@@ -53,6 +54,7 @@ async function field(page,name,value) {
 async function openWork(page) {
   await page.getByRole('tab',{name:'著作',exact:true}).click();
   await expect(page.getByRole('tabpanel')).toHaveCount(1);
+  await expect(page.getByRole('textbox',{name:/^著者・著作を検索/})).toHaveCount(1);
   await expect(page.getByRole('textbox',{name:/^著者・著作を検索/})).toBeVisible();
   await field(page,/^著者・著作を検索/,'国家');
   await page.getByRole('button',{name:/^国家 /}).click();
