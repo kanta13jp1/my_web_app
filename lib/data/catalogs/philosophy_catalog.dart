@@ -2721,7 +2721,7 @@ const _worksJson = r'''[
   {
     "id": "hegel:phenomenology",
     "title": "精神現象学",
-    "original_title": "Phanomenologie des Geistes",
+    "original_title": "Phänomenologie des Geistes",
     "author_info": {
       "id": "hegel",
       "name": "ヘーゲル",
@@ -2817,7 +2817,7 @@ const _worksJson = r'''[
   {
     "id": "kierkegaard:fear-trembling",
     "title": "恐れとおののき",
-    "original_title": "Frygt og Baeven",
+    "original_title": "Frygt og Bæven",
     "author_info": {
       "id": "kierkegaard",
       "name": "キルケゴール",
@@ -2849,7 +2849,7 @@ const _worksJson = r'''[
   {
     "id": "kierkegaard:sickness",
     "title": "死に至る病",
-    "original_title": "Sygdommen til Doden",
+    "original_title": "Sygdommen til Døden",
     "author_info": {
       "id": "kierkegaard",
       "name": "キルケゴール",
@@ -3210,7 +3210,7 @@ const _worksJson = r'''[
   {
     "id": "sartre:being-nothingness",
     "title": "存在と無",
-    "original_title": "L’etre et le neant",
+    "original_title": "L’être et le néant",
     "author_info": {
       "id": "sartre",
       "name": "サルトル",
@@ -3371,7 +3371,7 @@ const _worksJson = r'''[
   {
     "id": "foucault:sexuality",
     "title": "性の歴史",
-    "original_title": "Histoire de la sexualite",
+    "original_title": "Histoire de la sexualité",
     "author_info": {
       "id": "foucault",
       "name": "ミシェル・フーコー",
@@ -3500,7 +3500,7 @@ const _worksJson = r'''[
   {
     "id": "habermas:facts-norms",
     "title": "事実性と妥当性",
-    "original_title": "Faktizitat und Geltung",
+    "original_title": "Faktizität und Geltung",
     "author_info": {
       "id": "habermas",
       "name": "ユルゲン・ハーバーマス",

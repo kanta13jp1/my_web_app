@@ -151,6 +151,22 @@ Deno.test("server preserves history and ignores forged history", () => {
   );
 });
 
+Deno.test("older clients retain edition additions and explicit empty values clear them", () => {
+  const previous = validateCycles([cycle]);
+  const oldClient = { ...cycle, edition: { total_pages: 100 } };
+  const retained = validateCycles([oldClient], previous)[0].edition as Record<string, unknown>;
+  assertEquals(retained.editor, "編者");
+  assertEquals(retained.book_url, "https://example.com/book");
+  assertEquals(retained.source_url, "https://example.com/source");
+  const cleared = validateCycles([{
+    ...oldClient,
+    edition: { total_pages: 100, editor: "", book_url: "", source_url: "" },
+  }], previous)[0].edition as Record<string, unknown>;
+  assertEquals(cleared.editor, "");
+  assertEquals(cleared.book_url, "");
+  assertEquals(cleared.source_url, "");
+});
+
 Deno.test("authentication required before any reading database call", async () => {
   const client = createClient("https://example.invalid", "fixture-key");
   for (
@@ -256,6 +272,7 @@ Deno.test({
     );
     const editedCycle = {
       ...cycle,
+      edition: { total_pages: 100, publisher: "出版社", translator: "訳者" },
       entries: [{ ...entry, impression: "再考" }],
     };
     const edited = await handleReading(client, a, "reading.save", {
@@ -272,6 +289,10 @@ Deno.test({
         string,
         unknown
       >[])[0];
+    const preservedEdition = (updated.cycles as Record<string, unknown>[])[0].edition as Record<string, unknown>;
+    assertEquals(preservedEdition.editor, "編者");
+    assertEquals(preservedEdition.book_url, "https://example.com/book");
+    assertEquals(preservedEdition.source_url, "https://example.com/source");
     assertEquals(
       (savedEntry.history as Record<string, unknown>[])[0].impression,
       "第一印象",

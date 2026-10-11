@@ -152,6 +152,11 @@ export function validateCycles(value: unknown, previous: unknown = []): Json[] {
     cycleIds.add(id);
     const old = oldCycles.find((c) => c.id === id);
     const edition = object(cycle.edition);
+    const priorEdition = old?.edition as Json | undefined;
+    // Older tabs omit these new properties. Preserve them unless explicitly
+    // sent (an empty string intentionally clears a field).
+    const editionProperty = (key: string) =>
+      edition[key] === undefined ? priorEdition?.[key] : edition[key];
     const total = optionalInteger(edition.total_pages, 1);
     const status = string(cycle.status, 20);
     if (!["unread", "reading", "read", "paused"].includes(status)) {
@@ -220,14 +225,14 @@ export function validateCycles(value: unknown, previous: unknown = []): Json[] {
       entries,
       edition: {
         translator: string(edition.translator, 500, true),
-        editor: string(edition.editor, 500, true),
+        editor: string(editionProperty("editor"), 500, true),
         publisher: string(edition.publisher, 500, true),
         year: string(edition.year, 50, true),
         language: string(edition.language, 100, true),
         isbn: string(edition.isbn, 50, true),
         volume: string(edition.volume, 200, true),
-        book_url: link(edition.book_url),
-        source_url: link(edition.source_url),
+        book_url: link(editionProperty("book_url")),
+        source_url: link(editionProperty("source_url")),
         total_pages: total,
       },
     };
