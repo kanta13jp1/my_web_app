@@ -154,7 +154,10 @@ Deno.test("server preserves history and ignores forged history", () => {
 Deno.test("older clients retain edition additions and explicit empty values clear them", () => {
   const previous = validateCycles([cycle]);
   const oldClient = { ...cycle, edition: { total_pages: 100 } };
-  const retained = validateCycles([oldClient], previous)[0].edition as Record<string, unknown>;
+  const retained = validateCycles([oldClient], previous)[0].edition as Record<
+    string,
+    unknown
+  >;
   assertEquals(retained.editor, "編者");
   assertEquals(retained.book_url, "https://example.com/book");
   assertEquals(retained.source_url, "https://example.com/source");
@@ -289,7 +292,8 @@ Deno.test({
         string,
         unknown
       >[])[0];
-    const preservedEdition = (updated.cycles as Record<string, unknown>[])[0].edition as Record<string, unknown>;
+    const preservedEdition = (updated.cycles as Record<string, unknown>[])[0]
+      .edition as Record<string, unknown>;
     assertEquals(preservedEdition.editor, "編者");
     assertEquals(preservedEdition.book_url, "https://example.com/book");
     assertEquals(preservedEdition.source_url, "https://example.com/source");
