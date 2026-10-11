@@ -16,6 +16,8 @@ async function capture(page: Page, info: TestInfo, name: string) {
 }
 async function openWork(page: Page, title: string) {
   await page.getByRole('tab', { name: '著作', exact: true }).click();
+  await expect(page.getByRole('button', { name: '著者を追加', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '著作を追加', exact: true })).toBeVisible();
   await field(page, /^著者・著作を検索/, title);
   await page.getByRole('button', { name: new RegExp(`^${title} `) }).click();
 }
