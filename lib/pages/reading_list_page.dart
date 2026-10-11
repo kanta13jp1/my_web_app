@@ -319,7 +319,8 @@ class _ReadingListPageState extends State<ReadingListPage>
           ),
           const SizedBox(height: 8),
           const Text(
-              '目録 $philosophyCatalogVersion・順次拡充。世界の全哲学書に対する網羅率ではありません。',),
+            '目録 $philosophyCatalogVersion・順次拡充。世界の全哲学書に対する網羅率ではありません。',
+          ),
           _progressCard('収録済み著作全体', _model.progress(_model.works)),
           _filters(),
           _progressCard('現在の検索・分類対象', _model.progress(_filteredWorks)),
@@ -327,7 +328,9 @@ class _ReadingListPageState extends State<ReadingListPage>
           ..._groupProgress('成立世紀', (w) => w.centuries),
           ..._groupProgress('国／地域', (w) => w.author.regions),
           ..._groupProgress(
-              'ジャンル', (w) => w.genres.isEmpty ? ['不明'] : w.genres,),
+            'ジャンル',
+            (w) => w.genres.isEmpty ? ['不明'] : w.genres,
+          ),
         ],
       );
 
@@ -663,7 +666,9 @@ class _ReadingListPageState extends State<ReadingListPage>
                           onPressed: _model.saving || !_model.signedIn
                               ? null
                               : () => _replaceCycle(
-                                  record, cycle.copyWith(status: status),),
+                                    record,
+                                    cycle.copyWith(status: status),
+                                  ),
                           child: Text('${readingStatusLabels[status]}にする'),
                         ),
                       ),

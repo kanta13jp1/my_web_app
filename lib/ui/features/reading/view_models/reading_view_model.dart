@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:uuid/enums.dart';
 import '../../../../data/catalogs/philosophy_catalog.dart';
 import '../../../../data/repositories/reading_repository.dart';
 import '../../../../domain/models/philosophy_reading.dart';

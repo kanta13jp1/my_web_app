@@ -262,7 +262,10 @@ export async function handleReading(
     const work = action === "reading.add" && body.work != null
       ? validateWork(body.work)
       : null;
-    if (action === "reading.author.add" && object(body.author_info).id !== `private:${id}`) {
+    if (
+      action === "reading.author.add" &&
+      object(body.author_info).id !== `private:${id}`
+    ) {
       throw new ReadingError(400, "Private author id required");
     }
     const metadata: Json = action === "reading.author.add"
