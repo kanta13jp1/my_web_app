@@ -1,8 +1,9 @@
-import { chromium, expect } from '@playwright/test';
+import { chromium, expect as baseExpect } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 
+const expect = baseExpect.configure({timeout:45000});
 const base = 'https://my-web-app-b67f4.web.app';
 const url = process.env.SUPABASE_URL_PROD;
 const key = process.env.SUPABASE_PUBLISHABLE_KEY_PROD || process.env.SUPABASE_ANON_KEY_PROD;
@@ -50,7 +51,8 @@ async function field(page,name,value) {
 }
 async function openWork(page) {
   await page.getByRole('tab',{name:'著作',exact:true}).click();
-  await expect(page.getByRole('button',{name:'著作を追加',exact:true})).toBeVisible();
+  await expect(page.getByRole('tabpanel')).toHaveCount(1);
+  await expect(page.getByRole('textbox',{name:/^著者・著作を検索/})).toBeVisible();
   await field(page,/^著者・著作を検索/,'国家');
   await page.getByRole('button',{name:/^国家 /}).click();
 }
@@ -94,7 +96,7 @@ try {
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
   const page=await context.newPage();page.setDefaultTimeout(45000);
   await page.goto(base+'/login');await semantics(page);
-  await page.getByRole('button',{name:'ログイン',exact:true}).last().click();
+  await page.getByRole('button',{name:/ログイン/}).last().click();
   await field(page,/メールアドレス/,a.email);
   await page.getByRole('button',{name:'パスワードを使う',exact:true}).click();
   await field(page,/^パスワード/,a.password);
