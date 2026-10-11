@@ -419,3 +419,33 @@ test('guest author-to-work navigation, compound filters, empty state and keyboar
   await expect(page.getByText('条件に一致する著作はありません', { exact: true })).toBeVisible();
   await capture(page, info, 'guest-empty');
 });
+
+test('search a book and apply edition metadata before saving, reloading and editing', async ({ page }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await field(page, /^書籍情報を検索/, '978-4121600943');
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await page.getByText('エティカ・中央公論新社（中公クラシックス ; W48）', { exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+  await restoredField(page, /^出版社/, '中央公論新社');
+  await restoredField(page, /^訳者/, '工藤喜作・斎藤博');
+  await restoredField(page, /^ISBN/, '9784121600943');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, 'エチカ');
+  await editRegisteredEdition(page, '9784121600943');
+  await restoredField(page, /^版情報の出典URL/, 'https://ndlsearch.ndl.go.jp/books/R100000002-I000008440421');
+  await field(page, /^編集者・編者/, '検索後の修正');
+  await capture(page, info, 'searched-edition-edit');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, 'エチカ');
+  await editRegisteredEdition(page, '9784121600943');
+  await restoredField(page, /^編集者・編者/, '検索後の修正');
+});
