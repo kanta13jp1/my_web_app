@@ -253,7 +253,13 @@ void main() {
     for (final book in philosophyCatalogEditions) {
       final edition = book.edition;
       expect(ids.add('${book.workId}:${edition.isbn}'), isTrue);
-      expect(edition.translator, isNotEmpty);
+      if (const {'nishida:inquiry', 'watsuji:ethics', 'watsuji:climate'}
+          .contains(book.workId)) {
+        expect(edition.translator, isEmpty);
+        expect(book.note, contains('日本語原著'));
+      } else {
+        expect(edition.translator, isNotEmpty);
+      }
       expect(isReadingHttpsUrl(edition.bookUrl), isTrue);
       expect(
         ReadingEdition.fromJson(edition.toJson()).toJson(),
@@ -270,12 +276,12 @@ void main() {
         expect(sum % 11, 0, reason: edition.isbn);
       }
     }
-    expect(philosophyCatalogEditions.length, 33);
+    expect(philosophyCatalogEditions.length, 163);
     expect(
       philosophyCatalogEditions
           .where((b) => b.edition.language == '日本語')
           .length,
-      32,
+      162,
     );
     final books = philosophyCatalogEditions
         .where((b) => b.workId == 'confucius:analects')
@@ -316,6 +322,51 @@ void main() {
           .length,
       3,
     );
+  });
+  test(
+      'remaining Japanese editions cover verified works and keep partial scopes explicit',
+      () {
+    const unconfirmed = {
+      'al-farabi:virtuous-city',
+      'averroes:decisive-treatise',
+      'butler:afraid-gender',
+    };
+    final covered = philosophyCatalogEditions
+        .where((b) => b.edition.language == '日本語')
+        .map((b) => b.workId)
+        .toSet();
+    expect(covered.length, 77);
+    expect(
+      philosophyWorks.map((w) => w.id).toSet().difference(covered),
+      unconfirmed,
+    );
+    for (final id in [
+      'plotinus:enneads',
+      'aquinas:summa',
+      'avicenna:healing',
+      'zhu-xi:four-books',
+      'husserl:ideas',
+      'locke:understanding',
+    ]) {
+      expect(
+        philosophyCatalogEditions
+            .where((b) => b.workId == id)
+            .every((b) => b.note.isNotEmpty),
+        isTrue,
+        reason: id,
+      );
+    }
+    final collected = philosophyCatalogEditions.singleWhere(
+      (b) => b.workId == 'spinoza:ethics' && b.edition.isbn == '9784000928533',
+    );
+    expect(collected.edition.translator, '上野修（翻訳・解説）');
+    expect(collected.edition.editor, '上野修・鈴木泉（編）');
+    final sexuality = philosophyCatalogEditions.singleWhere(
+      (b) =>
+          b.workId == 'foucault:sexuality' && b.edition.isbn == '9784105067120',
+    );
+    expect(sexuality.edition.translator, '慎改康之');
+    expect(sexuality.edition.editor, 'フレデリック・グロ（編）');
   });
   test('century options sort chronologically with unknown last', () {
     final values = ['21世紀', '2世紀', '紀元前4世紀', '不明', '10世紀', '紀元前6世紀', '1世紀']
