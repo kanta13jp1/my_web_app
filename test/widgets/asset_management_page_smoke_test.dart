@@ -1674,6 +1674,9 @@ void main() {
         'reconciliation uses confirmed date and keeps revolving settings', (
       tester,
     ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': 'full',
+      });
       final now = DateTime(2026, 10, 11);
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
@@ -1719,6 +1722,7 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('カード明細取り込み・照合'), findsOneWidget);
       expect(find.textContaining('今回の返済予定: 13日 ¥77,541。'), findsOneWidget);
       expect(find.textContaining('25日の返済予定'), findsNothing);
       expect(find.textContaining('返済日: 毎月25日'), findsOneWidget);
