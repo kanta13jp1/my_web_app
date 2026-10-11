@@ -142,11 +142,15 @@ try {
   await page.getByRole('tab',{name:'進捗',exact:true}).click();
   await expect(page.getByRole('button',{name:'著作を追加',exact:true})).toHaveCount(0);
   await expect(page.getByRole('tabpanel')).toHaveCount(1);
-  await expect(page.getByRole('tabpanel')).toMatchAriaSnapshot(`
-- tabpanel:
-  - group:
-    - text: /.*収録済み著作全体.*読了 1 . 17 著作.*/
-`);
+  let progressSnapshot='';
+  const completedProgress=/収録済み著作全体[\s\S]*読了 1 . 17 著作/;
+  for(let attempt=0;attempt<30;attempt++) {
+    progressSnapshot=await page.getByRole('tabpanel').ariaSnapshot();
+    if(completedProgress.test(progressSnapshot)) break;
+    await page.waitForTimeout(200);
+  }
+  await writeFile('reading-production-evidence/progress-aria.txt',progressSnapshot);
+  assert.match(progressSnapshot,completedProgress,'Published completion progress differs from saved work');
   await capture(page,'progress');
   await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed'},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
