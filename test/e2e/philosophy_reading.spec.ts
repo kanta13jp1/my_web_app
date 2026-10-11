@@ -3,7 +3,12 @@ import { test, expect, type Page, type TestInfo } from '@playwright/test';
 async function field(page: Page, name: RegExp, value: string) {
   const input = page.getByRole('textbox', { name });
   await expect(input).toHaveCount(1);
-  await input.focus(); await input.fill(value);
+  await input.focus();
+  // Flutter connects the browser input to its controller on the next frame.
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  await input.fill(value);
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  await expect(input).toHaveValue(value);
 }
 async function capture(page: Page, info: TestInfo, name: string) {
   await page.evaluate(async () => {
@@ -45,20 +50,20 @@ test('record pages, understanding and impression persists across reload; reread 
   await page.getByRole('button', { name: /未評価/ }).click();
   await page.getByRole('menuitem', { name: '3 要点を理解した', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(page.getByText('感想: 正義の意味を考えた', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: /感想: 正義の意味を考えた/ }).last()).toBeVisible();
   await page.getByRole('button', { name: '読了にする', exact: true }).click();
-  await expect(page.getByText('状態: 読了（読了は手動で設定）', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: /状態: 読了\（読了は手動で設定\）/ }).last()).toBeVisible();
   await capture(page, info, 'saved-record');
   await page.reload();
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
   await openWork(page, '国家');
-  await expect(page.getByText('感想: 正義の意味を考えた', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: /感想: 正義の意味を考えた/ }).last()).toBeVisible();
   await page.getByRole('button', { name: '別の版・再読を始める', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(page.getByText(/第2回/)).toBeVisible();
+  await expect(page.getByRole('group', { name: /第2回/ }).last()).toBeVisible();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('tab', { name: '進捗', exact: true }).click();
-  await expect(page.getByText('読了 1 / 17 著作', { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('group', { name: /収録済み著作全体.*読了 1 \/ 17 著作/ }).last()).toBeVisible();
   await capture(page, info, 'progress');
   expect(errors).toEqual([]);
 });
@@ -81,7 +86,7 @@ test('invalid page range and failed save preserve input; retry, edit history and
   await field(page, /^感想/, '失敗して再試行');
   await capture(page, info, 'failure-kept-input');
   await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(page.getByText('感想: 失敗して再試行', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: /感想: 失敗して再試行/ }).last()).toBeVisible();
   await page.getByRole('button', { name: '記録を編集', exact: true }).click();
   await field(page, /^感想/, '読み直して理解した');
   await page.getByRole('button', { name: '保存', exact: true }).click();
@@ -89,7 +94,7 @@ test('invalid page range and failed save preserve input; retry, edit history and
   await capture(page, info, 'edit-history');
   await page.getByRole('button', { name: '記録を削除', exact: true }).click();
   await page.getByRole('button', { name: '削除', exact: true }).click();
-  await expect(page.getByText('感想: 読み直して理解した', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: /感想: 読み直して理解した/ }).last()).toHaveCount(0);
 });
 
 test('guest author-to-work navigation, compound filters, empty state and keyboard input', async ({ page }, info) => {
