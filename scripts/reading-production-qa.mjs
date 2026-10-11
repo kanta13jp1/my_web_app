@@ -43,7 +43,7 @@ async function semantics(page) {
   if(await placeholder.count()) await placeholder.evaluate(e=>e.click());
 }
 async function field(page,name,value) {
-  const input=page.getByRole('textbox',{name});
+  const input=name.source.startsWith('^パスワード') ? page.getByLabel(name) : page.getByRole('textbox',{name});
   await expect(input).toHaveCount(1);
   await input.focus();
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
@@ -128,6 +128,7 @@ try {
   await expect(page.getByRole('group',{name:/感想: 公開後の読書記録確認/}).last()).toBeVisible();
   await page.getByRole('button',{name:/Back|戻る/}).click();
   await page.getByRole('tab',{name:'進捗',exact:true}).click();
+  await expect(page.getByRole('button',{name:'著作を追加',exact:true})).toHaveCount(0);
   await expect(page.getByRole('tabpanel')).toHaveCount(1);
   await expect(page.getByRole('tabpanel')).toMatchAriaSnapshot(`
 - tabpanel:
