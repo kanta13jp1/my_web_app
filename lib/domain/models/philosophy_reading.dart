@@ -172,15 +172,20 @@ int compareReadingCenturies(String a, String b) {
 }
 
 // ISBN searches identify an edition; otherwise search for title and author.
-Map<String, Uri> readingBookSearchLinks(PhilosophyWork work,
-    [ReadingEdition? edition,]) {
+Map<String, Uri> readingBookSearchLinks(
+  PhilosophyWork work, [
+  ReadingEdition? edition,
+]) {
   final isbn = edition?.isbn.replaceAll(RegExp(r'[\s-]'), '') ?? '';
   final query = isbn.isNotEmpty ? isbn : '${work.title} ${work.author.name}';
   return {
     'Amazonで書籍を検索':
         Uri.https('www.amazon.co.jp', '/s/', {'i': 'stripbooks', 'k': query}),
-    '楽天ブックスで検索': Uri.https('search.books.rakuten.co.jp', '/bksearch/nm',
-        {'sv': '30', 'sitem': query},),
+    '楽天ブックスで検索': Uri.https(
+      'search.books.rakuten.co.jp',
+      '/bksearch/nm',
+      {'sv': '30', 'sitem': query},
+    ),
     '国立国会図書館で探す':
         Uri.https('ndlsearch.ndl.go.jp', '/search', {'keyword': query}),
   };
