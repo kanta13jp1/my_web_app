@@ -142,7 +142,7 @@ try {
   await expect(page.getByRole('button',{name:'著作を追加',exact:true})).toHaveCount(0);
   await expect(page.getByRole('tabpanel')).toHaveCount(1);
   let progressSnapshot='';
-  const completedProgress=/収録済み著作全体[\s\S]*読了 1 . 17 著作/;
+  const completedProgress=/収録済み著作全体[\s\S]*読了 1 . 80 著作/;
   for(let attempt=0;attempt<30;attempt++) {
     progressSnapshot=await page.getByRole('tabpanel').ariaSnapshot();
     if(completedProgress.test(progressSnapshot)) break;

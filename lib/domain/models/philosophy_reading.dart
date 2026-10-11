@@ -98,41 +98,73 @@ class PhilosophyWork {
 class ReadingEdition {
   const ReadingEdition({
     this.translator = '',
+    this.editor = '',
     this.publisher = '',
     this.year = '',
     this.language = '日本語',
     this.isbn = '',
     this.volume = '',
+    this.bookUrl = '',
+    this.sourceUrl = '',
     this.totalPages,
   });
 
   factory ReadingEdition.fromJson(ReadingJson json) => ReadingEdition(
         translator: json['translator'] as String? ?? '',
+        editor: json['editor'] as String? ?? '',
         publisher: json['publisher'] as String? ?? '',
         year: json['year'] as String? ?? '',
         language: json['language'] as String? ?? '日本語',
         isbn: json['isbn'] as String? ?? '',
         volume: json['volume'] as String? ?? '',
+        bookUrl: json['book_url'] as String? ?? '',
+        sourceUrl: json['source_url'] as String? ?? '',
         totalPages: json['total_pages'] as int?,
       );
 
   final String translator;
+  final String editor;
   final String publisher;
   final String year;
   final String language;
   final String isbn;
   final String volume;
+  final String bookUrl;
+  final String sourceUrl;
   final int? totalPages;
 
   ReadingJson toJson() => {
         'translator': translator,
+        'editor': editor,
         'publisher': publisher,
         'year': year,
         'language': language,
         'isbn': isbn,
         'volume': volume,
+        'book_url': bookUrl,
+        'source_url': sourceUrl,
         'total_pages': totalPages,
       };
+}
+
+bool isReadingHttpsUrl(String value) {
+  final uri = Uri.tryParse(value);
+  return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty &&
+      uri.userInfo.isEmpty;
+}
+
+// ISBN searches identify an edition; otherwise search for title and author.
+Map<String, Uri> readingBookSearchLinks(PhilosophyWork work,
+    [ReadingEdition? edition]) {
+  final isbn = edition?.isbn.replaceAll(RegExp(r'[\s-]'), '') ?? '';
+  final query = isbn.isNotEmpty ? isbn : '${work.title} ${work.author.name}';
+  return {
+    'Amazonで書籍を検索': Uri.https('www.amazon.co.jp', '/s/',
+        {'i': 'stripbooks', 'k': query}),
+    '楽天ブックスで検索': Uri.https('search.books.rakuten.co.jp', '/bksearch/nm',
+        {'sv': '30', 'sitem': query}),
+    '国立国会図書館で探す': Uri.https('ndlsearch.ndl.go.jp', '/search', {'keyword': query}),
+  };
 }
 
 class ReadingEntry {

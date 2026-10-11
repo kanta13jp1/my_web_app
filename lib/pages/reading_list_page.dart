@@ -232,7 +232,7 @@ class _ReadingListPageState extends State<ReadingListPage>
       padding: const EdgeInsets.all(16),
       children: [
         _filters(authors: true),
-        const Text('活動世紀・国／地域から著者を探し、著作へ進めます。目録は順次拡充します。'),
+        Text('共有目録 ${philosophyAuthors.length} 著者・${philosophyWorks.length} 著作。活動世紀・国／地域から探せます。地域は歴史上の活動との関係を表します。'),
         if (_model.signedIn)
           Align(
             alignment: Alignment.centerLeft,
@@ -378,7 +378,7 @@ class _ReadingListPageState extends State<ReadingListPage>
     if (url.isEmpty) return;
     try {
       final uri = Uri.parse(url);
-      if (uri.scheme != 'https' || !await launchUrl(uri)) {
+      if (!isReadingHttpsUrl(url) || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw StateError('unavailable');
       }
     } catch (_) {
@@ -501,6 +501,12 @@ class _ReadingListPageState extends State<ReadingListPage>
                       '${work.centuries.join('・')} / ${work.genres.join('・')}',
                     ),
                     Text(work.author.regions.join('・')),
+                    if (work.author.note.isNotEmpty) Text(work.author.note),
+                    if (work.author.source.isNotEmpty)
+                      Align(alignment: Alignment.centerLeft, child: TextButton(
+                        onPressed: () => _source(work.author.source),
+                        child: const Text('著者の出典を開く'),
+                      )),
                     Text(work.note),
                     if (work.source.isNotEmpty)
                       Align(
@@ -532,6 +538,7 @@ class _ReadingListPageState extends State<ReadingListPage>
                             : '別の版・再読を始める',
                       ),
                     ),
+                    _bookAvailability(work),
                     if (record != null && record.cycles.isEmpty)
                       Padding(
                         padding: const EdgeInsets.all(16),
@@ -551,6 +558,41 @@ class _ReadingListPageState extends State<ReadingListPage>
         ),
       );
 
+  Widget _bookAvailability(PhilosophyWork work) => ExpansionTile(
+        title: const Text('版・入手先'),
+        childrenPadding: const EdgeInsets.all(12),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('在庫・価格・翻訳言語・巻数は販売先で確認してください。検索結果には解説書や別の版も含まれます。'),
+          Wrap(spacing: 8, children: [
+            for (final link in readingBookSearchLinks(work).entries)
+              TextButton(onPressed: () => _source(link.value.toString()), child: Text(link.key)),
+          ]),
+          for (final book in philosophyCatalogEditions.where((e) => e.workId == work.id))
+            Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(book.label, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text('出版社: ${book.edition.publisher} / 訳者: ${book.edition.translator}'),
+                if (book.edition.editor.isNotEmpty) Text('編集者・編者: ${book.edition.editor}'),
+                Text('出版年: ${book.edition.year} / 言語: ${book.edition.language}'),
+                Text('ISBN: ${book.edition.isbn} / 総ページ数: ${book.edition.totalPages ?? '不明'}'),
+                TextButton(onPressed: () => _source(book.edition.sourceUrl), child: const Text('この版の書誌出典を開く')),
+                TextButton(onPressed: () => _source(book.edition.bookUrl), child: const Text('この版の出版社・書店を開く')),
+                Wrap(spacing: 8, children: [
+                  for (final link in readingBookSearchLinks(work, book.edition).entries)
+                    TextButton(onPressed: () => _source(link.value.toString()), child: Text('${link.key}（ISBN）')),
+                ]),
+                TextButton(
+                  onPressed: !_model.signedIn || _model.saving || _model.loading
+                      ? null : () => _start(work, edition: book.edition),
+                  child: const Text('この版で読書を始める'),
+                ),
+              ],
+            ))),
+        ],
+      );
+
   List<_Field> _editionFields(ReadingEdition edition) => [
         _Field(
           'total',
@@ -559,27 +601,44 @@ class _ReadingListPageState extends State<ReadingListPage>
           number: true,
         ),
         _Field('translator', '訳者', initial: edition.translator),
+        _Field('editor', '編集者・編者', initial: edition.editor),
         _Field('publisher', '出版社', initial: edition.publisher),
         _Field('year', '出版年', initial: edition.year),
         _Field('language', '言語', initial: edition.language),
         _Field('isbn', 'ISBN（任意）', initial: edition.isbn),
         _Field('volume', '巻・版の名前', initial: edition.volume),
+        _Field('book_url', '書籍・購入URL（HTTPS・任意）', initial: edition.bookUrl),
+        _Field('source_url', '版情報の出典URL（HTTPS・任意）', initial: edition.sourceUrl),
       ];
   ReadingEdition _edition(Map<String, String> values) => ReadingEdition(
         totalPages: int.tryParse(values['total']!),
         translator: values['translator']!,
+        editor: values['editor']!,
         publisher: values['publisher']!,
         year: values['year']!,
         language: values['language']!,
         isbn: values['isbn']!,
         volume: values['volume']!,
+        bookUrl: values['book_url']!,
+        sourceUrl: values['source_url']!,
       );
 
-  Future<void> _start(PhilosophyWork work) async {
+  String? _editionError(Map<String, String> values) {
+    for (final key in ['book_url', 'source_url']) {
+      if (values[key]!.isNotEmpty && !isReadingHttpsUrl(values[key]!)) {
+        return 'URLは有効なHTTPSアドレスを入力してください';
+      }
+    }
+    return null;
+  }
+
+  Future<void> _start(PhilosophyWork work, {ReadingEdition edition = const ReadingEdition()}) async {
     final recordId = const Uuid().v4();
     final cycleId = const Uuid().v4();
-    await _form('読む版を登録', _editionFields(const ReadingEdition()),
+    await _form('読む版を登録', _editionFields(edition),
         (values) async {
+      final error = _editionError(values);
+      if (error != null) return error;
       if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
         return '総ページ数は1以上です';
       }
@@ -627,6 +686,11 @@ class _ReadingListPageState extends State<ReadingListPage>
               Text(
                 '${cycle.edition.volume} ${cycle.edition.publisher} ${cycle.edition.translator} ${cycle.edition.language}',
               ),
+              if (cycle.edition.editor.isNotEmpty) Text('編集者・編者: ${cycle.edition.editor}'),
+              if (cycle.edition.bookUrl.isNotEmpty)
+                TextButton(onPressed: () => _source(cycle.edition.bookUrl), child: const Text('登録した書籍・購入先を開く')),
+              if (cycle.edition.sourceUrl.isNotEmpty)
+                TextButton(onPressed: () => _source(cycle.edition.sourceUrl), child: const Text('登録した版情報の出典を開く')),
               Text(
                 '出版年: ${cycle.edition.year.isEmpty ? '不明' : cycle.edition.year} / ISBN: ${cycle.edition.isbn.isEmpty ? '未登録' : cycle.edition.isbn}',
               ),
@@ -733,6 +797,8 @@ class _ReadingListPageState extends State<ReadingListPage>
 
   Future<void> _editEdition(ReadingRecord record, ReadingCycle cycle) async {
     await _form('版を編集', _editionFields(cycle.edition), (values) async {
+      final error = _editionError(values);
+      if (error != null) return error;
       if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
         return '総ページ数は1以上です';
       }

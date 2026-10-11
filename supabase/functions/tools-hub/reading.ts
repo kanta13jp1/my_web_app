@@ -80,8 +80,16 @@ function uuid(value: unknown): string {
 
 function link(value: unknown): string {
   const text = string(value, 2000, true);
-  if (text && !/^https:\/\//.test(text)) {
-    throw new ReadingError(400, "Source must use HTTPS");
+  if (text) {
+    let url: URL;
+    try {
+      url = new URL(text);
+    } catch {
+      throw new ReadingError(400, "Invalid reading URL");
+    }
+    if (!text.startsWith("https://") || url.protocol !== "https:" || !url.hostname || url.username || url.password) {
+      throw new ReadingError(400, "Source must use HTTPS without credentials");
+    }
   }
   return text;
 }
@@ -209,11 +217,14 @@ export function validateCycles(value: unknown, previous: unknown = []): Json[] {
       entries,
       edition: {
         translator: string(edition.translator, 500, true),
+        editor: string(edition.editor, 500, true),
         publisher: string(edition.publisher, 500, true),
         year: string(edition.year, 50, true),
         language: string(edition.language, 100, true),
         isbn: string(edition.isbn, 50, true),
         volume: string(edition.volume, 200, true),
+        book_url: link(edition.book_url),
+        source_url: link(edition.source_url),
         total_pages: total,
       },
     };

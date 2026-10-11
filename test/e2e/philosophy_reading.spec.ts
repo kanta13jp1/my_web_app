@@ -42,6 +42,11 @@ test('record pages, understanding and impression persists across reload; reread 
   await openWork(page, '国家');
   await page.getByRole('button', { name: '読書を始める', exact: true }).click();
   await field(page, /^総ページ数/, '100');
+  await field(page, /^出版社/, '読書テスト出版社');
+  await field(page, /^訳者/, 'テスト訳者');
+  await field(page, /^編集者・編者/, 'テスト編集者');
+  await field(page, /^書籍・購入URL/, 'https://example.com/book');
+  await field(page, /^版情報の出典URL/, 'https://example.com/source');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '記録を追加', exact: true }).click();
@@ -58,6 +63,14 @@ test('record pages, understanding and impression persists across reload; reread 
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
   await openWork(page, '国家');
   await expect(page.getByRole('group', { name: /感想: 正義の意味を考えた/ }).last()).toBeVisible();
+  await expect(page.getByRole('group', { name: /編集者・編者: テスト編集者/ }).last()).toBeVisible();
+  await page.getByRole('button', { name: '版を編集', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveValue('読書テスト出版社');
+  await expect(page.getByRole('textbox', { name: /^訳者/ })).toHaveValue('テスト訳者');
+  await expect(page.getByRole('textbox', { name: /^編集者・編者/ })).toHaveValue('テスト編集者');
+  await expect(page.getByRole('textbox', { name: /^書籍・購入URL/ })).toHaveValue('https://example.com/book');
+  await expect(page.getByRole('textbox', { name: /^版情報の出典URL/ })).toHaveValue('https://example.com/source');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('button', { name: '別の版・再読を始める', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByRole('group', { name: /第2回/ }).last()).toBeVisible();
@@ -68,10 +81,42 @@ test('record pages, understanding and impression persists across reload; reread 
   await expect(page.getByRole('tabpanel')).toMatchAriaSnapshot(`
 - tabpanel:
   - group:
-    - text: /.*収録済み著作全体.*読了 1 . 17 著作.*/
+    - text: /.*収録済み著作全体.*読了 1 . 80 著作.*/
 `);
   await capture(page, info, 'progress');
   expect(errors).toEqual([]);
+});
+
+test('catalog edition prefills publisher, translator and editor; ISBN link and URL validation work', async ({ page, context }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '正法眼蔵随聞記');
+  await page.getByRole('button', { name: /版・入手先/ }).click();
+  await expect(page.getByRole('button', { name: 'この版の書誌出典を開く', exact: true })).toBeVisible();
+  await context.route('https://www.amazon.co.jp/**', route => route.fulfill({ contentType: 'text/html', body: '<title>Book search fixture</title>' }));
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Amazonで書籍を検索（ISBN）', exact: true }).click();
+  const popup = await popupPromise;
+  await popup.waitForLoadState('domcontentloaded');
+  expect(new URL(popup.url()).searchParams.get('k')).toBe('9784480080226');
+  await popup.close();
+  await page.getByRole('button', { name: 'この版で読書を始める', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveValue('筑摩書房');
+  await expect(page.getByRole('textbox', { name: /^訳者/ })).toHaveValue('水野弥穂子');
+  await expect(page.getByRole('textbox', { name: /^編集者・編者/ })).toHaveValue('懐奘（記録・編纂）');
+  await field(page, /^書籍・購入URL/, 'javascript:alert(1)');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('URLは有効なHTTPSアドレスを入力してください', { exact: true })).toBeVisible();
+  await field(page, /^書籍・購入URL/, 'https://www.chikumashobo.co.jp/product/9784480080226/');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: /版・入手先/ }).click();
+  await capture(page, info, 'catalog-edition-record');
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '正法眼蔵随聞記');
+  await expect(page.getByRole('group', { name: /編集者・編者: 懐奘/ }).last()).toBeVisible();
+  await expect(page.getByRole('button', { name: '登録した書籍・購入先を開く', exact: true })).toBeVisible();
 });
 
 test('invalid page range and failed save preserve input; retry, edit history and deletion work', async ({ page }, info) => {
