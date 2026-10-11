@@ -326,12 +326,12 @@ try {
     await editBook(readingBook);await verifyBook(readingBook);
     await field(page,/^編集者・編者/,`公開確認・${mode}編集`);
     await page.getByRole('button',{name:'保存',exact:true}).click();
-    await expect(page.getByText('版を編集',{exact:true})).toHaveCount(0);
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
     await page.reload();await semantics(page);await openWork(page,'読書について');
     await editBook(readingBook);await verifyBook(readingBook,`公開確認・${mode}編集`);
     await capture(page,`reading-about-books-${mode}-edited-reloaded`);
     await page.getByRole('button',{name:'保存',exact:true}).click();
-    await expect(page.getByText('版を編集',{exact:true})).toHaveCount(0);
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
   }
   const personalRecords=await action(a.token,{action:'reading.list'});
   const personal=personalRecords.items.find(x=>x.id===personalId);
