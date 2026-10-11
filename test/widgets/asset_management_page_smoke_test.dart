@@ -1670,7 +1670,8 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('reconciliation uses confirmed date and keeps revolving settings', (
+    testWidgets(
+        'reconciliation uses confirmed date and keeps revolving settings', (
       tester,
     ) async {
       final now = DateTime(2026, 10, 11);
