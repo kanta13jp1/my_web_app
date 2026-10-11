@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 
 const expect = baseExpect.configure({timeout:45000});
+process.env.EXPECTED_PRODUCTION_SHA = 'b1686c51e1d7072cd82b32b1e99b4e426b7dc87d';
 const base = 'https://my-web-app-b67f4.web.app';
 const url = process.env.SUPABASE_URL_PROD;
 const key = process.env.SUPABASE_PUBLISHABLE_KEY_PROD || process.env.SUPABASE_ANON_KEY_PROD;
