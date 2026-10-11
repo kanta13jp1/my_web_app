@@ -1880,7 +1880,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     AssetLiabilityMonthlyState remote,
   ) {
     return _doubleMapEquals(
-            local.confirmedPaymentDays, remote.confirmedPaymentDays) &&
+          local.confirmedPaymentDays,
+          remote.confirmedPaymentDays,
+        ) &&
         _doubleMapEquals(local.paymentOverrides, remote.paymentOverrides) &&
         _doubleMapEquals(
           local.actualPaymentAmounts,

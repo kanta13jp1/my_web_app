@@ -81,7 +81,9 @@ void main() {
     );
     expect(next.confirmedPaymentDays, isEmpty);
     expect(next.billingConfirmedAccountIds, isEmpty);
-    expect((await store.loadMonth(DateTime(2026, 10))).confirmedPaymentDays,
-        isEmpty);
+    expect(
+      (await store.loadMonth(DateTime(2026, 10))).confirmedPaymentDays,
+      isEmpty,
+    );
   });
 }
