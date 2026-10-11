@@ -1,0 +1,191 @@
+name: Philosophy Reading Verification
+
+on:
+  pull_request:
+    paths:
+      - 'lib/pages/reading_list_page.dart'
+      - 'lib/domain/models/philosophy_reading.dart'
+      - 'lib/data/catalogs/philosophy_catalog.dart'
+      - 'lib/data/repositories/reading_repository.dart'
+      - 'lib/ui/features/reading/**'
+      - 'supabase/functions/tools-hub/reading*'
+      - 'test/**/reading*'
+      - 'test/**/philosophy_reading*'
+      - '.github/workflows/philosophy-reading.yml'
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        required: true
+        type: string
+      production:
+        description: Verify the published application using disposable test users
+        required: false
+        default: false
+        type: boolean
+
+permissions: {}
+
+concurrency:
+  group: philosophy-reading-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.event_name != 'workflow_dispatch' || !inputs.production
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16.6
+        env:
+          POSTGRES_PASSWORD: reading-fixture-only
+          POSTGRES_DB: reading_test
+        ports:
+          - 15432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d reading_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      READING_TEST_DATABASE_URL: http://127.0.0.1:3000
+      READING_TEST_JWT_SECRET: reading-isolated-ci-jwt-secret-never-production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify exact revision
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha || github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Dependencies and scoped formatting in cloud
+        run: |
+          flutter pub get
+          dart format lib/pages/reading_list_page.dart lib/domain/models/philosophy_reading.dart lib/data/catalogs/philosophy_catalog.dart lib/data/repositories/reading_repository.dart lib/ui/features/reading test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart test/support/reading_fixture_repository.dart test/fixtures/reading_app.dart
+      - name: Install repository-pinned Deno
+        run: bash scripts/ci/install_deno_from_github.sh
+      - name: Format scoped Edge Function files
+        run: deno fmt supabase/functions/tools-hub/reading.ts supabase/functions/tools-hub/reading.test.ts supabase/functions/tools-hub/reading_test_client.ts test/fixtures/reading_server.ts
+      - name: Collect formatter output
+        run: |
+          python3 - <<'PY'
+          import pathlib, shutil
+          files = ['lib/pages/reading_list_page.dart', 'lib/domain/models/philosophy_reading.dart', 'lib/data/catalogs/philosophy_catalog.dart', 'lib/data/repositories/reading_repository.dart', 'lib/ui/features/reading/view_models/reading_view_model.dart', 'test/domain/philosophy_reading_test.dart', 'test/ui/reading_view_model_test.dart', 'test/ui/reading_list_page_test.dart', 'test/support/reading_fixture_repository.dart', 'test/fixtures/reading_app.dart', 'supabase/functions/tools-hub/reading.ts', 'supabase/functions/tools-hub/reading.test.ts', 'supabase/functions/tools-hub/reading_test_client.ts', 'test/fixtures/reading_server.ts']
+          for file in files:
+              target = pathlib.Path('reading-format-output/files') / file
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copyfile(file, target)
+          pathlib.Path('reading-format-output/manifest.txt').write_text('\n'.join(files) + '\n')
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: reading-format-${{ github.run_id }}
+          path: reading-format-output
+          retention-days: 1
+      - name: Analyze reading implementation
+        run: flutter analyze lib/pages/reading_list_page.dart lib/domain/models/philosophy_reading.dart lib/data/catalogs/philosophy_catalog.dart lib/data/repositories/reading_repository.dart lib/ui/features/reading test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart test/support/reading_fixture_repository.dart test/fixtures/reading_app.dart
+      - name: Domain, view model and responsive widget tests
+        run: flutter test test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart --concurrency=2
+      - name: Lint and type-check reading API
+        run: |
+          deno lint --config supabase/functions/deno.json supabase/functions/tools-hub/reading.ts supabase/functions/tools-hub/reading.test.ts supabase/functions/tools-hub/reading_test_client.ts test/fixtures/reading_server.ts
+          deno check --config supabase/functions/deno.json supabase/functions/tools-hub/reading.ts supabase/functions/tools-hub/reading.test.ts test/fixtures/reading_server.ts
+      - name: Start isolated PostgREST with production hub_data RLS
+        env:
+          PGPASSWORD: reading-fixture-only
+        run: |
+          psql -h 127.0.0.1 -p 15432 -U postgres -d reading_test -v ON_ERROR_STOP=1 -f test/fixtures/reading_database.sql
+          psql -h 127.0.0.1 -p 15432 -U postgres -d reading_test -v ON_ERROR_STOP=1 -f supabase/migrations/20260412025000_create_hub_data_table.sql
+          docker run -d --name reading-postgrest --network host -e PGRST_DB_URI=postgres://postgres:reading-fixture-only@127.0.0.1:15432/reading_test -e PGRST_DB_ANON_ROLE=anon -e PGRST_JWT_SECRET="$READING_TEST_JWT_SECRET" postgrest/postgrest:v12.2.3
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:3000/ > /dev/null
+      - name: Actual database ownership, RLS and concurrency tests
+        run: deno test --allow-env --allow-net --config supabase/functions/deno.json supabase/functions/tools-hub/reading.test.ts
+      - name: Build production web entry point
+        run: flutter build web --release --pwa-strategy=none
+      - name: Build browser fixture using production page, repository and API
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/reading_app.dart
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install Playwright browser in cloud
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Desktop and mobile user-visible browser tests
+        run: |
+          set -euo pipefail
+          deno run --allow-env --allow-net --config supabase/functions/deno.json test/fixtures/reading_server.ts > reading-api.log 2>&1 &
+          api_pid=$!
+          python3 scripts/serve_spa.py build/web --port 7358 > reading-web.log 2>&1 &
+          web_pid=$!
+          trap 'kill "$api_pid" "$web_pid" || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:7359/ > /dev/null && curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:7359/ > /dev/null || { cat reading-api.log; exit 1; }
+          curl --fail http://127.0.0.1:7358/ > /dev/null || { cat reading-web.log; exit 1; }
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/philosophy_reading.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+      - name: Evidence and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: philosophy-reading-evidence-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            reading-api.log
+            reading-web.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  production:
+    if: github.event_name == 'workflow_dispatch' && inputs.production && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: observability-production
+      deployment: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.expected_head_sha }}
+          persist-credentials: false
+      - name: Verify requested production revision
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install browser in cloud
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Published reading catalog and authenticated persistence
+        env:
+          EXPECTED_PRODUCTION_SHA: ${{ inputs.expected_head_sha }}
+          SUPABASE_URL_PROD: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_ANON_KEY_PROD: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/reading-production-qa.mjs
+      - name: Published reading evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: reading-production-${{ github.run_id }}
+          path: reading-production-evidence/
+          retention-days: 7
+          if-no-files-found: ignore
