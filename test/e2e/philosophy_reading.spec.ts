@@ -63,7 +63,7 @@ test('record pages, understanding and impression persists across reload; reread 
   await expect(page.getByRole('group', { name: /第2回/ }).last()).toBeVisible();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('tab', { name: '進捗', exact: true }).click();
-  await expect(page.getByRole('group', { name: /収録済み著作全体.*読了 1 \/ 17 著作/ }).last()).toBeVisible();
+  await expect(page.getByText(/収録済み著作全体.*読了 1 \/ 17 著作/).last()).toBeVisible();
   await capture(page, info, 'progress');
   expect(errors).toEqual([]);
 });
@@ -90,7 +90,7 @@ test('invalid page range and failed save preserve input; retry, edit history and
   await page.getByRole('button', { name: '記録を編集', exact: true }).click();
   await field(page, /^感想/, '読み直して理解した');
   await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(page.getByRole('button', { name: /編集前の記録（1件）/ })).toBeVisible();
+  await expect(page.getByRole('group', { name: /感想: 読み直して理解した.*編集前の記録（1件）/ }).last()).toBeVisible();
   await capture(page, info, 'edit-history');
   await page.getByRole('button', { name: '記録を削除', exact: true }).click();
   await page.getByRole('button', { name: '削除', exact: true }).click();
