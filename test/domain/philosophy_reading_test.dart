@@ -323,7 +323,9 @@ void main() {
       3,
     );
   });
-  test('remaining Japanese editions cover verified works and keep partial scopes explicit', () {
+  test(
+      'remaining Japanese editions cover verified works and keep partial scopes explicit',
+      () {
     const unconfirmed = {
       'al-farabi:virtuous-city',
       'averroes:decisive-treatise',
@@ -334,20 +336,34 @@ void main() {
         .map((b) => b.workId)
         .toSet();
     expect(covered.length, 77);
-    expect(philosophyWorks.map((w) => w.id).toSet().difference(covered), unconfirmed);
+    expect(
+      philosophyWorks.map((w) => w.id).toSet().difference(covered),
+      unconfirmed,
+    );
     for (final id in [
-      'plotinus:enneads', 'aquinas:summa', 'avicenna:healing',
-      'zhu-xi:four-books', 'husserl:ideas', 'locke:understanding',
+      'plotinus:enneads',
+      'aquinas:summa',
+      'avicenna:healing',
+      'zhu-xi:four-books',
+      'husserl:ideas',
+      'locke:understanding',
     ]) {
-      expect(philosophyCatalogEditions.where((b) => b.workId == id)
-          .every((b) => b.note.isNotEmpty), isTrue, reason: id);
+      expect(
+        philosophyCatalogEditions
+            .where((b) => b.workId == id)
+            .every((b) => b.note.isNotEmpty),
+        isTrue,
+        reason: id,
+      );
     }
     final collected = philosophyCatalogEditions.singleWhere(
-        (b) => b.workId == 'spinoza:ethics' && b.edition.isbn == '9784000928533');
+      (b) => b.workId == 'spinoza:ethics' && b.edition.isbn == '9784000928533',
+    );
     expect(collected.edition.translator, '上野修（翻訳・解説）');
     expect(collected.edition.editor, '上野修・鈴木泉（編）');
     final sexuality = philosophyCatalogEditions.singleWhere(
-        (b) => b.workId == 'foucault:sexuality' && b.edition.isbn == '9784105067120');
+      (b) => b.workId == 'foucault:sexuality' && b.edition.isbn == '9784105067120',
+    );
     expect(sexuality.edition.translator, '慎改康之');
     expect(sexuality.edition.editor, 'フレデリック・グロ（編）');
   });
