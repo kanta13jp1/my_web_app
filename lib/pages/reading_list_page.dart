@@ -232,7 +232,8 @@ class _ReadingListPageState extends State<ReadingListPage>
       padding: const EdgeInsets.all(16),
       children: [
         _filters(authors: true),
-        Text('共有目録 ${philosophyAuthors.length} 著者・${philosophyWorks.length} 著作。活動世紀・国／地域から探せます。地域は歴史上の活動との関係を表します。'),
+        Text(
+            '共有目録 ${philosophyAuthors.length} 著者・${philosophyWorks.length} 著作。活動世紀・国／地域から探せます。地域は歴史上の活動との関係を表します。',),
         if (_model.signedIn)
           Align(
             alignment: Alignment.centerLeft,
@@ -379,7 +380,8 @@ class _ReadingListPageState extends State<ReadingListPage>
     if (url.isEmpty) return;
     try {
       final uri = Uri.parse(url);
-      if (!isReadingHttpsUrl(url) || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!isReadingHttpsUrl(url) ||
+          !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw StateError('unavailable');
       }
     } catch (_) {
@@ -504,10 +506,12 @@ class _ReadingListPageState extends State<ReadingListPage>
                     Text(work.author.regions.join('・')),
                     if (work.author.note.isNotEmpty) Text(work.author.note),
                     if (work.author.source.isNotEmpty)
-                      Align(alignment: Alignment.centerLeft, child: TextButton(
-                        onPressed: () => _source(work.author.source),
-                        child: const Text('著者の出典を開く'),
-                      )),
+                      Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: () => _source(work.author.source),
+                            child: const Text('著者の出典を開く'),
+                          ),),
                     Text(work.note),
                     if (work.source.isNotEmpty)
                       Align(
@@ -567,30 +571,53 @@ class _ReadingListPageState extends State<ReadingListPage>
           const Text('在庫・価格・翻訳言語・巻数は販売先で確認してください。検索結果には解説書や別の版も含まれます。'),
           Wrap(spacing: 8, children: [
             for (final link in readingBookSearchLinks(work).entries)
-              TextButton(onPressed: () => _source(link.value.toString()), child: Text(link.key)),
-          ]),
-          for (final book in philosophyCatalogEditions.where((e) => e.workId == work.id))
-            Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(book.label, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text('出版社: ${book.edition.publisher} / 訳者: ${book.edition.translator}'),
-                if (book.edition.editor.isNotEmpty) Text('編集者・編者: ${book.edition.editor}'),
-                Text('出版年: ${book.edition.year} / 言語: ${book.edition.language}'),
-                Text('ISBN: ${book.edition.isbn} / 総ページ数: ${book.edition.totalPages ?? '不明'}'),
-                TextButton(onPressed: () => _source(book.edition.sourceUrl), child: const Text('この版の書誌出典を開く')),
-                TextButton(onPressed: () => _source(book.edition.bookUrl), child: const Text('この版の出版社・書店を開く')),
-                Wrap(spacing: 8, children: [
-                  for (final link in readingBookSearchLinks(work, book.edition).entries)
-                    TextButton(onPressed: () => _source(link.value.toString()), child: Text('${link.key}（ISBN）')),
-                ]),
-                TextButton(
-                  onPressed: !_model.signedIn || _model.saving || _model.loading
-                      ? null : () => _start(work, edition: book.edition),
-                  child: const Text('この版で読書を始める'),
-                ),
-              ],
-            ))),
+              TextButton(
+                  onPressed: () => _source(link.value.toString()),
+                  child: Text(link.key),),
+          ],),
+          for (final book
+              in philosophyCatalogEditions.where((e) => e.workId == work.id))
+            Card(
+                child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(book.label,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold),),
+                        Text(
+                            '出版社: ${book.edition.publisher} / 訳者: ${book.edition.translator}',),
+                        if (book.edition.editor.isNotEmpty)
+                          Text('編集者・編者: ${book.edition.editor}'),
+                        Text(
+                            '出版年: ${book.edition.year} / 言語: ${book.edition.language}',),
+                        Text(
+                            'ISBN: ${book.edition.isbn} / 総ページ数: ${book.edition.totalPages ?? '不明'}',),
+                        TextButton(
+                            onPressed: () => _source(book.edition.sourceUrl),
+                            child: const Text('この版の書誌出典を開く'),),
+                        TextButton(
+                            onPressed: () => _source(book.edition.bookUrl),
+                            child: const Text('この版の出版社・書店を開く'),),
+                        Wrap(spacing: 8, children: [
+                          for (final link
+                              in readingBookSearchLinks(work, book.edition)
+                                  .entries)
+                            TextButton(
+                                onPressed: () => _source(link.value.toString()),
+                                child: Text('${link.key}（ISBN）'),),
+                        ],),
+                        TextButton(
+                          onPressed: !_model.signedIn ||
+                                  _model.saving ||
+                                  _model.loading
+                              ? null
+                              : () => _start(work, edition: book.edition),
+                          child: const Text('この版で読書を始める'),
+                        ),
+                      ],
+                    ),),),
         ],
       );
 
@@ -633,11 +660,11 @@ class _ReadingListPageState extends State<ReadingListPage>
     return null;
   }
 
-  Future<void> _start(PhilosophyWork work, {ReadingEdition edition = const ReadingEdition()}) async {
+  Future<void> _start(PhilosophyWork work,
+      {ReadingEdition edition = const ReadingEdition(),}) async {
     final recordId = const Uuid().v4();
     final cycleId = const Uuid().v4();
-    await _form('読む版を登録', _editionFields(edition),
-        (values) async {
+    await _form('読む版を登録', _editionFields(edition), (values) async {
       final error = _editionError(values);
       if (error != null) return error;
       if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
@@ -687,11 +714,16 @@ class _ReadingListPageState extends State<ReadingListPage>
               Text(
                 '${cycle.edition.volume} ${cycle.edition.publisher} ${cycle.edition.translator} ${cycle.edition.language}',
               ),
-              if (cycle.edition.editor.isNotEmpty) Text('編集者・編者: ${cycle.edition.editor}'),
+              if (cycle.edition.editor.isNotEmpty)
+                Text('編集者・編者: ${cycle.edition.editor}'),
               if (cycle.edition.bookUrl.isNotEmpty)
-                TextButton(onPressed: () => _source(cycle.edition.bookUrl), child: const Text('登録した書籍・購入先を開く')),
+                TextButton(
+                    onPressed: () => _source(cycle.edition.bookUrl),
+                    child: const Text('登録した書籍・購入先を開く'),),
               if (cycle.edition.sourceUrl.isNotEmpty)
-                TextButton(onPressed: () => _source(cycle.edition.sourceUrl), child: const Text('登録した版情報の出典を開く')),
+                TextButton(
+                    onPressed: () => _source(cycle.edition.sourceUrl),
+                    child: const Text('登録した版情報の出典を開く'),),
               Text(
                 '出版年: ${cycle.edition.year.isEmpty ? '不明' : cycle.edition.year} / ISBN: ${cycle.edition.isbn.isEmpty ? '未登録' : cycle.edition.isbn}',
               ),

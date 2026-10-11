@@ -14,36 +14,80 @@ class PhilosophyCatalogEdition {
 // Verified publisher/library bibliographies. Unknown fields remain empty.
 // A volume's page count is never treated as the complete work's page count.
 const philosophyCatalogEditions = [
-  PhilosophyCatalogEdition('aristotle:nicomachean-ethics', 'ニコマコス倫理学（上）・光文社古典新訳文庫',
-    ReadingEdition(publisher: '光文社', translator: '渡辺邦夫・立花幸司', year: '2015',
-      isbn: '9784334753221', volume: '上巻・光文社古典新訳文庫',
-      sourceUrl: 'https://www.kotensinyaku.jp/books/book221/',
-      bookUrl: 'https://www.kotensinyaku.jp/books/book221/')),
-  PhilosophyCatalogEdition('confucius:analects', '論語・岩波文庫（改訂新版）',
-    ReadingEdition(publisher: '岩波書店', translator: '金谷治（訳注）', year: '1999',
-      isbn: '9784003320211', volume: '岩波文庫・改訂新版',
-      sourceUrl: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000002845211',
-      bookUrl: 'https://www.kinokuniya.co.jp/f/dsg-01-9784003320211')),
-  PhilosophyCatalogEdition('arendt:human-condition', '人間の条件・ちくま学芸文庫',
-    ReadingEdition(publisher: '筑摩書房', translator: '志水速雄', year: '1994',
-      isbn: '9784480081568', volume: 'ちくま学芸文庫', totalPages: 560,
-      sourceUrl: 'https://www.chikumashobo.co.jp/product/9784480081568/',
-      bookUrl: 'https://www.chikumashobo.co.jp/product/9784480081568/')),
-  PhilosophyCatalogEdition('dogen:zuimonki', '正法眼蔵随聞記・ちくま学芸文庫',
-    ReadingEdition(publisher: '筑摩書房', translator: '水野弥穂子', editor: '懐奘（記録・編纂）',
-      year: '1992', isbn: '9784480080226', volume: 'ちくま学芸文庫', totalPages: 464,
-      sourceUrl: 'https://www.chikumashobo.co.jp/product/9784480080226/',
-      bookUrl: 'https://www.chikumashobo.co.jp/product/9784480080226/')),
-  PhilosophyCatalogEdition('habermas:facts-norms', 'Between Facts and Norms・英語ペーパーバック',
-    ReadingEdition(publisher: 'The MIT Press', translator: 'William Rehg', year: '1998',
-      language: '英語', isbn: '9780262581622', volume: 'Paperback', totalPages: 676,
-      sourceUrl: 'https://mitpress.mit.edu/9780262581622/between-facts-and-norms/',
-      bookUrl: 'https://mitpress.mit.edu/9780262581622/between-facts-and-norms/')),
-  PhilosophyCatalogEdition('butler:gender-trouble', 'ジェンダー・トラブル・青土社（1999年版）',
-    ReadingEdition(publisher: '青土社', translator: '竹村和子', year: '1999',
-      isbn: '4791757033', volume: '1999年版',
-      sourceUrl: 'https://www.seidosha.co.jp/book/index.php?id=856',
-      bookUrl: 'https://www.seidosha.co.jp/book/index.php?id=856')),
+  PhilosophyCatalogEdition(
+      'aristotle:nicomachean-ethics',
+      'ニコマコス倫理学（上）・光文社古典新訳文庫',
+      ReadingEdition(
+          publisher: '光文社',
+          translator: '渡辺邦夫・立花幸司',
+          year: '2015',
+          isbn: '9784334753221',
+          volume: '上巻・光文社古典新訳文庫',
+          sourceUrl: 'https://www.kotensinyaku.jp/books/book221/',
+          bookUrl: 'https://www.kotensinyaku.jp/books/book221/',),),
+  PhilosophyCatalogEdition(
+      'confucius:analects',
+      '論語・岩波文庫（改訂新版）',
+      ReadingEdition(
+          publisher: '岩波書店',
+          translator: '金谷治（訳注）',
+          year: '1999',
+          isbn: '9784003320211',
+          volume: '岩波文庫・改訂新版',
+          sourceUrl:
+              'https://ndlsearch.ndl.go.jp/books/R100000002-I000002845211',
+          bookUrl: 'https://www.kinokuniya.co.jp/f/dsg-01-9784003320211',),),
+  PhilosophyCatalogEdition(
+      'arendt:human-condition',
+      '人間の条件・ちくま学芸文庫',
+      ReadingEdition(
+          publisher: '筑摩書房',
+          translator: '志水速雄',
+          year: '1994',
+          isbn: '9784480081568',
+          volume: 'ちくま学芸文庫',
+          totalPages: 560,
+          sourceUrl: 'https://www.chikumashobo.co.jp/product/9784480081568/',
+          bookUrl: 'https://www.chikumashobo.co.jp/product/9784480081568/',),),
+  PhilosophyCatalogEdition(
+      'dogen:zuimonki',
+      '正法眼蔵随聞記・ちくま学芸文庫',
+      ReadingEdition(
+          publisher: '筑摩書房',
+          translator: '水野弥穂子',
+          editor: '懐奘（記録・編纂）',
+          year: '1992',
+          isbn: '9784480080226',
+          volume: 'ちくま学芸文庫',
+          totalPages: 464,
+          sourceUrl: 'https://www.chikumashobo.co.jp/product/9784480080226/',
+          bookUrl: 'https://www.chikumashobo.co.jp/product/9784480080226/',),),
+  PhilosophyCatalogEdition(
+      'habermas:facts-norms',
+      'Between Facts and Norms・英語ペーパーバック',
+      ReadingEdition(
+          publisher: 'The MIT Press',
+          translator: 'William Rehg',
+          year: '1998',
+          language: '英語',
+          isbn: '9780262581622',
+          volume: 'Paperback',
+          totalPages: 676,
+          sourceUrl:
+              'https://mitpress.mit.edu/9780262581622/between-facts-and-norms/',
+          bookUrl:
+              'https://mitpress.mit.edu/9780262581622/between-facts-and-norms/',),),
+  PhilosophyCatalogEdition(
+      'butler:gender-trouble',
+      'ジェンダー・トラブル・青土社（1999年版）',
+      ReadingEdition(
+          publisher: '青土社',
+          translator: '竹村和子',
+          year: '1999',
+          isbn: '4791757033',
+          volume: '1999年版',
+          sourceUrl: 'https://www.seidosha.co.jp/book/index.php?id=856',
+          bookUrl: 'https://www.seidosha.co.jp/book/index.php?id=856',),),
 ];
 
 final philosophyAuthors = List<PhilosophyAuthor>.unmodifiable(

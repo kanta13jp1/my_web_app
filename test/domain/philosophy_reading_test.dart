@@ -141,7 +141,9 @@ void main() {
     });
     expect(reopened.isRead, isFalse);
   });
-  test('expanded catalog keeps identity, East/West coverage and edition attribution', () {
+  test(
+      'expanded catalog keeps identity, East/West coverage and edition attribution',
+      () {
     final authors = {for (final author in philosophyAuthors) author.id: author};
     expect(authors.length, philosophyAuthors.length);
     final century = RegExp(r'^(紀元前)?[1-9][0-9]*世紀$');
@@ -152,38 +154,81 @@ void main() {
       expect(work.author.regions, isNotEmpty);
       expect(work.genres, isNotEmpty);
       expect(work.centuries, isNotEmpty);
-      expect(work.centuries.every((c) => c == '不明' || century.hasMatch(c)), isTrue);
-      expect(work.author.centuries.every((c) => c == '不明' || century.hasMatch(c)), isTrue);
-      expect(readingBookSearchLinks(work).values.every((url) => url.scheme == 'https'), isTrue);
+      expect(work.centuries.every((c) => c == '不明' || century.hasMatch(c)),
+          isTrue,);
+      expect(
+          work.author.centuries.every((c) => c == '不明' || century.hasMatch(c)),
+          isTrue,);
+      expect(
+          readingBookSearchLinks(work)
+              .values
+              .every((url) => url.scheme == 'https'),
+          isTrue,);
     }
-    for (final id in ['confucius:analects', 'plato:republic', 'nagarjuna:mulamadhyamakakarika',
-      'avicenna:healing', 'dogen:shobogenzo', 'aquinas:summa',
-      'butler:afraid-gender', 'sen:idea-justice']) {
+    for (final id in [
+      'confucius:analects',
+      'plato:republic',
+      'nagarjuna:mulamadhyamakakarika',
+      'avicenna:healing',
+      'dogen:shobogenzo',
+      'aquinas:summa',
+      'butler:afraid-gender',
+      'sen:idea-justice'
+    ,]) {
       expect(philosophyWorks.any((w) => w.id == id), isTrue, reason: id);
     }
-    expect(philosophyWorks.where(const ReadingFilter(century: '21世紀', genre: '政治哲学').matches), isNotEmpty);
+    expect(
+        philosophyWorks
+            .where(const ReadingFilter(century: '21世紀', genre: '政治哲学').matches),
+        isNotEmpty,);
     for (final book in philosophyCatalogEditions) {
       expect(philosophyWorks.any((w) => w.id == book.workId), isTrue);
       expect(isReadingHttpsUrl(book.edition.sourceUrl), isTrue);
       expect(book.edition.publisher, isNotEmpty);
       expect(book.edition.isbn, matches(RegExp(r'^(\d{10}|\d{13})$')));
-      expect(readingBookSearchLinks(philosophyWorks.first, book.edition)['Amazonで書籍を検索']!.queryParameters['k'], book.edition.isbn);
+      expect(
+          readingBookSearchLinks(
+                  philosophyWorks.first, book.edition,)['Amazonで書籍を検索']!
+              .queryParameters['k'],
+          book.edition.isbn,);
     }
-    expect(philosophyCatalogEditions.singleWhere((b) => b.workId == 'dogen:zuimonki').edition.editor, contains('懐奘'));
+    expect(
+        philosophyCatalogEditions
+            .singleWhere((b) => b.workId == 'dogen:zuimonki')
+            .edition
+            .editor,
+        contains('懐奘'),);
   });
-  test('old editions default new fields; editor and book/source links round trip', () {
-    final old = ReadingEdition.fromJson({'publisher': '旧出版社', 'total_pages': 100});
+  test(
+      'old editions default new fields; editor and book/source links round trip',
+      () {
+    final old =
+        ReadingEdition.fromJson({'publisher': '旧出版社', 'total_pages': 100});
     expect(old.editor, isEmpty);
     expect(old.bookUrl, isEmpty);
     expect(old.sourceUrl, isEmpty);
-    const edition = ReadingEdition(publisher: '出版社', translator: '訳者', editor: '編者',
-      bookUrl: 'https://example.com/book', sourceUrl: 'https://example.com/bibliography');
-    expect(ReadingEdition.fromJson(edition.toJson()).toJson(), edition.toJson());
-    for (final url in ['http://example.com', 'javascript:alert(1)', 'https://', 'https://user:password@example.com']) {
+    const edition = ReadingEdition(
+        publisher: '出版社',
+        translator: '訳者',
+        editor: '編者',
+        bookUrl: 'https://example.com/book',
+        sourceUrl: 'https://example.com/bibliography',);
+    expect(
+        ReadingEdition.fromJson(edition.toJson()).toJson(), edition.toJson(),);
+    for (final url in [
+      'http://example.com',
+      'javascript:alert(1)',
+      'https://',
+      'https://user:password@example.com'
+    ,]) {
       expect(isReadingHttpsUrl(url), isFalse);
     }
-    final work = const PhilosophyWork(id: 'a', title: '道 & 思想', author: PhilosophyAuthor(id: 'a', name: '著者'));
-    expect(readingBookSearchLinks(work)['Amazonで書籍を検索']!.queryParameters['k'], '道 & 思想 著者');
+    const work = PhilosophyWork(
+        id: 'a',
+        title: '道 & 思想',
+        author: PhilosophyAuthor(id: 'a', name: '著者'),);
+    expect(readingBookSearchLinks(work)['Amazonで書籍を検索']!.queryParameters['k'],
+        '道 & 思想 著者',);
   });
   test('century options sort chronologically with unknown last', () {
     final values = ['21世紀', '2世紀', '紀元前4世紀', '不明', '10世紀', '紀元前6世紀', '1世紀']

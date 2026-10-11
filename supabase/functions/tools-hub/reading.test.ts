@@ -41,8 +41,14 @@ const cycle = {
   started_at: "2026-10-11",
   finished_at: null,
   status: "reading",
-  edition: { total_pages: 100, publisher: "出版社", translator: "訳者", editor: "編者",
-    book_url: "https://example.com/book", source_url: "https://example.com/source" },
+  edition: {
+    total_pages: 100,
+    publisher: "出版社",
+    translator: "訳者",
+    editor: "編者",
+    book_url: "https://example.com/book",
+    source_url: "https://example.com/source",
+  },
   entries: [entry],
 };
 
@@ -97,11 +103,28 @@ Deno.test("reading validates edition bounds, dates, understanding and duplicate 
 
 Deno.test("edition URLs reject unsafe or malformed input and editor text is bounded", () => {
   for (const key of ["book_url", "source_url"]) {
-    for (const url of ["javascript:alert(1)", "http://example.com", "https://", "https://user:secret@example.com"]) {
-      assertThrows(() => validateCycles([{ ...cycle, edition: { ...cycle.edition, [key]: url } }]), ReadingError);
+    for (
+      const url of [
+        "javascript:alert(1)",
+        "http://example.com",
+        "https://",
+        "https://user:secret@example.com",
+      ]
+    ) {
+      assertThrows(
+        () =>
+          validateCycles([{
+            ...cycle,
+            edition: { ...cycle.edition, [key]: url },
+          }]),
+        ReadingError,
+      );
     }
   }
-  assertThrows(() => validateCycles([{ ...cycle, edition: { editor: "x".repeat(501) } }]), ReadingError);
+  assertThrows(
+    () => validateCycles([{ ...cycle, edition: { editor: "x".repeat(501) } }]),
+    ReadingError,
+  );
 });
 
 Deno.test("server preserves history and ignores forged history", () => {
@@ -191,7 +214,8 @@ Deno.test({
     const meta = stored.metadata as Record<string, unknown>;
     assertEquals(meta.user_id, a);
     assertEquals(meta.reading_revision, 1);
-    const storedEdition = (meta.cycles as Record<string, unknown>[])[0].edition as Record<string, unknown>;
+    const storedEdition = (meta.cycles as Record<string, unknown>[])[0]
+      .edition as Record<string, unknown>;
     assertEquals(storedEdition.editor, "編者");
     assertEquals(storedEdition.publisher, "出版社");
     assertEquals(storedEdition.translator, "訳者");

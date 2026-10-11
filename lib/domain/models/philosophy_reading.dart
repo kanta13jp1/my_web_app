@@ -149,7 +149,9 @@ class ReadingEdition {
 
 bool isReadingHttpsUrl(String value) {
   final uri = Uri.tryParse(value);
-  return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty &&
+  return uri != null &&
+      uri.scheme == 'https' &&
+      uri.host.isNotEmpty &&
       uri.userInfo.isEmpty;
 }
 
@@ -160,6 +162,7 @@ int compareReadingCenturies(String a, String b) {
     final number = int.parse(match.group(2)!);
     return match.group(1) == null ? number : -number;
   }
+
   final x = rank(a);
   final y = rank(b);
   if (x == null && y == null) return a.compareTo(b);
@@ -170,15 +173,16 @@ int compareReadingCenturies(String a, String b) {
 
 // ISBN searches identify an edition; otherwise search for title and author.
 Map<String, Uri> readingBookSearchLinks(PhilosophyWork work,
-    [ReadingEdition? edition]) {
+    [ReadingEdition? edition,]) {
   final isbn = edition?.isbn.replaceAll(RegExp(r'[\s-]'), '') ?? '';
   final query = isbn.isNotEmpty ? isbn : '${work.title} ${work.author.name}';
   return {
-    'Amazonで書籍を検索': Uri.https('www.amazon.co.jp', '/s/',
-        {'i': 'stripbooks', 'k': query}),
+    'Amazonで書籍を検索':
+        Uri.https('www.amazon.co.jp', '/s/', {'i': 'stripbooks', 'k': query}),
     '楽天ブックスで検索': Uri.https('search.books.rakuten.co.jp', '/bksearch/nm',
-        {'sv': '30', 'sitem': query}),
-    '国立国会図書館で探す': Uri.https('ndlsearch.ndl.go.jp', '/search', {'keyword': query}),
+        {'sv': '30', 'sitem': query},),
+    '国立国会図書館で探す':
+        Uri.https('ndlsearch.ndl.go.jp', '/search', {'keyword': query}),
   };
 }
 

@@ -87,7 +87,10 @@ function link(value: unknown): string {
     } catch {
       throw new ReadingError(400, "Invalid reading URL");
     }
-    if (!text.startsWith("https://") || url.protocol !== "https:" || !url.hostname || url.username || url.password) {
+    if (
+      !text.startsWith("https://") || url.protocol !== "https:" ||
+      !url.hostname || url.username || url.password
+    ) {
       throw new ReadingError(400, "Source must use HTTPS without credentials");
     }
   }
