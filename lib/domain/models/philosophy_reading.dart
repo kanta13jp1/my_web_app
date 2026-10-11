@@ -153,6 +153,21 @@ bool isReadingHttpsUrl(String value) {
       uri.userInfo.isEmpty;
 }
 
+int compareReadingCenturies(String a, String b) {
+  int? rank(String value) {
+    final match = RegExp(r'^(紀元前)?([1-9][0-9]*)世紀$').firstMatch(value);
+    if (match == null) return null;
+    final number = int.parse(match.group(2)!);
+    return match.group(1) == null ? number : -number;
+  }
+  final x = rank(a);
+  final y = rank(b);
+  if (x == null && y == null) return a.compareTo(b);
+  if (x == null) return 1;
+  if (y == null) return -1;
+  return x.compareTo(y);
+}
+
 // ISBN searches identify an edition; otherwise search for title and author.
 Map<String, Uri> readingBookSearchLinks(PhilosophyWork work,
     [ReadingEdition? edition]) {

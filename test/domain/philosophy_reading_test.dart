@@ -185,4 +185,9 @@ void main() {
     final work = const PhilosophyWork(id: 'a', title: '道 & 思想', author: PhilosophyAuthor(id: 'a', name: '著者'));
     expect(readingBookSearchLinks(work)['Amazonで書籍を検索']!.queryParameters['k'], '道 & 思想 著者');
   });
+  test('century options sort chronologically with unknown last', () {
+    final values = ['21世紀', '2世紀', '紀元前4世紀', '不明', '10世紀', '紀元前6世紀', '1世紀']
+      ..sort(compareReadingCenturies);
+    expect(values, ['紀元前6世紀', '紀元前4世紀', '1世紀', '2世紀', '10世紀', '21世紀', '不明']);
+  });
 }

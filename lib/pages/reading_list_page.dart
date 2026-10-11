@@ -123,7 +123,7 @@ class _ReadingListPageState extends State<ReadingListPage>
             : _model.works.expand((w) => w.centuries))
         .toSet()
         .toList()
-      ..sort();
+      ..sort(compareReadingCenturies);
     final regions = _model.authors.expand((a) => a.regions).toSet().toList()
       ..sort();
     final genres = _model.works.expand((w) => w.genres).toSet().toList()
@@ -357,7 +357,8 @@ class _ReadingListPageState extends State<ReadingListPage>
     String label,
     List<String> Function(PhilosophyWork) classify,
   ) {
-    final groups = _filteredWorks.expand(classify).toSet().toList()..sort();
+    final groups = _filteredWorks.expand(classify).toSet().toList()
+      ..sort(label == '成立世紀' ? compareReadingCenturies : null);
     return [
       Padding(
         padding: const EdgeInsets.only(top: 16),
