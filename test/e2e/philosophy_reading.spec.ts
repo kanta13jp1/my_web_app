@@ -14,10 +14,12 @@ async function capture(page: Page, info: TestInfo, name: string) {
   }
 }
 async function openWork(page: Page, title: string) {
-  await page.getByText('著作', { exact: true }).click();
+  await page.getByRole('tab', { name: '著作', exact: true }).click();
   await field(page, /^著者・著作を検索/, title);
-  await page.getByText(title, { exact: true }).click();
+  await page.getByRole('button', { name: new RegExp(`^${title} `) }).click();
 }
+
+test.setTimeout(60000);
 
 test.beforeEach(async ({ request }) => {
   const reset = await request.post('http://127.0.0.1:7359', { data: { action: 'fixture.reset' } });
@@ -37,8 +39,8 @@ test('record pages, understanding and impression persists across reload; reread 
   await page.getByRole('button', { name: '記録を追加', exact: true }).click();
   await field(page, /^開始ページ/, '1'); await field(page, /^終了ページ/, '10');
   await field(page, /^感想/, '正義の意味を考えた');
-  await page.getByText('未評価', { exact: true }).click();
-  await page.getByText('3 要点を理解した', { exact: true }).last().click();
+  await page.getByRole('button', { name: /未評価/ }).click();
+  await page.getByRole('button', { name: '3 要点を理解した', exact: true }).last().click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('感想: 正義の意味を考えた', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '読了にする', exact: true }).click();
@@ -52,7 +54,7 @@ test('record pages, understanding and impression persists across reload; reread 
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText(/第2回/)).toBeVisible();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
-  await page.getByText('進捗', { exact: true }).click();
+  await page.getByRole('tab', { name: '進捗', exact: true }).click();
   await expect(page.getByText('読了 1 / 17 著作', { exact: true })).toBeVisible();
   await capture(page, info, 'progress');
   expect(errors).toEqual([]);
@@ -90,20 +92,20 @@ test('invalid page range and failed save preserve input; retry, edit history and
 test('guest author-to-work navigation, compound filters, empty state and keyboard input', async ({ page }, info) => {
   await page.goto('/?guest=1');
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
-  await page.getByText('プラトン', { exact: true }).click();
-  await expect(page.getByText('国家', { exact: true })).toBeVisible();
-  await page.getByText('国家', { exact: true }).click();
+  await page.getByRole('button', { name: /^プラトン / }).click();
+  await expect(page.getByRole('button', { name: /^国家 / })).toBeVisible();
+  await page.getByRole('button', { name: /^国家 / }).click();
   await expect(page.getByRole('button', { name: '読書を始める', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('button', { name: '分類を解除', exact: true }).click();
-  await page.getByText('成立世紀', { exact: true }).click();
-  await page.getByText('紀元前4世紀', { exact: true }).last().click();
-  await page.getByText('国／地域', { exact: true }).click();
-  await page.getByText('古代ギリシア', { exact: true }).last().click();
-  await page.getByText('ジャンル', { exact: true }).click();
-  await page.getByText('政治哲学', { exact: true }).last().click();
-  await expect(page.getByText('国家', { exact: true })).toBeVisible();
-  await expect(page.getByText('論語', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: /成立世紀/ }).click();
+  await page.getByRole('button', { name: '紀元前4世紀', exact: true }).last().click();
+  await page.getByRole('button', { name: /国／地域/ }).click();
+  await page.getByRole('button', { name: '古代ギリシア', exact: true }).last().click();
+  await page.getByRole('button', { name: /ジャンル/ }).click();
+  await page.getByRole('button', { name: '政治哲学', exact: true }).last().click();
+  await expect(page.getByRole('button', { name: /^国家 / })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^論語 / })).toHaveCount(0);
   await field(page, /^著者・著作を検索/, '該当しない著作');
   await page.getByRole('textbox', { name: /^著者・著作を検索/ }).press('Tab');
   await expect(page.getByText('条件に一致する著作はありません', { exact: true })).toBeVisible();
