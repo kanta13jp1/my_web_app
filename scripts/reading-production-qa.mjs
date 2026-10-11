@@ -75,6 +75,8 @@ try {
   assert.equal(edited.item.metadata.cycles[0].entries[0].history.length,1);
   await action(key,{action:'reading.list'},401);
   console.log('Production API: save, reload, understanding/impression, edit history, stale revision, ownership and guest rejection passed.');
+  const apiCleanup=await fetch(url+`/rest/v1/hub_data?id=eq.${id}&source=eq.reading&metadata->>user_id=eq.${users[0]}`,{method:'DELETE',headers:{apikey:admin,Authorization:`Bearer ${admin}`}});
+  assert.equal(apiCleanup.status,204,'API verification record cleanup failed');
   browser=await chromium.launch();
   for(const [name,viewport] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
     const context=await browser.newContext({viewport});
