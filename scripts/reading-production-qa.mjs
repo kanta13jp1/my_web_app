@@ -20,7 +20,7 @@ async function req(path, token, data, method = 'POST') {
 async function user() {
   const email = `reading-qa-${randomUUID()}@example.invalid`;
   const password = randomUUID() + '!aA1';
-  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5739 production verification'}});
+  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5744 production verification'}});
   assert.equal(created.status,200,'Test user creation failed');
   users.push(created.body.id);
   const signed = await req('/auth/v1/token?grant_type=password', key, {email,password});
@@ -302,8 +302,51 @@ try {
   console.log('Published title/ISBN lookup and confirmed automatic prefill passed.');
   console.log('Published Japanese editions: desktop/mobile two translations, ISBN purchase destinations, prefill, registration, reload, independent editor changes and genuine API persistence passed.');
 
+  // A personal work, like the reported screen; never infer a shared-work link.
+  const personalWork={...work,id:'qa:'+randomUUID(),title:'読書について',author_info:{...work.author_info,id:'qa-schopenhauer',name:'ショーペンハウアー'}};
+  const personalId=randomUUID();
+  await action(a.token,{action:'reading.add',id:personalId,work:personalWork});
+  const readingBook={publisher:'光文社',translator:'鈴木芳子',editor:'',isbn:'9784334752712',volume:'',source:'https://www.kotensinyaku.jp/books/book169/',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752712'};
+  for(const [mode,size,query] of [['title',{width:1440,height:1000},'読書について'],['isbn',{width:390,height:844},'978-4-334-75271-2']]) {
+    await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'読書について');
+    const start=page.getByRole('button',{name:mode==='title'?'読書を始める':'別の版・再読を始める',exact:true});
+    await reveal(start);await expect(start).toBeEnabled();await start.click();
+    await field(page,/^出版社/,'検索前の手入力');
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await field(page,/^書籍情報を検索/,query);
+    await page.getByRole('button',{name:'書籍情報を検索',exact:true}).click();
+    await page.getByRole('button',{name:/^読書について・光文社/}).click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(readingBook);
+    await restoredField(page,/^出版年/,'2013');await restoredField(page,/^言語/,'日本語');
+    await capture(page,`reading-about-books-${mode}-prefill`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await editBook(readingBook);await verifyBook(readingBook);
+    await field(page,/^編集者・編者/,`公開確認・${mode}編集`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('版を編集',{exact:true})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await editBook(readingBook);await verifyBook(readingBook,`公開確認・${mode}編集`);
+    await capture(page,`reading-about-books-${mode}-edited-reloaded`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('版を編集',{exact:true})).toHaveCount(0);
+  }
+  const personalRecords=await action(a.token,{action:'reading.list'});
+  const personal=personalRecords.items.find(x=>x.id===personalId);
+  assert.equal(personal?.metadata.cycles.length,2);
+  for(const [i,mode] of ['title','isbn'].entries()) {
+    const edition=personal.metadata.cycles[i].edition;
+    for(const property of ['publisher','translator','isbn']) assert.equal(edition[property],readingBook[property]);
+    assert.equal(edition.editor,`公開確認・${mode}編集`);
+    assert.equal(edition.source_url,readingBook.source);assert.equal(edition.book_url,readingBook.purchase);
+  }
+  assert.deepEqual(browserErrors,[]);
+  console.log('Published Reading About Books: personal work title/ISBN search, confirmed metadata prefill, two registrations, desktop/mobile reload/edit/reload and real API persistence passed.');
+
   await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
-  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
 } finally {
   if(browser) await browser.close();
