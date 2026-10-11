@@ -100,9 +100,12 @@ try {
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
   const page=await context.newPage();page.setDefaultTimeout(45000);
   await page.goto(base+'/login');await semantics(page);
+  console.log('LOGIN INITIAL LABELS', (await page.locator('body').ariaSnapshot()).split('\n').filter(l=>/button|textbox|dialog/.test(l)).join('\n'));
   await page.getByRole('button',{name:/ログイン/}).last().click();
+  console.log('LOGIN SELECTED LABELS', (await page.locator('body').ariaSnapshot()).split('\n').filter(l=>/button|textbox|dialog/.test(l)).join('\n'));
   await field(page,/メールアドレス/,a.email);
   await page.getByRole('button',{name:'パスワードを使う',exact:true}).click();
+  console.log('PASSWORD LABELS', (await page.locator('body').ariaSnapshot()).split('\n').filter(l=>/button|textbox|dialog/.test(l)).join('\n'));
   await field(page,/^パスワード/,a.password);
   const signedIn=page.waitForResponse(r=>r.url().includes('/auth/v1/token') && r.request().method()==='POST');
   await page.getByRole('button',{name:'メールでログイン',exact:true}).click();
