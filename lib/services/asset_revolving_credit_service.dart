@@ -44,7 +44,7 @@ class AssetRevolvingCreditService {
         confirmedPaymentAmount.isFinite &&
         confirmedPaymentAmount >= 0;
     final billedAmount = hasConfirmedAmount
-        ? confirmedPaymentAmount!
+        ? confirmedPaymentAmount
         : minimumPayment + normalizedNewUsage;
 
     final isImported = hasImportedStatement ??
