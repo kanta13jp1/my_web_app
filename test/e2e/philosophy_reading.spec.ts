@@ -21,12 +21,13 @@ async function choose(page: Page, name: RegExp, option: string) {
   await page.getByRole('button', { name }).click();
   const item = page.getByRole('menuitem', { name: option, exact: true });
   const menu = page.getByRole('menu', { name: 'Popup menu', exact: true });
-  // Flutter virtualizes offscreen items. Mobile uses actual touch drags rather
-  // than wheel events, whose deltas are scaled by Chromium's mobile emulation.
+  // Wait for the animated menu to expose its items before deciding to scroll.
+  await expect(page.getByRole('menuitem').first()).toBeVisible();
+  await menu.hover();
+  // Flutter virtualizes offscreen items; mobile exercises native touch drags.
   const touch = test.info().project.use.isMobile
     ? await page.context().newCDPSession(page) : undefined;
   try {
-    if (!touch && await item.count() === 0) await menu.hover();
     for (let attempt = 0; attempt < 16 && await item.count() === 0; attempt++) {
       if (touch) {
         const bounds = await menu.boundingBox();
@@ -37,8 +38,8 @@ async function choose(page: Page, name: RegExp, option: string) {
         const bottom = Math.min(viewport.height, bounds!.y + bounds!.height) - 40;
         await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: bottom }] });
         for (let step = 1; step <= 10; step++) {
-          await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: bottom - (bottom - top) * step / 10 }] });
-          await page.waitForTimeout(20);
+          await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: bottom - Math.min(300, bottom - top) * step / 10 }] });
+          await page.waitForTimeout(30);
         }
         await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       } else {
