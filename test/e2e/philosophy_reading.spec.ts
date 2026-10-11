@@ -428,7 +428,7 @@ test('search a book and apply edition metadata before saving, reloading and edit
   await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
   await field(page, /^書籍情報を検索/, '978-4121600943');
   await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
-  await page.getByText('エティカ・中央公論新社（中公クラシックス ; W48）', { exact: true }).click();
+  await page.getByRole('button', { name: /^エティカ・中央公論新社/ }).click();
   await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
   await restoredField(page, /^出版社/, '中央公論新社');
   await restoredField(page, /^訳者/, '工藤喜作・斎藤博');
@@ -463,7 +463,7 @@ test('failed external book search preserves input and recovers with catalog sear
   await expect(page.getByText('書籍情報を取得できませんでした。再検索または手入力できます。', { exact: true })).toBeVisible();
   await field(page, /^書籍情報を検索/, 'エティカ');
   await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
-  await page.getByText('エティカ・中央公論新社（中公クラシックス ; W48）', { exact: true }).click();
+  await page.getByRole('button', { name: /^エティカ・中央公論新社/ }).click();
   await page.getByRole('button', { name: 'キャンセル', exact: true }).last().click();
   await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
   await restoredField(page, /^出版社/, '手入力を保持');
@@ -482,7 +482,7 @@ test('external ISBN metadata populates known fields and leaves unknown contribut
   await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
   await field(page, /^書籍情報を検索/, '9781234567897');
   await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
-  await page.getByText('検索した日本語版', { exact: true }).click();
+  await page.getByRole('button', { name: /^検索した日本語版/ }).click();
   await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
   await restoredField(page, /^出版社/, '取得した出版社');
   await restoredField(page, /^総ページ数/, '240');
