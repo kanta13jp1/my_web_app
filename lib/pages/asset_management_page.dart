@@ -27192,15 +27192,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 照合行の「確認事項」表示文。リボ払いカードは不一致アラートの代わりに
-  /// 返済内訳 (最低返済額 + 新規利用額) と毎月25日のルールを説明する。
+  /// 今回の支払日・請求額と恒久リボ設定を分けて説明する。
   String _cardReconciliationNote(
     AssetLiabilityCardStatementReconciliationGroup group,
   ) {
     final billing = group.revolvingBilling;
     if (billing != null) {
-      return 'リボ返済ルール: 最低返済 ${_formatManagementYen(billing.monthlyAmount)}'
+      return '今回の返済予定: ${billing.paymentDay}日 '
+          '${_formatManagementYen(billing.billedAmount)}。'
+          'リボ設定: 最低返済 ${_formatManagementYen(billing.monthlyAmount)}'
           ' ＋ 新規利用分の全額返済 ${_formatManagementYen(billing.newUsageAmount)}'
-          ' ＝ 25日の返済予定 ${_formatManagementYen(billing.billedAmount)}。'
+          '。'
           '既存残高 ${_formatManagementYen(billing.existingBalanceAmount)}は'
           '一括返済せず、最低返済額で圧縮します。';
     }
