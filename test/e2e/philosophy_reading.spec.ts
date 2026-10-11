@@ -63,7 +63,10 @@ test('record pages, understanding and impression persists across reload; reread 
   await expect(page.getByRole('group', { name: /第2回/ }).last()).toBeVisible();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('tab', { name: '進捗', exact: true }).click();
-  await expect(page.getByText(/収録済み著作全体.*読了 1 \/ 17 著作/).last()).toBeVisible();
+  await expect(page.getByRole('tabpanel')).toMatchAriaSnapshot(`
+- group:
+  - text: /.*収録済み著作全体.*読了 1 . 17 著作.*/
+`);
   await capture(page, info, 'progress');
   expect(errors).toEqual([]);
 });
