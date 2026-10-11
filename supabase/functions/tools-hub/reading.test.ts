@@ -281,7 +281,7 @@ Deno.test({
     const authorId = crypto.randomUUID();
     await handleReading(client, a, "reading.author.add", {
       id: authorId,
-      author_info: work.author_info,
+      author_info: { ...work.author_info, id: `private:${authorId}` },
     });
     assertEquals(
       (await handleReading(client, b, "reading.authors", {})).items,
@@ -289,7 +289,7 @@ Deno.test({
     );
     await handleReading(client, a, "reading.author.add", {
       id: authorId,
-      author_info: work.author_info,
+      author_info: { ...work.author_info, id: `private:${authorId}` },
     });
     // Reading source cannot target a private-author row with the same owner.
     await assertRejects(

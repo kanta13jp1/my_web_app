@@ -38,7 +38,8 @@ class SupabaseReadingRepository implements ReadingRepository {
         throw StateError('別の画面で更新されました。再読込してから保存してください');
       }
       throw StateError(
-          detail is String ? detail : '通信に失敗しました。入力を確認して再試行してください',);
+        detail is String ? detail : '通信に失敗しました。入力を確認して再試行してください',
+      );
     }
   }
 
@@ -54,9 +55,11 @@ class SupabaseReadingRepository implements ReadingRepository {
   Future<List<PhilosophyAuthor>> authors() async {
     final data = await _invoke('reading.authors', {});
     return (data['items'] as List)
-        .map((r) => PhilosophyAuthor.fromJson(
-              readingMap(readingMap(readingMap(r)['metadata'])['author_info']),
-            ),)
+        .map(
+          (r) => PhilosophyAuthor.fromJson(
+            readingMap(readingMap(readingMap(r)['metadata'])['author_info']),
+          ),
+        )
         .toList();
   }
 
@@ -76,10 +79,13 @@ class SupabaseReadingRepository implements ReadingRepository {
   @override
   Future<PhilosophyAuthor> addAuthor(String id, PhilosophyAuthor author) async {
     final data = await _invoke(
-        'reading.author.add', {'id': id, 'author_info': author.toJson()},);
+      'reading.author.add',
+      {'id': id, 'author_info': author.toJson()},
+    );
     return PhilosophyAuthor.fromJson(
       readingMap(
-          readingMap(readingMap(data['item'])['metadata'])['author_info'],),
+        readingMap(readingMap(data['item'])['metadata'])['author_info'],
+      ),
     );
   }
 }

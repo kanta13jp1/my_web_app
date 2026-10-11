@@ -236,6 +236,9 @@ export async function handleReading(
   body: Json,
 ): Promise<Json> {
   if (!userId) throw new ReadingError(401, "Unauthorized");
+  if (new TextEncoder().encode(JSON.stringify(body)).byteLength > 1000000) {
+    throw new ReadingError(400, "Reading record size limit reached");
+  }
   const source = action.startsWith("reading.author")
     ? "reading_author"
     : "reading";
@@ -259,6 +262,9 @@ export async function handleReading(
     const work = action === "reading.add" && body.work != null
       ? validateWork(body.work)
       : null;
+    if (action === "reading.author.add" && object(body.author_info).id !== `private:${id}`) {
+      throw new ReadingError(400, "Private author id required");
+    }
     const metadata: Json = action === "reading.author.add"
       ? { author_info: validateAuthor(body.author_info), user_id: userId }
       : {
@@ -335,7 +341,7 @@ export async function handleReading(
     user_id: userId,
     reading_revision: revision + 1,
   };
-  if (JSON.stringify(metadata).length > 1000000) {
+  if (new TextEncoder().encode(JSON.stringify(metadata)).byteLength > 1000000) {
     throw new ReadingError(400, "Reading record size limit reached");
   }
   let query = admin.from("hub_data").update({ metadata })

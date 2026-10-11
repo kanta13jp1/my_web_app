@@ -6,8 +6,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _FixtureRepository extends SupabaseReadingRepository {
   _FixtureRepository(this.guest)
-      : super(SupabaseClient(
-            'http://127.0.0.1:7359', 'reading-fixture-public-key',),);
+      : super(
+          SupabaseClient(
+            'http://127.0.0.1:7359',
+            'reading-fixture-public-key',
+          ),
+        );
   final bool guest;
   @override
   String? get sessionKey =>
@@ -18,11 +22,15 @@ class _FixtureRepository extends SupabaseReadingRepository {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized().ensureSemantics();
-  runApp(MaterialApp(
-    theme: ThemeData(colorSchemeSeed: Colors.indigo, fontFamily: 'NotoSansJP'),
-    routes: {'/login': (_) => const Scaffold(body: Text('ログイン入口'))},
-    home: ReadingListPage(
+  runApp(
+    MaterialApp(
+      theme:
+          ThemeData(colorSchemeSeed: Colors.indigo, fontFamily: 'NotoSansJP'),
+      routes: {'/login': (_) => const Scaffold(body: Text('ログイン入口'))},
+      home: ReadingListPage(
         repository:
-            _FixtureRepository(Uri.base.queryParameters['guest'] == '1'),),
-  ),);
+            _FixtureRepository(Uri.base.queryParameters['guest'] == '1'),
+      ),
+    ),
+  );
 }

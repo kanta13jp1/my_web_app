@@ -25,7 +25,9 @@ class ReadingFixtureRepository implements ReadingRepository {
       items.putIfAbsent(id, () => ReadingRecord(id: id, work: work));
   @override
   Future<PhilosophyAuthor> addAuthor(
-          String id, PhilosophyAuthor author,) async =>
+    String id,
+    PhilosophyAuthor author,
+  ) async =>
       privateAuthors.putIfAbsent(id, () => author);
   @override
   Future<ReadingRecord> save(ReadingRecord record) async {
@@ -36,11 +38,12 @@ class ReadingFixtureRepository implements ReadingRepository {
     final old = items[record.id]!;
     if (old.revision != record.revision) throw StateError('別の画面で更新されました');
     final result = ReadingRecord(
-        id: record.id,
-        work: record.work,
-        revision: record.revision + 1,
-        cycles: record.cycles,
-        legacyStatus: record.legacyStatus,);
+      id: record.id,
+      work: record.work,
+      revision: record.revision + 1,
+      cycles: record.cycles,
+      legacyStatus: record.legacyStatus,
+    );
     items[record.id] = result;
     return result;
   }

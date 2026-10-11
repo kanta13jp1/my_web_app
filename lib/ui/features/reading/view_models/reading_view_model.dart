@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:uuid/enums.dart';
 import '../../../../data/catalogs/philosophy_catalog.dart';
 import '../../../../data/repositories/reading_repository.dart';
 import '../../../../domain/models/philosophy_reading.dart';
@@ -79,8 +80,8 @@ class ReadingViewModel extends ChangeNotifier {
       if (_disposed ||
           generation != _generation ||
           session != repository.sessionKey) {
-          return;
-        }
+        return;
+      }
       _records = records;
       _privateAuthors = authors;
     } catch (failure) {
@@ -119,9 +120,12 @@ class ReadingViewModel extends ChangeNotifier {
 
   Future<bool> addWork(String id, PhilosophyWork work) => _mutate(() async {
         final session = repository.sessionKey;
-        final recordId = work.id.startsWith('private:') || work.id.startsWith('legacy:')
-        ? id : const Uuid().v5(Uuid.NAMESPACE_URL, 'reading:$session:${work.id}');
-    final result = await repository.add(recordId, work);
+        final recordId =
+            work.id.startsWith('private:') || work.id.startsWith('legacy:')
+                ? id
+                : const Uuid()
+                    .v5(Namespace.url.value, 'reading:$session:${work.id}');
+        final result = await repository.add(recordId, work);
         if (session != repository.sessionKey) return;
         _replace(result);
       });
@@ -140,8 +144,8 @@ class ReadingViewModel extends ChangeNotifier {
         if (session != repository.sessionKey) return;
         _privateAuthors = [
           ..._privateAuthors.where((a) => a.id != result.id),
-          result
-        ,];
+          result,
+        ];
       });
 
   void _replace(ReadingRecord record) {
