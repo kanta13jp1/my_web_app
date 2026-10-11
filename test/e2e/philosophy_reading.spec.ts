@@ -514,6 +514,7 @@ test('reading-about-books title prefills and persists the publisher edition', as
   await restoredField(page, /^訳者/, '鈴木芳子');
   await restoredField(page, /^ISBN/, '9784334752712');
   await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
   await page.reload();
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
   await openWork(page, 'エチカ');
