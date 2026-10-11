@@ -42,7 +42,7 @@ async function semantics(page) {
   if(await placeholder.count()) await placeholder.evaluate(e=>e.click());
 }
 async function field(page,name,value) {
-  const input=name.source.startsWith('^パスワード') ? page.getByLabel(name).last() : name.source==='メールアドレス' ? page.getByRole('textbox',{name:'メールアドレス',exact:true}).last() : page.getByRole('textbox',{name});
+  const input=name.source.startsWith('^パスワード') ? page.locator('input[type="password"]') : name.source==='メールアドレス' ? page.getByRole('textbox',{name:'メールアドレス',exact:true}).last() : page.getByRole('textbox',{name});
   await expect(input).toHaveCount(1);
   await input.focus();
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
@@ -113,10 +113,10 @@ try {
   await expect(auth.getByRole('button',{name:'Magic Linkでログイン',exact:true})).toBeVisible();
   await field(auth,/メールアドレス/,a.email);
   await auth.getByRole('button',{name:'パスワードを使う',exact:true}).evaluate(e=>e.click());
-  await expect(auth.getByRole('button',{name:'メールでログイン',exact:true})).toBeVisible();
-  await field(auth,/^パスワード/,a.password);
+  await expect(page.getByRole('button',{name:'メールでログイン',exact:true})).toBeVisible();
+  await field(page,/^パスワード/,a.password);
   const signedIn=page.waitForResponse(r=>r.url().includes('/auth/v1/token') && r.request().method()==='POST');
-  await auth.getByRole('button',{name:'メールでログイン',exact:true}).evaluate(e=>e.click());
+  await page.getByRole('button',{name:'メールでログイン',exact:true}).evaluate(e=>e.click());
   assert.equal((await signedIn).status(),200,'Published UI sign-in failed');
   await page.waitForTimeout(1500);
   await page.goto(base+'/reading-list');await semantics(page);
