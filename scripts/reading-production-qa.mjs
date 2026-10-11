@@ -96,8 +96,10 @@ try {
   await field(page,/メールアドレス/,a.email);
   await page.getByRole('button',{name:'パスワードを使う',exact:true}).click();
   await field(page,/^パスワード/,a.password);
+  const signedIn=page.waitForResponse(r=>r.url().includes('/auth/v1/token') && r.request().method()==='POST');
   await page.getByRole('button',{name:'メールでログイン',exact:true}).click();
-  await expect(page.getByRole('button',{name:'メールでログイン',exact:true})).toHaveCount(0,{timeout:60000});
+  assert.equal((await signedIn).status(),200,'Published UI sign-in failed');
+  await page.waitForTimeout(1500);
   await page.goto(base+'/reading-list');await semantics(page);
   await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
   await openWork(page);
