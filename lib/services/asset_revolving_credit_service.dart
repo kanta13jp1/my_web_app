@@ -36,11 +36,13 @@ class AssetRevolvingCreditService {
     final minimumPayment =
         requestedMinimum.clamp(0.0, existingBalance).toDouble();
     final paymentDay = confirmedPaymentDay != null &&
-            confirmedPaymentDay >= 1 && confirmedPaymentDay <= 31
+            confirmedPaymentDay >= 1 &&
+            confirmedPaymentDay <= 31
         ? confirmedPaymentDay
         : 25;
     final hasConfirmedAmount = confirmedPaymentAmount != null &&
-        confirmedPaymentAmount.isFinite && confirmedPaymentAmount >= 0;
+        confirmedPaymentAmount.isFinite &&
+        confirmedPaymentAmount >= 0;
     final billedAmount = hasConfirmedAmount
         ? confirmedPaymentAmount!
         : minimumPayment + normalizedNewUsage;
@@ -50,9 +52,8 @@ class AssetRevolvingCreditService {
     final items = <AssetLiabilityRevolvingUsageItem>[];
 
     if (statementLines != null && statementLines.isNotEmpty) {
-      final effectivePayment = hasConfirmedAmount
-          ? billedAmount
-          : scheduledPayment ?? billedAmount;
+      final effectivePayment =
+          hasConfirmedAmount ? billedAmount : scheduledPayment ?? billedAmount;
       var remainingCoverageBudget =
           (effectivePayment - minimumPayment).clamp(0.0, double.infinity);
 
@@ -86,9 +87,8 @@ class AssetRevolvingCreditService {
         );
       }
     } else if (normalizedNewUsage > 0) {
-      final effectivePayment = hasConfirmedAmount
-          ? billedAmount
-          : scheduledPayment ?? billedAmount;
+      final effectivePayment =
+          hasConfirmedAmount ? billedAmount : scheduledPayment ?? billedAmount;
       final hasShortfall =
           (effectivePayment - minimumPayment) < normalizedNewUsage;
       items.add(

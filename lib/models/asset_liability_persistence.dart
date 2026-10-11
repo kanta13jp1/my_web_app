@@ -119,7 +119,8 @@ class AssetLiabilityMonthlyStatePayload {
   }) {
     return AssetLiabilityMonthlyStatePayload(
       monthKey: monthKey,
-      confirmedPaymentDays: Map<String, double>.from(state.confirmedPaymentDays),
+      confirmedPaymentDays:
+          Map<String, double>.from(state.confirmedPaymentDays),
       paymentOverrides: Map<String, double>.from(state.paymentOverrides),
       actualPaymentAmounts: Map<String, double>.from(
         state.actualPaymentAmounts,

@@ -2197,7 +2197,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaymentOverrides = Map<String, double>.from(
           state.paymentOverrides,
         );
-        _confirmedPaymentDays = Map<String, double>.from(state.confirmedPaymentDays);
+        _confirmedPaymentDays =
+            Map<String, double>.from(state.confirmedPaymentDays);
         _actualPaymentAmounts = Map<String, double>.from(
           state.actualPaymentAmounts,
         );
@@ -2511,7 +2512,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _monthlyPaymentOverrides = Map<String, double>.from(
             currentState.paymentOverrides,
           );
-        _confirmedPaymentDays = Map<String, double>.from(currentState.confirmedPaymentDays);
+          _confirmedPaymentDays =
+              Map<String, double>.from(currentState.confirmedPaymentDays);
           _actualPaymentAmounts = Map<String, double>.from(
             currentState.actualPaymentAmounts,
           );
@@ -3062,7 +3064,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final migrated = AssetLiabilityMonthlyStateStore.migrateLegacyKeys(
       state: AssetLiabilityMonthlyState(
         confirmedPaymentDays: Map<String, double>.from(_confirmedPaymentDays),
-      paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
+        paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
         actualPaymentAmounts: Map<String, double>.from(_actualPaymentAmounts),
         paymentDifferenceReasons: Map<String, String>.from(
           _paymentDifferenceReasons,
@@ -3158,7 +3160,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaymentOverrides = Map<String, double>.from(
           migrated.paymentOverrides,
         );
-        _confirmedPaymentDays = Map<String, double>.from(migrated.confirmedPaymentDays);
+        _confirmedPaymentDays =
+            Map<String, double>.from(migrated.confirmedPaymentDays);
         _actualPaymentAmounts = Map<String, double>.from(
           migrated.actualPaymentAmounts,
         );
@@ -4175,7 +4178,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _monthlyPaymentOverrides = Map<String, double>.from(
         copied.paymentOverrides,
       );
-        _confirmedPaymentDays = Map<String, double>.from(copied.confirmedPaymentDays);
+      _confirmedPaymentDays =
+          Map<String, double>.from(copied.confirmedPaymentDays);
       _actualPaymentAmounts = <String, double>{};
       _paymentDifferenceReasons = <String, String>{};
       _monthlyPaidAccountNames = <String>{};
@@ -18117,7 +18121,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         latestSnapshot: latestSnapshot,
         baseDate: _now,
         confirmedPaymentDays: _confirmedPaymentDays,
-      monthlyPaymentOverrides: _monthlyPaymentOverrides,
+        monthlyPaymentOverrides: _monthlyPaymentOverrides,
         actualPaymentAmounts: _actualPaymentAmounts,
         paymentDifferenceReasons: _paymentDifferenceReasons,
         annualRateOverrides: _annualRateOverrides,
@@ -30963,7 +30967,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           labelText: row.isRevolving ? '今回の確定請求額' : null,
           helperText: row.isRevolving
               ? '今回のみ優先・リボ設定は保持'
-              : row.paymentAmountEstimated ? '未入力時は推定' : '実額を優先',
+              : row.paymentAmountEstimated
+                  ? '未入力時は推定'
+                  : '実額を優先',
           suffixIcon: row.paymentAmountEstimated
               ? null
               : IconButton(

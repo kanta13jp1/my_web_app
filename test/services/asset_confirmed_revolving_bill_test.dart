@@ -15,14 +15,18 @@ void main() {
     Map<String, double> amounts = const {},
     Map<String, double> days = const {},
     Set<String> confirmed = const {},
-  }) => service.buildWorkbook(
-    latestSnapshot: {'じぶん銀行': 81234, 'auPayカード': -537541},
-    baseDate: DateTime(2026, 10, 11),
-    monthlyPaymentOverrides: amounts,
-    confirmedPaymentDays: days,
-    billingConfirmedAccountIds: confirmed,
-    revolvingConfigs: {'aupay_card': config},
-  ).debtMasterRows.firstWhere((r) => r.id == 'aupay_card');
+  }) =>
+      service
+          .buildWorkbook(
+            latestSnapshot: {'じぶん銀行': 81234, 'auPayカード': -537541},
+            baseDate: DateTime(2026, 10, 11),
+            monthlyPaymentOverrides: amounts,
+            confirmedPaymentDays: days,
+            billingConfirmedAccountIds: confirmed,
+            revolvingConfigs: {'aupay_card': config},
+          )
+          .debtMasterRows
+          .firstWhere((r) => r.id == 'aupay_card');
 
   test('confirmed current bill overrides revolving amount and day, unpaid', () {
     final bill = row(
@@ -41,7 +45,8 @@ void main() {
     expect(config.creditLimit, 500000);
   });
 
-  test('unconfirmed carried amount does not override permanent revolving plan', () {
+  test('unconfirmed carried amount does not override permanent revolving plan',
+      () {
     final next = row(amounts: {'aupay_card': 77541});
     expect(next.scheduledPaymentAmount, 10000);
     expect(next.paymentDay, 25);
@@ -49,7 +54,9 @@ void main() {
     expect(invalid.paymentDay, 25);
   });
 
-  test('current day survives local and remote reload, never copies to next month', () async {
+  test(
+      'current day survives local and remote reload, never copies to next month',
+      () async {
     SharedPreferences.setMockInitialValues({});
     const state = AssetLiabilityMonthlyState(
       paymentOverrides: {'aupay_card': 77541},
@@ -61,16 +68,20 @@ void main() {
     final loaded = await store.loadMonth(DateTime(2026, 9));
     expect(loaded.confirmedPaymentDays, state.confirmedPaymentDays);
     final payload = AssetLiabilityMonthlyStatePayload.fromState(
-      monthKey: '2026-09', state: loaded,
+      monthKey: '2026-09',
+      state: loaded,
     ).toSupabaseJson(userId: 'test');
-    final remote = AssetLiabilityMonthlyStatePayload.fromSupabaseJson(payload).toState();
+    final remote =
+        AssetLiabilityMonthlyStatePayload.fromSupabaseJson(payload).toState();
     expect(remote.confirmedPaymentDays, state.confirmedPaymentDays);
     expect(remote.paidAccountNames, isEmpty);
     final next = AssetLiabilityMonthlyStateStore.copyPreviousMonthState(
-      previousState: remote, targetMonth: DateTime(2026, 10),
+      previousState: remote,
+      targetMonth: DateTime(2026, 10),
     );
     expect(next.confirmedPaymentDays, isEmpty);
     expect(next.billingConfirmedAccountIds, isEmpty);
-    expect((await store.loadMonth(DateTime(2026, 10))).confirmedPaymentDays, isEmpty);
+    expect((await store.loadMonth(DateTime(2026, 10))).confirmedPaymentDays,
+        isEmpty);
   });
 }

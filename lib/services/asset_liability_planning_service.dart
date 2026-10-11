@@ -846,14 +846,16 @@ class AssetLiabilityPlanningService {
         importedLines != null && importedLines.isNotEmpty;
     final importedNewUsage = cardStatementTotalsByBillingId[account.id] ??
         cardStatementTotalsByBillingId[account.name.trim()];
-    final confirmedPayment = _containsAccountKey(billingConfirmedAccountIds, account)
-        ? manualPayment
-        : null;
+    final confirmedPayment =
+        _containsAccountKey(billingConfirmedAccountIds, account)
+            ? manualPayment
+            : null;
     final rawConfirmedDay = confirmedPaymentDays[account.id] ??
         confirmedPaymentDays[account.name.trim()] ??
         confirmedPaymentDays[account.name];
     final confirmedDay = rawConfirmedDay != null &&
-            rawConfirmedDay >= 1 && rawConfirmedDay <= 31 &&
+            rawConfirmedDay >= 1 &&
+            rawConfirmedDay <= 31 &&
             rawConfirmedDay == rawConfirmedDay.roundToDouble()
         ? rawConfirmedDay.toInt()
         : null;

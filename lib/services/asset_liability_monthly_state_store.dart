@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AssetLiabilityMonthlyState {
   final Map<String, double> paymentOverrides;
+
   /// This cycle only; never copied into the next cycle.
   final Map<String, double> confirmedPaymentDays;
   final Map<String, double> actualPaymentAmounts;
