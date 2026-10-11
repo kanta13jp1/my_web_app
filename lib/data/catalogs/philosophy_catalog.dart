@@ -5,7 +5,8 @@ import '../../domain/models/philosophy_reading.dart';
 const philosophyCatalogVersion = '2026-10-11-japanese-editions';
 
 class PhilosophyCatalogEdition {
-  const PhilosophyCatalogEdition(this.workId, this.label, this.edition, {this.note = ''});
+  const PhilosophyCatalogEdition(this.workId, this.label, this.edition,
+      {this.note = ''});
   final String workId;
   final String label;
   final ReadingEdition edition;
@@ -414,7 +415,8 @@ const philosophyCatalogEditions = [
       year: '2008',
       isbn: '9784003320518',
       volume: '岩波文庫',
-      sourceUrl: 'https://lib-opac.mc.beppu-u.ac.jp/webopac/catdbl.do?hidden_return_link=true&pkey=BB00112034',
+      sourceUrl:
+          'https://lib-opac.mc.beppu-u.ac.jp/webopac/catdbl.do?hidden_return_link=true&pkey=BB00112034',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003320518',
     ),
     note: '出版社書誌と図書館書誌でページ数表記が異なるため、手元の本で確認してください。',
