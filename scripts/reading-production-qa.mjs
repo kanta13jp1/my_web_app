@@ -52,6 +52,7 @@ async function field(page,name,value) {
 }
 async function openWork(page) {
   await page.getByRole('tab',{name:'著作',exact:true}).click();
+  await expect(page.getByRole('button',{name:/^プラトン /})).toHaveCount(0);
   await expect(page.getByRole('tabpanel')).toHaveCount(1);
   await expect(page.getByRole('textbox',{name:/^著者・著作を検索/})).toHaveCount(1);
   await expect(page.getByRole('textbox',{name:/^著者・著作を検索/})).toBeVisible();
