@@ -21,9 +21,13 @@ void main() {
     await tester.tap(find.text('国家'));
     await tester.pumpAndSettle();
     expect(
-      tester.widget<FilledButton>(
-        find.byWidgetPredicate((widget) => widget is FilledButton,),
-      ).onPressed,
+      tester
+          .widget<FilledButton>(
+            find.byWidgetPredicate(
+              (widget) => widget is FilledButton,
+            ),
+          )
+          .onPressed,
       isNull,
     );
     expect(tester.takeException(), isNull);

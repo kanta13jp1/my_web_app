@@ -117,7 +117,7 @@ jobs:
       - name: Desktop and mobile user-visible browser tests
         run: |
           set -euo pipefail
-          deno run --allow-env --allow-net test/fixtures/reading_server.ts > reading-api.log 2>&1 &
+          deno run --allow-env --allow-net --config supabase/functions/deno.json test/fixtures/reading_server.ts > reading-api.log 2>&1 &
           api_pid=$!
           python3 scripts/serve_spa.py build/web --port 7358 > reading-web.log 2>&1 &
           web_pid=$!
@@ -126,6 +126,8 @@ jobs:
             if curl --fail --silent http://127.0.0.1:7359/ > /dev/null && curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
             sleep 1
           done
+          curl --fail http://127.0.0.1:7359/ > /dev/null || { cat reading-api.log; exit 1; }
+          curl --fail http://127.0.0.1:7358/ > /dev/null || { cat reading-web.log; exit 1; }
           E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/philosophy_reading.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
       - name: Evidence and diagnostic logs
         if: always()
