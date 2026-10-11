@@ -571,7 +571,8 @@ class _ReadingListPageState extends State<ReadingListPage>
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-              '出版社・訳者・巻数を比べて、読む本の「この版で読書を始める」を選んでください。版ごとに別の読書回として記録できます。'),
+            '出版社・訳者・巻数を比べて、読む本の「この版で読書を始める」を選んでください。版ごとに別の読書回として記録できます。',
+          ),
           const Text('在庫・価格・翻訳言語・巻数は販売先で確認してください。検索結果には解説書や別の版も含まれます。'),
           Wrap(
             spacing: 8,

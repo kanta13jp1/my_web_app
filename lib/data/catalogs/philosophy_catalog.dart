@@ -5,8 +5,12 @@ import '../../domain/models/philosophy_reading.dart';
 const philosophyCatalogVersion = '2026-10-11-japanese-editions';
 
 class PhilosophyCatalogEdition {
-  const PhilosophyCatalogEdition(this.workId, this.label, this.edition,
-      {this.note = ''});
+  const PhilosophyCatalogEdition(
+    this.workId,
+    this.label,
+    this.edition, {
+    this.note = '',
+  });
   final String workId;
   final String label;
   final ReadingEdition edition;

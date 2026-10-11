@@ -256,7 +256,7 @@ void main() {
       expect(edition.translator, isNotEmpty);
       expect(isReadingHttpsUrl(edition.bookUrl), isTrue);
       expect(
-          ReadingEdition.fromJson(edition.toJson()).toJson(), edition.toJson());
+          ReadingEdition.fromJson(edition.toJson()).toJson(), edition.toJson(),);
       final digits = edition.isbn.split('').map((d) => int.parse(d)).toList();
       if (digits.length == 13) {
         final sum = List.generate(13, (i) => digits[i] * (i.isEven ? 1 : 3))
@@ -273,12 +273,12 @@ void main() {
         philosophyCatalogEditions
             .where((b) => b.edition.language == '日本語')
             .length,
-        32);
+        32,);
     final books = philosophyCatalogEditions
         .where((b) => b.workId == 'confucius:analects')
         .toList();
     expect(books.map((b) => b.edition.isbn).toSet(),
-        {'9784003320211', '9784334107741'});
+        {'9784003320211', '9784334107741'},);
     final record = ReadingRecord(
         id: 'editions',
         work: philosophyWorks.firstWhere((w) => w.id == 'confucius:analects'),
@@ -287,23 +287,23 @@ void main() {
             ReadingCycle(
                 id: 'cycle-$i',
                 startedAt: '2026-10-11',
-                edition: books[i].edition),
-        ]);
+                edition: books[i].edition,),
+        ],);
     final restored = ReadingRecord.fromHub(
-        {'id': record.id, 'metadata': record.savePayload()});
+        {'id': record.id, 'metadata': record.savePayload()},);
     expect(restored.cycles.map((c) => c.edition.toJson()),
-        books.map((b) => b.edition.toJson()));
+        books.map((b) => b.edition.toJson()),);
     expect(ReadingProgress(philosophyWorks, [restored]).completed, 0);
     expect(
         philosophyCatalogEditions
             .where((b) => b.workId == 'kant:pure-reason')
             .length,
-        7);
+        7,);
     expect(
         philosophyCatalogEditions
             .where((b) => b.workId == 'nagarjuna:mulamadhyamakakarika')
             .length,
-        3);
+        3,);
   });
   test('century options sort chronologically with unknown last', () {
     final values = ['21世紀', '2世紀', '紀元前4世紀', '不明', '10世紀', '紀元前6世紀', '1世紀']
