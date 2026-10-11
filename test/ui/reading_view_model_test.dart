@@ -39,7 +39,7 @@ void main() {
     repo.changes.add(null);
     await Future<void>.delayed(Duration.zero);
     expect(model.records, isEmpty);
-    expect(model.works.length, 17);
+    expect(model.works.length, philosophyWorks.length);
     expect(await model.addWork('other', work), isFalse);
     model.dispose();
     await repo.changes.close();

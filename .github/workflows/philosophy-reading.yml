@@ -8,6 +8,8 @@ on:
       - 'lib/data/catalogs/philosophy_catalog.dart'
       - 'lib/data/repositories/reading_repository.dart'
       - 'lib/ui/features/reading/**'
+      - 'lib/data/services/reading_book_search.dart'
+      - 'lib/widgets/reading_book_lookup.dart'
       - 'supabase/functions/tools-hub/reading*'
       - 'test/**/reading*'
       - 'test/**/philosophy_reading*'
@@ -69,7 +71,7 @@ jobs:
       - name: Dependencies and scoped formatting in cloud
         run: |
           flutter pub get
-          dart format lib/pages/reading_list_page.dart lib/domain/models/philosophy_reading.dart lib/data/catalogs/philosophy_catalog.dart lib/data/repositories/reading_repository.dart lib/ui/features/reading test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart test/support/reading_fixture_repository.dart test/fixtures/reading_app.dart
+          dart format lib/data/services/reading_book_search.dart lib/widgets/reading_book_lookup.dart test/domain/reading_book_search_test.dart test/ui/reading_book_lookup_test.dart lib/pages/reading_list_page.dart lib/domain/models/philosophy_reading.dart lib/data/catalogs/philosophy_catalog.dart lib/data/repositories/reading_repository.dart lib/ui/features/reading test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart test/support/reading_fixture_repository.dart test/fixtures/reading_app.dart
       - name: Install repository-pinned Deno
         run: bash scripts/ci/install_deno_from_github.sh
       - name: Format scoped Edge Function files
@@ -78,7 +80,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import pathlib, shutil
-          files = ['lib/pages/reading_list_page.dart', 'lib/domain/models/philosophy_reading.dart', 'lib/data/catalogs/philosophy_catalog.dart', 'lib/data/repositories/reading_repository.dart', 'lib/ui/features/reading/view_models/reading_view_model.dart', 'test/domain/philosophy_reading_test.dart', 'test/ui/reading_view_model_test.dart', 'test/ui/reading_list_page_test.dart', 'test/support/reading_fixture_repository.dart', 'test/fixtures/reading_app.dart', 'supabase/functions/tools-hub/reading.ts', 'supabase/functions/tools-hub/reading.test.ts', 'supabase/functions/tools-hub/reading_test_client.ts', 'test/fixtures/reading_server.ts']
+          files = ['lib/data/services/reading_book_search.dart', 'lib/widgets/reading_book_lookup.dart', 'test/domain/reading_book_search_test.dart', 'test/ui/reading_book_lookup_test.dart', 'lib/pages/reading_list_page.dart', 'lib/domain/models/philosophy_reading.dart', 'lib/data/catalogs/philosophy_catalog.dart', 'lib/data/repositories/reading_repository.dart', 'lib/ui/features/reading/view_models/reading_view_model.dart', 'test/domain/philosophy_reading_test.dart', 'test/ui/reading_view_model_test.dart', 'test/ui/reading_list_page_test.dart', 'test/support/reading_fixture_repository.dart', 'test/fixtures/reading_app.dart', 'supabase/functions/tools-hub/reading.ts', 'supabase/functions/tools-hub/reading.test.ts', 'supabase/functions/tools-hub/reading_test_client.ts', 'test/fixtures/reading_server.ts']
           for file in files:
               target = pathlib.Path('reading-format-output/files') / file
               target.parent.mkdir(parents=True, exist_ok=True)
@@ -91,9 +93,9 @@ jobs:
           path: reading-format-output
           retention-days: 1
       - name: Analyze reading implementation
-        run: flutter analyze lib/pages/reading_list_page.dart lib/domain/models/philosophy_reading.dart lib/data/catalogs/philosophy_catalog.dart lib/data/repositories/reading_repository.dart lib/ui/features/reading test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart test/support/reading_fixture_repository.dart test/fixtures/reading_app.dart
+        run: flutter analyze lib/data/services/reading_book_search.dart lib/widgets/reading_book_lookup.dart test/domain/reading_book_search_test.dart test/ui/reading_book_lookup_test.dart lib/pages/reading_list_page.dart lib/domain/models/philosophy_reading.dart lib/data/catalogs/philosophy_catalog.dart lib/data/repositories/reading_repository.dart lib/ui/features/reading test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart test/support/reading_fixture_repository.dart test/fixtures/reading_app.dart
       - name: Domain, view model and responsive widget tests
-        run: flutter test test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart --concurrency=2
+        run: flutter test test/domain/reading_book_search_test.dart test/ui/reading_book_lookup_test.dart test/domain/philosophy_reading_test.dart test/ui/reading_view_model_test.dart test/ui/reading_list_page_test.dart --concurrency=2
       - name: Lint and type-check reading API
         run: |
           deno lint --config supabase/functions/deno.json supabase/functions/tools-hub/reading.ts supabase/functions/tools-hub/reading.test.ts supabase/functions/tools-hub/reading_test_client.ts test/fixtures/reading_server.ts
