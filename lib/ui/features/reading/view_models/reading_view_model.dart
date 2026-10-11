@@ -41,8 +41,12 @@ class ReadingViewModel extends ChangeNotifier {
 
   List<PhilosophyAuthor> get authors {
     final map = {for (final author in philosophyAuthors) author.id: author};
-    for (final author in _privateAuthors) { map[author.id] = author; }
-    for (final work in works) { map.putIfAbsent(work.author.id, () => work.author); }
+    for (final author in _privateAuthors) {
+      map[author.id] = author;
+    }
+    for (final work in works) {
+      map.putIfAbsent(work.author.id, () => work.author);
+    }
     return map.values.toList(growable: false);
   }
 
@@ -53,7 +57,8 @@ class ReadingViewModel extends ChangeNotifier {
     return null;
   }
 
-  ReadingProgress progress(Iterable<PhilosophyWork> targets) => ReadingProgress(targets, _records);
+  ReadingProgress progress(Iterable<PhilosophyWork> targets) =>
+      ReadingProgress(targets, _records);
 
   Future<void> load() async {
     final generation = ++_generation;
@@ -62,63 +67,85 @@ class ReadingViewModel extends ChangeNotifier {
     error = null;
     _notify();
     if (session == null) {
-      _records = []; _privateAuthors = []; _notify(); return;
+      _records = [];
+      _privateAuthors = [];
+      _notify();
+      return;
     }
     try {
       final records = await repository.list();
       final authors = await repository.authors();
-      if (_disposed || generation != _generation || session != repository.sessionKey) return;
-      _records = records; _privateAuthors = authors;
+      if (_disposed ||
+          generation != _generation ||
+          session != repository.sessionKey) return;
+      _records = records;
+      _privateAuthors = authors;
     } catch (failure) {
       if (generation == _generation && session == repository.sessionKey) {
         error = '読書記録を取得できませんでした。再試行してください';
       }
     } finally {
-      if (generation == _generation) { loading = false; _notify(); }
+      if (generation == _generation) {
+        loading = false;
+        _notify();
+      }
     }
   }
 
   Future<bool> _mutate(Future<void> Function() action) async {
     if (saving || !signedIn || loading) return false;
     final session = repository.sessionKey;
-    saving = true; error = null; _notify();
+    saving = true;
+    error = null;
+    _notify();
     try {
       await action();
       return !_disposed && session == repository.sessionKey;
     } catch (failure) {
       if (session == repository.sessionKey) {
-        error = failure is StateError ? failure.message.toString() : '保存できませんでした。入力を保持しています。再試行してください';
+        error = failure is StateError
+            ? failure.message.toString()
+            : '保存できませんでした。入力を保持しています。再試行してください';
       }
       return false;
-    } finally { saving = false; _notify(); }
+    } finally {
+      saving = false;
+      _notify();
+    }
   }
 
   Future<bool> addWork(String id, PhilosophyWork work) => _mutate(() async {
-    final session = repository.sessionKey;
-    final result = await repository.add(id, work);
-    if (session != repository.sessionKey) return;
-    _replace(result);
-  });
+        final session = repository.sessionKey;
+        final result = await repository.add(id, work);
+        if (session != repository.sessionKey) return;
+        _replace(result);
+      });
 
   Future<bool> save(ReadingRecord record) => _mutate(() async {
-    final session = repository.sessionKey;
-    final result = await repository.save(record);
-    if (session != repository.sessionKey) return;
-    _replace(result);
-  });
+        final session = repository.sessionKey;
+        final result = await repository.save(record);
+        if (session != repository.sessionKey) return;
+        _replace(result);
+      });
 
-  Future<bool> addAuthor(String id, PhilosophyAuthor author) => _mutate(() async {
-    final session = repository.sessionKey;
-    final result = await repository.addAuthor(id, author);
-    if (session != repository.sessionKey) return;
-    _privateAuthors = [..._privateAuthors.where((a) => a.id != result.id), result];
-  });
+  Future<bool> addAuthor(String id, PhilosophyAuthor author) =>
+      _mutate(() async {
+        final session = repository.sessionKey;
+        final result = await repository.addAuthor(id, author);
+        if (session != repository.sessionKey) return;
+        _privateAuthors = [
+          ..._privateAuthors.where((a) => a.id != result.id),
+          result
+        ];
+      });
 
   void _replace(ReadingRecord record) {
     _records = [record, ..._records.where((r) => r.id != record.id)];
   }
 
-  void _notify() { if (!_disposed) notifyListeners(); }
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
 
   @override
   void dispose() {
