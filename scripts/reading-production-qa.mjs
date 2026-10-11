@@ -259,7 +259,19 @@ try {
       const destination=await destinationPromise;await destination.waitForURL(target);bookLinks.push(destination.url());await destination.close();
     }
     await reveal(start);
-    await start.click();await verifyBook(book);await page.getByRole('button',{name:'保存',exact:true}).click();
+    await start.click();
+    await field(page,/^出版社/,'検索前の手入力');
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    const query=book.isbn==='9784121600943'?'エティカ':'978-4000928533';
+    await field(page,/^書籍情報を検索/,query);
+    await page.getByRole('button',{name:'書籍情報を検索',exact:true}).click();
+    const prefix=book.isbn==='9784121600943'?'^エティカ・中央公論新社':'^スピノザ全集';
+    await page.getByRole('button',{name:new RegExp(prefix)}).click();
+    await expect(page.getByText('この書籍情報を設定しますか？',{exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(book);
+    await capture(page,`lookup-prefill-${book.isbn}`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
     await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
     await page.getByRole('button',{name:/Back|戻る/}).click();await openWork(page,'エチカ');
   }
@@ -287,10 +299,11 @@ try {
     assert.equal(edition.editor,i===0?'公開確認・mobile編者':japaneseBooks[i].editor);
   }
   assert.deepEqual(browserErrors,[],'Published Japanese edition flow has browser errors');
+  console.log('Published title/ISBN lookup and confirmed automatic prefill passed.');
   console.log('Published Japanese editions: desktop/mobile two translations, ISBN purchase destinations, prefill, registration, reload, independent editor changes and genuine API persistence passed.');
 
   await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
-  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
 } finally {
   if(browser) await browser.close();
