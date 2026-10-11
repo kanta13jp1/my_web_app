@@ -10,13 +10,21 @@ const int _maxTotalBytes = 10 * 1024 * 1024;
 
 bool get isAssetObsidianVaultPickerSupported => true;
 
-Future<AssetObsidianVaultSelection?> pickAssetObsidianVault() {
+Future<AssetObsidianVaultSelection?> pickAssetObsidianVault() =>
+    _pickAssetObsidianMarkdown(directory: true);
+
+Future<AssetObsidianVaultSelection?> pickAssetObsidianFiles() =>
+    _pickAssetObsidianMarkdown(directory: false);
+
+Future<AssetObsidianVaultSelection?> _pickAssetObsidianMarkdown({
+  required bool directory,
+}) {
   final completer = Completer<AssetObsidianVaultSelection?>();
   final input = web.HTMLInputElement()
     ..type = 'file'
     ..accept = '.md,text/markdown,text/plain'
     ..multiple = true
-    ..webkitdirectory = true
+    ..webkitdirectory = directory
     ..style.display = 'none';
 
   void finish(AssetObsidianVaultSelection? selection) {
@@ -45,9 +53,9 @@ Future<AssetObsidianVaultSelection?> pickAssetObsidianVault() {
       for (var index = 0; index < fileList.length; index++) {
         final file = fileList.item(index);
         if (file == null) continue;
-        final relativePath = file.webkitRelativePath.replaceAll('\\', '/');
+        final relativePath = (directory ? file.webkitRelativePath : file.name).replaceAll('\\', '/');
         final segments = relativePath.split('/');
-        if (vaultName == null && segments.isNotEmpty) {
+        if (directory && vaultName == null && segments.isNotEmpty) {
           vaultName = segments.first;
         }
         if (!relativePath.toLowerCase().endsWith('.md') ||
@@ -79,7 +87,7 @@ Future<AssetObsidianVaultSelection?> pickAssetObsidianVault() {
         final content = (await file.text().toDart).toDart;
         selectedFiles.add(
           AssetObsidianVaultFile(
-            relativePath: file.webkitRelativePath.replaceAll('\\', '/'),
+            relativePath: (directory ? file.webkitRelativePath : file.name).replaceAll('\\', '/'),
             content: content,
             byteSize: file.size,
             lastModified: DateTime.fromMillisecondsSinceEpoch(
@@ -92,7 +100,7 @@ Future<AssetObsidianVaultSelection?> pickAssetObsidianVault() {
         AssetObsidianVaultSelection(
           vaultName: vaultName?.trim().isNotEmpty == true
               ? vaultName!.trim()
-              : '選択した保管庫',
+              : '選択したMarkdownファイル',
           files: selectedFiles,
         ),
       );

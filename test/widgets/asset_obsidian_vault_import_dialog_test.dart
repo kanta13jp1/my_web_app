@@ -20,7 +20,7 @@ void main() {
         ],
       );
 
-  testWidgets('差分プレビュー後に選択残高だけを確認して反映する', (tester) async {
+  testWidgets('個別Markdown選択後に選択残高だけを確認して反映する', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     AssetObsidianApplySelection? applied;
@@ -36,7 +36,7 @@ void main() {
                 amount: 10000,
               ),
             ],
-            pickVault: () async => selection(),
+            pickFiles: () async => selection(),
             onApply: (selection) async => applied = selection,
           ),
         ),
@@ -44,7 +44,8 @@ void main() {
     );
 
     expect(find.textContaining('Markdown本文はこのブラウザ内だけ'), findsOneWidget);
-    await tester.tap(find.text('Obsidian保管庫を選択'));
+    expect(find.text('Obsidian保管庫を選択'), findsOneWidget);
+    await tester.tap(find.text('Markdownファイルを選択'));
     await tester.pumpAndSettle();
 
     expect(find.text('company'), findsOneWidget);
