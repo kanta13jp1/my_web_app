@@ -153,7 +153,7 @@ jobs:
           retention-days: 7
 
   production:
-    if: github.event_name == 'workflow_dispatch' && inputs.production && github.ref == 'refs/heads/main' && inputs.expected_head_sha == github.sha
+    if: github.event_name == 'workflow_dispatch' && inputs.production && github.ref == 'refs/heads/codex/pr5735-production-qa-20261011' && inputs.expected_head_sha == github.sha
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
