@@ -362,7 +362,8 @@ void main() {
     expect(collected.edition.translator, '上野修（翻訳・解説）');
     expect(collected.edition.editor, '上野修・鈴木泉（編）');
     final sexuality = philosophyCatalogEditions.singleWhere(
-      (b) => b.workId == 'foucault:sexuality' && b.edition.isbn == '9784105067120',
+      (b) =>
+          b.workId == 'foucault:sexuality' && b.edition.isbn == '9784105067120',
     );
     expect(sexuality.edition.translator, '慎改康之');
     expect(sexuality.edition.editor, 'フレデリック・グロ（編）');
