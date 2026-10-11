@@ -21,8 +21,10 @@ void main() {
     expect(byTitle.single.edition.translator, '鈴木芳子');
     expect(byTitle.single.edition.editor, '');
     expect(byTitle.single.edition.totalPages, isNull);
-    expect(byTitle.single.edition.sourceUrl,
-        'https://www.kotensinyaku.jp/books/book169/');
+    expect(
+      byTitle.single.edition.sourceUrl,
+      'https://www.kotensinyaku.jp/books/book169/',
+    );
   });
   test(
     'ISBN-10 normalizes to ISBN-13; bad checksums never query the provider',
