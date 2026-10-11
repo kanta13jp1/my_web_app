@@ -205,15 +205,18 @@ class ReadingBookSearch {
       final translators = <String>{};
       final editors = <String>{};
       final credits = [
-        ...item.findElements('creator', namespace: dc).map((node) => node.innerText),
+        ...item
+            .findElements('creator', namespace: dc)
+            .map((node) => node.innerText),
         // RSS author also includes literal responsibility credits; authority
         // headings alone do not identify a translator or editor.
         ...item.findElements('author').expand(
-          (node) => node.innerText.split(',').where(
-            (credit) => RegExp(r'^[ぁ-んァ-ヶ一-龯々ー・\s]+(?:編訳|翻訳|訳|編集|編)(?:・解説)?$')
-                .hasMatch(credit.trim()),
-          ),
-        ),
+              (node) => node.innerText.split(',').where(
+                    (credit) =>
+                        RegExp(r'^[ぁ-んァ-ヶ一-龯々ー・\s]+(?:編訳|翻訳|訳|編集|編)(?:・解説)?$')
+                            .hasMatch(credit.trim()),
+                  ),
+            ),
       ];
       for (final creator in credits) {
         for (final credit in creator.split(RegExp(r'[;；]'))) {
@@ -239,23 +242,23 @@ class ReadingBookSearch {
       final publisher = value('publisher', dc);
       results.add(
         ReadingBookResult(
-        bookTitle,
-        ReadingEdition(
-          publisher: publisher,
-          translator: translators.join('・'),
-          editor: editors.join('・'),
-          isbn: isbn,
-          totalPages:
-              pages != null && pages > 0 && pages <= 1000000 ? pages : null,
-          year: year,
-          language: language == 'jpn' ? '日本語' : language,
-          volume: value('volume', ndl),
-          sourceUrl: source,
-          bookUrl: Uri.https('www.amazon.co.jp', '/s/', {
-            'i': 'stripbooks',
-            'k': isbn.isNotEmpty ? isbn : '$bookTitle $publisher',
-          }).toString(),
-        ),
+          bookTitle,
+          ReadingEdition(
+            publisher: publisher,
+            translator: translators.join('・'),
+            editor: editors.join('・'),
+            isbn: isbn,
+            totalPages:
+                pages != null && pages > 0 && pages <= 1000000 ? pages : null,
+            year: year,
+            language: language == 'jpn' ? '日本語' : language,
+            volume: value('volume', ndl),
+            sourceUrl: source,
+            bookUrl: Uri.https('www.amazon.co.jp', '/s/', {
+              'i': 'stripbooks',
+              'k': isbn.isNotEmpty ? isbn : '$bookTitle $publisher',
+            }).toString(),
+          ),
         ),
       );
     }

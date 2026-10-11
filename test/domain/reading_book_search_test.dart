@@ -11,8 +11,9 @@ void main() {
       '<dc:creator>訳者A 訳</dc:creator>',
       '<dc:creator>山田, 太郎, 1950-</dc:creator><author>山田, 太郎, 1950-,山田太郎 訳</author>',
     );
-    final client = MockClient((_) async => http.Response(xml, 200));
-    final books = await const ReadingBookSearch().search('外部書名', client: client);
+    final client = MockClient((_) async => http.Response.bytes(utf8.encode(xml), 200));
+    final books =
+        await const ReadingBookSearch().search('外部書名', client: client);
     expect(books.first.edition.translator, '山田太郎');
   });
 
@@ -23,7 +24,7 @@ void main() {
       expect(request.url.host, 'ndlsearch.ndl.go.jp');
       expect(request.url.queryParameters['title'], '目録にない外部書名');
       expect(request.url.queryParameters['dpid'], 'iss-ndl-opac');
-      return http.Response(ndlBooksFixture, 200);
+      return http.Response.bytes(utf8.encode(ndlBooksFixture), 200);
     });
     final books = await const ReadingBookSearch().search(
       '目録にない外部書名',
@@ -59,20 +60,20 @@ void main() {
       return http.Response('<rss><channel/></rss>', 200);
     });
     expect(
-        await const ReadingBookSearch().search(
-          'エティカ',
-          client: client,
-          external: true,
-        ),
-        isEmpty,
+      await const ReadingBookSearch().search(
+        'エティカ',
+        client: client,
+        external: true,
+      ),
+      isEmpty,
     );
     expect(requests, 1);
     expect(
-        await const ReadingBookSearch().search(
-          '9781234567890',
-          client: client,
-        ),
-        isEmpty,
+      await const ReadingBookSearch().search(
+        '9781234567890',
+        client: client,
+      ),
+      isEmpty,
     );
     expect(requests, 1);
     final wrong = MockClient((_) async => http.Response('<html/>', 200));
@@ -86,10 +87,11 @@ void main() {
     final xml = ndlBooksFixture
         .replaceAll('180p', 'iv, 180p')
         .replaceAll('訳者A 訳', '著者A 著')
-        .replaceAll('https://ndlsearch.ndl.go.jp/books/R100000002-IQA002',
-            'https://example.invalid/book',
+        .replaceAll(
+          'https://ndlsearch.ndl.go.jp/books/R100000002-IQA002',
+          'https://example.invalid/book',
         );
-    final client = MockClient((_) async => http.Response(xml, 200));
+    final client = MockClient((_) async => http.Response.bytes(utf8.encode(xml), 200));
     final books =
         await const ReadingBookSearch().search('外部書名', client: client);
     expect(books, hasLength(1));
