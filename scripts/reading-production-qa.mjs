@@ -20,7 +20,7 @@ async function req(path, token, data, method = 'POST') {
 async function user() {
   const email = `reading-qa-${randomUUID()}@example.invalid`;
   const password = randomUUID() + '!aA1';
-  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5730 production verification'}});
+  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5733 production verification'}});
   assert.equal(created.status,200,'Test user creation failed');
   users.push(created.body.id);
   const signed = await req('/auth/v1/token?grant_type=password', key, {email,password});
@@ -58,14 +58,31 @@ async function capture(page,name) {
     await page.waitForTimeout(200);
   }
 }
-async function openWork(page) {
+async function openWork(page,title = '国家') {
   await page.getByRole('tab',{name:'著作',exact:true}).click();
   await expect(page.getByRole('button',{name:/^プラトン /})).toHaveCount(0);
   await expect(page.getByRole('tabpanel')).toHaveCount(1);
   await expect(page.getByRole('textbox',{name:/^著者・著作を検索/})).toHaveCount(1);
   await expect(page.getByRole('textbox',{name:/^著者・著作を検索/})).toBeVisible();
-  await field(page,/^著者・著作を検索/,'国家');
-  await page.getByRole('button',{name:/^国家 /}).click();
+  await field(page,/^著者・著作を検索/,title);
+  await page.getByRole('button',{name:new RegExp(`^${title} `)}).click();
+}
+async function restoredField(page,name,value) {
+  const input=page.getByRole('textbox',{name});
+  await input.focus();
+  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  await expect(input).toHaveValue(value);
+}
+const bookLinks=[];
+async function isbnLink(page) {
+  const popupPromise=page.waitForEvent('popup');
+  await page.getByRole('button',{name:'Amazonで書籍を検索（ISBN）',exact:true}).click();
+  const popup=await popupPromise;
+  await popup.waitForURL(/^https:\/\/www\.amazon\.co\.jp\/s\//);
+  const destination=new URL(popup.url());
+  assert.equal(destination.searchParams.get('k'),'9784480080226','Published ISBN link differs from curated edition');
+  bookLinks.push(destination.toString());
+  await popup.close();
 }
 try {
   const version = await (await fetch(`${base}/version.json?qa=${Date.now()}`)).json();
@@ -76,16 +93,19 @@ try {
   const id=randomUUID();
   await action(a.token,{action:'reading.add',id,work});
   const date=new Date().toISOString().slice(0,10);
-  const cycles=[{id:'qa-cycle',started_at:date,finished_at:null,status:'reading',edition:{total_pages:100},entries:[{id:'qa-entry',date,pages:10,start_page:1,end_page:10,understanding:3,impression:'Publication verification',questions:'',concepts:''}]}];
+  const cycles=[{id:'qa-cycle',started_at:date,finished_at:null,status:'reading',edition:{total_pages:100,publisher:'QA publisher',translator:'QA translator',editor:'QA editor',book_url:'https://www.chikumashobo.co.jp/product/9784480080226/',source_url:'https://ndlsearch.ndl.go.jp/search?keyword=9784480080226'},entries:[{id:'qa-entry',date,pages:10,start_page:1,end_page:10,understanding:3,impression:'Publication verification',questions:'',concepts:''}]}];
   await action(a.token,{action:'reading.save',id,revision:0,work,cycles});
   const loaded=await action(a.token,{action:'reading.list'});
   assert.equal(loaded.items.find(x=>x.id===id).metadata.cycles[0].entries[0].understanding,3);
+  assert.deepEqual(loaded.items.find(x=>x.id===id).metadata.cycles[0].edition,{...cycles[0].edition,volume:'',year:'',language:'',isbn:''});
   const other=await action(b.token,{action:'reading.list'});
   assert(!other.items.some(x=>x.id===id),'Cross-user read leak');
   await action(a.token,{action:'reading.save',id,revision:0,work,cycles},409);
   cycles[0].entries[0].impression='Edited publication verification';
+  cycles[0].edition.editor='QA edited editor';
   const edited=await action(a.token,{action:'reading.save',id,revision:1,work,cycles});
   assert.equal(edited.item.metadata.cycles[0].entries[0].history.length,1);
+  assert.equal(edited.item.metadata.cycles[0].edition.editor,'QA edited editor');
   await action(key,{action:'reading.list'},401);
   console.log('Production API: save, reload, understanding/impression, edit history, stale revision, ownership and guest rejection passed.');
   const apiCleanup=await fetch(url+`/rest/v1/hub_data?id=eq.${id}&source=eq.reading&metadata->>user_id=eq.${users[0]}`,{method:'DELETE',headers:{apikey:admin,Authorization:`Bearer ${admin}`}});
@@ -98,10 +118,18 @@ try {
     await page.goto(base+'/reading-list');await semantics(page);
     await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
     await expect(page.getByRole('tab',{name:'著者',exact:true})).toBeVisible();
+    await expect(page.getByText(/共有目録 56 著者・80 著作/)).toBeVisible();
     await capture(page,`${name}-catalog`);
     await openWork(page);
     await expect(page.getByRole('button',{name:'読書を始める',exact:true})).toBeDisabled();
     await capture(page,`${name}-guest-work`);
+    await page.goto(base+'/reading-list');await semantics(page);
+    await openWork(page,'正法眼蔵随聞記');
+    await page.getByRole('button',{name:/版・入手先/}).click();
+    await expect(page.getByRole('button',{name:'この版の書誌出典を開く',exact:true})).toBeVisible();
+    await isbnLink(page);
+    await expect(page.getByRole('button',{name:'この版で読書を始める',exact:true})).toBeDisabled();
+    await capture(page,`${name}-book-links`);
     await context.close();
   }
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
@@ -124,6 +152,11 @@ try {
   await openWork(page);
   await page.getByRole('button',{name:'読書を始める',exact:true}).click();
   await field(page,/^総ページ数/,'100');
+  await field(page,/^出版社/,'公開確認出版社');
+  await field(page,/^訳者/,'公開確認訳者');
+  await field(page,/^編集者・編者/,'公開確認編集者');
+  await field(page,/^書籍・購入URL/,'https://www.chikumashobo.co.jp/product/9784480080226/');
+  await field(page,/^版情報の出典URL/,'https://ndlsearch.ndl.go.jp/search?keyword=9784480080226');
   await page.getByRole('button',{name:'保存',exact:true}).click();
   await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
   await page.getByRole('button',{name:'記録を追加',exact:true}).click();
@@ -137,6 +170,28 @@ try {
   await capture(page,'saved-record');
   await page.reload();await semantics(page);await openWork(page);
   await expect(page.getByRole('group',{name:/感想: 公開後の読書記録確認/}).last()).toBeVisible();
+  await page.getByRole('button',{name:'版を編集',exact:true}).click();
+  await restoredField(page,/^出版社/,'公開確認出版社');
+  await restoredField(page,/^訳者/,'公開確認訳者');
+  await restoredField(page,/^編集者・編者/,'公開確認編集者');
+  await restoredField(page,/^書籍・購入URL/,'https://www.chikumashobo.co.jp/product/9784480080226/');
+  await restoredField(page,/^版情報の出典URL/,'https://ndlsearch.ndl.go.jp/search?keyword=9784480080226');
+  await field(page,/^出版社/,'公開確認・編集済出版社');
+  await field(page,/^訳者/,'公開確認・編集済訳者');
+  await field(page,/^編集者・編者/,'公開確認・編集済編者');
+  await field(page,/^書籍・購入URL/,'https://www.kotensinyaku.jp/books/book221/');
+  await field(page,/^版情報の出典URL/,'https://ndlsearch.ndl.go.jp/search?keyword=9784334753221');
+  await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+  await page.reload();await semantics(page);await openWork(page);
+  await page.getByRole('button',{name:'版を編集',exact:true}).click();
+  await restoredField(page,/^出版社/,'公開確認・編集済出版社');
+  await restoredField(page,/^訳者/,'公開確認・編集済訳者');
+  await restoredField(page,/^編集者・編者/,'公開確認・編集済編者');
+  await restoredField(page,/^書籍・購入URL/,'https://www.kotensinyaku.jp/books/book221/');
+  await restoredField(page,/^版情報の出典URL/,'https://ndlsearch.ndl.go.jp/search?keyword=9784334753221');
+  await capture(page,'edited-edition');
+  await page.getByRole('button',{name:'保存',exact:true}).click();
   await page.getByRole('button',{name:/Back|戻る/}).click();
   await page.getByRole('tab',{name:'進捗',exact:true}).click();
   await expect(page.getByRole('button',{name:'著作を追加',exact:true})).toHaveCount(0);
@@ -151,7 +206,25 @@ try {
   await writeFile('reading-production-evidence/progress-aria.txt',progressSnapshot);
   assert.match(progressSnapshot,completedProgress,'Published completion progress differs from saved work');
   await capture(page,'progress');
-  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed'},null,2));
+  await page.goto(base+'/reading-list');await semantics(page);
+  await openWork(page,'正法眼蔵随聞記');
+  await page.getByRole('button',{name:/版・入手先/}).click();
+  await page.getByRole('button',{name:'この版で読書を始める',exact:true}).click();
+  await restoredField(page,/^出版社/,'筑摩書房');
+  await restoredField(page,/^訳者/,'水野弥穂子');
+  await restoredField(page,/^編集者・編者/,'懐奘（記録・編纂）');
+  await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+  await page.reload();await semantics(page);await openWork(page,'正法眼蔵随聞記');
+  await expect(page.getByRole('group',{name:/編集者・編者: 懐奘/}).last()).toBeVisible();
+  const records=await action(a.token,{action:'reading.list'});
+  const dogen=records.items.find(x=>x.metadata.work?.id==='dogen:zuimonki');
+  assert(dogen,'Curated edition was not persisted through the published API');
+  assert.equal(dogen.metadata.cycles[0].edition.publisher,'筑摩書房');
+  assert.equal(dogen.metadata.cycles[0].edition.editor,'懐奘（記録・編纂）');
+  await capture(page,'curated-edition');
+  await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed'},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
 } finally {
   if(browser) await browser.close();
