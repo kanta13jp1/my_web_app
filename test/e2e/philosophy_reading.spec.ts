@@ -499,3 +499,26 @@ test('external ISBN metadata populates known fields and leaves unknown contribut
   await restoredField(page, /^訳者/, '手元の本で補完した訳者');
   await restoredField(page, /^版情報の出典URL/, 'https://api.openbd.jp/v1/get?isbn=9781234567897');
 });
+
+test('reading-about-books title prefills and persists the publisher edition', async ({ page }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await field(page, /^書籍情報を検索/, '読書について');
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await page.getByRole('button', { name: /^読書について・光文社/ }).click();
+  await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+  await restoredField(page, /^出版社/, '光文社');
+  await restoredField(page, /^訳者/, '鈴木芳子');
+  await restoredField(page, /^ISBN/, '9784334752712');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, 'エチカ');
+  await editRegisteredEdition(page, '9784334752712');
+  await restoredField(page, /^出版社/, '光文社');
+  await restoredField(page, /^版情報の出典URL/, 'https://www.kotensinyaku.jp/books/book169/');
+  await capture(page, info, 'reading-title-restored');
+});
