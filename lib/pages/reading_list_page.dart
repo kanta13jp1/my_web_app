@@ -6,6 +6,7 @@ import '../data/catalogs/philosophy_catalog.dart';
 import '../data/repositories/reading_repository.dart';
 import '../domain/models/philosophy_reading.dart';
 import '../ui/features/reading/view_models/reading_view_model.dart';
+import '../widgets/reading_book_lookup.dart';
 
 class ReadingListPage extends StatefulWidget {
   const ReadingListPage({super.key, this.repository});
@@ -1102,6 +1103,14 @@ class _ReadingFormState extends State<_ReadingForm> {
                           color: Theme.of(context).colorScheme.error,
                         ),
                       ),
+                    if (_controllers.containsKey('isbn') && !_saving)
+                      ReadingBookLookup(onSelected: (edition) {
+                        final values = edition.toJson();
+                        for (final key in ['translator', 'editor', 'publisher', 'year', 'language', 'isbn', 'volume', 'book_url', 'source_url']) {
+                          _controllers[key]?.text = values[key]?.toString() ?? '';
+                        }
+                        _controllers['total']?.text = edition.totalPages?.toString() ?? '';
+                      }),
                     ...widget.fields.map(
                       (field) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
