@@ -5,6 +5,17 @@ import 'package:http/testing.dart';
 import 'package:my_web_app/data/services/reading_book_search.dart';
 
 void main() {
+  test('RSS responsibility credits supplement authority-only creator entries',
+      () async {
+    final xml = ndlBooksFixture.replaceAll(
+      '<dc:creator>訳者A 訳</dc:creator>',
+      '<dc:creator>山田, 太郎, 1950-</dc:creator><author>山田, 太郎, 1950-,山田太郎 訳</author>',
+    );
+    final client = MockClient((_) async => http.Response(xml, 200));
+    final books = await const ReadingBookSearch().search('外部書名', client: client);
+    expect(books.first.edition.translator, '山田太郎');
+  });
+
   test(
       'external title search returns distinct sourced editions and role credits',
       () async {

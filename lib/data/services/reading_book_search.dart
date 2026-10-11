@@ -204,9 +204,20 @@ class ReadingBookSearch {
       if (!seen.add(source)) continue;
       final translators = <String>{};
       final editors = <String>{};
-      for (final creator in item.findElements('creator', namespace: dc)) {
-        for (final credit in creator.innerText.split(RegExp(r'[;；]'))) {
-          final match = RegExp(r'^(.+?)\s*(編訳|翻訳|訳|編集|編)(?:・解説)?$')
+      final credits = [
+        ...item.findElements('creator', namespace: dc).map((node) => node.innerText),
+        // RSS author also includes literal responsibility credits; authority
+        // headings alone do not identify a translator or editor.
+        ...item.findElements('author').expand(
+          (node) => node.innerText.split(',').where(
+            (credit) => RegExp(r'^[ぁ-んァ-ヶ一-龯々ー・\s]+(?:編訳|翻訳|訳|編集|編)(?:・解説)?$')
+                .hasMatch(credit.trim()),
+          ),
+        ),
+      ];
+      for (final creator in credits) {
+        for (final credit in creator.split(RegExp(r'[;；]'))) {
+          final match = RegExp(r'^(.+?)\s+(編訳|翻訳|訳|編集|編)(?:・解説)?$')
               .firstMatch(credit.trim());
           if (match == null) continue;
           final name = match.group(1)!.trim();
