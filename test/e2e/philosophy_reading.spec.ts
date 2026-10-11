@@ -70,6 +70,41 @@ async function openWork(page: Page, title: string) {
   await page.getByRole('button', { name: new RegExp(`^${title} `) }).click();
 }
 
+async function revealReadingControl(page: Page, control: ReturnType<Page['getByRole']>) {
+  const viewport = page.viewportSize()!;
+  const touch = test.info().project.use.isMobile
+    ? await page.context().newCDPSession(page) : undefined;
+  try {
+    for (let attempt = 0; attempt < 16 && await control.count() === 0; attempt++) {
+      if (touch) {
+        const x = viewport.width / 2;
+        const bottom = viewport.height * .82;
+        const top = viewport.height * .30;
+        await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: bottom }] });
+        for (let step = 1; step <= 12; step++) {
+          await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: bottom - (bottom - top) * step / 12 }] });
+          await page.waitForTimeout(30);
+        }
+        await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      } else {
+        await page.mouse.move(viewport.width / 2, viewport.height * .65);
+        await page.mouse.wheel(0, 240);
+      }
+      await page.waitForTimeout(250);
+    }
+    await expect(control).toHaveCount(1);
+  } finally {
+    await touch?.detach();
+  }
+}
+async function editRegisteredEdition(page: Page, isbn: string) {
+  const cycle = page.getByRole('group', { name: new RegExp(`ISBN: ${isbn}`) })
+    .filter({ has: page.getByRole('button', { name: '版を編集', exact: true }) }).last();
+  const edit = cycle.getByRole('button', { name: '版を編集', exact: true });
+  await revealReadingControl(page, edit);
+  await edit.click();
+}
+
 test.setTimeout(60000);
 
 test.beforeEach(async ({ request }) => {
@@ -167,6 +202,88 @@ test('catalog edition prefills publisher, translator and editor; ISBN link and U
   await openWork(page, '正法眼蔵随聞記');
   await expect(page.getByRole('group', { name: /編集者・編者: 懐奘/ }).last()).toBeVisible();
   await expect(page.getByRole('button', { name: '登録した書籍・購入先を開く', exact: true })).toBeVisible();
+});
+
+
+test('choose two Japanese translations, preserve their ISBN/source fields after reload and edit independently', async ({ page, context }, info) => {
+  test.setTimeout(120000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '論語');
+  const books = [
+    { label: '論語・岩波文庫（改訂新版）', publisher: '岩波書店', translator: '金谷治（訳注）', isbn: '9784003320211', volume: '岩波文庫・改訂新版', source: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000002845211', purchase: 'https://www.kinokuniya.co.jp/f/dsg-01-9784003320211' },
+    { label: '論語・光文社古典新訳文庫（鶴ヶ谷真一訳）', publisher: '光文社', translator: '鶴ヶ谷真一（訳・注）', isbn: '9784334107741', volume: '光文社古典新訳文庫', source: 'https://www.kotensinyaku.jp/books/book420/', purchase: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334107741' },
+  ];
+  await context.route('https://www.amazon.co.jp/**', route => route.fulfill({ contentType: 'text/html', body: '<title>ISBN destination fixture</title>' }));
+  for (const book of books) {
+    await page.getByRole('button', { name: /版・入手先/ }).click();
+    const card = page.getByRole('group', { name: `版候補: ${book.label}`, exact: true });
+    const start = card.getByRole('button', { name: 'この版で読書を始める', exact: true });
+    await revealReadingControl(page, start);
+    await capture(page, info, `japanese-edition-candidates-${book.isbn}`);
+    const popupPromise = page.waitForEvent('popup');
+    await card.getByRole('button', { name: 'Amazonで書籍を検索（ISBN）', exact: true }).click();
+    const popup = await popupPromise;
+    await popup.waitForLoadState('domcontentloaded');
+    expect(new URL(popup.url()).searchParams.get('k')).toBe(book.isbn);
+    await popup.close();
+    await start.click();
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^巻・版の名前/, book.volume);
+    await restoredField(page, /^編集者・編者/, '');
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await restoredField(page, /^書籍・購入URL/, book.purchase);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+    // Return to the collapsed heading before selecting the next edition.
+    await page.getByRole('button', { name: /Back|戻る/ }).click();
+    await openWork(page, '論語');
+  }
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '論語');
+  for (let i = 0; i < books.length; i++) {
+    const book = books[i];
+    await editRegisteredEdition(page, book.isbn);
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^巻・版の名前/, book.volume);
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await restoredField(page, /^書籍・購入URL/, book.purchase);
+    if (i === 0) await field(page, /^編集者・編者/, '手元の版の編集者');
+    else await restoredField(page, /^編集者・編者/, '');
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+  }
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '論語');
+  await editRegisteredEdition(page, books[0].isbn);
+  await restoredField(page, /^編集者・編者/, '手元の版の編集者');
+  await restoredField(page, /^ISBN/, books[0].isbn);
+  await capture(page, info, 'japanese-edition-restored');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await editRegisteredEdition(page, books[1].isbn);
+  await restoredField(page, /^編集者・編者/, '');
+  await restoredField(page, /^ISBN/, books[1].isbn);
+  await capture(page, info, 'second-japanese-edition-restored');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('button', { name: /Back|戻る/ }).click();
+  await page.getByRole('tab', { name: '進捗', exact: true }).click();
+  const progress = page.getByRole('tabpanel').filter({
+    has: page.getByText('長期目標: すべての哲学書を読破する', { exact: true }),
+  });
+  await expect(progress).toHaveCount(1);
+  await expect(progress).toMatchAriaSnapshot(`
+- tabpanel:
+  - group:
+    - text: /.*収録済み著作全体.*読了 0 . 80 著作.*/
+`);
+  expect(errors).toEqual([]);
 });
 
 test('invalid page range and failed save preserve input; retry, edit history and deletion work', async ({ page }, info) => {

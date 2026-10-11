@@ -570,6 +570,9 @@ class _ReadingListPageState extends State<ReadingListPage>
         childrenPadding: const EdgeInsets.all(12),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            '出版社・訳者・巻数を比べて、読む本の「この版で読書を始める」を選んでください。版ごとに別の読書回として記録できます。',
+          ),
           const Text('在庫・価格・翻訳言語・巻数は販売先で確認してください。検索結果には解説書や別の版も含まれます。'),
           Wrap(
             spacing: 8,
@@ -583,55 +586,61 @@ class _ReadingListPageState extends State<ReadingListPage>
           ),
           for (final book
               in philosophyCatalogEditions.where((e) => e.workId == work.id))
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      book.label,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      '出版社: ${book.edition.publisher} / 訳者: ${book.edition.translator}',
-                    ),
-                    if (book.edition.editor.isNotEmpty)
-                      Text('編集者・編者: ${book.edition.editor}'),
-                    Text(
-                      '出版年: ${book.edition.year} / 言語: ${book.edition.language}',
-                    ),
-                    Text(
-                      'ISBN: ${book.edition.isbn} / 総ページ数: ${book.edition.totalPages ?? '不明'}',
-                    ),
-                    TextButton(
-                      onPressed: () => _source(book.edition.sourceUrl),
-                      child: const Text('この版の書誌出典を開く'),
-                    ),
-                    TextButton(
-                      onPressed: () => _source(book.edition.bookUrl),
-                      child: const Text('この版の出版社・書店を開く'),
-                    ),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final link
-                            in readingBookSearchLinks(work, book.edition)
-                                .entries)
-                          TextButton(
-                            onPressed: () => _source(link.value.toString()),
-                            child: Text('${link.key}（ISBN）'),
-                          ),
-                      ],
-                    ),
-                    TextButton(
-                      onPressed:
-                          !_model.signedIn || _model.saving || _model.loading
-                              ? null
-                              : () => _start(work, edition: book.edition),
-                      child: const Text('この版で読書を始める'),
-                    ),
-                  ],
+            Semantics(
+              container: true,
+              label: '版候補: ${book.label}',
+              explicitChildNodes: true,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        book.label,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '出版社: ${book.edition.publisher} / 訳者: ${book.edition.translator}',
+                      ),
+                      if (book.note.isNotEmpty) Text(book.note),
+                      if (book.edition.editor.isNotEmpty)
+                        Text('編集者・編者: ${book.edition.editor}'),
+                      Text(
+                        '出版年: ${book.edition.year} / 言語: ${book.edition.language}',
+                      ),
+                      Text(
+                        'ISBN: ${book.edition.isbn} / 総ページ数: ${book.edition.totalPages ?? '不明'}',
+                      ),
+                      TextButton(
+                        onPressed: () => _source(book.edition.sourceUrl),
+                        child: const Text('この版の書誌出典を開く'),
+                      ),
+                      TextButton(
+                        onPressed: () => _source(book.edition.bookUrl),
+                        child: const Text('この版の出版社・書店を開く'),
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final link
+                              in readingBookSearchLinks(work, book.edition)
+                                  .entries)
+                            TextButton(
+                              onPressed: () => _source(link.value.toString()),
+                              child: Text('${link.key}（ISBN）'),
+                            ),
+                        ],
+                      ),
+                      TextButton(
+                        onPressed:
+                            !_model.signedIn || _model.saving || _model.loading
+                                ? null
+                                : () => _start(work, edition: book.edition),
+                        child: const Text('この版で読書を始める'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
