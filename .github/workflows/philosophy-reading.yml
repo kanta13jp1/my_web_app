@@ -18,8 +18,7 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: philosophy-reading-${{ github.ref }}
@@ -27,6 +26,8 @@ concurrency:
 
 jobs:
   verify:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 35
     services:
