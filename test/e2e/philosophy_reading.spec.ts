@@ -70,6 +70,41 @@ async function openWork(page: Page, title: string) {
   await page.getByRole('button', { name: new RegExp(`^${title} `) }).click();
 }
 
+async function revealReadingControl(page: Page, control: ReturnType<Page['getByRole']>) {
+  const viewport = page.viewportSize()!;
+  const touch = test.info().project.use.isMobile
+    ? await page.context().newCDPSession(page) : undefined;
+  try {
+    for (let attempt = 0; attempt < 16 && await control.count() === 0; attempt++) {
+      if (touch) {
+        const x = viewport.width / 2;
+        const bottom = viewport.height * .82;
+        const top = viewport.height * .30;
+        await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: bottom }] });
+        for (let step = 1; step <= 12; step++) {
+          await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: bottom - (bottom - top) * step / 12 }] });
+          await page.waitForTimeout(30);
+        }
+        await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      } else {
+        await page.mouse.move(viewport.width / 2, viewport.height * .65);
+        await page.mouse.wheel(0, 240);
+      }
+      await page.waitForTimeout(250);
+    }
+    await expect(control).toHaveCount(1);
+  } finally {
+    await touch?.detach();
+  }
+}
+async function editRegisteredEdition(page: Page, isbn: string) {
+  const cycle = page.getByRole('group', { name: new RegExp(`ISBN: ${isbn}`) })
+    .filter({ has: page.getByRole('button', { name: '版を編集', exact: true }) }).last();
+  const edit = cycle.getByRole('button', { name: '版を編集', exact: true });
+  await revealReadingControl(page, edit);
+  await edit.click();
+}
+
 test.setTimeout(60000);
 
 test.beforeEach(async ({ request }) => {
@@ -186,13 +221,8 @@ test('choose two Japanese translations, preserve their ISBN/source fields after 
     await page.getByRole('button', { name: /版・入手先/ }).click();
     const card = page.getByRole('group', { name: `版候補: ${book.label}`, exact: true });
     const start = card.getByRole('button', { name: 'この版で読書を始める', exact: true });
-    const viewport = page.viewportSize()!;
-    await page.mouse.move(viewport.width / 2, viewport.height * .65);
-    for (let attempt = 0; attempt < 12 && await start.count() === 0; attempt++) {
-      await page.mouse.wheel(0, 280);
-      await page.waitForTimeout(200);
-    }
-    await expect(start).toHaveCount(1);
+    await revealReadingControl(page, start);
+    await capture(page, info, `japanese-edition-candidates-${book.isbn}`);
     const popupPromise = page.waitForEvent('popup');
     await card.getByRole('button', { name: 'Amazonで書籍を検索（ISBN）', exact: true }).click();
     const popup = await popupPromise;
@@ -216,10 +246,9 @@ test('choose two Japanese translations, preserve their ISBN/source fields after 
   await page.reload();
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
   await openWork(page, '論語');
-  const edits = page.getByRole('button', { name: '版を編集', exact: true });
   for (let i = 0; i < books.length; i++) {
     const book = books[i];
-    await edits.nth(i).click();
+    await editRegisteredEdition(page, book.isbn);
     await restoredField(page, /^出版社/, book.publisher);
     await restoredField(page, /^訳者/, book.translator);
     await restoredField(page, /^ISBN/, book.isbn);
@@ -233,18 +262,19 @@ test('choose two Japanese translations, preserve their ISBN/source fields after 
   await page.reload();
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
   await openWork(page, '論語');
-  await edits.nth(0).click();
+  await editRegisteredEdition(page, books[0].isbn);
   await restoredField(page, /^編集者・編者/, '手元の版の編集者');
   await restoredField(page, /^ISBN/, books[0].isbn);
   await capture(page, info, 'japanese-edition-restored');
   await page.getByRole('button', { name: '保存', exact: true }).click();
-  await edits.nth(1).click();
+  await editRegisteredEdition(page, books[1].isbn);
   await restoredField(page, /^編集者・編者/, '');
   await restoredField(page, /^ISBN/, books[1].isbn);
   await capture(page, info, 'second-japanese-edition-restored');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('tab', { name: '進捗', exact: true }).click();
+  await expect(page.getByRole('tabpanel')).toHaveCount(1);
   await expect(page.getByRole('tabpanel')).toMatchAriaSnapshot(`
 - tabpanel:
   - group:
