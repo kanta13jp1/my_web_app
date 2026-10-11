@@ -18,13 +18,13 @@ void main() {
     repo.failNextSave = true;
     expect(
         await model.save(old.withCycles(
-            const [ReadingCycle(id: 'cycle', startedAt: '2026-10-11')])),
-        isFalse);
+            const [ReadingCycle(id: 'cycle', startedAt: '2026-10-11')],),),
+        isFalse,);
     expect(model.recordFor(work.id)!.cycles, isEmpty);
     expect(
         await model.save(old.withCycles(
-            const [ReadingCycle(id: 'cycle', startedAt: '2026-10-11')])),
-        isTrue);
+            const [ReadingCycle(id: 'cycle', startedAt: '2026-10-11')],),),
+        isTrue,);
     await model.load();
     expect(model.recordFor(work.id)!.cycles.length, 1);
     repo.user = null;

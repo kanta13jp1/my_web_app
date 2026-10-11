@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../data/catalogs/philosophy_catalog.dart';
 import '../../../../data/repositories/reading_repository.dart';
 import '../../../../domain/models/philosophy_reading.dart';
@@ -77,7 +78,9 @@ class ReadingViewModel extends ChangeNotifier {
       final authors = await repository.authors();
       if (_disposed ||
           generation != _generation ||
-          session != repository.sessionKey) return;
+          session != repository.sessionKey) {
+          return;
+        }
       _records = records;
       _privateAuthors = authors;
     } catch (failure) {
@@ -116,7 +119,9 @@ class ReadingViewModel extends ChangeNotifier {
 
   Future<bool> addWork(String id, PhilosophyWork work) => _mutate(() async {
         final session = repository.sessionKey;
-        final result = await repository.add(id, work);
+        final recordId = work.id.startsWith('private:') || work.id.startsWith('legacy:')
+        ? id : const Uuid().v5(Uuid.NAMESPACE_URL, 'reading:$session:${work.id}');
+    final result = await repository.add(recordId, work);
         if (session != repository.sessionKey) return;
         _replace(result);
       });
@@ -136,7 +141,7 @@ class ReadingViewModel extends ChangeNotifier {
         _privateAuthors = [
           ..._privateAuthors.where((a) => a.id != result.id),
           result
-        ];
+        ,];
       });
 
   void _replace(ReadingRecord record) {

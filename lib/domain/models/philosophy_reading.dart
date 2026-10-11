@@ -353,7 +353,7 @@ class ReadingRecord {
 
 class ReadingFilter {
   const ReadingFilter(
-      {this.query = '', this.century, this.region, this.genre, this.authorId});
+      {this.query = '', this.century, this.region, this.genre, this.authorId,});
 
   final String query;
   final String? century;
@@ -382,7 +382,7 @@ class ReadingFilter {
 
 class ReadingProgress {
   ReadingProgress(
-      Iterable<PhilosophyWork> works, Iterable<ReadingRecord> records) {
+      Iterable<PhilosophyWork> works, Iterable<ReadingRecord> records,) {
     final ids = works.map((w) => w.id).toSet();
     total = ids.length;
     completed = records

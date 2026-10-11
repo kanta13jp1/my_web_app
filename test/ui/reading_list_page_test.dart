@@ -21,7 +21,7 @@ void main() {
     await tester.tap(find.text('国家'));
     await tester.pumpAndSettle();
     expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-        isNull);
+        isNull,);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     await repository.changes.close();
@@ -40,7 +40,7 @@ void main() {
     await tester.tap(find.text('読書を始める'));
     await tester.pumpAndSettle();
     await tester.enterText(
-        find.byKey(const ValueKey('reading-field-total')), '100');
+        find.byKey(const ValueKey('reading-field-total')), '100',);
     repository.failNextSave = true;
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
@@ -48,10 +48,10 @@ void main() {
     expect(
         tester
             .widget<TextFormField>(
-                find.byKey(const ValueKey('reading-field-total')))
+                find.byKey(const ValueKey('reading-field-total')),)
             .controller!
             .text,
-        '100');
+        '100',);
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(find.text('読む版を登録'), findsNothing);
