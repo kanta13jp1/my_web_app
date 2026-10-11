@@ -10,6 +10,49 @@ async function field(page: Page, name: RegExp, value: string) {
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   await expect(input).toHaveValue(value);
 }
+async function restoredField(page: Page, name: RegExp, value: string) {
+  const input = page.getByRole('textbox', { name });
+  await input.focus();
+  // Flutter populates the native accessibility input when it receives focus.
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  await expect(input).toHaveValue(value);
+}
+async function choose(page: Page, name: RegExp, option: string) {
+  await page.getByRole('button', { name }).click();
+  const item = page.getByRole('menuitem', { name: option, exact: true });
+  const menu = page.getByRole('menu', { name: 'Popup menu', exact: true });
+  // Wait for the animated menu to expose its items before deciding to scroll.
+  await expect(page.getByRole('menuitem').first()).toBeVisible();
+  await menu.hover();
+  // Flutter virtualizes offscreen items; mobile exercises native touch drags.
+  const touch = test.info().project.use.isMobile
+    ? await page.context().newCDPSession(page) : undefined;
+  try {
+    for (let attempt = 0; attempt < 16 && await item.count() === 0; attempt++) {
+      if (touch) {
+        const bounds = await menu.boundingBox();
+        expect(bounds).not.toBeNull();
+        const viewport = page.viewportSize()!;
+        const x = bounds!.x + bounds!.width / 2;
+        const top = Math.max(0, bounds!.y) + 40;
+        const bottom = Math.min(viewport.height, bounds!.y + bounds!.height) - 40;
+        await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: bottom }] });
+        for (let step = 1; step <= 10; step++) {
+          await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: bottom - Math.min(300, bottom - top) * step / 10 }] });
+          await page.waitForTimeout(30);
+        }
+        await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      } else {
+        await page.mouse.wheel(0, 240);
+      }
+      await page.waitForTimeout(300);
+    }
+    await expect(item).toHaveCount(1);
+    await item.click();
+  } finally {
+    await touch?.detach();
+  }
+}
 async function capture(page: Page, info: TestInfo, name: string) {
   await page.evaluate(async () => {
     await Promise.all(document.getAnimations({ subtree: true }).filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {})));
@@ -42,6 +85,11 @@ test('record pages, understanding and impression persists across reload; reread 
   await openWork(page, '国家');
   await page.getByRole('button', { name: '読書を始める', exact: true }).click();
   await field(page, /^総ページ数/, '100');
+  await field(page, /^出版社/, '読書テスト出版社');
+  await field(page, /^訳者/, 'テスト訳者');
+  await field(page, /^編集者・編者/, 'テスト編集者');
+  await field(page, /^書籍・購入URL/, 'https://example.com/book');
+  await field(page, /^版情報の出典URL/, 'https://example.com/source');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '記録を追加', exact: true }).click();
@@ -58,8 +106,23 @@ test('record pages, understanding and impression persists across reload; reread 
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
   await openWork(page, '国家');
   await expect(page.getByRole('group', { name: /感想: 正義の意味を考えた/ }).last()).toBeVisible();
+  await expect(page.getByRole('group', { name: /編集者・編者: テスト編集者/ }).last()).toBeVisible();
+  await page.getByRole('button', { name: '版を編集', exact: true }).click();
+  await restoredField(page, /^出版社/, '読書テスト出版社');
+  await restoredField(page, /^訳者/, 'テスト訳者');
+  await restoredField(page, /^編集者・編者/, 'テスト編集者');
+  await restoredField(page, /^書籍・購入URL/, 'https://example.com/book');
+  await restoredField(page, /^版情報の出典URL/, 'https://example.com/source');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('button', { name: '別の版・再読を始める', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  const viewport = page.viewportSize()!;
+  await page.mouse.move(viewport.width / 2, viewport.height * .75);
+  for (let attempt = 0; attempt < 8 && await page.getByRole('group', { name: /第2回/ }).count() === 0; attempt++) {
+    await page.mouse.wheel(0, 360);
+    await page.waitForTimeout(250);
+  }
   await expect(page.getByRole('group', { name: /第2回/ }).last()).toBeVisible();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('tab', { name: '進捗', exact: true }).click();
@@ -68,10 +131,42 @@ test('record pages, understanding and impression persists across reload; reread 
   await expect(page.getByRole('tabpanel')).toMatchAriaSnapshot(`
 - tabpanel:
   - group:
-    - text: /.*収録済み著作全体.*読了 1 . 17 著作.*/
+    - text: /.*収録済み著作全体.*読了 1 . 80 著作.*/
 `);
   await capture(page, info, 'progress');
   expect(errors).toEqual([]);
+});
+
+test('catalog edition prefills publisher, translator and editor; ISBN link and URL validation work', async ({ page, context }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '正法眼蔵随聞記');
+  await page.getByRole('button', { name: /版・入手先/ }).click();
+  await expect(page.getByRole('button', { name: 'この版の書誌出典を開く', exact: true })).toBeVisible();
+  await context.route('https://www.amazon.co.jp/**', route => route.fulfill({ contentType: 'text/html', body: '<title>Book search fixture</title>' }));
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Amazonで書籍を検索（ISBN）', exact: true }).click();
+  const popup = await popupPromise;
+  await popup.waitForLoadState('domcontentloaded');
+  expect(new URL(popup.url()).searchParams.get('k')).toBe('9784480080226');
+  await popup.close();
+  await page.getByRole('button', { name: 'この版で読書を始める', exact: true }).click();
+  await restoredField(page, /^出版社/, '筑摩書房');
+  await restoredField(page, /^訳者/, '水野弥穂子');
+  await restoredField(page, /^編集者・編者/, '懐奘（記録・編纂）');
+  await field(page, /^書籍・購入URL/, 'javascript:alert(1)');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('URLは有効なHTTPSアドレスを入力してください', { exact: true })).toBeVisible();
+  await field(page, /^書籍・購入URL/, 'https://www.chikumashobo.co.jp/product/9784480080226/');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: /版・入手先/ }).click();
+  await capture(page, info, 'catalog-edition-record');
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '正法眼蔵随聞記');
+  await expect(page.getByRole('group', { name: /編集者・編者: 懐奘/ }).last()).toBeVisible();
+  await expect(page.getByRole('button', { name: '登録した書籍・購入先を開く', exact: true })).toBeVisible();
 });
 
 test('invalid page range and failed save preserve input; retry, edit history and deletion work', async ({ page }, info) => {
@@ -112,12 +207,9 @@ test('guest author-to-work navigation, compound filters, empty state and keyboar
   await expect(page.getByRole('button', { name: '読書を始める', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('button', { name: '分類を解除', exact: true }).click();
-  await page.getByRole('button', { name: /成立世紀/ }).click();
-  await page.getByRole('menuitem', { name: '紀元前4世紀', exact: true }).click();
-  await page.getByRole('button', { name: /国／地域/ }).click();
-  await page.getByRole('menuitem', { name: '古代ギリシア', exact: true }).click();
-  await page.getByRole('button', { name: /ジャンル/ }).click();
-  await page.getByRole('menuitem', { name: '政治哲学', exact: true }).click();
+  await choose(page, /成立世紀/, '紀元前4世紀');
+  await choose(page, /国／地域/, '古代ギリシア');
+  await choose(page, /ジャンル/, '政治哲学');
   await expect(page.getByRole('button', { name: /^国家 / })).toBeVisible();
   await expect(page.getByRole('button', { name: /^論語 / })).toHaveCount(0);
   await field(page, /^著者・著作を検索/, '該当しない著作');
