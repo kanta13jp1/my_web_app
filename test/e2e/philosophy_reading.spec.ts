@@ -468,3 +468,34 @@ test('failed external book search preserves input and recovers with catalog sear
   await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
   await restoredField(page, /^出版社/, '手入力を保持');
 });
+
+test('external ISBN metadata populates known fields and leaves unknown contributors empty', async ({ page }, info) => {
+  await page.route('https://api.openbd.jp/**', route => route.fulfill({
+    status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' },
+    body: JSON.stringify([{ summary: { isbn: '9781234567897', title: '検索した日本語版', publisher: '取得した出版社', pubdate: '202610' },
+      onix: { DescriptiveDetail: { Contributor: [{ ContributorRole: ['A01'], PersonName: { content: '著者を訳者にしない' } }], Extent: [{ ExtentUnit: '03', ExtentValue: '240' }] } } }]),
+  }));
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await field(page, /^書籍情報を検索/, '9781234567897');
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await page.getByText('検索した日本語版', { exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+  await restoredField(page, /^出版社/, '取得した出版社');
+  await restoredField(page, /^総ページ数/, '240');
+  await restoredField(page, /^訳者/, '');
+  await restoredField(page, /^編集者・編者/, '');
+  await field(page, /^訳者/, '手元の本で補完した訳者');
+  await capture(page, info, 'external-book-prefill');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, 'エチカ');
+  await editRegisteredEdition(page, '9781234567897');
+  await restoredField(page, /^訳者/, '手元の本で補完した訳者');
+  await restoredField(page, /^版情報の出典URL/, 'https://api.openbd.jp/v1/get?isbn=9781234567897');
+});

@@ -9,6 +9,29 @@ class ReadingBookResult {
   final ReadingEdition edition;
 }
 
+String _normalizeIsbn(String value) {
+  var isbn = value.replaceAll(RegExp(r'[\s-]'), '').toUpperCase();
+  if (RegExp(r'^\d{9}[\dX]$').hasMatch(isbn)) {
+    var sum = 0;
+    for (var i = 0; i < 10; i++) {
+      sum += (isbn[i] == 'X' ? 10 : int.parse(isbn[i])) * (10 - i);
+    }
+    if (sum % 11 != 0) return '';
+    final prefix = '978${isbn.substring(0, 9)}';
+    var weighted = 0;
+    for (var i = 0; i < 12; i++) {
+      weighted += int.parse(prefix[i]) * (i.isEven ? 1 : 3);
+    }
+    isbn = '$prefix${(10 - weighted % 10) % 10}';
+  }
+  if (!RegExp(r'^97[89]\d{10}$').hasMatch(isbn)) return '';
+  var sum = 0;
+  for (var i = 0; i < 13; i++) {
+    sum += int.parse(isbn[i]) * (i.isEven ? 1 : 3);
+  }
+  return sum % 10 == 0 ? isbn : '';
+}
+
 class ReadingBookSearch {
   const ReadingBookSearch();
 
@@ -18,8 +41,8 @@ class ReadingBookSearch {
   }) async {
     final text = query.trim();
     if (text.isEmpty) return [];
-    final isbn = text.replaceAll(RegExp(r'[\s-]'), '').toUpperCase();
-    final isIsbn = RegExp(r'^(97[89]\d{10}|\d{9}[\dX])$').hasMatch(isbn);
+    final isbn = _normalizeIsbn(text);
+    final isIsbn = isbn.isNotEmpty;
     final matches = philosophyCatalogEditions.where(
       (book) => isIsbn
           ? book.edition.isbn == isbn
