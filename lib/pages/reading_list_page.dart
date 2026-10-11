@@ -473,6 +473,7 @@ class _ReadingListPageState extends State<ReadingListPage>
   Future<void> _openWork(PhilosophyWork work) => Navigator.push<void>(
         context,
         MaterialPageRoute(
+          settings: const RouteSettings(name: '/reading-list'),
           builder: (_) => AnimatedBuilder(
             animation: _model,
             builder: (context, _) {
