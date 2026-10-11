@@ -17,6 +17,10 @@ on:
       expected_head_sha:
         required: true
         type: string
+      production_sha:
+        description: Published application commit (defaults to verification source revision)
+        required: false
+        type: string
       production:
         description: Verify the published application using disposable test users
         required: false
@@ -149,7 +153,7 @@ jobs:
           retention-days: 7
 
   production:
-    if: github.event_name == 'workflow_dispatch' && inputs.production && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.production && github.ref == 'refs/heads/main' && inputs.expected_head_sha == github.sha
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -176,7 +180,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Published reading catalog and authenticated persistence
         env:
-          EXPECTED_PRODUCTION_SHA: ${{ inputs.expected_head_sha }}
+          EXPECTED_PRODUCTION_SHA: ${{ inputs.production_sha || inputs.expected_head_sha }}
           SUPABASE_URL_PROD: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_ANON_KEY_PROD: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
