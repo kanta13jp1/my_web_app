@@ -77,6 +77,7 @@ class AssetLiabilityPersistenceSnapshot {
 class AssetLiabilityMonthlyStatePayload {
   final String monthKey;
   final Map<String, double> paymentOverrides;
+  final Map<String, double> confirmedPaymentDays;
   final Map<String, double> actualPaymentAmounts;
   final Map<String, String> paymentDifferenceReasons;
   final Map<String, double> annualRateOverrides;
@@ -97,6 +98,7 @@ class AssetLiabilityMonthlyStatePayload {
   const AssetLiabilityMonthlyStatePayload({
     required this.monthKey,
     required this.paymentOverrides,
+    this.confirmedPaymentDays = const <String, double>{},
     required this.actualPaymentAmounts,
     required this.paymentDifferenceReasons,
     required this.annualRateOverrides,
@@ -117,6 +119,7 @@ class AssetLiabilityMonthlyStatePayload {
   }) {
     return AssetLiabilityMonthlyStatePayload(
       monthKey: monthKey,
+      confirmedPaymentDays: Map<String, double>.from(state.confirmedPaymentDays),
       paymentOverrides: Map<String, double>.from(state.paymentOverrides),
       actualPaymentAmounts: Map<String, double>.from(
         state.actualPaymentAmounts,
@@ -154,6 +157,8 @@ class AssetLiabilityMonthlyStatePayload {
         _readString(json, 'month_key') ?? _readString(json, 'monthKey') ?? '';
     return AssetLiabilityMonthlyStatePayload(
       monthKey: monthKey,
+      confirmedPaymentDays: _readDoubleMap(json, 'confirmed_payment_days') ??
+          const <String, double>{},
       paymentOverrides: _readDoubleMap(json, 'payment_overrides') ??
           _readDoubleMap(json, 'paymentOverrides') ??
           const <String, double>{},
@@ -202,6 +207,7 @@ class AssetLiabilityMonthlyStatePayload {
 
   AssetLiabilityMonthlyState toState() {
     return AssetLiabilityMonthlyState(
+      confirmedPaymentDays: Map<String, double>.from(confirmedPaymentDays),
       paymentOverrides: Map<String, double>.from(paymentOverrides),
       actualPaymentAmounts: Map<String, double>.from(actualPaymentAmounts),
       paymentDifferenceReasons: Map<String, String>.from(
@@ -234,6 +240,7 @@ class AssetLiabilityMonthlyStatePayload {
     return <String, Object?>{
       'user_id': userId,
       'month_key': monthKey,
+      'confirmed_payment_days': Map<String, double>.from(confirmedPaymentDays),
       'payment_overrides': Map<String, double>.from(paymentOverrides),
       'actual_payment_amounts': Map<String, double>.from(actualPaymentAmounts),
       'payment_difference_reasons': Map<String, String>.from(

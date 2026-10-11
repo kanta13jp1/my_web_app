@@ -753,6 +753,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, AssetWatchlistEntry> _watchlistByType = {};
   final Map<String, GlobalKey> _assetRowKeys = <String, GlobalKey>{};
   Map<String, double> _monthlyPaymentOverrides = <String, double>{};
+  Map<String, double> _confirmedPaymentDays = <String, double>{};
   Map<String, double> _actualPaymentAmounts = <String, double>{};
   Map<String, String> _paymentDifferenceReasons = <String, String>{};
   Map<String, double> _annualRateOverrides = <String, double>{};
@@ -2196,6 +2197,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaymentOverrides = Map<String, double>.from(
           state.paymentOverrides,
         );
+        _confirmedPaymentDays = Map<String, double>.from(state.confirmedPaymentDays);
         _actualPaymentAmounts = Map<String, double>.from(
           state.actualPaymentAmounts,
         );
@@ -2355,6 +2357,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   AssetLiabilityMonthlyState _currentAssetLiabilityMonthlyState() {
     return AssetLiabilityMonthlyState(
+      confirmedPaymentDays: Map<String, double>.from(_confirmedPaymentDays),
       paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
       actualPaymentAmounts: Map<String, double>.from(_actualPaymentAmounts),
       paymentDifferenceReasons: Map<String, String>.from(
@@ -2508,6 +2511,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _monthlyPaymentOverrides = Map<String, double>.from(
             currentState.paymentOverrides,
           );
+        _confirmedPaymentDays = Map<String, double>.from(currentState.confirmedPaymentDays);
           _actualPaymentAmounts = Map<String, double>.from(
             currentState.actualPaymentAmounts,
           );
@@ -3057,7 +3061,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final migrated = AssetLiabilityMonthlyStateStore.migrateLegacyKeys(
       state: AssetLiabilityMonthlyState(
-        paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
+        confirmedPaymentDays: Map<String, double>.from(_confirmedPaymentDays),
+      paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
         actualPaymentAmounts: Map<String, double>.from(_actualPaymentAmounts),
         paymentDifferenceReasons: Map<String, String>.from(
           _paymentDifferenceReasons,
@@ -3090,7 +3095,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _defaultCardBillingAccountIds,
       legacyKeyToAccountId,
     );
-    if (_sameDoubleMap(_monthlyPaymentOverrides, migrated.paymentOverrides) &&
+    if (_sameDoubleMap(_confirmedPaymentDays, migrated.confirmedPaymentDays) &&
+        _sameDoubleMap(_monthlyPaymentOverrides, migrated.paymentOverrides) &&
         _sameDoubleMap(_actualPaymentAmounts, migrated.actualPaymentAmounts) &&
         _sameStringMap(
           _paymentDifferenceReasons,
@@ -3152,6 +3158,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaymentOverrides = Map<String, double>.from(
           migrated.paymentOverrides,
         );
+        _confirmedPaymentDays = Map<String, double>.from(migrated.confirmedPaymentDays);
         _actualPaymentAmounts = Map<String, double>.from(
           migrated.actualPaymentAmounts,
         );
@@ -4168,6 +4175,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _monthlyPaymentOverrides = Map<String, double>.from(
         copied.paymentOverrides,
       );
+        _confirmedPaymentDays = Map<String, double>.from(copied.confirmedPaymentDays);
       _actualPaymentAmounts = <String, double>{};
       _paymentDifferenceReasons = <String, String>{};
       _monthlyPaidAccountNames = <String>{};
@@ -4573,6 +4581,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     await _assetLiabilityRepository.saveMonth(
       month: nextMonth,
       state: AssetLiabilityMonthlyState(
+        confirmedPaymentDays: nextState.confirmedPaymentDays,
         paymentOverrides: nextState.paymentOverrides,
         actualPaymentAmounts: nextState.actualPaymentAmounts,
         paymentDifferenceReasons: nextState.paymentDifferenceReasons,
@@ -5717,6 +5726,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final workbook = _assetLiabilityPlanner.buildWorkbook(
       latestSnapshot: snapshot,
       baseDate: _now,
+      confirmedPaymentDays: _confirmedPaymentDays,
       monthlyPaymentOverrides: _monthlyPaymentOverrides,
       actualPaymentAmounts: _actualPaymentAmounts,
       paymentDifferenceReasons: _paymentDifferenceReasons,
@@ -9852,6 +9862,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return _assetLiabilityPlanner.buildWorkbook(
       latestSnapshot: latestSnapshot,
       baseDate: _now,
+      confirmedPaymentDays: _confirmedPaymentDays,
       monthlyPaymentOverrides: _monthlyPaymentOverrides,
       actualPaymentAmounts: _actualPaymentAmounts,
       paymentDifferenceReasons: _paymentDifferenceReasons,
@@ -18105,7 +18116,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final workbook = _assetLiabilityPlanner.buildWorkbook(
         latestSnapshot: latestSnapshot,
         baseDate: _now,
-        monthlyPaymentOverrides: _monthlyPaymentOverrides,
+        confirmedPaymentDays: _confirmedPaymentDays,
+      monthlyPaymentOverrides: _monthlyPaymentOverrides,
         actualPaymentAmounts: _actualPaymentAmounts,
         paymentDifferenceReasons: _paymentDifferenceReasons,
         annualRateOverrides: _annualRateOverrides,
@@ -30384,9 +30396,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildDebtPaymentDayInput(AssetLiabilityDebtRow row) {
-    final hasOverride = _debtPaymentDayOverrides.containsKey(row.id);
+    final hasOverride = row.isRevolving
+        ? _confirmedPaymentDays.containsKey(row.id)
+        : _debtPaymentDayOverrides.containsKey(row.id);
     final statusLabel = hasOverride
-        ? '手動設定'
+        ? (row.isRevolving ? '今回のみ' : '手動設定')
         : row.paymentDay == null
             ? '未設定'
             : '自動推定';
@@ -30412,7 +30426,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               for (var day = 1; day <= 31; day++)
                 DropdownMenuItem<int?>(value: day, child: Text('$day日')),
             ],
-            onChanged: (value) => _setDebtPaymentDayOverride(row, value),
+            onChanged: (value) {
+              if (!row.isRevolving) {
+                _setDebtPaymentDayOverride(row, value);
+                return;
+              }
+              setState(() {
+                if (value == null) {
+                  _confirmedPaymentDays.remove(row.id);
+                } else {
+                  _confirmedPaymentDays[row.id] = value.toDouble();
+                }
+              });
+              unawaited(_saveAssetLiabilityMonthlyState());
+            },
           ),
         ],
       ),
@@ -30922,27 +30949,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildMonthlyPaymentInput(AssetLiabilityDebtRow row) {
-    if (row.isRevolving) {
-      // リボ払いは最低返済額と新規利用額から自動算出するため手入力欄は出さない。
-      final billing = row.revolvingBilling!;
-      return SizedBox(
-        width: 150,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _formatManagementYen(billing.billedAmount),
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.3),
-            ),
-            const Text(
-              '25日・最低返済＋新規利用',
-              style: TextStyle(fontSize: 11, height: 1.3),
-            ),
-          ],
-        ),
-      );
-    }
     final controller = _monthlyPaymentControllerFor(row);
     return SizedBox(
       width: 150,
@@ -30954,7 +30960,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         decoration: InputDecoration(
           isDense: true,
           hintText: _formatManagementYen(row.minimumPaymentEstimate),
-          helperText: row.paymentAmountEstimated ? '未入力時は推定' : '実額を優先',
+          labelText: row.isRevolving ? '今回の確定請求額' : null,
+          helperText: row.isRevolving
+              ? '今回のみ優先・リボ設定は保持'
+              : row.paymentAmountEstimated ? '未入力時は推定' : '実額を優先',
           suffixIcon: row.paymentAmountEstimated
               ? null
               : IconButton(
@@ -31030,7 +31039,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           if (row.revolvingBilling != null) ...[
             const SizedBox(height: 6),
             Text(
-              '25日返済 ${_formatManagementYen(row.revolvingBilling!.billedAmount)}'
+              '${row.revolvingBilling!.paymentDay}日支払 ${_formatManagementYen(row.revolvingBilling!.billedAmount)}'
               '（既存残高の一括返済なし）',
               style: const TextStyle(
                 fontSize: 11,
