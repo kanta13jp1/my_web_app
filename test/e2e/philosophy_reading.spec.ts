@@ -229,6 +229,8 @@ test('choose two Japanese translations, preserve their ISBN/source fields after 
     await popup.waitForLoadState('domcontentloaded');
     expect(new URL(popup.url()).searchParams.get('k')).toBe(book.isbn);
     await popup.close();
+    // Returning from the popup can restore the mobile viewport to the top.
+    await revealReadingControl(page, start);
     await start.click();
     await restoredField(page, /^出版社/, book.publisher);
     await restoredField(page, /^訳者/, book.translator);
@@ -310,6 +312,8 @@ test('choose new Ethics editions including collected editors, persist and edit i
     await popup.waitForLoadState('domcontentloaded');
     expect(new URL(popup.url()).searchParams.get('k')).toBe(book.isbn);
     await popup.close();
+    // Returning from the popup can restore the mobile viewport to the top.
+    await revealReadingControl(page, start);
     await start.click();
     await restoredField(page, /^出版社/, book.publisher);
     await restoredField(page, /^訳者/, book.translator);
