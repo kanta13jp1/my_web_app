@@ -43,18 +43,33 @@ class ReadingBookSearch {
     if (text.isEmpty) return [];
     final isbn = _normalizeIsbn(text);
     final isIsbn = isbn.isNotEmpty;
-    final matches = philosophyCatalogEditions.where(
+    // Searchable editions need not belong to the shared philosophical works.
+    // This also supports books attached to existing personal reading records.
+    final books = [
+      ...philosophyCatalogEditions.map(
+        (book) => ReadingBookResult(book.label, book.edition),
+      ),
+      const ReadingBookResult(
+        '読書について・光文社（ショーペンハウアー）',
+        ReadingEdition(
+          publisher: '光文社',
+          translator: '鈴木芳子',
+          year: '2013',
+          language: '日本語',
+          isbn: '9784334752712',
+          sourceUrl: 'https://www.kotensinyaku.jp/books/book169/',
+          bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752712',
+        ),
+      ),
+    ];
+    final matches = books.where(
       (book) => isIsbn
           ? book.edition.isbn == isbn
-          : '${book.label} ${book.edition.translator} ${book.edition.publisher}'
+          : '${book.title} ${book.edition.translator} ${book.edition.publisher}'
               .toLowerCase()
               .contains(text.toLowerCase()),
     );
-    if (matches.isNotEmpty) {
-      return matches
-          .map((book) => ReadingBookResult(book.label, book.edition))
-          .toList();
-    }
+    if (matches.isNotEmpty) return matches.toList();
     if (!isIsbn) return [];
     final ownedClient = client == null;
     final transport = client ?? http.Client();

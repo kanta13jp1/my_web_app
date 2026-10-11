@@ -5,6 +5,27 @@ import 'package:http/testing.dart';
 import 'package:my_web_app/data/services/reading_book_search.dart';
 
 void main() {
+  test('personal reading title has a sourced edition without provider access',
+      () async {
+    final client = MockClient((_) => throw StateError('No provider request'));
+    final byTitle = await const ReadingBookSearch().search(
+      '読書について',
+      client: client,
+    );
+    final byIsbn = await const ReadingBookSearch().search(
+      '978-4-334-75271-2',
+      client: client,
+    );
+    expect(byTitle.single.edition.isbn, byIsbn.single.edition.isbn);
+    expect(byTitle.single.edition.publisher, '光文社');
+    expect(byTitle.single.edition.translator, '鈴木芳子');
+    expect(byTitle.single.edition.editor, '');
+    expect(byTitle.single.edition.totalPages, isNull);
+    expect(
+      byTitle.single.edition.sourceUrl,
+      'https://www.kotensinyaku.jp/books/book169/',
+    );
+  });
   test(
     'ISBN-10 normalizes to ISBN-13; bad checksums never query the provider',
     () async {
