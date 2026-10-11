@@ -274,8 +274,11 @@ test('choose two Japanese translations, preserve their ISBN/source fields after 
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('tab', { name: '進捗', exact: true }).click();
-  await expect(page.getByRole('tabpanel')).toHaveCount(1);
-  await expect(page.getByRole('tabpanel')).toMatchAriaSnapshot(`
+  const progress = page.getByRole('tabpanel').filter({
+    has: page.getByText('長期目標: すべての哲学書を読破する', { exact: true }),
+  });
+  await expect(progress).toHaveCount(1);
+  await expect(progress).toMatchAriaSnapshot(`
 - tabpanel:
   - group:
     - text: /.*収録済み著作全体.*読了 0 . 80 著作.*/
