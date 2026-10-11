@@ -53,7 +53,8 @@ Future<AssetObsidianVaultSelection?> _pickAssetObsidianMarkdown({
       for (var index = 0; index < fileList.length; index++) {
         final file = fileList.item(index);
         if (file == null) continue;
-        final relativePath = (directory ? file.webkitRelativePath : file.name).replaceAll('\\', '/');
+        final relativePath = (directory ? file.webkitRelativePath : file.name)
+            .replaceAll('\\', '/');
         final segments = relativePath.split('/');
         if (directory && vaultName == null && segments.isNotEmpty) {
           vaultName = segments.first;
@@ -87,7 +88,8 @@ Future<AssetObsidianVaultSelection?> _pickAssetObsidianMarkdown({
         final content = (await file.text().toDart).toDart;
         selectedFiles.add(
           AssetObsidianVaultFile(
-            relativePath: (directory ? file.webkitRelativePath : file.name).replaceAll('\\', '/'),
+            relativePath: (directory ? file.webkitRelativePath : file.name)
+                .replaceAll('\\', '/'),
             content: content,
             byteSize: file.size,
             lastModified: DateTime.fromMillisecondsSinceEpoch(

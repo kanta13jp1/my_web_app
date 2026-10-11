@@ -74,7 +74,8 @@ class _AssetObsidianVaultImportDialogState
       _error = null;
     });
     try {
-      final selection = await (filesOnly ? widget.pickFiles : widget.pickVault)();
+      final selection =
+          await (filesOnly ? widget.pickFiles : widget.pickVault)();
       if (selection == null || !mounted) return;
       final preview = widget.importService.preview(
         files: selection.files,
@@ -236,8 +237,9 @@ class _AssetObsidianVaultImportDialogState
                     label: const Text('Markdownファイルを選択'),
                   ),
                   OutlinedButton.icon(
-                    onPressed:
-                        _isSelecting || _isApplying ? null : () => _selectVault(),
+                    onPressed: _isSelecting || _isApplying
+                        ? null
+                        : () => _selectVault(),
                     icon: _isSelecting
                         ? const SizedBox(
                             width: 18,
