@@ -10,6 +10,24 @@ async function field(page: Page, name: RegExp, value: string) {
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   await expect(input).toHaveValue(value);
 }
+async function restoredField(page: Page, name: RegExp, value: string) {
+  const input = page.getByRole('textbox', { name });
+  await input.focus();
+  // Flutter populates the native accessibility input when it receives focus.
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  await expect(input).toHaveValue(value);
+}
+async function choose(page: Page, name: RegExp, option: string) {
+  await page.getByRole('button', { name }).click();
+  const item = page.getByRole('menuitem', { name: option, exact: true });
+  // Offscreen Flutter menu items acquire semantics after actual menu scrolling.
+  for (let attempt = 0; attempt < 12 && await item.count() === 0; attempt++) {
+    await page.getByRole('menu', { name: 'Popup menu', exact: true }).hover();
+    await page.mouse.wheel(0, 240);
+    await page.waitForTimeout(100);
+  }
+  await item.click();
+}
 async function capture(page: Page, info: TestInfo, name: string) {
   await page.evaluate(async () => {
     await Promise.all(document.getAnimations({ subtree: true }).filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {})));
@@ -65,11 +83,11 @@ test('record pages, understanding and impression persists across reload; reread 
   await expect(page.getByRole('group', { name: /感想: 正義の意味を考えた/ }).last()).toBeVisible();
   await expect(page.getByRole('group', { name: /編集者・編者: テスト編集者/ }).last()).toBeVisible();
   await page.getByRole('button', { name: '版を編集', exact: true }).click();
-  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveValue('読書テスト出版社');
-  await expect(page.getByRole('textbox', { name: /^訳者/ })).toHaveValue('テスト訳者');
-  await expect(page.getByRole('textbox', { name: /^編集者・編者/ })).toHaveValue('テスト編集者');
-  await expect(page.getByRole('textbox', { name: /^書籍・購入URL/ })).toHaveValue('https://example.com/book');
-  await expect(page.getByRole('textbox', { name: /^版情報の出典URL/ })).toHaveValue('https://example.com/source');
+  await restoredField(page, /^出版社/, '読書テスト出版社');
+  await restoredField(page, /^訳者/, 'テスト訳者');
+  await restoredField(page, /^編集者・編者/, 'テスト編集者');
+  await restoredField(page, /^書籍・購入URL/, 'https://example.com/book');
+  await restoredField(page, /^版情報の出典URL/, 'https://example.com/source');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('button', { name: '別の版・再読を始める', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
@@ -101,9 +119,9 @@ test('catalog edition prefills publisher, translator and editor; ISBN link and U
   expect(new URL(popup.url()).searchParams.get('k')).toBe('9784480080226');
   await popup.close();
   await page.getByRole('button', { name: 'この版で読書を始める', exact: true }).click();
-  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveValue('筑摩書房');
-  await expect(page.getByRole('textbox', { name: /^訳者/ })).toHaveValue('水野弥穂子');
-  await expect(page.getByRole('textbox', { name: /^編集者・編者/ })).toHaveValue('懐奘（記録・編纂）');
+  await restoredField(page, /^出版社/, '筑摩書房');
+  await restoredField(page, /^訳者/, '水野弥穂子');
+  await restoredField(page, /^編集者・編者/, '懐奘（記録・編纂）');
   await field(page, /^書籍・購入URL/, 'javascript:alert(1)');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('URLは有効なHTTPSアドレスを入力してください', { exact: true })).toBeVisible();
@@ -157,12 +175,9 @@ test('guest author-to-work navigation, compound filters, empty state and keyboar
   await expect(page.getByRole('button', { name: '読書を始める', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('button', { name: '分類を解除', exact: true }).click();
-  await page.getByRole('button', { name: /成立世紀/ }).click();
-  await page.getByRole('menuitem', { name: '紀元前4世紀', exact: true }).click();
-  await page.getByRole('button', { name: /国／地域/ }).click();
-  await page.getByRole('menuitem', { name: '古代ギリシア', exact: true }).click();
-  await page.getByRole('button', { name: /ジャンル/ }).click();
-  await page.getByRole('menuitem', { name: '政治哲学', exact: true }).click();
+  await choose(page, /成立世紀/, '紀元前4世紀');
+  await choose(page, /国／地域/, '古代ギリシア');
+  await choose(page, /ジャンル/, '政治哲学');
   await expect(page.getByRole('button', { name: /^国家 / })).toBeVisible();
   await expect(page.getByRole('button', { name: /^論語 / })).toHaveCount(0);
   await field(page, /^著者・著作を検索/, '該当しない著作');
