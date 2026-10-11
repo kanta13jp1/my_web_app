@@ -55,7 +55,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('書籍情報を取得できませんでした。再検索または手入力できます。'), findsOneWidget);
     expect(
-      tester.widget<TextButton>(find.byType(TextButton)).onPressed,
+      tester.widget<TextButton>(find.widgetWithText(TextButton, '書籍情報を検索')).onPressed,
       isNotNull,
     );
   });

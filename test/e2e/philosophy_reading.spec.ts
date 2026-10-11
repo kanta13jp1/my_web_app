@@ -523,3 +523,89 @@ test('reading-about-books title prefills and persists the publisher edition', as
   await restoredField(page, /^版情報の出典URL/, 'https://www.kotensinyaku.jp/books/book169/');
   await capture(page, info, 'reading-title-restored');
 });
+
+const ndlTitleXml = `<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><channel>
+<item><dc:title>目録にない外部書名</dc:title><link>https://ndlsearch.ndl.go.jp/books/R100000002-IQA001</link><dc:publisher>外部出版社A</dc:publisher><dc:creator>原著者 著</dc:creator><dc:creator>訳者A 訳</dc:creator><dc:creator>編者A 編</dc:creator><dc:extent>180p</dc:extent><dcterms:issued>2012.3</dcterms:issued><dc:language>jpn</dc:language><dc:identifier xsi:type="dcndl:ISBN">978-4-569-80487-3</dc:identifier></item>
+<item><dc:title>目録にない外部書名</dc:title><link>https://ndlsearch.ndl.go.jp/books/R100000002-IQA002</link><dc:publisher>外部出版社B</dc:publisher><dc:creator>訳者B 訳</dc:creator><dc:extent>240 p</dc:extent><dcterms:issued>2009.8</dcterms:issued><dc:identifier xsi:type="dcndl:ISBN">978-4-569-70783-9</dc:identifier></item>
+</channel></rss>`;
+
+test('external title returns two editions; selected metadata persists and edits independently', async ({ page }, info) => {
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
+    expect(new URL(route.request().url()).searchParams.get('title')).toBe('目録にない外部書名');
+    return route.fulfill({ contentType: 'application/xml', body: ndlTitleXml });
+  });
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  const books = [
+    { publisher: '外部出版社A', translator: '訳者A', isbn: '9784569804873', pages: '180', source: 'https://ndlsearch.ndl.go.jp/books/R100000002-IQA001' },
+    { publisher: '外部出版社B', translator: '訳者B', isbn: '9784569707839', pages: '240', source: 'https://ndlsearch.ndl.go.jp/books/R100000002-IQA002' },
+  ];
+  for (let i = 0; i < books.length; i++) {
+    const book = books[i];
+    await page.getByRole('button', { name: i === 0 ? '読書を始める' : '別の版・再読を始める', exact: true }).click();
+    await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+    await field(page, /^書籍情報を検索/, '目録にない外部書名');
+    await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+    await expect(page.getByRole('button', { name: /^目録にない外部書名/ })).toHaveCount(2);
+    await page.getByRole('button', { name: new RegExp('^目録にない外部書名[\\s\\S]*' + book.publisher) }).click();
+    await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^総ページ数/, book.pages);
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await restoredField(page, /^書籍・購入URL/, 'https://www.amazon.co.jp/s/?i=stripbooks&k=' + book.isbn);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+    await openWork(page, 'エチカ');
+    await editRegisteredEdition(page, book.isbn);
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^総ページ数/, book.pages);
+    await field(page, /^出版社/, book.publisher + '・編集済み');
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  }
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, 'エチカ');
+  for (const book of books) {
+    await editRegisteredEdition(page, book.isbn);
+    await restoredField(page, /^出版社/, book.publisher + '・編集済み');
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^総ページ数/, book.pages);
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await capture(page, info, 'external-title-restored-' + book.isbn);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  }
+});
+
+test('external title failure and empty results preserve manual input; retry and cancel work', async ({ page }) => {
+  let calls = 0;
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
+    calls++;
+    return route.fulfill(calls === 1 ? { status: 503, body: '' } : {
+      contentType: 'application/xml', body: calls === 2 ? '<rss><channel/></rss>' : ndlTitleXml,
+    });
+  });
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await field(page, /^出版社/, '保持する出版社');
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await field(page, /^書籍情報を検索/, '目録にない外部書名');
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await expect(page.getByText('書籍情報を取得できませんでした。再検索または手入力できます。', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await expect(page.getByText('見つかりませんでした。書名を短くするか、ISBNで検索してください。手入力もできます。', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '外部の版も検索', exact: true }).click();
+  await page.getByRole('button', { name: /^目録にない外部書名/ }).first().click();
+  await page.getByRole('button', { name: 'キャンセル', exact: true }).last().click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await restoredField(page, /^出版社/, '保持する出版社');
+});

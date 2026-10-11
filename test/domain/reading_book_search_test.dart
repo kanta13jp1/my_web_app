@@ -5,6 +5,71 @@ import 'package:http/testing.dart';
 import 'package:my_web_app/data/services/reading_book_search.dart';
 
 void main() {
+  test('external title search returns distinct sourced editions and role credits',
+      () async {
+    final client = MockClient((request) async {
+      expect(request.url.host, 'ndlsearch.ndl.go.jp');
+      expect(request.url.queryParameters['title'], '目録にない外部書名');
+      expect(request.url.queryParameters['dpid'], 'iss-ndl-opac');
+      return http.Response(ndlBooksFixture, 200);
+    });
+    final books = await const ReadingBookSearch().search(
+      '目録にない外部書名',
+      client: client,
+    );
+    expect(books, hasLength(2));
+    expect(books[0].edition.publisher, '外部出版社A');
+    expect(books[0].edition.translator, '訳者A');
+    expect(books[0].edition.editor, '編者A');
+    expect(books[0].edition.totalPages, 180);
+    expect(books[0].edition.year, '2012');
+    expect(books[0].edition.language, '日本語');
+    expect(books[0].edition.isbn, '9784569804873');
+    expect(books[1].edition.isbn, '9784569707839');
+    expect(books[1].edition.translator, '訳者B');
+    expect(books[1].edition.editor, '');
+    expect(books[1].edition.totalPages, 240);
+    expect(books[1].edition.sourceUrl,
+        'https://ndlsearch.ndl.go.jp/books/R100000002-IQA002',);
+    expect(Uri.parse(books[1].edition.bookUrl).queryParameters['k'],
+        '9784569707839',);
+  });
+  test('explicit external lookup can bypass local matches; malformed input fails',
+      () async {
+    var requests = 0;
+    final client = MockClient((_) async {
+      requests++;
+      return http.Response('<rss><channel/></rss>', 200);
+    });
+    expect(await const ReadingBookSearch().search(
+      'エティカ', client: client, external: true,
+    ), isEmpty);
+    expect(requests, 1);
+    expect(await const ReadingBookSearch().search(
+      '9781234567890', client: client,
+    ), isEmpty);
+    expect(requests, 1);
+    final wrong = MockClient((_) async => http.Response('<html/>', 200));
+    await expectLater(const ReadingBookSearch().search('外部書名', client: wrong),
+        throwsFormatException,);
+  });
+  test('unsafe provenance, unknown roles and complex extent are not guessed',
+      () async {
+    final xml = ndlBooksFixture
+        .replaceAll('180p', 'iv, 180p')
+        .replaceAll('訳者A 訳', '著者A 著')
+        .replaceAll('https://ndlsearch.ndl.go.jp/books/R100000002-IQA002',
+            'https://example.invalid/book');
+    final client = MockClient((_) async => http.Response(xml, 200));
+    final books = await const ReadingBookSearch().search('外部書名', client: client);
+    expect(books, hasLength(1));
+    expect(books.single.edition.totalPages, isNull);
+    expect(books.single.edition.translator, '');
+    final unavailable = MockClient((_) async => http.Response('', 503));
+    await expectLater(const ReadingBookSearch().search('外部書名', client: unavailable),
+        throwsFormatException,);
+  });
+
   test('personal reading title has a sourced edition without provider access',
       () async {
     final client = MockClient((_) => throw StateError('No provider request'));
@@ -131,3 +196,8 @@ void main() {
     );
   });
 }
+
+const ndlBooksFixture = r'''<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><channel>
+<item><dc:title>目録にない外部書名</dc:title><link>https://ndlsearch.ndl.go.jp/books/R100000002-IQA001</link><dc:publisher>外部出版社A</dc:publisher><dc:creator>原著者 著</dc:creator><dc:creator>訳者A 訳</dc:creator><dc:creator>編者A 編</dc:creator><dc:extent>180p</dc:extent><dcterms:issued>2012.3</dcterms:issued><dc:language>jpn</dc:language><dc:identifier xsi:type="dcndl:ISBN">978-4-569-80487-3</dc:identifier></item>
+<item><dc:title>目録にない外部書名</dc:title><link>https://ndlsearch.ndl.go.jp/books/R100000002-IQA002</link><dc:publisher>外部出版社B</dc:publisher><dc:creator>訳者B 訳</dc:creator><dc:extent>240 p</dc:extent><dcterms:issued>2009.8</dcterms:issued><dc:identifier xsi:type="dcndl:ISBN">978-4-569-70783-9</dc:identifier></item>
+</channel></rss>''';
