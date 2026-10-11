@@ -1693,9 +1693,19 @@ void main() {
             debugRevolvingConfigsMirror: mirrorValue,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
               <String, int>{},
-              monthlyState: const AssetLiabilityMonthlyState(
-                paymentOverrides: <String, double>{'aupay_card': 77541},
-                confirmedPaymentDays: <String, double>{'aupay_card': 13},
+              monthlyState: AssetLiabilityMonthlyState(
+                paymentOverrides: const <String, double>{'aupay_card': 77541},
+                confirmedPaymentDays: const <String, double>{'aupay_card': 13},
+                cardStatementLines: <AssetLiabilityCardStatementLine>[
+                  AssetLiabilityCardStatementLine(
+                    id: 'confirmed_bill_line',
+                    billingAccountId: 'aupay_card',
+                    billingAccountName: 'auPayカード',
+                    description: 'Synthetic statement',
+                    amount: 1000,
+                    postedAt: DateTime(2026, 9, 11),
+                  ),
+                ],
               ),
             ),
             debugInitialAssetData: <String, Map<String, double>>{
