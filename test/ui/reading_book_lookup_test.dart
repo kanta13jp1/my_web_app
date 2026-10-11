@@ -10,7 +10,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: ReadingBookLookup(
       onSelected: (edition) => selected = edition,
       search: (_) async => [const ReadingBookResult('検索候補', ReadingEdition(publisher:'出版社', isbn:'9781234567897'))],
-    ))));
+    ),),),);
     await tester.enterText(find.byType(TextField), '検索');
     await tester.tap(find.text('書籍情報を検索')); await tester.pumpAndSettle();
     await tester.tap(find.text('検索候補')); await tester.pumpAndSettle();
@@ -24,7 +24,7 @@ void main() {
   testWidgets('network failure leaves manual entry available and offers retry', (tester) async {
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: ReadingBookLookup(
       onSelected: (_) {}, search: (_) async => throw Exception('offline'),
-    ))));
+    ),),),);
     await tester.tap(find.text('書籍情報を検索')); await tester.pumpAndSettle();
     expect(find.text('書籍情報を取得できませんでした。再検索または手入力できます。'), findsOneWidget);
     expect(tester.widget<TextButton>(find.byType(TextButton)).onPressed, isNotNull);

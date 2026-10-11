@@ -20,7 +20,7 @@ class ReadingBookSearch {
     final matches = philosophyCatalogEditions.where((book) => isIsbn
         ? book.edition.isbn == isbn
         : '${book.label} ${book.edition.translator} ${book.edition.publisher}'
-            .toLowerCase().contains(text.toLowerCase()));
+            .toLowerCase().contains(text.toLowerCase()),);
     if (matches.isNotEmpty) {
       return matches.map((book) => ReadingBookResult(book.label, book.edition)).toList();
     }
@@ -68,7 +68,7 @@ class ReadingBookSearch {
         totalPages: pages != null && pages > 0 && pages <= 1000000 ? pages : null,
         sourceUrl: 'https://api.openbd.jp/v1/get?isbn=$actualIsbn',
         bookUrl: Uri.https('www.amazon.co.jp', '/s/', {'i':'stripbooks','k':actualIsbn}).toString(),
-      ))];
+      ),),];
     } finally {
       if (ownedClient) transport.close();
     }

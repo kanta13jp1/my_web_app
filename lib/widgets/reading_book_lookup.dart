@@ -38,8 +38,8 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
       title: const Text('この書籍情報を設定しますか？'),
       content: Text('${book.title}\n${book.edition.publisher}\nISBN: ${book.edition.isbn}\n\n現在の版情報を置き換えます。取得できない項目は空欄になります。設定後に確認・修正してください。'),
       actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('キャンセル')),
-        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('書籍情報を設定'))],
-    ));
+        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('書籍情報を設定')),],
+    ),);
     if (selected == true && mounted) widget.onSelected(book.edition);
   }
   @override
@@ -50,5 +50,5 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
     if (_message != null) Text(_message!),
     ..._results.map((book) => ListTile(title: Text(book.title), subtitle: Text('${book.edition.publisher} / ${book.edition.translator}\nISBN: ${book.edition.isbn}'), onTap: () => _select(book))),
     const SizedBox(height: 12),
-  ]);
+  ],);
 }

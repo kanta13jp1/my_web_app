@@ -449,3 +449,22 @@ test('search a book and apply edition metadata before saving, reloading and edit
   await editRegisteredEdition(page, '9784121600943');
   await restoredField(page, /^編集者・編者/, '検索後の修正');
 });
+
+test('failed external book search preserves input and recovers with catalog search', async ({ page }) => {
+  await page.route('https://api.openbd.jp/**', route => route.fulfill({ status: 503, body: '' }));
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await field(page, /^出版社/, '手入力を保持');
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await field(page, /^書籍情報を検索/, '9781234567897');
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await expect(page.getByText('書籍情報を取得できませんでした。再検索または手入力できます。', { exact: true })).toBeVisible();
+  await field(page, /^書籍情報を検索/, 'エティカ');
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await page.getByText('エティカ・中央公論新社（中公クラシックス ; W48）', { exact: true }).click();
+  await page.getByRole('button', { name: 'キャンセル', exact: true }).last().click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await restoredField(page, /^出版社/, '手入力を保持');
+});

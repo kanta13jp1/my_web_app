@@ -1114,7 +1114,7 @@ class _ReadingFormState extends State<_ReadingForm> {
                         }
                         _controllers['total']?.text = edition.totalPages?.toString() ?? '';
                         setState(() => _lookupOpen = false);
-                      }),
+                      },),
                     ...widget.fields.map(
                       (field) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),

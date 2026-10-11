@@ -19,7 +19,7 @@ void main() {
         {'ContributorRole':['A01'],'PersonName':{'content':'著者'}},
         {'ContributorRole':['B06'],'PersonName':{'content':'訳者'}},
         {'ContributorRole':['B01'],'PersonName':{'content':'編者'}},
-      ],'Extent':[{'ExtentUnit':'03','ExtentValue':'240'}]}}}]), 200, headers: {'content-type':'application/json; charset=utf-8'});
+      ],'Extent':[{'ExtentUnit':'03','ExtentValue':'240'}],},},}]), 200, headers: {'content-type':'application/json; charset=utf-8'},);
     });
     final result = (await const ReadingBookSearch().search('9781234567897', client: client)).single;
     expect(result.title, '検索した本');
