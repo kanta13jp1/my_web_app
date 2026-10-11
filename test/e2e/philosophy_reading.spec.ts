@@ -286,6 +286,87 @@ test('choose two Japanese translations, preserve their ISBN/source fields after 
   expect(errors).toEqual([]);
 });
 
+test('choose new Ethics editions including collected editors, persist and edit independently', async ({ page, context }, info) => {
+  test.setTimeout(120000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  const books = [
+    {"label": "エティカ・中央公論新社（中公クラシックス ; W48）", "publisher": "中央公論新社", "translator": "工藤喜作・斎藤博", "isbn": "9784121600943", "volume": "中公クラシックス ; W48", "editor": "", "source": "https://ndlsearch.ndl.go.jp/books/R100000002-I000008440421", "purchase": "https://www.amazon.co.jp/s/?i=stripbooks&k=9784121600943"},
+    {"label": "スピノザ全集. 3・岩波書店", "publisher": "岩波書店", "translator": "上野修（翻訳・解説）", "isbn": "9784000928533", "volume": "3", "editor": "上野修・鈴木泉（編）", "source": "https://ndlsearch.ndl.go.jp/books/R100000002-I032507023", "purchase": "https://www.amazon.co.jp/s/?i=stripbooks&k=9784000928533"},
+  ];
+  await context.route('https://www.amazon.co.jp/**', route => route.fulfill({ contentType: 'text/html', body: '<title>ISBN destination fixture</title>' }));
+  for (const book of books) {
+    await page.getByRole('button', { name: /版・入手先/ }).click();
+    const card = page.getByRole('group', { name: `版候補: ${book.label}`, exact: true });
+    const start = card.getByRole('button', { name: 'この版で読書を始める', exact: true });
+    await revealReadingControl(page, start);
+    await capture(page, info, `ethics-edition-candidates-${book.isbn}`);
+    const popupPromise = page.waitForEvent('popup');
+    await card.getByRole('button', { name: 'Amazonで書籍を検索（ISBN）', exact: true }).click();
+    const popup = await popupPromise;
+    await popup.waitForLoadState('domcontentloaded');
+    expect(new URL(popup.url()).searchParams.get('k')).toBe(book.isbn);
+    await popup.close();
+    await start.click();
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^巻・版の名前/, book.volume);
+    await restoredField(page, /^編集者・編者/, book.editor);
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await restoredField(page, /^書籍・購入URL/, book.purchase);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+    // Return to the collapsed heading before selecting the next edition.
+    await page.getByRole('button', { name: /Back|戻る/ }).click();
+    await openWork(page, 'エチカ');
+  }
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  for (let i = 0; i < books.length; i++) {
+    const book = books[i];
+    await editRegisteredEdition(page, book.isbn);
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^巻・版の名前/, book.volume);
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await restoredField(page, /^書籍・購入URL/, book.purchase);
+    if (i === 0) await field(page, /^編集者・編者/, '手元の版の編集者');
+    else await restoredField(page, /^編集者・編者/, book.editor);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+  }
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  await editRegisteredEdition(page, books[0].isbn);
+  await restoredField(page, /^編集者・編者/, '手元の版の編集者');
+  await restoredField(page, /^ISBN/, books[0].isbn);
+  await capture(page, info, 'ethics-edition-restored');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await editRegisteredEdition(page, books[1].isbn);
+  await restoredField(page, /^編集者・編者/, books[1].editor);
+  await restoredField(page, /^ISBN/, books[1].isbn);
+  await capture(page, info, 'second-ethics-edition-restored');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('button', { name: /Back|戻る/ }).click();
+  await page.getByRole('tab', { name: '進捗', exact: true }).click();
+  const progress = page.getByRole('tabpanel').filter({
+    has: page.getByText('長期目標: すべての哲学書を読破する', { exact: true }),
+  });
+  await expect(progress).toHaveCount(1);
+  await expect(progress).toMatchAriaSnapshot(`
+- tabpanel:
+  - group:
+    - text: /.*収録済み著作全体.*読了 0 . 80 著作.*/
+`);
+  expect(errors).toEqual([]);
+});
+
 test('invalid page range and failed save preserve input; retry, edit history and deletion work', async ({ page }, info) => {
   await page.goto('/');
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
