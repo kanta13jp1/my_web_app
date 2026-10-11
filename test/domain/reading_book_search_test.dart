@@ -11,7 +11,8 @@ void main() {
       '<dc:creator>訳者A 訳</dc:creator>',
       '<dc:creator>山田, 太郎, 1950-</dc:creator><author>山田, 太郎, 1950-,山田太郎 訳</author>',
     );
-    final client = MockClient((_) async => http.Response.bytes(utf8.encode(xml), 200));
+    final client =
+        MockClient((_) async => http.Response.bytes(utf8.encode(xml), 200));
     final books =
         await const ReadingBookSearch().search('外部書名', client: client);
     expect(books.first.edition.translator, '山田太郎');
@@ -91,7 +92,8 @@ void main() {
           'https://ndlsearch.ndl.go.jp/books/R100000002-IQA002',
           'https://example.invalid/book',
         );
-    final client = MockClient((_) async => http.Response.bytes(utf8.encode(xml), 200));
+    final client =
+        MockClient((_) async => http.Response.bytes(utf8.encode(xml), 200));
     final books =
         await const ReadingBookSearch().search('外部書名', client: client);
     expect(books, hasLength(1));
