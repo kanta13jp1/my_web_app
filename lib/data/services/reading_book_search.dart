@@ -150,13 +150,15 @@ class ReadingBookSearch {
     String title,
     http.Client client,
   ) async {
-    final response = await client.get(
-      Uri.https('ndlsearch.ndl.go.jp', '/api/opensearch', {
-        'title': title,
-        'dpid': 'iss-ndl-opac',
-        'cnt': '20',
-      }),
-    ).timeout(const Duration(seconds: 20));
+    final response = await client
+        .get(
+          Uri.https('ndlsearch.ndl.go.jp', '/api/opensearch', {
+            'title': title,
+            'dpid': 'iss-ndl-opac',
+            'cnt': '20',
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
     if (response.statusCode != 200 || response.bodyBytes.length > 2000000) {
       throw const FormatException('Title search unavailable');
     }
@@ -180,14 +182,18 @@ class ReadingBookSearch {
           .where((text) => text.isNotEmpty)
           .join('・');
       final source = value('link');
-      if (!RegExp(r'^https://ndlsearch\.ndl\.go\.jp/books/R100000002-I[0-9A-Za-z]+$')
-          .hasMatch(source)) continue;
+      if (!RegExp(
+        r'^https://ndlsearch\.ndl\.go\.jp/books/R100000002-I[0-9A-Za-z]+$',
+      ).hasMatch(source)) {
+        continue;
+      }
       final bookTitle = value('title', dc);
       if (bookTitle.isEmpty) continue;
       var isbn = '';
       for (final identifier in item.findElements('identifier', namespace: dc)) {
         if (identifier.attributes.any(
-          (attribute) => attribute.name.local == 'type' &&
+          (attribute) =>
+              attribute.name.local == 'type' &&
               attribute.value.endsWith(':ISBN'),
         )) {
           isbn = _normalizeIsbn(identifier.innerText.trim());
@@ -213,22 +219,23 @@ class ReadingBookSearch {
           }
         }
       }
-      final pageMatch = RegExp(r'^(\d+)\s*p\.?$')
-          .firstMatch(value('extent', dc));
+      final pageMatch =
+          RegExp(r'^(\d+)\s*p\.?$').firstMatch(value('extent', dc));
       final pages = int.tryParse(pageMatch?.group(1) ?? '');
       final date = value('issued', terms);
       final year = RegExp(r'^\d{4}').firstMatch(date)?.group(0) ?? '';
       final language = value('language', dc);
       final publisher = value('publisher', dc);
-      results.add(ReadingBookResult(
+      results.add(
+        ReadingBookResult(
         bookTitle,
         ReadingEdition(
           publisher: publisher,
           translator: translators.join('・'),
           editor: editors.join('・'),
           isbn: isbn,
-          totalPages: pages != null && pages > 0 && pages <= 1000000
-              ? pages : null,
+          totalPages:
+              pages != null && pages > 0 && pages <= 1000000 ? pages : null,
           year: year,
           language: language == 'jpn' ? '日本語' : language,
           volume: value('volume', ndl),
@@ -238,9 +245,9 @@ class ReadingBookSearch {
             'k': isbn.isNotEmpty ? isbn : '$bookTitle $publisher',
           }).toString(),
         ),
-      ));
+        ),
+      );
     }
     return results;
   }
-
 }

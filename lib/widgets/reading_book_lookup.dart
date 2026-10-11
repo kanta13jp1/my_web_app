@@ -92,7 +92,9 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
             onPressed: _loading ? null : () => _search(external: true),
             child: const Text('外部の版も検索'),
           ),
-          const Text('外部検索は最大20件です。関連資料も含まれるため、書名・出版社・訳者・巻を確認して版を選んでください。購入リンクはAmazonの検索で、在庫は販売先で確認できます。'),
+          const Text(
+            '外部検索は最大20件です。関連資料も含まれるため、書名・出版社・訳者・巻を確認して版を選んでください。購入リンクはAmazonの検索で、在庫は販売先で確認できます。',
+          ),
           TextButton(
             onPressed: () => launchUrl(
               Uri.parse('https://ndlsearch.ndl.go.jp/help/api/provider'),
