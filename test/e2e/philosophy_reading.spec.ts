@@ -2,6 +2,7 @@ import { test, expect, type Page, type TestInfo } from '@playwright/test';
 
 async function field(page: Page, name: RegExp, value: string) {
   const input = page.getByRole('textbox', { name });
+  await expect(input).toHaveCount(1);
   await input.focus(); await input.fill(value);
 }
 async function capture(page: Page, info: TestInfo, name: string) {
@@ -40,7 +41,7 @@ test('record pages, understanding and impression persists across reload; reread 
   await field(page, /^開始ページ/, '1'); await field(page, /^終了ページ/, '10');
   await field(page, /^感想/, '正義の意味を考えた');
   await page.getByRole('button', { name: /未評価/ }).click();
-  await page.getByRole('button', { name: '3 要点を理解した', exact: true }).last().click();
+  await page.getByRole('menuitem', { name: '3 要点を理解した', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('感想: 正義の意味を考えた', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '読了にする', exact: true }).click();
@@ -99,11 +100,11 @@ test('guest author-to-work navigation, compound filters, empty state and keyboar
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('button', { name: '分類を解除', exact: true }).click();
   await page.getByRole('button', { name: /成立世紀/ }).click();
-  await page.getByRole('button', { name: '紀元前4世紀', exact: true }).last().click();
+  await page.getByRole('menuitem', { name: '紀元前4世紀', exact: true }).click();
   await page.getByRole('button', { name: /国／地域/ }).click();
-  await page.getByRole('button', { name: '古代ギリシア', exact: true }).last().click();
+  await page.getByRole('menuitem', { name: '古代ギリシア', exact: true }).click();
   await page.getByRole('button', { name: /ジャンル/ }).click();
-  await page.getByRole('button', { name: '政治哲学', exact: true }).last().click();
+  await page.getByRole('menuitem', { name: '政治哲学', exact: true }).click();
   await expect(page.getByRole('button', { name: /^国家 / })).toBeVisible();
   await expect(page.getByRole('button', { name: /^論語 / })).toHaveCount(0);
   await field(page, /^著者・著作を検索/, '該当しない著作');
