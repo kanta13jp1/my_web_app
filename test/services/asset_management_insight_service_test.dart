@@ -10,6 +10,70 @@ void main() {
     const service = AssetManagementInsightService();
     const planner = AssetLiabilityPlanningService();
 
+    test('advice dates match the cashflow salary cycle across boundaries', () {
+      for (final baseDate in <DateTime>[
+        DateTime(2026, 10, 8),
+        DateTime(2026, 10, 25),
+        DateTime(2027, 1, 8),
+        DateTime(2026, 2, 26),
+      ]) {
+        for (final salaryDay in <int?>[null, 25]) {
+          final workbook = planner.buildWorkbook(
+            latestSnapshot: const <String, double>{
+              'bank': 50000,
+              'Custom Card': -10000,
+            },
+            baseDate: baseDate,
+            salaryDay: salaryDay,
+            paymentDayOverrides: const <String, int>{'Custom Card': 31},
+          );
+          final debt = workbook.currentDebtRows.singleWhere(
+            (row) => row.name == 'Custom Card',
+          );
+          final payment = workbook.cashflowRows.singleWhere(
+            (row) => row.isPayment && row.accountId == debt.id,
+          );
+          final report = service.buildReport(workbook: workbook);
+          final prompt = const AssetManagementInsightPromptBuilder()
+              .buildDetailedAdvicePrompt(report);
+          final date = payment.paymentDate;
+          final formatted = '${date.year}/'
+              '${date.month.toString().padLeft(2, '0')}/'
+              '${date.day.toString().padLeft(2, '0')}';
+          final detail = prompt.split('\n').singleWhere(
+                (line) =>
+                    line.startsWith('- Custom Card / 種別:') &&
+                    line.contains('今月支払予定日:'),
+              );
+          expect(detail, contains('今月支払予定日:$formatted'));
+          for (final action in report.actionItems.where(
+            (item) => item.relatedAccountId == debt.id && item.dueDate != null,
+          )) {
+            expect(action.dueDate, date);
+          }
+        }
+      }
+    });
+
+    test('repayment simulation uses fractional annual rates', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'auPAYカード': -505608,
+        },
+        baseDate: DateTime(2026, 10, 8),
+        monthlyPaymentOverrides: const <String, double>{'auPAYカード': 10000},
+      );
+      final report = service.buildReport(workbook: workbook);
+      final warning = report.actionItems.singleWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.debtSpiralWarning,
+      );
+      // 15% APR, monthly compounding, no new borrowing: 81 payments.
+      expect(warning.description, contains('約81ヶ月'));
+      expect(warning.suggestedAction, contains('24ヶ月完済目標額24,516円'));
+    });
+
     test('does not present inferred discipline results as facts', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000},
@@ -922,7 +986,7 @@ void main() {
         billingAccountId: null,
         billingAccountName: null,
         includedInBillingAccount: false,
-        annualRate: 14.5,
+        annualRate: 0.145,
         minimumPaymentEstimate: 15000,
         manualPaymentAmount: 0,
         scheduledPaymentAmount: 0,
@@ -952,7 +1016,7 @@ void main() {
         billingAccountId: null,
         billingAccountName: null,
         includedInBillingAccount: false,
-        annualRate: 15.0,
+        annualRate: 0.15,
         minimumPaymentEstimate: 10000,
         manualPaymentAmount: 10000,
         scheduledPaymentAmount: 10000,
@@ -982,7 +1046,7 @@ void main() {
         billingAccountId: null,
         billingAccountName: null,
         includedInBillingAccount: false,
-        annualRate: 1.0,
+        annualRate: 0.01,
         minimumPaymentEstimate: 10000,
         manualPaymentAmount: 10000,
         scheduledPaymentAmount: 10000,

@@ -16,6 +16,14 @@ class _PythonBlockReviewCardState extends State<PythonBlockReviewCard> {
         _result = null;
         _error = null;
       });
+  void _loadExample(bool ambiguous) {
+    _names.text = 'parse_duration';
+    _response.text = ambiguous
+        ? '```python\ndef parse_duration(s):\n    return 1\n```\n```python\ndef parse_duration(s):\n    return 2\n```'
+        : '```python\ndef parse_duration(s):\n    return 1\n```\n```python\nprint(parse_duration("1s"))\n```';
+    _clear();
+  }
+
   void _inspect() {
     try {
       final result = PythonBlockReview.inspect(_response.text, _names.text);
@@ -53,6 +61,20 @@ class _PythonBlockReviewCardState extends State<PythonBlockReviewCard> {
             ),
             const Text(
               'AIの回答を貼り付けて、Pythonの実装と使用例を見比べます。入力は送信・保存せず、コードも実行しません。',
+            ),
+            const Text('人工の回答例を読み込めます。現在の入力を置き換えます。'),
+            Wrap(
+              spacing: 8,
+              children: [
+                OutlinedButton(
+                  onPressed: () => _loadExample(false),
+                  child: const Text('使用例が末尾にある例'),
+                ),
+                OutlinedButton(
+                  onPressed: () => _loadExample(true),
+                  child: const Text('実装が2つある例'),
+                ),
+              ],
             ),
             TextField(
               controller: _names,
