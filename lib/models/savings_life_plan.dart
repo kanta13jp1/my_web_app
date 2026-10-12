@@ -41,8 +41,9 @@ class SavingsLifePlan {
 
     final start = DateTime.parse(json['start'] as String);
     final targetDate = DateTime.parse(json['targetDate'] as String);
-    if (!targetDate.isAfter(start))
+    if (!targetDate.isAfter(start)) {
       throw const FormatException('invalid dates');
+    }
     return SavingsLifePlan(
       start: start,
       targetDate: targetDate,
@@ -60,7 +61,7 @@ class SavingsLifePlan {
 
 class SavingsPlanCheckpoint {
   const SavingsPlanCheckpoint(
-      this.date, this.targetSavings, this.forecastSavings);
+      this.date, this.targetSavings, this.forecastSavings,);
   final DateTime date;
   final int targetSavings;
   final int forecastSavings;

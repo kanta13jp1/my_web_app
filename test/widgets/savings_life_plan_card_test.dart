@@ -5,7 +5,7 @@ import 'package:my_web_app/widgets/savings_life_plan_card.dart';
 
 void main() {
   Future<void> open(WidgetTester tester,
-      {int income = 400000, int commitments = 200000}) async {
+      {int income = 400000, int commitments = 200000,}) async {
     await tester.pumpWidget(MaterialApp(
         home: Scaffold(
             body: SingleChildScrollView(

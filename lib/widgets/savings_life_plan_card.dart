@@ -87,9 +87,10 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
             '0';
       });
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loadFailed = true;
+      }
           _message = '今日のチェックを読み込めませんでした。';
         });
     }
@@ -154,8 +155,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
         _message = '計画をこのブラウザーに保存しました。';
       });
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() => _message = '保存できませんでした。入力は保持しています。再試行してください。');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -180,7 +182,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
   }
 
   Widget _field(String label, TextEditingController controller,
-          {bool positive = false}) =>
+          {bool positive = false,}) =>
       SizedBox(
         width: min(300, MediaQuery.sizeOf(context).width - 80),
         child: TextFormField(
@@ -191,7 +193,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
           decoration: InputDecoration(
               labelText: label,
               suffixText: '円',
-              border: const OutlineInputBorder()),
+              border: const OutlineInputBorder(),),
           validator: (value) => _amount(value ?? '') == null ||
                   (positive && _amount(value ?? '') == 0)
               ? (positive
@@ -233,16 +235,16 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
         padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('1年で貯蓄残高100万円・返済と生活の計画',
-              style: Theme.of(context).textTheme.titleLarge),
+              style: Theme.of(context).textTheme.titleLarge,),
           const SizedBox(height: 8),
           Text(
-              '${SavingsLifePlan.dateText(_plan.start)} → ${SavingsLifePlan.dateText(_plan.targetDate)}'),
+              '${SavingsLifePlan.dateText(_plan.start)} → ${SavingsLifePlan.dateText(_plan.targetDate)}',),
           const Text('目標は貯蓄残高100万円です。投資評価額・借入可能額・支払い用の口座残高は自動算入しません。'),
           const Text('計画と日々のチェックは本人用にこのブラウザーへ保存します。他端末との同期はありません。'),
           if (_loading)
             const Padding(
                 padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator()),
+                child: CircularProgressIndicator(),),
           if (_loadFailed) ...[
             const Text('保存済み計画を読み込めませんでした。上書きを防ぐため編集を止めています。'),
             TextButton(onPressed: _load, child: const Text('計画の読み込みを再試行')),
@@ -250,9 +252,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
           if (!_loading && !_loadFailed) ...[
             const SizedBox(height: 16),
             Text(
-                '登録済みの返済・固定費：月 ${_yen(widget.monthlyCommitments)}${widget.commitmentsEstimated ? '（推定額を含む）' : ''}'),
+                '登録済みの返済・固定費：月 ${_yen(widget.monthlyCommitments)}${widget.commitmentsEstimated ? '（推定額を含む）' : ''}',),
             const Text(
-                'カード請求に含む内訳を二重加算せず、今月の支払予定を12か月継続する保守的な試算です。返済額・支払日・臨時請求は明細で確認してください。'),
+                'カード請求に含む内訳を二重加算せず、今月の支払予定が毎月続く条件の試算です。返済額・支払日・臨時請求は明細で確認してください。',),
             TextButton(
                 onPressed: widget.onReviewPayments,
                 child: const Text('返済・固定費と支払日を確認'),),
@@ -266,7 +268,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                 ],),),
             const SizedBox(height: 12),
             const Text(
-                '現在貯蓄は返済・当面の生活費を確保した上で、目標用に分けてある実額を入力してください。生活費には上の固定費を重複して含めないでください。'),
+                '現在貯蓄は返済・当面の生活費を確保した上で、目標用に分けてある実額を入力してください。生活費には上の固定費を重複して含めないでください。',),
             FilledButton(
                 onPressed: _busy ? null : _save,
                 child: Text(_busy ? '保存中…' : '計画を保存・再計算'),),
@@ -280,19 +282,19 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
               if (result.expired)
                 Text(_plan.savings! >= _plan.target
                     ? '期限到達：入力した貯蓄残高は目標以上です。'
-                    : '期限に到達しています。現在貯蓄を確認して計画を見直してください。')
+                    : '期限に到達しています。現在貯蓄を確認して計画を見直してください。',)
               else if (result.monthlyShortfall > 0) ...[
                 Text('現計画では月 ${_yen(result.monthlyShortfall)} 不足',
                     style: TextStyle(
                         color: Theme.of(context).colorScheme.error,
                         fontWeight: FontWeight.bold,),),
                 const Text(
-                    '食事や通勤費を削って合わせず、収入増・固定費見直し・目標期限の再検討が必要です。日々の使用可能額は提示しません。'),
+                    '食事や通勤費を削って合わせず、収入増・固定費見直し・目標期限の再検討が必要です。日々の使用可能額は提示しません。',),
               ] else
                 const Text('入力条件が続く場合、期限までの100万円を計画できます（達成保証ではありません）。'),
               Text('積立後の生活費上限：月 ${_yen(result.monthlyLivingCeiling)}'),
               const Text(
-                  '新規借入・運用益・未確認のボーナスを収入に含めません。口座別・支払日ごとの不足は既存マネーカレンダーで別途確認してください。'),
+                  '新規借入・運用益・未確認のボーナスを収入に含めません。口座別・支払日ごとの不足は既存マネーカレンダーで別途確認してください。',),
               const Text('見込みは生活費・返済後の余力を全額積み立てる場合です。将来の残高実績ではありません。'),
               ExpansionTile(title: const Text('月ごとの目標と現計画の見込み'), children: [
                 for (final checkpoint in result.checkpoints)
@@ -303,15 +305,15 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
               ],),
               const Divider(height: 24),
               Text('今日の生活設計 · $_day',
-                  style: Theme.of(context).textTheme.titleMedium),
+                  style: Theme.of(context).textTheme.titleMedium,),
               if (result.dailyLivingBudget != null) ...[
                 Text(
-                    '生活費の日割り目安 ${_yen(result.dailyLivingBudget!)} / 日（毎月の日数で計算）'),
+                    '生活費の日割り目安 ${_yen(result.dailyLivingBudget!)} / 日（毎月の日数で計算）',),
                 Text(
-                    '今日の計画メモ ${_yen(spent)} / 残り ${_yen(max(0, result.dailyLivingBudget! - spent))}'),
+                    '今日の計画メモ ${_yen(spent)} / 残り ${_yen(max(0, result.dailyLivingBudget! - spent))}',),
                 if (spent > result.dailyLivingBudget!)
                   Text(
-                      '日割り目安を ${_yen(spent - result.dailyLivingBudget!)} 超えています。翌日の食事は確保し、週の配分を見直してください。'),
+                      '日割り目安を ${_yen(spent - result.dailyLivingBudget!)} 超えています。翌日の食事は確保し、週の配分を見直してください。',),
               ],
               Wrap(
                   spacing: 8,
@@ -334,14 +336,14 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                                 final amount = _amount(_spent.text);
                                 if (amount == null) {
                                   setState(() => _message =
-                                      '生活費メモは0〜100,000,000円の整数で入力してください。');
+                                      '生活費メモは0〜100,000,000円の整数で入力してください。',);
                                   return;
                                 }
                                 _saveDaily({
                                   ..._daily
                                       .where((e) => !e.startsWith('spent:')),
                                   'spent:$amount'
-                                });
+                                ,});
                               },
                         child: const Text('生活費メモを保存'),),
                   ],),

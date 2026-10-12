@@ -8,11 +8,11 @@ void main() {
   test('reload restores owner plan and daily notes without financial writes',
       () async {
     SharedPreferences.setMockInitialValues(
-        {'salary_amount': 400000, 'account_balance_history': 'protected'});
+        {'salary_amount': 400000, 'account_balance_history': 'protected'},);
     final date = DateTime(2026, 10, 13);
     final store = SavingsLifePlanStore('owner-a');
     await store.save(SavingsLifePlan(
-        start: date, targetDate: DateTime(2027, 10, 13), savings: 250000));
+        start: date, targetDate: DateTime(2027, 10, 13), savings: 250000,),);
     await store.saveDaily(date, {'morning', 'spent:1234'});
     final restored = SavingsLifePlanStore('owner-a');
     expect((await restored.load())!.savings, 250000);
@@ -28,6 +28,6 @@ void main() {
             .getKeys()
             .where((k) => !k.startsWith('savings_life_plan_v1:'))
             .toSet(),
-        {'salary_amount', 'account_balance_history'});
+        {'salary_amount', 'account_balance_history'},);
   });
 }
