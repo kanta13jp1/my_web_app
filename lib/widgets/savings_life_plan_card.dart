@@ -40,6 +40,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
   final _spent = TextEditingController(text: '0');
   late SavingsLifePlanStore _store;
   late SavingsLifePlan _plan;
+  late DateTime _deadline;
   Set<String> _daily = {};
   bool _loading = true;
   bool _busy = false;
@@ -60,6 +61,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
       start: start,
       targetDate: SavingsLifePlanService.anniversary(start, 12),
     );
+    _deadline = _plan.targetDate;
     _load();
   }
 
@@ -107,6 +109,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
       final plan = saved ?? _plan;
       setState(() {
         _plan = plan;
+        _deadline = plan.targetDate;
         _saved = saved != null;
         _edited = false;
         _savings.text = plan.savings?.toString() ?? '';
@@ -130,11 +133,31 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
     return number != null && number <= 100000000 ? number : null;
   }
 
+  Future<void> _chooseDeadline() async {
+    final first = SavingsLifePlanService.day(widget.today).add(const Duration(days: 1));
+    final last = SavingsLifePlanService.anniversary(_plan.start, 24);
+    if (first.isAfter(last)) return;
+    final initial = _deadline.isBefore(first) ? first : _deadline;
+    final chosen = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+      helpText: '貯蓄目標の期限を選択',
+    );
+    if (chosen != null && mounted) {
+      setState(() {
+        _deadline = SavingsLifePlanService.day(chosen);
+        _edited = true;
+      });
+    }
+  }
+
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     final next = SavingsLifePlan(
       start: _plan.start,
-      targetDate: _plan.targetDate,
+      targetDate: _deadline,
       target: _plan.target,
       savings: _amount(_savings.text),
       income: _amount(_income.text),
@@ -271,7 +294,12 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                 onPressed: widget.onReviewPayments,
                 child: const Text('返済・固定費と支払日を確認'),
               ),
-              Form(
+              TextButton.icon(
+              onPressed: _busy ? null : _chooseDeadline,
+              icon: const Icon(Icons.event),
+              label: Text('目標期限 ${SavingsLifePlan.dateText(_deadline)} を変更'),
+            ),
+            Form(
                 key: _form,
                 child: Wrap(
                   spacing: 12,
@@ -297,7 +325,11 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
               if (_edited) const Text('未保存の入力があります。下の試算は最後に保存した計画です。'),
               if (_saved && result.ready) ...[
                 const Divider(height: 32),
-                Semantics(container: true, header: true, child: Text('必要な積立：月 ${_yen(result.requiredMonthlySavings)}')), 
+                Semantics(
+                container: true,
+                header: true,
+                child: Text('必要な積立：月 ${_yen(result.requiredMonthlySavings)}'),
+              ),
                 Text('生活費・返済・予備費を引いた余力：月 ${_yen(result.monthlyCapacity)}'),
                 if (result.expired)
                   Text(
