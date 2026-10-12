@@ -672,6 +672,9 @@ test('page number alone saves progress, adds a delta, corrects and survives relo
   const input=page.getByRole('textbox',{name:/^読んだページ/});
   await revealReadingControl(page,input);
   for (const value of ['85','100','100','80']) {
+    // Clear prior feedback before retrying the same page, so an old success cannot satisfy this update.
+    await field(page,/^読んだページ/,'');
+    await expect(page.getByText(/^\d+ページまでの進捗を保存しました$/)).toHaveCount(0);
     await field(page,/^読んだページ/,value);
     await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
     await expect(page.getByText(value+'ページまでの進捗を保存しました',{exact:true})).toBeVisible();
