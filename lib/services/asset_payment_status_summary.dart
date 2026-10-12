@@ -45,8 +45,9 @@ String assetPaymentStatusPrompt(AssetLiabilityWorkbook workbook) {
   for (final entry in assetPaymentStatusGroups(workbook).entries) {
     final total =
         entry.value.fold<double>(0, (sum, row) => sum + row.paymentAmount);
-    buffer.writeln(
-        '- ${entry.key}: ${entry.value.length}件 / 合計 ${total.round()}円');
+    final line = '- ${entry.key}: ${entry.value.length}件 / '
+        '合計 ${total.round()}円';
+    buffer.writeln(line);
     for (final row in entry.value) {
       final date = row.paymentDate;
       buffer.writeln('  - ${row.accountName}: ${row.paymentAmount.round()}円 / '

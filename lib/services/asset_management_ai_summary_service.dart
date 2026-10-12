@@ -1467,7 +1467,9 @@ class AssetManagementAiSummaryService {
       for (final segment in paymentSegments) {
         if (!segment.contains(entry.key)) continue;
         if (RegExp(r'期限超過(?:では|で|は)(?:ない|ありません)|期限超過に含め(?:ない|ません)')
-            .hasMatch(segment)) continue;
+            .hasMatch(segment)) {
+          continue;
+        }
         final count = RegExp(r'([0-9]+)件').firstMatch(segment);
         if (count != null && int.parse(count.group(1)!) != entry.value.length) {
           errors.add('${entry.key}の件数が確定内訳と不一致');

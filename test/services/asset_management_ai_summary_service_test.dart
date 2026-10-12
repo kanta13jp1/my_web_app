@@ -44,11 +44,13 @@ void main() {
       expect(prompt, contains('本日期日: 1件 / 合計 100円'));
       expect(prompt, contains('今後の支払い: 1件 / 合計 200円'));
       final overdueIds = report.actionItems
-          .where((item) =>
-              item.type == AssetManagementInsightActionType.overduePayment)
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.overduePayment,
+          )
           .map((item) => item.relatedAccountId);
-      final todayId = workbook.currentDebtRows
-          .singleWhere((row) => row.name == 'Today').id;
+      final todayId =
+          workbook.currentDebtRows.singleWhere((row) => row.name == 'Today').id;
       expect(overdueIds, isNot(contains(todayId)));
       for (final response in <String>[
         '期限超過は2件、合計1,000円です。',
