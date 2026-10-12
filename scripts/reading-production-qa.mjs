@@ -209,6 +209,7 @@ try {
   await page.goto(base+'/reading-list');await semantics(page);
   await openWork(page,'正法眼蔵随聞記');
   await page.getByRole('button',{name:/版・入手先/}).click();
+  await expect(page.getByRole('button',{name:'この版で読書を始める',exact:true})).toBeEnabled({timeout:90000});
   await page.getByRole('button',{name:'この版で読書を始める',exact:true}).click();
   await restoredField(page,/^出版社/,'筑摩書房');
   await restoredField(page,/^訳者/,'水野弥穂子');
@@ -235,8 +236,8 @@ try {
     }
     await expect(control).toHaveCount(1);
   }
-  async function editBook(book) {
-    const cycle=page.getByRole('group',{name:new RegExp(`ISBN: ${book.isbn}`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
+  async function editBook(book,number) {
+    const cycle=page.getByRole('group',{name:number ? new RegExp(`第${number}回[\\s\\S]*ISBN: ${book.isbn}`) : new RegExp(`ISBN: ${book.isbn}`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
     const edit=cycle.getByRole('button',{name:'版を編集',exact:true});await reveal(edit);await edit.click();
   }
   async function verifyBook(book,editor=book.editor) {
@@ -348,6 +349,7 @@ try {
 
   const iwanami={publisher:'岩波書店',translator:'斎藤忍随',editor:'',isbn:'9784003363225',volume:'岩波文庫 青632-2',source:'https://www.hanmoto.com/bd/isbn/9784003363225',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225'};
   for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+    const cycleNumber=mode==='desktop'?3:4;
     await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'読書について');
     const start=page.getByRole('button',{name:'別の版・再読を始める',exact:true});
     await reveal(start);await expect(start).toBeEnabled();await start.click();
@@ -360,10 +362,10 @@ try {
     await page.getByRole('button',{name:'保存',exact:true}).click();
     await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
     await page.reload();await semantics(page);await openWork(page,'読書について');
-    await editBook(iwanami);await verifyBook(iwanami);await restoredField(page,/^総ページ数/,'160');
+    await editBook(iwanami,cycleNumber);await verifyBook(iwanami);await restoredField(page,/^総ページ数/,'160');
     await page.getByRole('button',{name:'キャンセル',exact:true}).click();
     await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
-    await editBook(iwanami);
+    await editBook(iwanami,cycleNumber);
     await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
     // Editing seeds the stored ISBN and runs the lookup automatically.
     await restoredField(page,/^書籍情報を検索/,iwanami.isbn);
@@ -374,7 +376,7 @@ try {
     await page.getByRole('button',{name:'保存',exact:true}).click();
     await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
     await page.reload();await semantics(page);await openWork(page,'読書について');
-    await editBook(iwanami);await verifyBook(iwanami,`公開確認・岩波${mode}編集`);
+    await editBook(iwanami,cycleNumber);await verifyBook(iwanami,`公開確認・岩波${mode}編集`);
     await restoredField(page,/^総ページ数/,'160');
     await capture(page,`iwanami-auto-${mode}-edited-reloaded`);
     await page.getByRole('button',{name:'保存',exact:true}).click();
