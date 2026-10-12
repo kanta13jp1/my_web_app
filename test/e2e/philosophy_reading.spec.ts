@@ -720,7 +720,8 @@ test('quick page update preserves a detailed impression and rejects moving behin
 test('Spinoza political treatise automatically selects a sourced Iwanami edition, reloads and edits', async ({ page }, info) => {
   await page.goto('/');
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
-  await page.getByRole('tab', { name: '著作', exact: true }).click();
+  await field(page, /^著者・著作を検索/, 'スピノザ');
+  await page.getByRole('button', { name: /^スピノザ / }).click();
   await page.getByRole('button', { name: '著作を追加', exact: true }).click();
   await field(page, /^著作名/, '国家論');
   await page.getByRole('button', { name: '保存', exact: true }).click();
