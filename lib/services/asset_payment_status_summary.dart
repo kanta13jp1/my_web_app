@@ -15,7 +15,9 @@ Map<String, List<AssetLiabilityCashflowRow>> assetPaymentStatusGroups(
     '今後の支払い': [],
   };
   for (final row in workbook.cashflowRows) {
-    if (!row.isPayment || !row.isDirectCashflowTarget || row.paid ||
+    if (!row.isPayment ||
+        !row.isDirectCashflowTarget ||
+        row.paid ||
         row.paymentAmount <= 0) {
       continue;
     }
@@ -26,7 +28,9 @@ Map<String, List<AssetLiabilityCashflowRow>> assetPaymentStatusGroups(
     );
     final label = date.isBefore(today)
         ? '期限超過'
-        : date == today ? '本日期日' : '今後の支払い';
+        : date == today
+            ? '本日期日'
+            : '今後の支払い';
     groups[label]!.add(row);
   }
   return groups;
@@ -39,8 +43,10 @@ String assetPaymentStatusPrompt(AssetLiabilityWorkbook workbook) {
         '各区分の件数・合計・項目は同じ行から計算済みです。区分を混ぜず、そのまま引用してください。'
         'カード請求内訳・支払済み・収入・0円項目は対象外です。');
   for (final entry in assetPaymentStatusGroups(workbook).entries) {
-    final total = entry.value.fold<double>(0, (sum, row) => sum + row.paymentAmount);
-    buffer.writeln('- ${entry.key}: ${entry.value.length}件 / 合計 ${total.round()}円');
+    final total =
+        entry.value.fold<double>(0, (sum, row) => sum + row.paymentAmount);
+    buffer.writeln(
+        '- ${entry.key}: ${entry.value.length}件 / 合計 ${total.round()}円');
     for (final row in entry.value) {
       final date = row.paymentDate;
       buffer.writeln('  - ${row.accountName}: ${row.paymentAmount.round()}円 / '

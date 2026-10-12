@@ -13,7 +13,9 @@ void main() {
   group('AssetManagementAiSummaryService', () {
     setUp(AiHubChatQuotaGuard.resetForTesting);
 
-    test('payment groups reject mixed counts and totals but accept exact values', () async {
+    test(
+        'payment groups reject mixed counts and totals but accept exact values',
+        () async {
       final workbook = const AssetLiabilityPlanningService().buildWorkbook(
         latestSnapshot: const <String, double>{
           'bank': 10000,
@@ -41,11 +43,13 @@ void main() {
       expect(prompt, contains('期限超過: 1件 / 合計 1000円'));
       expect(prompt, contains('本日期日: 1件 / 合計 100円'));
       expect(prompt, contains('今後の支払い: 1件 / 合計 200円'));
-      expect(report.actionItems.where((item) =>
-          item.type == AssetManagementInsightActionType.overduePayment)
-          .map((item) => item.relatedAccountId),
-          isNot(contains(workbook.currentDebtRows.singleWhere(
-            (row) => row.name == 'Today').id)));
+      final overdueIds = report.actionItems
+          .where((item) =>
+              item.type == AssetManagementInsightActionType.overduePayment)
+          .map((item) => item.relatedAccountId);
+      final todayId = workbook.currentDebtRows
+          .singleWhere((row) => row.name == 'Today').id;
+      expect(overdueIds, isNot(contains(todayId)));
       for (final response in <String>[
         '期限超過は2件、合計1,000円です。',
         '期限超過は1件、合計1,100円です。',
@@ -53,6 +57,7 @@ void main() {
         '期限超過は1件、合計1,000円です。本日期日は1件、合計100円です。',
         'Todayは本日期日で、期限超過ではありません。',
       ]) {
+        AiHubChatQuotaGuard.resetForTesting();
         final service = AssetManagementAiSummaryService(
           aiEnabled: true,
           chatService: AiHubChatService(
@@ -66,15 +71,15 @@ void main() {
         final result = await service.generateSummary(report: report);
         final valid = response.startsWith('期限超過は1件、合計1,000円') ||
             response.contains('期限超過ではありません');
-        expect(result.status, valid ? AssetManagementAiSummaryStatus.aiGenerated
-            : AssetManagementAiSummaryStatus.fallback);
+        final expectedStatus = valid
+            ? AssetManagementAiSummaryStatus.aiGenerated
+            : AssetManagementAiSummaryStatus.fallback;
+        expect(result.status, expectedStatus);
         if (!valid) {
           expect(result.text, contains('本日期日: 1件 / 合計 100円'));
         }
       }
     });
-
-
 
     test('does not call ai-hub when feature flag is off', () async {
       var calls = 0;

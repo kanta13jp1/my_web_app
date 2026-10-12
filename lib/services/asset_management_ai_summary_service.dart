@@ -1458,10 +1458,12 @@ class AssetManagementAiSummaryService {
     final paymentGroups = assetPaymentStatusGroups(workbook);
     final paymentSegments = text.split(RegExp(r'[\r\n。]+'));
     for (final entry in paymentGroups.entries) {
-      final expectedTotal = entry.value.fold<double>(
-        0,
-        (sum, row) => sum + row.paymentAmount,
-      ).round();
+      final expectedTotal = entry.value
+          .fold<double>(
+            0,
+            (sum, row) => sum + row.paymentAmount,
+          )
+          .round();
       for (final segment in paymentSegments) {
         if (!segment.contains(entry.key)) continue;
         if (RegExp(r'期限超過(?:では|で|は)(?:ない|ありません)|期限超過に含め(?:ない|ません)')
@@ -1470,8 +1472,8 @@ class AssetManagementAiSummaryService {
         if (count != null && int.parse(count.group(1)!) != entry.value.length) {
           errors.add('${entry.key}の件数が確定内訳と不一致');
         }
-        final total = RegExp(r'合計[^0-9]{0,12}([0-9][0-9,]*)\s*円')
-            .firstMatch(segment);
+        final total =
+            RegExp(r'合計[^0-9]{0,12}([0-9][0-9,]*)\s*円').firstMatch(segment);
         if (total != null && _parseYen('${total.group(1)}円') != expectedTotal) {
           errors.add('${entry.key}の合計が確定内訳と不一致');
         }
@@ -1479,7 +1481,8 @@ class AssetManagementAiSummaryService {
     }
     for (final row in paymentGroups['本日期日']!) {
       for (final segment in paymentSegments) {
-        if (segment.contains(row.accountName) && segment.contains('期限超過') &&
+        if (segment.contains(row.accountName) &&
+            segment.contains('期限超過') &&
             !RegExp(r'期限超過(?:では|で|は)(?:ない|ありません)|期限超過に含め(?:ない|ません)')
                 .hasMatch(segment)) {
           errors.add('${row.accountName}は本日期日で期限超過ではありません');
