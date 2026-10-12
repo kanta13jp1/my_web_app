@@ -687,6 +687,7 @@ test('page number alone saves progress, adds a delta, corrects and survives relo
   await field(page,/^読んだページ/,'160');
   await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
   await expect(page.getByText('160ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+  await revealReadingControl(page,page.getByRole('button',{name:'読了にする',exact:true}));
   await expect(page.getByRole('button',{name:'読了にする',exact:true})).toBeVisible();
   await capture(page,info,'quick-page-progress');
 });
