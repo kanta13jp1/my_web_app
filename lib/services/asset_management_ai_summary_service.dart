@@ -1464,7 +1464,7 @@ class AssetManagementAiSummaryService {
       ).round();
       for (final segment in paymentSegments) {
         if (!segment.contains(entry.key)) continue;
-        if (RegExp(r'期限超過(?:では|で|は)ない|期限超過に含め(?:ない|ません)')
+        if (RegExp(r'期限超過(?:では|で|は)(?:ない|ありません)|期限超過に含め(?:ない|ません)')
             .hasMatch(segment)) continue;
         final count = RegExp(r'([0-9]+)件').firstMatch(segment);
         if (count != null && int.parse(count.group(1)!) != entry.value.length) {
@@ -1480,7 +1480,7 @@ class AssetManagementAiSummaryService {
     for (final row in paymentGroups['本日期日']!) {
       for (final segment in paymentSegments) {
         if (segment.contains(row.accountName) && segment.contains('期限超過') &&
-            !RegExp(r'期限超過(?:では|で|は)ない|期限超過に含め(?:ない|ません)')
+            !RegExp(r'期限超過(?:では|で|は)(?:ない|ありません)|期限超過に含め(?:ない|ません)')
                 .hasMatch(segment)) {
           errors.add('${row.accountName}は本日期日で期限超過ではありません');
         }
