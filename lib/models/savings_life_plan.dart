@@ -36,10 +36,10 @@ class SavingsLifePlan {
 
   static SavingsLifePlan fromJson(Map<String, dynamic> json) {
     if (json['version'] != 2) throw const FormatException('unsupported plan');
-    int? amount(String key, {bool optional = false}) {
+    int? amount(String key, {bool optional = false, bool signed = false}) {
       final value = json[key];
       if (value == null && optional) return null;
-      if (value is! int || value < 0 || value > 100000000) {
+      if (value is! int || value < (signed ? -100000000 : 0) || value > 100000000) {
         throw FormatException('invalid $key');
       }
       return value;
@@ -54,7 +54,7 @@ class SavingsLifePlan {
       start: start,
       targetDate: targetDate,
       target: amount('target')!,
-      cashBalance: amount('cashBalance', optional: true),
+      cashBalance: amount('cashBalance', optional: true, signed: true),
       income: amount('income', optional: true),
       livingCosts: amount('livingCosts', optional: true),
       reserve: amount('reserve')!,

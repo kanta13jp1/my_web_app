@@ -28,6 +28,18 @@ void main() {
     expect(result.monthlyCapacity, 140000);
     expect(result.checkpoints.last.forecastSavings, 1820000);
   });
+  test('negative net deposits retain overdraft and never fabricate available savings', () {
+    final input = plan(cashBalance: -20000);
+    expect(SavingsLifePlan.fromJson(input.toJson()).cashBalance, -20000);
+    final result = SavingsLifePlanService.calculate(
+      plan: input,
+      asOf: start,
+      monthlyCommitments: 200000,
+    );
+    expect(result.currentFreeCash, -280000);
+    expect(result.requiredMonthlySavings, 106667);
+    expect(result.dailyLivingBudget, isNull);
+  });
   test('one million is final savings, not an additional million', () {
     final result = SavingsLifePlanService.calculate(
       plan: plan(cashBalance: 400000),

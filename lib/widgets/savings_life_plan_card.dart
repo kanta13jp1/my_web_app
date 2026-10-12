@@ -134,11 +134,11 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
     }
   }
 
-  int? _amount(String value) {
+  int? _amount(String value, {bool signed = false}) {
     final clean = value.trim().replaceAll(',', '');
-    if (!RegExp(r'^\d{1,9}$').hasMatch(clean)) return null;
+    if (!RegExp(signed ? r'^-?\d{1,9}$' : r'^\d{1,9}$').hasMatch(clean)) return null;
     final number = int.tryParse(clean);
-    return number != null && number <= 100000000 ? number : null;
+    return number != null && number.abs() <= 100000000 ? number : null;
   }
 
   Future<void> _suggest() async {
@@ -199,7 +199,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
       start: _plan.start,
       targetDate: _deadline,
       target: _plan.target,
-      cashBalance: _amount(_cashBalance.text),
+      cashBalance: _amount(_cashBalance.text, signed: true),
       income: widget.suggestedIncome,
       livingCosts: _amount(_living.text),
       reserve: _amount(_reserve.text)!,
@@ -251,6 +251,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
     TextEditingController controller, {
     bool positive = false,
     bool readOnly = false,
+    bool signed = false,
   }) =>
       SizedBox(
         width: min(300, MediaQuery.sizeOf(context).width - 80),
@@ -265,11 +266,11 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
             suffixText: '円',
             border: const OutlineInputBorder(),
           ),
-          validator: (value) => _amount(value ?? '') == null ||
+          validator: (value) => _amount(value ?? '', signed: signed) == null ||
                   (positive && _amount(value ?? '') == 0)
               ? (positive
                   ? '生活に必要な1円以上の金額を入力してください'
-                  : '0〜100,000,000円の整数を入力してください')
+                  : (signed ? '-100,000,000〜100,000,000円の整数を入力してください' : '0〜100,000,000円の整数を入力してください'))
               : null,
         ),
       );
@@ -379,7 +380,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                   spacing: 12,
                   runSpacing: 16,
                   children: [
-                    _field('現在の現金・預金（計画の起点）', _cashBalance),
+                    _field('現在の現金・預金（計画の起点）', _cashBalance, signed: true),
                     _field('登録済みの手取り収入（収入増なし）', _income, readOnly: true),
                     _field('毎月の生活費（食費・交通・日用品等）', _living, positive: true),
                     _field('毎月の予備費（臨時支出用）', _reserve),
