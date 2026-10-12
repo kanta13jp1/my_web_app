@@ -63,7 +63,9 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
         }
       });
     } catch (_) {
-      if (mounted && request == _request) setState(() => _message = '書籍情報を取得できませんでした。再検索または手入力できます。');
+      if (mounted && request == _request) {
+        setState(() => _message = '書籍情報を取得できませんでした。再検索または手入力できます。');
+      }
     } finally {
       if (mounted && request == _request) setState(() => _loading = false);
     }
