@@ -361,6 +361,9 @@ try {
     await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
     await page.reload();await semantics(page);await openWork(page,'読書について');
     await editBook(iwanami);await verifyBook(iwanami);await restoredField(page,/^総ページ数/,'160');
+    await page.getByRole('button',{name:'キャンセル',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await editBook(iwanami);
     await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
     // Editing seeds the stored ISBN and runs the lookup automatically.
     await restoredField(page,/^書籍情報を検索/,iwanami.isbn);
