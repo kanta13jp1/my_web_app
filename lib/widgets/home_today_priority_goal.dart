@@ -56,8 +56,8 @@ class _HomeTodayPriorityGoalState extends State<HomeTodayPriorityGoal> {
                     ),
                   ),
                 TextButton(
-                  onPressed: () => Navigator.of(context)
-                      .pushNamed('/life-goals?tab=small'),
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/life-goals?tab=small'),
                   child: const Text('目標を確認する'),
                 ),
               ],
