@@ -1,4 +1,3 @@
-import 'package:my_web_app/services/asset_flow_amount_parser.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:my_web_app/widgets/asset_interest_history_card.dart';
@@ -29,6 +28,8 @@ import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
 import 'package:my_web_app/services/asset_balance_timestamp_service.dart';
+import 'package:my_web_app/models/asset_balance_observation.dart';
+import 'package:my_web_app/widgets/asset_balance_history_control.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
@@ -751,6 +752,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, Map<String, double>> _assetData = {};
   Map<String, Map<String, double>> _effectiveAssetDataByDate = {};
   Map<String, String?> _lastUpdatedDates = {};
+  Map<String, AssetBalanceObservation> _latestBalanceObservations = {};
   Map<String, AssetWatchlistEntry> _watchlistByType = {};
   final Map<String, GlobalKey> _assetRowKeys = <String, GlobalKey>{};
   Map<String, double> _monthlyPaymentOverrides = <String, double>{};
@@ -6691,6 +6693,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final data = await _fetchAssetHistoryRows(userId);
       final Map<String, Map<String, double>> loadedData = {};
       final Set<String> loadedTypes = {'現金'};
+      final latestObservations = <String, AssetBalanceObservation>{};
       for (var item in data) {
         final createdAt = DateTime.parse(item['created_at']);
         final recordDate = AssetBalanceTimestampService.localRecordDate(
@@ -6701,6 +6704,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         final String title = item['title'];
         final double amount = (item['amount'] as num).toDouble();
         loadedTypes.add(title);
+        latestObservations[title] = AssetBalanceObservation.fromRow(item);
         if (!loadedData.containsKey(dateKey)) {
           loadedData[dateKey] = {};
         }
@@ -6710,6 +6714,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         setState(() {
           _assetTypes = loadedTypes.toList();
           _assetData = loadedData;
+          _latestBalanceObservations = latestObservations;
           _updateLastUpdatedDates();
           _sortAssetTypes(); // ★ ここで降順ソート
           _initControllers();
@@ -6718,6 +6723,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } catch (e) {
       debugPrint('Error loading assets: $e');
+    }
+  }
+
+  /// Fetch older rows only when the user opens a specific account's history.
+  /// This path is read-only and deliberately does not use the 400-day summary.
+  Future<List<AssetBalanceObservation>> _loadBalanceHistoryPage(
+    String type,
+    int offset,
+  ) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) throw StateError('ログインが必要です。');
+    final data = await _supabase
+        .from('cfo_assets')
+        .select('id,title,amount,created_at')
+        .eq('user_id', userId)
+        .eq('title', type)
+        .order('created_at', ascending: false)
+        .order('id', ascending: false)
+        .range(offset, offset + 49);
+    return data.map(AssetBalanceObservation.fromRow).toList(growable: false);
+  }
+
+  void _recordBalanceObservationsForDisplay(
+    Map<String, double> amounts,
+    DateTime recordedAt,
+  ) {
+    for (final entry in amounts.entries) {
+      _latestBalanceObservations[entry.key] = AssetBalanceObservation(
+        accountName: entry.key,
+        amount: entry.value,
+        recordedAt: recordedAt,
+      );
     }
   }
 
@@ -7182,18 +7219,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final previousAmount =
         previousDate == null ? null : _assetData[previousDate]?[type];
     try {
+      final recordedAt = DateTime.now();
       await _supabase.from('cfo_assets').insert({
         'user_id': userId,
         'title': type,
         'amount': amount,
         'created_at': AssetBalanceTimestampService.encodeForDatabase(
-          DateTime.now(),
+          recordedAt,
         ),
       });
 
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]![type] = amount;
+        _recordBalanceObservationsForDisplay({type: amount}, recordedAt);
         _updateLastUpdatedDates();
         _sortAssetTypes();
         _updateChartData();
@@ -7337,6 +7376,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           () => <String, double>{},
         );
         amounts.forEach((type, amount) => todayMap[type] = amount);
+        _recordBalanceObservationsForDisplay(amounts, DateTime.parse(nowIso));
         _updateLastUpdatedDates();
         _sortAssetTypes();
         _updateChartData();
@@ -7465,6 +7505,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         todayMap[candidate.accountName] = candidate.amount;
       }
+      _recordBalanceObservationsForDisplay(
+        {for (final candidate in candidates) candidate.accountName: candidate.amount},
+        DateTime.parse(nowIso),
+      );
       _initControllers();
       _updateLastUpdatedDates();
       _sortAssetTypes();
@@ -7546,6 +7590,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]!.addAll(todayData);
+        _recordBalanceObservationsForDisplay(todayData, DateTime.parse(nowIso));
         _updateLastUpdatedDates();
         _sortAssetTypes(); // ★ 一括更新後にも並び替え
         _updateChartData();
@@ -8599,7 +8644,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final memo = _flowMemoController.text.trim();
-    final amount = AssetFlowAmountParser.parse(_flowAmountController.text);
+    final amountStr = _flowAmountController.text.replaceAll(',', '');
+    final amount = int.tryParse(amountStr);
     final isTransfer = _selectedFlowType == '振替';
 
     if (amount == null || amount <= 0 || (!isTransfer && memo.isEmpty)) {
@@ -32651,6 +32697,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         isUpdatedToday ? const Color(0xFF047857) : staleColor,
                   ),
                 ],
+              ),
+              AssetBalanceHistoryControl(
+                accountName: type,
+                latest: _latestBalanceObservations[type],
+                loadPage: (offset) => _loadBalanceHistoryPage(type, offset),
               ),
             ],
           ),
