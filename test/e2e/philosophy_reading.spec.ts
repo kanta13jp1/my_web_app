@@ -107,7 +107,10 @@ async function editRegisteredEdition(page: Page, isbn: string) {
 
 test.setTimeout(60000);
 
-test.beforeEach(async ({ request }) => {
+test.beforeEach(async ({ request, page }) => {
+  // Automatic title lookups stay deterministic; each external scenario overrides this route.
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route =>
+    route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' }));
   const reset = await request.post('http://127.0.0.1:7359', { data: { action: 'fixture.reset' } });
   expect(reset.ok()).toBeTruthy();
 });
@@ -498,4 +501,217 @@ test('external ISBN metadata populates known fields and leaves unknown contribut
   await editRegisteredEdition(page, '9781234567897');
   await restoredField(page, /^訳者/, '手元の本で補完した訳者');
   await restoredField(page, /^版情報の出典URL/, 'https://api.openbd.jp/v1/get?isbn=9781234567897');
+});
+
+test('reading-about-books title prefills and persists the publisher edition', async ({ page }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await field(page, /^書籍情報を検索/, '読書について');
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await page.getByRole('button', { name: /^読書について・光文社/ }).click();
+  await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+  await restoredField(page, /^出版社/, '光文社');
+  await restoredField(page, /^訳者/, '鈴木芳子');
+  await restoredField(page, /^ISBN/, '9784334752712');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, 'エチカ');
+  await editRegisteredEdition(page, '9784334752712');
+  await restoredField(page, /^出版社/, '光文社');
+  await restoredField(page, /^版情報の出典URL/, 'https://www.kotensinyaku.jp/books/book169/');
+  await capture(page, info, 'reading-title-restored');
+});
+
+const ndlTitleXml = `<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><channel>
+<item><dc:title>目録にない外部書名</dc:title><link>https://ndlsearch.ndl.go.jp/books/R100000002-IQA001</link><dc:publisher>外部出版社A</dc:publisher><dc:creator>原著者 著</dc:creator><dc:creator>訳者A 訳</dc:creator><dc:creator>編者A 編</dc:creator><dc:extent>180p</dc:extent><dcterms:issued>2012.3</dcterms:issued><dc:language>jpn</dc:language><dc:identifier xsi:type="dcndl:ISBN">978-4-569-80487-3</dc:identifier></item>
+<item><dc:title>目録にない外部書名</dc:title><link>https://ndlsearch.ndl.go.jp/books/R100000002-IQA002</link><dc:publisher>外部出版社B</dc:publisher><dc:creator>訳者B 訳</dc:creator><dc:extent>240 p</dc:extent><dcterms:issued>2009.8</dcterms:issued><dc:identifier xsi:type="dcndl:ISBN">978-4-569-70783-9</dc:identifier></item>
+</channel></rss>`;
+
+test('external title returns two editions; selected metadata persists and edits independently', async ({ page }, info) => {
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
+    if (new URL(route.request().url()).searchParams.get('title') !== '目録にない外部書名') {
+      return route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' });
+    }
+    return route.fulfill({ contentType: 'application/xml', body: ndlTitleXml });
+  });
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  const books = [
+    { publisher: '外部出版社A', translator: '訳者A', isbn: '9784569804873', pages: '180', source: 'https://ndlsearch.ndl.go.jp/books/R100000002-IQA001' },
+    { publisher: '外部出版社B', translator: '訳者B', isbn: '9784569707839', pages: '240', source: 'https://ndlsearch.ndl.go.jp/books/R100000002-IQA002' },
+  ];
+  for (let i = 0; i < books.length; i++) {
+    const book = books[i];
+    await page.getByRole('button', { name: i === 0 ? '読書を始める' : '別の版・再読を始める', exact: true }).click();
+    await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+    await field(page, /^書籍情報を検索/, '目録にない外部書名');
+    await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+    await expect(page.getByRole('button', { name: /^目録にない外部書名/ })).toHaveCount(2);
+    await page.getByRole('button', { name: new RegExp('^目録にない外部書名[\\s\\S]*' + book.publisher) }).click();
+    await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^総ページ数/, book.pages);
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await restoredField(page, /^書籍・購入URL/, 'https://www.amazon.co.jp/s/?i=stripbooks&k=' + book.isbn);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+    await openWork(page, 'エチカ');
+    await editRegisteredEdition(page, book.isbn);
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^総ページ数/, book.pages);
+    await field(page, /^出版社/, book.publisher + '・編集済み');
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  }
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, 'エチカ');
+  for (const book of books) {
+    await editRegisteredEdition(page, book.isbn);
+    await restoredField(page, /^出版社/, book.publisher + '・編集済み');
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^総ページ数/, book.pages);
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await capture(page, info, 'external-title-restored-' + book.isbn);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  }
+});
+
+test('external title failure and empty results preserve manual input; retry and cancel work', async ({ page }) => {
+  let calls = 0;
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
+    if (new URL(route.request().url()).searchParams.get('title') !== '目録にない外部書名') {
+      return route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' });
+    }
+    calls++;
+    return route.fulfill(calls === 1 ? { status: 503, body: '' } : {
+      contentType: 'application/xml', body: calls === 2 ? '<rss><channel/></rss>' : ndlTitleXml,
+    });
+  });
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await field(page, /^出版社/, '保持する出版社');
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await field(page, /^書籍情報を検索/, '目録にない外部書名');
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await expect(page.getByText('書籍情報を取得できませんでした。再検索または手入力できます。', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await expect(page.getByText('見つかりませんでした。書名を短くするか、ISBNで検索してください。手入力もできます。', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '外部の版も検索', exact: true }).click();
+  await page.getByRole('button', { name: /^目録にない外部書名/ }).first().click();
+  await page.getByRole('button', { name: 'キャンセル', exact: true }).last().click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await restoredField(page, /^出版社/, '保持する出版社');
+});
+
+test('current title searches automatically and Iwanami edition registers, reloads and edits', async ({ page }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await page.getByRole('tab', { name: '著作', exact: true }).click();
+  await page.getByRole('button', { name: '著作を追加', exact: true }).click();
+  await field(page, /^著作名/, '読書について');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('著作を追加（自分の目録）', { exact: true })).toHaveCount(0);
+  await openWork(page, '読書について');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  // No typing and no search-button click: the current work seeds the lookup.
+  await revealReadingControl(page, page.getByRole('button', { name: /^読書について 他二篇・岩波文庫/ }));
+  await page.getByRole('button', { name: /^読書について 他二篇・岩波文庫/ }).click();
+  await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+  await restoredField(page, /^出版社/, '岩波書店');
+  await restoredField(page, /^訳者/, '斎藤忍随');
+  await restoredField(page, /^総ページ数/, '160');
+  await restoredField(page, /^ISBN/, '9784003363225');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '読書について');
+  await editRegisteredEdition(page, '9784003363225');
+  await restoredField(page, /^出版社/, '岩波書店');
+  await field(page, /^巻・版の名前/, '岩波文庫 青632-2・手元の版');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '読書について');
+  await editRegisteredEdition(page, '9784003363225');
+  await restoredField(page, /^出版社/, '岩波書店');
+  await restoredField(page, /^訳者/, '斎藤忍随');
+  await restoredField(page, /^総ページ数/, '160');
+  await restoredField(page, /^ISBN/, '9784003363225');
+  await restoredField(page, /^巻・版の名前/, '岩波文庫 青632-2・手元の版');
+  await restoredField(page, /^書籍・購入URL/, 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225');
+  await restoredField(page, /^版情報の出典URL/, 'https://www.hanmoto.com/bd/isbn/9784003363225');
+  await capture(page, info, 'iwanami-auto-reloaded');
+});
+
+test('page number alone saves progress, adds a delta, corrects and survives reload', async ({ page }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '国家');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await field(page, /^総ページ数/, '160');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  const input=page.getByRole('textbox',{name:/^読んだページ/});
+  await revealReadingControl(page,input);
+  for (const value of ['85','100','100','80']) {
+    // Clear prior feedback before retrying the same page, so an old success cannot satisfy this update.
+    await field(page,/^読んだページ/,'');
+    await expect(page.getByText(/^\d+ページまでの進捗を保存しました$/)).toHaveCount(0);
+    await field(page,/^読んだページ/,value);
+    await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+    await expect(page.getByText(value+'ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+    await expect(page.getByRole('group',{name:new RegExp('延べ '+value+' ページ / 区間記録済み '+value+' /')}).last()).toBeVisible();
+  }
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+  await openWork(page,'国家');
+  await revealReadingControl(page,input);
+  await restoredField(page,/^読んだページ/,'80');
+  await field(page,/^読んだページ/,'161');
+  await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('総ページ数（160ページ）を超えています',{exact:true})).toBeVisible();
+  await field(page,/^読んだページ/,'160');
+  await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('160ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+  await revealReadingControl(page,page.getByRole('button',{name:'読了にする',exact:true}));
+  await expect(page.getByRole('button',{name:'読了にする',exact:true})).toBeVisible();
+  await capture(page,info,'quick-page-progress');
+});
+
+test('quick page update preserves a detailed impression and rejects moving behind it', async ({page},info) => {
+  await page.goto('/');await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+  await openWork(page,'国家');
+  await page.getByRole('button',{name:'読書を始める',exact:true}).click();
+  await field(page,/^総ページ数/,'160');await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'記録を追加',exact:true}).click();
+  await field(page,/^開始ページ/,'1');await field(page,/^終了ページ/,'20');await field(page,/^感想/,'詳細の感想を保持');
+  await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByText('読書記録を追加',{exact:true})).toHaveCount(0);
+  await field(page,/^読んだページ/,'85');await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('85ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+  await field(page,/^読んだページ/,'10');await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('詳細記録の終了ページより前には戻せません。記録の編集で修正してください',{exact:true})).toBeVisible();
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'国家');
+  await restoredField(page,/^読んだページ/,'85');
+  const note=page.getByRole('group',{name:/感想: 詳細の感想を保持/}).last();
+  await revealReadingControl(page,note);await expect(note).toBeVisible();
+  await capture(page,info,'quick-progress-detailed-note');
 });

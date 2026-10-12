@@ -693,34 +693,39 @@ class _ReadingListPageState extends State<ReadingListPage>
   }) async {
     final recordId = const Uuid().v4();
     final cycleId = const Uuid().v4();
-    await _form('読む版を登録', _editionFields(edition), (values) async {
-      final error = _editionError(values);
-      if (error != null) return error;
-      if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
-        return '総ページ数は1以上です';
-      }
-      if (_model.recordFor(work.id) == null) {
-        if (!await _model.addWork(recordId, work)) {
-          return _model.error ?? '保存できませんでした';
+    await _form(
+      '読む版を登録',
+      _editionFields(edition),
+      (values) async {
+        final error = _editionError(values);
+        if (error != null) return error;
+        if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
+          return '総ページ数は1以上です';
         }
-      }
-      final record = _model.recordFor(work.id);
-      if (record == null) {
-        return '記録を再読込してから保存してください';
-      }
-      final cycle = ReadingCycle(
-        id: cycleId,
-        startedAt: DateTime.now().toIso8601String().substring(0, 10),
-        edition: _edition(values),
-      );
-      return await _model.save(
-        record.withCycles(
-          [...record.cycles.where((c) => c.id != cycleId), cycle],
-        ),
-      )
-          ? null
-          : _model.error ?? '保存できませんでした';
-    });
+        if (_model.recordFor(work.id) == null) {
+          if (!await _model.addWork(recordId, work)) {
+            return _model.error ?? '保存できませんでした';
+          }
+        }
+        final record = _model.recordFor(work.id);
+        if (record == null) {
+          return '記録を再読込してから保存してください';
+        }
+        final cycle = ReadingCycle(
+          id: cycleId,
+          startedAt: DateTime.now().toIso8601String().substring(0, 10),
+          edition: _edition(values),
+        );
+        return await _model.save(
+          record.withCycles(
+            [...record.cycles.where((c) => c.id != cycleId), cycle],
+          ),
+        )
+            ? null
+            : _model.error ?? '保存できませんでした';
+      },
+      bookQuery: work.title,
+    );
   }
 
   Future<bool> _replaceCycle(ReadingRecord record, ReadingCycle cycle) =>
@@ -731,6 +736,7 @@ class _ReadingListPageState extends State<ReadingListPage>
       );
 
   Widget _cycle(ReadingRecord record, ReadingCycle cycle, int number) => Card(
+        key: ValueKey(cycle.id),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -769,6 +775,28 @@ class _ReadingListPageState extends State<ReadingListPage>
                   ),
                 ),
               Text('状態: ${readingStatusLabels[cycle.status]}（読了は手動で設定）'),
+              _ReadingPageProgress(
+                key: ValueKey('page-progress-${cycle.id}'),
+                page: cycle.reachedPage,
+                total: cycle.edition.totalPages,
+                enabled: _model.signedIn && !_model.loading && !_model.saving,
+                onUpdate: (page) async {
+                  ReadingCycle updated;
+                  try {
+                    updated = cycle.withPageProgress(
+                      page,
+                      id: const Uuid().v4(),
+                      date: DateTime.now().toIso8601String().substring(0, 10),
+                    );
+                  } on ArgumentError catch (error) {
+                    return error.message.toString();
+                  }
+                  if (identical(updated, cycle)) return null;
+                  return await _replaceCycle(record, updated)
+                      ? null
+                      : _model.error ?? '更新できませんでした。入力を保持しています';
+                },
+              ),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -860,21 +888,28 @@ class _ReadingListPageState extends State<ReadingListPage>
       );
 
   Future<void> _editEdition(ReadingRecord record, ReadingCycle cycle) async {
-    await _form('版を編集', _editionFields(cycle.edition), (values) async {
-      final error = _editionError(values);
-      if (error != null) return error;
-      if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
-        return '総ページ数は1以上です';
-      }
-      final edition = _edition(values);
-      if (cycle.entries
-          .any((entry) => entry.validate(edition.totalPages) != null)) {
-        return '既存記録と総ページ数が矛盾します。記録を確認してください';
-      }
-      return await _replaceCycle(record, cycle.copyWith(edition: edition))
-          ? null
-          : _model.error ?? '保存できませんでした';
-    });
+    await _form(
+      '版を編集',
+      _editionFields(cycle.edition),
+      (values) async {
+        final error = _editionError(values);
+        if (error != null) return error;
+        if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
+          return '総ページ数は1以上です';
+        }
+        final edition = _edition(values);
+        if (cycle.entries
+            .any((entry) => entry.validate(edition.totalPages) != null)) {
+          return '既存記録と総ページ数が矛盾します。記録を確認してください';
+        }
+        return await _replaceCycle(record, cycle.copyWith(edition: edition))
+            ? null
+            : _model.error ?? '保存できませんでした';
+      },
+      bookQuery: cycle.edition.isbn.isNotEmpty
+          ? cycle.edition.isbn
+          : record.work.title,
+    );
   }
 
   Future<void> _entry(
@@ -994,13 +1029,18 @@ class _ReadingListPageState extends State<ReadingListPage>
   Future<void> _form(
     String title,
     List<_Field> fields,
-    Future<String?> Function(Map<String, String>) submit,
-  ) =>
+    Future<String?> Function(Map<String, String>) submit, {
+    String bookQuery = '',
+  }) =>
       showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) =>
-            _ReadingForm(title: title, fields: fields, submit: submit),
+        builder: (_) => _ReadingForm(
+          title: title,
+          fields: fields,
+          submit: submit,
+          bookQuery: bookQuery,
+        ),
       );
 }
 
@@ -1028,7 +1068,9 @@ class _ReadingForm extends StatefulWidget {
     required this.title,
     required this.fields,
     required this.submit,
+    this.bookQuery = '',
   });
+  final String bookQuery;
   final String title;
   final List<_Field> fields;
   final Future<String?> Function(Map<String, String>) submit;
@@ -1114,6 +1156,7 @@ class _ReadingFormState extends State<_ReadingForm> {
                         !_saving &&
                         _lookupOpen)
                       ReadingBookLookup(
+                        initialQuery: widget.bookQuery,
                         onSelected: (edition) {
                           final values = edition.toJson();
                           for (final key in [
@@ -1201,6 +1244,133 @@ class _ReadingFormState extends State<_ReadingForm> {
               child: Text(_saving ? '保存中…' : '保存'),
             ),
           ],
+        ),
+      );
+}
+
+class _ReadingPageProgress extends StatefulWidget {
+  const _ReadingPageProgress({
+    super.key,
+    required this.page,
+    required this.total,
+    required this.enabled,
+    required this.onUpdate,
+  });
+  final int page;
+  final int? total;
+  final bool enabled;
+  final Future<String?> Function(int) onUpdate;
+  @override
+  State<_ReadingPageProgress> createState() => _ReadingPageProgressState();
+}
+
+class _ReadingPageProgressState extends State<_ReadingPageProgress> {
+  late final TextEditingController _page;
+  bool _saving = false;
+  String? _error;
+  String? _success;
+  @override
+  void initState() {
+    super.initState();
+    _page = TextEditingController(text: widget.page.toString());
+  }
+
+  @override
+  void didUpdateWidget(covariant _ReadingPageProgress oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_saving &&
+        widget.page != oldWidget.page &&
+        _page.text == oldWidget.page.toString()) {
+      _page.text = widget.page.toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    _page.dispose();
+    super.dispose();
+  }
+
+  Future<void> _update() async {
+    if (_saving || !widget.enabled) return;
+    final page = int.tryParse(_page.text.trim());
+    if (page == null || page < 0 || page > 1000000) {
+      setState(() {
+        _error = 'ページ番号は0〜1000000の整数で入力してください';
+        _success = null;
+      });
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+      _success = null;
+    });
+    try {
+      final error = await widget.onUpdate(page);
+      if (!mounted) return;
+      setState(() {
+        _error = error;
+        if (error == null) {
+          _page.text = page.toString();
+          _success = '$pageページまでの進捗を保存しました';
+        }
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = '更新できませんでした。入力を保持しています');
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        container: true,
+        explicitChildNodes: true,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('reading-reached-page'),
+                      controller: _page,
+                      enabled: widget.enabled && !_saving,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: '読んだページ（ここまで）',
+                        suffixText: 'ページ',
+                        helperText: widget.total == null
+                            ? '例: 85'
+                            : '総 ${widget.total} ページ',
+                      ),
+                      onChanged: (_) => setState(() {
+                        _error = null;
+                        _success = null;
+                      }),
+                      onSubmitted: (_) => _update(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: widget.enabled && !_saving ? _update : null,
+                    child: Text(_saving ? '更新中…' : '進捗を更新'),
+                  ),
+                ],
+              ),
+              if (_error != null)
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              if (_success != null) Text(_success!),
+            ],
+          ),
         ),
       );
 }

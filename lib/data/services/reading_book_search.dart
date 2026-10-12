@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:xml/xml.dart';
 import '../catalogs/philosophy_catalog.dart';
 import '../../domain/models/philosophy_reading.dart';
 
@@ -38,27 +39,58 @@ class ReadingBookSearch {
   Future<List<ReadingBookResult>> search(
     String query, {
     http.Client? client,
+    bool external = false,
   }) async {
     final text = query.trim();
-    if (text.isEmpty) return [];
+    if (text.isEmpty || text.length > 200) return [];
     final isbn = _normalizeIsbn(text);
     final isIsbn = isbn.isNotEmpty;
-    final matches = philosophyCatalogEditions.where(
+    // Searchable editions need not belong to the shared philosophical works.
+    // This also supports books attached to existing personal reading records.
+    final books = [
+      ...philosophyCatalogEditions.map(
+        (book) => ReadingBookResult(book.label, book.edition),
+      ),
+      const ReadingBookResult(
+        '読書について・光文社（ショーペンハウアー）',
+        ReadingEdition(
+          publisher: '光文社',
+          translator: '鈴木芳子',
+          year: '2013',
+          language: '日本語',
+          isbn: '9784334752712',
+          sourceUrl: 'https://www.kotensinyaku.jp/books/book169/',
+          bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752712',
+        ),
+      ),
+      const ReadingBookResult(
+        '読書について 他二篇・岩波文庫（ショウペンハウエル）',
+        ReadingEdition(
+          publisher: '岩波書店',
+          translator: '斎藤忍随',
+          year: '1983',
+          language: '日本語',
+          volume: '岩波文庫 青632-2',
+          totalPages: 160,
+          isbn: '9784003363225',
+          sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003363225',
+          bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225',
+        ),
+      ),
+    ];
+    final matches = books.where(
       (book) => isIsbn
           ? book.edition.isbn == isbn
-          : '${book.label} ${book.edition.translator} ${book.edition.publisher}'
+          : '${book.title} ${book.edition.translator} ${book.edition.publisher}'
               .toLowerCase()
               .contains(text.toLowerCase()),
     );
-    if (matches.isNotEmpty) {
-      return matches
-          .map((book) => ReadingBookResult(book.label, book.edition))
-          .toList();
-    }
-    if (!isIsbn) return [];
+    if (matches.isNotEmpty && !external) return matches.toList();
+    if (!isIsbn && RegExp(r'^[0-9Xx\s-]+$').hasMatch(text)) return [];
     final ownedClient = client == null;
     final transport = client ?? http.Client();
     try {
+      if (!isIsbn) return await _searchTitle(text, transport);
       final response = await transport
           .get(Uri.https('api.openbd.jp', '/v1/get', {'isbn': isbn}))
           .timeout(const Duration(seconds: 12));
@@ -126,5 +158,124 @@ class ReadingBookSearch {
     } finally {
       if (ownedClient) transport.close();
     }
+  }
+
+  Future<List<ReadingBookResult>> _searchTitle(
+    String title,
+    http.Client client,
+  ) async {
+    final response = await client
+        .get(
+          Uri.https('ndlsearch.ndl.go.jp', '/api/opensearch', {
+            'title': title,
+            'dpid': 'iss-ndl-opac',
+            'cnt': '20',
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200 || response.bodyBytes.length > 2000000) {
+      throw const FormatException('Title search unavailable');
+    }
+    final text = utf8.decode(response.bodyBytes);
+    if (text.contains('<!DOCTYPE')) {
+      throw const FormatException('Unexpected XML declaration');
+    }
+    final document = XmlDocument.parse(text);
+    if (document.rootElement.name.local != 'rss') {
+      throw const FormatException('Unexpected title response');
+    }
+    const dc = 'http://purl.org/dc/elements/1.1/';
+    const terms = 'http://purl.org/dc/terms/';
+    const ndl = 'http://ndl.go.jp/dcndl/terms/';
+    final results = <ReadingBookResult>[];
+    final seen = <String>{};
+    for (final item in document.findAllElements('item').take(20)) {
+      String value(String name, [String? namespace]) => item
+          .findElements(name, namespace: namespace)
+          .map((node) => node.innerText.trim())
+          .where((text) => text.isNotEmpty)
+          .join('・');
+      final source = value('link');
+      if (!RegExp(
+        r'^https://ndlsearch\.ndl\.go\.jp/books/R100000002-I[0-9A-Za-z]+$',
+      ).hasMatch(source)) {
+        continue;
+      }
+      final bookTitle = value('title', dc);
+      if (bookTitle.isEmpty) continue;
+      var isbn = '';
+      for (final identifier in item.findElements('identifier', namespace: dc)) {
+        if (identifier.attributes.any(
+          (attribute) =>
+              attribute.name.local == 'type' &&
+              attribute.value.endsWith(':ISBN'),
+        )) {
+          isbn = _normalizeIsbn(identifier.innerText.trim());
+          if (isbn.isNotEmpty) break;
+        }
+      }
+      // Keep editions separate; deduplicate only the identical source record.
+      if (!seen.add(source)) continue;
+      final translators = <String>{};
+      final editors = <String>{};
+      final credits = [
+        ...item
+            .findElements('creator', namespace: dc)
+            .map((node) => node.innerText),
+        // RSS author also includes literal responsibility credits; authority
+        // headings alone do not identify a translator or editor.
+        ...item.findElements('author').expand(
+              (node) => node.innerText.split(',').where(
+                    (credit) =>
+                        RegExp(r'^[ぁ-んァ-ヶ一-龯々ー・\s]+(?:編訳|翻訳|訳|編集|編)(?:・解説)?$')
+                            .hasMatch(credit.trim()),
+                  ),
+            ),
+      ];
+      for (final creator in credits) {
+        for (final credit in creator.split(RegExp(r'[;；]'))) {
+          final match = RegExp(r'^(.+?)\s+(編訳|翻訳|訳|編集|編)(?:・解説)?$')
+              .firstMatch(credit.trim());
+          if (match == null) continue;
+          final name = match.group(1)!.trim();
+          final role = match.group(2)!;
+          if (role == '訳' || role == '翻訳' || role == '編訳') {
+            translators.add(name);
+          }
+          if (role == '編' || role == '編集' || role == '編訳') {
+            editors.add(name);
+          }
+        }
+      }
+      final pageMatch =
+          RegExp(r'^(\d+)\s*p\.?$').firstMatch(value('extent', dc));
+      final pages = int.tryParse(pageMatch?.group(1) ?? '');
+      final date = value('issued', terms);
+      final year = RegExp(r'^\d{4}').firstMatch(date)?.group(0) ?? '';
+      final language = value('language', dc);
+      final publisher = value('publisher', dc);
+      results.add(
+        ReadingBookResult(
+          bookTitle,
+          ReadingEdition(
+            publisher: publisher,
+            translator: translators.join('・'),
+            editor: editors.join('・'),
+            isbn: isbn,
+            totalPages:
+                pages != null && pages > 0 && pages <= 1000000 ? pages : null,
+            year: year,
+            language: language == 'jpn' ? '日本語' : language,
+            volume: value('volume', ndl),
+            sourceUrl: source,
+            bookUrl: Uri.https('www.amazon.co.jp', '/s/', {
+              'i': 'stripbooks',
+              'k': isbn.isNotEmpty ? isbn : '$bookTitle $publisher',
+            }).toString(),
+          ),
+        ),
+      );
+    }
+    return results;
   }
 }

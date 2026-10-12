@@ -20,7 +20,7 @@ async function req(path, token, data, method = 'POST') {
 async function user() {
   const email = `reading-qa-${randomUUID()}@example.invalid`;
   const password = randomUUID() + '!aA1';
-  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5739 production verification'}});
+  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5744 production verification'}});
   assert.equal(created.status,200,'Test user creation failed');
   users.push(created.body.id);
   const signed = await req('/auth/v1/token?grant_type=password', key, {email,password});
@@ -209,6 +209,7 @@ try {
   await page.goto(base+'/reading-list');await semantics(page);
   await openWork(page,'正法眼蔵随聞記');
   await page.getByRole('button',{name:/版・入手先/}).click();
+  await expect(page.getByRole('button',{name:'この版で読書を始める',exact:true})).toBeEnabled({timeout:90000});
   await page.getByRole('button',{name:'この版で読書を始める',exact:true}).click();
   await restoredField(page,/^出版社/,'筑摩書房');
   await restoredField(page,/^訳者/,'水野弥穂子');
@@ -235,8 +236,8 @@ try {
     }
     await expect(control).toHaveCount(1);
   }
-  async function editBook(book) {
-    const cycle=page.getByRole('group',{name:new RegExp(`ISBN: ${book.isbn}`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
+  async function editBook(book,number) {
+    const cycle=page.getByRole('group',{name:number ? new RegExp(`第${number}回[\\s\\S]*ISBN: ${book.isbn}`) : new RegExp(`ISBN: ${book.isbn}`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
     const edit=cycle.getByRole('button',{name:'版を編集',exact:true});await reveal(edit);await edit.click();
   }
   async function verifyBook(book,editor=book.editor) {
@@ -259,7 +260,19 @@ try {
       const destination=await destinationPromise;await destination.waitForURL(target);bookLinks.push(destination.url());await destination.close();
     }
     await reveal(start);
-    await start.click();await verifyBook(book);await page.getByRole('button',{name:'保存',exact:true}).click();
+    await start.click();
+    await field(page,/^出版社/,'検索前の手入力');
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    const query=book.isbn==='9784121600943'?'エティカ':'978-4000928533';
+    await field(page,/^書籍情報を検索/,query);
+    await page.getByRole('button',{name:'書籍情報を検索',exact:true}).click();
+    const prefix=book.isbn==='9784121600943'?'^エティカ・中央公論新社':'^スピノザ全集';
+    await page.getByRole('button',{name:new RegExp(prefix)}).click();
+    await expect(page.getByText('この書籍情報を設定しますか？',{exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(book);
+    await capture(page,`lookup-prefill-${book.isbn}`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
     await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
     await page.getByRole('button',{name:/Back|戻る/}).click();await openWork(page,'エチカ');
   }
@@ -287,10 +300,161 @@ try {
     assert.equal(edition.editor,i===0?'公開確認・mobile編者':japaneseBooks[i].editor);
   }
   assert.deepEqual(browserErrors,[],'Published Japanese edition flow has browser errors');
+  console.log('Published title/ISBN lookup and confirmed automatic prefill passed.');
   console.log('Published Japanese editions: desktop/mobile two translations, ISBN purchase destinations, prefill, registration, reload, independent editor changes and genuine API persistence passed.');
 
+  // A personal work, like the reported screen; never infer a shared-work link.
+  const personalWork={...work,id:'qa:'+randomUUID(),title:'読書について',author_info:{...work.author_info,id:'qa-schopenhauer',name:'ショーペンハウアー'}};
+  const personalId=randomUUID();
+  await action(a.token,{action:'reading.add',id:personalId,work:personalWork});
+  const readingBook={publisher:'光文社',translator:'鈴木芳子',editor:'',isbn:'9784334752712',volume:'',source:'https://www.kotensinyaku.jp/books/book169/',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752712'};
+  for(const [mode,size,query] of [['title',{width:1440,height:1000},'読書について'],['isbn',{width:390,height:844},'978-4-334-75271-2']]) {
+    await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'読書について');
+    const start=page.getByRole('button',{name:mode==='title'?'読書を始める':'別の版・再読を始める',exact:true});
+    await reveal(start);await expect(start).toBeEnabled();await start.click();
+    await field(page,/^出版社/,'検索前の手入力');
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await field(page,/^書籍情報を検索/,query);
+    await page.getByRole('button',{name:'書籍情報を検索',exact:true}).click();
+    await page.getByRole('button',{name:/^読書について・光文社/}).click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(readingBook);
+    await restoredField(page,/^出版年/,'2013');await restoredField(page,/^言語/,'日本語');
+    await capture(page,`reading-about-books-${mode}-prefill`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await editBook(readingBook);await verifyBook(readingBook);
+    await field(page,/^編集者・編者/,`公開確認・${mode}編集`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await editBook(readingBook);await verifyBook(readingBook,`公開確認・${mode}編集`);
+    await capture(page,`reading-about-books-${mode}-edited-reloaded`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+  }
+  const personalRecords=await action(a.token,{action:'reading.list'});
+  const personal=personalRecords.items.find(x=>x.id===personalId);
+  assert.equal(personal?.metadata.cycles.length,2);
+  for(const [i,mode] of ['title','isbn'].entries()) {
+    const edition=personal.metadata.cycles[i].edition;
+    for(const property of ['publisher','translator','isbn']) assert.equal(edition[property],readingBook[property]);
+    assert.equal(edition.editor,`公開確認・${mode}編集`);
+    assert.equal(edition.source_url,readingBook.source);assert.equal(edition.book_url,readingBook.purchase);
+  }
+  assert.deepEqual(browserErrors,[]);
+  console.log('Published Reading About Books: personal work title/ISBN search, confirmed metadata prefill, two registrations, desktop/mobile reload/edit/reload and real API persistence passed.');
+
+
+  const iwanami={publisher:'岩波書店',translator:'斎藤忍随',editor:'',isbn:'9784003363225',volume:'岩波文庫 青632-2',source:'https://www.hanmoto.com/bd/isbn/9784003363225',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225'};
+  for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+    const cycleNumber=mode==='desktop'?3:4;
+    await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'読書について');
+    const start=page.getByRole('button',{name:'別の版・再読を始める',exact:true});
+    await reveal(start);await expect(start).toBeEnabled();await start.click();
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    // The current work must seed and run the title lookup without typing/search submission.
+    const candidate=page.getByRole('button',{name:/^読書について 他二篇・岩波文庫/});
+    await reveal(candidate);await candidate.click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(iwanami);await restoredField(page,/^総ページ数/,'160');
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await editBook(iwanami,cycleNumber);await verifyBook(iwanami);await restoredField(page,/^総ページ数/,'160');
+    await page.getByRole('button',{name:'キャンセル',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await editBook(iwanami,cycleNumber);
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    // Editing seeds the stored ISBN and runs the lookup automatically.
+    await restoredField(page,/^書籍情報を検索/,iwanami.isbn);
+    await reveal(candidate);await candidate.click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(iwanami);await restoredField(page,/^総ページ数/,'160');
+    await field(page,/^編集者・編者/,`公開確認・岩波${mode}編集`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await editBook(iwanami,cycleNumber);await verifyBook(iwanami,`公開確認・岩波${mode}編集`);
+    await restoredField(page,/^総ページ数/,'160');
+    await capture(page,`iwanami-auto-${mode}-edited-reloaded`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+  }
+  const finalPersonal=(await action(a.token,{action:'reading.list'})).items.find(x=>x.id===personalId);
+  const iwanamiCycles=finalPersonal.metadata.cycles.filter(c=>c.edition.isbn===iwanami.isbn);
+  assert.equal(iwanamiCycles.length,2);
+  for(const [i,mode] of ['desktop','mobile'].entries()) {
+    const edition=iwanamiCycles[i].edition;
+    for(const property of ['publisher','translator','isbn','volume']) assert.equal(edition[property],iwanami[property]);
+    assert.equal(edition.total_pages,160);assert.equal(edition.source_url,iwanami.source);assert.equal(edition.book_url,iwanami.purchase);
+    assert.equal(edition.editor,`公開確認・岩波${mode}編集`);
+  }
+  assert.deepEqual(browserErrors,[]);
+  console.log('Published automatic title/ISBN lookup and Iwanami selection, registration, reload, edit, reload and real API persistence passed on desktop/mobile.');
+
+
+  // Exercise the released quick input with genuine browser actions and Auth/API persistence.
+  const quickPageResults=[];
+  for(const [mode,size,number] of [['desktop',{width:1440,height:1000},3],['mobile',{width:390,height:844},4]]) {
+    await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'読書について');
+    const cycle=page.getByRole('group',{name:new RegExp(`第${number}回[\\s\\S]*ISBN: ${iwanami.isbn}`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
+    const input=cycle.getByRole('textbox',{name:/^読んだページ/});
+    const update=cycle.getByRole('button',{name:'進捗を更新',exact:true});
+    async function setPage(value) {
+      await reveal(input);await input.focus();
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+      await input.fill(value);
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+      await expect(input).toHaveValue(value);
+    }
+    for(const value of ['85','100','100','80']) {
+      await setPage('');
+      await expect(page.getByText(/^\d+ページまでの進捗を保存しました$/)).toHaveCount(0);
+      await setPage(value);await update.click();
+      await expect(page.getByText(value+'ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+    }
+    let saved=(await action(a.token,{action:'reading.list'})).items.find(x=>x.id===personalId).metadata.cycles[number-1];
+    assert.equal(saved.entries.length,2,'Same-page update must not append another entry');
+    assert.equal(saved.entries.reduce((sum,e)=>sum+e.pages,0),80);
+    assert.equal(Math.max(...saved.entries.map(e=>e.end_page??0)),80);
+    assert(saved.entries[0].history.some(h=>h.end_page===85),'Correction history must preserve page 85');
+    assert.equal(saved.status,'reading');
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await reveal(input);await input.focus();
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    await expect(input).toHaveValue('80');
+    await setPage('161');await update.click();
+    await expect(page.getByText('総ページ数（160ページ）を超えています',{exact:true})).toBeVisible();
+    const edit=cycle.getByRole('button',{name:'記録を編集',exact:true}).first();
+    await reveal(edit);await edit.click();
+    await field(page,/^感想/,`簡易更新後も感想を保持・${mode}`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読書記録を編集',{exact:true})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await setPage('85');await update.click();
+    await expect(page.getByText('85ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+    await setPage('10');await update.click();
+    await expect(page.getByText('詳細記録の終了ページより前には戻せません。記録の編集で修正してください',{exact:true})).toBeVisible();
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await reveal(input);await input.focus();
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    await expect(input).toHaveValue('85');
+    await capture(page,`quick-page-${mode}-85-reloaded`);
+    saved=(await action(a.token,{action:'reading.list'})).items.find(x=>x.id===personalId).metadata.cycles[number-1];
+    assert.equal(saved.entries.length,3);assert.equal(saved.entries.reduce((sum,e)=>sum+e.pages,0),85);
+    assert.equal(saved.entries[0].impression,`簡易更新後も感想を保持・${mode}`);
+    assert.equal(Math.max(...saved.entries.map(e=>e.end_page??0)),85);
+    assert.equal(saved.status,'reading');
+    quickPageResults.push({mode,reachedPage:85,pagesRead:85,entries:3,correctionAndNotePreservation:'passed'});
+  }
+  assert.deepEqual(browserErrors,[]);
+  await writeFile('reading-production-evidence/quick-page-results.json',JSON.stringify(quickPageResults,null,2));
+  console.log('Published quick page progress: 85 to 100, duplicate prevention, correction to 80, reload, total-page validation, detailed-note edit/preservation and final page 85 passed on desktop/mobile.');
+
   await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
-  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,quickPageProgress:'passed',quickPageResults,automaticTitleIsbnIwanamiRegistrationReloadEdit:'passed',api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
 } finally {
   if(browser) await browser.close();

@@ -11,6 +11,7 @@ on:
       - 'lib/data/services/reading_book_search.dart'
       - 'lib/widgets/reading_book_lookup.dart'
       - 'supabase/functions/tools-hub/reading*'
+      - 'scripts/reading-production-qa.mjs'
       - 'test/**/reading*'
       - 'test/**/philosophy_reading*'
       - '.github/workflows/philosophy-reading.yml'
@@ -122,6 +123,8 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Check production verification script syntax
+        run: node --check scripts/reading-production-qa.mjs
       - name: Install Playwright browser in cloud
         run: |
           npm ci
