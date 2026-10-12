@@ -126,6 +126,9 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
           await widget.repository.hasPendingMonthEdits(_month) ||
           restored.paymentOverrides[account.id] != amount.toDouble() ||
           restored.cardBillingAccountIds[account.id] != _cardId ||
+          restored.paidAccountNames.contains(account.id) ||
+          restored.paidAccountNames.contains(account.name) ||
+          restored.actualPaymentAmounts.containsKey(account.id) ||
           restored.billingConfirmedAccountIds.contains(account.id)) {
         throw StateError('サーバ再読込の照合が未完了です');
       }
@@ -179,6 +182,19 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
             const Text(
               '請求対象月の予定額だけを保存します。恒久月額・今月・カード請求総額・収支・残高を変更しません。カード請求に含むため別途引落として加算しません。支払日は確定しません。',
             ),
+            for (final entry in (_state?.paymentDifferenceReasons.entries ??
+                const <MapEntry<String, String>>[]))
+              if (entry.value.startsWith(AssetFutureCardBill.notePrefix))
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    '${widget.accounts.where((a) => a.id == entry.key).map((a) => a.name).firstOrNull ?? entry.key} '
+                    '¥${_state!.paymentOverrides[entry.key]?.toStringAsFixed(0) ?? "未入力"} / '
+                    '${cards.where((a) => a.id == _state!.cardBillingAccountIds[entry.key]).map((a) => a.name).firstOrNull ?? "カード未設定"}請求に含む / '
+                    '未確定・${_state!.paidAccountNames.contains(entry.key) || _state!.actualPaymentAmounts.containsKey(entry.key) ? "支払状態を要照合" : "未払い"}\n'
+                    '${entry.value.substring(AssetFutureCardBill.notePrefix.length)}',
+                  ),
+                ),
             DropdownButtonFormField<DateTime>(
               initialValue: _month,
               decoration: const InputDecoration(labelText: '請求対象月'),
