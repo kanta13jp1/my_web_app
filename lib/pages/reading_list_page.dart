@@ -720,7 +720,7 @@ class _ReadingListPageState extends State<ReadingListPage>
       )
           ? null
           : _model.error ?? '保存できませんでした';
-    });
+    }, bookQuery: work.title,);
   }
 
   Future<bool> _replaceCycle(ReadingRecord record, ReadingCycle cycle) =>
@@ -874,7 +874,7 @@ class _ReadingListPageState extends State<ReadingListPage>
       return await _replaceCycle(record, cycle.copyWith(edition: edition))
           ? null
           : _model.error ?? '保存できませんでした';
-    });
+    }, bookQuery: cycle.edition.isbn.isNotEmpty ? cycle.edition.isbn : record.work.title,);
   }
 
   Future<void> _entry(
@@ -994,13 +994,14 @@ class _ReadingListPageState extends State<ReadingListPage>
   Future<void> _form(
     String title,
     List<_Field> fields,
-    Future<String?> Function(Map<String, String>) submit,
-  ) =>
+    Future<String?> Function(Map<String, String>) submit, {
+    String bookQuery = '',
+  }) =>
       showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (_) =>
-            _ReadingForm(title: title, fields: fields, submit: submit),
+            _ReadingForm(title: title, fields: fields, submit: submit, bookQuery: bookQuery,),
       );
 }
 
@@ -1028,7 +1029,9 @@ class _ReadingForm extends StatefulWidget {
     required this.title,
     required this.fields,
     required this.submit,
+    this.bookQuery = '',
   });
+  final String bookQuery;
   final String title;
   final List<_Field> fields;
   final Future<String?> Function(Map<String, String>) submit;
@@ -1114,6 +1117,7 @@ class _ReadingFormState extends State<_ReadingForm> {
                         !_saving &&
                         _lookupOpen)
                       ReadingBookLookup(
+                        initialQuery: widget.bookQuery,
                         onSelected: (edition) {
                           final values = edition.toJson();
                           for (final key in [

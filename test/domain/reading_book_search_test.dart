@@ -117,13 +117,18 @@ void main() {
       '978-4-334-75271-2',
       client: client,
     );
-    expect(byTitle.single.edition.isbn, byIsbn.single.edition.isbn);
-    expect(byTitle.single.edition.publisher, '光文社');
-    expect(byTitle.single.edition.translator, '鈴木芳子');
-    expect(byTitle.single.edition.editor, '');
-    expect(byTitle.single.edition.totalPages, isNull);
+    expect(byTitle, hasLength(2));
+    expect(byTitle.last.edition.isbn, '9784003363225');
+    expect(byTitle.last.edition.translator, '斎藤忍随');
+    expect(byTitle.last.edition.totalPages, 160);
+    expect(byTitle.last.edition.sourceUrl, 'https://www.hanmoto.com/bd/isbn/9784003363225',);
+    expect(byTitle.first.edition.isbn, byIsbn.single.edition.isbn);
+    expect(byTitle.first.edition.publisher, '光文社');
+    expect(byTitle.first.edition.translator, '鈴木芳子');
+    expect(byTitle.first.edition.editor, '');
+    expect(byTitle.first.edition.totalPages, isNull);
     expect(
-      byTitle.single.edition.sourceUrl,
+      byTitle.first.edition.sourceUrl,
       'https://www.kotensinyaku.jp/books/book169/',
     );
   });

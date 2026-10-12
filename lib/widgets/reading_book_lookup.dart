@@ -4,7 +4,13 @@ import '../data/services/reading_book_search.dart';
 import '../domain/models/philosophy_reading.dart';
 
 class ReadingBookLookup extends StatefulWidget {
-  const ReadingBookLookup({super.key, required this.onSelected, this.search});
+  const ReadingBookLookup({
+    super.key,
+    required this.onSelected,
+    this.search,
+    this.initialQuery = '',
+  });
+  final String initialQuery;
   final ValueChanged<ReadingEdition> onSelected;
   final Future<List<ReadingBookResult>> Function(String)? search;
   @override
@@ -16,6 +22,17 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
   bool _loading = false;
   String? _message;
   List<ReadingBookResult> _results = [];
+  @override
+  void initState() {
+    super.initState();
+    _query.text = widget.initialQuery.trim();
+    if (_query.text.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _search();
+      });
+    }
+  }
+
   @override
   void dispose() {
     _query.dispose();

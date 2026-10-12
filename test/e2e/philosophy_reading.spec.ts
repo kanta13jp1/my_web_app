@@ -609,3 +609,41 @@ test('external title failure and empty results preserve manual input; retry and 
   await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
   await restoredField(page, /^出版社/, '保持する出版社');
 });
+
+test('current title searches automatically and Iwanami edition registers, reloads and edits', async ({ page }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '読書について');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  // No typing and no search-button click: the current work seeds the lookup.
+  await expect(page.getByRole('button', { name: /^読書について 他二篇・岩波文庫/ })).toBeVisible();
+  await page.getByRole('button', { name: /^読書について 他二篇・岩波文庫/ }).click();
+  await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+  await restoredField(page, /^出版社/, '岩波書店');
+  await restoredField(page, /^訳者/, '斎藤忍随');
+  await restoredField(page, /^総ページ数/, '160');
+  await restoredField(page, /^ISBN/, '9784003363225');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '読書について');
+  await editRegisteredEdition(page, '9784003363225');
+  await restoredField(page, /^出版社/, '岩波書店');
+  await field(page, /^巻・版の名前/, '岩波文庫 青632-2・手元の版');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '読書について');
+  await editRegisteredEdition(page, '9784003363225');
+  await restoredField(page, /^出版社/, '岩波書店');
+  await restoredField(page, /^訳者/, '斎藤忍随');
+  await restoredField(page, /^総ページ数/, '160');
+  await restoredField(page, /^ISBN/, '9784003363225');
+  await restoredField(page, /^巻・版の名前/, '岩波文庫 青632-2・手元の版');
+  await restoredField(page, /^書籍・購入URL/, 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225');
+  await restoredField(page, /^版情報の出典URL/, 'https://www.hanmoto.com/bd/isbn/9784003363225');
+  await capture(page, info, 'iwanami-auto-reloaded');
+});

@@ -63,6 +63,20 @@ class ReadingBookSearch {
           bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752712',
         ),
       ),
+      const ReadingBookResult(
+        '読書について 他二篇・岩波文庫（ショウペンハウエル）',
+        ReadingEdition(
+          publisher: '岩波書店',
+          translator: '斎藤忍随',
+          year: '1983',
+          language: '日本語',
+          volume: '岩波文庫 青632-2',
+          totalPages: 160,
+          isbn: '9784003363225',
+          sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003363225',
+          bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225',
+        ),
+      ),
     ];
     final matches = books.where(
       (book) => isIsbn
