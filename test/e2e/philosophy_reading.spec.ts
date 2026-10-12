@@ -675,7 +675,7 @@ test('page number alone saves progress, adds a delta, corrects and survives relo
     await field(page,/^読んだページ/,value);
     await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
     await expect(page.getByText(value+'ページまでの進捗を保存しました',{exact:true})).toBeVisible();
-    await expect(page.getByText(new RegExp('延べ '+value+' ページ / 区間記録済み '+value+' /'))).toBeVisible();
+    await expect(page.getByRole('group',{name:new RegExp('延べ '+value+' ページ / 区間記録済み '+value+' /')}).last()).toBeVisible();
   }
   await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
   await openWork(page,'国家');
