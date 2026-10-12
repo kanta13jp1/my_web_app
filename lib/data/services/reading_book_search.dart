@@ -52,8 +52,14 @@ class ReadingBookSearch {
     final books = [
       ...philosophyCatalogEditions.map(
         (book) => ReadingBookResult(
-          book.label, book.edition,
-          author: philosophyWorks.where((work) => work.id == book.workId).firstOrNull?.author.name ?? '',
+          book.label,
+          book.edition,
+          author: philosophyWorks
+                  .where((work) => work.id == book.workId)
+                  .firstOrNull
+                  ?.author
+                  .name ??
+              '',
         ),
       ),
       const ReadingBookResult(
@@ -66,7 +72,8 @@ class ReadingBookSearch {
           volume: '岩波文庫・第16刷（第12刷改版: 1976年）',
           totalPages: 213,
           isbn: '9784003361566',
-          sourceUrl: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000002440109',
+          sourceUrl:
+              'https://ndlsearch.ndl.go.jp/books/R100000002-I000002440109',
           bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361566',
         ),
         author: 'スピノザ',
@@ -102,16 +109,22 @@ class ReadingBookSearch {
       (book) => isIsbn
           ? book.edition.isbn == isbn
           : '${book.title} ${book.edition.translator} ${book.edition.publisher}'
-              .toLowerCase()
-              .contains(text.toLowerCase()) &&
-              (author.trim().isEmpty || book.author.isEmpty || book.author.toLowerCase().contains(author.trim().toLowerCase())),
+                  .toLowerCase()
+                  .contains(text.toLowerCase()) &&
+              (author.trim().isEmpty ||
+                  book.author.isEmpty ||
+                  book.author
+                      .toLowerCase()
+                      .contains(author.trim().toLowerCase())),
     );
     if (matches.isNotEmpty && !external) return matches.toList();
     if (!isIsbn && RegExp(r'^[0-9Xx\s-]+$').hasMatch(text)) return [];
     final ownedClient = client == null;
     final transport = client ?? http.Client();
     try {
-      if (!isIsbn) return await _searchTitle(text, transport, author: author.trim());
+      if (!isIsbn) {
+        return await _searchTitle(text, transport, author: author.trim());
+      }
       final response = await transport
           .get(Uri.https('api.openbd.jp', '/v1/get', {'isbn': isbn}))
           .timeout(const Duration(seconds: 12));
