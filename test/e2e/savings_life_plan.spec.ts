@@ -27,7 +27,7 @@ test('savings goal, daily design, and reload preserve planning values without fi
   await page.getByRole('button', { name: '計画を保存・再計算' }).click();
   await expect(page.getByRole('heading', { name: '必要な積立：月 ¥70,834', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '月ごとの目標と現計画の見込み' }).click();
-  await expect(page.getByText('2027-10-13 自由資金目標 ¥1,000,000 / 現計画 ¥1,950,000', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '2027-10-13 自由資金目標 ¥1,000,000 / 現計画 ¥1,950,000', exact: true })).toBeVisible();
   await enterAmount(page, '今日の生活費合計（計画用メモ）', '1200');
   await page.getByRole('button', { name: '生活費メモを保存', exact: true }).click();
   const morning = page.getByRole('checkbox', { name: '朝：朝食・食器洗い・歯磨き、今日の予定を確認' });

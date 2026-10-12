@@ -449,6 +449,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                     for (final checkpoint in result.checkpoints)
                       Semantics(
                         container: true,
+                        header: true,
                         label:
                             '${SavingsLifePlan.dateText(checkpoint.date)} 自由資金目標 ${_yen(checkpoint.targetSavings)} / 現計画 ${_yen(checkpoint.forecastSavings)}',
                         child: ExcludeSemantics(
