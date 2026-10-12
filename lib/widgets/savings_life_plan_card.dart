@@ -297,7 +297,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
               if (_edited) const Text('未保存の入力があります。下の試算は最後に保存した計画です。'),
               if (_saved && result.ready) ...[
                 const Divider(height: 32),
-                Text('必要な積立：月 ${_yen(result.requiredMonthlySavings)}'),
+                Semantics(container: true, header: true, child: Text('必要な積立：月 ${_yen(result.requiredMonthlySavings)}')), 
                 Text('生活費・返済・予備費を引いた余力：月 ${_yen(result.monthlyCapacity)}'),
                 if (result.expired)
                   Text(
@@ -391,7 +391,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                   ],
                 ),
                 const Text(
-                    'このメモは家計簿の支出・貯蓄・返済実績へ自動登録しません。重複を避け、実績は収支欄で照合してください。'),
+                    'このメモは家計簿の支出・貯蓄・返済実績へ自動登録しません。重複を避け、実績は収支欄で照合してください。',),
                 _check('morning', '朝：朝食・食器洗い・歯磨き、今日の予定を確認'),
                 _check('noon', '昼：昼食・食器洗い・歯磨き、残り予算を確認'),
                 _check('evening', '夜：夕食・食器洗い・歯磨き、生活費を見直す'),
