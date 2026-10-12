@@ -129,7 +129,8 @@ class _AssetBalanceHistoryDialogState
                   for (final row in _rows)
                     Semantics(
                       container: true,
-                      label: '${row.timestampLabel} ¥${currency.format(row.amount)}',
+                      label:
+                          '${row.timestampLabel} ¥${currency.format(row.amount)}',
                       excludeSemantics: true,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
