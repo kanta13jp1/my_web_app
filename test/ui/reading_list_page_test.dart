@@ -4,7 +4,8 @@ import 'package:my_web_app/pages/reading_list_page.dart';
 import '../support/reading_fixture_repository.dart';
 
 void main() {
-  testWidgets('work memo saves at 320px without starting reading', (tester) async {
+  testWidgets('work memo saves at 320px without starting reading',
+      (tester) async {
     tester.view.physicalSize = const Size(320, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);

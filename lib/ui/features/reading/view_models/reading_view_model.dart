@@ -142,7 +142,8 @@ class ReadingViewModel extends ChangeNotifier {
       _notify();
       return false;
     }
-    final updated = PhilosophyWork.fromJson({...current.toJson(), 'note': note});
+    final updated =
+        PhilosophyWork.fromJson({...current.toJson(), 'note': note});
     if (record == null) return addWork(const Uuid().v4(), updated);
     return save(
       ReadingRecord(
