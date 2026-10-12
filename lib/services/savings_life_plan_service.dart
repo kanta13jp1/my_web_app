@@ -50,7 +50,7 @@ class SavingsLifePlanService {
         dates[i],
         min(plan.target, (plan.savings ?? 0) + required * (i + 1)),
         max(0, (plan.savings ?? 0) + capacity * (i + 1)),
-      ));
+      ),);
     }
     return SavingsPlanResult(
       ready: ready,

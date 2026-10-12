@@ -16,7 +16,7 @@ void main() {
       commitmentsEstimated: true,
       suggestedIncome: income,
       onReviewPayments: () {},
-    )))));
+    ),),),),);
     await tester.pumpAndSettle();
   }
 

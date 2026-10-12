@@ -182,7 +182,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
   Widget _field(String label, TextEditingController controller,
           {bool positive = false}) =>
       SizedBox(
-        width: 300,
+        width: min(300, MediaQuery.sizeOf(context).width - 80),
         child: TextFormField(
           controller: controller,
           onChanged: (_) => setState(() => _edited = true),
@@ -255,7 +255,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                 'カード請求に含む内訳を二重加算せず、今月の支払予定を12か月継続する保守的な試算です。返済額・支払日・臨時請求は明細で確認してください。'),
             TextButton(
                 onPressed: widget.onReviewPayments,
-                child: const Text('返済・固定費と支払日を確認')),
+                child: const Text('返済・固定費と支払日を確認'),),
             Form(
                 key: _form,
                 child: Wrap(spacing: 12, runSpacing: 16, children: [
@@ -263,13 +263,13 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                   _field('今後の毎月の手取り収入（計画値）', _income),
                   _field('毎月の生活費（食費・交通・日用品等）', _living, positive: true),
                   _field('毎月の予備費（臨時支出用）', _reserve),
-                ])),
+                ],),),
             const SizedBox(height: 12),
             const Text(
                 '現在貯蓄は返済・当面の生活費を確保した上で、目標用に分けてある実額を入力してください。生活費には上の固定費を重複して含めないでください。'),
             FilledButton(
                 onPressed: _busy ? null : _save,
-                child: Text(_busy ? '保存中…' : '計画を保存・再計算')),
+                child: Text(_busy ? '保存中…' : '計画を保存・再計算'),),
             if (!_saved || !result.ready)
               const Text('貯蓄・手取り・生活費を確認して保存すると、達成見込みと日々の予算を表示します。'),
             if (_edited) const Text('未保存の入力があります。下の試算は最後に保存した計画です。'),
@@ -285,7 +285,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                 Text('現計画では月 ${_yen(result.monthlyShortfall)} 不足',
                     style: TextStyle(
                         color: Theme.of(context).colorScheme.error,
-                        fontWeight: FontWeight.bold)),
+                        fontWeight: FontWeight.bold,),),
                 const Text(
                     '食事や通勤費を削って合わせず、収入増・固定費見直し・目標期限の再検討が必要です。日々の使用可能額は提示しません。'),
               ] else
@@ -299,8 +299,8 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                   ListTile(
                       title: Text(SavingsLifePlan.dateText(checkpoint.date)),
                       subtitle: Text(
-                          '目標 ${_yen(checkpoint.targetSavings)} / 現計画 ${_yen(checkpoint.forecastSavings)}')),
-              ]),
+                          '目標 ${_yen(checkpoint.targetSavings)} / 現計画 ${_yen(checkpoint.forecastSavings)}',),),
+              ],),
               const Divider(height: 24),
               Text('今日の生活設計 · $_day',
                   style: Theme.of(context).textTheme.titleMedium),
@@ -319,14 +319,14 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     SizedBox(
-                        width: 280,
+                        width: min(280, MediaQuery.sizeOf(context).width - 80),
                         child: TextField(
                             controller: _spent,
                             enabled: !_busy,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
                                 labelText: '今日の生活費合計（計画用メモ）',
-                                suffixText: '円'))),
+                                suffixText: '円',),),),
                     OutlinedButton(
                         onPressed: _busy
                             ? null
@@ -343,8 +343,8 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                                   'spent:$amount'
                                 });
                               },
-                        child: const Text('生活費メモを保存')),
-                  ]),
+                        child: const Text('生活費メモを保存'),),
+                  ],),
               const Text('このメモは家計簿の支出・貯蓄・返済実績へ自動登録しません。重複を避け、実績は収支欄で照合してください。'),
               _check('morning', '朝：朝食・食器洗い・歯磨き、今日の予定を確認'),
               _check('noon', '昼：昼食・食器洗い・歯磨き、残り予算を確認'),
@@ -357,9 +357,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
               Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child:
-                      Text(_message!, key: const Key('savings-plan-message'))),
+                      Text(_message!, key: const Key('savings-plan-message')),),
           ],
-        ]),
+        ],),
       ),
     );
   }

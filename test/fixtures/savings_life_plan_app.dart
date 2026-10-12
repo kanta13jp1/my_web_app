@@ -23,6 +23,6 @@ class SavingsFixture extends StatelessWidget {
             suggestedIncome: 400000,
             onReviewPayments: () {},
           ),
-        )),
+        ),),
       );
 }
