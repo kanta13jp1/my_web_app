@@ -30,6 +30,7 @@ class AssetBalanceHistoryControl extends StatelessWidget {
             style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
           ),
         TextButton.icon(
+          style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
           onPressed: () => showDialog<void>(
             context: context,
             builder: (_) => _AssetBalanceHistoryDialog(
@@ -144,9 +145,18 @@ class _AssetBalanceHistoryDialogState
                       ),
                     ),
                   if (_loading)
-                    const Center(child: CircularProgressIndicator()),
+                    const Center(
+                      child: Semantics(
+                        label: '残高履歴を読込み中',
+                        liveRegion: true,
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
                   if (_failed) ...[
-                    const Text('履歴を読み込めませんでした。'),
+                    const Semantics(
+                      liveRegion: true,
+                      child: Text('履歴を読み込めませんでした。'),
+                    ),
                     TextButton(
                       onPressed: _loadNext,
                       child: const Text('再試行'),

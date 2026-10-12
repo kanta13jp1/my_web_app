@@ -4,6 +4,8 @@ import 'package:my_web_app/widgets/asset_balance_history_control.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized().ensureSemantics();
+  final mode = Uri.base.queryParameters['history'];
+  var attempts = 0;
   final rows = [
     AssetBalanceObservation(
       id: 3,
@@ -37,7 +39,13 @@ void main() {
             AssetBalanceHistoryControl(
               accountName: 'サンプル銀行',
               latest: rows.first,
-              loadPage: (offset) async => offset == 0 ? rows : [],
+              loadPage: (offset) async {
+                attempts += 1;
+                if (mode == 'error' && attempts == 1) {
+                  throw StateError('fixture offline');
+                }
+                return mode == 'empty' || offset != 0 ? [] : rows;
+              },
             ),
           ],
         ),
