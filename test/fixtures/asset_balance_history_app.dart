@@ -28,29 +28,29 @@ void main() {
   ];
   runApp(
     MaterialApp(
-    home: Scaffold(
-      appBar: AppBar(title: const Text('残高履歴のプレビュー')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('サンプル銀行  ¥12,000'),
-            AssetBalanceHistoryControl(
-              accountName: 'サンプル銀行',
-              latest: rows.first,
-              loadPage: (offset) async {
-                attempts += 1;
-                if (mode == 'error' && attempts == 1) {
-                  throw StateError('fixture offline');
-                }
-                return mode == 'empty' || offset != 0 ? [] : rows;
-              },
-            ),
-          ],
+      home: Scaffold(
+        appBar: AppBar(title: const Text('残高履歴のプレビュー')),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('サンプル銀行  ¥12,000'),
+              AssetBalanceHistoryControl(
+                accountName: 'サンプル銀行',
+                latest: rows.first,
+                loadPage: (offset) async {
+                  attempts += 1;
+                  if (mode == 'error' && attempts == 1) {
+                    throw StateError('fixture offline');
+                  }
+                  return mode == 'empty' || offset != 0 ? [] : rows;
+                },
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     ),
   );
 }

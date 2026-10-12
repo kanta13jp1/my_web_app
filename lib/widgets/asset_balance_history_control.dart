@@ -129,6 +129,8 @@ class _AssetBalanceHistoryDialogState
                   for (final row in _rows)
                     Semantics(
                       container: true,
+                      label: '${row.timestampLabel} ¥${currency.format(row.amount)}',
+                      excludeSemantics: true,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
@@ -137,7 +139,8 @@ class _AssetBalanceHistoryDialogState
                             Text(row.timestampLabel),
                             Text(
                               '¥${currency.format(row.amount)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const Divider(),
                           ],
@@ -145,17 +148,17 @@ class _AssetBalanceHistoryDialogState
                       ),
                     ),
                   if (_loading)
-                    const Center(
+                    Center(
                       child: Semantics(
                         label: '残高履歴を読込み中',
                         liveRegion: true,
-                        child: CircularProgressIndicator(),
+                        child: const CircularProgressIndicator(),
                       ),
                     ),
                   if (_failed) ...[
-                    const Semantics(
+                    Semantics(
                       liveRegion: true,
-                      child: Text('履歴を読み込めませんでした。'),
+                      child: const Text('履歴を読み込めませんでした。'),
                     ),
                     TextButton(
                       onPressed: _loadNext,

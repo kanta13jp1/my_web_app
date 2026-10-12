@@ -22,13 +22,13 @@ Future<void> openHistory(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-    home: Scaffold(
-      body: AssetBalanceHistoryControl(
-        accountName: 'サンプル銀行',
-        latest: latest,
-        loadPage: loader,
+      home: Scaffold(
+        body: AssetBalanceHistoryControl(
+          accountName: 'サンプル銀行',
+          latest: latest,
+          loadPage: loader,
+        ),
       ),
-    ),
     ),
   );
   await tester.tap(find.text('残高履歴'));
@@ -43,10 +43,14 @@ void main() {
       observation(2, '2026-10-11T08:44:00Z'),
       observation(1, '2026-10-10T17:18:00Z'),
     ];
-    await openHistory(tester, (offset) async {
-      offsets.add(offset);
-      return rows;
-    }, latest: rows.first,);
+    await openHistory(
+      tester,
+      (offset) async {
+        offsets.add(offset);
+        return rows;
+      },
+      latest: rows.first,
+    );
     expect(offsets, [0]);
     expect(find.text('2026-10-11 17:44 JST'), findsOneWidget);
     expect(find.text('2026-10-11 02:18 JST'), findsOneWidget);

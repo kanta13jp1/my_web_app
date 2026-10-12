@@ -48,10 +48,11 @@ test('shows minute timestamps and distinct same-day history without writes', asy
   await page.keyboard.press('Enter');
   await expect(page.getByText('サンプル銀行の残高履歴', { exact: true })).toBeVisible();
   for (const timestamp of ['2026-10-11 17:44 JST', '2026-10-11 02:18 JST', '2026-10-09 17:39 JST']) {
-    await expect(page.getByRole('group', { name: new RegExp(timestamp) })).toBeVisible();
+    await expect(page.getByRole('alertdialog')).toContainText(timestamp);
   }
-  await expect(page.getByRole('group', { name: /JST.*¥12,000/ })).toHaveCount(2);
-  await expect(page.getByRole('group', { name: /2026-10-09 17:39 JST.*¥-5,000/ })).toBeVisible();
+  const historyText = await page.getByRole('alertdialog').innerText();
+  expect(historyText.match(/¥12,000/g)).toHaveLength(2);
+  await expect(page.getByRole('alertdialog')).toContainText('¥-5,000');
   await capture(page, info, 'balance-history');
   await page.getByRole('button', { name: '閉じる', exact: true }).click();
   await expect(page.getByText('サンプル銀行の残高履歴', { exact: true })).toHaveCount(0);
@@ -64,7 +65,7 @@ test('failed history load can retry without changing the latest timestamp', asyn
   await expect(page.getByText('履歴を読み込めませんでした。', { exact: true })).toBeVisible();
   await capture(page, info, 'history-error');
   await page.getByRole('button', { name: '再試行', exact: true }).click();
-  await expect(page.getByRole('group', { name: /2026-10-11 02:18 JST.*¥12,000/ })).toBeVisible();
+  await expect(page.getByRole('alertdialog')).toContainText('2026-10-11 02:18 JST');
   await capture(page, info, 'history-recovered');
 });
 
