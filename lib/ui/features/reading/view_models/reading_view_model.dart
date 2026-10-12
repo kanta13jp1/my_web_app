@@ -144,13 +144,15 @@ class ReadingViewModel extends ChangeNotifier {
     }
     final updated = PhilosophyWork.fromJson({...current.toJson(), 'note': note});
     if (record == null) return addWork(const Uuid().v4(), updated);
-    return save(ReadingRecord(
+    return save(
+      ReadingRecord(
       id: record.id,
       work: updated,
       revision: record.revision,
       cycles: record.cycles,
       legacyStatus: record.legacyStatus,
-    ));
+      ),
+    );
   }
 
   Future<bool> save(ReadingRecord record) => _mutate(() async {
