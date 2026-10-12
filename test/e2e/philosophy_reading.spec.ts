@@ -531,7 +531,9 @@ const ndlTitleXml = `<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcte
 
 test('external title returns two editions; selected metadata persists and edits independently', async ({ page }, info) => {
   await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
-    expect(new URL(route.request().url()).searchParams.get('title')).toBe('目録にない外部書名');
+    if (new URL(route.request().url()).searchParams.get('title') !== '目録にない外部書名') {
+      return route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' });
+    }
     return route.fulfill({ contentType: 'application/xml', body: ndlTitleXml });
   });
   await page.goto('/');
@@ -587,6 +589,9 @@ test('external title returns two editions; selected metadata persists and edits 
 test('external title failure and empty results preserve manual input; retry and cancel work', async ({ page }) => {
   let calls = 0;
   await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
+    if (new URL(route.request().url()).searchParams.get('title') !== '目録にない外部書名') {
+      return route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' });
+    }
     calls++;
     return route.fulfill(calls === 1 ? { status: 503, body: '' } : {
       contentType: 'application/xml', body: calls === 2 ? '<rss><channel/></rss>' : ndlTitleXml,
@@ -613,11 +618,16 @@ test('external title failure and empty results preserve manual input; retry and 
 test('current title searches automatically and Iwanami edition registers, reloads and edits', async ({ page }, info) => {
   await page.goto('/');
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await page.getByRole('tab', { name: '著作', exact: true }).click();
+  await page.getByRole('button', { name: '著作を追加', exact: true }).click();
+  await field(page, /^著作名/, '読書について');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('著作を追加（自分の目録）', { exact: true })).toHaveCount(0);
   await openWork(page, '読書について');
   await page.getByRole('button', { name: '読書を始める', exact: true }).click();
   await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
   // No typing and no search-button click: the current work seeds the lookup.
-  await expect(page.getByRole('button', { name: /^読書について 他二篇・岩波文庫/ })).toBeVisible();
+  await revealReadingControl(page, page.getByRole('button', { name: /^読書について 他二篇・岩波文庫/ }));
   await page.getByRole('button', { name: /^読書について 他二篇・岩波文庫/ }).click();
   await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
   await restoredField(page, /^出版社/, '岩波書店');

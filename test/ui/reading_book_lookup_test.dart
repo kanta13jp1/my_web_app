@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/reading_book_lookup.dart';
@@ -5,6 +6,29 @@ import 'package:my_web_app/data/services/reading_book_search.dart';
 import 'package:my_web_app/domain/models/philosophy_reading.dart';
 
 void main() {
+  testWidgets('changing an automatic query discards its late response',
+      (tester) async {
+    final pending = Completer<List<ReadingBookResult>>();
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: ReadingBookLookup(
+      initialQuery: '古い検索',
+      onSelected: (_) {},
+      search: (query) async => query == '古い検索' ? pending.future : [
+        const ReadingBookResult('新しい結果', ReadingEdition()),
+      ],
+    ),),),);
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), '新しい検索');
+    await tester.tap(find.text('書籍情報を検索'));
+    await tester.pumpAndSettle();
+    expect(find.text('新しい結果'), findsOneWidget);
+    pending.complete([
+      const ReadingBookResult('古い結果', ReadingEdition()),
+    ],);
+    await tester.pumpAndSettle();
+    expect(find.text('古い結果'), findsNothing);
+    expect(find.text('新しい結果'), findsOneWidget);
+  });
+
   testWidgets(
       'initial title searches once without typing or selecting metadata',
       (tester) async {

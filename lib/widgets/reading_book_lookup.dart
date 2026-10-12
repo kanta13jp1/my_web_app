@@ -20,6 +20,7 @@ class ReadingBookLookup extends StatefulWidget {
 class _ReadingBookLookupState extends State<ReadingBookLookup> {
   final _query = TextEditingController();
   bool _loading = false;
+  int _request = 0;
   String? _message;
   List<ReadingBookResult> _results = [];
   @override
@@ -41,6 +42,7 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
 
   Future<void> _search({bool external = false}) async {
     if (_loading) return;
+    final request = ++_request;
     setState(() {
       _loading = true;
       _message = null;
@@ -53,7 +55,7 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
               _query.text,
               external: external,
             );
-      if (!mounted) return;
+      if (!mounted || request != _request) return;
       setState(() {
         _results = results;
         if (results.isEmpty) {
@@ -61,9 +63,9 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
         }
       });
     } catch (_) {
-      if (mounted) setState(() => _message = '書籍情報を取得できませんでした。再検索または手入力できます。');
+      if (mounted && request == _request) setState(() => _message = '書籍情報を取得できませんでした。再検索または手入力できます。');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && request == _request) setState(() => _loading = false);
     }
   }
 
@@ -96,7 +98,12 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
         children: [
           TextField(
             controller: _query,
-            enabled: !_loading,
+            onChanged: (_) => setState(() {
+              _request++;
+              _loading = false;
+              _message = null;
+              _results = [];
+            }),
             decoration: const InputDecoration(labelText: '書籍情報を検索（書名・ISBN）'),
             onSubmitted: (_) => _search(),
           ),
