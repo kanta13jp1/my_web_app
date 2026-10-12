@@ -517,9 +517,10 @@ class _ReadingListPageState extends State<ReadingListPage>
                       ),
                     Text(record?.work.note ?? work.note),
                     OutlinedButton.icon(
-                      onPressed: !_model.signedIn || _model.saving || _model.loading
-                          ? null
-                          : () => _appendWorkMemo(work),
+                      onPressed:
+                          !_model.signedIn || _model.saving || _model.loading
+                              ? null
+                              : () => _appendWorkMemo(work),
                       icon: const Icon(Icons.note_add_outlined),
                       label: const Text('著作にメモを追記'),
                     ),

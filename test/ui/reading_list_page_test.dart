@@ -10,7 +10,9 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final repository = ReadingFixtureRepository();
-    await tester.pumpWidget(MaterialApp(home: ReadingListPage(repository: repository)));
+    await tester.pumpWidget(
+      MaterialApp(home: ReadingListPage(repository: repository)),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('プラトン'));
     await tester.pumpAndSettle();

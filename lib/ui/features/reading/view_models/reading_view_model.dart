@@ -146,11 +146,11 @@ class ReadingViewModel extends ChangeNotifier {
     if (record == null) return addWork(const Uuid().v4(), updated);
     return save(
       ReadingRecord(
-      id: record.id,
-      work: updated,
-      revision: record.revision,
-      cycles: record.cycles,
-      legacyStatus: record.legacyStatus,
+        id: record.id,
+        work: updated,
+        revision: record.revision,
+        cycles: record.cycles,
+        legacyStatus: record.legacyStatus,
       ),
     );
   }
