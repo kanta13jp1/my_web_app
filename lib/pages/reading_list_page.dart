@@ -1326,7 +1326,10 @@ class _ReadingPageProgressState extends State<_ReadingPageProgress> {
   }
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) => Semantics(
+        container: true,
+        explicitChildNodes: true,
+        child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1367,6 +1370,7 @@ class _ReadingPageProgressState extends State<_ReadingPageProgress> {
               ),
             if (_success != null) Text(_success!),
           ],
+        ),
         ),
       );
 }
