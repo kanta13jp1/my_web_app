@@ -6,7 +6,12 @@ import 'package:my_web_app/services/savings_plan_proposal_service.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SemanticsBinding.instance.ensureSemantics();
-  runApp(const MaterialApp(home: SavingsFixture()));
+  runApp(
+    MaterialApp(
+      theme: ThemeData(fontFamily: 'NotoSansJP'),
+      home: const SavingsFixture(),
+    ),
+  );
 }
 
 class SavingsFixture extends StatelessWidget {

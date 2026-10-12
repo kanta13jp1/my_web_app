@@ -31,7 +31,7 @@ test('savings goal, daily design, and reload preserve planning values without fi
   await enterAmount(page, '今日の生活費合計（計画用メモ）', '1200');
   await page.getByRole('button', { name: '生活費メモを保存', exact: true }).click();
   const morning = page.getByRole('checkbox', { name: '朝：朝食・食器洗い・歯磨き、今日の予定を確認' });
-  await morning.check();
+  await morning.click();
   await expect(morning).toBeChecked();
   await page.screenshot({ path: test.info().outputPath('daily-design.png'), fullPage: true });
   await page.reload();
@@ -53,7 +53,7 @@ test('unaffordable plan shows gap while retaining food and repayment', async ({ 
   await page.getByRole('button', { name: '計画を保存・再計算' }).click();
   await expect(page.getByRole('heading', { name: '現計画では月 ¥115,000 不足', exact: true })).toBeVisible();
   await expect(page.getByText(/生活費の日割り目安/)).toHaveCount(0);
-  await expect(page.getByText(/食事・通勤・医療と返済を守り/)).toBeVisible();
+  await expect(page.getByRole('group', { name: /食事・通勤・医療と返済を守り/ })).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('deficit.png') });
 });
 
