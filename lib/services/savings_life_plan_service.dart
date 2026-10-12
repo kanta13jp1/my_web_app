@@ -27,8 +27,7 @@ class SavingsLifePlanService {
       if (date.isAfter(deadline)) break;
       if (date.isAfter(today)) dates.add(date);
     }
-    if (deadline.isAfter(today) &&
-        (dates.isEmpty || dates.last != deadline)) {
+    if (deadline.isAfter(today) && (dates.isEmpty || dates.last != deadline)) {
       dates.add(deadline);
     }
     final ready = plan.savings != null &&
@@ -42,10 +41,8 @@ class SavingsLifePlanService {
         (plan.livingCosts ?? 0) -
         plan.reserve;
     final shortfall = max(0, required - capacity);
-    final livingCeiling = (plan.income ?? 0) -
-        monthlyCommitments -
-        plan.reserve -
-        required;
+    final livingCeiling =
+        (plan.income ?? 0) - monthlyCommitments - plan.reserve - required;
     final daysInMonth = DateTime.utc(today.year, today.month + 1, 0).day;
     final checkpoints = <SavingsPlanCheckpoint>[];
     for (var i = 0; i < dates.length; i++) {

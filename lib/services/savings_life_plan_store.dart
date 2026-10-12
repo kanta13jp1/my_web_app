@@ -9,7 +9,8 @@ class SavingsLifePlanStore {
   SavingsLifePlanStore(this.userId);
   final String userId;
   String get _key => 'savings_life_plan_v1:$userId';
-  String _dailyKey(DateTime day) => '$_key:daily:${SavingsLifePlan.dateText(day)}';
+  String _dailyKey(DateTime day) =>
+      '$_key:daily:${SavingsLifePlan.dateText(day)}';
 
   Future<SavingsLifePlan?> load() async {
     final raw = (await SharedPreferences.getInstance()).getString(_key);

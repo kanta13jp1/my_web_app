@@ -10184,16 +10184,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
             _buildDisplayModeSwitcher(),
-            if (assetLiabilityWorkbook != null && _supabase.auth.currentUser != null)
+            if (assetLiabilityWorkbook != null &&
+                _supabase.auth.currentUser != null)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
                 child: SavingsLifePlanCard(
-                  key: ValueKey('savings-life-plan:${_supabase.auth.currentUser!.id}'),
+                  key: ValueKey(
+                      'savings-life-plan:${_supabase.auth.currentUser!.id}'),
                   userId: _supabase.auth.currentUser!.id,
                   today: _now,
                   suggestedIncome: _registeredSalaryAmount()?.round(),
-                  monthlyCommitments: assetLiabilityWorkbook.monthlyScheduledPaymentTotal.ceil(),
-                  commitmentsEstimated: assetLiabilityWorkbook.estimatedPaymentCount > 0,
+                  monthlyCommitments: assetLiabilityWorkbook
+                      .monthlyScheduledPaymentTotal
+                      .ceil(),
+                  commitmentsEstimated:
+                      assetLiabilityWorkbook.estimatedPaymentCount > 0,
                   onReviewPayments: () => _scrollTo(_keyCalendar),
                 ),
               ),

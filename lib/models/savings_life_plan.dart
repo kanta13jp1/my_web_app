@@ -41,7 +41,8 @@ class SavingsLifePlan {
 
     final start = DateTime.parse(json['start'] as String);
     final targetDate = DateTime.parse(json['targetDate'] as String);
-    if (!targetDate.isAfter(start)) throw const FormatException('invalid dates');
+    if (!targetDate.isAfter(start))
+      throw const FormatException('invalid dates');
     return SavingsLifePlan(
       start: start,
       targetDate: targetDate,
@@ -58,7 +59,8 @@ class SavingsLifePlan {
 }
 
 class SavingsPlanCheckpoint {
-  const SavingsPlanCheckpoint(this.date, this.targetSavings, this.forecastSavings);
+  const SavingsPlanCheckpoint(
+      this.date, this.targetSavings, this.forecastSavings);
   final DateTime date;
   final int targetSavings;
   final int forecastSavings;
@@ -82,6 +84,7 @@ class SavingsPlanResult {
   final int monthlyCapacity;
   final int monthlyShortfall;
   final int monthlyLivingCeiling;
+
   /// Null when inputs are missing or the plan cannot fund essential living costs.
   final int? dailyLivingBudget;
   final List<SavingsPlanCheckpoint> checkpoints;

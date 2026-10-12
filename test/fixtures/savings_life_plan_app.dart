@@ -12,7 +12,8 @@ class SavingsFixture extends StatelessWidget {
   const SavingsFixture({super.key});
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: SingleChildScrollView(child: Padding(
+        body: SingleChildScrollView(
+            child: Padding(
           padding: const EdgeInsets.all(16),
           child: SavingsLifePlanCard(
             userId: 'synthetic-fixture',
