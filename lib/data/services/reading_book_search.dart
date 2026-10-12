@@ -5,7 +5,8 @@ import '../catalogs/philosophy_catalog.dart';
 import '../../domain/models/philosophy_reading.dart';
 
 class ReadingBookResult {
-  const ReadingBookResult(this.title, this.edition);
+  const ReadingBookResult(this.title, this.edition, {this.author = ''});
+  final String author;
   final String title;
   final ReadingEdition edition;
 }
@@ -40,6 +41,7 @@ class ReadingBookSearch {
     String query, {
     http.Client? client,
     bool external = false,
+    String author = '',
   }) async {
     final text = query.trim();
     if (text.isEmpty || text.length > 200) return [];
@@ -49,7 +51,25 @@ class ReadingBookSearch {
     // This also supports books attached to existing personal reading records.
     final books = [
       ...philosophyCatalogEditions.map(
-        (book) => ReadingBookResult(book.label, book.edition),
+        (book) => ReadingBookResult(
+          book.label, book.edition,
+          author: philosophyWorks.where((work) => work.id == book.workId).firstOrNull?.author.name ?? '',
+        ),
+      ),
+      const ReadingBookResult(
+        '国家論・岩波文庫（スピノザ／畠中尚志訳・第16刷）',
+        ReadingEdition(
+          publisher: '岩波書店',
+          translator: '畠中尚志',
+          year: '1995',
+          language: '日本語',
+          volume: '岩波文庫・第16刷（第12刷改版: 1976年）',
+          totalPages: 213,
+          isbn: '9784003361566',
+          sourceUrl: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000002440109',
+          bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361566',
+        ),
+        author: 'スピノザ',
       ),
       const ReadingBookResult(
         '読書について・光文社（ショーペンハウアー）',
@@ -83,14 +103,15 @@ class ReadingBookSearch {
           ? book.edition.isbn == isbn
           : '${book.title} ${book.edition.translator} ${book.edition.publisher}'
               .toLowerCase()
-              .contains(text.toLowerCase()),
+              .contains(text.toLowerCase()) &&
+              (author.trim().isEmpty || book.author.isEmpty || book.author.toLowerCase().contains(author.trim().toLowerCase())),
     );
     if (matches.isNotEmpty && !external) return matches.toList();
     if (!isIsbn && RegExp(r'^[0-9Xx\s-]+$').hasMatch(text)) return [];
     final ownedClient = client == null;
     final transport = client ?? http.Client();
     try {
-      if (!isIsbn) return await _searchTitle(text, transport);
+      if (!isIsbn) return await _searchTitle(text, transport, author: author.trim());
       final response = await transport
           .get(Uri.https('api.openbd.jp', '/v1/get', {'isbn': isbn}))
           .timeout(const Duration(seconds: 12));
@@ -162,12 +183,14 @@ class ReadingBookSearch {
 
   Future<List<ReadingBookResult>> _searchTitle(
     String title,
-    http.Client client,
-  ) async {
+    http.Client client, {
+    String author = '',
+  }) async {
     final response = await client
         .get(
           Uri.https('ndlsearch.ndl.go.jp', '/api/opensearch', {
             'title': title,
+            if (author.isNotEmpty) 'creator': author,
             'dpid': 'iss-ndl-opac',
             'cnt': '20',
           }),

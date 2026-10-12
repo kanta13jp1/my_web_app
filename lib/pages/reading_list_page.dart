@@ -741,6 +741,7 @@ class _ReadingListPageState extends State<ReadingListPage>
             : _model.error ?? '保存できませんでした';
       },
       bookQuery: work.title,
+      bookAuthor: work.author.name,
     );
   }
 
@@ -925,6 +926,7 @@ class _ReadingListPageState extends State<ReadingListPage>
       bookQuery: cycle.edition.isbn.isNotEmpty
           ? cycle.edition.isbn
           : record.work.title,
+      bookAuthor: record.work.author.name,
     );
   }
 
@@ -1047,6 +1049,7 @@ class _ReadingListPageState extends State<ReadingListPage>
     List<_Field> fields,
     Future<String?> Function(Map<String, String>) submit, {
     String bookQuery = '',
+    String bookAuthor = '',
   }) =>
       showDialog<void>(
         context: context,
@@ -1056,6 +1059,7 @@ class _ReadingListPageState extends State<ReadingListPage>
           fields: fields,
           submit: submit,
           bookQuery: bookQuery,
+          bookAuthor: bookAuthor,
         ),
       );
 }
@@ -1085,8 +1089,10 @@ class _ReadingForm extends StatefulWidget {
     required this.fields,
     required this.submit,
     this.bookQuery = '',
+    this.bookAuthor = '',
   });
   final String bookQuery;
+  final String bookAuthor;
   final String title;
   final List<_Field> fields;
   final Future<String?> Function(Map<String, String>) submit;
@@ -1173,6 +1179,7 @@ class _ReadingFormState extends State<_ReadingForm> {
                         _lookupOpen)
                       ReadingBookLookup(
                         initialQuery: widget.bookQuery,
+                        author: widget.bookAuthor,
                         onSelected: (edition) {
                           final values = edition.toJson();
                           for (final key in [

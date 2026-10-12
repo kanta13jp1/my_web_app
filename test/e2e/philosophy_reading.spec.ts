@@ -715,3 +715,44 @@ test('quick page update preserves a detailed impression and rejects moving behin
   await revealReadingControl(page,note);await expect(note).toBeVisible();
   await capture(page,info,'quick-progress-detailed-note');
 });
+
+
+test('Spinoza political treatise automatically selects a sourced Iwanami edition, reloads and edits', async ({ page }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await page.getByRole('tab', { name: '著作', exact: true }).click();
+  await page.getByRole('button', { name: '著作を追加', exact: true }).click();
+  await field(page, /^著作名/, '国家論');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('著作を追加（自分の目録）', { exact: true })).toHaveCount(0);
+  await openWork(page, '国家論');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  const candidate = page.getByRole('button', { name: /^国家論・岩波文庫（スピノザ/ });
+  await revealReadingControl(page, candidate);
+  await candidate.click();
+  await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+  await restoredField(page, /^出版社/, '岩波書店');
+  await restoredField(page, /^訳者/, '畠中尚志');
+  await restoredField(page, /^総ページ数/, '213');
+  await restoredField(page, /^ISBN/, '9784003361566');
+  await restoredField(page, /^版情報の出典URL/, 'https://ndlsearch.ndl.go.jp/books/R100000002-I000002440109');
+  await restoredField(page, /^書籍・購入URL/, 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361566');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '国家論');
+  await editRegisteredEdition(page, '9784003361566');
+  await restoredField(page, /^ISBN/, '9784003361566');
+  await field(page, /^巻・版の名前/, '手元の刷を確認済み');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '国家論');
+  await editRegisteredEdition(page, '9784003361566');
+  await restoredField(page, /^訳者/, '畠中尚志');
+  await restoredField(page, /^巻・版の名前/, '手元の刷を確認済み');
+  await capture(page, info, 'spinoza-iwanami-restored');
+});
