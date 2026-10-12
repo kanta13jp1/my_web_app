@@ -36,7 +36,7 @@ void main() {
     await tester.tap(find.text('進捗を更新'));
     await tester.pumpAndSettle();
     expect(tester.widget<TextField>(input).controller!.text, '85');
-    expect(find.textContaining('保存できませんでした'), findsWidgets);
+    expect(find.textContaining('入力を保持しています'), findsWidgets);
     await tester.tap(find.text('進捗を更新'));
     await tester.pumpAndSettle();
     expect(find.text('85ページまでの進捗を保存しました'), findsOneWidget);
