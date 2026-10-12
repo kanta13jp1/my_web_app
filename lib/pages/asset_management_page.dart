@@ -1,3 +1,4 @@
+import '../widgets/asset_future_card_bill_card.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:my_web_app/widgets/asset_interest_history_card.dart';
@@ -10232,6 +10233,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 onIgnore: _ignoreDuplicateGroup,
               ),
               _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
+              if (assetLiabilityWorkbook != null)
+                AssetFutureCardBillCard(
+                  repository: _assetLiabilityRepository,
+                  accounts: assetLiabilityWorkbook.accounts,
+                  subscriptionIds:
+                      assetLiabilityWorkbook.subscriptionFixedCostAccountIds,
+                  currentStateMonth: _assetLiabilityStateMonth(_now),
+                ),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(
