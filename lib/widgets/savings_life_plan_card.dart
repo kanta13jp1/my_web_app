@@ -317,7 +317,8 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
               '${SavingsLifePlan.dateText(_plan.start)} → ${SavingsLifePlan.dateText(_plan.targetDate)}',
             ),
             const Text(
-                '目標は、翌1給与サイクル分の生活費・固定費・返済・予備費を別に確保した後、同棲準備に丸々使える100万円です。収入増・副業収入は前提にしません。投資評価額・借入可能額は含めません。',),
+              '目標は、翌1給与サイクル分の生活費・固定費・返済・予備費を別に確保した後、同棲準備に丸々使える100万円です。収入増・副業収入は前提にしません。投資評価額・借入可能額は含めません。',
+            ),
             const Text('計画と日々のチェックは本人用にこのブラウザーへ保存します。他端末との同期はありません。'),
             if (_loading)
               const Padding(
@@ -351,19 +352,24 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                 label: const Text('口座を分析してAI提案'),
               ),
               const Text(
-                  '現金・預金、登録返済・固定費、手取り計画、生活費の集計だけを既存AIへ送ります。口座番号や明細原文は送りません。AIが使えない場合は仮置き案と表示します。',),
+                '現金・預金、登録返済・固定費、手取り計画、生活費の集計だけを既存AIへ送ります。口座番号や明細原文は送りません。AIが使えない場合は仮置き案と表示します。',
+              ),
               if (_proposal != null) ...[
                 Semantics(container: true, child: Text(_proposal!.source)),
                 Text(
-                    '現在の貯蓄余力案：${_yen(_proposal!.availableSavings)} / 別枠確保：${_yen(_proposal!.protectedCash)}',),
+                  '現在の貯蓄余力案：${_yen(_proposal!.availableSavings)} / 別枠確保：${_yen(_proposal!.protectedCash)}',
+                ),
                 if (_proposal!.reserveShortfall > 0)
                   Text(
-                      '確保資金が ${_yen(_proposal!.reserveShortfall)} 不足。先に生活と支払いを確保します。',),
+                    '確保資金が ${_yen(_proposal!.reserveShortfall)} 不足。先に生活と支払いを確保します。',
+                  ),
                 Text(
-                    '生活費案 ${_yen(_proposal!.livingCosts)}・予備費案 ${_yen(_proposal!.reserve)}',),
+                  '生活費案 ${_yen(_proposal!.livingCosts)}・予備費案 ${_yen(_proposal!.reserve)}',
+                ),
                 Semantics(container: true, child: Text(_proposal!.rationale)),
                 Text(
-                    '生活費記録がある日：${_proposal!.input.recordedDays}日。未入力支出・臨時支出・未確定請求は別途確認が必要です。',),
+                  '生活費記録がある日：${_proposal!.input.recordedDays}日。未入力支出・臨時支出・未確定請求は別途確認が必要です。',
+                ),
               ],
               if (widget.suggestedIncome == null)
                 const Text('手取り収入が未確認です。給与明細または登録給料額を確認してください。収入増は計画に含めません。'),
@@ -401,11 +407,13 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                 Text('生活費・返済・予備費を引いた余力：月 ${_yen(result.monthlyCapacity)}'),
                 Text('翌1サイクルの別枠確保：${_yen(result.protectedCash)}'),
                 Text(
-                    '期限時点で必要な現金・預金：${_yen(_plan.target + result.protectedCash)}（自由資金100万円＋別枠確保）',),
+                  '期限時点で必要な現金・預金：${_yen(_plan.target + result.protectedCash)}（自由資金100万円＋別枠確保）',
+                ),
                 Text('現在の自由資金：${_yen(max(0, result.currentFreeCash))}'),
                 if (result.currentFreeCash < 0)
                   Text(
-                      '現在の別枠確保不足：${_yen(-result.currentFreeCash)}。この不足の補充も必要積立に含めています。',),
+                    '現在の別枠確保不足：${_yen(-result.currentFreeCash)}。この不足の補充も必要積立に含めています。',
+                  ),
                 if (result.expired)
                   Text(
                     result.currentFreeCash >= _plan.target
@@ -414,16 +422,17 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                   )
                 else if (result.monthlyShortfall > 0) ...[
                   Semantics(
-                      container: true,
-                      header: true,
-                      liveRegion: true,
-                      child: Text(
-                        '現計画では月 ${_yen(result.monthlyShortfall)} 不足',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),),
+                    container: true,
+                    header: true,
+                    liveRegion: true,
+                    child: Text(
+                      '現計画では月 ${_yen(result.monthlyShortfall)} 不足',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                   const Text(
                     '食事・通勤・医療と返済を守り、不要な固定費・購入を見直す必要があります。収入増で不足を埋めません。削減可能額が足りなければ1年以内の達成は困難です。日々の使用可能額は提示しません。',
                   ),
@@ -443,13 +452,14 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                         label:
                             '${SavingsLifePlan.dateText(checkpoint.date)} 自由資金目標 ${_yen(checkpoint.targetSavings)} / 現計画 ${_yen(checkpoint.forecastSavings)}',
                         child: ExcludeSemantics(
-                            child: ListTile(
-                          title:
-                              Text(SavingsLifePlan.dateText(checkpoint.date)),
-                          subtitle: Text(
-                            '自由資金目標 ${_yen(checkpoint.targetSavings)} / 現計画 ${_yen(checkpoint.forecastSavings)}',
+                          child: ListTile(
+                            title:
+                                Text(SavingsLifePlan.dateText(checkpoint.date)),
+                            subtitle: Text(
+                              '自由資金目標 ${_yen(checkpoint.targetSavings)} / 現計画 ${_yen(checkpoint.forecastSavings)}',
+                            ),
                           ),
-                        ),),
+                        ),
                       ),
                   ],
                 ),
@@ -464,7 +474,8 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                 ),
                 if (result.currentFreeCash < 0)
                   const Text(
-                      '別枠資金が未確保のため日割り使用可能額は出しません。食事・通勤・直近の支払いを先に確保し、支払日ごとの不足はマネーカレンダーで確認してください。',),
+                    '別枠資金が未確保のため日割り使用可能額は出しません。食事・通勤・直近の支払いを先に確保し、支払日ごとの不足はマネーカレンダーで確認してください。',
+                  ),
                 if (result.dailyLivingBudget != null) ...[
                   Text(
                     '生活費の日割り目安 ${_yen(result.dailyLivingBudget!)} / 日（毎月の日数で計算）',
@@ -545,8 +556,8 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
       _income,
       _living,
       _reserve,
-      _spent
-    ,]) {
+      _spent,
+    ]) {
       controller.dispose();
     }
     super.dispose();
