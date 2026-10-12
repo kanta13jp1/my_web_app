@@ -90,9 +90,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
       if (mounted) {
         setState(() {
           _loadFailed = true;
-      }
           _message = '今日のチェックを読み込めませんでした。';
         });
+      }
     }
   }
 
