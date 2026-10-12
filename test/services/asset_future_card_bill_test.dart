@@ -46,8 +46,11 @@ void main() {
   );
   test('existing paid history cannot be silently changed to unpaid', () {
     expect(
-      () => apply(const AssetLiabilityMonthlyState(
-          billingConfirmedAccountIds: {'cloud'})),
+      () => apply(
+        const AssetLiabilityMonthlyState(
+          billingConfirmedAccountIds: {'cloud'},
+        ),
+      ),
       throwsStateError,
     );
     expect(
