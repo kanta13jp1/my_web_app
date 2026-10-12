@@ -660,3 +660,58 @@ test('current title searches automatically and Iwanami edition registers, reload
   await restoredField(page, /^版情報の出典URL/, 'https://www.hanmoto.com/bd/isbn/9784003363225');
   await capture(page, info, 'iwanami-auto-reloaded');
 });
+
+test('page number alone saves progress, adds a delta, corrects and survives reload', async ({ page }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '国家');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await field(page, /^総ページ数/, '160');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  const input=page.getByRole('textbox',{name:/^読んだページ/});
+  await revealReadingControl(page,input);
+  for (const value of ['85','100','100','80']) {
+    // Clear prior feedback before retrying the same page, so an old success cannot satisfy this update.
+    await field(page,/^読んだページ/,'');
+    await expect(page.getByText(/^\d+ページまでの進捗を保存しました$/)).toHaveCount(0);
+    await field(page,/^読んだページ/,value);
+    await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+    await expect(page.getByText(value+'ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+    await expect(page.getByRole('group',{name:new RegExp('延べ '+value+' ページ / 区間記録済み '+value+' /')}).last()).toBeVisible();
+  }
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+  await openWork(page,'国家');
+  await revealReadingControl(page,input);
+  await restoredField(page,/^読んだページ/,'80');
+  await field(page,/^読んだページ/,'161');
+  await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('総ページ数（160ページ）を超えています',{exact:true})).toBeVisible();
+  await field(page,/^読んだページ/,'160');
+  await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('160ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+  await revealReadingControl(page,page.getByRole('button',{name:'読了にする',exact:true}));
+  await expect(page.getByRole('button',{name:'読了にする',exact:true})).toBeVisible();
+  await capture(page,info,'quick-page-progress');
+});
+
+test('quick page update preserves a detailed impression and rejects moving behind it', async ({page},info) => {
+  await page.goto('/');await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+  await openWork(page,'国家');
+  await page.getByRole('button',{name:'読書を始める',exact:true}).click();
+  await field(page,/^総ページ数/,'160');await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'記録を追加',exact:true}).click();
+  await field(page,/^開始ページ/,'1');await field(page,/^終了ページ/,'20');await field(page,/^感想/,'詳細の感想を保持');
+  await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByText('読書記録を追加',{exact:true})).toHaveCount(0);
+  await field(page,/^読んだページ/,'85');await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('85ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+  await field(page,/^読んだページ/,'10');await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('詳細記録の終了ページより前には戻せません。記録の編集で修正してください',{exact:true})).toBeVisible();
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'国家');
+  await restoredField(page,/^読んだページ/,'85');
+  const note=page.getByRole('group',{name:/感想: 詳細の感想を保持/}).last();
+  await revealReadingControl(page,note);await expect(note).toBeVisible();
+  await capture(page,info,'quick-progress-detailed-note');
+});
