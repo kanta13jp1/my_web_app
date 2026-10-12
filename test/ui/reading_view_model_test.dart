@@ -6,6 +6,29 @@ import 'package:my_web_app/ui/features/reading/view_models/reading_view_model.da
 import '../support/reading_fixture_repository.dart';
 
 void main() {
+  test('work memo persists without starting a reading cycle', () async {
+    final repo = ReadingFixtureRepository();
+    final model = ReadingViewModel(repo);
+    await model.load();
+    final work = philosophyWorks.first;
+    expect(await model.appendWorkMemo(work, '画像確認16〜17頁'), isTrue);
+    await model.load();
+    final record = model.recordFor(work.id)!;
+    expect(record.work.note, contains('画像確認16〜17頁'));
+    expect(record.cycles, isEmpty);
+    expect(record.pagesRead, 0);
+    expect(record.isRead, isFalse);
+    repo.failNextSave = true;
+    expect(await model.appendWorkMemo(work, '追加失敗'), isFalse);
+    expect(model.recordFor(work.id)!.work.note, record.work.note);
+    expect(await model.appendWorkMemo(work, '追記成功'), isTrue);
+    await model.load();
+    expect(model.recordFor(work.id)!.work.note, contains('追記成功'));
+    expect(model.recordFor(work.id)!.cycles, isEmpty);
+    model.dispose();
+    await repo.changes.close();
+  });
+
   test(
       'guest can browse but cannot mutate; save failure leaves the previous record intact',
       () async {

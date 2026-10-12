@@ -488,6 +488,14 @@ class _ReadingListPageState extends State<ReadingListPage>
                   title: Text(work.title),
                   actions: [
                     IconButton(
+                      tooltip: '著作にメモを追記',
+                      onPressed:
+                          !_model.signedIn || _model.saving || _model.loading
+                              ? null
+                              : () => _appendWorkMemo(work),
+                      icon: const Icon(Icons.note_add_outlined),
+                    ),
+                    IconButton(
                       tooltip: '再読込',
                       onPressed: _model.saving ? null : _model.load,
                       icon: const Icon(Icons.refresh),
@@ -515,7 +523,7 @@ class _ReadingListPageState extends State<ReadingListPage>
                           child: const Text('著者の出典を開く'),
                         ),
                       ),
-                    Text(work.note),
+                    Text(record?.work.note ?? work.note),
                     if (work.source.isNotEmpty)
                       Align(
                         alignment: Alignment.centerLeft,
@@ -564,6 +572,14 @@ class _ReadingListPageState extends State<ReadingListPage>
             },
           ),
         ),
+      );
+
+  Future<void> _appendWorkMemo(PhilosophyWork work) => _form(
+        '著作にメモを追記',
+        [const _Field('memo', '追記するメモ', required: true, lines: 6)],
+        (values) async => await _model.appendWorkMemo(work, values['memo']!)
+            ? null
+            : _model.error ?? 'メモを入力してください',
       );
 
   Widget _bookAvailability(PhilosophyWork work) => ExpansionTile(
