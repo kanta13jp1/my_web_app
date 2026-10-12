@@ -16744,8 +16744,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     for (final row in _payslipRows) {
       final date = DateTime.tryParse(row['pay_date']?.toString() ?? '');
       final net = _numberFromDynamic(row['net_amount']);
-      if (date == null || date.isAfter(_now) || !net.isFinite || net <= 0)
+      if (date == null || date.isAfter(_now) || !net.isFinite || net <= 0) {
         continue;
+      }
       if (latest == null || date.isAfter(latest)) {
         latest = date;
         amount = net.floor();

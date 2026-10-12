@@ -34,7 +34,7 @@ void main() {
     for (final response in [
       '{"living_costs":1,"reserve":0,"rationale":"節約"}',
       'not json'
-    ]) {
+    ,]) {
       final result = await SavingsPlanProposalService(
         allowExternalAi: () async => true,
         generate: (_) async => response,

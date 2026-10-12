@@ -101,10 +101,11 @@ class SavingsPlanProposalService {
           'rationaleには金額・数字・達成済み・返済済みと書かず、生活方針だけを説明する。生活費は上の固定費を重複して含めない。集計：${jsonEncode(evidence)}';
       final raw = await _generate(prompt).timeout(const Duration(seconds: 30));
       var text = raw.trim();
-      if (text.startsWith('```'))
+      if (text.startsWith('```')) {
         text = text
             .replaceFirst(RegExp(r'^```(?:json)?\s*'), '')
             .replaceFirst(RegExp(r'\s*```$'), '');
+      }
       final value = jsonDecode(text) as Map<String, dynamic>;
       final living = value['living_costs'];
       final reserve = value['reserve'];
