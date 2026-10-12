@@ -736,6 +736,7 @@ class _ReadingListPageState extends State<ReadingListPage>
       );
 
   Widget _cycle(ReadingRecord record, ReadingCycle cycle, int number) => Card(
+        key: ValueKey(cycle.id),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(

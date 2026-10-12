@@ -109,7 +109,7 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(find.text('読む版を登録'), findsNothing);
-    expect(find.textContaining('総 100 ページ'), findsOneWidget);
+    expect(find.textContaining('延べ 0 ページ / 区間記録済み 0 / 総 100 ページ'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await repository.changes.close();
   });
