@@ -26,6 +26,7 @@ void main() {
     );
     await tester.pump();
     await tester.enterText(find.byType(TextField), '新しい検索');
+    await tester.pump();
     await tester.tap(find.text('書籍情報を検索'));
     await tester.pumpAndSettle();
     expect(find.text('新しい結果'), findsOneWidget);
