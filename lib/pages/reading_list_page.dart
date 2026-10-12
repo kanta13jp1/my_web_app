@@ -1330,47 +1330,47 @@ class _ReadingPageProgressState extends State<_ReadingPageProgress> {
         container: true,
         explicitChildNodes: true,
         child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    key: const ValueKey('reading-reached-page'),
-                    controller: _page,
-                    enabled: widget.enabled && !_saving,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: '読んだページ（ここまで）',
-                      suffixText: 'ページ',
-                      helperText: widget.total == null
-                          ? '例: 85'
-                          : '総 ${widget.total} ページ',
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('reading-reached-page'),
+                      controller: _page,
+                      enabled: widget.enabled && !_saving,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: '読んだページ（ここまで）',
+                        suffixText: 'ページ',
+                        helperText: widget.total == null
+                            ? '例: 85'
+                            : '総 ${widget.total} ページ',
+                      ),
+                      onChanged: (_) => setState(() {
+                        _error = null;
+                        _success = null;
+                      }),
+                      onSubmitted: (_) => _update(),
                     ),
-                    onChanged: (_) => setState(() {
-                      _error = null;
-                      _success = null;
-                    }),
-                    onSubmitted: (_) => _update(),
                   ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: widget.enabled && !_saving ? _update : null,
-                  child: Text(_saving ? '更新中…' : '進捗を更新'),
-                ),
-              ],
-            ),
-            if (_error != null)
-              Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: widget.enabled && !_saving ? _update : null,
+                    child: Text(_saving ? '更新中…' : '進捗を更新'),
+                  ),
+                ],
               ),
-            if (_success != null) Text(_success!),
-          ],
-        ),
+              if (_error != null)
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              if (_success != null) Text(_success!),
+            ],
+          ),
         ),
       );
 }
