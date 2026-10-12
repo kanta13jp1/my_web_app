@@ -7,7 +7,9 @@ class AssetFlowAmountParser {
         })
         .replaceAll('，', ',')
         .trim();
-    if (!RegExp(r'^(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)$').hasMatch(normalized)) {
+    if (!RegExp(
+      r'^(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)$',
+    ).hasMatch(normalized)) {
       return null;
     }
     return int.tryParse(normalized.replaceAll(',', ''));
