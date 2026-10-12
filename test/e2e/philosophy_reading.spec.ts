@@ -107,7 +107,10 @@ async function editRegisteredEdition(page: Page, isbn: string) {
 
 test.setTimeout(60000);
 
-test.beforeEach(async ({ request }) => {
+test.beforeEach(async ({ request, page }) => {
+  // Automatic title lookups stay deterministic; each external scenario overrides this route.
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route =>
+    route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' }));
   const reset = await request.post('http://127.0.0.1:7359', { data: { action: 'fixture.reset' } });
   expect(reset.ok()).toBeTruthy();
 });
