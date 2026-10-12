@@ -5,19 +5,31 @@ import 'package:my_web_app/data/services/reading_book_search.dart';
 import 'package:my_web_app/domain/models/philosophy_reading.dart';
 
 void main() {
-  testWidgets('initial title searches once without typing or selecting metadata',
+  testWidgets(
+      'initial title searches once without typing or selecting metadata',
       (tester) async {
     var calls = 0;
     ReadingEdition? selected;
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: ReadingBookLookup(
-      initialQuery: '読書について',
-      onSelected: (value) => selected = value,
-      search: (query) async {
-        calls++;
-        expect(query, '読書について');
-        return [const ReadingBookResult('岩波文庫', ReadingEdition(publisher: '岩波書店'))];
-      },
-    ),),),);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ReadingBookLookup(
+            initialQuery: '読書について',
+            onSelected: (value) => selected = value,
+            search: (query) async {
+              calls++;
+              expect(query, '読書について');
+              return [
+                const ReadingBookResult(
+                  '岩波文庫',
+                  ReadingEdition(publisher: '岩波書店'),
+                ),
+              ];
+            },
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(calls, 1);
     expect(find.text('岩波文庫'), findsOneWidget);

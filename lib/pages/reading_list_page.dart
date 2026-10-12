@@ -693,34 +693,39 @@ class _ReadingListPageState extends State<ReadingListPage>
   }) async {
     final recordId = const Uuid().v4();
     final cycleId = const Uuid().v4();
-    await _form('読む版を登録', _editionFields(edition), (values) async {
-      final error = _editionError(values);
-      if (error != null) return error;
-      if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
-        return '総ページ数は1以上です';
-      }
-      if (_model.recordFor(work.id) == null) {
-        if (!await _model.addWork(recordId, work)) {
-          return _model.error ?? '保存できませんでした';
+    await _form(
+      '読む版を登録',
+      _editionFields(edition),
+      (values) async {
+        final error = _editionError(values);
+        if (error != null) return error;
+        if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
+          return '総ページ数は1以上です';
         }
-      }
-      final record = _model.recordFor(work.id);
-      if (record == null) {
-        return '記録を再読込してから保存してください';
-      }
-      final cycle = ReadingCycle(
-        id: cycleId,
-        startedAt: DateTime.now().toIso8601String().substring(0, 10),
-        edition: _edition(values),
-      );
-      return await _model.save(
-        record.withCycles(
-          [...record.cycles.where((c) => c.id != cycleId), cycle],
-        ),
-      )
-          ? null
-          : _model.error ?? '保存できませんでした';
-    }, bookQuery: work.title,);
+        if (_model.recordFor(work.id) == null) {
+          if (!await _model.addWork(recordId, work)) {
+            return _model.error ?? '保存できませんでした';
+          }
+        }
+        final record = _model.recordFor(work.id);
+        if (record == null) {
+          return '記録を再読込してから保存してください';
+        }
+        final cycle = ReadingCycle(
+          id: cycleId,
+          startedAt: DateTime.now().toIso8601String().substring(0, 10),
+          edition: _edition(values),
+        );
+        return await _model.save(
+          record.withCycles(
+            [...record.cycles.where((c) => c.id != cycleId), cycle],
+          ),
+        )
+            ? null
+            : _model.error ?? '保存できませんでした';
+      },
+      bookQuery: work.title,
+    );
   }
 
   Future<bool> _replaceCycle(ReadingRecord record, ReadingCycle cycle) =>
@@ -860,21 +865,28 @@ class _ReadingListPageState extends State<ReadingListPage>
       );
 
   Future<void> _editEdition(ReadingRecord record, ReadingCycle cycle) async {
-    await _form('版を編集', _editionFields(cycle.edition), (values) async {
-      final error = _editionError(values);
-      if (error != null) return error;
-      if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
-        return '総ページ数は1以上です';
-      }
-      final edition = _edition(values);
-      if (cycle.entries
-          .any((entry) => entry.validate(edition.totalPages) != null)) {
-        return '既存記録と総ページ数が矛盾します。記録を確認してください';
-      }
-      return await _replaceCycle(record, cycle.copyWith(edition: edition))
-          ? null
-          : _model.error ?? '保存できませんでした';
-    }, bookQuery: cycle.edition.isbn.isNotEmpty ? cycle.edition.isbn : record.work.title,);
+    await _form(
+      '版を編集',
+      _editionFields(cycle.edition),
+      (values) async {
+        final error = _editionError(values);
+        if (error != null) return error;
+        if (values['total']!.isNotEmpty && int.parse(values['total']!) < 1) {
+          return '総ページ数は1以上です';
+        }
+        final edition = _edition(values);
+        if (cycle.entries
+            .any((entry) => entry.validate(edition.totalPages) != null)) {
+          return '既存記録と総ページ数が矛盾します。記録を確認してください';
+        }
+        return await _replaceCycle(record, cycle.copyWith(edition: edition))
+            ? null
+            : _model.error ?? '保存できませんでした';
+      },
+      bookQuery: cycle.edition.isbn.isNotEmpty
+          ? cycle.edition.isbn
+          : record.work.title,
+    );
   }
 
   Future<void> _entry(
@@ -1000,8 +1012,12 @@ class _ReadingListPageState extends State<ReadingListPage>
       showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) =>
-            _ReadingForm(title: title, fields: fields, submit: submit, bookQuery: bookQuery,),
+        builder: (_) => _ReadingForm(
+          title: title,
+          fields: fields,
+          submit: submit,
+          bookQuery: bookQuery,
+        ),
       );
 }
 

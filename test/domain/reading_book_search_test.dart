@@ -121,7 +121,10 @@ void main() {
     expect(byTitle.last.edition.isbn, '9784003363225');
     expect(byTitle.last.edition.translator, '斎藤忍随');
     expect(byTitle.last.edition.totalPages, 160);
-    expect(byTitle.last.edition.sourceUrl, 'https://www.hanmoto.com/bd/isbn/9784003363225',);
+    expect(
+      byTitle.last.edition.sourceUrl,
+      'https://www.hanmoto.com/bd/isbn/9784003363225',
+    );
     expect(byTitle.first.edition.isbn, byIsbn.single.edition.isbn);
     expect(byTitle.first.edition.publisher, '光文社');
     expect(byTitle.first.edition.translator, '鈴木芳子');
