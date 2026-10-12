@@ -290,6 +290,75 @@ class ReadingCycle {
   final ReadingEdition edition;
   final List<ReadingEntry> entries;
 
+  int get reachedPage => entries.fold(
+        0,
+        (page, entry) => (entry.endPage ?? 0) > page ? entry.endPage! : page,
+      );
+
+  ReadingCycle withPageProgress(
+    int page, {
+    required String id,
+    required String date,
+  }) {
+    if (page < 0 || page > 1000000) {
+      throw ArgumentError('ページ番号は0〜1000000の整数で入力してください');
+    }
+    if (edition.totalPages != null && page > edition.totalPages!) {
+      throw ArgumentError('総ページ数（${edition.totalPages}ページ）を超えています');
+    }
+    final dateError = ReadingEntry(
+      id: id,
+      date: date,
+      pages: 0,
+    ).validate(null);
+    if (dateError != null) throw ArgumentError(dateError);
+    if (page == reachedPage) return this;
+    if (page > reachedPage) {
+      final entry = ReadingEntry(
+        id: 'progress:$id',
+        date: date,
+        pages: page - reachedPage,
+        startPage: reachedPage + 1,
+        endPage: page,
+      );
+      return copyWith(entries: [...entries, entry]);
+    }
+    final corrected = <ReadingEntry>[];
+    for (final entry in entries) {
+      if (entry.endPage == null || entry.endPage! <= page) {
+        corrected.add(entry);
+        continue;
+      }
+      if (!entry.id.startsWith('progress:') ||
+          entry.startPage == null ||
+          entry.understanding != null ||
+          entry.impression.isNotEmpty ||
+          entry.questions.isNotEmpty ||
+          entry.concepts.isNotEmpty) {
+        throw ArgumentError('詳細記録の終了ページより前には戻せません。記録の編集で修正してください');
+      }
+      final hasRange = entry.startPage! <= page;
+      final snapshot = entry.toJson()..remove('history');
+      final history = [...entry.history, snapshot]
+          .reversed
+          .take(20)
+          .toList()
+          .reversed
+          .toList();
+      corrected.add(
+        ReadingEntry(
+          id: entry.id,
+          date: entry.date,
+          pages: hasRange ? page - entry.startPage! + 1 : 0,
+          startPage: hasRange ? entry.startPage : null,
+          endPage: hasRange ? page : null,
+          history: history,
+        ),
+      );
+    }
+    return copyWith(entries: corrected);
+  }
+
   int get pagesRead => entries.fold(0, (total, entry) => total + entry.pages);
 
   // Unique page coverage is calculated within one edition and one reading cycle.
