@@ -59,21 +59,24 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
       if (!widget.repository.isMonthVerifiedForAi(_month)) {
         throw StateError('サーバから対象月を確認できませんでした');
       }
-      if (mounted)
+      if (mounted) {
         setState(() {
           _state = state;
           _select(_accountId);
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _message = '対象月の読込に失敗しました。再読込してください。';
         });
+      }
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
         });
+      }
     }
   }
 
@@ -119,7 +122,9 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
         note: _note.text,
         editedAt: DateTime.now(),
       );
-      if (!ownsRead()) throw StateError('保存対象のユーザーが変わりました');
+      if (!ownsRead()) {
+        throw StateError('保存対象のユーザーが変わりました');
+      }
       await widget.repository.saveMonth(month: _month, state: edited);
       final restored = await widget.repository.loadMonth(_month);
       if (!ownsRead() ||
@@ -132,21 +137,24 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
           restored.billingConfirmedAccountIds.contains(account.id)) {
         throw StateError('サーバ再読込の照合が未完了です');
       }
-      if (mounted)
+      if (mounted) {
         setState(() {
           _state = restored;
           _message = '対象月へ保存・サーバ再読込確認済み（未確定・未払い）';
         });
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _message = '保存の確認ができませんでした：$e';
         });
+      }
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
         });
+      }
     }
   }
 
