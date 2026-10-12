@@ -394,8 +394,67 @@ try {
   assert.deepEqual(browserErrors,[]);
   console.log('Published automatic title/ISBN lookup and Iwanami selection, registration, reload, edit, reload and real API persistence passed on desktop/mobile.');
 
+
+  // Exercise the released quick input with genuine browser actions and Auth/API persistence.
+  const quickPageResults=[];
+  for(const [mode,size,number] of [['desktop',{width:1440,height:1000},3],['mobile',{width:390,height:844},4]]) {
+    await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'読書について');
+    const cycle=page.getByRole('group',{name:new RegExp(`第${number}回[\\s\\S]*ISBN: ${iwanami.isbn}`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
+    const input=cycle.getByRole('textbox',{name:/^読んだページ/});
+    const update=cycle.getByRole('button',{name:'進捗を更新',exact:true});
+    async function setPage(value) {
+      await reveal(input);await input.focus();
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+      await input.fill(value);
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+      await expect(input).toHaveValue(value);
+    }
+    for(const value of ['85','100','100','80']) {
+      await setPage('');
+      await expect(page.getByText(/^\d+ページまでの進捗を保存しました$/)).toHaveCount(0);
+      await setPage(value);await update.click();
+      await expect(page.getByText(value+'ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+    }
+    let saved=(await action(a.token,{action:'reading.list'})).items.find(x=>x.id===personalId).metadata.cycles[number-1];
+    assert.equal(saved.entries.length,2,'Same-page update must not append another entry');
+    assert.equal(saved.entries.reduce((sum,e)=>sum+e.pages,0),80);
+    assert.equal(Math.max(...saved.entries.map(e=>e.end_page??0)),80);
+    assert(saved.entries[0].history.some(h=>h.end_page===85),'Correction history must preserve page 85');
+    assert.equal(saved.status,'reading');
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await reveal(input);await input.focus();
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    await expect(input).toHaveValue('80');
+    await setPage('161');await update.click();
+    await expect(page.getByText('総ページ数（160ページ）を超えています',{exact:true})).toBeVisible();
+    const edit=cycle.getByRole('button',{name:'記録を編集',exact:true}).first();
+    await reveal(edit);await edit.click();
+    await field(page,/^感想/,`簡易更新後も感想を保持・${mode}`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読書記録を編集',{exact:true})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await setPage('85');await update.click();
+    await expect(page.getByText('85ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+    await setPage('10');await update.click();
+    await expect(page.getByText('詳細記録の終了ページより前には戻せません。記録の編集で修正してください',{exact:true})).toBeVisible();
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await reveal(input);await input.focus();
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    await expect(input).toHaveValue('85');
+    await capture(page,`quick-page-${mode}-85-reloaded`);
+    saved=(await action(a.token,{action:'reading.list'})).items.find(x=>x.id===personalId).metadata.cycles[number-1];
+    assert.equal(saved.entries.length,3);assert.equal(saved.entries.reduce((sum,e)=>sum+e.pages,0),85);
+    assert.equal(saved.entries[0].impression,`簡易更新後も感想を保持・${mode}`);
+    assert.equal(Math.max(...saved.entries.map(e=>e.end_page??0)),85);
+    assert.equal(saved.status,'reading');
+    quickPageResults.push({mode,reachedPage:85,pagesRead:85,entries:3,correctionAndNotePreservation:'passed'});
+  }
+  assert.deepEqual(browserErrors,[]);
+  await writeFile('reading-production-evidence/quick-page-results.json',JSON.stringify(quickPageResults,null,2));
+  console.log('Published quick page progress: 85 to 100, duplicate prevention, correction to 80, reload, total-page validation, detailed-note edit/preservation and final page 85 passed on desktop/mobile.');
+
   await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
-  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,automaticTitleIsbnIwanamiRegistrationReloadEdit:'passed',api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,quickPageProgress:'passed',quickPageResults,automaticTitleIsbnIwanamiRegistrationReloadEdit:'passed',api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
 } finally {
   if(browser) await browser.close();
