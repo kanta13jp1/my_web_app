@@ -136,8 +136,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
 
   int? _amount(String value, {bool signed = false}) {
     final clean = value.trim().replaceAll(',', '');
-    if (!RegExp(signed ? r'^-?\d{1,9}$' : r'^\d{1,9}$').hasMatch(clean))
+    if (!RegExp(signed ? r'^-?\d{1,9}$' : r'^\d{1,9}$').hasMatch(clean)) {
       return null;
+    }
     final number = int.tryParse(clean);
     return number != null && number.abs() <= 100000000 ? number : null;
   }
@@ -503,7 +504,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                       child: TextField(
                         controller: _spent,
                         enabled: !_busy,
-                        keyboardType: TextInputType.numberWithOptions(signed: signed),
+                        keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           labelText: '今日の生活費合計（計画用メモ）',
                           suffixText: '円',

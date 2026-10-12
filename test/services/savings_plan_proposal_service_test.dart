@@ -45,6 +45,16 @@ void main() {
       expect(result.source, contains('仮置き'));
     }
   });
+  test('income growth suggestions are rejected instead of adopted', () async {
+    final result = await SavingsPlanProposalService(
+      allowExternalAi: () async => true,
+      generate: (_) async =>
+          '{"living_costs":70000,"reserve":10000,"rationale":"副業で不足を埋めます。"}',
+    ).propose(input);
+    expect(result.usedAi, isFalse);
+    expect(result.source, contains('検証できず'));
+    expect(result.input.monthlyIncome, input.monthlyIncome);
+  });
   test('mask-money privacy setting prevents transmission', () async {
     var calls = 0;
     final result = await SavingsPlanProposalService(
