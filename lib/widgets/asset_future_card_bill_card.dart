@@ -36,12 +36,6 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
   final _note = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  @override
   void dispose() {
     _amount.dispose();
     _note.dispose();
