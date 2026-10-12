@@ -24,7 +24,8 @@ void main() {
       recordedAt: DateTime.parse('2026-10-09T08:39:00Z'),
     ),
   ];
-  runApp(MaterialApp(
+  runApp(
+    MaterialApp(
     home: Scaffold(
       appBar: AppBar(title: const Text('残高履歴のプレビュー')),
       body: Padding(
@@ -42,5 +43,6 @@ void main() {
         ),
       ),
     ),
-  ));
+    ),
+  );
 }

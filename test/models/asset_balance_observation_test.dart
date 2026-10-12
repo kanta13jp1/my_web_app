@@ -11,8 +11,10 @@ void main() {
           'created_at': timestamp,
         });
     expect(row('2026-10-10T17:18:00Z').timestampLabel, '2026-10-11 02:18 JST');
-    expect(row('2026-10-11T02:18:00+09:00').timestampLabel,
-        '2026-10-11 02:18 JST');
+    expect(
+      row('2026-10-11T02:18:00+09:00').timestampLabel,
+      '2026-10-11 02:18 JST',
+    );
     expect(row('2026-10-09T08:39:00Z').timestampLabel, '2026-10-09 17:39 JST');
     expect(row('2026-10-10T17:18:00Z').amount, -170423);
   });

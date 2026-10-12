@@ -17,10 +17,10 @@ test('shows minute timestamps and distinct same-day history without writes', asy
   await page.getByRole('button', { name: '残高履歴', exact: true }).click();
   await expect(page.getByText('サンプル銀行の残高履歴', { exact: true })).toBeVisible();
   for (const timestamp of ['2026-10-11 17:44 JST', '2026-10-11 02:18 JST', '2026-10-09 17:39 JST']) {
-    await expect(page.getByText(timestamp, { exact: true })).toBeVisible();
+    await expect(page.getByRole('group', { name: new RegExp(timestamp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })).toBeVisible();
   }
-  await expect(page.getByText('¥12,000', { exact: true })).toHaveCount(2);
-  await expect(page.getByText('¥-5,000', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: /JST.*¥12,000/ })).toHaveCount(2);
+  await expect(page.getByRole('group', { name: /2026-10-09 17:39 JST.*¥-5,000/ })).toBeVisible();
   await page.screenshot({ path: info.outputPath('balance-history.png') });
   await page.getByRole('button', { name: '閉じる', exact: true }).click();
   await expect(page.getByText('サンプル銀行の残高履歴', { exact: true })).toHaveCount(0);

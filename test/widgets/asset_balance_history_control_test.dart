@@ -3,8 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_balance_observation.dart';
 import 'package:my_web_app/widgets/asset_balance_history_control.dart';
 
-AssetBalanceObservation observation(int id, String timestamp,
-        {double amount = 1000}) =>
+AssetBalanceObservation observation(
+  int id,
+  String timestamp, {
+  double amount = 1000,
+}) =>
     AssetBalanceObservation(
       id: id,
       accountName: 'サンプル銀行',
@@ -12,9 +15,13 @@ AssetBalanceObservation observation(int id, String timestamp,
       recordedAt: DateTime.parse(timestamp),
     );
 
-Future<void> openHistory(WidgetTester tester, AssetBalanceHistoryLoader loader,
-    {AssetBalanceObservation? latest}) async {
-  await tester.pumpWidget(MaterialApp(
+Future<void> openHistory(
+  WidgetTester tester,
+  AssetBalanceHistoryLoader loader, {
+  AssetBalanceObservation? latest,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
     home: Scaffold(
       body: AssetBalanceHistoryControl(
         accountName: 'サンプル銀行',
@@ -22,7 +29,8 @@ Future<void> openHistory(WidgetTester tester, AssetBalanceHistoryLoader loader,
         loadPage: loader,
       ),
     ),
-  ));
+    ),
+  );
   await tester.tap(find.text('残高履歴'));
   await tester.pumpAndSettle();
 }
@@ -38,7 +46,7 @@ void main() {
     await openHistory(tester, (offset) async {
       offsets.add(offset);
       return rows;
-    }, latest: rows.first);
+    }, latest: rows.first,);
     expect(offsets, [0]);
     expect(find.text('2026-10-11 17:44 JST'), findsOneWidget);
     expect(find.text('2026-10-11 02:18 JST'), findsOneWidget);
@@ -79,8 +87,11 @@ void main() {
       return [observation(50, '2024-01-01T00:00:00Z')];
     });
     final more = find.text('さらに読み込む');
-    await tester.scrollUntilVisible(more, 500,
-        scrollable: find.byType(Scrollable).last);
+    await tester.scrollUntilVisible(
+      more,
+      500,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(more);
     await tester.pumpAndSettle();
     expect(offsets, [0, 50]);

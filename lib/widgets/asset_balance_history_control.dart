@@ -126,18 +126,21 @@ class _AssetBalanceHistoryDialogState
                   if (_rows.isEmpty && !_loading && !_failed)
                     const Text('残高履歴はありません。'),
                   for (final row in _rows)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(row.timestampLabel),
-                          Text(
-                            '¥${currency.format(row.amount)}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const Divider(),
-                        ],
+                    Semantics(
+                      container: true,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(row.timestampLabel),
+                            Text(
+                              '¥${currency.format(row.amount)}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const Divider(),
+                          ],
+                        ),
                       ),
                     ),
                   if (_loading)
