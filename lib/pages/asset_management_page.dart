@@ -7506,7 +7506,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         todayMap[candidate.accountName] = candidate.amount;
       }
       _recordBalanceObservationsForDisplay(
-        {for (final candidate in candidates) candidate.accountName: candidate.amount},
+        {
+          for (final candidate in candidates)
+            candidate.accountName: candidate.amount
+        },
         DateTime.parse(nowIso),
       );
       _initControllers();

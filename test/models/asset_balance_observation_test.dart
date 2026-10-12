@@ -10,16 +10,15 @@ void main() {
           'amount': -170423,
           'created_at': timestamp,
         });
-    expect(row('2026-10-10T17:18:00Z').timestampLabel,
-        '2026-10-11 02:18 JST');
+    expect(row('2026-10-10T17:18:00Z').timestampLabel, '2026-10-11 02:18 JST');
     expect(row('2026-10-11T02:18:00+09:00').timestampLabel,
         '2026-10-11 02:18 JST');
-    expect(row('2026-10-09T08:39:00Z').timestampLabel,
-        '2026-10-09 17:39 JST');
+    expect(row('2026-10-09T08:39:00Z').timestampLabel, '2026-10-09 17:39 JST');
     expect(row('2026-10-10T17:18:00Z').amount, -170423);
   });
 
-  test('keeps same-day and equal-value observations ordered by time then id', () {
+  test('keeps same-day and equal-value observations ordered by time then id',
+      () {
     final rows = [
       for (final pair in [(1, '02:18'), (3, '17:44'), (2, '17:44')])
         AssetBalanceObservation(

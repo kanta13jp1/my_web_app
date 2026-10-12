@@ -59,7 +59,8 @@ class _AssetBalanceHistoryDialog extends StatefulWidget {
       _AssetBalanceHistoryDialogState();
 }
 
-class _AssetBalanceHistoryDialogState extends State<_AssetBalanceHistoryDialog> {
+class _AssetBalanceHistoryDialogState
+    extends State<_AssetBalanceHistoryDialog> {
   final List<AssetBalanceObservation> _rows = [];
   bool _loading = false;
   bool _hasMore = true;

@@ -28,7 +28,8 @@ Future<void> openHistory(WidgetTester tester, AssetBalanceHistoryLoader loader,
 }
 
 void main() {
-  testWidgets('opens lazily and retains same-day equal-value rows', (tester) async {
+  testWidgets('opens lazily and retains same-day equal-value rows',
+      (tester) async {
     final offsets = <int>[];
     final rows = [
       observation(2, '2026-10-11T08:44:00Z'),
@@ -47,7 +48,8 @@ void main() {
     expect(find.text('残高日時 2026-10-11 17:44 JST'), findsOneWidget);
   });
 
-  testWidgets('retry keeps the same offset and displays older negative balances',
+  testWidgets(
+      'retry keeps the same offset and displays older negative balances',
       (tester) async {
     final offsets = <int>[];
     await openHistory(tester, (offset) async {
