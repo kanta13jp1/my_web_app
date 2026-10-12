@@ -16,6 +16,7 @@ class SavingsLifePlanService {
     required SavingsLifePlan plan,
     required DateTime asOf,
     required int monthlyCommitments,
+    int? monthlyIncomeCeiling,
   }) {
     final today = day(asOf);
     final deadline = day(plan.targetDate);
@@ -38,13 +39,14 @@ class SavingsLifePlanService {
     final currentFreeCash = (plan.cashBalance ?? 0) - protectedCash;
     final gap = max(0, plan.target - currentFreeCash);
     final required = dates.isEmpty ? gap : (gap / dates.length).ceil();
-    final capacity = (plan.income ?? 0) -
+    final income = monthlyIncomeCeiling == null ? (plan.income ?? 0) : min(plan.income ?? 0, monthlyIncomeCeiling);
+    final capacity = income -
         monthlyCommitments -
         (plan.livingCosts ?? 0) -
         plan.reserve;
     final shortfall = max(0, required - capacity);
     final livingCeiling =
-        (plan.income ?? 0) - monthlyCommitments - plan.reserve - required;
+        income - monthlyCommitments - plan.reserve - required;
     final daysInMonth = DateTime.utc(today.year, today.month + 1, 0).day;
     final checkpoints = <SavingsPlanCheckpoint>[];
     for (var i = 0; i < dates.length; i++) {

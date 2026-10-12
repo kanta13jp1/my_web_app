@@ -11,6 +11,7 @@ void main() {
 
 class SavingsFixture extends StatelessWidget {
   const SavingsFixture({super.key});
+  int get income => int.tryParse(Uri.base.queryParameters['income'] ?? '') ?? 400000;
   @override
   Widget build(BuildContext context) => Scaffold(
         body: SingleChildScrollView(
@@ -21,7 +22,7 @@ class SavingsFixture extends StatelessWidget {
               today: DateTime(2026, 10, 13),
               monthlyCommitments: 200000,
               commitmentsEstimated: true,
-              suggestedIncome: 400000,
+              suggestedIncome: income,
               proposalRevision: 'synthetic-fixture-v2',
             propose: () => SavingsPlanProposalService(
               allowExternalAi: () async => true,
@@ -29,10 +30,10 @@ class SavingsFixture extends StatelessWidget {
                 if (Uri.base.queryParameters['ai'] == 'error') throw StateError('synthetic offline');
                 return '{"living_costs":70000,"reserve":10000,"rationale":"架空家計・模擬AI応答です。食費と通勤費を確保し、日々の支出を確認します。"}';
               },
-            ).propose(const SavingsPlanProposalInput(
-              cashBalance: 400000, monthlyIncome: 400000, monthlyCommitments: 200000,
+            ).propose(SavingsPlanProposalInput(
+              cashBalance: 400000, monthlyIncome: income, monthlyCommitments: 200000,
               observedLivingExpense: 12000, recordedDays: 5, estimatedPayments: true,
-            )),
+            ),),
             onReviewPayments: () {},
             ),
           ),

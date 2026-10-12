@@ -10195,13 +10195,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       'savings-life-plan:${_supabase.auth.currentUser!.id}'),
                   userId: _supabase.auth.currentUser!.id,
                   today: _now,
-                  suggestedIncome: _registeredSalaryAmount()?.round(),
+                  suggestedIncome: _savingsPlanNetIncome(),
                   monthlyCommitments: assetLiabilityWorkbook
                       .monthlyScheduledPaymentTotal
                       .ceil(),
                   commitmentsEstimated:
                       assetLiabilityWorkbook.estimatedPaymentCount > 0,
-                  proposalRevision: '${_assetManagementAiInputRevision}:${assetLiabilityWorkbook.cashLikeTotal}:${assetLiabilityWorkbook.monthlyScheduledPaymentTotal}:${_registeredSalaryAmount()}:${_buildSalarySpendingBreakdown().totalExpense}',
+                  proposalRevision: '$_assetManagementAiInputRevision:${assetLiabilityWorkbook.cashLikeTotal}:${assetLiabilityWorkbook.monthlyScheduledPaymentTotal}:${_registeredSalaryAmount()}:${_buildSalarySpendingBreakdown().totalExpense}',
                   propose: _assetManagementAiInputReady
                       ? () => _proposeSavingsLifePlan(assetLiabilityWorkbook)
                       : null,
@@ -16730,6 +16730,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return buffer.toString();
   }
 
+  int? _savingsPlanNetIncome() {
+    // Only registered salary / observed payslip net pay. No inflow plans,
+    // side income, future bonuses or assumed raises.
+    if (_salaryAmount != null && _salaryAmount!.isFinite && _salaryAmount! > 0) {
+      return _salaryAmount!.floor();
+    }
+    DateTime? latest;
+    int? amount;
+    for (final row in _payslipRows) {
+      final date = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final net = _numberFromDynamic(row['net_amount']);
+      if (date == null || date.isAfter(_now) || !net.isFinite || net <= 0) continue;
+      if (latest == null || date.isAfter(latest)) { latest = date; amount = net.floor(); }
+    }
+    return amount;
+  }
+
   Future<SavingsPlanProposal> _proposeSavingsLifePlan(
     AssetLiabilityWorkbook workbook,
   ) async {
@@ -16753,7 +16770,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       .map((entry) => SavingsLifePlan.dateText(entry.date)).toSet().length;
     return SavingsPlanProposalService().propose(SavingsPlanProposalInput(
       cashBalance: workbook.cashLikeTotal.floor(),
-      monthlyIncome: _registeredSalaryAmount()?.floor(),
+      monthlyIncome: _savingsPlanNetIncome(),
       monthlyCommitments: workbook.monthlyScheduledPaymentTotal.ceil(),
       observedLivingExpense: living.ceil(),
       recordedDays: days,
