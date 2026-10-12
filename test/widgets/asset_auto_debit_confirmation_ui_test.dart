@@ -13,8 +13,11 @@ import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-AssetRecurringFixedCost _cost(String id, String source,
-    {double amount = 3000}) {
+AssetRecurringFixedCost _cost(
+  String id,
+  String source, {
+  double amount = 3000,
+}) {
   return AssetRecurringFixedCost(
     id: id,
     name: id,
@@ -47,18 +50,20 @@ Future<void> _mount(
   });
   await tester.binding.setSurfaceSize(const Size(1200, 3200));
   addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(MaterialApp(
-    home: AssetManagementPage(
-      debugNow: DateTime(2026, 10, 7),
-      debugCalendarNow: DateTime(2026, 10, 7),
-      debugInitialAssetData: {
-        '2026-10-07': {
-          '三井住友銀行大塚支店': bank,
-          if (card != null) 'auPayカード': card,
+  await tester.pumpWidget(
+    MaterialApp(
+      home: AssetManagementPage(
+        debugNow: DateTime(2026, 10, 7),
+        debugCalendarNow: DateTime(2026, 10, 7),
+        debugInitialAssetData: {
+          '2026-10-07': {
+            '三井住友銀行大塚支店': bank,
+            if (card != null) 'auPayカード': card,
+          },
         },
-      },
+      ),
     ),
-  ));
+  );
   await tester.pump(const Duration(milliseconds: 300));
   await tester.pump(const Duration(milliseconds: 300));
 }
@@ -88,8 +93,11 @@ void main() {
     AssetRecurringTombstoneSyncService.resetSharedForTest();
   });
   testWidgets('bank warning renders bank debit explanation', (tester) async {
-    await _mount(tester, [_cost('bank_warning', 'smbc_otsuka_branch')],
-        bank: 100);
+    await _mount(
+      tester,
+      [_cost('bank_warning', 'smbc_otsuka_branch')],
+      bank: 100,
+    );
     expect(find.textContaining('引落が失敗している可能性'), findsWidgets);
     expect(find.textContaining('振替元カードの利用枠見込み'), findsNothing);
     await _dispose(tester);
@@ -97,8 +105,12 @@ void main() {
 
   testWidgets('card warning renders credit limit, never bank failure',
       (tester) async {
-    await _mount(tester, [_cost('card_warning', 'aupay_card')],
-        card: -98000, limit: 95000);
+    await _mount(
+      tester,
+      [_cost('card_warning', 'aupay_card')],
+      card: -98000,
+      limit: 95000,
+    );
     expect(find.textContaining('振替元カードの利用枠見込み'), findsWidgets);
     expect(find.textContaining('利用限度額を超過しています'), findsWidgets);
     expect(find.textContaining('引落が失敗している可能性'), findsNothing);
@@ -108,13 +120,14 @@ void main() {
   testWidgets('unknown rows cannot raise eligible count above threshold',
       (tester) async {
     await _mount(
-        tester,
-        [
-          _cost('eligible_bank', 'smbc_otsuka_branch'),
-          _cost('unknown_card', 'aupay_card'),
-          _cost('unknown_balance', 'missing_source'),
-        ],
-        card: -10000);
+      tester,
+      [
+        _cost('eligible_bank', 'smbc_otsuka_branch'),
+        _cost('unknown_card', 'aupay_card'),
+        _cost('unknown_balance', 'missing_source'),
+      ],
+      card: -10000,
+    );
     expect(_bulkButton(), findsNothing);
     expect(find.textContaining('件をまとめて引落済み'), findsNothing);
     expect(find.textContaining('振替元カードの利用枠見込み'), findsNothing);
@@ -125,14 +138,15 @@ void main() {
       'bulk count, confirmation list and saved targets exclude unknowns',
       (tester) async {
     await _mount(
-        tester,
-        [
-          _cost('eligible_one', 'smbc_otsuka_branch'),
-          _cost('eligible_two', 'smbc_otsuka_branch'),
-          _cost('unknown_card', 'aupay_card'),
-          _cost('unknown_balance', 'missing_source'),
-        ],
-        card: -10000);
+      tester,
+      [
+        _cost('eligible_one', 'smbc_otsuka_branch'),
+        _cost('eligible_two', 'smbc_otsuka_branch'),
+        _cost('unknown_card', 'aupay_card'),
+        _cost('unknown_balance', 'missing_source'),
+      ],
+      card: -10000,
+    );
     expect(_bulkButton(), findsOneWidget);
     await tester.ensureVisible(_bulkButton());
     await tester.tap(_bulkButton());
@@ -140,17 +154,26 @@ void main() {
     final dialog = find.byType(AlertDialog);
     expect(dialog, findsOneWidget);
     expect(
-        find.descendant(
-            of: dialog, matching: find.textContaining('eligible_one')),
-        findsOneWidget);
+      find.descendant(
+        of: dialog,
+        matching: find.textContaining('eligible_one'),
+      ),
+      findsOneWidget,
+    );
     expect(
-        find.descendant(
-            of: dialog, matching: find.textContaining('unknown_card')),
-        findsNothing);
+      find.descendant(
+        of: dialog,
+        matching: find.textContaining('unknown_card'),
+      ),
+      findsNothing,
+    );
     expect(
-        find.descendant(
-            of: dialog, matching: find.textContaining('unknown_balance')),
-        findsNothing);
+      find.descendant(
+        of: dialog,
+        matching: find.textContaining('unknown_balance'),
+      ),
+      findsNothing,
+    );
     await tester.tap(find.widgetWithText(FilledButton, 'まとめて引落済み'));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
