@@ -13,16 +13,17 @@ class SavingsFixture extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         body: SingleChildScrollView(
-            child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SavingsLifePlanCard(
-            userId: 'synthetic-fixture',
-            today: DateTime(2026, 10, 13),
-            monthlyCommitments: 200000,
-            commitmentsEstimated: true,
-            suggestedIncome: 400000,
-            onReviewPayments: () {},
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SavingsLifePlanCard(
+              userId: 'synthetic-fixture',
+              today: DateTime(2026, 10, 13),
+              monthlyCommitments: 200000,
+              commitmentsEstimated: true,
+              suggestedIncome: 400000,
+              onReviewPayments: () {},
+            ),
           ),
-        ),),
+        ),
       );
 }

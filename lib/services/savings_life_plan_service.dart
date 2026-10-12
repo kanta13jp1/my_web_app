@@ -46,11 +46,13 @@ class SavingsLifePlanService {
     final daysInMonth = DateTime.utc(today.year, today.month + 1, 0).day;
     final checkpoints = <SavingsPlanCheckpoint>[];
     for (var i = 0; i < dates.length; i++) {
-      checkpoints.add(SavingsPlanCheckpoint(
-        dates[i],
-        min(plan.target, (plan.savings ?? 0) + required * (i + 1)),
-        max(0, (plan.savings ?? 0) + capacity * (i + 1)),
-      ),);
+      checkpoints.add(
+        SavingsPlanCheckpoint(
+          dates[i],
+          min(plan.target, (plan.savings ?? 0) + required * (i + 1)),
+          max(0, (plan.savings ?? 0) + capacity * (i + 1)),
+        ),
+      );
     }
     return SavingsPlanResult(
       ready: ready,

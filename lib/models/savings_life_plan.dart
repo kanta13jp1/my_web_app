@@ -61,7 +61,10 @@ class SavingsLifePlan {
 
 class SavingsPlanCheckpoint {
   const SavingsPlanCheckpoint(
-      this.date, this.targetSavings, this.forecastSavings,);
+    this.date,
+    this.targetSavings,
+    this.forecastSavings,
+  );
   final DateTime date;
   final int targetSavings;
   final int forecastSavings;

@@ -4,19 +4,27 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_web_app/widgets/savings_life_plan_card.dart';
 
 void main() {
-  Future<void> open(WidgetTester tester,
-      {int income = 400000, int commitments = 200000,}) async {
-    await tester.pumpWidget(MaterialApp(
+  Future<void> open(
+    WidgetTester tester, {
+    int income = 400000,
+    int commitments = 200000,
+  }) async {
+    await tester.pumpWidget(
+      MaterialApp(
         home: Scaffold(
-            body: SingleChildScrollView(
-                child: SavingsLifePlanCard(
-      userId: 'fixture',
-      today: DateTime(2026, 10, 13),
-      monthlyCommitments: commitments,
-      commitmentsEstimated: true,
-      suggestedIncome: income,
-      onReviewPayments: () {},
-    ),),),),);
+          body: SingleChildScrollView(
+            child: SavingsLifePlanCard(
+              userId: 'fixture',
+              today: DateTime(2026, 10, 13),
+              monthlyCommitments: commitments,
+              commitmentsEstimated: true,
+              suggestedIncome: income,
+              onReviewPayments: () {},
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
