@@ -1,3 +1,4 @@
+import 'package:my_web_app/services/asset_flow_amount_parser.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:my_web_app/widgets/asset_interest_history_card.dart';
@@ -8598,8 +8599,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final memo = _flowMemoController.text.trim();
-    final amountStr = _flowAmountController.text.replaceAll(',', '');
-    final amount = int.tryParse(amountStr);
+    final amount = AssetFlowAmountParser.parse(_flowAmountController.text);
     final isTransfer = _selectedFlowType == '振替';
 
     if (amount == null || amount <= 0 || (!isTransfer && memo.isEmpty)) {
