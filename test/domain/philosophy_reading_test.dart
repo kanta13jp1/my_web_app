@@ -3,6 +3,56 @@ import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 import 'package:my_web_app/domain/models/philosophy_reading.dart';
 
 void main() {
+  test('page progress adds only the delta and round trips without marking read', () {
+    const initial = ReadingCycle(id: 'cycle', startedAt: '2026-10-12', edition: ReadingEdition(totalPages: 160),);
+    final first = initial.withPageProgress(85, id: 'first', date: '2026-10-12',);
+    final next = first.withPageProgress(100, id: 'next', date: '2026-10-13',);
+    expect(first.reachedPage, 85);
+    expect(next.entries.last.pages, 15);
+    expect(next.entries.last.startPage, 86);
+    expect(next.coveredPages, 100);
+    expect(next.pagesRead, 100);
+    expect(next.status, 'reading');
+    expect(
+      identical(
+        next.withPageProgress(100, id: 'same', date: '2026-10-13',),
+        next,
+      ),
+      isTrue,
+    );
+    expect(ReadingCycle.fromJson(next.toJson()).reachedPage, 100);
+    expect(initial.reachedPage, 0);
+  });
+  test('page correction adjusts only simple entries and keeps bounded audit history', () {
+    const initial = ReadingCycle(id: 'cycle', startedAt: '2026-10-12', edition: ReadingEdition(totalPages: 160),);
+    final saved = initial.withPageProgress(85, id: 'first', date: '2026-10-12',).withPageProgress(100, id: 'next', date: '2026-10-13',);
+    final corrected = saved.withPageProgress(80, id: 'fix', date: '2026-10-14',);
+    expect(corrected.reachedPage, 80);
+    expect(corrected.pagesRead, 80);
+    expect(corrected.coveredPages, 80);
+    expect(corrected.entries.every((e) => e.validate(160) == null), isTrue);
+    expect(corrected.entries.first.history.single['end_page'], 85);
+    expect(corrected.entries.first.history.single.containsKey('history'), isFalse);
+    final reset = corrected.withPageProgress(0, id: 'reset', date: '2026-10-14',);
+    expect(reset.reachedPage, 0);
+    expect(reset.pagesRead, 0);
+    expect(saved.reachedPage, 100);
+  });
+  test('quick progress preserves detailed notes and rejects invalid values', () {
+    const initial = ReadingCycle(id: 'cycle', startedAt: '2026-10-12', edition: ReadingEdition(totalPages: 160), entries: [
+      ReadingEntry(id: 'detail', date: '2026-10-12', pages: 20, startPage: 1, endPage: 20, understanding: 3, impression: '詳細の感想',),
+    ],);
+    final updated = initial.withPageProgress(85, id: 'new', date: '2026-10-12',);
+    expect(updated.entries.first.impression, '詳細の感想');
+    expect(updated.entries.last.pages, 65);
+    expect(updated.pagesRead, 85);
+    for (final page in [-1, 10, 161]) {
+      expect(() => updated.withPageProgress(page, id: 'bad', date: '2026-10-12',), throwsArgumentError,);
+    }
+    expect(() => initial.withPageProgress(85, id: 'bad', date: '2026-02-30',), throwsArgumentError,);
+    expect(updated.reachedPage, 85);
+  });
+
   test('catalog identity, sources and BCE compound classification', () {
     expect(philosophyAuthors.length, 56);
     expect(philosophyWorks.length, 80);
@@ -58,7 +108,7 @@ void main() {
   });
   test('bad dates, out-of-edition ranges and understanding are rejected', () {
     expect(
-      const ReadingEntry(id: 'a', date: '2026-02-30', pages: 0).validate(null),
+      const ReadingEntry(id: 'a', date: '2026-02-30', pages: 0,).validate(null),
       isNotNull,
     );
     expect(
