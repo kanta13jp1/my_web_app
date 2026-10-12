@@ -792,7 +792,8 @@ class _ReadingListPageState extends State<ReadingListPage>
                   }
                   if (identical(updated, cycle)) return null;
                   return await _replaceCycle(record, updated)
-                      ? null : _model.error ?? '更新できませんでした。入力を保持しています';
+                      ? null
+                      : _model.error ?? '更新できませんでした。入力を保持しています';
                 },
               ),
               Wrap(
@@ -1247,7 +1248,13 @@ class _ReadingFormState extends State<_ReadingForm> {
 }
 
 class _ReadingPageProgress extends StatefulWidget {
-  const _ReadingPageProgress({super.key, required this.page, required this.total, required this.enabled, required this.onUpdate,});
+  const _ReadingPageProgress({
+    super.key,
+    required this.page,
+    required this.total,
+    required this.enabled,
+    required this.onUpdate,
+  });
   final int page;
   final int? total;
   final bool enabled;
@@ -1266,26 +1273,38 @@ class _ReadingPageProgressState extends State<_ReadingPageProgress> {
     super.initState();
     _page = TextEditingController(text: widget.page.toString());
   }
+
   @override
   void didUpdateWidget(covariant _ReadingPageProgress oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!_saving && widget.page != oldWidget.page && _page.text == oldWidget.page.toString()) {
+    if (!_saving &&
+        widget.page != oldWidget.page &&
+        _page.text == oldWidget.page.toString()) {
       _page.text = widget.page.toString();
     }
   }
+
   @override
   void dispose() {
     _page.dispose();
     super.dispose();
   }
+
   Future<void> _update() async {
     if (_saving || !widget.enabled) return;
     final page = int.tryParse(_page.text.trim());
     if (page == null || page < 0 || page > 1000000) {
-      setState(() { _error = 'ページ番号は0〜1000000の整数で入力してください'; _success = null; });
+      setState(() {
+        _error = 'ページ番号は0〜1000000の整数で入力してください';
+        _success = null;
+      });
       return;
     }
-    setState(() { _saving = true; _error = null; _success = null; });
+    setState(() {
+      _saving = true;
+      _error = null;
+      _success = null;
+    });
     try {
       final error = await widget.onUpdate(page);
       if (!mounted) return;
@@ -1304,25 +1323,49 @@ class _ReadingPageProgressState extends State<_ReadingPageProgress> {
       if (mounted) setState(() => _saving = false);
     }
   }
+
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 12),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        Expanded(child: TextField(
-          key: const ValueKey('reading-reached-page'),
-          controller: _page,
-          enabled: widget.enabled && !_saving,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(labelText: '読んだページ（ここまで）', suffixText: 'ページ', helperText: widget.total == null ? '例: 85' : '総 ${widget.total} ページ',),
-          onChanged: (_) => setState(() { _error = null; _success = null; }),
-          onSubmitted: (_) => _update(),
-        ),),
-        const SizedBox(width: 8),
-        FilledButton(onPressed: widget.enabled && !_saving ? _update : null, child: Text(_saving ? '更新中…' : '進捗を更新'),),
-      ],),
-      if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error),),
-      if (_success != null) Text(_success!),
-    ],),
-  );
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: const ValueKey('reading-reached-page'),
+                    controller: _page,
+                    enabled: widget.enabled && !_saving,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: '読んだページ（ここまで）',
+                      suffixText: 'ページ',
+                      helperText: widget.total == null
+                          ? '例: 85'
+                          : '総 ${widget.total} ページ',
+                    ),
+                    onChanged: (_) => setState(() {
+                      _error = null;
+                      _success = null;
+                    }),
+                    onSubmitted: (_) => _update(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: widget.enabled && !_saving ? _update : null,
+                  child: Text(_saving ? '更新中…' : '進捗を更新'),
+                ),
+              ],
+            ),
+            if (_error != null)
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            if (_success != null) Text(_success!),
+          ],
+        ),
+      );
 }
