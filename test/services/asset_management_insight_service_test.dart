@@ -280,7 +280,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
       );
 
@@ -302,7 +302,7 @@ void main() {
           '財布': 3000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
       );
@@ -326,7 +326,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
       );
@@ -351,7 +351,7 @@ void main() {
           'モビット': -300000,
           'auPayカード': -200000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{
           'mobit': 30000,
           AssetLiabilityPlanningService.auPayCardAccountId: 30000,
@@ -384,7 +384,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{
           'mobit': 'ghost_account',

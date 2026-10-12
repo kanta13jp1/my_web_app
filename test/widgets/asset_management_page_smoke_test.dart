@@ -1903,7 +1903,7 @@ void main() {
           home: AssetManagementPage(
             debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
-              <String, int>{'mobit': now.day},
+              <String, int>{'mobit': now.day - 1},
               monthlyState: AssetLiabilityMonthlyState(
                 paidAccountNames: <String>{
                   for (final row in defaultBills.cashflowRows) row.accountName,
