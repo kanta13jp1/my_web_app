@@ -61,12 +61,13 @@ void main() {
   test('sparse records and insufficient cash never fabricate existing savings',
       () async {
     const poor = SavingsPlanProposalInput(
-        cashBalance: 50000,
-        monthlyIncome: 300000,
-        monthlyCommitments: 240000,
-        observedLivingExpense: 698,
-        recordedDays: 1,
-        estimatedPayments: true,);
+      cashBalance: 50000,
+      monthlyIncome: 300000,
+      monthlyCommitments: 240000,
+      observedLivingExpense: 698,
+      recordedDays: 1,
+      estimatedPayments: true,
+    );
     final result = await SavingsPlanProposalService(
       allowExternalAi: () async => true,
       generate: (_) async => throw StateError('unavailable'),

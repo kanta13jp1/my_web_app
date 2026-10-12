@@ -423,7 +423,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                           color: Theme.of(context).colorScheme.error,
                           fontWeight: FontWeight.bold,
                         ),
-                      )),
+                      ),),
                   const Text(
                     '食事・通勤・医療と返済を守り、不要な固定費・購入を見直す必要があります。収入増で不足を埋めません。削減可能額が足りなければ1年以内の達成は困難です。日々の使用可能額は提示しません。',
                   ),
@@ -449,7 +449,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                           subtitle: Text(
                             '自由資金目標 ${_yen(checkpoint.targetSavings)} / 現計画 ${_yen(checkpoint.forecastSavings)}',
                           ),
-                        )),
+                        ),),
                       ),
                   ],
                 ),

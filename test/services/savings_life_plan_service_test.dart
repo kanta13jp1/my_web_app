@@ -17,7 +17,8 @@ void main() {
         livingCosts: living,
         reserve: 10000,
       );
-  test('registered net income caps forecasts without assumed income growth', () {
+  test('registered net income caps forecasts without assumed income growth',
+      () {
     final result = SavingsLifePlanService.calculate(
       plan: plan(cashBalance: 400000, income: 900000),
       asOf: start,
