@@ -5,25 +5,27 @@ import 'package:my_web_app/services/savings_life_plan_service.dart';
 void main() {
   final start = DateTime.utc(2026, 10, 13);
   SavingsLifePlan plan({
-    int? savings = 0,
+    int? cashBalance = 0,
     int income = 400000,
     int living = 50000,
   }) =>
       SavingsLifePlan(
         start: start,
         targetDate: DateTime.utc(2027, 10, 13),
-        savings: savings,
+        cashBalance: cashBalance,
         income: income,
         livingCosts: living,
         reserve: 10000,
       );
   test('one million is final savings, not an additional million', () {
     final result = SavingsLifePlanService.calculate(
-      plan: plan(savings: 400000),
+      plan: plan(cashBalance: 400000),
       asOf: start,
       monthlyCommitments: 200000,
     );
-    expect(result.requiredMonthlySavings, 50000);
+    expect(result.requiredMonthlySavings, 71667);
+    expect(result.protectedCash, 260000);
+    expect(result.currentFreeCash, 140000);
     expect(result.checkpoints.length, 12);
     expect(result.checkpoints.last.targetSavings, 1000000);
     expect(result.checkpoints.last.date, DateTime.utc(2027, 10, 13));
@@ -37,7 +39,7 @@ void main() {
       asOf: start,
       monthlyCommitments: 200000,
     );
-    expect(result.requiredMonthlySavings, 83334);
+    expect(result.requiredMonthlySavings, 105000);
     expect(result.checkpoints.last.targetSavings, 1000000);
     expect(result.monthlyShortfall, 0);
   });
@@ -50,7 +52,7 @@ void main() {
       monthlyCommitments: 240000,
     );
     expect(result.monthlyCapacity, -10000);
-    expect(result.monthlyShortfall, 93334);
+    expect(result.monthlyShortfall, 119167);
     expect(result.dailyLivingBudget, isNull);
     expect(input.livingCosts, 60000);
     expect(result.checkpoints.last.forecastSavings, 0);
@@ -59,7 +61,7 @@ void main() {
       'unconfirmed opening savings is missing, never inferred from account assets',
       () {
     final result = SavingsLifePlanService.calculate(
-      plan: plan(savings: null),
+      plan: plan(cashBalance: null),
       asOf: start,
       monthlyCommitments: 200000,
     );
@@ -68,12 +70,12 @@ void main() {
   });
   test('remaining deposit opportunities shrink after an anniversary', () {
     final result = SavingsLifePlanService.calculate(
-      plan: plan(savings: 100000),
+      plan: plan(cashBalance: 100000),
       asOf: DateTime.utc(2027, 1, 13),
       monthlyCommitments: 200000,
     );
     expect(result.checkpoints.length, 9);
-    expect(result.requiredMonthlySavings, 100000);
+    expect(result.requiredMonthlySavings, 128889);
     expect(result.checkpoints.first.date, DateTime.utc(2027, 2, 13));
   });
   test('calendar month anchors clamp Jan 31 and leap years', () {
@@ -99,13 +101,13 @@ void main() {
   test(
       'saved anchors and zero savings round-trip; corrupt amounts are rejected',
       () {
-    expect(SavingsLifePlan.fromJson(plan().toJson()).savings, 0);
+    expect(SavingsLifePlan.fromJson(plan().toJson()).cashBalance, 0);
     expect(
       () => SavingsLifePlan.fromJson({...plan().toJson(), 'income': -1}),
       throwsFormatException,
     );
     expect(
-      () => SavingsLifePlan.fromJson({...plan().toJson(), 'version': 2}),
+      () => SavingsLifePlan.fromJson({...plan().toJson(), 'version': 9}),
       throwsFormatException,
     );
   });

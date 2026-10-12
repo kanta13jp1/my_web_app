@@ -16,12 +16,12 @@ void main() {
       SavingsLifePlan(
         start: date,
         targetDate: DateTime(2027, 10, 13),
-        savings: 250000,
+        cashBalance: 250000,
       ),
     );
     await store.saveDaily(date, {'morning', 'spent:1234'});
     final restored = SavingsLifePlanStore('owner-a');
-    expect((await restored.load())!.savings, 250000);
+    expect((await restored.load())!.cashBalance, 250000);
     expect(await restored.loadDaily(date), {'morning', 'spent:1234'});
     expect(await restored.loadDaily(DateTime(2026, 10, 14)), isEmpty);
     expect(await SavingsLifePlanStore('owner-b').load(), isNull);

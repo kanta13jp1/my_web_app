@@ -30,11 +30,13 @@ class SavingsLifePlanService {
     if (deadline.isAfter(today) && (dates.isEmpty || dates.last != deadline)) {
       dates.add(deadline);
     }
-    final ready = plan.savings != null &&
+    final ready = plan.cashBalance != null &&
         plan.income != null &&
         plan.livingCosts != null &&
         monthlyCommitments >= 0;
-    final gap = max(0, plan.target - (plan.savings ?? 0));
+    final protectedCash = monthlyCommitments + (plan.livingCosts ?? 0) + plan.reserve;
+    final currentFreeCash = (plan.cashBalance ?? 0) - protectedCash;
+    final gap = max(0, plan.target - currentFreeCash);
     final required = dates.isEmpty ? gap : (gap / dates.length).ceil();
     final capacity = (plan.income ?? 0) -
         monthlyCommitments -
@@ -49,19 +51,21 @@ class SavingsLifePlanService {
       checkpoints.add(
         SavingsPlanCheckpoint(
           dates[i],
-          min(plan.target, (plan.savings ?? 0) + required * (i + 1)),
-          max(0, (plan.savings ?? 0) + capacity * (i + 1)),
+          min(plan.target, max(0, currentFreeCash + required * (i + 1))),
+          max(0, currentFreeCash + capacity * (i + 1)),
         ),
       );
     }
     return SavingsPlanResult(
+      protectedCash: protectedCash,
+      currentFreeCash: currentFreeCash,
       ready: ready,
       expired: !deadline.isAfter(today),
       requiredMonthlySavings: required,
       monthlyCapacity: capacity,
       monthlyShortfall: shortfall,
       monthlyLivingCeiling: livingCeiling,
-      dailyLivingBudget: ready && shortfall == 0 && dates.isNotEmpty
+      dailyLivingBudget: ready && shortfall == 0 && currentFreeCash >= 0 && dates.isNotEmpty
           ? (plan.livingCosts! / daysInMonth).floor()
           : null,
       checkpoints: List.unmodifiable(checkpoints),

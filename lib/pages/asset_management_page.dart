@@ -123,6 +123,8 @@ import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/savings_life_plan_card.dart';
+import 'package:my_web_app/services/savings_plan_proposal_service.dart';
+import 'package:my_web_app/models/savings_life_plan.dart';
 import 'package:my_web_app/widgets/asset_chat_widget.dart';
 import 'package:my_web_app/widgets/debt_progress_share_dialog.dart';
 import 'package:my_web_app/widgets/asset_alert_center_card.dart';
@@ -10199,6 +10201,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       .ceil(),
                   commitmentsEstimated:
                       assetLiabilityWorkbook.estimatedPaymentCount > 0,
+                  proposalRevision: '${_assetManagementAiInputRevision}:${assetLiabilityWorkbook.cashLikeTotal}:${assetLiabilityWorkbook.monthlyScheduledPaymentTotal}:${_registeredSalaryAmount()}:${_buildSalarySpendingBreakdown().totalExpense}',
+                  propose: _assetManagementAiInputReady
+                      ? () => _proposeSavingsLifePlan(assetLiabilityWorkbook)
+                      : null,
                   onReviewPayments: () => _scrollTo(_keyCalendar),
                 ),
               ),
@@ -16722,6 +16728,37 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       buffer.write(' / $source');
     }
     return buffer.toString();
+  }
+
+  Future<SavingsPlanProposal> _proposeSavingsLifePlan(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final entries = AssetSalarySpendingEntries.build(
+      cardStatementLines: _cardStatementLines,
+      recentFlows: _recentFlows,
+      monthlyIncomePlans: _monthlyIncomePlans,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      payslipRows: _payslipRows,
+      flowDisplayTitle: _flowDisplayTitle,
+    );
+    final breakdown = _buildSalarySpendingBreakdown();
+    const categories = {'食費', '交通', '医療', '日用品', '娯楽・浪費'};
+    final living = breakdown.sections.where((section) => categories.contains(section.category))
+        .fold<double>(0, (total, section) => total + section.amount);
+    final days = entries.expenses.where((entry) =>
+      !entry.date.isBefore(breakdown.periodStart) &&
+      entry.date.isBefore(breakdown.periodEndExclusive) &&
+      !entry.date.isAfter(_now) &&
+      categories.contains(_salarySpendingBreakdownService.categorize(entry.description)))
+      .map((entry) => SavingsLifePlan.dateText(entry.date)).toSet().length;
+    return SavingsPlanProposalService().propose(SavingsPlanProposalInput(
+      cashBalance: workbook.cashLikeTotal.floor(),
+      monthlyIncome: _registeredSalaryAmount()?.floor(),
+      monthlyCommitments: workbook.monthlyScheduledPaymentTotal.ceil(),
+      observedLivingExpense: living.ceil(),
+      recordedDays: days,
+      estimatedPayments: workbook.estimatedPaymentCount > 0,
+    ));
   }
 
   Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {

@@ -37,11 +37,11 @@ void main() {
     await tester.ensureVisible(find.text('計画を保存・再計算'));
     await tester.tap(find.text('計画を保存・再計算'));
     await tester.pumpAndSettle();
-    expect(find.text('必要な積立：月 ¥50,000'), findsOneWidget);
+    expect(find.text('必要な積立：月 ¥70,834'), findsOneWidget);
     expect(find.text('2026-10-13 → 2027-10-13'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await open(tester);
-    expect(find.text('必要な積立：月 ¥50,000'), findsOneWidget);
+    expect(find.text('必要な積立：月 ¥70,834'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets('missing savings and zero living costs cannot fabricate a plan',
@@ -61,7 +61,7 @@ void main() {
     await tester.ensureVisible(find.text('計画を保存・再計算'));
     await tester.tap(find.text('計画を保存・再計算'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('現計画では月 ¥83,334 不足'), findsOneWidget);
+    expect(find.textContaining('現計画では月 ¥108,334 不足'), findsOneWidget);
     expect(find.textContaining('生活費の日割り目安'), findsNothing);
     expect(find.textContaining('朝食・食器洗い・歯磨き'), findsOneWidget);
   });

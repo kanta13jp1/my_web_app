@@ -7,6 +7,8 @@ on:
       - lib/models/savings_life_plan.dart
       - lib/services/savings_life_plan_service.dart
       - lib/services/savings_life_plan_store.dart
+      - lib/services/savings_plan_proposal_service.dart
+      - test/services/savings_plan_proposal_service_test.dart
       - lib/widgets/savings_life_plan_card.dart
       - test/services/savings_life_plan_service_test.dart
       - test/services/savings_life_plan_store_test.dart
