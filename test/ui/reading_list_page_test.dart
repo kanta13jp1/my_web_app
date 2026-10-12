@@ -19,7 +19,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('国家'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('著作にメモを追記'));
+    await tester.tap(find.byTooltip('著作にメモを追記'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const ValueKey('reading-field-memo')),

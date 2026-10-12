@@ -488,6 +488,14 @@ class _ReadingListPageState extends State<ReadingListPage>
                   title: Text(work.title),
                   actions: [
                     IconButton(
+                      tooltip: '著作にメモを追記',
+                      onPressed:
+                          !_model.signedIn || _model.saving || _model.loading
+                              ? null
+                              : () => _appendWorkMemo(work),
+                      icon: const Icon(Icons.note_add_outlined),
+                    ),
+                    IconButton(
                       tooltip: '再読込',
                       onPressed: _model.saving ? null : _model.load,
                       icon: const Icon(Icons.refresh),
@@ -516,15 +524,6 @@ class _ReadingListPageState extends State<ReadingListPage>
                         ),
                       ),
                     Text(record?.work.note ?? work.note),
-                    OutlinedButton.icon(
-                      onPressed:
-                          !_model.signedIn || _model.saving || _model.loading
-                              ? null
-                              : () => _appendWorkMemo(work),
-                      icon: const Icon(Icons.note_add_outlined),
-                      label: const Text('著作にメモを追記'),
-                    ),
-                    const Text('読書回を開始せずに保存できます。読んだページ数や読了状態は変わりません。'),
                     if (work.source.isNotEmpty)
                       Align(
                         alignment: Alignment.centerLeft,
