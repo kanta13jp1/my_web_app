@@ -27,8 +27,9 @@ void main() {
       expect(edition.year, '1995');
       expect(edition.isbn, '9784003361566');
       expect(edition.editor, isEmpty);
-      expect(edition.sourceUrl,
-          'https://ndlsearch.ndl.go.jp/books/R100000002-I000002440109',
+      expect(
+        edition.sourceUrl,
+        'https://ndlsearch.ndl.go.jp/books/R100000002-I000002440109',
       );
       expect(Uri.parse(edition.bookUrl).queryParameters['k'], edition.isbn);
     }
@@ -44,9 +45,9 @@ void main() {
       return http.Response('<rss><channel/></rss>', 200);
     });
     expect(
-        await const ReadingBookSearch()
-            .search('国家論', author: '別の著者', client: client),
-        isEmpty,
+      await const ReadingBookSearch()
+          .search('国家論', author: '別の著者', client: client),
+      isEmpty,
     );
     expect(calls, 1);
   });
@@ -58,9 +59,9 @@ void main() {
       return http.Response('<rss><channel/></rss>', 200);
     });
     expect(
-        await const ReadingBookSearch()
-            .search('国家論', author: 'スピノザ', client: client, external: true),
-        isEmpty,
+      await const ReadingBookSearch()
+          .search('国家論', author: 'スピノザ', client: client, external: true),
+      isEmpty,
     );
   });
 

@@ -718,6 +718,12 @@ test('quick page update preserves a detailed impression and rejects moving behin
 
 
 test('Spinoza political treatise automatically selects a sourced Iwanami edition, reloads and edits', async ({ page }, info) => {
+  test.setTimeout(120000);
+  const externalQueries: URL[] = [];
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
+    externalQueries.push(new URL(route.request().url()));
+    return route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' });
+  });
   await page.goto('/');
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
   await field(page, /^著者・著作を検索/, 'スピノザ');
@@ -730,6 +736,13 @@ test('Spinoza political treatise automatically selects a sourced Iwanami edition
   await page.getByRole('button', { name: '読書を始める', exact: true }).click();
   await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
   const candidate = page.getByRole('button', { name: /^国家論・岩波文庫（スピノザ/ });
+  await revealReadingControl(page, candidate);
+  await page.getByRole('button', { name: '外部の版も検索', exact: true }).click();
+  await expect.poll(() => externalQueries.length).toBe(1);
+  expect(externalQueries[0].searchParams.get('title')).toBe('国家論');
+  expect(externalQueries[0].searchParams.get('creator')).toBe('スピノザ');
+  await expect(page.getByText('見つかりませんでした。書名を短くするか、ISBNで検索してください。手入力もできます。', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
   await revealReadingControl(page, candidate);
   await candidate.click();
   await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
