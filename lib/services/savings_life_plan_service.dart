@@ -35,18 +35,18 @@ class SavingsLifePlanService {
         plan.income != null &&
         plan.livingCosts != null &&
         monthlyCommitments >= 0;
-    final protectedCash = monthlyCommitments + (plan.livingCosts ?? 0) + plan.reserve;
+    final protectedCash =
+        monthlyCommitments + (plan.livingCosts ?? 0) + plan.reserve;
     final currentFreeCash = (plan.cashBalance ?? 0) - protectedCash;
     final gap = max(0, plan.target - currentFreeCash);
     final required = dates.isEmpty ? gap : (gap / dates.length).ceil();
-    final income = monthlyIncomeCeiling == null ? (plan.income ?? 0) : min(plan.income ?? 0, monthlyIncomeCeiling);
-    final capacity = income -
-        monthlyCommitments -
-        (plan.livingCosts ?? 0) -
-        plan.reserve;
+    final income = monthlyIncomeCeiling == null
+        ? (plan.income ?? 0)
+        : min(plan.income ?? 0, monthlyIncomeCeiling);
+    final capacity =
+        income - monthlyCommitments - (plan.livingCosts ?? 0) - plan.reserve;
     final shortfall = max(0, required - capacity);
-    final livingCeiling =
-        income - monthlyCommitments - plan.reserve - required;
+    final livingCeiling = income - monthlyCommitments - plan.reserve - required;
     final daysInMonth = DateTime.utc(today.year, today.month + 1, 0).day;
     final checkpoints = <SavingsPlanCheckpoint>[];
     for (var i = 0; i < dates.length; i++) {
@@ -67,9 +67,10 @@ class SavingsLifePlanService {
       monthlyCapacity: capacity,
       monthlyShortfall: shortfall,
       monthlyLivingCeiling: livingCeiling,
-      dailyLivingBudget: ready && shortfall == 0 && currentFreeCash >= 0 && dates.isNotEmpty
-          ? (plan.livingCosts! / daysInMonth).floor()
-          : null,
+      dailyLivingBudget:
+          ready && shortfall == 0 && currentFreeCash >= 0 && dates.isNotEmpty
+              ? (plan.livingCosts! / daysInMonth).floor()
+              : null,
       checkpoints: List.unmodifiable(checkpoints),
     );
   }

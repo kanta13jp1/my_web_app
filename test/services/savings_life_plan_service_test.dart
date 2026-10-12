@@ -17,6 +17,16 @@ void main() {
         livingCosts: living,
         reserve: 10000,
       );
+  test('registered net income caps forecasts without assumed income growth', () {
+    final result = SavingsLifePlanService.calculate(
+      plan: plan(cashBalance: 400000, income: 900000),
+      asOf: start,
+      monthlyCommitments: 200000,
+      monthlyIncomeCeiling: 400000,
+    );
+    expect(result.monthlyCapacity, 140000);
+    expect(result.checkpoints.last.forecastSavings, 1820000);
+  });
   test('one million is final savings, not an additional million', () {
     final result = SavingsLifePlanService.calculate(
       plan: plan(cashBalance: 400000),

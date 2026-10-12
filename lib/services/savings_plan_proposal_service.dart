@@ -47,8 +47,8 @@ class SavingsPlanProposalService {
   SavingsPlanProposalService({
     Future<String> Function(String)? generate,
     Future<bool> Function()? allowExternalAi,
-  }) : _generate = generate ?? _request,
-       _allowExternalAi = allowExternalAi ?? _privacyAllows;
+  })  : _generate = generate ?? _request,
+        _allowExternalAi = allowExternalAi ?? _privacyAllows;
 
   final Future<String> Function(String) _generate;
   final Future<bool> Function() _allowExternalAi;
@@ -72,14 +72,14 @@ class SavingsPlanProposalService {
     // This is an editable working scenario, never a claimed personal minimum.
     final baselineLiving = max(60000, input.observedLivingExpense);
     SavingsPlanProposal fallback(String reason) => SavingsPlanProposal(
-      input: input,
-      livingCosts: baselineLiving,
-      reserve: 10000,
-      rationale: '生活費は記録済み金額と仮置き60,000円の大きい方、予備費は仮置き10,000円です。'
-          '支出記録が少ない場合、必要生活費は確定できません。食事・通勤・医療を確保できるか確認してください。',
-      usedAi: false,
-      source: reason,
-    );
+          input: input,
+          livingCosts: baselineLiving,
+          reserve: 10000,
+          rationale: '生活費は記録済み金額と仮置き60,000円の大きい方、予備費は仮置き10,000円です。'
+              '支出記録が少ない場合、必要生活費は確定できません。食事・通勤・医療を確保できるか確認してください。',
+          usedAi: false,
+          source: reason,
+        );
     try {
       if (!await _allowExternalAi()) return fallback('AI未使用：金額を隠す設定を尊重');
       final evidence = {
@@ -101,20 +101,35 @@ class SavingsPlanProposalService {
           'rationaleには金額・数字・達成済み・返済済みと書かず、生活方針だけを説明する。生活費は上の固定費を重複して含めない。集計：${jsonEncode(evidence)}';
       final raw = await _generate(prompt).timeout(const Duration(seconds: 30));
       var text = raw.trim();
-      if (text.startsWith('```')) text = text.replaceFirst(RegExp(r'^```(?:json)?\s*'), '').replaceFirst(RegExp(r'\s*```$'), '');
+      if (text.startsWith('```'))
+        text = text
+            .replaceFirst(RegExp(r'^```(?:json)?\s*'), '')
+            .replaceFirst(RegExp(r'\s*```$'), '');
       final value = jsonDecode(text) as Map<String, dynamic>;
       final living = value['living_costs'];
       final reserve = value['reserve'];
       final rationale = value['rationale'];
-      if (living is! int || living < baselineLiving || living > 1000000 ||
-          reserve is! int || reserve < 10000 || reserve > 1000000 ||
-          rationale is! String || rationale.length > 1200 ||
+      if (living is! int ||
+          living < baselineLiving ||
+          living > 1000000 ||
+          reserve is! int ||
+          reserve < 10000 ||
+          reserve > 1000000 ||
+          rationale is! String ||
+          rationale.length > 1200 ||
           !RegExp(r'[ぁ-んァ-ン一-龯]').hasMatch(rationale) ||
-          RegExp(r'[0-9０-９]|達成済|返済済|食事を抜|水だけ|収入増|収入を増|増収|副業|転職|賃上げ|ボーナス|運用益').hasMatch(rationale)) {
+          RegExp(r'[0-9０-９]|達成済|返済済|食事を抜|水だけ|収入増|収入を増|増収|副業|転職|賃上げ|ボーナス|運用益')
+              .hasMatch(rationale)) {
         return fallback('AI応答を検証できず、仮置き案を表示');
       }
-      return SavingsPlanProposal(input: input, livingCosts: living, reserve: reserve,
-        rationale: rationale, usedAi: true, source: 'AI提案（集計値を検証・保存前に確認）',);
+      return SavingsPlanProposal(
+        input: input,
+        livingCosts: living,
+        reserve: reserve,
+        rationale: rationale,
+        usedAi: true,
+        source: 'AI提案（集計値を検証・保存前に確認）',
+      );
     } catch (_) {
       return fallback('AIを利用できず、仮置き案を表示');
     }

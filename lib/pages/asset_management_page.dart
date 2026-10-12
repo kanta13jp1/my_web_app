@@ -10201,7 +10201,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       .ceil(),
                   commitmentsEstimated:
                       assetLiabilityWorkbook.estimatedPaymentCount > 0,
-                  proposalRevision: '$_assetManagementAiInputRevision:${assetLiabilityWorkbook.cashLikeTotal}:${assetLiabilityWorkbook.monthlyScheduledPaymentTotal}:${_registeredSalaryAmount()}:${_buildSalarySpendingBreakdown().totalExpense}',
+                  proposalRevision:
+                      '$_assetManagementAiInputRevision:${assetLiabilityWorkbook.cashLikeTotal}:${assetLiabilityWorkbook.monthlyScheduledPaymentTotal}:${_registeredSalaryAmount()}:${_buildSalarySpendingBreakdown().totalExpense}',
                   propose: _assetManagementAiInputReady
                       ? () => _proposeSavingsLifePlan(assetLiabilityWorkbook)
                       : null,
@@ -16733,7 +16734,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   int? _savingsPlanNetIncome() {
     // Only registered salary / observed payslip net pay. No inflow plans,
     // side income, future bonuses or assumed raises.
-    if (_salaryAmount != null && _salaryAmount!.isFinite && _salaryAmount! > 0) {
+    if (_salaryAmount != null &&
+        _salaryAmount!.isFinite &&
+        _salaryAmount! > 0) {
       return _salaryAmount!.floor();
     }
     DateTime? latest;
@@ -16741,8 +16744,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     for (final row in _payslipRows) {
       final date = DateTime.tryParse(row['pay_date']?.toString() ?? '');
       final net = _numberFromDynamic(row['net_amount']);
-      if (date == null || date.isAfter(_now) || !net.isFinite || net <= 0) continue;
-      if (latest == null || date.isAfter(latest)) { latest = date; amount = net.floor(); }
+      if (date == null || date.isAfter(_now) || !net.isFinite || net <= 0)
+        continue;
+      if (latest == null || date.isAfter(latest)) {
+        latest = date;
+        amount = net.floor();
+      }
     }
     return amount;
   }
@@ -16760,14 +16767,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     final breakdown = _buildSalarySpendingBreakdown();
     const categories = {'食費', '交通', '医療', '日用品', '娯楽・浪費'};
-    final living = breakdown.sections.where((section) => categories.contains(section.category))
+    final living = breakdown.sections
+        .where((section) => categories.contains(section.category))
         .fold<double>(0, (total, section) => total + section.amount);
-    final days = entries.expenses.where((entry) =>
-      !entry.date.isBefore(breakdown.periodStart) &&
-      entry.date.isBefore(breakdown.periodEndExclusive) &&
-      !entry.date.isAfter(_now) &&
-      categories.contains(_salarySpendingBreakdownService.categorize(entry.description)))
-      .map((entry) => SavingsLifePlan.dateText(entry.date)).toSet().length;
+    final days = entries.expenses
+        .where((entry) =>
+            !entry.date.isBefore(breakdown.periodStart) &&
+            entry.date.isBefore(breakdown.periodEndExclusive) &&
+            !entry.date.isAfter(_now) &&
+            categories.contains(
+                _salarySpendingBreakdownService.categorize(entry.description)))
+        .map((entry) => SavingsLifePlan.dateText(entry.date))
+        .toSet()
+        .length;
     return SavingsPlanProposalService().propose(SavingsPlanProposalInput(
       cashBalance: workbook.cashLikeTotal.floor(),
       monthlyIncome: _savingsPlanNetIncome(),

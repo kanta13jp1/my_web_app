@@ -11,7 +11,8 @@ void main() {
 
 class SavingsFixture extends StatelessWidget {
   const SavingsFixture({super.key});
-  int get income => int.tryParse(Uri.base.queryParameters['income'] ?? '') ?? 400000;
+  int get income =>
+      int.tryParse(Uri.base.queryParameters['income'] ?? '') ?? 400000;
   @override
   Widget build(BuildContext context) => Scaffold(
         body: SingleChildScrollView(
@@ -24,17 +25,24 @@ class SavingsFixture extends StatelessWidget {
               commitmentsEstimated: true,
               suggestedIncome: income,
               proposalRevision: 'synthetic-fixture-v2',
-            propose: () => SavingsPlanProposalService(
-              allowExternalAi: () async => true,
-              generate: (_) async {
-                if (Uri.base.queryParameters['ai'] == 'error') throw StateError('synthetic offline');
-                return '{"living_costs":70000,"reserve":10000,"rationale":"架空家計・模擬AI応答です。食費と通勤費を確保し、日々の支出を確認します。"}';
-              },
-            ).propose(SavingsPlanProposalInput(
-              cashBalance: 400000, monthlyIncome: income, monthlyCommitments: 200000,
-              observedLivingExpense: 12000, recordedDays: 5, estimatedPayments: true,
-            ),),
-            onReviewPayments: () {},
+              propose: () => SavingsPlanProposalService(
+                allowExternalAi: () async => true,
+                generate: (_) async {
+                  if (Uri.base.queryParameters['ai'] == 'error')
+                    throw StateError('synthetic offline');
+                  return '{"living_costs":70000,"reserve":10000,"rationale":"架空家計・模擬AI応答です。食費と通勤費を確保し、日々の支出を確認します。"}';
+                },
+              ).propose(
+                SavingsPlanProposalInput(
+                  cashBalance: 400000,
+                  monthlyIncome: income,
+                  monthlyCommitments: 200000,
+                  observedLivingExpense: 12000,
+                  recordedDays: 5,
+                  estimatedPayments: true,
+                ),
+              ),
+              onReviewPayments: () {},
             ),
           ),
         ),

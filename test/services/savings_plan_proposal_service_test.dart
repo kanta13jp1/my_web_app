@@ -10,7 +10,9 @@ void main() {
     recordedDays: 5,
     estimatedPayments: true,
   );
-  test('AI proposes living/reserve while immutable account totals stay grounded', () async {
+  test(
+      'AI proposes living/reserve while immutable account totals stay grounded',
+      () async {
     String? prompt;
     final service = SavingsPlanProposalService(
       allowExternalAi: () async => true,
@@ -27,8 +29,12 @@ void main() {
     expect(prompt, contains('days_with_recorded_expenses'));
     expect(prompt, isNot(contains('account_number')));
   });
-  test('unsafe low living costs and malformed responses use labelled fallback', () async {
-    for (final response in ['{"living_costs":1,"reserve":0,"rationale":"節約"}', 'not json']) {
+  test('unsafe low living costs and malformed responses use labelled fallback',
+      () async {
+    for (final response in [
+      '{"living_costs":1,"reserve":0,"rationale":"節約"}',
+      'not json'
+    ]) {
       final result = await SavingsPlanProposalService(
         allowExternalAi: () async => true,
         generate: (_) async => response,
@@ -43,15 +49,24 @@ void main() {
     var calls = 0;
     final result = await SavingsPlanProposalService(
       allowExternalAi: () async => false,
-      generate: (_) async { calls++; return '{}'; },
+      generate: (_) async {
+        calls++;
+        return '{}';
+      },
     ).propose(input);
     expect(calls, 0);
     expect(result.usedAi, isFalse);
     expect(result.source, contains('設定'));
   });
-  test('sparse records and insufficient cash never fabricate existing savings', () async {
-    const poor = SavingsPlanProposalInput(cashBalance: 50000, monthlyIncome: 300000,
-      monthlyCommitments: 240000, observedLivingExpense: 698, recordedDays: 1, estimatedPayments: true);
+  test('sparse records and insufficient cash never fabricate existing savings',
+      () async {
+    const poor = SavingsPlanProposalInput(
+        cashBalance: 50000,
+        monthlyIncome: 300000,
+        monthlyCommitments: 240000,
+        observedLivingExpense: 698,
+        recordedDays: 1,
+        estimatedPayments: true,);
     final result = await SavingsPlanProposalService(
       allowExternalAi: () async => true,
       generate: (_) async => throw StateError('unavailable'),
