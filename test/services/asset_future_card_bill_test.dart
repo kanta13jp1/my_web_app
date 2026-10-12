@@ -24,7 +24,7 @@ void main() {
         paymentOverrides: {'aupay': 77541, 'cloud': 59, 'paypay': 13074},
         paidAccountNames: {'other'},
         confirmedPaymentDays: {'aupay': 13},
-        billingConfirmedAccountIds: {'other', 'cloud'},
+        billingConfirmedAccountIds: {'other'},
         paymentSourceAccountIds: {'paypay': 'bank'},
       );
       final once = apply(original);
@@ -45,6 +45,11 @@ void main() {
     },
   );
   test('existing paid history cannot be silently changed to unpaid', () {
+    expect(
+      () => apply(const AssetLiabilityMonthlyState(
+          billingConfirmedAccountIds: {'cloud'})),
+      throwsStateError,
+    );
     expect(
       () => apply(
         const AssetLiabilityMonthlyState(paidAccountNames: {'Google Cloud'}),

@@ -38,8 +38,9 @@ class AssetFutureCardBill {
     if (state.paidAccountNames.contains(accountId) ||
         state.paidAccountNames.contains(accountName) ||
         state.actualPaymentAmounts.containsKey(accountId) ||
+        state.billingConfirmedAccountIds.contains(accountId) ||
         state.confirmedPaymentDays.containsKey(accountId)) {
-      throw StateError('対象月に支払実績があります。先に明細を照合してください。');
+      throw StateError('対象月に支払実績または確定情報があります。先に明細を照合してください。');
     }
     return AssetLiabilityMonthlyState(
       paymentOverrides: {...state.paymentOverrides, accountId: amount},
