@@ -62,7 +62,7 @@ test('shows minute timestamps and distinct same-day history without writes', asy
 test('failed history load can retry without changing the latest timestamp', async ({ page }, info) => {
   await page.goto('/?history=error');
   await page.getByRole('button', { name: '残高履歴', exact: true }).click();
-  await expect(page.getByText('履歴を読み込めませんでした。', { exact: true })).toBeVisible();
+  await expect(page.getByRole('alertdialog')).toContainText('履歴を読み込めませんでした。');
   await capture(page, info, 'history-error');
   await page.getByRole('button', { name: '再試行', exact: true }).click();
   await expect(page.getByRole('alertdialog')).toContainText('2026-10-11 02:18 JST');
