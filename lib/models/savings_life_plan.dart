@@ -39,7 +39,9 @@ class SavingsLifePlan {
     int? amount(String key, {bool optional = false, bool signed = false}) {
       final value = json[key];
       if (value == null && optional) return null;
-      if (value is! int || value < (signed ? -100000000 : 0) || value > 100000000) {
+      if (value is! int ||
+          value < (signed ? -100000000 : 0) ||
+          value > 100000000) {
         throw FormatException('invalid $key');
       }
       return value;

@@ -136,7 +136,8 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
 
   int? _amount(String value, {bool signed = false}) {
     final clean = value.trim().replaceAll(',', '');
-    if (!RegExp(signed ? r'^-?\d{1,9}$' : r'^\d{1,9}$').hasMatch(clean)) return null;
+    if (!RegExp(signed ? r'^-?\d{1,9}$' : r'^\d{1,9}$').hasMatch(clean))
+      return null;
     final number = int.tryParse(clean);
     return number != null && number.abs() <= 100000000 ? number : null;
   }
@@ -260,7 +261,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
           readOnly: readOnly,
           onChanged: (_) => setState(() => _edited = true),
           enabled: !_busy,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.numberWithOptions(signed: signed),
           decoration: InputDecoration(
             labelText: label,
             suffixText: '円',
@@ -270,7 +271,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                   (positive && _amount(value ?? '') == 0)
               ? (positive
                   ? '生活に必要な1円以上の金額を入力してください'
-                  : (signed ? '-100,000,000〜100,000,000円の整数を入力してください' : '0〜100,000,000円の整数を入力してください'))
+                  : (signed
+                      ? '-100,000,000〜100,000,000円の整数を入力してください'
+                      : '0〜100,000,000円の整数を入力してください'))
               : null,
         ),
       );
@@ -500,7 +503,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                       child: TextField(
                         controller: _spent,
                         enabled: !_busy,
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.numberWithOptions(signed: signed),
                         decoration: const InputDecoration(
                           labelText: '今日の生活費合計（計画用メモ）',
                           suffixText: '円',

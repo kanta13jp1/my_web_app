@@ -28,7 +28,9 @@ void main() {
     expect(result.monthlyCapacity, 140000);
     expect(result.checkpoints.last.forecastSavings, 1820000);
   });
-  test('negative net deposits retain overdraft and never fabricate available savings', () {
+  test(
+      'negative net deposits retain overdraft and never fabricate available savings',
+      () {
     final input = plan(cashBalance: -20000);
     expect(SavingsLifePlan.fromJson(input.toJson()).cashBalance, -20000);
     final result = SavingsLifePlanService.calculate(
