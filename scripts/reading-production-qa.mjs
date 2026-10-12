@@ -345,8 +345,52 @@ try {
   assert.deepEqual(browserErrors,[]);
   console.log('Published Reading About Books: personal work title/ISBN search, confirmed metadata prefill, two registrations, desktop/mobile reload/edit/reload and real API persistence passed.');
 
+
+  const iwanami={publisher:'岩波書店',translator:'斎藤忍随',editor:'',isbn:'9784003363225',volume:'岩波文庫 青632-2',source:'https://www.hanmoto.com/bd/isbn/9784003363225',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225'};
+  for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+    await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'読書について');
+    const start=page.getByRole('button',{name:'別の版・再読を始める',exact:true});
+    await reveal(start);await expect(start).toBeEnabled();await start.click();
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    // The current work must seed and run the title lookup without typing/search submission.
+    const candidate=page.getByRole('button',{name:/^読書について 他二篇・岩波文庫/});
+    await reveal(candidate);await candidate.click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(iwanami);await restoredField(page,/^総ページ数/,'160');
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await editBook(iwanami);await verifyBook(iwanami);await restoredField(page,/^総ページ数/,'160');
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    // Editing seeds the stored ISBN and runs the lookup automatically.
+    await restoredField(page,/^書籍情報を検索/,iwanami.isbn);
+    await reveal(candidate);await candidate.click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(iwanami);await restoredField(page,/^総ページ数/,'160');
+    await field(page,/^編集者・編者/,`公開確認・岩波${mode}編集`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'読書について');
+    await editBook(iwanami);await verifyBook(iwanami,`公開確認・岩波${mode}編集`);
+    await restoredField(page,/^総ページ数/,'160');
+    await capture(page,`iwanami-auto-${mode}-edited-reloaded`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+  }
+  const finalPersonal=(await action(a.token,{action:'reading.list'})).items.find(x=>x.id===personalId);
+  const iwanamiCycles=finalPersonal.metadata.cycles.filter(c=>c.edition.isbn===iwanami.isbn);
+  assert.equal(iwanamiCycles.length,2);
+  for(const [i,mode] of ['desktop','mobile'].entries()) {
+    const edition=iwanamiCycles[i].edition;
+    for(const property of ['publisher','translator','isbn','volume']) assert.equal(edition[property],iwanami[property]);
+    assert.equal(edition.total_pages,160);assert.equal(edition.source_url,iwanami.source);assert.equal(edition.book_url,iwanami.purchase);
+    assert.equal(edition.editor,`公開確認・岩波${mode}編集`);
+  }
+  assert.deepEqual(browserErrors,[]);
+  console.log('Published automatic title/ISBN lookup and Iwanami selection, registration, reload, edit, reload and real API persistence passed on desktop/mobile.');
+
   await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
-  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,automaticTitleIsbnIwanamiRegistrationReloadEdit:'passed',api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
 } finally {
   if(browser) await browser.close();
