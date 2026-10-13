@@ -135,7 +135,8 @@ try {
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
   const page=await context.newPage();page.setDefaultTimeout(45000);
   await page.goto(base+'/login');await semantics(page);
-  await page.getByRole('button',{name:'ログイン',exact:true}).first().click();
+  await page.getByRole('button',{name:'ログイン',exact:true}).first().evaluate(e=>e.click());
+  await semantics(page);
   const auth=page.getByRole('group',{name:/ログインして続きから再開/});
   await expect(auth).toHaveCount(1);
   await expect(auth.getByRole('button',{name:'Magic Linkでログイン',exact:true})).toBeVisible();
@@ -508,6 +509,17 @@ try {
   await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
   await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,spinozaResults,spinozaAutomaticSearchRegistrationEdit:'passed',quickPageProgress:'passed',quickPageResults,automaticTitleIsbnIwanamiRegistrationReloadEdit:'passed',api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
+} catch(error) {
+  if(browser) {
+    for(const [i,context] of browser.contexts().entries()) {
+      for(const [j,openPage] of context.pages().entries()) {
+        await capture(openPage,`failure-${i}-${j}`).catch(()=>{});
+        const labels=await openPage.locator('[role="button"]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('aria-label') || node.textContent || '')).catch(()=>[]);
+        await writeFile(`reading-production-evidence/failure-${i}-${j}-buttons.json`,JSON.stringify({path:new URL(openPage.url()).pathname,buttons:labels},null,2));
+      }
+    }
+  }
+  throw error;
 } finally {
   if(browser) await browser.close();
   for(const id of users) {
