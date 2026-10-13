@@ -167,13 +167,9 @@ test('record pages, understanding and impression persists across reload; reread 
   await page.getByRole('button', { name: '別の版・再読を始める', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
-  const viewport = page.viewportSize()!;
-  await page.mouse.move(viewport.width / 2, viewport.height * .75);
-  for (let attempt = 0; attempt < 8 && await page.getByRole('group', { name: /第2回/ }).count() === 0; attempt++) {
-    await page.mouse.wheel(0, 360);
-    await page.waitForTimeout(250);
-  }
-  await expect(page.getByRole('group', { name: /第2回/ }).last()).toBeVisible();
+  const secondCycle=page.getByRole('group', { name: /第2回/ }).last();
+  await revealReadingControl(page,secondCycle);
+  await expect(secondCycle).toBeVisible();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('tab', { name: '進捗', exact: true }).click();
   await expect(page.getByRole('button', { name: '著作を追加', exact: true })).toHaveCount(0);
