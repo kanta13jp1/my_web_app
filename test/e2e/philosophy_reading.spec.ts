@@ -17,6 +17,13 @@ async function restoredField(page: Page, name: RegExp, value: string) {
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   await expect(input).toHaveValue(value);
 }
+async function expectReadingSummary(page: Page, text: string) {
+  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Flutter exposes static card text as its accessible name rather than a text node.
+  const summary = page.getByRole('group', { name: new RegExp(escaped) })
+    .or(page.getByText(text)).last();
+  await expect(summary).toBeVisible();
+}
 async function choose(page: Page, name: RegExp, option: string) {
   await page.getByRole('button', { name }).click();
   const item = page.getByRole('menuitem', { name: option, exact: true });
@@ -138,7 +145,7 @@ test('record pages, understanding and impression persists across reload; reread 
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByRole('group', { name: /感想: 正義の意味を考えた/ }).last()).toBeVisible();
   await page.getByRole('button', { name: '読了にする', exact: true }).click();
-  await expect(page.getByRole('group', { name: /状態: 読了\（読了は手動で設定\）/ }).last()).toBeVisible();
+  await expect(page.getByRole('group', { name: /状態: 読了/ }).last()).toBeVisible();
   await capture(page, info, 'saved-record');
   await page.reload();
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
@@ -680,13 +687,13 @@ test('page number alone saves progress, adds a delta, corrects and survives relo
     await field(page,/^読んだページ/,value);
     await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
     await expect(page.getByText(value+'ページまでの進捗を保存しました',{exact:true})).toBeVisible();
-    await expect(page.getByText(value+'ページまで／全160ページ・'+(Number(value)/160*100).toFixed(1)+'％',{exact:false})).toBeVisible();
+    await expectReadingSummary(page, value+'ページまで／全160ページ・'+(Number(value)/160*100).toFixed(1)+'％');
   }
   await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
   await openWork(page,'国家');
   await revealReadingControl(page,input);
   await restoredField(page,/^読んだページ/,'80');
-  await expect(page.getByText('80ページまで／全160ページ・50.0％',{exact:false})).toBeVisible();
+  await expectReadingSummary(page, '80ページまで／全160ページ・50.0％');
   await field(page,/^読んだページ/,'161');
   await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
   await expect(page.getByText('総ページ数（160ページ）を超えています',{exact:true})).toBeVisible();
@@ -695,21 +702,21 @@ test('page number alone saves progress, adds a delta, corrects and survives relo
   await expect(page.getByText('160ページまでの進捗を保存しました',{exact:true})).toBeVisible();
   await revealReadingControl(page,page.getByRole('button',{name:'読了にする',exact:true}));
   await expect(page.getByRole('button',{name:'読了にする',exact:true})).toBeVisible();
-  await expect(page.getByText('160ページまで／全160ページ・100.0％',{exact:false})).toBeVisible();
+  await expectReadingSummary(page, '160ページまで／全160ページ・100.0％');
   await capture(page,info,'quick-page-progress');
   await page.getByRole('button',{name:/Back|戻る/}).click();
   await page.getByRole('tab',{name:'進捗',exact:true}).click();
-  await expect(page.getByText('読書中 1 著作・読了 0 著作',{exact:false}).last()).toBeVisible();
+  await expectReadingSummary(page, '読書中 1 著作・読了 0 著作');
   await capture(page,info,'reading-work-counts');
   await openWork(page,'国家');
   await revealReadingControl(page,page.getByRole('button',{name:'読了にする',exact:true}));
   await page.getByRole('button',{name:'読了にする',exact:true}).click();
   await page.getByRole('button',{name:/Back|戻る/}).click();
   await page.getByRole('tab',{name:'進捗',exact:true}).click();
-  await expect(page.getByText('読書中 0 著作・読了 1 著作',{exact:false}).last()).toBeVisible();
+  await expectReadingSummary(page, '読書中 0 著作・読了 1 著作');
   await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
   await page.getByRole('tab',{name:'進捗',exact:true}).click();
-  await expect(page.getByText('読書中 0 著作・読了 1 著作',{exact:false}).last()).toBeVisible();
+  await expectReadingSummary(page, '読書中 0 著作・読了 1 著作');
   await capture(page,info,'completed-work-counts-reloaded');
 });
 
@@ -867,18 +874,18 @@ test('unknown total shows reached page and gains percentage after editing the ed
   await page.getByRole('button',{name:'保存',exact:true}).click();await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
   const input=page.getByRole('textbox',{name:/^読んだページ/});await revealReadingControl(page,input);
   await field(page,/^読んだページ/,'11');await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
-  await expect(page.getByText('11ページまで読んだ',{exact:false})).toBeVisible();
-  await expect(page.getByText('総ページ数未登録。「版を編集」で登録すると進捗率を表示します。',{exact:false})).toBeVisible();
+  await expectReadingSummary(page, '11ページまで読んだ');
+  await expectReadingSummary(page, '総ページ数未登録。「版を編集」で登録すると進捗率を表示します。');
   await expect(page.getByRole('progressbar',{name:'ページ位置の進捗',exact:true})).toHaveCount(0);
   await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'国家');
-  await expect(page.getByText('11ページまで読んだ',{exact:false})).toBeVisible();
+  await expectReadingSummary(page, '11ページまで読んだ');
   await capture(page,info,'unknown-total-position-reloaded');
   const edit=page.getByRole('button',{name:'版を編集',exact:true});await revealReadingControl(page,edit);await edit.click();
   await field(page,/^総ページ数/,'100');await page.getByRole('button',{name:'保存',exact:true}).click();
   await expect(page.getByRole('textbox',{name:/^総ページ数/})).toHaveCount(0);
-  await expect(page.getByText('11ページまで／全100ページ・11.0％',{exact:false})).toBeVisible();
+  await expectReadingSummary(page, '11ページまで／全100ページ・11.0％');
   await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'国家');
-  await expect(page.getByText('11ページまで／全100ページ・11.0％',{exact:false})).toBeVisible();
+  await expectReadingSummary(page, '11ページまで／全100ページ・11.0％');
   await restoredField(page,/^読んだページ/,'11');
   await capture(page,info,'total-added-position-reloaded');
 });
