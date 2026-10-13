@@ -837,7 +837,7 @@ test('long work memo persists without a reading cycle and accepts another append
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByRole('textbox', { name: /^追記するメモ/ })).toHaveCount(0);
   await expect(page.getByText(/長文末尾.*12〜15頁追記確認/s)).toHaveCount(1);
-  await revealReadingControl(page, page.getByRole('button', { name: '読書を始める', exact: true }));
+  await revealReadingControl(page, page.getByText(/既存の状態: 未読/));
   await expect(page.getByText(/既存の状態: 未読/)).toBeVisible();
   await capture(page, info, 'long-work-memo-no-cycle');
 });
