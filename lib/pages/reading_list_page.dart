@@ -826,7 +826,7 @@ class _ReadingListPageState extends State<ReadingListPage>
                     value: cycle.pageFraction,
                     semanticsLabel: 'ページ位置の進捗',
                   ),
-                )
+                ),
               if (!cycle.hasPagePosition)
                 const Text('読んだページ番号を入力すると、ページ位置からの進捗を表示します。'),
               if (cycle.edition.totalPages == null ||
