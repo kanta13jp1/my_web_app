@@ -82,8 +82,10 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('この書籍情報を設定しますか？'),
-        content: Text(
+        content: SingleChildScrollView(
+          child: Text(
           '${book.title}\n${book.edition.publisher} / ${book.edition.year}\n訳者: ${book.edition.translator}\nページ数: ${book.edition.totalPages ?? '不明'}\nISBN: ${book.edition.isbn}\n出典: ${book.edition.sourceUrl}\n${book.note.isEmpty ? '' : '版の注記: ${book.note}\n'}\n現在の版情報を置き換えます。取得できない項目は空欄になります。設定後に確認・修正してください。',
+          ),
         ),
         actions: [
           TextButton(

@@ -7,52 +7,148 @@ import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 
 void main() {
   const unconfirmed = {'averroes:decisive-treatise', 'butler:afraid-gender'};
-  for (final work in philosophyWorks.where((work) => !unconfirmed.contains(work.id))) {
-    test('catalog automatic title finds sourced Japanese editions: ${work.id}', () async {
-      final client = MockClient((_) => throw StateError('Curated editions must be available offline'));
-      final books = await const ReadingBookSearch().search(work.title, author: work.author.name, client: client);
-      expect(books, isNotEmpty, reason: work.title,);
+  for (final work
+      in philosophyWorks.where((work) => !unconfirmed.contains(work.id))) {
+    test('catalog automatic title finds sourced Japanese editions: ${work.id}',
+        () async {
+      final client = MockClient((_) =>
+          throw StateError('Curated editions must be available offline'),
+      );
+      final books = await const ReadingBookSearch()
+          .search(work.title, author: work.author.name, client: client);
+      expect(
+        books,
+        isNotEmpty,
+        reason: work.title,
+      );
       for (final book in books) {
-        expect(book.workId, work.id,);
-        expect(book.edition.language, '日本語',);
-        expect(book.edition.publisher, isNotEmpty,);
-        expect(Uri.parse(book.edition.sourceUrl).scheme, 'https',);
-        expect(Uri.parse(book.edition.bookUrl).scheme, 'https',);
+        expect(
+          book.workId,
+          work.id,
+        );
+        expect(
+          book.edition.language,
+          '日本語',
+        );
+        expect(
+          book.edition.publisher,
+          isNotEmpty,
+        );
+        expect(
+          Uri.parse(book.edition.sourceUrl).scheme,
+          'https',
+        );
+        expect(
+          Uri.parse(book.edition.bookUrl).scheme,
+          'https',
+        );
       }
     });
   }
-  test('only the two explicitly unconfirmed works lack curated Japanese editions', () {
-    expect(philosophyWorks.where((work) => !philosophyCatalogEditions.any((book) => book.workId == work.id)).map((work) => work.id).toSet(), unconfirmed,);
+  test(
+      'only the two explicitly unconfirmed works lack curated Japanese editions',
+      () {
+    expect(
+      philosophyWorks
+          .where((work) =>
+              !philosophyCatalogEditions.any((book) => book.workId == work.id),
+          )
+          .map((work) => work.id)
+          .toSet(),
+      unconfirmed,
+    );
   });
-  test('a different author does not borrow editions through a catalog title', () async {
+  test('a different author does not borrow editions through a catalog title',
+      () async {
     final client = MockClient((request) async {
-      expect(request.url.queryParameters['creator'], '別の著者',);
+      expect(
+        request.url.queryParameters['creator'],
+        '別の著者',
+      );
       return http.Response('<rss><channel/></rss>', 200);
     });
-    expect(await const ReadingBookSearch().search('道徳経', author: '別の著者', client: client), isEmpty,);
-    expect(await const ReadingBookSearch().search('!!!', client: client), isEmpty,);
+    expect(
+      await const ReadingBookSearch()
+          .search('道徳経', author: '別の著者', client: client),
+      isEmpty,
+    );
+    expect(
+      await const ReadingBookSearch().search('読書について', author: '別の著者', client: client),
+      isEmpty,
+    );
+    expect(
+      await const ReadingBookSearch().search('!!!', client: client),
+      isEmpty,
+    );
   });
-  test('Japanese alternate title, author alias and anthology notes are preserved', () async {
+  test(
+      'Japanese alternate title, author alias and anthology notes are preserved',
+      () async {
     final client = MockClient((_) => throw StateError('No provider request'));
-    final ethics = await const ReadingBookSearch().search('エチカ', author: 'Spinoza', client: client);
-    expect(ethics.map((book) => book.edition.isbn), containsAll(['9784121600943', '9784003361542', '9784003361559']),);
-    final ideas = await const ReadingBookSearch().search('イデーンⅠ', author: 'フッサール', client: client);
-    expect(ideas, hasLength(2),);
-    expect(ideas.every((book) => book.note.isNotEmpty), isTrue,);
-    final farabi = (await const ReadingBookSearch().search('有徳都市の住民の見解', author: 'ファーラービー', client: client)).single;
-    expect(farabi.edition.translator, '竹下政孝',);
-    expect(farabi.edition.isbn, '9784582734218',);
-    expect(farabi.edition.totalPages, 1161,);
-    expect(farabi.note, contains('巻全体'),);
+    final ethics = await const ReadingBookSearch()
+        .search('エチカ', author: 'Spinoza', client: client);
+    expect(
+      ethics.map((book) => book.edition.isbn),
+      containsAll(['9784121600943', '9784003361542', '9784003361559']),
+    );
+    final ideas = await const ReadingBookSearch()
+        .search('イデーンⅠ', author: 'フッサール', client: client);
+    expect(
+      ideas,
+      hasLength(2),
+    );
+    expect(
+      ideas.every((book) => book.note.isNotEmpty),
+      isTrue,
+    );
+    final farabi = (await const ReadingBookSearch()
+            .search('有徳都市の住民の見解', author: 'ファーラービー', client: client))
+        .single;
+    expect(
+      farabi.edition.translator,
+      '竹下政孝',
+    );
+    expect(
+      farabi.edition.isbn,
+      '9784582734218',
+    );
+    expect(
+      farabi.edition.totalPages,
+      1161,
+    );
+    expect(
+      farabi.note,
+      contains('巻全体'),
+    );
   });
-  test('catalog ISBN-10 resolves without asking openBD and all catalog ISBNs resolve locally', () async {
+  test(
+      'catalog ISBN-10 resolves without asking openBD and all catalog ISBNs resolve locally',
+      () async {
     final client = MockClient((_) => throw StateError('No provider request'));
-    final oldButler = await const ReadingBookSearch().search('4791757033', client: client);
-    expect(oldButler.single.edition.isbn, '4791757033',);
-    expect((await const ReadingBookSearch().search('9784791757039', client: client)).single.edition.isbn, '4791757033',);
-    for (final book in philosophyCatalogEditions.where((book) => book.edition.isbn.isNotEmpty)) {
-      final results = await const ReadingBookSearch().search(book.edition.isbn, client: client);
-      expect(results.any((result) => result.edition.sourceUrl == book.edition.sourceUrl), isTrue, reason: book.label,);
+    final oldButler =
+        await const ReadingBookSearch().search('4791757033', client: client);
+    expect(
+      oldButler.single.edition.isbn,
+      '4791757033',
+    );
+    expect(
+      (await const ReadingBookSearch().search('9784791757039', client: client))
+          .single
+          .edition
+          .isbn,
+      '4791757033',
+    );
+    for (final book in philosophyCatalogEditions
+        .where((book) => book.edition.isbn.isNotEmpty)) {
+      final results = await const ReadingBookSearch()
+          .search(book.edition.isbn, client: client);
+      expect(
+        results.any(
+            (result) => result.edition.sourceUrl == book.edition.sourceUrl,
+        ),
+        isTrue,
+        reason: book.label,
+      );
     }
   });
   test(

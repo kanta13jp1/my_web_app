@@ -621,7 +621,8 @@ test('external title failure and empty results preserve manual input; retry and 
 test('current title searches automatically and Iwanami edition registers, reloads and edits', async ({ page }, info) => {
   await page.goto('/');
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
-  await page.getByRole('tab', { name: '著作', exact: true }).click();
+  await field(page, /^著者・著作を検索/, 'ショーペンハウアー');
+  await page.getByRole('button', { name: /^ショーペンハウアー / }).click();
   await page.getByRole('button', { name: '著作を追加', exact: true }).click();
   await field(page, /^著作名/, '読書について');
   await page.getByRole('button', { name: '保存', exact: true }).click();
@@ -780,6 +781,7 @@ for (const book of [
 ]) {
   test(`catalog alternate title automatically finds and persists the Japanese edition: ${book.title}`, async ({ page }, info) => {
     test.setTimeout(120000);
+    const errors: string[] = [];page.on('pageerror', error => errors.push(error.message));
     await page.goto('/');
     await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
     await openWork(page,book.title);
@@ -812,5 +814,6 @@ for (const book of [
     await restoredField(page,/^巻・版の名前/,'手元の版を確認・'+book.title);
     await restoredField(page,/^版情報の出典URL/,book.source);
     await capture(page,info,'catalog-alias-'+book.isbn+'-edited-reloaded');
+    expect(errors).toEqual([]);
   });
 }

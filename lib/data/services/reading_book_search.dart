@@ -5,7 +5,9 @@ import '../catalogs/philosophy_catalog.dart';
 import '../../domain/models/philosophy_reading.dart';
 
 class ReadingBookResult {
-  const ReadingBookResult(this.title, this.edition, {
+  const ReadingBookResult(
+    this.title,
+    this.edition, {
     this.author = '',
     this.authorAliases = const [],
     this.workId = '',
@@ -26,7 +28,9 @@ String _searchText(String value) => value
 
 bool _matchesAuthor(String query, String name, List<String> aliases) {
   final text = _searchText(query);
-  return text.isEmpty || name.isEmpty ||
+  if (query.trim().isNotEmpty && text.isEmpty) return false;
+  return text.isEmpty ||
+      name.isEmpty ||
       [name, ...aliases].any((value) => _searchText(value).contains(text));
 }
 
@@ -70,9 +74,11 @@ class ReadingBookSearch {
     // This also supports books attached to existing personal reading records.
     final books = [
       ...philosophyCatalogEditions.map((book) {
-        final work = philosophyWorks.where((work) => work.id == book.workId).firstOrNull;
+        final work =
+            philosophyWorks.where((work) => work.id == book.workId).firstOrNull;
         return ReadingBookResult(
-          book.label, book.edition,
+          book.label,
+          book.edition,
           workId: book.workId,
           author: work?.author.name ?? '',
           authorAliases: work?.author.aliases ?? const [],
@@ -106,6 +112,8 @@ class ReadingBookSearch {
           sourceUrl: 'https://www.kotensinyaku.jp/books/book169/',
           bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752712',
         ),
+        author: 'ショーペンハウアー',
+        authorAliases: ['ショウペンハウエル', 'ショーペンハウエル', 'Arthur Schopenhauer',],
       ),
       const ReadingBookResult(
         '読書について 他二篇・岩波文庫（ショウペンハウエル）',
@@ -120,6 +128,8 @@ class ReadingBookSearch {
           sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003363225',
           bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225',
         ),
+        author: 'ショーペンハウアー',
+        authorAliases: ['ショウペンハウエル', 'ショーペンハウエル', 'Arthur Schopenhauer',],
       ),
     ];
     // A curated work identity connects alternate Japanese titles and anthologies.
@@ -127,16 +137,25 @@ class ReadingBookSearch {
     // substring searches remain available without inferring new work links.
     final normalized = _searchText(text);
     if (normalized.isEmpty) return [];
-    final workIds = philosophyWorks.where((work) =>
-      (_searchText(work.title) == normalized ||
-       (work.originalTitle.isNotEmpty && _searchText(work.originalTitle) == normalized)) &&
-      _matchesAuthor(author, work.author.name, work.author.aliases),
-    ).map((work) => work.id).toSet();
-    final matches = books.where((book) => isIsbn
-      ? _normalizeIsbn(book.edition.isbn) == isbn
-      : _matchesAuthor(author, book.author, book.authorAliases) &&
-        (workIds.contains(book.workId) ||
-         _searchText('${book.title} ${book.edition.translator} ${book.edition.publisher}').contains(normalized)),
+    final workIds = philosophyWorks
+        .where(
+          (work) =>
+              (_searchText(work.title) == normalized ||
+                  (work.originalTitle.isNotEmpty &&
+                      _searchText(work.originalTitle) == normalized)) &&
+              _matchesAuthor(author, work.author.name, work.author.aliases),
+        )
+        .map((work) => work.id)
+        .toSet();
+    final matches = books.where(
+      (book) => isIsbn
+          ? _normalizeIsbn(book.edition.isbn) == isbn
+          : _matchesAuthor(author, book.author, book.authorAliases) &&
+              (workIds.contains(book.workId) ||
+                  _searchText(
+                          '${book.title} ${book.edition.translator} ${book.edition.publisher}',
+                      )
+                      .contains(normalized)),
     );
     if (matches.isNotEmpty && !external) return matches.toList();
     if (!isIsbn && RegExp(r'^[0-9Xx\s-]+$').hasMatch(text)) return [];
