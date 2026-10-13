@@ -295,11 +295,14 @@ class _ReadingListPageState extends State<ReadingListPage>
               child: Text('条件に一致する著作はありません'),
             ),
           ..._filteredWorks.map(
-            (work) => Card(
+            (work) {
+              final record = _model.recordFor(work.id);
+              final cycle = record?.cycles.lastOrNull;
+              return Card(
               child: ListTile(
                 title: Text(work.title),
                 subtitle: Text(
-                  '${work.author.name}\n${work.centuries.join('・')} / ${work.genres.join('・')}',
+                  '${work.author.name}\n${work.centuries.join('・')} / ${work.genres.join('・')}${cycle == null ? '' : '\n${_pageSummary(cycle)}'}',
                 ),
                 trailing: Text(
                   readingStatusLabels[
@@ -308,7 +311,8 @@ class _ReadingListPageState extends State<ReadingListPage>
                 ),
                 onTap: () => _openWork(work),
               ),
-            ),
+              );
+            },
           ),
         ],
       );
@@ -344,13 +348,25 @@ class _ReadingListPageState extends State<ReadingListPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label),
+              const SizedBox(height: 8),
+              Text(
+                '読書中 ${progress.reading} 著作・読了 ${progress.completed} 著作',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Text('対象 ${progress.total} 著作'),
+              const SizedBox(height: 8),
+              const Text('読了した著作の割合'),
               Text(
                 '読了 ${progress.completed} / ${progress.total} 著作${progress.total == 0 ? '（対象なし）' : ''}',
               ),
               const SizedBox(height: 8),
-              LinearProgressIndicator(value: progress.fraction),
+              LinearProgressIndicator(
+                value: progress.fraction,
+                semanticsLabel: '読了した著作の割合',
+              ),
               const SizedBox(height: 8),
-              Text('延べ読書量 ${progress.pages} ページ（再読を含む）'),
+              Text('読書記録の合計 ${progress.pages} ページ（再読を含む）'),
+              const Text('再読中の著作は「読書中」と「読了」の両方に含まれます。'),
             ],
           ),
         ),
@@ -752,6 +768,12 @@ class _ReadingListPageState extends State<ReadingListPage>
         ),
       );
 
+  String _pageSummary(ReadingCycle cycle) {
+    final fraction = cycle.pageFraction;
+    if (fraction == null) return '${cycle.reachedPage}ページまで読んだ';
+    return '${cycle.reachedPage}ページまで／全${cycle.edition.totalPages}ページ・${(fraction * 100).toStringAsFixed(1)}％';
+  }
+
   Widget _cycle(ReadingRecord record, ReadingCycle cycle, int number) => Card(
         key: ValueKey(cycle.id),
         child: Padding(
@@ -781,17 +803,24 @@ class _ReadingListPageState extends State<ReadingListPage>
               Text(
                 '出版年: ${cycle.edition.year.isEmpty ? '不明' : cycle.edition.year} / ISBN: ${cycle.edition.isbn.isEmpty ? '未登録' : cycle.edition.isbn}',
               ),
+              const SizedBox(height: 8),
               Text(
-                '延べ ${cycle.pagesRead} ページ / 区間記録済み ${cycle.coveredPages} / 総 ${cycle.edition.totalPages?.toString() ?? '不明'} ページ',
+                _pageSummary(cycle),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              if (cycle.coverage != null)
+              if (cycle.pageFraction != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: LinearProgressIndicator(
-                    value: cycle.coverage!.clamp(0, 1),
+                    value: cycle.pageFraction,
+                    semanticsLabel: 'ページ位置の進捗',
                   ),
-                ),
-              Text('状態: ${readingStatusLabels[cycle.status]}（読了は手動で設定）'),
+                )
+              else
+                const Text('総ページ数未登録。「版を編集」で登録すると進捗率を表示します。'),
+              Text('状態: ${readingStatusLabels[cycle.status]}'),
+              const Text('ページ位置から進捗率を計算します。読み終えたら「読了にする」を押してください。'),
+              Text('読書記録の合計 ${cycle.pagesRead} ページ（同じページの再読も含む）'),
               _ReadingPageProgress(
                 key: ValueKey('page-progress-${cycle.id}'),
                 page: cycle.reachedPage,

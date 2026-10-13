@@ -70,7 +70,7 @@ void main() {
     await tester.tap(find.text('進捗を更新'));
     await tester.pumpAndSettle();
     expect(find.text('85ページまでの進捗を保存しました'), findsOneWidget);
-    expect(find.textContaining('区間記録済み 85'), findsOneWidget);
+    expect(find.text('85ページまで／全160ページ・53.1％'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     await repository.changes.close();
