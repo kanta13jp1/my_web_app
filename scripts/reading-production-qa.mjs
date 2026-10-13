@@ -206,7 +206,12 @@ async function verifyProgressDisplay(page, account, version) {
     await summary('80ページまで／全160ページ・50.0％');await restoredField(page,/^読んだページ/,'80');
     await capture(page,`progress-${mode}-known-reloaded`);
     await update(160);await summary('160ページまで／全160ページ・100.0％');await overview(2,0);
-    await detail(books[0]);const complete=page.getByRole('button',{name:'読了にする',exact:true});await reveal(complete);await complete.click();
+    await detail(books[0]);const complete=page.getByRole('button',{name:'読了にする',exact:true});await reveal(complete);
+    const completionSaved=page.waitForResponse(r=>r.url().includes('/functions/v1/tools-hub') && r.request().method()==='POST' && r.request().postDataJSON()?.action==='reading.save');
+    await complete.click();assert.equal((await completionSaved).status(),200,'Completion save failed');
+    await summary('状態: 読了');
+    const completedRecord=(await action(account.token,{action:'reading.list'})).items.find(x=>x.id===books[0].id);
+    assert.equal(completedRecord.metadata.cycles[0].status,'read','Completion must persist before navigating');
     await overview(1,1);await page.reload();await semantics(page);await page.getByRole('tab',{name:'進捗',exact:true}).click();await summary('読書中 1 著作・読了 1 著作');
     await capture(page,`progress-${mode}-completed-counts-reloaded`);
     await detail(books[1]);await summary('ページ位置未登録');await update(11);await summary('11ページまで読んだ');
