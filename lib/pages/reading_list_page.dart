@@ -776,9 +776,7 @@ class _ReadingListPageState extends State<ReadingListPage>
     final fraction = cycle.pageFraction;
     if (!cycle.hasPagePosition) {
       final total = cycle.edition.totalPages;
-      return total != null && total > 0
-          ? 'ページ位置未登録／全$totalページ'
-          : 'ページ位置未登録';
+      return total != null && total > 0 ? 'ページ位置未登録／全$totalページ' : 'ページ位置未登録';
     }
     if (fraction == null) return '${cycle.reachedPage}ページまで読んだ';
     return '${cycle.reachedPage}ページまで／全${cycle.edition.totalPages}ページ・${(fraction * 100).toStringAsFixed(1)}％';
