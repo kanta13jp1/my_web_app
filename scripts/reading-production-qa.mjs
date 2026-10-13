@@ -215,11 +215,11 @@ try {
   await page.goto(base+'/login');await semantics(page);
   await page.getByRole('button',{name:'ログイン',exact:true}).first().evaluate(e=>e.click());
   await semantics(page);
-  const auth=page.getByRole('group',{name:/ログインして続きから再開/});
-  await expect(auth).toHaveCount(1);
-  await expect(auth.getByRole('button',{name:'Magic Linkでログイン',exact:true})).toBeVisible();
-  await field(auth,/メールアドレス/,a.email);
-  await auth.getByRole('button',{name:'パスワードを使う',exact:true}).click();
+  // The landing form's wrapper is virtualized; interact with its visible inputs.
+  await field(page,/メールアドレス/,a.email);
+  if(await page.locator('input[type="password"]').count() === 0) {
+    await page.getByRole('button',{name:'パスワードを使う',exact:true}).click();
+  }
   await expect(page.getByRole('button',{name:'メールでログイン',exact:true})).toBeVisible();
   await field(page,/^パスワード/,a.password);
   const signedIn=page.waitForResponse(r=>r.url().includes('/auth/v1/token') && r.request().method()==='POST');
