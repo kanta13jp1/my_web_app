@@ -320,14 +320,25 @@ void main() {
       expect(philosophyWorks.any((w) => w.id == book.workId), isTrue);
       expect(isReadingHttpsUrl(book.edition.sourceUrl), isTrue);
       expect(book.edition.publisher, isNotEmpty);
-      expect(book.edition.isbn, matches(RegExp(r'^(\d{10}|\d{13})$')));
+      if (book.edition.isbn.isEmpty) {
+        expect(book.workId, 'husserl:ideas');
+        expect(book.edition.volume, '1-1');
+        expect(book.edition.sourceUrl,
+            'https://ndlsearch.ndl.go.jp/books/R100000002-I000001441684');
+        expect(book.note, contains('未記載'));
+      } else {
+        expect(book.edition.isbn, matches(RegExp(r'^(\d{10}|\d{13})$')));
+      }
+      final work = philosophyWorks.firstWhere((w) => w.id == book.workId);
       expect(
         readingBookSearchLinks(
-          philosophyWorks.first,
+          work,
           book.edition,
         )['Amazonで書籍を検索']!
             .queryParameters['k'],
-        book.edition.isbn,
+        book.edition.isbn.isEmpty
+            ? '${work.title} ${work.author.name}'
+            : book.edition.isbn,
       );
     }
     expect(
@@ -395,6 +406,12 @@ void main() {
         ReadingEdition.fromJson(edition.toJson()).toJson(),
         edition.toJson(),
       );
+      if (edition.isbn.isEmpty) {
+        expect(book.workId, 'husserl:ideas');
+        expect(edition.volume, '1-1');
+        expect(book.note, contains('未記載'));
+        continue;
+      }
       final digits = edition.isbn.split('').map((d) => int.parse(d)).toList();
       if (digits.length == 13) {
         final sum = List.generate(13, (i) => digits[i] * (i.isEven ? 1 : 3))
@@ -406,12 +423,12 @@ void main() {
         expect(sum % 11, 0, reason: edition.isbn);
       }
     }
-    expect(philosophyCatalogEditions.length, 163);
+    expect(philosophyCatalogEditions.length, 167);
     expect(
       philosophyCatalogEditions
           .where((b) => b.edition.language == '日本語')
           .length,
-      162,
+      166,
     );
     final books = philosophyCatalogEditions
         .where((b) => b.workId == 'confucius:analects')
@@ -457,7 +474,6 @@ void main() {
       'remaining Japanese editions cover verified works and keep partial scopes explicit',
       () {
     const unconfirmed = {
-      'al-farabi:virtuous-city',
       'averroes:decisive-treatise',
       'butler:afraid-gender',
     };
@@ -465,7 +481,7 @@ void main() {
         .where((b) => b.edition.language == '日本語')
         .map((b) => b.workId)
         .toSet();
-    expect(covered.length, 77);
+    expect(covered.length, 78);
     expect(
       philosophyWorks.map((w) => w.id).toSet().difference(covered),
       unconfirmed,

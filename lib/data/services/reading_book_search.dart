@@ -113,7 +113,11 @@ class ReadingBookSearch {
           bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334752712',
         ),
         author: 'ショーペンハウアー',
-        authorAliases: ['ショウペンハウエル', 'ショーペンハウエル', 'Arthur Schopenhauer',],
+        authorAliases: [
+          'ショウペンハウエル',
+          'ショーペンハウエル',
+          'Arthur Schopenhauer',
+        ],
       ),
       const ReadingBookResult(
         '読書について 他二篇・岩波文庫（ショウペンハウエル）',
@@ -129,7 +133,11 @@ class ReadingBookSearch {
           bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225',
         ),
         author: 'ショーペンハウアー',
-        authorAliases: ['ショウペンハウエル', 'ショーペンハウエル', 'Arthur Schopenhauer',],
+        authorAliases: [
+          'ショウペンハウエル',
+          'ショーペンハウエル',
+          'Arthur Schopenhauer',
+        ],
       ),
     ];
     // A curated work identity connects alternate Japanese titles and anthologies.
@@ -151,11 +159,12 @@ class ReadingBookSearch {
       (book) => isIsbn
           ? _normalizeIsbn(book.edition.isbn) == isbn
           : _matchesAuthor(author, book.author, book.authorAliases) &&
-              (workIds.contains(book.workId) ||
-                  _searchText(
-                          '${book.title} ${book.edition.translator} ${book.edition.publisher}',
-                      )
-                      .contains(normalized)),
+              (workIds.isNotEmpty
+                  ? workIds.contains(book.workId) &&
+                      book.edition.language == '日本語'
+                  : _searchText(
+                      '${book.title} ${book.edition.translator} ${book.edition.publisher}',
+                    ).contains(normalized)),
     );
     if (matches.isNotEmpty && !external) return matches.toList();
     if (!isIsbn && RegExp(r'^[0-9Xx\s-]+$').hasMatch(text)) return [];

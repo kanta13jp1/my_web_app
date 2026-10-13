@@ -11,8 +11,8 @@ void main() {
       in philosophyWorks.where((work) => !unconfirmed.contains(work.id))) {
     test('catalog automatic title finds sourced Japanese editions: ${work.id}',
         () async {
-      final client = MockClient((_) =>
-          throw StateError('Curated editions must be available offline'),
+      final client = MockClient(
+        (_) => throw StateError('Curated editions must be available offline'),
       );
       final books = await const ReadingBookSearch()
           .search(work.title, author: work.author.name, client: client);
@@ -50,8 +50,9 @@ void main() {
       () {
     expect(
       philosophyWorks
-          .where((work) =>
-              !philosophyCatalogEditions.any((book) => book.workId == work.id),
+          .where(
+            (work) => !philosophyCatalogEditions
+                .any((book) => book.workId == work.id),
           )
           .map((work) => work.id)
           .toSet(),
@@ -73,7 +74,8 @@ void main() {
       isEmpty,
     );
     expect(
-      await const ReadingBookSearch().search('読書について', author: '別の著者', client: client),
+      await const ReadingBookSearch()
+          .search('読書について', author: '別の著者', client: client),
       isEmpty,
     );
     expect(
@@ -144,7 +146,7 @@ void main() {
           .search(book.edition.isbn, client: client);
       expect(
         results.any(
-            (result) => result.edition.sourceUrl == book.edition.sourceUrl,
+          (result) => result.edition.sourceUrl == book.edition.sourceUrl,
         ),
         isTrue,
         reason: book.label,
