@@ -9,8 +9,10 @@ class ReadingBookLookup extends StatefulWidget {
     required this.onSelected,
     this.search,
     this.initialQuery = '',
+    this.author = '',
   });
   final String initialQuery;
+  final String author;
   final ValueChanged<ReadingEdition> onSelected;
   final Future<List<ReadingBookResult>> Function(String)? search;
   @override
@@ -54,6 +56,10 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
           : await const ReadingBookSearch().search(
               _query.text,
               external: external,
+              // Keep the work author only while searching its original title.
+              author: _query.text.trim() == widget.initialQuery.trim()
+                  ? (widget.author == '不明' ? '' : widget.author)
+                  : '',
             );
       if (!mounted || request != _request) return;
       setState(() {
