@@ -293,7 +293,9 @@ class _InvestmentAssetManagementPanelState
       });
       unawaited(_loadHistory(userId));
       _showMessage(
-        asset == null ? '${saved.displayLabel}を追加しました。' : '${saved.displayLabel}を更新しました。',
+        asset == null
+            ? '${saved.displayLabel}を追加しました。'
+            : '${saved.displayLabel}を更新しました。',
       );
     } catch (error, stackTrace) {
       debugPrint('Investment asset save failed: $error');
