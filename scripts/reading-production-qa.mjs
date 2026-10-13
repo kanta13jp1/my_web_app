@@ -20,7 +20,7 @@ async function req(path, token, data, method = 'POST') {
 async function user() {
   const email = `reading-qa-${randomUUID()}@example.invalid`;
   const password = randomUUID() + '!aA1';
-  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5760 production verification'}});
+  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'Reading release production verification'}});
   assert.equal(created.status,200,'Test user creation failed');
   users.push(created.body.id);
   const signed = await req('/auth/v1/token?grant_type=password', key, {email,password});
@@ -84,6 +84,84 @@ async function isbnLink(page) {
   bookLinks.push(destination.toString());
   await popup.close();
 }
+
+// Run the catalog release checks without repeating unrelated historical flows.
+async function verifyCatalogRelease(page, account, version) {
+  const books = [
+    {workId:'laozi:daodejing',title:'道徳経',label:'老子・岩波文庫',publisher:'岩波書店',translator:'蜂屋邦夫（訳注）',isbn:'9784003320518',pages:'',source:'https://www.hanmoto.com/bd/isbn/9784003320518'},
+    {workId:'russell:problems',title:'哲学の諸問題',label:'哲学入門・筑摩書房',publisher:'筑摩書房',translator:'高村夏輝',isbn:'9784480089045',pages:'288',source:'https://www.chikumashobo.co.jp/product/9784480089045/'},
+    {workId:'epicurus:menoeceus',title:'メノイケウス宛の手紙',label:'自然について他・京都大学学術出版会',publisher:'京都大学学術出版会',translator:'朴一功・和田利博',isbn:'9784814005598',pages:'',source:'https://ndlsearch.ndl.go.jp/books/R100000002-I034002308'},
+    {workId:'al-farabi:virtuous-city',title:'有徳都市の住民の見解',label:'中世思想原典集成11 イスラーム哲学・平凡社',publisher:'平凡社',translator:'竹下政孝',editor:'上智大学中世思想研究所（編訳・監修）',isbn:'9784582734218',pages:'1161',source:'https://catalog.library.metro.tokyo.lg.jp/winj/opac/switch-detail-iccap.do?bibid=1105284612',note:/版の注記: .*1161ページは巻全体/},
+    {workId:'spinoza:ethics',title:'エチカ',label:'エチカ（倫理学）上・岩波文庫',publisher:'岩波書店',translator:'畠中尚志',isbn:'9784003361542',pages:'',source:'https://www.hanmoto.com/bd/isbn/9784003361542'},
+    {workId:'spinoza:ethics',title:'エチカ',label:'エチカ（倫理学）下・岩波文庫',publisher:'岩波書店',translator:'畠中尚志',isbn:'9784003361559',pages:'',source:'https://www.hanmoto.com/bd/isbn/9784003361559'},
+    {workId:'husserl:ideas',title:'イデーン I',label:'イデーン1-1・みすず書房',publisher:'みすず書房',translator:'渡辺二郎',isbn:'',pages:'',source:'https://ndlsearch.ndl.go.jp/books/R100000002-I000001441684',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=イデーン1-1+フッサール+みすず書房',note:/版の注記: .*ISBNは未記載/},
+  ];
+  const results = [];
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  async function reveal(control) {
+    for (let i=0; i<20 && await control.count()===0; i++) {
+      const size=page.viewportSize();
+      await page.mouse.move(size.width/2,size.height*.65);
+      await page.mouse.wheel(0,240);await page.waitForTimeout(250);
+    }
+    await expect(control).toHaveCount(1);
+  }
+  async function verify(book, volume) {
+    for (const [name,value] of [[/^出版社/,book.publisher],[/^訳者/,book.translator],[/^編集者・編者/,book.editor || ''],[/^ISBN/,book.isbn],[/^総ページ数/,book.pages],[/^版情報の出典URL/,book.source],[/^書籍・購入URL/,book.purchase]]) await restoredField(page,name,value);
+    if(volume !== undefined) await restoredField(page,/^巻・版の名前/,volume);
+  }
+  for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+    await page.setViewportSize(size);
+    for (const [index,book] of books.entries()) {
+      book.purchase ||= 'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn;
+      await page.goto(base+'/reading-list');await semantics(page);await openWork(page,book.title);
+      const start=page.getByRole('button',{name:'読書を始める',exact:true});
+      await reveal(start);await expect(start).toBeEnabled();await start.click();
+      await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+      await restoredField(page,/^書籍情報を検索/,book.title);
+      const escaped=book.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const candidate=page.getByRole('button',{name:new RegExp('^'+escaped)});
+      await reveal(candidate);await candidate.click();
+      if(book.note) await expect(page.getByText(book.note).last()).toBeVisible();
+      await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+      await verify(book);await capture(page,`catalog-${mode}-${index}-prefilled`);
+      await page.getByRole('button',{name:'保存',exact:true}).click();
+      await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+      let record=(await action(account.token,{action:'reading.list'})).items.find(x=>x.metadata.work?.id===book.workId);
+      assert(record,`Missing saved catalog work: ${book.title}`);
+      const number=record.metadata.cycles.length;
+      const cycle=page.getByRole('group',{name:new RegExp(`第${number}回[\\s\\S]*`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
+      const edit=cycle.getByRole('button',{name:'版を編集',exact:true});
+      await page.reload();await semantics(page);await openWork(page,book.title);await reveal(edit);await edit.click();await verify(book);
+      await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+      await restoredField(page,/^書籍情報を検索/,book.isbn || book.title);
+      await reveal(candidate);await candidate.click();await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();await verify(book);
+      const volume=`公開確認・${mode}・${index}・${book.title}`;
+      await field(page,/^巻・版の名前/,volume);
+      await page.getByRole('button',{name:'保存',exact:true}).click();await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+      await page.reload();await semantics(page);await openWork(page,book.title);await reveal(edit);await edit.click();await verify(book,volume);
+      await capture(page,`catalog-${mode}-${index}-edited-reloaded`);
+      await page.getByRole('button',{name:'キャンセル',exact:true}).click();await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+      const link=cycle.getByRole('button',{name:'登録した書籍・購入先を開く',exact:true});await reveal(link);
+      const popupPromise=page.waitForEvent('popup');await link.click();const popup=await popupPromise;
+      await popup.waitForURL(/^https:\/\/www\.amazon\.co\.jp\/s\//);
+      assert.equal(new URL(popup.url()).searchParams.get('k'),new URL(book.purchase).searchParams.get('k'));
+      await popup.close();
+      record=(await action(account.token,{action:'reading.list'})).items.find(x=>x.metadata.work?.id===book.workId);
+      const saved=record.metadata.cycles[number-1].edition;
+      for(const property of ['publisher','translator','isbn']) assert.equal(saved[property],book[property]);
+      assert.equal(saved.editor,book.editor || '');assert.equal(saved.total_pages,book.pages ? Number(book.pages) : null);
+      assert.equal(saved.source_url,book.source);assert.equal(saved.book_url,book.purchase);assert.equal(saved.volume,volume);
+      results.push({mode,workId:book.workId,title:book.title,isbn:book.isbn,automaticSearchSelectionPrefillRegistrationReloadEdit:'passed',purchaseLink:'passed',realApiPersistence:'passed'});
+    }
+  }
+  assert.deepEqual(errors,[]);
+  await writeFile('reading-production-evidence/catalog-results.json',JSON.stringify(results,null,2));
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,profile:'catalog',api:'passed',desktop:'passed',mobile:'passed',cases:results},null,2));
+  console.log(`Published catalog: ${results.length} desktop/mobile title/ISBN selection, autofill, registration/reload/edit/reload, purchase and real API checks passed.`);
+}
+
 try {
   const version = await (await fetch(`${base}/version.json?qa=${Date.now()}`)).json();
   assert.equal(version.commit,process.env.EXPECTED_PRODUCTION_SHA,'Published version differs from merged commit');
@@ -150,6 +228,9 @@ try {
   await page.waitForTimeout(1500);
   await page.goto(base+'/reading-list');await semantics(page);
   await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+  if(process.env.READING_QA_CATALOG === 'true') {
+    await verifyCatalogRelease(page,a,version);
+  } else {
   await openWork(page);
   await page.getByRole('button',{name:'読書を始める',exact:true}).click();
   await field(page,/^総ページ数/,'100');
@@ -509,6 +590,7 @@ try {
   await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
   await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,spinozaResults,spinozaAutomaticSearchRegistrationEdit:'passed',quickPageProgress:'passed',quickPageResults,automaticTitleIsbnIwanamiRegistrationReloadEdit:'passed',api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
+  }
 } catch(error) {
   if(browser) {
     for(const [i,context] of browser.contexts().entries()) {
