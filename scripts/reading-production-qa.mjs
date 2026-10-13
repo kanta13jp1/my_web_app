@@ -197,12 +197,13 @@ async function verifyProgressDisplay(page, account, version) {
     async function detail(book) {await page.goto(base+'/reading-list');await semantics(page);await openWork(page,book.title);}
     async function update(value) {
       const input=page.getByRole('textbox',{name:/^読んだページ/});await reveal(input);
+      const unchanged=(await input.inputValue())===String(value);
       await field(page,/^読んだページ/,'');
       await expect(page.getByText(/^\d+ページまでの進捗を保存しました$/)).toHaveCount(0);
       await field(page,/^読んだページ/,String(value));
-      const updated=page.waitForResponse(r=>r.url().includes('/functions/v1/tools-hub') && r.request().method()==='POST' && r.request().postDataJSON()?.action==='reading.save');
+      const updated=unchanged ? null : page.waitForResponse(r=>r.url().includes('/functions/v1/tools-hub') && r.request().method()==='POST' && r.request().postDataJSON()?.action==='reading.save');
       await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
-      assert.equal((await updated).status(),200,'Page update save failed');
+      if(updated) assert.equal((await updated).status(),200,'Page update save failed');
       await expect(page.getByText(`${value}ページまでの進捗を保存しました`,{exact:true})).toBeVisible();
       await expect(page.getByRole('button',{name:'進捗を更新',exact:true})).toBeEnabled();
     }
