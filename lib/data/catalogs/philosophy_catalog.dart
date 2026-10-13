@@ -2,7 +2,7 @@ import 'dart:convert';
 import '../../domain/models/philosophy_reading.dart';
 
 // Factual metadata only; attribution sources and edition sources are separate.
-const philosophyCatalogVersion = '2026-10-12-remaining-japanese-editions';
+const philosophyCatalogVersion = '2026-10-13-catalog-title-lookup-audit';
 
 class PhilosophyCatalogEdition {
   const PhilosophyCatalogEdition(
@@ -20,6 +20,64 @@ class PhilosophyCatalogEdition {
 // Verified publisher/library bibliographies. Unknown fields remain empty.
 // A volume's page count is never treated as the complete work's page count.
 const philosophyCatalogEditions = [
+  PhilosophyCatalogEdition(
+    'al-farabi:virtuous-city',
+    '中世思想原典集成11 イスラーム哲学・平凡社（有徳都市の住民がもつ見解の諸原理）',
+    ReadingEdition(
+      publisher: '平凡社',
+      translator: '竹下政孝',
+      editor: '上智大学中世思想研究所（編訳・監修）',
+      year: '2000',
+      isbn: '9784582734218',
+      volume: '11 イスラーム哲学',
+      totalPages: 1161,
+      sourceUrl:
+          'https://catalog.library.metro.tokyo.lg.jp/winj/opac/switch-detail-iccap.do?bibid=1105284612',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784582734218',
+    ),
+    note: '「有徳都市の住民がもつ見解の諸原理」を収録。ISBN・1161ページは巻全体の値です。竹下政孝はこの収録作品の訳者です。',
+  ),
+  PhilosophyCatalogEdition(
+    'husserl:ideas',
+    'イデーン1-1・みすず書房（純粋現象学への全般的序論・前半）',
+    ReadingEdition(
+      publisher: 'みすず書房',
+      translator: '渡辺二郎',
+      year: '1979',
+      volume: '1-1',
+      sourceUrl: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000001441684',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=イデーン1-1+フッサール+みすず書房',
+    ),
+    note: 'イデーンIの前半のみ。1-2は後半です。旧版書誌のISBNは未記載、数量は434,15pのためページ数を単一値に推測しません。',
+  ),
+  PhilosophyCatalogEdition(
+    'spinoza:ethics',
+    'エチカ（倫理学）上・岩波文庫（畠中尚志訳）',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '畠中尚志',
+      year: '1975',
+      isbn: '9784003361542',
+      volume: '上・岩波文庫',
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003361542',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361542',
+    ),
+    note: '上巻のみ。刊行年は出版社書誌の初刊年です。同じISBNの刷・改版でページ数が異なるため、手元の本で確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'spinoza:ethics',
+    'エチカ（倫理学）下・岩波文庫（畠中尚志訳）',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '畠中尚志',
+      year: '1951',
+      isbn: '9784003361559',
+      volume: '下・岩波文庫 青615-5',
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003361559',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361559',
+    ),
+    note: '下巻のみ。刊行年は出版社書誌の初刊年です。同じISBNの刷・改版でページ数が異なるため、手元の本で確認してください。',
+  ),
   PhilosophyCatalogEdition(
     'aristotle:nicomachean-ethics',
     'ニコマコス倫理学（上）・光文社古典新訳文庫',
@@ -419,8 +477,7 @@ const philosophyCatalogEditions = [
       year: '2008',
       isbn: '9784003320518',
       volume: '岩波文庫',
-      sourceUrl:
-          'https://lib-opac.mc.beppu-u.ac.jp/webopac/catdbl.do?hidden_return_link=true&pkey=BB00112034',
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003320518',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003320518',
     ),
     note: '出版社書誌と図書館書誌でページ数表記が異なるため、手元の本で確認してください。',
@@ -1738,8 +1795,9 @@ const philosophyCatalogEditions = [
       translator: '高村夏輝',
       year: '2005',
       isbn: '9784480089045',
+      totalPages: 288,
       volume: 'ちくま学芸文庫',
-      sourceUrl: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000007687640',
+      sourceUrl: 'https://www.chikumashobo.co.jp/product/9784480089045/',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784480089045',
     ),
   ),
@@ -4185,7 +4243,7 @@ const _worksJson = r'''[
       "宗教哲学"
     ],
     "source": "https://plato.stanford.edu/entries/ibn-rushd/",
-    "note": "邦題には表記の異同がある。"
+    "note": "邦題には表記の異同がある。 日本語の書籍版は今回の出典調査では未確認（2026-10-13）。別著作・原語版を日本語訳として扱わず、ISBN・訳者などは確認後に登録してください。"
   },
   {
     "id": "aquinas:summa",
@@ -5697,7 +5755,7 @@ const _worksJson = r'''[
       "政治哲学"
     ],
     "source": "https://vcresearch.berkeley.edu/faculty/judith-butler",
-    "note": "2024年。原著名で掲載。"
+    "note": "2024年。原著名で掲載。 日本語の書籍版は今回の出典調査では未確認（2026-10-13）。別著作・原語版を日本語訳として扱わず、ISBN・訳者などは確認後に登録してください。"
   },
   {
     "id": "sen:idea-justice",
