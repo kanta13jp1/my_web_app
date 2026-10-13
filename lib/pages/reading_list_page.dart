@@ -330,7 +330,10 @@ class _ReadingListPageState extends State<ReadingListPage>
           ),
           _progressCard('収録済み著作全体', _model.progress(_model.works)),
           _filters(),
-          _progressCard('現在の検索・分類対象', _model.progress(_filteredWorks)),
+          _progressCard(
+            '著者・検索・分類で絞り込んだ著作',
+            _model.progress(_filteredWorks),
+          ),
           const Text('分類別の読了数（複数分類の著作は各分類に含まれます）'),
           ..._groupProgress('成立世紀', (w) => w.centuries),
           ..._groupProgress('国／地域', (w) => w.author.regions),
