@@ -116,7 +116,7 @@ async function verifyCatalogRelease(page, account, version) {
     for (const [index,book] of books.entries()) {
       book.purchase ||= 'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn;
       await page.goto(base+'/reading-list');await semantics(page);await openWork(page,book.title);
-      const start=page.getByRole('button',{name:'読書を始める',exact:true});
+      const start=page.getByRole('button',{name:/^(読書を始める|別の版・再読を始める)$/});
       await reveal(start);await expect(start).toBeEnabled();await start.click();
       await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
       await restoredField(page,/^書籍情報を検索/,book.title);
