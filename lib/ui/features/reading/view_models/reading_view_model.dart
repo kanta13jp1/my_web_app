@@ -129,6 +129,33 @@ class ReadingViewModel extends ChangeNotifier {
         _replace(result);
       });
 
+  Future<bool> appendWorkMemo(PhilosophyWork work, String text) async {
+    final addition = text.trim();
+    if (addition.isEmpty) return false;
+    final record = recordFor(work.id);
+    final current = record?.work ?? work;
+    final note = [current.note, addition]
+        .where((value) => value.isNotEmpty)
+        .join('\n\n');
+    if (note.length > 2000) {
+      error = 'メモの合計は2000文字以内にしてください。既存のメモは保持しています';
+      _notify();
+      return false;
+    }
+    final updated =
+        PhilosophyWork.fromJson({...current.toJson(), 'note': note});
+    if (record == null) return addWork(const Uuid().v4(), updated);
+    return save(
+      ReadingRecord(
+        id: record.id,
+        work: updated,
+        revision: record.revision,
+        cycles: record.cycles,
+        legacyStatus: record.legacyStatus,
+      ),
+    );
+  }
+
   Future<bool> save(ReadingRecord record) => _mutate(() async {
         final session = repository.sessionKey;
         final result = await repository.save(record);

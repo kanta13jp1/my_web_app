@@ -4,6 +4,36 @@ import 'package:my_web_app/pages/reading_list_page.dart';
 import '../support/reading_fixture_repository.dart';
 
 void main() {
+  testWidgets('work memo saves at 320px without starting reading',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repository = ReadingFixtureRepository();
+    await tester.pumpWidget(
+      MaterialApp(home: ReadingListPage(repository: repository)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('プラトン'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('国家'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('著作にメモを追記'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('reading-field-memo')),
+      '画像確認メモ',
+    );
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('画像確認メモ'), findsWidgets);
+    expect(find.text('読書を始める'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    await repository.changes.close();
+  });
+
   testWidgets('quick page update keeps failed input and works at 320px',
       (tester) async {
     tester.view.physicalSize = const Size(320, 900);

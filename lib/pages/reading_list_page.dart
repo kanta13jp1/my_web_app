@@ -488,6 +488,14 @@ class _ReadingListPageState extends State<ReadingListPage>
                   title: Text(work.title),
                   actions: [
                     IconButton(
+                      tooltip: '著作にメモを追記',
+                      onPressed:
+                          !_model.signedIn || _model.saving || _model.loading
+                              ? null
+                              : () => _appendWorkMemo(work),
+                      icon: const Icon(Icons.note_add_outlined),
+                    ),
+                    IconButton(
                       tooltip: '再読込',
                       onPressed: _model.saving ? null : _model.load,
                       icon: const Icon(Icons.refresh),
@@ -515,7 +523,7 @@ class _ReadingListPageState extends State<ReadingListPage>
                           child: const Text('著者の出典を開く'),
                         ),
                       ),
-                    Text(work.note),
+                    Text(record?.work.note ?? work.note),
                     if (work.source.isNotEmpty)
                       Align(
                         alignment: Alignment.centerLeft,
@@ -564,6 +572,14 @@ class _ReadingListPageState extends State<ReadingListPage>
             },
           ),
         ),
+      );
+
+  Future<void> _appendWorkMemo(PhilosophyWork work) => _form(
+        '著作にメモを追記',
+        [const _Field('memo', '追記するメモ', required: true, lines: 6)],
+        (values) async => await _model.appendWorkMemo(work, values['memo']!)
+            ? null
+            : _model.error ?? 'メモを入力してください',
       );
 
   Widget _bookAvailability(PhilosophyWork work) => ExpansionTile(
@@ -725,6 +741,7 @@ class _ReadingListPageState extends State<ReadingListPage>
             : _model.error ?? '保存できませんでした';
       },
       bookQuery: work.title,
+      bookAuthor: work.author.name,
     );
   }
 
@@ -909,6 +926,7 @@ class _ReadingListPageState extends State<ReadingListPage>
       bookQuery: cycle.edition.isbn.isNotEmpty
           ? cycle.edition.isbn
           : record.work.title,
+      bookAuthor: record.work.author.name,
     );
   }
 
@@ -1031,6 +1049,7 @@ class _ReadingListPageState extends State<ReadingListPage>
     List<_Field> fields,
     Future<String?> Function(Map<String, String>) submit, {
     String bookQuery = '',
+    String bookAuthor = '',
   }) =>
       showDialog<void>(
         context: context,
@@ -1040,6 +1059,7 @@ class _ReadingListPageState extends State<ReadingListPage>
           fields: fields,
           submit: submit,
           bookQuery: bookQuery,
+          bookAuthor: bookAuthor,
         ),
       );
 }
@@ -1069,8 +1089,10 @@ class _ReadingForm extends StatefulWidget {
     required this.fields,
     required this.submit,
     this.bookQuery = '',
+    this.bookAuthor = '',
   });
   final String bookQuery;
+  final String bookAuthor;
   final String title;
   final List<_Field> fields;
   final Future<String?> Function(Map<String, String>) submit;
@@ -1157,6 +1179,7 @@ class _ReadingFormState extends State<_ReadingForm> {
                         _lookupOpen)
                       ReadingBookLookup(
                         initialQuery: widget.bookQuery,
+                        author: widget.bookAuthor,
                         onSelected: (edition) {
                           final values = edition.toJson();
                           for (final key in [

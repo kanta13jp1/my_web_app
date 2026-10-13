@@ -1,3 +1,4 @@
+import '../widgets/asset_future_card_bill_card.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:my_web_app/widgets/asset_interest_history_card.dart';
@@ -121,6 +122,9 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
+import 'package:my_web_app/widgets/savings_life_plan_card.dart';
+import 'package:my_web_app/services/savings_plan_proposal_service.dart';
+import 'package:my_web_app/models/savings_life_plan.dart';
 import 'package:my_web_app/widgets/asset_chat_widget.dart';
 import 'package:my_web_app/widgets/debt_progress_share_dialog.dart';
 import 'package:my_web_app/widgets/asset_alert_center_card.dart';
@@ -10182,6 +10186,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
             _buildDisplayModeSwitcher(),
+            if (assetLiabilityWorkbook != null &&
+                _supabase.auth.currentUser != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: SavingsLifePlanCard(
+                  key: ValueKey(
+                      'savings-life-plan:${_supabase.auth.currentUser!.id}'),
+                  userId: _supabase.auth.currentUser!.id,
+                  today: _now,
+                  suggestedIncome: _savingsPlanNetIncome(),
+                  monthlyCommitments: assetLiabilityWorkbook
+                      .monthlyScheduledPaymentTotal
+                      .ceil(),
+                  commitmentsEstimated:
+                      assetLiabilityWorkbook.estimatedPaymentCount > 0,
+                  proposalRevision:
+                      '$_assetManagementAiInputRevision:${assetLiabilityWorkbook.cashLikeTotal}:${assetLiabilityWorkbook.monthlyScheduledPaymentTotal}:${_registeredSalaryAmount()}:${_buildSalarySpendingBreakdown().totalExpense}',
+                  propose: _assetManagementAiInputReady
+                      ? () => _proposeSavingsLifePlan(assetLiabilityWorkbook)
+                      : null,
+                  onReviewPayments: () => _scrollTo(_keyCalendar),
+                ),
+              ),
             const SizedBox(height: 12),
             if (_isSectionShown(AssetManagementSectionId.monthlyFlow)) ...[
               _sectionAnchor(AssetManagementSectionId.monthlyFlow),
@@ -10232,6 +10259,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 onIgnore: _ignoreDuplicateGroup,
               ),
               _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
+              if (assetLiabilityWorkbook != null)
+                AssetFutureCardBillCard(
+                  repository: _assetLiabilityRepository,
+                  accounts: assetLiabilityWorkbook.accounts,
+                  subscriptionIds:
+                      assetLiabilityWorkbook.subscriptionFixedCostAccountIds,
+                  currentStateMonth: _assetLiabilityStateMonth(_now),
+                ),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(
@@ -16694,6 +16729,66 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       buffer.write(' / $source');
     }
     return buffer.toString();
+  }
+
+  int? _savingsPlanNetIncome() {
+    // Only registered salary / observed payslip net pay. No inflow plans,
+    // side income, future bonuses or assumed raises.
+    if (_salaryAmount != null &&
+        _salaryAmount!.isFinite &&
+        _salaryAmount! > 0) {
+      return _salaryAmount!.floor();
+    }
+    DateTime? latest;
+    int? amount;
+    for (final row in _payslipRows) {
+      final date = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final net = _numberFromDynamic(row['net_amount']);
+      if (date == null || date.isAfter(_now) || !net.isFinite || net <= 0) {
+        continue;
+      }
+      if (latest == null || date.isAfter(latest)) {
+        latest = date;
+        amount = net.floor();
+      }
+    }
+    return amount;
+  }
+
+  Future<SavingsPlanProposal> _proposeSavingsLifePlan(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final entries = AssetSalarySpendingEntries.build(
+      cardStatementLines: _cardStatementLines,
+      recentFlows: _recentFlows,
+      monthlyIncomePlans: _monthlyIncomePlans,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      payslipRows: _payslipRows,
+      flowDisplayTitle: _flowDisplayTitle,
+    );
+    final breakdown = _buildSalarySpendingBreakdown();
+    const categories = {'食費', '交通', '医療', '日用品', '娯楽・浪費'};
+    final living = breakdown.sections
+        .where((section) => categories.contains(section.category))
+        .fold<double>(0, (total, section) => total + section.amount);
+    final days = entries.expenses
+        .where((entry) =>
+            !entry.date.isBefore(breakdown.periodStart) &&
+            entry.date.isBefore(breakdown.periodEndExclusive) &&
+            !entry.date.isAfter(_now) &&
+            categories.contains(
+                _salarySpendingBreakdownService.categorize(entry.description)))
+        .map((entry) => SavingsLifePlan.dateText(entry.date))
+        .toSet()
+        .length;
+    return SavingsPlanProposalService().propose(SavingsPlanProposalInput(
+      cashBalance: workbook.cashLikeTotal.floor(),
+      monthlyIncome: _savingsPlanNetIncome(),
+      monthlyCommitments: workbook.monthlyScheduledPaymentTotal.ceil(),
+      observedLivingExpense: living.ceil(),
+      recordedDays: days,
+      estimatedPayments: workbook.estimatedPaymentCount > 0,
+    ));
   }
 
   Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {

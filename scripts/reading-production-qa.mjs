@@ -20,7 +20,7 @@ async function req(path, token, data, method = 'POST') {
 async function user() {
   const email = `reading-qa-${randomUUID()}@example.invalid`;
   const password = randomUUID() + '!aA1';
-  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5744 production verification'}});
+  const created = await req('/auth/v1/admin/users', admin, {email,password,email_confirm:true,user_metadata:{purpose:'PR5760 production verification'}});
   assert.equal(created.status,200,'Test user creation failed');
   users.push(created.body.id);
   const signed = await req('/auth/v1/token?grant_type=password', key, {email,password});
@@ -136,15 +136,16 @@ try {
   const page=await context.newPage();page.setDefaultTimeout(45000);
   await page.goto(base+'/login');await semantics(page);
   await page.getByRole('button',{name:'ログイン',exact:true}).first().evaluate(e=>e.click());
+  await semantics(page);
   const auth=page.getByRole('group',{name:/ログインして続きから再開/});
   await expect(auth).toHaveCount(1);
   await expect(auth.getByRole('button',{name:'Magic Linkでログイン',exact:true})).toBeVisible();
   await field(auth,/メールアドレス/,a.email);
-  await auth.getByRole('button',{name:'パスワードを使う',exact:true}).evaluate(e=>e.click());
+  await auth.getByRole('button',{name:'パスワードを使う',exact:true}).click();
   await expect(page.getByRole('button',{name:'メールでログイン',exact:true})).toBeVisible();
   await field(page,/^パスワード/,a.password);
   const signedIn=page.waitForResponse(r=>r.url().includes('/auth/v1/token') && r.request().method()==='POST');
-  await page.getByRole('button',{name:'メールでログイン',exact:true}).evaluate(e=>e.click());
+  await page.getByRole('button',{name:'メールでログイン',exact:true}).click();
   assert.equal((await signedIn).status(),200,'Published UI sign-in failed');
   await page.waitForTimeout(1500);
   await page.goto(base+'/reading-list');await semantics(page);
@@ -453,9 +454,72 @@ try {
   await writeFile('reading-production-evidence/quick-page-results.json',JSON.stringify(quickPageResults,null,2));
   console.log('Published quick page progress: 85 to 100, duplicate prevention, correction to 80, reload, total-page validation, detailed-note edit/preservation and final page 85 passed on desktop/mobile.');
 
+
+  // Verify the reported personal Spinoza work against the published app and API.
+  const spinozaWork={...work,id:'qa:'+randomUUID(),title:'国家論',original_title:'Tractatus Politicus',author_info:{...work.author_info,id:'qa-spinoza',name:'スピノザ',regions:['ネーデルラント']}};
+  const spinozaId=randomUUID();
+  await action(a.token,{action:'reading.add',id:spinozaId,work:spinozaWork});
+  const spinozaBook={publisher:'岩波書店',translator:'畠中尚志',editor:'',isbn:'9784003361566',volume:'岩波文庫・第16刷（第12刷改版: 1976年）',source:'https://ndlsearch.ndl.go.jp/books/R100000002-I000002440109',purchase:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361566'};
+  const spinozaResults=[];
+  for(const [mode,size,number] of [['desktop',{width:1440,height:1000},1],['mobile',{width:390,height:844},2]]) {
+    await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);await openWork(page,'国家論');
+    const start=page.getByRole('button',{name:number===1?'読書を始める':'別の版・再読を始める',exact:true});
+    await reveal(start);await expect(start).toBeEnabled();await start.click();
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await restoredField(page,/^書籍情報を検索/,'国家論');
+    const candidate=page.getByRole('button',{name:/^国家論・岩波文庫（スピノザ/});
+    await reveal(candidate);await candidate.click();
+    await expect(page.getByText('この書籍情報を設定しますか？',{exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(spinozaBook);await restoredField(page,/^総ページ数/,'213');await restoredField(page,/^出版年/,'1995');
+    await capture(page,`spinoza-${mode}-automatic-prefill`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'国家論');
+    await editBook(spinozaBook,number);await verifyBook(spinozaBook);await restoredField(page,/^総ページ数/,'213');
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await restoredField(page,/^書籍情報を検索/,spinozaBook.isbn);
+    await reveal(candidate);await candidate.click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await verifyBook(spinozaBook);
+    await field(page,/^巻・版の名前/,`公開確認・国家論${mode}の刷`);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,'国家論');
+    await editBook(spinozaBook,number);await verifyBook({...spinozaBook,volume:`公開確認・国家論${mode}の刷`});
+    await restoredField(page,/^総ページ数/,'213');
+    await capture(page,`spinoza-${mode}-edited-reloaded`);
+    await page.getByRole('button',{name:'キャンセル',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    const cycle=page.getByRole('group',{name:new RegExp(`第${number}回[\\s\\S]*ISBN: ${spinozaBook.isbn}`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
+    const link=cycle.getByRole('button',{name:'登録した書籍・購入先を開く',exact:true});await reveal(link);
+    const popupPromise=page.waitForEvent('popup');await link.click();const popup=await popupPromise;
+    await popup.waitForURL(/^https:\/\/www\.amazon\.co\.jp\/s\//);
+    assert.equal(new URL(popup.url()).searchParams.get('k'),spinozaBook.isbn);bookLinks.push(popup.url());await popup.close();
+    const saved=(await action(a.token,{action:'reading.list'})).items.find(x=>x.id===spinozaId).metadata.cycles[number-1].edition;
+    for(const property of ['publisher','translator','isbn']) assert.equal(saved[property],spinozaBook[property]);
+    assert.equal(saved.total_pages,213);assert.equal(saved.source_url,spinozaBook.source);assert.equal(saved.book_url,spinozaBook.purchase);
+    assert.equal(saved.volume,`公開確認・国家論${mode}の刷`);
+    spinozaResults.push({mode,isbn:saved.isbn,automaticSearchSelectionPrefillRegistrationReloadEdit:'passed',purchaseLink:'passed'});
+  }
+  assert.deepEqual(browserErrors,[]);
+  await writeFile('reading-production-evidence/spinoza-results.json',JSON.stringify(spinozaResults,null,2));
+  console.log('Published Spinoza political treatise: automatic title/ISBN lookup, Iwanami selection/prefill, registration/reload/edit/reload, purchase destinations and real API persistence passed on desktop/mobile.');
+
   await writeFile('reading-production-evidence/book-links.json',JSON.stringify(bookLinks,null,2));
-  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,quickPageProgress:'passed',quickPageResults,automaticTitleIsbnIwanamiRegistrationReloadEdit:'passed',api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,spinozaResults,spinozaAutomaticSearchRegistrationEdit:'passed',quickPageProgress:'passed',quickPageResults,automaticTitleIsbnIwanamiRegistrationReloadEdit:'passed',api:'passed',desktop:'passed',mobile:'passed',authenticatedSaveReloadProgress:'passed',catalog:'56 authors / 80 works',bookLinks:'passed',editionRegistrationEditReload:'passed',curatedEdition:'passed',japaneseEditionSelectionRegistrationEdit:'passed',titleAndIsbnLookupPrefillRegistrationReloadEdit:'passed',readingAboutBooksTitleIsbnRegistrationReloadEdit:'passed',newWork:'spinoza:ethics',verifiedEditions:japaneseBooks.map(b=>({isbn:b.isbn,publisher:b.publisher,source:b.source,purchase:b.purchase}))},null,2));
   console.log('Published browser: desktop/mobile catalog and guest protection, genuine user login, pages/understanding/impression save, reload and completion progress passed.');
+} catch(error) {
+  if(browser) {
+    for(const [i,context] of browser.contexts().entries()) {
+      for(const [j,openPage] of context.pages().entries()) {
+        await capture(openPage,`failure-${i}-${j}`).catch(()=>{});
+        const labels=await openPage.locator('[role="button"]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('aria-label') || node.textContent || '')).catch(()=>[]);
+        await writeFile(`reading-production-evidence/failure-${i}-${j}-buttons.json`,JSON.stringify({path:new URL(openPage.url()).pathname,buttons:labels},null,2));
+      }
+    }
+  }
+  throw error;
 } finally {
   if(browser) await browser.close();
   for(const id of users) {
