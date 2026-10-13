@@ -95,9 +95,12 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(
-      tester.widget<TextFormField>(
-        find.byKey(const Key('investment_asset_name_field')),
-      ).controller?.text,
+      tester
+          .widget<TextFormField>(
+            find.byKey(const Key('investment_asset_name_field')),
+          )
+          .controller
+          ?.text,
       '東京海上',
     );
     await tester.enterText(
