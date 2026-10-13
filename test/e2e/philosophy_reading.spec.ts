@@ -872,6 +872,10 @@ test('unknown total shows reached page and gains percentage after editing the ed
   await page.goto('/');await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
   await openWork(page,'国家');await page.getByRole('button',{name:'読書を始める',exact:true}).click();
   await page.getByRole('button',{name:'保存',exact:true}).click();await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+  const add=page.getByRole('button',{name:'記録を追加',exact:true});await revealReadingControl(page,add);await add.click();
+  await field(page,/^今回読んだページ数/,'5');await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByText('読書記録を追加',{exact:true})).toHaveCount(0);
+  await expectReadingSummary(page,'ページ位置未登録');
   const input=page.getByRole('textbox',{name:/^読んだページ/});await revealReadingControl(page,input);
   await field(page,/^読んだページ/,'11');await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
   await expectReadingSummary(page, '11ページまで読んだ');

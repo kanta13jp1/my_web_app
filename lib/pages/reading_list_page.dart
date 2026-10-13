@@ -774,6 +774,12 @@ class _ReadingListPageState extends State<ReadingListPage>
 
   String _pageSummary(ReadingCycle cycle) {
     final fraction = cycle.pageFraction;
+    if (!cycle.hasPagePosition) {
+      final total = cycle.edition.totalPages;
+      return total != null && total > 0
+          ? 'ページ位置未登録／全$totalページ'
+          : 'ページ位置未登録';
+    }
     if (fraction == null) return '${cycle.reachedPage}ページまで読んだ';
     return '${cycle.reachedPage}ページまで／全${cycle.edition.totalPages}ページ・${(fraction * 100).toStringAsFixed(1)}％';
   }
@@ -821,10 +827,17 @@ class _ReadingListPageState extends State<ReadingListPage>
                     semanticsLabel: 'ページ位置の進捗',
                   ),
                 )
-              else
+              if (!cycle.hasPagePosition)
+                const Text('読んだページ番号を入力すると、ページ位置からの進捗を表示します。'),
+              if (cycle.edition.totalPages == null ||
+                  cycle.edition.totalPages! <= 0)
                 const Text('総ページ数未登録。「版を編集」で登録すると進捗率を表示します。'),
               Text('状態: ${readingStatusLabels[cycle.status]}'),
-              const Text('ページ位置から進捗率を計算します。読み終えたら「読了にする」を押してください。'),
+              Text(
+                cycle.status == 'read'
+                    ? '進捗率は記録したページ位置から計算します。'
+                    : 'ページ位置から進捗率を計算します。読み終えたら「読了にする」を押してください。',
+              ),
               Text('読書記録の合計 ${cycle.pagesRead} ページ（同じページの再読も含む）'),
               _ReadingPageProgress(
                 key: ValueKey('page-progress-${cycle.id}'),

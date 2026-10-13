@@ -217,6 +217,27 @@ void main() {
     );
     expect(ReadingCycle.fromJson(cycle.toJson()).pageFraction, .85);
   });
+  test('count-only and completed records do not invent a page position', () {
+    const cycle = ReadingCycle(
+      id: 'count-only',
+      startedAt: '2026-10-14',
+      edition: ReadingEdition(totalPages: 100),
+      entries: [ReadingEntry(id: 'count', date: '2026-10-14', pages: 10)],
+    );
+    expect(cycle.hasPagePosition, isFalse);
+    expect(cycle.pageFraction, isNull);
+    expect(cycle.pagesRead, 10);
+    final marked = cycle.withPageProgress(11, id: 'mark', date: '2026-10-14');
+    expect(marked.pageFraction, .11);
+    expect(marked.entries.first.toJson(), cycle.entries.first.toJson());
+    final reset = marked.withPageProgress(0, id: 'reset', date: '2026-10-14');
+    expect(reset.hasPagePosition, isTrue);
+    expect(reset.pageFraction, 0);
+    expect(reset.pagesRead, 10);
+    const empty = ReadingCycle(id: 'empty', startedAt: '2026-10-14');
+    expect(empty.copyWith(status: 'read').hasPagePosition, isFalse);
+    expect(empty.hasPagePosition, isTrue);
+  });
   test('paused and unread works are not counted as currently reading', () {
     final work = philosophyWorks.first;
     for (final status in ['paused', 'unread', 'read']) {

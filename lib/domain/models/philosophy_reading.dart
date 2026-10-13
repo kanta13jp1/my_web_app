@@ -295,10 +295,19 @@ class ReadingCycle {
         (page, entry) => (entry.endPage ?? 0) > page ? entry.endPage! : page,
       );
 
+  bool get hasPagePosition {
+    if (entries.any(
+      (entry) => entry.endPage != null || entry.id.startsWith('progress:'),
+    )) {
+      return true;
+    }
+    return status != 'read' && pagesRead == 0;
+  }
+
   // Page-position progress is distinct from recorded unique page coverage.
   double? get pageFraction {
     final total = edition.totalPages;
-    if (total == null || total <= 0) return null;
+    if (total == null || total <= 0 || !hasPagePosition) return null;
     return (reachedPage / total).clamp(0, 1).toDouble();
   }
 
