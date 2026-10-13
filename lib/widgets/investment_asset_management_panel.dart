@@ -293,7 +293,7 @@ class _InvestmentAssetManagementPanelState
       });
       unawaited(_loadHistory(userId));
       _showMessage(
-        asset == null ? '${saved.ticker}を追加しました。' : '${saved.ticker}を更新しました。',
+        asset == null ? '${saved.displayLabel}を追加しました。' : '${saved.displayLabel}を更新しました。',
       );
     } catch (error, stackTrace) {
       debugPrint('Investment asset save failed: $error');
@@ -313,7 +313,7 @@ class _InvestmentAssetManagementPanelState
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('投資資産を削除'),
-        content: Text('${asset.ticker}を一覧から削除しますか？'),
+        content: Text('${asset.displayLabel}を一覧から削除しますか？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -342,7 +342,7 @@ class _InvestmentAssetManagementPanelState
         ];
       });
       unawaited(_loadHistory(userId));
-      _showMessage('${asset.ticker}を削除しました。');
+      _showMessage('${asset.displayLabel}を削除しました。');
     } catch (error, stackTrace) {
       debugPrint('Investment asset delete failed: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -577,7 +577,7 @@ class _InvestmentAssetManagementPanelState
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
-                    asset.ticker,
+                    asset.displayLabel,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -591,14 +591,14 @@ class _InvestmentAssetManagementPanelState
             ),
             IconButton(
               key: ValueKey<String>('investment_asset_edit_${asset.id}'),
-              tooltip: '${asset.ticker}を編集',
+              tooltip: '${asset.displayLabel}を編集',
               onPressed: _saving ? null : () => _openEditor(asset),
               icon: const Icon(Icons.edit_outlined),
               iconSize: 20,
             ),
             IconButton(
               key: ValueKey<String>('investment_asset_delete_${asset.id}'),
-              tooltip: '${asset.ticker}を削除',
+              tooltip: '${asset.displayLabel}を削除',
               onPressed: _saving ? null : () => _confirmDelete(asset),
               icon: const Icon(Icons.delete_outline),
               iconSize: 20,
@@ -808,6 +808,7 @@ class _InvestmentAssetEditorDialogState
   final _formKey = GlobalKey<FormState>();
   late InvestmentAssetType _assetType;
   late final TextEditingController _tickerController;
+  late final TextEditingController _nameController;
   late final TextEditingController _quantityController;
   late final TextEditingController _buyPriceController;
   late final TextEditingController _buyDateController;
@@ -819,6 +820,7 @@ class _InvestmentAssetEditorDialogState
     final asset = widget.asset;
     _assetType = asset?.assetType ?? InvestmentAssetType.stock;
     _tickerController = TextEditingController(text: asset?.ticker ?? '');
+    _nameController = TextEditingController(text: asset?.displayName ?? '');
     _quantityController = TextEditingController(
       text: asset == null ? '' : _plainNumber(asset.quantity),
     );
@@ -832,6 +834,7 @@ class _InvestmentAssetEditorDialogState
   @override
   void dispose() {
     _tickerController.dispose();
+    _nameController.dispose();
     _quantityController.dispose();
     _buyPriceController.dispose();
     _buyDateController.dispose();
@@ -866,6 +869,7 @@ class _InvestmentAssetEditorDialogState
         assetType: _assetType,
         ticker: ticker,
         existingTicker: asset?.ticker,
+        displayName: _nameController.text,
         quantity: _parseNumber(_quantityController.text)!,
         buyPriceJpy: _parseNumber(_buyPriceController.text)!,
         buyDate: _buyDate,
@@ -918,6 +922,16 @@ class _InvestmentAssetEditorDialogState
                 validator: (value) => _tickerValidationMessage(
                   value,
                   existingTicker: widget.asset?.ticker,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('investment_asset_name_field'),
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: '銘柄名（任意）',
+                  hintText: '例: 東京海上',
+                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
