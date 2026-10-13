@@ -116,7 +116,7 @@ async function verifyCatalogRelease(page, account, version) {
     for (const [index,book] of books.entries()) {
       book.purchase ||= 'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn;
       await page.goto(base+'/reading-list');await semantics(page);await openWork(page,book.title);
-      const start=page.getByRole('button',{name:'読書を始める',exact:true});
+      const start=page.getByRole('button',{name:/^(読書を始める|別の版・再読を始める)$/});
       await reveal(start);await expect(start).toBeEnabled();await start.click();
       await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
       await restoredField(page,/^書籍情報を検索/,book.title);
@@ -215,11 +215,11 @@ try {
   await page.goto(base+'/login');await semantics(page);
   await page.getByRole('button',{name:'ログイン',exact:true}).first().evaluate(e=>e.click());
   await semantics(page);
-  const auth=page.getByRole('group',{name:/ログインして続きから再開/});
-  await expect(auth).toHaveCount(1);
-  await expect(auth.getByRole('button',{name:'Magic Linkでログイン',exact:true})).toBeVisible();
-  await field(auth,/メールアドレス/,a.email);
-  await auth.getByRole('button',{name:'パスワードを使う',exact:true}).click();
+  // The landing form's wrapper is virtualized; interact with its visible inputs.
+  await field(page,/メールアドレス/,a.email);
+  if(await page.locator('input[type="password"]').count() === 0) {
+    await page.getByRole('button',{name:'パスワードを使う',exact:true}).click();
+  }
   await expect(page.getByRole('button',{name:'メールでログイン',exact:true})).toBeVisible();
   await field(page,/^パスワード/,a.password);
   const signedIn=page.waitForResponse(r=>r.url().includes('/auth/v1/token') && r.request().method()==='POST');

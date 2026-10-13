@@ -137,8 +137,8 @@ class ReadingViewModel extends ChangeNotifier {
     final note = [current.note, addition]
         .where((value) => value.isNotEmpty)
         .join('\n\n');
-    if (note.length > 2000) {
-      error = 'メモの合計は2000文字以内にしてください。既存のメモは保持しています';
+    if (note.length > 100000) {
+      error = 'メモの合計は10万文字以内にしてください。既存のメモは保持しています';
       _notify();
       return false;
     }
