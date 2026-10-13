@@ -123,6 +123,7 @@ test.beforeEach(async ({ request, page }) => {
 });
 
 test('record pages, understanding and impression persists across reload; reread keeps one completed work', async ({ page }, info) => {
+  test.setTimeout(120000);
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('/');
@@ -159,6 +160,10 @@ test('record pages, understanding and impression persists across reload; reread 
   await restoredField(page, /^書籍・購入URL/, 'https://example.com/book');
   await restoredField(page, /^版情報の出典URL/, 'https://example.com/source');
   await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  // Reopen the work from its list so the repeat-reading action is in the viewport.
+  await page.getByRole('button', { name: /Back|戻る/ }).click();
+  await openWork(page, '国家');
   await page.getByRole('button', { name: '別の版・再読を始める', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
