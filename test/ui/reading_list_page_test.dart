@@ -140,7 +140,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('読む版を登録'), findsNothing);
     expect(
-      find.textContaining('延べ 0 ページ / 区間記録済み 0 / 総 100 ページ'),
+      find.textContaining('0ページまで／全100ページ・0.0％'),
       findsOneWidget,
     );
     await tester.pumpWidget(const SizedBox());

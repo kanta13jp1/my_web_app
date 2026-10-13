@@ -299,18 +299,18 @@ class _ReadingListPageState extends State<ReadingListPage>
               final record = _model.recordFor(work.id);
               final cycle = record?.cycles.lastOrNull;
               return Card(
-              child: ListTile(
-                title: Text(work.title),
-                subtitle: Text(
-                  '${work.author.name}\n${work.centuries.join('・')} / ${work.genres.join('・')}${cycle == null ? '' : '\n${_pageSummary(cycle)}'}',
+                child: ListTile(
+                  title: Text(work.title),
+                  subtitle: Text(
+                    '${work.author.name}\n${work.centuries.join('・')} / ${work.genres.join('・')}${cycle == null ? '' : '\n${_pageSummary(cycle)}'}',
+                  ),
+                  trailing: Text(
+                    readingStatusLabels[
+                            _model.recordFor(work.id)?.status ?? 'unread'] ??
+                        '未読',
+                  ),
+                  onTap: () => _openWork(work),
                 ),
-                trailing: Text(
-                  readingStatusLabels[
-                          _model.recordFor(work.id)?.status ?? 'unread'] ??
-                      '未読',
-                ),
-                onTap: () => _openWork(work),
-              ),
               );
             },
           ),
@@ -351,7 +351,8 @@ class _ReadingListPageState extends State<ReadingListPage>
               const SizedBox(height: 8),
               Text(
                 '読書中 ${progress.reading} 著作・読了 ${progress.completed} 著作',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Text('対象 ${progress.total} 著作'),
               const SizedBox(height: 8),
@@ -806,7 +807,8 @@ class _ReadingListPageState extends State<ReadingListPage>
               const SizedBox(height: 8),
               Text(
                 _pageSummary(cycle),
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               if (cycle.pageFraction != null)
                 Padding(

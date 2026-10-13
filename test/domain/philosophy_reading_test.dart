@@ -182,7 +182,8 @@ void main() {
     const unknown = ReadingCycle(id: 'd', startedAt: '2026-10-11');
     expect(unknown.coverage, isNull);
   });
-  test('page-position fraction distinguishes gaps, unknown totals and rereads', () {
+  test('page-position fraction distinguishes gaps, unknown totals and rereads',
+      () {
     const cycle = ReadingCycle(
       id: 'position',
       startedAt: '2026-10-14',
@@ -209,7 +210,9 @@ void main() {
     );
     expect(cycle.copyWith(entries: const []).pageFraction, 0);
     expect(
-      cycle.copyWith(edition: const ReadingEdition(totalPages: 80)).pageFraction,
+      cycle
+          .copyWith(edition: const ReadingEdition(totalPages: 80))
+          .pageFraction,
       1,
     );
     expect(ReadingCycle.fromJson(cycle.toJson()).pageFraction, .85);
