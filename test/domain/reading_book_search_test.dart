@@ -5,6 +5,66 @@ import 'package:http/testing.dart';
 import 'package:my_web_app/data/services/reading_book_search.dart';
 
 void main() {
+  test(
+      'author context preserves shared catalog editions whose label omits the author',
+      () async {
+    final client = MockClient((_) => throw StateError('No provider request'));
+    final books = await const ReadingBookSearch()
+        .search('エティカ', author: 'スピノザ', client: client);
+    expect(books.any((book) => book.edition.translator == '工藤喜作・斎藤博'), isTrue);
+  });
+  test('Spinoza political treatise has a sourced Iwanami edition offline',
+      () async {
+    final client = MockClient((_) => throw StateError('No provider request'));
+    for (final query in ['国家論', '4-00-336156-3', '9784003361566']) {
+      final books = await const ReadingBookSearch()
+          .search(query, client: client, author: 'スピノザ');
+      expect(books, hasLength(1));
+      final edition = books.single.edition;
+      expect(edition.publisher, '岩波書店');
+      expect(edition.translator, '畠中尚志');
+      expect(edition.totalPages, 213);
+      expect(edition.year, '1995');
+      expect(edition.isbn, '9784003361566');
+      expect(edition.editor, isEmpty);
+      expect(
+        edition.sourceUrl,
+        'https://ndlsearch.ndl.go.jp/books/R100000002-I000002440109',
+      );
+      expect(Uri.parse(edition.bookUrl).queryParameters['k'], edition.isbn);
+    }
+  });
+  test(
+      'title lookup constrains NDL by the known author and does not match another author locally',
+      () async {
+    var calls = 0;
+    final client = MockClient((request) async {
+      calls++;
+      expect(request.url.queryParameters['title'], '国家論');
+      expect(request.url.queryParameters['creator'], '別の著者');
+      return http.Response('<rss><channel/></rss>', 200);
+    });
+    expect(
+      await const ReadingBookSearch()
+          .search('国家論', author: '別の著者', client: client),
+      isEmpty,
+    );
+    expect(calls, 1);
+  });
+  test('explicit external Spinoza search sends title and creator separately',
+      () async {
+    final client = MockClient((request) async {
+      expect(request.url.queryParameters['title'], '国家論');
+      expect(request.url.queryParameters['creator'], 'スピノザ');
+      return http.Response('<rss><channel/></rss>', 200);
+    });
+    expect(
+      await const ReadingBookSearch()
+          .search('国家論', author: 'スピノザ', client: client, external: true),
+      isEmpty,
+    );
+  });
+
   test('RSS responsibility credits supplement authority-only creator entries',
       () async {
     final xml = ndlBooksFixture.replaceAll(
