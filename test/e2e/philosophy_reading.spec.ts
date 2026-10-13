@@ -621,7 +621,8 @@ test('external title failure and empty results preserve manual input; retry and 
 test('current title searches automatically and Iwanami edition registers, reloads and edits', async ({ page }, info) => {
   await page.goto('/');
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
-  await page.getByRole('tab', { name: '著作', exact: true }).click();
+  await field(page, /^著者・著作を検索/, 'ショーペンハウアー');
+  await page.getByRole('button', { name: /^ショーペンハウアー / }).click();
   await page.getByRole('button', { name: '著作を追加', exact: true }).click();
   await field(page, /^著作名/, '読書について');
   await page.getByRole('button', { name: '保存', exact: true }).click();
@@ -770,3 +771,49 @@ test('Spinoza political treatise automatically selects a sourced Iwanami edition
   await restoredField(page, /^巻・版の名前/, '手元の刷を確認済み');
   await capture(page, info, 'spinoza-iwanami-restored');
 });
+
+
+for (const book of [
+  {title:'道徳経',candidate:'老子・岩波文庫',publisher:'岩波書店',translator:'蜂屋邦夫（訳注）',isbn:'9784003320518',source:'https://www.hanmoto.com/bd/isbn/9784003320518',pages:''},
+  {title:'哲学の諸問題',candidate:'哲学入門・筑摩書房',publisher:'筑摩書房',translator:'高村夏輝',isbn:'9784480089045',source:'https://www.chikumashobo.co.jp/product/9784480089045/',pages:'288'},
+  {title:'メノイケウス宛の手紙',candidate:'自然について他・京都大学学術出版会',publisher:'京都大学学術出版会',translator:'朴一功・和田利博',isbn:'9784814005598',source:'https://ndlsearch.ndl.go.jp/books/R100000002-I034002308',pages:''},
+  {title:'有徳都市の住民の見解',candidate:'中世思想原典集成11 イスラーム哲学・平凡社',publisher:'平凡社',translator:'竹下政孝',isbn:'9784582734218',source:'https://catalog.library.metro.tokyo.lg.jp/winj/opac/switch-detail-iccap.do?bibid=1105284612',pages:'1161'},
+]) {
+  test(`catalog alternate title automatically finds and persists the Japanese edition: ${book.title}`, async ({ page }, info) => {
+    test.setTimeout(120000);
+    const errors: string[] = [];page.on('pageerror', error => errors.push(error.message));
+    await page.goto('/');
+    await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+    await openWork(page,book.title);
+    await page.getByRole('button',{name:'読書を始める',exact:true}).click();
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await restoredField(page,/^書籍情報を検索/,book.title);
+    const candidate=page.getByRole('button',{name:new RegExp('^'+book.candidate)});
+    await revealReadingControl(page,candidate);await candidate.click();
+    if(book.title==='有徳都市の住民の見解') await expect(page.getByText(/版の注記: .*1161ページは巻全体/).last()).toBeVisible();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await restoredField(page,/^出版社/,book.publisher);
+    await restoredField(page,/^訳者/,book.translator);
+    await restoredField(page,/^ISBN/,book.isbn);
+    await restoredField(page,/^総ページ数/,book.pages);
+    await restoredField(page,/^版情報の出典URL/,book.source);
+    await restoredField(page,/^書籍・購入URL/,'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+    await openWork(page,book.title);await editRegisteredEdition(page,book.isbn);
+    await restoredField(page,/^出版社/,book.publisher);
+    await restoredField(page,/^訳者/,book.translator);
+    await restoredField(page,/^ISBN/,book.isbn);
+    await field(page,/^巻・版の名前/,'手元の版を確認・'+book.title);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+    await openWork(page,book.title);await editRegisteredEdition(page,book.isbn);
+    await restoredField(page,/^訳者/,book.translator);
+    await restoredField(page,/^巻・版の名前/,'手元の版を確認・'+book.title);
+    await restoredField(page,/^版情報の出典URL/,book.source);
+    await capture(page,info,'catalog-alias-'+book.isbn+'-edited-reloaded');
+    expect(errors).toEqual([]);
+  });
+}
