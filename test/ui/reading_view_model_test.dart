@@ -29,6 +29,32 @@ void main() {
     await repo.changes.close();
   });
 
+  test('long work memo survives reload and overflow preserves existing memo',
+      () async {
+    final repo = ReadingFixtureRepository();
+    final model = ReadingViewModel(repo);
+    await model.load();
+    final work = philosophyWorks.first;
+    final text = List.filled(3000, '本').join();
+    expect(await model.appendWorkMemo(work, text), isTrue);
+    expect(await model.appendWorkMemo(work, '12〜15頁の目次'), isTrue);
+    await model.load();
+    final record = model.recordFor(work.id)!;
+    expect(record.work.note, contains(text));
+    expect(record.work.note, endsWith('12〜15頁の目次'));
+    expect(record.cycles, isEmpty);
+    expect(record.pagesRead, 0);
+    expect(record.isRead, isFalse);
+    expect(await model.appendWorkMemo(work, List.filled(100000, '字').join()),
+        isFalse);
+    expect(model.recordFor(work.id)!.work.note, record.work.note);
+    repo.failNextSave = true;
+    expect(await model.appendWorkMemo(work, '保存失敗'), isFalse);
+    expect(model.recordFor(work.id)!.work.note, record.work.note);
+    model.dispose();
+    await repo.changes.close();
+  });
+
   test(
       'guest can browse but cannot mutate; save failure leaves the previous record intact',
       () async {

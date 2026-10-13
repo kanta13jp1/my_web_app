@@ -378,3 +378,9 @@ Deno.test({
     assertEquals((all.items as unknown[]).length, 507);
   },
 });
+
+Deno.test("work memo accepts long notes without truncation and rejects overflow", () => {
+  const note = "本".repeat(100000);
+  assertEquals(validateWork({ ...work, note }).note, note);
+  assertThrows(() => validateWork({ ...work, note: note + "字" }), ReadingError);
+});

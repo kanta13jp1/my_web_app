@@ -134,7 +134,7 @@ export function validateWork(value: unknown): Json {
     centuries: strings(work.centuries),
     genres: strings(work.genres),
     source: link(work.source),
-    note: string(work.note, 2000, true),
+    note: string(work.note, 100000, true),
   };
 }
 
