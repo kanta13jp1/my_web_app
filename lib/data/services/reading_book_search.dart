@@ -5,10 +5,29 @@ import '../catalogs/philosophy_catalog.dart';
 import '../../domain/models/philosophy_reading.dart';
 
 class ReadingBookResult {
-  const ReadingBookResult(this.title, this.edition, {this.author = ''});
+  const ReadingBookResult(this.title, this.edition, {
+    this.author = '',
+    this.authorAliases = const [],
+    this.workId = '',
+    this.note = '',
+  });
+  final List<String> authorAliases;
+  final String workId;
+  final String note;
   final String author;
   final String title;
   final ReadingEdition edition;
+}
+
+String _searchText(String value) => value
+    .replaceAll('Ⅰ', 'I')
+    .toLowerCase()
+    .replaceAll(RegExp(r'''[\s　・･:：'’“”"?？!！,，.。()（）\[\]「」『』-]'''), '');
+
+bool _matchesAuthor(String query, String name, List<String> aliases) {
+  final text = _searchText(query);
+  return text.isEmpty || name.isEmpty ||
+      [name, ...aliases].any((value) => _searchText(value).contains(text));
 }
 
 String _normalizeIsbn(String value) {
@@ -50,18 +69,16 @@ class ReadingBookSearch {
     // Searchable editions need not belong to the shared philosophical works.
     // This also supports books attached to existing personal reading records.
     final books = [
-      ...philosophyCatalogEditions.map(
-        (book) => ReadingBookResult(
-          book.label,
-          book.edition,
-          author: philosophyWorks
-                  .where((work) => work.id == book.workId)
-                  .firstOrNull
-                  ?.author
-                  .name ??
-              '',
-        ),
-      ),
+      ...philosophyCatalogEditions.map((book) {
+        final work = philosophyWorks.where((work) => work.id == book.workId).firstOrNull;
+        return ReadingBookResult(
+          book.label, book.edition,
+          workId: book.workId,
+          author: work?.author.name ?? '',
+          authorAliases: work?.author.aliases ?? const [],
+          note: book.note,
+        );
+      }),
       const ReadingBookResult(
         '国家論・岩波文庫（スピノザ／畠中尚志訳・第16刷）',
         ReadingEdition(
@@ -105,17 +122,21 @@ class ReadingBookSearch {
         ),
       ),
     ];
-    final matches = books.where(
-      (book) => isIsbn
-          ? book.edition.isbn == isbn
-          : '${book.title} ${book.edition.translator} ${book.edition.publisher}'
-                  .toLowerCase()
-                  .contains(text.toLowerCase()) &&
-              (author.trim().isEmpty ||
-                  book.author.isEmpty ||
-                  book.author
-                      .toLowerCase()
-                      .contains(author.trim().toLowerCase())),
+    // A curated work identity connects alternate Japanese titles and anthologies.
+    // Only exact catalog/original titles establish this relationship; label
+    // substring searches remain available without inferring new work links.
+    final normalized = _searchText(text);
+    if (normalized.isEmpty) return [];
+    final workIds = philosophyWorks.where((work) =>
+      (_searchText(work.title) == normalized ||
+       (work.originalTitle.isNotEmpty && _searchText(work.originalTitle) == normalized)) &&
+      _matchesAuthor(author, work.author.name, work.author.aliases),
+    ).map((work) => work.id).toSet();
+    final matches = books.where((book) => isIsbn
+      ? _normalizeIsbn(book.edition.isbn) == isbn
+      : _matchesAuthor(author, book.author, book.authorAliases) &&
+        (workIds.contains(book.workId) ||
+         _searchText('${book.title} ${book.edition.translator} ${book.edition.publisher}').contains(normalized)),
     );
     if (matches.isNotEmpty && !external) return matches.toList();
     if (!isIsbn && RegExp(r'^[0-9Xx\s-]+$').hasMatch(text)) return [];

@@ -83,7 +83,7 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
       builder: (context) => AlertDialog(
         title: const Text('この書籍情報を設定しますか？'),
         content: Text(
-          '${book.title}\n${book.edition.publisher} / ${book.edition.year}\n訳者: ${book.edition.translator}\nページ数: ${book.edition.totalPages ?? '不明'}\nISBN: ${book.edition.isbn}\n出典: ${book.edition.sourceUrl}\n\n現在の版情報を置き換えます。取得できない項目は空欄になります。設定後に確認・修正してください。',
+          '${book.title}\n${book.edition.publisher} / ${book.edition.year}\n訳者: ${book.edition.translator}\nページ数: ${book.edition.totalPages ?? '不明'}\nISBN: ${book.edition.isbn}\n出典: ${book.edition.sourceUrl}\n${book.note.isEmpty ? '' : '版の注記: ${book.note}\n'}\n現在の版情報を置き換えます。取得できない項目は空欄になります。設定後に確認・修正してください。',
         ),
         actions: [
           TextButton(
@@ -139,7 +139,7 @@ class _ReadingBookLookupState extends State<ReadingBookLookup> {
             (book) => ListTile(
               title: Text(book.title),
               subtitle: Text(
-                '${book.edition.publisher} / ${book.edition.year} / ${book.edition.translator}\n巻: ${book.edition.volume} / ${book.edition.totalPages ?? '不明'}ページ\nISBN: ${book.edition.isbn}',
+                '${book.edition.publisher} / ${book.edition.year} / ${book.edition.translator}\n巻: ${book.edition.volume} / ${book.edition.totalPages ?? '不明'}ページ\nISBN: ${book.edition.isbn} / 言語: ${book.edition.language.isEmpty ? '不明' : book.edition.language}${book.note.isEmpty ? '' : '\n版の注記: ${book.note}'}',
               ),
               onTap: () => _select(book),
             ),
