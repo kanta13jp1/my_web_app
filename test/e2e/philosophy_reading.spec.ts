@@ -817,3 +817,27 @@ for (const book of [
     expect(errors).toEqual([]);
   });
 }
+
+test('long work memo persists without a reading cycle and accepts another append', async ({ page }, info) => {
+  test.setTimeout(120000);
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '論語');
+  await page.getByRole('button', { name: '著作にメモを追記', exact: true }).click();
+  const memo = '長文確認' + '本'.repeat(3000) + '長文末尾';
+  await field(page, /^追記するメモ/, memo);
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^追記するメモ/ })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '論語');
+  await expect(page.getByText(/長文確認.*長文末尾/)).toHaveCount(1);
+  await page.getByRole('button', { name: '著作にメモを追記', exact: true }).click();
+  await field(page, /^追記するメモ/, '12〜15頁追記確認');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^追記するメモ/ })).toHaveCount(0);
+  await expect(page.getByText(/長文末尾.*12〜15頁追記確認/s)).toHaveCount(1);
+  await revealReadingControl(page, page.getByRole('button', { name: '読書を始める', exact: true }));
+  await expect(page.getByText(/既存の状態: 未読/)).toBeVisible();
+  await capture(page, info, 'long-work-memo-no-cycle');
+});

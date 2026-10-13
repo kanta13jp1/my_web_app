@@ -45,8 +45,10 @@ void main() {
     expect(record.cycles, isEmpty);
     expect(record.pagesRead, 0);
     expect(record.isRead, isFalse);
-    expect(await model.appendWorkMemo(work, List.filled(100000, '字').join()),
-        isFalse);
+    expect(
+      await model.appendWorkMemo(work, List.filled(100000, '字').join()),
+      isFalse,
+    );
     expect(model.recordFor(work.id)!.work.note, record.work.note);
     repo.failNextSave = true;
     expect(await model.appendWorkMemo(work, '保存失敗'), isFalse);
