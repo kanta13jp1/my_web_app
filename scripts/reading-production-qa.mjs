@@ -162,6 +162,71 @@ async function verifyCatalogRelease(page, account, version) {
   console.log(`Published catalog: ${results.length} desktop/mobile title/ISBN selection, autofill, registration/reload/edit/reload, purchase and real API checks passed.`);
 }
 
+async function verifyProgressDisplay(page, account, version) {
+  const results=[];const owned=[];
+  async function summary(text) {
+    const escaped=text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    await expect(page.getByRole('group',{name:new RegExp(escaped)}).or(page.getByText(text)).last()).toBeVisible();
+  }
+  async function reveal(control) {
+    for(let i=0;i<20 && (await control.count())===0;i++) {
+      await page.mouse.move(200,600);await page.mouse.wheel(0,260);await page.waitForTimeout(250);
+    }
+    await expect(control).toHaveCount(1);await expect(control).toBeVisible();
+  }
+  async function overview(reading,completed) {
+    await page.goto(base+'/reading-list');await semantics(page);
+    await page.getByRole('tab',{name:'進捗',exact:true}).click();
+    await summary(`読書中 ${reading} 著作・読了 ${completed} 著作`);
+  }
+  for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+    for(const id of owned.splice(0)) {
+      const removed=await fetch(url+`/rest/v1/hub_data?id=eq.${id}&source=eq.reading&metadata->>user_id=eq.${users[0]}`,{method:'DELETE',headers:{apikey:admin,Authorization:`Bearer ${admin}`}});
+      assert.equal(removed.status,204);
+    }
+    const date=new Date().toISOString().slice(0,10);
+    const books=[];
+    for(const [label,total] of [['既知',160],['不明',null]]) {
+      const id=randomUUID();owned.push(id);
+      const work={id:'qa:'+randomUUID(),title:`進捗公開確認${mode}${label}`,author_info:{id:'qa-author',name:'QA',aliases:[],centuries:['21'],regions:['QA'],traditions:[],source:'',note:''},original_title:'',centuries:['21'],genres:['QA'],source:'',note:''};
+      await action(account.token,{action:'reading.add',id,work});
+      const cycles=[{id:randomUUID(),started_at:date,finished_at:null,status:'reading',edition:{total_pages:total,publisher:'QA',translator:'',editor:'',volume:'',year:'',language:'日本語',isbn:'',book_url:'',source_url:''},entries:total===null?[{id:randomUUID(),date,pages:5,start_page:null,end_page:null,understanding:null,impression:'旧記録保持確認',questions:'',concepts:''}]:[]}];
+      await action(account.token,{action:'reading.save',id,revision:0,work,cycles});books.push({id,title:work.title});
+    }
+    await page.setViewportSize(size);await overview(2,0);await capture(page,`progress-${mode}-reading-counts`);
+    async function detail(book) {await page.goto(base+'/reading-list');await semantics(page);await openWork(page,book.title);}
+    async function update(value) {
+      const input=page.getByRole('textbox',{name:/^読んだページ/});await reveal(input);await field(page,/^読んだページ/,String(value));
+      await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+      await expect(page.getByText(`${value}ページまでの進捗を保存しました`,{exact:true})).toBeVisible();
+    }
+    await detail(books[0]);
+    for(const [value,percent] of [[85,'53.1'],[100,'62.5'],[100,'62.5'],[80,'50.0']]) {await update(value);await summary(`${value}ページまで／全160ページ・${percent}％`);}
+    await page.reload();await semantics(page);await openWork(page,books[0].title);
+    await summary('80ページまで／全160ページ・50.0％');await restoredField(page,/^読んだページ/,'80');
+    await capture(page,`progress-${mode}-known-reloaded`);
+    await update(160);await summary('160ページまで／全160ページ・100.0％');await overview(2,0);
+    await detail(books[0]);const complete=page.getByRole('button',{name:'読了にする',exact:true});await reveal(complete);await complete.click();
+    await overview(1,1);await page.reload();await semantics(page);await page.getByRole('tab',{name:'進捗',exact:true}).click();await summary('読書中 1 著作・読了 1 著作');
+    await capture(page,`progress-${mode}-completed-counts-reloaded`);
+    await detail(books[1]);await summary('ページ位置未登録');await update(11);await summary('11ページまで読んだ');
+    await expect(page.getByRole('progressbar',{name:'ページ位置の進捗',exact:true})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,books[1].title);await summary('11ページまで読んだ');await restoredField(page,/^読んだページ/,'11');
+    await summary('総ページ数未登録。「版を編集」で登録すると進捗率を表示します。');await capture(page,`progress-${mode}-unknown-reloaded`);
+    const edit=page.getByRole('button',{name:'版を編集',exact:true});await reveal(edit);await edit.click();await field(page,/^総ページ数/,'100');await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^総ページ数/})).toHaveCount(0);
+    await page.reload();await semantics(page);await openWork(page,books[1].title);await summary('11ページまで／全100ページ・11.0％');await capture(page,`progress-${mode}-total-added-reloaded`);
+    const items=(await action(account.token,{action:'reading.list'})).items;
+    const known=items.find(x=>x.id===books[0].id).metadata.cycles[0];const unknown=items.find(x=>x.id===books[1].id).metadata.cycles[0];
+    assert.equal(known.status,'read');assert.equal(Math.max(...known.entries.map(e=>e.end_page??0)),160);
+    assert.equal(unknown.edition.total_pages,100);assert.equal(Math.max(...unknown.entries.map(e=>e.end_page??0)),11);assert.equal(unknown.entries[0].impression,'旧記録保持確認');
+    results.push({mode,known:'160/160 100.0%',unknown:'11/100 11.0%',reading:1,completed:1,updateReload:'passed',oldRecordPreserved:true});
+  }
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,profile:'progress',api:'passed',cases:results},null,2));
+  console.log('Published progress display, updates, reload, unknown totals, completion counts and preserved legacy notes passed on desktop/mobile.');
+}
+
+
 try {
   const version = await (await fetch(`${base}/version.json?qa=${Date.now()}`)).json();
   assert.equal(version.commit,process.env.EXPECTED_PRODUCTION_SHA,'Published version differs from merged commit');
@@ -228,7 +293,9 @@ try {
   await page.waitForTimeout(1500);
   await page.goto(base+'/reading-list');await semantics(page);
   await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
-  if(process.env.READING_QA_CATALOG === 'true') {
+  if(process.env.READING_QA_PROGRESS === 'true') {
+    await verifyProgressDisplay(page,a,version);
+  } else if(process.env.READING_QA_CATALOG === 'true') {
     await verifyCatalogRelease(page,a,version);
   } else {
   await openWork(page);

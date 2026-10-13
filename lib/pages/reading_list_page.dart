@@ -295,20 +295,24 @@ class _ReadingListPageState extends State<ReadingListPage>
               child: Text('条件に一致する著作はありません'),
             ),
           ..._filteredWorks.map(
-            (work) => Card(
-              child: ListTile(
-                title: Text(work.title),
-                subtitle: Text(
-                  '${work.author.name}\n${work.centuries.join('・')} / ${work.genres.join('・')}',
+            (work) {
+              final record = _model.recordFor(work.id);
+              final cycle = record?.cycles.lastOrNull;
+              return Card(
+                child: ListTile(
+                  title: Text(work.title),
+                  subtitle: Text(
+                    '${work.author.name}\n${work.centuries.join('・')} / ${work.genres.join('・')}${cycle == null ? '' : '\n${_pageSummary(cycle)}'}',
+                  ),
+                  trailing: Text(
+                    readingStatusLabels[
+                            _model.recordFor(work.id)?.status ?? 'unread'] ??
+                        '未読',
+                  ),
+                  onTap: () => _openWork(work),
                 ),
-                trailing: Text(
-                  readingStatusLabels[
-                          _model.recordFor(work.id)?.status ?? 'unread'] ??
-                      '未読',
-                ),
-                onTap: () => _openWork(work),
-              ),
-            ),
+              );
+            },
           ),
         ],
       );
@@ -326,7 +330,10 @@ class _ReadingListPageState extends State<ReadingListPage>
           ),
           _progressCard('収録済み著作全体', _model.progress(_model.works)),
           _filters(),
-          _progressCard('現在の検索・分類対象', _model.progress(_filteredWorks)),
+          _progressCard(
+            '著者・検索・分類で絞り込んだ著作',
+            _model.progress(_filteredWorks),
+          ),
           const Text('分類別の読了数（複数分類の著作は各分類に含まれます）'),
           ..._groupProgress('成立世紀', (w) => w.centuries),
           ..._groupProgress('国／地域', (w) => w.author.regions),
@@ -344,13 +351,26 @@ class _ReadingListPageState extends State<ReadingListPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label),
+              const SizedBox(height: 8),
+              Text(
+                '読書中 ${progress.reading} 著作・読了 ${progress.completed} 著作',
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Text('対象 ${progress.total} 著作'),
+              const SizedBox(height: 8),
+              const Text('読了した著作の割合'),
               Text(
                 '読了 ${progress.completed} / ${progress.total} 著作${progress.total == 0 ? '（対象なし）' : ''}',
               ),
               const SizedBox(height: 8),
-              LinearProgressIndicator(value: progress.fraction),
+              LinearProgressIndicator(
+                value: progress.fraction,
+                semanticsLabel: '読了した著作の割合',
+              ),
               const SizedBox(height: 8),
-              Text('延べ読書量 ${progress.pages} ページ（再読を含む）'),
+              Text('読書記録の合計 ${progress.pages} ページ（再読を含む）'),
+              const Text('再読中の著作は「読書中」と「読了」の両方に含まれます。'),
             ],
           ),
         ),
@@ -752,6 +772,16 @@ class _ReadingListPageState extends State<ReadingListPage>
         ),
       );
 
+  String _pageSummary(ReadingCycle cycle) {
+    final fraction = cycle.pageFraction;
+    if (!cycle.hasPagePosition) {
+      final total = cycle.edition.totalPages;
+      return total != null && total > 0 ? 'ページ位置未登録／全$totalページ' : 'ページ位置未登録';
+    }
+    if (fraction == null) return '${cycle.reachedPage}ページまで読んだ';
+    return '${cycle.reachedPage}ページまで／全${cycle.edition.totalPages}ページ・${(fraction * 100).toStringAsFixed(1)}％';
+  }
+
   Widget _cycle(ReadingRecord record, ReadingCycle cycle, int number) => Card(
         key: ValueKey(cycle.id),
         child: Padding(
@@ -781,17 +811,32 @@ class _ReadingListPageState extends State<ReadingListPage>
               Text(
                 '出版年: ${cycle.edition.year.isEmpty ? '不明' : cycle.edition.year} / ISBN: ${cycle.edition.isbn.isEmpty ? '未登録' : cycle.edition.isbn}',
               ),
+              const SizedBox(height: 8),
               Text(
-                '延べ ${cycle.pagesRead} ページ / 区間記録済み ${cycle.coveredPages} / 総 ${cycle.edition.totalPages?.toString() ?? '不明'} ページ',
+                _pageSummary(cycle),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              if (cycle.coverage != null)
+              if (cycle.pageFraction != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: LinearProgressIndicator(
-                    value: cycle.coverage!.clamp(0, 1),
+                    value: cycle.pageFraction,
+                    semanticsLabel: 'ページ位置の進捗',
                   ),
                 ),
-              Text('状態: ${readingStatusLabels[cycle.status]}（読了は手動で設定）'),
+              if (!cycle.hasPagePosition)
+                const Text('読んだページ番号を入力すると、ページ位置からの進捗を表示します。'),
+              if (cycle.edition.totalPages == null ||
+                  cycle.edition.totalPages! <= 0)
+                const Text('総ページ数未登録。「版を編集」で登録すると進捗率を表示します。'),
+              Text('状態: ${readingStatusLabels[cycle.status]}'),
+              Text(
+                cycle.status == 'read'
+                    ? '進捗率は記録したページ位置から計算します。'
+                    : 'ページ位置から進捗率を計算します。読み終えたら「読了にする」を押してください。',
+              ),
+              Text('読書記録の合計 ${cycle.pagesRead} ページ（同じページの再読も含む）'),
               _ReadingPageProgress(
                 key: ValueKey('page-progress-${cycle.id}'),
                 page: cycle.reachedPage,

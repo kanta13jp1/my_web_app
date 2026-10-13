@@ -70,7 +70,7 @@ void main() {
     await tester.tap(find.text('進捗を更新'));
     await tester.pumpAndSettle();
     expect(find.text('85ページまでの進捗を保存しました'), findsOneWidget);
-    expect(find.textContaining('区間記録済み 85'), findsOneWidget);
+    expect(find.text('85ページまで／全160ページ・53.1％'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     await repository.changes.close();
@@ -140,7 +140,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('読む版を登録'), findsNothing);
     expect(
-      find.textContaining('延べ 0 ページ / 区間記録済み 0 / 総 100 ページ'),
+      find.textContaining('0ページまで／全100ページ・0.0％'),
       findsOneWidget,
     );
     await tester.pumpWidget(const SizedBox());

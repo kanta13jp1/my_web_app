@@ -182,6 +182,79 @@ void main() {
     const unknown = ReadingCycle(id: 'd', startedAt: '2026-10-11');
     expect(unknown.coverage, isNull);
   });
+  test('page-position fraction distinguishes gaps, unknown totals and rereads',
+      () {
+    const cycle = ReadingCycle(
+      id: 'position',
+      startedAt: '2026-10-14',
+      edition: ReadingEdition(totalPages: 100),
+      entries: [
+        ReadingEntry(
+          id: 'gap',
+          date: '2026-10-14',
+          pages: 11,
+          startPage: 75,
+          endPage: 85,
+        ),
+      ],
+    );
+    expect(cycle.pageFraction, .85);
+    expect(cycle.coverage, .11);
+    expect(
+      cycle.copyWith(edition: const ReadingEdition()).pageFraction,
+      isNull,
+    );
+    expect(
+      cycle.copyWith(edition: const ReadingEdition(totalPages: 0)).pageFraction,
+      isNull,
+    );
+    expect(cycle.copyWith(entries: const []).pageFraction, 0);
+    expect(
+      cycle
+          .copyWith(edition: const ReadingEdition(totalPages: 80))
+          .pageFraction,
+      1,
+    );
+    expect(ReadingCycle.fromJson(cycle.toJson()).pageFraction, .85);
+  });
+  test('count-only and completed records do not invent a page position', () {
+    const cycle = ReadingCycle(
+      id: 'count-only',
+      startedAt: '2026-10-14',
+      edition: ReadingEdition(totalPages: 100),
+      entries: [ReadingEntry(id: 'count', date: '2026-10-14', pages: 10)],
+    );
+    expect(cycle.hasPagePosition, isFalse);
+    expect(cycle.pageFraction, isNull);
+    expect(cycle.pagesRead, 10);
+    final marked = cycle.withPageProgress(11, id: 'mark', date: '2026-10-14');
+    expect(marked.pageFraction, .11);
+    expect(marked.entries.first.toJson(), cycle.entries.first.toJson());
+    final reset = marked.withPageProgress(0, id: 'reset', date: '2026-10-14');
+    expect(reset.hasPagePosition, isTrue);
+    expect(reset.pageFraction, 0);
+    expect(reset.pagesRead, 10);
+    const empty = ReadingCycle(id: 'empty', startedAt: '2026-10-14');
+    expect(empty.copyWith(status: 'read').hasPagePosition, isFalse);
+    expect(empty.hasPagePosition, isTrue);
+  });
+  test('paused and unread works are not counted as currently reading', () {
+    final work = philosophyWorks.first;
+    for (final status in ['paused', 'unread', 'read']) {
+      final progress = ReadingProgress(
+        [work],
+        [ReadingRecord(id: status, work: work, legacyStatus: status)],
+      );
+      expect(progress.reading, 0);
+    }
+    expect(
+      ReadingProgress(
+        [work],
+        [ReadingRecord(id: 'legacy', work: work, legacyStatus: 'reading')],
+      ).reading,
+      1,
+    );
+  });
   test('bad dates, out-of-edition ranges and understanding are rejected', () {
     expect(
       const ReadingEntry(
@@ -246,6 +319,8 @@ void main() {
     ];
     final progress = ReadingProgress(philosophyWorks, records);
     expect(progress.completed, 1);
+    expect(progress.reading, 1);
+    expect(ReadingProgress([], records).reading, 0);
     expect(progress.total, philosophyWorks.length);
     expect(ReadingProgress([], records).fraction, 0);
   });

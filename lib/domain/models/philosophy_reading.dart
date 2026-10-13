@@ -295,6 +295,22 @@ class ReadingCycle {
         (page, entry) => (entry.endPage ?? 0) > page ? entry.endPage! : page,
       );
 
+  bool get hasPagePosition {
+    if (entries.any(
+      (entry) => entry.endPage != null || entry.id.startsWith('progress:'),
+    )) {
+      return true;
+    }
+    return status != 'read' && pagesRead == 0;
+  }
+
+  // Page-position progress is distinct from recorded unique page coverage.
+  double? get pageFraction {
+    final total = edition.totalPages;
+    if (total == null || total <= 0 || !hasPagePosition) return null;
+    return (reachedPage / total).clamp(0, 1).toDouble();
+  }
+
   ReadingCycle withPageProgress(
     int page, {
     required String id,
@@ -522,6 +538,11 @@ class ReadingProgress {
         .map((r) => r.work.id)
         .toSet()
         .length;
+    reading = records
+        .where((r) => r.status == 'reading' && ids.contains(r.work.id))
+        .map((r) => r.work.id)
+        .toSet()
+        .length;
     pages = records
         .where((r) => ids.contains(r.work.id))
         .fold(0, (total, record) => total + record.pagesRead);
@@ -529,6 +550,7 @@ class ReadingProgress {
 
   late final int total;
   late final int completed;
+  late final int reading;
   late final int pages;
   double get fraction => total == 0 ? 0 : completed / total;
 }
