@@ -196,9 +196,15 @@ async function verifyProgressDisplay(page, account, version) {
     await page.setViewportSize(size);await overview(2,0);await capture(page,`progress-${mode}-reading-counts`);
     async function detail(book) {await page.goto(base+'/reading-list');await semantics(page);await openWork(page,book.title);}
     async function update(value) {
-      const input=page.getByRole('textbox',{name:/^読んだページ/});await reveal(input);await field(page,/^読んだページ/,String(value));
+      const input=page.getByRole('textbox',{name:/^読んだページ/});await reveal(input);
+      await field(page,/^読んだページ/,'');
+      await expect(page.getByText(/^\d+ページまでの進捗を保存しました$/)).toHaveCount(0);
+      await field(page,/^読んだページ/,String(value));
+      const updated=page.waitForResponse(r=>r.url().includes('/functions/v1/tools-hub') && r.request().method()==='POST' && r.request().postDataJSON()?.action==='reading.save');
       await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+      assert.equal((await updated).status(),200,'Page update save failed');
       await expect(page.getByText(`${value}ページまでの進捗を保存しました`,{exact:true})).toBeVisible();
+      await expect(page.getByRole('button',{name:'進捗を更新',exact:true})).toBeEnabled();
     }
     await detail(books[0]);
     for(const [value,percent] of [[85,'53.1'],[100,'62.5'],[100,'62.5'],[80,'50.0']]) {await update(value);await summary(`${value}ページまで／全160ページ・${percent}％`);}
