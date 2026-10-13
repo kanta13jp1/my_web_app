@@ -323,8 +323,9 @@ void main() {
       if (book.edition.isbn.isEmpty) {
         expect(book.workId, 'husserl:ideas');
         expect(book.edition.volume, '1-1');
-        expect(book.edition.sourceUrl,
-            'https://ndlsearch.ndl.go.jp/books/R100000002-I000001441684',
+        expect(
+          book.edition.sourceUrl,
+          'https://ndlsearch.ndl.go.jp/books/R100000002-I000001441684',
         );
         expect(book.note, contains('未記載'));
       } else {
