@@ -95,6 +95,24 @@ class RootlessContainerSetupTest(unittest.TestCase):
 
         self.assertTrue(any("api.port" in error for error in errors), errors)
 
+    def test_cloud_workflow_candidate_pins_and_rejections(self) -> None:
+        workflow = (REPO_ROOT / ".github/workflows/rootless-container-cloud-smoke.yml").read_text(encoding="utf-8")
+        podman = (REPO_ROOT / "scripts/rootless_cloud_smoke.sh").read_text(encoding="utf-8")
+        docker = (REPO_ROOT / "scripts/rootless_docker_supabase_smoke.sh").read_text(encoding="utf-8")
+        updated = workflow.replace(
+            "46f7f98c7f948ad727d22c1e67fab04c223a0520",
+            "45a513f8c64c0bc8e0e3dfe572b5c95be85f6359",
+        ).replace(
+            "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+            "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        )
+        for candidate in (workflow, updated):
+            self.assertEqual(validate_cloud_workflow(candidate, podman, docker), [])
+        for ref in ("v2", "0" * 40):
+            broken = updated.replace("45a513f8c64c0bc8e0e3dfe572b5c95be85f6359", ref)
+            self.assertTrue(any("exact pin" in e for e in validate_cloud_workflow(broken, podman, docker)))
+        for marker in ("pull_request_target:", "secrets.API_KEY", "--privileged"):
+            self.assertTrue(validate_cloud_workflow(updated + "\n" + marker, podman, docker))
     def test_rejects_unsafe_or_incomplete_cloud_workflow(self) -> None:
         errors = validate_cloud_workflow(
             "pull_request_target:\nsecrets.API_KEY\n--privileged\n",

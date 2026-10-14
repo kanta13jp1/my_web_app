@@ -179,12 +179,30 @@ def validate_cloud_workflow(
         "9DC858229FC7DD38854AE2D88D81803C0EBFCD88",
         "sudo systemctl disable --now docker.service docker.socket",
         "rootless_docker_supabase_smoke.sh",
-        "supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520",
-        "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+
     )
     for marker in workflow_markers:
         if marker not in workflow:
             errors.append(f"cloud workflow missing {marker!r}.")
+    # Exact candidate pins only; this contract is not a supply-chain approval.
+    allowed_pins = {
+        "supabase/setup-cli": (
+            "46f7f98c7f948ad727d22c1e67fab04c223a0520",
+            "45a513f8c64c0bc8e0e3dfe572b5c95be85f6359",
+        ),
+        "actions/upload-artifact": (
+            "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+            "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        ),
+    }
+    for action, pins in allowed_pins.items():
+        refs = []
+        for line in workflow.splitlines():
+            stripped = line.strip().removeprefix("- ")
+            if stripped.startswith(f"uses: {action}@"):
+                refs.append(stripped.split("@", 1)[1].split("#", 1)[0].strip())
+        if not refs or any(ref not in pins for ref in refs):
+            errors.append(f"cloud workflow requires an allowed exact pin for {action}.")
     for forbidden in (
         "pull_request_target:",
         "secrets.",
