@@ -239,6 +239,55 @@ async function verifyProgressDisplay(page, account, version) {
 }
 
 
+async function verifyAuthorSearchRelease(page, account, version) {
+  const id=randomUUID();
+  const work={id:'legacy:'+randomUUID(),title:'読書について',original_title:'On Reading',
+    author_info:{id:'legacy-author:'+randomUUID(),name:'ショーペンハウエル',aliases:[],centuries:['不明'],regions:['不明'],traditions:[],source:'',note:''},
+    centuries:['不明'],genres:['認識論'],source:'',note:'公開検証用の既存著作メモ'};
+  const date=new Date().toISOString().slice(0,10);
+  await action(account.token,{action:'reading.add',id,work});
+  await action(account.token,{action:'reading.save',id,revision:0,work,
+    cycles:[{id:randomUUID(),started_at:date,status:'reading',edition:{total_pages:160,translator:'斎藤忍随',publisher:'岩波書店',isbn:'9784003363225'},
+      entries:[{id:randomUUID(),date,pages:91,start_page:1,end_page:91,understanding:3,impression:'既存の感想を保持',questions:'既存の疑問',concepts:'既存の概念'}]}]});
+  const savedRecord=async()=>(await action(account.token,{action:'reading.list'})).items.find(row=>row.id===id);
+  const original=await savedRecord();const results=[];
+  async function summary(text) {
+    const escaped=text.replace(/[.*+?^${}()|[]\]/g,'\$&');
+    await expect(page.getByRole('group',{name:new RegExp(escaped)}).or(page.getByText(text)).last()).toBeVisible();
+  }
+  for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+    await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);
+    await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+    for(const query of ['読書について','On Reading','ショーペンハウエル','ショーペンハウアー']) {
+      await field(page,/^著者・著作を検索/,query);
+      const author=page.getByRole('button',{name:/^ショーペンハウアー /});
+      await expect(author).toHaveCount(1);await expect(author).toBeVisible();
+      await expect(page.getByRole('button',{name:/^ショーペンハウエル /})).toHaveCount(0);
+    }
+    await field(page,/^著者・著作を検索/,'読書について');
+    await expect(page.getByRole('button',{name:/該当する著作: 読書について/})).toHaveCount(1);
+    await capture(page,`author-${mode}-title-search`);
+    await page.getByRole('button',{name:/^ショーペンハウアー /}).click();
+    await expect(page.getByRole('button',{name:/^意志と表象としての世界 /})).toHaveCount(0);
+    await page.getByRole('button',{name:/^読書について ショーペンハウアー/}).click();
+    await summary('91ページまで／全160ページ・56.9％');
+    await expect(page.getByRole('group',{name:/既存の感想を保持/}).last()).toBeVisible();
+    await page.reload();await semantics(page);
+    // Named production routes may retain the detail; start a fresh author-tab visit.
+    await page.goto(base+'/reading-list');await semantics(page);
+    await field(page,/^著者・著作を検索/,'読書について');
+    await page.getByRole('button',{name:/^ショーペンハウアー /}).click();
+    await page.getByRole('button',{name:/^読書について ショーペンハウアー/}).click();
+    await summary('91ページまで／全160ページ・56.9％');
+    await capture(page,`author-${mode}-legacy-record-reloaded`);
+    assert.deepEqual(await savedRecord(),original,'Searching or reloading changed the persisted record');
+    results.push({mode,title:'passed',originalTitle:'passed',nameVariants:'one author',page:91,total:160,percentage:'56.9%',reload:'passed',entireRecordPreserved:true});
+  }
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,profile:'authors',api:'passed',cases:results},null,2));
+  console.log('Published author title/original-title/name-variant search, display, reload and entire persisted record preservation passed on desktop/mobile.');
+}
+
+
 try {
   const version = await (await fetch(`${base}/version.json?qa=${Date.now()}`)).json();
   assert.equal(version.commit,process.env.EXPECTED_PRODUCTION_SHA,'Published version differs from merged commit');
@@ -305,7 +354,9 @@ try {
   await page.waitForTimeout(1500);
   await page.goto(base+'/reading-list');await semantics(page);
   await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
-  if(process.env.READING_QA_PROGRESS === 'true') {
+  if(process.env.READING_QA_AUTHORS === 'true') {
+    await verifyAuthorSearchRelease(page,a,version);
+  } else if(process.env.READING_QA_PROGRESS === 'true') {
     await verifyProgressDisplay(page,a,version);
   } else if(process.env.READING_QA_CATALOG === 'true') {
     await verifyCatalogRelease(page,a,version);
