@@ -24,6 +24,11 @@ on:
         description: Published application commit (defaults to verification source revision)
         required: false
         type: string
+      groups:
+        description: Verify duplicate work grouping, preserved cycles and independent owner editing
+        required: false
+        default: false
+        type: boolean
       authors:
         description: Verify author title search, known name variants and existing record preservation
         required: false
@@ -200,6 +205,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Published reading catalog and authenticated persistence
         env:
+          READING_QA_GROUPS: ${{ inputs.groups }}
           READING_QA_AUTHORS: ${{ inputs.authors }}
           READING_QA_PROGRESS: ${{ inputs.progress }}
           READING_QA_CATALOG: ${{ inputs.catalog }}
