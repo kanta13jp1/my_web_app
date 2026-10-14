@@ -980,7 +980,7 @@ test('duplicate shared and legacy works preserve both reading cycles across sear
   await second.getByRole('button', { name: '版を編集', exact: true }).click();
   await field(page, /^出版社/, '保持版B編集');
   await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
   await page.reload();
   await search();
   await page.getByRole('button', { name: /^国家 プラトン/ }).click();
@@ -994,5 +994,5 @@ test('duplicate shared and legacy works preserve both reading cycles across sear
   const changed = after.find((record: { id: string }) => record.id === ids[1]);
   expect(changed.metadata.work).toEqual(original.metadata.work);
   expect(changed.metadata.cycles[0].entries).toEqual(original.metadata.cycles[0].entries);
-  expect(changed.metadata.cycles[0].edition.publisher).toBe('保持版B編集');
+  expect(changed.metadata.cycles[0].edition).toEqual({ ...original.metadata.cycles[0].edition, publisher: '保持版B編集' });
 });
