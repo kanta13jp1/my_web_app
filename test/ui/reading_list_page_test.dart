@@ -16,27 +16,30 @@ void main() {
     const author = PhilosophyAuthor(id: 'plato', name: 'プラトン');
     for (final id in ['plato:republic', 'legacy:republic']) {
       repository.items[id] = ReadingRecord(
-          id: id,
-          work: PhilosophyWork(id: id, title: '国家', author: author),
-          cycles: [
-            ReadingCycle(
-                id: 'same-cycle',
-                startedAt: '2026-10-14',
-                edition: ReadingEdition(publisher: id, totalPages: 100),
-                entries: [
-                  ReadingEntry(
-                      id: 'entry',
-                      date: '2026-10-14',
-                      pages: 10,
-                      endPage: 10,
-                      impression: id,)
-                ,],)
-          ,],);
+        id: id,
+        work: PhilosophyWork(id: id, title: '国家', author: author),
+        cycles: [
+          ReadingCycle(
+            id: 'same-cycle',
+            startedAt: '2026-10-14',
+            edition: ReadingEdition(publisher: id, totalPages: 100),
+            entries: [
+              ReadingEntry(
+                id: 'entry',
+                date: '2026-10-14',
+                pages: 10,
+                endPage: 10,
+                impression: id,
+              ),
+            ],
+          ),
+        ],
+      );
     }
     final before = {
       for (final record in repository.items.values)
-        record.id: record.savePayload()
-    ,};
+        record.id: record.savePayload(),
+    };
     await tester
         .pumpWidget(MaterialApp(home: ReadingListPage(repository: repository)));
     await tester.pumpAndSettle();
@@ -51,10 +54,13 @@ void main() {
     expect(find.textContaining('同じ著作の記録をまとめて表示'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
-    expect({
-      for (final record in repository.items.values)
-        record.id: record.savePayload()
-    ,}, before,);
+    expect(
+      {
+        for (final record in repository.items.values)
+          record.id: record.savePayload(),
+      },
+      before,
+    );
     await repository.changes.close();
   });
 

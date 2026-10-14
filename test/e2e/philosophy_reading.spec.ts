@@ -944,7 +944,7 @@ test('duplicate shared and legacy works preserve both reading cycles across sear
       note: i === 0 ? '共有側メモ' : '既存側メモ' };
     expect((await request.post('http://127.0.0.1:7359', { data: { action: 'reading.add', id: ids[i], work } })).ok()).toBeTruthy();
     expect((await request.post('http://127.0.0.1:7359', { data: { action: 'reading.save', id: ids[i], revision: 0, work,
-      cycles: [{ id: 'same-cycle', started_at: i === 0 ? '2026-10-12' : '2026-10-14', status: i === 0 ? 'read' : 'reading',
+      cycles: [{ id: 'same-cycle', started_at: i === 0 ? '2026-10-12' : '2026-10-14', finished_at: i === 0 ? '2026-10-14' : null, status: i === 0 ? 'read' : 'reading',
         edition: { total_pages: i === 0 ? 100 : 160, publisher: i === 0 ? '保持版A' : '保持版B', translator: '保持訳者', isbn: i === 0 ? '9784003363225' : '9784003361566' },
         entries: [{ id: 'entry-' + i, date: '2026-10-14', pages: (i + 1) * 10, start_page: 1, end_page: (i + 1) * 10, understanding: 3, impression: i === 0 ? '保持感想A' : '保持感想B' }] }] } })).ok()).toBeTruthy();
   }
@@ -954,7 +954,7 @@ test('duplicate shared and legacy works preserve both reading cycles across sear
     await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
     await field(page, /^著者・著作を検索/, '国家');
     await expect(page.getByRole('button', { name: /^プラトン / })).toHaveCount(1);
-    await page.getByRole('tab', { name: '著作', exact: true }).click();
+    await page.getByRole('button', { name: /^プラトン / }).click();
     await expect(page.getByRole('button', { name: /^国家 プラトン/ })).toHaveCount(1);
     await expect(page.getByRole('button', { name: /^国家 Plato/ })).toHaveCount(0);
   };
