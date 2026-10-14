@@ -590,10 +590,12 @@ class _ReadingListPageState extends State<ReadingListPage>
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text(
-                            '既存の状態: ${readingStatusLabels[saved.legacyStatus] ?? '未読'}。履歴は新しい読書回から記録できます。',),
+                          '既存の状態: ${readingStatusLabels[saved.legacyStatus] ?? '未読'}。履歴は新しい読書回から記録できます。',
+                        ),
                       ),
                     ...cycles.indexed.map(
-                        (item) => _cycle(item.$2.$1, item.$2.$2, item.$1 + 1),),
+                      (item) => _cycle(item.$2.$1, item.$2.$2, item.$1 + 1),
+                    ),
                   ],
                 ),
               );

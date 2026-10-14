@@ -79,8 +79,8 @@ class ReadingViewModel extends ChangeNotifier {
 
   List<(ReadingRecord, ReadingCycle)> cyclesFor(String workId) => [
         for (final record in recordsFor(workId))
-          for (final cycle in record.cycles) (record, cycle)
-      ,]..sort((a, b) {
+          for (final cycle in record.cycles) (record, cycle),
+      ]..sort((a, b) {
           final date = a.$2.startedAt.compareTo(b.$2.startedAt);
           if (date != 0) return date;
           final owner = a.$1.id.compareTo(b.$1.id);
@@ -98,8 +98,11 @@ class ReadingViewModel extends ChangeNotifier {
 
   ReadingProgress progress(Iterable<PhilosophyWork> targets) {
     final index = _workIndex;
-    return ReadingProgress(targets, _records,
-        workId: (work) => index.resolve(work).id,);
+    return ReadingProgress(
+      targets,
+      _records,
+      workId: (work) => index.resolve(work).id,
+    );
   }
 
   Future<void> load() async {
