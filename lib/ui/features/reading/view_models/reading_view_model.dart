@@ -32,18 +32,28 @@ class ReadingViewModel extends ChangeNotifier {
 
   bool get signedIn => repository.sessionKey != null;
   List<ReadingRecord> get records => List.unmodifiable(_records);
+  final _authorIndex = ReadingAuthorIndex(philosophyAuthors);
+
   List<PhilosophyWork> get works {
     final map = {for (final work in philosophyWorks) work.id: work};
     for (final record in _records) {
       map.putIfAbsent(record.work.id, () => record.work);
     }
-    return map.values.toList(growable: false);
+    return map.values.map((work) {
+      final author = _authorIndex.resolve(work.author);
+      if (identical(author, work.author)) return work;
+      return PhilosophyWork.fromJson({
+        ...work.toJson(),
+        'author_info': author.toJson(),
+      });
+    }).toList(growable: false);
   }
 
   List<PhilosophyAuthor> get authors {
     final map = {for (final author in philosophyAuthors) author.id: author};
     for (final author in _privateAuthors) {
-      map[author.id] = author;
+      final displayed = _authorIndex.resolve(author);
+      map.putIfAbsent(displayed.id, () => displayed);
     }
     for (final work in works) {
       map.putIfAbsent(work.author.id, () => work.author);

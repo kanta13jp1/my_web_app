@@ -894,3 +894,43 @@ test('unknown total shows reached page and gains percentage after editing the ed
   await restoredField(page,/^読んだページ/,'11');
   await capture(page,info,'total-added-position-reloaded');
 });
+
+test('author title and spelling searches preserve legacy reading data across reload', async ({ request, page }, info) => {
+  test.setTimeout(120000);
+  const id = '44444444-4444-4444-8444-444444444444';
+  const work = { id: 'legacy:reading-about-books', title: '読書について', original_title: 'On Reading',
+    author_info: { id: 'legacy:schopenhauer', name: 'ショーペンハウエル', aliases: [], centuries: ['不明'], regions: ['不明'], traditions: [], source: '', note: '' },
+    centuries: ['不明'], genres: ['認識論'], source: '', note: '既存の著作メモ' };
+  const added = await request.post('http://127.0.0.1:7359', { data: { action: 'reading.add', id, work } });
+  expect(added.ok()).toBeTruthy();
+  const saved = await request.post('http://127.0.0.1:7359', { data: { action: 'reading.save', id, revision: 0, work,
+    cycles: [{ id: 'legacy-cycle', started_at: '2026-10-12', status: 'reading', edition: { total_pages: 160, translator: '斎藤忍随', publisher: '岩波書店', isbn: '9784003363225' },
+      entries: [{ id: 'legacy-entry', date: '2026-10-14', pages: 91, start_page: 1, end_page: 91, understanding: 3, impression: '既存の感想を保持', questions: '既存の疑問', concepts: '既存の概念' }] }] } });
+  expect(saved.ok()).toBeTruthy();
+  const list = async () => (await (await request.post('http://127.0.0.1:7359', { data: { action: 'reading.list' } })).json()).items.find((r: { id: string }) => r.id === id);
+  const original = await list();
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  for (const query of ['読書について', 'On Reading', 'ショーペンハウエル', 'ショーペンハウアー']) {
+    await field(page, /^著者・著作を検索/, query);
+    const author = page.getByRole('button', { name: /^ショーペンハウアー / });
+    await expect(author).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /^ショーペンハウエル / })).toHaveCount(0);
+    await expect(author).toBeVisible();
+  }
+  await field(page, /^著者・著作を検索/, '読書について');
+  await expect(page.getByRole('button', { name: /該当する著作: 読書について/ })).toHaveCount(1);
+  await capture(page, info, 'author-title-search');
+  await page.getByRole('button', { name: /^ショーペンハウアー / }).click();
+  await expect(page.getByRole('button', { name: /^意志と表象としての世界 / })).toHaveCount(0);
+  await page.getByRole('button', { name: /^読書について ショーペンハウアー/ }).click();
+  await expectReadingSummary(page, '91ページまで／全160ページ・56.9％');
+  await expect(page.getByRole('group', { name: /既存の感想を保持/ }).last()).toBeVisible();
+  await page.reload();
+  await field(page, /^著者・著作を検索/, '読書について');
+  await page.getByRole('button', { name: /^ショーペンハウアー / }).click();
+  await page.getByRole('button', { name: /^読書について ショーペンハウアー/ }).click();
+  await expectReadingSummary(page, '91ページまで／全160ページ・56.9％');
+  await capture(page, info, 'legacy-record-reloaded');
+  expect(await list()).toEqual(original);
+});

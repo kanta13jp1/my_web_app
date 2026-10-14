@@ -24,6 +24,11 @@ on:
         description: Published application commit (defaults to verification source revision)
         required: false
         type: string
+      authors:
+        description: Verify author title search, known name variants and existing record preservation
+        required: false
+        default: false
+        type: boolean
       progress:
         description: Verify page positions, percentages, work counts and unknown totals after release
         required: false
@@ -195,6 +200,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Published reading catalog and authenticated persistence
         env:
+          READING_QA_AUTHORS: ${{ inputs.authors }}
           READING_QA_PROGRESS: ${{ inputs.progress }}
           READING_QA_CATALOG: ${{ inputs.catalog }}
           EXPECTED_PRODUCTION_SHA: ${{ inputs.production_sha || inputs.expected_head_sha }}
