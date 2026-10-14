@@ -547,8 +547,10 @@ class ReadingFilter {
     return (century == null || author.centuries.contains(century)) &&
         (region == null || author.regions.contains(region)) &&
         (genre == null || eligible.isNotEmpty) &&
-        ([author.name, ...author.aliases].any((name) =>
-                readingSearchText(name).contains(readingSearchText(query)),) ||
+        ([author.name, ...author.aliases].any(
+              (name) =>
+                  readingSearchText(name).contains(readingSearchText(query)),
+            ) ||
             eligible.any(titleMatches));
   }
 

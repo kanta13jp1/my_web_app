@@ -21,7 +21,7 @@ void main() {
     expect(find.textContaining(RegExp(r'該当する著作: 国家$')), findsOneWidget);
     await tester.tap(find.text('プラトン'));
     await tester.pumpAndSettle();
-    expect(find.text('国家'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, '国家'), findsOneWidget);
     expect(find.text('饗宴'), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());

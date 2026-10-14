@@ -7,35 +7,42 @@ void main() {
       () {
     final author = philosophyAuthors.firstWhere((a) => a.id == 'schopenhauer');
     final work = PhilosophyWork(
-        id: 'private:reading',
-        title: '読書について',
-        originalTitle: 'On Reading',
-        author: author,
-        genres: const ['認識論'],);
+      id: 'private:reading',
+      title: '読書について',
+      originalTitle: 'On Reading',
+      author: author,
+      genres: const ['認識論'],
+    );
     expect(
-        const ReadingFilter(query: ' 読書について ')
-            .authorMatches(author, works: [work]),
-        isTrue,);
+      const ReadingFilter(query: ' 読書について ')
+          .authorMatches(author, works: [work]),
+      isTrue,
+    );
     expect(
-        const ReadingFilter(query: 'on reading')
-            .authorMatches(author, works: [work]),
-        isTrue,);
+      const ReadingFilter(query: 'on reading')
+          .authorMatches(author, works: [work]),
+      isTrue,
+    );
     expect(
-        const ReadingFilter(query: '読書について', century: '19世紀', genre: '認識論')
-            .authorMatches(author, works: [work]),
-        isTrue,);
+      const ReadingFilter(query: '読書について', century: '19世紀', genre: '認識論')
+          .authorMatches(author, works: [work]),
+      isTrue,
+    );
     expect(
-        const ReadingFilter(query: '読書について', century: '20世紀')
-            .authorMatches(author, works: [work]),
-        isFalse,);
+      const ReadingFilter(query: '読書について', century: '20世紀')
+          .authorMatches(author, works: [work]),
+      isFalse,
+    );
     expect(
-        const ReadingFilter(query: '読書について', genre: '政治哲学')
-            .authorMatches(author, works: [work]),
-        isFalse,);
+      const ReadingFilter(query: '読書について', genre: '政治哲学')
+          .authorMatches(author, works: [work]),
+      isFalse,
+    );
     expect(
-        const ReadingFilter(query: '読書について', region: '中国')
-            .authorMatches(author, works: [work]),
-        isFalse,);
+      const ReadingFilter(query: '読書について', region: '中国')
+          .authorMatches(author, works: [work]),
+      isFalse,
+    );
     expect(const ReadingFilter(query: 'ショーペンハウエル').matches(work), isTrue);
   });
 
@@ -46,15 +53,23 @@ void main() {
     const old = PhilosophyAuthor(id: 'legacy:a', name: 'ショーペンハウエル');
     expect(index.resolve(old).id, 'schopenhauer');
     expect(
-        index
-            .resolve(const PhilosophyAuthor(
-                id: 'private:a', name: ' Arthur Schopenhauer ',),)
-            .id,
-        'schopenhauer',);
+      index
+          .resolve(
+            const PhilosophyAuthor(
+              id: 'private:a',
+              name: ' Arthur Schopenhauer ',
+            ),
+          )
+          .id,
+      'schopenhauer',
+    );
     const similar = PhilosophyAuthor(id: 'private:study', name: 'ショーペンハウエル研究会');
     expect(index.resolve(similar), same(similar));
     const personalAlias = PhilosophyAuthor(
-        id: 'private:other', name: '別の人物', aliases: ['ショーペンハウエル'],);
+      id: 'private:other',
+      name: '別の人物',
+      aliases: ['ショーペンハウエル'],
+    );
     expect(index.resolve(personalAlias), same(personalAlias));
     final ambiguous = ReadingAuthorIndex(const [
       PhilosophyAuthor(id: 'a', name: 'A', aliases: ['同名']),

@@ -13,29 +13,38 @@ void main() {
     final model = ReadingViewModel(repo);
     await model.load();
     const work = PhilosophyWork(
-        id: 'legacy:reading',
-        title: '読書について',
-        author: PhilosophyAuthor(id: 'legacy:schopenhauer', name: 'ショーペンハウエル'),);
+      id: 'legacy:reading',
+      title: '読書について',
+      author: PhilosophyAuthor(id: 'legacy:schopenhauer', name: 'ショーペンハウエル'),
+    );
     expect(await model.addWork('legacy-record', work), isTrue);
     final record = model.recordFor(work.id)!;
     expect(
-        await model.save(record.withCycles(const [
+      await model.save(
+        record.withCycles(const [
           ReadingCycle(
-              id: 'old-cycle',
-              startedAt: '2026-10-12',
-              edition: ReadingEdition(
-                  totalPages: 160, translator: '斎藤忍随', isbn: '9784003363225',),
-              entries: [
-                ReadingEntry(
-                    id: 'old-entry',
-                    date: '2026-10-14',
-                    pages: 91,
-                    startPage: 1,
-                    endPage: 91,
-                    impression: '既存の感想',)
-              ,],)
-        ,]),),
-        isTrue,);
+            id: 'old-cycle',
+            startedAt: '2026-10-12',
+            edition: ReadingEdition(
+              totalPages: 160,
+              translator: '斎藤忍随',
+              isbn: '9784003363225',
+            ),
+            entries: [
+              ReadingEntry(
+                id: 'old-entry',
+                date: '2026-10-14',
+                pages: 91,
+                startPage: 1,
+                endPage: 91,
+                impression: '既存の感想',
+              ),
+            ],
+          ),
+        ]),
+      ),
+      isTrue,
+    );
     final saved = model.recordFor(work.id)!.savePayload();
     await model.load();
     expect(model.authors.where((a) => a.name.startsWith('ショーペン')).length, 1);

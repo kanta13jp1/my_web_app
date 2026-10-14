@@ -249,9 +249,11 @@ class _ReadingListPageState extends State<ReadingListPage>
           final matchingTitles = _query.trim().isEmpty
               ? <PhilosophyWork>[]
               : related
-                  .where((work) =>
-                      _filter.titleMatches(work) &&
-                      (_genre == null || work.genres.contains(_genre)),)
+                  .where(
+                    (work) =>
+                        _filter.titleMatches(work) &&
+                        (_genre == null || work.genres.contains(_genre)),
+                  )
                   .toList();
           final progress = _model.progress(related);
           return Card(
