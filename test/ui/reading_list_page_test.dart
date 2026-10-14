@@ -1,9 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/reading_list_page.dart';
+import 'package:my_web_app/domain/models/philosophy_reading.dart';
 import '../support/reading_fixture_repository.dart';
 
 void main() {
+  testWidgets('320px duplicate works have one card and keep both stored records', (tester) async {
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repository = ReadingFixtureRepository();
+    const author = PhilosophyAuthor(id: 'plato', name: 'プラトン');
+    for (final id in ['plato:republic', 'legacy:republic']) {
+      repository.items[id] = ReadingRecord(id: id, work: PhilosophyWork(id: id, title: '国家', author: author), cycles: [ReadingCycle(id: 'same-cycle', startedAt: '2026-10-14', edition: ReadingEdition(publisher: id, totalPages: 100), entries: [ReadingEntry(id: 'entry', date: '2026-10-14', pages: 10, endPage: 10, impression: id)])]);
+    }
+    final before = {for (final record in repository.items.values) record.id: record.savePayload()};
+    await tester.pumpWidget(MaterialApp(home: ReadingListPage(repository: repository)));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, '国家');
+    await tester.pumpAndSettle();
+    expect(find.text('プラトン'), findsOneWidget);
+    await tester.tap(find.text('プラトン'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, '国家'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ListTile, '国家'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('同じ著作の記録をまとめて表示'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    expect({for (final record in repository.items.values) record.id: record.savePayload()}, before);
+    await repository.changes.close();
+  });
+
   testWidgets(
       '320px author search finds a work title and opens its matching work',
       (tester) async {

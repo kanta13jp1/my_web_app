@@ -308,9 +308,7 @@ class _ReadingListPageState extends State<ReadingListPage>
                     '${work.author.name}\n${work.centuries.join('・')} / ${work.genres.join('・')}${cycle == null ? '' : '\n${_pageSummary(cycle)}'}',
                   ),
                   trailing: Text(
-                    readingStatusLabels[
-                            _model.statusFor(work.id)] ??
-                        '未読',
+                    readingStatusLabels[_model.statusFor(work.id)] ?? '未読',
                   ),
                   onTap: () => _openWork(work),
                 ),
@@ -552,7 +550,10 @@ class _ReadingListPageState extends State<ReadingListPage>
                       Text(record?.work.note ?? work.note)
                     else ...[
                       const Text('同じ著作の記録をまとめて表示しています。版・読書回はそれぞれの元の記録に保存します。'),
-                      for (final note in records.map((record) => record.work.note).where((note) => note.isNotEmpty).toSet())
+                      for (final note in records
+                          .map((record) => record.work.note)
+                          .where((note) => note.isNotEmpty)
+                          .toSet())
                         Text(note),
                     ],
                     if (work.source.isNotEmpty)
@@ -580,19 +581,19 @@ class _ReadingListPageState extends State<ReadingListPage>
                               : () => _start(work),
                       icon: const Icon(Icons.menu_book),
                       label: Text(
-                        cycles.isEmpty
-                            ? '読書を始める'
-                            : '別の版・再読を始める',
+                        cycles.isEmpty ? '読書を始める' : '別の版・再読を始める',
                       ),
                     ),
                     _bookAvailability(work),
-                    for (final saved in records.where((record) => record.cycles.isEmpty))
+                    for (final saved
+                        in records.where((record) => record.cycles.isEmpty))
                       Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text('既存の状態: ${readingStatusLabels[saved.legacyStatus] ?? '未読'}。履歴は新しい読書回から記録できます。'),
+                        child: Text(
+                            '既存の状態: ${readingStatusLabels[saved.legacyStatus] ?? '未読'}。履歴は新しい読書回から記録できます。',),
                       ),
-                    ...cycles.indexed.map((item) =>
-                      _cycle(item.$2.$1, item.$2.$2, item.$1 + 1)),
+                    ...cycles.indexed.map(
+                        (item) => _cycle(item.$2.$1, item.$2.$2, item.$1 + 1),),
                   ],
                 ),
               );

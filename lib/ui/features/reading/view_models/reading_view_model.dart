@@ -35,8 +35,10 @@ class ReadingViewModel extends ChangeNotifier {
   final _authorIndex = ReadingAuthorIndex(philosophyAuthors);
 
   ReadingWorkIndex get _workIndex => ReadingWorkIndex(
-    philosophyWorks, _records.map((record) => record.work), _authorIndex,
-  );
+        philosophyWorks,
+        _records.map((record) => record.work),
+        _authorIndex,
+      );
 
   List<PhilosophyWork> get works {
     final index = _workIndex;
@@ -63,7 +65,9 @@ class ReadingViewModel extends ChangeNotifier {
   List<ReadingRecord> recordsFor(String workId) {
     final index = _workIndex;
     final id = index.idFor(workId);
-    return _records.where((record) => index.resolve(record.work).id == id).toList()
+    return _records
+        .where((record) => index.resolve(record.work).id == id)
+        .toList()
       ..sort((a, b) {
         if (a.work.id == id && b.work.id != id) return -1;
         if (b.work.id == id && a.work.id != id) return 1;
@@ -73,10 +77,10 @@ class ReadingViewModel extends ChangeNotifier {
 
   ReadingRecord? recordFor(String workId) => recordsFor(workId).firstOrNull;
 
-  List<(ReadingRecord, ReadingCycle)> cyclesFor(String workId) =>
-      [for (final record in recordsFor(workId))
-        for (final cycle in record.cycles) (record, cycle)]
-        ..sort((a, b) {
+  List<(ReadingRecord, ReadingCycle)> cyclesFor(String workId) => [
+        for (final record in recordsFor(workId))
+          for (final cycle in record.cycles) (record, cycle)
+      ,]..sort((a, b) {
           final date = a.$2.startedAt.compareTo(b.$2.startedAt);
           if (date != 0) return date;
           final owner = a.$1.id.compareTo(b.$1.id);
@@ -94,7 +98,8 @@ class ReadingViewModel extends ChangeNotifier {
 
   ReadingProgress progress(Iterable<PhilosophyWork> targets) {
     final index = _workIndex;
-    return ReadingProgress(targets, _records, workId: (work) => index.resolve(work).id);
+    return ReadingProgress(targets, _records,
+        workId: (work) => index.resolve(work).id,);
   }
 
   Future<void> load() async {

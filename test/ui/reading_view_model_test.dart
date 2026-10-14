@@ -6,20 +6,59 @@ import 'package:my_web_app/ui/features/reading/view_models/reading_view_model.da
 import '../support/reading_fixture_repository.dart';
 
 void main() {
-
-  test('duplicate works keep separate editions and save only the cycle owner', () async {
+  test('duplicate works keep separate editions and save only the cycle owner',
+      () async {
     final repo = ReadingFixtureRepository();
     final model = ReadingViewModel(repo);
     await model.load();
-    final shared = philosophyWorks.firstWhere((work) => work.id == 'plato:republic');
-    const legacy = PhilosophyWork(id: 'legacy:republic', title: '国家', author: PhilosophyAuthor(id: 'old-plato', name: 'Plato'), note: '古い著作メモ');
+    final shared =
+        philosophyWorks.firstWhere((work) => work.id == 'plato:republic');
+    const legacy = PhilosophyWork(
+        id: 'legacy:republic',
+        title: '国家',
+        author: PhilosophyAuthor(id: 'old-plato', name: 'Plato'),
+        note: '古い著作メモ',);
     expect(await model.addWork('shared-record', shared), isTrue);
     final first = model.recordFor(shared.id)!;
-    expect(await model.save(first.withCycles(const [ReadingCycle(id: 'same-cycle', startedAt: '2026-10-12', status: 'read', edition: ReadingEdition(publisher: '版A', totalPages: 100), entries: [ReadingEntry(id: 'entry-a', date: '2026-10-12', pages: 10, endPage: 10, impression: '感想A')])])), isTrue);
+    expect(
+        await model.save(first.withCycles(const [
+          ReadingCycle(
+              id: 'same-cycle',
+              startedAt: '2026-10-12',
+              status: 'read',
+              edition: ReadingEdition(publisher: '版A', totalPages: 100),
+              entries: [
+                ReadingEntry(
+                    id: 'entry-a',
+                    date: '2026-10-12',
+                    pages: 10,
+                    endPage: 10,
+                    impression: '感想A',)
+              ,],)
+        ,]),),
+        isTrue,);
     expect(await model.addWork('legacy-record', legacy), isTrue);
-    final second = model.records.singleWhere((record) => record.work.id == legacy.id);
-    expect(await model.save(second.withCycles(const [ReadingCycle(id: 'same-cycle', startedAt: '2026-10-14', edition: ReadingEdition(publisher: '版B', totalPages: 160), entries: [ReadingEntry(id: 'entry-b', date: '2026-10-14', pages: 20, endPage: 20, impression: '感想B')])])), isTrue);
-    final before = {for (final record in model.records) record.id: record.savePayload()};
+    final second =
+        model.records.singleWhere((record) => record.work.id == legacy.id);
+    expect(
+        await model.save(second.withCycles(const [
+          ReadingCycle(
+              id: 'same-cycle',
+              startedAt: '2026-10-14',
+              edition: ReadingEdition(publisher: '版B', totalPages: 160),
+              entries: [
+                ReadingEntry(
+                    id: 'entry-b',
+                    date: '2026-10-14',
+                    pages: 20,
+                    endPage: 20,
+                    impression: '感想B',)
+              ,],)
+        ,]),),
+        isTrue,);
+    final before = {
+      for (final record in model.records) record.id: record.savePayload()
+    ,};
     await model.load();
     expect(model.works.length, philosophyWorks.length);
     expect(model.works.where((work) => work.title == '国家').length, 1);
@@ -32,12 +71,23 @@ void main() {
     expect(progress.completed, 1);
     expect(progress.reading, 1);
     expect(progress.pages, 30);
-    expect({for (final record in model.records) record.id: record.savePayload()}, before);
+    expect(
+        {for (final record in model.records) record.id: record.savePayload()},
+        before,);
     final owner = model.cyclesFor(shared.id).last.$1;
     final oldCycle = owner.cycles.single;
-    expect(await model.save(owner.withCycles([oldCycle.copyWith(edition: const ReadingEdition(publisher: '版B編集', totalPages: 160))])), isTrue);
+    expect(
+        await model.save(owner.withCycles([
+          oldCycle.copyWith(
+              edition: const ReadingEdition(publisher: '版B編集', totalPages: 160),)
+        ,]),),
+        isTrue,);
     await model.load();
-    expect(model.records.singleWhere((record) => record.id == first.id).savePayload(), before[first.id]);
+    expect(
+        model.records
+            .singleWhere((record) => record.id == first.id)
+            .savePayload(),
+        before[first.id],);
     final edited = model.records.singleWhere((record) => record.id == owner.id);
     expect(edited.work.toJson(), legacy.toJson());
     expect(edited.cycles.single.entries.single.impression, '感想B');

@@ -139,24 +139,29 @@ class ReadingWorkIndex {
       final matches = trusted.where((candidate) {
         if (candidate.author.id != author.id) return false;
         final titles = [candidate.title, candidate.originalTitle]
-            .map(readingSearchText).where((title) => title.isNotEmpty).toSet();
+            .map(readingSearchText)
+            .where((title) => title.isNotEmpty)
+            .toSet();
         final names = [work.title, work.originalTitle]
-            .map(readingSearchText).where((title) => title.isNotEmpty);
+            .map(readingSearchText)
+            .where((title) => title.isNotEmpty);
         return names.any(titles.contains);
       }).toList();
       final candidate = catalogIds[work.id] ??
           (matches.length == 1 &&
-              (work.originalTitle.trim().isEmpty ||
-                  matches.single.originalTitle.trim().isEmpty ||
-                  readingSearchText(work.originalTitle) ==
-                      readingSearchText(matches.single.originalTitle))
-              ? matches.single : null);
+                  (work.originalTitle.trim().isEmpty ||
+                      matches.single.originalTitle.trim().isEmpty ||
+                      readingSearchText(work.originalTitle) ==
+                          readingSearchText(matches.single.originalTitle))
+              ? matches.single
+              : null);
       if (candidate != null) {
         _resolved[work.id] = candidate;
       } else {
         final title = readingSearchText(work.title);
-        final key = title.isEmpty ? work.id :
-            '${author.id}\u0000$title\u0000${readingSearchText(work.originalTitle)}';
+        final key = title.isEmpty
+            ? work.id
+            : '${author.id}\u0000$title\u0000${readingSearchText(work.originalTitle)}';
         groups.putIfAbsent(key, () => []).add(work);
       }
     }
@@ -164,9 +169,12 @@ class ReadingWorkIndex {
       group.sort((a, b) => a.id.compareTo(b.id));
       final first = group.first;
       final display = PhilosophyWork.fromJson({
-        ...first.toJson(), 'author_info': authors.resolve(first.author).toJson(),
+        ...first.toJson(),
+        'author_info': authors.resolve(first.author).toJson(),
       });
-      for (final work in group) { _resolved[work.id] = display; }
+      for (final work in group) {
+        _resolved[work.id] = display;
+      }
     }
     // An explicit catalog ID remains authoritative even when stored metadata differs.
     _resolved.addAll(catalogIds);
@@ -639,12 +647,19 @@ class ReadingProgress {
         uniqueRecords[record.id] = record;
       }
     }
-    final included = uniqueRecords.values.where((record) => ids.contains(identify(record.work)));
+    final included = uniqueRecords.values
+        .where((record) => ids.contains(identify(record.work)));
     total = ids.length;
-    completed = included.where((record) => record.isRead)
-        .map((record) => identify(record.work)).toSet().length;
-    reading = included.where((record) => record.status == 'reading')
-        .map((record) => identify(record.work)).toSet().length;
+    completed = included
+        .where((record) => record.isRead)
+        .map((record) => identify(record.work))
+        .toSet()
+        .length;
+    reading = included
+        .where((record) => record.status == 'reading')
+        .map((record) => identify(record.work))
+        .toSet()
+        .length;
     pages = included.fold(0, (total, record) => total + record.pagesRead);
   }
 
