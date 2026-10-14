@@ -288,6 +288,74 @@ async function verifyAuthorSearchRelease(page, account, version) {
 }
 
 
+
+async function verifyWorkGroupsRelease(page, account, version) {
+  const ids=[randomUUID(),randomUUID()];
+  const date=new Date().toISOString().slice(0,10);
+  for(let i=0;i<2;i++) {
+    const work={id:i===0?'plato:republic':'legacy:'+randomUUID(),title:'国家',original_title:'Republic',
+      author_info:{id:i===0?'plato':'legacy-author:'+randomUUID(),name:i===0?'プラトン':'Plato'},note:i===0?'共有側メモ':'既存側メモ'};
+    await action(account.token,{action:'reading.add',id:ids[i],work});
+    await action(account.token,{action:'reading.save',id:ids[i],revision:0,work,cycles:[{
+      id:'same-cycle',started_at:i===0?new Date(Date.now()-86400000).toISOString().slice(0,10):date,finished_at:i===0?date:null,status:i===0?'read':'reading',
+      edition:{publisher:i===0?'保持版A':'保持版B',translator:'保持訳者',editor:'保持編集者',year:'2020',language:'日本語',volume:'公開検証版',
+        isbn:i===0?'9784003363225':'9784003361566',total_pages:i===0?100:160,book_url:'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361566',source_url:'https://ndlsearch.ndl.go.jp/search?keyword=9784003361566'},
+      entries:[{id:'entry-'+i,date,pages:(i+1)*10,start_page:1,end_page:(i+1)*10,understanding:3,impression:i===0?'保持感想A':'保持感想B',questions:'保持疑問',concepts:'保持概念'}],
+    }]});
+  }
+  const list=async()=>(await action(account.token,{action:'reading.list'})).items;
+  async function summary(text) {
+    const escaped=text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    await expect(page.getByRole('group',{name:new RegExp(escaped)}).or(page.getByText(text)).last()).toBeVisible();
+  }
+  async function reveal(control) {
+    for(let attempt=0;attempt<18 && await control.count()===0;attempt++) {
+      const size=page.viewportSize();await page.mouse.move(size.width/2,size.height*.6);await page.mouse.wheel(0,280);await page.waitForTimeout(250);
+    }
+    await expect(control).toHaveCount(1);
+  }
+  async function search() {
+    await page.goto(base+'/reading-list');await semantics(page);
+    await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+    await field(page,/^著者・著作を検索/,'国家');
+    const author=page.getByRole('button',{name:/^プラトン /});await expect(author).toHaveCount(1);await author.click();
+    await expect(page.getByRole('button',{name:/^国家 プラトン/})).toHaveCount(1);
+    await expect(page.getByRole('button',{name:/^国家 Plato/})).toHaveCount(0);
+  }
+  const results=[];
+  for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+    await page.setViewportSize(size);const before=await list();
+    await search();await capture(page,`groups-${mode}-search`);
+    await page.getByRole('tab',{name:'進捗',exact:true}).click();
+    await summary('読書中 1 著作・読了 1 著作');await summary('対象 1 著作');await summary('対象 80 著作');await summary('読書記録の合計 30 ページ');
+    await capture(page,`groups-${mode}-progress`);
+    await page.getByRole('tab',{name:'著作',exact:true}).click();await page.getByRole('button',{name:/^国家 プラトン/}).click();
+    await expect(page.getByText(/同じ著作の記録をまとめて表示/)).toBeVisible();
+    await expect(page.getByText('共有側メモ',{exact:true})).toBeVisible();await expect(page.getByText('既存側メモ',{exact:true})).toBeVisible();
+    await summary('10ページまで／全100ページ・10.0％');
+    const owner=page.getByRole('group',{name:/ISBN: 9784003361566/}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
+    const edit=owner.getByRole('button',{name:'版を編集',exact:true});await reveal(edit);
+    await summary('20ページまで／全160ページ・12.5％');await capture(page,`groups-${mode}-cycles`);
+    assert.deepEqual(await list(),before,'Searching/displaying grouped works modified stored records');
+    await edit.click();await field(page,/^出版社/,`保持版B-${mode}`);
+    const saved=page.waitForResponse(r=>r.url().includes('/functions/v1/tools-hub') && r.request().method()==='POST' && r.request().postDataJSON()?.action==='reading.save');
+    await page.getByRole('button',{name:'保存',exact:true}).click();assert.equal((await saved).status(),200);
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await page.reload();await search();await page.getByRole('button',{name:/^国家 プラトン/}).click();
+    await reveal(edit);await summary('20ページまで／全160ページ・12.5％');await capture(page,`groups-${mode}-edited-reloaded`);
+    const after=await list(),original=before.find(x=>x.id===ids[1]),changed=after.find(x=>x.id===ids[1]);
+    assert.deepEqual(after.find(x=>x.id===ids[0]),before.find(x=>x.id===ids[0]),'Editing another owner changed the first record');
+    assert.deepEqual(changed.metadata.work,original.metadata.work);
+    assert.deepEqual(changed.metadata.cycles[0].entries,original.metadata.cycles[0].entries);
+    assert.deepEqual(changed.metadata.cycles[0].edition,{...original.metadata.cycles[0].edition,publisher:`保持版B-${mode}`});
+    assert.deepEqual({...changed.metadata.cycles[0],edition:original.metadata.cycles[0].edition},original.metadata.cycles[0]);
+    assert.equal(changed.metadata.cycles.length,1);assert.equal(after.length,2);
+    results.push({mode,search:'one work',totalWorks:80,filteredWorks:1,reading:1,completed:1,pages:30,cycles:2,reload:'passed',otherRecordUnchanged:true,workAndEntriesPreserved:true,allOtherEditionPropertiesPreserved:true});
+  }
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,profile:'groups',api:'passed',cases:results},null,2));
+  console.log('Published grouped work search, unique progress counts, independent owner edit, both editions/pages/impressions and reload passed on desktop/mobile.');
+}
+
 try {
   const version = await (await fetch(`${base}/version.json?qa=${Date.now()}`)).json();
   assert.equal(version.commit,process.env.EXPECTED_PRODUCTION_SHA,'Published version differs from merged commit');
@@ -354,7 +422,9 @@ try {
   await page.waitForTimeout(1500);
   await page.goto(base+'/reading-list');await semantics(page);
   await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
-  if(process.env.READING_QA_AUTHORS === 'true') {
+  if(process.env.READING_QA_GROUPS === 'true') {
+    await verifyWorkGroupsRelease(page,a,version);
+  } else if(process.env.READING_QA_AUTHORS === 'true') {
     await verifyAuthorSearchRelease(page,a,version);
   } else if(process.env.READING_QA_PROGRESS === 'true') {
     await verifyProgressDisplay(page,a,version);
