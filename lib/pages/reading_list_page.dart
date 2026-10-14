@@ -219,15 +219,9 @@ class _ReadingListPageState extends State<ReadingListPage>
       );
 
   Widget _authorList() {
+    final works = _model.works;
     final authors = _model.authors
-        .where(
-          (a) =>
-              _filter.authorMatches(a) &&
-              (_genre == null ||
-                  _model.works.any(
-                    (w) => w.author.id == a.id && w.genres.contains(_genre),
-                  )),
-        )
+        .where((author) => _filter.authorMatches(author, works: works))
         .toList();
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -251,19 +245,23 @@ class _ReadingListPageState extends State<ReadingListPage>
             child: Text('条件に一致する著者はいません'),
           ),
         ...authors.map((a) {
-          final progress =
-              _model.progress(_model.works.where((w) => w.author.id == a.id));
+          final related = works.where((work) => work.author.id == a.id);
+          final matchingTitles = _query.trim().isEmpty
+              ? <PhilosophyWork>[]
+              : related.where((work) => _filter.titleMatches(work) &&
+                  (_genre == null || work.genres.contains(_genre))).toList();
+          final progress = _model.progress(related);
           return Card(
             child: ListTile(
               title: Text(a.name),
               subtitle: Text(
-                '${a.centuries.join('・')} / ${a.regions.join('・')}\n${a.traditions.join('・')}\n${progress.total == 0 ? '著作を調査中' : '収録 ${progress.total} 著作 / 読了 ${progress.completed} 著作'}',
+                '${a.centuries.join('・')} / ${a.regions.join('・')}\n${a.traditions.join('・')}\n${progress.total == 0 ? '著作を調査中' : '収録 ${progress.total} 著作 / 読了 ${progress.completed} 著作'}${matchingTitles.isEmpty ? '' : '\n該当する著作: ${matchingTitles.map((work) => work.title).join('・')}'}',
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 setState(() {
                   _author = a.id;
-                  _query = '';
+                  if (matchingTitles.isEmpty) _query = '';
                   _century = null;
                 });
                 _tabs.animateTo(1);

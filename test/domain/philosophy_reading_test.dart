@@ -3,6 +3,36 @@ import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 import 'package:my_web_app/domain/models/philosophy_reading.dart';
 
 void main() {
+  test('author search matches related titles with author and genre filters', () {
+    final author = philosophyAuthors.firstWhere((a) => a.id == 'schopenhauer');
+    final work = PhilosophyWork(id: 'private:reading', title: '読書について',
+      originalTitle: 'On Reading', author: author, genres: const ['認識論']);
+    expect(const ReadingFilter(query: ' 読書について ').authorMatches(author, works: [work]), isTrue);
+    expect(const ReadingFilter(query: 'on reading').authorMatches(author, works: [work]), isTrue);
+    expect(const ReadingFilter(query: '読書について', century: '19世紀', genre: '認識論').authorMatches(author, works: [work]), isTrue);
+    expect(const ReadingFilter(query: '読書について', century: '20世紀').authorMatches(author, works: [work]), isFalse);
+    expect(const ReadingFilter(query: '読書について', genre: '政治哲学').authorMatches(author, works: [work]), isFalse);
+    expect(const ReadingFilter(query: '読書について', region: '中国').authorMatches(author, works: [work]), isFalse);
+    expect(const ReadingFilter(query: 'ショーペンハウエル').matches(work), isTrue);
+  });
+
+  test('author resolution is exact and ambiguity never merges unrelated authors', () {
+    final index = ReadingAuthorIndex(philosophyAuthors);
+    const old = PhilosophyAuthor(id: 'legacy:a', name: 'ショーペンハウエル');
+    expect(index.resolve(old).id, 'schopenhauer');
+    expect(index.resolve(const PhilosophyAuthor(id: 'private:a', name: ' Arthur Schopenhauer ')).id, 'schopenhauer');
+    const similar = PhilosophyAuthor(id: 'private:study', name: 'ショーペンハウエル研究会');
+    expect(index.resolve(similar), same(similar));
+    const personalAlias = PhilosophyAuthor(id: 'private:other', name: '別の人物', aliases: ['ショーペンハウエル']);
+    expect(index.resolve(personalAlias), same(personalAlias));
+    final ambiguous = ReadingAuthorIndex(const [
+      PhilosophyAuthor(id: 'a', name: 'A', aliases: ['同名']),
+      PhilosophyAuthor(id: 'b', name: 'B', aliases: ['同名']),
+    ]);
+    const unknown = PhilosophyAuthor(id: 'private:c', name: '同名');
+    expect(ambiguous.resolve(unknown), same(unknown));
+  });
+
   test('page progress adds only the delta and round trips without marking read',
       () {
     const initial = ReadingCycle(
