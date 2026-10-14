@@ -6825,6 +6825,7 @@ serve(async (req: Request) => {
         }
       }
 
+      case "expense.jev_search":
       case "expense.jev_suggest": {
         if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
         const offlinePolicy = parseOfflineSecureModePolicy(body);
@@ -6837,6 +6838,7 @@ serve(async (req: Request) => {
         const account = userId ? await admin.auth.admin.getUserById(userId) : null;
         try {
           const result = await classifyJevExpense({
+            semanticSearch: action === "expense.jev_search",
             userId: account?.error ? null : account?.data.user?.id ?? null,
             anonymous: account?.data.user?.is_anonymous !== false,
             body,

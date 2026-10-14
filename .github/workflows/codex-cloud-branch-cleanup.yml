@@ -66,6 +66,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMUM_AGE_DAYS: ${{ inputs.minimum_age_days }}
           MAX_DELETIONS: ${{ inputs.max_deletions }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
           tmp_dir=$(mktemp -d)
@@ -122,6 +123,28 @@ jobs:
           echo "candidate_count=$candidate_count" >> "$GITHUB_OUTPUT"
           echo "selected_count=$selected_count" >> "$GITHUB_OUTPUT"
 
+          # Persist only public branch/PR identifiers and selection controls.
+          # The temporary work files are removed by the existing EXIT trap.
+          audit_dir="$RUNNER_TEMP/codex-cloud-cleanup-evidence"
+          mkdir -p "$audit_dir"
+          cp "$candidates" "$audit_dir/candidates.tsv"
+          cp "$selected" "$audit_dir/selected.tsv"
+          jq -n \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg head_sha "$GITHUB_SHA" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            --argjson dry_run "$DRY_RUN" \
+            --argjson minimum_age_days "$MINIMUM_AGE_DAYS" \
+            --argjson max_deletions "$MAX_DELETIONS" \
+            --argjson candidate_count "$candidate_count" \
+            --argjson selected_count "$selected_count" \
+            '{repository: $repository, head_sha: $head_sha, run_id: $run_id,
+              attempt: $attempt, dry_run: $dry_run,
+              minimum_age_days: $minimum_age_days, max_deletions: $max_deletions,
+              candidate_count: $candidate_count, selected_count: $selected_count}' \
+            > "$audit_dir/context.json"
+
           {
             echo "## Codex cloud branch cleanup"
             echo
@@ -138,6 +161,14 @@ jobs:
               echo 'No branches meet the deletion proof and age requirements.'
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable cleanup candidate evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: codex-cloud-cleanup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/codex-cloud-cleanup-evidence/
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Delete selected remote branches with SHA leases
         if: inputs.dry_run == false && steps.manifest.outputs.selected_count != '0'

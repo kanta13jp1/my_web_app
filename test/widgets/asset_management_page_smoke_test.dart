@@ -18,6 +18,7 @@ import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
+import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
@@ -589,6 +590,12 @@ void main() {
           salaryDay: AssetSalaryDayStore.defaultSalaryDay,
         );
         final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
+        final previousCycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+          DateTime(cycleStart.year, cycleStart.month - 1),
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetSalaryResetMarkerStore.prefsKey: previousCycleKey,
+        });
 
         await tester.binding.setSurfaceSize(const Size(1200, 2400));
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -596,6 +603,11 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                DateFormat('yyyy-MM-dd').format(now): const <String, double>{
+                  '現金': 50000,
+                },
+              },
               // 収支フロー(wealth_struggles)は空。
               debugInitialRecentFlows: const <Map<String, dynamic>>[],
               // 給料は salary_incomes にのみ存在 (給与明細のみ管理)。
@@ -622,6 +634,31 @@ void main() {
           find.descendant(of: card, matching: find.text('¥280,000')),
           findsOneWidget,
         );
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.textContaining('給与明細・受取済み収入予定から計上した'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.textContaining('現在残高や今後の支払後に使える額とは異なります'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        final prefs = await SharedPreferences.getInstance();
+        expect(
+          prefs.getString(AssetSalaryResetMarkerStore.prefsKey),
+          previousCycleKey,
+          reason: '給与明細だけでは口座入金と判定して支払チェックをリセットしない',
+        );
+        await tester.binding.setSurfaceSize(const Size(390, 1200));
+        await tester.pump();
+        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+        expect(tester.takeException(), isNull);
         // 収入があるので「未記録」の空状態文言は出ない。
         expect(
           find.descendant(
@@ -1633,6 +1670,66 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets(
+        'reconciliation uses confirmed date and keeps revolving settings', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': 'full',
+      });
+      final now = DateTime(2026, 10, 11);
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+      );
+      await tester.binding.setSurfaceSize(const Size(1200, 3200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: now,
+            debugRevolvingConfigsMirror: mirrorValue,
+            assetLiabilityRepository: _FakeDebtOverrideRepository(
+              <String, int>{},
+              monthlyState: AssetLiabilityMonthlyState(
+                paymentOverrides: const <String, double>{'aupay_card': 77541},
+                confirmedPaymentDays: const <String, double>{'aupay_card': 13},
+                billingConfirmedAccountIds: const <String>{'aupay_card'},
+                cardStatementLines: <AssetLiabilityCardStatementLine>[
+                  AssetLiabilityCardStatementLine(
+                    id: 'confirmed_bill_line',
+                    billingAccountId: 'aupay_card',
+                    billingAccountName: 'auPayカード',
+                    description: 'Synthetic statement',
+                    amount: 1000,
+                    postedAt: DateTime(2026, 9, 11),
+                  ),
+                ],
+              ),
+            ),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('カード明細取り込み・照合'), findsOneWidget);
+      expect(find.textContaining('今回の返済予定: 13日 ¥77,541。'), findsOneWidget);
+      expect(find.textContaining('25日の返済予定'), findsNothing);
+      expect(find.textContaining('返済日: 毎月25日'), findsOneWidget);
+      expect(find.textContaining('リボ設定: 最低返済 ¥10,000'), findsOneWidget);
+      await _unmount(tester);
+    });
     testWidgets('revolving payoff chip and payday rule appear on debt cards', (
       tester,
     ) async {
@@ -1786,7 +1883,7 @@ void main() {
     ) async {
       // The action list displays only its first eight entries. Keep the
       // fixture date stable so later overdue payments cannot displace it.
-      final now = DateTime(2026, 9, 1);
+      final now = DateTime(2026, 9, 2);
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await tester.binding.setSurfaceSize(const Size(1200, 3200));
@@ -1806,7 +1903,7 @@ void main() {
           home: AssetManagementPage(
             debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
-              <String, int>{'mobit': now.day},
+              <String, int>{'mobit': now.day - 1},
               monthlyState: AssetLiabilityMonthlyState(
                 paidAccountNames: <String>{
                   for (final row in defaultBills.cashflowRows) row.accountName,

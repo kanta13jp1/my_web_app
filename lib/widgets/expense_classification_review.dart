@@ -95,7 +95,10 @@ class _ExpenseClassificationReviewState
   Widget build(BuildContext context) {
     final empty = widget.memo.trim().isEmpty;
     final ai = _prediction.source == 'jev' && !_prediction.isFallback;
-    final hasCandidate = !empty && (ai || _prediction.source == 'local_rule');
+    // Uniform distributions can have a tiny floating-point entropy residue.
+    final unresolvedAi = ai && _prediction.confidence <= 1e-9;
+    final hasCandidate =
+        !empty && !unresolvedAi && (ai || _prediction.source == 'local_rule');
     final colors = Theme.of(context).colorScheme;
     final destination = Uri.tryParse(_client.endpoint)?.host ?? '';
     return Container(
@@ -149,22 +152,33 @@ class _ExpenseClassificationReviewState
           const SizedBox(height: 4),
           if (!empty)
             Text(
-              ai
-                  ? 'AIの提案です。用途や明細と照らして確認してください。'
-                  : hasCandidate
-                      ? 'キーワード一致による候補です。店名だけでは用途を確定できません。'
-                      : 'ルールに一致しません。品目や用途を追記して確認してください。',
+              unresolvedAi
+                  ? 'AIの判断が候補に分散しているため、先頭の候補を表示していません。'
+                      '明細や用途を確認してカテゴリを選んでください。'
+                  : ai
+                      ? 'AIの提案です。用途や明細と照らして確認してください。'
+                      : hasCandidate
+                          ? 'キーワード一致による候補です。店名だけでは用途を確定できません。'
+                          : 'ルールに一致しません。品目や用途を追記して確認してください。',
             ),
+          if (ai) ...[
+            Text(
+              '接続先：${_client.isLocalMode ? 'ローカルAI' : 'クラウドAI'}',
+            ),
+            Text('応答時間：${_prediction.latencyMs} ms（要求全体）'),
+            const Text('通信と返答の処理を含みます。モデル内部の推論時間ではありません。'),
+          ],
           if (ai)
             Text(
               'モデルの確信度：${(_prediction.confidence * 100).toStringAsFixed(0)}%'
               '（正答率ではありません）',
             ),
-          if (ai)
-            const ExpansionTile(
+          if (!empty)
+            ExpansionTile(
+              key: ValueKey(widget.memo),
               tilePadding: EdgeInsets.zero,
-              title: Text('確信度の読み方'),
-              children: [
+              title: const Text('確信度の読み方'),
+              children: const [
                 Padding(
                   padding: EdgeInsets.only(bottom: 8),
                   child: Text(
@@ -179,6 +193,32 @@ class _ExpenseClassificationReviewState
           if (_aiUnavailable) ...[
             const SizedBox(height: 8),
             const Text('AIの候補を取得できなかったため、端末内ルールで表示しています。'),
+            ExpansionTile(
+              key: const Key('expense_connection_help'),
+              tilePadding: EdgeInsets.zero,
+              title: const Text('AIに接続できないとき'),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    _client.isLocalMode
+                        ? 'ローカルAIの起動と、指定したモデルの準備を確認してください。'
+                            'サーバーが応答していても、ブラウザーからの接続が許可されていない場合があります。'
+                            '別のポートから接続する構成では、配信元と接続先の組み合わせを確認してください。'
+                            'この表示だけでは、接続拒否と時間切れを区別できません。'
+                            '接続を確認してから、必要な場合だけボタンで再試行してください。'
+                        : '通信状態やサービスの利用上限を確認し、しばらく待ってから'
+                            '必要な場合だけボタンで再試行してください。'
+                            'この表示だけでは失敗の原因を確定できません。',
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: Text('AIを使わずに内容を確認して記録できます。'
+                      '再試行は自動では行わず、入力や記録を変更しません。'),
+                ),
+              ],
+            ),
           ],
           const SizedBox(height: 8),
           const Text('候補は参考表示です。記録・金額・カテゴリを自動で変更しません。'),

@@ -8,6 +8,7 @@ import '../models/user_profile.dart';
 import 'ai_hub_chat_service.dart';
 import 'asset_management_ai_provider_router.dart';
 import 'asset_management_insight_service.dart';
+import 'asset_payment_status_summary.dart';
 
 class AssetManagementAiSummaryFeatureFlag {
   static const String dartDefineName = 'ASSET_MANAGEMENT_AI_SUMMARY_ENABLED';
@@ -387,7 +388,7 @@ class AssetManagementAiSummaryService {
   Map<String, dynamic> buildPayload(AssetManagementInsightReport report) {
     return <String, dynamic>{
       // Invalidate saved summaries when the response policy changes.
-      'response_policy_version': 3,
+      'response_policy_version': 4,
       'user_profile': _profileToDetailedJson(report.userProfile),
       'workbook': _workbookToDetailedJson(report.workbook),
       'available_money': <String, dynamic>{
@@ -502,6 +503,7 @@ class AssetManagementAiSummaryService {
       if (critical > 3) 'ほか${critical - 3}件は下の要対応項目を確認してください。',
       emergency,
       movement,
+      assetPaymentStatusPrompt(report.workbook),
       '金額はDartルールで計算済みです。AIは要約のみを行います。',
     ].join(' ');
   }
@@ -1452,6 +1454,43 @@ class AssetManagementAiSummaryService {
     validateAmount('現金同等資産', workbook.cashLikeTotal);
     validateAmount('今月支払予定合計', workbook.monthlyScheduledPaymentTotal);
     validateAmount('今月未払い合計', workbook.monthlyUnpaidPaymentTotal);
+
+    final paymentGroups = assetPaymentStatusGroups(workbook);
+    final paymentSegments = text.split(RegExp(r'[\r\n。]+'));
+    for (final entry in paymentGroups.entries) {
+      final expectedTotal = entry.value
+          .fold<double>(
+            0,
+            (sum, row) => sum + row.paymentAmount,
+          )
+          .round();
+      for (final segment in paymentSegments) {
+        if (!segment.contains(entry.key)) continue;
+        if (RegExp(r'期限超過(?:では|で|は)(?:ない|ありません)|期限超過に含め(?:ない|ません)')
+            .hasMatch(segment)) {
+          continue;
+        }
+        final count = RegExp(r'([0-9]+)件').firstMatch(segment);
+        if (count != null && int.parse(count.group(1)!) != entry.value.length) {
+          errors.add('${entry.key}の件数が確定内訳と不一致');
+        }
+        final total =
+            RegExp(r'合計[^0-9]{0,12}([0-9][0-9,]*)\s*円').firstMatch(segment);
+        if (total != null && _parseYen('${total.group(1)}円') != expectedTotal) {
+          errors.add('${entry.key}の合計が確定内訳と不一致');
+        }
+      }
+    }
+    for (final row in paymentGroups['本日期日']!) {
+      for (final segment in paymentSegments) {
+        if (segment.contains(row.accountName) &&
+            segment.contains('期限超過') &&
+            !RegExp(r'期限超過(?:では|で|は)(?:ない|ありません)|期限超過に含め(?:ない|ません)')
+                .hasMatch(segment)) {
+          errors.add('${row.accountName}は本日期日で期限超過ではありません');
+        }
+      }
+    }
 
     const unpaidLanguage = <String>[
       '未払い',

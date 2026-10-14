@@ -1,0 +1,115 @@
+import 'dart:async';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
+import 'package:my_web_app/domain/models/philosophy_reading.dart';
+import 'package:my_web_app/ui/features/reading/view_models/reading_view_model.dart';
+import '../support/reading_fixture_repository.dart';
+
+void main() {
+  test('work memo persists without starting a reading cycle', () async {
+    final repo = ReadingFixtureRepository();
+    final model = ReadingViewModel(repo);
+    await model.load();
+    final work = philosophyWorks.first;
+    expect(await model.appendWorkMemo(work, '画像確認16〜17頁'), isTrue);
+    await model.load();
+    final record = model.recordFor(work.id)!;
+    expect(record.work.note, contains('画像確認16〜17頁'));
+    expect(record.cycles, isEmpty);
+    expect(record.pagesRead, 0);
+    expect(record.isRead, isFalse);
+    repo.failNextSave = true;
+    expect(await model.appendWorkMemo(work, '追加失敗'), isFalse);
+    expect(model.recordFor(work.id)!.work.note, record.work.note);
+    expect(await model.appendWorkMemo(work, '追記成功'), isTrue);
+    await model.load();
+    expect(model.recordFor(work.id)!.work.note, contains('追記成功'));
+    expect(model.recordFor(work.id)!.cycles, isEmpty);
+    model.dispose();
+    await repo.changes.close();
+  });
+
+  test('long work memo survives reload and overflow preserves existing memo',
+      () async {
+    final repo = ReadingFixtureRepository();
+    final model = ReadingViewModel(repo);
+    await model.load();
+    final work = philosophyWorks.first;
+    final text = List.filled(3000, '本').join();
+    expect(await model.appendWorkMemo(work, text), isTrue);
+    expect(await model.appendWorkMemo(work, '12〜15頁の目次'), isTrue);
+    await model.load();
+    final record = model.recordFor(work.id)!;
+    expect(record.work.note, contains(text));
+    expect(record.work.note, endsWith('12〜15頁の目次'));
+    expect(record.cycles, isEmpty);
+    expect(record.pagesRead, 0);
+    expect(record.isRead, isFalse);
+    expect(
+      await model.appendWorkMemo(work, List.filled(100000, '字').join()),
+      isFalse,
+    );
+    expect(model.recordFor(work.id)!.work.note, record.work.note);
+    repo.failNextSave = true;
+    expect(await model.appendWorkMemo(work, '保存失敗'), isFalse);
+    expect(model.recordFor(work.id)!.work.note, record.work.note);
+    model.dispose();
+    await repo.changes.close();
+  });
+
+  test(
+      'guest can browse but cannot mutate; save failure leaves the previous record intact',
+      () async {
+    final repo = ReadingFixtureRepository();
+    final model = ReadingViewModel(repo);
+    await model.load();
+    final work = philosophyWorks.first;
+    expect(await model.addWork('id', work), isTrue);
+    final old = model.recordFor(work.id)!;
+    repo.failNextSave = true;
+    expect(
+      await model.save(
+        old.withCycles(
+          const [ReadingCycle(id: 'cycle', startedAt: '2026-10-11')],
+        ),
+      ),
+      isFalse,
+    );
+    expect(model.recordFor(work.id)!.cycles, isEmpty);
+    expect(
+      await model.save(
+        old.withCycles(
+          const [ReadingCycle(id: 'cycle', startedAt: '2026-10-11')],
+        ),
+      ),
+      isTrue,
+    );
+    await model.load();
+    expect(model.recordFor(work.id)!.cycles.length, 1);
+    repo.user = null;
+    repo.changes.add(null);
+    await Future<void>.delayed(Duration.zero);
+    expect(model.records, isEmpty);
+    expect(model.works.length, philosophyWorks.length);
+    expect(await model.addWork('other', work), isFalse);
+    model.dispose();
+    await repo.changes.close();
+  });
+  test('late previous-account response cannot restore private records',
+      () async {
+    final repo = ReadingFixtureRepository();
+    final model = ReadingViewModel(repo);
+    final delayed = Completer<List<ReadingRecord>>();
+    repo.delayedList = delayed;
+    final request = model.load();
+    repo.user = null;
+    repo.changes.add(null);
+    await Future<void>.delayed(Duration.zero);
+    delayed
+        .complete([ReadingRecord(id: 'private', work: philosophyWorks.first)]);
+    await request;
+    expect(model.records, isEmpty);
+    model.dispose();
+    await repo.changes.close();
+  });
+}

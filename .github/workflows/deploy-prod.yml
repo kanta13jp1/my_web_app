@@ -17,6 +17,11 @@ on:
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
       - '.github/workflows/**'
+      - 'scripts/production_core_hub_scope.py'
+      - 'scripts/production_core_hub_scope_test.py'
+      - 'supabase/functions/core-hub/blog_view.ts'
+      - 'supabase/functions/core-hub/blog_view_test.ts'
+      - 'supabase/functions/core-hub/index_test.ts'
       - 'lefthook.yml'
       - 'scripts/classify_ci_changes.py'
       - 'scripts/classify_ci_changes_test.py'
@@ -43,13 +48,8 @@ on:
 
 concurrency:
   group: deploy-prod
-  # Win版#109: cancel-in-progress を true → false に変更 (deploy保証 100%化)。
-  # 5 インスタンス (Win/PS/VSCode/WEB/📱スマホ) 並行 push で
-  # cancel-in-progress: true だと cancel 連鎖が発生し全コミットが
-  # 反映されない問題が頻発していた (Win#101-#107 で確認)。
-  # false にすると同 group で順次実行 (1本ずつ・最大 11分 × 並行数 待機)
-  # するが、全 commit が必ず deploy される。
-  # group が同じため同時並行はゼロ・GitHub Actions リソース消費は変わらない。
+  # Running deployments are never cancelled; GitHub may replace one pending run.
+  # Release operators must inspect exact SHA and deployment state before retrying.
   cancel-in-progress: false
 
 permissions: {}
@@ -117,21 +117,18 @@ jobs:
 
       - name: Collect pushed files
         if: github.event_name == 'push'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        with:
-          script: |
-            const fs = require('fs');
-            const comparison = await github.rest.repos.compareCommitsWithBasehead({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              basehead: `${context.payload.before}...${context.sha}`,
-              per_page: 100,
-            });
-            fs.mkdirSync('.deploy-logs', { recursive: true });
-            fs.writeFileSync(
-              '.deploy-logs/changed-files.txt',
-              (comparison.data.files || []).map((file) => file.filename).join('\n') + '\n',
-            );
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          [[ "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE_SHA" != 0000000000000000000000000000000000000000 ]]
+          git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
+          mkdir -p .deploy-logs
+          git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" > .deploy-logs/changed-files.txt
+
+      - name: Reject mixed public-blog deployments
+        if: github.event_name == 'push'
+        run: python scripts/production_core_hub_scope.py guard --changed-files .deploy-logs/changed-files.txt
 
       - name: Classify deploy scope
         id: changes
@@ -737,6 +734,17 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
 
+      - name: Resolve normalized AI University provider catalog
+        id: ai_university_catalog
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          mkdir -p .ci-generated
+          provider_count=$(python3 scripts/ai_university_provider_catalog.py \
+            --output .ci-generated/ai-university-catalog.json)
+          echo "provider_count=$provider_count" >> "$GITHUB_OUTPUT"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
       - name: Build Flutter Web (Production)
         if: steps.changes.outputs.web == 'true'
         run: |
@@ -750,6 +758,7 @@ jobs:
             --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
+            --dart-define=AI_UNIVERSITY_PROVIDER_COUNT=${{ steps.ai_university_catalog.outputs.provider_count }} \
             --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
             --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
@@ -774,6 +783,7 @@ jobs:
         run: |
           echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
           cp web/release-notes.json build/web/release-notes.json
+          cp .ci-generated/ai-university-catalog.json build/web/ai-university-catalog.json
 
       - name: Cache-bust OGP image URLs
         if: steps.changes.outputs.web == 'true'
@@ -791,7 +801,8 @@ jobs:
             --template build/web/index.html \
             --outdir build/web \
             --routes web/seo/comparison-routes.json \
-            --public-routes web/seo/public-routes.json
+            --public-routes web/seo/public-routes.json \
+            --ai-university-catalog .ci-generated/ai-university-catalog.json
           # 実在ルートのみの sitemap を当日 lastmod で再生成 (build 済みへ出力)
           python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
@@ -1051,4 +1062,3 @@ jobs:
               commit_sha: context.sha,
               body: 'Production deployment completed.\n\n- **Web**: ${{ needs.deploy.outputs.web }}\n- **Edge Functions**: ${{ needs.deploy.outputs.edge }}\n- **Migrations**: ${{ needs.deploy.outputs.migration }}\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
             })
-

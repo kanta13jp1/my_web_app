@@ -17,6 +17,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "lefthook": "^2.1.14"
+    "lefthook": "^2.1.16"
   }
 }

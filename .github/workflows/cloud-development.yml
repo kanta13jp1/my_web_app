@@ -4,8 +4,33 @@ on:
   pull_request:
     paths:
       - .agents/skills/site-trust-improvement-loop/**
+      - lib/models/savings_life_plan.dart
+      - lib/services/savings_life_plan_service.dart
+      - lib/services/savings_life_plan_store.dart
+      - lib/services/savings_plan_proposal_service.dart
+      - test/services/savings_plan_proposal_service_test.dart
+      - lib/widgets/savings_life_plan_card.dart
+      - test/services/savings_life_plan_service_test.dart
+      - test/services/savings_life_plan_store_test.dart
+      - test/widgets/savings_life_plan_card_test.dart
+      - test/fixtures/savings_life_plan_app.dart
+      - test/e2e/savings_life_plan.spec.ts
+      - lib/models/asset_balance_observation.dart
+      - lib/widgets/asset_balance_history_control.dart
+      - test/models/asset_balance_observation_test.dart
+      - test/widgets/asset_balance_history_control_test.dart
+      - test/fixtures/asset_balance_history_app.dart
+      - test/e2e/asset_balance_history.spec.ts
       - .devcontainer/**
       - .github/workflows/cloud-development.yml
+      - lib/widgets/slide_number_check_card.dart
+      - lib/services/slide_number_check.dart
+      - test/fixtures/slide_number_check_app.dart
+      - test/e2e/slide_number_check.spec.ts
+      - lib/pages/ai_search_page.dart
+      - test/pages/ai_search_page_test.dart
+      - test/fixtures/ai_search_app.dart
+      - test/e2e/ai_search_pending.spec.ts
       - lib/models/platform_release_checklist.dart
       - lib/pages/platform_release_checklist_page.dart
       - test/e2e/platform_release_checklist.spec.ts
@@ -246,4 +271,240 @@ jobs:
             playwright-report/
             test-results/
             checklist-server.log
+          if-no-files-found: ignore
+
+  ai-search-pending-e2e:
+    name: Note search pending E2E
+    if: github.event_name == 'pull_request' || inputs.profile == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Resolve dependencies and build Flutter Web
+        run: |
+          flutter pub get
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/ai_search_app.dart \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Playwright Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run note search pending E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/ai_search_pending.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Upload note search E2E report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ai-search-pending-e2e-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            search-server.log
+          if-no-files-found: ignore
+
+  slide-number-check-e2e:
+    name: Slide number check E2E
+    if: github.event_name == 'pull_request' || inputs.profile == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Resolve dependencies and build Flutter Web
+        run: |
+          flutter pub get
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/slide_number_check_app.dart \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Playwright Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run note search pending E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/slide_number_check.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Upload note search E2E report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: slide-number-check-e2e-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            search-server.log
+          if-no-files-found: ignore
+
+  asset-balance-history-e2e:
+    name: Balance timestamp and history E2E
+    if: github.event_name == 'pull_request' || inputs.profile == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Resolve dependencies and build Flutter Web
+        run: |
+          flutter pub get
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/asset_balance_history_app.dart \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Playwright Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run balance history pending E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7358 > history-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/asset_balance_history.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Upload balance history E2E report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: asset-balance-history-e2e-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            history-server.log
+          if-no-files-found: ignore
+
+  savings-life-plan-e2e:
+    name: Savings and daily life plan E2E
+    if: github.event_name == 'pull_request' || inputs.profile == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Resolve dependencies and build Flutter Web
+        run: |
+          flutter pub get
+          flutter build web --release --pwa-strategy=none --target=test/fixtures/savings_life_plan_app.dart \
+            --dart-define=ENVIRONMENT=visual-test \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Playwright Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run savings life plan pending E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7359 > savings-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7359/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7359 npx playwright test test/e2e/savings_life_plan.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Upload savings life plan E2E report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: savings-life-plan-e2e-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            savings-server.log
           if-no-files-found: ignore

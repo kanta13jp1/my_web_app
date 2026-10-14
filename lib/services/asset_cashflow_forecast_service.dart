@@ -7,11 +7,18 @@ class AssetCashflowRecurringEntry {
     required this.dayOfMonth,
     required this.amount,
     this.label = '',
+    this.fixedCostMatchKey,
+    this.isFixedCostRow = false,
   });
 
   final int dayOfMonth;
   final double amount;
   final String label;
+
+  /// 負債一覧と旧固定費一覧にある同一請求の照合キー。
+  /// 実際の発生日は月末への丸め後に比較する。
+  final String? fixedCostMatchKey;
+  final bool isFixedCostRow;
 }
 
 /// 特定日に1回だけ発生する収入・支出の1項目。
@@ -161,9 +168,22 @@ class AssetCashflowForecastService {
             dayIn += entry.amount;
           }
         }
+        final fixedCostRowsForDay = <String>{
+          for (final entry in recurringOutflow)
+            if (entry.isFixedCostRow &&
+                entry.fixedCostMatchKey != null &&
+                entry.amount > _epsilon &&
+                _clampDay(entry.dayOfMonth, monthStart) == day)
+              entry.fixedCostMatchKey!,
+        };
         for (final entry in recurringOutflow) {
           if (entry.amount > _epsilon &&
               _clampDay(entry.dayOfMonth, monthStart) == day) {
+            if (!entry.isFixedCostRow &&
+                entry.fixedCostMatchKey != null &&
+                fixedCostRowsForDay.contains(entry.fixedCostMatchKey)) {
+              continue;
+            }
             dayOut += entry.amount;
           }
         }

@@ -183,6 +183,7 @@ class AssetLiabilityPlanningService {
     Map<String, String> paymentDifferenceReasons = const <String, String>{},
     Map<String, double> annualRateOverrides = const <String, double>{},
     Map<String, int> paymentDayOverrides = const <String, int>{},
+    Map<String, double> confirmedPaymentDays = const <String, double>{},
     Set<String> paidAccountNames = const <String>{},
     Set<String> billingConfirmedAccountIds = const <String>{},
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
@@ -361,6 +362,7 @@ class AssetLiabilityPlanningService {
           (account) => _buildDebtRow(
             account: account,
             liabilityTotal: liabilityTotal,
+            confirmedPaymentDays: confirmedPaymentDays,
             monthlyPaymentOverrides: effectiveMonthlyPaymentOverrides,
             actualPaymentAmounts: actualPaymentAmounts,
             paymentDifferenceReasons: paymentDifferenceReasons,
@@ -795,6 +797,7 @@ class AssetLiabilityPlanningService {
     required AssetLiabilityAccount account,
     required double liabilityTotal,
     required Map<String, double> monthlyPaymentOverrides,
+    Map<String, double> confirmedPaymentDays = const <String, double>{},
     required Map<String, double> actualPaymentAmounts,
     required Map<String, String> paymentDifferenceReasons,
     required Map<String, double> annualRateOverrides,
@@ -843,6 +846,19 @@ class AssetLiabilityPlanningService {
         importedLines != null && importedLines.isNotEmpty;
     final importedNewUsage = cardStatementTotalsByBillingId[account.id] ??
         cardStatementTotalsByBillingId[account.name.trim()];
+    final confirmedPayment =
+        _containsAccountKey(billingConfirmedAccountIds, account)
+            ? manualPayment
+            : null;
+    final rawConfirmedDay = confirmedPaymentDays[account.id] ??
+        confirmedPaymentDays[account.name.trim()] ??
+        confirmedPaymentDays[account.name];
+    final confirmedDay = rawConfirmedDay != null &&
+            rawConfirmedDay >= 1 &&
+            rawConfirmedDay <= 31 &&
+            rawConfirmedDay == rawConfirmedDay.roundToDouble()
+        ? rawConfirmedDay.toInt()
+        : null;
     final revolvingBilling = revolvingConfig == null
         ? null
         : const AssetRevolvingCreditService().computeBilling(
@@ -852,6 +868,8 @@ class AssetLiabilityPlanningService {
             statementLines: importedLines,
             hasImportedStatement: hasImportedStatement,
             scheduledPayment: manualPayment,
+            confirmedPaymentAmount: confirmedPayment,
+            confirmedPaymentDay: confirmedDay,
           );
     final scheduledPayment =
         revolvingBilling?.billedAmount ?? manualPayment ?? minimumPayment;
@@ -1567,7 +1585,7 @@ class AssetLiabilityPlanningService {
           paymentAmountEstimated: false,
           paid: false,
           received: plan.received,
-          overdue: !plan.received && !paymentDate.isAfter(_dateOnly(baseDate)),
+          overdue: !plan.received && paymentDate.isBefore(_dateOnly(baseDate)),
           cashBeforePayment: 0,
           cashAfterPayment: 0,
           riskLevel: AssetLiabilityCashRiskLevel.normal,
@@ -1584,7 +1602,7 @@ class AssetLiabilityPlanningService {
       );
       final overdue = row.isDirectCashflowTarget &&
           row.requiresAction &&
-          !paymentDate.isAfter(_dateOnly(baseDate));
+          paymentDate.isBefore(_dateOnly(baseDate));
       result.add(
         AssetLiabilityCashflowRow(
           eventType: AssetLiabilityCashflowEventType.payment,

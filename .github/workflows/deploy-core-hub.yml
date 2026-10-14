@@ -1,0 +1,122 @@
+name: Deploy public blog core-hub only
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - supabase/functions/core-hub/blog_view.ts
+      - supabase/functions/core-hub/blog_view_test.ts
+      - supabase/functions/core-hub/index_test.ts
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/deploy-prod.yml
+      - .github/workflows/deploy-core-hub.yml
+      - scripts/production_core_hub_scope.py
+      - scripts/production_core_hub_scope_test.py
+      - supabase/functions/core-hub/blog_view.ts
+      - supabase/functions/core-hub/blog_view_test.ts
+      - supabase/functions/core-hub/index_test.ts
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.event_name == 'push' && 'deploy-prod' || format('core-hub-contract-{0}', github.ref) }}
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: Core-hub deployment scope contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout tested source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Verify deployment boundary and probe behavior
+        run: python scripts/production_core_hub_scope_test.py
+
+  deploy:
+    name: Deploy only core-hub public blog repair
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: production
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout immutable event source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Collect complete push diff and require exact scope
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          [[ "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE_SHA" != 0000000000000000000000000000000000000000 ]]
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
+          mkdir -p .deploy-logs
+          git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" > .deploy-logs/core-hub-changed-files.txt
+          python scripts/production_core_hub_scope.py require-core-hub --changed-files .deploy-logs/core-hub-changed-files.txt
+          test -f supabase/functions/core-hub/blog_view.ts
+      - name: Setup Deno
+        shell: bash
+        env:
+          DENO_VERSION: v2.9.1
+        run: bash scripts/ci/install_deno_from_github.sh
+      - name: Recheck core-hub source and regression tests
+        run: |
+          deno fmt --check supabase/functions/core-hub/blog_view.ts supabase/functions/core-hub/blog_view_test.ts supabase/functions/core-hub/index_test.ts
+          deno lint --config supabase/functions/deno.json supabase/functions/core-hub/
+          deno check --config supabase/functions/deno.json --lock supabase/functions/deno.lock --frozen supabase/functions/core-hub/index.ts supabase/functions/core-hub/blog_view_test.ts supabase/functions/core-hub/index_test.ts
+          deno test --allow-all --config supabase/functions/deno.json --lock supabase/functions/deno.lock --frozen supabase/functions/core-hub/blog_view_test.ts supabase/functions/core-hub/index_test.ts
+      - name: Setup Python for DB and Edge smoke
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+      - name: Install DB and Edge smoke dependencies
+        run: python -m pip install --requirement scripts/requirements-testcontainers.txt
+      - name: Gate production changes with DB and Edge smoke
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+        run: |
+          python test/scripts/test_testcontainers_supabase_smoke.py
+          python scripts/testcontainers_supabase_smoke.py --plan
+          python scripts/testcontainers_supabase_smoke.py --artifacts-dir .testcontainers-logs
+      - name: Upload production DB and Edge smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: core-hub-production-testcontainers-smoke-logs
+          path: .testcontainers-logs/
+          if-no-files-found: ignore
+          include-hidden-files: true
+      - name: Setup pinned Supabase CLI
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
+        with:
+          version: 2.84.2
+      - name: Verify supported deploy flags
+        run: |
+          supabase functions deploy --help > .deploy-logs/functions-deploy-help.txt
+          grep -q -- '--use-api' .deploy-logs/functions-deploy-help.txt
+          grep -q -- '--project-ref' .deploy-logs/functions-deploy-help.txt
+          grep -q -- '--no-verify-jwt' .deploy-logs/functions-deploy-help.txt
+      - name: Deploy core-hub only
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID_PROD: ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
+        run: |
+          set -euo pipefail
+          test "$SUPABASE_PROJECT_ID_PROD" = smmkxxavexumewbfaqpy
+          supabase functions deploy core-hub --project-ref "$SUPABASE_PROJECT_ID_PROD" --no-verify-jwt --use-api
+      - name: Verify anonymous production HTTP contract
+        run: python scripts/production_core_hub_scope.py probe

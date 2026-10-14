@@ -1,12 +1,13 @@
 import '../models/asset_liability_workbook.dart';
 import 'asset_cashflow_forecast_service.dart';
 import 'asset_expected_inflow_store.dart';
+import 'asset_payment_calendar_service.dart';
 
 /// 資産管理ページの状態(口座・負債・繰り返し収入テンプレ・入金ルール・固定費)から
 /// [AssetCashflowForecastService.project] へ渡す入力を導出する純関数の置き場。
 ///
-/// 元々ページの `_buildCashflowForecastCard` 内にインラインで書かれていたロジックを
-/// 抽出し、build メソッドから切り離してユニットテスト可能にしたもの(振る舞いは不変)。
+/// ページの build から切り離し、カレンダーと共通の支払日設定と
+/// 固定費の重複判定に必要な情報をテスト可能な形で組み立てる。
 class AssetCashflowForecastInputs {
   const AssetCashflowForecastInputs({
     required this.startingBalance,
@@ -43,6 +44,7 @@ class AssetCashflowForecastInputs {
     required List<AssetExpectedInflowRule> inflowRules,
     required List<AssetExpectedInflow> oneTimeInflows,
     required List<Map<String, dynamic>> subscriptions,
+    Map<String, int> paymentDayOverrides = const <String, int>{},
   }) {
     var startingBalance = 0.0;
     for (final account in accounts) {
@@ -96,18 +98,30 @@ class AssetCashflowForecastInputs {
       }
     }
 
-    final recurringOutflow = <AssetCashflowRecurringEntry>[
-      for (final row in debtRows)
-        if (row.isDirectCashflowTarget &&
-            row.balance < 0 &&
-            (row.paymentDay ?? 0) > 0 &&
-            row.scheduledPaymentAmount > 0)
-          AssetCashflowRecurringEntry(
-            dayOfMonth: row.paymentDay!,
-            amount: row.scheduledPaymentAmount,
-            label: row.name,
-          ),
-    ];
+    final recurringOutflow = <AssetCashflowRecurringEntry>[];
+    for (final row in debtRows) {
+      final debt = AssetCalendarDebtInput.fromDebtRow(
+        row,
+        paymentDayOverrides: paymentDayOverrides,
+      );
+      if (!debt.isDirectCashflowTarget ||
+          debt.balance >= 0 ||
+          (debt.paymentDay ?? 0) <= 0 ||
+          debt.scheduledPaymentAmount <= 0) {
+        continue;
+      }
+      recurringOutflow.add(
+        AssetCashflowRecurringEntry(
+          dayOfMonth: debt.paymentDay!,
+          amount: debt.scheduledPaymentAmount,
+          label: debt.name,
+          isFixedCostRow: debt.isFixedCost,
+          fixedCostMatchKey: debt.isFixedCost
+              ? _fixedCostMatchKey(debt.name, debt.scheduledPaymentAmount)
+              : null,
+        ),
+      );
+    }
     for (final subscription in subscriptions) {
       final entry = subscriptionRecurringEntry(subscription);
       if (entry != null) {
@@ -133,6 +147,11 @@ class AssetCashflowForecastInputs {
     );
   }
 
+  static String _fixedCostMatchKey(String name, double amount) {
+    final normalized = name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
+    return '$normalized|${amount.toStringAsFixed(2)}';
+  }
+
   /// 固定費(subscription)1 件を繰り返し支出エントリへ変換する。
   /// 価格が無効(null/非正)なら null。支払日は due_date の日、名前が空なら「固定費」。
   static AssetCashflowRecurringEntry? subscriptionRecurringEntry(
@@ -150,6 +169,7 @@ class AssetCashflowForecastInputs {
       dayOfMonth: dueDate?.day ?? 1,
       amount: price,
       label: name.isEmpty ? '固定費' : name,
+      fixedCostMatchKey: _fixedCostMatchKey(name, price),
     );
   }
 }

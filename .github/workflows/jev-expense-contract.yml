@@ -6,6 +6,8 @@ on:
       - 'supabase/migrations/*jev_expense*'
       - 'lib/services/jev*'
       - 'lib/widgets/expense_classification_review.dart'
+      - 'lib/widgets/expense_semantic_search.dart'
+      - 'test/widgets/expense_semantic_search_test.dart'
       - '.github/workflows/jev-expense-contract.yml'
       - 'integration_test/jev_expense_review*'
       - 'test_driver/jev_expense_screenshots.dart'

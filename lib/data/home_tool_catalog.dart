@@ -3,6 +3,8 @@ import 'dart:async';
 import '../pages/aero_lab_page.dart';
 import '../pages/sound_bloom_page.dart';
 import '../pages/lumen_path_page.dart';
+import '../pages/kinetic_forge_page.dart';
+import '../pages/flow_city_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -2407,6 +2409,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['ABテスト', 'ランディング', 'LP', 'CVR', 'コンバージョン'],
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'flow-city',
+      sectionId: 'growth',
+      title: '交通実験室 · FLOW CITY',
+      subtitle: '同じ需要で信号条件を変え、到着と待機を比較',
+      icon: Icons.traffic_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['交通', '信号', '比較', 'FLOW CITY', 'Astra'],
+      onOpen: (context) => _pushPage(context, const FlowCityPage()),
+    ),
+    HomeToolEntry(
+      id: 'kinetic-forge',
+      sectionId: 'growth',
+      title: '描画実験室 · KINETIC FORGE',
+      subtitle: '坂を描き、球を放って、失敗からコースを改善する',
+      icon: Icons.route_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['描画', 'コース', '実験', 'KINETIC FORGE', 'Astra'],
+      onOpen: (context) => _pushPage(context, const KineticForgePage()),
     ),
     HomeToolEntry(
       id: 'lumen-path',

@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects, assert } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { classifyJevExpense, JEV_CRITERIA, JevExpenseError } from "./jev_expense.ts";
+import { classifyJevExpense, JEV_CRITERIA, JEV_SEARCH_CRITERIA, JevExpenseError } from "./jev_expense.ts";
 import { authorizeAiHubAction } from "./action_access_policy.ts";
 
 function answer() {
@@ -82,4 +82,48 @@ Deno.test("aborted provider returns a controlled error", async () => {
   f.options.fetcher = (() => Promise.reject(new DOMException("secret", "TimeoutError"))) as typeof fetch;
   const error = await assertRejects(() => classifyJevExpense(f.options), JevExpenseError);
   assertEquals(error.code, "provider_unavailable");
+});
+
+Deno.test("semantic search uses the authenticated action and fixed binary schema", async () => {
+  assertEquals(authorizeAiHubAction("expense.jev_search", { userId: null, isServiceRole: false }).allowed, false);
+  assertEquals(authorizeAiHubAction("expense.jev_search", { userId: "test-user", isServiceRole: false }).allowed, true);
+  const f = fixture();
+  let calls = 0;
+  const binary = { type: "choice", choice: "match", confidence: 0.9, probabilities: { match: 0.9, not_match: 0.1 } };
+  const result = await classifyJevExpense({ ...f.options, semanticSearch: true,
+    body: { memo: "人工メモと検索条件", consent: true, criteria: { injected: "no" }, endpoint: "https://attacker.invalid" },
+    fetcher: ((_url, init) => {
+      calls++;
+      assertEquals(_url, "https://api.typesafe.ai/v1/systemone");
+      assertEquals(init?.redirect, "error");
+      const payload = JSON.parse(String(init?.body));
+      assertEquals(payload.questions.classification.criteria, JEV_SEARCH_CRITERIA);
+      assertEquals(payload.state, "人工メモと検索条件");
+      return Promise.resolve(Response.json({ answers: { classification: binary } }));
+    }) as typeof fetch,
+  });
+  assertEquals(result, { answers: { classification: binary } });
+  assertEquals(calls, 1);
+  assertEquals(f.reservations(), 1);
+});
+for (const [name, patch] of [
+  ["missing authentication", { userId: null }],
+  ["anonymous account", { anonymous: true }],
+  ["missing consent", { body: { memo: "人工例" } }],
+  ["exhausted quota", { reserve: () => Promise.resolve(false) }],
+] as const) {
+  Deno.test(`semantic search rejects ${name} before provider`, async () => {
+    const f = fixture();
+    await assertRejects(() => classifyJevExpense({ ...f.options, semanticSearch: true, ...patch }), JevExpenseError);
+    assertEquals(f.calls(), 0);
+  });
+}
+Deno.test("semantic search rejects category answers and invalid binary probabilities", async () => {
+  for (const value of [answer(), { type: "choice", choice: "match", confidence: 0.9, probabilities: { match: 2, not_match: -1 } }]) {
+    const f = fixture();
+    const error = await assertRejects(() => classifyJevExpense({ ...f.options, semanticSearch: true,
+      fetcher: (() => Promise.resolve(Response.json({ answers: { classification: value } }))) as typeof fetch,
+    }), JevExpenseError);
+    assertEquals(error.code, "invalid_provider_response");
+  }
 });

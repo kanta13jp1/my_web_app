@@ -61,6 +61,57 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('edits a name and keeps code, quantity and cached price', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(
+        id: 'asset-1',
+        ticker: '8766',
+        quantity: 2,
+        buyPriceJpy: 1000,
+        currentPriceJpy: 1200,
+      ),
+    ]);
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+    await tester.tap(
+      find.byKey(const ValueKey<String>('investment_asset_edit_asset-1')),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_name_field')),
+      '東京海上',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pumpAndSettle();
+    expect(repository.lastUpdatedDraft?.displayName, '東京海上');
+    expect(repository.lastUpdatedDraft?.normalizedTicker, '8766');
+    expect(repository.lastUpdatedDraft?.quantity, 2);
+    expect(repository.lastUpdatedDraft?.currentPriceJpy, 1200);
+    expect(find.text('東京海上 (8766)'), findsOne);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('investment_asset_edit_asset-1')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.byKey(const Key('investment_asset_name_field')),
+          )
+          .controller
+          ?.text,
+      '東京海上',
+    );
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_name_field')),
+      '',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pumpAndSettle();
+    expect(find.text('8766'), findsOne);
+  });
+
   testWidgets('retries after a repository load error', (tester) async {
     final repository = _FakeInvestmentAssetRepository(const [])
       ..fetchError = Exception('temporary load failure');
@@ -555,6 +606,7 @@ InvestmentAsset _fromDraft({
     userId: userId,
     assetType: draft.assetType,
     ticker: draft.normalizedTicker,
+    displayName: draft.displayName,
     quantity: draft.quantity,
     buyPriceJpy: draft.buyPriceJpy,
     buyDate: draft.buyDate,

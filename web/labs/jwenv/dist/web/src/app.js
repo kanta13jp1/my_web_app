@@ -4,6 +4,7 @@
 import { requestDevice } from "../../src/gpu/device.js";
 import { Qwen3Model } from "../../src/model/qwen3.js";
 import { JevClassifier, JevError } from "../../src/jev.js";
+import { validateDraft, draftErrorMessage } from "./request_validation.js";
 import { blobSource } from "./browser_source.js";
 import { applyStatic, getLang, onLangChange, setLang, t } from "./i18n.js";
 const $ = (id) => document.getElementById(id);
@@ -11,6 +12,7 @@ const shaderLoader = async (name) => (await fetch(new URL(`./shaders/${name}.wgs
 let jev = null;
 let current = null;
 let serverMode = false;
+let running = false;
 let statusMsg = { key: "status.needWebgpu", kind: "info" };
 let runMsg = { raw: "", kind: "info" };
 function show(id, m) {
@@ -65,7 +67,7 @@ async function load(src, name) {
         sec: ((performance.now() - t0) / 1000).toFixed(1), layers: c.nLayer, dim: c.dim,
         mb: (current.gpuBytes / 2 ** 20).toFixed(0), t: jev.temperature.toFixed(3), gpu: adapterInfo,
     }, "ok");
-    $("run").disabled = false;
+    updateRequestJson();
     setModelName(name);
     $("model-panel").open = false; // 読み込みが終わったら畳む
 }
@@ -123,7 +125,7 @@ function buildRequest() {
         }
         catch { /* JSONでなければ文字列のまま */ }
     }
-    const questions = {};
+    const questions = Object.create(null);
     document.querySelectorAll(".qcard").forEach((card, i) => {
         const id = card.querySelector(".q-id").value.trim() || `q${i + 1}`;
         const type = card.querySelector(".q-type").value;
@@ -296,8 +298,9 @@ async function runOnServer(req) {
 async function run() {
     if (!jev && !serverMode)
         return;
-    const req = buildRequest();
-    updateRequestJson();
+    const req = updateRequestJson();
+    if (!req) return;
+    running = true;
     const btn = $("run");
     btn.disabled = true;
     const t0 = performance.now();
@@ -313,12 +316,34 @@ async function run() {
         setRunStatus({ raw: `${err.code}: ${err.message}${err.field ? ` (${err.field})` : ""}`, kind: "error" });
     }
     finally {
-        btn.disabled = false;
+        running = false;
+        updateRequestJson();
     }
 }
 // リクエスト/レスポンスのタブ切り替え。リクエストJSONは入力の変更に合わせて更新する
 function updateRequestJson() {
-    $("json-req").textContent = JSON.stringify(buildRequest(), null, 2);
+    const req = buildRequest();
+    const feedback = $("input-check");
+    const cards = [...document.querySelectorAll(".qcard")].map(card => ({
+        id: card.querySelector(".q-id").value,
+        type: card.querySelector(".q-type").value,
+        criteria: card.querySelector(".q-crit").value,
+    }));
+    try {
+        validateDraft(req, cards);
+        $("json-req").textContent = JSON.stringify(req, null, 2);
+        feedback.dataset.kind = "ok";
+        feedback.textContent = t("input.valid", { n: cards.length });
+        $("run").disabled = running || (!jev && !serverMode);
+        return req;
+    } catch (error) {
+        // Do not display silently collapsed duplicate inputs as a valid request.
+        $("json-req").textContent = JSON.stringify({ error: { code: error.code, message: error.message, field: error.field } }, null, 2);
+        feedback.dataset.kind = "error";
+        feedback.textContent = draftErrorMessage(error, getLang());
+        $("run").disabled = true;
+        return null;
+    }
 }
 function selectTab(which) {
     $("tab-request").setAttribute("aria-selected", String(which === "request"));
@@ -357,6 +382,7 @@ let serverModelVars = null;
 onLangChange(() => {
     show("status", statusMsg);
     show("run-status", runMsg);
+    updateRequestJson();
     setModelName(modelName);
     document.querySelectorAll(".qcard").forEach(refreshCard);
     if (serverModelVars)
@@ -391,7 +417,7 @@ if (health) {
     $("lead").dataset.i18n = "lead.server";
     $("api-note").hidden = false; // API の形式はサーバーで使うときだけ案内する
     applyStatic();
-    $("run").disabled = false;
+    updateRequestJson();
 }
 else if (!("gpu" in navigator)) {
     setStatus("status.noWebgpu", {}, "error");

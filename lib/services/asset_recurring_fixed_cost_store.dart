@@ -45,21 +45,8 @@ class AssetRecurringFixedCostStore {
     await store.setString(prefsKey, jsonEncode(encodeMirrorValue(normalized)));
   }
 
-  /// レガシーな定期固定費・サブスクリプションの自動移行・正規化を行う。
-  /// - Claude: 旧契約（36,418円等）は一旦解約され、現在は「Claude Pro (3,000円)」に変更済み。
+  /// Persist user-entered billing details without vendor-specific guesses.
   static AssetRecurringFixedCost normalizeCost(AssetRecurringFixedCost cost) {
-    final nameLower = cost.name.toLowerCase();
-    final idLower = cost.id.toLowerCase();
-    final isClaude = nameLower.contains('claude') || idLower.contains('claude');
-    if (isClaude && cost.amount > 5000) {
-      return cost.copyWith(
-        name: 'Claude Pro',
-        amount: 3000,
-        currency: AssetRecurringFixedCostCurrency.jpy,
-        clearUsdAmount: true,
-        category: AssetRecurringFixedCostCategory.subscription,
-      );
-    }
     return cost;
   }
 
