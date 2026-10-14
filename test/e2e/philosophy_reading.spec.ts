@@ -934,3 +934,65 @@ test('author title and spelling searches preserve legacy reading data across rel
   await capture(page, info, 'legacy-record-reloaded');
   expect(await list()).toEqual(original);
 });
+
+test('duplicate shared and legacy works preserve both reading cycles across search and reload', async ({ request, page }, info) => {
+  test.setTimeout(180000);
+  const ids = ['55555555-5555-4555-8555-555555555555', '66666666-6666-4666-8666-666666666666'];
+  for (let i = 0; i < ids.length; i++) {
+    const work = { id: i === 0 ? 'plato:republic' : 'legacy:republic', title: '国家', original_title: 'Republic',
+      author_info: { id: i === 0 ? 'plato' : 'legacy:plato', name: i === 0 ? 'プラトン' : 'Plato' },
+      note: i === 0 ? '共有側メモ' : '既存側メモ' };
+    expect((await request.post('http://127.0.0.1:7359', { data: { action: 'reading.add', id: ids[i], work } })).ok()).toBeTruthy();
+    expect((await request.post('http://127.0.0.1:7359', { data: { action: 'reading.save', id: ids[i], revision: 0, work,
+      cycles: [{ id: 'same-cycle', started_at: i === 0 ? '2026-10-12' : '2026-10-14', finished_at: i === 0 ? '2026-10-14' : null, status: i === 0 ? 'read' : 'reading',
+        edition: { total_pages: i === 0 ? 100 : 160, publisher: i === 0 ? '保持版A' : '保持版B', translator: '保持訳者', isbn: i === 0 ? '9784003363225' : '9784003361566' },
+        entries: [{ id: 'entry-' + i, date: '2026-10-14', pages: (i + 1) * 10, start_page: 1, end_page: (i + 1) * 10, understanding: 3, impression: i === 0 ? '保持感想A' : '保持感想B' }] }] } })).ok()).toBeTruthy();
+  }
+  const list = async () => (await (await request.post('http://127.0.0.1:7359', { data: { action: 'reading.list' } })).json()).items;
+  const before = await list();
+  const search = async () => {
+    await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+    await field(page, /^著者・著作を検索/, '国家');
+    await expect(page.getByRole('button', { name: /^プラトン / })).toHaveCount(1);
+    await page.getByRole('button', { name: /^プラトン / }).click();
+    await expect(page.getByRole('button', { name: /^国家 プラトン/ })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /^国家 Plato/ })).toHaveCount(0);
+  };
+  await page.goto('/');
+  await search();
+  await capture(page, info, 'grouped-work-search');
+  await page.getByRole('tab', { name: '進捗', exact: true }).click();
+  await expectReadingSummary(page, '読書中 1 著作・読了 1 著作');
+  await expectReadingSummary(page, '対象 1 著作');
+  await expectReadingSummary(page, '読書記録の合計 30 ページ');
+  await capture(page, info, 'grouped-progress');
+  await page.getByRole('tab', { name: '著作', exact: true }).click();
+  await page.getByRole('button', { name: /^国家 プラトン/ }).click();
+  await expect(page.getByText(/同じ著作の記録をまとめて表示/)).toBeVisible();
+  await expect(page.getByText('共有側メモ', { exact: true })).toBeVisible();
+  await expect(page.getByText('既存側メモ', { exact: true })).toBeVisible();
+  await expectReadingSummary(page, '10ページまで／全100ページ・10.0％');
+  const second = page.getByRole('group', { name: /保持版B/ }).filter({ has: page.getByRole('button', { name: '版を編集', exact: true }) }).last();
+  await revealReadingControl(page, second.getByRole('button', { name: '版を編集', exact: true }));
+  await expectReadingSummary(page, '20ページまで／全160ページ・12.5％');
+  await capture(page, info, 'grouped-cycles');
+  expect(await list()).toEqual(before);
+  await second.getByRole('button', { name: '版を編集', exact: true }).click();
+  await field(page, /^出版社/, '保持版B編集');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  await page.reload();
+  await search();
+  await page.getByRole('button', { name: /^国家 プラトン/ }).click();
+  const edited = page.getByRole('group', { name: /保持版B編集/ }).filter({ has: page.getByRole('button', { name: '版を編集', exact: true }) }).last();
+  await revealReadingControl(page, edited.getByRole('button', { name: '版を編集', exact: true }));
+  await expectReadingSummary(page, '20ページまで／全160ページ・12.5％');
+  await capture(page, info, 'grouped-reloaded');
+  const after = await list();
+  expect(after.find((record: { id: string }) => record.id === ids[0])).toEqual(before.find((record: { id: string }) => record.id === ids[0]));
+  const original = before.find((record: { id: string }) => record.id === ids[1]);
+  const changed = after.find((record: { id: string }) => record.id === ids[1]);
+  expect(changed.metadata.work).toEqual(original.metadata.work);
+  expect(changed.metadata.cycles[0].entries).toEqual(original.metadata.cycles[0].entries);
+  expect(changed.metadata.cycles[0].edition).toEqual({ ...original.metadata.cycles[0].edition, publisher: '保持版B編集' });
+});

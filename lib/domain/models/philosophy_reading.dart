@@ -124,6 +124,68 @@ class PhilosophyWork {
       };
 }
 
+// A read-only work identity projection. Raw records remain independently editable.
+class ReadingWorkIndex {
+  ReadingWorkIndex(
+    Iterable<PhilosophyWork> catalog,
+    Iterable<PhilosophyWork> existing,
+    this.authors,
+  ) {
+    final trusted = catalog.toList();
+    final catalogIds = {for (final work in trusted) work.id: work};
+    final groups = <String, List<PhilosophyWork>>{};
+    for (final work in existing) {
+      final author = authors.resolve(work.author);
+      final matches = trusted.where((candidate) {
+        if (candidate.author.id != author.id) return false;
+        final titles = [candidate.title, candidate.originalTitle]
+            .map(readingSearchText)
+            .where((title) => title.isNotEmpty)
+            .toSet();
+        final names = [work.title, work.originalTitle]
+            .map(readingSearchText)
+            .where((title) => title.isNotEmpty);
+        return names.any(titles.contains);
+      }).toList();
+      final candidate = catalogIds[work.id] ??
+          (matches.length == 1 &&
+                  (work.originalTitle.trim().isEmpty ||
+                      matches.single.originalTitle.trim().isEmpty ||
+                      readingSearchText(work.originalTitle) ==
+                          readingSearchText(matches.single.originalTitle))
+              ? matches.single
+              : null);
+      if (candidate != null) {
+        _resolved[work.id] = candidate;
+      } else {
+        final title = readingSearchText(work.title);
+        final key = title.isEmpty
+            ? work.id
+            : '${author.id}\u0000$title\u0000${readingSearchText(work.originalTitle)}';
+        groups.putIfAbsent(key, () => []).add(work);
+      }
+    }
+    for (final group in groups.values) {
+      group.sort((a, b) => a.id.compareTo(b.id));
+      final first = group.first;
+      final display = PhilosophyWork.fromJson({
+        ...first.toJson(),
+        'author_info': authors.resolve(first.author).toJson(),
+      });
+      for (final work in group) {
+        _resolved[work.id] = display;
+      }
+    }
+    // An explicit catalog ID remains authoritative even when stored metadata differs.
+    _resolved.addAll(catalogIds);
+  }
+
+  final ReadingAuthorIndex authors;
+  final _resolved = <String, PhilosophyWork>{};
+  PhilosophyWork resolve(PhilosophyWork work) => _resolved[work.id] ?? work;
+  String idFor(String id) => _resolved[id]?.id ?? id;
+}
+
 class ReadingEdition {
   const ReadingEdition({
     this.translator = '',
@@ -573,23 +635,32 @@ class ReadingFilter {
 class ReadingProgress {
   ReadingProgress(
     Iterable<PhilosophyWork> works,
-    Iterable<ReadingRecord> records,
-  ) {
-    final ids = works.map((w) => w.id).toSet();
+    Iterable<ReadingRecord> records, {
+    String Function(PhilosophyWork)? workId,
+  }) {
+    final identify = workId ?? ((PhilosophyWork work) => work.id);
+    final ids = works.map(identify).toSet();
+    final uniqueRecords = <String, ReadingRecord>{};
+    for (final record in records) {
+      final previous = uniqueRecords[record.id];
+      if (previous == null || record.revision > previous.revision) {
+        uniqueRecords[record.id] = record;
+      }
+    }
+    final included = uniqueRecords.values
+        .where((record) => ids.contains(identify(record.work)));
     total = ids.length;
-    completed = records
-        .where((r) => r.isRead && ids.contains(r.work.id))
-        .map((r) => r.work.id)
+    completed = included
+        .where((record) => record.isRead)
+        .map((record) => identify(record.work))
         .toSet()
         .length;
-    reading = records
-        .where((r) => r.status == 'reading' && ids.contains(r.work.id))
-        .map((r) => r.work.id)
+    reading = included
+        .where((record) => record.status == 'reading')
+        .map((record) => identify(record.work))
         .toSet()
         .length;
-    pages = records
-        .where((r) => ids.contains(r.work.id))
-        .fold(0, (total, record) => total + record.pagesRead);
+    pages = included.fold(0, (total, record) => total + record.pagesRead);
   }
 
   late final int total;
