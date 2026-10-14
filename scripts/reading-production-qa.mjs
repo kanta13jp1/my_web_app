@@ -196,9 +196,16 @@ async function verifyProgressDisplay(page, account, version) {
     await page.setViewportSize(size);await overview(2,0);await capture(page,`progress-${mode}-reading-counts`);
     async function detail(book) {await page.goto(base+'/reading-list');await semantics(page);await openWork(page,book.title);}
     async function update(value) {
-      const input=page.getByRole('textbox',{name:/^読んだページ/});await reveal(input);await field(page,/^読んだページ/,String(value));
+      const input=page.getByRole('textbox',{name:/^読んだページ/});await reveal(input);
+      const unchanged=(await input.inputValue())===String(value);
+      await field(page,/^読んだページ/,'');
+      await expect(page.getByText(/^\d+ページまでの進捗を保存しました$/)).toHaveCount(0);
+      await field(page,/^読んだページ/,String(value));
+      const updated=unchanged ? null : page.waitForResponse(r=>r.url().includes('/functions/v1/tools-hub') && r.request().method()==='POST' && r.request().postDataJSON()?.action==='reading.save');
       await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+      if(updated) assert.equal((await updated).status(),200,'Page update save failed');
       await expect(page.getByText(`${value}ページまでの進捗を保存しました`,{exact:true})).toBeVisible();
+      await expect(page.getByRole('button',{name:'進捗を更新',exact:true})).toBeEnabled();
     }
     await detail(books[0]);
     for(const [value,percent] of [[85,'53.1'],[100,'62.5'],[100,'62.5'],[80,'50.0']]) {await update(value);await summary(`${value}ページまで／全160ページ・${percent}％`);}
@@ -206,7 +213,12 @@ async function verifyProgressDisplay(page, account, version) {
     await summary('80ページまで／全160ページ・50.0％');await restoredField(page,/^読んだページ/,'80');
     await capture(page,`progress-${mode}-known-reloaded`);
     await update(160);await summary('160ページまで／全160ページ・100.0％');await overview(2,0);
-    await detail(books[0]);const complete=page.getByRole('button',{name:'読了にする',exact:true});await reveal(complete);await complete.click();
+    await detail(books[0]);const complete=page.getByRole('button',{name:'読了にする',exact:true});await reveal(complete);
+    const completionSaved=page.waitForResponse(r=>r.url().includes('/functions/v1/tools-hub') && r.request().method()==='POST' && r.request().postDataJSON()?.action==='reading.save');
+    await complete.click();assert.equal((await completionSaved).status(),200,'Completion save failed');
+    await summary('状態: 読了');
+    const completedRecord=(await action(account.token,{action:'reading.list'})).items.find(x=>x.id===books[0].id);
+    assert.equal(completedRecord.metadata.cycles[0].status,'read','Completion must persist before navigating');
     await overview(1,1);await page.reload();await semantics(page);await page.getByRole('tab',{name:'進捗',exact:true}).click();await summary('読書中 1 著作・読了 1 著作');
     await capture(page,`progress-${mode}-completed-counts-reloaded`);
     await detail(books[1]);await summary('ページ位置未登録');await update(11);await summary('11ページまで読んだ');
@@ -224,6 +236,55 @@ async function verifyProgressDisplay(page, account, version) {
   }
   await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,profile:'progress',api:'passed',cases:results},null,2));
   console.log('Published progress display, updates, reload, unknown totals, completion counts and preserved legacy notes passed on desktop/mobile.');
+}
+
+
+async function verifyAuthorSearchRelease(page, account, version) {
+  const id=randomUUID();
+  const work={id:'legacy:'+randomUUID(),title:'読書について',original_title:'On Reading',
+    author_info:{id:'legacy-author:'+randomUUID(),name:'ショーペンハウエル',aliases:[],centuries:['不明'],regions:['不明'],traditions:[],source:'',note:''},
+    centuries:['不明'],genres:['認識論'],source:'',note:'公開検証用の既存著作メモ'};
+  const date=new Date().toISOString().slice(0,10);
+  await action(account.token,{action:'reading.add',id,work});
+  await action(account.token,{action:'reading.save',id,revision:0,work,
+    cycles:[{id:randomUUID(),started_at:date,status:'reading',edition:{total_pages:160,translator:'斎藤忍随',publisher:'岩波書店',isbn:'9784003363225'},
+      entries:[{id:randomUUID(),date,pages:91,start_page:1,end_page:91,understanding:3,impression:'既存の感想を保持',questions:'既存の疑問',concepts:'既存の概念'}]}]});
+  const savedRecord=async()=>(await action(account.token,{action:'reading.list'})).items.find(row=>row.id===id);
+  const original=await savedRecord();const results=[];
+  async function summary(text) {
+    const escaped=text.replace(/[.*+?^${}()|[]\]/g,'\$&');
+    await expect(page.getByRole('group',{name:new RegExp(escaped)}).or(page.getByText(text)).last()).toBeVisible();
+  }
+  for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+    await page.setViewportSize(size);await page.goto(base+'/reading-list');await semantics(page);
+    await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+    for(const query of ['読書について','On Reading','ショーペンハウエル','ショーペンハウアー']) {
+      await field(page,/^著者・著作を検索/,query);
+      const author=page.getByRole('button',{name:/^ショーペンハウアー /});
+      await expect(author).toHaveCount(1);await expect(author).toBeVisible();
+      await expect(page.getByRole('button',{name:/^ショーペンハウエル /})).toHaveCount(0);
+    }
+    await field(page,/^著者・著作を検索/,'読書について');
+    await expect(page.getByRole('button',{name:/該当する著作: 読書について/})).toHaveCount(1);
+    await capture(page,`author-${mode}-title-search`);
+    await page.getByRole('button',{name:/^ショーペンハウアー /}).click();
+    await expect(page.getByRole('button',{name:/^意志と表象としての世界 /})).toHaveCount(0);
+    await page.getByRole('button',{name:/^読書について ショーペンハウアー/}).click();
+    await summary('91ページまで／全160ページ・56.9％');
+    await expect(page.getByRole('group',{name:/既存の感想を保持/}).last()).toBeVisible();
+    await page.reload();await semantics(page);
+    // Named production routes may retain the detail; start a fresh author-tab visit.
+    await page.goto(base+'/reading-list');await semantics(page);
+    await field(page,/^著者・著作を検索/,'読書について');
+    await page.getByRole('button',{name:/^ショーペンハウアー /}).click();
+    await page.getByRole('button',{name:/^読書について ショーペンハウアー/}).click();
+    await summary('91ページまで／全160ページ・56.9％');
+    await capture(page,`author-${mode}-legacy-record-reloaded`);
+    assert.deepEqual(await savedRecord(),original,'Searching or reloading changed the persisted record');
+    results.push({mode,title:'passed',originalTitle:'passed',nameVariants:'one author',page:91,total:160,percentage:'56.9%',reload:'passed',entireRecordPreserved:true});
+  }
+  await writeFile('reading-production-evidence/result.json',JSON.stringify({commit:version.commit,profile:'authors',api:'passed',cases:results},null,2));
+  console.log('Published author title/original-title/name-variant search, display, reload and entire persisted record preservation passed on desktop/mobile.');
 }
 
 
@@ -293,7 +354,9 @@ try {
   await page.waitForTimeout(1500);
   await page.goto(base+'/reading-list');await semantics(page);
   await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
-  if(process.env.READING_QA_PROGRESS === 'true') {
+  if(process.env.READING_QA_AUTHORS === 'true') {
+    await verifyAuthorSearchRelease(page,a,version);
+  } else if(process.env.READING_QA_PROGRESS === 'true') {
     await verifyProgressDisplay(page,a,version);
   } else if(process.env.READING_QA_CATALOG === 'true') {
     await verifyCatalogRelease(page,a,version);

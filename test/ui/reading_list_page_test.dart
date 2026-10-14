@@ -4,6 +4,30 @@ import 'package:my_web_app/pages/reading_list_page.dart';
 import '../support/reading_fixture_repository.dart';
 
 void main() {
+  testWidgets(
+      '320px author search finds a work title and opens its matching work',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repository = ReadingFixtureRepository();
+    await tester
+        .pumpWidget(MaterialApp(home: ReadingListPage(repository: repository)));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, '国家');
+    await tester.pumpAndSettle();
+    expect(find.text('プラトン'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'該当する著作: 国家$')), findsOneWidget);
+    await tester.tap(find.text('プラトン'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, '国家'), findsOneWidget);
+    expect(find.text('饗宴'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    await repository.changes.close();
+  });
+
   testWidgets('work memo saves at 320px without starting reading',
       (tester) async {
     tester.view.physicalSize = const Size(320, 900);

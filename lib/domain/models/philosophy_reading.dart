@@ -51,6 +51,35 @@ class PhilosophyAuthor {
       };
 }
 
+// Presentation-only resolution uses exact, uniquely known catalog names.
+// Persisted author/work/record IDs and metadata remain untouched.
+class ReadingAuthorIndex {
+  ReadingAuthorIndex(Iterable<PhilosophyAuthor> authors) {
+    for (final author in authors) {
+      _ids[author.id] = author;
+      for (final name in [author.name, ...author.aliases]) {
+        final key = readingSearchText(name);
+        if (key.isNotEmpty) {
+          _names.putIfAbsent(key, () => <String>{}).add(author.id);
+        }
+      }
+    }
+  }
+
+  final _ids = <String, PhilosophyAuthor>{};
+  final _names = <String, Set<String>>{};
+
+  PhilosophyAuthor resolve(PhilosophyAuthor author) {
+    final byId = _ids[author.id];
+    if (byId != null) return byId;
+    final ids = _names[readingSearchText(author.name)];
+    return ids?.length == 1 ? _ids[ids!.single]! : author;
+  }
+}
+
+String readingSearchText(String value) =>
+    value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
 class PhilosophyWork {
   const PhilosophyWork({
     required this.id,
@@ -507,13 +536,28 @@ class ReadingFilter {
   final String? genre;
   final String? authorId;
 
-  bool authorMatches(PhilosophyAuthor author) =>
-      (century == null || author.centuries.contains(century)) &&
-      (region == null || author.regions.contains(region)) &&
-      [author.name, ...author.aliases]
-          .join(' ')
-          .toLowerCase()
-          .contains(query.toLowerCase());
+  bool authorMatches(
+    PhilosophyAuthor author, {
+    Iterable<PhilosophyWork> works = const [],
+  }) {
+    final related = works.where((work) => work.author.id == author.id);
+    final eligible = related.where(
+      (work) => genre == null || work.genres.contains(genre),
+    );
+    return (century == null || author.centuries.contains(century)) &&
+        (region == null || author.regions.contains(region)) &&
+        (genre == null || eligible.isNotEmpty) &&
+        ([author.name, ...author.aliases].any(
+              (name) =>
+                  readingSearchText(name).contains(readingSearchText(query)),
+            ) ||
+            eligible.any(titleMatches));
+  }
+
+  bool titleMatches(PhilosophyWork work) =>
+      [work.title, work.originalTitle].any(
+        (title) => readingSearchText(title).contains(readingSearchText(query)),
+      );
 
   bool matches(PhilosophyWork work) =>
       (authorId == null || work.author.id == authorId) &&
@@ -523,7 +567,7 @@ class ReadingFilter {
       [work.title, work.originalTitle, work.author.name, ...work.author.aliases]
           .join(' ')
           .toLowerCase()
-          .contains(query.toLowerCase());
+          .contains(readingSearchText(query));
 }
 
 class ReadingProgress {

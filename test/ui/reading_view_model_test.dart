@@ -6,6 +6,59 @@ import 'package:my_web_app/ui/features/reading/view_models/reading_view_model.da
 import '../support/reading_fixture_repository.dart';
 
 void main() {
+  test(
+      'legacy author presentation groups works without modifying saved records',
+      () async {
+    final repo = ReadingFixtureRepository();
+    final model = ReadingViewModel(repo);
+    await model.load();
+    const work = PhilosophyWork(
+      id: 'legacy:reading',
+      title: '読書について',
+      author: PhilosophyAuthor(id: 'legacy:schopenhauer', name: 'ショーペンハウエル'),
+    );
+    expect(await model.addWork('legacy-record', work), isTrue);
+    final record = model.recordFor(work.id)!;
+    expect(
+      await model.save(
+        record.withCycles(const [
+          ReadingCycle(
+            id: 'old-cycle',
+            startedAt: '2026-10-12',
+            edition: ReadingEdition(
+              totalPages: 160,
+              translator: '斎藤忍随',
+              isbn: '9784003363225',
+            ),
+            entries: [
+              ReadingEntry(
+                id: 'old-entry',
+                date: '2026-10-14',
+                pages: 91,
+                startPage: 1,
+                endPage: 91,
+                impression: '既存の感想',
+              ),
+            ],
+          ),
+        ]),
+      ),
+      isTrue,
+    );
+    final saved = model.recordFor(work.id)!.savePayload();
+    await model.load();
+    expect(model.authors.where((a) => a.name.startsWith('ショーペン')).length, 1);
+    final displayed = model.works.firstWhere((w) => w.id == work.id);
+    expect(displayed.author.id, 'schopenhauer');
+    expect(displayed.author.name, 'ショーペンハウアー');
+    expect(model.works.where((w) => w.author.id == 'schopenhauer').length, 2);
+    expect(model.recordFor(work.id)!.savePayload(), saved);
+    expect(model.recordFor(work.id)!.work.author.id, 'legacy:schopenhauer');
+    expect(model.recordFor(work.id)!.cycles.single.reachedPage, 91);
+    model.dispose();
+    await repo.changes.close();
+  });
+
   test('work memo persists without starting a reading cycle', () async {
     final repo = ReadingFixtureRepository();
     final model = ReadingViewModel(repo);

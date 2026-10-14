@@ -2974,7 +2974,9 @@ const _authorsJson = r'''[
     "id": "schopenhauer",
     "name": "ショーペンハウアー",
     "aliases": [
-      "Arthur Schopenhauer"
+      "Arthur Schopenhauer",
+      "ショーペンハウエル",
+      "ショーペンハウア"
     ],
     "centuries": [
       "19世紀"
@@ -4949,7 +4951,9 @@ const _worksJson = r'''[
       "id": "schopenhauer",
       "name": "ショーペンハウアー",
       "aliases": [
-        "Arthur Schopenhauer"
+        "Arthur Schopenhauer",
+      "ショーペンハウエル",
+      "ショーペンハウア"
       ],
       "centuries": [
         "19世紀"
