@@ -299,8 +299,8 @@ class _ReadingListPageState extends State<ReadingListPage>
             ),
           ..._filteredWorks.map(
             (work) {
-              final record = _model.recordFor(work.id);
-              final cycle = record?.cycles.lastOrNull;
+              final cycles = _model.cyclesFor(work.id);
+              final cycle = cycles.lastOrNull?.$2;
               return Card(
                 child: ListTile(
                   title: Text(work.title),
@@ -309,7 +309,7 @@ class _ReadingListPageState extends State<ReadingListPage>
                   ),
                   trailing: Text(
                     readingStatusLabels[
-                            _model.recordFor(work.id)?.status ?? 'unread'] ??
+                            _model.statusFor(work.id)] ??
                         '未読',
                   ),
                   onTap: () => _openWork(work),
@@ -505,7 +505,9 @@ class _ReadingListPageState extends State<ReadingListPage>
           builder: (_) => AnimatedBuilder(
             animation: _model,
             builder: (context, _) {
-              final record = _model.recordFor(work.id);
+              final records = _model.recordsFor(work.id);
+              final record = records.firstOrNull;
+              final cycles = _model.cyclesFor(work.id);
               return Scaffold(
                 appBar: AppBar(
                   title: Text(work.title),
@@ -546,7 +548,13 @@ class _ReadingListPageState extends State<ReadingListPage>
                           child: const Text('著者の出典を開く'),
                         ),
                       ),
-                    Text(record?.work.note ?? work.note),
+                    if (records.length <= 1)
+                      Text(record?.work.note ?? work.note)
+                    else ...[
+                      const Text('同じ著作の記録をまとめて表示しています。版・読書回はそれぞれの元の記録に保存します。'),
+                      for (final note in records.map((record) => record.work.note).where((note) => note.isNotEmpty).toSet())
+                        Text(note),
+                    ],
                     if (work.source.isNotEmpty)
                       Align(
                         alignment: Alignment.centerLeft,
@@ -572,23 +580,19 @@ class _ReadingListPageState extends State<ReadingListPage>
                               : () => _start(work),
                       icon: const Icon(Icons.menu_book),
                       label: Text(
-                        record == null || record.cycles.isEmpty
+                        cycles.isEmpty
                             ? '読書を始める'
                             : '別の版・再読を始める',
                       ),
                     ),
                     _bookAvailability(work),
-                    if (record != null && record.cycles.isEmpty)
+                    for (final saved in records.where((record) => record.cycles.isEmpty))
                       Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text(
-                          '既存の状態: ${readingStatusLabels[record.legacyStatus] ?? '未読'}。履歴は新しい読書回から記録できます。',
-                        ),
+                        child: Text('既存の状態: ${readingStatusLabels[saved.legacyStatus] ?? '未読'}。履歴は新しい読書回から記録できます。'),
                       ),
-                    if (record != null)
-                      ...record.cycles.indexed.map(
-                        (item) => _cycle(record, item.$2, item.$1 + 1),
-                      ),
+                    ...cycles.indexed.map((item) =>
+                      _cycle(item.$2.$1, item.$2.$2, item.$1 + 1)),
                   ],
                 ),
               );
@@ -786,7 +790,7 @@ class _ReadingListPageState extends State<ReadingListPage>
   }
 
   Widget _cycle(ReadingRecord record, ReadingCycle cycle, int number) => Card(
-        key: ValueKey(cycle.id),
+        key: ValueKey('${record.id}:${cycle.id}'),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(

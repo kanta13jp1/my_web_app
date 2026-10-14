@@ -34,19 +34,18 @@ class ReadingViewModel extends ChangeNotifier {
   List<ReadingRecord> get records => List.unmodifiable(_records);
   final _authorIndex = ReadingAuthorIndex(philosophyAuthors);
 
+  ReadingWorkIndex get _workIndex => ReadingWorkIndex(
+    philosophyWorks, _records.map((record) => record.work), _authorIndex,
+  );
+
   List<PhilosophyWork> get works {
+    final index = _workIndex;
     final map = {for (final work in philosophyWorks) work.id: work};
     for (final record in _records) {
-      map.putIfAbsent(record.work.id, () => record.work);
+      final work = index.resolve(record.work);
+      map.putIfAbsent(work.id, () => work);
     }
-    return map.values.map((work) {
-      final author = _authorIndex.resolve(work.author);
-      if (identical(author, work.author)) return work;
-      return PhilosophyWork.fromJson({
-        ...work.toJson(),
-        'author_info': author.toJson(),
-      });
-    }).toList(growable: false);
+    return map.values.toList(growable: false);
   }
 
   List<PhilosophyAuthor> get authors {
@@ -61,15 +60,42 @@ class ReadingViewModel extends ChangeNotifier {
     return map.values.toList(growable: false);
   }
 
-  ReadingRecord? recordFor(String workId) {
-    for (final record in _records) {
-      if (record.work.id == workId) return record;
-    }
-    return null;
+  List<ReadingRecord> recordsFor(String workId) {
+    final index = _workIndex;
+    final id = index.idFor(workId);
+    return _records.where((record) => index.resolve(record.work).id == id).toList()
+      ..sort((a, b) {
+        if (a.work.id == id && b.work.id != id) return -1;
+        if (b.work.id == id && a.work.id != id) return 1;
+        return a.id.compareTo(b.id);
+      });
   }
 
-  ReadingProgress progress(Iterable<PhilosophyWork> targets) =>
-      ReadingProgress(targets, _records);
+  ReadingRecord? recordFor(String workId) => recordsFor(workId).firstOrNull;
+
+  List<(ReadingRecord, ReadingCycle)> cyclesFor(String workId) =>
+      [for (final record in recordsFor(workId))
+        for (final cycle in record.cycles) (record, cycle)]
+        ..sort((a, b) {
+          final date = a.$2.startedAt.compareTo(b.$2.startedAt);
+          if (date != 0) return date;
+          final owner = a.$1.id.compareTo(b.$1.id);
+          if (owner != 0) return owner;
+          return a.$1.cycles.indexOf(a.$2).compareTo(b.$1.cycles.indexOf(b.$2));
+        });
+
+  String statusFor(String workId) {
+    final records = recordsFor(workId);
+    if (records.any((record) => record.status == 'reading')) return 'reading';
+    if (records.any((record) => record.isRead)) return 'read';
+    if (records.any((record) => record.status == 'paused')) return 'paused';
+    return 'unread';
+  }
+
+  ReadingProgress progress(Iterable<PhilosophyWork> targets) {
+    final index = _workIndex;
+    return ReadingProgress(targets, _records, workId: (work) => index.resolve(work).id);
+  }
 
   Future<void> load() async {
     final generation = ++_generation;
