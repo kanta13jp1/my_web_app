@@ -1883,7 +1883,7 @@ void main() {
     ) async {
       // The action list displays only its first eight entries. Keep the
       // fixture date stable so later overdue payments cannot displace it.
-      final now = DateTime(2026, 9, 1);
+      final now = DateTime(2026, 9, 2);
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await tester.binding.setSurfaceSize(const Size(1200, 3200));
@@ -1903,7 +1903,7 @@ void main() {
           home: AssetManagementPage(
             debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
-              <String, int>{'mobit': now.day},
+              <String, int>{'mobit': now.day - 1},
               monthlyState: AssetLiabilityMonthlyState(
                 paidAccountNames: <String>{
                   for (final row in defaultBills.cashflowRows) row.accountName,

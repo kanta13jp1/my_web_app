@@ -17,6 +17,13 @@ async function restoredField(page: Page, name: RegExp, value: string) {
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   await expect(input).toHaveValue(value);
 }
+async function expectReadingSummary(page: Page, text: string) {
+  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Flutter exposes static card text as its accessible name rather than a text node.
+  const summary = page.getByRole('group', { name: new RegExp(escaped) })
+    .or(page.getByText(text)).last();
+  await expect(summary).toBeVisible();
+}
 async function choose(page: Page, name: RegExp, option: string) {
   await page.getByRole('button', { name }).click();
   const item = page.getByRole('menuitem', { name: option, exact: true });
@@ -107,12 +114,16 @@ async function editRegisteredEdition(page: Page, isbn: string) {
 
 test.setTimeout(60000);
 
-test.beforeEach(async ({ request }) => {
+test.beforeEach(async ({ request, page }) => {
+  // Automatic title lookups stay deterministic; each external scenario overrides this route.
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route =>
+    route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' }));
   const reset = await request.post('http://127.0.0.1:7359', { data: { action: 'fixture.reset' } });
   expect(reset.ok()).toBeTruthy();
 });
 
 test('record pages, understanding and impression persists across reload; reread keeps one completed work', async ({ page }, info) => {
+  test.setTimeout(120000);
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('/');
@@ -135,7 +146,7 @@ test('record pages, understanding and impression persists across reload; reread 
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByRole('group', { name: /感想: 正義の意味を考えた/ }).last()).toBeVisible();
   await page.getByRole('button', { name: '読了にする', exact: true }).click();
-  await expect(page.getByRole('group', { name: /状態: 読了\（読了は手動で設定\）/ }).last()).toBeVisible();
+  await expect(page.getByRole('group', { name: /状態: 読了/ }).last()).toBeVisible();
   await capture(page, info, 'saved-record');
   await page.reload();
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
@@ -149,16 +160,16 @@ test('record pages, understanding and impression persists across reload; reread 
   await restoredField(page, /^書籍・購入URL/, 'https://example.com/book');
   await restoredField(page, /^版情報の出典URL/, 'https://example.com/source');
   await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  // Reopen the work from its list so the repeat-reading action is in the viewport.
+  await page.getByRole('button', { name: /Back|戻る/ }).click();
+  await openWork(page, '国家');
   await page.getByRole('button', { name: '別の版・再読を始める', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
-  const viewport = page.viewportSize()!;
-  await page.mouse.move(viewport.width / 2, viewport.height * .75);
-  for (let attempt = 0; attempt < 8 && await page.getByRole('group', { name: /第2回/ }).count() === 0; attempt++) {
-    await page.mouse.wheel(0, 360);
-    await page.waitForTimeout(250);
-  }
-  await expect(page.getByRole('group', { name: /第2回/ }).last()).toBeVisible();
+  const secondCycle=page.getByRole('group', { name: /第2回/ }).last();
+  await revealReadingControl(page,secondCycle);
+  await expect(secondCycle).toBeVisible();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('tab', { name: '進捗', exact: true }).click();
   await expect(page.getByRole('button', { name: '著作を追加', exact: true })).toHaveCount(0);
@@ -522,4 +533,404 @@ test('reading-about-books title prefills and persists the publisher edition', as
   await restoredField(page, /^出版社/, '光文社');
   await restoredField(page, /^版情報の出典URL/, 'https://www.kotensinyaku.jp/books/book169/');
   await capture(page, info, 'reading-title-restored');
+});
+
+const ndlTitleXml = `<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><channel>
+<item><dc:title>目録にない外部書名</dc:title><link>https://ndlsearch.ndl.go.jp/books/R100000002-IQA001</link><dc:publisher>外部出版社A</dc:publisher><dc:creator>原著者 著</dc:creator><dc:creator>訳者A 訳</dc:creator><dc:creator>編者A 編</dc:creator><dc:extent>180p</dc:extent><dcterms:issued>2012.3</dcterms:issued><dc:language>jpn</dc:language><dc:identifier xsi:type="dcndl:ISBN">978-4-569-80487-3</dc:identifier></item>
+<item><dc:title>目録にない外部書名</dc:title><link>https://ndlsearch.ndl.go.jp/books/R100000002-IQA002</link><dc:publisher>外部出版社B</dc:publisher><dc:creator>訳者B 訳</dc:creator><dc:extent>240 p</dc:extent><dcterms:issued>2009.8</dcterms:issued><dc:identifier xsi:type="dcndl:ISBN">978-4-569-70783-9</dc:identifier></item>
+</channel></rss>`;
+
+test('external title returns two editions; selected metadata persists and edits independently', async ({ page }, info) => {
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
+    if (new URL(route.request().url()).searchParams.get('title') !== '目録にない外部書名') {
+      return route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' });
+    }
+    return route.fulfill({ contentType: 'application/xml', body: ndlTitleXml });
+  });
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  const books = [
+    { publisher: '外部出版社A', translator: '訳者A', isbn: '9784569804873', pages: '180', source: 'https://ndlsearch.ndl.go.jp/books/R100000002-IQA001' },
+    { publisher: '外部出版社B', translator: '訳者B', isbn: '9784569707839', pages: '240', source: 'https://ndlsearch.ndl.go.jp/books/R100000002-IQA002' },
+  ];
+  for (let i = 0; i < books.length; i++) {
+    const book = books[i];
+    await page.getByRole('button', { name: i === 0 ? '読書を始める' : '別の版・再読を始める', exact: true }).click();
+    await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+    await field(page, /^書籍情報を検索/, '目録にない外部書名');
+    await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+    await expect(page.getByRole('button', { name: /^目録にない外部書名/ })).toHaveCount(2);
+    await page.getByRole('button', { name: new RegExp('^目録にない外部書名[\\s\\S]*' + book.publisher) }).click();
+    await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^総ページ数/, book.pages);
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await restoredField(page, /^書籍・購入URL/, 'https://www.amazon.co.jp/s/?i=stripbooks&k=' + book.isbn);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+    await openWork(page, 'エチカ');
+    await editRegisteredEdition(page, book.isbn);
+    await restoredField(page, /^出版社/, book.publisher);
+    await restoredField(page, /^総ページ数/, book.pages);
+    await field(page, /^出版社/, book.publisher + '・編集済み');
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  }
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, 'エチカ');
+  for (const book of books) {
+    await editRegisteredEdition(page, book.isbn);
+    await restoredField(page, /^出版社/, book.publisher + '・編集済み');
+    await restoredField(page, /^訳者/, book.translator);
+    await restoredField(page, /^ISBN/, book.isbn);
+    await restoredField(page, /^総ページ数/, book.pages);
+    await restoredField(page, /^版情報の出典URL/, book.source);
+    await capture(page, info, 'external-title-restored-' + book.isbn);
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  }
+});
+
+test('external title failure and empty results preserve manual input; retry and cancel work', async ({ page }) => {
+  let calls = 0;
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
+    if (new URL(route.request().url()).searchParams.get('title') !== '目録にない外部書名') {
+      return route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' });
+    }
+    calls++;
+    return route.fulfill(calls === 1 ? { status: 503, body: '' } : {
+      contentType: 'application/xml', body: calls === 2 ? '<rss><channel/></rss>' : ndlTitleXml,
+    });
+  });
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, 'エチカ');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await field(page, /^出版社/, '保持する出版社');
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await field(page, /^書籍情報を検索/, '目録にない外部書名');
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await expect(page.getByText('書籍情報を取得できませんでした。再検索または手入力できます。', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await expect(page.getByText('見つかりませんでした。書名を短くするか、ISBNで検索してください。手入力もできます。', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '外部の版も検索', exact: true }).click();
+  await page.getByRole('button', { name: /^目録にない外部書名/ }).first().click();
+  await page.getByRole('button', { name: 'キャンセル', exact: true }).last().click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  await restoredField(page, /^出版社/, '保持する出版社');
+});
+
+test('current title searches automatically and Iwanami edition registers, reloads and edits', async ({ page }, info) => {
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await field(page, /^著者・著作を検索/, 'ショーペンハウアー');
+  await page.getByRole('button', { name: /^ショーペンハウアー / }).click();
+  await page.getByRole('button', { name: '著作を追加', exact: true }).click();
+  await field(page, /^著作名/, '読書について');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('著作を追加（自分の目録）', { exact: true })).toHaveCount(0);
+  await openWork(page, '読書について');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  // No typing and no search-button click: the current work seeds the lookup.
+  await revealReadingControl(page, page.getByRole('button', { name: /^読書について 他二篇・岩波文庫/ }));
+  await page.getByRole('button', { name: /^読書について 他二篇・岩波文庫/ }).click();
+  await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+  await restoredField(page, /^出版社/, '岩波書店');
+  await restoredField(page, /^訳者/, '斎藤忍随');
+  await restoredField(page, /^総ページ数/, '160');
+  await restoredField(page, /^ISBN/, '9784003363225');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '読書について');
+  await editRegisteredEdition(page, '9784003363225');
+  await restoredField(page, /^出版社/, '岩波書店');
+  await field(page, /^巻・版の名前/, '岩波文庫 青632-2・手元の版');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '読書について');
+  await editRegisteredEdition(page, '9784003363225');
+  await restoredField(page, /^出版社/, '岩波書店');
+  await restoredField(page, /^訳者/, '斎藤忍随');
+  await restoredField(page, /^総ページ数/, '160');
+  await restoredField(page, /^ISBN/, '9784003363225');
+  await restoredField(page, /^巻・版の名前/, '岩波文庫 青632-2・手元の版');
+  await restoredField(page, /^書籍・購入URL/, 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003363225');
+  await restoredField(page, /^版情報の出典URL/, 'https://www.hanmoto.com/bd/isbn/9784003363225');
+  await capture(page, info, 'iwanami-auto-reloaded');
+});
+
+test('page number alone saves progress, adds a delta, corrects and survives reload', async ({ page }, info) => {
+  test.setTimeout(120000);
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '国家');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await field(page, /^総ページ数/, '160');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  const input=page.getByRole('textbox',{name:/^読んだページ/});
+  await revealReadingControl(page,input);
+  for (const value of ['85','100','100','80']) {
+    // Clear prior feedback before retrying the same page, so an old success cannot satisfy this update.
+    await field(page,/^読んだページ/,'');
+    await expect(page.getByText(/^\d+ページまでの進捗を保存しました$/)).toHaveCount(0);
+    await field(page,/^読んだページ/,value);
+    await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+    await expect(page.getByText(value+'ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+    await expectReadingSummary(page, value+'ページまで／全160ページ・'+(Number(value)/160*100).toFixed(1)+'％');
+  }
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+  await openWork(page,'国家');
+  await revealReadingControl(page,input);
+  await restoredField(page,/^読んだページ/,'80');
+  await expectReadingSummary(page, '80ページまで／全160ページ・50.0％');
+  await field(page,/^読んだページ/,'161');
+  await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('総ページ数（160ページ）を超えています',{exact:true})).toBeVisible();
+  await field(page,/^読んだページ/,'160');
+  await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('160ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+  await revealReadingControl(page,page.getByRole('button',{name:'読了にする',exact:true}));
+  await expect(page.getByRole('button',{name:'読了にする',exact:true})).toBeVisible();
+  await expectReadingSummary(page, '160ページまで／全160ページ・100.0％');
+  await capture(page,info,'quick-page-progress');
+  await page.getByRole('button',{name:/Back|戻る/}).click();
+  await page.getByRole('tab',{name:'進捗',exact:true}).click();
+  await expectReadingSummary(page, '読書中 1 著作・読了 0 著作');
+  await capture(page,info,'reading-work-counts');
+  await openWork(page,'国家');
+  await revealReadingControl(page,page.getByRole('button',{name:'読了にする',exact:true}));
+  await page.getByRole('button',{name:'読了にする',exact:true}).click();
+  await page.getByRole('button',{name:/Back|戻る/}).click();
+  await page.getByRole('tab',{name:'進捗',exact:true}).click();
+  await expectReadingSummary(page, '読書中 0 著作・読了 1 著作');
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+  await page.getByRole('tab',{name:'進捗',exact:true}).click();
+  await expectReadingSummary(page, '読書中 0 著作・読了 1 著作');
+  await capture(page,info,'completed-work-counts-reloaded');
+});
+
+test('quick page update preserves a detailed impression and rejects moving behind it', async ({page},info) => {
+  await page.goto('/');await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+  await openWork(page,'国家');
+  await page.getByRole('button',{name:'読書を始める',exact:true}).click();
+  await field(page,/^総ページ数/,'160');await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'記録を追加',exact:true}).click();
+  await field(page,/^開始ページ/,'1');await field(page,/^終了ページ/,'20');await field(page,/^感想/,'詳細の感想を保持');
+  await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByText('読書記録を追加',{exact:true})).toHaveCount(0);
+  await field(page,/^読んだページ/,'85');await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('85ページまでの進捗を保存しました',{exact:true})).toBeVisible();
+  await field(page,/^読んだページ/,'10');await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expect(page.getByText('詳細記録の終了ページより前には戻せません。記録の編集で修正してください',{exact:true})).toBeVisible();
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'国家');
+  await restoredField(page,/^読んだページ/,'85');
+  const note=page.getByRole('group',{name:/感想: 詳細の感想を保持/}).last();
+  await revealReadingControl(page,note);await expect(note).toBeVisible();
+  await capture(page,info,'quick-progress-detailed-note');
+});
+
+
+test('Spinoza political treatise automatically selects a sourced Iwanami edition, reloads and edits', async ({ page }, info) => {
+  test.setTimeout(120000);
+  const externalQueries: URL[] = [];
+  await page.route('https://ndlsearch.ndl.go.jp/api/opensearch?**', route => {
+    externalQueries.push(new URL(route.request().url()));
+    return route.fulfill({ contentType: 'application/xml', body: '<rss><channel/></rss>' });
+  });
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await field(page, /^著者・著作を検索/, 'スピノザ');
+  await page.getByRole('button', { name: /^スピノザ / }).click();
+  await page.getByRole('button', { name: '著作を追加', exact: true }).click();
+  await field(page, /^著作名/, '国家論');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('著作を追加（自分の目録）', { exact: true })).toHaveCount(0);
+  await openWork(page, '国家論');
+  await page.getByRole('button', { name: '読書を始める', exact: true }).click();
+  await page.getByRole('button', { name: '書籍情報から自動入力', exact: true }).click();
+  const candidate = page.getByRole('button', { name: /^国家論・岩波文庫（スピノザ/ });
+  await revealReadingControl(page, candidate);
+  await page.getByRole('button', { name: '外部の版も検索', exact: true }).click();
+  await expect.poll(() => externalQueries.length).toBe(1);
+  expect(externalQueries[0].searchParams.get('title')).toBe('国家論');
+  expect(externalQueries[0].searchParams.get('creator')).toBe('スピノザ');
+  await expect(page.getByText('見つかりませんでした。書名を短くするか、ISBNで検索してください。手入力もできます。', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '書籍情報を検索', exact: true }).click();
+  await revealReadingControl(page, candidate);
+  await candidate.click();
+  await page.getByRole('button', { name: '書籍情報を設定', exact: true }).click();
+  await restoredField(page, /^出版社/, '岩波書店');
+  await restoredField(page, /^訳者/, '畠中尚志');
+  await restoredField(page, /^総ページ数/, '213');
+  await restoredField(page, /^ISBN/, '9784003361566');
+  await restoredField(page, /^版情報の出典URL/, 'https://ndlsearch.ndl.go.jp/books/R100000002-I000002440109');
+  await restoredField(page, /^書籍・購入URL/, 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361566');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '国家論');
+  await editRegisteredEdition(page, '9784003361566');
+  await restoredField(page, /^ISBN/, '9784003361566');
+  await field(page, /^巻・版の名前/, '手元の刷を確認済み');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('読む版を登録', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '国家論');
+  await editRegisteredEdition(page, '9784003361566');
+  await restoredField(page, /^訳者/, '畠中尚志');
+  await restoredField(page, /^巻・版の名前/, '手元の刷を確認済み');
+  await capture(page, info, 'spinoza-iwanami-restored');
+});
+
+
+for (const book of [
+  {title:'道徳経',candidate:'老子・岩波文庫',publisher:'岩波書店',translator:'蜂屋邦夫（訳注）',isbn:'9784003320518',source:'https://www.hanmoto.com/bd/isbn/9784003320518',pages:''},
+  {title:'哲学の諸問題',candidate:'哲学入門・筑摩書房',publisher:'筑摩書房',translator:'高村夏輝',isbn:'9784480089045',source:'https://www.chikumashobo.co.jp/product/9784480089045/',pages:'288'},
+  {title:'メノイケウス宛の手紙',candidate:'自然について他・京都大学学術出版会',publisher:'京都大学学術出版会',translator:'朴一功・和田利博',isbn:'9784814005598',source:'https://ndlsearch.ndl.go.jp/books/R100000002-I034002308',pages:''},
+  {title:'有徳都市の住民の見解',candidate:'中世思想原典集成11 イスラーム哲学・平凡社',publisher:'平凡社',translator:'竹下政孝',isbn:'9784582734218',source:'https://catalog.library.metro.tokyo.lg.jp/winj/opac/switch-detail-iccap.do?bibid=1105284612',pages:'1161'},
+]) {
+  test(`catalog alternate title automatically finds and persists the Japanese edition: ${book.title}`, async ({ page }, info) => {
+    test.setTimeout(120000);
+    const errors: string[] = [];page.on('pageerror', error => errors.push(error.message));
+    await page.goto('/');
+    await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+    await openWork(page,book.title);
+    await page.getByRole('button',{name:'読書を始める',exact:true}).click();
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await restoredField(page,/^書籍情報を検索/,book.title);
+    const candidate=page.getByRole('button',{name:new RegExp('^'+book.candidate)});
+    await revealReadingControl(page,candidate);await candidate.click();
+    if(book.title==='有徳都市の住民の見解') await expect(page.getByText(/版の注記: .*1161ページは巻全体/).last()).toBeVisible();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await restoredField(page,/^出版社/,book.publisher);
+    await restoredField(page,/^訳者/,book.translator);
+    await restoredField(page,/^ISBN/,book.isbn);
+    await restoredField(page,/^総ページ数/,book.pages);
+    await restoredField(page,/^版情報の出典URL/,book.source);
+    await restoredField(page,/^書籍・購入URL/,'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+    await openWork(page,book.title);await editRegisteredEdition(page,book.isbn);
+    await restoredField(page,/^出版社/,book.publisher);
+    await restoredField(page,/^訳者/,book.translator);
+    await restoredField(page,/^ISBN/,book.isbn);
+    await field(page,/^巻・版の名前/,'手元の版を確認・'+book.title);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();
+    await openWork(page,book.title);await editRegisteredEdition(page,book.isbn);
+    await restoredField(page,/^訳者/,book.translator);
+    await restoredField(page,/^巻・版の名前/,'手元の版を確認・'+book.title);
+    await restoredField(page,/^版情報の出典URL/,book.source);
+    await capture(page,info,'catalog-alias-'+book.isbn+'-edited-reloaded');
+    expect(errors).toEqual([]);
+  });
+}
+
+test('long work memo persists without a reading cycle and accepts another append', async ({ page }, info) => {
+  test.setTimeout(120000);
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  await openWork(page, '論語');
+  await page.getByRole('button', { name: '著作にメモを追記', exact: true }).click();
+  const memo = '長文確認' + '本'.repeat(3000) + '長文末尾';
+  await field(page, /^追記するメモ/, memo);
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^追記するメモ/ })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible();
+  await openWork(page, '論語');
+  await expect(page.getByText(/長文確認.*長文末尾/)).toHaveCount(1);
+  await page.getByRole('button', { name: '著作にメモを追記', exact: true }).click();
+  await field(page, /^追記するメモ/, '12〜15頁追記確認');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^追記するメモ/ })).toHaveCount(0);
+  await expect(page.getByText(/長文末尾.*12〜15頁追記確認/s)).toHaveCount(1);
+  await revealReadingControl(page, page.getByText(/既存の状態: 未読/));
+  await expect(page.getByText(/既存の状態: 未読/)).toBeVisible();
+  await capture(page, info, 'long-work-memo-no-cycle');
+});
+
+
+test('unknown total shows reached page and gains percentage after editing the edition',async ({page},info)=>{
+  test.setTimeout(120000);
+  await page.goto('/');await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+  await openWork(page,'国家');await page.getByRole('button',{name:'読書を始める',exact:true}).click();
+  await page.getByRole('button',{name:'保存',exact:true}).click();await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
+  const add=page.getByRole('button',{name:'記録を追加',exact:true});await revealReadingControl(page,add);await add.click();
+  await field(page,/^今回読んだページ数/,'5');await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByText('読書記録を追加',{exact:true})).toHaveCount(0);
+  await expectReadingSummary(page,'ページ位置未登録');
+  const input=page.getByRole('textbox',{name:/^読んだページ/});await revealReadingControl(page,input);
+  await field(page,/^読んだページ/,'11');await page.getByRole('button',{name:'進捗を更新',exact:true}).click();
+  await expectReadingSummary(page, '11ページまで読んだ');
+  await expectReadingSummary(page, '総ページ数未登録。「版を編集」で登録すると進捗率を表示します。');
+  await expect(page.getByRole('progressbar',{name:'ページ位置の進捗',exact:true})).toHaveCount(0);
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'国家');
+  await expectReadingSummary(page, '11ページまで読んだ');
+  await capture(page,info,'unknown-total-position-reloaded');
+  const edit=page.getByRole('button',{name:'版を編集',exact:true});await revealReadingControl(page,edit);await edit.click();
+  await field(page,/^総ページ数/,'100');await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByRole('textbox',{name:/^総ページ数/})).toHaveCount(0);
+  await expectReadingSummary(page, '11ページまで／全100ページ・11.0％');
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'国家');
+  await expectReadingSummary(page, '11ページまで／全100ページ・11.0％');
+  await restoredField(page,/^読んだページ/,'11');
+  await capture(page,info,'total-added-position-reloaded');
+});
+
+test('author title and spelling searches preserve legacy reading data across reload', async ({ request, page }, info) => {
+  test.setTimeout(120000);
+  const id = '44444444-4444-4444-8444-444444444444';
+  const work = { id: 'legacy:reading-about-books', title: '読書について', original_title: 'On Reading',
+    author_info: { id: 'legacy:schopenhauer', name: 'ショーペンハウエル', aliases: [], centuries: ['不明'], regions: ['不明'], traditions: [], source: '', note: '' },
+    centuries: ['不明'], genres: ['認識論'], source: '', note: '既存の著作メモ' };
+  const added = await request.post('http://127.0.0.1:7359', { data: { action: 'reading.add', id, work } });
+  expect(added.ok()).toBeTruthy();
+  const saved = await request.post('http://127.0.0.1:7359', { data: { action: 'reading.save', id, revision: 0, work,
+    cycles: [{ id: 'legacy-cycle', started_at: '2026-10-12', status: 'reading', edition: { total_pages: 160, translator: '斎藤忍随', publisher: '岩波書店', isbn: '9784003363225' },
+      entries: [{ id: 'legacy-entry', date: '2026-10-14', pages: 91, start_page: 1, end_page: 91, understanding: 3, impression: '既存の感想を保持', questions: '既存の疑問', concepts: '既存の概念' }] }] } });
+  expect(saved.ok()).toBeTruthy();
+  const list = async () => (await (await request.post('http://127.0.0.1:7359', { data: { action: 'reading.list' } })).json()).items.find((r: { id: string }) => r.id === id);
+  const original = await list();
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  for (const query of ['読書について', 'On Reading', 'ショーペンハウエル', 'ショーペンハウアー']) {
+    await field(page, /^著者・著作を検索/, query);
+    const author = page.getByRole('button', { name: /^ショーペンハウアー / });
+    await expect(author).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /^ショーペンハウエル / })).toHaveCount(0);
+    await expect(author).toBeVisible();
+  }
+  await field(page, /^著者・著作を検索/, '読書について');
+  await expect(page.getByRole('button', { name: /該当する著作: 読書について/ })).toHaveCount(1);
+  await capture(page, info, 'author-title-search');
+  await page.getByRole('button', { name: /^ショーペンハウアー / }).click();
+  await expect(page.getByRole('button', { name: /^意志と表象としての世界 / })).toHaveCount(0);
+  await page.getByRole('button', { name: /^読書について ショーペンハウアー/ }).click();
+  await expectReadingSummary(page, '91ページまで／全160ページ・56.9％');
+  await expect(page.getByRole('group', { name: /既存の感想を保持/ }).last()).toBeVisible();
+  await page.reload();
+  await field(page, /^著者・著作を検索/, '読書について');
+  await page.getByRole('button', { name: /^ショーペンハウアー / }).click();
+  await page.getByRole('button', { name: /^読書について ショーペンハウアー/ }).click();
+  await expectReadingSummary(page, '91ページまで／全160ページ・56.9％');
+  await capture(page, info, 'legacy-record-reloaded');
+  expect(await list()).toEqual(original);
 });

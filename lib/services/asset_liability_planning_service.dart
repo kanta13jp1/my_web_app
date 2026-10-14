@@ -1585,7 +1585,7 @@ class AssetLiabilityPlanningService {
           paymentAmountEstimated: false,
           paid: false,
           received: plan.received,
-          overdue: !plan.received && !paymentDate.isAfter(_dateOnly(baseDate)),
+          overdue: !plan.received && paymentDate.isBefore(_dateOnly(baseDate)),
           cashBeforePayment: 0,
           cashAfterPayment: 0,
           riskLevel: AssetLiabilityCashRiskLevel.normal,
@@ -1602,7 +1602,7 @@ class AssetLiabilityPlanningService {
       );
       final overdue = row.isDirectCashflowTarget &&
           row.requiresAction &&
-          !paymentDate.isAfter(_dateOnly(baseDate));
+          paymentDate.isBefore(_dateOnly(baseDate));
       result.add(
         AssetLiabilityCashflowRow(
           eventType: AssetLiabilityCashflowEventType.payment,

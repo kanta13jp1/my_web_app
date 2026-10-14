@@ -11,6 +11,7 @@ on:
       - 'lib/data/services/reading_book_search.dart'
       - 'lib/widgets/reading_book_lookup.dart'
       - 'supabase/functions/tools-hub/reading*'
+      - 'scripts/reading-production-qa.mjs'
       - 'test/**/reading*'
       - 'test/**/philosophy_reading*'
       - '.github/workflows/philosophy-reading.yml'
@@ -23,6 +24,21 @@ on:
         description: Published application commit (defaults to verification source revision)
         required: false
         type: string
+      authors:
+        description: Verify author title search, known name variants and existing record preservation
+        required: false
+        default: false
+        type: boolean
+      progress:
+        description: Verify page positions, percentages, work counts and unknown totals after release
+        required: false
+        default: false
+        type: boolean
+      catalog:
+        description: Verify alternate catalog titles and the Japanese editions added in PR5764
+        required: false
+        default: false
+        type: boolean
       production:
         description: Verify the published application using disposable test users
         required: false
@@ -122,6 +138,8 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Check production verification script syntax
+        run: node --check scripts/reading-production-qa.mjs
       - name: Install Playwright browser in cloud
         run: |
           npm ci
@@ -157,7 +175,7 @@ jobs:
   production:
     if: github.event_name == 'workflow_dispatch' && inputs.production && github.ref == 'refs/heads/main' && inputs.expected_head_sha == github.sha
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     environment:
       name: observability-production
       deployment: false
@@ -182,6 +200,9 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Published reading catalog and authenticated persistence
         env:
+          READING_QA_AUTHORS: ${{ inputs.authors }}
+          READING_QA_PROGRESS: ${{ inputs.progress }}
+          READING_QA_CATALOG: ${{ inputs.catalog }}
           EXPECTED_PRODUCTION_SHA: ${{ inputs.production_sha || inputs.expected_head_sha }}
           SUPABASE_URL_PROD: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_ANON_KEY_PROD: ${{ secrets.SUPABASE_ANON_KEY_PROD }}

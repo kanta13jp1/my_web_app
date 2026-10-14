@@ -32,18 +32,28 @@ class ReadingViewModel extends ChangeNotifier {
 
   bool get signedIn => repository.sessionKey != null;
   List<ReadingRecord> get records => List.unmodifiable(_records);
+  final _authorIndex = ReadingAuthorIndex(philosophyAuthors);
+
   List<PhilosophyWork> get works {
     final map = {for (final work in philosophyWorks) work.id: work};
     for (final record in _records) {
       map.putIfAbsent(record.work.id, () => record.work);
     }
-    return map.values.toList(growable: false);
+    return map.values.map((work) {
+      final author = _authorIndex.resolve(work.author);
+      if (identical(author, work.author)) return work;
+      return PhilosophyWork.fromJson({
+        ...work.toJson(),
+        'author_info': author.toJson(),
+      });
+    }).toList(growable: false);
   }
 
   List<PhilosophyAuthor> get authors {
     final map = {for (final author in philosophyAuthors) author.id: author};
     for (final author in _privateAuthors) {
-      map[author.id] = author;
+      final displayed = _authorIndex.resolve(author);
+      map.putIfAbsent(displayed.id, () => displayed);
     }
     for (final work in works) {
       map.putIfAbsent(work.author.id, () => work.author);
@@ -128,6 +138,33 @@ class ReadingViewModel extends ChangeNotifier {
         if (session != repository.sessionKey) return;
         _replace(result);
       });
+
+  Future<bool> appendWorkMemo(PhilosophyWork work, String text) async {
+    final addition = text.trim();
+    if (addition.isEmpty) return false;
+    final record = recordFor(work.id);
+    final current = record?.work ?? work;
+    final note = [current.note, addition]
+        .where((value) => value.isNotEmpty)
+        .join('\n\n');
+    if (note.length > 100000) {
+      error = 'メモの合計は10万文字以内にしてください。既存のメモは保持しています';
+      _notify();
+      return false;
+    }
+    final updated =
+        PhilosophyWork.fromJson({...current.toJson(), 'note': note});
+    if (record == null) return addWork(const Uuid().v4(), updated);
+    return save(
+      ReadingRecord(
+        id: record.id,
+        work: updated,
+        revision: record.revision,
+        cycles: record.cycles,
+        legacyStatus: record.legacyStatus,
+      ),
+    );
+  }
 
   Future<bool> save(ReadingRecord record) => _mutate(() async {
         final session = repository.sessionKey;

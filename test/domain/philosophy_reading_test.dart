@@ -3,6 +3,208 @@ import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 import 'package:my_web_app/domain/models/philosophy_reading.dart';
 
 void main() {
+  test('author search matches related titles with author and genre filters',
+      () {
+    final author = philosophyAuthors.firstWhere((a) => a.id == 'schopenhauer');
+    final work = PhilosophyWork(
+      id: 'private:reading',
+      title: '読書について',
+      originalTitle: 'On Reading',
+      author: author,
+      genres: const ['認識論'],
+    );
+    expect(
+      const ReadingFilter(query: ' 読書について ')
+          .authorMatches(author, works: [work]),
+      isTrue,
+    );
+    expect(
+      const ReadingFilter(query: 'on reading')
+          .authorMatches(author, works: [work]),
+      isTrue,
+    );
+    expect(
+      const ReadingFilter(query: '読書について', century: '19世紀', genre: '認識論')
+          .authorMatches(author, works: [work]),
+      isTrue,
+    );
+    expect(
+      const ReadingFilter(query: '読書について', century: '20世紀')
+          .authorMatches(author, works: [work]),
+      isFalse,
+    );
+    expect(
+      const ReadingFilter(query: '読書について', genre: '政治哲学')
+          .authorMatches(author, works: [work]),
+      isFalse,
+    );
+    expect(
+      const ReadingFilter(query: '読書について', region: '中国')
+          .authorMatches(author, works: [work]),
+      isFalse,
+    );
+    expect(const ReadingFilter(query: 'ショーペンハウエル').matches(work), isTrue);
+  });
+
+  test(
+      'author resolution is exact and ambiguity never merges unrelated authors',
+      () {
+    final index = ReadingAuthorIndex(philosophyAuthors);
+    const old = PhilosophyAuthor(id: 'legacy:a', name: 'ショーペンハウエル');
+    expect(index.resolve(old).id, 'schopenhauer');
+    expect(
+      index
+          .resolve(
+            const PhilosophyAuthor(
+              id: 'private:a',
+              name: ' Arthur Schopenhauer ',
+            ),
+          )
+          .id,
+      'schopenhauer',
+    );
+    const similar = PhilosophyAuthor(id: 'private:study', name: 'ショーペンハウエル研究会');
+    expect(index.resolve(similar), same(similar));
+    const personalAlias = PhilosophyAuthor(
+      id: 'private:other',
+      name: '別の人物',
+      aliases: ['ショーペンハウエル'],
+    );
+    expect(index.resolve(personalAlias), same(personalAlias));
+    final ambiguous = ReadingAuthorIndex(const [
+      PhilosophyAuthor(id: 'a', name: 'A', aliases: ['同名']),
+      PhilosophyAuthor(id: 'b', name: 'B', aliases: ['同名']),
+    ]);
+    const unknown = PhilosophyAuthor(id: 'private:c', name: '同名');
+    expect(ambiguous.resolve(unknown), same(unknown));
+  });
+
+  test('page progress adds only the delta and round trips without marking read',
+      () {
+    const initial = ReadingCycle(
+      id: 'cycle',
+      startedAt: '2026-10-12',
+      edition: ReadingEdition(totalPages: 160),
+    );
+    final first = initial.withPageProgress(
+      85,
+      id: 'first',
+      date: '2026-10-12',
+    );
+    final next = first.withPageProgress(
+      100,
+      id: 'next',
+      date: '2026-10-13',
+    );
+    expect(first.reachedPage, 85);
+    expect(next.entries.last.pages, 15);
+    expect(next.entries.last.startPage, 86);
+    expect(next.coveredPages, 100);
+    expect(next.pagesRead, 100);
+    expect(next.status, 'reading');
+    expect(
+      identical(
+        next.withPageProgress(
+          100,
+          id: 'same',
+          date: '2026-10-13',
+        ),
+        next,
+      ),
+      isTrue,
+    );
+    expect(ReadingCycle.fromJson(next.toJson()).reachedPage, 100);
+    expect(initial.reachedPage, 0);
+  });
+  test(
+      'page correction adjusts only simple entries and keeps bounded audit history',
+      () {
+    const initial = ReadingCycle(
+      id: 'cycle',
+      startedAt: '2026-10-12',
+      edition: ReadingEdition(totalPages: 160),
+    );
+    final saved = initial
+        .withPageProgress(
+          85,
+          id: 'first',
+          date: '2026-10-12',
+        )
+        .withPageProgress(
+          100,
+          id: 'next',
+          date: '2026-10-13',
+        );
+    final corrected = saved.withPageProgress(
+      80,
+      id: 'fix',
+      date: '2026-10-14',
+    );
+    expect(corrected.reachedPage, 80);
+    expect(corrected.pagesRead, 80);
+    expect(corrected.coveredPages, 80);
+    expect(corrected.entries.every((e) => e.validate(160) == null), isTrue);
+    expect(corrected.entries.first.history.single['end_page'], 85);
+    expect(
+      corrected.entries.first.history.single.containsKey('history'),
+      isFalse,
+    );
+    final reset = corrected.withPageProgress(
+      0,
+      id: 'reset',
+      date: '2026-10-14',
+    );
+    expect(reset.reachedPage, 0);
+    expect(reset.pagesRead, 0);
+    expect(saved.reachedPage, 100);
+  });
+  test('quick progress preserves detailed notes and rejects invalid values',
+      () {
+    const initial = ReadingCycle(
+      id: 'cycle',
+      startedAt: '2026-10-12',
+      edition: ReadingEdition(totalPages: 160),
+      entries: [
+        ReadingEntry(
+          id: 'detail',
+          date: '2026-10-12',
+          pages: 20,
+          startPage: 1,
+          endPage: 20,
+          understanding: 3,
+          impression: '詳細の感想',
+        ),
+      ],
+    );
+    final updated = initial.withPageProgress(
+      85,
+      id: 'new',
+      date: '2026-10-12',
+    );
+    expect(updated.entries.first.impression, '詳細の感想');
+    expect(updated.entries.last.pages, 65);
+    expect(updated.pagesRead, 85);
+    for (final page in [-1, 10, 161]) {
+      expect(
+        () => updated.withPageProgress(
+          page,
+          id: 'bad',
+          date: '2026-10-12',
+        ),
+        throwsArgumentError,
+      );
+    }
+    expect(
+      () => initial.withPageProgress(
+        85,
+        id: 'bad',
+        date: '2026-02-30',
+      ),
+      throwsArgumentError,
+    );
+    expect(updated.reachedPage, 85);
+  });
+
   test('catalog identity, sources and BCE compound classification', () {
     expect(philosophyAuthors.length, 56);
     expect(philosophyWorks.length, 80);
@@ -56,9 +258,86 @@ void main() {
     const unknown = ReadingCycle(id: 'd', startedAt: '2026-10-11');
     expect(unknown.coverage, isNull);
   });
+  test('page-position fraction distinguishes gaps, unknown totals and rereads',
+      () {
+    const cycle = ReadingCycle(
+      id: 'position',
+      startedAt: '2026-10-14',
+      edition: ReadingEdition(totalPages: 100),
+      entries: [
+        ReadingEntry(
+          id: 'gap',
+          date: '2026-10-14',
+          pages: 11,
+          startPage: 75,
+          endPage: 85,
+        ),
+      ],
+    );
+    expect(cycle.pageFraction, .85);
+    expect(cycle.coverage, .11);
+    expect(
+      cycle.copyWith(edition: const ReadingEdition()).pageFraction,
+      isNull,
+    );
+    expect(
+      cycle.copyWith(edition: const ReadingEdition(totalPages: 0)).pageFraction,
+      isNull,
+    );
+    expect(cycle.copyWith(entries: const []).pageFraction, 0);
+    expect(
+      cycle
+          .copyWith(edition: const ReadingEdition(totalPages: 80))
+          .pageFraction,
+      1,
+    );
+    expect(ReadingCycle.fromJson(cycle.toJson()).pageFraction, .85);
+  });
+  test('count-only and completed records do not invent a page position', () {
+    const cycle = ReadingCycle(
+      id: 'count-only',
+      startedAt: '2026-10-14',
+      edition: ReadingEdition(totalPages: 100),
+      entries: [ReadingEntry(id: 'count', date: '2026-10-14', pages: 10)],
+    );
+    expect(cycle.hasPagePosition, isFalse);
+    expect(cycle.pageFraction, isNull);
+    expect(cycle.pagesRead, 10);
+    final marked = cycle.withPageProgress(11, id: 'mark', date: '2026-10-14');
+    expect(marked.pageFraction, .11);
+    expect(marked.entries.first.toJson(), cycle.entries.first.toJson());
+    final reset = marked.withPageProgress(0, id: 'reset', date: '2026-10-14');
+    expect(reset.hasPagePosition, isTrue);
+    expect(reset.pageFraction, 0);
+    expect(reset.pagesRead, 10);
+    const empty = ReadingCycle(id: 'empty', startedAt: '2026-10-14');
+    expect(empty.copyWith(status: 'read').hasPagePosition, isFalse);
+    expect(empty.hasPagePosition, isTrue);
+  });
+  test('paused and unread works are not counted as currently reading', () {
+    final work = philosophyWorks.first;
+    for (final status in ['paused', 'unread', 'read']) {
+      final progress = ReadingProgress(
+        [work],
+        [ReadingRecord(id: status, work: work, legacyStatus: status)],
+      );
+      expect(progress.reading, 0);
+    }
+    expect(
+      ReadingProgress(
+        [work],
+        [ReadingRecord(id: 'legacy', work: work, legacyStatus: 'reading')],
+      ).reading,
+      1,
+    );
+  });
   test('bad dates, out-of-edition ranges and understanding are rejected', () {
     expect(
-      const ReadingEntry(id: 'a', date: '2026-02-30', pages: 0).validate(null),
+      const ReadingEntry(
+        id: 'a',
+        date: '2026-02-30',
+        pages: 0,
+      ).validate(null),
       isNotNull,
     );
     expect(
@@ -116,6 +395,8 @@ void main() {
     ];
     final progress = ReadingProgress(philosophyWorks, records);
     expect(progress.completed, 1);
+    expect(progress.reading, 1);
+    expect(ReadingProgress([], records).reading, 0);
     expect(progress.total, philosophyWorks.length);
     expect(ReadingProgress([], records).fraction, 0);
   });
@@ -190,14 +471,27 @@ void main() {
       expect(philosophyWorks.any((w) => w.id == book.workId), isTrue);
       expect(isReadingHttpsUrl(book.edition.sourceUrl), isTrue);
       expect(book.edition.publisher, isNotEmpty);
-      expect(book.edition.isbn, matches(RegExp(r'^(\d{10}|\d{13})$')));
+      if (book.edition.isbn.isEmpty) {
+        expect(book.workId, 'husserl:ideas');
+        expect(book.edition.volume, '1-1');
+        expect(
+          book.edition.sourceUrl,
+          'https://ndlsearch.ndl.go.jp/books/R100000002-I000001441684',
+        );
+        expect(book.note, contains('未記載'));
+      } else {
+        expect(book.edition.isbn, matches(RegExp(r'^(\d{10}|\d{13})$')));
+      }
+      final work = philosophyWorks.firstWhere((w) => w.id == book.workId);
       expect(
         readingBookSearchLinks(
-          philosophyWorks.first,
+          work,
           book.edition,
         )['Amazonで書籍を検索']!
             .queryParameters['k'],
-        book.edition.isbn,
+        book.edition.isbn.isEmpty
+            ? '${work.title} ${work.author.name}'
+            : book.edition.isbn,
       );
     }
     expect(
@@ -265,6 +559,12 @@ void main() {
         ReadingEdition.fromJson(edition.toJson()).toJson(),
         edition.toJson(),
       );
+      if (edition.isbn.isEmpty) {
+        expect(book.workId, 'husserl:ideas');
+        expect(edition.volume, '1-1');
+        expect(book.note, contains('未記載'));
+        continue;
+      }
       final digits = edition.isbn.split('').map((d) => int.parse(d)).toList();
       if (digits.length == 13) {
         final sum = List.generate(13, (i) => digits[i] * (i.isEven ? 1 : 3))
@@ -276,12 +576,12 @@ void main() {
         expect(sum % 11, 0, reason: edition.isbn);
       }
     }
-    expect(philosophyCatalogEditions.length, 163);
+    expect(philosophyCatalogEditions.length, 167);
     expect(
       philosophyCatalogEditions
           .where((b) => b.edition.language == '日本語')
           .length,
-      162,
+      166,
     );
     final books = philosophyCatalogEditions
         .where((b) => b.workId == 'confucius:analects')
@@ -327,7 +627,6 @@ void main() {
       'remaining Japanese editions cover verified works and keep partial scopes explicit',
       () {
     const unconfirmed = {
-      'al-farabi:virtuous-city',
       'averroes:decisive-treatise',
       'butler:afraid-gender',
     };
@@ -335,7 +634,7 @@ void main() {
         .where((b) => b.edition.language == '日本語')
         .map((b) => b.workId)
         .toSet();
-    expect(covered.length, 77);
+    expect(covered.length, 78);
     expect(
       philosophyWorks.map((w) => w.id).toSet().difference(covered),
       unconfirmed,

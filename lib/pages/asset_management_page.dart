@@ -1,3 +1,4 @@
+import '../widgets/asset_future_card_bill_card.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:my_web_app/widgets/asset_interest_history_card.dart';
@@ -28,6 +29,8 @@ import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
 import 'package:my_web_app/services/asset_balance_timestamp_service.dart';
+import 'package:my_web_app/models/asset_balance_observation.dart';
+import 'package:my_web_app/widgets/asset_balance_history_control.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
@@ -119,6 +122,9 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
+import 'package:my_web_app/widgets/savings_life_plan_card.dart';
+import 'package:my_web_app/services/savings_plan_proposal_service.dart';
+import 'package:my_web_app/models/savings_life_plan.dart';
 import 'package:my_web_app/widgets/asset_chat_widget.dart';
 import 'package:my_web_app/widgets/debt_progress_share_dialog.dart';
 import 'package:my_web_app/widgets/asset_alert_center_card.dart';
@@ -750,6 +756,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, Map<String, double>> _assetData = {};
   Map<String, Map<String, double>> _effectiveAssetDataByDate = {};
   Map<String, String?> _lastUpdatedDates = {};
+  Map<String, AssetBalanceObservation> _latestBalanceObservations = {};
   Map<String, AssetWatchlistEntry> _watchlistByType = {};
   final Map<String, GlobalKey> _assetRowKeys = <String, GlobalKey>{};
   Map<String, double> _monthlyPaymentOverrides = <String, double>{};
@@ -6690,6 +6697,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final data = await _fetchAssetHistoryRows(userId);
       final Map<String, Map<String, double>> loadedData = {};
       final Set<String> loadedTypes = {'現金'};
+      final latestObservations = <String, AssetBalanceObservation>{};
       for (var item in data) {
         final createdAt = DateTime.parse(item['created_at']);
         final recordDate = AssetBalanceTimestampService.localRecordDate(
@@ -6700,6 +6708,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         final String title = item['title'];
         final double amount = (item['amount'] as num).toDouble();
         loadedTypes.add(title);
+        latestObservations[title] = AssetBalanceObservation.fromRow(item);
         if (!loadedData.containsKey(dateKey)) {
           loadedData[dateKey] = {};
         }
@@ -6709,6 +6718,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         setState(() {
           _assetTypes = loadedTypes.toList();
           _assetData = loadedData;
+          _latestBalanceObservations = latestObservations;
           _updateLastUpdatedDates();
           _sortAssetTypes(); // ★ ここで降順ソート
           _initControllers();
@@ -6717,6 +6727,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } catch (e) {
       debugPrint('Error loading assets: $e');
+    }
+  }
+
+  /// Fetch older rows only when the user opens a specific account's history.
+  /// This path is read-only and deliberately does not use the 400-day summary.
+  Future<List<AssetBalanceObservation>> _loadBalanceHistoryPage(
+    String type,
+    int offset,
+  ) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) throw StateError('ログインが必要です。');
+    final data = await _supabase
+        .from('cfo_assets')
+        .select('id,title,amount,created_at')
+        .eq('user_id', userId)
+        .eq('title', type)
+        .order('created_at', ascending: false)
+        .order('id', ascending: false)
+        .range(offset, offset + 49);
+    return data.map(AssetBalanceObservation.fromRow).toList(growable: false);
+  }
+
+  void _recordBalanceObservationsForDisplay(
+    Map<String, double> amounts,
+    DateTime recordedAt,
+  ) {
+    for (final entry in amounts.entries) {
+      _latestBalanceObservations[entry.key] = AssetBalanceObservation(
+        accountName: entry.key,
+        amount: entry.value,
+        recordedAt: recordedAt,
+      );
     }
   }
 
@@ -7181,18 +7223,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final previousAmount =
         previousDate == null ? null : _assetData[previousDate]?[type];
     try {
+      final recordedAt = DateTime.now();
       await _supabase.from('cfo_assets').insert({
         'user_id': userId,
         'title': type,
         'amount': amount,
         'created_at': AssetBalanceTimestampService.encodeForDatabase(
-          DateTime.now(),
+          recordedAt,
         ),
       });
 
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]![type] = amount;
+        _recordBalanceObservationsForDisplay({type: amount}, recordedAt);
         _updateLastUpdatedDates();
         _sortAssetTypes();
         _updateChartData();
@@ -7336,6 +7380,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           () => <String, double>{},
         );
         amounts.forEach((type, amount) => todayMap[type] = amount);
+        _recordBalanceObservationsForDisplay(amounts, DateTime.parse(nowIso));
         _updateLastUpdatedDates();
         _sortAssetTypes();
         _updateChartData();
@@ -7464,6 +7509,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         todayMap[candidate.accountName] = candidate.amount;
       }
+      _recordBalanceObservationsForDisplay(
+        {
+          for (final candidate in candidates)
+            candidate.accountName: candidate.amount
+        },
+        DateTime.parse(nowIso),
+      );
       _initControllers();
       _updateLastUpdatedDates();
       _sortAssetTypes();
@@ -7545,6 +7597,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]!.addAll(todayData);
+        _recordBalanceObservationsForDisplay(todayData, DateTime.parse(nowIso));
         _updateLastUpdatedDates();
         _sortAssetTypes(); // ★ 一括更新後にも並び替え
         _updateChartData();
@@ -10133,6 +10186,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
             _buildDisplayModeSwitcher(),
+            if (assetLiabilityWorkbook != null &&
+                _supabase.auth.currentUser != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: SavingsLifePlanCard(
+                  key: ValueKey(
+                      'savings-life-plan:${_supabase.auth.currentUser!.id}'),
+                  userId: _supabase.auth.currentUser!.id,
+                  today: _now,
+                  suggestedIncome: _savingsPlanNetIncome(),
+                  monthlyCommitments: assetLiabilityWorkbook
+                      .monthlyScheduledPaymentTotal
+                      .ceil(),
+                  commitmentsEstimated:
+                      assetLiabilityWorkbook.estimatedPaymentCount > 0,
+                  proposalRevision:
+                      '$_assetManagementAiInputRevision:${assetLiabilityWorkbook.cashLikeTotal}:${assetLiabilityWorkbook.monthlyScheduledPaymentTotal}:${_registeredSalaryAmount()}:${_buildSalarySpendingBreakdown().totalExpense}',
+                  propose: _assetManagementAiInputReady
+                      ? () => _proposeSavingsLifePlan(assetLiabilityWorkbook)
+                      : null,
+                  onReviewPayments: () => _scrollTo(_keyCalendar),
+                ),
+              ),
             const SizedBox(height: 12),
             if (_isSectionShown(AssetManagementSectionId.monthlyFlow)) ...[
               _sectionAnchor(AssetManagementSectionId.monthlyFlow),
@@ -10183,6 +10259,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 onIgnore: _ignoreDuplicateGroup,
               ),
               _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
+              if (assetLiabilityWorkbook != null)
+                AssetFutureCardBillCard(
+                  repository: _assetLiabilityRepository,
+                  accounts: assetLiabilityWorkbook.accounts,
+                  subscriptionIds:
+                      assetLiabilityWorkbook.subscriptionFixedCostAccountIds,
+                  currentStateMonth: _assetLiabilityStateMonth(_now),
+                ),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(
@@ -16645,6 +16729,66 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       buffer.write(' / $source');
     }
     return buffer.toString();
+  }
+
+  int? _savingsPlanNetIncome() {
+    // Only registered salary / observed payslip net pay. No inflow plans,
+    // side income, future bonuses or assumed raises.
+    if (_salaryAmount != null &&
+        _salaryAmount!.isFinite &&
+        _salaryAmount! > 0) {
+      return _salaryAmount!.floor();
+    }
+    DateTime? latest;
+    int? amount;
+    for (final row in _payslipRows) {
+      final date = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final net = _numberFromDynamic(row['net_amount']);
+      if (date == null || date.isAfter(_now) || !net.isFinite || net <= 0) {
+        continue;
+      }
+      if (latest == null || date.isAfter(latest)) {
+        latest = date;
+        amount = net.floor();
+      }
+    }
+    return amount;
+  }
+
+  Future<SavingsPlanProposal> _proposeSavingsLifePlan(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final entries = AssetSalarySpendingEntries.build(
+      cardStatementLines: _cardStatementLines,
+      recentFlows: _recentFlows,
+      monthlyIncomePlans: _monthlyIncomePlans,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      payslipRows: _payslipRows,
+      flowDisplayTitle: _flowDisplayTitle,
+    );
+    final breakdown = _buildSalarySpendingBreakdown();
+    const categories = {'食費', '交通', '医療', '日用品', '娯楽・浪費'};
+    final living = breakdown.sections
+        .where((section) => categories.contains(section.category))
+        .fold<double>(0, (total, section) => total + section.amount);
+    final days = entries.expenses
+        .where((entry) =>
+            !entry.date.isBefore(breakdown.periodStart) &&
+            entry.date.isBefore(breakdown.periodEndExclusive) &&
+            !entry.date.isAfter(_now) &&
+            categories.contains(
+                _salarySpendingBreakdownService.categorize(entry.description)))
+        .map((entry) => SavingsLifePlan.dateText(entry.date))
+        .toSet()
+        .length;
+    return SavingsPlanProposalService().propose(SavingsPlanProposalInput(
+      cashBalance: workbook.cashLikeTotal.floor(),
+      monthlyIncome: _savingsPlanNetIncome(),
+      monthlyCommitments: workbook.monthlyScheduledPaymentTotal.ceil(),
+      observedLivingExpense: living.ceil(),
+      recordedDays: days,
+      estimatedPayments: workbook.estimatedPaymentCount > 0,
+    ));
   }
 
   Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {
@@ -32651,6 +32795,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         isUpdatedToday ? const Color(0xFF047857) : staleColor,
                   ),
                 ],
+              ),
+              AssetBalanceHistoryControl(
+                accountName: type,
+                latest: _latestBalanceObservations[type],
+                loadPage: (offset) => _loadBalanceHistoryPage(type, offset),
               ),
             ],
           ),
