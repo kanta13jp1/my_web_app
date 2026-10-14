@@ -113,6 +113,7 @@ class RootlessContainerSetupTest(unittest.TestCase):
             self.assertTrue(any("exact pin" in e for e in validate_cloud_workflow(broken, podman, docker)))
         for marker in ("pull_request_target:", "secrets.API_KEY", "--privileged"):
             self.assertTrue(validate_cloud_workflow(updated + "\n" + marker, podman, docker))
+
     def test_rejects_unsafe_or_incomplete_cloud_workflow(self) -> None:
         errors = validate_cloud_workflow(
             "pull_request_target:\nsecrets.API_KEY\n--privileged\n",

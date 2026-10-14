@@ -179,7 +179,6 @@ def validate_cloud_workflow(
         "9DC858229FC7DD38854AE2D88D81803C0EBFCD88",
         "sudo systemctl disable --now docker.service docker.socket",
         "rootless_docker_supabase_smoke.sh",
-
     )
     for marker in workflow_markers:
         if marker not in workflow:
