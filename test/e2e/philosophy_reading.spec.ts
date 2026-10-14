@@ -992,7 +992,7 @@ test('duplicate shared and legacy works preserve both reading cycles across sear
   expect(after.find((record: { id: string }) => record.id === ids[0])).toEqual(before.find((record: { id: string }) => record.id === ids[0]));
   const original = before.find((record: { id: string }) => record.id === ids[1]);
   const changed = after.find((record: { id: string }) => record.id === ids[1]);
-  expect(changed.work).toEqual(original.work);
-  expect(changed.cycles[0].entries).toEqual(original.cycles[0].entries);
-  expect(changed.cycles[0].edition.publisher).toBe('保持版B編集');
+  expect(changed.metadata.work).toEqual(original.metadata.work);
+  expect(changed.metadata.cycles[0].entries).toEqual(original.metadata.cycles[0].entries);
+  expect(changed.metadata.cycles[0].edition.publisher).toBe('保持版B編集');
 });
