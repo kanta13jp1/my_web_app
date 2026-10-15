@@ -5,6 +5,8 @@ on:
       - docs/proposals/payroll_snapshot/**
       - supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
       - .github/workflows/payroll-snapshot-contract.yml
+      - scripts/check_migration_time_relative_check.py
+      - scripts/test_check_migration_time_relative_check.py
   workflow_dispatch:
 permissions: {}
 concurrency:
@@ -39,6 +41,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Verify schema-qualified migration guard
+        run: python scripts/test_check_migration_time_relative_check.py
       - name: Verify reviewed proposal equals applied migration
         run: cmp docs/proposals/payroll_snapshot/DRAFT_PAYROLL_SCHEMA.sql supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
       - name: Test draft schema in disposable database only
