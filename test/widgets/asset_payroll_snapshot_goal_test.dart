@@ -1,6 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../../integration_test/payroll_snapshot_fixture.dart';
+import 'package:my_web_app/services/asset_payroll_snapshot_store.dart';
+
+class ComparableStore extends SyntheticSnapshotStore {
+  @override
+  Future<PayrollSnapshotRecord?> selected(String accountId, DateTime month) async {
+    return PayrollSnapshotRecord(
+      id: 'selected-${month.month}',
+      ownerId: ownerId,
+      accountId: accountId,
+      month: month,
+      depositDate: DateTime(month.year, month.month, 25),
+      balanceYen: month.month == 1 ? 111000 : 100000,
+      note: 'synthetic owner-confirmed day observation',
+    );
+  }
+}
 
 Finder targetField() => find.byWidgetPredicate(
       (widget) =>
@@ -14,6 +30,15 @@ Future<void> saveGoal(WidgetTester tester, String value) async {
 }
 
 void main() {
+  testWidgets('selected consecutive day records show the configured target reached', (tester) async {
+    final store = ComparableStore()..target = 10000;
+    await showSnapshot(tester, store);
+    expect(find.text('前月との差：11000円'), findsOneWidget);
+    expect(find.text('前月比の増加目標：10000円'), findsOneWidget);
+    expect(find.text('目標判定：達成'), findsOneWidget);
+    expect(store.targetWrites, 0);
+    expect(store.writes, 0);
+  });
   testWidgets('stale expected target never overwrites a concurrent setting',
       (tester) async {
     final store = SyntheticSnapshotStore();
