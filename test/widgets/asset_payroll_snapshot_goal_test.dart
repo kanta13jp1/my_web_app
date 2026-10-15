@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../../integration_test/payroll_snapshot_fixture.dart';
 import 'package:my_web_app/services/asset_payroll_snapshot_store.dart';
+import '../../integration_test/payroll_snapshot_fixture.dart';
 
 class ComparableStore extends SyntheticSnapshotStore {
   @override
