@@ -605,6 +605,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _syncRefreshDirty = false;
   String? _syncSourcesOwnerId;
   Map<AssetSyncDomain, Object?> _syncObservedLocalValues = {};
+  int? _syncObservedDirtyGeneration;
 
   Map<AssetSyncDomain, Object?> _syncCurrentPreferenceValues() => {
         AssetSyncDomain.mainAccount:
@@ -631,6 +632,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         sources: _syncSources,
         observedLocalValues: _syncObservedLocalValues,
         currentLocalValues: _syncCurrentPreferenceValues(),
+        observationStable: _syncObservedDirtyGeneration ==
+                AssetSyncDirtyKeysStore.mutationGeneration &&
+            !AssetSyncDirtyKeysStore.hasPendingMutations,
       ),
     );
   }
@@ -11272,6 +11276,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _syncRefreshInFlight = true;
     try {
       final ownerId = _supabase.auth.currentUser?.id;
+      final dirtyGeneration = AssetSyncDirtyKeysStore.mutationGeneration;
       var readSucceeded = false;
       var remote = <String, Map<String, dynamic>>{};
       if (ownerId != null) {
@@ -11300,16 +11305,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
       }
       final store = await SharedPreferences.getInstance();
-      const keys = <String>[
-        'main_account_id',
-        'watchlist_entries',
-        'revolving_credit_configs',
-        'debt_payment_day_overrides',
-      ];
-      final dirty = <String, Set<String>>{};
-      for (final key in keys) {
-        dirty[key] = await _syncDirtyKeysStore.loadDirty(key, prefs: store);
-      }
       if (!mounted) return;
       if (_supabase.auth.currentUser?.id != ownerId) {
         _syncRefreshDirty = true;
@@ -11317,6 +11312,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       // No await from this point to setState: compare the latest local values,
       // not the values present when the remote read began.
+      final dirty = _syncDirtyKeysStore.readDirtySnapshot(store);
+      final observationStable = dirtyGeneration ==
+              AssetSyncDirtyKeysStore.mutationGeneration &&
+          !AssetSyncDirtyKeysStore.hasPendingMutations;
       bool pendingDeletion(MirrorTombstoneStore tombstones, String remoteKey) {
         if (ownerId != null && !readSucceeded) return false;
         final localIds = tombstones.activeIds(store);
@@ -11347,6 +11346,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           remoteValue: row?['value'],
           hasDirtyKeys: dirty[key]?.isNotEmpty ?? false,
           hasPendingDeletion: deletionPending,
+          observationStable: observationStable,
         );
         return switch (result) {
           AssetSyncVerification.unverified => AssetSyncSource.unverified,
@@ -11410,6 +11410,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _syncSourcesOwnerId = ownerId;
         _syncObservedLocalValues = _syncCurrentPreferenceValues();
+        _syncObservedDirtyGeneration = observationStable ? dirtyGeneration : null;
         _syncSources
           ..clear()
           ..addAll(next);

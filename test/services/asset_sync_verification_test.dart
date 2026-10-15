@@ -1,8 +1,64 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_sync_status.dart';
 import 'package:my_web_app/services/asset_sync_verification.dart';
+import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  test('queued dirty work is visible before persistence without changing data',
+      () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    final prefs = await SharedPreferences.getInstance();
+    const dirty = AssetSyncDirtyKeysStore();
+    final initialGeneration = AssetSyncDirtyKeysStore.mutationGeneration;
+    final pending = dirty.markDirty('watchlist_entries', 'synthetic', prefs: prefs);
+    expect(AssetSyncDirtyKeysStore.hasPendingMutations, isTrue);
+    expect(AssetSyncDirtyKeysStore.mutationGeneration,
+        greaterThan(initialGeneration));
+    expect(
+      verifyAssetPreferenceSync(
+        loggedIn: true,
+        ownerMatches: true,
+        hasLocalData: true,
+        remoteReadSucceeded: true,
+        remoteRowExists: true,
+        currentValue: 'same',
+        remoteValue: 'same',
+        observationStable: !AssetSyncDirtyKeysStore.hasPendingMutations,
+      ),
+      AssetSyncVerification.unverified,
+    );
+    await pending;
+    expect(AssetSyncDirtyKeysStore.hasPendingMutations, isFalse);
+    expect(dirty.readDirtySnapshot(prefs)['watchlist_entries'], {'synthetic'});
+  });
+
+  test('same-value edit and clear cannot reuse an older clean observation',
+      () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    final prefs = await SharedPreferences.getInstance();
+    const dirty = AssetSyncDirtyKeysStore();
+    final observedGeneration = AssetSyncDirtyKeysStore.mutationGeneration;
+    await dirty.markDirty('watchlist_entries', 'synthetic', prefs: prefs);
+    await dirty.clearDomain('watchlist_entries', prefs: prefs);
+    expect(dirty.readDirtySnapshot(prefs), isEmpty);
+    final result = currentAssetSyncSources(
+      observedOwnerId: 'synthetic-owner',
+      currentOwnerId: 'synthetic-owner',
+      sources: {AssetSyncDomain.watchlist: AssetSyncSource.synced},
+      observedLocalValues: {AssetSyncDomain.watchlist: 'same'},
+      currentLocalValues: {AssetSyncDomain.watchlist: 'same'},
+      observationStable: observedGeneration ==
+              AssetSyncDirtyKeysStore.mutationGeneration &&
+          !AssetSyncDirtyKeysStore.hasPendingMutations,
+    );
+    expect(result[AssetSyncDomain.watchlist], AssetSyncSource.unverified);
+  });
+
   test('another owner cannot inherit verified saving evidence', () {
     final result = currentAssetSyncSources(
       observedOwnerId: 'synthetic-owner-a',

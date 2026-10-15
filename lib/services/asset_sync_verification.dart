@@ -8,8 +8,12 @@ Map<AssetSyncDomain, AssetSyncSource> currentAssetSyncSources({
   required Map<AssetSyncDomain, AssetSyncSource> sources,
   required Map<AssetSyncDomain, Object?> observedLocalValues,
   required Map<AssetSyncDomain, Object?> currentLocalValues,
+  bool observationStable = true,
 }) {
   if (observedOwnerId != currentOwnerId) return {};
+  if (!observationStable) {
+    return {for (final domain in sources.keys) domain: AssetSyncSource.unverified};
+  }
   return {
     for (final entry in sources.entries)
       entry.key: currentLocalValues.containsKey(entry.key) &&
@@ -36,8 +40,11 @@ AssetSyncVerification verifyAssetPreferenceSync({
   required Object? remoteValue,
   bool hasDirtyKeys = false,
   bool hasPendingDeletion = false,
+  bool observationStable = true,
 }) {
-  if (!ownerMatches) return AssetSyncVerification.unverified;
+  if (!ownerMatches || !observationStable) {
+    return AssetSyncVerification.unverified;
+  }
   if (hasDirtyKeys || hasPendingDeletion) {
     return AssetSyncVerification.localOnly;
   }
