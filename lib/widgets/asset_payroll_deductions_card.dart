@@ -8,7 +8,7 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
     required this.ownerId,
     required this.year,
     required this.rows,
-  },);
+  });
 
   final String ownerId;
   final int year;
@@ -31,7 +31,7 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
       ownerId: ownerId,
       year: year,
       rows: rows,
-    ,);
+    );
     final taxMonths = months.where((m) => m.confirmedTaxYen != null).toList();
     final socialMonths =
         months.where((m) => m.confirmedSocialYen != null).toList();
@@ -70,7 +70,7 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
           ],
         ),
       ),
-    ,);
+    );
   }
 
   Widget _statement(BuildContext context, PayrollDeductions row, int index) {
@@ -96,6 +96,6 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
           const Text('差がある場合は未取得・未分類項目や読取内容を確認してください。還付などの負数は符号を保持します。'),
         ],
       ),
-    ,);
+    );
   }
 }

@@ -42,7 +42,7 @@ class PayrollDeductions {
 
   Map<String, int?> get unclassified => Map.unmodifiable(
         Map.fromEntries(items.entries.where((e) => !knownKeys.contains(e.key))),
-      ,);
+      );
 
   /// Only known categories are subtotaled. Missing entries remain absent in
   /// [items]; this subtotal must never be labelled the full deduction amount.
@@ -111,7 +111,7 @@ class PayrollDeductions {
       readYen(row['net_amount']),
       readYen(row['social_insurance_total']),
       Map.unmodifiable(items),
-    ,);
+    );
   }
 }
 
@@ -185,7 +185,7 @@ class AssetPayrollDeductions {
         DateTime(year, month),
         List.unmodifiable(byMonth[month] ?? const <PayrollDeductions>[]),
         conflictMonths.contains(month),
-      ,);
+      );
     },);
   }
 
