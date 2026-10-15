@@ -1,4 +1,8 @@
 begin;
+do $$ begin
+ if has_table_privilege('authenticated','public.asset_calendar_reflections','TRUNCATE') then raise exception 'truncate privilege must be absent'; end if;
+ if has_table_privilege('authenticated','public.asset_calendar_reflections','TRIGGER') then raise exception 'trigger privilege must be absent'; end if;
+end $$;
 insert into auth.users values ('11111111-1111-4111-8111-111111111111'), ('22222222-2222-4222-8222-222222222222');
 insert into public.wealth_struggles values ('33333333-3333-4333-8333-333333333333','11111111-1111-4111-8111-111111111111',123),('44444444-4444-4444-8444-444444444444','22222222-2222-4222-8222-222222222222',456);
 set local role authenticated;

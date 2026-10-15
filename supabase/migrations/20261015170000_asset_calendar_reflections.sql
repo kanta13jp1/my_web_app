@@ -21,7 +21,7 @@ create table public.asset_calendar_reflections (
 create index asset_calendar_reflections_user_date_idx
   on public.asset_calendar_reflections(user_id, occurred_on, source_key);
 alter table public.asset_calendar_reflections enable row level security;
-revoke all on public.asset_calendar_reflections from anon;
+revoke all on public.asset_calendar_reflections from public, anon, authenticated;
 grant select, insert, update, delete on public.asset_calendar_reflections to authenticated;
 create policy reflection_select on public.asset_calendar_reflections for select to authenticated
   using ((select auth.uid()) = user_id);
