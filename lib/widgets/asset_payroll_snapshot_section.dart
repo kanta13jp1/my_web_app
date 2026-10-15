@@ -222,7 +222,11 @@ class _AssetPayrollSnapshotSectionState
       _reason.clear();
       await _load();
     } catch (_) {
-      if (mounted) setState(() => _error = '保存結果が未確認です。再送せず「保存結果を照合」を押してください。画面を開き直した場合は同じ口座・月を選び、取得結果を確認してください。');
+      if (mounted) {
+        setState(() {
+          _error = '保存結果が未確認です。再送せず「保存結果を照合」を押してください。画面を開き直した場合は同じ口座・月を選び、取得結果を確認してください。';
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }

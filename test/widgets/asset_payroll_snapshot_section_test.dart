@@ -42,7 +42,9 @@ void main() {
     expect(find.text('本人確認の直後残高：120000円'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('recreating after uncertain save reloads selection without another write', (tester) async {
+  testWidgets(
+      'recreating after uncertain save reloads selection without another write',
+      (tester) async {
     final store = SyntheticSnapshotStore()..failAfterCommit = true;
     await showForm(tester, store);
     await tester.tap(find.byType(CheckboxListTile));
@@ -55,12 +57,16 @@ void main() {
     expect(find.text('本人確認の直後残高：120000円'), findsOneWidget);
     expect(find.text('訂正理由（旧記録は履歴に残ります）'), findsOneWidget);
     expect(
-      tester.widget<TextFormField>(find.byType(TextFormField).at(1)).controller!.text,
+      tester
+          .widget<TextFormField>(find.byType(TextFormField).at(1))
+          .controller!
+          .text,
       isEmpty,
     );
     expect(store.writes, 1);
   });
-  testWidgets('month load failure clears old values and disables saving', (tester) async {
+  testWidgets('month load failure clears old values and disables saving',
+      (tester) async {
     final store = SyntheticSnapshotStore();
     await showSnapshot(tester, store);
     store.failReads = true;
@@ -68,7 +74,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('取得できませんでした。再読込してください。'), findsOneWidget);
     expect(
-      tester.widget<FilledButton>(find.widgetWithText(FilledButton, '保存前の確認へ')).onPressed,
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, '保存前の確認へ'))
+          .onPressed,
       isNull,
     );
     expect(store.writes, 0);

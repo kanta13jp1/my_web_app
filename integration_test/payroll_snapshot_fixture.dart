@@ -15,10 +15,12 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
   @override
   Future<void> createAccount(String label) async {}
   @override
-  Future<PayrollSnapshotRecord?> selected(String accountId, DateTime month) async {
+  Future<PayrollSnapshotRecord?> selected(
+      String accountId, DateTime month,) async {
     if (failReads) throw StateError('synthetic unavailable');
     return month.month == 1 && saved != null ? _record() : null;
   }
+
   PayrollSnapshotRecord _record() => PayrollSnapshotRecord(
         id: 'synthetic-observation',
         balanceYen: saved!.balanceYen,
