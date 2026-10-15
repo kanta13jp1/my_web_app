@@ -1,5 +1,6 @@
 import '../services/asset_month_end_snapshot_service.dart';
 import '../widgets/asset_month_end_snapshot_card.dart';
+import '../widgets/asset_payroll_deductions_section.dart';
 import '../widgets/asset_reflection_day_badge.dart';
 import '../models/asset_calendar_reflection.dart';
 import '../services/asset_calendar_reflection_repository.dart';
@@ -21835,6 +21836,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               key: ValueKey('month-end-${_supabase.auth.currentUser?.id}'),
               service: AssetMonthEndSnapshotService(_supabase),
               monthKeys: _recentMonthEndSnapshotKeys(),
+            ),
+            const SizedBox(height: 16),
+            AssetPayrollDeductionsSection(
+              key: ValueKey(
+                  'payroll-deductions-${_supabase.auth.currentUser?.id}'),
+              client: _supabase,
+              initialYear: _now.year,
             ),
             const SizedBox(height: 16),
             _buildMonthlyReportSection(),
