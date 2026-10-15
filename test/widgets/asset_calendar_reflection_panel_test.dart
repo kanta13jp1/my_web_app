@@ -88,6 +88,11 @@ void main() {
     await tester.pumpWidget(app(DateTime(2026, 1, 3), DateTime(2025, 12, 25)));
     await tester.pumpAndSettle();
     expect(repository.loads, 2);
+    await tester.pumpWidget(app(DateTime(2026, 1, 3), DateTime(2026, 1, 10)));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Confirmed reading memo'), findsNothing);
+    expect(find.text('読書 0日'), findsOneWidget);
+
     expect(tester.takeException(), isNull);
   });
 }

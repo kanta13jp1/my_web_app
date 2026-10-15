@@ -112,7 +112,9 @@ class _AssetCalendarReflectionPanelState
                     Text('確認: ${preview!.length}件。金額不明は不明のまま保存します。'),
                     for (final event in preview!)
                       Text(
-                        '${event.date.month}/${event.date.day} ${event.kinds.map((k) => k.label).join('・')} ${event.title}（出典: ${event.sourceLabel}）',
+                        '${event.date.month}/${event.date.day} ${event.kinds.map((k) => k.label).join('・')} ${event.title}（出典: ${event.sourceLabel}）\n'
+                        '金額: ${event.verifiedAmount?.toStringAsFixed(0) ?? '不明'}・酒代内訳: ${event.alcoholAmount?.toStringAsFixed(0) ?? '不明'}\n'
+                        '${event.memo} ${event.pages == null ? '' : '${event.pages}ページ'} ${event.minutes == null ? '' : '${event.minutes}分'}',
                       ),
                   ],
                 ],
@@ -192,7 +194,7 @@ class _AssetCalendarReflectionPanelState
     final linked =
         _events.map((e) => e.linkedFlowId).whereType<String>().toSet();
     final events = [
-      ..._events,
+      ..._events.where((e) => !e.date.isBefore(widget.start) && e.date.isBefore(widget.end)),
       ...widget.flowEvents.where(
         (e) =>
             !linked.contains(e.linkedFlowId) &&
