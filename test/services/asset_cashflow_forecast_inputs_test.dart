@@ -20,11 +20,13 @@ AssetLiabilityAccount _account(
 
 AssetLiabilityDebtRow _debt({
   int? day = 10,
+  String? recurringFixedCostId,
   AssetLiabilityAccountKind kind = AssetLiabilityAccountKind.utility,
   bool fullPaymentEstimate = false,
 }) {
   return AssetLiabilityDebtRow(
     id: 'bill',
+    recurringFixedCostId: recurringFixedCostId,
     name: 'Service Fee',
     kind: kind,
     balance: -20000,
@@ -60,15 +62,18 @@ AssetCashflowForecastInputs _billInputs({
   Map<String, int> overrides = const {},
   String dueDate = '2026-06-10',
   double subscriptionAmount = 2000,
+  Map<String, String> links = const {},
 }) {
   return AssetCashflowForecastInputs.fromAssetData(
     accounts: const [],
     debtRows: [debt],
+    subscriptionFixedCostIds: links,
     recurringIncomeTemplates: const [],
     inflowRules: const [],
     oneTimeInflows: const [],
     subscriptions: [
       {
+        'id': 'legacy-bill',
         'service_name': ' service fee ',
         'due_date': dueDate,
         'price': subscriptionAmount,
@@ -90,13 +95,16 @@ double _projectOutflow(AssetCashflowForecastInputs inputs) {
 void main() {
   group('forecast and calendar payment schedule agreement', () {
     test('the same fixed cost in both sources is counted once', () {
-      final debt = _debt();
-      final inputs = _billInputs(debt: debt);
+      final debt = _debt(recurringFixedCostId: 'cost-bill');
+      final inputs =
+          _billInputs(debt: debt, links: const {'legacy-bill': 'cost-bill'});
       final calendar = AssetPaymentCalendarService.buildMonth(
         month: DateTime(2026, 6),
         flows: const [],
+        subscriptionFixedCostIds: const {'legacy-bill': 'cost-bill'},
         subscriptions: [
           {
+            'id': 'legacy-bill',
             'service_name': ' service fee ',
             'due_date': '2026-06-10',
             'price': 2000,
@@ -129,7 +137,9 @@ void main() {
             debt: _debt(
               kind: AssetLiabilityAccountKind.cardLoan,
               fullPaymentEstimate: true,
+              recurringFixedCostId: 'cost-bill',
             ),
+            links: const {'legacy-bill': 'cost-bill'},
           ),
         ),
         2000,
@@ -150,8 +160,7 @@ void main() {
       expect(_projectOutflow(byId), 4000);
     });
 
-    test('deduplication compares each actual date after month-end clamping',
-        () {
+    test('unlinked contracts stay independent after month-end clamping', () {
       final inputs = _billInputs(
         debt: _debt(day: 31),
         dueDate: '2026-01-30',
@@ -162,8 +171,27 @@ void main() {
         horizonMonths: 2,
         recurringOutflow: inputs.recurringOutflow,
       );
-      expect(forecast.months[0].outflowTotal, 2000);
+      // Coinciding in February is not evidence these are the same contract.
+      expect(forecast.months[0].outflowTotal, 4000);
       expect(forecast.months[1].outflowTotal, 4000);
+    });
+
+    test('explicit contract uses canonical due date after month-end clamping',
+        () {
+      final inputs = _billInputs(
+        debt: _debt(day: 31, recurringFixedCostId: 'cost-bill'),
+        dueDate: '2026-01-30',
+        links: const {'legacy-bill': 'cost-bill'},
+      );
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 2, 1),
+        startingBalance: 10000,
+        horizonMonths: 2,
+        recurringOutflow: inputs.recurringOutflow,
+      );
+      expect(forecast.months[0].outflowTotal, 2000);
+      expect(forecast.months[1].outflowTotal, 2000);
+      expect(inputs.recurringOutflow.single.dayOfMonth, 31);
     });
   });
 

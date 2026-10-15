@@ -685,6 +685,9 @@ class AssetLiabilityRevolvingCreditBilling {
 
 class AssetLiabilityDebtRow {
   final String id;
+
+  /// Original recurring-cost identity; never inferred from a legacy subscription.
+  final String? recurringFixedCostId;
   final String name;
   final AssetLiabilityAccountKind kind;
   final double balance;
@@ -726,6 +729,7 @@ class AssetLiabilityDebtRow {
 
   const AssetLiabilityDebtRow({
     required this.id,
+    this.recurringFixedCostId,
     required this.name,
     required this.kind,
     required this.balance,
