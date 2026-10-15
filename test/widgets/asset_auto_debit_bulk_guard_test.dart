@@ -21,7 +21,7 @@ Future<void> pumpPage(
       home: AssetManagementPage(
         debugNow: DateTime(2026, 6, 20),
         debugInitialAssetData: const {
-          '2026-06-20': {'現金': 100000},
+          '2026-06-20': {'現金': 100000, '合成カード': -10000},
         },
         debugInitialRecurringFixedCosts: costs,
       ),
@@ -53,7 +53,7 @@ const unknownA = AssetRecurringFixedCost(
   amount: 1000,
   paymentDay: 12,
   category: AssetRecurringFixedCostCategory.utility,
-  sourceAccountId: 'not-observed-a',
+  sourceAccountId: '合成カード',
 );
 const unknownB = AssetRecurringFixedCost(
   id: 'synthetic_unknown_b',
@@ -61,7 +61,7 @@ const unknownB = AssetRecurringFixedCost(
   amount: 2000,
   paymentDay: 13,
   category: AssetRecurringFixedCostCategory.utility,
-  sourceAccountId: 'not-observed-b',
+  sourceAccountId: '合成カード',
 );
 
 void main() {
@@ -75,7 +75,7 @@ void main() {
     );
   });
 
-  testWidgets('unknown source balances remain individual confirmations',
+  testWidgets('unknown credit limits remain individual confirmations',
       (tester) async {
     await pumpPage(tester, const [unknownA, unknownB]);
     expect(find.text('引落の確認待ち (2件)'), findsOneWidget);
@@ -92,7 +92,7 @@ void main() {
     expect(bulk, findsOneWidget);
     await tester.ensureVisible(bulk);
     await tester.tap(bulk);
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 400));
     final dialog = find.byType(AlertDialog);
     expect(dialog, findsOneWidget);
     expect(
@@ -108,7 +108,7 @@ void main() {
       findsNothing,
     );
     await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 400));
     final saved = await const AssetLiabilityMonthlyStateStore()
         .loadMonth(DateTime(2026, 5));
     expect(saved.paidAccountNames, isEmpty);
