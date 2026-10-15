@@ -580,8 +580,10 @@ void main() {
         endExclusive: DateTime(2026, 9, 1),
         asOf: DateTime(2026, 8, 1),
         flows: const <Map<String, dynamic>>[],
+        subscriptionFixedCostIds: const {'legacy-notion': 'cost-notion'},
         subscriptions: <Map<String, dynamic>>[
           <String, dynamic>{
+            'id': 'legacy-notion',
             'service_name': 'Notion',
             'price': 3712,
             'due_date': '2026-08-17T00:00:00',
@@ -590,6 +592,7 @@ void main() {
         debts: const <AssetCalendarDebtInput>[
           AssetCalendarDebtInput(
             id: 'notion',
+            recurringFixedCostId: 'cost-notion',
             name: 'Notion',
             balance: -3712,
             paymentDay: 17,
