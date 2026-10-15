@@ -565,4 +565,5 @@ jobs:
             integration_test/payroll_snapshot_fixture.dart
             .ci-logs/payroll-snapshot-*.log
             .ci-logs/asset-triage-visual/payroll-snapshot-*
+          include-hidden-files: true
           retention-days: 3

@@ -172,7 +172,7 @@ class _AssetPayrollSnapshotSectionState
                 if (_current != null)
                   Text('旧記録：${_current!.balanceYen}円／訂正理由：${draft.reason}'),
                 const Text(
-                  '記録種別は本人確認です。銀行検証済みではありません。短文メモだけを保存し、既存残高・収支は変更しません。',
+                  '記録種別は本人確認です。銀行検証済みではありません。資料は短文メモで残し、画像・PDFは送信しません。口座の呼び名・対象月・直後残高・訂正履歴を本人限定で保存し、既存残高・収支は変更しません。',
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,

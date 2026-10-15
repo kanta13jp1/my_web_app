@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'payroll_snapshot_fixture.dart'
-    show SyntheticSnapshotStore, showForm;
+import 'payroll_snapshot_fixture.dart' show SyntheticSnapshotStore, showForm;
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();

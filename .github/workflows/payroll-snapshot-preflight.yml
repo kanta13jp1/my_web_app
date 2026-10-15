@@ -6,6 +6,7 @@ on:
       - lib/widgets/asset_payroll_snapshot_section.dart
       - test/widgets/asset_payroll_snapshot_section_test.dart
       - integration_test/payroll_snapshot_test.dart
+      - integration_test/payroll_snapshot_fixture.dart
       - .github/workflows/payroll-snapshot-preflight.yml
   workflow_dispatch:
 permissions: {}
@@ -68,4 +69,5 @@ jobs:
             integration_test/payroll_snapshot_fixture.dart
             .ci-logs/payroll-snapshot-*.log
             .ci-logs/asset-triage-visual/payroll-snapshot-*
+          include-hidden-files: true
           retention-days: 3
