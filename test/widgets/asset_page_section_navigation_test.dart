@@ -53,6 +53,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(BottomSheet), findsNothing);
+    debugPrint('TARGET_AFTER ${tester.getRect(find.text('月末の記録残高'))}');
     final pageScrollbar = tester.widget<Scrollbar>(
       find.byKey(const Key('asset_page_scrollbar')),
     );

@@ -6126,7 +6126,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   void _scrollTo(GlobalKey key) {
     final ctx = key.currentContext;
+    debugPrint('JUMP_DIAGNOSTIC key=$key context=${ctx != null} offset=${_scrollController.hasClients ? _scrollController.offset : null}');
     if (ctx == null) return;
+    debugPrint('JUMP_RENDER ${ctx.findRenderObject()}');
     Scrollable.ensureVisible(
       ctx,
       duration: const Duration(milliseconds: 350),
