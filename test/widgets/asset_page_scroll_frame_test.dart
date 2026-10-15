@@ -32,10 +32,25 @@ void main() {
     expect(frame.controller, same(controller));
     expect(frame.thumbVisibility, isTrue);
     final rect = tester.getRect(find.byKey(const Key('asset_page_scrollbar')));
+    final state = tester.state<RawScrollbarState>(
+      find.byKey(const Key('asset_page_scrollbar')),
+    );
+    final thumbPoints = <Offset>[
+      for (var y = 0.0; y < rect.height; y += 2)
+        for (var x = rect.width - 20; x < rect.width; x += 2)
+          if (state.scrollbarPainter.hitTestOnlyThumbInteractive(
+            Offset(x, y),
+            PointerDeviceKind.mouse,
+          ))
+            Offset(x, y),
+    ];
+    expect(thumbPoints, isNotEmpty, reason: 'visible draggable thumb is painted');
+    final thumbCenter = thumbPoints[thumbPoints.length ~/ 2] + rect.topLeft;
     final gesture = await tester.startGesture(
-      Offset(rect.right - 5, rect.top + 18),
+      thumbCenter,
       kind: PointerDeviceKind.mouse,
     );
+    await tester.pump();
     await gesture.moveBy(const Offset(0, 24));
     await tester.pump();
     await gesture.moveBy(const Offset(0, 160));

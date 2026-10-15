@@ -41,6 +41,8 @@ void main() {
     await tester.enterText(search, '月末記録');
     await tester.pump();
     expect(find.text('月末の残高記録'), findsOneWidget);
+    await tester.ensureVisible(find.text('月末の残高記録'));
+    await tester.pump();
     await tester.tap(find.text('月末の残高記録'));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(BottomSheet), findsNothing);
