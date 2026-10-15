@@ -122,7 +122,8 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.descendant(of: dialog, matching: find.textContaining('残高未確認UnknownA')),
+      find.descendant(
+          of: dialog, matching: find.textContaining('残高未確認UnknownA'),),
       findsNothing,
     );
     await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
@@ -130,7 +131,12 @@ void main() {
     final saved = await const AssetLiabilityMonthlyStateStore()
         .loadMonth(DateTime(2026, 5));
     expect(saved.paidAccountNames, {'gas_bill'});
-    expect(find.text('引落の確認待ち (3件)'), findsOneWidget, reason: find.byType(Text).evaluate().map((e) => (e.widget as Text).data).join(' / '));
+    expect(find.text('引落の確認待ち (3件)'), findsOneWidget,
+        reason: find
+            .byType(Text)
+            .evaluate()
+            .map((e) => (e.widget as Text).data)
+            .join(' / '),);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
