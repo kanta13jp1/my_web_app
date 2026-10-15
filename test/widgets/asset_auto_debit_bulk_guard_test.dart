@@ -37,7 +37,7 @@ Future<void> pumpPage(
 
 const knownA = AssetRecurringFixedCost(
   id: 'synthetic_known_a',
-  name: '確認対象A',
+  name: '確認対象KnownA',
   amount: 1000,
   paymentDay: 10,
   category: AssetRecurringFixedCostCategory.utility,
@@ -45,7 +45,7 @@ const knownA = AssetRecurringFixedCost(
 );
 const knownB = AssetRecurringFixedCost(
   id: 'synthetic_known_b',
-  name: '確認対象B',
+  name: '確認対象KnownB',
   amount: 2000,
   paymentDay: 11,
   category: AssetRecurringFixedCostCategory.utility,
@@ -53,7 +53,7 @@ const knownB = AssetRecurringFixedCost(
 );
 const unknownA = AssetRecurringFixedCost(
   id: 'synthetic_unknown_a',
-  name: '残高未確認A',
+  name: '残高未確認UnknownA',
   amount: 1000,
   paymentDay: 12,
   category: AssetRecurringFixedCostCategory.utility,
@@ -61,7 +61,7 @@ const unknownA = AssetRecurringFixedCost(
 );
 const unknownB = AssetRecurringFixedCost(
   id: 'synthetic_unknown_b',
-  name: '残高未確認B',
+  name: '残高未確認UnknownB',
   amount: 2000,
   paymentDay: 13,
   category: AssetRecurringFixedCostCategory.utility,
@@ -114,15 +114,15 @@ void main() {
     final dialog = find.byType(AlertDialog);
     expect(dialog, findsOneWidget);
     expect(
-      find.descendant(of: dialog, matching: find.textContaining('確認対象A')),
+      find.descendant(of: dialog, matching: find.textContaining('確認対象KnownA')),
       findsOneWidget,
     );
     expect(
-      find.descendant(of: dialog, matching: find.textContaining('確認対象B')),
+      find.descendant(of: dialog, matching: find.textContaining('確認対象KnownB')),
       findsOneWidget,
     );
     expect(
-      find.descendant(of: dialog, matching: find.textContaining('残高未確認A')),
+      find.descendant(of: dialog, matching: find.textContaining('残高未確認UnknownA')),
       findsNothing,
     );
     await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
