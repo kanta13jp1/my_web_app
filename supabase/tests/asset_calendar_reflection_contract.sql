@@ -4,11 +4,11 @@ do $$ begin
  if has_table_privilege('authenticated','public.asset_calendar_reflections','TRIGGER') then raise exception 'trigger privilege must be absent'; end if;
 end $$;
 insert into auth.users values ('11111111-1111-4111-8111-111111111111'), ('22222222-2222-4222-8222-222222222222');
-insert into public.wealth_struggles values ('33333333-3333-4333-8333-333333333333','11111111-1111-4111-8111-111111111111',123),('44444444-4444-4444-8444-444444444444','22222222-2222-4222-8222-222222222222',456);
+insert into public.wealth_struggles values ('333','11111111-1111-4111-8111-111111111111',123),('444','22222222-2222-4222-8222-222222222222',456);
 set local role authenticated;
 select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
 insert into public.asset_calendar_reflections(user_id,source_key,occurred_on,kinds,title,source_label,linked_flow_id)
- values ('11111111-1111-4111-8111-111111111111','test:a','2026-01-02',array['dining'],'Test meal','Test diary','33333333-3333-4333-8333-333333333333');
+ values ('11111111-1111-4111-8111-111111111111','test:a','2026-01-02',array['dining'],'Test meal','Test diary','333');
 -- Same import is idempotent; unknown amount remains null.
 insert into public.asset_calendar_reflections(user_id,source_key,occurred_on,kinds,title,source_label)
  values ('11111111-1111-4111-8111-111111111111','test:a','2026-01-02',array['dining'],'Test meal','Test diary') on conflict(user_id,source_key) do nothing;
@@ -20,7 +20,7 @@ do $$ begin
   raise exception 'owner reassignment allowed';
  exception when insufficient_privilege then null; end;
  begin
-  update public.asset_calendar_reflections set linked_flow_id='44444444-4444-4444-8444-444444444444';
+  update public.asset_calendar_reflections set linked_flow_id='444';
   raise exception 'foreign flow allowed';
  exception when insufficient_privilege then null; end;
 end $$;

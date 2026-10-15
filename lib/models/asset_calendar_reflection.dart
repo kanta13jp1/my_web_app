@@ -97,9 +97,8 @@ class AssetCalendarReflection {
     if (memo is! String || memo.length > 2000) {
       throw const FormatException('メモが長すぎます');
     }
-    final flow = json['linked_flow_id'];
-    if (flow != null &&
-        (flow is! String || !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(flow))) {
+    final flow = json['linked_flow_id']?.toString();
+    if (flow != null && !RegExp(r'^[1-9][0-9]*$').hasMatch(flow)) {
       throw const FormatException('明細の参照が不正です');
     }
     return AssetCalendarReflection(
@@ -113,7 +112,7 @@ class AssetCalendarReflection {
       alcoholAmount: alcohol,
       pages: pages,
       minutes: minutes,
-      linkedFlowId: flow as String?,
+      linkedFlowId: flow,
     );
   }
 
@@ -155,7 +154,7 @@ class AssetCalendarReflection {
                   !RegExp(r'金額不明|金額未確認|推定|概算').hasMatch(description)
               ? value.abs().toDouble()
               : null,
-          linkedFlowId: RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id) ? id : null,
+          linkedFlowId: RegExp(r'^[1-9][0-9]*$').hasMatch(id) ? id : null,
         ),
       );
     }
