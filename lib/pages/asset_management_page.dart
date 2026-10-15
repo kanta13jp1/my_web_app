@@ -1115,6 +1115,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetCalendarReflection> _calendarReflections = const [];
   String? _calendarReflectionOwner;
   int _calendarReflectionRevision = 0;
+  List<AssetCalendarReflection> get _calendarFlowReflections {
+    final owner = _supabase.auth.currentUser?.id;
+    if (owner == null || _recentFlowsOwnerId != owner) return const [];
+    return AssetCalendarReflection.fromFlows(_recentFlows);
+  }
+
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
   String? _wasteTrainingAiReviewKey;
   bool _isGeneratingAssetManagementAiSummary = false;
@@ -17306,7 +17312,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 key: ValueKey(
                     'reflection_${_supabase.auth.currentUser!.id}_$_calendarReflectionRevision'),
                 repository: AssetCalendarReflectionRepository(_supabase),
-                flowEvents: AssetCalendarReflection.fromFlows(_recentFlows),
+                flowEvents: _calendarFlowReflections,
                 start: cycleStart,
                 end: cycleEndExclusive,
                 selectedDate: _calendarSelectedDate,
@@ -17813,7 +17819,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         recorded.map((e) => e.linkedFlowId).whereType<String>().toSet();
     final reflections = [
       ...recorded,
-      ...AssetCalendarReflection.fromFlows(_recentFlows)
+      ..._calendarFlowReflections
           .where((e) => !linked.contains(e.linkedFlowId))
     ]
         .where((e) =>
