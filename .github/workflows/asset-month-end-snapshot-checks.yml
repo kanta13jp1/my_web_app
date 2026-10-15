@@ -1,0 +1,90 @@
+name: Asset Month End Snapshot Checks
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261015170000_asset_month_end_balance_snapshots.sql'
+      - 'supabase/tests/asset_month_end_balances_test.sql'
+      - 'lib/services/asset_month_end_snapshot_service.dart'
+      - 'lib/widgets/asset_month_end_snapshot_card.dart'
+      - 'test/services/asset_month_end_snapshot_service_test.dart'
+      - '.github/workflows/asset-month-end-snapshot-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: contract
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: contract
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Isolated source schema
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create role anon;
+          create role authenticated;
+          create schema auth;
+          create table auth.users(id uuid primary key);
+          create function auth.uid() returns uuid language sql stable as
+            $$select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid$$;
+          grant usage on schema auth to authenticated;
+          grant execute on function auth.uid() to authenticated;
+          create table public.cfo_assets (
+            id bigint generated always as identity primary key,
+            user_id uuid not null references auth.users(id),
+            title text, amount numeric, created_at timestamptz not null
+          );
+          -- Stub only records scheduler registration; no background task or production calls.
+          create schema cron;
+          create table cron.test_jobs(name text primary key, schedule text, command text);
+          create function cron.schedule(text,text,text) returns bigint language sql as
+            $$insert into cron.test_jobs values ($1,$2,$3)
+              on conflict(name) do update set schedule=$2,command=$3 returning 1::bigint$$;
+          SQL
+      - name: Migration and boundary/security contracts
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261015170000_asset_month_end_balance_snapshots.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/asset_month_end_balances_test.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $$ begin
+            assert (select count(*) from cron.test_jobs) = 1;
+            assert (select schedule from cron.test_jobs) = '5,35 15 * * *';
+          end $$;
+          SQL
+  flutter-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Format scoped files
+        run: dart format lib/services/asset_month_end_snapshot_service.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart
+      - name: Analyze scoped files
+        run: flutter analyze lib/services/asset_month_end_snapshot_service.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart
+      - name: Targeted tests
+        run: flutter test test/services/asset_month_end_snapshot_service_test.dart
+      - name: Preserve formatter result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: formatted-month-end-dart
+          path: |
+            lib/services/asset_month_end_snapshot_service.dart
+            lib/widgets/asset_month_end_snapshot_card.dart
+            test/services/asset_month_end_snapshot_service_test.dart
