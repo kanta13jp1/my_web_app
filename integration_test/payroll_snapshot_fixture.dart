@@ -6,6 +6,7 @@ import 'package:my_web_app/widgets/asset_payroll_snapshot_section.dart';
 class SyntheticSnapshotStore implements PayrollSnapshotStore {
   int writes = 0;
   bool failAfterCommit = false;
+  bool failReads = false;
   PayrollSnapshotDraft? saved;
 
   @override
@@ -14,11 +15,10 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
   @override
   Future<void> createAccount(String label) async {}
   @override
-  Future<PayrollSnapshotRecord?> selected(
-    String accountId,
-    DateTime month,
-  ) async =>
-      month.month == 1 && saved != null ? _record() : null;
+  Future<PayrollSnapshotRecord?> selected(String accountId, DateTime month) async {
+    if (failReads) throw StateError('synthetic unavailable');
+    return month.month == 1 && saved != null ? _record() : null;
+  }
   PayrollSnapshotRecord _record() => PayrollSnapshotRecord(
         id: 'synthetic-observation',
         balanceYen: saved!.balanceYen,
@@ -36,7 +36,7 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
   }
 }
 
-Future<void> showForm(
+Future<void> showSnapshot(
   WidgetTester tester,
   SyntheticSnapshotStore store, {
   double textScale = 1,
@@ -59,6 +59,14 @@ Future<void> showForm(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+Future<void> showForm(
+  WidgetTester tester,
+  SyntheticSnapshotStore store, {
+  double textScale = 1,
+}) async {
+  await showSnapshot(tester, store, textScale: textScale);
   await tester.enterText(find.byType(TextFormField).at(0), '2020-01-25');
   await tester.enterText(find.byType(TextFormField).at(1), '120000');
   await tester.enterText(find.byType(TextFormField).at(2), '合成銀行明細の給与行を本人確認');

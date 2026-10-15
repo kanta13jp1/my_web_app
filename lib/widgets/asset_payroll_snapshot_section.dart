@@ -31,6 +31,7 @@ class _AssetPayrollSnapshotSectionState
   PayrollSnapshotRecord? _previous;
   PayrollSnapshotDraft? _pending;
   bool _loading = true;
+  bool _dataReady = false;
   bool _busy = false;
   bool _reconciledAbsent = false;
   String? _error;
@@ -55,6 +56,9 @@ class _AssetPayrollSnapshotSectionState
     final epoch = ++_epoch;
     setState(() {
       _loading = true;
+      _dataReady = false;
+      _current = null;
+      _previous = null;
       _error = null;
     });
     try {
@@ -79,6 +83,7 @@ class _AssetPayrollSnapshotSectionState
         _current = values[0];
         _previous = values[1];
         _loading = false;
+        _dataReady = true;
       });
     } catch (_) {
       if (!mounted || epoch != _epoch) return;
@@ -217,7 +222,7 @@ class _AssetPayrollSnapshotSectionState
       _reason.clear();
       await _load();
     } catch (_) {
-      if (mounted) setState(() => _error = '保存結果が未確認です。再送せず「保存結果を照合」を押してください。');
+      if (mounted) setState(() => _error = '保存結果が未確認です。再送せず「保存結果を照合」を押してください。画面を開き直した場合は同じ口座・月を選び、取得結果を確認してください。');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -255,7 +260,7 @@ class _AssetPayrollSnapshotSectionState
 
   @override
   Widget build(BuildContext context) {
-    final enabled = !_loading && !_busy && _pending == null;
+    final enabled = _dataReady && !_loading && !_busy && _pending == null;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
