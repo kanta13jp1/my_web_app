@@ -204,8 +204,7 @@ class SalarySpendingBreakdownService {
     final text = description.toLowerCase();
     // 金融機関名を含む手数料を返済元本へ分類しない。
     // fee の部分一致は coffee 等も拾うため単語境界を使う。
-    if (text.contains('手数料') ||
-        RegExp(r'\bfees?\b').hasMatch(text)) {
+    if (text.contains('手数料') || RegExp(r'\bfees?\b').hasMatch(text)) {
       return '手数料・税金';
     }
     if (RegExp(r'\btax(?:es)? payment\b').hasMatch(text) &&
@@ -416,4 +415,3 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     '印紙税',
   ]),
 ];
-

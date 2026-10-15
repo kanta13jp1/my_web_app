@@ -461,9 +461,8 @@ class AssetPaymentCalendarService {
           date,
           AssetCalendarEvent(
             kind: AssetCalendarEventKind.transfer,
-            label: description.isEmpty
-                ? '振替（支出集計外）'
-                : '振替（支出集計外）: $description',
+            label:
+                description.isEmpty ? '振替（支出集計外）' : '振替（支出集計外）: $description',
             amount: amount.abs(),
             sourceId: flow['id']?.toString(),
           ),

@@ -4,7 +4,8 @@ import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 
 void main() {
-  test('transfer principal is visible but excluded from expense and income', () {
+  test('transfer principal is visible but excluded from expense and income',
+      () {
     final calendar = AssetPaymentCalendarService.buildMonth(
       month: DateTime(2026, 6),
       flows: <Map<String, dynamic>>[
