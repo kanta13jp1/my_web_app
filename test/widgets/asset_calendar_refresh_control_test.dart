@@ -19,9 +19,9 @@ void main() {
               TextField(controller: draft),
               AssetCalendarRefreshControl(
                 onRefresh: () {
-                calls++;
-                return pending.future;
-              },
+                  calls++;
+                  return pending.future;
+                },
               ),
             ],
           ),
@@ -46,9 +46,9 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: AssetCalendarRefreshControl(
-                onRefresh: () async {
-            if (++calls == 1) throw StateError('offline');
-          },
+            onRefresh: () async {
+              if (++calls == 1) throw StateError('offline');
+            },
           ),
         ),
       ),
