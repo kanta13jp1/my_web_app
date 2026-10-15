@@ -12,7 +12,7 @@ create table public.asset_calendar_reflections (
   alcohol_amount numeric(12,2) check (alcohol_amount between 0 and 100000000),
   pages integer check (pages between 0 and 1000000),
   minutes integer check (minutes between 0 and 1000000),
-  linked_flow_id uuid,
+  linked_flow_id bigint,
   created_at timestamptz not null default now(),
   unique(user_id, source_key),
   check (verified_amount is null or alcohol_amount is null or alcohol_amount <= verified_amount),
