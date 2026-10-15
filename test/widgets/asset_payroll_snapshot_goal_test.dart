@@ -5,7 +5,8 @@ import '../../integration_test/payroll_snapshot_fixture.dart';
 
 class ComparableStore extends SyntheticSnapshotStore {
   @override
-  Future<PayrollSnapshotRecord?> selected(String accountId, DateTime month) async {
+  Future<PayrollSnapshotRecord?> selected(
+      String accountId, DateTime month,) async {
     return PayrollSnapshotRecord(
       id: 'selected-${month.month}',
       ownerId: ownerId,
@@ -30,7 +31,9 @@ Future<void> saveGoal(WidgetTester tester, String value) async {
 }
 
 void main() {
-  testWidgets('selected consecutive day records show the configured target reached', (tester) async {
+  testWidgets(
+      'selected consecutive day records show the configured target reached',
+      (tester) async {
     final store = ComparableStore()..target = 10000;
     await showSnapshot(tester, store);
     expect(find.text('前月との差：11000円'), findsOneWidget);
