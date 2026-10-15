@@ -48,8 +48,7 @@ test('savings goal, daily design, and reload preserve planning values without fi
   await expect(savings).toHaveValue('400000');
   await expect(page.getByRole('heading', { name: '必要な積立：月 ¥70,834', exact: true })).toBeVisible();
   await expect(morning).toBeChecked();
-  await page.getByRole('textbox', { name: '今日の生活費合計（計画用メモ）' }).click();
-  await expect(page.getByRole('textbox', { name: '今日の生活費合計（計画用メモ）' })).toHaveValue('1200');
+  await expect(page.getByRole('group', { name: /今日の計画メモ ¥1,200 \/ 残り ¥412/ })).toBeVisible();
   expect(financialWrites).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
