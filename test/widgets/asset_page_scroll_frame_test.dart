@@ -51,7 +51,11 @@ void main() {
           ))
             Offset(x, y),
     ];
-    expect(thumbPoints, isNotEmpty, reason: 'visible draggable thumb is painted');
+    expect(
+      thumbPoints,
+      isNotEmpty,
+      reason: 'visible draggable thumb is painted',
+    );
     final thumbCenter = thumbPoints[thumbPoints.length ~/ 2] + rect.topLeft;
     final gesture = await tester.startGesture(
       thumbCenter,
