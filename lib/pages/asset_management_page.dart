@@ -17171,7 +17171,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           row,
           paymentDayOverrides: _debtPaymentDayOverrides,
           sourceAccountKindsById: {
-            for (final account in workbook?.accounts ?? <AssetLiabilityAccount>[])
+            for (final account
+                in workbook?.accounts ?? <AssetLiabilityAccount>[])
               account.id: account.kind,
           },
           paidPeriodStart: paidPeriodStart,

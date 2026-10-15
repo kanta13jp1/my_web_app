@@ -50,7 +50,8 @@ class AssetCalendarDebtInput {
       paid: row.paid,
       paidPeriodStart: paidPeriodStart,
       paidPeriodEndExclusive: paidPeriodEndExclusive,
-      paymentSourceAccountKind: sourceAccountKindsById[row.paymentSourceAccountId],
+      paymentSourceAccountKind:
+          sourceAccountKindsById[row.paymentSourceAccountId],
       paymentSourceAccountName: row.paymentSourceAccountName,
       paymentAmountEstimated: row.paymentAmountEstimated,
       billingConfirmed: row.billingConfirmed,
@@ -479,8 +480,8 @@ class AssetPaymentCalendarService {
             label: row.hasPaymentRoutingConflict
                 ? '${row.name}（支払方式とカード原資が不一致・要照合）'
                 : row.isFixedCost
-                ? (effectivePaid ? '${row.name} (支払済)' : row.name)
-                : (effectivePaid ? '${row.name} (支払済)' : '${row.name} 返済'),
+                    ? (effectivePaid ? '${row.name} (支払済)' : row.name)
+                    : (effectivePaid ? '${row.name} (支払済)' : '${row.name} 返済'),
             amount: amount,
             sourceId: row.id.isEmpty ? null : row.id,
             isPaid: effectivePaid,

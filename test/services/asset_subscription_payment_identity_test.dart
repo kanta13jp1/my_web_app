@@ -51,8 +51,11 @@ AssetPaymentCalendarMonth contractCalendar({
 }
 
 void main() {
-  for (final kind in [AssetLiabilityAccountKind.creditCard,
-    AssetLiabilityAccountKind.deposit, null]) {
+  for (final kind in [
+    AssetLiabilityAccountKind.creditCard,
+    AssetLiabilityAccountKind.deposit,
+    null
+  ]) {
     test('direct payment routing evidence for $kind', () {
       final debt = AssetCalendarDebtInput(
         name: 'Synthetic routed payment',
@@ -72,8 +75,10 @@ void main() {
         subscriptions: const [],
       );
       final event = result.dayFor(DateTime(2026, 10, 20))!.events.single;
-      expect(event.paymentMethodUnverified,
-        kind == AssetLiabilityAccountKind.creditCard,);
+      expect(
+        event.paymentMethodUnverified,
+        kind == AssetLiabilityAccountKind.creditCard,
+      );
       expect(result.scheduledOutflowTotal, 500);
       if (kind == AssetLiabilityAccountKind.creditCard) {
         expect(event.label, contains('支払方式とカード原資が不一致'));
