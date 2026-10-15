@@ -220,12 +220,13 @@ class PayrollMonthDeductions {
     if (social && statements.any((row) => row.conflictingPensionAliases)) {
       reasons.add('厚生年金の項目名違いが競合');
     }
-    if (social && statements.any((row) =>
-        row.socialMismatchYen != null && row.socialMismatchYen != 0)) {
+    if (social &&
+        statements.any((row) =>
+            row.socialMismatchYen != null && row.socialMismatchYen != 0,)) {
       reasons.add('社会保険の記載合計と内訳が不一致');
     }
-    if (statements.any((row) =>
-        (social ? row.socialTotalYen : row.taxTotalYen) == null)) {
+    if (statements.any(
+        (row) => (social ? row.socialTotalYen : row.taxTotalYen) == null,)) {
       reasons.add('必要項目の記載なし');
     }
     if (reasons.isNotEmpty) {

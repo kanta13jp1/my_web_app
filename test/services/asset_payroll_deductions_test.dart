@@ -28,9 +28,11 @@ void main() {
         },
       };
 
-  test('summary separates retrieval verification missing conflict and mismatch', () {
+  test('summary separates retrieval verification missing conflict and mismatch',
+      () {
     PayrollMonthDeductions month(List<Map<String, dynamic>> rows) =>
-        AssetPayrollDeductions.months(ownerId: 'owner-a', year: 2030, rows: rows)[1];
+        AssetPayrollDeductions.months(
+            ownerId: 'owner-a', year: 2030, rows: rows,)[1];
     expect(month([]).summaryStatus(social: false), '明細なし');
     final automatic = month([fixture(status: 'auto')]);
     expect(automatic.summaryStatus(social: false), contains('取得済み・本人未確認'));
@@ -38,7 +40,7 @@ void main() {
     final missing = fixture();
     (missing['deductions'] as Map).remove('income_tax');
     expect(month([missing]).summaryStatus(social: false),
-        contains('本人確認済み／必要項目の記載なし'));
+        contains('本人確認済み／必要項目の記載なし'),);
     final alias = fixture();
     (alias['deductions'] as Map)['employees_pension_insurance'] = 99;
     expect(month([alias]).summaryStatus(social: true), contains('項目名違いが競合'));

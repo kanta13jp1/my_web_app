@@ -63,11 +63,14 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
             Text(
               '社会保険料の確認済み分：${socialMonths.isEmpty ? '確定累計対象なし' : '$socialSum円'}（${socialMonths.length}/12か月）',
             ),
-            Text('明細取得済み ${months.where((m) => m.statements.isNotEmpty).length}/12か月・本人未確認 ${months.where((m) => m.statements.isNotEmpty && !m.confirmed && !m.conflicting).length}か月'),
+            Text(
+                '明細取得済み ${months.where((m) => m.statements.isNotEmpty).length}/12か月・本人未確認 ${months.where((m) => m.statements.isNotEmpty && !m.confirmed && !m.conflicting).length}か月',),
             const Text('取得済みでも本人未確認・項目不足・競合・内訳不一致の額は確定累計に含めません。'),
-            for (final month in months.where((m) => m.statements.isNotEmpty &&
-                (m.confirmedTaxYen == null || m.confirmedSocialYen == null)))
-              Text('${month.month.month}月の累計対象外理由：税 ${month.summaryStatus(social: false)} / 社会保険 ${month.summaryStatus(social: true)}'),
+            for (final month in months.where((m) =>
+                m.statements.isNotEmpty &&
+                (m.confirmedTaxYen == null || m.confirmedSocialYen == null),))
+              Text(
+                  '${month.month.month}月の累計対象外理由：税 ${month.summaryStatus(social: false)} / 社会保険 ${month.summaryStatus(social: true)}',),
             const Text('空欄は0円ではありません。自動読取は本人確認済みの合計に含めません。'),
             for (final month in months)
               ExpansionTile(
