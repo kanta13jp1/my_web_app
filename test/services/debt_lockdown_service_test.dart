@@ -8,6 +8,25 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
+    test('unverified zero preserves enabled and history on read', () async {
+      final service = DebtLockdownService();
+      final prefs = await SharedPreferences.getInstance();
+      await service.setEnabled(true, remainingDebt: 1000, prefs: prefs);
+      final before = {for (final key in prefs.getKeys()) key: prefs.get(key)};
+      final snapshot = await service.loadSnapshot(remainingDebt: 0, prefs: prefs);
+      expect(snapshot.isReleased, isFalse);
+      expect(snapshot.isEnabled, isTrue);
+      expect({for (final key in prefs.getKeys()) key: prefs.get(key)}, before);
+      final verified = await service.loadSnapshot(
+        remainingDebt: 0,
+        debtFullyVerified: true,
+        prefs: prefs,
+      );
+      expect(verified.isReleased, isTrue);
+      expect(prefs.getBool('debt_lockdown_enabled_v1'), isTrue);
+      expect({for (final key in prefs.getKeys()) key: prefs.get(key)}, before);
+    });
+
     test('can enable mode, complete a rule, and record a violation', () async {
       final now = DateTime(2026, 3, 23, 8, 30);
       final service = DebtLockdownService(nowProvider: () => now);
@@ -38,14 +57,17 @@ void main() {
     });
 
     test(
-      'marks snapshot as released when remaining debt reaches zero',
+      'verified zero reports released without changing stored preference',
       () async {
         final service = DebtLockdownService(
           nowProvider: () => DateTime(2026, 3, 23, 9, 0),
         );
 
         await service.setEnabled(true, remainingDebt: 80000);
-        final snapshot = await service.loadSnapshot(remainingDebt: 0);
+        final snapshot = await service.loadSnapshot(
+        remainingDebt: 0,
+        debtFullyVerified: true,
+      );
 
         expect(snapshot.isReleased, isTrue);
         expect(snapshot.isEnabled, isFalse);
