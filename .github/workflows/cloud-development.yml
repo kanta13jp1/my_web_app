@@ -182,7 +182,7 @@ jobs:
       - name: Test in cloud
         if: env.CLOUD_PROFILE == 'test'
         run: |
-          rg -n 'DebtLockdownService|KonbiniUdonChallengeService' lib test --glob '*.dart'
+          grep -RnE 'DebtLockdownService|KonbiniUdonChallengeService' lib test --include='*.dart'
           flutter analyze
           flutter test test/services/debt_lockdown_service_test.dart test/services/konbini_udon_challenge_service_test.dart --reporter expanded
 
