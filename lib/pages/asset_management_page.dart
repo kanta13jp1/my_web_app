@@ -479,17 +479,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // heuristicFloor 依存から精密判定へ切り替わる。AssetSalaryAmountStore で永続化 +
   // asset_pref_mirror(salary_amount)で端末間同期。
   double? _salaryAmount;
-  // 支払済みチェックのリセット契機を「給料がメインバンクへ振り込まれた検知」にする
+  // 支払済みチェックのリセット契機を「本人による給与着金の確認」にする
   // ための、リセット承認済み給料サイクル(yyyy-MM)。AssetSalaryResetMarkerStore で
   // 永続化 + asset_pref_mirror(salary_reset_ack_cycle)で端末間同期(max-merge)。
   // 当日サイクルがこのマーカーと一致しない間は前サイクルの支払済みチェックを保持し、
-  // 残高更新を促す。検知 or 手動承認でマーカーを当日サイクルへ前進=リセット。
+  // 残高更新を促す。本人の着金確認後の手動承認でだけマーカーを前進させる。
   final AssetSalaryResetMarkerStore _salaryResetMarkerStore =
       const AssetSalaryResetMarkerStore();
   static const String _salaryResetMarkerMirrorKey = 'salary_reset_ack_cycle';
   String? _ackedResetCycleKey;
-  // 検知成立後の二重スケジュール防止(post-frame ack 中のサイクルキー)。
-  String? _pendingSalaryResetAck;
+  // 金額や残高増による候補。着金確認や保存済み状態とは分離する。
+  SalaryDepositDetection _salaryDepositCandidate = SalaryDepositDetection.none;
   static const List<Color> _salarySpendingChartColors = <Color>[
     Color(0xFF0F766E),
     Color(0xFF2563EB),
@@ -1506,7 +1506,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       dt,
       salaryDay: _salaryDay,
     );
-    // 給料振込を検知/承認したサイクルだけ新サイクルへ切り替える。未承認の間は前サイクル
+    // 本人が着金を確認して承認したサイクルだけ新サイクルへ切り替える。未承認の間は前サイクル
     // に留まり、支払済みチェック等の月次stateを保持する(暦の給料日では切り替えない)。
     // マーカー未設定(初回)は当日サイクルを採用。load/save/sync すべてこの実効月を
     // 共有するため、ウィンドウ中の編集も前サイクルへ対称に書かれる(非対称消失なし)。
@@ -7653,7 +7653,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
       await _fetchTodayClosing();
-      // メイン口座の残高更新が給料反映なら、ここで検知して支払済みをリセットする
+      // メイン口座の残高更新が給料反映なら、ここで確認候補を更新する
       // (残高増は入金フローを生成しないため、残高窓ベースの検知が要)。
       _maybeDetectSalaryDeposit();
     } catch (e) {
@@ -10685,37 +10685,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  /// 当日サイクルが未承認のときだけ給料振込を検知し、検知できたらリセットを承認する。
-  /// build からではなくイベント(月次stateロード後 / フロー取得後 / 残高更新後 / 1分
-  /// タイマー)から呼ぶ。未承認でない通常時はワークブックも作らず即 return(軽量)。
-  /// 冪等(承認後はマーカー一致でこの分岐に入らない / `_pendingSalaryResetAck` で多重防止)。
+  /// 推定は表示用の候補だけ更新する。受取確認・サイクル承認は本人操作で行う。
   void _maybeDetectSalaryDeposit() {
-    if (!_salaryResetPending || !_assetLiabilityBootStateLoaded) {
-      return;
-    }
-    final currentCycleKey = _currentSalaryCycleKey();
-    if (_pendingSalaryResetAck == currentCycleKey) {
-      return;
-    }
+    if (!mounted || !_assetLiabilityBootStateLoaded) return;
     final workbook = _buildCurrentAssetLiabilityWorkbook();
-    if (workbook == null) {
+    final detection = _salaryResetPending && workbook != null
+        ? _computeSalaryDepositDetection(workbook)
+        : SalaryDepositDetection.none;
+    if (_salaryDepositCandidate.confidence == detection.confidence &&
+        _salaryDepositCandidate.signal == detection.signal &&
+        _salaryDepositCandidate.matchedAmount == detection.matchedAmount) {
       return;
     }
-    final detection = _computeSalaryDepositDetection(workbook);
-    if (!detection.detected) {
-      return;
-    }
-    _pendingSalaryResetAck = currentCycleKey;
-    unawaited(
-      _acknowledgeSalaryReset(currentCycleKey).then((_) {
-        if (mounted && _loadedAssetLiabilityMonthKey == currentCycleKey) {
-          _reconcileAndSaveSalaryIncomePlansIfPending(
-              forceSalaryReceived: true);
-        }
-      }).whenComplete(() {
-        _pendingSalaryResetAck = null;
-      }),
-    );
+    setState(() => _salaryDepositCandidate = detection);
   }
 
   /// 現サイクルにメインバンクへの給料振込があったかを推定する。
@@ -10827,56 +10809,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return maxAmount > 0 ? maxAmount : null;
   }
 
-  bool _hasSalaryInflowInCurrentCycle() {
-    for (final flow in _flowsForCycle(_now)) {
-      if (_isIncomeActionType(flow['action_type']?.toString() ?? '')) {
-        final amount = ((flow['amount'] as num?)?.toDouble() ?? 0).abs();
-        final description = flow['description']?.toString() ?? '';
-        final title = flow['title']?.toString() ?? '';
-        if (amount >= 200000 ||
-            description.contains('給与') ||
-            description.contains('給料') ||
-            title.contains('給与') ||
-            title.contains('給料')) {
-          return true;
-        }
-      }
-    }
-    final currentCycleKey = _currentSalaryCycleKey();
-    for (final row in _payslipRows) {
-      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
-      final amount =
-          ((row['net_amount'] ?? row['amount']) as num?)?.toDouble() ?? 0;
-      if (payDate != null && amount > 0) {
-        final cycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
-          AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
-            payDate,
-            salaryDay: _salaryDay,
-          ),
-        );
-        if (cycleKey == currentCycleKey) {
-          return true;
-        }
-      }
-    }
-    for (final row in _payslipSalaryIncomes) {
-      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
-      final amount = (row['amount'] as num?)?.toDouble() ?? 0;
-      if (payDate != null && amount > 0) {
-        final cycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
-          AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
-            payDate,
-            salaryDay: _salaryDay,
-          ),
-        );
-        if (cycleKey == currentCycleKey) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   bool _isSalaryIncomePlan(AssetLiabilityIncomePlan plan) {
     final name = plan.name.toLowerCase();
     return name.contains('給料') ||
@@ -10897,8 +10829,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       baseDate: _now,
     );
 
-    final shouldMarkSalaryReceived =
-        forceSalaryReceived || _hasSalaryInflowInCurrentCycle();
+    // 給与明細の会計計上と、本人による口座着金確認を混同しない。
+    final shouldMarkSalaryReceived = forceSalaryReceived;
 
     if (!shouldMarkSalaryReceived) {
       return reconciledWithPayslips;
@@ -10971,8 +10903,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       builder: (dialogContext) => AlertDialog(
         title: const Text('給料を受け取った'),
         content: const Text(
-          '支払済みチェックを新しい給料サイクルへリセットします。'
-          '前サイクルのチェックは消えます。よろしいですか?',
+          '実際の給与着金を口座明細で確認済みの場合だけ実行してください。'
+          '支払済みチェックの表示を新しい給料サイクルへ切り替えます。'
+          '過去サイクルの記録は保持します。よろしいですか?',
         ),
         actions: [
           TextButton(
@@ -15798,10 +15731,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 8),
               Text(
                 '給与明細から収入に計上された金額と、口座への入金確認は別です。'
-                '現在、メイン口座への給与振込を自動検知できていません。'
+                '現在、メイン口座への給与着金は未確認です。'
                 '支払済みチェックは前サイクルのまま保持しています。'
                 '口座の入出金明細を確認し、残高を更新してください。'
-                '入金を検知すると新しいサイクルへ切り替わります。'
+                '金額の一致や残高の増加だけでは新しいサイクルへ切り替えません。'
                 '入金後の支出などで検知できない場合は、入金を確認したうえで'
                 '「給料を受け取った（リセット）」を選んでください。',
                 style: TextStyle(
@@ -15811,6 +15744,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
               const SizedBox(height: 8),
+              if (_salaryDepositCandidate.detected) ...[
+                Text(
+                  '給与入金の候補があります。収入額や残高の増加は推定のため、'
+                  '明細で実際の給与着金を確認してから切り替えてください。',
+                  key: const Key('asset_salary_deposit_candidate'),
+                  style: TextStyle(color: scheme.onTertiaryContainer, height: 1.5),
+                ),
+                const SizedBox(height: 8),
+              ],
               _buildTextStatusChip(
                 label: '前サイクルの支払済みを表示中',
                 color: const Color(0xFF0E7490),
@@ -15818,8 +15760,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               if (!salaryRegistered) ...[
                 const SizedBox(height: 8),
                 Text(
-                  '想定給料額を登録すると、入金額の一致で給料振込を自動検知でき、'
-                  '誤検知や取りこぼしが減ります。',
+                  '想定給料額を登録すると、金額の一致から確認候補を見つけやすくなります。'
+                  '候補は着金済みの証拠ではありません。',
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.5,
