@@ -1,6 +1,6 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/10/14 (JST)_
+_Generated: 2026/10/15 (JST)_
 _Active user tasks: 79_
 
 ## 概要
@@ -1605,21 +1605,6 @@ Use X replies to earn impressions without relying on acquaintances. Reply to 30 
 
 ---
 
-### 🔴 🔧 [追加要望][収益化P0][X集客][10K] 10Kインプレッション狙いのブリーフィング投稿を7日実行
-
-- **id**: `aeede945-e64d-49c3-b208-3f03d7454011`
-- **category**: 追加要望 / x-10k-briefing-growth
-- **progress**: 90%
-- **status**: in_progress
-- **priority**: high
-- **deadline**: 2027-09-07
-
-**説明**:
-
-Publish one Daily Briefing style X post/thread per day for 7 days using timely topics and the AI share briefing preset. Target at least one 10K-impression post, then convert profile visits/replies into one real site user.
-
----
-
 ### 🔴 🔧 [追加要望][収益化P0][X集客] 7日間・1日5投稿のインプレッション実験
 
 - **id**: `aaacd8b8-2efb-4db0-b77c-fe3a007e1284`
@@ -1632,6 +1617,21 @@ Publish one Daily Briefing style X post/thread per day for 7 days using timely t
 **説明**:
 
 Run a 7-day X content sprint: 1 build-in-public post, 1 problem/lesson post, 1 site feature post, 1 reply-bait question, and 1 quote/reply to a relevant larger account per day.
+
+---
+
+### 🔴 🔧 [追加要望][収益化P0][X集客][10K] 10Kインプレッション狙いのブリーフィング投稿を7日実行
+
+- **id**: `aeede945-e64d-49c3-b208-3f03d7454011`
+- **category**: 追加要望 / x-10k-briefing-growth
+- **progress**: 90%
+- **status**: in_progress
+- **priority**: high
+- **deadline**: 2027-09-07
+
+**説明**:
+
+Publish one Daily Briefing style X post/thread per day for 7 days using timely topics and the AI share briefing preset. Target at least one 10K-impression post, then convert profile visits/replies into one real site user.
 
 ---
 
