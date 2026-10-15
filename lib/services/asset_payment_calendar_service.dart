@@ -15,6 +15,9 @@ class AssetCalendarDebtInput {
     this.paid = false,
     this.paidPeriodStart,
     this.paidPeriodEndExclusive,
+    this.paymentSourceAccountName,
+    this.paymentAmountEstimated = true,
+    this.billingConfirmed = false,
   });
 
   factory AssetCalendarDebtInput.fromDebtRow(
@@ -37,6 +40,9 @@ class AssetCalendarDebtInput {
       paid: row.paid,
       paidPeriodStart: paidPeriodStart,
       paidPeriodEndExclusive: paidPeriodEndExclusive,
+      paymentSourceAccountName: row.paymentSourceAccountName,
+      paymentAmountEstimated: row.paymentAmountEstimated,
+      billingConfirmed: row.billingConfirmed,
     );
   }
 
@@ -59,6 +65,9 @@ class AssetCalendarDebtInput {
   /// conservative rule for future dates; callers must not invent a period.
   final DateTime? paidPeriodStart;
   final DateTime? paidPeriodEndExclusive;
+  final String? paymentSourceAccountName;
+  final bool paymentAmountEstimated;
+  final bool billingConfirmed;
 }
 
 /// カレンダーに載せる日次イベントの種別。
@@ -93,6 +102,10 @@ class AssetCalendarEvent {
     this.amount,
     this.sourceId,
     this.isPaid = false,
+    this.affectsCashProjection = true,
+    this.paymentSourceAccountName,
+    this.paymentAmountEstimated = true,
+    this.billingConfirmed = false,
   });
 
   final AssetCalendarEventKind kind;
@@ -104,6 +117,10 @@ class AssetCalendarEvent {
 
   /// 支払完了済みフラグ。
   final bool isPaid;
+  final bool affectsCashProjection;
+  final String? paymentSourceAccountName;
+  final bool paymentAmountEstimated;
+  final bool billingConfirmed;
 }
 
 /// 1日分のサマリ。支出/収入はフロー記録の合算。
@@ -450,6 +467,10 @@ class AssetPaymentCalendarService {
             amount: amount,
             sourceId: row.id.isEmpty ? null : row.id,
             isPaid: effectivePaid,
+            affectsCashProjection: amount != null,
+            paymentSourceAccountName: row.paymentSourceAccountName,
+            paymentAmountEstimated: row.paymentAmountEstimated,
+            billingConfirmed: row.billingConfirmed,
           ),
         );
       }
@@ -475,6 +496,7 @@ class AssetPaymentCalendarService {
             kind: AssetCalendarEventKind.subscription,
             label: '${name.isEmpty ? '固定費' : name}（カード利用・現金引落なし）',
             amount: price,
+            affectsCashProjection: false,
           ),
         );
         continue;
