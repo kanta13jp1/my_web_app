@@ -12,7 +12,9 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: MediaQuery(
-            data: const MediaQueryData(textScaler: TextScaler.linear(mobile ? 2 : 1)),
+            data: const MediaQueryData(
+              textScaler: TextScaler.linear(mobile ? 2 : 1),
+            ),
             child: SingleChildScrollView(
               child: AssetPayrollDeductionsCard(
                 ownerId: 'synthetic-owner',
