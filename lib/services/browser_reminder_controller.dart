@@ -113,10 +113,11 @@ class BrowserReminderController extends ChangeNotifier {
       if (generation != _generation || _disposed) return;
       lastRequestedAt = _now();
       nextAt = _now().add(Duration(minutes: intervalMinutes));
-    } catch (_) {
+      message = 'ブラウザから通知の表示応答を受け取りました。Windowsのバナー表示はこのページから確認できません。';
+    } catch (error) {
       if (generation != _generation || _disposed) return;
       stop();
-      message = '通知を送れなかったため停止しました。設定を確認して再開してください。';
+      message = _deliveryFailure(error, periodic: true);
     } finally {
       _delivering = false;
       if (!_disposed) notifyListeners();
@@ -134,17 +135,25 @@ class BrowserReminderController extends ChangeNotifier {
         await _showReminder();
         if (generation != _generation || _disposed) return;
         lastRequestedAt = _now();
-        message = 'テスト通知を要求しました。表示されない場合はWindowsとブラウザの通知設定を確認してください。';
+        message = 'ブラウザから通知の表示応答を受け取りました。Windowsのバナー表示はこのページから確認できません。';
       }
-    } catch (_) {
+    } catch (error) {
       if (_disposed || generation != _generation) return;
-      message = 'テスト通知を送れませんでした。サイトの通知設定を確認してください。';
+      message = _deliveryFailure(error, periodic: false);
     } finally {
       if (!_disposed && generation == _generation) {
         busy = false;
         notifyListeners();
       }
     }
+  }
+
+  String _deliveryFailure(Object error, {required bool periodic}) {
+    final prefix = error is TimeoutException
+        ? '8秒以内にブラウザから通知の表示応答がありませんでした。'
+        : 'ブラウザが通知を表示できませんでした。';
+    final suffix = periodic ? ' 定期通知を停止しました。' : '';
+    return '$prefix$suffix 許可済みでも表示に失敗する場合があります。Windowsの通知センター（Win+N）、応答不可、Chromeのバナー設定を確認してください。';
   }
 
   void refreshPermission() {
