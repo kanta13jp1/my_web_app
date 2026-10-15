@@ -6,7 +6,9 @@ import '../../integration_test/payroll_snapshot_fixture.dart';
 class ComparableStore extends SyntheticSnapshotStore {
   @override
   Future<PayrollSnapshotRecord?> selected(
-      String accountId, DateTime month,) async {
+    String accountId,
+    DateTime month,
+  ) async {
     return PayrollSnapshotRecord(
       id: 'selected-${month.month}',
       ownerId: ownerId,
