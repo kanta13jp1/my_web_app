@@ -4,7 +4,7 @@ import 'package:my_web_app/widgets/asset_payroll_deductions_card.dart';
 
 void main() {
   testWidgets('empty months remain missing on narrow enlarged-text layout', (tester) async {
-    await tester.view.setPhysicalSize(const Size(320, 900));
+    tester.view.physicalSize = const Size(320, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
