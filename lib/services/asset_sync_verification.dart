@@ -14,7 +14,8 @@ AssetSyncVerification verifyAssetPreferenceSync({
   bool hasPendingDeletion = false,
 }) {
   if (!ownerMatches) return AssetSyncVerification.unverified;
-  if (hasDirtyKeys || hasPendingDeletion) return AssetSyncVerification.localOnly;
+  if (hasDirtyKeys || hasPendingDeletion)
+    return AssetSyncVerification.localOnly;
   if (!loggedIn) {
     return hasLocalData
         ? AssetSyncVerification.localOnly
@@ -31,7 +32,9 @@ AssetSyncVerification verifyAssetPreferenceSync({
         ? AssetSyncVerification.localOnly
         : AssetSyncVerification.unverified;
   }
-  return hasLocalData ? AssetSyncVerification.synced : AssetSyncVerification.empty;
+  return hasLocalData
+      ? AssetSyncVerification.synced
+      : AssetSyncVerification.empty;
 }
 
 /// JSON object key order is irrelevant; list order and missing/null keys are
@@ -54,7 +57,8 @@ bool assetSyncPayloadsEqual(Object? left, Object? right) {
   if (left is Map && right is Map) {
     if (left.length != right.length) return false;
     for (final key in left.keys) {
-      if (key is! String || !right.containsKey(key) ||
+      if (key is! String ||
+          !right.containsKey(key) ||
           !assetSyncPayloadsEqual(left[key], right[key])) return false;
     }
     return true;
