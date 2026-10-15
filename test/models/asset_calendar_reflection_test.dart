@@ -21,7 +21,9 @@ void main() {
     expect(event.linkedFlowId, '333');
     expect(AssetCalendarReflection.fromJson(event.toJson()).linkedFlowId, '333');
     expect(
-      () => AssetCalendarReflection.fromJson({...fixture(), 'linked_flow_id': 'bad'}),
+      () => AssetCalendarReflection.fromJson(
+        {...fixture(), 'linked_flow_id': 'bad'},
+      ),
       throwsFormatException,
     );
   });

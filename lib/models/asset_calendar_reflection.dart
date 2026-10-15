@@ -98,8 +98,7 @@ class AssetCalendarReflection {
       throw const FormatException('メモが長すぎます');
     }
     final flow = json['linked_flow_id']?.toString();
-    if (flow != null &&
-        (!RegExp(r'^[1-9][0-9]*$').hasMatch(flow))) {
+    if (flow != null && !RegExp(r'^[1-9][0-9]*$').hasMatch(flow)) {
       throw const FormatException('明細の参照が不正です');
     }
     return AssetCalendarReflection(
