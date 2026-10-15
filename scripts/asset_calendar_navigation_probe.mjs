@@ -28,7 +28,7 @@ async function prepare(name){
   return {next,rect};
 }
 async function verify(name){
-  await page.getByRole('group',{name:/^マネーカレンダー\n2026\/6\/25〜7\/24\n/}).waitFor({state:'attached',timeout:5000});
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('[role="group"]')).some(el => (el.getAttribute('aria-label') ?? '').split('\n').includes('2026/6/25〜7/24')),null,{timeout:5000});
   const dialog=page.getByRole('dialog');
   if(await dialog.count())throw new Error('Unexpected dialog after next cycle');
   await page.screenshot({path:`${dir}/${name}-after.png`});
@@ -43,6 +43,7 @@ try{
   for(let step=0;step<300;step++){
     await page.keyboard.press('Tab');
     const current=await page.evaluate(()=>({label:document.activeElement?.getAttribute('aria-label'),text:document.activeElement?.textContent}));
+    if(step<20 || current.label)evidence.push({focusStep:step,label:current.label,text:current.text?.slice(0,60)});
     if(current.label==='次のサイクル' || current.text?.trim()==='次のサイクル'){focused=true;break;}
   }
   if(!focused)throw new Error('Keyboard next-cycle focus was not established');
