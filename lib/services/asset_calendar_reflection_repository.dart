@@ -1,7 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/asset_calendar_reflection.dart';
 
-class AssetCalendarReflectionRepository {
+abstract interface class AssetCalendarReflectionStore {
+  Future<List<AssetCalendarReflection>> load(DateTime start, DateTime end);
+  Future<void> import(List<AssetCalendarReflection> events);
+}
+
+class AssetCalendarReflectionRepository implements AssetCalendarReflectionStore {
   AssetCalendarReflectionRepository(this.client);
   final SupabaseClient client;
 

@@ -17746,7 +17746,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 6),
               if (!selectedDay.hasAnyEvent)
                 Text(
-                  'この日のイベントはありません。',
+                  'この日の収支・支払イベントはありません。',
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -17819,8 +17819,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         recorded.map((e) => e.linkedFlowId).whereType<String>().toSet();
     final reflections = [
       ...recorded,
-      ..._calendarFlowReflections
-          .where((e) => !linked.contains(e.linkedFlowId))
+      ..._calendarFlowReflections.where((e) => !linked.contains(e.linkedFlowId))
     ]
         .where((e) =>
             e.date.year == day.date.year &&

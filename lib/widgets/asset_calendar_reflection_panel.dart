@@ -1,3 +1,4 @@
+import 'asset_reflection_day_badge.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/asset_calendar_reflection.dart';
@@ -14,7 +15,7 @@ class AssetCalendarReflectionPanel extends StatefulWidget {
     this.flowEvents = const [],
   });
   final List<AssetCalendarReflection> flowEvents;
-  final AssetCalendarReflectionRepository repository;
+  final AssetCalendarReflectionStore repository;
   final DateTime start;
   final DateTime end;
   final DateTime? selectedDate;
@@ -229,7 +230,7 @@ class _AssetCalendarReflectionPanelState
             spacing: 8,
             children: [
               for (final kind in AssetReflectionKind.values)
-                Chip(label: Text('${kind.label} ${summary.days(kind)}日')),
+                Chip(backgroundColor: AssetReflectionDayBadge.backgroundFor({kind}), label: Text('${kind.label} ${summary.days(kind)}日')),
             ],
           ),
           Text(

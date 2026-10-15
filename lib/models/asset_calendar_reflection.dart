@@ -150,8 +150,11 @@ class AssetCalendarReflection {
               ? description.substring(0, 200)
               : description,
           sourceLabel: '記録済み支出の明示された内容',
-          verifiedAmount:
-              value is num && value.isFinite && !RegExp(r'金額不明|金額未確認|推定|概算').hasMatch(description) ? value.abs().toDouble() : null,
+          verifiedAmount: value is num &&
+                  value.isFinite &&
+                  !RegExp(r'金額不明|金額未確認|推定|概算').hasMatch(description)
+              ? value.abs().toDouble()
+              : null,
           linkedFlowId: RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id) ? id : null,
         ),
       );

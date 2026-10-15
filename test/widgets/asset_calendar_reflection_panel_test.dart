@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/models/asset_calendar_reflection.dart';
 import 'package:my_web_app/services/asset_calendar_reflection_repository.dart';
 import 'package:my_web_app/widgets/asset_calendar_reflection_panel.dart';
 import 'package:my_web_app/widgets/asset_reflection_day_badge.dart';
 
-class FakeRepository extends AssetCalendarReflectionRepository {
-  FakeRepository(super.client);
+class FakeRepository implements AssetCalendarReflectionStore {
   int loads = 0;
+  @override
+  Future<void> import(List<AssetCalendarReflection> events) async {}
   @override
   Future<List<AssetCalendarReflection>> load(
     DateTime start,
@@ -62,9 +62,7 @@ void main() {
   });
   testWidgets('selected day reading detail and period changes stay scoped',
       (tester) async {
-    final client = SupabaseClient('http://localhost', 'test-key');
-    addTearDown(client.dispose);
-    final repository = FakeRepository(client);
+    final repository = FakeRepository();
     Widget app(DateTime selected, DateTime start) => MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
