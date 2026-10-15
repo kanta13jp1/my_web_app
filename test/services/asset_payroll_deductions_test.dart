@@ -22,10 +22,71 @@ void main() {
           'health_insurance': 80,
           'pension': 100,
           'employment_insurance': 20,
+          'long_term_care_insurance': 0,
+          'employees_pension_fund_contribution': 0,
           'ideco': 10,
         },
       };
 
+  test('missing optional premiums are unknown rather than inferred zero', () {
+    final raw = fixture();
+    raw['social_insurance_total'] = null;
+    final items = raw['deductions'] as Map;
+    items.remove('long_term_care_insurance');
+    items.remove('employees_pension_fund_contribution');
+    expect(PayrollDeductions.fromRow(raw)!.socialPartsTotalYen, isNull);
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, isNull);
+    items['long_term_care_insurance'] = 0;
+    items['employees_pension_fund_contribution'] = 0;
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, 200);
+    items.remove('long_term_care_insurance');
+    raw['social_insurance_total'] = 200;
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, 200);
+    expect(PayrollDeductions.fromRow(raw)!.socialPartsTotalYen, isNull);
+  });
+  test('AI pension alias and care/fund remain one social total', () {
+    final raw = fixture();
+    raw['social_insurance_total'] = 230;
+    raw['deductions'] = {
+      'income_tax': 50,
+      'resident_tax': 40,
+      'health_insurance': 80,
+      'employees_pension_insurance': 100,
+      'employment_insurance': 20,
+      'long_term_care_insurance': 10,
+      'employees_pension_fund_contribution': 20,
+      'ideco': 10,
+    };
+    final row = PayrollDeductions.fromRow(raw)!;
+    expect(row.items['pension'], 100);
+    expect(row.socialPartsTotalYen, 230);
+    expect(row.socialTotalYen, 230);
+    expect(row.identifiedSubtotalYen, 330);
+    expect(row.socialMismatchYen, 0);
+    expect(row.unclassified, isEmpty);
+  });
+  test('matching pension aliases count once and conflicting ones need review',
+      () {
+    final raw = fixture();
+    (raw['deductions'] as Map)['employees_pension_insurance'] = 100;
+    expect(PayrollDeductions.fromRow(raw)!.socialPartsTotalYen, 200);
+    (raw['deductions'] as Map)['employees_pension_insurance'] = 101;
+    final row = PayrollDeductions.fromRow(raw)!;
+    expect(row.conflictingPensionAliases, isTrue);
+    expect(row.socialPartsTotalYen, isNull);
+    final month = AssetPayrollDeductions.months(
+      ownerId: 'owner-a',
+      year: 2030,
+      rows: [raw],
+    )[1];
+    expect(month.confirmedSocialYen, isNull);
+  });
+  test('present unknown optional premium is not treated as zero', () {
+    final raw = fixture();
+    raw['social_insurance_total'] = null;
+    (raw['deductions'] as Map)['long_term_care_insurance'] = null;
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, isNull);
+  });
   test(
     'social total replaces components and iDeCo is neither tax nor social',
     () {
