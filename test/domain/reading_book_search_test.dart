@@ -21,8 +21,8 @@ void main() {
       expect(edition.totalPages, pages);
       expect(edition.year, year);
       expect(edition.sourceUrl, source);
-      expect(edition.bookUrl, 'https://www.amazon.co.jp/s/?i=stripbooks&k=$isbn');
-      for (final query in [isbn, isbn == '9784003360439' ? '4003360435' : '4003360443']) {
+      expect(edition.bookUrl, 'https://www.amazon.co.jp/s/?i=stripbooks&k=$isbn',);
+      for (final query in [isbn, isbn == '9784003360439' ? '4003360435' : '4003360443',]) {
         final matches = await const ReadingBookSearch().search(query, client: client,);
         expect(matches.any((book) => book.edition.isbn == isbn), isTrue);
       }
