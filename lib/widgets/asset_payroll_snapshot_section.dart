@@ -289,7 +289,7 @@ class _AssetPayrollSnapshotSectionState
         account == null ||
         _busy ||
         _pending != null ||
-        _pendingGoal != null) return;
+        _pendingGoal != null) { return; }
     final text = _target.text.trim();
     final next = text.isEmpty ? null : int.tryParse(text);
     if (text.isNotEmpty &&
@@ -317,8 +317,9 @@ class _AssetPayrollSnapshotSectionState
           .setTarget(request.accountId, request.expected, request.next);
       if (!mounted) return;
       await _load();
-      if (mounted)
+      if (mounted) {
         setState(() => _goalMessage = '目標の更新応答を受け取りました。表示は再取得した現在値です。');
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -349,8 +350,9 @@ class _AssetPayrollSnapshotSectionState
             '照合時点の目標は${current == null ? '未設定' : '$current円'}です。今回の更新の成否は確定できません。自動再送はしません。';
       });
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() => _goalMessage = '現在値を照合できませんでした。再送せず、時間を置いて照合してください。');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -462,22 +464,22 @@ class _AssetPayrollSnapshotSectionState
                       ? '目標判定：比較対象未取得'
                       : comparison!.reached!
                           ? '目標判定：達成'
-                          : '目標判定：未達成'),
+                          : '目標判定：未達成',),
               TextField(
                 controller: _target,
                 enabled: enabled,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
-                    labelText: '前月比の増加目標（円・空欄は未設定）', hintText: '例：10000'),
+                    labelText: '前月比の増加目標（円・空欄は未設定）', hintText: '例：10000',),
               ),
               TextButton(
                   onPressed: enabled ? _saveTarget : null,
-                  child: const Text('目標を保存・解除')),
+                  child: const Text('目標を保存・解除'),),
               if (_goalMessage != null) Text(_goalMessage!),
               if (_pendingGoal != null)
                 TextButton(
                     onPressed: _busy ? null : _reconcileTarget,
-                    child: const Text('目標の現在値を照合')),
+                    child: const Text('目標の現在値を照合'),),
               const Text('目標はこの口座だけに適用します。銀行残高・収支・確認済み残高は変更しません。'),
               Form(
                 key: _form,
