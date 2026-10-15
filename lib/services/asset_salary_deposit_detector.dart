@@ -20,6 +20,7 @@ enum SalaryDepositSignal {
   balanceJump,
   heuristicFlow,
   heuristicBalance,
+  payslipPaid,
 }
 
 /// サイクル窓内の収入フロー1件(金額は正の円、発生日時はローカル)。
@@ -43,19 +44,26 @@ class MainAccountBalanceWindow {
   const MainAccountBalanceWindow({
     required this.previousCycleEndBalance,
     required this.currentBalance,
+    this.peakBalanceInCycle,
   });
 
   final double? previousCycleEndBalance;
   final double? currentBalance;
 
-  /// 前サイクル末 → 現在 の残高増減。特定できない場合は null。
+  /// 現サイクル内に記録された残高の最大値。入金直後に残高を更新していれば、
+  /// その後の支出で現在残高が減っても給料反映を検知できる。記録が無ければ null。
+  final double? peakBalanceInCycle;
+
+  /// 前サイクル末 → 現サイクル内の最大残高(現在残高を含む) の増減。
+  /// 特定できない場合は null。
   double? get delta {
     final prev = previousCycleEndBalance;
     final cur = currentBalance;
     if (prev == null || cur == null) {
       return null;
     }
-    return cur - prev;
+    final peak = peakBalanceInCycle;
+    return (peak != null && peak > cur ? peak : cur) - prev;
   }
 
   static const MainAccountBalanceWindow unknown = MainAccountBalanceWindow(
@@ -99,6 +107,9 @@ class AssetSalaryDepositDetector {
   ///   - (C2) 残高が [heuristicFloor] 以上 **増加** → medium (heuristicBalance)
   /// - いずれも該当しなければ none(=未検知)。
   ///
+  /// - (D) 支給日を迎えた現サイクルの給与明細 → medium (payslipPaid)
+  ///   ([paidPayslipAmounts] は呼び出し側が pay_date <= 今日 で絞る)。
+  ///
   /// 残高の **減少** は給料振込のシグナルにならない(正の増分のみ採用)。
   /// 登録給料額がある場合は誤検知(部分入金などでの早すぎるリセット)を避けるため
   /// ヒューリスティックは使わない。取りこぼしは手動 override で救済する。
@@ -108,6 +119,7 @@ class AssetSalaryDepositDetector {
     double? expectedSalaryAmount,
     double amountTolerance = 0.15,
     double heuristicFloor = 100000,
+    List<double> paidPayslipAmounts = const [],
   }) {
     final hasExpected =
         expectedSalaryAmount != null && expectedSalaryAmount > 0;
@@ -133,6 +145,16 @@ class AssetSalaryDepositDetector {
           matchedAmount: delta,
         );
       }
+      // (D) 支給日を迎えた現サイクルの給与明細。口座残高を更新していなくても検知する。
+      for (final amount in paidPayslipAmounts) {
+        if (amount > 0 && (amount - expected).abs() <= tolerance) {
+          return SalaryDepositDetection(
+            confidence: SalaryDepositConfidence.medium,
+            signal: SalaryDepositSignal.payslipPaid,
+            matchedAmount: amount,
+          );
+        }
+      }
       return SalaryDepositDetection.none;
     }
 
@@ -153,6 +175,15 @@ class AssetSalaryDepositDetector {
         signal: SalaryDepositSignal.heuristicBalance,
         matchedAmount: delta,
       );
+    }
+    for (final amount in paidPayslipAmounts) {
+      if (amount >= heuristicFloor) {
+        return SalaryDepositDetection(
+          confidence: SalaryDepositConfidence.medium,
+          signal: SalaryDepositSignal.payslipPaid,
+          matchedAmount: amount,
+        );
+      }
     }
     return SalaryDepositDetection.none;
   }
