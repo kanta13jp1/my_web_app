@@ -126,7 +126,7 @@ class AssetLiabilityRepaymentSimulationService {
         .where(
           (row) =>
               _isEligibleDebt(row,
-                  includePaidPrincipal: includePaidPrincipal) &&
+                  includePaidPrincipal: includePaidPrincipal,) &&
               (eligibleAccountIds?.contains(row.id) ?? true),
         )
         .map(_SimulationDebt.fromRow)
