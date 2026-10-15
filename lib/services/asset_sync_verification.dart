@@ -59,7 +59,9 @@ bool assetSyncPayloadsEqual(Object? left, Object? right) {
     for (final key in left.keys) {
       if (key is! String ||
           !right.containsKey(key) ||
-          !assetSyncPayloadsEqual(left[key], right[key])) return false;
+          !assetSyncPayloadsEqual(left[key], right[key])) {
+        return false;
+      }
     }
     return true;
   }
