@@ -244,11 +244,13 @@ class DebtProgressCardService {
     const simulation = AssetLiabilityRepaymentSimulationService();
     // 繰り上げ返済なしの基準プラン = 「今のままだとこうなる」。
     final stockRows = workbook.debtMasterRows
-        .where((row) =>
-            row.balance < 0 &&
-            row.isDirectCashflowTarget &&
-            !row.includedInBillingAccount &&
-            !workbook.scheduledExpenseAccountIds.contains(row.id),)
+        .where(
+          (row) =>
+              row.balance < 0 &&
+              row.isDirectCashflowTarget &&
+              !row.includedInBillingAccount &&
+              !workbook.scheduledExpenseAccountIds.contains(row.id),
+        )
         .toList();
     final stockIds = stockRows.map((row) => row.id).toSet();
     final result = simulation.buildComparison(
@@ -266,11 +268,13 @@ class DebtProgressCardService {
       for (final row in basis.priorityRows) row.id,
     };
 
-    final termsConfirmed = stockRows.every((row) =>
-        row.annualRate.isFinite &&
-        !row.paymentAmountEstimated &&
-        (confirmedAnnualRateAccountKeys.contains(row.id) ||
-            confirmedAnnualRateAccountKeys.contains(row.name)),);
+    final termsConfirmed = stockRows.every(
+      (row) =>
+          row.annualRate.isFinite &&
+          !row.paymentAmountEstimated &&
+          (confirmedAnnualRateAccountKeys.contains(row.id) ||
+              confirmedAnnualRateAccountKeys.contains(row.name)),
+    );
     final monthlyInterest = stockRows.fold<double>(
       0,
       (sum, row) => sum + row.balance.abs() * row.annualRate / 12,

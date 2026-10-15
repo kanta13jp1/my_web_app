@@ -123,9 +123,12 @@ class AssetLiabilityRepaymentSimulationService {
     int maxMonths = _defaultMaxMonths,
   }) {
     final sourceDebts = workbook.debtMasterRows
-        .where((row) =>
-            _isEligibleDebt(row, includePaidPrincipal: includePaidPrincipal) &&
-            (eligibleAccountIds?.contains(row.id) ?? true),)
+        .where(
+          (row) =>
+              _isEligibleDebt(row,
+                  includePaidPrincipal: includePaidPrincipal) &&
+              (eligibleAccountIds?.contains(row.id) ?? true),
+        )
         .map(_SimulationDebt.fromRow)
         .toList(growable: false);
     final baseMonthlyPayment = sourceDebts.fold<double>(
@@ -165,8 +168,10 @@ class AssetLiabilityRepaymentSimulationService {
     );
   }
 
-  bool _isEligibleDebt(AssetLiabilityDebtRow row,
-      {bool includePaidPrincipal = false,}) {
+  bool _isEligibleDebt(
+    AssetLiabilityDebtRow row, {
+    bool includePaidPrincipal = false,
+  }) {
     return row.balance < -_epsilon &&
         (includePaidPrincipal || !row.paid) &&
         row.isDirectCashflowTarget &&

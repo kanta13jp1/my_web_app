@@ -28,8 +28,10 @@ void main() {
       } else {
         expect(card.payoffMonths, isNull);
         expect(card.estimatedInterest, isNull);
-        expect(card.projectionStatus,
-            DebtProgressProjectionStatus.unconfirmedTerms,);
+        expect(
+          card.projectionStatus,
+          DebtProgressProjectionStatus.unconfirmedTerms,
+        );
         expect(card.projectionNote, contains('未確認'));
       }
     });
@@ -47,8 +49,10 @@ void main() {
       workbook: workbook,
       confirmedAnnualRateAccountKeys: const {'SyntheticLoan'},
     )!;
-    expect(card.projectionStatus,
-        DebtProgressProjectionStatus.insufficientPayment,);
+    expect(
+      card.projectionStatus,
+      DebtProgressProjectionStatus.insufficientPayment,
+    );
     expect(card.payoffMonths, isNull);
     expect(card.estimatedInterest, isNull);
   });

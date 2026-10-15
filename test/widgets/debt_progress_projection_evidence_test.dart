@@ -23,13 +23,15 @@ void main() {
         debtCount: 1,
         projectionStatus: status,
       );
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: DebtProgressCard(data: data, month: DateTime(2026, 6)),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: DebtProgressCard(data: data, month: DateTime(2026, 6)),
+            ),
           ),
         ),
-      ),);
+      );
       expect(find.text(data.projectionNote), findsOneWidget);
       expect(find.text('毎月の返済予定'), findsOneWidget);
       expect(tester.takeException(), isNull);
