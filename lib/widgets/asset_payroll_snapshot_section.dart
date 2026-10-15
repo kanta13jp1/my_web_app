@@ -61,6 +61,7 @@ class _AssetPayrollSnapshotSectionState
     setState(() {
       _loading = true;
       _dataReady = false;
+      _accounts = [];
       _current = null;
       _previous = null;
       _error = null;
@@ -318,7 +319,9 @@ class _AssetPayrollSnapshotSectionState
       if (!mounted) return;
       await _load();
       if (mounted) {
-        setState(() => _goalMessage = '目標の更新応答を受け取りました。表示は再取得した現在値です。');
+        setState(() => _goalMessage = _dataReady
+            ? '目標の更新応答を受け取りました。表示は再取得した現在値です。'
+            : '目標の更新応答は受け取りましたが、現在値の再取得に失敗しました。再読込してください。');
       }
     } catch (_) {
       if (!mounted) return;

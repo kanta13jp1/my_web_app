@@ -14,6 +14,19 @@ Future<void> saveGoal(WidgetTester tester, String value) async {
 }
 
 void main() {
+  testWidgets('stale expected target never overwrites a concurrent setting', (tester) async {
+    final store = SyntheticSnapshotStore();
+    await showSnapshot(tester, store);
+    store.target = 20000;
+    await saveGoal(tester, '10000');
+    expect(store.targetWrites, 0);
+    expect(store.target, 20000);
+    await tester.ensureVisible(find.text('目標の現在値を照合'));
+    await tester.tap(find.text('目標の現在値を照合'));
+    await tester.pumpAndSettle();
+    expect(find.text('前月比の増加目標：20000円'), findsOneWidget);
+    expect(store.targetWrites, 0);
+  });
   testWidgets('target remains unset until explicit save and can be cleared',
       (tester) async {
     final store = SyntheticSnapshotStore();

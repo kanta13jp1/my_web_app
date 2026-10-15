@@ -1,5 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+int? readPayrollTarget(Object? value) {
+  if (value == null) return null;
+  if (value is! num || !value.isFinite || value < 0 ||
+      value > 9007199254740991 || value != value.roundToDouble()) {
+    throw const FormatException('Unsupported payroll target value');
+  }
+  return value.toInt();
+}
+
 String payrollDate(DateTime date) =>
     '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
@@ -104,7 +113,7 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
         PayrollSnapshotAccount(
           row['id'] as String,
           row['display_label'] as String,
-          targetIncreaseYen: (row['target_increase_yen'] as num?)?.toInt(),
+          targetIncreaseYen: readPayrollTarget(row['target_increase_yen']),
         ),
     ];
   }

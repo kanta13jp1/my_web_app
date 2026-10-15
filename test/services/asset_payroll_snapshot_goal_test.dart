@@ -3,6 +3,14 @@ import 'package:my_web_app/services/asset_payroll_snapshot_goal.dart';
 import 'package:my_web_app/services/asset_payroll_snapshot_store.dart';
 
 void main() {
+  test('stored target preserves unset and zero and rejects unsafe values', () {
+    expect(readPayrollTarget(null), isNull);
+    expect(readPayrollTarget(0), 0);
+    expect(readPayrollTarget(10000), 10000);
+    for (final value in [-1, 1.5, 9007199254740992, '10000']) {
+      expect(() => readPayrollTarget(value), throwsFormatException);
+    }
+  });
   PayrollSnapshotRecord record({
     String owner = 'owner-a',
     String account = 'account-a',
