@@ -113,6 +113,7 @@ import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_mirror_read_policy.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_status.dart';
+import 'package:my_web_app/services/asset_sync_verification.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
@@ -602,11 +603,44 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 起動時の複数ロードからの同時呼び出しを 1 回に集約する再入ガード。
   bool _syncRefreshInFlight = false;
   bool _syncRefreshDirty = false;
+  String? _syncSourcesOwnerId;
+  Map<AssetSyncDomain, Object?> _syncObservedLocalValues = {};
+  int? _syncObservedDirtyGeneration;
+  int? _syncObservedTombstoneGeneration;
 
-  AssetSyncStatusSummary get _syncSummary => AssetSyncStatusSummary(
-        loggedIn: _supabase.auth.currentUser != null,
+  Map<AssetSyncDomain, Object?> _syncCurrentPreferenceValues() => {
+        AssetSyncDomain.mainAccount:
+            AssetManagementMainAccountStore.encodeMirrorValue(
+          _assetManagementMainAccountId,
+        ),
+        AssetSyncDomain.watchlist: AssetWatchlistService.encodeMirrorValue(
+          _watchlistByType.values.toList(),
+        ),
+        AssetSyncDomain.revolving:
+            AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          _revolvingConfigs,
+        ),
+        AssetSyncDomain.debtOverrides:
+            Map<String, int>.from(_debtPaymentDayOverrides),
+      };
+
+  AssetSyncStatusSummary get _syncSummary {
+    return AssetSyncStatusSummary(
+      loggedIn: _supabase.auth.currentUser != null,
+      sources: currentAssetSyncSources(
+        observedOwnerId: _syncSourcesOwnerId,
+        currentOwnerId: _supabase.auth.currentUser?.id,
         sources: _syncSources,
-      );
+        observedLocalValues: _syncObservedLocalValues,
+        currentLocalValues: _syncCurrentPreferenceValues(),
+        observationStable: _syncObservedDirtyGeneration ==
+                AssetSyncDirtyKeysStore.mutationGeneration &&
+            !AssetSyncDirtyKeysStore.hasPendingMutations,
+        tombstoneObservationStable: _syncObservedTombstoneGeneration ==
+            MirrorTombstoneStore.mutationGeneration,
+      ),
+    );
+  }
 
   /// 集約 pref ドメインのローカル最終変更時刻 (LWW 判定用 / Phase B)。
   final AssetSyncTimestampStore _syncTimestampStore =
@@ -10024,6 +10058,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     late final IconData icon;
     late final String text;
     switch (summary.level) {
+      case AssetSyncLevel.unverified:
+        background = warnBg;
+        foreground = warnFg;
+        icon = Icons.help_outline;
+        text = '対象6領域の保存状況：未照合 ${summary.unverifiedDomains.length} 項目';
+      case AssetSyncLevel.noData:
+        background = const Color(0xFFF1F5F9);
+        foreground = const Color(0xFF475569);
+        icon = Icons.cloud_queue;
+        text = '対象6領域に保存対象なし';
       case AssetSyncLevel.loggedOut:
         background = warnBg;
         foreground = warnFg;
@@ -10033,17 +10077,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         background = warnBg;
         foreground = warnFg;
         icon = Icons.sync_problem;
-        text = '未同期 ${summary.localOnlyCount} 項目（この端末のみ）';
+        text =
+            '対象6領域：未同期 ${summary.localOnlyCount}・未照合 ${summary.unverifiedDomains.length} 項目';
       case AssetSyncLevel.allSynced:
         background = okBg;
         foreground = okFg;
         icon = Icons.cloud_done;
-        text = 'サーバ保存済み（残高・明細との照合は別途必要）';
+        text = '対象6領域の現在値をサーバと照合済み（残高・明細照合は別途）';
     }
-    final tappable = summary.level != AssetSyncLevel.allSynced;
     return InkWell(
       key: const Key('asset_sync_status_chip'),
-      onTap: tappable ? _showSyncStatusDetails : null,
+      onTap: _showSyncStatusDetails,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -10067,8 +10111,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
             ),
-            if (tappable)
-              Icon(Icons.chevron_right, size: 18, color: foreground),
+            Icon(Icons.chevron_right, size: 18, color: foreground),
           ],
         ),
       ),
@@ -10129,35 +10172,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('同期ステータス'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (summary.isLoggedOut)
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               const Text(
-                '未ログインのため、資産管理のデータはこの端末にのみ保存されます。\n'
-                'ログインするとサーバに同期され、スマホなど他の端末でも参照できます。',
-                style: TextStyle(fontSize: 13, height: 1.4),
-              )
-            else ...[
-              const Text(
-                '次のデータはまだサーバに同期されていません（この端末のみ）:',
-                style: TextStyle(fontSize: 13, height: 1.4),
+                '以下の6領域だけの保存状況です。残高・明細の正確さや、'
+                'ブラウザ内だけに保存する計画などの同期を保証するものではありません。',
               ),
-              const SizedBox(height: 8),
-              for (final domain in summary.localOnlyDomains)
+              const SizedBox(height: 12),
+              for (final domain in AssetSyncDomain.values)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.cloud_off, size: 16),
-                      const SizedBox(width: 6),
-                      Text(domain.label),
-                    ],
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    '${domain.label}：${switch (summary.sources[domain]) {
+                      AssetSyncSource.synced => '現在値をサーバと照合済み',
+                      AssetSyncSource.localOnly => '現在値または削除の同期が未完了',
+                      AssetSyncSource.empty => '保存対象なし',
+                      AssetSyncSource.unverified || null => '未照合（保存失敗とは未確定）',
+                    }}',
                   ),
                 ),
+              const SizedBox(height: 12),
+              const Text(
+                '入金予定と月次の支払・計画設定は、'
+                'サーバーの現在値との一致が未確認です。保存失敗を意味するものではありません。',
+              ),
             ],
-          ],
+          ),
         ),
         actions: [
           TextButton(
@@ -11226,11 +11269,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  /// 各データ領域の同期出所を再計算する。サーバに該当データがあれば synced、
-  /// ローカルのみなら localOnly、何も無ければ empty。未ログイン時は同期されない
-  /// ため、データのある領域はすべて localOnly になる。
-  ///
-  /// 起動時の複数ロードや保存後から繰り返し呼ばれるため、再入は 1 回に集約する。
+  /// 対象6領域の保存状況。現在値の一致を確認できない領域を保存済みにしない。
+  /// 読取専用であり、失敗時の再送やローカル値の変更は行わない。
   Future<void> _refreshSyncSources() async {
     if (_syncRefreshInFlight) {
       _syncRefreshDirty = true;
@@ -11238,78 +11278,148 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     _syncRefreshInFlight = true;
     try {
-      final user = _supabase.auth.currentUser;
-      final presentPrefKeys = <String>{};
-      var hasInflowOnServer = false;
-      if (user != null) {
+      final ownerId = _supabase.auth.currentUser?.id;
+      final dirtyGeneration = AssetSyncDirtyKeysStore.mutationGeneration;
+      final tombstoneGeneration = MirrorTombstoneStore.mutationGeneration;
+      var readSucceeded = false;
+      var remote = <String, Map<String, dynamic>>{};
+      if (ownerId != null) {
         try {
-          final boot = _bootPrefMirrorFuture;
-          if (boot != null) {
-            presentPrefKeys.addAll((await boot).keys);
-          } else {
-            final rows = await _supabase
-                .from('asset_pref_mirror')
-                .select('pref_key')
-                .eq('user_id', user.id);
-            for (final row in rows) {
-              final key = row['pref_key'];
-              if (key is String) {
-                presentPrefKeys.add(key);
-              }
-            }
-          }
-        } catch (e) {
-          debugPrint('sync sources: pref mirror fetch failed: $e');
-        }
-        try {
-          final inflowRows = await _supabase
-              .from('asset_expected_inflow_items')
-              .select('id')
-              .eq('user_id', user.id)
-              .limit(1);
-          hasInflowOnServer = inflowRows.isNotEmpty;
-        } catch (e) {
-          debugPrint('sync sources: inflow items fetch failed: $e');
+          // Boot cache and key existence cannot acknowledge the current payload.
+          final rows = await _supabase
+              .from('asset_pref_mirror')
+              .select('user_id,pref_key,value')
+              .eq('user_id', ownerId)
+              .inFilter(
+            'pref_key',
+            const [
+              'main_account_id',
+              'watchlist_entries',
+              'revolving_credit_configs',
+              'debt_payment_day_overrides',
+              'watchlist_entries_deleted',
+              'revolving_credit_configs_deleted',
+              'debt_payment_day_override_deleted',
+            ],
+          );
+          remote = indexPrefMirrorRowsByKey(rows);
+          readSucceeded = true;
+        } catch (error) {
+          debugPrint('sync verification read failed: $error');
         }
       }
-
-      AssetSyncSource prefSource(String prefKey, {required bool hasLocal}) {
-        if (user != null && presentPrefKeys.contains(prefKey)) {
-          return AssetSyncSource.synced;
-        }
-        return hasLocal ? AssetSyncSource.localOnly : AssetSyncSource.empty;
+      final store = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      if (_supabase.auth.currentUser?.id != ownerId) {
+        _syncRefreshDirty = true;
+        return;
+      }
+      // No await from this point to setState: compare the latest local values,
+      // not the values present when the remote read began.
+      final dirty = _syncDirtyKeysStore.readDirtySnapshot(store);
+      final observationStable =
+          dirtyGeneration == AssetSyncDirtyKeysStore.mutationGeneration &&
+              !AssetSyncDirtyKeysStore.hasPendingMutations;
+      final tombstoneObservationStable =
+          tombstoneGeneration == MirrorTombstoneStore.mutationGeneration;
+      bool pendingDeletion(MirrorTombstoneStore tombstones, String remoteKey) {
+        if (ownerId != null && !readSucceeded) return false;
+        final localIds = tombstones.activeIds(store);
+        if (localIds.isEmpty) return false;
+        final raw = remote[remoteKey]?['value'];
+        if (raw is! Map) return true;
+        final remoteIds = MirrorTombstoneStore.decodeMirror(
+          Map<String, dynamic>.from(raw),
+        );
+        return !remoteIds.toSet().containsAll(localIds);
       }
 
+      AssetSyncSource prefSource(
+        String key, {
+        required bool hasLocal,
+        required Object? currentValue,
+        bool deletionPending = false,
+      }) {
+        final row = remote[key];
+        final result = verifyAssetPreferenceSync(
+          loggedIn: ownerId != null,
+          ownerMatches: true,
+          hasLocalData: hasLocal,
+          remoteReadSucceeded:
+              readSucceeded && (row == null || row['user_id'] == ownerId),
+          remoteRowExists: row != null && row['user_id'] == ownerId,
+          currentValue: currentValue,
+          remoteValue: row?['value'],
+          hasDirtyKeys: dirty[key]?.isNotEmpty ?? false,
+          hasPendingDeletion: deletionPending,
+          observationStable: observationStable && tombstoneObservationStable,
+        );
+        return switch (result) {
+          AssetSyncVerification.unverified => AssetSyncSource.unverified,
+          AssetSyncVerification.empty => AssetSyncSource.empty,
+          AssetSyncVerification.localOnly => AssetSyncSource.localOnly,
+          AssetSyncVerification.synced => AssetSyncSource.synced,
+        };
+      }
+
+      final loggedIn = ownerId != null;
+      AssetSyncSource withoutCurrentRemoteProof(bool hasLocal) => loggedIn
+          ? AssetSyncSource.unverified
+          : (hasLocal ? AssetSyncSource.localOnly : AssetSyncSource.empty);
       final next = <AssetSyncDomain, AssetSyncSource>{
         AssetSyncDomain.mainAccount: prefSource(
           'main_account_id',
           hasLocal: _assetManagementMainAccountId != null,
+          currentValue: AssetManagementMainAccountStore.encodeMirrorValue(
+            _assetManagementMainAccountId,
+          ),
         ),
         AssetSyncDomain.watchlist: prefSource(
           'watchlist_entries',
           hasLocal: _watchlistByType.isNotEmpty,
+          currentValue: AssetWatchlistService.encodeMirrorValue(
+            _watchlistByType.values.toList(),
+          ),
+          deletionPending: pendingDeletion(
+            _watchlistTombstones,
+            'watchlist_entries_deleted',
+          ),
         ),
         AssetSyncDomain.revolving: prefSource(
           'revolving_credit_configs',
           hasLocal: _revolvingConfigs.isNotEmpty,
+          currentValue: AssetRevolvingCreditConfigStore.encodeMirrorValue(
+            _revolvingConfigs,
+          ),
+          deletionPending: pendingDeletion(
+            _revolvingConfigTombstones,
+            'revolving_credit_configs_deleted',
+          ),
         ),
         AssetSyncDomain.debtOverrides: prefSource(
           'debt_payment_day_overrides',
           hasLocal: _debtPaymentDayOverrides.isNotEmpty,
+          currentValue: Map<String, int>.from(_debtPaymentDayOverrides),
+          deletionPending: pendingDeletion(
+            _debtOverrideTombstones,
+            'debt_payment_day_override_deleted',
+          ),
         ),
-        AssetSyncDomain.inflow: _inflowSyncSource(
-          loggedIn: user != null,
-          hasInflowOnServer: hasInflowOnServer,
+        // Row existence / enabled writes / idle status do not prove equality.
+        AssetSyncDomain.inflow: withoutCurrentRemoteProof(
+          _expectedInflows.isNotEmpty || _expectedInflowRules.isNotEmpty,
         ),
-        AssetSyncDomain.monthlyState: _monthlyStateSyncSource(
-          loggedIn: user != null,
+        AssetSyncDomain.monthlyState: withoutCurrentRemoteProof(
+          !_currentAssetLiabilityMonthlyState().isEmpty,
         ),
       };
-
-      if (!mounted) {
-        return;
-      }
       setState(() {
+        _syncSourcesOwnerId = ownerId;
+        _syncObservedLocalValues = _syncCurrentPreferenceValues();
+        _syncObservedDirtyGeneration =
+            observationStable ? dirtyGeneration : null;
+        _syncObservedTombstoneGeneration =
+            tombstoneObservationStable ? tombstoneGeneration : null;
         _syncSources
           ..clear()
           ..addAll(next);
@@ -11321,32 +11431,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         unawaited(_refreshSyncSources());
       }
     }
-  }
-
-  AssetSyncSource _inflowSyncSource({
-    required bool loggedIn,
-    required bool hasInflowOnServer,
-  }) {
-    final hasLocal =
-        _expectedInflows.isNotEmpty || _expectedInflowRules.isNotEmpty;
-    if (loggedIn && hasInflowOnServer) {
-      return AssetSyncSource.synced;
-    }
-    return hasLocal ? AssetSyncSource.localOnly : AssetSyncSource.empty;
-  }
-
-  AssetSyncSource _monthlyStateSyncSource({required bool loggedIn}) {
-    final hasLocal = !_currentAssetLiabilityMonthlyState().isEmpty;
-    if (!hasLocal) {
-      return AssetSyncSource.empty;
-    }
-    // リモート書込が無効 / 未ログイン / 直近同期が失敗ならローカルのみ。
-    if (!loggedIn ||
-        !_assetLiabilityRepository.supabaseWritesEnabled ||
-        _assetLiabilitySyncStatus == AssetLiabilityManualSyncStatus.failure) {
-      return AssetSyncSource.localOnly;
-    }
-    return AssetSyncSource.synced;
   }
 
   Future<void> _setMainAccount(String? accountId) async {
