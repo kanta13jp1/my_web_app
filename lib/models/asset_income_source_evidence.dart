@@ -337,6 +337,20 @@ class AssetIncomeSourceEvidence {
               '${parsed.day.toString().padLeft(2, '0')}' ==
           row.date;
     }
-    return RegExp(r'(Z|[+-]\d{2}:\d{2})$').hasMatch(row.date);
+    final parts = RegExp(
+      r'^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})'
+      r'(?:\.\d{1,6})?(Z|[+-]\d{2}:\d{2})$',
+    ).firstMatch(row.date);
+    if (parts == null) return false;
+    final year = int.parse(parts[1]!);
+    final month = int.parse(parts[2]!);
+    final day = int.parse(parts[3]!);
+    final calendar = DateTime.utc(year, month, day);
+    if (calendar.year != year || calendar.month != month || calendar.day != day) {
+      return false;
+    }
+    return int.parse(parts[4]!) < 24 &&
+        int.parse(parts[5]!) < 60 &&
+        int.parse(parts[6]!) < 60;
   }
 }

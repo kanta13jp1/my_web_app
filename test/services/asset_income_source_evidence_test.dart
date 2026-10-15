@@ -259,4 +259,42 @@ void main() {
     expect(overflowing.combinedRecordedTotal, isNull);
     expect(overflowing.sourceRecordedTotals[IncomeSourceKind.flow], isNull);
   });
+
+  test('invalid or timezone-free instants are not normalized into valid dates', () {
+    for (final date in [
+      '2026-02-30T00:00:00Z',
+      '2026-01-25T24:00:00Z',
+      '2026-01-25T00:00:00',
+    ]) {
+      final result = _project([
+        _row(
+          IncomeSourceKind.flow,
+          'f',
+          date: date,
+          precision: IncomeDatePrecision.instant,
+        ),
+      ]);
+      expect(result.combinedRecordedTotal, isNull);
+      expect(result.issues.single.problem, IncomeEvidenceProblem.invalidDate);
+    }
+  });
+
+  test('explicit FK instants with equivalent offsets keep the same observation', () {
+    final result = _project([
+      _row(
+        IncomeSourceKind.payslip,
+        'p',
+        date: '2026-01-25T00:00:00Z',
+        precision: IncomeDatePrecision.instant,
+      ),
+      _row(
+        IncomeSourceKind.salaryIncome,
+        's',
+        payslipId: 'p',
+        date: '2026-01-25T09:00:00+09:00',
+        precision: IncomeDatePrecision.instant,
+      ),
+    ]);
+    expect(result.combinedRecordedTotal, 1000);
+  });
 }
