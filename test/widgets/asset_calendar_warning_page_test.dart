@@ -66,7 +66,10 @@ void main() {
   testWidgets('same loaded cycle paid state prevents future double subtraction',
       (tester) async {
     await pumpWarningPage(tester, paid: true);
-    expect(find.byKey(const Key('asset_calendar_shortfall_warning')), findsNothing);
+    expect(
+      find.byKey(const Key('asset_calendar_shortfall_warning')),
+      findsNothing,
+    );
     final saved = await const AssetLiabilityMonthlyStateStore().loadMonth(
       DateTime(2026, 5),
     );

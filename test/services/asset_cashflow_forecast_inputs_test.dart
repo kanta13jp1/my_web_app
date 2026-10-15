@@ -160,8 +160,7 @@ void main() {
       expect(_projectOutflow(byId), 4000);
     });
 
-    test('unlinked contracts stay independent after month-end clamping',
-        () {
+    test('unlinked contracts stay independent after month-end clamping', () {
       final inputs = _billInputs(
         debt: _debt(day: 31),
         dueDate: '2026-01-30',
@@ -177,7 +176,8 @@ void main() {
       expect(forecast.months[1].outflowTotal, 4000);
     });
 
-    test('explicit contract uses canonical due date after month-end clamping', () {
+    test('explicit contract uses canonical due date after month-end clamping',
+        () {
       final inputs = _billInputs(
         debt: _debt(day: 31, recurringFixedCostId: 'cost-bill'),
         dueDate: '2026-01-30',

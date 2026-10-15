@@ -16854,13 +16854,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               key: const Key('asset_forecast_unverified_payments'),
             ),
           AssetCashflowForecastCard(
-        forecast: forecast,
-        currencyFormatter: _formatYen,
-        currentHorizon: _forecastHorizonMonths,
-        onHorizonChanged: (months) =>
-            setState(() => _forecastHorizonMonths = months),
-        onReviewPaymentDays: () => _scrollTo(_keyCalendar),
-      ),
+            forecast: forecast,
+            currencyFormatter: _formatYen,
+            currentHorizon: _forecastHorizonMonths,
+            onHorizonChanged: (months) =>
+                setState(() => _forecastHorizonMonths = months),
+            onReviewPaymentDays: () => _scrollTo(_keyCalendar),
+          ),
         ],
       ),
     );
@@ -17593,7 +17593,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       // Aggregate balances have no single verified observation
                       // timestamp here; do not manufacture one from a date key.
                       onReviewPayments: () => _scrollTo(
-                        _sectionAnchorKey(AssetManagementSectionId.workbookBoard),
+                        _sectionAnchorKey(
+                          AssetManagementSectionId.workbookBoard,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
