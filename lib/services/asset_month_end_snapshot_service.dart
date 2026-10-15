@@ -10,6 +10,7 @@ class AssetMonthEndSnapshot {
   final double netWorth;
   final List<Map<String, dynamic>> accounts;
   final int staleAccountCount;
+  final int undatedAccountCount;
 
   const AssetMonthEndSnapshot({
     required this.monthKey,
@@ -20,6 +21,7 @@ class AssetMonthEndSnapshot {
     required this.netWorth,
     required this.accounts,
     required this.staleAccountCount,
+    required this.undatedAccountCount,
   });
 
   factory AssetMonthEndSnapshot.fromJson(Map<String, dynamic> row) {
@@ -34,6 +36,7 @@ class AssetMonthEndSnapshot {
           .map((item) => Map<String, dynamic>.from(item as Map))
           .toList(growable: false),
       staleAccountCount: (row['stale_account_count'] as num).toInt(),
+      undatedAccountCount: (row['undated_account_count'] as num).toInt(),
     );
   }
 }

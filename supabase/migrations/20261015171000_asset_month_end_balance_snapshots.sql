@@ -24,6 +24,7 @@ create table public.asset_month_end_balance_snapshots (
   net_worth numeric not null,
   accounts jsonb not null check (jsonb_typeof(accounts) = 'array'),
   stale_account_count integer not null check (stale_account_count >= 0),
+  undated_account_count integer not null check (undated_account_count >= 0),
   -- The source is recorded balances, never a bank-confirmed month-end statement.
   source text not null default 'recorded_balances' check (source = 'recorded_balances'),
   primary key (user_id, month_key),
@@ -76,12 +77,19 @@ begin
       ) order by title) as accounts,
       count(*) filter (where created_at < v_month::timestamp at time zone 'Asia/Tokyo')::integer as stale
     from latest group by user_id
+  ), undated as (
+    select a.user_id, count(distinct a.title)::integer as count
+    from public.cfo_assets a
+    join public.asset_month_end_snapshot_settings s on s.user_id = a.user_id and s.enabled
+    where a.created_at is null
+    group by a.user_id
   )
   insert into public.asset_month_end_balance_snapshots (
     user_id, month_key, cutoff_at, captured_at, total_assets,
-    total_liabilities, net_worth, accounts, stale_account_count
-  ) select user_id, v_month, v_cutoff, p_run_at, assets, liabilities, net, accounts, stale
-    from totals
+    total_liabilities, net_worth, accounts, stale_account_count, undated_account_count
+  ) select t.user_id, v_month, v_cutoff, p_run_at, assets, liabilities, net,
+      accounts, stale, coalesce(u.count, 0)
+    from totals t left join undated u on u.user_id = t.user_id
   on conflict (user_id, month_key) do nothing;
   get diagnostics v_inserted = row_count;
   return v_inserted;

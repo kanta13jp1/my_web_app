@@ -49,7 +49,7 @@ jobs:
           create table public.cfo_assets (
             id bigint generated always as identity primary key,
             user_id uuid not null references auth.users(id),
-            title text, amount numeric, created_at timestamptz not null
+            title text, amount numeric, created_at timestamptz
           );
           -- Stub only records scheduler registration; no background task or production calls.
           create schema cron;

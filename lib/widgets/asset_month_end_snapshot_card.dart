@@ -158,7 +158,7 @@ class _AssetMonthEndSnapshotCardState extends State<AssetMonthEndSnapshotCard> {
                                     )
                                     .join('\n'),
                                 child: Text(
-                                  '前月以前の残高 ${snapshot.staleAccountCount}口座',
+                                  '古い残高 ${snapshot.staleAccountCount}口座・日時不明 ${snapshot.undatedAccountCount}口座',
                                 ),
                               ),
                       ),

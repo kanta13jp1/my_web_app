@@ -19,6 +19,7 @@ AssetMonthEndSnapshot checkpoint() => AssetMonthEndSnapshot.fromJson({
         }
       ],
       'stale_account_count': 1,
+      'undated_account_count': 1,
     });
 
 class NoNetworkClient extends Fake implements SupabaseClient {}
@@ -57,6 +58,7 @@ void main() {
     expect(snapshot.cutoffAt, DateTime.utc(2026, 8, 31, 15));
     expect(snapshot.accounts.single['observed_at'], '2026-07-31T14:00:00Z');
     expect(snapshot.staleAccountCount, 1);
+    expect(snapshot.undatedAccountCount, 1);
   });
 
   testWidgets('narrow view preserves gaps and opt-in is explicit',
