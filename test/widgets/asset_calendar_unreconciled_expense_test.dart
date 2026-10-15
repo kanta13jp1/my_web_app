@@ -118,6 +118,11 @@ void main() {
       await tester.ensureVisible(badge);
       await tester.pump();
       expect(badge, findsOneWidget);
+      final day = find.byKey(const Key('asset_calendar_day_20'));
+      await tester.ensureVisible(day);
+      await tester.pump();
+      await tester.tap(day);
+      await tester.pump();
       expect(
         find.byKey(const Key('asset_calendar_unreconciled_details')),
         findsOneWidget,

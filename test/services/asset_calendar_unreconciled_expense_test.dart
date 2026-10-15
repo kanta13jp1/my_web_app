@@ -38,7 +38,7 @@ void main() {
   test('transfer and income are never unknown expenses', () {
     final day = summary([
       flow('使途不明金（残高差分から自動記録）', 700, action: 'transfer'),
-      flow('使途不明金: 返金', 200, action: 'income'),
+      flow('使途不明金: 返金', 200, action: 'conquer'),
     ]);
     expect(day.expenseTotal, 0);
     expect(day.unreconciledExpenseTotal, 0);
