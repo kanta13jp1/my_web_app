@@ -11,20 +11,29 @@ void main() {
       (tester) async {
     final store = SyntheticSnapshotStore()..failTargetAfterCommit = true;
     await showSnapshot(tester, store, textScale: mobile ? 2 : 1);
+    // Let Japanese fallback fonts settle before editing an active text painter.
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(seconds: 2));
+    });
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'initial goal layout');
     expect(find.text('前月比の増加目標：未設定'), findsOneWidget);
     final field = find.byWidgetPredicate(
       (widget) =>
           widget is TextField && widget.decoration?.hintText == '例：10000',
     );
     await tester.enterText(field, '10000');
+    expect(tester.takeException(), isNull, reason: 'goal input');
     await tester.ensureVisible(find.text('目標を保存・解除'));
     await tester.tap(find.text('目標を保存・解除'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'uncertain target response');
     expect(store.targetWrites, 1);
     expect(store.writes, 0);
     await tester.ensureVisible(find.text('目標の現在値を照合'));
     await tester.tap(find.text('目標の現在値を照合'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'target reconciliation');
     expect(find.text('前月比の増加目標：10000円'), findsOneWidget);
     expect(find.textContaining('今回の更新の成否は確定できません'), findsOneWidget);
     expect(store.targetWrites, 1);
