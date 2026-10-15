@@ -30,7 +30,7 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: contract
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Isolated source schema
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
@@ -81,7 +81,7 @@ jobs:
         run: flutter test test/services/asset_month_end_snapshot_service_test.dart
       - name: Preserve formatter result
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: formatted-month-end-dart
           path: |
