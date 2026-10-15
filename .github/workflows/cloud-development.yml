@@ -508,3 +508,37 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  payroll-goal-preflight:
+    if: inputs.profile == 'workspace'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Format analyze and verify explicit target
+        run: |
+          dart format lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart integration_test/payroll_snapshot_fixture.dart integration_test/payroll_snapshot_test.dart test/widgets/asset_payroll_snapshot_section_test.dart lib/services/asset_payroll_snapshot_goal.dart test/services/asset_payroll_snapshot_goal_test.dart test/widgets/asset_payroll_snapshot_goal_test.dart
+          flutter analyze lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart integration_test/payroll_snapshot_fixture.dart integration_test/payroll_snapshot_test.dart test/widgets/asset_payroll_snapshot_section_test.dart lib/services/asset_payroll_snapshot_goal.dart test/services/asset_payroll_snapshot_goal_test.dart test/widgets/asset_payroll_snapshot_goal_test.dart
+          flutter test test/services/asset_payroll_snapshot_goal_test.dart test/widgets/asset_payroll_snapshot_goal_test.dart test/widgets/asset_payroll_snapshot_section_test.dart --reporter expanded
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: payroll-goal-preflight-${{ github.run_id }}
+          path: |
+            lib/services/asset_payroll_snapshot_store.dart
+            lib/services/asset_payroll_snapshot_goal.dart
+            lib/widgets/asset_payroll_snapshot_section.dart
+            integration_test/payroll_snapshot_fixture.dart
+            integration_test/payroll_snapshot_test.dart
+            test/services/asset_payroll_snapshot_goal_test.dart
+            test/widgets/asset_payroll_snapshot_goal_test.dart
+            test/widgets/asset_payroll_snapshot_section_test.dart
+          retention-days: 3
