@@ -62,7 +62,7 @@ class AssetPayrollBankRowAdapter {
         sourceImportReference.trim().isEmpty ||
         candidate.transaction.importKey.trim().isEmpty) {
       throw ArgumentError(
-          'Owner, account, source import and row are required.',
+        'Owner, account, source import and row are required.',
       );
     }
     return OwnerConfirmedPayrollBankRow._(

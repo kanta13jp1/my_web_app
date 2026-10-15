@@ -35,15 +35,15 @@ void main() {
     expect(candidate.datePrecision, PayrollDepositDatePrecision.day);
     expect(candidate.hasPayrollLabel, isTrue);
     expect(
-        AssetPayrollBankRowAdapter.confirm(
-          ownerId: 'owner-a',
-          accountId: 'account-a',
-          payrollMonth: DateTime(2030, 2),
-          sourceImportReference: 'synthetic-import',
-          candidate: candidate,
-          ownerConfirmedPayrollAndImmediateBalance: false,
-        ),
-        isNull,
+      AssetPayrollBankRowAdapter.confirm(
+        ownerId: 'owner-a',
+        accountId: 'account-a',
+        payrollMonth: DateTime(2030, 2),
+        sourceImportReference: 'synthetic-import',
+        candidate: candidate,
+        ownerConfirmedPayrollAndImmediateBalance: false,
+      ),
+      isNull,
     );
   });
   test(
@@ -76,8 +76,8 @@ void main() {
         .transactions;
     expect(PayrollBankRowCandidate.fromTransaction(rows.first), isNull);
     expect(
-        PayrollBankRowCandidate.fromTransaction(rows.last)!.immediateBalanceYen,
-        0,
+      PayrollBankRowCandidate.fromTransaction(rows.last)!.immediateBalanceYen,
+      0,
     );
   });
   test('payroll label is only a hint and stable row keys survive repeat parse',
