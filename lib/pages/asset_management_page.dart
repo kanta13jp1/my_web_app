@@ -29605,7 +29605,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final japanNow = DateTime.now().toUtc().add(const Duration(hours: 9));
     return [
       for (var offset = 2; offset >= 0; offset--)
-        DateFormat('yyyy-MM').format(DateTime(japanNow.year, japanNow.month - offset)),
+        DateFormat('yyyy-MM')
+            .format(DateTime(japanNow.year, japanNow.month - offset)),
     ];
   }
 
