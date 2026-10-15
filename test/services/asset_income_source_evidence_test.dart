@@ -45,9 +45,14 @@ void main() {
     expect(result.matchedEventSubtotal, 1000);
     expect(result.sourceRecordedTotals.values, everyElement(1000));
     expect(result.issues, isEmpty);
+    expect(
+      result.matchedEvents.single.evidence,
+      {IncomeLinkEvidence.existingPayslipFk},
+    );
   });
 
-  test('same amount across unlinked sources preserves both and has no total', () {
+  test('same amount across unlinked sources preserves both and has no total',
+      () {
     final result = _project([
       _row(IncomeSourceKind.flow, 'f'),
       _row(IncomeSourceKind.payslip, 'p'),
@@ -62,7 +67,8 @@ void main() {
     );
   });
 
-  test('distinct source IDs in the same source are not monetary duplicates', () {
+  test('distinct source IDs in the same source are not monetary duplicates',
+      () {
     final result = _project([
       _row(IncomeSourceKind.receivedPlan, 'a'),
       _row(IncomeSourceKind.receivedPlan, 'b'),
@@ -92,7 +98,8 @@ void main() {
     );
   });
 
-  test('explicit session same-event decision can collapse compatible records', () {
+  test('explicit session same-event decision can collapse compatible records',
+      () {
     final flow = _row(IncomeSourceKind.flow, 'f');
     final payslip = _row(IncomeSourceKind.payslip, 'p');
     final result = _project(
@@ -107,6 +114,10 @@ void main() {
     );
     expect(result.combinedRecordedTotal, 1000);
     expect(result.matchedEventSubtotal, 1000);
+    expect(
+      result.matchedEvents.single.evidence,
+      {IncomeLinkEvidence.sessionConfirmation},
+    );
   });
 
   test('same source ID conflict blocks total and source subtotal', () {
@@ -187,7 +198,8 @@ void main() {
     expect(zero.allowsIncomeDerivedOutput, isTrue);
   });
 
-  test('identical source retrieval is counted once without merging other IDs', () {
+  test('identical source retrieval is counted once without merging other IDs',
+      () {
     final row = _row(IncomeSourceKind.flow, 'f');
     expect(_project([row, row]).combinedRecordedTotal, 1000);
   });

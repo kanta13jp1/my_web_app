@@ -6,6 +6,8 @@ enum IncomeDatePrecision { day, instant }
 
 enum IncomeRelationship { sameEvent, distinctEvents }
 
+enum IncomeLinkEvidence { existingPayslipFk, sessionConfirmation }
+
 enum IncomeEvidenceProblem {
   ownerMismatch,
   currencyMismatch,
@@ -45,7 +47,8 @@ class IncomeSourceRecord {
   final String? payslipId;
   final bool requiresPayslipLink;
 
-  String? get key => id == null || id!.trim().isEmpty ? null : '${kind.name}:$id';
+  String? get key =>
+      id == null || id!.trim().isEmpty ? null : '${kind.name}:$id';
 
   // A decision applies only to the exact source observation and owner.
   String get fingerprint => jsonEncode([
@@ -86,6 +89,7 @@ class IncomeEvidenceProjection {
     required this.matchedEventSubtotal,
     required this.combinedRecordedTotal,
     required this.issues,
+    required this.matchedEvents,
   });
 
   final List<IncomeSourceRecord> records;
@@ -93,8 +97,21 @@ class IncomeEvidenceProjection {
   final int? matchedEventSubtotal;
   final int? combinedRecordedTotal;
   final List<IncomeEvidenceIssue> issues;
+  final List<IncomeMatchedEvent> matchedEvents;
 
   bool get allowsIncomeDerivedOutput => combinedRecordedTotal != null;
+}
+
+class IncomeMatchedEvent {
+  const IncomeMatchedEvent({
+    required this.recordKeys,
+    required this.amount,
+    required this.evidence,
+  });
+
+  final List<String> recordKeys;
+  final int amount;
+  final Set<IncomeLinkEvidence> evidence;
 }
 
 /// Read-only projection. No monetary/name matching and no persistence.
@@ -178,6 +195,7 @@ class AssetIncomeSourceEvidence {
     }
 
     final parent = {for (final key in byKey.keys) key: key};
+    final linkEvidence = <String, Set<IncomeLinkEvidence>>{};
     String root(String key) {
       while (parent[key] != key) {
         key = parent[key]!;
@@ -185,7 +203,7 @@ class AssetIncomeSourceEvidence {
       return key;
     }
 
-    bool merge(String left, String right) {
+    bool merge(String left, String right, IncomeLinkEvidence evidence) {
       final a = byKey[left]!;
       final b = byKey[right]!;
       if (a.amount != b.amount) {
@@ -204,6 +222,8 @@ class AssetIncomeSourceEvidence {
         return false;
       }
       parent[root(right)] = root(left);
+      linkEvidence.putIfAbsent(left, () => {}).add(evidence);
+      linkEvidence.putIfAbsent(right, () => {}).add(evidence);
       return true;
     }
 
@@ -220,11 +240,13 @@ class AssetIncomeSourceEvidence {
       if (!byKey.containsKey(target)) {
         issue(IncomeEvidenceProblem.missingPayslipTarget, [row.key!]);
       } else {
-        merge(target, row.key!);
+        merge(target, row.key!, IncomeLinkEvidence.existingPayslipFk);
       }
     }
 
-    final fingerprintRows = {for (final row in byKey.values) row.fingerprint: row};
+    final fingerprintRows = {
+      for (final row in byKey.values) row.fingerprint: row
+    };
     final distinct = <List<String>>[];
     for (final decision in decisions) {
       final left = fingerprintRows[decision.leftFingerprint];
@@ -234,7 +256,7 @@ class AssetIncomeSourceEvidence {
         continue;
       }
       if (decision.relationship == IncomeRelationship.sameEvent) {
-        merge(left.key!, right.key!);
+        merge(left.key!, right.key!, IncomeLinkEvidence.sessionConfirmation);
       } else {
         distinct.add([left.key!, right.key!]);
       }
@@ -292,6 +314,16 @@ class AssetIncomeSourceEvidence {
       matchedEventSubtotal: matchedTotal,
       combinedRecordedTotal: combinedTotal,
       issues: List.unmodifiable(issues),
+      matchedEvents: List.unmodifiable([
+        for (final group in matched)
+          IncomeMatchedEvent(
+            recordKeys: List.unmodifiable(group.map((row) => row.key!)),
+            amount: group.first.amount,
+            evidence: Set.unmodifiable({
+              for (final row in group) ...?linkEvidence[row.key!],
+            }),
+          ),
+      ]),
     );
   }
 
