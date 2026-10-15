@@ -10,6 +10,14 @@ async function enterAmount(page: Page, name: string, value: string) {
 }
 
 
+
+async function configureGoal(page: Page) {
+  await expect(page.getByText('目標は未設定です。目的・金額・期限を入力してください。')).toBeVisible();
+  await enterAmount(page, '目標額', '1000000');
+  await page.getByRole('button', { name: '目標期限を設定', exact: true }).click();
+  await page.getByRole('button', { name: 'OK', exact: true }).click();
+}
+
 test('savings goal, daily design, and reload preserve planning values without financial writes', async ({ page }) => {
   const financialWrites: string[] = [];
   const pageErrors: string[] = [];
@@ -20,6 +28,7 @@ test('savings goal, daily design, and reload preserve planning values without fi
   });
   page.on('pageerror', error => pageErrors.push(error.message));
   await page.goto('/');
+  await configureGoal(page);
   const savings = page.getByRole('textbox', { name: '現在の現金・預金（計画の起点）' });
   await expect(savings).toBeVisible();
   await enterAmount(page, '現在の現金・預金（計画の起点）', '400000');
@@ -47,6 +56,7 @@ test('savings goal, daily design, and reload preserve planning values without fi
 
 test('unaffordable plan shows gap while retaining food and repayment', async ({ page }) => {
   await page.goto('/?income=250000');
+  await configureGoal(page);
   await enterAmount(page, '現在の現金・預金（計画の起点）', '0');
   await expect(page.getByRole('textbox', { name: '登録済みの手取り収入（収入増なし）' })).toHaveAttribute('readonly', /^(readonly)?$/);
   await enterAmount(page, '毎月の生活費（食費・交通・日用品等）', '60000');
@@ -60,6 +70,7 @@ test('unaffordable plan shows gap while retaining food and repayment', async ({ 
 
 test('account analysis proposes reviewable amounts and requires explicit save', async ({ page }) => {
   await page.goto('/');
+  await configureGoal(page);
   await page.getByRole('button', { name: '口座を分析してAI提案', exact: true }).click();
   await page.getByRole('textbox', { name: '現在の現金・預金（計画の起点）' }).click();
   await expect(page.getByRole('textbox', { name: '現在の現金・預金（計画の起点）' })).toHaveValue('400000');

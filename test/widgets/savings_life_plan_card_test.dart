@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,7 +29,32 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  setUp(() => SharedPreferences.setMockInitialValues({
+        'savings_life_plan_v1:fixture': jsonEncode({
+          'version': 2,
+          'start': '2026-10-13',
+          'targetDate': '2027-10-13',
+          'target': 1000000,
+          'reserve': 0,
+        }),
+      }));
+  testWidgets('new user has no personal goal; amount and deadline are required',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await open(tester);
+    expect(find.text('貯蓄目標と生活費の計画'), findsOneWidget);
+    expect(find.textContaining('同棲'), findsNothing);
+    expect(find.textContaining('目標は未設定'), findsOneWidget);
+    expect(find.text('目標期限を設定'), findsOneWidget);
+    expect(find.textContaining('必要な積立：'), findsNothing);
+    await tester.enterText(find.byType(TextFormField).at(0), '400000');
+    await tester.enterText(find.byType(TextFormField).at(2), '50000');
+    await tester.enterText(find.byType(TextFormField).at(5), '250000');
+    await tester.ensureVisible(find.text('計画を保存・再計算'));
+    await tester.tap(find.text('計画を保存・再計算'));
+    await tester.pumpAndSettle();
+    expect(find.text('目標期限を選択してください。'), findsOneWidget);
+  });
   testWidgets('saving confirms final savings goal; reload preserves anchors',
       (tester) async {
     await open(tester);
