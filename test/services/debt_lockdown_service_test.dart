@@ -9,7 +9,7 @@ void main() {
     });
 
     test('unverified zero preserves enabled and history on read', () async {
-      final service = DebtLockdownService();
+      const service = DebtLockdownService();
       final prefs = await SharedPreferences.getInstance();
       await service.setEnabled(true, remainingDebt: 1000, prefs: prefs);
       final before = {for (final key in prefs.getKeys()) key: prefs.get(key)};

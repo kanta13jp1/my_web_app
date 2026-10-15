@@ -219,28 +219,28 @@ class DebtLockdownService {
   static const List<DebtLockdownRule> builtinRules = <DebtLockdownRule>[
     DebtLockdownRule(
       id: 'essentials_only',
-      label: '必需品以外に金を使わない',
-      description: '生活維持と返済に関係しない支出を増やさない。',
+      label: '必要な生活費を確保する',
+      description: '生活に必要な支出と返済予定を確認します。',
     ),
     DebtLockdownRule(
       id: 'no_waste_spending',
-      label: '浪費カテゴリをゼロにする',
-      description: '酒、たばこ、夜遊び、ギャンブル、課金を禁止する。',
+      label: '見直したい支出を振り返る',
+      description: '支出の目的と予算を振り返ります。',
     ),
     DebtLockdownRule(
       id: 'daily_debt_check',
       label: '残債と家計を毎日1回確認する',
-      description: '逃避せず、残債・支出・返済計画を見直す。',
+      description: '登録済み残債・支出・返済計画を確認します。',
     ),
     DebtLockdownRule(
       id: 'one_repayment_action',
-      label: '返済前進アクションを1件やる',
-      description: '返済、収入増、固定費削減のどれかを必ず進める。',
+      label: '家計を見直す行動を選ぶ',
+      description: '返済予定や固定費など、取り組めることを確認します。',
     ),
     DebtLockdownRule(
       id: 'no_new_escape',
-      label: '新しい逃避を始めない',
-      description: '新規サブスク、趣味買い、勉強のつまみ食いを増やさない。',
+      label: '追加契約や購入を見直す',
+      description: '新しい契約や購入は生活費と目的を確認して検討します。',
     ),
   ];
 
