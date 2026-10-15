@@ -53,10 +53,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(BottomSheet), findsNothing);
-    final scroller = tester.state<ScrollableState>(
-      find.byType(Scrollable).first,
+    final pageScrollbar = tester.widget<Scrollbar>(
+      find.byKey(const Key('asset_page_scrollbar')),
     );
-    expect(scroller.position.pixels, greaterThan(0));
+    expect(pageScrollbar.controller!.offset, greaterThan(0));
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();

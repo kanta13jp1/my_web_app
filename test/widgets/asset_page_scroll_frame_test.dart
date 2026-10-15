@@ -26,6 +26,7 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(harness(controller));
     await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
     final frame = tester.widget<Scrollbar>(
       find.byKey(const Key('asset_page_scrollbar')),
     );
