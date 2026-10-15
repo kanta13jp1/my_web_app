@@ -31,13 +31,13 @@ void main() {
 
   setUp(
     () => SharedPreferences.setMockInitialValues({
-        'savings_life_plan_v1:fixture': jsonEncode({
-          'version': 2,
-          'start': '2026-10-13',
-          'targetDate': '2027-10-13',
-          'target': 1000000,
-          'reserve': 0,
-        }),
+      'savings_life_plan_v1:fixture': jsonEncode({
+        'version': 2,
+        'start': '2026-10-13',
+        'targetDate': '2027-10-13',
+        'target': 1000000,
+        'reserve': 0,
+      }),
     }),
   );
   testWidgets('new user has no personal goal; amount and deadline are required',
