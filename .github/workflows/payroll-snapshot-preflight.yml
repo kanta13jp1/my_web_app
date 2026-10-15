@@ -1,0 +1,76 @@
+name: Payroll snapshot UI preflight
+on:
+  pull_request:
+    paths:
+      - lib/services/asset_payroll_snapshot_store.dart
+      - lib/widgets/asset_payroll_snapshot_section.dart
+      - lib/widgets/asset_payroll_snapshot_connection.dart
+      - lib/pages/asset_management_page.dart
+      - test/widgets/asset_payroll_snapshot_section_test.dart
+      - integration_test/payroll_snapshot_test.dart
+      - integration_test/payroll_snapshot_fixture.dart
+      - .github/workflows/payroll-snapshot-preflight.yml
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: payroll-snapshot-ui-preflight-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Verify format analysis and synthetic feature
+        run: |
+          dart format --output=none --set-exit-if-changed lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart lib/widgets/asset_payroll_snapshot_connection.dart lib/pages/asset_management_page.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart integration_test/payroll_snapshot_fixture.dart
+          flutter analyze lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart lib/widgets/asset_payroll_snapshot_connection.dart lib/pages/asset_management_page.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart integration_test/payroll_snapshot_fixture.dart
+          flutter test test/widgets/asset_payroll_snapshot_section_test.dart --reporter expanded
+      - name: Synthetic browser preview on desktop and enlarged narrow viewport
+        shell: bash
+        run: |
+          mkdir -p .ci-logs
+          chromedriver --port=4444 > .ci-logs/payroll-snapshot-driver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status
+          set -o pipefail
+          for viewport in desktop mobile; do
+            dimensions=1440x1000@1
+            mobile=false
+            if [ "$viewport" = mobile ]; then dimensions=320x900@1; mobile=true; fi
+            flutter drive --driver=test_driver/asset_triage_visual.dart \
+              --target=integration_test/payroll_snapshot_test.dart \
+              --dart-define="PAYROLL_MOBILE=$mobile" \
+              --browser-dimension="$dimensions" \
+              -d web-server --browser-name=chrome --headless \
+              2>&1 | tee ".ci-logs/payroll-snapshot-$viewport.log"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: payroll-snapshot-ui-preflight-${{ github.run_id }}
+          path: |
+            lib/services/asset_payroll_snapshot_store.dart
+            lib/widgets/asset_payroll_snapshot_section.dart
+            lib/widgets/asset_payroll_snapshot_connection.dart
+            lib/pages/asset_management_page.dart
+            test/widgets/asset_payroll_snapshot_section_test.dart
+            integration_test/payroll_snapshot_test.dart
+            integration_test/payroll_snapshot_fixture.dart
+            .ci-logs/payroll-snapshot-*.log
+            .ci-logs/asset-triage-visual/payroll-snapshot-*
+          include-hidden-files: true
+          retention-days: 3
