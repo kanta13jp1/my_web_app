@@ -333,7 +333,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
             ),
             const SizedBox(height: 8),
             Text(
-              _saved ? '${SavingsLifePlan.dateText(_plan.start)} → ${SavingsLifePlan.dateText(_plan.targetDate)}' : '目標は未設定です。目的・金額・期限を入力してください。',
+              _saved
+                  ? '${SavingsLifePlan.dateText(_plan.start)} → ${SavingsLifePlan.dateText(_plan.targetDate)}'
+                  : '目標は未設定です。目的・金額・期限を入力してください。',
             ),
             const Text(
               '目的・目標額・期限を自分で設定します。翌1給与サイクル分の生活費・固定費・返済・予備費を確保した後の自由資金を計画します。投資評価額・借入可能額は含めません。',
@@ -363,7 +365,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
               TextButton.icon(
                 onPressed: _busy ? null : _chooseDeadline,
                 icon: const Icon(Icons.event),
-                label: Text(_deadlineSelected ? '目標期限 ${SavingsLifePlan.dateText(_deadline)} を変更' : '目標期限を設定'),
+                label: Text(_deadlineSelected
+                    ? '目標期限 ${SavingsLifePlan.dateText(_deadline)} を変更'
+                    : '目標期限を設定'),
               ),
               OutlinedButton.icon(
                 onPressed: _busy || widget.propose == null ? null : _suggest,
@@ -409,11 +413,14 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                         controller: _goalName,
                         enabled: !_busy,
                         maxLength: 80,
-                        decoration: const InputDecoration(labelText: '目標の名前（任意）', border: OutlineInputBorder()),
+                        decoration: const InputDecoration(
+                            labelText: '目標の名前（任意）',
+                            border: OutlineInputBorder()),
                         onChanged: (_) => setState(() => _edited = true),
                       ),
                     ),
-                    _field('目標額', _target, positive: true, positiveError: '目標額は1円以上で入力してください'),
+                    _field('目標額', _target,
+                        positive: true, positiveError: '目標額は1円以上で入力してください'),
                   ],
                 ),
               ),

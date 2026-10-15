@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/savings_life_plan.dart';
 
 void main() {
-  test('legacy plan retains its chosen amount and deadline without a goal name', () {
+  test('legacy plan retains its chosen amount and deadline without a goal name',
+      () {
     final plan = SavingsLifePlan.fromJson({
       'version': 2,
       'start': '2026-10-13',
