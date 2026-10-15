@@ -4,14 +4,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/widgets/asset_payroll_deductions_section.dart';
 
 void main() {
-  testWidgets('signed-out section creates no unhandled load future',
-      (tester) async {
-    final client = SupabaseClient(
+  late SupabaseClient client;
+  setUpAll(() {
+    // Keep isolate initialization outside the widget test's fake async zone.
+    client = SupabaseClient(
       'https://example.invalid',
       'synthetic-public-key',
       authOptions: const AuthClientOptions(autoRefreshToken: false),
     );
-    addTearDown(() => tester.runAsync(client.dispose));
+  });
+  tearDownAll(() => client.dispose());
+
+  testWidgets('signed-out section creates no unhandled load future',
+      (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
