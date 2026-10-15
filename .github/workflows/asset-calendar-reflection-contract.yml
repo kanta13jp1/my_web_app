@@ -66,4 +66,4 @@ jobs:
             lib/widgets/asset_reflection_day_badge.dart
             test/widgets/asset_calendar_reflection_panel_test.dart
       - run: flutter analyze lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart
-      - run: timeout 300s flutter test --timeout 60s test/models/asset_calendar_reflection_test.dart test/widgets/asset_calendar_refresh_control_test.dart test/widgets/asset_calendar_reflection_panel_test.dart --concurrency=2
+      - run: timeout 300s flutter test --no-pub --timeout 60s test/models/asset_calendar_reflection_test.dart test/widgets/asset_calendar_refresh_control_test.dart test/widgets/asset_calendar_reflection_panel_test.dart --concurrency=2
