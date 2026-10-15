@@ -118,16 +118,18 @@ class PayrollDeductions {
       month,
       day,
     );
-    if (date.year != year || date.month != month || date.day != day)
+    if (date.year != year || date.month != month || date.day != day) {
       return null;
+    }
     final rawItems = row['deductions'];
     final items = <String, int?>{};
     if (rawItems is Map) {
       for (final entry in rawItems.entries) {
-        if (entry.key is String)
+        if (entry.key is String) {
           items[entry.key as String] = readYen(
             entry.value,
           );
+        }
       }
     }
     return PayrollDeductions._(
@@ -184,8 +186,9 @@ class PayrollMonthDeductions {
       );
 
   static int? _socialForComparison(PayrollDeductions row) {
-    if (row.socialMismatchYen != null && row.socialMismatchYen != 0)
+    if (row.socialMismatchYen != null && row.socialMismatchYen != 0) {
       return null;
+    }
     return row.socialTotalYen;
   }
 }
@@ -200,10 +203,11 @@ class AssetPayrollDeductions {
     required int year,
     required Iterable<Map<String, dynamic>> rows,
   }) {
-    if (ownerId.trim().isEmpty)
+    if (ownerId.trim().isEmpty) {
       throw ArgumentError(
         'Owner is required.',
       );
+    }
     final byMonth = <int, List<PayrollDeductions>>{};
     final byId = <String, Map<String, dynamic>>{};
     final conflictMonths = <int>{};

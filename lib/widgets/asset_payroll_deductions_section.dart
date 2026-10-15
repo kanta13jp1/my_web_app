@@ -26,13 +26,20 @@ class _AssetPayrollDeductionsSectionState
   void initState() {
     super.initState();
     _year = widget.initialYear;
-    _load = AssetPayrollDeductionsRepository(widget.client).loadYear(_year);
+    _load = _fetchYear();
+  }
+
+  Future<PayrollDeductionsYear> _fetchYear() {
+    if (widget.client.auth.currentUser == null) {
+      return Future.value(const PayrollDeductionsYear([], complete: true));
+    }
+    return AssetPayrollDeductionsRepository(widget.client).loadYear(_year);
   }
 
   void _reload([int? year]) {
     setState(() {
       _year = year ?? _year;
-      _load = AssetPayrollDeductionsRepository(widget.client).loadYear(_year);
+      _load = _fetchYear();
     });
   }
 
