@@ -616,7 +616,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         AssetSyncDomain.revolving:
             AssetRevolvingCreditConfigStore.encodeMirrorValue(
-                _revolvingConfigs),
+          _revolvingConfigs,
+        ),
         AssetSyncDomain.debtOverrides:
             Map<String, int>.from(_debtPaymentDayOverrides),
       };
@@ -10188,8 +10189,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               const SizedBox(height: 12),
               const Text(
-                '入金予定と月次の支払・計画設定は現在値の照合に未対応のため、'
-                'ログイン中は未照合と表示します。設定を変更したり再送したりはしません。',
+                '入金予定と月次の支払・計画設定は、'
+                'サーバーの現在値との一致が未確認です。保存失敗を意味するものではありません。',
               ),
             ],
           ),

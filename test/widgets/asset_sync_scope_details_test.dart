@@ -39,7 +39,7 @@ void main() {
       expect(find.text('同期ステータス'), findsOneWidget);
       expect(find.textContaining('以下の6領域だけの保存状況です'), findsOneWidget);
       expect(find.textContaining('月次の支払・計画設定：'), findsOneWidget);
-      expect(find.textContaining('現在値の照合に未対応'), findsOneWidget);
+      expect(find.textContaining('サーバーの現在値との一致が未確認'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('閉じる'));
       await tester.pump();
