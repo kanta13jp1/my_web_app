@@ -2,9 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
+import 'package:my_web_app/services/savings_life_plan_store.dart';
+import 'package:my_web_app/models/savings_life_plan.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
   for (final mode in AssetManagementDisplayMode.values) {
     for (final override in AssetManagementSectionVisibilityOverride.values) {
@@ -29,12 +32,20 @@ void main() {
   test('new section is appended and old preference keys survive hide/reset',
       () async {
     const planKey = 'savings_life_plan_v1:synthetic-owner';
-    const savedPlan = 'synthetic-saved-planning-preference';
     SharedPreferences.setMockInitialValues({
       'asset_management_section_overrides_v1':
           jsonEncode({'flow': 'hidden', 'chart': 'pinned'}),
-      planKey: savedPlan,
     });
+    final planStore = SavingsLifePlanStore('synthetic-owner');
+    await planStore.save(
+      SavingsLifePlan(
+        start: DateTime(2026, 10, 15),
+        targetDate: DateTime(2027, 10, 15),
+        cashBalance: 12345,
+      ),
+    );
+    final prefs = await SharedPreferences.getInstance();
+    final savedPlan = prefs.getString(planKey);
     const store = AssetManagementDisplayModeStore();
     expect(
       AssetManagementSectionId.values.last,
@@ -67,6 +78,7 @@ void main() {
       ),
       isFalse,
     );
-    expect((await SharedPreferences.getInstance()).getString(planKey), savedPlan);
+    expect(prefs.getString(planKey), savedPlan);
+    expect((await planStore.load())!.cashBalance, 12345);
   });
 }

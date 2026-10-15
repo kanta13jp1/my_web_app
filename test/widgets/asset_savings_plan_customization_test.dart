@@ -27,49 +27,55 @@ void main() {
       AssetManagementSectionVisibilityOverride.hidden,
       AssetManagementSectionVisibilityOverride.pinned,
     ]) {
-    testWidgets('savings $override setting and guest search at width $width',
-        (tester) async {
-      await tester.binding.setSurfaceSize(Size(width, 900));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(
-        MaterialApp(
-          home: AssetManagementPage(debugNow: DateTime(2026, 10, 15)),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text('カスタマイズ'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      final dropdown = find.byKey(const Key('asset_section_override_savingsPlan'));
-      await tester.ensureVisible(dropdown);
-      await tester.tap(dropdown);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.tap(find.text(override.label).last);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      expect(
-        (await const AssetManagementDisplayModeStore().loadOverrides())[
-            AssetManagementSectionId.savingsPlan],
-        override,
-      );
-      await tester.tap(find.text('閉じる'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.tap(find.byKey(const Key('asset_section_search_appbar_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.enterText(
-        find.descendant(of: find.byType(BottomSheet), matching: find.byType(TextField)),
-        '貯蓄目標',
-      );
-      await tester.pump();
-      expect(find.text('貯蓄目標と生活費の計画'), findsNothing);
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump();
-    });
+      testWidgets('savings $override setting and guest search at width $width',
+          (tester) async {
+        await tester.binding.setSurfaceSize(Size(width, 900));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(debugNow: DateTime(2026, 10, 15)),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.ensureVisible(find.text('カスタマイズ'));
+        await tester.tap(find.text('カスタマイズ'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        final dropdown =
+            find.byKey(const Key('asset_section_override_savingsPlan'));
+        await tester.ensureVisible(dropdown);
+        await tester.tap(dropdown);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.tap(find.text(override.label).last);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        expect(
+          (await const AssetManagementDisplayModeStore()
+              .loadOverrides())[AssetManagementSectionId.savingsPlan],
+          override,
+        );
+        await tester.tap(find.text('閉じる'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester
+            .tap(find.byKey(const Key('asset_section_search_appbar_button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.enterText(
+          find.descendant(
+            of: find.byType(BottomSheet),
+            matching: find.byType(TextField),
+          ),
+          '貯蓄目標',
+        );
+        await tester.pump();
+        expect(find.text('貯蓄目標と生活費の計画'), findsNothing);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      });
     }
   }
 }
