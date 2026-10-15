@@ -9,7 +9,8 @@ void main() {
         await tester.binding.setSurfaceSize(Size(width, 900));
         addTearDown(() => tester.binding.setSurfaceSize(null));
         var pauses = 0;
-        await tester.pumpWidget(MaterialApp(
+        await tester.pumpWidget(
+          MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
               child: AssetLegacyMealRuleCard(
@@ -20,7 +21,8 @@ void main() {
               ),
             ),
           ),
-        ));
+          ),
+        );
         if (mode == 'none') {
           expect(find.byType(ExpansionTile), findsNothing);
           expect(find.textContaining('うどん'), findsNothing);

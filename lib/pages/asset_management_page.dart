@@ -19965,8 +19965,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           );
-    _ensureDebtLockdownSnapshotLoaded(totalDebt);
-    _ensureKonbiniUdonSnapshotLoaded(totalDebt);
+    if (_supabase.auth.currentUser != null) {
+      _ensureDebtLockdownSnapshotLoaded(totalDebt);
+      _ensureKonbiniUdonSnapshotLoaded(totalDebt);
+    }
 
     return Card(
       elevation: 2,
