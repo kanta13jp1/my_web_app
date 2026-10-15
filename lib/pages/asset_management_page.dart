@@ -1,3 +1,5 @@
+import '../services/asset_spending_attention_calendar.dart';
+import '../widgets/asset_attention_day_label.dart';
 import '../widgets/asset_calendar_refresh_control.dart';
 import '../widgets/asset_future_card_bill_card.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
@@ -17292,6 +17294,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 4),
+            Text('この表示期間の浪費危険日: ${AssetSpendingAttentionCalendar.countDays(calendar.days.map((day) => day.date))}日'),
+            const Text('金曜・土日・公式祝日・その休前日の注意表示です。実際の浪費・飲酒の記録とは別です。休前日は翌日が土日・公式祝日の日で、本人の個別休暇は含みません。'),
+            const Text('祝日データ: 内閣府 2026–2027年（2026-10-15取得）。未対応年の祝日は推測しません。'),
+            const SizedBox(height: 4),
             Text(
               '給料日サイクル(給料日〜翌給料日前日)で、日ごとの支出と返済日・固定費・給料日のイベントをまとめて見渡せます。',
               style: TextStyle(
@@ -17634,6 +17640,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               spacing: 12,
               runSpacing: 4,
               children: [
+                _buildCalendarLegendItem(AssetAttentionDayLabel.background, '浪費危険日（注意の背景）'),
                 _buildCalendarLegendItem(const Color(0xFFB91C1C), '返済日'),
                 _buildCalendarLegendItem(const Color(0xFF9333EA), '固定費'),
                 _buildCalendarLegendItem(const Color(0xFF0D9488), '給料日'),
@@ -17681,6 +17688,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             if (selectedDay != null) ...[
               const SizedBox(height: 10),
+              Text(
+                AssetSpendingAttentionCalendar.forDate(selectedDay.date).description,
+                style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF78350F)),
+              ),
               Text(
                 '${DateFormat('M月d日').format(selectedDay.date)} のイベント',
                 style: const TextStyle(
@@ -17769,7 +17780,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetCalendarCell(AssetCalendarDaySummary? day, DateTime today) {
     if (day == null) {
-      return const SizedBox(height: 54);
+      return const SizedBox(height: 68);
     }
     final isToday = day.date.year == today.year &&
         day.date.month == today.month &&
@@ -17779,6 +17790,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         day.date.year == selectedDate.year &&
         day.date.month == selectedDate.month &&
         day.date.day == selectedDate.day;
+    final attention = AssetSpendingAttentionCalendar.forDate(day.date);
     final markers = <Color>[
       if (day.hasDebtPayment) const Color(0xFFB91C1C),
       if (day.hasSubscription) const Color(0xFF9333EA),
@@ -17796,7 +17808,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
       },
       child: Container(
-        height: 54,
+        height: 68,
         margin: const EdgeInsets.all(1),
         padding: const EdgeInsets.symmetric(vertical: 3),
         decoration: BoxDecoration(
@@ -17804,7 +17816,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
               : day.isShortfall
                   ? const Color(0xFFFEE2E2)
-                  : null,
+                  : attention.isAttentionDay ? AssetAttentionDayLabel.background : null,
           borderRadius: BorderRadius.circular(6),
           border: isToday
               ? Border.all(color: const Color(0xFF7C3AED), width: 1.5)
@@ -17833,6 +17845,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   height: 1.2,
                 ),
               ),
+            AssetAttentionDayLabel(day: attention),
             const Spacer(),
             if (markers.isNotEmpty)
               Row(
