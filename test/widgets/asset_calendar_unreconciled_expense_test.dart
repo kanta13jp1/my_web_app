@@ -40,27 +40,43 @@ void main() {
   });
   testWidgets('unknown, attention, and reflection marks coexist in narrow cell',
       (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Center(child: SizedBox(width: 40, height: 84,
-        child: Column(children: [
-          const Text('20', style: TextStyle(fontSize: 11)),
-          const Text('1,000', style: TextStyle(fontSize: 9)),
-          const AssetUnreconciledExpenseBadge(),
-          AssetAttentionDayLabel(
-            day: AssetSpendingAttentionCalendar.forDate(DateTime(2026, 6, 20)),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 40,
+            height: 84,
+            child: Column(
+              children: [
+                const Text('20', style: TextStyle(fontSize: 11)),
+                const Text('1,000', style: TextStyle(fontSize: 9)),
+                const AssetUnreconciledExpenseBadge(),
+                AssetAttentionDayLabel(
+                  day: AssetSpendingAttentionCalendar.forDate(
+                      DateTime(2026, 6, 20),),
+                ),
+                const Expanded(
+                  child: AssetReflectionDayBadge(
+                    kinds: {
+                      AssetReflectionKind.dining,
+                      AssetReflectionKind.drinkingOut,
+                      AssetReflectionKind.alcoholPurchase,
+                      AssetReflectionKind.reading,
+                    },
+                  ),
+                ),
+                const SizedBox(height: 5),
+              ],
+            ),
           ),
-          const Expanded(child: AssetReflectionDayBadge(kinds: {
-            AssetReflectionKind.dining, AssetReflectionKind.drinkingOut,
-            AssetReflectionKind.alcoholPurchase, AssetReflectionKind.reading,
-          },),),
-          const SizedBox(height: 5),
-        ],),
-      ),),
-    ),);
+        ),
+      ),
+    );
     expect(find.text('不明'), findsOneWidget);
     expect(find.text('注意'), findsOneWidget);
     expect(find.textContaining('外食'), findsOneWidget);
-    expect(tester.getSize(find.byType(AssetReflectionDayBadge)).height, greaterThan(0));
+    expect(tester.getSize(find.byType(AssetReflectionDayBadge)).height,
+        greaterThan(0),);
     expect(tester.takeException(), isNull);
   });
   for (final width in [1200.0, 390.0]) {
@@ -102,8 +118,10 @@ void main() {
       await tester.ensureVisible(badge);
       await tester.pump();
       expect(badge, findsOneWidget);
-      expect(find.byKey(const Key('asset_calendar_unreconciled_details')),
-          findsOneWidget,);
+      expect(
+        find.byKey(const Key('asset_calendar_unreconciled_details')),
+        findsOneWidget,
+      );
       expect(find.textContaining('日別支出に含まれる参考内訳'), findsOneWidget);
       expect(find.textContaining('消費を確認した記録ではありません'), findsOneWidget);
       expect(tester.takeException(), isNull);

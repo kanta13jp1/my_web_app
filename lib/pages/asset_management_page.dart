@@ -17792,7 +17792,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   style:
                       const TextStyle(fontSize: 11, color: Color(0xFF92400E)),
                 ),
-              if (selectedDay.events.any((event) => event.balanceDifferenceAutoRecorded,))
+              if (selectedDay.events.any(
+                (event) => event.balanceDifferenceAutoRecorded,
+              ))
                 const Text(
                   '残高差分からの自動記録を含みます。消費の確定ではありません。',
                   style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
