@@ -2175,7 +2175,7 @@ class AssetLiabilityPlanningService {
         existingAccounts.map((account) => _normalize(account.name)).toSet();
     final result = <({
       AssetLiabilityAccount account,
-        String recurringFixedCostId,
+      String recurringFixedCostId,
       String? sourceAccountId,
       bool isSubscription,
     })>[];

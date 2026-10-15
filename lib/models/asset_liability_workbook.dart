@@ -685,6 +685,7 @@ class AssetLiabilityRevolvingCreditBilling {
 
 class AssetLiabilityDebtRow {
   final String id;
+
   /// Original recurring-cost identity; never inferred from a legacy subscription.
   final String? recurringFixedCostId;
   final String name;

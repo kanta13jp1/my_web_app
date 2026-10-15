@@ -65,7 +65,8 @@ class AssetCalendarShortfallDetails extends StatelessWidget {
               )
               .fold<double>(0, (amount, event) => amount + (event.amount ?? 0)),
     );
-    final unverified = lines.where((line) => line.$2.paymentMethodUnverified).length;
+    final unverified =
+        lines.where((line) => line.$2.paymentMethodUnverified).length;
     final textStyle = Theme.of(context).textTheme.bodySmall;
     return Column(
       key: const Key('asset_calendar_shortfall_details'),

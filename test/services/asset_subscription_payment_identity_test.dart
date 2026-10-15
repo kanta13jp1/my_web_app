@@ -71,7 +71,8 @@ void main() {
   });
 
   test('names are irrelevant when explicit contract identity is known', () {
-    final result = contractCalendar(invoice: 500, legacyName: 'Another spelling');
+    final result =
+        contractCalendar(invoice: 500, legacyName: 'Another spelling');
     expect(result.scheduledOutflowTotal, 500);
   });
 
@@ -80,7 +81,11 @@ void main() {
     final noBilling = contractCalendar(invoice: 1000, billingAccountId: null);
     for (final result in [noLinks, noBilling]) {
       expect(
-        result.dayFor(DateTime(2026, 10, 20))!.events.single.paymentMethodUnverified,
+        result
+            .dayFor(DateTime(2026, 10, 20))!
+            .events
+            .single
+            .paymentMethodUnverified,
         isTrue,
       );
     }
@@ -103,6 +108,9 @@ void main() {
       (row) => row.name == 'Synthetic unique fixed cost',
     );
     expect(row.recurringFixedCostId, 'cost-a');
-    expect(AssetCalendarDebtInput.fromDebtRow(row).recurringFixedCostId, 'cost-a');
+    expect(
+      AssetCalendarDebtInput.fromDebtRow(row).recurringFixedCostId,
+      'cost-a',
+    );
   });
 }
