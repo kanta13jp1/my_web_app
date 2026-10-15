@@ -11281,17 +11281,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               .select('user_id,pref_key,value')
               .eq('user_id', ownerId)
               .inFilter(
-                'pref_key',
-                const [
-                'main_account_id',
-                'watchlist_entries',
-                'revolving_credit_configs',
-                'debt_payment_day_overrides',
-                'watchlist_entries_deleted',
-                'revolving_credit_configs_deleted',
-                'debt_payment_day_override_deleted',
-                ],
-              );
+            'pref_key',
+            const [
+              'main_account_id',
+              'watchlist_entries',
+              'revolving_credit_configs',
+              'debt_payment_day_overrides',
+              'watchlist_entries_deleted',
+              'revolving_credit_configs_deleted',
+              'debt_payment_day_override_deleted',
+            ],
+          );
           remote = indexPrefMirrorRowsByKey(rows);
           readSucceeded = true;
         } catch (error) {

@@ -18,7 +18,8 @@ void main() {
     );
   });
 
-  test('local change invalidates saved evidence before the next read returns', () {
+  test('local change invalidates saved evidence before the next read returns',
+      () {
     final result = currentAssetSyncSources(
       observedOwnerId: 'synthetic-owner',
       currentOwnerId: 'synthetic-owner',
@@ -35,7 +36,9 @@ void main() {
       currentOwnerId: 'synthetic-owner',
       sources: {AssetSyncDomain.watchlist: AssetSyncSource.empty},
       observedLocalValues: {AssetSyncDomain.watchlist: <String>[]},
-      currentLocalValues: {AssetSyncDomain.watchlist: ['synthetic-entry']},
+      currentLocalValues: {
+        AssetSyncDomain.watchlist: ['synthetic-entry'],
+      },
     );
     expect(result[AssetSyncDomain.watchlist], AssetSyncSource.localOnly);
   });
