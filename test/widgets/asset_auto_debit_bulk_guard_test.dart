@@ -87,7 +87,11 @@ void main() {
     expect(
       find.text('引落の確認待ち (2件)'),
       findsOneWidget,
-      reason: find.byType(Text).evaluate().map((e) => (e.widget as Text).data).join(' / '),
+      reason: find
+          .byType(Text)
+          .evaluate()
+          .map((e) => (e.widget as Text).data)
+          .join(' / '),
     );
     expect(find.textContaining('件をまとめて引落済み'), findsNothing);
     expect(find.text('引落済み'), findsNWidgets(2));
