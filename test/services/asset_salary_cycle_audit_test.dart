@@ -65,18 +65,18 @@ void main() {
       () {
     final entries = _entries(
       flows: const [
-      {
-        'action_type': 'transfer',
-        'amount': 1000,
-        'occurred_at': '2026-01-25',
-        'description': '合成ATM振替',
-      },
-      {
-        'action_type': 'expense',
-        'amount': 10,
-        'occurred_at': '2026-01-25',
-        'description': '合成ATM手数料',
-      },
+        {
+          'action_type': 'transfer',
+          'amount': 1000,
+          'occurred_at': '2026-01-25',
+          'description': '合成ATM振替',
+        },
+        {
+          'action_type': 'expense',
+          'amount': 10,
+          'occurred_at': '2026-01-25',
+          'description': '合成ATM手数料',
+        },
       ],
     );
     expect(entries.incomes, isEmpty);
@@ -87,12 +87,12 @@ void main() {
       () {
     final entries = _entries(
       flows: const [
-      {
-        'action_type': 'expense',
-        'amount': 10,
-        'occurred_at': '2026-01-25',
-        'description': '合成支出',
-      },
+        {
+          'action_type': 'expense',
+          'amount': 10,
+          'occurred_at': '2026-01-25',
+          'description': '合成支出',
+        },
       ],
     );
     expect(entries.incomes, isEmpty);
