@@ -38,8 +38,10 @@ void main() {
     final initialGeneration = AssetSyncDirtyKeysStore.mutationGeneration;
     final pending = dirty.markDirty('watchlist_entries', 'synthetic', prefs: prefs);
     expect(AssetSyncDirtyKeysStore.hasPendingMutations, isTrue);
-    expect(AssetSyncDirtyKeysStore.mutationGeneration,
-        greaterThan(initialGeneration));
+    expect(
+      AssetSyncDirtyKeysStore.mutationGeneration,
+      greaterThan(initialGeneration),
+    );
     expect(
       verifyAssetPreferenceSync(
         loggedIn: true,
