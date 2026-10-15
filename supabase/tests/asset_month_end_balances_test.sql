@@ -35,6 +35,9 @@ begin
  assert not has_function_privilege('authenticated',
    'asset_snapshot_private.capture_month_end_balances(timestamptz)', 'execute');
  assert not has_table_privilege('authenticated','public.asset_month_end_balance_snapshots','update');
+ assert not has_table_privilege('authenticated','public.asset_month_end_balance_snapshots','truncate');
+ assert not has_table_privilege('authenticated','public.asset_month_end_snapshot_settings','truncate');
+ assert not has_table_privilege('anon','public.asset_month_end_balance_snapshots','select');
 end;
 $test$;
 -- A later edit cannot change an already saved checkpoint.

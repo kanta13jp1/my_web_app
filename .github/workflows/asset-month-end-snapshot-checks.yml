@@ -40,6 +40,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 <<'SQL'
           create role anon;
           create role authenticated;
+          alter default privileges in schema public grant all on tables to anon, authenticated;
           create schema auth;
           create table auth.users(id uuid primary key);
           create function auth.uid() returns uuid language sql stable as

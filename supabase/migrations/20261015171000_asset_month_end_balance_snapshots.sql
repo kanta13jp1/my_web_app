@@ -11,8 +11,8 @@ alter table public.asset_month_end_snapshot_settings enable row level security;
 create policy month_end_settings_owner on public.asset_month_end_snapshot_settings
   for all to authenticated using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
+revoke all on public.asset_month_end_snapshot_settings from public, anon, authenticated;
 grant select, insert, update, delete on public.asset_month_end_snapshot_settings to authenticated;
-revoke all on public.asset_month_end_snapshot_settings from anon;
 
 create table public.asset_month_end_balance_snapshots (
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -33,9 +33,8 @@ create table public.asset_month_end_balance_snapshots (
 alter table public.asset_month_end_balance_snapshots enable row level security;
 create policy month_end_snapshots_owner_read on public.asset_month_end_balance_snapshots
   for select to authenticated using ((select auth.uid()) = user_id);
+revoke all on public.asset_month_end_balance_snapshots from public, anon, authenticated;
 grant select on public.asset_month_end_balance_snapshots to authenticated;
-revoke all on public.asset_month_end_balance_snapshots from anon;
-revoke insert, update, delete on public.asset_month_end_balance_snapshots from authenticated;
 
 -- Supports each opted-in user's latest observation per account at the boundary.
 create index if not exists cfo_assets_month_end_lookup_idx
