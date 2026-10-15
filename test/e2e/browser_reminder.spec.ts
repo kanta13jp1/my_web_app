@@ -5,20 +5,24 @@ test('desktop reminder is opt-in, testable and stoppable', async ({ page, contex
   const settings = page.getByLabel('Dialog', { exact: true });
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await context.grantPermissions(['notifications']);
+  await context.grantPermissions(['notifications'], {
+    origin: new URL(process.env.E2E_BASE_URL ?? 'http://127.0.0.1:7361').origin,
+  });
   await page.addInitScript(() => {
     const NativeNotification = window.Notification;
     (window as any).__reminderCalls = [];
     // Observe the real adapter boundary without relying on an OS toast in headless CI.
-    (window as any).Notification = class extends NativeNotification {
-      constructor(title: string, options?: NotificationOptions) {
-        (window as any).__reminderCalls.push({ title, body: options?.body });
-        super(title, options);
-      }
-    };
+    (window as any).Notification = new Proxy(NativeNotification, {
+      construct(target, args: [string, NotificationOptions?]) {
+        (window as any).__reminderCalls.push({ title: args[0], body: args[1]?.body });
+        return Reflect.construct(target, args);
+      },
+      get(target, property) { return Reflect.get(target, property, target); },
+    });
   });
   await page.goto('/');
   await page.getByRole('button', { name: /^「手は机へ」デスクトップ通知/ }).click();
+  await expect(settings.getByText('ブラウザの通知：許可済み', { exact: true })).toBeVisible();
   await expect(settings.getByText('停止中', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as any).__reminderCalls)).toHaveLength(0);
   await page.getByRole('button', { name: 'テスト通知', exact: true }).click();
