@@ -13,7 +13,7 @@
 | テーブル案 | 主な列 | 制約と用途 |
 |---|---|---|
 | asset_payroll_accounts | user_id UUID、id UUID、display_label TEXT、target_increase_yen BIGINT NULL、archived BOOL | 所有者と口座IDの複合一意。口座番号は保存しない。目標額NULLは未設定 |
-| asset_payroll_balance_observations | user_id、id、account_id、payroll_month DATE、deposit_reference、deposited_at TIMESTAMPTZ、observed_at TIMESTAMPTZ、balance_yen BIGINT、evidence_kind、source_note、request_id、recorded_at | 本人確認の観測を追記保存。入金日時と観測日時を別保持。観測が入金前なら拒否。月は1日正規化。request_idで再送重複防止。所有者・口座・月・IDの複合一意 |
+| asset_payroll_balance_observations | user_id、id、account_id、payroll_month DATE、deposit_reference、deposit_date DATE、date_precision、deposited_at/observed_at TIMESTAMPTZ NULL、balance_yen BIGINT、evidence_kind、source_note、request_id、recorded_at、expected_previous_id、selection_reason | 本人確認の観測を追記保存。CSVはday精度で時刻NULL、時刻が分かる時だけinstant精度。時刻観測が入金前なら拒否。月は1日正規化。request_idで再送重複防止。所有者・口座・月・IDの複合一意 |
 | asset_payroll_balance_selections | user_id、account_id、payroll_month、observation_id、reason | 各月の明示選択済み観測を1件だけ参照。複合FKで別人・別口座・別月の観測を選択不可 |
 | asset_payroll_balance_selection_history | user_id、account_id、payroll_month、old_observation_id、new_observation_id、reason、changed_at | 選択の変更履歴。server triggerのみ追記。クライアントによる履歴上書き不可 |
 
@@ -54,7 +54,11 @@
 | 金融不変 | cfo_assets/flows/給与入金実績を増減させず、元収入を二重計上しない |
 | UI | 320px/拡大文字/desktop、空・取得中・失敗・復旧・訂正・再読込 |
 
-純粋比較のPR5787は上記の比較部分のみ。保存DDL・RLS・SQL試験・UIはまだ実装前。次はこの案から適用されないdraft SQL差分と、使い捨てPostgresでの2利用者試験を作る。本人の具体確認前にmigration適用・本番書込・新しい自動取得は行わない。
+純粋比較のPR5787は上記の比較部分のみ。本フォルダのDRAFT_PAYROLL_SCHEMA.sqlは本番適用されない保存案で、migrationフォルダへ置かない。contract.sqlとconcurrency.pyは使い捨てpayroll_contract DBだけで2利用者・自己昇格拒否・再送・訂正競合・監査atomicを検証する。SQL試験の成功はまだ未確認。UIは未実装。本人の具体確認前にmigration適用・本番書込・新しい自動取得は行わない。
+
+## 既存銀行取込との接続調査
+
+SmbcCsvImportServiceは各入金行にbalanceとimportKeyを保持する。本人が給与行と確認した行の取引後残高を使えるため、後日のlatestBalanceから復元する必要はない。PR5791で残高の符号保持・無効日付拒否・日精度の候補と本人確認アダプターを準備している。CSVを再度金融flowへ登録するのではなく、既存取込元と選択行を参照する。32bit短縮importKeyだけをグローバル一意証明とせず、owner・口座・取込元（ファイル内容の強いダイジェスト等）・行を保存層で結びつける。銀行APIの自動巡回はまだ存在しない。
 
 ## 根拠
 
