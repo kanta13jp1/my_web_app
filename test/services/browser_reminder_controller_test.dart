@@ -78,6 +78,23 @@ void main() {
     expect(controller.message, contains('ブロック'));
   });
 
+  test('late permission failure cannot overwrite explicit stop', () async {
+    final prompt = Completer<String>();
+    final pending = BrowserReminderController(
+      supported: true,
+      readPermission: () => 'default',
+      requestPermission: () => prompt.future,
+      showReminder: () async {},
+    );
+    final start = pending.start();
+    pending.stop();
+    prompt.completeError(StateError('permission failed after stop'));
+    await start;
+    expect(pending.message, '停止中です。');
+    expect(pending.running, false);
+    pending.dispose();
+  });
+
   test('stop while permission prompt pending cannot enable later', () async {
     final prompt = Completer<String>();
     final pending = BrowserReminderController(

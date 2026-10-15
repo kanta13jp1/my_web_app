@@ -80,6 +80,7 @@ class BrowserReminderController extends ChangeNotifier {
         message = 'このページを開いている間、約$intervalMinutes分おきに通知します。';
       }
     } catch (_) {
+      if (_disposed || generation != _generation) return;
       message = '通知を開始できませんでした。サイトの通知設定を確認してください。';
     } finally {
       if (!_disposed && generation == _generation) {
@@ -136,6 +137,7 @@ class BrowserReminderController extends ChangeNotifier {
         message = 'テスト通知を要求しました。表示されない場合はWindowsとブラウザの通知設定を確認してください。';
       }
     } catch (_) {
+      if (_disposed || generation != _generation) return;
       message = 'テスト通知を送れませんでした。サイトの通知設定を確認してください。';
     } finally {
       if (!_disposed && generation == _generation) {
