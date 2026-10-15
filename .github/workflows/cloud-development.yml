@@ -508,3 +508,37 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  payslip-review-preflight:
+    if: inputs.profile == 'workspace'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Format analyze and verify explicit original review
+        run: |
+          dart format integration_test/payslip_review_fixture.dart integration_test/payslip_review_test.dart lib/services/asset_payslip_review_store.dart lib/widgets/asset_payroll_deductions_card.dart lib/widgets/asset_payroll_deductions_section.dart lib/widgets/asset_payslip_review_dialog.dart test/services/asset_payslip_review_store_test.dart test/widgets/asset_payslip_review_dialog_test.dart
+          flutter analyze integration_test/payslip_review_fixture.dart integration_test/payslip_review_test.dart lib/services/asset_payslip_review_store.dart lib/widgets/asset_payroll_deductions_card.dart lib/widgets/asset_payroll_deductions_section.dart lib/widgets/asset_payslip_review_dialog.dart test/services/asset_payslip_review_store_test.dart test/widgets/asset_payslip_review_dialog_test.dart
+          flutter test test/services/asset_payslip_review_store_test.dart test/widgets/asset_payslip_review_dialog_test.dart --reporter expanded
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: payslip-review-preflight-${{ github.run_id }}
+          path: |
+            integration_test/payslip_review_fixture.dart
+            integration_test/payslip_review_test.dart
+            lib/services/asset_payslip_review_store.dart
+            lib/widgets/asset_payroll_deductions_card.dart
+            lib/widgets/asset_payroll_deductions_section.dart
+            lib/widgets/asset_payslip_review_dialog.dart
+            test/services/asset_payslip_review_store_test.dart
+            test/widgets/asset_payslip_review_dialog_test.dart
+          retention-days: 3

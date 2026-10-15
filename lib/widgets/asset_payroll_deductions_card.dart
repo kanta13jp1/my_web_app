@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import '../services/asset_payroll_deductions.dart';
 
-/// Uses already authorized payslip rows; never uploads or modifies a payslip.
+/// Projects authorized rows; review is an explicit optional action callback.
 class AssetPayrollDeductionsCard extends StatelessWidget {
   const AssetPayrollDeductionsCard({
     super.key,
     required this.ownerId,
     required this.year,
     required this.rows,
+    this.onReview,
   });
 
   final String ownerId;
   final int year;
   final List<Map<String, dynamic>> rows;
+  final ValueChanged<String>? onReview;
 
   static String amount(int? value) => value == null ? '未取得' : '$value円';
 
@@ -108,6 +110,8 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
             '明細${index + 1}・${row.payDate.month}/${row.payDate.day}支給・${row.confirmed ? '本人確認済み' : '読取内容は未確認'}',
             style: Theme.of(context).textTheme.titleSmall,
           ),
+          if (onReview != null && (row.reviewStatus == 'auto' || row.reviewStatus == 'needs_review'))
+            OutlinedButton(onPressed: () => onReview!(row.sourceId), child: const Text('元明細と照合して確認')),
           Text('総支給 ${amount(row.grossYen)} / 手取り ${amount(row.netYen)}'),
           for (final entry in labels.entries)
             Text('${entry.value}：${amount(row.items[entry.key])}'),
