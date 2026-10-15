@@ -6,24 +6,51 @@ import 'package:my_web_app/data/services/reading_book_search.dart';
 import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 
 void main() {
-  test('Aristotle Metaphysics has separate sourced Iwanami volumes offline', () async {
-    final client = MockClient((_) => throw StateError('No external search needed'),);
-    final books = await const ReadingBookSearch().search('形而上学', author: 'アリストテレス', client: client,);
+  test('Aristotle Metaphysics has separate sourced Iwanami volumes offline',
+      () async {
+    final client = MockClient(
+      (_) => throw StateError('No external search needed'),
+    );
+    final books = await const ReadingBookSearch().search(
+      '形而上学',
+      author: 'アリストテレス',
+      client: client,
+    );
     expect(books.any((book) => book.edition.isbn == '9784061591165'), isTrue);
     for (final (isbn, pages, year, source) in [
-      ('9784003360439', 420, '1959', 'https://www.hanmoto.com/bd/isbn/9784003360439',),
-      ('9784003360446', 458, '1961', 'https://www.books.or.jp/book-details/9784003360446',),
+      (
+        '9784003360439',
+        420,
+        '1959',
+        'https://www.hanmoto.com/bd/isbn/9784003360439',
+      ),
+      (
+        '9784003360446',
+        458,
+        '1961',
+        'https://www.books.or.jp/book-details/9784003360446',
+      ),
     ]) {
-      final edition = books.singleWhere((book) => book.edition.isbn == isbn).edition;
+      final edition =
+          books.singleWhere((book) => book.edition.isbn == isbn).edition;
       expect(edition.publisher, '岩波書店');
       expect(edition.translator, '出隆');
       expect(edition.editor, isEmpty);
       expect(edition.totalPages, pages);
       expect(edition.year, year);
       expect(edition.sourceUrl, source);
-      expect(edition.bookUrl, 'https://www.amazon.co.jp/s/?i=stripbooks&k=$isbn',);
-      for (final query in [isbn, isbn == '9784003360439' ? '4003360435' : '4003360443',]) {
-        final matches = await const ReadingBookSearch().search(query, client: client,);
+      expect(
+        edition.bookUrl,
+        'https://www.amazon.co.jp/s/?i=stripbooks&k=$isbn',
+      );
+      for (final query in [
+        isbn,
+        isbn == '9784003360439' ? '4003360435' : '4003360443',
+      ]) {
+        final matches = await const ReadingBookSearch().search(
+          query,
+          client: client,
+        );
         expect(matches.any((book) => book.edition.isbn == isbn), isTrue);
       }
     }
