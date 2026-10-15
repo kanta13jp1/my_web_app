@@ -6262,6 +6262,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 1) セクション (表示中のみ)。
     for (final id in AssetManagementSectionId.values) {
       if (!_isSectionShown(id)) continue;
+      if (id == AssetManagementSectionId.savingsPlan &&
+          _sectionAnchorKey(id).currentContext == null) {
+        continue;
+      }
       if (!matches(id.label)) continue;
       entries.add(
         _AssetSectionSearchEntry(
@@ -10300,8 +10304,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
               const SizedBox(height: 12),
               _buildDisplayModeSwitcher(),
-              if (assetLiabilityWorkbook != null &&
-                  _supabase.auth.currentUser != null)
+              if (_isSectionShown(AssetManagementSectionId.savingsPlan) &&
+                  assetLiabilityWorkbook != null &&
+                  _supabase.auth.currentUser != null) ...[
+                _sectionAnchor(AssetManagementSectionId.savingsPlan),
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: SavingsLifePlanCard(
@@ -10323,6 +10329,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     onReviewPayments: () => _scrollTo(_keyCalendar),
                   ),
                 ),
+              ],
               const SizedBox(height: 12),
               if (_isSectionShown(AssetManagementSectionId.monthlyFlow)) ...[
                 _sectionAnchor(AssetManagementSectionId.monthlyFlow),
