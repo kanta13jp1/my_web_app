@@ -9,11 +9,12 @@ on:
 concurrency:
   group: calendar-reflection-${{ github.ref }}
   cancel-in-progress: true
-permissions:
-  contents: read
+permissions: {}
 jobs:
   ownership-contract:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 10
     services:
       postgres:
@@ -27,6 +28,8 @@ jobs:
           --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Exercise ownership, dedup, unknown amounts, and unchanged totals
         env:
           PGPASSWORD: postgres
@@ -37,10 +40,13 @@ jobs:
 
   flutter-focused:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-flutter-sdk
         with:
