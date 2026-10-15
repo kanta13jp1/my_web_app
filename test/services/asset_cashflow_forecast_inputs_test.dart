@@ -137,7 +137,9 @@ void main() {
             debt: _debt(
               kind: AssetLiabilityAccountKind.cardLoan,
               fullPaymentEstimate: true,
+              recurringFixedCostId: 'cost-bill',
             ),
+            links: const {'legacy-bill': 'cost-bill'},
           ),
         ),
         2000,
@@ -158,7 +160,7 @@ void main() {
       expect(_projectOutflow(byId), 4000);
     });
 
-    test('deduplication compares each actual date after month-end clamping',
+    test('unlinked contracts stay independent after month-end clamping',
         () {
       final inputs = _billInputs(
         debt: _debt(day: 31),
@@ -170,8 +172,26 @@ void main() {
         horizonMonths: 2,
         recurringOutflow: inputs.recurringOutflow,
       );
-      expect(forecast.months[0].outflowTotal, 2000);
+      // Coinciding in February is not evidence these are the same contract.
+      expect(forecast.months[0].outflowTotal, 4000);
       expect(forecast.months[1].outflowTotal, 4000);
+    });
+
+    test('explicit contract uses canonical due date after month-end clamping', () {
+      final inputs = _billInputs(
+        debt: _debt(day: 31, recurringFixedCostId: 'cost-bill'),
+        dueDate: '2026-01-30',
+        links: const {'legacy-bill': 'cost-bill'},
+      );
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 2, 1),
+        startingBalance: 10000,
+        horizonMonths: 2,
+        recurringOutflow: inputs.recurringOutflow,
+      );
+      expect(forecast.months[0].outflowTotal, 2000);
+      expect(forecast.months[1].outflowTotal, 2000);
+      expect(inputs.recurringOutflow.single.dayOfMonth, 31);
     });
   });
 
