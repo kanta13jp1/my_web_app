@@ -21,8 +21,10 @@ AssetMonthEndSnapshot checkpoint() => AssetMonthEndSnapshot.fromJson({
       'stale_account_count': 1,
     });
 
+class NoNetworkClient extends Fake implements SupabaseClient {}
+
 class MemoryService extends AssetMonthEndSnapshotService {
-  MemoryService() : super(SupabaseClient('https://example.invalid', 'test'));
+  MemoryService() : super(NoNetworkClient());
   bool enabled = false;
   bool fail = false;
   int loads = 0;
