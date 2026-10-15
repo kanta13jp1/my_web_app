@@ -89,17 +89,22 @@ class DebtProgressCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          _row('今月の返済', _yen(data.monthlyPayment)),
+          _row('毎月の返済予定', _yen(data.monthlyPayment)),
           const SizedBox(height: 10),
           _row(
             '完済まで',
-            data.payoffLabel == null ? '— (要見直し)' : 'あと${data.payoffLabel}',
+            data.payoffLabel == null ? data.unavailablePayoffLabel : 'あと${data.payoffLabel}',
             emphasize: data.payoffLabel == null,
           ),
           if (data.estimatedInterest != null) ...[
             const SizedBox(height: 10),
             _row('利息見込み', _yen(data.estimatedInterest!)),
           ],
+          const SizedBox(height: 10),
+          Text(
+            data.projectionNote,
+            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+          ),
           const SizedBox(height: 18),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

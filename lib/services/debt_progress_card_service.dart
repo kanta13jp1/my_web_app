@@ -10,6 +10,13 @@ import 'package:my_web_app/services/asset_liability_repayment_simulation_service
 ///
 /// 載せる: 残債総額 / 今月の返済予定額 / 完済予定 / 利息見込み / 前月比 / 件数
 /// 載せない: 年収・月収 / 口座残高 / 借入先名 / 勤務先 / 支払元口座
+enum DebtProgressProjectionStatus {
+  estimated,
+  unconfirmedTerms,
+  insufficientPayment,
+  horizonExceeded,
+}
+
 class DebtProgressCardData {
   /// 残債総額 (円 / 正の値)。
   final double totalDebt;
@@ -18,7 +25,7 @@ class DebtProgressCardData {
   final double monthlyPayment;
 
   /// 現在の返済額を続けた場合の完済までの月数。
-  /// null = 現在の返済額では完済しない (返済が利息に追いつかない等)。
+  /// null = 条件未確認または計算範囲内で完済を算出できない。理由は projectionStatus。
   final int? payoffMonths;
 
   /// 完済までに支払う利息の見込み総額 (円)。
@@ -31,6 +38,7 @@ class DebtProgressCardData {
 
   /// 返済対象の負債件数。**名前は持たない** (借入先が分かると特定に繋がる)。
   final int debtCount;
+  final DebtProgressProjectionStatus projectionStatus;
 
   const DebtProgressCardData({
     required this.totalDebt,
@@ -39,7 +47,26 @@ class DebtProgressCardData {
     required this.estimatedInterest,
     required this.monthOverMonthDelta,
     required this.debtCount,
+    this.projectionStatus = DebtProgressProjectionStatus.estimated,
   });
+
+  String get projectionNote => switch (projectionStatus) {
+        DebtProgressProjectionStatus.unconfirmedTerms =>
+          '利率または返済額が未確認のため、完済時期・利息は表示していません。',
+        DebtProgressProjectionStatus.insufficientPayment =>
+          '登録返済額が月利息以下の見込みです。返済条件を明細で確認してください。',
+        DebtProgressProjectionStatus.horizonExceeded =>
+          '試算期間内の完済時期を算出できませんでした。',
+        DebtProgressProjectionStatus.estimated =>
+          '登録した利率と返済額を継続する試算です。新規利用や条件変更は含みません。',
+      };
+
+  String get unavailablePayoffLabel => switch (projectionStatus) {
+        DebtProgressProjectionStatus.unconfirmedTerms => '条件未確認',
+        DebtProgressProjectionStatus.insufficientPayment => '返済額の見直し',
+        DebtProgressProjectionStatus.horizonExceeded => '期間内に算出不可',
+        DebtProgressProjectionStatus.estimated => '算出できません',
+      };
 
   /// 前月より残債が減ったか。前月データが無いときは null。
   bool? get isImproving {
@@ -81,19 +108,20 @@ class DebtProgressCardService {
     final lines = <String>[
       '【${month.year}年${month.month}月の返済報告】',
       '残債 ${_yen(card.totalDebt)}${_deltaSuffix(card.monthOverMonthDelta)}',
-      '今月の返済 ${_yen(card.monthlyPayment)}',
+      '毎月の返済予定（登録額） ${_yen(card.monthlyPayment)}',
     ];
     final payoff = card.payoffLabel;
     if (payoff != null) {
       lines.add('このペースで完済まで あと$payoff');
     } else {
       // 完済しない見込みを黙って省くと、報告として誠実でなくなる。
-      lines.add('※ 今の返済額だと元金が減りません(要見直し)');
+      lines.add('※ ${card.unavailablePayoffLabel}');
     }
     final interest = card.estimatedInterest;
     if (interest != null) {
       lines.add('完済までの利息見込み ${_yen(interest)}');
     }
+    lines.add(card.projectionNote);
     if (hashtags.isNotEmpty) {
       lines
         ..add('')
@@ -130,10 +158,11 @@ class DebtProgressCardService {
     final parts = <String>[
       '${month.year}年${month.month}月の返済報告カード',
       '残債 ${_yen(card.totalDebt)}',
-      '今月の返済 ${_yen(card.monthlyPayment)}',
+      '毎月の返済予定（登録額） ${_yen(card.monthlyPayment)}',
     ];
     final payoff = card.payoffLabel;
-    parts.add(payoff == null ? '現在の返済額では完済しない見込み' : '完済まであと$payoff');
+    parts.add(payoff == null ? card.unavailablePayoffLabel : '完済まであと$payoff');
+    parts.add(card.projectionNote);
     return parts.join(' / ');
   }
 
@@ -204,14 +233,27 @@ class DebtProgressCardService {
   ///
   /// [priorBalancesByAccountId] は前月の残高スナップショット
   /// (`AssetAccountBalanceHistoryStore.priorMonthBalances` /
-  /// **accountId -> 利用残高の絶対額 (正の値)**)。空なら前月比は null。
+  /// **accountId -> 利用残高の絶対額 (正の値)**)。対象集合が不一致なら前月比は null。
+  /// [confirmedAnnualRateAccountKeys] は本人が明示した利率の既存キーのみ。
+  /// 推定利率・欠落の0を確認済み利率へ昇格させない。
   DebtProgressCardData? build({
     required AssetLiabilityWorkbook workbook,
     Map<String, double> priorBalancesByAccountId = const <String, double>{},
+    Set<String> confirmedAnnualRateAccountKeys = const <String>{},
   }) {
     const simulation = AssetLiabilityRepaymentSimulationService();
     // 繰り上げ返済なしの基準プラン = 「今のままだとこうなる」。
-    final result = simulation.buildComparison(workbook: workbook);
+    final stockRows = workbook.debtMasterRows.where((row) =>
+        row.balance < 0 &&
+        row.isDirectCashflowTarget &&
+        !row.includedInBillingAccount &&
+        !workbook.scheduledExpenseAccountIds.contains(row.id)).toList();
+    final stockIds = stockRows.map((row) => row.id).toSet();
+    final result = simulation.buildComparison(
+      workbook: workbook,
+      includePaidPrincipal: true,
+      eligibleAccountIds: stockIds,
+    );
     final basis = result.baselinePlanFor(_basisStrategy);
     if (basis == null || basis.priorityRows.isEmpty) return null;
 
@@ -222,7 +264,23 @@ class DebtProgressCardService {
       for (final row in basis.priorityRows) row.id,
     };
 
-    final payoffMonths = basis.estimatedPayoffMonths;
+    final termsConfirmed = stockRows.every((row) =>
+        row.annualRate.isFinite &&
+        !row.paymentAmountEstimated &&
+        (confirmedAnnualRateAccountKeys.contains(row.id) ||
+            confirmedAnnualRateAccountKeys.contains(row.name)));
+    final monthlyInterest = stockRows.fold<double>(
+      0,
+      (sum, row) => sum + row.balance.abs() * row.annualRate / 12,
+    );
+    final projectionStatus = !termsConfirmed
+        ? DebtProgressProjectionStatus.unconfirmedTerms
+        : basis.estimatedPayoffMonths != null
+            ? DebtProgressProjectionStatus.estimated
+            : result.baseMonthlyPayment <= monthlyInterest + 0.01
+                ? DebtProgressProjectionStatus.insufficientPayment
+                : DebtProgressProjectionStatus.horizonExceeded;
+    final payoffMonths = termsConfirmed ? basis.estimatedPayoffMonths : null;
     // 完済しない場合の利息総額はシミュレーション打ち切り時点の部分和でしかなく、
     // 「完済までに払う利息」として出すと実際より小さい額を約束することになる。
     final estimatedInterest =
@@ -239,6 +297,7 @@ class DebtProgressCardService {
         priorBalancesByAccountId: priorBalancesByAccountId,
       ),
       debtCount: basis.priorityRows.length,
+      projectionStatus: projectionStatus,
     );
   }
 
@@ -264,12 +323,15 @@ class DebtProgressCardService {
     for (final row in workbook.debtMasterRows) {
       if (!eligibleIds.contains(row.id)) continue;
       final priorBalance = priorBalancesByAccountId[row.id];
-      if (priorBalance == null) continue;
+      if (priorBalance == null || !priorBalance.isFinite) continue;
       current += row.balance.abs();
       prior += priorBalance.abs();
       comparable += 1;
     }
-    if (comparable == 0) return null;
+    if (comparable != eligibleIds.length ||
+        priorBalancesByAccountId.keys.any((id) => !eligibleIds.contains(id))) {
+      return null;
+    }
     return current - prior;
   }
 }
