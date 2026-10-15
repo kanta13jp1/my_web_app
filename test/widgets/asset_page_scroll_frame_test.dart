@@ -32,13 +32,20 @@ void main() {
     expect(frame.controller, same(controller));
     expect(frame.thumbVisibility, isTrue);
     final rect = tester.getRect(find.byKey(const Key('asset_page_scrollbar')));
-    final state = tester.state<RawScrollbarState>(
-      find.byKey(const Key('asset_page_scrollbar')),
-    );
+    final painter = tester
+        .widgetList<CustomPaint>(
+          find.descendant(
+            of: find.byKey(const Key('asset_page_scrollbar')),
+            matching: find.byType(CustomPaint),
+          ),
+        )
+        .map((paint) => paint.foregroundPainter)
+        .whereType<ScrollbarPainter>()
+        .single;
     final thumbPoints = <Offset>[
       for (var y = 0.0; y < rect.height; y += 2)
         for (var x = rect.width - 20; x < rect.width; x += 2)
-          if (state.scrollbarPainter.hitTestOnlyThumbInteractive(
+          if (painter.hitTestOnlyThumbInteractive(
             Offset(x, y),
             PointerDeviceKind.mouse,
           ))
