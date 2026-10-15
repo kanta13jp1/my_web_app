@@ -1,6 +1,7 @@
 import '../services/asset_month_end_snapshot_service.dart';
 import '../widgets/asset_month_end_snapshot_card.dart';
 import '../widgets/asset_payroll_deductions_section.dart';
+import '../widgets/asset_page_scroll_frame.dart';
 import '../widgets/asset_payroll_snapshot_connection.dart';
 import '../services/asset_payroll_snapshot_store.dart';
 import '../widgets/asset_reflection_day_badge.dart';
@@ -519,6 +520,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // --- 今日18:00締切のためのチェックリスト ---
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey _keyPayrollDeductionsSection = GlobalKey();
+  final GlobalKey _keyMonthEndRecordsSection = GlobalKey();
   static const double _paymentSourceSafetyBalance = 30000;
   final _keyStock = GlobalKey();
   final _keyFlow = GlobalKey();
@@ -6234,6 +6237,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     }
 
+    // The payroll card is nested in the workbook. Offer a jump only while
+    // its authenticated, visible destination is actually mounted.
+    if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
+        _supabase.auth.currentUser != null &&
+        _keyPayrollDeductionsSection.currentContext != null &&
+        matches('給与控除 給与明細 給与明細の控除 税金 所得税 住民税 社会保険料 控除 手取り')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '給与明細・税金・社会保険料の控除',
+          sublabel: '資産/負債 管理ボード → 給与の内訳へ移動',
+          icon: Icons.receipt_long_outlined,
+          onTap: () => _scrollTo(_keyPayrollDeductionsSection),
+        ),
+      );
+    }
+
+    if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
+        _keyMonthEndRecordsSection.currentContext != null &&
+        matches('月末 月末記録 月末保存 月次スナップショット 過去の残高 記録')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '月末の残高記録',
+          sublabel: '資産/負債 管理ボード → 月末記録へ移動',
+          icon: Icons.history_outlined,
+          onTap: () => _scrollTo(_keyMonthEndRecordsSection),
+        ),
+      );
+    }
+
     // 2) 定期固定費 / サブスク (Pontaパス 等)。該当カードのセクションへ飛ぶ。
     for (final cost in _recurringFixedCosts) {
       if (!matches(cost.name)) continue;
@@ -10201,7 +10233,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: SingleChildScrollView(
+      body: AssetPageScrollFrame(
+        controller: _scrollController,
+        compact: isCompact,
+        child: SingleChildScrollView(
         controller: _scrollController,
         padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
         child: Column(
@@ -10382,6 +10417,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ],
         ),
+      ),
       ),
     );
   }
@@ -21782,10 +21818,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 16),
             _buildMonthlySnapshotSection(workbook),
             const SizedBox(height: 16),
-            AssetMonthEndSnapshotCard(
-              key: ValueKey('month-end-${_supabase.auth.currentUser?.id}'),
-              service: AssetMonthEndSnapshotService(_supabase),
-              monthKeys: _recentMonthEndSnapshotKeys(),
+            KeyedSubtree(
+              key: _keyMonthEndRecordsSection,
+              child: AssetMonthEndSnapshotCard(
+                key: ValueKey('month-end-${_supabase.auth.currentUser?.id}'),
+                service: AssetMonthEndSnapshotService(_supabase),
+                monthKeys: _recentMonthEndSnapshotKeys(),
+              ),
             ),
             const SizedBox(height: 16),
             AssetPayrollSnapshotConnection(
@@ -21799,11 +21838,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 16),
-            AssetPayrollDeductionsSection(
-              key: ValueKey(
-                  'payroll-deductions-${_supabase.auth.currentUser?.id}'),
-              client: _supabase,
-              initialYear: _now.year,
+            KeyedSubtree(
+              key: _keyPayrollDeductionsSection,
+              child: AssetPayrollDeductionsSection(
+                key: ValueKey(
+                    'payroll-deductions-${_supabase.auth.currentUser?.id}'),
+                client: _supabase,
+                initialYear: _now.year,
+              ),
             ),
             const SizedBox(height: 16),
             _buildMonthlyReportSection(),
