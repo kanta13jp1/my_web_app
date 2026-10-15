@@ -40,16 +40,22 @@ class PayrollSnapshotGoal {
     if ((current != null && !matches(current, month)) ||
         (previous != null &&
             !matches(previous, DateTime(month.year, month.month - 1)))) {
-      return PayrollSnapshotGoal(PayrollSnapshotGoalStatus.contextMismatch,
-          targetYen: targetYen,);
+      return PayrollSnapshotGoal(
+        PayrollSnapshotGoalStatus.contextMismatch,
+        targetYen: targetYen,
+      );
     }
     if (current == null) {
-      return PayrollSnapshotGoal(PayrollSnapshotGoalStatus.currentMissing,
-          targetYen: targetYen,);
+      return PayrollSnapshotGoal(
+        PayrollSnapshotGoalStatus.currentMissing,
+        targetYen: targetYen,
+      );
     }
     if (previous == null) {
-      return PayrollSnapshotGoal(PayrollSnapshotGoalStatus.previousMissing,
-          targetYen: targetYen,);
+      return PayrollSnapshotGoal(
+        PayrollSnapshotGoalStatus.previousMissing,
+        targetYen: targetYen,
+      );
     }
     return PayrollSnapshotGoal(
       PayrollSnapshotGoalStatus.comparable,

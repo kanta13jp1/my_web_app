@@ -66,16 +66,16 @@ void main() {
     expect(unset.deltaYen, 0);
     expect(unset.reached, isNull);
     expect(
-        compare(current: record(month: 2), previous: record(), target: 0)
-            .reached,
-        isTrue,);
+      compare(current: record(month: 2), previous: record(), target: 0).reached,
+      isTrue,
+    );
   });
   test('owner account and consecutive calendar month must match', () {
     for (final previous in [
       record(owner: 'owner-b'),
       record(account: 'account-b'),
-      record(month: 0)
-    ,]) {
+      record(month: 0),
+    ]) {
       final result =
           compare(current: record(month: 2), previous: previous, target: 0);
       expect(result.status, PayrollSnapshotGoalStatus.contextMismatch);

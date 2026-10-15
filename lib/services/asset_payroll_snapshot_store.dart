@@ -2,8 +2,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 int? readPayrollTarget(Object? value) {
   if (value == null) return null;
-  if (value is! num || !value.isFinite || value < 0 ||
-      value > 9007199254740991 || value != value.roundToDouble()) {
+  if (value is! num ||
+      !value.isFinite ||
+      value < 0 ||
+      value > 9007199254740991 ||
+      value != value.roundToDouble()) {
     throw const FormatException('Unsupported payroll target value');
   }
   return value.toInt();
@@ -182,7 +185,8 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
     final row = await client
         .from('asset_payroll_balance_observations')
         .select(
-            'id,user_id,account_id,payroll_month,balance_yen,deposit_date,source_note',)
+          'id,user_id,account_id,payroll_month,balance_yen,deposit_date,source_note',
+        )
         .eq('user_id', ownerId)
         .eq('id', selection['observation_id'])
         .eq('account_id', accountId)

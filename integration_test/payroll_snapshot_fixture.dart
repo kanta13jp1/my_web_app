@@ -29,9 +29,12 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
   Future<List<PayrollSnapshotAccount>> accounts() async => failTargetReads
       ? throw StateError('synthetic target read failed')
       : [
-          PayrollSnapshotAccount('synthetic-account', '給与口座A',
-              targetIncreaseYen: target,)
-        ,];
+          PayrollSnapshotAccount(
+            'synthetic-account',
+            '給与口座A',
+            targetIncreaseYen: target,
+          ),
+        ];
   @override
   Future<void> createAccount(String label) async {}
   @override

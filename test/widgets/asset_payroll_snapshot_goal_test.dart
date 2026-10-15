@@ -14,7 +14,8 @@ Future<void> saveGoal(WidgetTester tester, String value) async {
 }
 
 void main() {
-  testWidgets('stale expected target never overwrites a concurrent setting', (tester) async {
+  testWidgets('stale expected target never overwrites a concurrent setting',
+      (tester) async {
     final store = SyntheticSnapshotStore();
     await showSnapshot(tester, store);
     store.target = 20000;
