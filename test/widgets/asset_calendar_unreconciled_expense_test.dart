@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/models/asset_calendar_reflection.dart';
+import 'package:my_web_app/services/asset_spending_attention_calendar.dart';
+import 'package:my_web_app/widgets/asset_attention_day_label.dart';
+import 'package:my_web_app/widgets/asset_reflection_day_badge.dart';
 import 'package:my_web_app/widgets/asset_unreconciled_expense_badge.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -32,6 +36,31 @@ void main() {
       ),
     );
     expect(find.text('不明'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('unknown, attention, and reflection marks coexist in narrow cell',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Center(child: SizedBox(width: 40, height: 84,
+        child: Column(children: [
+          const Text('20', style: TextStyle(fontSize: 11)),
+          const Text('1,000', style: TextStyle(fontSize: 9)),
+          const AssetUnreconciledExpenseBadge(),
+          AssetAttentionDayLabel(
+            day: AssetSpendingAttentionCalendar.forDate(DateTime(2026, 6, 20)),
+          ),
+          const Expanded(child: AssetReflectionDayBadge(kinds: {
+            AssetReflectionKind.dining, AssetReflectionKind.drinkingOut,
+            AssetReflectionKind.alcoholPurchase, AssetReflectionKind.reading,
+          },),),
+          const SizedBox(height: 5),
+        ],),
+      ),),
+    ),);
+    expect(find.text('不明'), findsOneWidget);
+    expect(find.text('注意'), findsOneWidget);
+    expect(find.textContaining('外食'), findsOneWidget);
+    expect(tester.getSize(find.byType(AssetReflectionDayBadge)).height, greaterThan(0));
     expect(tester.takeException(), isNull);
   });
   for (final width in [1200.0, 390.0]) {
@@ -67,13 +96,14 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
-      final badge =
-          find.byKey(const Key('asset_calendar_unreconciled_2026_6_20'));
+      final badge = find.byKey(
+        const Key('asset_calendar_unreconciled_2026_6_20'),
+      );
       await tester.ensureVisible(badge);
       await tester.pump();
       expect(badge, findsOneWidget);
       expect(find.byKey(const Key('asset_calendar_unreconciled_details')),
-          findsOneWidget);
+          findsOneWidget,);
       expect(find.textContaining('日別支出に含まれる参考内訳'), findsOneWidget);
       expect(find.textContaining('消費を確認した記録ではありません'), findsOneWidget);
       expect(tester.takeException(), isNull);
