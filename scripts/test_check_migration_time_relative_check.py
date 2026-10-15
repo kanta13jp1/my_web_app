@@ -33,6 +33,10 @@ CREATE TRIGGER due_guard BEFORE UPDATE ON public.wbs_tasks FOR EACH ROW EXECUTE 
                 risky = guard.canonical_name(guard.UPDATE_RE.search("UPDATE public.wbs_tasks SET title = 'x'").group(1))
                 self.assertNotIn(safe, sensitive)
                 self.assertIn(risky, sensitive)
+                unqualified = guard.canonical_name(guard.UPDATE_RE.search("UPDATE wbs_tasks SET title = 'x'").group(1))
+                quoted = guard.canonical_name(guard.UPDATE_RE.search('UPDATE "public"."wbs_tasks" SET title = 1').group(1))
+                self.assertIn(unqualified, sensitive)
+                self.assertIn(quoted, sensitive)
             finally:
                 guard.MIGRATIONS_DIR = original
 
