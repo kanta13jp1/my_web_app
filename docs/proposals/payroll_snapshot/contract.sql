@@ -70,12 +70,15 @@ begin
 end $test$;
 select public.test_error('update public.asset_payroll_balance_observations set balance_yen = 1', '42501');
 select public.test_error('delete from public.asset_payroll_balance_observations', '42501');
+select public.test_error('insert into public.asset_payroll_balance_observations(user_id,account_id,payroll_month,deposit_reference,deposit_date,date_precision,balance_yen,source_note,confirmation_version,selection_reason,request_id) values (''aaaaaaaa-0000-0000-0000-000000000001'',''aaaaaaaa-1111-1111-1111-111111111111'',''2030-03-01'',''unconfirmed direct insert'',''2030-03-20'',''day'',500,''synthetic'',''immediate-balance-v1'',''synthetic'',''00000000-0000-0000-0000-000000000007'')', '42501');
+select public.test_error('insert into public.asset_payroll_balance_selections(user_id,account_id,payroll_month,observation_id,reason) select user_id,account_id,payroll_month,id,''direct insert without confirmation'' from public.asset_payroll_balance_observations limit 1', '42501');
+select public.test_error('update public.asset_payroll_balance_selections set observation_id = (select old_observation_id from public.asset_payroll_balance_selection_history where old_observation_id is not null limit 1), reason = ''stale direct overwrite''', '42501');
 select public.test_error('insert into public.asset_payroll_balance_selection_history(user_id,account_id,payroll_month,new_observation_id,reason) select user_id,account_id,payroll_month,observation_id,reason from public.asset_payroll_balance_selections', '42501');
 select public.test_error('update public.asset_payroll_accounts set user_id = ''bbbbbbbb-0000-0000-0000-000000000002''', '42501');
 select public.test_error('insert into public.asset_payroll_accounts(user_id,id,display_label) values (''bbbbbbbb-0000-0000-0000-000000000002'',''bbbbbbbb-1111-1111-1111-111111111111'',''forged'')', '42501');
 
 -- A client cannot assert bank-verified evidence or set the server capture time.
-select public.test_error('insert into public.asset_payroll_balance_observations(user_id,account_id,payroll_month,deposit_reference,deposit_date,date_precision,balance_yen,evidence_kind,source_note,confirmation_version,selection_reason,request_id) values (''aaaaaaaa-0000-0000-0000-000000000001'',''aaaaaaaa-1111-1111-1111-111111111111'',''2030-02-01'',''synthetic'',''2030-02-20'',''day'',500,''bank_verified'',''synthetic'',''immediate-balance-v1'',''synthetic'',''00000000-0000-0000-0000-000000000009'')', '23514');
+select public.test_error('insert into public.asset_payroll_balance_observations(user_id,account_id,payroll_month,deposit_reference,deposit_date,date_precision,balance_yen,evidence_kind,source_note,confirmation_version,selection_reason,request_id) values (''aaaaaaaa-0000-0000-0000-000000000001'',''aaaaaaaa-1111-1111-1111-111111111111'',''2030-02-01'',''synthetic'',''2030-02-20'',''day'',500,''bank_verified'',''synthetic'',''immediate-balance-v1'',''synthetic'',''00000000-0000-0000-0000-000000000009'')', '42501');
 select public.test_error('insert into public.asset_payroll_balance_observations(recorded_at) values (now())', '42501');
 
 select set_config('request.jwt.claim.sub', 'bbbbbbbb-0000-0000-0000-000000000002', false);

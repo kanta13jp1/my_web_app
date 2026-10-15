@@ -23,11 +23,11 @@
 
 - 全4表でRLSを有効化する。PUBLICとanonへの全権限を剥奪。
 - accountsはauthenticatedの本人行だけSELECT/INSERT/UPDATE可能。UPDATEはUSING/WITH CHECK双方でowner固定。
-- observationsは本人行のSELECTと指定列INSERTのみ。UPDATE/DELETEは付与せず、訂正は新観測を追加する。recorded_atはserver defaultと列GRANTでクライアント指定不可。
-- selectionsは本人行のSELECT/INSERT/UPDATEのみ。変更理由を必須とし、他ownerのIDを入れると複合FKとRLSで拒否。
+- observationsは本人行のSELECTのみ。クライアントの直接INSERT/UPDATE/DELETEをGRANTとpolicy双方で禁止する。訂正は限定RPCが新観測を追加し、recorded_atもserverで設定する。
+- selectionsは本人行のSELECTのみ。直接INSERT/UPDATE/DELETEは禁止。変更理由と期待する旧選択を必須とする限定RPCだけが訂正を行い、他ownerのIDはowner照合と複合FKで拒否する。
 - historyは本人行のSELECTのみ。変更triggerは空search_pathで対象schemaを完全修飾し、認証ownerを照合する。直接EXECUTEとINSERT/UPDATE/DELETEは全クライアントから剥奪。
 - 所有者削除はauth.usersのcascadeで関連観測/履歴も削除。通常のUIでは口座をarchiveにして履歴を保持する。個別削除機能は別途設計・本人選択とする。
-- service roleをブラウザへ置かない。新しい公開ビューやRPCによるRLS回避は作らない。
+- service roleをブラウザへ置かない。publicにはinvoker wrapperだけを公開し、非公開schemaの限定definer実装でauth.uidを取り、全SQLにownerを固定する。authenticatedには当該関数のEXECUTEとschema USAGEだけを追加し、他private関数の直接EXECUTEは剥奪する。直接DMLで確認・再送・競合契約を回避する経路を作らない。
 
 ## 根拠取得UI
 

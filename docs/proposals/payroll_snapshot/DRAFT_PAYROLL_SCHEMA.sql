@@ -91,13 +91,8 @@ grant select on public.asset_payroll_accounts,
 grant insert (user_id, id, display_label, target_increase_yen, archived),
   update (display_label, target_increase_yen, archived)
   on public.asset_payroll_accounts to authenticated;
-grant insert (user_id, id, account_id, payroll_month, deposit_reference,
-  deposit_date, date_precision, deposited_at, observed_at, balance_yen, evidence_kind, source_note,
-  confirmation_version, selection_reason, expected_previous_id, request_id)
-  on public.asset_payroll_balance_observations to authenticated;
-grant insert (user_id, account_id, payroll_month, observation_id, reason),
-  update (observation_id, reason)
-  on public.asset_payroll_balance_selections to authenticated;
+-- No client DML on observations or selections: every write must enforce the
+-- explicit confirmation, idempotent payload and expected-selection contract.
 
 create policy payroll_accounts_owner_select on public.asset_payroll_accounts
   for select to authenticated using ((select auth.uid()) = user_id);
@@ -108,15 +103,8 @@ create policy payroll_accounts_owner_update on public.asset_payroll_accounts
   with check ((select auth.uid()) = user_id);
 create policy payroll_observations_owner_select on public.asset_payroll_balance_observations
   for select to authenticated using ((select auth.uid()) = user_id);
-create policy payroll_observations_owner_insert on public.asset_payroll_balance_observations
-  for insert to authenticated with check ((select auth.uid()) = user_id);
 create policy payroll_selections_owner_select on public.asset_payroll_balance_selections
   for select to authenticated using ((select auth.uid()) = user_id);
-create policy payroll_selections_owner_insert on public.asset_payroll_balance_selections
-  for insert to authenticated with check ((select auth.uid()) = user_id);
-create policy payroll_selections_owner_update on public.asset_payroll_balance_selections
-  for update to authenticated using ((select auth.uid()) = user_id)
-  with check ((select auth.uid()) = user_id);
 create policy payroll_history_owner_select on public.asset_payroll_balance_selection_history
   for select to authenticated using ((select auth.uid()) = user_id);
 
@@ -155,14 +143,14 @@ create trigger payroll_selection_audit
   after insert or update on public.asset_payroll_balance_selections
   for each row execute function payroll_snapshot_private.audit_selection();
 
-create function public.confirm_payroll_balance_observation(
+create function payroll_snapshot_private.confirm_payroll_balance_observation(
   p_account_id uuid, p_payroll_month date, p_deposit_reference text,
   p_deposit_date date, p_date_precision text,
   p_deposited_at timestamptz, p_observed_at timestamptz,
   p_balance_yen bigint, p_source_note text, p_request_id uuid,
   p_expected_previous_id uuid, p_reason text, p_confirm_immediate boolean
 ) returns uuid
-language plpgsql security invoker set search_path = '' as $confirm$
+language plpgsql security definer set search_path = '' as $confirm$
 declare
   v_user uuid := auth.uid();
   v_observation public.asset_payroll_balance_observations%rowtype;
@@ -232,6 +220,31 @@ begin
   return v_observation.id;
 end;
 $confirm$;
+revoke all on function payroll_snapshot_private.confirm_payroll_balance_observation(
+  uuid, date, text, date, text, timestamptz, timestamptz, bigint, text, uuid, uuid, text, boolean
+) from public, anon, authenticated;
+grant usage on schema payroll_snapshot_private to authenticated;
+grant execute on function payroll_snapshot_private.confirm_payroll_balance_observation(
+  uuid, date, text, date, text, timestamptz, timestamptz, bigint, text, uuid, uuid, text, boolean
+) to authenticated;
+
+-- Only the narrow wrapper is exposed through the public Data API. The private
+-- implementation performs auth.uid ownership checks for every touched row.
+create function public.confirm_payroll_balance_observation(
+  p_account_id uuid, p_payroll_month date, p_deposit_reference text,
+  p_deposit_date date, p_date_precision text,
+  p_deposited_at timestamptz, p_observed_at timestamptz,
+  p_balance_yen bigint, p_source_note text, p_request_id uuid,
+  p_expected_previous_id uuid, p_reason text, p_confirm_immediate boolean
+) returns uuid
+language sql security invoker set search_path = '' as $wrapper$
+  select payroll_snapshot_private.confirm_payroll_balance_observation(
+    p_account_id, p_payroll_month, p_deposit_reference,
+    p_deposit_date, p_date_precision, p_deposited_at, p_observed_at,
+    p_balance_yen, p_source_note, p_request_id, p_expected_previous_id,
+    p_reason, p_confirm_immediate
+  );
+$wrapper$;
 revoke all on function public.confirm_payroll_balance_observation(
   uuid, date, text, date, text, timestamptz, timestamptz, bigint, text, uuid, uuid, text, boolean
 ) from public, anon, authenticated;
