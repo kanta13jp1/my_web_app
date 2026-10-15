@@ -11,15 +11,21 @@ void main() {
     final draft = TextEditingController(text: '未保存の入力');
     addTearDown(draft.dispose);
     var calls = 0;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
         home: Scaffold(
-            body: Column(children: [
+          body: Column(
+            children: [
       TextField(controller: draft),
       AssetCalendarRefreshControl(onRefresh: () {
         calls++;
         return pending.future;
       }),
-    ]))));
+            ],
+          ),
+        ),
+      ),
+    );
     final button = find.byKey(const Key('asset_calendar_refresh'));
     await tester.tap(button);
     await tester.pump();
@@ -34,11 +40,15 @@ void main() {
 
   testWidgets('failed read is visible and can be retried', (tester) async {
     var calls = 0;
-    await tester.pumpWidget(MaterialApp(home: Scaffold(
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
       body: AssetCalendarRefreshControl(onRefresh: () async {
         if (++calls == 1) throw StateError('offline');
       }),
-    )));
+        ),
+      ),
+    );
     await tester.tap(find.byKey(const Key('asset_calendar_refresh')));
     await tester.pumpAndSettle();
     expect(find.textContaining('表示は前回のまま'), findsOneWidget);
