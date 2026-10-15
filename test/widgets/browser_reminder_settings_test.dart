@@ -4,6 +4,16 @@ import 'package:my_web_app/services/browser_reminder_controller.dart';
 import 'package:my_web_app/widgets/browser_reminder_settings.dart';
 
 void main() {
+  testWidgets('opening settings does not notify an ancestor during build', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: BrowserReminderSettingsTile())),
+    );
+    await tester.tap(find.text('「手は机へ」デスクトップ通知'));
+    await tester.pumpAndSettle();
+    expect(find.text('通知間隔'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('narrow screen supports start, test, stop without overflow',
       (tester) async {
     tester.view.physicalSize = const Size(320, 700);

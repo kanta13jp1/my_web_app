@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 test('desktop reminder is opt-in, testable and stoppable', async ({ page, context }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Desktop notification feature');
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
   await context.grantPermissions(['notifications']);
   await page.addInitScript(() => {
     const NativeNotification = window.Notification;
@@ -29,6 +31,7 @@ test('desktop reminder is opt-in, testable and stoppable', async ({ page, contex
   await page.reload();
   await page.getByRole('button', { name: /^「手は机へ」デスクトップ通知/ }).click();
   await expect(page.getByText('停止中', { exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
 });
 
 test('permission request happens only on the explicit click', async ({ page }, testInfo) => {

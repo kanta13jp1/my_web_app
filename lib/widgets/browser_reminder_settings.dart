@@ -47,7 +47,11 @@ class _BrowserReminderSettingsState extends State<BrowserReminderSettings>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    widget.controller.refreshPermission();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.controller.refreshPermission();
+      }
+    });
   }
 
   @override
