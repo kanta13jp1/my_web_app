@@ -18,9 +18,15 @@ void main() {
       showReminder: () async { shown++; },
     );
     addTearDown(controller.dispose);
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
-      child: BrowserReminderSettings(controller: controller),
-    ))));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: BrowserReminderSettings(controller: controller),
+          ),
+        ),
+      ),
+    );
     expect(requests, 0);
     expect(find.text('停止中'), findsOneWidget);
     await tester.tap(find.text('開始'));

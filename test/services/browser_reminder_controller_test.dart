@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/browser_reminder_controller.dart';
 
@@ -22,42 +21,36 @@ void main() {
   });
   tearDown(() => controller.dispose());
 
-  test('initially off, no unsolicited permission, every five minutes then stop', () {
-    fakeAsync((clock) {
+  testWidgets('initially off, no unsolicited permission, every five minutes then stop', (tester) async {
       expect(controller.running, false);
       expect(requests, 0);
-      controller.start();
-      clock.flushMicrotasks();
+      await controller.start();
       expect(requests, 1);
       expect(shown, 0);
-      clock.elapse(const Duration(minutes: 4));
+      await tester.pump(const Duration(minutes: 4));
       expect(shown, 0);
-      clock.elapse(const Duration(minutes: 1));
+      await tester.pump(const Duration(minutes: 1));
       expect(shown, 1);
-      controller.start(); // no duplicate timer
-      clock.elapse(const Duration(minutes: 5));
+      await controller.start(); // no duplicate timer
+      await tester.pump(const Duration(minutes: 5));
       expect(shown, 2);
       controller.stop();
-      clock.elapse(const Duration(minutes: 20));
+      await tester.pump(const Duration(minutes: 20));
       expect(shown, 2);
-    });
   });
 
-  test('interval change replaces schedule and permission revocation stops', () {
-    fakeAsync((clock) {
+  testWidgets('interval change replaces schedule and permission revocation stops', (tester) async {
       permission = 'granted';
-      controller.start();
-      clock.flushMicrotasks();
+      await controller.start();
       controller.setInterval(10);
-      clock.elapse(const Duration(minutes: 5));
+      await tester.pump(const Duration(minutes: 5));
       expect(shown, 0);
-      clock.elapse(const Duration(minutes: 5));
+      await tester.pump(const Duration(minutes: 5));
       expect(shown, 1);
       permission = 'denied';
-      clock.elapse(const Duration(minutes: 10));
+      await tester.pump(const Duration(minutes: 10));
       expect(shown, 1);
       expect(controller.running, false);
-    });
   });
 
   test('test notification is immediate but does not start reminder', () async {
@@ -93,20 +86,17 @@ void main() {
     pending.dispose();
   });
 
-  test('platform failure stops timer and reports failure', () {
-    fakeAsync((clock) {
+  testWidgets('platform failure stops timer and reports failure', (tester) async {
       final failing = BrowserReminderController(
         supported: true,
         readPermission: () => 'granted',
         requestPermission: () async => 'granted',
         showReminder: () async => throw StateError('platform failure'),
       );
-      failing.start();
-      clock.flushMicrotasks();
-      clock.elapse(const Duration(minutes: 5));
+      await failing.start();
+      await tester.pump(const Duration(minutes: 5));
       expect(failing.running, false);
       expect(failing.message, contains('停止'));
       failing.dispose();
-    });
   });
 }

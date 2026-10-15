@@ -6,16 +6,21 @@ external JSAny? get _notificationApi;
 
 class BrowserReminderPlatform {
   bool get supported => _notificationApi != null && web.window.isSecureContext;
-  String get permission => supported ? web.Notification.permission : 'unsupported';
+  String get permission =>
+      supported ? web.Notification.permission : 'unsupported';
 
   Future<String> requestPermission() {
     if (!supported) return Future.value('unsupported');
     // Invoke immediately, in the user's click stack; never at app startup.
-    return web.Notification.requestPermission().toDart.then((value) => value.toDart);
+    return web.Notification.requestPermission()
+        .toDart
+        .then((value) => value.toDart);
   }
 
   Future<void> showReminder() async {
-    if (permission != 'granted') throw StateError('Notification permission lost');
+    if (permission != 'granted') {
+      throw StateError('Notification permission lost');
+    }
     web.Notification(
       '手は机へ',
       web.NotificationOptions(

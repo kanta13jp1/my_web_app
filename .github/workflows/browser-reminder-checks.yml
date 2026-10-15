@@ -39,7 +39,7 @@ jobs:
         run: |
           dart format lib/services/browser_reminder*.dart lib/widgets/browser_reminder_settings.dart test/services/browser_reminder_controller_test.dart test/widgets/browser_reminder_settings_test.dart test/fixtures/browser_reminder_app.dart
           mkdir -p reminder-format
-          git diff --binary > reminder-format/format.patch
+          git diff --binary -- lib/services/browser_reminder*.dart lib/widgets/browser_reminder_settings.dart test/services/browser_reminder_controller_test.dart test/widgets/browser_reminder_settings_test.dart test/fixtures/browser_reminder_app.dart > reminder-format/format.patch
       - name: Analyze scoped implementation
         run: flutter analyze lib/services/browser_reminder_controller.dart lib/services/browser_reminder_platform.dart lib/services/browser_reminder_platform_stub.dart lib/services/browser_reminder_platform_web.dart lib/widgets/browser_reminder_settings.dart lib/pages/notifications_page.dart test/services/browser_reminder_controller_test.dart test/widgets/browser_reminder_settings_test.dart test/fixtures/browser_reminder_app.dart
       - name: Controller and responsive widget tests

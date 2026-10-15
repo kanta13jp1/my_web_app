@@ -12,9 +12,11 @@ class BrowserReminderSettingsTile extends StatelessWidget {
       builder: (context, _) => ListTile(
         leading: const Icon(Icons.desktop_windows_outlined),
         title: const Text('「手は机へ」デスクトップ通知'),
-        subtitle: Text(controller.running
+        subtitle: Text(
+          controller.running
             ? '実行中・約${controller.intervalMinutes}分おき'
-            : '停止中・開始／テスト／間隔を設定'),
+            : '停止中・開始／テスト／間隔を設定',
+        ),
         trailing: const Icon(Icons.settings_outlined),
         onTap: () => showModalBottomSheet<void>(
           context: context,
@@ -35,7 +37,8 @@ class BrowserReminderSettings extends StatefulWidget {
   final BrowserReminderController controller;
 
   @override
-  State<BrowserReminderSettings> createState() => _BrowserReminderSettingsState();
+  State<BrowserReminderSettings> createState() =>
+      _BrowserReminderSettingsState();
 }
 
 class _BrowserReminderSettingsState extends State<BrowserReminderSettings>
@@ -49,7 +52,9 @@ class _BrowserReminderSettingsState extends State<BrowserReminderSettings>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) widget.controller.refreshPermission();
+    if (state == AppLifecycleState.resumed) {
+      widget.controller.refreshPermission();
+    }
   }
 
   @override
@@ -81,9 +86,11 @@ class _BrowserReminderSettingsState extends State<BrowserReminderSettings>
           const SizedBox(height: 12),
           Semantics(
             liveRegion: true,
-            child: Text(controller.running
+            child: Text(
+              controller.running
                 ? '実行中・約${controller.intervalMinutes}分おき'
-                : '停止中'),
+                : '停止中',
+            ),
           ),
           Text('ブラウザの通知：${_permissionLabel(controller.permission)}'),
           const SizedBox(height: 12),
@@ -107,14 +114,18 @@ class _BrowserReminderSettingsState extends State<BrowserReminderSettings>
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed: !controller.supported || controller.busy || controller.running
+                onPressed: !controller.supported ||
+                        controller.busy ||
+                        controller.running
                     ? null
                     : controller.start,
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('開始'),
               ),
               OutlinedButton.icon(
-                onPressed: controller.running || controller.busy ? controller.stop : null,
+                onPressed: controller.running || controller.busy
+                    ? controller.stop
+                    : null,
                 icon: const Icon(Icons.stop),
                 label: const Text('停止'),
               ),
