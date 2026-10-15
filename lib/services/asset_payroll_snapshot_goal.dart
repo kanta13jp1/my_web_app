@@ -12,9 +12,8 @@ class PayrollSnapshotGoal {
   final PayrollSnapshotGoalStatus status;
   final int? deltaYen;
   final int? targetYen;
-  bool? get reached => deltaYen == null || targetYen == null
-      ? null
-      : deltaYen! >= targetYen!;
+  bool? get reached =>
+      deltaYen == null || targetYen == null ? null : deltaYen! >= targetYen!;
 
   /// Records are explicitly selected owner-confirmed day observations. This
   /// neither constructs a timestamp nor infers a bank deposit from a date.
@@ -26,23 +25,31 @@ class PayrollSnapshotGoal {
     required PayrollSnapshotRecord? previous,
     required int? targetYen,
   }) {
-    if (ownerId.isEmpty || accountId.isEmpty ||
-        (targetYen != null && (targetYen < 0 || targetYen > 9007199254740991))) {
+    if (ownerId.isEmpty ||
+        accountId.isEmpty ||
+        (targetYen != null &&
+            (targetYen < 0 || targetYen > 9007199254740991))) {
       throw ArgumentError('Invalid owner, account or target');
     }
     bool matches(PayrollSnapshotRecord row, DateTime expected) =>
-        row.id.isNotEmpty && row.ownerId == ownerId &&
-        row.accountId == accountId && row.month.year == expected.year &&
+        row.id.isNotEmpty &&
+        row.ownerId == ownerId &&
+        row.accountId == accountId &&
+        row.month.year == expected.year &&
         row.month.month == expected.month;
     if ((current != null && !matches(current, month)) ||
-        (previous != null && !matches(previous, DateTime(month.year, month.month - 1)))) {
-      return PayrollSnapshotGoal(PayrollSnapshotGoalStatus.contextMismatch, targetYen: targetYen);
+        (previous != null &&
+            !matches(previous, DateTime(month.year, month.month - 1)))) {
+      return PayrollSnapshotGoal(PayrollSnapshotGoalStatus.contextMismatch,
+          targetYen: targetYen);
     }
     if (current == null) {
-      return PayrollSnapshotGoal(PayrollSnapshotGoalStatus.currentMissing, targetYen: targetYen);
+      return PayrollSnapshotGoal(PayrollSnapshotGoalStatus.currentMissing,
+          targetYen: targetYen);
     }
     if (previous == null) {
-      return PayrollSnapshotGoal(PayrollSnapshotGoalStatus.previousMissing, targetYen: targetYen);
+      return PayrollSnapshotGoal(PayrollSnapshotGoalStatus.previousMissing,
+          targetYen: targetYen);
     }
     return PayrollSnapshotGoal(
       PayrollSnapshotGoalStatus.comparable,

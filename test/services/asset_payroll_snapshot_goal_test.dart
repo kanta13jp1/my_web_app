@@ -8,28 +8,30 @@ void main() {
     String account = 'account-a',
     int month = 1,
     int balance = 100,
-  }) => PayrollSnapshotRecord(
-    id: 'selected-$month',
-    ownerId: owner,
-    accountId: account,
-    month: DateTime(2020, month),
-    balanceYen: balance,
-    depositDate: DateTime(2020, month, 25),
-    note: 'synthetic explicit owner confirmation',
-  );
+  }) =>
+      PayrollSnapshotRecord(
+        id: 'selected-$month',
+        ownerId: owner,
+        accountId: account,
+        month: DateTime(2020, month),
+        balanceYen: balance,
+        depositDate: DateTime(2020, month, 25),
+        note: 'synthetic explicit owner confirmation',
+      );
   PayrollSnapshotGoal compare({
     PayrollSnapshotRecord? current,
     PayrollSnapshotRecord? previous,
     int? target,
     int month = 2,
-  }) => PayrollSnapshotGoal.compare(
-    ownerId: 'owner-a',
-    accountId: 'account-a',
-    month: DateTime(2020, month),
-    current: current,
-    previous: previous,
-    targetYen: target,
-  );
+  }) =>
+      PayrollSnapshotGoal.compare(
+        ownerId: 'owner-a',
+        accountId: 'account-a',
+        month: DateTime(2020, month),
+        current: current,
+        previous: previous,
+        targetYen: target,
+      );
 
   test('explicit threshold below equal above and signed difference', () {
     for (final amount in [109, 110, 111]) {
@@ -55,11 +57,19 @@ void main() {
     final unset = compare(current: record(month: 2), previous: record());
     expect(unset.deltaYen, 0);
     expect(unset.reached, isNull);
-    expect(compare(current: record(month: 2), previous: record(), target: 0).reached, isTrue);
+    expect(
+        compare(current: record(month: 2), previous: record(), target: 0)
+            .reached,
+        isTrue);
   });
   test('owner account and consecutive calendar month must match', () {
-    for (final previous in [record(owner: 'owner-b'), record(account: 'account-b'), record(month: 0)]) {
-      final result = compare(current: record(month: 2), previous: previous, target: 0);
+    for (final previous in [
+      record(owner: 'owner-b'),
+      record(account: 'account-b'),
+      record(month: 0)
+    ]) {
+      final result =
+          compare(current: record(month: 2), previous: previous, target: 0);
       expect(result.status, PayrollSnapshotGoalStatus.contextMismatch);
       expect(result.reached, isNull);
     }

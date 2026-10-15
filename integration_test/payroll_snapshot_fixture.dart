@@ -15,16 +15,22 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
     if (target != expected) throw StateError('synthetic conflict');
     targetWrites++;
     target = next;
-    if (failTargetAfterCommit) throw StateError('synthetic target response lost');
+    if (failTargetAfterCommit)
+      throw StateError('synthetic target response lost');
   }
+
   int writes = 0;
   bool failAfterCommit = false;
   bool failReads = false;
   PayrollSnapshotDraft? saved;
 
   @override
-  Future<List<PayrollSnapshotAccount>> accounts() async =>
-      failTargetReads ? throw StateError('synthetic target read failed') : [PayrollSnapshotAccount('synthetic-account', '給与口座A', targetIncreaseYen: target)];
+  Future<List<PayrollSnapshotAccount>> accounts() async => failTargetReads
+      ? throw StateError('synthetic target read failed')
+      : [
+          PayrollSnapshotAccount('synthetic-account', '給与口座A',
+              targetIncreaseYen: target)
+        ];
   @override
   Future<void> createAccount(String label) async {}
   @override

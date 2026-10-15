@@ -115,9 +115,12 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
     if (next != null && (next < 0 || next > 9007199254740991)) {
       throw ArgumentError('目標は0以上の安全な整数で入力してください。');
     }
-    var query = client.from('asset_payroll_accounts')
+    var query = client
+        .from('asset_payroll_accounts')
         .update({'target_increase_yen': next})
-        .eq('user_id', ownerId).eq('id', accountId).eq('archived', false);
+        .eq('user_id', ownerId)
+        .eq('id', accountId)
+        .eq('archived', false);
     query = expected == null
         ? query.isFilter('target_increase_yen', null)
         : query.eq('target_increase_yen', expected);
@@ -169,7 +172,8 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
     if (selection == null) return null;
     final row = await client
         .from('asset_payroll_balance_observations')
-        .select('id,user_id,account_id,payroll_month,balance_yen,deposit_date,source_note')
+        .select(
+            'id,user_id,account_id,payroll_month,balance_yen,deposit_date,source_note')
         .eq('user_id', ownerId)
         .eq('id', selection['observation_id'])
         .eq('account_id', accountId)
