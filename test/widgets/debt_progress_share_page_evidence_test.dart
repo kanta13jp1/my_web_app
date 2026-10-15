@@ -19,7 +19,8 @@ void main() {
     );
   });
   for (final confirmed in [false, true]) {
-    testWidgets('share preview preserves principal and rate evidence $confirmed',
+    testWidgets(
+        'share preview preserves principal and rate evidence $confirmed',
         (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         AssetSalaryResetMarkerStore.prefsKey: '2026-05',
@@ -29,34 +30,39 @@ void main() {
         state: AssetLiabilityMonthlyState(
           paidAccountNames: const {'SyntheticLoan'},
           paymentOverrides: const {'SyntheticLoan': 10000},
-          annualRateOverrides: confirmed
-              ? const {'SyntheticLoan': 0}
-              : const <String, double>{},
+          annualRateOverrides:
+              confirmed ? const {'SyntheticLoan': 0} : const <String, double>{},
         ),
       );
       await tester.binding.setSurfaceSize(const Size(1200, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(MaterialApp(
-        home: AssetManagementPage(
-          debugNow: DateTime(2026, 6, 20),
-          debugCalendarNow: DateTime(2026, 6, 20),
-          debugInitialAssetData: const {
-            '2026-06-20': {'Synthetic bank': 1000, 'SyntheticLoan': -100000},
-          },
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 6, 20),
+            debugCalendarNow: DateTime(2026, 6, 20),
+            debugInitialAssetData: const {
+              '2026-06-20': {'Synthetic bank': 1000, 'SyntheticLoan': -100000},
+            },
+          ),
         ),
-      ),);
+      );
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.byKey(const Key('debt_progress_share_appbar_button')));
+      await tester
+          .tap(find.byKey(const Key('debt_progress_share_appbar_button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       final preview = tester.widget<DebtProgressShareDialog>(
         find.byType(DebtProgressShareDialog),
       );
       expect(preview.data.totalDebt, 100000);
-      expect(preview.data.projectionStatus, confirmed
-          ? DebtProgressProjectionStatus.estimated
-          : DebtProgressProjectionStatus.unconfirmedTerms,);
+      expect(
+        preview.data.projectionStatus,
+        confirmed
+            ? DebtProgressProjectionStatus.estimated
+            : DebtProgressProjectionStatus.unconfirmedTerms,
+      );
       expect(preview.data.estimatedInterest, confirmed ? 0 : null);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();

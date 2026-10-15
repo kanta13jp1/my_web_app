@@ -8,7 +8,8 @@ void main() {
     int? payoffMonths = 38,
     double? interest = 234567,
     double? delta = -50000,
-    DebtProgressProjectionStatus status = DebtProgressProjectionStatus.estimated,
+    DebtProgressProjectionStatus status =
+        DebtProgressProjectionStatus.estimated,
   }) =>
       DebtProgressCardData(
         totalDebt: 1234567,

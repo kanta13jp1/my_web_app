@@ -125,8 +125,10 @@ class AssetLiabilityRepaymentSimulationService {
     final sourceDebts = workbook.debtMasterRows
         .where(
           (row) =>
-              _isEligibleDebt(row,
-                  includePaidPrincipal: includePaidPrincipal,) &&
+              _isEligibleDebt(
+                row,
+                includePaidPrincipal: includePaidPrincipal,
+              ) &&
               (eligibleAccountIds?.contains(row.id) ?? true),
         )
         .map(_SimulationDebt.fromRow)
