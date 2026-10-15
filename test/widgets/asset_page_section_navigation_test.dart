@@ -44,7 +44,13 @@ void main() {
     expect(find.text('月末の残高記録'), findsOneWidget);
     await tester.ensureVisible(find.text('月末の残高記録'));
     await tester.pump();
+    debugPrint(
+      'SEARCH_DIAGNOSTIC sheet=${tester.getRect(find.byType(BottomSheet))} '
+      'target=${tester.getRect(find.text('月末の残高記録'))} '
+      'hit=${find.text('月末の残高記録').hitTestable().evaluate().length}',
+    );
     await tester.tap(find.text('月末の残高記録'));
+    await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(BottomSheet), findsNothing);
     final scroller = tester.state<ScrollableState>(

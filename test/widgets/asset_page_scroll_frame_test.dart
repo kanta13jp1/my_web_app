@@ -42,9 +42,13 @@ void main() {
         .map((paint) => paint.foregroundPainter)
         .whereType<ScrollbarPainter>()
         .single;
+    debugPrint(
+      'SCROLL_DIAGNOSTIC rect=$rect viewport=${controller.position.viewportDimension} '
+      'max=${controller.position.maxScrollExtent} opacity=${painter.fadeoutOpacityAnimation.value}',
+    );
     final thumbPoints = <Offset>[
       for (var y = 0.0; y < rect.height; y += 2)
-        for (var x = rect.width - 20; x < rect.width; x += 2)
+        for (var x = 0.0; x < rect.width; x += 2)
           if (painter.hitTestOnlyThumbInteractive(
             Offset(x, y),
             PointerDeviceKind.mouse,
