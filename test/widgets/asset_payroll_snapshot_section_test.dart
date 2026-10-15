@@ -1,8 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/widgets/asset_payroll_snapshot_connection.dart';
 import '../../integration_test/payroll_snapshot_fixture.dart';
 
 void main() {
+  testWidgets('signed out page connection never constructs a store',
+      (tester) async {
+    var created = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetPayrollSnapshotConnection(
+          ownerId: null,
+          initialMonth: DateTime(2030, 1),
+          createStore: (_) {
+            created++;
+            throw StateError('No store may be created while signed out');
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(created, 0);
+    expect(find.text('給与入金直後の残高を記録するにはログインしてください。'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('owner change discards the previous owners unsaved input',
+      (tester) async {
+    final stores = <String, SyntheticSnapshotStore>{};
+    Future<void> open(String owner) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AssetPayrollSnapshotConnection(
+                ownerId: owner,
+                initialMonth: DateTime(2020),
+                createStore: (id) =>
+                    stores.putIfAbsent(id, SyntheticSnapshotStore.new),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await open('owner-a');
+    await tester.enterText(
+      find.byType(TextFormField).at(2),
+      'owner-a private draft',
+    );
+    await open('owner-b');
+    expect(find.text('owner-a private draft'), findsNothing);
+    expect(stores.keys, containsAll(['owner-a', 'owner-b']));
+    expect(stores.values.every((store) => store.writes == 0), isTrue);
+  });
+
   testWidgets('preview requires immediate-balance acknowledgement before save',
       (tester) async {
     final store = SyntheticSnapshotStore();
