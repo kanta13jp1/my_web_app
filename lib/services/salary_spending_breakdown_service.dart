@@ -202,6 +202,16 @@ class SalarySpendingBreakdownService {
 
   String categorize(String description) {
     final text = description.toLowerCase();
+    // 金融機関名を含む手数料を返済元本へ分類しない。
+    // fee の部分一致は coffee 等も拾うため単語境界を使う。
+    if (text.contains('手数料') ||
+        RegExp(r'\bfees?\b').hasMatch(text)) {
+      return '手数料・税金';
+    }
+    if (RegExp(r'\btax(?:es)? payment\b').hasMatch(text) &&
+        !RegExp(r'\btax[- ]free\b').hasMatch(text)) {
+      return '手数料・税金';
+    }
     for (final rule in _categoryRules) {
       for (final keyword in rule.keywords) {
         if (text.contains(keyword.toLowerCase())) {
@@ -393,5 +403,17 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     'ギャンブル',
     'casino',
   ]),
-  _SalarySpendingCategoryRule('手数料・税金', <String>['手数料', '税', 'fee', 'tax']),
+  // 「税込」「税抜」など価格の注記だけでは税金の支払と判定しない。
+  _SalarySpendingCategoryRule('手数料・税金', <String>[
+    '税金',
+    '納税',
+    '所得税',
+    '住民税',
+    '固定資産税',
+    '自動車税',
+    '国税',
+    '地方税',
+    '印紙税',
+  ]),
 ];
+

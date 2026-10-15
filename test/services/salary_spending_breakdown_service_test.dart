@@ -2,6 +2,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 
 void main() {
+  test('bank fees are not repayments and inclusive prices are not taxes', () {
+    const service = SalarySpendingBreakdownService();
+    expect(service.categorize('三井住友 ATM手数料'), '手数料・税金');
+    expect(service.categorize('ローン 振込手数料'), '手数料・税金');
+    expect(service.categorize('bank transfer fee'), '手数料・税金');
+    expect(service.categorize('ローン返済'), '借入返済');
+    expect(service.categorize('コンビニ コーヒーとパン 税込'), '食費');
+    expect(service.categorize('スーパー 税抜価格'), '食費');
+    expect(service.categorize('coffee'), '食費');
+    expect(service.categorize('taxi'), isNot('手数料・税金'));
+    expect(service.categorize('tax-free goods'), isNot('手数料・税金'));
+    expect(service.categorize('所得税 納付'), '手数料・税金');
+    expect(service.categorize('住民税'), '手数料・税金');
+    expect(service.categorize('自動車税'), '手数料・税金');
+    expect(service.categorize('tax payment'), '手数料・税金');
+  });
+
   group('SalarySpendingBreakdownService', () {
     test(
         'Issue #5194: correctly categorizes bank transfer and debt keywords into 借入返済, 住居, and 通信',
