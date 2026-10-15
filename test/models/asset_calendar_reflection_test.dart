@@ -11,6 +11,21 @@ Map<String, dynamic> fixture(
       'source_label': 'Test diary',
     };
 void main() {
+  test('flow projection requires explicit context and never infers reading', () {
+    Map<String, dynamic> flow(String title) => {
+      'id': '33333333-3333-4333-8333-333333333333',
+      'occurred_at': '2026-01-02T03:00:00Z', 'action_type': 'expense',
+      'description': title, 'amount': 1000,
+    };
+    expect(AssetCalendarReflection.fromFlows([flow('本購入')]), isEmpty);
+    expect(AssetCalendarReflection.fromFlows([flow('ビール')]), isEmpty);
+    final event = AssetCalendarReflection.fromFlows([flow('外食 ビールを含む')]).single;
+    expect(event.kinds, {AssetReflectionKind.dining, AssetReflectionKind.drinkingOut});
+    expect(event.alcoholAmount, isNull);
+    expect(AssetCalendarReflection.fromFlows([flow('酒購入')]).single.kinds,
+        {AssetReflectionKind.alcoholPurchase});
+  });
+
   test('unknown amounts remain null through roundtrip', () {
     final event = AssetCalendarReflection.fromJson(fixture());
     expect(event.verifiedAmount, isNull);

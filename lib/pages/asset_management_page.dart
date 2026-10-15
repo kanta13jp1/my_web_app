@@ -1,3 +1,4 @@
+import '../widgets/asset_reflection_day_badge.dart';
 import '../models/asset_calendar_reflection.dart';
 import '../services/asset_calendar_reflection_repository.dart';
 import '../widgets/asset_calendar_reflection_panel.dart';
@@ -17305,6 +17306,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 key: ValueKey(
                     'reflection_${_supabase.auth.currentUser!.id}_$_calendarReflectionRevision'),
                 repository: AssetCalendarReflectionRepository(_supabase),
+                flowEvents: AssetCalendarReflection.fromFlows(_recentFlows),
                 start: cycleStart,
                 end: cycleEndExclusive,
                 selectedDate: _calendarSelectedDate,
@@ -17804,25 +17806,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         day.date.year == selectedDate.year &&
         day.date.month == selectedDate.month &&
         day.date.day == selectedDate.day;
-    final reflections =
-        _calendarReflectionOwner == _supabase.auth.currentUser?.id
-            ? _calendarReflections
-                .where((e) =>
-                    e.date.year == day.date.year &&
-                    e.date.month == day.date.month &&
-                    e.date.day == day.date.day)
-                .toList()
-            : <AssetCalendarReflection>[];
+    final recorded = _calendarReflectionOwner == _supabase.auth.currentUser?.id
+        ? _calendarReflections : <AssetCalendarReflection>[];
+    final linked = recorded.map((e) => e.linkedFlowId).whereType<String>().toSet();
+    final reflections = [...recorded, ...AssetCalendarReflection.fromFlows(_recentFlows)
+        .where((e) => !linked.contains(e.linkedFlowId))].where((e) =>
+      e.date.year == day.date.year && e.date.month == day.date.month && e.date.day == day.date.day).toList();
     final kinds = reflections.expand((e) => e.kinds).toSet();
-    final reflectionColor = kinds.contains(AssetReflectionKind.drinkingOut)
-        ? const Color(0xFFFECACA)
-        : kinds.contains(AssetReflectionKind.dining)
-            ? const Color(0xFFFED7AA)
-            : kinds.contains(AssetReflectionKind.alcoholPurchase)
-                ? const Color(0xFFF5D0FE)
-                : kinds.contains(AssetReflectionKind.reading)
-                    ? const Color(0xFFBBF7D0)
-                    : null;
+    final reflectionColor = AssetReflectionDayBadge.backgroundFor(kinds);
     final markers = <Color>[
       if (day.hasDebtPayment) const Color(0xFFB91C1C),
       if (day.hasSubscription) const Color(0xFF9333EA),
@@ -17880,19 +17871,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
             if (kinds.isNotEmpty)
-              Expanded(
-                  child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        kinds.map((kind) => kind.label).join('\n'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF172554)),
-                      )))
-            else
-              const Spacer(),
+              Expanded(child: AssetReflectionDayBadge(kinds: kinds))
+            else const Spacer(),
             if (markers.isNotEmpty)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

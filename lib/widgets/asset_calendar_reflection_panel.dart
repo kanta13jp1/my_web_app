@@ -11,7 +11,9 @@ class AssetCalendarReflectionPanel extends StatefulWidget {
     required this.end,
     required this.selectedDate,
     required this.onLoaded,
+    this.flowEvents = const [],
   });
+  final List<AssetCalendarReflection> flowEvents;
   final AssetCalendarReflectionRepository repository;
   final DateTime start;
   final DateTime end;
@@ -174,11 +176,14 @@ class _AssetCalendarReflectionPanelState
 
   @override
   Widget build(BuildContext context) {
-    final summary = AssetReflectionSummary(_events);
+    final linked = _events.map((e) => e.linkedFlowId).whereType<String>().toSet();
+    final events = [..._events, ...widget.flowEvents.where((e) =>
+      !linked.contains(e.linkedFlowId) && !e.date.isBefore(widget.start) && e.date.isBefore(widget.end))];
+    final summary = AssetReflectionSummary(events);
     final selected = widget.selectedDate;
     final dayEvents = selected == null
         ? <AssetCalendarReflection>[]
-        : _events
+        : events
             .where(
               (e) =>
                   e.date.year == selected.year &&
