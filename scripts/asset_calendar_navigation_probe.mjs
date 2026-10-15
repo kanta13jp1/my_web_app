@@ -28,7 +28,7 @@ async function prepare(name){
   return {next,rect};
 }
 async function verify(name){
-  await page.getByLabel('2026/6/25〜7/24',{exact:true}).waitFor({state:'visible',timeout:5000});
+  await page.getByRole('group',{name:/^マネーカレンダー\n2026\/6\/25〜7\/24\n/}).waitFor({state:'attached',timeout:5000});
   const dialog=page.getByRole('dialog');
   if(await dialog.count())throw new Error('Unexpected dialog after next cycle');
   await page.screenshot({path:`${dir}/${name}-after.png`});
