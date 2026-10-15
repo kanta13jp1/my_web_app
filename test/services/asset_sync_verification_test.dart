@@ -3,8 +3,31 @@ import 'package:my_web_app/services/asset_sync_status.dart';
 import 'package:my_web_app/services/asset_sync_verification.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_web_app/services/mirror_tombstone_store.dart';
 
 void main() {
+  test('same-value tombstone add/remove invalidates an older observation',
+      () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    const tombstones = MirrorTombstoneStore(storageKey: 'synthetic_deleted');
+    final observed = MirrorTombstoneStore.mutationGeneration;
+    await tombstones.addId(prefs, 'synthetic');
+    await tombstones.removeId(prefs, 'synthetic');
+    expect(tombstones.activeIds(prefs), isEmpty);
+    final result = currentAssetSyncSources(
+      observedOwnerId: 'synthetic-owner',
+      currentOwnerId: 'synthetic-owner',
+      sources: {AssetSyncDomain.watchlist: AssetSyncSource.synced},
+      observedLocalValues: {AssetSyncDomain.watchlist: 'same'},
+      currentLocalValues: {AssetSyncDomain.watchlist: 'same'},
+      tombstoneObservationStable:
+          observed == MirrorTombstoneStore.mutationGeneration,
+    );
+    expect(result[AssetSyncDomain.watchlist], AssetSyncSource.unverified);
+  });
+
   test('queued dirty work is visible before persistence without changing data',
       () async {
     TestWidgetsFlutterBinding.ensureInitialized();

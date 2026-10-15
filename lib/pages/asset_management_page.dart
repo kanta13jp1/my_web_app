@@ -606,6 +606,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _syncSourcesOwnerId;
   Map<AssetSyncDomain, Object?> _syncObservedLocalValues = {};
   int? _syncObservedDirtyGeneration;
+  int? _syncObservedTombstoneGeneration;
 
   Map<AssetSyncDomain, Object?> _syncCurrentPreferenceValues() => {
         AssetSyncDomain.mainAccount:
@@ -635,6 +636,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         observationStable: _syncObservedDirtyGeneration ==
                 AssetSyncDirtyKeysStore.mutationGeneration &&
             !AssetSyncDirtyKeysStore.hasPendingMutations,
+        tombstoneObservationStable: _syncObservedTombstoneGeneration ==
+            MirrorTombstoneStore.mutationGeneration,
       ),
     );
   }
@@ -11277,6 +11280,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       final ownerId = _supabase.auth.currentUser?.id;
       final dirtyGeneration = AssetSyncDirtyKeysStore.mutationGeneration;
+      final tombstoneGeneration = MirrorTombstoneStore.mutationGeneration;
       var readSucceeded = false;
       var remote = <String, Map<String, dynamic>>{};
       if (ownerId != null) {
@@ -11316,6 +11320,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final observationStable = dirtyGeneration ==
               AssetSyncDirtyKeysStore.mutationGeneration &&
           !AssetSyncDirtyKeysStore.hasPendingMutations;
+      final tombstoneObservationStable =
+          tombstoneGeneration == MirrorTombstoneStore.mutationGeneration;
       bool pendingDeletion(MirrorTombstoneStore tombstones, String remoteKey) {
         if (ownerId != null && !readSucceeded) return false;
         final localIds = tombstones.activeIds(store);
@@ -11346,7 +11352,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           remoteValue: row?['value'],
           hasDirtyKeys: dirty[key]?.isNotEmpty ?? false,
           hasPendingDeletion: deletionPending,
-          observationStable: observationStable,
+          observationStable: observationStable && tombstoneObservationStable,
         );
         return switch (result) {
           AssetSyncVerification.unverified => AssetSyncSource.unverified,
@@ -11411,6 +11417,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _syncSourcesOwnerId = ownerId;
         _syncObservedLocalValues = _syncCurrentPreferenceValues();
         _syncObservedDirtyGeneration = observationStable ? dirtyGeneration : null;
+        _syncObservedTombstoneGeneration = tombstoneObservationStable
+            ? tombstoneGeneration
+            : null;
         _syncSources
           ..clear()
           ..addAll(next);

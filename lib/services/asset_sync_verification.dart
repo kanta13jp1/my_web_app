@@ -9,9 +9,10 @@ Map<AssetSyncDomain, AssetSyncSource> currentAssetSyncSources({
   required Map<AssetSyncDomain, Object?> observedLocalValues,
   required Map<AssetSyncDomain, Object?> currentLocalValues,
   bool observationStable = true,
+  bool tombstoneObservationStable = true,
 }) {
   if (observedOwnerId != currentOwnerId) return {};
-  if (!observationStable) {
+  if (!observationStable || !tombstoneObservationStable) {
     return {for (final domain in sources.keys) domain: AssetSyncSource.unverified};
   }
   return {
