@@ -1,3 +1,6 @@
+import '../models/asset_calendar_reflection.dart';
+import '../services/asset_calendar_reflection_repository.dart';
+import '../widgets/asset_calendar_reflection_panel.dart';
 import '../widgets/asset_calendar_refresh_control.dart';
 import '../widgets/asset_future_card_bill_card.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
@@ -1108,6 +1111,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 表示する)。サイクル送りは給料日を保ったまま暦月を±1する。
   DateTime _calendarCycleAnchor = DateTime.now();
   DateTime? _calendarSelectedDate;
+  List<AssetCalendarReflection> _calendarReflections = const [];
+  String? _calendarReflectionOwner;
+  int _calendarReflectionRevision = 0;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
   String? _wasteTrainingAiReviewKey;
   bool _isGeneratingAssetManagementAiSummary = false;
@@ -17286,11 +17292,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             AssetCalendarRefreshControl(
-              onRefresh: () => _fetchRecentFlows(
-                runSalaryReconciliation: false,
-                reportErrors: true,
-              ),
+              onRefresh: () async {
+                await _fetchRecentFlows(
+                  runSalaryReconciliation: false,
+                  reportErrors: true,
+                );
+                if (mounted) setState(() => _calendarReflectionRevision++);
+              },
             ),
+            if (_supabase.auth.currentUser?.id != null)
+              AssetCalendarReflectionPanel(
+                key: ValueKey('reflection_${_supabase.auth.currentUser!.id}_$_calendarReflectionRevision'),
+                repository: AssetCalendarReflectionRepository(_supabase),
+                start: cycleStart,
+                end: cycleEndExclusive,
+                selectedDate: _calendarSelectedDate,
+                onLoaded: (events) {
+                  if (!mounted) return;
+                  setState(() {
+                    _calendarReflections = events;
+                    _calendarReflectionOwner = _supabase.auth.currentUser?.id;
+                  });
+                },
+              ),
             const SizedBox(height: 4),
             Text(
               '給料日サイクル(給料日〜翌給料日前日)で、日ごとの支出と返済日・固定費・給料日のイベントをまとめて見渡せます。',
@@ -17769,7 +17793,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetCalendarCell(AssetCalendarDaySummary? day, DateTime today) {
     if (day == null) {
-      return const SizedBox(height: 54);
+      return const SizedBox(height: 84);
     }
     final isToday = day.date.year == today.year &&
         day.date.month == today.month &&
@@ -17779,6 +17803,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         day.date.year == selectedDate.year &&
         day.date.month == selectedDate.month &&
         day.date.day == selectedDate.day;
+    final reflections = _calendarReflectionOwner == _supabase.auth.currentUser?.id
+        ? _calendarReflections.where((e) => e.date.year == day.date.year &&
+            e.date.month == day.date.month && e.date.day == day.date.day).toList()
+        : <AssetCalendarReflection>[];
+    final kinds = reflections.expand((e) => e.kinds).toSet();
+    final reflectionColor = kinds.contains(AssetReflectionKind.drinkingOut)
+        ? const Color(0xFFFECACA)
+        : kinds.contains(AssetReflectionKind.dining)
+            ? const Color(0xFFFED7AA)
+            : kinds.contains(AssetReflectionKind.alcoholPurchase)
+                ? const Color(0xFFF5D0FE)
+                : kinds.contains(AssetReflectionKind.reading)
+                    ? const Color(0xFFBBF7D0)
+                    : null;
     final markers = <Color>[
       if (day.hasDebtPayment) const Color(0xFFB91C1C),
       if (day.hasSubscription) const Color(0xFF9333EA),
@@ -17796,18 +17834,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
       },
       child: Container(
-        height: 54,
+        height: 84,
         margin: const EdgeInsets.all(1),
         padding: const EdgeInsets.symmetric(vertical: 3),
         decoration: BoxDecoration(
-          color: isSelected
+          color: reflectionColor ?? (isSelected
               ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
-              : day.isShortfall
-                  ? const Color(0xFFFEE2E2)
-                  : null,
+              : day.isShortfall ? const Color(0xFFFEE2E2) : null),
           borderRadius: BorderRadius.circular(6),
-          border: isToday
-              ? Border.all(color: const Color(0xFF7C3AED), width: 1.5)
+          border: isSelected || isToday
+              ? Border.all(color: const Color(0xFF7C3AED), width: isSelected ? 2.5 : 1.5)
               : null,
         ),
         child: Column(
@@ -17833,7 +17869,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   height: 1.2,
                 ),
               ),
-            const Spacer(),
+            if (kinds.isNotEmpty)
+              Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: Text(
+                kinds.map((kind) => kind.label).join('\n'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF172554)),
+              )))
+            else const Spacer(),
             if (markers.isNotEmpty)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
