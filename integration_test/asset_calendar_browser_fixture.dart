@@ -13,13 +13,15 @@ Future<void> main() async {
     authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
   );
   SemanticsBinding.instance.ensureSemantics();
-  runApp(MaterialApp(
-    home: AssetManagementPage(
-      debugNow: DateTime(2026, 6, 20),
-      debugCalendarNow: DateTime(2026, 6, 20),
-      debugInitialAssetData: const {
-        '2026-06-20': {'Synthetic bank': 1000, 'SyntheticLoan': -10000},
-      },
+  runApp(
+    MaterialApp(
+      home: AssetManagementPage(
+        debugNow: DateTime(2026, 6, 20),
+        debugCalendarNow: DateTime(2026, 6, 20),
+        debugInitialAssetData: const {
+          '2026-06-20': {'Synthetic bank': 1000, 'SyntheticLoan': -10000},
+        },
+      ),
     ),
-  ),);
+  );
 }
