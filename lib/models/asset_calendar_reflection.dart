@@ -118,15 +118,19 @@ class AssetCalendarReflection {
   }
 
   /// Only explicit expense context is projected; purchases never imply reading.
-  static List<AssetCalendarReflection> fromFlows(Iterable<Map<String, dynamic>> flows) {
+  static List<AssetCalendarReflection> fromFlows(
+    Iterable<Map<String, dynamic>> flows,
+  ) {
     final result = <AssetCalendarReflection>[];
     for (final flow in flows) {
       if (flow['action_type'] != 'expense') continue;
       final id = flow['id']?.toString();
-      final day = DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal();
+      final day =
+          DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal();
       final description = flow['description']?.toString() ?? '';
       if (id == null || day == null) continue;
-      final dining = RegExp(r'外食|店内飲食|レストラン|ラーメン.+店|定食.+店').hasMatch(description);
+      final dining =
+          RegExp(r'外食|店内飲食|レストラン|ラーメンショップ|ラーメン店|定食屋').hasMatch(description);
       final outside = RegExp(r'飲み屋|居酒屋|外飲み|飲みに行').hasMatch(description) ||
           (dining && RegExp(r'ビール|飲酒|ハイボール').hasMatch(description));
       final purchase = RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入').hasMatch(description);
@@ -137,13 +141,20 @@ class AssetCalendarReflection {
       };
       if (kinds.isEmpty) continue;
       final value = flow['amount'];
-      result.add(AssetCalendarReflection(
-        sourceKey: 'flow:$id', date: DateTime(day.year, day.month, day.day),
-        kinds: kinds, title: description.length > 200 ? description.substring(0, 200) : description,
-        sourceLabel: '記録済み支出の明示された内容',
-        verifiedAmount: value is num && value.isFinite ? value.abs().toDouble() : null,
-        linkedFlowId: RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id) ? id : null,
-      ));
+      result.add(
+        AssetCalendarReflection(
+          sourceKey: 'flow:$id',
+          date: DateTime(day.year, day.month, day.day),
+          kinds: kinds,
+          title: description.length > 200
+              ? description.substring(0, 200)
+              : description,
+          sourceLabel: '記録済み支出の明示された内容',
+          verifiedAmount:
+              value is num && value.isFinite ? value.abs().toDouble() : null,
+          linkedFlowId: RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id) ? id : null,
+        ),
+      );
     }
     return result;
   }
@@ -189,9 +200,15 @@ class AssetReflectionSummary {
       return sum + (event.alcoholAmount ?? 0);
     });
   }
-  int get unknownAlcoholAmounts => events.where((e) =>
-      (e.kinds.contains(AssetReflectionKind.drinkingOut) || e.kinds.contains(AssetReflectionKind.alcoholPurchase)) &&
-      e.alcoholAmount == null).length;
+
+  int get unknownAlcoholAmounts => events
+      .where(
+        (e) =>
+            (e.kinds.contains(AssetReflectionKind.drinkingOut) ||
+                e.kinds.contains(AssetReflectionKind.alcoholPurchase)) &&
+            e.alcoholAmount == null,
+      )
+      .length;
   int get unknownAmounts => events
       .where(
         (e) =>

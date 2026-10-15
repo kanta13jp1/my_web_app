@@ -17807,11 +17807,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         day.date.month == selectedDate.month &&
         day.date.day == selectedDate.day;
     final recorded = _calendarReflectionOwner == _supabase.auth.currentUser?.id
-        ? _calendarReflections : <AssetCalendarReflection>[];
-    final linked = recorded.map((e) => e.linkedFlowId).whereType<String>().toSet();
-    final reflections = [...recorded, ...AssetCalendarReflection.fromFlows(_recentFlows)
-        .where((e) => !linked.contains(e.linkedFlowId))].where((e) =>
-      e.date.year == day.date.year && e.date.month == day.date.month && e.date.day == day.date.day).toList();
+        ? _calendarReflections
+        : <AssetCalendarReflection>[];
+    final linked =
+        recorded.map((e) => e.linkedFlowId).whereType<String>().toSet();
+    final reflections = [
+      ...recorded,
+      ...AssetCalendarReflection.fromFlows(_recentFlows)
+          .where((e) => !linked.contains(e.linkedFlowId))
+    ]
+        .where((e) =>
+            e.date.year == day.date.year &&
+            e.date.month == day.date.month &&
+            e.date.day == day.date.day)
+        .toList();
     final kinds = reflections.expand((e) => e.kinds).toSet();
     final reflectionColor = AssetReflectionDayBadge.backgroundFor(kinds);
     final markers = <Color>[
@@ -17872,7 +17881,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             if (kinds.isNotEmpty)
               Expanded(child: AssetReflectionDayBadge(kinds: kinds))
-            else const Spacer(),
+            else
+              const Spacer(),
             if (markers.isNotEmpty)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

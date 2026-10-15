@@ -85,28 +85,34 @@ class _AssetCalendarReflectionPanelState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                      '確認済みの日付と内容だけを JSON 配列で取り込みます。口座番号や個人名など不要な情報は含めないでください。支出・残高には加算しません。同じ出典キーは重複登録しません。',),
+                    '確認済みの日付と内容だけを JSON 配列で取り込みます。口座番号や個人名など不要な情報は含めないでください。支出・残高には加算しません。同じ出典キーは重複登録しません。',
+                  ),
                   TextField(
                     controller: input,
                     maxLines: 6,
                     enabled: !saving,
                     decoration: const InputDecoration(
-                        labelText: '振り返りデータ（JSON）',
-                        hintText: '日付・種類・タイトル・出典キー・出典名',),
+                      labelText: '振り返りデータ（JSON）',
+                      hintText: '日付・種類・タイトル・出典キー・出典名',
+                    ),
                     onChanged: (_) => update(() {
                       preview = null;
                       error = null;
                     }),
                   ),
                   if (error != null)
-                    Text(error!,
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,),),
+                    Text(
+                      error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   if (preview != null) ...[
                     Text('確認: ${preview!.length}件。金額不明は不明のまま保存します。'),
                     for (final event in preview!)
                       Text(
-                          '${event.date.month}/${event.date.day} ${event.kinds.map((k) => k.label).join('・')} ${event.title}（出典: ${event.sourceLabel}）',),
+                        '${event.date.month}/${event.date.day} ${event.kinds.map((k) => k.label).join('・')} ${event.title}（出典: ${event.sourceLabel}）',
+                      ),
                   ],
                 ],
               ),
@@ -114,20 +120,26 @@ class _AssetCalendarReflectionPanelState
           ),
           actions: [
             TextButton(
-                onPressed: saving ? null : () => Navigator.pop(context),
-                child: const Text('閉じる'),),
+              onPressed: saving ? null : () => Navigator.pop(context),
+              child: const Text('閉じる'),
+            ),
             TextButton(
               onPressed: saving
                   ? null
                   : () {
                       try {
                         final data = jsonDecode(input.text);
-                        if (data is! List || data.isEmpty || data.length > 200) {
+                        if (data is! List ||
+                            data.isEmpty ||
+                            data.length > 200) {
                           throw const FormatException('1〜200件の配列が必要です');
                         }
                         final parsed = data
-                            .map((row) => AssetCalendarReflection.fromJson(
-                                Map<String, dynamic>.from(row as Map),),)
+                            .map(
+                              (row) => AssetCalendarReflection.fromJson(
+                                Map<String, dynamic>.from(row as Map),
+                              ),
+                            )
                             .toList();
                         if (parsed.map((e) => e.sourceKey).toSet().length !=
                             parsed.length) {
@@ -176,9 +188,17 @@ class _AssetCalendarReflectionPanelState
 
   @override
   Widget build(BuildContext context) {
-    final linked = _events.map((e) => e.linkedFlowId).whereType<String>().toSet();
-    final events = [..._events, ...widget.flowEvents.where((e) =>
-      !linked.contains(e.linkedFlowId) && !e.date.isBefore(widget.start) && e.date.isBefore(widget.end))];
+    final linked =
+        _events.map((e) => e.linkedFlowId).whereType<String>().toSet();
+    final events = [
+      ..._events,
+      ...widget.flowEvents.where(
+        (e) =>
+            !linked.contains(e.linkedFlowId) &&
+            !e.date.isBefore(widget.start) &&
+            e.date.isBefore(widget.end),
+      ),
+    ];
     final summary = AssetReflectionSummary(events);
     final selected = widget.selectedDate;
     final dayEvents = selected == null
@@ -195,13 +215,16 @@ class _AssetCalendarReflectionPanelState
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFB45309)),
-          borderRadius: BorderRadius.circular(8),),
+        border: Border.all(color: const Color(0xFFB45309)),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('外食・飲酒・読書の振り返り',
-              style: TextStyle(fontWeight: FontWeight.bold),),
+          const Text(
+            '外食・飲酒・読書の振り返り',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           Wrap(
             spacing: 8,
             children: [
@@ -210,34 +233,43 @@ class _AssetCalendarReflectionPanelState
             ],
           ),
           Text(
-              '表示期間の確認済み金額 ${summary.knownAmount.toStringAsFixed(0)}円・金額不明${summary.unknownAmounts}件',),
-        Text('酒代の確認済み内訳 ${summary.knownAlcoholAmount.toStringAsFixed(0)}円・酒代不明${summary.unknownAlcoholAmounts}件（合計の内訳）'),
-
+            '表示期間の確認済み金額 ${summary.knownAmount.toStringAsFixed(0)}円・金額不明${summary.unknownAmounts}件',
+          ),
+          Text(
+            '酒代の確認済み内訳 ${summary.knownAlcoholAmount.toStringAsFixed(0)}円・酒代不明${summary.unknownAlcoholAmounts}件（合計の内訳）',
+          ),
           const Text(
-              '記録のある日だけを集計しています。印のない日は未記録の場合があります。振り返りの金額は参考内訳で、支出合計には加算しません。',),
+            '記録のある日だけを集計しています。印のない日は未記録の場合があります。振り返りの金額は参考内訳で、支出合計には加算しません。',
+          ),
           if (_loading) const LinearProgressIndicator(),
           if (_error != null)
             Semantics(
-                liveRegion: true,
-                child: Text(_error!,
-                    style:
-                        TextStyle(color: Theme.of(context).colorScheme.error),),),
+              liveRegion: true,
+              child: Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           Wrap(
             spacing: 8,
             children: [
               TextButton.icon(
-                  onPressed: _loading ? null : _load,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('振り返りを再取得'),),
+                onPressed: _loading ? null : _load,
+                icon: const Icon(Icons.refresh),
+                label: const Text('振り返りを再取得'),
+              ),
               TextButton.icon(
-                  onPressed: _loading ? null : _import,
-                  icon: const Icon(Icons.note_add),
-                  label: const Text('日記・読書データを取り込む'),),
+                onPressed: _loading ? null : _import,
+                icon: const Icon(Icons.note_add),
+                label: const Text('日記・読書データを取り込む'),
+              ),
             ],
           ),
           if (selected != null)
-            Text('${selected.month}/${selected.day} の振り返り',
-                style: const TextStyle(fontWeight: FontWeight.bold),),
+            Text(
+              '${selected.month}/${selected.day} の振り返り',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           for (final event in dayEvents)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),

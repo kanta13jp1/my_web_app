@@ -10,30 +10,74 @@ class FakeRepository extends AssetCalendarReflectionRepository {
   FakeRepository(super.client);
   int loads = 0;
   @override
-  Future<List<AssetCalendarReflection>> load(DateTime start, DateTime end) async {
+  Future<List<AssetCalendarReflection>> load(
+    DateTime start,
+    DateTime end,
+  ) async {
     loads++;
-    return [AssetCalendarReflection(sourceKey: 'test:reading', date: DateTime(2026, 1, 3),
-      kinds: {AssetReflectionKind.reading}, title: 'Test book', sourceLabel: 'Test diary',
-      memo: 'Confirmed reading memo', pages: 12)];
+    return [
+      AssetCalendarReflection(
+        sourceKey: 'test:reading',
+        date: DateTime(2026, 1, 3),
+        kinds: {AssetReflectionKind.reading},
+        title: 'Test book',
+        sourceLabel: 'Test diary',
+        memo: 'Confirmed reading memo',
+        pages: 12,
+      ),
+    ];
   }
 }
+
 void main() {
-  testWidgets('badges distinguish drinking dining and reading using words and color', (tester) async {
-    final kinds = {AssetReflectionKind.dining, AssetReflectionKind.drinkingOut, AssetReflectionKind.reading};
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SizedBox(width: 60, height: 84,
-      child: AssetReflectionDayBadge(kinds: kinds)))));
+  testWidgets(
+      'badges distinguish drinking dining and reading using words and color',
+      (tester) async {
+    final kinds = {
+      AssetReflectionKind.dining,
+      AssetReflectionKind.drinkingOut,
+      AssetReflectionKind.reading,
+    };
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 60,
+            height: 84,
+            child: AssetReflectionDayBadge(kinds: kinds),
+          ),
+        ),
+      ),
+    );
     expect(find.text('外食\n外飲み\n読書'), findsOneWidget);
-    expect(AssetReflectionDayBadge.backgroundFor(kinds), const Color(0xFFFECACA));
-    expect(AssetReflectionDayBadge.backgroundFor({AssetReflectionKind.reading}), const Color(0xFFBBF7D0));
+    expect(
+      AssetReflectionDayBadge.backgroundFor(kinds),
+      const Color(0xFFFECACA),
+    );
+    expect(
+      AssetReflectionDayBadge.backgroundFor({AssetReflectionKind.reading}),
+      const Color(0xFFBBF7D0),
+    );
     expect(tester.takeException(), isNull);
   });
-  testWidgets('selected day reading detail and period changes stay scoped', (tester) async {
+  testWidgets('selected day reading detail and period changes stay scoped',
+      (tester) async {
     final client = SupabaseClient('http://localhost', 'test-key');
     addTearDown(client.dispose);
     final repository = FakeRepository(client);
-    Widget app(DateTime selected, DateTime start) => MaterialApp(home: Scaffold(body: SingleChildScrollView(
-      child: AssetCalendarReflectionPanel(repository: repository, start: start, end: DateTime(2026, 2),
-        selectedDate: selected, onLoaded: (_) {}))));
+    Widget app(DateTime selected, DateTime start) => MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AssetCalendarReflectionPanel(
+                repository: repository,
+                start: start,
+                end: DateTime(2026, 2),
+                selectedDate: selected,
+                onLoaded: (_) {},
+              ),
+            ),
+          ),
+        );
     await tester.pumpWidget(app(DateTime(2026, 1, 2), DateTime(2026, 1)));
     await tester.pumpAndSettle();
     expect(find.textContaining('Confirmed reading memo'), findsNothing);

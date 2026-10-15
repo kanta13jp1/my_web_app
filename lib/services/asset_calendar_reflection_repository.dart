@@ -6,7 +6,9 @@ class AssetCalendarReflectionRepository {
   final SupabaseClient client;
 
   Future<List<AssetCalendarReflection>> load(
-      DateTime start, DateTime end,) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     final owner = client.auth.currentUser?.id;
     if (owner == null) throw StateError('ログインしてください');
     final rows = await client
