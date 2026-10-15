@@ -78,15 +78,26 @@ void main() {
     final correction = fixture()..['net_amount'] = 600;
     await show(tester, [fixture(), correction]);
     expect(find.text('同じ明細の内容が競合・要確認'), findsOneWidget);
-    expect(find.text('税金の確認済み分：未取得（0/12か月）'), findsOneWidget);
+    expect(find.text('税金の確認済み分：確定累計対象なし（0/12か月）'), findsOneWidget);
     await capture(
       tester,
       mobile ? 'payroll-conflict-mobile' : 'payroll-conflict-desktop',
     );
   });
+  testWidgets('retrieved unconfirmed statement is not labelled missing', (tester) async {
+    final automatic = fixture()..['review_status'] = 'auto';
+    await show(tester, [automatic]);
+    expect(find.textContaining('取得済み・本人未確認'), findsWidgets);
+    expect(find.text('明細取得済み 1/12か月・本人未確認 1か月'), findsOneWidget);
+    expect(find.text('税金の確認済み分：確定累計対象なし（0/12か月）'), findsOneWidget);
+    await capture(
+      tester,
+      mobile ? 'payroll-unconfirmed-mobile' : 'payroll-unconfirmed-desktop',
+    );
+  });
   testWidgets('empty state does not invent zero deductions', (tester) async {
     await show(tester, []);
-    expect(find.text('税金の確認済み分：未取得（0/12か月）'), findsOneWidget);
+    expect(find.text('税金の確認済み分：確定累計対象なし（0/12か月）'), findsOneWidget);
     await capture(
       tester,
       mobile ? 'payroll-empty-mobile' : 'payroll-empty-desktop',
