@@ -60,7 +60,9 @@ void main() {
     expect(frame.thumbVisibility, isFalse);
     expect(frame.trackVisibility, isFalse);
     await tester.drag(
-        find.byType(SingleChildScrollView), const Offset(0, -300));
+      find.byType(SingleChildScrollView),
+      const Offset(0, -300),
+    );
     await tester.pumpAndSettle();
     expect(controller.offset, greaterThan(0));
     expect(tester.takeException(), isNull);
