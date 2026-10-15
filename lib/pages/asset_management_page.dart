@@ -3910,7 +3910,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     List<MapEntry<AssetAutoDebitConfirmation, AssetLiabilityDebtRow>> entries,
   ) async {
     final targets = entries
-        .where((entry) => !entry.key.sourceBalanceInsufficient)
+        .where((entry) => entry.key.isEligibleForBulkConfirm)
         .toList(growable: false);
     if (targets.isEmpty) return;
 
@@ -16500,7 +16500,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
               if (entries
-                      .where((e) => !e.key.sourceBalanceInsufficient)
+                      .where((e) => e.key.isEligibleForBulkConfirm)
                       .length >=
                   2) ...[
                 const SizedBox(height: 8),
@@ -16512,7 +16512,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     icon: const Icon(Icons.done_all, size: 16),
                     label: Text(
                       '警告のない'
-                      '${entries.where((e) => !e.key.sourceBalanceInsufficient).length}'
+                      '${entries.where((e) => e.key.isEligibleForBulkConfirm).length}'
                       '件をまとめて引落済み',
                     ),
                   ),
@@ -16558,10 +16558,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                         // 残高は「この行の引落前の見込み」= 先行する
                                         // 成功見込み引落を差し引いた値 (同一口座から
                                         // 複数引落がある場合の合計不足も検出する)。
-                                        '振替元の残高見込み'
-                                        '(${_formatManagementYen(entry.key.sourceAccountBalance!)})'
-                                        'が支払額を下回っています。引落が失敗している'
-                                        '可能性があるため、残高をご確認のうえ操作してください。',
+                                        entry.key.shortfallWarningMessage(
+                                          formattedSourceBalance:
+                                              _formatManagementYen(entry.key.sourceAccountBalance!),
+                                          formattedCreditLimit:
+                                              entry.key.sourceAccountCreditLimit == null
+                                                  ? null
+                                                  : _formatManagementYen(entry.key.sourceAccountCreditLimit!),
+                                        )!,
                                         style:
                                             theme.textTheme.bodySmall?.copyWith(
                                           color: scheme.error,
