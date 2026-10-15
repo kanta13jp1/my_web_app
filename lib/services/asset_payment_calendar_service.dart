@@ -13,11 +13,15 @@ class AssetCalendarDebtInput {
     this.isFixedCost = false,
     this.id = '',
     this.paid = false,
+    this.paidPeriodStart,
+    this.paidPeriodEndExclusive,
   });
 
   factory AssetCalendarDebtInput.fromDebtRow(
     AssetLiabilityDebtRow row, {
     Map<String, int>? paymentDayOverrides,
+    DateTime? paidPeriodStart,
+    DateTime? paidPeriodEndExclusive,
   }) {
     final overrideDay =
         paymentDayOverrides?[row.id] ?? paymentDayOverrides?[row.name];
@@ -31,6 +35,8 @@ class AssetCalendarDebtInput {
       isFixedCost: row.kind == AssetLiabilityAccountKind.utility ||
           row.fullPaymentEstimate,
       paid: row.paid,
+      paidPeriodStart: paidPeriodStart,
+      paidPeriodEndExclusive: paidPeriodEndExclusive,
     );
   }
 
@@ -48,6 +54,11 @@ class AssetCalendarDebtInput {
 
   /// 支払完了済みフラグ。
   final bool paid;
+
+  /// Period whose saved paid state this row represents. Null retains the legacy
+  /// conservative rule for future dates; callers must not invent a period.
+  final DateTime? paidPeriodStart;
+  final DateTime? paidPeriodEndExclusive;
 }
 
 /// カレンダーに載せる日次イベントの種別。
@@ -208,6 +219,46 @@ class AssetPaymentCalendarService {
   static const double _epsilon = 0.01;
 
   /// 31日などが短い月に食い込む場合は月末日に丸める(2月の26日締め等)。
+  static String _subscriptionMatchKey(String name, double amount) {
+    final normalized = name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
+    return '$normalized|${amount.toStringAsFixed(2)}';
+  }
+
+  /// A service renewal is not a bank withdrawal when the canonical workbook
+  /// explicitly includes it in a card invoice. Unmatched rows remain unchanged.
+  static bool subscriptionIsIncludedInCard(
+    Map<String, dynamic> subscription,
+    List<AssetCalendarDebtInput> debts,
+  ) {
+    final amount = (subscription['price'] as num?)?.toDouble();
+    if (amount == null || amount <= 0) return false;
+    final name = subscription['service_name']?.toString() ?? '';
+    final key = _subscriptionMatchKey(name, amount);
+    return debts.any((row) {
+      if (!row.isFixedCost || row.isDirectCashflowTarget) return false;
+      final rowAmount = row.scheduledPaymentAmount > _epsilon
+          ? row.scheduledPaymentAmount
+          : row.balance.abs();
+      return rowAmount > _epsilon &&
+          _subscriptionMatchKey(row.name, rowAmount) == key;
+    });
+  }
+
+  static bool _paidAppliesOn(
+    AssetCalendarDebtInput row,
+    DateTime date,
+    DateTime? asOf,
+  ) {
+    if (!row.paid) return false;
+    final start = row.paidPeriodStart;
+    final end = row.paidPeriodEndExclusive;
+    if (start != null && end != null && start.isBefore(end)) {
+      return !date.isBefore(start) && date.isBefore(end);
+    }
+    return asOf == null ||
+        !date.isAfter(DateTime(asOf.year, asOf.month, asOf.day));
+  }
+
   static int clampDayToMonth(int day, DateTime month) {
     final lastDay = DateTime(month.year, month.month + 1, 0).day;
     return max(1, min(day, lastDay));
@@ -366,9 +417,14 @@ class AssetPaymentCalendarService {
         if (!inSchedule(date)) {
           continue;
         }
-        final isFuture = asOf != null &&
-            date.isAfter(DateTime(asOf.year, asOf.month, asOf.day));
-        final effectivePaid = isFuture ? false : row.paid;
+        final effectivePaid = _paidAppliesOn(row, date, asOf);
+        // Reserve the legacy match even for settled rows, otherwise raw
+        // subscription data silently reintroduces an already-paid cash cost.
+        if (row.isFixedCost && row.scheduledPaymentAmount > _epsilon) {
+          scheduledFixedCostKeys.add(
+            fixedCostKey(row.name, date, row.scheduledPaymentAmount),
+          );
+        }
         final amount = (!effectivePaid && row.scheduledPaymentAmount > _epsilon)
             ? row.scheduledPaymentAmount
             : null;
@@ -412,6 +468,17 @@ class AssetPaymentCalendarService {
       }
       final name = subscription['service_name']?.toString().trim() ?? '';
       final price = (subscription['price'] as num?)?.toDouble();
+      if (subscriptionIsIncludedInCard(subscription, debts)) {
+        addEvent(
+          date,
+          AssetCalendarEvent(
+            kind: AssetCalendarEventKind.subscription,
+            label: '${name.isEmpty ? '固定費' : name}（カード利用・現金引落なし）',
+            amount: price,
+          ),
+        );
+        continue;
+      }
       if (price != null && price > 0) {
         if (scheduledFixedCostKeys.contains(fixedCostKey(name, date, price))) {
           continue;

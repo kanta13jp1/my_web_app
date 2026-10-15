@@ -122,7 +122,16 @@ class AssetCashflowForecastInputs {
         ),
       );
     }
+    final debtInputs = [
+      for (final row in debtRows) AssetCalendarDebtInput.fromDebtRow(row),
+    ];
     for (final subscription in subscriptions) {
+      if (AssetPaymentCalendarService.subscriptionIsIncludedInCard(
+        subscription,
+        debtInputs,
+      )) {
+        continue;
+      }
       final entry = subscriptionRecurringEntry(subscription);
       if (entry != null) {
         recurringOutflow.add(entry);

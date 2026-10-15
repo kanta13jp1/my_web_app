@@ -1,4 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 
 AssetPaymentCalendarMonth calendar({
@@ -39,9 +42,11 @@ void main() {
 
   test('same-cycle early-settled payment is not subtracted again', () {
     final result = calendar(
-      debts: const [
+      debts: [
         AssetCalendarDebtInput(
           id: 'paid_in_advance',
+          paidPeriodStart: DateTime(2026, 10),
+          paidPeriodEndExclusive: DateTime(2026, 11),
           name: 'Synthetic early settlement',
           balance: -20000,
           paymentDay: 20,
@@ -78,6 +83,32 @@ void main() {
     expect(result.scheduledOutflowTotal, 0);
   });
 
+  test('current paid period does not erase the next cycle payment', () {
+    final result = AssetPaymentCalendarService.buildRange(
+      start: DateTime(2026, 10),
+      endExclusive: DateTime(2026, 12),
+      asOf: DateTime(2026, 10, 15),
+      startingCashBalance: 5000,
+      flows: const [],
+      subscriptions: const [],
+      debts: [
+        AssetCalendarDebtInput(
+          id: 'period_paid',
+          name: 'Synthetic recurring payment',
+          balance: -20000,
+          paymentDay: 20,
+          scheduledPaymentAmount: 10000,
+          paid: true,
+          paidPeriodStart: DateTime(2026, 10),
+          paidPeriodEndExclusive: DateTime(2026, 11),
+        ),
+      ],
+    );
+    expect(result.dayFor(DateTime(2026, 10, 20))!.scheduledOutflow, 0);
+    expect(result.dayFor(DateTime(2026, 11, 20))!.scheduledOutflow, 10000);
+    expect(result.firstShortfallDate, DateTime(2026, 11, 20));
+  });
+
   test('card-included subscription is not also a direct cash payment', () {
     final result = calendar(
       balance: 10000,
@@ -109,6 +140,55 @@ void main() {
     );
     expect(result.scheduledOutflowTotal, 10000);
     expect(result.firstShortfallDate, isNull);
+    expect(result.dayFor(DateTime(2026, 10, 17))!.scheduledOutflow, 0);
+    expect(
+      result.dayFor(DateTime(2026, 10, 17))!.events.single.label,
+      contains('カード利用'),
+    );
+    expect(result.dayFor(DateTime(2026, 10, 20))!.scheduledOutflow, 10000);
+  });
+
+  test('long-term forecast also excludes card-included raw renewal', () {
+    final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+      latestSnapshot: const {'SyntheticCard': -10000, '現金': 10000},
+      baseDate: DateTime(2026, 10, 15),
+      includeDefaultFixedPayments: false,
+      recurringFixedCosts: const [
+        AssetRecurringFixedCost(
+          id: 'synthetic_service',
+          name: 'SyntheticService',
+          amount: 1000,
+          paymentDay: 17,
+          category: AssetRecurringFixedCostCategory.subscription,
+        ),
+      ],
+      cardBillingAccountIds: const {
+        'SyntheticService': 'custom_syntheticcard',
+      },
+    );
+    final source = workbook.debtMasterRows.singleWhere(
+      (row) => row.name == 'SyntheticService',
+    );
+    expect(source.isDirectCashflowTarget, isFalse);
+    final inputs = AssetCashflowForecastInputs.fromAssetData(
+      accounts: workbook.accounts,
+      debtRows: workbook.debtMasterRows,
+      recurringIncomeTemplates: const [],
+      inflowRules: const [],
+      oneTimeInflows: const [],
+      subscriptions: const [
+        {
+          'service_name': 'SyntheticService',
+          'due_date': '2026-10-17',
+          'price': 1000,
+        },
+      ],
+    );
+    expect(
+      inputs.recurringOutflow.any((e) => e.label == 'SyntheticService'),
+      isFalse,
+    );
+    expect(inputs.recurringOutflow.any((e) => e.label == 'SyntheticCard'), isTrue);
   });
 
   test('future expected income is a forecast input, not observed balance', () {
