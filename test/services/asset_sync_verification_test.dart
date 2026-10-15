@@ -36,7 +36,8 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     const dirty = AssetSyncDirtyKeysStore();
     final initialGeneration = AssetSyncDirtyKeysStore.mutationGeneration;
-    final pending = dirty.markDirty('watchlist_entries', 'synthetic', prefs: prefs);
+    final pending =
+        dirty.markDirty('watchlist_entries', 'synthetic', prefs: prefs);
     expect(AssetSyncDirtyKeysStore.hasPendingMutations, isTrue);
     expect(
       AssetSyncDirtyKeysStore.mutationGeneration,
@@ -77,9 +78,9 @@ void main() {
       sources: {AssetSyncDomain.watchlist: AssetSyncSource.synced},
       observedLocalValues: {AssetSyncDomain.watchlist: 'same'},
       currentLocalValues: {AssetSyncDomain.watchlist: 'same'},
-      observationStable: observedGeneration ==
-              AssetSyncDirtyKeysStore.mutationGeneration &&
-          !AssetSyncDirtyKeysStore.hasPendingMutations,
+      observationStable:
+          observedGeneration == AssetSyncDirtyKeysStore.mutationGeneration &&
+              !AssetSyncDirtyKeysStore.hasPendingMutations,
     );
     expect(result[AssetSyncDomain.watchlist], AssetSyncSource.unverified);
   });

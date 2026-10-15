@@ -11317,9 +11317,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // No await from this point to setState: compare the latest local values,
       // not the values present when the remote read began.
       final dirty = _syncDirtyKeysStore.readDirtySnapshot(store);
-      final observationStable = dirtyGeneration ==
-              AssetSyncDirtyKeysStore.mutationGeneration &&
-          !AssetSyncDirtyKeysStore.hasPendingMutations;
+      final observationStable =
+          dirtyGeneration == AssetSyncDirtyKeysStore.mutationGeneration &&
+              !AssetSyncDirtyKeysStore.hasPendingMutations;
       final tombstoneObservationStable =
           tombstoneGeneration == MirrorTombstoneStore.mutationGeneration;
       bool pendingDeletion(MirrorTombstoneStore tombstones, String remoteKey) {
@@ -11416,10 +11416,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _syncSourcesOwnerId = ownerId;
         _syncObservedLocalValues = _syncCurrentPreferenceValues();
-        _syncObservedDirtyGeneration = observationStable ? dirtyGeneration : null;
-        _syncObservedTombstoneGeneration = tombstoneObservationStable
-            ? tombstoneGeneration
-            : null;
+        _syncObservedDirtyGeneration =
+            observationStable ? dirtyGeneration : null;
+        _syncObservedTombstoneGeneration =
+            tombstoneObservationStable ? tombstoneGeneration : null;
         _syncSources
           ..clear()
           ..addAll(next);

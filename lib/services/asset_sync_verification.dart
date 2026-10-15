@@ -13,7 +13,9 @@ Map<AssetSyncDomain, AssetSyncSource> currentAssetSyncSources({
 }) {
   if (observedOwnerId != currentOwnerId) return {};
   if (!observationStable || !tombstoneObservationStable) {
-    return {for (final domain in sources.keys) domain: AssetSyncSource.unverified};
+    return {
+      for (final domain in sources.keys) domain: AssetSyncSource.unverified,
+    };
   }
   return {
     for (final entry in sources.entries)
