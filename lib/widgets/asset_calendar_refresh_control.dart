@@ -57,10 +57,10 @@ class _AssetCalendarRefreshControlState
                 : const Icon(Icons.refresh),
             label: Text(
               _loading
-                ? '記録を更新中…'
-                : _failed
-                    ? '記録の更新を再試行'
-                    : 'カレンダーの記録を更新',
+                  ? '記録を更新中…'
+                  : _failed
+                      ? '記録の更新を再試行'
+                      : 'カレンダーの記録を更新',
             ),
           ),
           if (_message != null)
