@@ -66,7 +66,8 @@ Future<void> pumpEvidence(
 }
 
 void main() {
-  testWidgets('distinguishes first deficit from maximum deficit and unknown time',
+  testWidgets(
+      'distinguishes first deficit from maximum deficit and unknown time',
       (tester) async {
     await pumpEvidence(tester);
     expect(find.text('現金・預金合計の資金繰り見込み'), findsOneWidget);
@@ -76,7 +77,8 @@ void main() {
     expect(find.textContaining('口座別の引落可否'), findsOneWidget);
   });
 
-  testWidgets('390px evidence reveals source and estimate without financial action',
+  testWidgets(
+      '390px evidence reveals source and estimate without financial action',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
