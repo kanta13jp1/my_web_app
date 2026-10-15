@@ -37,6 +37,12 @@ void main() {
     await tester.ensureVisible(next);
     await tester.pump();
     expect(next.hitTestable(), findsOneWidget);
+    final nextRect = tester.getRect(next);
+    final shareRect = tester.getRect(
+      find.byKey(const Key('debt_progress_share_appbar_button')),
+    );
+    expect(nextRect.overlaps(shareRect), isFalse);
+    debugPrint('A13_RECT next=$nextRect appbarShare=$shareRect');
     expect(find.text('2026/5/25〜6/24'), findsOneWidget);
     await tester.tapAt(tester.getCenter(next));
     await tester.pump();
