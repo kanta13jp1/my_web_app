@@ -23,6 +23,7 @@ Future<void> pumpWarningPage(WidgetTester tester, {required bool paid}) async {
     MaterialApp(
       home: AssetManagementPage(
         debugNow: DateTime(2026, 6, 20),
+        debugCalendarNow: DateTime(2026, 6, 20),
         debugInitialAssetData: const {
           '2026-06-20': {'Synthetic bank': 1000},
         },

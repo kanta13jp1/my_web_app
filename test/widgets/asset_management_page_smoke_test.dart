@@ -1544,7 +1544,7 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
+      expect(find.textContaining('期間内の最大不足:'), findsOneWidget);
       expect(
         find.byKey(const Key('asset_shift_payment_mobit')),
         findsOneWidget,
@@ -1567,7 +1567,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
+      expect(find.textContaining('期間内の最大不足:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -1610,7 +1610,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
+      expect(find.textContaining('期間内の最大不足:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -2321,7 +2321,7 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
+      expect(find.textContaining('期間内の最大不足:'), findsOneWidget);
       // ただし26日へ移せば次回支払は 7/26 = 次サイクル(給料日後)扱いになり、
       // 当サイクルの支払が消えるため事前判定が「回避できます」。
       expect(find.textContaining('の設定を26日へ(試算上の不足なし)'), findsOneWidget);
