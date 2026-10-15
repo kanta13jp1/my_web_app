@@ -1,14 +1,46 @@
 import { test, expect, type Page } from '@playwright/test';
 
+test.use({ trace: 'retain-on-failure' });
+test.afterEach(async ({ page }, info) => {
+  if (info.status === info.expectedStatus) return;
+  await info.attach('input-focus-state', {
+    body: JSON.stringify(await page.locator('input, textarea, flt-text-editing-host').evaluateAll(elements =>
+      elements.map(element => ({
+        tag: element.tagName,
+        className: element.className,
+        label: element.getAttribute('aria-label'),
+        value: (element as HTMLInputElement).value,
+        focused: element === document.activeElement,
+        rect: element.getBoundingClientRect().toJSON(),
+      }))), null, 2),
+    contentType: 'application/json',
+  });
+});
+
+
+
 async function enterAmount(page: Page, name: string, value: string) {
   const input = page.getByRole('textbox', { name });
   await input.click();
+  await input.focus();
+  await expect(input).toBeFocused();
+  await page.evaluate(() => new Promise<void>(resolve =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  await input.press('End');
   await input.press('ControlOrMeta+A');
-  await input.pressSequentially(value, { delay: 20 });
+  await input.pressSequentially(value, { delay: 80 });
   await expect(input).toHaveValue(value);
   await input.press('Tab');
 }
 
+
+
+async function configureGoal(page: Page) {
+  await expect(page.getByRole('group', { name: /目標は未設定です。目的・金額・期限を入力してください。/ })).toBeVisible();
+  await enterAmount(page, '目標額', '1000000');
+  await page.getByRole('button', { name: '目標期限を設定', exact: true }).click();
+  await page.getByRole('button', { name: 'OK', exact: true }).click();
+}
 
 test('savings goal, daily design, and reload preserve planning values without financial writes', async ({ page }) => {
   const financialWrites: string[] = [];
@@ -20,6 +52,7 @@ test('savings goal, daily design, and reload preserve planning values without fi
   });
   page.on('pageerror', error => pageErrors.push(error.message));
   await page.goto('/');
+  await configureGoal(page);
   const savings = page.getByRole('textbox', { name: '現在の現金・預金（計画の起点）' });
   await expect(savings).toBeVisible();
   await enterAmount(page, '現在の現金・預金（計画の起点）', '400000');
@@ -39,14 +72,14 @@ test('savings goal, daily design, and reload preserve planning values without fi
   await expect(savings).toHaveValue('400000');
   await expect(page.getByRole('heading', { name: '必要な積立：月 ¥70,834', exact: true })).toBeVisible();
   await expect(morning).toBeChecked();
-  await page.getByRole('textbox', { name: '今日の生活費合計（計画用メモ）' }).click();
-  await expect(page.getByRole('textbox', { name: '今日の生活費合計（計画用メモ）' })).toHaveValue('1200');
+  await expect(page.getByRole('group', { name: /今日の計画メモ ¥1,200 \/ 残り ¥412/ })).toBeVisible();
   expect(financialWrites).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
 
 test('unaffordable plan shows gap while retaining food and repayment', async ({ page }) => {
   await page.goto('/?income=250000');
+  await configureGoal(page);
   await enterAmount(page, '現在の現金・預金（計画の起点）', '0');
   await expect(page.getByRole('textbox', { name: '登録済みの手取り収入（収入増なし）' })).toHaveAttribute('readonly', /^(readonly)?$/);
   await enterAmount(page, '毎月の生活費（食費・交通・日用品等）', '60000');
@@ -60,7 +93,11 @@ test('unaffordable plan shows gap while retaining food and repayment', async ({ 
 
 test('account analysis proposes reviewable amounts and requires explicit save', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: '口座を分析してAI提案', exact: true }).click();
+  await configureGoal(page);
+  const propose = page.getByRole('button', { name: '口座を分析してAI提案', exact: true });
+  await propose.focus();
+  await expect(propose).toBeFocused();
+  await propose.press('Enter');
   await page.getByRole('textbox', { name: '現在の現金・預金（計画の起点）' }).click();
   await expect(page.getByRole('textbox', { name: '現在の現金・預金（計画の起点）' })).toHaveValue('400000');
   await page.getByRole('textbox', { name: '毎月の生活費（食費・交通・日用品等）' }).click();
@@ -74,7 +111,10 @@ test('account analysis proposes reviewable amounts and requires explicit save', 
 
 test('unavailable AI is labelled as a provisional proposal, not an AI success', async ({ page }) => {
   await page.goto('/?ai=error');
-  await page.getByRole('button', { name: '口座を分析してAI提案', exact: true }).click();
+  const propose = page.getByRole('button', { name: '口座を分析してAI提案', exact: true });
+  await propose.focus();
+  await expect(propose).toBeFocused();
+  await propose.press('Enter');
   await expect(page.getByText('AIを利用できず、仮置き案を表示', { exact: true })).toBeVisible();
   await page.getByRole('textbox', { name: '毎月の生活費（食費・交通・日用品等）' }).click();
   await expect(page.getByRole('textbox', { name: '毎月の生活費（食費・交通・日用品等）' })).toHaveValue('60000');
