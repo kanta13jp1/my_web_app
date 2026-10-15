@@ -31,18 +31,20 @@ void main() {
       publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
       httpClient: MockClient((request) async {
-        final rows = request.method == 'GET' &&
-                request.url.path.endsWith('/cfo_assets')
-            ? [
-                {
-                  'id': 1,
-                  'user_id': owner.id,
-                  'title': '現金',
-                  'amount': 12345,
-                  'created_at': '2026-10-15T09:00:00Z',
-                },
-              ]
-            : [];
+        final rows =
+            request.url.path.endsWith('/asset_management_recent_cfo_assets') ||
+                    (request.method == 'GET' &&
+                        request.url.path.endsWith('/cfo_assets'))
+                ? [
+                    {
+                      'id': 1,
+                      'user_id': owner.id,
+                      'title': '現金',
+                      'amount': 12345,
+                      'created_at': '2026-10-15T09:00:00Z',
+                    },
+                  ]
+                : [];
         return http.Response(
           jsonEncode(rows),
           200,
@@ -69,11 +71,15 @@ void main() {
     when(client.auth).thenReturn(auth);
     when(auth.currentUser).thenReturn(owner);
     when(auth.currentSession).thenReturn(session);
+    when(auth.getUser(any)).thenAnswer(
+      (_) async => UserResponse.fromJson(owner.toJson()),
+    );
     when(auth.onAuthStateChange).thenAnswer((_) => const Stream.empty());
     when(session.user).thenReturn(owner);
     when(session.accessToken).thenReturn('synthetic-access-token');
     when(client.from(any)).thenAnswer(
-      (invocation) => transport.from(invocation.positionalArguments.first as String),
+      (invocation) =>
+          transport.from(invocation.positionalArguments.first as String),
     );
     when(client.rpc(any, params: anyNamed('params'))).thenAnswer(
       (invocation) => transport.rpc(
@@ -97,17 +103,21 @@ void main() {
       MaterialApp(
         home: AssetManagementPage(
           debugNow: DateTime(2026, 10, 15),
-          debugInitialAssetData: const {'2026-10-15': {'現金': 12345}},
+          debugInitialAssetData: const {
+            '2026-10-15': {'現金': 12345},
+          },
         ),
       ),
     );
     for (var i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 300));
     }
-    final card = find.byKey(const ValueKey('savings-life-plan:synthetic-owner'));
+    final card =
+        find.byKey(const ValueKey('savings-life-plan:synthetic-owner'));
     expect(card, findsNothing);
     Future<Finder> openSearch() async {
-      await tester.tap(find.byKey(const Key('asset_section_search_appbar_button')));
+      await tester
+          .tap(find.byKey(const Key('asset_section_search_appbar_button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       await tester.enterText(
@@ -123,6 +133,7 @@ void main() {
         matching: find.text('貯蓄目標と生活費の計画'),
       );
     }
+
     expect(await openSearch(), findsNothing);
     Navigator.of(tester.element(find.byType(BottomSheet))).pop();
     await tester.pump();
@@ -131,7 +142,8 @@ void main() {
     await tester.tap(find.text('カスタマイズ'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
-    final dropdown = find.byKey(const Key('asset_section_override_savingsPlan'));
+    final dropdown =
+        find.byKey(const Key('asset_section_override_savingsPlan'));
     await tester.ensureVisible(dropdown);
     await tester.tap(dropdown);
     await tester.pump();
