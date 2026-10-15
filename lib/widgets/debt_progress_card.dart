@@ -93,7 +93,9 @@ class DebtProgressCard extends StatelessWidget {
           const SizedBox(height: 10),
           _row(
             '完済まで',
-            data.payoffLabel == null ? data.unavailablePayoffLabel : 'あと${data.payoffLabel}',
+            data.payoffLabel == null
+                ? data.unavailablePayoffLabel
+                : 'あと${data.payoffLabel}',
             emphasize: data.payoffLabel == null,
           ),
           if (data.estimatedInterest != null) ...[

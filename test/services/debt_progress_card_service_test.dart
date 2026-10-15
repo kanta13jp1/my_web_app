@@ -171,7 +171,8 @@ void main() {
       int? payoffMonths = 38,
       double? interest = 234567,
       double? delta = -50000,
-      DebtProgressProjectionStatus status = DebtProgressProjectionStatus.estimated,
+      DebtProgressProjectionStatus status =
+          DebtProgressProjectionStatus.estimated,
     }) =>
         DebtProgressCardData(
           totalDebt: 1234567,
@@ -211,8 +212,11 @@ void main() {
     test('states plainly when the current payment never clears the debt', () {
       // 完済しない事実を黙って省くと報告として誠実でなくなる。
       final text = service.buildDraftText(
-        card(payoffMonths: null, interest: null,
-          status: DebtProgressProjectionStatus.insufficientPayment,),
+        card(
+          payoffMonths: null,
+          interest: null,
+          status: DebtProgressProjectionStatus.insufficientPayment,
+        ),
         month: DateTime(2026, 7, 1),
       );
 

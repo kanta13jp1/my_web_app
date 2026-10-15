@@ -7,7 +7,8 @@ void main() {
   const service = DebtProgressCardService();
 
   for (final confirmed in [false, true]) {
-    test('zero interest requires explicit rate evidence confirmed=$confirmed', () {
+    test('zero interest requires explicit rate evidence confirmed=$confirmed',
+        () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const {'SyntheticLoan': -100000},
         baseDate: DateTime(2026, 6, 20),
@@ -54,12 +55,16 @@ void main() {
 
   test('missing prior stock is not a whole-report month comparison', () {
     final workbook = planner.buildWorkbook(
-      latestSnapshot: const {'SyntheticLoanA': -100000, 'SyntheticLoanB': -200000},
+      latestSnapshot: const {
+        'SyntheticLoanA': -100000,
+        'SyntheticLoanB': -200000
+      },
       baseDate: DateTime(2026, 6, 20),
       includeDefaultFixedPayments: false,
     );
     final id = workbook.debtMasterRows
-        .singleWhere((row) => row.name == 'SyntheticLoanA').id;
+        .singleWhere((row) => row.name == 'SyntheticLoanA')
+        .id;
     final card = service.build(
       workbook: workbook,
       priorBalancesByAccountId: {id: 120000},

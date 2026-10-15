@@ -4,7 +4,8 @@ import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/debt_progress_card_service.dart';
 
 void main() {
-  test('paid monthly installment does not erase outstanding loan principal', () {
+  test('paid monthly installment does not erase outstanding loan principal',
+      () {
     final workbook = const AssetLiabilityPlanningService().buildWorkbook(
       latestSnapshot: const {'アコムローン': -100000, 'Synthetic bank': 10000},
       baseDate: DateTime(2026, 6, 20),
@@ -16,7 +17,8 @@ void main() {
     expect(card!.totalDebt, 100000);
   });
 
-  test('future recurring living cost is not outstanding repayment principal', () {
+  test('future recurring living cost is not outstanding repayment principal',
+      () {
     final workbook = const AssetLiabilityPlanningService().buildWorkbook(
       latestSnapshot: const {'Synthetic bank': 10000},
       baseDate: DateTime(2026, 6, 20),

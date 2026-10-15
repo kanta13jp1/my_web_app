@@ -243,11 +243,13 @@ class DebtProgressCardService {
   }) {
     const simulation = AssetLiabilityRepaymentSimulationService();
     // 繰り上げ返済なしの基準プラン = 「今のままだとこうなる」。
-    final stockRows = workbook.debtMasterRows.where((row) =>
-        row.balance < 0 &&
-        row.isDirectCashflowTarget &&
-        !row.includedInBillingAccount &&
-        !workbook.scheduledExpenseAccountIds.contains(row.id)).toList();
+    final stockRows = workbook.debtMasterRows
+        .where((row) =>
+            row.balance < 0 &&
+            row.isDirectCashflowTarget &&
+            !row.includedInBillingAccount &&
+            !workbook.scheduledExpenseAccountIds.contains(row.id))
+        .toList();
     final stockIds = stockRows.map((row) => row.id).toSet();
     final result = simulation.buildComparison(
       workbook: workbook,

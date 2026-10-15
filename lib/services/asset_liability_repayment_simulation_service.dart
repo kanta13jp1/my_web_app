@@ -165,7 +165,8 @@ class AssetLiabilityRepaymentSimulationService {
     );
   }
 
-  bool _isEligibleDebt(AssetLiabilityDebtRow row, {bool includePaidPrincipal = false}) {
+  bool _isEligibleDebt(AssetLiabilityDebtRow row,
+      {bool includePaidPrincipal = false}) {
     return row.balance < -_epsilon &&
         (includePaidPrincipal || !row.paid) &&
         row.isDirectCashflowTarget &&
