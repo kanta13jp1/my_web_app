@@ -3,8 +3,10 @@ import { test, expect, type Page } from '@playwright/test';
 async function enterAmount(page: Page, name: string, value: string) {
   const input = page.getByRole('textbox', { name });
   await input.click();
+  await expect(input).toBeFocused();
+  await input.press('End');
   await input.press('ControlOrMeta+A');
-  await input.pressSequentially(value, { delay: 20 });
+  await input.pressSequentially(value, { delay: 80 });
   await expect(input).toHaveValue(value);
   await input.press('Tab');
 }
