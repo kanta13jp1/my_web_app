@@ -61,80 +61,80 @@ void main() {
   });
 
   for (final width in [1200.0, 390.0]) {
-  testWidgets('partial asset-only data preserves settings at $width',
-      (tester) async {
-    SharedPreferences.setMockInitialValues({
-      'debt_lockdown_enabled_v1': true,
-      'konbini_udon_challenge_enabled_v1': true,
-    });
-    AssetSyncDirtyKeysStore.resetWriteLockForTest();
-    AssetRecurringTombstoneSyncService.resetSharedForTest();
-    final client = MockSupabaseClient();
-    final auth = MockGoTrueClient();
-    final session = MockSession();
-    when(client.auth).thenReturn(auth);
-    when(auth.currentUser).thenReturn(owner);
-    when(auth.currentSession).thenReturn(session);
-    when(auth.getUser(any)).thenAnswer(
-      (_) async => UserResponse.fromJson(owner.toJson()),
-    );
-    when(auth.onAuthStateChange).thenAnswer((_) => const Stream.empty());
-    when(session.user).thenReturn(owner);
-    when(session.accessToken).thenReturn('synthetic-access-token');
-    when(client.from(any)).thenAnswer(
-      (invocation) =>
-          transport.from(invocation.positionalArguments.first as String),
-    );
-    when(client.rpc(any, params: anyNamed('params'))).thenAnswer(
-      (invocation) => transport.rpc(
-        invocation.positionalArguments.first as String,
-        params: invocation.namedArguments[#params] as Map<String, dynamic>?,
-      ),
-    );
-    when(client.functions).thenReturn(transport.functions);
-    when(client.storage).thenReturn(transport.storage);
-    Supabase.instance.client = client;
-    addTearDown(() => Supabase.instance.client = transport);
-    const display = AssetManagementDisplayModeStore();
-    await display.save(AssetManagementDisplayMode.full);
-    await tester.binding.setSurfaceSize(Size(width, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AssetManagementPage(
-          debugNow: DateTime(2026, 10, 15),
-          debugInitialAssetData: const {
-            '2026-10-15': {'現金': 12345},
-          },
+    testWidgets('partial asset-only data preserves settings at $width',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'debt_lockdown_enabled_v1': true,
+        'konbini_udon_challenge_enabled_v1': true,
+      });
+      AssetSyncDirtyKeysStore.resetWriteLockForTest();
+      AssetRecurringTombstoneSyncService.resetSharedForTest();
+      final client = MockSupabaseClient();
+      final auth = MockGoTrueClient();
+      final session = MockSession();
+      when(client.auth).thenReturn(auth);
+      when(auth.currentUser).thenReturn(owner);
+      when(auth.currentSession).thenReturn(session);
+      when(auth.getUser(any)).thenAnswer(
+        (_) async => UserResponse.fromJson(owner.toJson()),
+      );
+      when(auth.onAuthStateChange).thenAnswer((_) => const Stream.empty());
+      when(session.user).thenReturn(owner);
+      when(session.accessToken).thenReturn('synthetic-access-token');
+      when(client.from(any)).thenAnswer(
+        (invocation) =>
+            transport.from(invocation.positionalArguments.first as String),
+      );
+      when(client.rpc(any, params: anyNamed('params'))).thenAnswer(
+        (invocation) => transport.rpc(
+          invocation.positionalArguments.first as String,
+          params: invocation.namedArguments[#params] as Map<String, dynamic>?,
         ),
-      ),
-    );
-    for (var i = 0; i < 4; i++) {
-      await tester.pump(const Duration(milliseconds: 300));
-    }
-    final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getBool('debt_lockdown_enabled_v1'), isTrue);
-    expect(prefs.getBool('konbini_udon_challenge_enabled_v1'), isTrue);
-    expect(find.text('登録済み負債の合計は0円です。未登録の負債がないか確認してください。'), findsOneWidget);
-    expect(find.text('完済までの収監モード'), findsNothing);
-    expect(find.text('うどん縛り — 完済までの獄中食'), findsNothing);
-    final legacy = find.byKey(const Key('legacy-meal-rule-history'));
-    expect(legacy, findsOneWidget);
-    await tester.ensureVisible(legacy);
-    await tester.tap(find.text('以前の食費ルール（任意）'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
-    final pause = find.text('以前の食費ルールを中断');
-    await tester.ensureVisible(pause);
-    await tester.tap(pause);
-    for (var i = 0; i < 4; i++) {
-      await tester.pump(const Duration(milliseconds: 300));
-    }
-    expect(prefs.getBool('konbini_udon_challenge_enabled_v1'), isFalse);
-    expect(prefs.getBool('debt_lockdown_enabled_v1'), isTrue);
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
-  });
+      );
+      when(client.functions).thenReturn(transport.functions);
+      when(client.storage).thenReturn(transport.storage);
+      Supabase.instance.client = client;
+      addTearDown(() => Supabase.instance.client = transport);
+      const display = AssetManagementDisplayModeStore();
+      await display.save(AssetManagementDisplayMode.full);
+      await tester.binding.setSurfaceSize(Size(width, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 10, 15),
+            debugInitialAssetData: const {
+              '2026-10-15': {'現金': 12345},
+            },
+          ),
+        ),
+      );
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('debt_lockdown_enabled_v1'), isTrue);
+      expect(prefs.getBool('konbini_udon_challenge_enabled_v1'), isTrue);
+      expect(find.text('登録済み負債の合計は0円です。未登録の負債がないか確認してください。'), findsOneWidget);
+      expect(find.text('完済までの収監モード'), findsNothing);
+      expect(find.text('うどん縛り — 完済までの獄中食'), findsNothing);
+      final legacy = find.byKey(const Key('legacy-meal-rule-history'));
+      expect(legacy, findsOneWidget);
+      await tester.ensureVisible(legacy);
+      await tester.tap(find.text('以前の食費ルール（任意）'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      final pause = find.text('以前の食費ルールを中断');
+      await tester.ensureVisible(pause);
+      await tester.tap(pause);
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+      expect(prefs.getBool('konbini_udon_challenge_enabled_v1'), isFalse);
+      expect(prefs.getBool('debt_lockdown_enabled_v1'), isTrue);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    });
   }
 }

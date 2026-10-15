@@ -20561,12 +20561,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     ElevatedButton.icon(
-                      onPressed: !isEnabled && (!hasDebtData || remainingDebt <= 0)
-                          ? null
-                          : () => _setDebtLockdownEnabled(
-                                !isEnabled,
-                                remainingDebt,
-                              ),
+                      onPressed:
+                          !isEnabled && (!hasDebtData || remainingDebt <= 0)
+                              ? null
+                              : () => _setDebtLockdownEnabled(
+                                    !isEnabled,
+                                    remainingDebt,
+                                  ),
                       icon: Icon(isEnabled ? Icons.pause_circle : Icons.shield),
                       label: Text(isEnabled ? '生活ルールを中断' : '生活ルールを開始'),
                     ),
@@ -20585,12 +20586,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: !isEnabled && (!hasDebtData || remainingDebt <= 0)
-                            ? null
-                            : () => _setDebtLockdownEnabled(
-                                  !isEnabled,
-                                  remainingDebt,
-                                ),
+                        onPressed:
+                            !isEnabled && (!hasDebtData || remainingDebt <= 0)
+                                ? null
+                                : () => _setDebtLockdownEnabled(
+                                      !isEnabled,
+                                      remainingDebt,
+                                    ),
                         icon: Icon(
                           isEnabled ? Icons.pause_circle : Icons.shield,
                         ),
@@ -20703,8 +20705,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       hasHistory: hasHistory,
       isEnabled: snapshot?.isEnabled ?? false,
       entries: [
-        for (final entry in snapshot?.recentViolations ??
-            const <KonbiniUdonViolation>[])
+        for (final entry
+            in snapshot?.recentViolations ?? const <KonbiniUdonViolation>[])
           '${DateFormat('MM/dd HH:mm').format(entry.createdAt)} ${entry.mealSlotLabel} ${entry.note}',
       ],
       onPause: () => _setKonbiniUdonEnabled(false, remainingDebt),
