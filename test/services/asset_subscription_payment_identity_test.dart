@@ -91,10 +91,32 @@ void main() {
     }
   });
 
+  test('ambiguous canonical identity is not resolved by name or price', () {
+    const row = AssetCalendarDebtInput(
+      id: 'first',
+      recurringFixedCostId: 'cost-a',
+      name: 'Synthetic contract',
+      balance: -1000,
+      paymentDay: 20,
+    );
+    expect(
+      AssetPaymentCalendarService.resolvedSubscriptionDebt(
+        const {'id': 'legacy-a'},
+        const [row, row],
+        subscriptionFixedCostIds: const {'legacy-a': 'cost-a'},
+      ),
+      isNull,
+    );
+  });
+
   test('injected recurring identity reaches pure calendar DTO', () {
     final workbook = const AssetLiabilityPlanningService().buildWorkbook(
-      latestSnapshot: const {'Synthetic bank': 5000},
+      latestSnapshot: const {'Synthetic bank': 5000, 'SyntheticCard': -1000},
       baseDate: DateTime(2026, 10, 15),
+      includeDefaultFixedPayments: false,
+      cardBillingAccountIds: const {
+        'Synthetic unique fixed cost': 'custom_syntheticcard',
+      },
       recurringFixedCosts: const [
         AssetRecurringFixedCost(
           id: 'cost-a',
@@ -112,5 +134,8 @@ void main() {
       AssetCalendarDebtInput.fromDebtRow(row).recurringFixedCostId,
       'cost-a',
     );
+    final dto = AssetCalendarDebtInput.fromDebtRow(row);
+    expect(dto.paymentMethod, AssetLiabilityPaymentMethod.includedInCard);
+    expect(dto.billingAccountId, 'custom_syntheticcard');
   });
 }

@@ -20,11 +20,13 @@ AssetLiabilityAccount _account(
 
 AssetLiabilityDebtRow _debt({
   int? day = 10,
+  String? recurringFixedCostId,
   AssetLiabilityAccountKind kind = AssetLiabilityAccountKind.utility,
   bool fullPaymentEstimate = false,
 }) {
   return AssetLiabilityDebtRow(
     id: 'bill',
+    recurringFixedCostId: recurringFixedCostId,
     name: 'Service Fee',
     kind: kind,
     balance: -20000,
@@ -60,15 +62,18 @@ AssetCashflowForecastInputs _billInputs({
   Map<String, int> overrides = const {},
   String dueDate = '2026-06-10',
   double subscriptionAmount = 2000,
+  Map<String, String> links = const {},
 }) {
   return AssetCashflowForecastInputs.fromAssetData(
     accounts: const [],
     debtRows: [debt],
+    subscriptionFixedCostIds: links,
     recurringIncomeTemplates: const [],
     inflowRules: const [],
     oneTimeInflows: const [],
     subscriptions: [
       {
+        'id': 'legacy-bill',
         'service_name': ' service fee ',
         'due_date': dueDate,
         'price': subscriptionAmount,
@@ -90,13 +95,15 @@ double _projectOutflow(AssetCashflowForecastInputs inputs) {
 void main() {
   group('forecast and calendar payment schedule agreement', () {
     test('the same fixed cost in both sources is counted once', () {
-      final debt = _debt();
-      final inputs = _billInputs(debt: debt);
+      final debt = _debt(recurringFixedCostId: 'cost-bill');
+      final inputs = _billInputs(debt: debt, links: const {'legacy-bill': 'cost-bill'});
       final calendar = AssetPaymentCalendarService.buildMonth(
         month: DateTime(2026, 6),
         flows: const [],
+        subscriptionFixedCostIds: const {'legacy-bill': 'cost-bill'},
         subscriptions: [
           {
+            'id': 'legacy-bill',
             'service_name': ' service fee ',
             'due_date': '2026-06-10',
             'price': 2000,

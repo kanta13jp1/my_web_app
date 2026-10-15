@@ -151,7 +151,13 @@ class AssetCashflowForecastInputs {
       );
       final entry = subscriptionRecurringEntry(subscription);
       if (entry != null) {
-        recurringOutflow.add(entry);
+        recurringOutflow.add(
+          AssetCashflowRecurringEntry(
+            dayOfMonth: entry.dayOfMonth,
+            amount: entry.amount,
+            label: entry.label,
+          ),
+        );
       }
     }
 

@@ -43,6 +43,7 @@ AssetPaymentCalendarMonth example({bool withIncomePlan = false}) {
 
 Future<void> pumpEvidence(
   WidgetTester tester, {
+  AssetPaymentCalendarMonth? calendarOverride,
   bool withIncomePlan = false,
   DateTime? balanceRecordedOn,
   VoidCallback? onReview,
@@ -53,7 +54,7 @@ Future<void> pumpEvidence(
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: AssetCalendarShortfallDetails(
-            calendar: example(withIncomePlan: withIncomePlan),
+            calendar: calendarOverride ?? example(withIncomePlan: withIncomePlan),
             asOf: DateTime(2026, 10, 15),
             startingCashBalance: 5000,
             balanceRecordedOn: balanceRecordedOn,
@@ -66,6 +67,33 @@ Future<void> pumpEvidence(
 }
 
 void main() {
+  testWidgets('unresolved legacy payment lowers forecast certainty',
+      (tester) async {
+    final calendar = AssetPaymentCalendarService.buildRange(
+      start: DateTime(2026, 10),
+      endExclusive: DateTime(2026, 11),
+      asOf: DateTime(2026, 10, 15),
+      startingCashBalance: 100,
+      flows: const [],
+      debts: const [],
+      subscriptions: const [
+        {
+          'id': 'unlinked',
+          'service_name': 'Synthetic unresolved service',
+          'price': 1000,
+          'due_date': '2026-10-20',
+        },
+      ],
+    );
+    await pumpEvidence(tester, calendarOverride: calendar);
+    expect(find.textContaining('条件付き試算です。確定した不足ではありません。'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const Key('asset_calendar_shortfall_payment_evidence')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('支払方法未照合・現金支出を仮置き'), findsOneWidget);
+  });
+
   testWidgets(
       'distinguishes first deficit from maximum deficit and unknown time',
       (tester) async {
