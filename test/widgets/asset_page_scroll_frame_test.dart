@@ -36,7 +36,10 @@ void main() {
       Offset(rect.right - 5, rect.top + 18),
       kind: PointerDeviceKind.mouse,
     );
+    await gesture.moveBy(const Offset(0, 24));
+    await tester.pump();
     await gesture.moveBy(const Offset(0, 160));
+    await tester.pump();
     await gesture.up();
     await tester.pump();
     expect(controller.offset, greaterThan(0));
