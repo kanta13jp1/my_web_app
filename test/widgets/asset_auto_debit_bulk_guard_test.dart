@@ -78,6 +78,12 @@ void main() {
   testWidgets('unknown credit limits remain individual confirmations',
       (tester) async {
     await pumpPage(tester, const [unknownA, unknownB]);
+    await tester.scrollUntilVisible(
+      find.textContaining('引落の確認待ち'),
+      600,
+      maxScrolls: 25,
+    );
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('引落の確認待ち (2件)'), findsOneWidget);
     expect(find.textContaining('件をまとめて引落済み'), findsNothing);
     expect(find.text('引落済み'), findsNWidgets(2));
