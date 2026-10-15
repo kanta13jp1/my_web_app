@@ -365,9 +365,11 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
               TextButton.icon(
                 onPressed: _busy ? null : _chooseDeadline,
                 icon: const Icon(Icons.event),
-                label: Text(_deadlineSelected
-                    ? '目標期限 ${SavingsLifePlan.dateText(_deadline)} を変更'
-                    : '目標期限を設定'),
+                label: Text(
+                  _deadlineSelected
+                      ? '目標期限 ${SavingsLifePlan.dateText(_deadline)} を変更'
+                      : '目標期限を設定',
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: _busy || widget.propose == null ? null : _suggest,
@@ -414,13 +416,18 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                         enabled: !_busy,
                         maxLength: 80,
                         decoration: const InputDecoration(
-                            labelText: '目標の名前（任意）',
-                            border: OutlineInputBorder()),
+                          labelText: '目標の名前（任意）',
+                          border: OutlineInputBorder(),
+                        ),
                         onChanged: (_) => setState(() => _edited = true),
                       ),
                     ),
-                    _field('目標額', _target,
-                        positive: true, positiveError: '目標額は1円以上で入力してください'),
+                    _field(
+                      '目標額',
+                      _target,
+                      positive: true,
+                      positiveError: '目標額は1円以上で入力してください',
+                    ),
                   ],
                 ),
               ),

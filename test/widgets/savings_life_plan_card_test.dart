@@ -29,7 +29,8 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  setUp(() => SharedPreferences.setMockInitialValues({
+  setUp(
+    () => SharedPreferences.setMockInitialValues({
         'savings_life_plan_v1:fixture': jsonEncode({
           'version': 2,
           'start': '2026-10-13',
@@ -37,7 +38,8 @@ void main() {
           'target': 1000000,
           'reserve': 0,
         }),
-      }));
+    }),
+  );
   testWidgets('new user has no personal goal; amount and deadline are required',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
