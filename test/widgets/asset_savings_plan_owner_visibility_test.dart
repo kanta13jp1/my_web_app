@@ -165,7 +165,13 @@ void main() {
     expect(destination, findsOneWidget);
     await tester.tap(destination);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 450));
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    debugPrint(
+      'synthetic savings jump: before=$beforeJump after=${position.pixels} '
+      'cardTop=${tester.getTopLeft(card).dy}',
+    );
     expect(find.byType(BottomSheet), findsNothing);
     expect((position.pixels - beforeJump).abs(), greaterThan(1));
     expect(tester.getTopLeft(card).dy, inInclusiveRange(0, 899));
