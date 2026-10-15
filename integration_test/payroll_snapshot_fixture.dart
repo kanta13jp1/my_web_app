@@ -4,14 +4,37 @@ import 'package:my_web_app/services/asset_payroll_snapshot_store.dart';
 import 'package:my_web_app/widgets/asset_payroll_snapshot_section.dart';
 
 class SyntheticSnapshotStore implements PayrollSnapshotStore {
+  @override
+  String get ownerId => 'synthetic-owner';
+  int targetWrites = 0;
+  int? target;
+  bool failTargetAfterCommit = false;
+  bool failTargetReads = false;
+  @override
+  Future<void> setTarget(String accountId, int? expected, int? next) async {
+    if (target != expected) throw StateError('synthetic conflict');
+    targetWrites++;
+    target = next;
+    if (failTargetAfterCommit) {
+      throw StateError('synthetic target response lost');
+    }
+  }
+
   int writes = 0;
   bool failAfterCommit = false;
   bool failReads = false;
   PayrollSnapshotDraft? saved;
 
   @override
-  Future<List<PayrollSnapshotAccount>> accounts() async =>
-      [const PayrollSnapshotAccount('synthetic-account', '給与口座A')];
+  Future<List<PayrollSnapshotAccount>> accounts() async => failTargetReads
+      ? throw StateError('synthetic target read failed')
+      : [
+          PayrollSnapshotAccount(
+            'synthetic-account',
+            '給与口座A',
+            targetIncreaseYen: target,
+          ),
+        ];
   @override
   Future<void> createAccount(String label) async {}
   @override
@@ -25,6 +48,9 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
 
   PayrollSnapshotRecord _record() => PayrollSnapshotRecord(
         id: 'synthetic-observation',
+        ownerId: ownerId,
+        accountId: 'synthetic-account',
+        month: DateTime(2020),
         balanceYen: saved!.balanceYen,
         depositDate: saved!.depositDate,
         note: saved!.note,
