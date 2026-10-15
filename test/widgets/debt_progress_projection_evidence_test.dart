@@ -29,7 +29,7 @@ void main() {
             child: DebtProgressCard(data: data, month: DateTime(2026, 6)),
           ),
         ),
-      ));
+      ),);
       expect(find.text(data.projectionNote), findsOneWidget);
       expect(find.text('毎月の返済予定'), findsOneWidget);
       expect(tester.takeException(), isNull);

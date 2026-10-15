@@ -248,7 +248,7 @@ class DebtProgressCardService {
             row.balance < 0 &&
             row.isDirectCashflowTarget &&
             !row.includedInBillingAccount &&
-            !workbook.scheduledExpenseAccountIds.contains(row.id))
+            !workbook.scheduledExpenseAccountIds.contains(row.id),)
         .toList();
     final stockIds = stockRows.map((row) => row.id).toSet();
     final result = simulation.buildComparison(
@@ -270,7 +270,7 @@ class DebtProgressCardService {
         row.annualRate.isFinite &&
         !row.paymentAmountEstimated &&
         (confirmedAnnualRateAccountKeys.contains(row.id) ||
-            confirmedAnnualRateAccountKeys.contains(row.name)));
+            confirmedAnnualRateAccountKeys.contains(row.name)),);
     final monthlyInterest = stockRows.fold<double>(
       0,
       (sum, row) => sum + row.balance.abs() * row.annualRate / 12,

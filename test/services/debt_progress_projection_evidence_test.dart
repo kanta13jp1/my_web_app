@@ -29,7 +29,7 @@ void main() {
         expect(card.payoffMonths, isNull);
         expect(card.estimatedInterest, isNull);
         expect(card.projectionStatus,
-            DebtProgressProjectionStatus.unconfirmedTerms);
+            DebtProgressProjectionStatus.unconfirmedTerms,);
         expect(card.projectionNote, contains('未確認'));
       }
     });
@@ -48,7 +48,7 @@ void main() {
       confirmedAnnualRateAccountKeys: const {'SyntheticLoan'},
     )!;
     expect(card.projectionStatus,
-        DebtProgressProjectionStatus.insufficientPayment);
+        DebtProgressProjectionStatus.insufficientPayment,);
     expect(card.payoffMonths, isNull);
     expect(card.estimatedInterest, isNull);
   });
@@ -57,7 +57,7 @@ void main() {
     final workbook = planner.buildWorkbook(
       latestSnapshot: const {
         'SyntheticLoanA': -100000,
-        'SyntheticLoanB': -200000
+        'SyntheticLoanB': -200000,
       },
       baseDate: DateTime(2026, 6, 20),
       includeDefaultFixedPayments: false,
