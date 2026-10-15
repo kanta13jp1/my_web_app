@@ -512,7 +512,7 @@ jobs:
   payslip-review-preflight:
     if: inputs.profile == 'workspace'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     permissions:
       contents: read
     steps:
@@ -528,6 +528,30 @@ jobs:
           dart format integration_test/payslip_review_fixture.dart integration_test/payslip_review_test.dart lib/services/asset_payslip_review_store.dart lib/widgets/asset_payroll_deductions_card.dart lib/widgets/asset_payroll_deductions_section.dart lib/widgets/asset_payslip_review_dialog.dart test/services/asset_payslip_review_store_test.dart test/widgets/asset_payslip_review_dialog_test.dart
           flutter analyze integration_test/payslip_review_fixture.dart integration_test/payslip_review_test.dart lib/services/asset_payslip_review_store.dart lib/widgets/asset_payroll_deductions_card.dart lib/widgets/asset_payroll_deductions_section.dart lib/widgets/asset_payslip_review_dialog.dart test/services/asset_payslip_review_store_test.dart test/widgets/asset_payslip_review_dialog_test.dart
           flutter test test/services/asset_payslip_review_store_test.dart test/widgets/asset_payslip_review_dialog_test.dart --reporter expanded
+      - name: Synthetic browser preview on desktop and enlarged narrow viewport
+        shell: bash
+        run: |
+          mkdir -p .ci-logs
+          chromedriver --port=4444 > .ci-logs/payslip-review-driver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status
+          set -o pipefail
+          for viewport in desktop mobile; do
+            dimensions=1440x1000@1
+            mobile=false
+            if [ "$viewport" = mobile ]; then dimensions=320x900@1; mobile=true; fi
+            flutter drive --driver=test_driver/asset_triage_visual.dart \
+              --target=integration_test/payslip_review_test.dart \
+              --dart-define="PAYSLIP_REVIEW_MOBILE=$mobile" \
+              --browser-dimension="$dimensions" \
+              -d web-server --browser-name=chrome --headless \
+              2>&1 | tee ".ci-logs/payslip-review-$viewport.log"
+          done
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -541,4 +565,7 @@ jobs:
             lib/widgets/asset_payslip_review_dialog.dart
             test/services/asset_payslip_review_store_test.dart
             test/widgets/asset_payslip_review_dialog_test.dart
+            .ci-logs/payslip-review-*.log
+            .ci-logs/asset-triage-visual/payslip-review-*
+          include-hidden-files: true
           retention-days: 3
