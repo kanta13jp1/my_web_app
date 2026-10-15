@@ -12,7 +12,7 @@ async function enterAmount(page: Page, name: string, value: string) {
 
 
 async function configureGoal(page: Page) {
-  await expect(page.getByText('目標は未設定です。目的・金額・期限を入力してください。')).toBeVisible();
+  await expect(page.getByRole('group', { name: /目標は未設定です。目的・金額・期限を入力してください。/ })).toBeVisible();
   await enterAmount(page, '目標額', '1000000');
   await page.getByRole('button', { name: '目標期限を設定', exact: true }).click();
   await page.getByRole('button', { name: 'OK', exact: true }).click();
