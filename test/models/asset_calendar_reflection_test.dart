@@ -19,8 +19,8 @@ void main() {
       'linked_flow_id': 333,
     });
     expect(event.linkedFlowId, '333');
-    expect(
-        AssetCalendarReflection.fromJson(event.toJson()).linkedFlowId, '333');
+    final restored = AssetCalendarReflection.fromJson(event.toJson());
+    expect(restored.linkedFlowId, '333');
     expect(
       () => AssetCalendarReflection.fromJson(
         {...fixture(), 'linked_flow_id': 'bad'},
