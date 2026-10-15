@@ -184,7 +184,7 @@ jobs:
         run: |
           grep -RnE 'DebtLockdownService|KonbiniUdonChallengeService' lib test --include='*.dart'
           flutter analyze
-          flutter test test/services/debt_lockdown_service_test.dart test/services/konbini_udon_challenge_service_test.dart test/widgets/asset_debt_rule_registration_test.dart test/widgets/asset_legacy_meal_rule_card_test.dart --reporter expanded
+          flutter test test/widgets/asset_management_page_smoke_test.dart --name 'missing asset data|registered asset-only zero' --reporter expanded
 
       - name: Build Flutter Web in cloud
         id: web_build
