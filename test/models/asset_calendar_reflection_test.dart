@@ -13,10 +13,22 @@ Map<String, dynamic> fixture({
       'source_label': 'Test diary',
     };
 void main() {
+  test('numeric production flow ids roundtrip and deduplicate projections', () {
+    final event = AssetCalendarReflection.fromJson({
+      ...fixture(),
+      'linked_flow_id': 333,
+    });
+    expect(event.linkedFlowId, '333');
+    expect(AssetCalendarReflection.fromJson(event.toJson()).linkedFlowId, '333');
+    expect(
+      () => AssetCalendarReflection.fromJson({...fixture(), 'linked_flow_id': 'bad'}),
+      throwsFormatException,
+    );
+  });
   test('flow projection requires explicit context and never infers reading',
       () {
     Map<String, dynamic> flow(String title) => {
-          'id': '33333333-3333-4333-8333-333333333333',
+          'id': '333',
           'occurred_at': '2026-01-02T03:00:00Z',
           'action_type': 'expense',
           'description': title,
@@ -76,7 +88,7 @@ void main() {
   test(
       'summary deduplicates days and linked financial amount without summing twice',
       () {
-    const flow = '33333333-3333-4333-8333-333333333333';
+    const flow = '333';
     final first = AssetCalendarReflection.fromJson({
       ...fixture(),
       'verified_amount': 1000,
