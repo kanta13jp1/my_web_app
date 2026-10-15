@@ -1,7 +1,11 @@
+import '../services/asset_month_end_snapshot_service.dart';
+import '../widgets/asset_month_end_snapshot_card.dart';
 import '../widgets/asset_reflection_day_badge.dart';
 import '../models/asset_calendar_reflection.dart';
 import '../services/asset_calendar_reflection_repository.dart';
 import '../widgets/asset_calendar_reflection_panel.dart';
+import '../services/asset_spending_attention_calendar.dart';
+import '../widgets/asset_attention_day_label.dart';
 import '../widgets/asset_calendar_refresh_control.dart';
 import '../widgets/asset_future_card_bill_card.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
@@ -17326,6 +17330,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             const SizedBox(height: 4),
             Text(
+                'この表示期間の浪費危険日: ${AssetSpendingAttentionCalendar.countDays(calendar.days.map((day) => day.date))}日'),
+            const Text(
+                '金曜・土日・公式祝日・その休前日の注意表示です。実際の浪費・飲酒の記録とは別です。休前日は翌日が土日・公式祝日の日で、本人の個別休暇は含みません。'),
+            const Text('祝日データ: 内閣府 2026–2027年（2026-10-15取得）。未対応年の祝日は推測しません。'),
+            const SizedBox(height: 4),
+            Text(
               '給料日サイクル(給料日〜翌給料日前日)で、日ごとの支出と返済日・固定費・給料日のイベントをまとめて見渡せます。',
               style: TextStyle(
                 fontSize: 11,
@@ -17667,6 +17677,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               spacing: 12,
               runSpacing: 4,
               children: [
+                _buildCalendarLegendItem(
+                    AssetAttentionDayLabel.background, '浪費危険日（注意の背景）'),
                 _buildCalendarLegendItem(const Color(0xFFB91C1C), '返済日'),
                 _buildCalendarLegendItem(const Color(0xFF9333EA), '固定費'),
                 _buildCalendarLegendItem(const Color(0xFF0D9488), '給料日'),
@@ -17714,6 +17726,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             if (selectedDay != null) ...[
               const SizedBox(height: 10),
+              Text(
+                AssetSpendingAttentionCalendar.forDate(selectedDay.date)
+                    .description,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, color: Color(0xFF78350F)),
+              ),
               Text(
                 '${DateFormat('M月d日').format(selectedDay.date)} のイベント',
                 style: const TextStyle(
@@ -17828,6 +17846,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         .toList();
     final kinds = reflections.expand((e) => e.kinds).toSet();
     final reflectionColor = AssetReflectionDayBadge.backgroundFor(kinds);
+    final attention = AssetSpendingAttentionCalendar.forDate(day.date);
     final markers = <Color>[
       if (day.hasDebtPayment) const Color(0xFFB91C1C),
       if (day.hasSubscription) const Color(0xFF9333EA),
@@ -17854,7 +17873,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
                   : day.isShortfall
                       ? const Color(0xFFFEE2E2)
-                      : null),
+                      : attention.isAttentionDay
+                          ? AssetAttentionDayLabel.background
+                          : null),
           borderRadius: BorderRadius.circular(6),
           border: isSelected || isToday
               ? Border.all(
@@ -17884,6 +17905,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   height: 1.2,
                 ),
               ),
+            AssetAttentionDayLabel(day: attention),
             if (kinds.isNotEmpty)
               Expanded(child: AssetReflectionDayBadge(kinds: kinds))
             else
@@ -21802,6 +21824,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAccountCashflowSection(workbook),
             const SizedBox(height: 16),
             _buildMonthlySnapshotSection(workbook),
+            const SizedBox(height: 16),
+            AssetMonthEndSnapshotCard(
+              key: ValueKey('month-end-${_supabase.auth.currentUser?.id}'),
+              service: AssetMonthEndSnapshotService(_supabase),
+              monthKeys: _recentMonthEndSnapshotKeys(),
+            ),
             const SizedBox(height: 16),
             _buildMonthlyReportSection(),
             const SizedBox(height: 16),
@@ -29571,6 +29599,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ],
     );
+  }
+
+  List<String> _recentMonthEndSnapshotKeys() {
+    final japanNow = DateTime.now().toUtc().add(const Duration(hours: 9));
+    return [
+      for (var offset = 2; offset >= 0; offset--)
+        DateFormat('yyyy-MM').format(DateTime(japanNow.year, japanNow.month - offset)),
+    ];
   }
 
   Widget _buildMonthlySnapshotSection(AssetLiabilityWorkbook workbook) {
