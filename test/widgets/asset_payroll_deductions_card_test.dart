@@ -102,15 +102,23 @@ void main() {
       );
     },
   );
-  testWidgets('zero residual does not claim unclassified details are complete', (tester) async {
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: ListView(children: const [
-      AssetPayrollDeductionsCard(ownerId: 'owner-a', year: 2030, rows: [{
-        'id': 'synthetic-unknown', 'user_id': 'owner-a',
-        'pay_date': '2030-01-20', 'review_status': 'auto',
-        'gross_amount': 1000, 'net_amount': 700,
-        'social_insurance_total': 300,
-        'deductions': {'unknown_social_component': 20},
-      }]),
+  testWidgets('zero residual does not claim unclassified details are complete',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: ListView(children: const [
+      AssetPayrollDeductionsCard(ownerId: 'owner-a', year: 2030, rows: [
+        {
+          'id': 'synthetic-unknown',
+          'user_id': 'owner-a',
+          'pay_date': '2030-01-20',
+          'review_status': 'auto',
+          'gross_amount': 1000,
+          'net_amount': 700,
+          'social_insurance_total': 300,
+          'deductions': {'unknown_social_component': 20},
+        }
+      ]),
     ]))));
     await tester.tap(find.text('1月'));
     await tester.pumpAndSettle();

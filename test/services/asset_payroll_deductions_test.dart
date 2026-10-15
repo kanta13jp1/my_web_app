@@ -47,7 +47,8 @@ void main() {
     expect(row.socialMismatchYen, 0);
     expect(row.unclassified, isEmpty);
   });
-  test('matching pension aliases count once and conflicting ones need review', () {
+  test('matching pension aliases count once and conflicting ones need review',
+      () {
     final raw = fixture();
     (raw['deductions'] as Map)['employees_pension_insurance'] = 100;
     expect(PayrollDeductions.fromRow(raw)!.socialPartsTotalYen, 200);
@@ -56,7 +57,9 @@ void main() {
     expect(row.conflictingPensionAliases, isTrue);
     expect(row.socialPartsTotalYen, isNull);
     final month = AssetPayrollDeductions.months(
-      ownerId: 'owner-a', year: 2030, rows: [raw],
+      ownerId: 'owner-a',
+      year: 2030,
+      rows: [raw],
     )[1];
     expect(month.confirmedSocialYen, isNull);
   });
