@@ -25506,6 +25506,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final data = service.build(
       workbook: workbook,
       priorBalancesByAccountId: _assetDebtTrendPriorBalances,
+      confirmedAnnualRateAccountKeys: _annualRateOverrides.keys.toSet(),
     );
     if (!mounted) return;
     if (data == null) {
