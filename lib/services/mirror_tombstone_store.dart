@@ -67,6 +67,10 @@ class AssetTombstoneGcConfig {
 /// テスト戦略を併せて見直すこと。本不変条件は
 /// `test/services/mirror_tombstone_store_test.dart` の並行テストでガードする。
 class MirrorTombstoneStore {
+  static int _mutationGeneration = 0;
+
+  /// Read-only observation epoch; persisted values and write order are unchanged.
+  static int get mutationGeneration => _mutationGeneration;
   const MirrorTombstoneStore({
     required this.storageKey,
     this.gcConfig = const AssetTombstoneGcConfig(),
@@ -246,6 +250,7 @@ class MirrorTombstoneStore {
     SharedPreferences store,
     List<Map<String, String>> entries,
   ) async {
+    _mutationGeneration++;
     await store.setString(storageKey, jsonEncode(entries));
   }
 }
