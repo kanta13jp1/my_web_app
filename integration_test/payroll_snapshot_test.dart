@@ -14,6 +14,11 @@ void main() {
     expect(store.writes, 0);
     expect(find.text('給与入金直後の残高を確認'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    // CanvasKit can settle before asynchronous Japanese fallback fonts arrive.
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(seconds: 2));
+    });
+    await tester.pumpAndSettle();
     await binding.takeScreenshot(
         mobile
             ? 'payroll-snapshot-preview-mobile'
