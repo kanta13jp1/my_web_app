@@ -49,12 +49,15 @@ void main() {
     await tester.tap(find.text('開始'));
     await tester.pump();
     expect(find.text('実行中・約5分おき'), findsOneWidget);
+    expect(find.textContaining('次回通知の目安：'), findsOneWidget);
     await tester.tap(find.text('テスト通知'));
     await tester.pump();
     expect(shown, 1);
+    expect(find.textContaining('最終表示応答：'), findsOneWidget);
     await tester.tap(find.text('停止'));
     await tester.pump();
     expect(controller.running, false);
+    expect(find.textContaining('次回通知の目安：'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
