@@ -66,7 +66,7 @@ void main() {
     await controller.testNotification();
     expect(shown, 1);
     expect(controller.running, false);
-    expect(controller.message, contains('要求'));
+    expect(controller.message, contains('表示応答'));
   });
 
   test('blocked permission is not requested repeatedly', () async {
@@ -128,4 +128,24 @@ void main() {
     expect(failing.message, contains('停止'));
     failing.dispose();
   });
+  for (final timeout in [false, true]) {
+    test('test notification surfaces ${timeout ? 'timeout' : 'async error'} without success time', () async {
+      final failing = BrowserReminderController(
+        supported: true,
+        readPermission: () => 'granted',
+        requestPermission: () async => 'granted',
+        showReminder: () async {
+          if (timeout) throw TimeoutException('show not confirmed');
+          throw StateError('asynchronous notification error');
+        },
+      );
+      await failing.testNotification();
+      expect(failing.message, contains(timeout ? '8秒以内' : '表示できません'));
+      expect(failing.lastRequestedAt, isNull);
+      expect(failing.busy, false);
+      expect(failing.running, false);
+      failing.dispose();
+    });
+  }
+
 }
