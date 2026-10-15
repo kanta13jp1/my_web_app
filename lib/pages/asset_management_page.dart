@@ -21789,7 +21789,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 16),
             AssetPayrollSnapshotConnection(
-              key: ValueKey('payroll-snapshot-owner-${_supabase.auth.currentUser?.id}'),
+              key: ValueKey(
+                  'payroll-snapshot-owner-${_supabase.auth.currentUser?.id}'),
               ownerId: _supabase.auth.currentUser?.id,
               initialMonth: _now,
               createStore: (owner) => SupabasePayrollSnapshotStore(

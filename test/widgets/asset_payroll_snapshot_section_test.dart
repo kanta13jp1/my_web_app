@@ -4,7 +4,8 @@ import 'package:my_web_app/widgets/asset_payroll_snapshot_connection.dart';
 import '../../integration_test/payroll_snapshot_fixture.dart';
 
 void main() {
-  testWidgets('signed out page connection never constructs a store', (tester) async {
+  testWidgets('signed out page connection never constructs a store',
+      (tester) async {
     var created = 0;
     await tester.pumpWidget(
       MaterialApp(
@@ -24,7 +25,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('owner change discards the previous owners unsaved input', (tester) async {
+  testWidgets('owner change discards the previous owners unsaved input',
+      (tester) async {
     final stores = <String, SyntheticSnapshotStore>{};
     Future<void> open(String owner) async {
       await tester.pumpWidget(
@@ -34,7 +36,8 @@ void main() {
               child: AssetPayrollSnapshotConnection(
                 ownerId: owner,
                 initialMonth: DateTime(2020),
-                createStore: (id) => stores.putIfAbsent(id, SyntheticSnapshotStore.new),
+                createStore: (id) =>
+                    stores.putIfAbsent(id, SyntheticSnapshotStore.new),
               ),
             ),
           ),
@@ -42,8 +45,10 @@ void main() {
       );
       await tester.pumpAndSettle();
     }
+
     await open('owner-a');
-    await tester.enterText(find.byType(TextFormField).at(2), 'owner-a private draft');
+    await tester.enterText(
+        find.byType(TextFormField).at(2), 'owner-a private draft',);
     await open('owner-b');
     expect(find.text('owner-a private draft'), findsNothing);
     expect(stores.keys, containsAll(['owner-a', 'owner-b']));
