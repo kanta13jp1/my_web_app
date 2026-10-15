@@ -5,6 +5,15 @@ on:
       - 'supabase/migrations/20261015170000_asset_calendar_reflections.sql'
       - 'supabase/tests/asset_calendar_reflection*'
       - '.github/workflows/asset-calendar-reflection-contract.yml'
+      - 'lib/models/asset_calendar_reflection.dart'
+      - 'lib/pages/asset_management_page.dart'
+      - 'lib/services/asset_calendar_reflection_repository.dart'
+      - 'lib/widgets/asset_calendar_reflection_panel.dart'
+      - 'test/models/asset_calendar_reflection_test.dart'
+      - 'lib/widgets/asset_reflection_day_badge.dart'
+      - 'test/widgets/asset_calendar_reflection_panel_test.dart'
+      - 'lib/widgets/asset_month_end_snapshot_card.dart'
+      - 'test/services/asset_month_end_snapshot_service_test.dart'
   workflow_dispatch:
 concurrency:
   group: calendar-reflection-${{ github.ref }}
@@ -52,8 +61,8 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
-      - name: Prepare integrated Dart formatting
-        run: dart format lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart
+      - name: Verify committed Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart
       - name: Preserve exact tested source for review
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
