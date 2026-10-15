@@ -44,6 +44,7 @@ AssetPaymentCalendarMonth example({bool withIncomePlan = false}) {
 Future<void> pumpEvidence(
   WidgetTester tester, {
   bool withIncomePlan = false,
+  DateTime? balanceRecordedOn,
   VoidCallback? onReview,
 }) async {
   await tester.pumpWidget(
@@ -55,6 +56,7 @@ Future<void> pumpEvidence(
             calendar: example(withIncomePlan: withIncomePlan),
             asOf: DateTime(2026, 10, 15),
             startingCashBalance: 5000,
+            balanceRecordedOn: balanceRecordedOn,
             onReviewPayments: onReview,
           ),
         ),
@@ -109,5 +111,12 @@ void main() {
       find.text('この見込みには入金予定¥2,000を含みます（着金未確認）。'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('date-only balances do not claim a midnight observation',
+      (tester) async {
+    await pumpEvidence(tester, balanceRecordedOn: DateTime(2026, 10, 14));
+    expect(find.text('残高記録日: 2026/10/14（時刻不明）'), findsOneWidget);
+    expect(find.textContaining('00:00'), findsNothing);
   });
 }

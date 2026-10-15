@@ -11,13 +11,18 @@ class AssetCalendarShortfallDetails extends StatelessWidget {
     required this.asOf,
     required this.startingCashBalance,
     this.balanceRecordedAt,
+    this.balanceRecordedOn,
     this.onReviewPayments,
   });
 
   final AssetPaymentCalendarMonth calendar;
   final DateTime asOf;
   final double? startingCashBalance;
+
+  /// Only an explicitly recorded timestamp, never the forecast's calculation
+  /// time or midnight manufactured from a date-only balance observation.
   final DateTime? balanceRecordedAt;
+  final DateTime? balanceRecordedOn;
   final VoidCallback? onReviewPayments;
 
   String yen(num value) => NumberFormat.currency(
@@ -81,9 +86,11 @@ class AssetCalendarShortfallDetails extends StatelessWidget {
           style: textStyle,
         ),
         Text(
-          balanceRecordedAt == null
-              ? '残高の記録日時: 未確認'
-              : '残高の記録日時: ${DateFormat('yyyy/MM/dd HH:mm').format(balanceRecordedAt!)}',
+          balanceRecordedAt != null
+              ? '残高の記録日時: ${DateFormat('yyyy/MM/dd HH:mm').format(balanceRecordedAt!)}'
+              : balanceRecordedOn != null
+                  ? '残高記録日: ${DateFormat('yyyy/MM/dd').format(balanceRecordedOn!)}（時刻不明）'
+                  : '残高の記録日時: 未確認',
           style: textStyle,
         ),
         Text(
