@@ -79,7 +79,8 @@ class AssetPayrollSnapshotComparison {
     }
     final previousMonth = DateTime(payrollMonth.year, payrollMonth.month - 1);
     List<PayrollBalanceObservation> eligible(DateTime month) => observations
-        .where((row) =>
+        .where(
+          (row) =>
             row.ownerId == ownerId &&
             row.accountId == accountId &&
             row.payrollMonth.year == month.year &&
@@ -87,7 +88,8 @@ class AssetPayrollSnapshotComparison {
             row.depositReference.trim().isNotEmpty &&
             row.sourceReference.trim().isNotEmpty &&
             row.confirmedImmediatelyAfterDeposit &&
-            !row.observedAt.isBefore(row.depositedAt))
+            !row.observedAt.isBefore(row.depositedAt),
+        )
         .toList();
 
     final current = eligible(payrollMonth);

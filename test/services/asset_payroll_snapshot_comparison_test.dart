@@ -79,18 +79,21 @@ void main() {
   test('December to January boundary', () {
     final result = compare(
         [observation(12, 120, year: 2029), observation(1, 170)],
-        month: 1);
+        month: 1,
+    );
     expect(result.deltaYen, 50);
   });
   test('conflicting duplicate observations require review', () {
     final result = compare(
-        [observation(1, 120), observation(2, 170), observation(2, 180)]);
+        [observation(1, 120), observation(2, 170), observation(2, 180)],
+    );
     expect(result.status, PayrollComparisonStatus.conflictingObservations);
     expect(result.deltaYen, isNull);
   });
   test('observation before deposit is rejected', () {
     final result = compare(
-        [observation(1, 120), observation(2, 170, beforeDeposit: true)]);
+        [observation(1, 120), observation(2, 170, beforeDeposit: true)],
+    );
     expect(result.status, PayrollComparisonStatus.currentMissing);
   });
 }
