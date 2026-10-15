@@ -28,7 +28,7 @@ async function prepare(name){
   return {next,rect};
 }
 async function verify(name){
-  await page.getByText('2026/6/25〜7/24',{exact:true}).waitFor({state:'visible',timeout:5000});
+  await page.getByLabel('2026/6/25〜7/24',{exact:true}).waitFor({state:'visible',timeout:5000});
   const dialog=page.getByRole('dialog');
   if(await dialog.count())throw new Error('Unexpected dialog after next cycle');
   await page.screenshot({path:`${dir}/${name}-after.png`});
@@ -49,6 +49,7 @@ try{
   await page.keyboard.press('Enter');
   await verify('keyboard');
 }finally{
+  await writeFile(`${dir}/semantics.json`,JSON.stringify(await page.locator('[aria-label]').evaluateAll(els=>els.map(e=>({role:e.getAttribute('role'),label:e.getAttribute('aria-label')}))),null,2));
   await page.screenshot({path:`${dir}/last-state.png`});
   await writeFile(`${dir}/evidence.json`,JSON.stringify(evidence,null,2));
   await browser.close();
