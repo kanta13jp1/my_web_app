@@ -129,6 +129,8 @@ class AssetCalendarEvent {
     this.paymentSourceAccountName,
     this.paymentAmountEstimated = true,
     this.billingConfirmed = false,
+    this.unreconciledExpense = false,
+    this.balanceDifferenceAutoRecorded = false,
   });
 
   final AssetCalendarEventKind kind;
@@ -145,6 +147,10 @@ class AssetCalendarEvent {
   final String? paymentSourceAccountName;
   final bool paymentAmountEstimated;
   final bool billingConfirmed;
+
+  /// 既存expense内の参照フラグ。収支へ追加加算しない。
+  final bool unreconciledExpense;
+  final bool balanceDifferenceAutoRecorded;
 }
 
 /// 1日分のサマリ。支出/収入はフロー記録の合算。
@@ -186,6 +192,13 @@ class AssetCalendarDaySummary {
   bool get hasIncome => incomeTotal > 0;
 
   bool get hasTransfer => _has(AssetCalendarEventKind.transfer);
+
+  bool get hasUnreconciledExpense => events.any((event) =>
+      event.kind == AssetCalendarEventKind.expense && event.unreconciledExpense,);
+
+  double get unreconciledExpenseTotal => events
+      .where((event) => event.kind == AssetCalendarEventKind.expense && event.unreconciledExpense,)
+      .fold<double>(0, (sum, event) => sum + (event.amount ?? 0),);
 
   bool get hasAnyEvent => events.isNotEmpty;
 }
@@ -563,6 +576,11 @@ class AssetPaymentCalendarService {
       final actionType = flow['action_type']?.toString() ?? '';
       final description = flow['description']?.toString().trim() ?? '';
       if (expenseActionTypes.contains(actionType)) {
+        // 元の記録の見出しに明記されたものだけ。一般購入の説明中の言及は含めない。
+        final unreconciled = RegExp(
+          r'^(?:\[[^\]]+\]\s*)?(?:使途不明金|使途不明|用途不明金|用途不明)(?:[（(:：\s]|$)',
+        ).hasMatch(description);
+
         expenseByDate[_dateKey(date)] =
             (expenseByDate[_dateKey(date)] ?? 0) + amount.abs();
         addEvent(
@@ -570,6 +588,9 @@ class AssetPaymentCalendarService {
           AssetCalendarEvent(
             kind: AssetCalendarEventKind.expense,
             label: description.isEmpty ? '支出' : description,
+            unreconciledExpense: unreconciled,
+            balanceDifferenceAutoRecorded: unreconciled &&
+                description.contains('残高差分から自動記録'),
             amount: amount.abs(),
           ),
         );
