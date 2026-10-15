@@ -78,13 +78,17 @@ void main() {
   testWidgets('unknown credit limits remain individual confirmations',
       (tester) async {
     await pumpPage(tester, const [unknownA, unknownB]);
-    await tester.scrollUntilVisible(
-      find.textContaining('引落の確認待ち'),
-      600,
-      maxScrolls: 25,
+    // Boot restoration spans several asynchronous stores. Wait for the card,
+    // without waiting for unrelated persistent page animations to settle.
+    for (var attempt = 0; attempt < 20; attempt++) {
+      if (find.textContaining('引落の確認待ち').evaluate().isNotEmpty) break;
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(
+      find.text('引落の確認待ち (2件)'),
+      findsOneWidget,
+      reason: find.byType(Text).evaluate().map((e) => (e.widget as Text).data).join(' / '),
     );
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('引落の確認待ち (2件)'), findsOneWidget);
     expect(find.textContaining('件をまとめて引落済み'), findsNothing);
     expect(find.text('引落済み'), findsNWidgets(2));
     await tester.pumpWidget(const SizedBox.shrink());
