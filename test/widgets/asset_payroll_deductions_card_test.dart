@@ -25,7 +25,9 @@ void main() {
               body: ListView(
                 children: const [
                   AssetPayrollDeductionsCard(
-                      ownerId: 'owner-a', year: 2030, rows: [],
+                    ownerId: 'owner-a',
+                    year: 2030,
+                    rows: [],
                   ),
                 ],
               ),
