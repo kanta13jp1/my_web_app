@@ -8,7 +8,7 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
     required this.ownerId,
     required this.year,
     required this.rows,
-  });
+  },);
 
   final String ownerId;
   final int year;
@@ -31,22 +31,27 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
       ownerId: ownerId,
       year: year,
       rows: rows,
-    );
+    ,);
     final taxMonths = months.where((m) => m.confirmedTaxYen != null).toList();
-    final socialMonths = months.where((m) => m.confirmedSocialYen != null).toList();
-    final taxSum = taxMonths.fold<int>(0, (sum, m) => sum + m.confirmedTaxYen!);
-    final socialSum = socialMonths.fold<int>(0, (sum, m) => sum + m.confirmedSocialYen!);
+    final socialMonths =
+        months.where((m) => m.confirmedSocialYen != null).toList();
+    final taxSum = taxMonths.fold<int>(0, (sum, m) => sum + m.confirmedTaxYen!,);
+    final socialSum =
+        socialMonths.fold<int>(0, (sum, m) => sum + m.confirmedSocialYen!,);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$year年 給与の税金・社会保険料', style: Theme.of(context).textTheme.titleMedium),
+            Text('$year年 給与の税金・社会保険料',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             const Text('給与明細の支給日が属する月で表示します。控除を家計簿の支出へ重ねて追加しません。'),
-            Text('税金の確認済み分：${taxMonths.isEmpty ? '未取得' : '$taxSum円'}（${taxMonths.length}/12か月）'),
-            Text('社会保険料の確認済み分：${socialMonths.isEmpty ? '未取得' : '$socialSum円'}（${socialMonths.length}/12か月）'),
+            Text(
+                '税金の確認済み分：${taxMonths.isEmpty ? '未取得' : '$taxSum円'}（${taxMonths.length}/12か月）'),
+            Text(
+                '社会保険料の確認済み分：${socialMonths.isEmpty ? '未取得' : '$socialSum円'}（${socialMonths.length}/12か月）'),
             const Text('空欄は0円ではありません。自動読取は本人確認済みの合計に含めません。'),
             for (final month in months)
               ExpansionTile(
@@ -65,7 +70,7 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ,);
   }
 
   Widget _statement(BuildContext context, PayrollDeductions row, int index) {
@@ -74,7 +79,9 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('明細${index + 1}・${row.payDate.month}/${row.payDate.day}支給・${row.confirmed ? '本人確認済み' : '読取内容は未確認'}', style: Theme.of(context).textTheme.titleSmall),
+          Text(
+              '明細${index + 1}・${row.payDate.month}/${row.payDate.day}支給・${row.confirmed ? '本人確認済み' : '読取内容は未確認'}',
+              style: Theme.of(context).textTheme.titleSmall),
           Text('総支給 ${amount(row.grossYen)} / 手取り ${amount(row.netYen)}'),
           for (final entry in labels.entries)
             Text('${entry.value}：${amount(row.items[entry.key])}'),
@@ -89,6 +96,6 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
           const Text('差がある場合は未取得・未分類項目や読取内容を確認してください。還付などの負数は符号を保持します。'),
         ],
       ),
-    );
+    ,);
   }
 }

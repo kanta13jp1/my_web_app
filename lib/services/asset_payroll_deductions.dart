@@ -1,7 +1,7 @@
 /// Read-only projections of existing payslip fields. No new expense is posted.
 class PayrollDeductions {
   PayrollDeductions._(this.sourceId, this.payDate, this.reviewStatus,
-      this.grossYen, this.netYen, this.reportedSocialYen, this.items);
+      this.grossYen, this.netYen, this.reportedSocialYen, this.items,);
 
   final String sourceId;
   final DateTime payDate;
@@ -32,8 +32,8 @@ class PayrollDeductions {
     return sum;
   }
 
-  int? get taxTotalYen => _completeTotal(taxKeys);
-  int? get socialPartsTotalYen => _completeTotal(socialKeys);
+  int? get taxTotalYen => _completeTotal(taxKeys,);
+  int? get socialPartsTotalYen => _completeTotal(socialKeys,);
   int? get socialTotalYen => reportedSocialYen ?? socialPartsTotalYen;
   int? get socialMismatchYen =>
       reportedSocialYen == null || socialPartsTotalYen == null
@@ -42,7 +42,7 @@ class PayrollDeductions {
 
   Map<String, int?> get unclassified => Map.unmodifiable(
         Map.fromEntries(items.entries.where((e) => !knownKeys.contains(e.key))),
-      );
+      ,);
 
   /// Only known categories are subtotaled. Missing entries remain absent in
   /// [items]; this subtotal must never be labelled the full deduction amount.
@@ -58,7 +58,7 @@ class PayrollDeductions {
           if (items[key] != null) items[key]!,
       if (items['ideco'] != null) items['ideco']!,
     ];
-    return values.isEmpty ? null : values.reduce((a, b) => a + b);
+    return values.isEmpty ? null : values.reduce((a, b) => a + b,);
   }
 
   /// Gross minus net is a derived total, not another parsed source field.
@@ -85,55 +85,67 @@ class PayrollDeductions {
     if (sourceId is! String || sourceId.trim().isEmpty || rawDate is! String) {
       return null;
     }
-    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(rawDate);
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(rawDate,);
     if (match == null) return null;
-    final year = int.parse(match[1]!);
-    final month = int.parse(match[2]!);
-    final day = int.parse(match[3]!);
-    final date = DateTime(year, month, day);
-    if (date.year != year || date.month != month || date.day != day) return null;
+    final year = int.parse(match[1]!,);
+    final month = int.parse(match[2]!,);
+    final day = int.parse(match[3]!,);
+    final date = DateTime(year, month, day,);
+    if (date.year != year || date.month != month || date.day != day)
+      return null;
     final rawItems = row['deductions'];
     final items = <String, int?>{};
     if (rawItems is Map) {
       for (final entry in rawItems.entries) {
-        if (entry.key is String) items[entry.key as String] = readYen(entry.value);
+        if (entry.key is String)
+          items[entry.key as String] = readYen(entry.value,);
       }
     }
     return PayrollDeductions._(
       sourceId,
       date,
-      row['review_status'] is String ? row['review_status'] as String : 'unknown',
+      row['review_status'] is String
+          ? row['review_status'] as String
+          : 'unknown',
       readYen(row['gross_amount']),
       readYen(row['net_amount']),
       readYen(row['social_insurance_total']),
       Map.unmodifiable(items),
-    );
+    ,);
   }
 }
 
 class PayrollMonthDeductions {
-  const PayrollMonthDeductions(this.month, this.statements, this.conflicting);
+  const PayrollMonthDeductions(this.month, this.statements, this.conflicting,);
   final DateTime month;
   final List<PayrollDeductions> statements;
+
   /// Repeated source with different content must be corrected before totals.
   final bool conflicting;
 
-  bool get confirmed => !conflicting && statements.isNotEmpty &&
-      statements.every((row) => row.confirmed && !row.rejected);
+  bool get confirmed =>
+      !conflicting &&
+      statements.isNotEmpty &&
+      statements.every((row) => row.confirmed && !row.rejected,);
 
   int? _sum(int? Function(PayrollDeductions) read) {
     if (!confirmed) return null;
     var sum = 0;
     for (final row in statements) {
-      final amount = read(row);
+      final amount = read(row,);
       if (amount == null) return null;
       sum += amount;
     }
     return sum;
   }
 
-  int? get confirmedTaxYen => _sum((row) => row.taxTotalYen);
-  int? get confirmedSocialYen => _sum((row) => row.socialTotalYen);
+  int? get confirmedTaxYen => _sum((row) => row.taxTotalYen,);
+  int? get confirmedSocialYen => _sum(_socialForComparison,);
+
+  static int? _socialForComparison(PayrollDeductions row) {
+    if (row.socialMismatchYen != null && row.socialMismatchYen != 0) return null;
+    return row.socialTotalYen;
+  }
 }
 
 class AssetPayrollDeductions {
@@ -146,26 +158,26 @@ class AssetPayrollDeductions {
     required int year,
     required Iterable<Map<String, dynamic>> rows,
   }) {
-    if (ownerId.trim().isEmpty) throw ArgumentError('Owner is required.');
+    if (ownerId.trim().isEmpty) throw ArgumentError('Owner is required.',);
     final byMonth = <int, List<PayrollDeductions>>{};
     final byId = <String, Map<String, dynamic>>{};
     final conflictMonths = <int>{};
     for (final raw in rows) {
       if (raw['user_id'] != ownerId) continue;
-      final row = PayrollDeductions.fromRow(raw);
+      final row = PayrollDeductions.fromRow(raw,);
       if (row == null || row.payDate.year != year || row.rejected) continue;
       final previous = byId[row.sourceId];
       if (previous != null) {
         // Do not pick the latest copy or silently double-count repeated data.
         final prior = PayrollDeductions.fromRow(previous)!;
         if (!_same(prior, row)) {
-          conflictMonths.add(prior.payDate.month);
-          conflictMonths.add(row.payDate.month);
+          conflictMonths.add(prior.payDate.month,);
+          conflictMonths.add(row.payDate.month,);
         }
         continue;
       }
       byId[row.sourceId] = raw;
-      byMonth.putIfAbsent(row.payDate.month, () => []).add(row);
+      byMonth.putIfAbsent(row.payDate.month, () => []).add(row,);
     }
     return List.generate(12, (index) {
       final month = index + 1;
@@ -173,14 +185,17 @@ class AssetPayrollDeductions {
         DateTime(year, month),
         List.unmodifiable(byMonth[month] ?? const <PayrollDeductions>[]),
         conflictMonths.contains(month),
-      );
-    });
+      ,);
+    },);
   }
 
   static bool _same(PayrollDeductions a, PayrollDeductions b) =>
-      a.payDate == b.payDate && a.reviewStatus == b.reviewStatus &&
-      a.grossYen == b.grossYen && a.netYen == b.netYen &&
+      a.payDate == b.payDate &&
+      a.reviewStatus == b.reviewStatus &&
+      a.grossYen == b.grossYen &&
+      a.netYen == b.netYen &&
       a.reportedSocialYen == b.reportedSocialYen &&
       a.items.length == b.items.length &&
-      a.items.entries.every((e) => b.items.containsKey(e.key) && b.items[e.key] == e.value);
+      a.items.entries.every(
+          (e) => b.items.containsKey(e.key) && b.items[e.key] == e.value,);
 }
