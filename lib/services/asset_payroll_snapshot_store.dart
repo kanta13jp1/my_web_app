@@ -92,7 +92,9 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
     return [
       for (final row in rows)
         PayrollSnapshotAccount(
-            row['id'] as String, row['display_label'] as String,),
+          row['id'] as String,
+          row['display_label'] as String,
+        ),
     ];
   }
 
@@ -119,7 +121,9 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
 
   @override
   Future<PayrollSnapshotRecord?> selected(
-      String accountId, DateTime month,) async {
+    String accountId,
+    DateTime month,
+  ) async {
     _checkOwner();
     final selection = await client
         .from('asset_payroll_balance_selections')
@@ -147,7 +151,8 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
     final row = await client
         .from('asset_payroll_balance_observations')
         .select(
-            'id,balance_yen,deposit_date,source_note,account_id,payroll_month,selection_reason,expected_previous_id',)
+          'id,balance_yen,deposit_date,source_note,account_id,payroll_month,selection_reason,expected_previous_id',
+        )
         .eq('user_id', ownerId)
         .eq('request_id', draft.requestId)
         .maybeSingle();
@@ -175,8 +180,10 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
         draft.reason.length > 300) {
       throw ArgumentError('確認資料メモと理由は1〜300文字です。');
     }
-    await client.rpc('confirm_payroll_balance_observation',
-        params: draft.toRpc(),);
+    await client.rpc(
+      'confirm_payroll_balance_observation',
+      params: draft.toRpc(),
+    );
     _checkOwner();
   }
 }

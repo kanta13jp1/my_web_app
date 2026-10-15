@@ -526,9 +526,33 @@ jobs:
       - name: Normalize mechanical lints and validate isolated feature
         run: |
           dart fix --apply --code=require_trailing_commas
-          dart format lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart test/widgets/asset_payroll_snapshot_section_test.dart
-          flutter analyze lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart test/widgets/asset_payroll_snapshot_section_test.dart
+          dart format lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart
+          flutter analyze lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart
           flutter test test/widgets/asset_payroll_snapshot_section_test.dart --reporter expanded
+      - name: Synthetic browser preview on desktop and enlarged narrow viewport
+        shell: bash
+        run: |
+          mkdir -p .ci-logs
+          chromedriver --port=4444 > .ci-logs/payroll-snapshot-driver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status
+          set -o pipefail
+          for viewport in desktop mobile; do
+            dimensions=1440x1000@1
+            mobile=false
+            if [ "$viewport" = mobile ]; then dimensions=320x900@1; mobile=true; fi
+            flutter drive --driver=test_driver/asset_triage_visual.dart \
+              --target=integration_test/payroll_snapshot_test.dart \
+              --dart-define="PAYROLL_MOBILE=$mobile" \
+              --browser-dimension="$dimensions" \
+              -d web-server --browser-name=chrome --headless \
+              2>&1 | tee ".ci-logs/payroll-snapshot-$viewport.log"
+          done
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
@@ -537,4 +561,7 @@ jobs:
             lib/services/asset_payroll_snapshot_store.dart
             lib/widgets/asset_payroll_snapshot_section.dart
             test/widgets/asset_payroll_snapshot_section_test.dart
+            integration_test/payroll_snapshot_test.dart
+            .ci-logs/payroll-snapshot-*.log
+            .ci-logs/asset-triage-visual/payroll-snapshot-*
           retention-days: 3

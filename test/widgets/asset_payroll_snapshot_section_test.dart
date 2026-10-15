@@ -15,7 +15,9 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
   Future<void> createAccount(String label) async {}
   @override
   Future<PayrollSnapshotRecord?> selected(
-          String accountId, DateTime month,) async =>
+    String accountId,
+    DateTime month,
+  ) async =>
       month.month == 1 && saved != null ? _record() : null;
   PayrollSnapshotRecord _record() => PayrollSnapshotRecord(
         id: 'synthetic-observation',
@@ -34,13 +36,19 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
   }
 }
 
-Future<void> showForm(WidgetTester tester, SyntheticSnapshotStore store) async {
+Future<void> showForm(WidgetTester tester, SyntheticSnapshotStore store, {double textScale = 1}) async {
   await tester.pumpWidget(
     MaterialApp(
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       home: Scaffold(
         body: SingleChildScrollView(
           child: AssetPayrollSnapshotSection(
-              store: store, initialMonth: DateTime(2020),),
+            store: store,
+            initialMonth: DateTime(2020),
+          ),
         ),
       ),
     ),
@@ -61,10 +69,11 @@ void main() {
     await showForm(tester, store);
     expect(store.writes, 0);
     expect(
-        tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, '確認して保存'))
-            .onPressed,
-        isNull,);
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, '確認して保存'))
+          .onPressed,
+      isNull,
+    );
     await tester.tap(find.byType(CheckboxListTile));
     await tester.pumpAndSettle();
     await tester.tap(find.text('確認して保存'));

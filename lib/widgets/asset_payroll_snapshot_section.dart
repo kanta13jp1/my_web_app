@@ -102,7 +102,9 @@ class _AssetPayrollSnapshotSectionState
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('戻る'),),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('戻る'),
+          ),
           FilledButton(
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
@@ -161,7 +163,8 @@ class _AssetPayrollSnapshotSectionState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    '口座：${_accounts.firstWhere((a) => a.id == _account).label}',),
+                  '口座：${_accounts.firstWhere((a) => a.id == _account).label}',
+                ),
                 Text('対象月：${_month.year}/${_month.month}'),
                 Text('給与入金日：${payrollDate(draft.depositDate)}（時刻未取得）'),
                 Text('入金直後残高：${draft.balanceYen}円'),
@@ -169,7 +172,8 @@ class _AssetPayrollSnapshotSectionState
                 if (_current != null)
                   Text('旧記録：${_current!.balanceYen}円／訂正理由：${draft.reason}'),
                 const Text(
-                    '記録種別は本人確認です。銀行検証済みではありません。短文メモだけを保存し、既存残高・収支は変更しません。',),
+                  '記録種別は本人確認です。銀行検証済みではありません。短文メモだけを保存し、既存残高・収支は変更しません。',
+                ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('後日の残高ではなく、給与入金取引の直後残高を確認しました'),
@@ -182,8 +186,9 @@ class _AssetPayrollSnapshotSectionState
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('保留する'),),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('保留する'),
+            ),
             FilledButton(
               onPressed:
                   acknowledged ? () => Navigator.pop(context, true) : null,
@@ -263,43 +268,48 @@ class _AssetPayrollSnapshotSectionState
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 TextButton(
-                    onPressed: enabled
-                        ? () {
-                            _month = DateTime(_month.year, _month.month - 1);
-                            _load();
-                          }
-                        : null,
-                    child: const Text('前月'),),
+                  onPressed: enabled
+                      ? () {
+                          _month = DateTime(_month.year, _month.month - 1);
+                          _load();
+                        }
+                      : null,
+                  child: const Text('前月'),
+                ),
                 Text('${_month.year}/${_month.month}'),
                 TextButton(
-                    onPressed: enabled
-                        ? () {
-                            _month = DateTime(_month.year, _month.month + 1);
-                            _load();
-                          }
-                        : null,
-                    child: const Text('翌月'),),
+                  onPressed: enabled
+                      ? () {
+                          _month = DateTime(_month.year, _month.month + 1);
+                          _load();
+                        }
+                      : null,
+                  child: const Text('翌月'),
+                ),
                 TextButton(
-                    onPressed: !_busy && (_pending == null || _reconciledAbsent)
-                        ? () {
-                            _pending = null;
-                            _reconciledAbsent = false;
-                            _load();
-                          }
-                        : null,
-                    child: const Text('再読込'),),
+                  onPressed: !_busy && (_pending == null || _reconciledAbsent)
+                      ? () {
+                          _pending = null;
+                          _reconciledAbsent = false;
+                          _load();
+                        }
+                      : null,
+                  child: const Text('再読込'),
+                ),
               ],
             ),
             if (_loading) const LinearProgressIndicator(),
             if (_error != null) Text(_error!),
             if (_pending != null)
               TextButton(
-                  onPressed: _busy ? null : _reconcile,
-                  child: const Text('保存結果を照合'),),
+                onPressed: _busy ? null : _reconcile,
+                child: const Text('保存結果を照合'),
+              ),
             if (!_loading && _accounts.isEmpty)
               TextButton(
-                  onPressed: enabled ? _createAccount : null,
-                  child: const Text('給与口座の呼び名を設定'),),
+                onPressed: enabled ? _createAccount : null,
+                child: const Text('給与口座の呼び名を設定'),
+              ),
             if (_accounts.isNotEmpty) ...[
               DropdownButtonFormField<String>(
                 initialValue: _account,
@@ -308,8 +318,10 @@ class _AssetPayrollSnapshotSectionState
                 items: [
                   for (final account in _accounts)
                     DropdownMenuItem(
-                        value: account.id, child: Text(account.label),)
-                ,],
+                      value: account.id,
+                      child: Text(account.label),
+                    ),
+                ],
                 onChanged: enabled
                     ? (value) {
                         _account = value;
@@ -318,9 +330,11 @@ class _AssetPayrollSnapshotSectionState
                     : null,
               ),
               Text(
-                  '本人確認の直後残高：${_current == null ? '未取得' : '${_current!.balanceYen}円'}',),
+                '本人確認の直後残高：${_current == null ? '未取得' : '${_current!.balanceYen}円'}',
+              ),
               Text(
-                  '前月との差：${_current == null || _previous == null ? '比較対象未取得' : '${_current!.balanceYen - _previous!.balanceYen}円'}',),
+                '前月との差：${_current == null || _previous == null ? '比較対象未取得' : '${_current!.balanceYen - _previous!.balanceYen}円'}',
+              ),
               Form(
                 key: _form,
                 child: Column(
@@ -353,7 +367,8 @@ class _AssetPayrollSnapshotSectionState
                       enabled: enabled,
                       maxLength: 300,
                       decoration: const InputDecoration(
-                          labelText: '確認資料の短文メモ（口座番号などは入力しない）',),
+                        labelText: '確認資料の短文メモ（口座番号などは入力しない）',
+                      ),
                       validator: (value) => value?.trim().isNotEmpty == true
                           ? null
                           : '確認資料を入力してください',
@@ -364,14 +379,16 @@ class _AssetPayrollSnapshotSectionState
                         enabled: enabled,
                         maxLength: 300,
                         decoration: const InputDecoration(
-                            labelText: '訂正理由（旧記録は履歴に残ります）',),
+                          labelText: '訂正理由（旧記録は履歴に残ります）',
+                        ),
                         validator: (value) => value?.trim().isNotEmpty == true
                             ? null
                             : '訂正理由を入力してください',
                       ),
                     FilledButton(
-                        onPressed: enabled ? _review : null,
-                        child: const Text('保存前の確認へ'),),
+                      onPressed: enabled ? _review : null,
+                      child: const Text('保存前の確認へ'),
+                    ),
                   ],
                 ),
               ),
