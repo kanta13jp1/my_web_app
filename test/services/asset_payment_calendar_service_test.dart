@@ -4,6 +4,74 @@ import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 
 void main() {
+  test('transfer principal is visible but excluded from expense and income',
+      () {
+    final calendar = AssetPaymentCalendarService.buildMonth(
+      month: DateTime(2026, 6),
+      flows: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 42,
+          'occurred_at': '2026-06-12T04:00:00Z',
+          'amount': 5000,
+          'action_type': 'transfer',
+          'description': '[銀行A→現金] ATM引出し',
+        },
+        <String, dynamic>{
+          'occurred_at': '2026-06-12T04:00:00Z',
+          'amount': 220,
+          'action_type': 'expense',
+          'description': 'ATM手数料',
+        },
+      ],
+      subscriptions: const <Map<String, dynamic>>[],
+      debts: const <AssetCalendarDebtInput>[],
+      startingCashBalance: 10000,
+    );
+    final day = calendar.dayFor(DateTime(2026, 6, 12))!;
+    expect(day.events, hasLength(2));
+    expect(day.hasTransfer, isTrue);
+    expect(day.expenseTotal, 220);
+    expect(day.incomeTotal, 0);
+    expect(day.projectedBalance, 10000);
+    final transfer = day.events.singleWhere(
+      (event) => event.kind == AssetCalendarEventKind.transfer,
+    );
+    expect(transfer.amount, 5000);
+    expect(transfer.sourceId, '42');
+    expect(transfer.label, contains('銀行A→現金'));
+    expect(transfer.label, contains('支出集計外'));
+    expect(
+      calendar.days.fold<double>(0, (sum, day) => sum + day.expenseTotal),
+      220,
+    );
+  });
+
+  test('transfer without a recorded fee does not invent an expense', () {
+    final calendar = AssetPaymentCalendarService.buildMonth(
+      month: DateTime(2026, 6),
+      flows: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'occurred_at': '2026-06-30T04:00:00Z',
+          'amount': 7000,
+          'action_type': 'transfer',
+        },
+        <String, dynamic>{
+          'occurred_at': '2026-07-01T04:00:00Z',
+          'amount': 8000,
+          'action_type': 'transfer',
+        },
+      ],
+      subscriptions: const <Map<String, dynamic>>[],
+      debts: const <AssetCalendarDebtInput>[],
+    );
+    final day = calendar.dayFor(DateTime(2026, 6, 30))!;
+    expect(day.events.single.kind, AssetCalendarEventKind.transfer);
+    expect(day.events.single.label, '振替（支出集計外）');
+    expect(day.expenseTotal, 0);
+    expect(day.incomeTotal, 0);
+    expect(calendar.days.where((day) => day.hasTransfer), hasLength(1));
+  });
+
   group('AssetPaymentCalendarService', () {
     test(
         'Issue #5190: handles paid debt without adding to scheduled outflow and labels (支払済)',

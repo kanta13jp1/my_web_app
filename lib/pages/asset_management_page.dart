@@ -1,5 +1,6 @@
 import '../services/asset_month_end_snapshot_service.dart';
 import '../widgets/asset_month_end_snapshot_card.dart';
+import '../widgets/asset_payroll_deductions_section.dart';
 import '../widgets/asset_reflection_day_badge.dart';
 import '../models/asset_calendar_reflection.dart';
 import '../services/asset_calendar_reflection_repository.dart';
@@ -17683,6 +17684,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildCalendarLegendItem(const Color(0xFF9333EA), '固定費'),
                 _buildCalendarLegendItem(const Color(0xFF0D9488), '給料日'),
                 _buildCalendarLegendItem(const Color(0xFF2563EB), '収入'),
+                _buildCalendarLegendItem(const Color(0xFF64748B), '振替（支出集計外）'),
                 _buildCalendarLegendItem(const Color(0xFF0EA5E9), '入金予定'),
               ],
             ),
@@ -17853,6 +17855,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (day.hasSalary) const Color(0xFF0D9488),
       if (day.hasExpectedInflow) const Color(0xFF0EA5E9),
       if (day.hasIncome) const Color(0xFF2563EB),
+      if (day.hasTransfer) const Color(0xFF64748B),
     ];
 
     return InkWell(
@@ -17977,6 +17980,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return Icons.remove_circle_outline;
       case AssetCalendarEventKind.income:
         return Icons.add_circle_outline;
+      case AssetCalendarEventKind.transfer:
+        return Icons.swap_horiz;
     }
   }
 
@@ -17994,6 +17999,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return const Color(0xFFC05621);
       case AssetCalendarEventKind.income:
         return const Color(0xFF2563EB);
+      case AssetCalendarEventKind.transfer:
+        return const Color(0xFF64748B);
     }
   }
 
@@ -21829,6 +21836,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               key: ValueKey('month-end-${_supabase.auth.currentUser?.id}'),
               service: AssetMonthEndSnapshotService(_supabase),
               monthKeys: _recentMonthEndSnapshotKeys(),
+            ),
+            const SizedBox(height: 16),
+            AssetPayrollDeductionsSection(
+              key: ValueKey(
+                  'payroll-deductions-${_supabase.auth.currentUser?.id}'),
+              client: _supabase,
+              initialYear: _now.year,
             ),
             const SizedBox(height: 16),
             _buildMonthlyReportSection(),
