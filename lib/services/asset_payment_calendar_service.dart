@@ -58,6 +58,7 @@ enum AssetCalendarEventKind {
   subscription,
   expense,
   income,
+  transfer,
 }
 
 /// 入金予定の入力(ストアのモデルから必要項目だけ写す)。
@@ -131,6 +132,8 @@ class AssetCalendarDaySummary {
   bool get hasExpectedInflow => _has(AssetCalendarEventKind.expectedInflow);
 
   bool get hasIncome => incomeTotal > 0;
+
+  bool get hasTransfer => _has(AssetCalendarEventKind.transfer);
 
   bool get hasAnyEvent => events.isNotEmpty;
 }
@@ -450,6 +453,18 @@ class AssetPaymentCalendarService {
             kind: AssetCalendarEventKind.expense,
             label: description.isEmpty ? '支出' : description,
             amount: amount.abs(),
+          ),
+        );
+      } else if (actionType == 'transfer') {
+        // 口座間・口座から現金への移動は支出/収入へ加算しない。
+        addEvent(
+          date,
+          AssetCalendarEvent(
+            kind: AssetCalendarEventKind.transfer,
+            label:
+                description.isEmpty ? '振替（支出集計外）' : '振替（支出集計外）: $description',
+            amount: amount.abs(),
+            sourceId: flow['id']?.toString(),
           ),
         );
       } else if (incomeActionTypes.contains(actionType)) {
