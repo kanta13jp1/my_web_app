@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - lib/services/asset_payroll_snapshot_store.dart
+      - lib/services/asset_payroll_snapshot_goal.dart
+      - test/services/asset_payroll_snapshot_goal_test.dart
+      - test/widgets/asset_payroll_snapshot_goal_test.dart
       - lib/widgets/asset_payroll_snapshot_section.dart
       - lib/widgets/asset_payroll_snapshot_connection.dart
       - lib/pages/asset_management_page.dart
@@ -31,9 +34,9 @@ jobs:
       - run: flutter pub get
       - name: Verify format analysis and synthetic feature
         run: |
-          dart format --output=none --set-exit-if-changed lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart lib/widgets/asset_payroll_snapshot_connection.dart lib/pages/asset_management_page.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart integration_test/payroll_snapshot_fixture.dart
-          flutter analyze lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart lib/widgets/asset_payroll_snapshot_connection.dart lib/pages/asset_management_page.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart integration_test/payroll_snapshot_fixture.dart
-          flutter test test/widgets/asset_payroll_snapshot_section_test.dart --reporter expanded
+          dart format --output=none --set-exit-if-changed lib/services/asset_payroll_snapshot_store.dart lib/services/asset_payroll_snapshot_goal.dart test/services/asset_payroll_snapshot_goal_test.dart test/widgets/asset_payroll_snapshot_goal_test.dart lib/widgets/asset_payroll_snapshot_section.dart lib/widgets/asset_payroll_snapshot_connection.dart lib/pages/asset_management_page.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart integration_test/payroll_snapshot_fixture.dart
+          flutter analyze lib/services/asset_payroll_snapshot_store.dart lib/services/asset_payroll_snapshot_goal.dart test/services/asset_payroll_snapshot_goal_test.dart test/widgets/asset_payroll_snapshot_goal_test.dart lib/widgets/asset_payroll_snapshot_section.dart lib/widgets/asset_payroll_snapshot_connection.dart lib/pages/asset_management_page.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart integration_test/payroll_snapshot_fixture.dart
+          flutter test test/widgets/asset_payroll_snapshot_section_test.dart test/services/asset_payroll_snapshot_goal_test.dart test/widgets/asset_payroll_snapshot_goal_test.dart --reporter expanded
       - name: Synthetic browser preview on desktop and enlarged narrow viewport
         shell: bash
         run: |
@@ -64,6 +67,9 @@ jobs:
           name: payroll-snapshot-ui-preflight-${{ github.run_id }}
           path: |
             lib/services/asset_payroll_snapshot_store.dart
+            lib/services/asset_payroll_snapshot_goal.dart
+            test/services/asset_payroll_snapshot_goal_test.dart
+            test/widgets/asset_payroll_snapshot_goal_test.dart
             lib/widgets/asset_payroll_snapshot_section.dart
             lib/widgets/asset_payroll_snapshot_connection.dart
             lib/pages/asset_management_page.dart
@@ -72,5 +78,6 @@ jobs:
             integration_test/payroll_snapshot_fixture.dart
             .ci-logs/payroll-snapshot-*.log
             .ci-logs/asset-triage-visual/payroll-snapshot-*
+            .ci-logs/asset-triage-visual/payroll-goal-*
           include-hidden-files: true
           retention-days: 3

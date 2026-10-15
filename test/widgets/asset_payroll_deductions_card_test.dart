@@ -36,11 +36,11 @@ void main() {
         ),
       );
       expect(
-        find.text('税金の確認済み分：未取得（0/12か月）'),
+        find.text('税金の確認済み分：確定累計対象なし（0/12か月）'),
         findsOneWidget,
       );
       expect(
-        find.text('社会保険料の確認済み分：未取得（0/12か月）'),
+        find.text('社会保険料の確認済み分：確定累計対象なし（0/12か月）'),
         findsOneWidget,
       );
       expect(
@@ -93,7 +93,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text('税金の確認済み分：未取得（0/12か月）'),
+        find.text('税金の確認済み分：確定累計対象なし（0/12か月）'),
         findsOneWidget,
       );
       expect(
@@ -135,7 +135,7 @@ void main() {
     expect(find.text('記載済み控除小計との差：0円'), findsOneWidget);
     expect(find.text('内訳の分類状態：未分類 1項目'), findsOneWidget);
     expect(find.textContaining('差が0円でも内訳の分類完了を意味しません'), findsOneWidget);
-    expect(find.text('社会保険料の確認済み分：未取得（0/12か月）'), findsOneWidget);
+    expect(find.text('社会保険料の確認済み分：確定累計対象なし（0/12か月）'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -127,12 +127,7 @@ void main() {
     await tester.tap(find.text('翌月'));
     await tester.pumpAndSettle();
     expect(find.text('取得できませんでした。再読込してください。'), findsOneWidget);
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, '保存前の確認へ'))
-          .onPressed,
-      isNull,
-    );
+    expect(find.text('保存前の確認へ'), findsNothing);
     expect(store.writes, 0);
     expect(tester.takeException(), isNull);
   });

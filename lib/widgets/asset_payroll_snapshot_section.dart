@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../services/asset_payroll_snapshot_store.dart';
+import '../services/asset_payroll_snapshot_goal.dart';
 
 /// Records explicit owner confirmation; never infers a deposit from a date.
 class AssetPayrollSnapshotSection extends StatefulWidget {
@@ -19,6 +20,9 @@ class AssetPayrollSnapshotSection extends StatefulWidget {
 
 class _AssetPayrollSnapshotSectionState
     extends State<AssetPayrollSnapshotSection> {
+  final _target = TextEditingController();
+  ({String accountId, int? expected, int? next})? _pendingGoal;
+  String? _goalMessage;
   final _balance = TextEditingController();
   final _date = TextEditingController();
   final _note = TextEditingController();
@@ -46,7 +50,7 @@ class _AssetPayrollSnapshotSectionState
 
   @override
   void dispose() {
-    for (final controller in [_balance, _date, _note, _reason]) {
+    for (final controller in [_balance, _date, _note, _reason, _target]) {
       controller.dispose();
     }
     super.dispose();
@@ -57,9 +61,12 @@ class _AssetPayrollSnapshotSectionState
     setState(() {
       _loading = true;
       _dataReady = false;
+      _accounts = [];
       _current = null;
       _previous = null;
       _error = null;
+      _goalMessage = null;
+      _target.clear();
     });
     try {
       final accounts = await widget.store.accounts();
@@ -80,6 +87,13 @@ class _AssetPayrollSnapshotSectionState
       setState(() {
         _accounts = accounts;
         _account = selected;
+        _target.text = selected == null
+            ? ''
+            : accounts
+                    .firstWhere((a) => a.id == selected)
+                    .targetIncreaseYen
+                    ?.toString() ??
+                '';
         _current = values[0];
         _previous = values[1];
         _loading = false;
@@ -263,9 +277,112 @@ class _AssetPayrollSnapshotSectionState
     }
   }
 
+  PayrollSnapshotAccount? get _selectedAccount {
+    for (final account in _accounts) {
+      if (account.id == _account) return account;
+    }
+    return null;
+  }
+
+  Future<void> _saveTarget() async {
+    final account = _selectedAccount;
+    if (!_dataReady ||
+        account == null ||
+        _busy ||
+        _pending != null ||
+        _pendingGoal != null) {
+      return;
+    }
+    final text = _target.text.trim();
+    final next = text.isEmpty ? null : int.tryParse(text);
+    if (text.isNotEmpty &&
+        (!RegExp(r'^\d+$').hasMatch(text) ||
+            next == null ||
+            next > 9007199254740991)) {
+      setState(() => _goalMessage = '目標は0以上の整数、または未設定の空欄にしてください。');
+      return;
+    }
+    if (next == account.targetIncreaseYen) {
+      setState(() => _goalMessage = '現在の目標と同じため更新していません。');
+      return;
+    }
+    final request = (
+      accountId: account.id,
+      expected: account.targetIncreaseYen,
+      next: next
+    );
+    setState(() {
+      _busy = true;
+      _goalMessage = null;
+    });
+    try {
+      await widget.store
+          .setTarget(request.accountId, request.expected, request.next);
+      if (!mounted) return;
+      await _load();
+      if (mounted) {
+        setState(
+          () => _goalMessage = _dataReady
+              ? '目標の更新応答を受け取りました。表示は再取得した現在値です。'
+              : '目標の更新応答は受け取りましたが、現在値の再取得に失敗しました。再読込してください。',
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _pendingGoal = request;
+        _goalMessage = '目標の更新結果が不明です。再送せず現在値を照合してください。';
+      });
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _reconcileTarget() async {
+    final request = _pendingGoal;
+    if (request == null || _busy) return;
+    setState(() => _busy = true);
+    try {
+      final accounts = await widget.store.accounts();
+      if (!mounted) return;
+      final matching =
+          accounts.where((a) => a.id == request.accountId).toList();
+      if (matching.length != 1) throw StateError('Account unavailable');
+      final current = matching.single.targetIncreaseYen;
+      setState(() {
+        _accounts = accounts;
+        _target.text = current?.toString() ?? '';
+        _pendingGoal = null;
+        _goalMessage =
+            '照合時点の目標は${current == null ? '未設定' : '$current円'}です。今回の更新の成否は確定できません。自動再送はしません。';
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _goalMessage = '現在値を照合できませんでした。再送せず、時間を置いて照合してください。');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final enabled = _dataReady && !_loading && !_busy && _pending == null;
+    final enabled = _dataReady &&
+        !_loading &&
+        !_busy &&
+        _pending == null &&
+        _pendingGoal == null;
+    final target = _selectedAccount?.targetIncreaseYen;
+    final comparison = _account == null
+        ? null
+        : PayrollSnapshotGoal.compare(
+            ownerId: widget.store.ownerId,
+            accountId: _account!,
+            month: _month,
+            current: _current,
+            previous: _previous,
+            targetYen: target,
+          );
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -297,7 +414,9 @@ class _AssetPayrollSnapshotSectionState
                   child: const Text('翌月'),
                 ),
                 TextButton(
-                  onPressed: !_busy && (_pending == null || _reconciledAbsent)
+                  onPressed: !_busy &&
+                          _pendingGoal == null &&
+                          (_pending == null || _reconciledAbsent)
                       ? () {
                           _pending = null;
                           _reconciledAbsent = false;
@@ -343,8 +462,38 @@ class _AssetPayrollSnapshotSectionState
                 '本人確認の直後残高：${_current == null ? '未取得' : '${_current!.balanceYen}円'}',
               ),
               Text(
-                '前月との差：${_current == null || _previous == null ? '比較対象未取得' : '${_current!.balanceYen - _previous!.balanceYen}円'}',
+                '前月との差：${comparison?.deltaYen == null ? '比較対象未取得' : '${comparison!.deltaYen}円'}',
               ),
+              Text('前月比の増加目標：${target == null ? '未設定' : '$target円'}'),
+              Text(
+                target == null
+                    ? '目標判定：目標未設定'
+                    : comparison?.reached == null
+                        ? '目標判定：比較対象未取得'
+                        : comparison!.reached!
+                            ? '目標判定：達成'
+                            : '目標判定：未達成',
+              ),
+              TextField(
+                controller: _target,
+                enabled: enabled,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '前月比の増加目標（円・空欄は未設定）',
+                  hintText: '例：10000',
+                ),
+              ),
+              TextButton(
+                onPressed: enabled ? _saveTarget : null,
+                child: const Text('目標を保存・解除'),
+              ),
+              if (_goalMessage != null) Text(_goalMessage!),
+              if (_pendingGoal != null)
+                TextButton(
+                  onPressed: _busy ? null : _reconcileTarget,
+                  child: const Text('目標の現在値を照合'),
+                ),
+              const Text('目標はこの口座だけに適用します。銀行残高・収支・確認済み残高は変更しません。'),
               Form(
                 key: _form,
                 child: Column(

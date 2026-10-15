@@ -58,11 +58,23 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
             const SizedBox(height: 8),
             const Text('給与明細の支給日が属する月で表示します。控除を家計簿の支出へ重ねて追加しません。'),
             Text(
-              '税金の確認済み分：${taxMonths.isEmpty ? '未取得' : '$taxSum円'}（${taxMonths.length}/12か月）',
+              '税金の確認済み分：${taxMonths.isEmpty ? '確定累計対象なし' : '$taxSum円'}（${taxMonths.length}/12か月）',
             ),
             Text(
-              '社会保険料の確認済み分：${socialMonths.isEmpty ? '未取得' : '$socialSum円'}（${socialMonths.length}/12か月）',
+              '社会保険料の確認済み分：${socialMonths.isEmpty ? '確定累計対象なし' : '$socialSum円'}（${socialMonths.length}/12か月）',
             ),
+            Text(
+              '明細取得済み ${months.where((m) => m.statements.isNotEmpty).length}/12か月・本人未確認 ${months.where((m) => m.statements.isNotEmpty && !m.confirmed && !m.conflicting).length}か月',
+            ),
+            const Text('取得済みでも本人未確認・項目不足・競合・内訳不一致の額は確定累計に含めません。'),
+            for (final month in months.where(
+              (m) =>
+                  m.statements.isNotEmpty &&
+                  (m.confirmedTaxYen == null || m.confirmedSocialYen == null),
+            ))
+              Text(
+                '${month.month.month}月の累計対象外理由：税 ${month.summaryStatus(social: false)} / 社会保険 ${month.summaryStatus(social: true)}',
+              ),
             const Text('空欄は0円ではありません。自動読取は本人確認済みの合計に含めません。'),
             for (final month in months)
               ExpansionTile(
@@ -73,7 +85,7 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
                       ? '同じ明細の内容が競合・要確認'
                       : month.statements.isEmpty
                           ? '明細なし'
-                          : '税 ${amount(month.confirmedTaxYen)} / 社会保険 ${amount(month.confirmedSocialYen)}',
+                          : '税 ${month.confirmedTaxYen == null ? month.summaryStatus(social: false) : amount(month.confirmedTaxYen)} / 社会保険 ${month.confirmedSocialYen == null ? month.summaryStatus(social: true) : amount(month.confirmedSocialYen)}',
                 ),
                 children: [
                   for (var index = 0; index < month.statements.length; index++)
