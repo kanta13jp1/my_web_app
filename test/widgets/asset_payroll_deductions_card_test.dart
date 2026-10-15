@@ -102,4 +102,22 @@ void main() {
       );
     },
   );
+  testWidgets('zero residual does not claim unclassified details are complete', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: ListView(children: const [
+      AssetPayrollDeductionsCard(ownerId: 'owner-a', year: 2030, rows: [{
+        'id': 'synthetic-unknown', 'user_id': 'owner-a',
+        'pay_date': '2030-01-20', 'review_status': 'auto',
+        'gross_amount': 1000, 'net_amount': 700,
+        'social_insurance_total': 300,
+        'deductions': {'unknown_social_component': 20},
+      }]),
+    ]))));
+    await tester.tap(find.text('1月'));
+    await tester.pumpAndSettle();
+    expect(find.text('記載済み控除小計との差：0円'), findsOneWidget);
+    expect(find.text('内訳の分類状態：未分類 1項目'), findsOneWidget);
+    expect(find.textContaining('差が0円でも内訳の分類完了を意味しません'), findsOneWidget);
+    expect(find.text('社会保険料の確認済み分：未取得（0/12か月）'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

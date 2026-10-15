@@ -22,6 +22,8 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
     'health_insurance': '健康保険',
     'pension': '厚生年金',
     'employment_insurance': '雇用保険',
+    'long_term_care_insurance': '介護保険',
+    'employees_pension_fund_contribution': '厚生年金基金掛金',
     'ideco': 'iDeCo（その他控除）',
   };
 
@@ -101,10 +103,16 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
           Text('社会保険合計：${amount(row.socialTotalYen)}'),
           if (row.socialMismatchYen != null && row.socialMismatchYen != 0)
             Text('社会保険の記載合計と内訳に差：${amount(row.socialMismatchYen)}・要確認'),
+          if (row.conflictingPensionAliases)
+            const Text('厚生年金の項目名違いで金額が競合・要確認（累計から除外）'),
+          Text('内訳の分類状態：未分類 ${row.unclassified.length}項目'),
           for (final entry in row.unclassified.entries)
             Text('未分類控除（${entry.key}）：${amount(entry.value)}'),
           Text('総支給−手取り（計算値）：${amount(row.derivedDeductionTotalYen)}'),
-          Text('分類済み内訳との差：${amount(row.unidentifiedDifferenceYen)}'),
+          Text('記載済み控除小計との差：${amount(row.unidentifiedDifferenceYen)}'),
+          const Text('小計は社会保険の記載合計を優先し、内訳を重ねて足しません。'),
+          if (row.unclassified.isNotEmpty)
+            const Text('差が0円でも内訳の分類完了を意味しません。未分類項目が記載合計に含まれる場合があります。'),
           const Text('差がある場合は未取得・未分類項目や読取内容を確認してください。還付などの負数は符号を保持します。'),
         ],
       ),

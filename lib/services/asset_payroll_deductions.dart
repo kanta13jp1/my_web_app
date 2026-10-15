@@ -24,7 +24,24 @@ class PayrollDeductions {
     'pension',
     'employment_insurance',
   ];
-  static const knownKeys = {...taxKeys, ...socialKeys, 'ideco'};
+  static const optionalSocialKeys = [
+    'long_term_care_insurance',
+    'employees_pension_fund_contribution',
+  ];
+  static const knownKeys = {
+    ...taxKeys,
+    ...socialKeys,
+    ...optionalSocialKeys,
+    'employees_pension_insurance',
+    'ideco',
+  };
+
+  bool get conflictingPensionAliases =>
+      items.containsKey('pension') &&
+      items.containsKey('employees_pension_insurance') &&
+      (items['pension'] == null ||
+          items['employees_pension_insurance'] == null ||
+          items['pension'] != items['employees_pension_insurance']);
 
   bool get confirmed => reviewStatus == 'confirmed';
   bool get rejected => reviewStatus == 'rejected';
@@ -42,9 +59,13 @@ class PayrollDeductions {
   int? get taxTotalYen => _completeTotal(
         taxKeys,
       );
-  int? get socialPartsTotalYen => _completeTotal(
-        socialKeys,
-      );
+  int? get socialPartsTotalYen => conflictingPensionAliases
+      ? null
+      : _completeTotal([
+          ...socialKeys,
+          for (final key in optionalSocialKeys)
+            if (items.containsKey(key)) key,
+        ]);
   int? get socialTotalYen => reportedSocialYen ?? socialPartsTotalYen;
   int? get socialMismatchYen =>
       reportedSocialYen == null || socialPartsTotalYen == null
@@ -65,7 +86,7 @@ class PayrollDeductions {
       if (socialTotalYen != null)
         socialTotalYen!
       else
-        for (final key in socialKeys)
+        for (final key in [...socialKeys, ...optionalSocialKeys])
           if (items[key] != null) items[key]!,
       if (items['ideco'] != null) items['ideco']!,
     ];
@@ -132,6 +153,12 @@ class PayrollDeductions {
         }
       }
     }
+    // AI extraction can preserve the longer source key while the deterministic
+    // parser emits pension. Normalize only when the canonical key is absent.
+    if (!items.containsKey('pension') &&
+        items.containsKey('employees_pension_insurance')) {
+      items['pension'] = items['employees_pension_insurance'];
+    }
     return PayrollDeductions._(
       sourceId,
       date,
@@ -186,6 +213,7 @@ class PayrollMonthDeductions {
       );
 
   static int? _socialForComparison(PayrollDeductions row) {
+    if (row.conflictingPensionAliases) return null;
     if (row.socialMismatchYen != null && row.socialMismatchYen != 0) {
       return null;
     }
