@@ -53,7 +53,8 @@ void main() {
                 const AssetUnreconciledExpenseBadge(),
                 AssetAttentionDayLabel(
                   day: AssetSpendingAttentionCalendar.forDate(
-                      DateTime(2026, 6, 20),),
+                    DateTime(2026, 6, 20),
+                  ),
                 ),
                 const Expanded(
                   child: AssetReflectionDayBadge(
@@ -75,8 +76,10 @@ void main() {
     expect(find.text('不明'), findsOneWidget);
     expect(find.text('注意'), findsOneWidget);
     expect(find.textContaining('外食'), findsOneWidget);
-    expect(tester.getSize(find.byType(AssetReflectionDayBadge)).height,
-        greaterThan(0),);
+    expect(
+      tester.getSize(find.byType(AssetReflectionDayBadge)).height,
+      greaterThan(0),
+    );
     expect(tester.takeException(), isNull);
   });
   for (final width in [1200.0, 390.0]) {
