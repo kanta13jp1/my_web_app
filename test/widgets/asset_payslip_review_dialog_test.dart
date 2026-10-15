@@ -26,10 +26,14 @@ void main() {
     final store = SyntheticPayslipReviewStore();
     cleanUp(tester, store);
     var pdfOpened = 0;
-    await showPayslipReview(tester, store, openPdf: (_) async {
-      pdfOpened++;
-      return true;
-    },);
+    await showPayslipReview(
+      tester,
+      store,
+      openPdf: (_) async {
+        pdfOpened++;
+        return true;
+      },
+    );
     expect(tester.widget<FilledButton>(saveButton()).onPressed, isNull);
     expect(store.originalRequests, 0);
     await tester.ensureVisible(find.text('保存済みの元PDFを開く'));
@@ -74,8 +78,8 @@ void main() {
     store.data = {
       ...store.data,
       'net_amount': 701,
-      'updated_at': '2030-01-20T00:00:02Z'
-    ,};
+      'updated_at': '2030-01-20T00:00:02Z',
+    };
     await acknowledgeAndSave(tester);
     expect(store.writes, 0);
     await tester.ensureVisible(find.text('確認保存の現在状態を照合'));
@@ -105,17 +109,22 @@ void main() {
     store.data = {
       ...store.data,
       'social_insurance_total': null,
-      'deductions': {'income_tax': 50, 'resident_tax': 40}
-    ,};
+      'deductions': {'income_tax': 50, 'resident_tax': 40},
+    };
     await showPayslipReview(tester, store);
     await acknowledgeAndSave(tester);
     final month = AssetPayrollDeductions.months(
-        ownerId: store.ownerId, year: 2030, rows: [store.data],).first;
+      ownerId: store.ownerId,
+      year: 2030,
+      rows: [store.data],
+    ).first;
     expect(month.confirmedTaxYen, 90);
     expect(month.confirmedSocialYen, isNull);
     expect(month.summaryStatus(social: true), contains('必要項目の記載なし'));
-    expect((store.data['deductions'] as Map).containsKey('health_insurance'),
-        isFalse,);
+    expect(
+      (store.data['deductions'] as Map).containsKey('health_insurance'),
+      isFalse,
+    );
   });
   testWidgets('alias conflict blocks the explicit confirmation action',
       (tester) async {
@@ -125,10 +134,9 @@ void main() {
     await showPayslipReview(tester, store);
     expect(find.textContaining('項目名違いが競合'), findsOneWidget);
     expect(
-        tester
-            .widget<CheckboxListTile>(find.byType(CheckboxListTile))
-            .onChanged,
-        isNull,);
+      tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).onChanged,
+      isNull,
+    );
     expect(tester.widget<FilledButton>(saveButton()).onPressed, isNull);
     expect(store.writes, 0);
   });

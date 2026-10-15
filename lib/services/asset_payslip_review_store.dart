@@ -61,8 +61,9 @@ class PayslipReviewSnapshot {
   }
 
   Map<String, dynamic> get original => Map.fromEntries(
-        raw.entries.where((entry) =>
-            entry.key != 'updated_at' && entry.key != 'review_status',),
+        raw.entries.where(
+          (entry) => entry.key != 'updated_at' && entry.key != 'review_status',
+        ),
       );
   bool sameOriginal(PayslipReviewSnapshot other) =>
       _same(original, other.original);
@@ -94,8 +95,10 @@ abstract class PayslipReviewStore {
   bool get isCurrentOwner;
   Stream<void> get ownerChanges;
   Future<PayslipReviewSnapshot> load(String id);
-  Future<void> confirm(PayslipReviewSnapshot expected,
-      {required bool confirmedDisplayedValues,});
+  Future<void> confirm(
+    PayslipReviewSnapshot expected, {
+    required bool confirmedDisplayedValues,
+  });
   Future<Uri> originalPdf(PayslipReviewSnapshot expected);
 }
 
@@ -135,8 +138,10 @@ class SupabasePayslipReviewStore implements PayslipReviewStore {
   }
 
   @override
-  Future<void> confirm(PayslipReviewSnapshot expected,
-      {required bool confirmedDisplayedValues,}) async {
+  Future<void> confirm(
+    PayslipReviewSnapshot expected, {
+    required bool confirmedDisplayedValues,
+  }) async {
     _checkOwner();
     if (!confirmedDisplayedValues ||
         expected.ownerId != ownerId ||
@@ -177,7 +182,9 @@ class SupabasePayslipReviewStore implements PayslipReviewStore {
       throw StateError('元明細が変わりました。開き直してください。');
     }
     final path = payslipPrivateObjectPath(
-        expected.raw['source_pdf_path'] as String? ?? '', ownerId,);
+      expected.raw['source_pdf_path'] as String? ?? '',
+      ownerId,
+    );
     final url = await client.storage.from('payslips').createSignedUrl(path, 60);
     _checkOwner();
     return Uri.parse(url);

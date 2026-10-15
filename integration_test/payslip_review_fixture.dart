@@ -21,8 +21,8 @@ Map<String, dynamic> syntheticPayslip() => {
         'employment_insurance': 20,
         'long_term_care_insurance': 0,
         'employees_pension_fund_contribution': 0,
-        'ideco': 10
-      ,},
+        'ideco': 10,
+      },
       'earnings': {'base_salary': 1000},
       'attendance': {'work_days': 20},
       'source_pdf_path': 'payslips/synthetic-owner/statement.pdf',
@@ -61,8 +61,10 @@ class SyntheticPayslipReviewStore implements PayslipReviewStore {
   }
 
   @override
-  Future<void> confirm(PayslipReviewSnapshot expected,
-      {required bool confirmedDisplayedValues,}) async {
+  Future<void> confirm(
+    PayslipReviewSnapshot expected, {
+    required bool confirmedDisplayedValues,
+  }) async {
     final current = await load(expected.id);
     if (!confirmedDisplayedValues ||
         !expected.sameVersion(current) ||
@@ -73,8 +75,8 @@ class SyntheticPayslipReviewStore implements PayslipReviewStore {
     data = {
       ...data,
       'review_status': 'confirmed',
-      'updated_at': '2030-01-20T00:00:01Z'
-    ,};
+      'updated_at': '2030-01-20T00:00:01Z',
+    };
     if (failAfterCommit) throw StateError('Synthetic response lost');
   }
 
@@ -87,17 +89,26 @@ class SyntheticPayslipReviewStore implements PayslipReviewStore {
 }
 
 Future<void> showPayslipReview(
-    WidgetTester tester, SyntheticPayslipReviewStore store,
-    {double textScale = 1, Future<bool> Function(Uri)? openPdf,}) async {
-  await tester.pumpWidget(MaterialApp(
-    builder: (context, child) => MediaQuery(
-      data: MediaQuery.of(context)
-          .copyWith(textScaler: TextScaler.linear(textScale)),
-      child: child!,
-    ),
-    home: Scaffold(
+  WidgetTester tester,
+  SyntheticPayslipReviewStore store, {
+  double textScale = 1,
+  Future<bool> Function(Uri)? openPdf,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
+      home: Scaffold(
         body: AssetPayslipReviewDialog(
-            store: store, payslipId: 'synthetic-statement', openPdf: openPdf,),),
-  ),);
+          store: store,
+          payslipId: 'synthetic-statement',
+          openPdf: openPdf,
+        ),
+      ),
+    ),
+  );
   await tester.pumpAndSettle();
 }

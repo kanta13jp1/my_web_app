@@ -114,8 +114,9 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
               (row.reviewStatus == 'auto' ||
                   row.reviewStatus == 'needs_review'))
             OutlinedButton(
-                onPressed: () => onReview!(row.sourceId),
-                child: const Text('元明細と照合して確認'),),
+              onPressed: () => onReview!(row.sourceId),
+              child: const Text('元明細と照合して確認'),
+            ),
           Text('総支給 ${amount(row.grossYen)} / 手取り ${amount(row.netYen)}'),
           for (final entry in labels.entries)
             Text('${entry.value}：${amount(row.items[entry.key])}'),

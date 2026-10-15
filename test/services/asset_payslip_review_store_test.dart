@@ -15,36 +15,45 @@ void main() {
     final first = PayslipReviewSnapshot(source);
     (source['deductions'] as Map)['income_tax'] = 999;
     expect((first.raw['deductions'] as Map)['income_tax'], 50);
-    expect(() => (first.raw['deductions'] as Map)['income_tax'] = 999,
-        throwsUnsupportedError,);
     expect(
-        first.sameVersion(PayslipReviewSnapshot(syntheticPayslip())), isTrue,);
+      () => (first.raw['deductions'] as Map)['income_tax'] = 999,
+      throwsUnsupportedError,
+    );
+    expect(
+      first.sameVersion(PayslipReviewSnapshot(syntheticPayslip())),
+      isTrue,
+    );
     for (final changed in [
       {...syntheticPayslip(), 'updated_at': '2030-02-01T00:00:00Z'},
       {...syntheticPayslip(), 'review_status': 'confirmed'},
       {...syntheticPayslip(), 'net_amount': 701},
       {
         ...syntheticPayslip(),
-        'attendance': {'work_days': 19}
-      ,},
+        'attendance': {'work_days': 19},
+      },
     ]) {
       expect(first.sameVersion(PayslipReviewSnapshot(changed)), isFalse);
     }
   });
   test('private PDF paths stay in the explicit owners folder', () {
     expect(
-        payslipPrivateObjectPath(
-            'payslips/synthetic-owner/a.pdf', 'synthetic-owner',),
-        'synthetic-owner/a.pdf',);
+      payslipPrivateObjectPath(
+        'payslips/synthetic-owner/a.pdf',
+        'synthetic-owner',
+      ),
+      'synthetic-owner/a.pdf',
+    );
     for (final path in [
       'other/a.pdf',
       'synthetic-owner/../a.pdf',
       'synthetic-owner/%2e%2e/a.pdf',
       'synthetic-owner/%2fother/a.pdf',
-      'https://example.invalid/a.pdf'
-    ,]) {
-      expect(() => payslipPrivateObjectPath(path, 'synthetic-owner'),
-          throwsFormatException,);
+      'https://example.invalid/a.pdf',
+    ]) {
+      expect(
+        () => payslipPrivateObjectPath(path, 'synthetic-owner'),
+        throwsFormatException,
+      );
     }
   });
   test('owner CAS changes only review status and rejects stale raw values',
@@ -54,11 +63,12 @@ void main() {
     var raceAfterRead = false;
     var clearOwnerAfterRead = false;
     User? owner = const User(
-        id: 'synthetic-owner',
-        appMetadata: {},
-        userMetadata: {},
-        aud: 'authenticated',
-        createdAt: '2030-01-01',);
+      id: 'synthetic-owner',
+      appMetadata: {},
+      userMetadata: {},
+      aud: 'authenticated',
+      createdAt: '2030-01-01',
+    );
     final transport = SupabaseClient(
       'https://example.invalid',
       'synthetic-public-key',
@@ -77,8 +87,8 @@ void main() {
               data = {
                 ...data,
                 'review_status': 'confirmed',
-                'updated_at': '2030-01-20T00:00:01Z'
-              ,};
+                'updated_at': '2030-01-20T00:00:01Z',
+              };
               rows = [data];
             }
           } else {
@@ -87,8 +97,8 @@ void main() {
               data = {
                 ...data,
                 'net_amount': 701,
-                'updated_at': '2030-01-20T00:00:02Z'
-              ,};
+                'updated_at': '2030-01-20T00:00:02Z',
+              };
             }
             if (clearOwnerAfterRead) owner = null;
           }
@@ -96,9 +106,11 @@ void main() {
         final objectResponse =
             request.headers['accept']?.contains('vnd.pgrst.object') ?? false;
         return http.Response(
-            jsonEncode(objectResponse && rows.isNotEmpty ? rows.single : rows),
-            200,
-            headers: {'content-type': 'application/json'},);
+          jsonEncode(objectResponse && rows.isNotEmpty ? rows.single : rows),
+          200,
+          headers: {'content-type': 'application/json'},
+          request: request,
+        );
       }),
     );
     addTearDown(transport.dispose);
@@ -110,28 +122,36 @@ void main() {
     final store = SupabasePayslipReviewStore(client, 'synthetic-owner');
     final before = await store.load('synthetic-statement');
     final getCount = requests.length;
-    await expectLater(store.confirm(before, confirmedDisplayedValues: false),
-        throwsStateError,);
+    await expectLater(
+      store.confirm(before, confirmedDisplayedValues: false),
+      throwsStateError,
+    );
     expect(requests.length, getCount);
     await store.confirm(before, confirmedDisplayedValues: true);
     expect(data['net_amount'], 700);
     expect((data['deductions'] as Map)['income_tax'], 50);
     expect(requests.where((r) => r.method == 'PATCH').length, 1);
-    await expectLater(store.confirm(before, confirmedDisplayedValues: true),
-        throwsStateError,);
+    await expectLater(
+      store.confirm(before, confirmedDisplayedValues: true),
+      throwsStateError,
+    );
     expect(requests.where((r) => r.method == 'PATCH').length, 1);
     data = syntheticPayslip();
     raceAfterRead = true;
-    await expectLater(store.confirm(before, confirmedDisplayedValues: true),
-        throwsStateError,);
+    await expectLater(
+      store.confirm(before, confirmedDisplayedValues: true),
+      throwsStateError,
+    );
     expect(data['review_status'], 'auto');
     expect(data['net_amount'], 701);
     raceAfterRead = false;
     data = syntheticPayslip();
     clearOwnerAfterRead = true;
     final patchCount = requests.where((r) => r.method == 'PATCH').length;
-    await expectLater(store.confirm(before, confirmedDisplayedValues: true),
-        throwsStateError,);
+    await expectLater(
+      store.confirm(before, confirmedDisplayedValues: true),
+      throwsStateError,
+    );
     expect(requests.where((r) => r.method == 'PATCH').length, patchCount);
     expect(requests.every((r) => r.url.path == '/rest/v1/payslips'), isTrue);
   });

@@ -9,38 +9,45 @@ void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   const mobile = bool.fromEnvironment('PAYSLIP_REVIEW_MOBILE');
   Future<void> showCard(
-      WidgetTester tester, SyntheticPayslipReviewStore store,) async {
+    WidgetTester tester,
+    SyntheticPayslipReviewStore store,
+  ) async {
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox());
       await store.dispose();
     });
-    await tester.pumpWidget(MaterialApp(
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: const TextScaler.linear(mobile ? 2 : 1)),
-        child: child!,
-      ),
-      home: Scaffold(
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(mobile ? 2 : 1)),
+          child: child!,
+        ),
+        home: Scaffold(
           body: StatefulBuilder(
-              builder: (context, refresh) => SingleChildScrollView(
-                    child: AssetPayrollDeductionsCard(
-                      ownerId: store.ownerId,
-                      year: 2030,
-                      rows: [store.data],
-                      onReview: (id) async {
-                        await showDialog<void>(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (_) => AssetPayslipReviewDialog(
-                              store: store,
-                              payslipId: id,
-                              openPdf: (_) async => true,),
-                        );
-                        if (context.mounted) refresh(() {});
-                      },
+            builder: (context, refresh) => SingleChildScrollView(
+              child: AssetPayrollDeductionsCard(
+                ownerId: store.ownerId,
+                year: 2030,
+                rows: [store.data],
+                onReview: (id) async {
+                  await showDialog<void>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => AssetPayslipReviewDialog(
+                      store: store,
+                      payslipId: id,
+                      openPdf: (_) async => true,
                     ),
-                  ),),),
-    ),);
+                  );
+                  if (context.mounted) refresh(() {});
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -86,11 +93,13 @@ void main() {
     await showCard(tester, store);
     await open(tester);
     expect(
-        tester
-            .widget<FilledButton>(
-                find.widgetWithText(FilledButton, '記載内容を本人確認済みにする'),)
-            .onPressed,
-        isNull,);
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, '記載内容を本人確認済みにする'),
+          )
+          .onPressed,
+      isNull,
+    );
     expect(store.originalRequests, 0);
     await acknowledge(tester);
     expect(store.writes, 1);
@@ -125,11 +134,13 @@ void main() {
     await showCard(tester, store);
     await open(tester);
     expect(
-        tester
-            .widget<FilledButton>(
-                find.widgetWithText(FilledButton, '記載内容を本人確認済みにする'),)
-            .onPressed,
-        isNull,);
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, '記載内容を本人確認済みにする'),
+          )
+          .onPressed,
+      isNull,
+    );
     expect(store.writes, 0);
     await tester.ensureVisible(find.textContaining('項目名違いが競合しています'));
     await capture(tester, 'payslip-review-conflict');

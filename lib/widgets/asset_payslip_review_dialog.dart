@@ -72,7 +72,9 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
         _pending ||
         !_acknowledged ||
         row == null ||
-        row.blockingReason != null) { return; }
+        row.blockingReason != null) {
+      return;
+    }
     setState(() {
       _busy = true;
       _message = null;
@@ -82,9 +84,11 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
       if (!mounted) return;
       await _read();
       if (mounted) {
-        setState(() => _message = _snapshot?.status == 'confirmed'
-            ? '現在の記載内容は本人確認済みです。閉じると累計を再読込します。'
-            : '確認更新の応答は受け取りました。現在状態を再取得してください。',);
+        setState(
+          () => _message = _snapshot?.status == 'confirmed'
+              ? '現在の記載内容は本人確認済みです。閉じると累計を再読込します。'
+              : '確認更新の応答は受け取りました。現在状態を再取得してください。',
+        );
       }
     } catch (_) {
       if (mounted) {
@@ -158,7 +162,8 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
           if (raw is Map)
             for (final entry in raw.entries)
               Text(
-                  '${AssetPayrollDeductionsCard.labels[entry.key] ?? otherLabels[entry.key] ?? 'その他（${entry.key}）'}：${entry.value ?? '未取得'}',),
+                '${AssetPayrollDeductionsCard.labels[entry.key] ?? otherLabels[entry.key] ?? 'その他（${entry.key}）'}：${entry.value ?? '未取得'}',
+              ),
         ],
       );
 
@@ -182,31 +187,40 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
               if (_loading) const LinearProgressIndicator(),
               if (row != null && projection != null) ...[
                 Text(
-                    '${row.raw['pay_date']} 支給／${row.raw['company_name'] ?? ''}',),
-                Text(row.status == 'confirmed'
-                    ? '記載済み値は本人確認済み'
-                    : row.unreviewed
-                        ? '取得済み・本人未確認'
-                        : '確認保存の対象外です',),
+                  '${row.raw['pay_date']} 支給／${row.raw['company_name'] ?? ''}',
+                ),
                 Text(
-                    '総支給：${row.raw['gross_amount']}円／手取り：${row.raw['net_amount']}円',),
+                  row.status == 'confirmed'
+                      ? '記載済み値は本人確認済み'
+                      : row.unreviewed
+                          ? '取得済み・本人未確認'
+                          : '確認保存の対象外です',
+                ),
+                Text(
+                  '総支給：${row.raw['gross_amount']}円／手取り：${row.raw['net_amount']}円',
+                ),
                 Text('課税対象額：${row.raw['taxable_amount'] ?? '未取得'}'),
                 _originalItems('控除の取込値（変更しません）', row.raw['deductions']),
                 _originalItems('支給内訳の取込値（変更しません）', row.raw['earnings']),
                 _originalItems('勤怠の取込値（変更しません）', row.raw['attendance']),
                 Text(
-                    '税金合計：${AssetPayrollDeductionsCard.amount(projection.taxTotalYen)}',),
+                  '税金合計：${AssetPayrollDeductionsCard.amount(projection.taxTotalYen)}',
+                ),
                 Text(
-                    '社会保険合計：${AssetPayrollDeductionsCard.amount(projection.socialTotalYen)}',),
+                  '社会保険合計：${AssetPayrollDeductionsCard.amount(projection.socialTotalYen)}',
+                ),
                 Text('未分類控除：${projection.unclassified.length}項目'),
                 Text(
-                    '総支給−手取りと記載済み控除小計との差：${AssetPayrollDeductionsCard.amount(projection.unidentifiedDifferenceYen)}',),
+                  '総支給−手取りと記載済み控除小計との差：${AssetPayrollDeductionsCard.amount(projection.unidentifiedDifferenceYen)}',
+                ),
                 const Text(
-                    '差額は未取得・未分類項目などが原因の可能性があります。差が0円でも全項目取得済みとは限りません。欠落は0円として保存・集計しません。',),
+                  '差額は未取得・未分類項目などが原因の可能性があります。差が0円でも全項目取得済みとは限りません。欠落は0円として保存・集計しません。',
+                ),
                 if (row.blockingReason != null) Text(row.blockingReason!),
                 TextButton(
-                    onPressed: enabled ? _openOriginal : null,
-                    child: const Text('保存済みの元PDFを開く'),),
+                  onPressed: enabled ? _openOriginal : null,
+                  child: const Text('保存済みの元PDFを開く'),
+                ),
                 const Text('原本の閲覧は本人限定Storageから行います。PDFや記載内容を外部AIへ送りません。'),
                 if (_pending) const Text('表示は保存前に取得した内容です。現在状態を照合してください。'),
                 CheckboxListTile(
@@ -217,26 +231,30 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
                           setState(() => _acknowledged = value ?? false)
                       : null,
                   title: const Text(
-                      '表示された取込内容を元の給与明細と照合しました。未取得項目を0円と確認するものではありません。',),
+                    '表示された取込内容を元の給与明細と照合しました。未取得項目を0円と確認するものではありません。',
+                  ),
                 ),
               ],
               if (_message != null) Text(_message!),
               if (_pending)
                 TextButton(
-                    onPressed: _busy ? null : _reconcile,
-                    child: const Text('確認保存の現在状態を照合'),),
+                  onPressed: _busy ? null : _reconcile,
+                  child: const Text('確認保存の現在状態を照合'),
+                ),
               if (row == null && !_loading)
                 TextButton(
-                    onPressed: _busy ? null : _read,
-                    child: const Text('明細を再取得'),),
+                  onPressed: _busy ? null : _read,
+                  child: const Text('明細を再取得'),
+                ),
             ],
           ],
         ),
       ),
       actions: [
         TextButton(
-            onPressed: _busy ? null : () => Navigator.pop(context),
-            child: const Text('閉じる'),),
+          onPressed: _busy ? null : () => Navigator.pop(context),
+          child: const Text('閉じる'),
+        ),
         FilledButton(
           onPressed: enabled &&
                   row?.blockingReason == null &&
