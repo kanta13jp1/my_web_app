@@ -8,6 +8,7 @@ void main() {
     int? payoffMonths = 38,
     double? interest = 234567,
     double? delta = -50000,
+    DebtProgressProjectionStatus status = DebtProgressProjectionStatus.estimated,
   }) =>
       DebtProgressCardData(
         totalDebt: 1234567,
@@ -16,6 +17,7 @@ void main() {
         estimatedInterest: interest,
         monthOverMonthDelta: delta,
         debtCount: 3,
+        projectionStatus: status,
       );
 
   Future<void> pump(WidgetTester tester, DebtProgressCardData data) async {
@@ -57,9 +59,16 @@ void main() {
   testWidgets('flags a non-clearing payment instead of hiding it', (
     tester,
   ) async {
-    await pump(tester, cardData(payoffMonths: null, interest: null));
+    await pump(
+      tester,
+      cardData(
+        payoffMonths: null,
+        interest: null,
+        status: DebtProgressProjectionStatus.insufficientPayment,
+      ),
+    );
 
-    expect(find.text('— (要見直し)'), findsOneWidget);
+    expect(find.text('返済額の見直し'), findsOneWidget);
     // 完済しないときに利息見込みを出すと、実際より小さい額を約束してしまう。
     expect(find.text('利息見込み'), findsNothing);
   });

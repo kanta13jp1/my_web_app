@@ -314,9 +314,8 @@ class DebtProgressCardService {
   /// 返済が進んでいるのに「増えた」と公開投稿してしまう。両辺とも
   /// **絶対額に正規化**してから比較する。
   ///
-  /// 🔑 **前月に記録が無い負債は比較から除外する**。0円として扱うと、
-  /// 記録を始めたばかりの負債が「今月まるごと増えた」ように見える。
-  /// 比較可能な行が1件も無ければ null (= カードに前月比を出さない)。
+  /// 🔑 前月と今月の対象集合が一致する場合だけ全体の前月比を表示する。
+  /// 欠落を0円にしたり、一部だけの差分を全体の前月比として表示しない。
   double? _monthOverMonthDelta({
     required AssetLiabilityWorkbook workbook,
     required Set<String> eligibleIds,
