@@ -110,8 +110,12 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
             '明細${index + 1}・${row.payDate.month}/${row.payDate.day}支給・${row.confirmed ? '本人確認済み' : '読取内容は未確認'}',
             style: Theme.of(context).textTheme.titleSmall,
           ),
-          if (onReview != null && (row.reviewStatus == 'auto' || row.reviewStatus == 'needs_review'))
-            OutlinedButton(onPressed: () => onReview!(row.sourceId), child: const Text('元明細と照合して確認')),
+          if (onReview != null &&
+              (row.reviewStatus == 'auto' ||
+                  row.reviewStatus == 'needs_review'))
+            OutlinedButton(
+                onPressed: () => onReview!(row.sourceId),
+                child: const Text('元明細と照合して確認'),),
           Text('総支給 ${amount(row.grossYen)} / 手取り ${amount(row.netYen)}'),
           for (final entry in labels.entries)
             Text('${entry.value}：${amount(row.items[entry.key])}'),

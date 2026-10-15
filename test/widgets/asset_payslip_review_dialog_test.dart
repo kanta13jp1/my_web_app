@@ -10,6 +10,7 @@ void cleanUp(WidgetTester tester, SyntheticPayslipReviewStore store) {
     await store.dispose();
   });
 }
+
 Future<void> acknowledgeAndSave(WidgetTester tester) async {
   await tester.ensureVisible(find.byType(CheckboxListTile));
   await tester.tap(find.byType(CheckboxListTile));
@@ -20,11 +21,15 @@ Future<void> acknowledgeAndSave(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('only explicit original comparison updates confirmation once', (tester) async {
+  testWidgets('only explicit original comparison updates confirmation once',
+      (tester) async {
     final store = SyntheticPayslipReviewStore();
     cleanUp(tester, store);
     var pdfOpened = 0;
-    await showPayslipReview(tester, store, openPdf: (_) async { pdfOpened++; return true; });
+    await showPayslipReview(tester, store, openPdf: (_) async {
+      pdfOpened++;
+      return true;
+    },);
     expect(tester.widget<FilledButton>(saveButton()).onPressed, isNull);
     expect(store.originalRequests, 0);
     await tester.ensureVisible(find.text('保存済みの元PDFを開く'));
@@ -38,7 +43,8 @@ void main() {
     expect(find.text('記載済み値は本人確認済み'), findsOneWidget);
     expect(tester.widget<FilledButton>(saveButton()).onPressed, isNull);
   });
-  testWidgets('unknown save reconciles without resend or attributing success', (tester) async {
+  testWidgets('unknown save reconciles without resend or attributing success',
+      (tester) async {
     final store = SyntheticPayslipReviewStore()..failAfterCommit = true;
     cleanUp(tester, store);
     await showPayslipReview(tester, store);
@@ -60,11 +66,16 @@ void main() {
     expect(find.text('記載済み値は本人確認済み'), findsOneWidget);
     expect(store.writes, 1);
   });
-  testWidgets('changed original cannot receive the previous confirmation', (tester) async {
+  testWidgets('changed original cannot receive the previous confirmation',
+      (tester) async {
     final store = SyntheticPayslipReviewStore();
     cleanUp(tester, store);
     await showPayslipReview(tester, store);
-    store.data = {...store.data, 'net_amount': 701, 'updated_at': '2030-01-20T00:00:02Z'};
+    store.data = {
+      ...store.data,
+      'net_amount': 701,
+      'updated_at': '2030-01-20T00:00:02Z'
+    ,};
     await acknowledgeAndSave(tester);
     expect(store.writes, 0);
     await tester.ensureVisible(find.text('確認保存の現在状態を照合'));
@@ -74,7 +85,8 @@ void main() {
     expect(tester.widget<FilledButton>(saveButton()).onPressed, isNull);
     expect(store.data['review_status'], 'auto');
   });
-  testWidgets('owner switch clears the previous original and disables saving', (tester) async {
+  testWidgets('owner switch clears the previous original and disables saving',
+      (tester) async {
     final store = SyntheticPayslipReviewStore();
     cleanUp(tester, store);
     await showPayslipReview(tester, store);
@@ -86,25 +98,37 @@ void main() {
     expect(tester.widget<FilledButton>(saveButton()).onPressed, isNull);
     expect(store.writes, 0);
   });
-  testWidgets('missing fields stay unknown after explicit confirmation', (tester) async {
+  testWidgets('missing fields stay unknown after explicit confirmation',
+      (tester) async {
     final store = SyntheticPayslipReviewStore();
     cleanUp(tester, store);
-    store.data = {...store.data, 'social_insurance_total': null, 'deductions': {'income_tax': 50, 'resident_tax': 40}};
+    store.data = {
+      ...store.data,
+      'social_insurance_total': null,
+      'deductions': {'income_tax': 50, 'resident_tax': 40}
+    ,};
     await showPayslipReview(tester, store);
     await acknowledgeAndSave(tester);
-    final month = AssetPayrollDeductions.months(ownerId: store.ownerId, year: 2030, rows: [store.data]).first;
+    final month = AssetPayrollDeductions.months(
+        ownerId: store.ownerId, year: 2030, rows: [store.data],).first;
     expect(month.confirmedTaxYen, 90);
     expect(month.confirmedSocialYen, isNull);
     expect(month.summaryStatus(social: true), contains('必要項目の記載なし'));
-    expect((store.data['deductions'] as Map).containsKey('health_insurance'), isFalse);
+    expect((store.data['deductions'] as Map).containsKey('health_insurance'),
+        isFalse,);
   });
-  testWidgets('alias conflict blocks the explicit confirmation action', (tester) async {
+  testWidgets('alias conflict blocks the explicit confirmation action',
+      (tester) async {
     final store = SyntheticPayslipReviewStore();
     cleanUp(tester, store);
     (store.data['deductions'] as Map)['employees_pension_insurance'] = 99;
     await showPayslipReview(tester, store);
     expect(find.textContaining('項目名違いが競合'), findsOneWidget);
-    expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).onChanged, isNull);
+    expect(
+        tester
+            .widget<CheckboxListTile>(find.byType(CheckboxListTile))
+            .onChanged,
+        isNull,);
     expect(tester.widget<FilledButton>(saveButton()).onPressed, isNull);
     expect(store.writes, 0);
   });

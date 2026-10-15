@@ -85,13 +85,15 @@ class _AssetPayrollDeductionsSectionState
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             TextButton(
-              onPressed: !_reviewing && _year > 2000 ? () => _reload(_year - 1) : null,
+              onPressed:
+                  !_reviewing && _year > 2000 ? () => _reload(_year - 1) : null,
               child: const Text('前年'),
             ),
             Text('$_year年 給与控除'),
             TextButton(
-              onPressed:
-                  !_reviewing && _year < widget.initialYear ? () => _reload(_year + 1) : null,
+              onPressed: !_reviewing && _year < widget.initialYear
+                  ? () => _reload(_year + 1)
+                  : null,
               child: const Text('翌年'),
             ),
             TextButton(
