@@ -146,6 +146,12 @@ class _BrowserReminderSettingsState extends State<BrowserReminderSettings>
             const LinearProgressIndicator(),
             const Text('通知の許可・送信を確認しています。'),
           ],
+          if (controller.nextAt != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              '次回通知の目安：${controller.nextAt!.toLocal().toIso8601String().split('T').last.split('.').first}（省電力・スリープで遅れる場合があります）',
+            ),
+          ],
           if (controller.lastRequestedAt != null) ...[
             const SizedBox(height: 8),
             Text(

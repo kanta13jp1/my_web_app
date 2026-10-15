@@ -29,6 +29,7 @@ test('desktop reminder is opt-in, testable and stoppable', async ({ page, contex
   await expect(settings.getByText('ブラウザから通知の表示応答を受け取りました。Windowsのバナー表示はこのページから確認できません。', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '開始', exact: true }).click();
   await expect(settings.getByText('実行中・約5分おき', { exact: true })).toBeVisible();
+  await expect(settings.getByText(/次回通知の目安：/)).toBeVisible();
   await page.getByRole('button', { name: '停止', exact: true }).click();
   await expect(settings.getByText('停止中', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('desktop-reminder.png'), fullPage: true });
