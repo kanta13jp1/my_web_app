@@ -14,6 +14,10 @@ Future<void> pumpPage(
   SharedPreferences.setMockInitialValues(<String, Object>{
     AssetSalaryResetMarkerStore.prefsKey: '2026-05',
   });
+  await const AssetLiabilityMonthlyStateStore().saveMonth(
+    month: DateTime(2026, 5),
+    state: const AssetLiabilityMonthlyState(paidAccountNames: {'gas_bill'}),
+  );
   await tester.binding.setSurfaceSize(const Size(1200, 2400));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
@@ -125,7 +129,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     final saved = await const AssetLiabilityMonthlyStateStore()
         .loadMonth(DateTime(2026, 5));
-    expect(saved.paidAccountNames, isEmpty);
+    expect(saved.paidAccountNames, {'gas_bill'});
     expect(find.text('引落の確認待ち (3件)'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
