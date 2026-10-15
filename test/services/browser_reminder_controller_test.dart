@@ -129,7 +129,9 @@ void main() {
     failing.dispose();
   });
   for (final timeout in [false, true]) {
-    test('test notification surfaces ${timeout ? 'timeout' : 'async error'} without success time', () async {
+    test(
+        'test notification surfaces ${timeout ? 'timeout' : 'async error'} without success time',
+        () async {
       final failing = BrowserReminderController(
         supported: true,
         readPermission: () => 'granted',
@@ -147,5 +149,4 @@ void main() {
       failing.dispose();
     });
   }
-
 }
