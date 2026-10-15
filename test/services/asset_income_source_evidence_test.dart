@@ -265,6 +265,8 @@ void main() {
       '2026-02-30T00:00:00Z',
       '2026-01-25T24:00:00Z',
       '2026-01-25T00:00:00',
+      '2026-01-25T00:00:00+99:00',
+      '2026-01-25T00:00:00+09:99',
     ]) {
       final result = _project([
         _row(
@@ -296,5 +298,78 @@ void main() {
       ),
     ]);
     expect(result.combinedRecordedTotal, 1000);
+  });
+
+  test('transitive same-event and distinct decisions remain contradictory', () {
+    final a = _row(IncomeSourceKind.flow, 'a');
+    final b = _row(IncomeSourceKind.receivedPlan, 'b');
+    final c = _row(IncomeSourceKind.payslip, 'c');
+    final result = _project(
+      [a, b, c],
+      decisions: [
+        IncomeRelationshipDecision(
+          leftFingerprint: a.fingerprint,
+          rightFingerprint: b.fingerprint,
+          relationship: IncomeRelationship.sameEvent,
+        ),
+        IncomeRelationshipDecision(
+          leftFingerprint: b.fingerprint,
+          rightFingerprint: c.fingerprint,
+          relationship: IncomeRelationship.sameEvent,
+        ),
+        IncomeRelationshipDecision(
+          leftFingerprint: a.fingerprint,
+          rightFingerprint: c.fingerprint,
+          relationship: IncomeRelationship.distinctEvents,
+        ),
+      ],
+    );
+    expect(result.combinedRecordedTotal, isNull);
+    expect(result.matchedEventSubtotal, isNull);
+    expect(
+      result.issues.map((issue) => issue.problem),
+      contains(IncomeEvidenceProblem.contradictoryDecision),
+    );
+  });
+
+  test('comparison pagination never makes undisplayed pairs look resolved', () {
+    final rows = [
+      _row(IncomeSourceKind.flow, 'f1'),
+      _row(IncomeSourceKind.flow, 'f2'),
+      _row(IncomeSourceKind.payslip, 'p1'),
+      _row(IncomeSourceKind.payslip, 'p2'),
+    ];
+    final page = AssetIncomeSourceEvidence.project(
+      ownerId: 'synthetic-owner',
+      currency: 'JPY',
+      records: rows,
+      relationshipPage: 1,
+      relationshipPageSize: 1,
+    );
+    expect(page.unresolvedRelationshipCount, 4);
+    expect(page.issues, hasLength(1));
+    expect(page.combinedRecordedTotal, isNull);
+    final outside = AssetIncomeSourceEvidence.project(
+      ownerId: 'synthetic-owner',
+      currency: 'JPY',
+      records: rows,
+      relationshipPage: 99,
+    );
+    expect(outside.issues, isEmpty);
+    expect(outside.unresolvedRelationshipCount, 4);
+    expect(outside.combinedRecordedTotal, isNull);
+  });
+
+  test('large input retains records but refuses partial numeric totals', () {
+    final result = _project([
+      for (var i = 0; i < 513; i++) _row(IncomeSourceKind.flow, 'f$i'),
+    ]);
+    expect(result.records, hasLength(513));
+    expect(result.combinedRecordedTotal, isNull);
+    expect(result.unresolvedRelationshipCount, isNull);
+    expect(
+      result.issues.single.problem,
+      IncomeEvidenceProblem.inputLimitExceeded,
+    );
   });
 }

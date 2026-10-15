@@ -22,6 +22,7 @@ enum IncomeEvidenceProblem {
   staleDecision,
   contradictoryDecision,
   missingRelationship,
+  inputLimitExceeded,
 }
 
 class IncomeSourceRecord {
@@ -90,6 +91,9 @@ class IncomeEvidenceProjection {
     required this.combinedRecordedTotal,
     required this.issues,
     required this.matchedEvents,
+    required this.unresolvedRelationshipCount,
+    required this.relationshipPage,
+    required this.relationshipPageSize,
   });
 
   final List<IncomeSourceRecord> records;
@@ -98,6 +102,9 @@ class IncomeEvidenceProjection {
   final int? combinedRecordedTotal;
   final List<IncomeEvidenceIssue> issues;
   final List<IncomeMatchedEvent> matchedEvents;
+  final int? unresolvedRelationshipCount;
+  final int relationshipPage;
+  final int relationshipPageSize;
 
   bool get allowsIncomeDerivedOutput => combinedRecordedTotal != null;
 }
@@ -124,7 +131,30 @@ class AssetIncomeSourceEvidence {
     required String currency,
     required List<IncomeSourceRecord> records,
     List<IncomeRelationshipDecision> decisions = const [],
+    int relationshipPage = 0,
+    int relationshipPageSize = 20,
   }) {
+    final page = relationshipPage < 0 ? 0 : relationshipPage;
+    final pageSize = relationshipPageSize.clamp(1, 50).toInt();
+    if (records.length > 512) {
+      final owned = records.where((row) =>
+          ownerId.isNotEmpty && row.ownerId == ownerId).toList();
+      return IncomeEvidenceProjection(
+        records: List.unmodifiable(owned),
+        sourceRecordedTotals: Map.unmodifiable({
+          for (final row in owned) row.kind: null,
+        }),
+        matchedEventSubtotal: null,
+        combinedRecordedTotal: null,
+        matchedEvents: const [],
+        unresolvedRelationshipCount: null,
+        relationshipPage: page,
+        relationshipPageSize: pageSize,
+        issues: const [
+          IncomeEvidenceIssue(IncomeEvidenceProblem.inputLimitExceeded, []),
+        ],
+      );
+    }
     final issues = <IncomeEvidenceIssue>[];
     final owned = <IncomeSourceRecord>[];
     final byKey = <String, IncomeSourceRecord>{};
@@ -272,6 +302,7 @@ class AssetIncomeSourceEvidence {
       groups.putIfAbsent(root(row.key!), () => []).add(row);
     }
     final groupList = groups.values.toList();
+    var unresolvedCount = 0;
     for (var i = 0; i < groupList.length; i++) {
       for (var j = i + 1; j < groupList.length; j++) {
         final left = groupList[i];
@@ -284,10 +315,13 @@ class AssetIncomeSourceEvidence {
             (root(pair[1]) == root(left.first.key!) &&
                 root(pair[0]) == root(right.first.key!)));
         if (!decidedDistinct) {
-          issue(
-            IncomeEvidenceProblem.missingRelationship,
-            [...left, ...right].map((row) => row.key!).toList(),
-          );
+          final index = unresolvedCount++;
+          if (index >= page * pageSize && index < (page + 1) * pageSize) {
+            issue(
+              IncomeEvidenceProblem.missingRelationship,
+              [...left, ...right].map((row) => row.key!).toList(),
+            );
+          }
         }
       }
     }
@@ -299,7 +333,7 @@ class AssetIncomeSourceEvidence {
     var matchedTotal = matched.isEmpty
         ? null
         : matched.fold<int>(0, (sum, group) => sum + group.first.amount);
-    var combinedTotal = issues.isNotEmpty || byKey.isEmpty
+    var combinedTotal = issues.isNotEmpty || unresolvedCount > 0 || byKey.isEmpty
         ? null
         : groupList.fold<int>(0, (sum, group) => sum + group.first.amount);
     if ((matchedTotal ?? 0) > _maxSafeInteger ||
@@ -324,6 +358,9 @@ class AssetIncomeSourceEvidence {
             }),
           ),
       ]),
+      unresolvedRelationshipCount: unresolvedCount,
+      relationshipPage: page,
+      relationshipPageSize: pageSize,
     );
   }
 
@@ -347,6 +384,12 @@ class AssetIncomeSourceEvidence {
     final day = int.parse(parts[3]!);
     final calendar = DateTime.utc(year, month, day);
     if (calendar.year != year || calendar.month != month || calendar.day != day) {
+      return false;
+    }
+    final offset = parts[7]!;
+    if (offset != 'Z' &&
+        (int.parse(offset.substring(1, 3)) > 23 ||
+            int.parse(offset.substring(4, 6)) > 59)) {
       return false;
     }
     return int.parse(parts[4]!) < 24 &&
