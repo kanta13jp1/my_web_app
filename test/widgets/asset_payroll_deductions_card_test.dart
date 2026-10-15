@@ -19,13 +19,17 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
-            home: MediaQuery(
-          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-          child: Scaffold(
-              body: ListView(children: const [
-            AssetPayrollDeductionsCard(ownerId: 'owner-a', year: 2030, rows: [])
-          ])),
-        )),
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+            child: Scaffold(
+              body: ListView(
+                children: const [
+                  AssetPayrollDeductionsCard(ownerId: 'owner-a', year: 2030, rows: []),
+                ],
+              ),
+            ),
+          ),
+        ),
       );
       expect(
         find.text('税金の確認済み分：未取得（0/12か月）'),
@@ -47,18 +51,26 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-            home: Scaffold(
-                body: ListView(children: [
-          AssetPayrollDeductionsCard(ownerId: 'owner-a', year: 2030, rows: [
-            {
-              'id': 'synthetic',
-              'user_id': 'owner-a',
-              'pay_date': '2030-01-20',
-              'review_status': 'auto',
-              'deductions': {'income_tax': 0, 'resident_tax': 0}
-            },
-          ]),
-        ]))),
+          home: Scaffold(
+            body: ListView(
+              children: [
+                AssetPayrollDeductionsCard(
+                  ownerId: 'owner-a',
+                  year: 2030,
+                  rows: [
+                    {
+                      'id': 'synthetic',
+                      'user_id': 'owner-a',
+                      'pay_date': '2030-01-20',
+                      'review_status': 'auto',
+                      'deductions': {'income_tax': 0, 'resident_tax': 0},
+                    },
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       );
       await tester.tap(
         find.text('1月'),

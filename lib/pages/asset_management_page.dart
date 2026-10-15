@@ -21839,7 +21839,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 16),
             AssetPayrollDeductionsSection(
-              key: ValueKey('payroll-deductions-${_supabase.auth.currentUser?.id}'),
+              key: ValueKey(
+                  'payroll-deductions-${_supabase.auth.currentUser?.id}'),
               client: _supabase,
               initialYear: _now.year,
             ),

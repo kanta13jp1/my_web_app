@@ -50,13 +50,16 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('$year年 給与の税金・社会保険料',
-                style: Theme.of(context).textTheme.titleMedium),
+                style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             const Text('給与明細の支給日が属する月で表示します。控除を家計簿の支出へ重ねて追加しません。'),
             Text(
-                '税金の確認済み分：${taxMonths.isEmpty ? '未取得' : '$taxSum円'}（${taxMonths.length}/12か月）'),
+                '税金の確認済み分：${taxMonths.isEmpty ? '未取得' : '$taxSum円'}（${taxMonths.length}/12か月）',
+            ),
             Text(
-                '社会保険料の確認済み分：${socialMonths.isEmpty ? '未取得' : '$socialSum円'}（${socialMonths.length}/12か月）'),
+                '社会保険料の確認済み分：${socialMonths.isEmpty ? '未取得' : '$socialSum円'}（${socialMonths.length}/12か月）',
+            ),
             const Text('空欄は0円ではありません。自動読取は本人確認済みの合計に含めません。'),
             for (final month in months)
               ExpansionTile(
@@ -66,7 +69,8 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
                     ? '同じ明細の内容が競合・要確認'
                     : month.statements.isEmpty
                         ? '明細なし'
-                        : '税 ${amount(month.confirmedTaxYen)} / 社会保険 ${amount(month.confirmedSocialYen)}'),
+                        : '税 ${amount(month.confirmedTaxYen)} / 社会保険 ${amount(month.confirmedSocialYen)}',
+                ),
                 children: [
                   for (var index = 0; index < month.statements.length; index++)
                     _statement(context, month.statements[index], index),
@@ -86,7 +90,8 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
         children: [
           Text(
               '明細${index + 1}・${row.payDate.month}/${row.payDate.day}支給・${row.confirmed ? '本人確認済み' : '読取内容は未確認'}',
-              style: Theme.of(context).textTheme.titleSmall),
+              style: Theme.of(context).textTheme.titleSmall,
+          ),
           Text('総支給 ${amount(row.grossYen)} / 手取り ${amount(row.netYen)}'),
           for (final entry in labels.entries)
             Text('${entry.value}：${amount(row.items[entry.key])}'),
