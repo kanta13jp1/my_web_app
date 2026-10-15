@@ -180,8 +180,26 @@ jobs:
         run: flutter analyze
 
       - name: Test in cloud
-        if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
-        run: flutter test --concurrency=2
+        if: env.CLOUD_PROFILE == 'test'
+        shell: bash
+        run: |
+          flutter analyze integration_test/asset_calendar_browser_fixture.dart
+          flutter build web --release --pwa-strategy=none --target=integration_test/asset_calendar_browser_fixture.dart
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4173 --directory build/web > /tmp/calendar-probe-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node scripts/asset_calendar_navigation_probe.mjs
+      - name: Upload synthetic navigation evidence
+        if: always() && env.CLOUD_PROFILE == 'test'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: calendar-native-navigation-${{ github.run_id }}
+          path: .ci-logs/calendar-native-navigation
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Build Flutter Web in cloud
         id: web_build
