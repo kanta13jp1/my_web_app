@@ -1,3 +1,4 @@
+import '../widgets/asset_calendar_refresh_control.dart';
 import '../widgets/asset_future_card_bill_card.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
@@ -8217,9 +8218,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return '$sanitized.pdf';
   }
 
-  Future<void> _fetchRecentFlows() async {
+  Future<void> _fetchRecentFlows({
+    bool runSalaryReconciliation = true,
+    bool reportErrors = false,
+  }) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      if (reportErrors) throw StateError('ログイン状態を確認してください');
+      return;
+    }
     try {
       final cutoff = AssetManagementEgressPolicy.recentFlowCutoff(
         DateTime.now(),
@@ -8247,18 +8254,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _recentFlowsOwnerId = userId;
           _recentFlows = List<Map<String, dynamic>>.from(data);
         });
-        unawaited(
+        if (runSalaryReconciliation) unawaited(
           _resolveInitialDisplayMode(
             hasExistingData:
                 _recentFlows.isNotEmpty || _subscriptions.isNotEmpty,
           ),
         );
         // フロー更新後に給料振込検知を再評価(サイクル窓の収入が増えた可能性)。
-        _maybeDetectSalaryDeposit();
-        _reconcileAndSaveSalaryIncomePlansIfPending();
+        if (runSalaryReconciliation) {
+          _maybeDetectSalaryDeposit();
+          _reconcileAndSaveSalaryIncomePlansIfPending();
+        }
+      } else if (reportErrors) {
+        throw StateError('ログイン状態が変わりました。再試行してください');
       }
     } catch (e) {
       debugPrint('Error fetching flows: $e');
+      if (reportErrors) rethrow;
     }
   }
 
@@ -17270,6 +17282,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   onPressed: () => _shiftCalendarCycle(1),
                 ),
               ],
+            ),
+            AssetCalendarRefreshControl(
+              onRefresh: () => _fetchRecentFlows(
+                runSalaryReconciliation: false,
+                reportErrors: true,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
