@@ -100,7 +100,8 @@ void main() {
   });
 
   for (final balanceJump in [false, true]) {
-    testWidgets('salary candidate does not confirm payment, balanceJump=$balanceJump',
+    testWidgets(
+        'salary candidate does not confirm payment, balanceJump=$balanceJump',
         (tester) async {
       await pumpSalaryCandidate(tester, balanceJump: balanceJump);
       expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
