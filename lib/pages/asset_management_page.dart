@@ -17294,8 +17294,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 4),
-            Text('この表示期間の浪費危険日: ${AssetSpendingAttentionCalendar.countDays(calendar.days.map((day) => day.date))}日'),
-            const Text('金曜・土日・公式祝日・その休前日の注意表示です。実際の浪費・飲酒の記録とは別です。休前日は翌日が土日・公式祝日の日で、本人の個別休暇は含みません。'),
+            Text(
+                'この表示期間の浪費危険日: ${AssetSpendingAttentionCalendar.countDays(calendar.days.map((day) => day.date))}日'),
+            const Text(
+                '金曜・土日・公式祝日・その休前日の注意表示です。実際の浪費・飲酒の記録とは別です。休前日は翌日が土日・公式祝日の日で、本人の個別休暇は含みません。'),
             const Text('祝日データ: 内閣府 2026–2027年（2026-10-15取得）。未対応年の祝日は推測しません。'),
             const SizedBox(height: 4),
             Text(
@@ -17640,7 +17642,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               spacing: 12,
               runSpacing: 4,
               children: [
-                _buildCalendarLegendItem(AssetAttentionDayLabel.background, '浪費危険日（注意の背景）'),
+                _buildCalendarLegendItem(
+                    AssetAttentionDayLabel.background, '浪費危険日（注意の背景）'),
                 _buildCalendarLegendItem(const Color(0xFFB91C1C), '返済日'),
                 _buildCalendarLegendItem(const Color(0xFF9333EA), '固定費'),
                 _buildCalendarLegendItem(const Color(0xFF0D9488), '給料日'),
@@ -17689,8 +17692,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (selectedDay != null) ...[
               const SizedBox(height: 10),
               Text(
-                AssetSpendingAttentionCalendar.forDate(selectedDay.date).description,
-                style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF78350F)),
+                AssetSpendingAttentionCalendar.forDate(selectedDay.date)
+                    .description,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, color: Color(0xFF78350F)),
               ),
               Text(
                 '${DateFormat('M月d日').format(selectedDay.date)} のイベント',
@@ -17816,7 +17821,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
               : day.isShortfall
                   ? const Color(0xFFFEE2E2)
-                  : attention.isAttentionDay ? AssetAttentionDayLabel.background : null,
+                  : attention.isAttentionDay
+                      ? AssetAttentionDayLabel.background
+                      : null,
           borderRadius: BorderRadius.circular(6),
           border: isToday
               ? Border.all(color: const Color(0xFF7C3AED), width: 1.5)

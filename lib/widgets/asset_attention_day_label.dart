@@ -7,8 +7,20 @@ class AssetAttentionDayLabel extends StatelessWidget {
   static const background = Color(0xFFFFF4CC);
   @override
   Widget build(BuildContext context) => day.isAttentionDay
-      ? Tooltip(message: day.description, child: Semantics(label: day.description,
-          child: const Text('注意', maxLines: 1,
-            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF78350F)))))
+      ? Tooltip(
+          message: day.description,
+          child: Semantics(
+            label: day.description,
+            child: const Text(
+              '注意',
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF78350F),
+              ),
+            ),
+          ),
+        )
       : const SizedBox.shrink();
 }

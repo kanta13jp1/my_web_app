@@ -1,22 +1,26 @@
 /// Calendar context only: these labels never create spending/activity records.
 class AssetSpendingAttentionDay {
-  const AssetSpendingAttentionDay({required this.reasons, required this.holiday,
-    required this.holidayDataAvailable});
+  const AssetSpendingAttentionDay({
+    required this.reasons,
+    required this.holiday,
+    required this.holidayDataAvailable,
+  });
   final List<String> reasons;
   final String? holiday;
   final bool holidayDataAvailable;
   bool get isAttentionDay => reasons.isNotEmpty;
   String get description {
-    final label = reasons.isNotEmpty ? '浪費危険日: ${reasons.join('・')}'
+    final label = reasons.isNotEmpty
+        ? '浪費危険日: ${reasons.join('・')}'
         : '注意日の条件に該当しません（支出の有無とは別です）';
     return holidayDataAvailable ? label : '$label / 祝日は未確認（未対応年）';
   }
-
 }
 
 class AssetSpendingAttentionCalendar {
   const AssetSpendingAttentionCalendar._();
-  static const sourceUrl = 'https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv';
+  static const sourceUrl =
+      'https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv';
   static const sourceRetrievedOn = '2026-10-15';
   static const supportedYears = {2026, 2027};
   // Cabinet Office official CSV; includes substitute/citizens holidays.
@@ -59,7 +63,8 @@ class AssetSpendingAttentionCalendar {
   };
   static String _key(DateTime date) =>
       '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  static bool _weekend(DateTime date) => date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+  static bool _weekend(DateTime date) =>
+      date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
   static AssetSpendingAttentionDay forDate(DateTime date) {
     final day = DateTime(date.year, date.month, date.day);
     final next = DateTime(day.year, day.month, day.day + 1);
@@ -71,9 +76,16 @@ class AssetSpendingAttentionCalendar {
       if (holiday != null) '祝日・休日（$holiday）',
       if (_weekend(next) || holidays.containsKey(_key(next))) '休前日（翌日が土日・公式祝日）',
     ];
-    return AssetSpendingAttentionDay(reasons: List.unmodifiable(reasons),
-      holiday: holiday, holidayDataAvailable: supportedYears.contains(day.year));
+    return AssetSpendingAttentionDay(
+      reasons: List.unmodifiable(reasons),
+      holiday: holiday,
+      holidayDataAvailable: supportedYears.contains(day.year),
+    );
   }
+
   static int countDays(Iterable<DateTime> dates) => dates
-      .where((date) => forDate(date).isAttentionDay).map(_key).toSet().length;
+      .where((date) => forDate(date).isAttentionDay)
+      .map(_key)
+      .toSet()
+      .length;
 }

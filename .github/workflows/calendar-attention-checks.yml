@@ -28,11 +28,8 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
-      - name: Prepare scoped formatter output
-        run: |
-          dart format lib/services/asset_spending_attention_calendar.dart lib/widgets/asset_attention_day_label.dart lib/pages/asset_management_page.dart test/services/asset_spending_attention_calendar_test.dart test/widgets/asset_attention_day_label_test.dart
-          dart fix --apply --code=require_trailing_commas --code=curly_braces_in_flow_control_structures
-          dart format lib/services/asset_spending_attention_calendar.dart lib/widgets/asset_attention_day_label.dart lib/pages/asset_management_page.dart test/services/asset_spending_attention_calendar_test.dart test/widgets/asset_attention_day_label_test.dart
+      - name: Verify committed scoped formatting
+        run: dart format --output=none --set-exit-if-changed lib/services/asset_spending_attention_calendar.dart lib/widgets/asset_attention_day_label.dart lib/pages/asset_management_page.dart test/services/asset_spending_attention_calendar_test.dart test/widgets/asset_attention_day_label_test.dart
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: attention-formatted-source
