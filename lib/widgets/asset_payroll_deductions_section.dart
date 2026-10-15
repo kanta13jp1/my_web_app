@@ -67,9 +67,8 @@ class _AssetPayrollDeductionsSectionState
             ),
             Text('$_year年 給与控除'),
             TextButton(
-              onPressed: _year < widget.initialYear
-                  ? () => _reload(_year + 1)
-                  : null,
+              onPressed:
+                  _year < widget.initialYear ? () => _reload(_year + 1) : null,
               child: const Text('翌年'),
             ),
             TextButton(

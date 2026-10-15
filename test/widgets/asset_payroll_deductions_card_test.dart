@@ -24,7 +24,8 @@ void main() {
             child: Scaffold(
               body: ListView(
                 children: const [
-                  AssetPayrollDeductionsCard(ownerId: 'owner-a', year: 2030, rows: []),
+                  AssetPayrollDeductionsCard(
+                      ownerId: 'owner-a', year: 2030, rows: []),
                 ],
               ),
             ),

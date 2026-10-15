@@ -4,8 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/widgets/asset_payroll_deductions_section.dart';
 
 void main() {
-  testWidgets('signed-out section creates no unhandled load future', (tester) async {
-    final client = SupabaseClient('https://example.invalid', 'synthetic-public-key');
+  testWidgets('signed-out section creates no unhandled load future',
+      (tester) async {
+    final client =
+        SupabaseClient('https://example.invalid', 'synthetic-public-key');
     addTearDown(client.dispose);
     await tester.pumpWidget(
       MaterialApp(
