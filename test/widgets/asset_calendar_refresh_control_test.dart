@@ -5,14 +5,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/asset_calendar_refresh_control.dart';
 
 void main() {
-  testWidgets('disables duplicate refresh and retains sibling draft', (tester) async {
+  testWidgets('disables duplicate refresh and retains sibling draft',
+      (tester) async {
     final pending = Completer<void>();
     final draft = TextEditingController(text: '未保存の入力');
     addTearDown(draft.dispose);
     var calls = 0;
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: Column(children: [
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: Column(children: [
       TextField(controller: draft),
-      AssetCalendarRefreshControl(onRefresh: () { calls++; return pending.future; }),
+      AssetCalendarRefreshControl(onRefresh: () {
+        calls++;
+        return pending.future;
+      }),
     ]))));
     final button = find.byKey(const Key('asset_calendar_refresh'));
     await tester.tap(button);

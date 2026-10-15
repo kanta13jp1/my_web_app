@@ -8254,12 +8254,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _recentFlowsOwnerId = userId;
           _recentFlows = List<Map<String, dynamic>>.from(data);
         });
-        if (runSalaryReconciliation) unawaited(
-          _resolveInitialDisplayMode(
-            hasExistingData:
-                _recentFlows.isNotEmpty || _subscriptions.isNotEmpty,
-          ),
-        );
+        if (runSalaryReconciliation)
+          unawaited(
+            _resolveInitialDisplayMode(
+              hasExistingData:
+                  _recentFlows.isNotEmpty || _subscriptions.isNotEmpty,
+            ),
+          );
         // フロー更新後に給料振込検知を再評価(サイクル窓の収入が増えた可能性)。
         if (runSalaryReconciliation) {
           _maybeDetectSalaryDeposit();
