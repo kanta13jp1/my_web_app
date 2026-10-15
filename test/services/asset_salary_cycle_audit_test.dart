@@ -33,7 +33,8 @@ void main() {
     );
   });
 
-  test('salary-cycle audit: same-day same-amount separate income is retained', () {
+  test('salary-cycle audit: same-day same-amount separate income is retained',
+      () {
     final entries = _entries(
       flows: const [
         {
@@ -60,7 +61,8 @@ void main() {
     );
   });
 
-  test('salary-cycle audit: ATM principal is excluded and only fee is expense', () {
+  test('salary-cycle audit: ATM principal is excluded and only fee is expense',
+      () {
     final entries = _entries(flows: const [
       {
         'action_type': 'transfer',
@@ -79,7 +81,8 @@ void main() {
     expect(entries.expenses.single.amount, 10);
   });
 
-  test('salary-cycle audit: expense-only records keep income evidence empty', () {
+  test('salary-cycle audit: expense-only records keep income evidence empty',
+      () {
     final entries = _entries(flows: const [
       {
         'action_type': 'expense',
