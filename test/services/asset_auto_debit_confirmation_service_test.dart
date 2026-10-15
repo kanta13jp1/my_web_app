@@ -602,5 +602,53 @@ void main() {
         expect(cardMsg, contains('カード決済が承認されない可能性があるため'));
       },
     );
+
+    test('unknown balances and credit limits require individual confirmation',
+        () {
+      final unknownBalance = AssetAutoDebitConfirmation(
+        row: testRow,
+        sourceAccountBalance: null,
+        sourceAccountKind: AssetLiabilityAccountKind.deposit,
+      );
+      expect(unknownBalance.sourceBalanceInsufficient, isFalse);
+      expect(unknownBalance.isEligibleForBulkConfirm, isFalse);
+      expect(
+        unknownBalance.shortfallWarningMessage(formattedSourceBalance: '?'),
+        isNull,
+      );
+      for (final limit in <double?>[null, 0]) {
+        final card = AssetAutoDebitConfirmation(
+          row: testRow,
+          sourceAccountBalance: -12000,
+          sourceAccountKind: AssetLiabilityAccountKind.creditCard,
+          sourceAccountCreditLimit: limit,
+        );
+        expect(card.sourceBalanceInsufficient, isFalse);
+        expect(card.isEligibleForBulkConfirm, isFalse);
+        expect(
+          card.shortfallWarningMessage(formattedSourceBalance: '-12000'),
+          isNull,
+        );
+      }
+    });
+
+    test('card limit warning never uses the bank debit failure explanation',
+        () {
+      final card = AssetAutoDebitConfirmation(
+        row: testRow,
+        sourceAccountBalance: -12000,
+        sourceAccountKind: AssetLiabilityAccountKind.creditCard,
+        sourceAccountCreditLimit: 10000,
+      );
+      final message = card.shortfallWarningMessage(
+        formattedSourceBalance: '-12000',
+        formattedCreditLimit: '10000',
+      );
+      expect(message, contains('利用限度額を超過'));
+      expect(message, contains('10000'));
+      expect(message, isNot(contains('引落が失敗')));
+      expect(message, isNot(contains('支払額を下回')));
+      expect(card.isEligibleForBulkConfirm, isFalse);
+    });
   });
 }
