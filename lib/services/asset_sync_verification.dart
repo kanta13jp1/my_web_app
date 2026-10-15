@@ -14,8 +14,9 @@ AssetSyncVerification verifyAssetPreferenceSync({
   bool hasPendingDeletion = false,
 }) {
   if (!ownerMatches) return AssetSyncVerification.unverified;
-  if (hasDirtyKeys || hasPendingDeletion)
+  if (hasDirtyKeys || hasPendingDeletion) {
     return AssetSyncVerification.localOnly;
+  }
   if (!loggedIn) {
     return hasLocalData
         ? AssetSyncVerification.localOnly
