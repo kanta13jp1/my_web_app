@@ -28,6 +28,7 @@ class MemoryService extends AssetMonthEndSnapshotService {
   MemoryService() : super(NoNetworkClient());
   bool enabled = false;
   bool fail = false;
+  bool empty = false;
   int loads = 0;
   @override
   Future<bool> isEnabled() async => enabled;
@@ -35,7 +36,7 @@ class MemoryService extends AssetMonthEndSnapshotService {
   Future<List<AssetMonthEndSnapshot>> load() async {
     loads++;
     if (fail) throw StateError('unavailable');
-    return [checkpoint()];
+    return empty ? [] : [checkpoint()];
   }
 
   @override
@@ -112,4 +113,57 @@ void main() {
     expect(find.textContaining('取得できませんでした'), findsNothing);
     expect(find.text('2026-08'), findsOneWidget);
   });
+  for (final empty in [true, false]) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets(
+        'headings remain readable at 320px with themed text scale $scale empty=$empty',
+        (tester) async {
+          tester.view.physicalSize = const Size(320, 1000);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          final service = MemoryService()..empty = empty;
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: ThemeData(
+                dataTableTheme: const DataTableThemeData(
+                  headingTextStyle: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  dataTextStyle: TextStyle(fontSize: 12),
+                  columnSpacing: 12,
+                  horizontalMargin: 8,
+                ),
+              ),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.linear(scale),
+                ),
+                child: child!,
+              ),
+              home: Scaffold(
+                body: SingleChildScrollView(
+                  child: AssetMonthEndSnapshotCard(
+                    service: service,
+                    monthKeys: const ['2026-08', '2026-09', '2026-10'],
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          expect(find.text('未取得'), findsNWidgets(empty ? 3 : 2));
+          await tester.ensureVisible(find.text('観測状況'));
+          await tester.pumpAndSettle();
+          expect(
+            find.text('観測状況').hitTestable(at: Alignment.centerLeft),
+            findsOneWidget,
+          );
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
 }
