@@ -81,14 +81,14 @@ class AssetPayrollSnapshotComparison {
     List<PayrollBalanceObservation> eligible(DateTime month) => observations
         .where(
           (row) =>
-            row.ownerId == ownerId &&
-            row.accountId == accountId &&
-            row.payrollMonth.year == month.year &&
-            row.payrollMonth.month == month.month &&
-            row.depositReference.trim().isNotEmpty &&
-            row.sourceReference.trim().isNotEmpty &&
-            row.confirmedImmediatelyAfterDeposit &&
-            !row.observedAt.isBefore(row.depositedAt),
+              row.ownerId == ownerId &&
+              row.accountId == accountId &&
+              row.payrollMonth.year == month.year &&
+              row.payrollMonth.month == month.month &&
+              row.depositReference.trim().isNotEmpty &&
+              row.sourceReference.trim().isNotEmpty &&
+              row.confirmedImmediatelyAfterDeposit &&
+              !row.observedAt.isBefore(row.depositedAt),
         )
         .toList();
 
