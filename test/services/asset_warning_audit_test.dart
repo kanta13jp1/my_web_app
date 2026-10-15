@@ -188,7 +188,10 @@ void main() {
       inputs.recurringOutflow.any((e) => e.label == 'SyntheticService'),
       isFalse,
     );
-    expect(inputs.recurringOutflow.any((e) => e.label == 'SyntheticCard'), isTrue);
+    expect(
+      inputs.recurringOutflow.any((e) => e.label == 'SyntheticCard'),
+      isTrue,
+    );
   });
 
   test('future expected income is a forecast input, not observed balance', () {
