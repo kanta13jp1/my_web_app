@@ -26,9 +26,11 @@ void main() {
         (tester) async {
       await tester.binding.setSurfaceSize(Size(width, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(MaterialApp(
-        home: AssetManagementPage(debugNow: DateTime(2026, 10, 15)),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(debugNow: DateTime(2026, 10, 15)),
+        ),
+      );
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.byKey(const Key('asset_sync_status_chip')));

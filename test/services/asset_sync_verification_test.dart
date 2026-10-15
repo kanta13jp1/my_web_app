@@ -1,7 +1,45 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/services/asset_sync_status.dart';
 import 'package:my_web_app/services/asset_sync_verification.dart';
 
 void main() {
+  test('another owner cannot inherit verified saving evidence', () {
+    final result = currentAssetSyncSources(
+      observedOwnerId: 'synthetic-owner-a',
+      currentOwnerId: 'synthetic-owner-b',
+      sources: {AssetSyncDomain.mainAccount: AssetSyncSource.synced},
+      observedLocalValues: {AssetSyncDomain.mainAccount: 'a'},
+      currentLocalValues: {AssetSyncDomain.mainAccount: 'a'},
+    );
+    expect(result, isEmpty);
+    expect(
+      AssetSyncStatusSummary(loggedIn: true, sources: result).level,
+      AssetSyncLevel.unverified,
+    );
+  });
+
+  test('local change invalidates saved evidence before the next read returns', () {
+    final result = currentAssetSyncSources(
+      observedOwnerId: 'synthetic-owner',
+      currentOwnerId: 'synthetic-owner',
+      sources: {AssetSyncDomain.mainAccount: AssetSyncSource.synced},
+      observedLocalValues: {AssetSyncDomain.mainAccount: 'old'},
+      currentLocalValues: {AssetSyncDomain.mainAccount: 'edited'},
+    );
+    expect(result[AssetSyncDomain.mainAccount], AssetSyncSource.localOnly);
+  });
+
+  test('new data cannot retain a previously empty domain status', () {
+    final result = currentAssetSyncSources(
+      observedOwnerId: 'synthetic-owner',
+      currentOwnerId: 'synthetic-owner',
+      sources: {AssetSyncDomain.watchlist: AssetSyncSource.empty},
+      observedLocalValues: {AssetSyncDomain.watchlist: <String>[]},
+      currentLocalValues: {AssetSyncDomain.watchlist: ['synthetic-entry']},
+    );
+    expect(result[AssetSyncDomain.watchlist], AssetSyncSource.localOnly);
+  });
+
   AssetSyncVerification verify({
     bool owner = true,
     bool dirty = false,

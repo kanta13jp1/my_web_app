@@ -94,8 +94,11 @@ class AssetSyncStatusSummary {
       ];
 
   /// 同期対象 (synced か localOnly) のデータが1つでもあるか。
-  bool get hasAnyData => sources.values.any((source) =>
-      source == AssetSyncSource.synced || source == AssetSyncSource.localOnly);
+  bool get hasAnyData => sources.values.any(
+        (source) =>
+            source == AssetSyncSource.synced ||
+            source == AssetSyncSource.localOnly,
+      );
 
   AssetSyncLevel get level {
     if (!loggedIn) {

@@ -622,22 +622,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       };
 
   AssetSyncStatusSummary get _syncSummary {
-    final current = _syncCurrentPreferenceValues();
-    final ownerMatches = _syncSourcesOwnerId == _supabase.auth.currentUser?.id;
     return AssetSyncStatusSummary(
       loggedIn: _supabase.auth.currentUser != null,
-      sources: ownerMatches
-          ? {
-              for (final entry in _syncSources.entries)
-                entry.key: current.containsKey(entry.key) &&
-                        !assetSyncPayloadsEqual(
-                          current[entry.key],
-                          _syncObservedLocalValues[entry.key],
-                        )
-                    ? AssetSyncSource.localOnly
-                    : entry.value,
-            }
-          : const <AssetSyncDomain, AssetSyncSource>{},
+      sources: currentAssetSyncSources(
+        observedOwnerId: _syncSourcesOwnerId,
+        currentOwnerId: _supabase.auth.currentUser?.id,
+        sources: _syncSources,
+        observedLocalValues: _syncObservedLocalValues,
+        currentLocalValues: _syncCurrentPreferenceValues(),
+      ),
     );
   }
 
@@ -10084,10 +10077,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         icon = Icons.cloud_done;
         text = '対象6領域の現在値をサーバと照合済み（残高・明細照合は別途）';
     }
-    const tappable = true;
     return InkWell(
       key: const Key('asset_sync_status_chip'),
-      onTap: tappable ? _showSyncStatusDetails : null,
+      onTap: _showSyncStatusDetails,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -10111,8 +10103,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
             ),
-            if (tappable)
-              Icon(Icons.chevron_right, size: 18, color: foreground),
+            Icon(Icons.chevron_right, size: 18, color: foreground),
           ],
         ),
       ),
@@ -11288,7 +11279,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           final rows = await _supabase
               .from('asset_pref_mirror')
               .select('user_id,pref_key,value')
-              .eq('user_id', ownerId);
+              .eq('user_id', ownerId)
+              .inFilter(
+                'pref_key',
+                const [
+                'main_account_id',
+                'watchlist_entries',
+                'revolving_credit_configs',
+                'debt_payment_day_overrides',
+                'watchlist_entries_deleted',
+                'revolving_credit_configs_deleted',
+                'debt_payment_day_override_deleted',
+                ],
+              );
           remote = indexPrefMirrorRowsByKey(rows);
           readSucceeded = true;
         } catch (error) {
@@ -11321,7 +11324,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         final remoteIds = MirrorTombstoneStore.decodeMirror(
           Map<String, dynamic>.from(raw),
         );
-        return !remoteIds.containsAll(localIds);
+        return !remoteIds.toSet().containsAll(localIds);
       }
 
       AssetSyncSource prefSource(
@@ -11335,7 +11338,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           loggedIn: ownerId != null,
           ownerMatches: true,
           hasLocalData: hasLocal,
-          remoteReadSucceeded: readSucceeded,
+          remoteReadSucceeded:
+              readSucceeded && (row == null || row['user_id'] == ownerId),
           remoteRowExists: row != null && row['user_id'] == ownerId,
           currentValue: currentValue,
           remoteValue: row?['value'],

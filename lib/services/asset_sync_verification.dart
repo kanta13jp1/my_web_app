@@ -1,3 +1,27 @@
+import 'asset_sync_status.dart';
+
+/// Discard another owner's evidence and invalidate a previously observed value
+/// immediately after a local edit, including while a remote read is pending.
+Map<AssetSyncDomain, AssetSyncSource> currentAssetSyncSources({
+  required String? observedOwnerId,
+  required String? currentOwnerId,
+  required Map<AssetSyncDomain, AssetSyncSource> sources,
+  required Map<AssetSyncDomain, Object?> observedLocalValues,
+  required Map<AssetSyncDomain, Object?> currentLocalValues,
+}) {
+  if (observedOwnerId != currentOwnerId) return {};
+  return {
+    for (final entry in sources.entries)
+      entry.key: currentLocalValues.containsKey(entry.key) &&
+              !assetSyncPayloadsEqual(
+                currentLocalValues[entry.key],
+                observedLocalValues[entry.key],
+              )
+          ? AssetSyncSource.localOnly
+          : entry.value,
+  };
+}
+
 /// Read-only verification of the current preference payload against one
 /// successfully observed remote row. No write or retry is performed here.
 enum AssetSyncVerification { unverified, empty, localOnly, synced }
