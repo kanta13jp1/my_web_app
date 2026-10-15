@@ -1,6 +1,8 @@
 import '../services/asset_month_end_snapshot_service.dart';
 import '../widgets/asset_month_end_snapshot_card.dart';
 import '../widgets/asset_payroll_deductions_section.dart';
+import '../widgets/asset_payroll_snapshot_connection.dart';
+import '../services/asset_payroll_snapshot_store.dart';
 import '../widgets/asset_reflection_day_badge.dart';
 import '../models/asset_calendar_reflection.dart';
 import '../services/asset_calendar_reflection_repository.dart';
@@ -21784,6 +21786,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               key: ValueKey('month-end-${_supabase.auth.currentUser?.id}'),
               service: AssetMonthEndSnapshotService(_supabase),
               monthKeys: _recentMonthEndSnapshotKeys(),
+            ),
+            const SizedBox(height: 16),
+            AssetPayrollSnapshotConnection(
+              key: ValueKey(
+                  'payroll-snapshot-owner-${_supabase.auth.currentUser?.id}'),
+              ownerId: _supabase.auth.currentUser?.id,
+              initialMonth: _now,
+              createStore: (owner) => SupabasePayrollSnapshotStore(
+                _supabase,
+                owner,
+              ),
             ),
             const SizedBox(height: 16),
             AssetPayrollDeductionsSection(
