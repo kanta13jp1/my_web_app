@@ -63,7 +63,8 @@ void main() {
 
   test('salary-cycle audit: ATM principal is excluded and only fee is expense',
       () {
-    final entries = _entries(flows: const [
+    final entries = _entries(
+      flows: const [
       {
         'action_type': 'transfer',
         'amount': 1000,
@@ -76,21 +77,24 @@ void main() {
         'occurred_at': '2026-01-25',
         'description': '合成ATM手数料',
       },
-    ]);
+      ],
+    );
     expect(entries.incomes, isEmpty);
     expect(entries.expenses.single.amount, 10);
   });
 
   test('salary-cycle audit: expense-only records keep income evidence empty',
       () {
-    final entries = _entries(flows: const [
+    final entries = _entries(
+      flows: const [
       {
         'action_type': 'expense',
         'amount': 10,
         'occurred_at': '2026-01-25',
         'description': '合成支出',
       },
-    ]);
+      ],
+    );
     expect(entries.incomes, isEmpty);
     expect(entries.expenses.single.amount, 10);
   });
