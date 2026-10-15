@@ -3,6 +3,7 @@ import '../widgets/asset_month_end_snapshot_card.dart';
 import '../widgets/asset_payroll_deductions_section.dart';
 import '../widgets/asset_page_scroll_frame.dart';
 import '../widgets/asset_calendar_shortfall_details.dart';
+import '../widgets/asset_unreconciled_expense_badge.dart';
 import '../widgets/asset_payroll_snapshot_connection.dart';
 import '../services/asset_payroll_snapshot_store.dart';
 import '../widgets/asset_reflection_day_badge.dart';
@@ -17704,6 +17705,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildCalendarLegendItem(const Color(0xFF2563EB), '収入'),
                 _buildCalendarLegendItem(const Color(0xFF64748B), '振替（支出集計外）'),
                 _buildCalendarLegendItem(const Color(0xFF0EA5E9), '入金予定'),
+                _buildCalendarLegendItem(
+                    const Color(0xFF92400E), '不明: 使途不明金（内訳未照合）'),
               ],
             ),
             const SizedBox(height: 4),
@@ -17782,6 +17785,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ],
               ),
               const SizedBox(height: 6),
+              if (selectedDay.hasUnreconciledExpense)
+                Text(
+                  '使途不明金 ${_formatYen(selectedDay.unreconciledExpenseTotal)}（日別支出に含まれる参考内訳）です。使途の照合が必要です。',
+                  key: const Key('asset_calendar_unreconciled_details'),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                ),
+              if (selectedDay.events.any(
+                (event) => event.balanceDifferenceAutoRecorded,
+              ))
+                const Text(
+                  '残高差分からの自動記録を含みます。消費の確定ではありません。',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                ),
               if (!selectedDay.hasAnyEvent)
                 Text(
                   'この日の収支・支払イベントはありません。',
@@ -17795,29 +17812,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 for (final event in selectedDay.events.take(10))
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          _calendarEventIcon(event.kind),
-                          size: 14,
-                          color: _calendarEventColor(event.kind),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            event.label,
-                            style: const TextStyle(fontSize: 12, height: 1.5),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (event.amount != null)
-                          Text(
-                            _formatYen(event.amount!),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              height: 1.5,
+                        Row(
+                          children: [
+                            Icon(
+                              _calendarEventIcon(event.kind),
+                              size: 14,
+                              color: _calendarEventColor(event.kind),
                             ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                event.label,
+                                style:
+                                    const TextStyle(fontSize: 12, height: 1.5),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (event.amount != null)
+                              Text(
+                                _formatYen(event.amount!),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.5,
+                                ),
+                              ),
+                          ],
+                        ),
+                        if (event.balanceDifferenceAutoRecorded)
+                          const Text(
+                            '残高差分から自動記録された未照合額です。消費を確認した記録ではありません。',
+                            style: TextStyle(
+                                fontSize: 11, color: Color(0xFF92400E)),
                           ),
                       ],
                     ),
@@ -17924,6 +17953,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: Color(0xFFB91C1C),
                   fontWeight: FontWeight.w700,
                   height: 1.2,
+                ),
+              ),
+            if (day.hasUnreconciledExpense)
+              AssetUnreconciledExpenseBadge(
+                key: Key(
+                  'asset_calendar_unreconciled_${day.date.year}_${day.date.month}_${day.date.day}',
                 ),
               ),
             AssetAttentionDayLabel(day: attention),
