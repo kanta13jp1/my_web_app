@@ -34,14 +34,16 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.byKey(const Key('asset_sync_status_chip')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
       expect(find.text('同期ステータス'), findsOneWidget);
       expect(find.textContaining('以下の6領域だけの保存状況です'), findsOneWidget);
       expect(find.textContaining('月次の支払・計画設定：'), findsOneWidget);
       expect(find.textContaining('現在値の照合に未対応'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('閉じる'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
       expect(find.text('同期ステータス'), findsNothing);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();

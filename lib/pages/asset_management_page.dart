@@ -11317,6 +11317,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // No await from this point to setState: compare the latest local values,
       // not the values present when the remote read began.
       bool pendingDeletion(MirrorTombstoneStore tombstones, String remoteKey) {
+        if (ownerId != null && !readSucceeded) return false;
         final localIds = tombstones.activeIds(store);
         if (localIds.isEmpty) return false;
         final raw = remote[remoteKey]?['value'];
