@@ -78,63 +78,98 @@ class _AssetMonthEndSnapshotCardState extends State<AssetMonthEndSnapshotCard> {
       snapshots: _snapshots,
     );
     return Card(
-        child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
-          Text('月末の記録残高', style: Theme.of(context).textTheme.titleMedium),
-          IconButton(
-              onPressed: _loading ? null : _refresh,
-              tooltip: '月末記録だけ更新',
-              icon: const Icon(Icons.refresh)),
-        ]),
-        SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('月末に自動保存する'),
-            subtitle: const Text('日本時間の月替わりに、サイトを閉じていても保存します。'),
-            value: _enabled,
-            onChanged: _loading ? null : _toggle),
-        if (_loading) const LinearProgressIndicator(),
-        if (_error != null)
-          Text(_error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error)),
-        const Text('銀行との照合済み残高ではありません。未更新・廃止口座の有無は確認が必要です。手動の記録とは分けて表示します。'),
-        const SizedBox(height: 8),
-        SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columns: const [
-                DataColumn(label: Text('月')),
-                DataColumn(label: Text('総資産')),
-                DataColumn(label: Text('負債')),
-                DataColumn(label: Text('純資産')),
-                DataColumn(label: Text('観測状況'))
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text('月末の記録残高', style: Theme.of(context).textTheme.titleMedium),
+                IconButton(
+                  onPressed: _loading ? null : _refresh,
+                  tooltip: '月末記録だけ更新',
+                  icon: const Icon(Icons.refresh),
+                ),
               ],
-              rows: List.generate(widget.monthKeys.length, (index) {
-                final snapshot = snapshots[index];
-                return DataRow(cells: [
-                  DataCell(Text(widget.monthKeys[index])),
-                  DataCell(Text(snapshot == null
-                      ? '未取得'
-                      : yen.format(snapshot.totalAssets))),
-                  DataCell(Text(snapshot == null
-                      ? '—'
-                      : yen.format(snapshot.totalLiabilities))),
-                  DataCell(Text(
-                      snapshot == null ? '—' : yen.format(snapshot.netWorth))),
-                  DataCell(snapshot == null
-                      ? const Text('月末前・過去の未取得分は補完しません')
-                      : Tooltip(
-                          message: snapshot.accounts
-                              .map((account) =>
-                                  '${account['title']}: ${account['observed_at']}')
-                              .join('\n'),
-                          child:
-                              Text('前月以前の残高 ${snapshot.staleAccountCount}口座'))),
-                ]);
-              }),
-            )),
-      ]),
-    ));
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('月末に自動保存する'),
+              subtitle: const Text('日本時間の月替わりに、サイトを閉じていても保存します。'),
+              value: _enabled,
+              onChanged: _loading ? null : _toggle,
+            ),
+            if (_loading) const LinearProgressIndicator(),
+            if (_error != null)
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            const Text(
+              '銀行との照合済み残高ではありません。未更新・廃止口座の有無は確認が必要です。手動の記録とは分けて表示します。',
+            ),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columns: const [
+                  DataColumn(label: Text('月')),
+                  DataColumn(label: Text('総資産')),
+                  DataColumn(label: Text('負債')),
+                  DataColumn(label: Text('純資産')),
+                  DataColumn(label: Text('観測状況')),
+                ],
+                rows: List.generate(widget.monthKeys.length, (index) {
+                  final snapshot = snapshots[index];
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(widget.monthKeys[index])),
+                      DataCell(
+                        Text(
+                          snapshot == null
+                              ? '未取得'
+                              : yen.format(snapshot.totalAssets),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          snapshot == null
+                              ? '—'
+                              : yen.format(snapshot.totalLiabilities),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          snapshot == null
+                              ? '—'
+                              : yen.format(snapshot.netWorth),
+                        ),
+                      ),
+                      DataCell(
+                        snapshot == null
+                            ? const Text('月末前・過去の未取得分は補完しません')
+                            : Tooltip(
+                                message: snapshot.accounts
+                                    .map(
+                                      (account) =>
+                                          '${account['title']}: ${account['observed_at']}',
+                                    )
+                                    .join('\n'),
+                                child: Text(
+                                  '前月以前の残高 ${snapshot.staleAccountCount}口座',
+                                ),
+                              ),
+                      ),
+                    ],
+                  );
+                }),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

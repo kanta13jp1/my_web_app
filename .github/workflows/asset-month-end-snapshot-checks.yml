@@ -2,7 +2,7 @@ name: Asset Month End Snapshot Checks
 on:
   pull_request:
     paths:
-      - 'supabase/migrations/20261015170000_asset_month_end_balance_snapshots.sql'
+      - 'supabase/migrations/20261015171000_asset_month_end_balance_snapshots.sql'
       - 'supabase/tests/asset_month_end_balances_test.sql'
       - 'lib/services/asset_month_end_snapshot_service.dart'
       - 'lib/widgets/asset_month_end_snapshot_card.dart'
@@ -56,7 +56,7 @@ jobs:
           SQL
       - name: Migration and boundary/security contracts
         run: |
-          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261015170000_asset_month_end_balance_snapshots.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261015171000_asset_month_end_balance_snapshots.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/asset_month_end_balances_test.sql
           psql -v ON_ERROR_STOP=1 <<'SQL'
           do $$ begin
@@ -73,13 +73,8 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
-      - name: Repair scoped formatting lints
-        run: |
-          for target in lib/services/asset_month_end_snapshot_service.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart; do
-            dart fix --apply --code=require_trailing_commas --code=curly_braces_in_flow_control_structures "$target"
-          done
-      - name: Format scoped files
-        run: dart format lib/services/asset_month_end_snapshot_service.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart
+      - name: Verify scoped formatting
+        run: dart format --output=none --set-exit-if-changed lib/services/asset_month_end_snapshot_service.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart
       - name: Analyze scoped files
         run: flutter analyze lib/services/asset_month_end_snapshot_service.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart
       - name: Targeted tests

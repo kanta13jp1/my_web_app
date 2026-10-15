@@ -15,7 +15,7 @@ AssetMonthEndSnapshot checkpoint() => AssetMonthEndSnapshot.fromJson({
         {
           'title': 'sample account',
           'observed_at': '2026-07-31T14:00:00Z',
-          'stale': true
+          'stale': true,
         }
       ],
       'stale_account_count': 1,
@@ -64,12 +64,18 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final service = MemoryService();
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
         home: Scaffold(
-            body: SingleChildScrollView(
-      child: AssetMonthEndSnapshotCard(
-          service: service, monthKeys: const ['2026-08', '2026-09', '2026-10']),
-    ))));
+          body: SingleChildScrollView(
+            child: AssetMonthEndSnapshotCard(
+              service: service,
+              monthKeys: const ['2026-08', '2026-09', '2026-10'],
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('未取得'), findsNWidgets(2));
     expect(service.enabled, isFalse);
@@ -84,12 +90,16 @@ void main() {
 
   testWidgets('load failure is visible and retry recovers', (tester) async {
     final service = MemoryService()..fail = true;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
         home: Scaffold(
-            body: AssetMonthEndSnapshotCard(
-      service: service,
-      monthKeys: const ['2026-08'],
-    ))));
+          body: AssetMonthEndSnapshotCard(
+            service: service,
+            monthKeys: const ['2026-08'],
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('取得できませんでした'), findsOneWidget);
     service.fail = false;

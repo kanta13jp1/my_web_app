@@ -44,7 +44,7 @@ List<AssetMonthEndSnapshot?> monthEndComparison({
   required Iterable<AssetMonthEndSnapshot> snapshots,
 }) {
   final byMonth = {
-    for (final snapshot in snapshots) snapshot.monthKey: snapshot
+    for (final snapshot in snapshots) snapshot.monthKey: snapshot,
   };
   return monthKeys.map((key) => byMonth[key]).toList(growable: false);
 }
