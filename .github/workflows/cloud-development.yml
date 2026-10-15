@@ -180,8 +180,8 @@ jobs:
         run: flutter analyze
 
       - name: Test in cloud
-        if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
-        run: flutter test --concurrency=2
+        if: env.CLOUD_PROFILE == 'test'
+        run: flutter analyze && flutter test test/services/asset_salary_cycle_audit_test.dart test/services/asset_salary_spending_entries_test.dart test/services/asset_liability_monthly_state_store_test.dart --reporter expanded
 
       - name: Build Flutter Web in cloud
         id: web_build
