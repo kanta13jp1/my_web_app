@@ -6,10 +6,12 @@ abstract interface class AssetCalendarReflectionStore {
   Future<void> import(List<AssetCalendarReflection> events);
 }
 
-class AssetCalendarReflectionRepository implements AssetCalendarReflectionStore {
+class AssetCalendarReflectionRepository
+    implements AssetCalendarReflectionStore {
   AssetCalendarReflectionRepository(this.client);
   final SupabaseClient client;
 
+  @override
   Future<List<AssetCalendarReflection>> load(
     DateTime start,
     DateTime end,
@@ -30,6 +32,7 @@ class AssetCalendarReflectionRepository implements AssetCalendarReflectionStore 
     return rows.map(AssetCalendarReflection.fromJson).toList(growable: false);
   }
 
+  @override
   Future<void> import(List<AssetCalendarReflection> events) async {
     final owner = client.auth.currentUser?.id;
     if (owner == null) throw StateError('ログインしてください');

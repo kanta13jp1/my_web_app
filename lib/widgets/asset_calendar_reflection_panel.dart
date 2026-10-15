@@ -194,7 +194,9 @@ class _AssetCalendarReflectionPanelState
     final linked =
         _events.map((e) => e.linkedFlowId).whereType<String>().toSet();
     final events = [
-      ..._events.where((e) => !e.date.isBefore(widget.start) && e.date.isBefore(widget.end)),
+      ..._events.where(
+        (e) => !e.date.isBefore(widget.start) && e.date.isBefore(widget.end),
+      ),
       ...widget.flowEvents.where(
         (e) =>
             !linked.contains(e.linkedFlowId) &&
@@ -232,7 +234,11 @@ class _AssetCalendarReflectionPanelState
             spacing: 8,
             children: [
               for (final kind in AssetReflectionKind.values)
-                Chip(backgroundColor: AssetReflectionDayBadge.backgroundFor({kind}), label: Text('${kind.label} ${summary.days(kind)}日')),
+                Chip(
+                  backgroundColor:
+                      AssetReflectionDayBadge.backgroundFor({kind}),
+                  label: Text('${kind.label} ${summary.days(kind)}日'),
+                ),
             ],
           ),
           Text(
