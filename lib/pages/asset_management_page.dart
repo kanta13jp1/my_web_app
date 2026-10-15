@@ -17302,7 +17302,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             if (_supabase.auth.currentUser?.id != null)
               AssetCalendarReflectionPanel(
-                key: ValueKey('reflection_${_supabase.auth.currentUser!.id}_$_calendarReflectionRevision'),
+                key: ValueKey(
+                    'reflection_${_supabase.auth.currentUser!.id}_$_calendarReflectionRevision'),
                 repository: AssetCalendarReflectionRepository(_supabase),
                 start: cycleStart,
                 end: cycleEndExclusive,
@@ -17803,10 +17804,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         day.date.year == selectedDate.year &&
         day.date.month == selectedDate.month &&
         day.date.day == selectedDate.day;
-    final reflections = _calendarReflectionOwner == _supabase.auth.currentUser?.id
-        ? _calendarReflections.where((e) => e.date.year == day.date.year &&
-            e.date.month == day.date.month && e.date.day == day.date.day).toList()
-        : <AssetCalendarReflection>[];
+    final reflections =
+        _calendarReflectionOwner == _supabase.auth.currentUser?.id
+            ? _calendarReflections
+                .where((e) =>
+                    e.date.year == day.date.year &&
+                    e.date.month == day.date.month &&
+                    e.date.day == day.date.day)
+                .toList()
+            : <AssetCalendarReflection>[];
     final kinds = reflections.expand((e) => e.kinds).toSet();
     final reflectionColor = kinds.contains(AssetReflectionKind.drinkingOut)
         ? const Color(0xFFFECACA)
@@ -17838,12 +17844,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         margin: const EdgeInsets.all(1),
         padding: const EdgeInsets.symmetric(vertical: 3),
         decoration: BoxDecoration(
-          color: reflectionColor ?? (isSelected
-              ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
-              : day.isShortfall ? const Color(0xFFFEE2E2) : null),
+          color: reflectionColor ??
+              (isSelected
+                  ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
+                  : day.isShortfall
+                      ? const Color(0xFFFEE2E2)
+                      : null),
           borderRadius: BorderRadius.circular(6),
           border: isSelected || isToday
-              ? Border.all(color: const Color(0xFF7C3AED), width: isSelected ? 2.5 : 1.5)
+              ? Border.all(
+                  color: const Color(0xFF7C3AED), width: isSelected ? 2.5 : 1.5)
               : null,
         ),
         child: Column(
@@ -17870,12 +17880,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
             if (kinds.isNotEmpty)
-              Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: Text(
-                kinds.map((kind) => kind.label).join('\n'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF172554)),
-              )))
-            else const Spacer(),
+              Expanded(
+                  child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        kinds.map((kind) => kind.label).join('\n'),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF172554)),
+                      )))
+            else
+              const Spacer(),
             if (markers.isNotEmpty)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
