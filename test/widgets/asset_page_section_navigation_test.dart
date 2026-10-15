@@ -50,6 +50,7 @@ void main() {
       'hit=${find.text('月末の残高記録').hitTestable().evaluate().length}',
     );
     await tester.tap(find.text('月末の残高記録'));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(BottomSheet), findsNothing);
