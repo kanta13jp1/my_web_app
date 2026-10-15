@@ -105,6 +105,19 @@ void main() {
         }
         final objectResponse =
             request.headers['accept']?.contains('vnd.pgrst.object') ?? false;
+        if (objectResponse && rows.isEmpty) {
+          return http.Response(
+            jsonEncode({
+              'code': 'PGRST116',
+              'details': 'The result contains 0 rows',
+              'hint': null,
+              'message': 'JSON object requested, multiple (or no) rows returned',
+            }),
+            406,
+            headers: {'content-type': 'application/json'},
+            request: request,
+          );
+        }
         return http.Response(
           jsonEncode(objectResponse && rows.isNotEmpty ? rows.single : rows),
           200,
