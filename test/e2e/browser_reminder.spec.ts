@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 
+// The legacy headless shell reports Notification.permission='denied' even
+// when the Permissions API is granted. Use Chromium's real browser channel.
+test.use({ channel: 'chromium' });
+
 test('desktop reminder is opt-in, testable and stoppable', async ({ page, context }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Desktop notification feature');
   const settings = page.getByLabel('Dialog', { exact: true });
