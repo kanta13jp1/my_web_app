@@ -15,7 +15,7 @@ test('desktop reminder is opt-in, testable and stoppable', async ({ page, contex
     };
   });
   await page.goto('/');
-  await page.getByText('「手は机へ」デスクトップ通知', { exact: true }).click();
+  await page.getByRole('button', { name: /^「手は机へ」デスクトップ通知/ }).click();
   await expect(page.getByText('停止中', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as any).__reminderCalls)).toHaveLength(0);
   await page.getByRole('button', { name: 'テスト通知', exact: true }).click();
@@ -27,7 +27,7 @@ test('desktop reminder is opt-in, testable and stoppable', async ({ page, contex
   await expect(page.getByText('停止中', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('desktop-reminder.png'), fullPage: true });
   await page.reload();
-  await page.getByText('「手は机へ」デスクトップ通知', { exact: true }).click();
+  await page.getByRole('button', { name: /^「手は机へ」デスクトップ通知/ }).click();
   await expect(page.getByText('停止中', { exact: true })).toBeVisible();
 });
 
@@ -42,7 +42,7 @@ test('permission request happens only on the explicit click', async ({ page }, t
     };
   });
   await page.goto('/');
-  await page.getByText('「手は机へ」デスクトップ通知', { exact: true }).click();
+  await page.getByRole('button', { name: /^「手は机へ」デスクトップ通知/ }).click();
   expect(await page.evaluate(() => (window as any).__permissionClicks)).toHaveLength(0);
   await page.getByRole('button', { name: '開始', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (window as any).__permissionClicks)).toEqual([true]);

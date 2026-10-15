@@ -4,7 +4,8 @@ import 'package:my_web_app/services/browser_reminder_controller.dart';
 import 'package:my_web_app/widgets/browser_reminder_settings.dart';
 
 void main() {
-  testWidgets('narrow screen supports start, test, stop without overflow', (tester) async {
+  testWidgets('narrow screen supports start, test, stop without overflow',
+      (tester) async {
     tester.view.physicalSize = const Size(320, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -14,8 +15,13 @@ void main() {
     final controller = BrowserReminderController(
       supported: true,
       readPermission: () => 'granted',
-      requestPermission: () async { requests++; return 'granted'; },
-      showReminder: () async { shown++; },
+      requestPermission: () async {
+        requests++;
+        return 'granted';
+      },
+      showReminder: () async {
+        shown++;
+      },
     );
     addTearDown(controller.dispose);
     await tester.pumpWidget(

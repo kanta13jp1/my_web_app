@@ -14,8 +14,8 @@ class BrowserReminderSettingsTile extends StatelessWidget {
         title: const Text('「手は机へ」デスクトップ通知'),
         subtitle: Text(
           controller.running
-            ? '実行中・約${controller.intervalMinutes}分おき'
-            : '停止中・開始／テスト／間隔を設定',
+              ? '実行中・約${controller.intervalMinutes}分おき'
+              : '停止中・開始／テスト／間隔を設定',
         ),
         trailing: const Icon(Icons.settings_outlined),
         onTap: () => showModalBottomSheet<void>(
@@ -88,8 +88,8 @@ class _BrowserReminderSettingsState extends State<BrowserReminderSettings>
             liveRegion: true,
             child: Text(
               controller.running
-                ? '実行中・約${controller.intervalMinutes}分おき'
-                : '停止中',
+                  ? '実行中・約${controller.intervalMinutes}分おき'
+                  : '停止中',
             ),
           ),
           Text('ブラウザの通知：${_permissionLabel(controller.permission)}'),

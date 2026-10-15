@@ -15,13 +15,14 @@ on:
       - test/fixtures/browser_reminder_app.dart
       - test/e2e/browser_reminder.spec.ts
       - .github/workflows/browser-reminder-checks.yml
-permissions:
-  contents: read
+permissions: {}
 concurrency:
   group: browser-reminder-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   checks:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

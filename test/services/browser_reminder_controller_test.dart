@@ -15,42 +15,51 @@ void main() {
     controller = BrowserReminderController(
       supported: true,
       readPermission: () => permission,
-      requestPermission: () async { requests++; return permission = 'granted'; },
-      showReminder: () async { shown++; },
+      requestPermission: () async {
+        requests++;
+        return permission = 'granted';
+      },
+      showReminder: () async {
+        shown++;
+      },
     );
   });
   tearDown(() => controller.dispose());
 
-  testWidgets('initially off, no unsolicited permission, every five minutes then stop', (tester) async {
-      expect(controller.running, false);
-      expect(requests, 0);
-      await controller.start();
-      expect(requests, 1);
-      expect(shown, 0);
-      await tester.pump(const Duration(minutes: 4));
-      expect(shown, 0);
-      await tester.pump(const Duration(minutes: 1));
-      expect(shown, 1);
-      await controller.start(); // no duplicate timer
-      await tester.pump(const Duration(minutes: 5));
-      expect(shown, 2);
-      controller.stop();
-      await tester.pump(const Duration(minutes: 20));
-      expect(shown, 2);
+  testWidgets(
+      'initially off, no unsolicited permission, every five minutes then stop',
+      (tester) async {
+    expect(controller.running, false);
+    expect(requests, 0);
+    await controller.start();
+    expect(requests, 1);
+    expect(shown, 0);
+    await tester.pump(const Duration(minutes: 4));
+    expect(shown, 0);
+    await tester.pump(const Duration(minutes: 1));
+    expect(shown, 1);
+    await controller.start(); // no duplicate timer
+    await tester.pump(const Duration(minutes: 5));
+    expect(shown, 2);
+    controller.stop();
+    await tester.pump(const Duration(minutes: 20));
+    expect(shown, 2);
   });
 
-  testWidgets('interval change replaces schedule and permission revocation stops', (tester) async {
-      permission = 'granted';
-      await controller.start();
-      controller.setInterval(10);
-      await tester.pump(const Duration(minutes: 5));
-      expect(shown, 0);
-      await tester.pump(const Duration(minutes: 5));
-      expect(shown, 1);
-      permission = 'denied';
-      await tester.pump(const Duration(minutes: 10));
-      expect(shown, 1);
-      expect(controller.running, false);
+  testWidgets(
+      'interval change replaces schedule and permission revocation stops',
+      (tester) async {
+    permission = 'granted';
+    await controller.start();
+    controller.setInterval(10);
+    await tester.pump(const Duration(minutes: 5));
+    expect(shown, 0);
+    await tester.pump(const Duration(minutes: 5));
+    expect(shown, 1);
+    permission = 'denied';
+    await tester.pump(const Duration(minutes: 10));
+    expect(shown, 1);
+    expect(controller.running, false);
   });
 
   test('test notification is immediate but does not start reminder', () async {
@@ -75,7 +84,9 @@ void main() {
       supported: true,
       readPermission: () => 'default',
       requestPermission: () => prompt.future,
-      showReminder: () async { shown++; },
+      showReminder: () async {
+        shown++;
+      },
     );
     final start = pending.start();
     pending.stop();
@@ -86,17 +97,18 @@ void main() {
     pending.dispose();
   });
 
-  testWidgets('platform failure stops timer and reports failure', (tester) async {
-      final failing = BrowserReminderController(
-        supported: true,
-        readPermission: () => 'granted',
-        requestPermission: () async => 'granted',
-        showReminder: () async => throw StateError('platform failure'),
-      );
-      await failing.start();
-      await tester.pump(const Duration(minutes: 5));
-      expect(failing.running, false);
-      expect(failing.message, contains('停止'));
-      failing.dispose();
+  testWidgets('platform failure stops timer and reports failure',
+      (tester) async {
+    final failing = BrowserReminderController(
+      supported: true,
+      readPermission: () => 'granted',
+      requestPermission: () async => 'granted',
+      showReminder: () async => throw StateError('platform failure'),
+    );
+    await failing.start();
+    await tester.pump(const Duration(minutes: 5));
+    expect(failing.running, false);
+    expect(failing.message, contains('停止'));
+    failing.dispose();
   });
 }
