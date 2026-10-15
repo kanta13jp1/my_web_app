@@ -25,7 +25,8 @@ void main() {
               body: ListView(
                 children: const [
                   AssetPayrollDeductionsCard(
-                      ownerId: 'owner-a', year: 2030, rows: []),
+                      ownerId: 'owner-a', year: 2030, rows: [],
+                  ),
                 ],
               ),
             ),
@@ -54,8 +55,8 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: ListView(
-              children: [
-                const AssetPayrollDeductionsCard(
+              children: const [
+                AssetPayrollDeductionsCard(
                   ownerId: 'owner-a',
                   year: 2030,
                   rows: [
