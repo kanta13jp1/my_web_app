@@ -2,6 +2,7 @@ import '../services/asset_month_end_snapshot_service.dart';
 import '../widgets/asset_month_end_snapshot_card.dart';
 import '../widgets/asset_payroll_deductions_section.dart';
 import '../widgets/asset_page_scroll_frame.dart';
+import '../widgets/asset_calendar_shortfall_details.dart';
 import '../widgets/asset_payroll_snapshot_connection.dart';
 import '../services/asset_payroll_snapshot_store.dart';
 import '../widgets/asset_reflection_day_badge.dart';
@@ -16843,13 +16844,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: AssetCashflowForecastCard(
-        forecast: forecast,
-        currencyFormatter: _formatYen,
-        currentHorizon: _forecastHorizonMonths,
-        onHorizonChanged: (months) =>
-            setState(() => _forecastHorizonMonths = months),
-        onReviewPaymentDays: () => _scrollTo(_keyCalendar),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (inputs.unverifiedPaymentLabels.isNotEmpty)
+            Text(
+              '支払方法未照合の支払を現金支出に仮置きした条件付き予測です。'
+              '確定した不足ではありません。対象: ${inputs.unverifiedPaymentLabels.join('、')}',
+              key: const Key('asset_forecast_unverified_payments'),
+            ),
+          AssetCashflowForecastCard(
+            forecast: forecast,
+            currencyFormatter: _formatYen,
+            currentHorizon: _forecastHorizonMonths,
+            onHorizonChanged: (months) =>
+                setState(() => _forecastHorizonMonths = months),
+            onReviewPaymentDays: () => _scrollTo(_keyCalendar),
+          ),
+        ],
       ),
     );
   }
@@ -17139,11 +17151,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cycleStart,
       cycleEndExclusive,
     );
+    // Paid flags belong to the loaded effective salary cycle, not whichever
+    // future month happens to be selected in the calendar.
+    final paidStateMonth =
+        _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now)
+            ? _assetLiabilityStateMonth(_now)
+            : null;
+    final paidPeriodStart = paidStateMonth == null
+        ? null
+        : DateTime(paidStateMonth.year, paidStateMonth.month,
+            _salaryDay.clamp(1, 28).toInt());
+    final paidPeriodEndExclusive = paidPeriodStart == null
+        ? null
+        : DateTime(paidPeriodStart.year, paidPeriodStart.month + 1,
+            paidPeriodStart.day);
     final debtInputs = <AssetCalendarDebtInput>[
       for (final row in debtRows)
         AssetCalendarDebtInput.fromDebtRow(
           row,
           paymentDayOverrides: _debtPaymentDayOverrides,
+          sourceAccountKindsById: {
+            for (final account
+                in workbook?.accounts ?? <AssetLiabilityAccount>[])
+              account.id: account.kind,
+          },
+          paidPeriodStart: paidPeriodStart,
+          paidPeriodEndExclusive: paidPeriodEndExclusive,
         ),
     ];
     final inflowInputs = <AssetCalendarInflowInput>[
@@ -17558,22 +17591,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '現金・預金 ${_formatYen(startingCashBalance ?? 0)} と登録済み入金予定を起点に、今日以降の返済予定と固定費を差し引いた見込みです。未登録の入金は含まれません。',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        height: 1.6,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '登録データに基づく不足額の試算: ${_formatYen(calendar.shortfallRecoveryAmount)}。残高・支払済み状態・支払日を明細と照合してから判断してください。入金や支出削減の時期によって結果は変わります。',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFFB91C1C),
-                        height: 1.5,
+                    AssetCalendarShortfallDetails(
+                      calendar: calendar,
+                      asOf: _calendarNow,
+                      startingCashBalance: startingCashBalance,
+                      // Aggregate balances have no single verified observation
+                      // timestamp here; do not manufacture one from a date key.
+                      onReviewPayments: () => _scrollTo(
+                        _sectionAnchorKey(
+                          AssetManagementSectionId.workbookBoard,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -17798,7 +17825,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             const SizedBox(height: 4),
             Text(
-              '支出・収入は記録済みフロー(直近取得分)に基づく概算、残高ショート見込みは入金を含めない保守的試算です。',
+              '支出・収入は記録済みフロー(直近取得分)に基づく概算です。残高の見込みには登録済み入金予定を含みます（着金未確認）。支払方法未照合の固定費は現金支出に仮置きしています。',
               style: TextStyle(
                 fontSize: 10,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
