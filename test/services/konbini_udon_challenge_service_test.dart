@@ -13,7 +13,8 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       await service.setEnabled(true, remainingDebt: 1000, prefs: prefs);
       final before = {for (final key in prefs.getKeys()) key: prefs.get(key)};
-      final snapshot = await service.loadSnapshot(remainingDebt: 0, prefs: prefs);
+      final snapshot =
+          await service.loadSnapshot(remainingDebt: 0, prefs: prefs);
       expect(snapshot.isReleased, isFalse);
       expect(snapshot.isEnabled, isTrue);
       expect({for (final key in prefs.getKeys()) key: prefs.get(key)}, before);
