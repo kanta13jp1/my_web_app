@@ -17,10 +17,12 @@ void main() {
           body: Column(
             children: [
               TextField(controller: draft),
-              AssetCalendarRefreshControl(onRefresh: () {
+              AssetCalendarRefreshControl(
+                onRefresh: () {
                 calls++;
                 return pending.future;
-              }),
+              },
+              ),
             ],
           ),
         ),
@@ -43,9 +45,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: AssetCalendarRefreshControl(onRefresh: () async {
+          body: AssetCalendarRefreshControl(
+                onRefresh: () async {
             if (++calls == 1) throw StateError('offline');
-          }),
+          },
+          ),
         ),
       ),
     );
