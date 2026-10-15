@@ -9,10 +9,14 @@ on:
       - 'test/services/asset_month_end_snapshot_service_test.dart'
       - '.github/workflows/asset-month-end-snapshot-checks.yml'
   workflow_dispatch:
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: asset-month-end-snapshot-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   postgres-contract:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 8
     services:
@@ -65,6 +69,8 @@ jobs:
           end $$;
           SQL
   flutter-contract:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
