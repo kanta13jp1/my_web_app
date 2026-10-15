@@ -4,6 +4,7 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
+import 'package:my_web_app/widgets/asset_calendar_shortfall_details.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -67,6 +68,13 @@ void main() {
   testWidgets('same loaded cycle paid state prevents future double subtraction',
       (tester) async {
     await pumpWarningPage(tester, paid: true);
+    for (final details in tester.widgetList<AssetCalendarShortfallDetails>(
+      find.byType(AssetCalendarShortfallDetails),
+    )) {
+      debugPrint(
+        'A11_EVENTS ${details.calendar.days.expand((day) => day.events).map((event) => '${event.label}:${event.amount}').join('|')}',
+      );
+    }
     expect(
       find.byKey(const Key('asset_calendar_shortfall_warning')),
       findsNothing,

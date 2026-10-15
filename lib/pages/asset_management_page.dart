@@ -17174,6 +17174,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           paidPeriodEndExclusive: paidPeriodEndExclusive,
         ),
     ];
+    debugPrint(
+      'A11_PERIOD loaded=$_loadedAssetLiabilityMonthKey '
+      'expected=${_assetLiabilityStateMonthKey(_now)} '
+      'start=$paidPeriodStart end=$paidPeriodEndExclusive '
+      'rows=${debtInputs.map((row) => '${row.name}:${row.paid}').join('|')}',
+    );
     final inflowInputs = <AssetCalendarInflowInput>[
       for (final inflow in monthInflowEntries)
         AssetCalendarInflowInput(
