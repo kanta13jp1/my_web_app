@@ -26,6 +26,7 @@ class BrowserReminderPlatform {
       web.NotificationOptions(
         body: '髪に手が伸びていたら、そっと机に戻しましょう。',
         tag: 'hands-on-desk-reminder',
+        renotify: true,
       ),
     );
   }
