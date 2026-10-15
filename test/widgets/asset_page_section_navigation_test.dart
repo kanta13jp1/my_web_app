@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/widgets/debt_progress_share_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -13,6 +14,38 @@ void main() {
       publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
+  });
+
+  testWidgets('visible next cycle pointer updates range without share dialog',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(1200, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugInitialAssetData: const {
+            '2026-06-20': {'Synthetic bank': 1000, 'アコムローン': -10000},
+          },
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    final next = find.byKey(const Key('asset_calendar_next_month'));
+    await tester.ensureVisible(next);
+    await tester.pump();
+    expect(next.hitTestable(), findsOneWidget);
+    expect(find.text('2026/5/25〜6/24'), findsOneWidget);
+    await tester.tapAt(tester.getCenter(next));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('2026/6/25〜7/24'), findsOneWidget);
+    expect(find.byType(DebtProgressShareDialog), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 
   testWidgets('search reaches month records and hides signed-out payroll target',
