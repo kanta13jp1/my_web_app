@@ -6,6 +6,7 @@
 enum AssetSyncSource {
   /// 現在値とサーバ値の照合が完了していない。
   unverified,
+
   /// Supabase に保存済み (他端末でも参照できる)。
   synced,
 
@@ -53,6 +54,7 @@ enum AssetSyncLevel {
 
   /// 対象6領域に保存対象がないことを確認済み。
   noData,
+
   /// 未ログイン: 何も同期されない (この端末のみ)。
   loggedOut,
 
@@ -92,10 +94,8 @@ class AssetSyncStatusSummary {
       ];
 
   /// 同期対象 (synced か localOnly) のデータが1つでもあるか。
-  bool get hasAnyData =>
-      sources.values.any((source) =>
-          source == AssetSyncSource.synced ||
-          source == AssetSyncSource.localOnly);
+  bool get hasAnyData => sources.values.any((source) =>
+      source == AssetSyncSource.synced || source == AssetSyncSource.localOnly);
 
   AssetSyncLevel get level {
     if (!loggedIn) {

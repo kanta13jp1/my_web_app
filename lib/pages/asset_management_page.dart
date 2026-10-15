@@ -615,15 +615,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _watchlistByType.values.toList(),
         ),
         AssetSyncDomain.revolving:
-            AssetRevolvingCreditConfigStore.encodeMirrorValue(_revolvingConfigs),
+            AssetRevolvingCreditConfigStore.encodeMirrorValue(
+                _revolvingConfigs),
         AssetSyncDomain.debtOverrides:
             Map<String, int>.from(_debtPaymentDayOverrides),
       };
 
   AssetSyncStatusSummary get _syncSummary {
     final current = _syncCurrentPreferenceValues();
-    final ownerMatches =
-        _syncSourcesOwnerId == _supabase.auth.currentUser?.id;
+    final ownerMatches = _syncSourcesOwnerId == _supabase.auth.currentUser?.id;
     return AssetSyncStatusSummary(
       loggedIn: _supabase.auth.currentUser != null,
       sources: ownerMatches
@@ -10076,7 +10076,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         background = warnBg;
         foreground = warnFg;
         icon = Icons.sync_problem;
-        text = '対象6領域：未同期 ${summary.localOnlyCount}・未照合 ${summary.unverifiedDomains.length} 項目';
+        text =
+            '対象6領域：未同期 ${summary.localOnlyCount}・未照合 ${summary.unverifiedDomains.length} 項目';
       case AssetSyncLevel.allSynced:
         background = okBg;
         foreground = okFg;

@@ -40,7 +40,9 @@ void main() {
   test('failed read or changed owner cannot prove remote state', () {
     expect(verify(read: false, current: 'A'), AssetSyncVerification.unverified);
     expect(
-        verify(owner: false, current: 'A'), AssetSyncVerification.unverified,);
+      verify(owner: false, current: 'A'),
+      AssetSyncVerification.unverified,
+    );
   });
   test('absent remote and empty local differs from unread remote', () {
     expect(verify(local: false, exists: false), AssetSyncVerification.empty);
@@ -48,21 +50,24 @@ void main() {
   });
   test('remote only row is not acknowledgement of a restored local value', () {
     expect(
-        verify(local: false, current: null), AssetSyncVerification.unverified,);
+      verify(local: false, current: null),
+      AssetSyncVerification.unverified,
+    );
   });
   test('comparison respects JSON semantic boundaries', () {
     expect(
-        assetSyncPayloadsEqual(
-          {
-            'a': 1,
-            'b': [true, null],
-          },
-          {
-            'b': [true, null],
-            'a': 1.0,
-          },
-        ),
-        isTrue,);
+      assetSyncPayloadsEqual(
+        {
+          'a': 1,
+          'b': [true, null],
+        },
+        {
+          'b': [true, null],
+          'a': 1.0,
+        },
+      ),
+      isTrue,
+    );
     expect(assetSyncPayloadsEqual([1, 2], [2, 1]), isFalse);
     expect(assetSyncPayloadsEqual({'a': null}, {}), isFalse);
     expect(assetSyncPayloadsEqual(double.infinity, double.infinity), isFalse);
