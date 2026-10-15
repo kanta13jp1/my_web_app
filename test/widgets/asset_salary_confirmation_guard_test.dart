@@ -49,7 +49,7 @@ Future<void> pumpSalaryCandidate(
       home: AssetManagementPage(
         debugNow: DateTime(2026, 6, 20),
         debugInitialAssetData: {
-          '2026-05-24': {'銀行A': 1000, '現金': 0},
+          '2026-05-24': const {'銀行A': 1000, '現金': 0},
           '2026-06-20': {'銀行A': balanceJump ? 201000 : 1000, '現金': 0},
         },
         debugInitialPayslipSalaryIncomes: payslipOnly
