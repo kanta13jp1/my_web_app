@@ -183,6 +183,8 @@ jobs:
         if: env.CLOUD_PROFILE == 'test'
         run: |
           grep -RnE 'AssetSalarySpendingEntries.build|_cycleSalaryIncomeTotal\(|_buildSalarySpendingBreakdown\(' lib test --include='*.dart'
+          flutter analyze
+          flutter test test/services/asset_income_source_evidence_test.dart --reporter expanded
 
       - name: Build Flutter Web in cloud
         id: web_build
