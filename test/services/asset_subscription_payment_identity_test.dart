@@ -54,7 +54,7 @@ void main() {
   for (final kind in [
     AssetLiabilityAccountKind.creditCard,
     AssetLiabilityAccountKind.deposit,
-    null
+    null,
   ]) {
     test('direct payment routing evidence for $kind', () {
       final debt = AssetCalendarDebtInput(
