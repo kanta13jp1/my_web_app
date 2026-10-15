@@ -193,12 +193,22 @@ class AssetCalendarDaySummary {
 
   bool get hasTransfer => _has(AssetCalendarEventKind.transfer);
 
-  bool get hasUnreconciledExpense => events.any((event) =>
-      event.kind == AssetCalendarEventKind.expense && event.unreconciledExpense,);
+  bool get hasUnreconciledExpense => events.any(
+        (event) =>
+            event.kind == AssetCalendarEventKind.expense &&
+            event.unreconciledExpense,
+      );
 
   double get unreconciledExpenseTotal => events
-      .where((event) => event.kind == AssetCalendarEventKind.expense && event.unreconciledExpense,)
-      .fold<double>(0, (sum, event) => sum + (event.amount ?? 0),);
+      .where(
+        (event) =>
+            event.kind == AssetCalendarEventKind.expense &&
+            event.unreconciledExpense,
+      )
+      .fold<double>(
+        0,
+        (sum, event) => sum + (event.amount ?? 0),
+      );
 
   bool get hasAnyEvent => events.isNotEmpty;
 }
@@ -589,8 +599,8 @@ class AssetPaymentCalendarService {
             kind: AssetCalendarEventKind.expense,
             label: description.isEmpty ? '支出' : description,
             unreconciledExpense: unreconciled,
-            balanceDifferenceAutoRecorded: unreconciled &&
-                description.contains('残高差分から自動記録'),
+            balanceDifferenceAutoRecorded:
+                unreconciled && description.contains('残高差分から自動記録'),
             amount: amount.abs(),
           ),
         );

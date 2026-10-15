@@ -15,7 +15,10 @@ class AssetUnreconciledExpenseBadge extends StatelessWidget {
           children: [
             Icon(Icons.help_outline, size: 10, color: Color(0xFF92400E)),
             SizedBox(width: 2),
-            Text('不明', style: TextStyle(fontSize: 9, color: Color(0xFF92400E)),),
+            Text(
+              '不明',
+              style: TextStyle(fontSize: 9, color: Color(0xFF92400E)),
+            ),
           ],
         ),
       ),

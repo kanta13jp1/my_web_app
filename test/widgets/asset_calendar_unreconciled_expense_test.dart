@@ -10,16 +10,27 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await Supabase.initialize(
-      url: 'http://127.0.0.1:9999', publishableKey: 'test-publishable-key',
+      url: 'http://127.0.0.1:9999',
+      publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
   });
-  testWidgets('narrow badge remains visible with enlarged text', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: MediaQuery(
-      data: MediaQueryData(textScaler: TextScaler.linear(2)),
-      child: Center(child: SizedBox(width: 40, height: 24,
-        child: AssetUnreconciledExpenseBadge(),),),
-    ),),);
+  testWidgets('narrow badge remains visible with enlarged text',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: Center(
+            child: SizedBox(
+              width: 40,
+              height: 24,
+              child: AssetUnreconciledExpenseBadge(),
+            ),
+          ),
+        ),
+      ),
+    );
     expect(find.text('不明'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -29,25 +40,40 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await tester.binding.setSurfaceSize(Size(width, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(MaterialApp(home: AssetManagementPage(
-        debugNow: DateTime(2026, 6, 20),
-        debugCalendarNow: DateTime(2026, 6, 20),
-        debugInitialAssetData: const {'2026-06-20': {'Synthetic bank': 10000}},
-        debugInitialRecentFlows: const [
-          {'description': '使途不明金（残高差分から自動記録）',
-            'amount': 700, 'action_type': 'expense',
-            'occurred_at': '2026-06-20T12:00:00'},
-          {'description': '通常の購入', 'amount': 300,
-            'action_type': 'expense', 'occurred_at': '2026-06-20T12:00:00'},
-        ],
-      ),),);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 6, 20),
+            debugCalendarNow: DateTime(2026, 6, 20),
+            debugInitialAssetData: const {
+              '2026-06-20': {'Synthetic bank': 10000},
+            },
+            debugInitialRecentFlows: const [
+              {
+                'description': '使途不明金（残高差分から自動記録）',
+                'amount': 700,
+                'action_type': 'expense',
+                'occurred_at': '2026-06-20T12:00:00',
+              },
+              {
+                'description': '通常の購入',
+                'amount': 300,
+                'action_type': 'expense',
+                'occurred_at': '2026-06-20T12:00:00',
+              },
+            ],
+          ),
+        ),
+      );
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
-      final badge=find.byKey(const Key('asset_calendar_unreconciled_2026_6_20'));
+      final badge =
+          find.byKey(const Key('asset_calendar_unreconciled_2026_6_20'));
       await tester.ensureVisible(badge);
       await tester.pump();
       expect(badge, findsOneWidget);
-      expect(find.byKey(const Key('asset_calendar_unreconciled_details')), findsOneWidget);
+      expect(find.byKey(const Key('asset_calendar_unreconciled_details')),
+          findsOneWidget);
       expect(find.textContaining('日別支出に含まれる参考内訳'), findsOneWidget);
       expect(find.textContaining('消費を確認した記録ではありません'), findsOneWidget);
       expect(tester.takeException(), isNull);
