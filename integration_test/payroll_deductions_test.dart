@@ -48,7 +48,16 @@ void main() {
         'gross_amount': 1000,
         'net_amount': 700,
         'social_insurance_total': 200,
-        'deductions': {'income_tax': 50, 'resident_tax': 40, 'ideco': 10},
+        'deductions': {
+          'income_tax': 50,
+          'resident_tax': 40,
+          'health_insurance': 70,
+          'employees_pension_insurance': 100,
+          'employment_insurance': 20,
+          'long_term_care_insurance': 5,
+          'employees_pension_fund_contribution': 5,
+          'ideco': 10,
+        },
       };
 
   testWidgets('confirmed source shows tax and social separately and recreates',
