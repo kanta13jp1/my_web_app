@@ -34,12 +34,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.byTooltip('カード・項目を検索して移動'));
     await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
     final search = find.byType(TextField).last;
     await tester.enterText(search, '給与控除');
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('給与明細・税金・社会保険料の控除'), findsNothing);
     await tester.enterText(search, '月末記録');
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('月末の残高記録'), findsOneWidget);
     await tester.ensureVisible(find.text('月末の残高記録'));
     await tester.pump();
