@@ -2,7 +2,7 @@ import 'dart:convert';
 import '../../domain/models/philosophy_reading.dart';
 
 // Factual metadata only; attribution sources and edition sources are separate.
-const philosophyCatalogVersion = '2026-10-13-catalog-title-lookup-audit';
+const philosophyCatalogVersion = '2026-10-16-aristotle-metaphysics-iwanami';
 
 class PhilosophyCatalogEdition {
   const PhilosophyCatalogEdition(
@@ -526,6 +526,36 @@ const philosophyCatalogEditions = [
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784476011609',
     ),
     note: '羅什漢訳を基準にサンスクリット詩頌と対照した訳注。入手先では中古を含む在庫・版を確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'aristotle:metaphysics',
+    '形而上学（上）・岩波書店（岩波文庫）',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '出隆',
+      year: '1959',
+      isbn: '9784003360439',
+      volume: '岩波文庫 青604-3・上巻',
+      totalPages: 420,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003360439',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360439',
+    ),
+    note: '上下二巻のうち上巻。ページ数はこの巻のみの値です。出版年は書誌の初版年で、手元の刷の発行年は別途確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'aristotle:metaphysics',
+    '形而上学（下）・岩波書店（岩波文庫）',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '出隆',
+      year: '1961',
+      isbn: '9784003360446',
+      volume: '岩波文庫 青604-4・下巻',
+      totalPages: 458,
+      sourceUrl: 'https://www.books.or.jp/book-details/9784003360446',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360446',
+    ),
+    note: '上下二巻のうち下巻。ページ数はこの巻のみの値です。出版年は書誌の初版年で、手元の刷の発行年は別途確認してください。',
   ),
   PhilosophyCatalogEdition(
     'aristotle:metaphysics',

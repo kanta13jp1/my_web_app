@@ -996,3 +996,44 @@ test('duplicate shared and legacy works preserve both reading cycles across sear
   expect(changed.metadata.cycles[0].entries).toEqual(original.metadata.cycles[0].entries);
   expect(changed.metadata.cycles[0].edition).toEqual({ ...original.metadata.cycles[0].edition, publisher: '保持版B編集' });
 });
+
+test('Metaphysics Iwanami upper and lower volumes can be selected, restored and edited independently', async ({ page }, info) => {
+  test.setTimeout(180000);
+  const volumes=[
+    {label:'形而上学（上）・岩波書店',isbn:'9784003360439',pages:'420',year:'1959',volume:'岩波文庫 青604-3・上巻',source:'https://www.hanmoto.com/bd/isbn/9784003360439'},
+    {label:'形而上学（下）・岩波書店',isbn:'9784003360446',pages:'458',year:'1961',volume:'岩波文庫 青604-4・下巻',source:'https://www.books.or.jp/book-details/9784003360446'},
+  ];
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+  await openWork(page,'形而上学');
+  for (const [index,book] of volumes.entries()) {
+    await page.getByRole('button',{name:index===0?'読書を始める':'別の版・再読を始める',exact:true}).click();
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await restoredField(page,/^書籍情報を検索/,'形而上学');
+    const candidate=page.getByRole('button',{name:new RegExp('^'+book.label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))});
+    await revealReadingControl(page,candidate);await candidate.click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await restoredField(page,/^出版社/,'岩波書店');await restoredField(page,/^訳者/,'出隆');
+    await restoredField(page,/^ISBN/,book.isbn);await restoredField(page,/^総ページ数/,book.pages);
+    await restoredField(page,/^出版年/,book.year);await restoredField(page,/^巻・版の名前/,book.volume);
+    await restoredField(page,/^版情報の出典URL/,book.source);
+    await restoredField(page,/^書籍・購入URL/,'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn);
+    await capture(page,info,'metaphysics-'+book.isbn+'-prefilled');
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'形而上学');
+  }
+  await editRegisteredEdition(page,volumes[1].isbn);
+  await field(page,/^出版社/,'岩波書店・手元の版を確認');
+  await page.getByRole('button',{name:'保存',exact:true}).click();await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+  for(const [index,book] of volumes.entries()) {
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'形而上学');
+    await editRegisteredEdition(page,book.isbn);
+    await restoredField(page,/^出版社/,index===0?'岩波書店':'岩波書店・手元の版を確認');
+    await restoredField(page,/^訳者/,'出隆');await restoredField(page,/^ISBN/,book.isbn);
+    await restoredField(page,/^総ページ数/,book.pages);await restoredField(page,/^巻・版の名前/,book.volume);
+    await restoredField(page,/^版情報の出典URL/,book.source);
+    await capture(page,info,'metaphysics-'+book.isbn+'-reloaded');
+    await page.getByRole('button',{name:'キャンセル',exact:true}).click();
+  }
+});
