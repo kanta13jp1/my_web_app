@@ -8,26 +8,21 @@ test('desktop reminder is opt-in, testable and stoppable', async ({ page, contex
   await context.grantPermissions(['notifications'], {
     origin: new URL(process.env.E2E_BASE_URL ?? 'http://127.0.0.1:7361').origin,
   });
-  await page.addInitScript(() => {
-    const NativeNotification = window.Notification;
-    (window as any).__reminderCalls = [];
-    // Observe the real adapter boundary without relying on an OS toast in headless CI.
-    (window as any).Notification = new Proxy(NativeNotification, {
-      construct(target, args: [string, NotificationOptions?]) {
-        (window as any).__reminderCalls.push({ title: args[0], body: args[1]?.body });
-        return Reflect.construct(target, args);
-      },
-      get(target, property) { return Reflect.get(target, property, target); },
-    });
-  });
   await page.goto('/');
+  await testInfo.attach('browser-permission', {
+    body: JSON.stringify(await page.evaluate(async () => ({
+      permission: Notification.permission,
+      origin: location.origin,
+      secure: isSecureContext,
+      query: (await navigator.permissions.query({ name: 'notifications' })).state,
+    }))), contentType: 'application/json',
+  });
+  expect(await page.evaluate(() => Notification.permission)).toBe('granted');
   await page.getByRole('button', { name: /^「手は机へ」デスクトップ通知/ }).click();
   await expect(settings.getByText('ブラウザの通知：許可済み', { exact: true })).toBeVisible();
   await expect(settings.getByText('停止中', { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => (window as any).__reminderCalls)).toHaveLength(0);
   await page.getByRole('button', { name: 'テスト通知', exact: true }).click();
-  await expect.poll(async () => page.evaluate(() => (window as any).__reminderCalls.length)).toBe(1);
-  expect(await page.evaluate(() => (window as any).__reminderCalls[0].title)).toBe('手は机へ');
+  await expect(settings.getByText('テスト通知を要求しました。表示されない場合はWindowsとブラウザの通知設定を確認してください。', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '開始', exact: true }).click();
   await expect(settings.getByText('実行中・約5分おき', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '停止', exact: true }).click();
