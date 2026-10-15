@@ -148,7 +148,9 @@ class _BrowserReminderSettingsState extends State<BrowserReminderSettings>
           ],
           if (controller.lastRequestedAt != null) ...[
             const SizedBox(height: 8),
-            Text('最終表示応答：${controller.lastRequestedAt!.toLocal().toIso8601String().split('T').last.split('.').first}'),
+            Text(
+              '最終表示応答：${controller.lastRequestedAt!.toLocal().toIso8601String().split('T').last.split('.').first}',
+            ),
           ],
           if (controller.message != null) ...[
             const SizedBox(height: 12),
