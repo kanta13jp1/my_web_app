@@ -75,7 +75,7 @@ void main() {
     final saved = await const AssetLiabilityMonthlyStateStore().loadMonth(
       DateTime(2026, 5),
     );
-    expect(saved.paidAccountNames, contains('Synthetic cycle cost'));
+    expect(saved.paidAccountNames, contains('custom_syntheticcyclecost'));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });

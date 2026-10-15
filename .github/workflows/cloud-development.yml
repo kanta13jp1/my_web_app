@@ -181,7 +181,7 @@ jobs:
 
       - name: Test in cloud
         if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
-        run: flutter analyze && flutter test test/widgets/asset_calendar_warning_page_test.dart --reporter expanded
+        run: flutter analyze && flutter test test/services/asset_subscription_payment_identity_test.dart test/services/asset_warning_audit_test.dart test/widgets/asset_calendar_shortfall_details_test.dart test/services/asset_payment_calendar_service_test.dart test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_calendar_warning_page_test.dart test/widgets/asset_management_page_smoke_test.dart --reporter expanded
 
       - name: Build Flutter Web in cloud
         id: web_build

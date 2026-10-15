@@ -14,7 +14,7 @@ class AssetCashflowForecastInputs {
     required this.recurringIncome,
     required this.recurringOutflow,
     required this.oneTimeIncome,
-    this.unverifiedSubscriptionLabels = const <String>[],
+    this.unverifiedPaymentLabels = const <String>[],
   });
 
   /// 現金・預金(残高がプラスの流動資産)の合計。予測の起点残高。
@@ -22,7 +22,7 @@ class AssetCashflowForecastInputs {
 
   /// Legacy contracts whose payment method is not evidenced. Their amounts are
   /// conservative assumptions, not confirmed bank withdrawals.
-  final List<String> unverifiedSubscriptionLabels;
+  final List<String> unverifiedPaymentLabels;
 
   final List<AssetCashflowRecurringEntry> recurringIncome;
   final List<AssetCashflowRecurringEntry> recurringOutflow;
@@ -104,17 +104,25 @@ class AssetCashflowForecastInputs {
       }
     }
 
+    final sourceAccountKindsById = {
+      for (final account in accounts) account.id: account.kind,
+    };
+    final unverifiedPaymentLabels = <String>[];
     final recurringOutflow = <AssetCashflowRecurringEntry>[];
     for (final row in debtRows) {
       final debt = AssetCalendarDebtInput.fromDebtRow(
         row,
         paymentDayOverrides: paymentDayOverrides,
+        sourceAccountKindsById: sourceAccountKindsById,
       );
       if (!debt.isDirectCashflowTarget ||
           debt.balance >= 0 ||
           (debt.paymentDay ?? 0) <= 0 ||
           debt.scheduledPaymentAmount <= 0) {
         continue;
+      }
+      if (debt.hasPaymentRoutingConflict) {
+        unverifiedPaymentLabels.add('${debt.name}（支払方式とカード原資が不一致・要照合）');
       }
       recurringOutflow.add(
         AssetCashflowRecurringEntry(
@@ -129,9 +137,12 @@ class AssetCashflowForecastInputs {
       );
     }
     final debtInputs = [
-      for (final row in debtRows) AssetCalendarDebtInput.fromDebtRow(row),
+      for (final row in debtRows)
+        AssetCalendarDebtInput.fromDebtRow(
+          row,
+          sourceAccountKindsById: sourceAccountKindsById,
+        ),
     ];
-    final unverifiedSubscriptionLabels = <String>[];
     for (final subscription in subscriptions) {
       if (AssetPaymentCalendarService.subscriptionIsIncludedInCard(
         subscription,
@@ -148,7 +159,7 @@ class AssetCashflowForecastInputs {
       if (resolved != null && resolved.isDirectCashflowTarget) continue;
       final entry = subscriptionRecurringEntry(subscription);
       if (entry != null) {
-        unverifiedSubscriptionLabels.add(entry.label);
+        unverifiedPaymentLabels.add(entry.label);
         recurringOutflow.add(
           AssetCashflowRecurringEntry(
             dayOfMonth: entry.dayOfMonth,
@@ -174,7 +185,7 @@ class AssetCashflowForecastInputs {
       recurringIncome: recurringIncome,
       recurringOutflow: recurringOutflow,
       oneTimeIncome: oneTimeIncome,
-      unverifiedSubscriptionLabels: unverifiedSubscriptionLabels,
+      unverifiedPaymentLabels: unverifiedPaymentLabels,
     );
   }
 

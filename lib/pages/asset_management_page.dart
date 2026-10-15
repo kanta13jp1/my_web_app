@@ -16847,10 +16847,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (inputs.unverifiedSubscriptionLabels.isNotEmpty)
+          if (inputs.unverifiedPaymentLabels.isNotEmpty)
             Text(
-              '支払方法未照合の固定費を現金支出に仮置きした条件付き予測です。'
-              '確定した不足ではありません。対象: ${inputs.unverifiedSubscriptionLabels.join('、')}',
+              '支払方法未照合の支払を現金支出に仮置きした条件付き予測です。'
+              '確定した不足ではありません。対象: ${inputs.unverifiedPaymentLabels.join('、')}',
               key: const Key('asset_forecast_unverified_payments'),
             ),
           AssetCashflowForecastCard(
@@ -17170,6 +17170,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         AssetCalendarDebtInput.fromDebtRow(
           row,
           paymentDayOverrides: _debtPaymentDayOverrides,
+          sourceAccountKindsById: {
+            for (final account in workbook?.accounts ?? <AssetLiabilityAccount>[])
+              account.id: account.kind,
+          },
           paidPeriodStart: paidPeriodStart,
           paidPeriodEndExclusive: paidPeriodEndExclusive,
         ),

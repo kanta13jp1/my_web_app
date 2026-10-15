@@ -51,6 +51,36 @@ AssetPaymentCalendarMonth contractCalendar({
 }
 
 void main() {
+  for (final kind in [AssetLiabilityAccountKind.creditCard,
+    AssetLiabilityAccountKind.deposit, null]) {
+    test('direct payment routing evidence for $kind', () {
+      final debt = AssetCalendarDebtInput(
+        name: 'Synthetic routed payment',
+        balance: -500,
+        paymentDay: 20,
+        scheduledPaymentAmount: 500,
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentSourceAccountKind: kind,
+      );
+      final result = AssetPaymentCalendarService.buildRange(
+        start: DateTime(2026, 10),
+        endExclusive: DateTime(2026, 11),
+        asOf: DateTime(2026, 10, 15),
+        flows: const [],
+        startingCashBalance: 100,
+        debts: [debt],
+        subscriptions: const [],
+      );
+      final event = result.dayFor(DateTime(2026, 10, 20))!.events.single;
+      expect(event.paymentMethodUnverified,
+        kind == AssetLiabilityAccountKind.creditCard,);
+      expect(result.scheduledOutflowTotal, 500);
+      if (kind == AssetLiabilityAccountKind.creditCard) {
+        expect(event.label, contains('支払方式とカード原資が不一致'));
+      }
+    });
+  }
+
   for (final invoice in [500.0, 0.0]) {
     test('explicit contract identity survives override invoice $invoice', () {
       final result = contractCalendar(invoice: invoice);

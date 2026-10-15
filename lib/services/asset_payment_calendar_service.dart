@@ -20,6 +20,7 @@ class AssetCalendarDebtInput {
     this.paidPeriodStart,
     this.paidPeriodEndExclusive,
     this.paymentSourceAccountName,
+    this.paymentSourceAccountKind,
     this.paymentAmountEstimated = true,
     this.billingConfirmed = false,
   });
@@ -27,6 +28,7 @@ class AssetCalendarDebtInput {
   factory AssetCalendarDebtInput.fromDebtRow(
     AssetLiabilityDebtRow row, {
     Map<String, int>? paymentDayOverrides,
+    Map<String, AssetLiabilityAccountKind> sourceAccountKindsById = const {},
     DateTime? paidPeriodStart,
     DateTime? paidPeriodEndExclusive,
   }) {
@@ -48,6 +50,7 @@ class AssetCalendarDebtInput {
       paid: row.paid,
       paidPeriodStart: paidPeriodStart,
       paidPeriodEndExclusive: paidPeriodEndExclusive,
+      paymentSourceAccountKind: sourceAccountKindsById[row.paymentSourceAccountId],
       paymentSourceAccountName: row.paymentSourceAccountName,
       paymentAmountEstimated: row.paymentAmountEstimated,
       billingConfirmed: row.billingConfirmed,
@@ -77,6 +80,12 @@ class AssetCalendarDebtInput {
   /// conservative rule for future dates; callers must not invent a period.
   final DateTime? paidPeriodStart;
   final DateTime? paidPeriodEndExclusive;
+  final AssetLiabilityAccountKind? paymentSourceAccountKind;
+
+  bool get hasPaymentRoutingConflict =>
+      paymentMethod == AssetLiabilityPaymentMethod.direct &&
+      paymentSourceAccountKind == AssetLiabilityAccountKind.creditCard;
+
   final String? paymentSourceAccountName;
   final bool paymentAmountEstimated;
   final bool billingConfirmed;
@@ -466,7 +475,10 @@ class AssetPaymentCalendarService {
             kind: row.isFixedCost
                 ? AssetCalendarEventKind.subscription
                 : AssetCalendarEventKind.debtPayment,
-            label: row.isFixedCost
+            paymentMethodUnverified: row.hasPaymentRoutingConflict,
+            label: row.hasPaymentRoutingConflict
+                ? '${row.name}（支払方式とカード原資が不一致・要照合）'
+                : row.isFixedCost
                 ? (effectivePaid ? '${row.name} (支払済)' : row.name)
                 : (effectivePaid ? '${row.name} (支払済)' : '${row.name} 返済'),
             amount: amount,
@@ -683,6 +695,7 @@ class AssetPaymentCalendarService {
                 paid: debt.paid,
                 paidPeriodStart: debt.paidPeriodStart,
                 paidPeriodEndExclusive: debt.paidPeriodEndExclusive,
+                paymentSourceAccountKind: debt.paymentSourceAccountKind,
                 paymentSourceAccountName: debt.paymentSourceAccountName,
                 paymentAmountEstimated: debt.paymentAmountEstimated,
                 billingConfirmed: debt.billingConfirmed,
