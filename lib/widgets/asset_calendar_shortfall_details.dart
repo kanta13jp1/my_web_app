@@ -60,8 +60,9 @@ class AssetCalendarShortfallDetails extends StatelessWidget {
       (sum, day) =>
           sum +
           day.events
-              .where((event) =>
-                  event.kind == AssetCalendarEventKind.expectedInflow)
+              .where(
+                (event) => event.kind == AssetCalendarEventKind.expectedInflow,
+              )
               .fold<double>(0, (amount, event) => amount + (event.amount ?? 0)),
     );
     final textStyle = Theme.of(context).textTheme.bodySmall;
