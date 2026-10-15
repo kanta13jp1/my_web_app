@@ -82,12 +82,18 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
   @override
   Future<List<PayrollSnapshotAccount>> accounts() async {
     _checkOwner();
-    final rows = await client.from('asset_payroll_accounts')
-        .select('id,display_label').eq('user_id', ownerId)
-        .eq('archived', false).order('display_label');
+    final rows = await client
+        .from('asset_payroll_accounts')
+        .select('id,display_label')
+        .eq('user_id', ownerId)
+        .eq('archived', false)
+        .order('display_label');
     _checkOwner();
-    return [for (final row in rows)
-      PayrollSnapshotAccount(row['id'] as String, row['display_label'] as String)];
+    return [
+      for (final row in rows)
+        PayrollSnapshotAccount(
+            row['id'] as String, row['display_label'] as String,),
+    ];
   }
 
   @override
@@ -97,32 +103,40 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
       throw ArgumentError('口座の呼び名は1〜120文字です。');
     }
     await client.from('asset_payroll_accounts').insert({
-      'user_id': ownerId, 'display_label': label.trim(),
+      'user_id': ownerId,
+      'display_label': label.trim(),
     });
     _checkOwner();
   }
 
-  PayrollSnapshotRecord _record(Map<String, dynamic> row) => PayrollSnapshotRecord(
-    id: row['id'] as String,
-    balanceYen: (row['balance_yen'] as num).toInt(),
-    depositDate: DateTime.parse(row['deposit_date'] as String),
-    note: row['source_note'] as String,
-  );
+  PayrollSnapshotRecord _record(Map<String, dynamic> row) =>
+      PayrollSnapshotRecord(
+        id: row['id'] as String,
+        balanceYen: (row['balance_yen'] as num).toInt(),
+        depositDate: DateTime.parse(row['deposit_date'] as String),
+        note: row['source_note'] as String,
+      );
 
   @override
-  Future<PayrollSnapshotRecord?> selected(String accountId, DateTime month) async {
+  Future<PayrollSnapshotRecord?> selected(
+      String accountId, DateTime month,) async {
     _checkOwner();
-    final selection = await client.from('asset_payroll_balance_selections')
-        .select('observation_id').eq('user_id', ownerId)
+    final selection = await client
+        .from('asset_payroll_balance_selections')
+        .select('observation_id')
+        .eq('user_id', ownerId)
         .eq('account_id', accountId)
         .eq('payroll_month', payrollDate(DateTime(month.year, month.month)))
         .maybeSingle();
     _checkOwner();
     if (selection == null) return null;
-    final row = await client.from('asset_payroll_balance_observations')
+    final row = await client
+        .from('asset_payroll_balance_observations')
         .select('id,balance_yen,deposit_date,source_note')
-        .eq('user_id', ownerId).eq('id', selection['observation_id'])
-        .eq('account_id', accountId).maybeSingle();
+        .eq('user_id', ownerId)
+        .eq('id', selection['observation_id'])
+        .eq('account_id', accountId)
+        .maybeSingle();
     _checkOwner();
     return row == null ? null : _record(row);
   }
@@ -130,15 +144,21 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
   @override
   Future<PayrollSnapshotRecord?> byRequest(PayrollSnapshotDraft draft) async {
     _checkOwner();
-    final row = await client.from('asset_payroll_balance_observations')
-        .select('id,balance_yen,deposit_date,source_note,account_id,payroll_month,selection_reason,expected_previous_id')
-        .eq('user_id', ownerId).eq('request_id', draft.requestId).maybeSingle();
+    final row = await client
+        .from('asset_payroll_balance_observations')
+        .select(
+            'id,balance_yen,deposit_date,source_note,account_id,payroll_month,selection_reason,expected_previous_id',)
+        .eq('user_id', ownerId)
+        .eq('request_id', draft.requestId)
+        .maybeSingle();
     _checkOwner();
     if (row == null) return null;
     if (row['account_id'] != draft.accountId ||
-        row['payroll_month'] != payrollDate(DateTime(draft.month.year, draft.month.month)) ||
+        row['payroll_month'] !=
+            payrollDate(DateTime(draft.month.year, draft.month.month)) ||
         row['deposit_date'] != payrollDate(draft.depositDate) ||
-        row['balance_yen'] != draft.balanceYen || row['source_note'] != draft.note ||
+        row['balance_yen'] != draft.balanceYen ||
+        row['source_note'] != draft.note ||
         row['selection_reason'] != draft.reason ||
         row['expected_previous_id'] != draft.previousId) {
       throw StateError('保存内容が一致しません。再登録せず確認してください。');
@@ -149,11 +169,14 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
   @override
   Future<void> confirm(PayrollSnapshotDraft draft) async {
     _checkOwner();
-    if (draft.note.trim().isEmpty || draft.note.length > 300 ||
-        draft.reason.trim().isEmpty || draft.reason.length > 300) {
+    if (draft.note.trim().isEmpty ||
+        draft.note.length > 300 ||
+        draft.reason.trim().isEmpty ||
+        draft.reason.length > 300) {
       throw ArgumentError('確認資料メモと理由は1〜300文字です。');
     }
-    await client.rpc('confirm_payroll_balance_observation', params: draft.toRpc());
+    await client.rpc('confirm_payroll_balance_observation',
+        params: draft.toRpc(),);
     _checkOwner();
   }
 }

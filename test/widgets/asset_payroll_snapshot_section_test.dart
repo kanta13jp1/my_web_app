@@ -14,12 +14,15 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
   @override
   Future<void> createAccount(String label) async {}
   @override
-  Future<PayrollSnapshotRecord?> selected(String accountId, DateTime month) async =>
+  Future<PayrollSnapshotRecord?> selected(
+          String accountId, DateTime month,) async =>
       month.month == 1 && saved != null ? _record() : null;
   PayrollSnapshotRecord _record() => PayrollSnapshotRecord(
-    id: 'synthetic-observation', balanceYen: saved!.balanceYen,
-    depositDate: saved!.depositDate, note: saved!.note,
-  );
+        id: 'synthetic-observation',
+        balanceYen: saved!.balanceYen,
+        depositDate: saved!.depositDate,
+        note: saved!.note,
+      );
   @override
   Future<PayrollSnapshotRecord?> byRequest(PayrollSnapshotDraft draft) async =>
       saved?.requestId == draft.requestId ? _record() : null;
@@ -32,9 +35,16 @@ class SyntheticSnapshotStore implements PayrollSnapshotStore {
 }
 
 Future<void> showForm(WidgetTester tester, SyntheticSnapshotStore store) async {
-  await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
-    child: AssetPayrollSnapshotSection(store: store, initialMonth: DateTime(2020)),
-  ))));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: AssetPayrollSnapshotSection(
+              store: store, initialMonth: DateTime(2020),),
+        ),
+      ),
+    ),
+  );
   await tester.pumpAndSettle();
   await tester.enterText(find.byType(TextFormField).at(0), '2020-01-25');
   await tester.enterText(find.byType(TextFormField).at(1), '120000');
@@ -45,11 +55,16 @@ Future<void> showForm(WidgetTester tester, SyntheticSnapshotStore store) async {
 }
 
 void main() {
-  testWidgets('preview requires immediate-balance acknowledgement before save', (tester) async {
+  testWidgets('preview requires immediate-balance acknowledgement before save',
+      (tester) async {
     final store = SyntheticSnapshotStore();
     await showForm(tester, store);
     expect(store.writes, 0);
-    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, '確認して保存')).onPressed, isNull);
+    expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, '確認して保存'))
+            .onPressed,
+        isNull,);
     await tester.tap(find.byType(CheckboxListTile));
     await tester.pumpAndSettle();
     await tester.tap(find.text('確認して保存'));
@@ -61,7 +76,8 @@ void main() {
     expect(find.text('前月との差：比較対象未取得'), findsOneWidget);
   });
 
-  testWidgets('lost response reconciles the same request without another write', (tester) async {
+  testWidgets('lost response reconciles the same request without another write',
+      (tester) async {
     final store = SyntheticSnapshotStore()..failAfterCommit = true;
     await showForm(tester, store);
     await tester.tap(find.byType(CheckboxListTile));
