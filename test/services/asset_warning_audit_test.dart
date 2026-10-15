@@ -153,6 +153,9 @@ void main() {
       latestSnapshot: const {'SyntheticCard': -10000, '現金': 10000},
       baseDate: DateTime(2026, 10, 15),
       includeDefaultFixedPayments: false,
+      paymentDayOverrides: const {'custom_syntheticcard': 20},
+      monthlyPaymentOverrides: const {'custom_syntheticcard': 10000},
+      billingConfirmedAccountIds: const {'custom_syntheticcard'},
       recurringFixedCosts: const [
         AssetRecurringFixedCost(
           id: 'synthetic_service',
@@ -192,6 +195,11 @@ void main() {
       inputs.recurringOutflow.any((e) => e.label == 'SyntheticCard'),
       isTrue,
     );
+    final cardPayment = inputs.recurringOutflow.singleWhere(
+      (entry) => entry.label == 'SyntheticCard',
+    );
+    expect(cardPayment.dayOfMonth, 20);
+    expect(cardPayment.amount, 10000);
   });
 
   test('future expected income is a forecast input, not observed balance', () {
