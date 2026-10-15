@@ -16499,9 +16499,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: scheme.onTertiaryContainer,
                 ),
               ),
-              if (entries
-                      .where((e) => e.key.isEligibleForBulkConfirm)
-                      .length >=
+              if (entries.where((e) => e.key.isEligibleForBulkConfirm).length >=
                   2) ...[
                 const SizedBox(height: 8),
                 Align(
@@ -16560,11 +16558,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                         // 複数引落がある場合の合計不足も検出する)。
                                         entry.key.shortfallWarningMessage(
                                           formattedSourceBalance:
-                                              _formatManagementYen(entry.key.sourceAccountBalance!),
-                                          formattedCreditLimit:
-                                              entry.key.sourceAccountCreditLimit == null
-                                                  ? null
-                                                  : _formatManagementYen(entry.key.sourceAccountCreditLimit!),
+                                              _formatManagementYen(entry
+                                                  .key.sourceAccountBalance!),
+                                          formattedCreditLimit: entry.key
+                                                      .sourceAccountCreditLimit ==
+                                                  null
+                                              ? null
+                                              : _formatManagementYen(entry.key
+                                                  .sourceAccountCreditLimit!),
                                         )!,
                                         style:
                                             theme.textTheme.bodySmall?.copyWith(
