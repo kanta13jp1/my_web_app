@@ -11,16 +11,16 @@ void main() {
         var pauses = 0;
         await tester.pumpWidget(
           MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: AssetLegacyMealRuleCard(
-                hasHistory: mode != 'none',
-                isEnabled: mode == 'active',
-                entries: const ['合成の以前の振り返り'],
-                onPause: () => pauses++,
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: AssetLegacyMealRuleCard(
+                  hasHistory: mode != 'none',
+                  isEnabled: mode == 'active',
+                  entries: const ['合成の以前の振り返り'],
+                  onPause: () => pauses++,
+                ),
               ),
             ),
-          ),
           ),
         );
         if (mode == 'none') {
