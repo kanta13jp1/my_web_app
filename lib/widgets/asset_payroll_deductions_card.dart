@@ -35,9 +35,14 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
     final taxMonths = months.where((m) => m.confirmedTaxYen != null).toList();
     final socialMonths =
         months.where((m) => m.confirmedSocialYen != null).toList();
-    final taxSum = taxMonths.fold<int>(0, (sum, m) => sum + m.confirmedTaxYen!,);
-    final socialSum =
-        socialMonths.fold<int>(0, (sum, m) => sum + m.confirmedSocialYen!,);
+    final taxSum = taxMonths.fold<int>(
+      0,
+      (sum, m) => sum + m.confirmedTaxYen!,
+    );
+    final socialSum = socialMonths.fold<int>(
+      0,
+      (sum, m) => sum + m.confirmedSocialYen!,
+    );
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

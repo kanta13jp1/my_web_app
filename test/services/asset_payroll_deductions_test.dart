@@ -26,94 +26,225 @@ void main() {
         },
       };
 
-  test('social total replaces components and iDeCo is neither tax nor social',
-      () {
-    final row = PayrollDeductions.fromRow(fixture())!;
-    expect(row.taxTotalYen, 90,);
-    expect(row.socialTotalYen, 200,);
-    expect(row.socialMismatchYen, 0,);
-    expect(row.identifiedSubtotalYen, 300,);
-    expect(row.derivedDeductionTotalYen, 300,);
-    expect(row.unidentifiedDifferenceYen, 0,);
-  },);
-  test('missing values are unknown while explicitly reported zeros remain zero',
-      () {
-    final raw = fixture();
-    raw['deductions'] = {'income_tax': 0, 'resident_tax': 0};
-    raw['social_insurance_total'] = null;
-    final row = PayrollDeductions.fromRow(raw)!;
-    expect(row.taxTotalYen, 0,);
-    expect(row.socialTotalYen, isNull,);
-    expect(row.items['health_insurance'], isNull,);
-  },);
-  test('partial tax extraction has no full tax total', () {
-    final raw = fixture();
-    (raw['deductions'] as Map).remove('resident_tax',);
-    final row = PayrollDeductions.fromRow(raw)!;
-    expect(row.taxTotalYen, isNull,);
-    expect(row.items['income_tax'], 50,);
-  },);
-  test('negative withholding adjustment retains its sign', () {
-    final raw = fixture();
-    (raw['deductions'] as Map)['income_tax'] = -50;
-    final row = PayrollDeductions.fromRow(raw)!;
-    expect(row.taxTotalYen, -10,);
-    expect(row.unidentifiedDifferenceYen, 100,);
-  },);
-  test('unknown keys and invalid numeric values retain unknown classification',
-      () {
-    final raw = fixture();
-    (raw['deductions'] as Map)['unknown_component'] = 15;
-    (raw['deductions'] as Map)['income_tax'] = '50';
-    final row = PayrollDeductions.fromRow(raw)!;
-    expect(row.unclassified['unknown_component'], 15,);
-    expect(row.taxTotalYen, isNull,);
-    expect(PayrollDeductions.readYen(double.infinity), isNull,);
-    expect(PayrollDeductions.readYen(12.5), isNull,);
-  },);
-  test('social mismatch is visible without adding two social totals', () {
-    final raw = fixture();
-    raw['social_insurance_total'] = 210;
-    final row = PayrollDeductions.fromRow(raw)!;
-    expect(row.socialMismatchYen, 10,);
-    expect(row.identifiedSubtotalYen, 310,);
-  },);
-  test('only owner rows and confirmed months enter comparison', () {
-    final months =
-        AssetPayrollDeductions.months(ownerId: 'owner-a', year: 2030, rows: [
-      fixture(),
-      fixture(id: 'foreign', owner: 'owner-b'),
-      fixture(id: 'auto', status: 'auto', date: '2030-03-20'),
-      fixture(id: 'rejected', status: 'rejected', date: '2030-04-20'),
-    ],);
-    expect(months[1].confirmedTaxYen, 90,);
-    expect(months[2].confirmedTaxYen, isNull,);
-    expect(months[3].statements, isEmpty,);
-    expect(months[0].confirmedTaxYen, isNull,);
-  },);
-  test('repeated same source is deduplicated and different content conflicts',
-      () {
-    var months = AssetPayrollDeductions.months(
-        ownerId: 'owner-a', year: 2030, rows: [fixture(), fixture()],);
-    expect(months[1].statements, hasLength(1),);
-    expect(months[1].confirmedTaxYen, 90,);
-    final corrected = fixture();
-    corrected['net_amount'] = 600;
-    months = AssetPayrollDeductions.months(
-        ownerId: 'owner-a', year: 2030, rows: [fixture(), corrected],);
-    expect(months[1].conflicting, isTrue,);
-    expect(months[1].confirmedTaxYen, isNull,);
-  },);
-  test('multiple distinct payslips in one month are combined without loss', () {
-    final months = AssetPayrollDeductions.months(
+  test(
+    'social total replaces components and iDeCo is neither tax nor social',
+    () {
+      final row = PayrollDeductions.fromRow(fixture())!;
+      expect(
+        row.taxTotalYen,
+        90,
+      );
+      expect(
+        row.socialTotalYen,
+        200,
+      );
+      expect(
+        row.socialMismatchYen,
+        0,
+      );
+      expect(
+        row.identifiedSubtotalYen,
+        300,
+      );
+      expect(
+        row.derivedDeductionTotalYen,
+        300,
+      );
+      expect(
+        row.unidentifiedDifferenceYen,
+        0,
+      );
+    },
+  );
+  test(
+    'missing values are unknown while explicitly reported zeros remain zero',
+    () {
+      final raw = fixture();
+      raw['deductions'] = {'income_tax': 0, 'resident_tax': 0};
+      raw['social_insurance_total'] = null;
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.taxTotalYen,
+        0,
+      );
+      expect(
+        row.socialTotalYen,
+        isNull,
+      );
+      expect(
+        row.items['health_insurance'],
+        isNull,
+      );
+    },
+  );
+  test(
+    'partial tax extraction has no full tax total',
+    () {
+      final raw = fixture();
+      (raw['deductions'] as Map).remove(
+        'resident_tax',
+      );
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.taxTotalYen,
+        isNull,
+      );
+      expect(
+        row.items['income_tax'],
+        50,
+      );
+    },
+  );
+  test(
+    'negative withholding adjustment retains its sign',
+    () {
+      final raw = fixture();
+      (raw['deductions'] as Map)['income_tax'] = -50;
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.taxTotalYen,
+        -10,
+      );
+      expect(
+        row.unidentifiedDifferenceYen,
+        100,
+      );
+    },
+  );
+  test(
+    'unknown keys and invalid numeric values retain unknown classification',
+    () {
+      final raw = fixture();
+      (raw['deductions'] as Map)['unknown_component'] = 15;
+      (raw['deductions'] as Map)['income_tax'] = '50';
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.unclassified['unknown_component'],
+        15,
+      );
+      expect(
+        row.taxTotalYen,
+        isNull,
+      );
+      expect(
+        PayrollDeductions.readYen(double.infinity),
+        isNull,
+      );
+      expect(
+        PayrollDeductions.readYen(12.5),
+        isNull,
+      );
+    },
+  );
+  test(
+    'social mismatch is visible without adding two social totals',
+    () {
+      final raw = fixture();
+      raw['social_insurance_total'] = 210;
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.socialMismatchYen,
+        10,
+      );
+      expect(
+        row.identifiedSubtotalYen,
+        310,
+      );
+    },
+  );
+  test(
+    'only owner rows and confirmed months enter comparison',
+    () {
+      final months = AssetPayrollDeductions.months(
         ownerId: 'owner-a',
         year: 2030,
-        rows: [fixture(), fixture(id: 'synthetic-b')],);
-    expect(months[1].statements, hasLength(2),);
-    expect(months[1].confirmedTaxYen, 180,);
-  },);
-  test('invalid or missing dates never roll into another month', () {
-    expect(PayrollDeductions.fromRow(fixture(date: '2030-02-31')), isNull,);
-    expect(PayrollDeductions.fromRow(fixture(date: '')), isNull,);
-  },);
+        rows: [
+          fixture(),
+          fixture(id: 'foreign', owner: 'owner-b'),
+          fixture(id: 'auto', status: 'auto', date: '2030-03-20'),
+          fixture(id: 'rejected', status: 'rejected', date: '2030-04-20'),
+        ],
+      );
+      expect(
+        months[1].confirmedTaxYen,
+        90,
+      );
+      expect(
+        months[2].confirmedTaxYen,
+        isNull,
+      );
+      expect(
+        months[3].statements,
+        isEmpty,
+      );
+      expect(
+        months[0].confirmedTaxYen,
+        isNull,
+      );
+    },
+  );
+  test(
+    'repeated same source is deduplicated and different content conflicts',
+    () {
+      var months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [fixture(), fixture()],
+      );
+      expect(
+        months[1].statements,
+        hasLength(1),
+      );
+      expect(
+        months[1].confirmedTaxYen,
+        90,
+      );
+      final corrected = fixture();
+      corrected['net_amount'] = 600;
+      months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [fixture(), corrected],
+      );
+      expect(
+        months[1].conflicting,
+        isTrue,
+      );
+      expect(
+        months[1].confirmedTaxYen,
+        isNull,
+      );
+    },
+  );
+  test(
+    'multiple distinct payslips in one month are combined without loss',
+    () {
+      final months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [fixture(), fixture(id: 'synthetic-b')],
+      );
+      expect(
+        months[1].statements,
+        hasLength(2),
+      );
+      expect(
+        months[1].confirmedTaxYen,
+        180,
+      );
+    },
+  );
+  test(
+    'invalid or missing dates never roll into another month',
+    () {
+      expect(
+        PayrollDeductions.fromRow(fixture(date: '2030-02-31')),
+        isNull,
+      );
+      expect(
+        PayrollDeductions.fromRow(fixture(date: '')),
+        isNull,
+      );
+    },
+  );
 }
