@@ -7,7 +7,8 @@ const page=await browser.newPage({viewport:{width:1440,height:1000}});
 const evidence=[];
 page.on('pageerror',err=>evidence.push({pageError:String(err)}));
 async function prepare(name){
-  await page.goto('http://127.0.0.1:4173/asset-management');
+  const response=await page.goto('http://127.0.0.1:4173/');
+  if(!response?.ok())throw new Error(`Fixture HTTP status: ${response?.status()}`);
   const next=page.getByRole('button',{name:'次のサイクル',exact:true});
   await next.waitFor({state:'attached',timeout:60000});
   await page.locator('#seo-shell').waitFor({state:'hidden',timeout:30000});
