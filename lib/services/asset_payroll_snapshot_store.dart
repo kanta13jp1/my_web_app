@@ -1,23 +1,42 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+int? readPayrollTarget(Object? value) {
+  if (value == null) return null;
+  if (value is! num ||
+      !value.isFinite ||
+      value < 0 ||
+      value > 9007199254740991 ||
+      value != value.roundToDouble()) {
+    throw const FormatException('Unsupported payroll target value');
+  }
+  return value.toInt();
+}
+
 String payrollDate(DateTime date) =>
     '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
 class PayrollSnapshotAccount {
-  const PayrollSnapshotAccount(this.id, this.label);
+  const PayrollSnapshotAccount(this.id, this.label, {this.targetIncreaseYen});
   final String id;
   final String label;
+  final int? targetIncreaseYen;
 }
 
 class PayrollSnapshotRecord {
   const PayrollSnapshotRecord({
     required this.id,
     required this.balanceYen,
+    required this.ownerId,
+    required this.accountId,
+    required this.month,
     required this.depositDate,
     required this.note,
   });
   final String id;
   final int balanceYen;
+  final String ownerId;
+  final String accountId;
+  final DateTime month;
   final DateTime depositDate;
   final String note;
 }
@@ -60,6 +79,8 @@ class PayrollSnapshotDraft {
 }
 
 abstract class PayrollSnapshotStore {
+  String get ownerId;
+  Future<void> setTarget(String accountId, int? expected, int? next);
   Future<List<PayrollSnapshotAccount>> accounts();
   Future<void> createAccount(String label);
   Future<PayrollSnapshotRecord?> selected(String accountId, DateTime month);
@@ -71,6 +92,7 @@ abstract class PayrollSnapshotStore {
 class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
   SupabasePayrollSnapshotStore(this.client, this.ownerId);
   final SupabaseClient client;
+  @override
   final String ownerId;
 
   void _checkOwner() {
@@ -84,7 +106,7 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
     _checkOwner();
     final rows = await client
         .from('asset_payroll_accounts')
-        .select('id,display_label')
+        .select('id,display_label,target_increase_yen')
         .eq('user_id', ownerId)
         .eq('archived', false)
         .order('display_label');
@@ -94,8 +116,31 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
         PayrollSnapshotAccount(
           row['id'] as String,
           row['display_label'] as String,
+          targetIncreaseYen: readPayrollTarget(row['target_increase_yen']),
         ),
     ];
+  }
+
+  @override
+  Future<void> setTarget(String accountId, int? expected, int? next) async {
+    _checkOwner();
+    if (next != null && (next < 0 || next > 9007199254740991)) {
+      throw ArgumentError('目標は0以上の安全な整数で入力してください。');
+    }
+    var query = client
+        .from('asset_payroll_accounts')
+        .update({'target_increase_yen': next})
+        .eq('user_id', ownerId)
+        .eq('id', accountId)
+        .eq('archived', false);
+    query = expected == null
+        ? query.isFilter('target_increase_yen', null)
+        : query.eq('target_increase_yen', expected);
+    final row = await query.select('id,target_increase_yen').maybeSingle();
+    _checkOwner();
+    if (row == null || row['target_increase_yen'] != next) {
+      throw StateError('別の更新と競合しました。現在値を照合してください。');
+    }
   }
 
   @override
@@ -114,6 +159,9 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
   PayrollSnapshotRecord _record(Map<String, dynamic> row) =>
       PayrollSnapshotRecord(
         id: row['id'] as String,
+        ownerId: row['user_id'] as String,
+        accountId: row['account_id'] as String,
+        month: DateTime.parse(row['payroll_month'] as String),
         balanceYen: (row['balance_yen'] as num).toInt(),
         depositDate: DateTime.parse(row['deposit_date'] as String),
         note: row['source_note'] as String,
@@ -136,10 +184,13 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
     if (selection == null) return null;
     final row = await client
         .from('asset_payroll_balance_observations')
-        .select('id,balance_yen,deposit_date,source_note')
+        .select(
+          'id,user_id,account_id,payroll_month,balance_yen,deposit_date,source_note',
+        )
         .eq('user_id', ownerId)
         .eq('id', selection['observation_id'])
         .eq('account_id', accountId)
+        .eq('payroll_month', payrollDate(DateTime(month.year, month.month)))
         .maybeSingle();
     _checkOwner();
     return row == null ? null : _record(row);
@@ -151,7 +202,7 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
     final row = await client
         .from('asset_payroll_balance_observations')
         .select(
-          'id,balance_yen,deposit_date,source_note,account_id,payroll_month,selection_reason,expected_previous_id',
+          'id,user_id,balance_yen,deposit_date,source_note,account_id,payroll_month,selection_reason,expected_previous_id',
         )
         .eq('user_id', ownerId)
         .eq('request_id', draft.requestId)
