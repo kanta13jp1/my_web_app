@@ -508,3 +508,33 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  payroll-ui-preflight:
+    if: inputs.profile == 'workspace'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Normalize mechanical lints and validate isolated feature
+        run: |
+          dart fix --apply --code=require_trailing_commas
+          dart format lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart test/widgets/asset_payroll_snapshot_section_test.dart
+          flutter analyze lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart test/widgets/asset_payroll_snapshot_section_test.dart
+          flutter test test/widgets/asset_payroll_snapshot_section_test.dart --reporter expanded
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: payroll-snapshot-ui-preflight-${{ github.run_id }}
+          path: |
+            lib/services/asset_payroll_snapshot_store.dart
+            lib/widgets/asset_payroll_snapshot_section.dart
+            test/widgets/asset_payroll_snapshot_section_test.dart
+          retention-days: 3
