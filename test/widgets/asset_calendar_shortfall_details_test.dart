@@ -54,7 +54,8 @@ Future<void> pumpEvidence(
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: AssetCalendarShortfallDetails(
-            calendar: calendarOverride ?? example(withIncomePlan: withIncomePlan),
+            calendar:
+                calendarOverride ?? example(withIncomePlan: withIncomePlan),
             asOf: DateTime(2026, 10, 15),
             startingCashBalance: 5000,
             balanceRecordedOn: balanceRecordedOn,

@@ -146,11 +146,9 @@ class AssetCashflowForecastInputs {
         subscriptionFixedCostIds: subscriptionFixedCostIds,
       );
       if (resolved != null && resolved.isDirectCashflowTarget) continue;
-      unverifiedSubscriptionLabels.add(
-        subscription['service_name']?.toString() ?? '固定費',
-      );
       final entry = subscriptionRecurringEntry(subscription);
       if (entry != null) {
+        unverifiedSubscriptionLabels.add(entry.label);
         recurringOutflow.add(
           AssetCashflowRecurringEntry(
             dayOfMonth: entry.dayOfMonth,

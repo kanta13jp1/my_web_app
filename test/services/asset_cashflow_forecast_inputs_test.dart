@@ -96,7 +96,8 @@ void main() {
   group('forecast and calendar payment schedule agreement', () {
     test('the same fixed cost in both sources is counted once', () {
       final debt = _debt(recurringFixedCostId: 'cost-bill');
-      final inputs = _billInputs(debt: debt, links: const {'legacy-bill': 'cost-bill'});
+      final inputs =
+          _billInputs(debt: debt, links: const {'legacy-bill': 'cost-bill'});
       final calendar = AssetPaymentCalendarService.buildMonth(
         month: DateTime(2026, 6),
         flows: const [],
