@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - docs/proposals/payroll_snapshot/**
+      - supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
       - .github/workflows/payroll-snapshot-contract.yml
   workflow_dispatch:
 permissions: {}
@@ -38,6 +39,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Verify reviewed proposal equals applied migration
+        run: cmp docs/proposals/payroll_snapshot/DRAFT_PAYROLL_SCHEMA.sql supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
       - name: Test draft schema in disposable database only
         working-directory: docs/proposals/payroll_snapshot
         run: psql -X -v ON_ERROR_STOP=1 -f contract.sql
