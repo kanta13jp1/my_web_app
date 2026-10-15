@@ -1,5 +1,23 @@
 import { test, expect, type Page } from '@playwright/test';
 
+test.use({ trace: 'retain-on-failure' });
+test.afterEach(async ({ page }, info) => {
+  if (info.status === info.expectedStatus) return;
+  await info.attach('input-focus-state', {
+    body: JSON.stringify(await page.locator('input, textarea, flt-text-editing-host').evaluateAll(elements =>
+      elements.map(element => ({
+        tag: element.tagName,
+        className: element.className,
+        label: element.getAttribute('aria-label'),
+        value: (element as HTMLInputElement).value,
+        focused: element === document.activeElement,
+        rect: element.getBoundingClientRect().toJSON(),
+      }))), null, 2),
+    contentType: 'application/json',
+  });
+});
+
+
 
 async function enterAmount(page: Page, name: string, value: string) {
   const input = page.getByRole('textbox', { name });
