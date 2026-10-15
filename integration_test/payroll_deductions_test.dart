@@ -7,7 +7,8 @@ void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   const mobile = bool.fromEnvironment('PAYROLL_MOBILE');
   Future<void> show(
-      WidgetTester tester, List<Map<String, dynamic>> rows) async {
+      WidgetTester tester, List<Map<String, dynamic>> rows,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -55,7 +56,8 @@ void main() {
     expect(find.text('税金の確認済み分：90円（1/12か月）'), findsOneWidget);
     expect(find.text('社会保険料の確認済み分：200円（1/12か月）'), findsOneWidget);
     await capture(tester,
-        mobile ? 'payroll-confirmed-mobile' : 'payroll-confirmed-desktop');
+        mobile ? 'payroll-confirmed-mobile' : 'payroll-confirmed-desktop',
+    );
     await tester.pumpWidget(const SizedBox());
     await show(tester, [fixture()]);
     expect(find.text('税金の確認済み分：90円（1/12か月）'), findsOneWidget);
@@ -67,12 +69,14 @@ void main() {
     expect(find.text('同じ明細の内容が競合・要確認'), findsOneWidget);
     expect(find.text('税金の確認済み分：未取得（0/12か月）'), findsOneWidget);
     await capture(tester,
-        mobile ? 'payroll-conflict-mobile' : 'payroll-conflict-desktop');
+        mobile ? 'payroll-conflict-mobile' : 'payroll-conflict-desktop',
+    );
   });
   testWidgets('empty state does not invent zero deductions', (tester) async {
     await show(tester, []);
     expect(find.text('税金の確認済み分：未取得（0/12か月）'), findsOneWidget);
     await capture(
-        tester, mobile ? 'payroll-empty-mobile' : 'payroll-empty-desktop');
+        tester, mobile ? 'payroll-empty-mobile' : 'payroll-empty-desktop',
+    );
   });
 }
