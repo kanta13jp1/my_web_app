@@ -73,6 +73,11 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
+      - name: Repair scoped formatting lints
+        run: |
+          for target in lib/services/asset_month_end_snapshot_service.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart; do
+            dart fix --apply --code=require_trailing_commas --code=curly_braces_in_flow_control_structures "$target"
+          done
       - name: Format scoped files
         run: dart format lib/services/asset_month_end_snapshot_service.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart
       - name: Analyze scoped files
