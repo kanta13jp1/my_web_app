@@ -45,7 +45,8 @@ jobs:
       - run: flutter pub get
       - name: Produce scoped style corrections
         run: |
-          dart fix --apply --code=require_trailing_commas --code=curly_braces_in_flow_control_structures
+          dart format lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart
+          dart fix --apply --code=require_trailing_commas --code=curly_braces_in_flow_control_structures --code=prefer_const_declarations
           dart format lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart
       - name: Preserve scoped corrections for reviewed commit
         if: always()

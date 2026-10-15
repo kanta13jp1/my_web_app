@@ -182,6 +182,16 @@ class AssetReflectionSummary {
     });
   }
 
+  double get knownAlcoholAmount {
+    final seen = <String>{};
+    return events.fold<double>(0, (sum, event) {
+      if (!seen.add(event.linkedFlowId ?? event.sourceKey)) return sum;
+      return sum + (event.alcoholAmount ?? 0);
+    });
+  }
+  int get unknownAlcoholAmounts => events.where((e) =>
+      (e.kinds.contains(AssetReflectionKind.drinkingOut) || e.kinds.contains(AssetReflectionKind.alcoholPurchase)) &&
+      e.alcoholAmount == null).length;
   int get unknownAmounts => events
       .where(
         (e) =>

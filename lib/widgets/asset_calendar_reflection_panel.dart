@@ -211,6 +211,8 @@ class _AssetCalendarReflectionPanelState
           ),
           Text(
               '表示期間の確認済み金額 ${summary.knownAmount.toStringAsFixed(0)}円・金額不明${summary.unknownAmounts}件',),
+        Text('酒代の確認済み内訳 ${summary.knownAlcoholAmount.toStringAsFixed(0)}円・酒代不明${summary.unknownAlcoholAmounts}件（合計の内訳）'),
+
           const Text(
               '記録のある日だけを集計しています。印のない日は未記録の場合があります。振り返りの金額は参考内訳で、支出合計には加算しません。',),
           if (_loading) const LinearProgressIndicator(),
