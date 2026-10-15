@@ -249,7 +249,9 @@ class SmbcCsvImportService {
     if (year == null || month == null || day == null) return null;
     if (month < 1 || month > 12 || day < 1 || day > 31) return null;
     final date = DateTime(year, month, day);
-    if (date.year != year || date.month != month || date.day != day) return null;
+    if (date.year != year || date.month != month || date.day != day) {
+      return null;
+    }
     return date;
   }
 

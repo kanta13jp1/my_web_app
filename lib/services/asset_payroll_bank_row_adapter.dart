@@ -9,7 +9,8 @@ class PayrollBankRowCandidate {
   final SmbcCsvTransaction transaction;
   int get immediateBalanceYen => transaction.balance!;
   DateTime get depositDate => transaction.date;
-  PayrollDepositDatePrecision get datePrecision => PayrollDepositDatePrecision.day;
+  PayrollDepositDatePrecision get datePrecision =>
+      PayrollDepositDatePrecision.day;
 
   /// Discovery hint only. Never used to set a confirmed state automatically.
   bool get hasPayrollLabel => RegExp(r'給与|給料|salary', caseSensitive: false)
@@ -33,9 +34,11 @@ class OwnerConfirmedPayrollBankRow {
   final String ownerId;
   final String accountId;
   final DateTime payrollMonth;
+
   /// Reference to the owner's already-authorized import; no raw CSV is copied.
   final String sourceImportReference;
   final PayrollBankRowCandidate candidate;
+
   /// Import keys assist lookup, but their short hash is not globally unique.
   /// Storage must additionally bind source import, row, owner and account.
   String get rowImportKey => candidate.transaction.importKey;
@@ -54,10 +57,13 @@ class AssetPayrollBankRowAdapter {
     required bool ownerConfirmedPayrollAndImmediateBalance,
   }) {
     if (!ownerConfirmedPayrollAndImmediateBalance) return null;
-    if (ownerId.trim().isEmpty || accountId.trim().isEmpty ||
+    if (ownerId.trim().isEmpty ||
+        accountId.trim().isEmpty ||
         sourceImportReference.trim().isEmpty ||
         candidate.transaction.importKey.trim().isEmpty) {
-      throw ArgumentError('Owner, account, source import and row are required.');
+      throw ArgumentError(
+          'Owner, account, source import and row are required.',
+      );
     }
     return OwnerConfirmedPayrollBankRow._(
       ownerId: ownerId,
