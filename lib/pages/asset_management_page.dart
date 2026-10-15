@@ -15749,7 +15749,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   '給与入金の候補があります。収入額や残高の増加は推定のため、'
                   '明細で実際の給与着金を確認してから切り替えてください。',
                   key: const Key('asset_salary_deposit_candidate'),
-                  style: TextStyle(color: scheme.onTertiaryContainer, height: 1.5),
+                  style:
+                      TextStyle(color: scheme.onTertiaryContainer, height: 1.5),
                 ),
                 const SizedBox(height: 8),
               ],
