@@ -22,10 +22,28 @@ void main() {
           'health_insurance': 80,
           'pension': 100,
           'employment_insurance': 20,
+          'long_term_care_insurance': 0,
+          'employees_pension_fund_contribution': 0,
           'ideco': 10,
         },
       };
 
+  test('missing optional premiums are unknown rather than inferred zero', () {
+    final raw = fixture();
+    raw['social_insurance_total'] = null;
+    final items = raw['deductions'] as Map;
+    items.remove('long_term_care_insurance');
+    items.remove('employees_pension_fund_contribution');
+    expect(PayrollDeductions.fromRow(raw)!.socialPartsTotalYen, isNull);
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, isNull);
+    items['long_term_care_insurance'] = 0;
+    items['employees_pension_fund_contribution'] = 0;
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, 200);
+    items.remove('long_term_care_insurance');
+    raw['social_insurance_total'] = 200;
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, 200);
+    expect(PayrollDeductions.fromRow(raw)!.socialPartsTotalYen, isNull);
+  });
   test('AI pension alias and care/fund remain one social total', () {
     final raw = fixture();
     raw['social_insurance_total'] = 230;

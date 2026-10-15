@@ -63,8 +63,7 @@ class PayrollDeductions {
       ? null
       : _completeTotal([
           ...socialKeys,
-          for (final key in optionalSocialKeys)
-            if (items.containsKey(key)) key,
+          ...optionalSocialKeys,
         ]);
   int? get socialTotalYen => reportedSocialYen ?? socialPartsTotalYen;
   int? get socialMismatchYen =>
