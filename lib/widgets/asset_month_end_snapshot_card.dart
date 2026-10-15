@@ -77,6 +77,11 @@ class _AssetMonthEndSnapshotCardState extends State<AssetMonthEndSnapshotCard> {
       monthKeys: widget.monthKeys,
       snapshots: _snapshots,
     );
+    // On Web, intrinsic measurements can shrink heading Rows to the width of
+    // short body values (for example an em dash). Keep every heading's minimum
+    // width explicit, and grow that width with the user's text scaling.
+    final columnScale = MediaQuery.textScalerOf(context).scale(16) / 16;
+    final widthScale = columnScale < 1 ? 1.0 : columnScale;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -114,12 +119,37 @@ class _AssetMonthEndSnapshotCardState extends State<AssetMonthEndSnapshotCard> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('月')),
-                  DataColumn(label: Text('総資産')),
-                  DataColumn(label: Text('負債')),
-                  DataColumn(label: Text('純資産')),
-                  DataColumn(label: Text('観測状況')),
+                columns: [
+                  DataColumn(
+                    label: SizedBox(
+                      width: 80 * widthScale,
+                      child: const Text('月'),
+                    ),
+                  ),
+                  DataColumn(
+                    label: SizedBox(
+                      width: 160 * widthScale,
+                      child: const Text('総資産'),
+                    ),
+                  ),
+                  DataColumn(
+                    label: SizedBox(
+                      width: 160 * widthScale,
+                      child: const Text('負債'),
+                    ),
+                  ),
+                  DataColumn(
+                    label: SizedBox(
+                      width: 160 * widthScale,
+                      child: const Text('純資産'),
+                    ),
+                  ),
+                  DataColumn(
+                    label: SizedBox(
+                      width: 360 * widthScale,
+                      child: const Text('観測状況'),
+                    ),
+                  ),
                 ],
                 rows: List.generate(widget.monthKeys.length, (index) {
                   final snapshot = snapshots[index];

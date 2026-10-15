@@ -1,3 +1,9 @@
+import '../services/asset_month_end_snapshot_service.dart';
+import '../widgets/asset_month_end_snapshot_card.dart';
+import '../widgets/asset_reflection_day_badge.dart';
+import '../models/asset_calendar_reflection.dart';
+import '../services/asset_calendar_reflection_repository.dart';
+import '../widgets/asset_calendar_reflection_panel.dart';
 import '../services/asset_spending_attention_calendar.dart';
 import '../widgets/asset_attention_day_label.dart';
 import '../widgets/asset_calendar_refresh_control.dart';
@@ -1110,6 +1116,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 表示する)。サイクル送りは給料日を保ったまま暦月を±1する。
   DateTime _calendarCycleAnchor = DateTime.now();
   DateTime? _calendarSelectedDate;
+  List<AssetCalendarReflection> _calendarReflections = const [];
+  String? _calendarReflectionOwner;
+  int _calendarReflectionRevision = 0;
+  List<AssetCalendarReflection> get _calendarFlowReflections {
+    final owner = _supabase.auth.currentUser?.id;
+    if (owner == null || _recentFlowsOwnerId != owner) return const [];
+    return AssetCalendarReflection.fromFlows(_recentFlows);
+  }
+
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
   String? _wasteTrainingAiReviewKey;
   bool _isGeneratingAssetManagementAiSummary = false;
@@ -17288,11 +17303,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             AssetCalendarRefreshControl(
-              onRefresh: () => _fetchRecentFlows(
-                runSalaryReconciliation: false,
-                reportErrors: true,
-              ),
+              onRefresh: () async {
+                await _fetchRecentFlows(
+                  runSalaryReconciliation: false,
+                  reportErrors: true,
+                );
+                if (mounted) setState(() => _calendarReflectionRevision++);
+              },
             ),
+            if (_supabase.auth.currentUser?.id != null)
+              AssetCalendarReflectionPanel(
+                key: ValueKey(
+                    'reflection_${_supabase.auth.currentUser!.id}_$_calendarReflectionRevision'),
+                repository: AssetCalendarReflectionRepository(_supabase),
+                flowEvents: _calendarFlowReflections,
+                start: cycleStart,
+                end: cycleEndExclusive,
+                selectedDate: _calendarSelectedDate,
+                onLoaded: (events) {
+                  if (!mounted) return;
+                  setState(() {
+                    _calendarReflections = events;
+                    _calendarReflectionOwner = _supabase.auth.currentUser?.id;
+                  });
+                },
+              ),
             const SizedBox(height: 4),
             Text(
                 'この表示期間の浪費危険日: ${AssetSpendingAttentionCalendar.countDays(calendar.days.map((day) => day.date))}日'),
@@ -17729,7 +17764,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 6),
               if (!selectedDay.hasAnyEvent)
                 Text(
-                  'この日のイベントはありません。',
+                  'この日の収支・支払イベントはありません。',
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -17785,7 +17820,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetCalendarCell(AssetCalendarDaySummary? day, DateTime today) {
     if (day == null) {
-      return const SizedBox(height: 68);
+      return const SizedBox(height: 84);
     }
     final isToday = day.date.year == today.year &&
         day.date.month == today.month &&
@@ -17795,6 +17830,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         day.date.year == selectedDate.year &&
         day.date.month == selectedDate.month &&
         day.date.day == selectedDate.day;
+    final recorded = _calendarReflectionOwner == _supabase.auth.currentUser?.id
+        ? _calendarReflections
+        : <AssetCalendarReflection>[];
+    final linked =
+        recorded.map((e) => e.linkedFlowId).whereType<String>().toSet();
+    final reflections = [
+      ...recorded,
+      ..._calendarFlowReflections.where((e) => !linked.contains(e.linkedFlowId))
+    ]
+        .where((e) =>
+            e.date.year == day.date.year &&
+            e.date.month == day.date.month &&
+            e.date.day == day.date.day)
+        .toList();
+    final kinds = reflections.expand((e) => e.kinds).toSet();
+    final reflectionColor = AssetReflectionDayBadge.backgroundFor(kinds);
     final attention = AssetSpendingAttentionCalendar.forDate(day.date);
     final markers = <Color>[
       if (day.hasDebtPayment) const Color(0xFFB91C1C),
@@ -17813,20 +17864,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
       },
       child: Container(
-        height: 68,
+        height: 84,
         margin: const EdgeInsets.all(1),
         padding: const EdgeInsets.symmetric(vertical: 3),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
-              : day.isShortfall
-                  ? const Color(0xFFFEE2E2)
-                  : attention.isAttentionDay
-                      ? AssetAttentionDayLabel.background
-                      : null,
+          color: reflectionColor ??
+              (isSelected
+                  ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
+                  : day.isShortfall
+                      ? const Color(0xFFFEE2E2)
+                      : attention.isAttentionDay
+                          ? AssetAttentionDayLabel.background
+                          : null),
           borderRadius: BorderRadius.circular(6),
-          border: isToday
-              ? Border.all(color: const Color(0xFF7C3AED), width: 1.5)
+          border: isSelected || isToday
+              ? Border.all(
+                  color: const Color(0xFF7C3AED), width: isSelected ? 2.5 : 1.5)
               : null,
         ),
         child: Column(
@@ -17853,7 +17906,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
             AssetAttentionDayLabel(day: attention),
-            const Spacer(),
+            if (kinds.isNotEmpty)
+              Expanded(child: AssetReflectionDayBadge(kinds: kinds))
+            else
+              const Spacer(),
             if (markers.isNotEmpty)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -21768,6 +21824,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAccountCashflowSection(workbook),
             const SizedBox(height: 16),
             _buildMonthlySnapshotSection(workbook),
+            const SizedBox(height: 16),
+            AssetMonthEndSnapshotCard(
+              key: ValueKey('month-end-${_supabase.auth.currentUser?.id}'),
+              service: AssetMonthEndSnapshotService(_supabase),
+              monthKeys: _recentMonthEndSnapshotKeys(),
+            ),
             const SizedBox(height: 16),
             _buildMonthlyReportSection(),
             const SizedBox(height: 16),
@@ -29537,6 +29599,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ],
     );
+  }
+
+  List<String> _recentMonthEndSnapshotKeys() {
+    final japanNow = DateTime.now().toUtc().add(const Duration(hours: 9));
+    return [
+      for (var offset = 2; offset >= 0; offset--)
+        DateFormat('yyyy-MM')
+            .format(DateTime(japanNow.year, japanNow.month - offset)),
+    ];
   }
 
   Widget _buildMonthlySnapshotSection(AssetLiabilityWorkbook workbook) {
