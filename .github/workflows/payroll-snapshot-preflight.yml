@@ -27,10 +27,9 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
-      - name: Normalize mechanical lints and validate isolated feature
+      - name: Verify format analysis and synthetic feature
         run: |
-          dart fix --apply --code=require_trailing_commas
-          dart format lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart integration_test/payroll_snapshot_fixture.dart
+          dart format --output=none --set-exit-if-changed lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart integration_test/payroll_snapshot_fixture.dart
           flutter analyze lib/services/asset_payroll_snapshot_store.dart lib/widgets/asset_payroll_snapshot_section.dart test/widgets/asset_payroll_snapshot_section_test.dart integration_test/payroll_snapshot_test.dart integration_test/payroll_snapshot_fixture.dart
           flutter test test/widgets/asset_payroll_snapshot_section_test.dart --reporter expanded
       - name: Synthetic browser preview on desktop and enlarged narrow viewport
