@@ -153,7 +153,7 @@ void main() {
     raceAfterRead = true;
     await expectLater(
       store.confirm(before, confirmedDisplayedValues: true),
-      throwsStateError,
+      throwsA(isA<PostgrestException>()),
     );
     expect(data['review_status'], 'auto');
     expect(data['net_amount'], 701);
