@@ -18,6 +18,7 @@ class PayrollBalanceObservation {
 
   final String ownerId;
   final String accountId;
+
   /// Payroll attribution month, not necessarily the calendar month of deposit.
   final DateTime payrollMonth;
   final String depositReference;
@@ -26,6 +27,7 @@ class PayrollBalanceObservation {
   final DateTime observedAt;
   final int balanceYen;
   final PayrollBalanceEvidence evidence;
+
   /// Must come from verified bank evidence or an explicit user confirmation.
   /// A payslip, scheduled date, or estimated balance cannot set this flag.
   final bool confirmedImmediatelyAfterDeposit;
@@ -51,6 +53,7 @@ class PayrollBalanceComparison {
   final int? currentBalanceYen;
   final int? previousBalanceYen;
   final int? deltaYen;
+
   /// User setting; absent means no goal, never an implicit universal target.
   final int? targetIncreaseYen;
   bool? get targetReached => deltaYen == null || targetIncreaseYen == null
