@@ -40,8 +40,10 @@ void main() {
     expect(transfer.sourceId, '42');
     expect(transfer.label, contains('銀行A→現金'));
     expect(transfer.label, contains('支出集計外'));
-    expect(calendar.days.fold<double>(0, (sum, day) => sum + day.expenseTotal),
-        220);
+    expect(
+      calendar.days.fold<double>(0, (sum, day) => sum + day.expenseTotal),
+      220,
+    );
   });
 
   test('transfer without a recorded fee does not invent an expense', () {
