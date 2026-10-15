@@ -135,7 +135,8 @@ void main() {
     expect(withPlan.dayFor(DateTime(2026, 10, 15))!.projectedBalance, 5000);
   });
 
-  test('first shortfall and maximum recovery are different dated quantities', () {
+  test('first shortfall and maximum recovery are different dated quantities',
+      () {
     final result = calendar(
       debts: const [
         AssetCalendarDebtInput(
