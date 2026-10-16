@@ -27,10 +27,12 @@ void main() {
       final cancelLabel = MaterialLocalizations.of(
         tester.element(find.byType(DatePickerDialog)),
       ).cancelButtonLabel;
-      await tester.tap(find.descendant(
-        of: find.byType(DatePickerDialog),
-        matching: find.text(cancelLabel),
-      ));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(DatePickerDialog),
+          matching: find.text(cancelLabel),
+        ),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.text('キャンセル'));
       await tester.pumpAndSettle();
