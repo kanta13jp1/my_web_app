@@ -508,3 +508,88 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  cashflow-paid-period:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && github.ref_name == 'codex/cashflow-paid-period-probe'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Verify exact head
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Focused contracts
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs/cashflow
+          flutter pub get
+          dart format test/services/asset_cashflow_forecast_inputs_test.dart
+          flutter analyze --no-pub test/services/asset_cashflow_forecast_inputs_test.dart
+          flutter test --no-pub --reporter expanded test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart | tee .ci-logs/cashflow/tests.log
+      - name: Preserve source
+        if: always()
+        run: |
+          mkdir -p .ci-logs/cashflow/source/test/services
+          cp test/services/asset_cashflow_forecast_inputs_test.dart .ci-logs/cashflow/source/test/services/
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: cashflow-${{ github.run_id }}
+          path: .ci-logs/cashflow
+
+  cashflow-responsive:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && github.ref_name == 'codex/cashflow-paid-responsive'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Verify exact source
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Build isolated forecast surface
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs/cashflow-responsive
+          flutter pub get
+          dart format lib/services/asset_cashflow_forecast_service.dart lib/services/asset_cashflow_forecast_inputs.dart lib/pages/asset_management_page.dart lib/widgets/asset_cashflow_forecast_card.dart test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart test/fixtures/cashflow_paid_qa.dart
+          flutter analyze --no-pub lib/services/asset_cashflow_forecast_service.dart lib/services/asset_cashflow_forecast_inputs.dart lib/pages/asset_management_page.dart lib/widgets/asset_cashflow_forecast_card.dart test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart test/fixtures/cashflow_paid_qa.dart
+          flutter test --no-pub --reporter expanded test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart test/services/asset_payment_calendar_service_test.dart test/widgets/asset_calendar_warning_page_test.dart | tee .ci-logs/cashflow-responsive/focused.log
+          mkdir -p .ci-logs/cashflow-responsive/source
+          cp --parents lib/services/asset_cashflow_forecast_service.dart lib/services/asset_cashflow_forecast_inputs.dart lib/pages/asset_management_page.dart lib/widgets/asset_cashflow_forecast_card.dart test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart .ci-logs/cashflow-responsive/source/
+          git diff -- lib/services/asset_cashflow_forecast_service.dart lib/services/asset_cashflow_forecast_inputs.dart lib/pages/asset_management_page.dart lib/widgets/asset_cashflow_forecast_card.dart test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart > .ci-logs/cashflow-responsive/mechanical.patch
+          flutter build web --release --pwa-strategy=none --no-web-resources-cdn --target=test/fixtures/cashflow_paid_qa.dart
+          python3 scripts/prepare_income_qa_local_fonts.py
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Public browser cases
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory build/web > .ci-logs/cashflow-responsive/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/cashflow_paid_qa.mjs
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: cashflow-responsive-${{ github.run_id }}
+          path: .ci-logs/cashflow-responsive
