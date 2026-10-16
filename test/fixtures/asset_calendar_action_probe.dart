@@ -61,9 +61,10 @@ class _ActionProbeState extends State<ActionProbe> {
           title: const Text('合成検査モーダル'),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('合成モーダルを閉じる'),)
-          ,],
+              onPressed: () => Navigator.pop(context),
+              child: const Text('合成モーダルを閉じる'),
+            ),
+          ],
         ),
       );
 
@@ -79,22 +80,35 @@ class _ActionProbeState extends State<ActionProbe> {
         navigatorKey: navigator,
         navigatorObservers: [counter],
         home: Scaffold(
-          body: Column(children: [
-            Wrap(children: [
-              TextButton(
-                  onPressed: delayedBanner, child: const Text('合成：遅延カード'),),
-              TextButton(onPressed: hideShow, child: const Text('合成：非表示と再表示')),
-              TextButton(
-                  onPressed: openFixtureModal, child: const Text('合成：モーダル'),),
-              ValueListenableBuilder<int>(
-                  valueListenable: counter.pushes,
-                  builder: (_, value, child) =>
-                      Text('fixture-popup-pushes:$value'),),
-            ],),
-            if (banner)
-              const SizedBox(
-                  height: 120, child: Center(child: Text('合成：追加カード表示済み')),),
-            Expanded(
+          body: Column(
+            children: [
+              Wrap(
+                children: [
+                  TextButton(
+                    onPressed: delayedBanner,
+                    child: const Text('合成：遅延カード'),
+                  ),
+                  TextButton(
+                    onPressed: hideShow,
+                    child: const Text('合成：非表示と再表示'),
+                  ),
+                  TextButton(
+                    onPressed: openFixtureModal,
+                    child: const Text('合成：モーダル'),
+                  ),
+                  ValueListenableBuilder<int>(
+                    valueListenable: counter.pushes,
+                    builder: (_, value, child) =>
+                        Text('fixture-popup-pushes:$value'),
+                  ),
+                ],
+              ),
+              if (banner)
+                const SizedBox(
+                  height: 120,
+                  child: Center(child: Text('合成：追加カード表示済み')),
+                ),
+              Expanded(
                 child: visible
                     ? AssetManagementPage(
                         key: const ValueKey('synthetic-asset-page'),
@@ -103,12 +117,14 @@ class _ActionProbeState extends State<ActionProbe> {
                         debugInitialAssetData: const {
                           '2026-06-20': {
                             'Synthetic bank': 1000,
-                            'SyntheticLoan': -10000
-                          ,}
-                        ,},
+                            'SyntheticLoan': -10000,
+                          },
+                        },
                       )
-                    : const Center(child: Text('合成：一時非表示')),),
-          ],),
+                    : const Center(child: Text('合成：一時非表示')),
+              ),
+            ],
+          ),
         ),
       );
 }
