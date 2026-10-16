@@ -154,11 +154,11 @@ class AssetIncomeReconciliationSection extends StatelessWidget {
         ],
         if (projection.matchedEvents.length > 20)
           Text('照合済み${projection.matchedEvents.length}組のうち先頭20組を表示しています。'),
-        for (final entry in projection.sourceRecordedTotals.entries)
+        for (final kind in IncomeSourceKind.values)
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              '${sourceLabels[entry.key]}記録計: ${entry.value == null ? '未計算' : 'JPY ${entry.value}'}',
+              '${sourceLabels[kind]}記録計: ${projection.sourceRecordedTotals[kind] == null ? '未計算' : 'JPY ${projection.sourceRecordedTotals[kind]}'}',
             ),
           ),
         Text(
