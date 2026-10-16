@@ -69,59 +69,62 @@ void main() {
         expect(SemanticsBinding.instance.semanticsEnabled, isFalse);
       }
       try {
-        await http.runWithClient(() async {
-          await tester
-              .pumpWidget(probe.AuthenticatedProbe(repository: repository));
-          await tester.pump(const Duration(milliseconds: 600));
-          final savings = find.byKey(
-            const ValueKey('savings-life-plan:${probe.probeOwner}'),
-          );
-          expect(
-            savings,
-            findsNothing,
-            reason: 'real page card waits for its snapshot',
-          );
-          expect(repository.loadCalls, 1);
-          expect(repository.completedLoads, 0);
-          await tester.tap(find.text('Probe: release synthetic data'));
-          for (var i = 0; i < 8; i++) {
-            await tester.pump(const Duration(milliseconds: 200));
-          }
-          expect(repository.completedLoads, 1);
-          expect(
-            savings,
-            findsOneWidget,
-            reason: 'card is inside the real page, not a harness sibling',
-          );
-          if (lateSemantics) {
-            await tester.tap(find.text('Probe: enable semantics'));
+        await http.runWithClient(
+          () async {
+            await tester
+                .pumpWidget(probe.AuthenticatedProbe(repository: repository));
+            await tester.pump(const Duration(milliseconds: 600));
+            final savings = find.byKey(
+              const ValueKey('savings-life-plan:${probe.probeOwner}'),
+            );
+            expect(
+              savings,
+              findsNothing,
+              reason: 'real page card waits for its snapshot',
+            );
+            expect(repository.loadCalls, 1);
+            expect(repository.completedLoads, 0);
+            await tester.tap(find.text('Probe: release synthetic data'));
+            for (var i = 0; i < 8; i++) {
+              await tester.pump(const Duration(milliseconds: 200));
+            }
+            expect(repository.completedLoads, 1);
+            expect(
+              savings,
+              findsOneWidget,
+              reason: 'card is inside the real page, not a harness sibling',
+            );
+            if (lateSemantics) {
+              await tester.tap(find.text('Probe: enable semantics'));
+              await tester.pump();
+              expect(SemanticsBinding.instance.semanticsEnabled, isTrue);
+            }
+            final next = find.byKey(const Key('asset_calendar_next_month'));
+            await tester.ensureVisible(next);
             await tester.pump();
-            expect(SemanticsBinding.instance.semanticsEnabled, isTrue);
-          }
-          final next = find.byKey(const Key('asset_calendar_next_month'));
-          await tester.ensureVisible(next);
-          await tester.pump();
-          expect(
-            tester.semantics.simulatedAccessibilityTraversal(),
-            contains(containsSemantics(label: '次のサイクル')),
-          );
-          expect(find.text('2026/5/25〜6/24'), findsOneWidget);
-          expect(next.hitTestable(), findsOneWidget);
-          await tester.tapAt(tester.getCenter(next));
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 400));
-          expect(find.text('2026/6/25〜7/24'), findsOneWidget);
-          expect(find.byType(DebtProgressShareDialog), findsNothing);
-          expect(find.byType(AlertDialog), findsNothing);
-          await tester.pumpWidget(const SizedBox.shrink());
-          await tester.pump();
-        }, () => client,);
+            expect(
+              tester.semantics.simulatedAccessibilityTraversal(),
+              contains(containsSemantics(label: '次のサイクル')),
+            );
+            expect(find.text('2026/5/25〜6/24'), findsOneWidget);
+            expect(next.hitTestable(), findsOneWidget);
+            await tester.tapAt(tester.getCenter(next));
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 400));
+            expect(find.text('2026/6/25〜7/24'), findsOneWidget);
+            expect(find.byType(DebtProgressShareDialog), findsNothing);
+            expect(find.byType(AlertDialog), findsNothing);
+            await tester.pumpWidget(const SizedBox.shrink());
+            await tester.pump();
+          },
+          () => client,
+        );
       } finally {
         if (!gate.isCompleted) gate.complete();
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pump();
         semantics?.dispose();
       }
-    });
+    }, semanticsEnabled: false,);
   }
 }

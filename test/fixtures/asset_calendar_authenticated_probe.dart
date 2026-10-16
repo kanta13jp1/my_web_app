@@ -65,6 +65,7 @@ class ProbeMemoryHttp extends http.BaseClient {
       Stream<List<int>>.value(utf8.encode(jsonEncode(body))),
       status,
       headers: {'content-type': 'application/json; charset=utf-8'},
+      request: request,
     );
   }
 }
@@ -113,24 +114,27 @@ Widget authenticatedProbePage(ProbeDelayedRepository repository) =>
 
 Future<void> main() {
   final client = ProbeMemoryHttp();
-  return http.runWithClient(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    final gate = Completer<void>();
-    client.historyGate = gate;
-    await Supabase.initialize(
-      url: probeOrigin,
-      publishableKey: 'test-publishable-key',
-      httpClient: client,
-      authOptions: const FlutterAuthClientOptions(
-        autoRefreshToken: false,
-        detectSessionInUri: false,
-        localStorage: EmptyLocalStorage(),
-      ),
-    );
-    await restoreProbeOwner();
-    runApp(AuthenticatedProbe(repository: ProbeDelayedRepository(gate)));
-  }, () => client,);
+  return http.runWithClient(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final gate = Completer<void>();
+      client.historyGate = gate;
+      await Supabase.initialize(
+        url: probeOrigin,
+        publishableKey: 'test-publishable-key',
+        httpClient: client,
+        authOptions: const FlutterAuthClientOptions(
+          autoRefreshToken: false,
+          detectSessionInUri: false,
+          localStorage: EmptyLocalStorage(),
+        ),
+      );
+      await restoreProbeOwner();
+      runApp(AuthenticatedProbe(repository: ProbeDelayedRepository(gate)));
+    },
+    () => client,
+  );
 }
 
 class AuthenticatedProbe extends StatefulWidget {
