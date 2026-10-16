@@ -110,6 +110,18 @@ Future<void> _unmount(WidgetTester tester) async {
   await tester.pump(const Duration(seconds: 2));
 }
 
+class _FailingIncomeTemplateRepository
+    extends SharedPreferencesAssetLiabilityRepository {
+  int attempts = 0;
+  @override
+  Future<void> saveRecurringIncomeTemplates(
+    List<AssetLiabilityRecurringIncomeTemplate> templates,
+  ) async {
+    attempts++;
+    throw StateError('synthetic local save failure');
+  }
+}
+
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -258,6 +270,64 @@ void main() {
       await _unmount(tester);
     });
   }
+
+  testWidgets('income save failure keeps the editor and entered data',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1':
+          AssetManagementDisplayMode.standard.storageId,
+    });
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _FailingIncomeTemplateRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: [
+            for (final month in [1, 2, 3, 4, 5, 6])
+              <String, dynamic>{
+                'action_type': 'conquer',
+                'amount': 10000,
+                'description': 'synthetic income',
+                'occurred_at':
+                    DateTime(2026, month, 15, 12).toIso8601String(),
+              },
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    try {
+      final register = find.byKey(
+        const Key('asset_recurring_income_suggestion_register_0'),
+      );
+      expect(register, findsOneWidget);
+      await tester.ensureVisible(register);
+      await tester.tap(register);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(AlertDialog), findsOneWidget);
+      final save = find.widgetWithText(FilledButton, '保存');
+      expect(save, findsOneWidget);
+      await tester.tap(save);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(repository.attempts, 1);
+      expect(
+        find.byType(AlertDialog),
+        findsOneWidget,
+        reason: 'Failed local persistence must retain the editor for retry',
+      );
+      expect(find.text('synthetic income'), findsWidgets);
+    } finally {
+      await _unmount(tester);
+    }
+  });
 
   group('AssetManagementPage smoke', () {
     testWidgets('mobile chat reserves space outside the scrolling content', (
