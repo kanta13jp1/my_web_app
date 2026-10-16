@@ -236,7 +236,11 @@ class _AuthenticatedProbeState extends State<AuthenticatedProbe> {
         // Match the production ThemeService bundled fonts without changing product code.
         theme: ThemeData(
           fontFamily: 'NotoSansJP',
-          fontFamilyFallback: const ['NotoSansJP', 'NotoSans', 'NotoColorEmoji'],
+          fontFamilyFallback: const [
+            'NotoSansJP',
+            'NotoSans',
+            'NotoColorEmoji',
+          ],
         ),
         home: Scaffold(
           body: Padding(
