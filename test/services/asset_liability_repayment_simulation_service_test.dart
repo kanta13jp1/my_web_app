@@ -233,5 +233,34 @@ void main() {
       expect(plan.priorityRows.map((row) => row.name), isNot(contains('au')));
       expect(plan.startingBalanceTotal, 5000);
     });
+
+    test('interest availability matches zero-budget epsilon and empty return', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'mobit': -5000},
+        baseDate: DateTime(2026, 10, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 0},
+      );
+      final atLimit = service.buildPanelComparison(
+        workbook: workbook,
+        extraMonthlyPayment: 0.01,
+      ).plans.first;
+      expect(atLimit.monthSnapshots, isEmpty);
+      expect(atLimit.hasInterestEstimate, isFalse);
+      final aboveLimit = service.buildPanelComparison(
+        workbook: workbook,
+        extraMonthlyPayment: 0.02,
+      ).plans.first;
+      expect(aboveLimit.monthSnapshots, isNotEmpty);
+      expect(aboveLimit.hasInterestEstimate, isTrue);
+      final empty = service.buildPanelComparison(
+        workbook: planner.buildWorkbook(
+          latestSnapshot: const <String, double>{},
+          baseDate: DateTime(2026, 10, 1),
+        ),
+      ).plans.first;
+      expect(empty.startingBalanceTotal, 0);
+      expect(empty.estimatedPayoffMonths, 0);
+      expect(empty.hasInterestEstimate, isTrue);
+    });
   });
 }
