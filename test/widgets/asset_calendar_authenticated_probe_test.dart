@@ -63,6 +63,9 @@ void main() {
       final repository = probe.ProbeDelayedRepository(gate);
       SemanticsHandle? semantics;
       if (!lateSemantics) semantics = tester.ensureSemantics();
+      if (lateSemantics) {
+        expect(SemanticsBinding.instance.semanticsEnabled, isFalse);
+      }
       try {
         await http.runWithClient(() async {
           await tester.pumpWidget(probe.AuthenticatedProbe(repository: repository));
@@ -82,6 +85,7 @@ void main() {
           if (lateSemantics) {
             await tester.tap(find.text('Probe: enable semantics'));
             await tester.pump();
+            expect(SemanticsBinding.instance.semanticsEnabled, isTrue);
           }
           final next = find.byKey(const Key('asset_calendar_next_month'));
           await tester.ensureVisible(next);
