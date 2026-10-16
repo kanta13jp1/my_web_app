@@ -4945,17 +4945,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ? initial?.destinationAccountId
             : null;
 
+    final templateId = existing?.id ??
+        'income_template_${DateTime.now().microsecondsSinceEpoch}';
+    var isSaving = false;
+    String? saveError;
+
     await showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
+            return PopScope(
+              canPop: !isSaving,
+              child: AlertDialog(
               title: Text(existing == null ? '定期収入を追加' : '定期収入を編集'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (saveError != null)
+                      Text(
+                        saveError!,
+                        key: const Key('recurring_income_save_error'),
+                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      ),
                     TextField(
                       controller: nameController,
                       decoration: const InputDecoration(labelText: '名称'),
@@ -5000,11 +5014,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: isSaving ? null : () => Navigator.of(context).pop(),
                   child: const Text('キャンセル'),
                 ),
                 FilledButton(
-                  onPressed: () {
+                  onPressed: isSaving ? null : () async {
                     final name = nameController.text.trim();
                     final day = int.tryParse(dayController.text.trim());
                     final amount = double.tryParse(
@@ -5025,8 +5039,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       }
                     }
                     final template = AssetLiabilityRecurringIncomeTemplate(
-                      id: existing?.id ??
-                          'income_template_${DateTime.now().microsecondsSinceEpoch}',
+                      id: templateId,
                       dayOfMonth: day.clamp(1, 31).toInt(),
                       name: name,
                       amount: amount,
@@ -5050,6 +5063,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ? previousGeneratedPlan.first.received
                           : false,
                     );
+                    setDialogState(() {
+                      isSaving = true;
+                      saveError = null;
+                    });
+                    var templateSaved = false;
+                    try {
+                      final templates = <AssetLiabilityRecurringIncomeTemplate>[
+                        for (final current in _recurringIncomeTemplates)
+                          if (current.id != template.id) current,
+                        template,
+                      ];
+                      await _assetLiabilityRepository.saveRecurringIncomeTemplates(
+                        templates,
+                      );
+                      templateSaved = true;
+                      if (!mounted) return;
                     setState(() {
                       _recurringIncomeTemplates = [
                         for (final current in _recurringIncomeTemplates)
@@ -5068,13 +5097,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         generatedPlan,
                       ]..sort((a, b) => a.date.compareTo(b.date));
                     });
-                    unawaited(_saveRecurringIncomeTemplates());
-                    unawaited(_saveAssetLiabilityMonthlyState());
-                    Navigator.of(context).pop();
+                    await _persistAssetLiabilityMonthlyState();
+                    if (context.mounted) Navigator.of(context).pop();
+                    } catch (error) {
+                      debugPrint('Error saving recurring income editor: $error');
+                      if (context.mounted) {
+                        setDialogState(() {
+                          isSaving = false;
+                          saveError = templateSaved
+                              ? '定期収入は保存済みですが、今月の予定を保存できませんでした。もう一度保存してください。'
+                              : '保存できませんでした。入力内容を残しています。もう一度保存してください。';
+                        });
+                      }
+                    }
                   },
                   child: const Text('保存'),
                 ),
               ],
+              ),
             );
           },
         );
