@@ -1,5 +1,3 @@
-import 'dart:ui' show SemanticsFlag;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
@@ -77,7 +75,7 @@ void main() {
           matching: find.byType(ListTile),
         );
         final semanticsData = tester.getSemantics(tile).getSemanticsData();
-        expect(semanticsData.hasFlag(SemanticsFlag.isButton), isTrue);
+        expect(semanticsData.flagsCollection.isButton, isTrue);
         await tester.ensureVisible(details);
         await tester.tap(find.text('月別内訳（月末・月内最低）'));
         await tester.pumpAndSettle();

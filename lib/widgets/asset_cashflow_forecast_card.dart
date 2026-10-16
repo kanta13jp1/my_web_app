@@ -130,29 +130,34 @@ class AssetCashflowForecastCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               _buildSummary(context),
-              ExpansionTile(
-                key: const Key('asset_cashflow_forecast_month_details'),
-                internalAddSemanticForOnTap: true,
-                tilePadding: EdgeInsets.zero,
-                title: const Text('月別内訳（月末・月内最低）'),
-                children: [
-                  for (final month in months)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${month.month.year}/${month.month.month} '
-                          '月末 ${_yen(month.closingBalance)} / '
-                          '月内最低 ${_yen(month.worstBalance)}',
-                          style: TextStyle(
-                            color: month.isShortfall ? _danger : null,
-                            fontSize: 12,
+              Semantics(
+                container: true,
+                explicitChildNodes: true,
+                child: ExpansionTile(
+                  key: const Key('asset_cashflow_forecast_month_details'),
+                  internalAddSemanticForOnTap: true,
+                  tilePadding: EdgeInsets.zero,
+                  title: const Text('月別内訳（月末・月内最低）'),
+                  children: [
+                    for (final month in months)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '${month.month.year}/${month.month.month} '
+                            '月末 ${_yen(month.closingBalance)} / '
+                            '月内最低 ${_yen(month.worstBalance)}',
+                            style: TextStyle(
+                              color: month.isShortfall ? _danger : null,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+      
+              ),
+            ],
               ),
             ],
           ],
