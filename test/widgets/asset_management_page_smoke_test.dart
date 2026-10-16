@@ -213,6 +213,9 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(MaterialApp(home: AssetManagementPage(
         debugNow: DateTime(2026, 6, 20),
+        debugInitialAssetData: const {
+          '2026-06-20': {'synthetic cash': 1000.0},
+        },
         debugCalendarNow: DateTime(2026, 6, 20),
         debugInitialRecentFlows: [
           for (final month in months)
