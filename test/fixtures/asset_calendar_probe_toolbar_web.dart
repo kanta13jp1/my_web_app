@@ -17,7 +17,8 @@ void installProbeToolbar({
     'Browser probe release data': release,
     'Browser probe audit transport': audit,
   }.entries) {
-    final button = web.document.createElement('button') as web.HTMLButtonElement;
+    final button =
+        web.document.createElement('button') as web.HTMLButtonElement;
     button.textContent = entry.key;
     button.addEventListener('click', ((web.Event event) => entry.value()).toJS);
     toolbar.appendChild(button);

@@ -11,7 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'asset_calendar_probe_toolbar_stub.dart'
-    if (dart.library.js_interop) 'asset_calendar_probe_toolbar_web.dart' as toolbar;
+    if (dart.library.js_interop) 'asset_calendar_probe_toolbar_web.dart'
+    as toolbar;
 
 const probeOwner = '00000000-0000-4000-8000-000000000001';
 const probeOrigin = 'http://127.0.0.1:9999';
@@ -136,12 +137,14 @@ Future<void> main() {
         ),
       );
       await restoreProbeOwner();
-      runApp(AuthenticatedProbe(
-        repository: ProbeDelayedRepository(gate),
-        client: client,
-        browserToolbar: true,
-        earlySemantics: Uri.base.queryParameters['semantics'] == 'early',
-      ),);
+      runApp(
+        AuthenticatedProbe(
+          repository: ProbeDelayedRepository(gate),
+          client: client,
+          browserToolbar: true,
+          earlySemantics: Uri.base.queryParameters['semantics'] == 'early',
+        ),
+      );
     },
     () => client,
   );
@@ -205,7 +208,9 @@ class _AuthenticatedProbeState extends State<AuthenticatedProbe> {
     if (!widget.repository.gate.isCompleted) widget.repository.gate.complete();
     for (var attempt = 0; attempt < 250; attempt++) {
       if ((widget.client?.deliveredHistory ?? 0) > 0 &&
-          widget.repository.completedLoads > 0) break;
+          widget.repository.completedLoads > 0) {
+        break;
+      }
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     await WidgetsBinding.instance.endOfFrame;
@@ -215,7 +220,6 @@ class _AuthenticatedProbeState extends State<AuthenticatedProbe> {
         widget.repository.completedLoads > 0;
     auditTransport();
   }
-
 
   @override
   void dispose() {
@@ -231,40 +235,41 @@ class _AuthenticatedProbeState extends State<AuthenticatedProbe> {
           body: Padding(
             padding: EdgeInsets.only(top: widget.browserToolbar ? 80 : 0),
             child: Column(
-            children: [
-              Wrap(
-                children: [
-                  ValueListenableBuilder<int>(
-                    valueListenable: counter.pushes,
-                    builder: (_, value, child) => Semantics(
-                      container: true,
-                      label: 'fixture-popup-pushes:$value',
-                      excludeSemantics: true,
-                      child: SizedBox(
-                        width: 220,
-                        height: 32,
-                        child: Text('fixture-popup-pushes:$value'),
+              children: [
+                Wrap(
+                  children: [
+                    ValueListenableBuilder<int>(
+                      valueListenable: counter.pushes,
+                      builder: (_, value, child) => Semantics(
+                        container: true,
+                        label: 'fixture-popup-pushes:$value',
+                        excludeSemantics: true,
+                        child: SizedBox(
+                          width: 220,
+                          height: 32,
+                          child: Text('fixture-popup-pushes:$value'),
+                        ),
                       ),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      if (!widget.repository.gate.isCompleted) {
-                        widget.repository.gate.complete();
-                      }
-                    },
-                    child: const Text('Probe: release synthetic data'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      semantics ??= SemanticsBinding.instance.ensureSemantics();
-                    },
-                    child: const Text('Probe: enable semantics'),
-                  ),
-                ],
-              ),
-              Expanded(child: authenticatedProbePage(widget.repository)),
-            ],
+                    TextButton(
+                      onPressed: () {
+                        if (!widget.repository.gate.isCompleted) {
+                          widget.repository.gate.complete();
+                        }
+                      },
+                      child: const Text('Probe: release synthetic data'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        semantics ??=
+                            SemanticsBinding.instance.ensureSemantics();
+                      },
+                      child: const Text('Probe: enable semantics'),
+                    ),
+                  ],
+                ),
+                Expanded(child: authenticatedProbePage(widget.repository)),
+              ],
             ),
           ),
         ),
