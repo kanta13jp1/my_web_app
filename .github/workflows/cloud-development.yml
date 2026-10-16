@@ -529,14 +529,15 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs/cashflow
           flutter pub get
-          dart format test/services/asset_cashflow_forecast_inputs_test.dart
-          flutter analyze --no-pub test/services/asset_cashflow_forecast_inputs_test.dart
-          flutter test --no-pub --reporter expanded test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart | tee .ci-logs/cashflow/tests.log
+          dart format lib/services/asset_cashflow_forecast_service.dart lib/services/asset_cashflow_forecast_inputs.dart lib/pages/asset_management_page.dart lib/widgets/asset_cashflow_forecast_card.dart test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart
+          flutter analyze --no-pub lib/services/asset_cashflow_forecast_service.dart lib/services/asset_cashflow_forecast_inputs.dart lib/pages/asset_management_page.dart lib/widgets/asset_cashflow_forecast_card.dart test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart
+          flutter test --no-pub --reporter expanded test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart test/services/asset_payment_calendar_service_test.dart test/widgets/asset_calendar_warning_page_test.dart | tee .ci-logs/cashflow/tests.log
       - name: Preserve source
         if: always()
         run: |
           mkdir -p .ci-logs/cashflow/source/test/services
-          cp test/services/asset_cashflow_forecast_inputs_test.dart .ci-logs/cashflow/source/test/services/
+          cp --parents lib/services/asset_cashflow_forecast_service.dart lib/services/asset_cashflow_forecast_inputs.dart lib/pages/asset_management_page.dart lib/widgets/asset_cashflow_forecast_card.dart test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart .ci-logs/cashflow/source/
+          git diff -- lib/services/asset_cashflow_forecast_service.dart lib/services/asset_cashflow_forecast_inputs.dart lib/pages/asset_management_page.dart lib/widgets/asset_cashflow_forecast_card.dart test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart test/widgets/asset_cashflow_forecast_card_test.dart > .ci-logs/cashflow/mechanical.patch
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

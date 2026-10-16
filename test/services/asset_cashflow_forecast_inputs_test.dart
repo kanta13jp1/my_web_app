@@ -64,8 +64,12 @@ AssetCashflowForecastInputs _billInputs({
   String dueDate = '2026-06-10',
   double subscriptionAmount = 2000,
   Map<String, String> links = const {},
+  DateTime? paidPeriodStart,
+  DateTime? paidPeriodEndExclusive,
 }) {
   return AssetCashflowForecastInputs.fromAssetData(
+    paidPeriodStart: paidPeriodStart,
+    paidPeriodEndExclusive: paidPeriodEndExclusive,
     accounts: const [],
     debtRows: [debt],
     subscriptionFixedCostIds: links,
@@ -95,11 +99,38 @@ double _projectOutflow(AssetCashflowForecastInputs inputs) {
 
 void main() {
   group('forecast and calendar payment schedule agreement', () {
+    test('only paid rows in a known cycle suppress the due occurrence', () {
+      for (final paid in [false, true]) {
+        final inputs = _billInputs(
+          debt: _debt(paid: paid, recurringFixedCostId: 'cost-bill'),
+          links: const {'legacy-bill': 'cost-bill'},
+          paidPeriodStart: DateTime(2026, 6, 1),
+          paidPeriodEndExclusive: DateTime(2026, 7, 1),
+        );
+        expect(_projectOutflow(inputs), paid ? 0 : 2000);
+      }
+      final unknown = _billInputs(
+        debt: _debt(paid: true, recurringFixedCostId: 'cost-bill'),
+        links: const {'legacy-bill': 'cost-bill'},
+      );
+      expect(_projectOutflow(unknown), 2000);
+      final outside = _billInputs(
+        debt: _debt(paid: true, recurringFixedCostId: 'cost-bill'),
+        links: const {'legacy-bill': 'cost-bill'},
+        overrides: const {'bill': 25},
+        paidPeriodStart: DateTime(2026, 5, 25),
+        paidPeriodEndExclusive: DateTime(2026, 6, 25),
+      );
+      expect(_projectOutflow(outside), 2000);
+    });
+
     test('paid current-period bill is not deducted again before its due day', () {
       final debt = _debt(paid: true, recurringFixedCostId: 'cost-bill');
       final inputs = _billInputs(
         debt: debt,
         links: const {'legacy-bill': 'cost-bill'},
+        paidPeriodStart: DateTime(2026, 6, 1),
+        paidPeriodEndExclusive: DateTime(2026, 7, 1),
       );
       final calendar = AssetPaymentCalendarService.buildMonth(
         month: DateTime(2026, 6),

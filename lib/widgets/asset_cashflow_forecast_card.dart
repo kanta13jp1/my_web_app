@@ -262,7 +262,9 @@ class AssetCashflowForecastCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           '現金・預金 ${_yen(forecast.startingBalance)} を起点に、繰り返し収入・固定費・返済予定を'
-          '毎月積み上げた見込みです。未登録の入出金は含まれません。',
+          '毎月積み上げた見込みです。未登録の入出金は含まれません。'
+          '支払済みの設定は対象の給与サイクル内だけ反映します。'
+          '支払結果を反映した残高が起点という前提です。',
           style: TextStyle(
             fontSize: 11,
             height: 1.5,
