@@ -4,6 +4,31 @@ import 'package:my_web_app/services/note_task_service.dart';
 import 'package:my_web_app/widgets/note_tasks_panel.dart';
 
 void main() {
+  for (final days in <int>[-30, 5000]) {
+    testWidgets('date picker handles due date offset $days without saving',
+        (tester) async {
+      final dueAt = DateTime.now().add(Duration(days: days));
+      final repository = _FakeNoteTaskRepository(
+        tasks: <NoteTask>[_task(id: 'dated', dueAt: dueAt)],
+      );
+      await _pumpPanel(tester, repository, width: 1000);
+      await tester.tap(find.byKey(const ValueKey('note_task_edit_dated')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('note_task_due_button')));
+      await tester.pumpAndSettle();
+
+      final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+      expect(picker.initialDate.isBefore(picker.firstDate), isFalse);
+      expect(picker.initialDate.isAfter(picker.lastDate), isFalse);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('CANCEL'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+      expect((await repository.loadTasks(noteId: 429)).single.dueAt, dueAt);
+      expect(repository.createdDrafts, isEmpty);
+    });
+  }
   testWidgets('shows imported and native Tasks responsively and toggles status',
       (tester) async {
     final repository = _FakeNoteTaskRepository(
@@ -171,6 +196,7 @@ NoteTask _task({
   List<NoteTaskReminder> reminders = const <NoteTaskReminder>[],
   String? assigneeEmail,
   String? assigneeDisplayName,
+  DateTime? dueAt,
 }) {
   return NoteTask(
     id: id,
@@ -184,7 +210,7 @@ NoteTask _task({
     taskGroupNoteLevelId: 'group-429',
     sourceSystem: sourceSystem,
     reminders: reminders,
-    dueAt: DateTime.utc(2026, 9, 1, 9),
+    dueAt: dueAt ?? DateTime.utc(2026, 9, 1, 9),
     recurrence: 'RRULE:FREQ=WEEKLY',
     repeatAfterCompletion: true,
     assigneeEmail: assigneeEmail,
