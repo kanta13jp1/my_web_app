@@ -527,9 +527,35 @@ jobs:
       - run: flutter pub get
       - name: Format analyze and run restored regression
         run: |
-          dart format test/fixtures/asset_calendar_authenticated_probe.dart test/widgets/asset_calendar_authenticated_probe_test.dart
-          flutter analyze test/fixtures/asset_calendar_authenticated_probe.dart test/widgets/asset_calendar_authenticated_probe_test.dart
+          dart format test/fixtures/asset_calendar_authenticated_probe.dart test/fixtures/asset_calendar_probe_toolbar_stub.dart test/fixtures/asset_calendar_probe_toolbar_web.dart test/widgets/asset_calendar_authenticated_probe_test.dart
+          flutter analyze test/fixtures/asset_calendar_authenticated_probe.dart test/fixtures/asset_calendar_probe_toolbar_stub.dart test/fixtures/asset_calendar_probe_toolbar_web.dart test/widgets/asset_calendar_authenticated_probe_test.dart
           flutter test test/widgets/asset_calendar_authenticated_probe_test.dart --reporter expanded
+# Draft steps to add after successful Stage A, never launched concurrently.
+      - name: Build synthetic browser action probe
+        run: |
+          flutter build web --release --pwa-strategy=none --no-web-resources-cdn --target=test/fixtures/asset_calendar_authenticated_probe.dart
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Compare four authenticated synthetic browser boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --directory build/web > /tmp/calendar-action-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/asset_calendar_authenticated_probe.mjs
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: calendar-authenticated-browser-${{ github.run_id }}
+          path: .ci-logs/calendar-authenticated-probe
+          include-hidden-files: true
+          retention-days: 3
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -537,4 +563,6 @@ jobs:
           path: |
             test/fixtures/asset_calendar_authenticated_probe.dart
             test/widgets/asset_calendar_authenticated_probe_test.dart
+            test/fixtures/asset_calendar_probe_toolbar_stub.dart
+            test/fixtures/asset_calendar_probe_toolbar_web.dart
           retention-days: 3

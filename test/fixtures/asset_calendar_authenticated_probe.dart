@@ -10,6 +10,9 @@ import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'asset_calendar_probe_toolbar_stub.dart'
+    if (dart.library.js_interop) 'asset_calendar_probe_toolbar_web.dart' as toolbar;
+
 const probeOwner = '00000000-0000-4000-8000-000000000001';
 const probeOrigin = 'http://127.0.0.1:9999';
 
@@ -19,6 +22,7 @@ class ProbeMemoryHttp extends http.BaseClient {
   final requests = <String>[];
   int deniedWrites = 0;
   int deniedExternal = 0;
+  int deliveredHistory = 0;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
@@ -39,6 +43,7 @@ class ProbeMemoryHttp extends http.BaseClient {
       };
     } else if (request.url.path == '/rest/v1/cfo_assets') {
       await historyGate?.future;
+      deliveredHistory++;
       body = [
         {
           'id': 1,
@@ -131,15 +136,29 @@ Future<void> main() {
         ),
       );
       await restoreProbeOwner();
-      runApp(AuthenticatedProbe(repository: ProbeDelayedRepository(gate)));
+      runApp(AuthenticatedProbe(
+        repository: ProbeDelayedRepository(gate),
+        client: client,
+        browserToolbar: true,
+        earlySemantics: Uri.base.queryParameters['semantics'] == 'early',
+      ),);
     },
     () => client,
   );
 }
 
 class AuthenticatedProbe extends StatefulWidget {
-  const AuthenticatedProbe({super.key, required this.repository});
+  const AuthenticatedProbe({
+    super.key,
+    required this.repository,
+    this.client,
+    this.browserToolbar = false,
+    this.earlySemantics = false,
+  });
   final ProbeDelayedRepository repository;
+  final ProbeMemoryHttp? client;
+  final bool browserToolbar;
+  final bool earlySemantics;
 
   @override
   State<AuthenticatedProbe> createState() => _AuthenticatedProbeState();
@@ -147,20 +166,87 @@ class AuthenticatedProbe extends StatefulWidget {
 
 class _AuthenticatedProbeState extends State<AuthenticatedProbe> {
   SemanticsHandle? semantics;
+  final counter = _AuthenticatedPopupCounter();
+  bool dataFramesSettled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.earlySemantics) {
+      semantics = SemanticsBinding.instance.ensureSemantics();
+    }
+    if (widget.browserToolbar) {
+      toolbar.installProbeToolbar(
+        enable: () {
+          semantics ??= SemanticsBinding.instance.ensureSemantics();
+          auditTransport();
+        },
+        release: () => unawaited(releaseBrowserData()),
+        audit: auditTransport,
+      );
+      auditTransport();
+    }
+  }
+
+  void auditTransport() {
+    final client = widget.client;
+    toolbar.setProbeToolbarStatus(
+      'probe-status:owner=synthetic;'
+      'semantics=${semantics == null ? 'disabled' : 'enabled'};'
+      'dataFrames=${dataFramesSettled ? 'settled' : 'waiting'};'
+      'history=${client?.deliveredHistory ?? 0};'
+      'loads=${widget.repository.completedLoads};'
+      'writes-denied=${client?.deniedWrites ?? 0};'
+      'external-denied=${client?.deniedExternal ?? 0};forwarded=0',
+    );
+  }
+
+  Future<void> releaseBrowserData() async {
+    if (!widget.repository.gate.isCompleted) widget.repository.gate.complete();
+    for (var attempt = 0; attempt < 250; attempt++) {
+      if ((widget.client?.deliveredHistory ?? 0) > 0 &&
+          widget.repository.completedLoads > 0) break;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    await WidgetsBinding.instance.endOfFrame;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    dataFramesSettled = (widget.client?.deliveredHistory ?? 0) > 0 &&
+        widget.repository.completedLoads > 0;
+    auditTransport();
+  }
+
 
   @override
   void dispose() {
     semantics?.dispose();
+    counter.pushes.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => MaterialApp(
+        navigatorObservers: [counter],
         home: Scaffold(
-          body: Column(
+          body: Padding(
+            padding: EdgeInsets.only(top: widget.browserToolbar ? 80 : 0),
+            child: Column(
             children: [
               Wrap(
                 children: [
+                  ValueListenableBuilder<int>(
+                    valueListenable: counter.pushes,
+                    builder: (_, value, child) => Semantics(
+                      container: true,
+                      label: 'fixture-popup-pushes:$value',
+                      excludeSemantics: true,
+                      child: SizedBox(
+                        width: 220,
+                        height: 32,
+                        child: Text('fixture-popup-pushes:$value'),
+                      ),
+                    ),
+                  ),
                   TextButton(
                     onPressed: () {
                       if (!widget.repository.gate.isCompleted) {
@@ -179,7 +265,19 @@ class _AuthenticatedProbeState extends State<AuthenticatedProbe> {
               ),
               Expanded(child: authenticatedProbePage(widget.repository)),
             ],
+            ),
           ),
         ),
       );
+}
+
+class _AuthenticatedPopupCounter extends NavigatorObserver {
+  final pushes = ValueNotifier<int>(0);
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route is PopupRoute) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => pushes.value++);
+    }
+  }
 }
