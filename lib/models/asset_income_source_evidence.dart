@@ -137,8 +137,9 @@ class AssetIncomeSourceEvidence {
     final page = relationshipPage < 0 ? 0 : relationshipPage;
     final pageSize = relationshipPageSize.clamp(1, 50).toInt();
     if (records.length > 512) {
-      final owned = records.where((row) =>
-          ownerId.isNotEmpty && row.ownerId == ownerId).toList();
+      final owned = records
+          .where((row) => ownerId.isNotEmpty && row.ownerId == ownerId)
+          .toList();
       return IncomeEvidenceProjection(
         records: List.unmodifiable(owned),
         sourceRecordedTotals: Map.unmodifiable({
@@ -333,9 +334,10 @@ class AssetIncomeSourceEvidence {
     var matchedTotal = matched.isEmpty
         ? null
         : matched.fold<int>(0, (sum, group) => sum + group.first.amount);
-    var combinedTotal = issues.isNotEmpty || unresolvedCount > 0 || byKey.isEmpty
-        ? null
-        : groupList.fold<int>(0, (sum, group) => sum + group.first.amount);
+    var combinedTotal =
+        issues.isNotEmpty || unresolvedCount > 0 || byKey.isEmpty
+            ? null
+            : groupList.fold<int>(0, (sum, group) => sum + group.first.amount);
     if ((matchedTotal ?? 0) > _maxSafeInteger ||
         (combinedTotal ?? 0) > _maxSafeInteger) {
       issue(IncomeEvidenceProblem.invalidAmount);
@@ -383,7 +385,9 @@ class AssetIncomeSourceEvidence {
     final month = int.parse(parts[2]!);
     final day = int.parse(parts[3]!);
     final calendar = DateTime.utc(year, month, day);
-    if (calendar.year != year || calendar.month != month || calendar.day != day) {
+    if (calendar.year != year ||
+        calendar.month != month ||
+        calendar.day != day) {
       return false;
     }
     final offset = parts[7]!;

@@ -260,7 +260,8 @@ void main() {
     expect(overflowing.sourceRecordedTotals[IncomeSourceKind.flow], isNull);
   });
 
-  test('invalid or timezone-free instants are not normalized into valid dates', () {
+  test('invalid or timezone-free instants are not normalized into valid dates',
+      () {
     for (final date in [
       '2026-02-30T00:00:00Z',
       '2026-01-25T24:00:00Z',
@@ -281,7 +282,8 @@ void main() {
     }
   });
 
-  test('explicit FK instants with equivalent offsets keep the same observation', () {
+  test('explicit FK instants with equivalent offsets keep the same observation',
+      () {
     final result = _project([
       _row(
         IncomeSourceKind.payslip,
