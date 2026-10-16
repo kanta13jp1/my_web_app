@@ -1,3 +1,4 @@
+import '../services/asset_payslip_item_label.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -144,17 +145,7 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
     }
   }
 
-  static const otherLabels = {
-    'base_salary': '基本給',
-    'fixed_overtime': '固定残業手当',
-    'overtime': '残業手当',
-    'allowance': '手当',
-    'commuting': '通勤手当',
-    'work_days': '勤務日数',
-    'overtime_hours': '時間外時間',
-    'employees_pension_insurance': '厚生年金（別名）',
-  };
-  Widget _originalItems(String title, Object? raw) => Column(
+  Widget _originalItems(String title, Object? raw, PayslipItemGroup group) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title),
@@ -162,7 +153,7 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
           if (raw is Map)
             for (final entry in raw.entries)
               Text(
-                '${AssetPayrollDeductionsCard.labels[entry.key] ?? otherLabels[entry.key] ?? 'その他（${entry.key}）'}：${entry.value ?? '未取得'}',
+                '${group == PayslipItemGroup.deduction ? AssetPayrollDeductionsCard.labels[entry.key] ?? (entry.key == 'employees_pension_insurance' ? '厚生年金（別名）' : 'その他（${entry.key}）') : PayslipItemLabel.label(group, entry.key as String)}：${PayslipItemLabel.value(group, entry.key as String, entry.value)}',
               ),
         ],
       );
@@ -200,9 +191,9 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
                   '総支給：${row.raw['gross_amount']}円／手取り：${row.raw['net_amount']}円',
                 ),
                 Text('課税対象額：${row.raw['taxable_amount'] ?? '未取得'}'),
-                _originalItems('控除の取込値（変更しません）', row.raw['deductions']),
-                _originalItems('支給内訳の取込値（変更しません）', row.raw['earnings']),
-                _originalItems('勤怠の取込値（変更しません）', row.raw['attendance']),
+                _originalItems('控除の取込値（変更しません）', row.raw['deductions'], PayslipItemGroup.deduction),
+                _originalItems('支給内訳の取込値（変更しません）', row.raw['earnings'], PayslipItemGroup.earning),
+                _originalItems('勤怠の取込値（変更しません）', row.raw['attendance'], PayslipItemGroup.attendance),
                 Text(
                   '税金合計：${AssetPayrollDeductionsCard.amount(projection.taxTotalYen)}',
                 ),
