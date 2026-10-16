@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
@@ -123,6 +124,7 @@ Future<void> main() {
   return http.runWithClient(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      GoogleFonts.config.allowRuntimeFetching = false;
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final gate = Completer<void>();
       client.historyGate = gate;
@@ -231,6 +233,11 @@ class _AuthenticatedProbeState extends State<AuthenticatedProbe> {
   @override
   Widget build(BuildContext context) => MaterialApp(
         navigatorObservers: [counter],
+        // Match the production ThemeService bundled fonts without changing product code.
+        theme: ThemeData(
+          fontFamily: 'NotoSansJP',
+          fontFamilyFallback: const ['NotoSansJP', 'NotoSans', 'NotoColorEmoji'],
+        ),
         home: Scaffold(
           body: Padding(
             padding: EdgeInsets.only(top: widget.browserToolbar ? 80 : 0),

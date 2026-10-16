@@ -5,7 +5,7 @@ await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({headless:true});
 let page;
 const results=[];
-const blockedExternal=[];
+const blockedExternal=new Map();
 const nextName='次のサイクル';
 const shareName='今月の返済報告カードを作る（実額を公開）';
 const next=()=>page.getByRole('button',{name:nextName,exact:true});
@@ -34,19 +34,49 @@ async function visibleNext(){
   throw new Error('Next button not visibly placed');
 }
 
+async function twoFrames(){await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));}
+async function focusState(){
+  return page.evaluate(names=>{
+    const next=Array.from(document.querySelectorAll('[role="button"]')).find(e=>(e.getAttribute('aria-label')??e.textContent)===names[0]);
+    const chain=[];
+    let active=document.activeElement;
+    while(active){
+      const raw=active.getAttribute('aria-label')??active.textContent??'';
+      const name=names.includes(raw)||(active.tagName==='BUTTON'&&raw.startsWith('Browser probe '))?raw:null;
+      chain.push({tag:active.tagName,id:active.id,role:active.getAttribute('role'),name,tabIndex:active.tabIndex});
+      const deeper=active.shadowRoot?.activeElement;
+      if(!deeper||deeper===active)break;
+      active=deeper;
+    }
+    const r=next?.getBoundingClientRect();
+    return {chain,targetFocused:!!next&&(active===next||next.matches(':focus')),targetRect:r?{x:r.x,y:r.y,width:r.width,height:r.height}:null};
+  },[nextName,shareName]);
+}
 async function activate(locator,name,input){
   if(input==='pointer'){
     const rect=await locator.boundingBox();if(!rect)throw new Error('Missing pointer rect');
     await page.mouse.click(rect.x+rect.width/2,rect.y+rect.height/2);
   }else if(input==='dom')await locator.evaluate(el=>el.click());
   else{
+    // Enter Flutter through a visible, non-actionable date label, not a callback.
+    const rect=await locator.boundingBox();
+    if(!rect)throw new Error('Missing keyboard entry rect');
+    results.push({focusStage:'toolbar-before-entry',focus:await focusState()});
+    await page.mouse.click(rect.x-110,rect.y+rect.height/2);
+    await twoFrames();
+    if(!await hasRange(initial)||await popupCount()!==0)throw new Error('Keyboard entry unexpectedly activated a product action');
+    results.push({focusStage:'flutter-date-label-entry',focus:await focusState()});
     let focused=false;
-    for(let i=0;i<350;i++){
+    const trace=[];
+    for(let i=0;i<80;i++){
       await page.keyboard.press('Tab');
-      const label=await page.evaluate(()=>(document.activeElement?.getAttribute('aria-label')??document.activeElement?.textContent));
-      if(label===name){focused=true;break;}
+      await twoFrames();
+      const state=await focusState();
+      trace.push({tab:i+1,...state});
+      if(state.targetFocused){focused=true;break;}
     }
-    if(!focused)throw new Error(`Focus not established: ${name}`);
+    results.push({focusStage:'bounded-tab-trace',trace});
+    if(!focused)throw new Error(`Focus not established after 80 observed Tabs: ${name}`);
     await capture(`keyboard-focus:${name}`);
     await page.keyboard.press('Enter');
   }
@@ -65,7 +95,10 @@ async function prepare(mode){
   await context.route('**/*',async route=>{
     const request=route.request(),url=new URL(request.url());
     if(url.origin==='http://127.0.0.1:4173'&&request.method()==='GET')return route.continue();
-    blockedExternal.push({method:request.method(),origin:url.origin,path:url.pathname});
+    const key=`${request.method()} ${url.origin}${url.pathname}`;
+    const previous=blockedExternal.get(key);
+    if(previous)previous.count++;
+    else blockedExternal.set(key,{method:request.method(),origin:url.origin,path:url.pathname,count:1});
     return route.abort('blockedbyclient');
   });
   page=await context.newPage();
@@ -107,41 +140,49 @@ async function prepare(mode){
   return context;
 }
 let context;
+let failures=0;
 try{
-  for(const [mode,input] of [['early-pointer','pointer'],['late-before-card-dom','dom'],['late-after-card-keyboard','keyboard']]){
-    context=await prepare(mode);
-    await activate(next(),nextName,input);
-    await page.waitForFunction(value=>Array.from(document.querySelectorAll('[role="group"]')).some(e=>(e.getAttribute('aria-label')??'').split('\n').includes(value)),following,{timeout:5000});
-    if(await popup().count()||await popupCount()!==0)throw new Error(`Unexpected popup ${mode}`);
-    await page.waitForTimeout(250);
-    if(!await hasRange(following))throw new Error(`Range moved more than once ${mode}`);
-    results.push({case:mode,nextTransitions:1,popupDelta:0,realCardObserved:true});
-    await capture(`${mode}:after`);
-    await page.screenshot({path:`${dir}/${mode}.png`});
-    await audit(`${mode}:after`);
-    await context.close();context=undefined;
+  for(const [mode,input] of [['early-pointer','pointer'],['late-before-card-dom','dom'],['late-after-card-keyboard','keyboard'],['share-pointer','pointer']]){
+    try{
+      context=await prepare(mode);
+      if(mode==='share-pointer'){
+        await activate(share(),shareName,'pointer');
+        await popup().waitFor();
+        await page.getByText('今月の返済報告を作る',{exact:true}).waitFor({state:'visible'});
+        await page.screenshot({path:`${dir}/share-preview.png`});
+        await popup().getByRole('button',{name:'閉じる',exact:true}).click();
+        await popup().waitFor({state:'detached'});
+        if(await popupCount()!==1||!await hasRange(initial))throw new Error('Share control counter/range mismatch');
+        results.push({case:mode,result:'success',nextTransitions:0,popupDelta:1,realCardObserved:true});
+      }else{
+        await activate(next(),nextName,input);
+        await page.waitForFunction(value=>Array.from(document.querySelectorAll('[role="group"]')).some(e=>(e.getAttribute('aria-label')??'').split('\n').includes(value)),following,{timeout:5000});
+        if(await popup().count()||await popupCount()!==0)throw new Error(`Unexpected popup ${mode}`);
+        await page.waitForTimeout(250);
+        if(!await hasRange(following))throw new Error(`Range moved more than once ${mode}`);
+        results.push({case:mode,result:'success',nextTransitions:1,popupDelta:0,realCardObserved:true});
+      }
+      await capture(`${mode}:after`);
+      await page.screenshot({path:`${dir}/${mode}.png`});
+      await audit(`${mode}:after`);
+    }catch(error){
+      failures++;
+      results.push({case:mode,result:'failure',probeFailure:String(error)});
+      if(page&&!page.isClosed()){
+        await writeFile(`${dir}/${mode}-synthetic-dom.html`,await page.content());
+        await capture(`${mode}:failure`);
+        await page.screenshot({path:`${dir}/${mode}-failure.png`});
+      }
+    }finally{
+      if(context)await context.close();
+      else if(page&&!page.isClosed())await page.context().close();
+      context=undefined;
+    }
   }
-  context=await prepare('share-pointer');
-  await activate(share(),shareName,'pointer');
-  await popup().waitFor();
-  await page.getByText('今月の返済報告を作る',{exact:true}).waitFor({state:'visible'});
-  await page.screenshot({path:`${dir}/share-preview.png`});
-  await popup().getByRole('button',{name:'閉じる',exact:true}).click();
-  await popup().waitFor({state:'detached'});
-  if(await popupCount()!==1||!await hasRange(initial))throw new Error('Share control counter/range mismatch');
-  results.push({case:'share-pointer',nextTransitions:0,popupDelta:1,realCardObserved:true});
-  await audit('share-pointer:after');
-  if(results.some(x=>x.pageError))throw new Error('Browser runtime error');
-}catch(error){
-  results.push({probeFailure:String(error)});
-  if(page&&!page.isClosed()){
-    await writeFile(`${dir}/synthetic-dom.html`,await page.content());
-    await capture('probe-failure');
-    await page.screenshot({path:`${dir}/probe-failure.png`});
-  }
-  throw error;
+  if(failures||results.some(x=>x.pageError))throw new Error(`Synthetic browser failures: ${failures}`);
 }finally{
-  results.push({blockedBrowserRequests:blockedExternal});
+  const blocked=Array.from(blockedExternal.values());
+  results.push({blockedBrowserRequestTotal:blocked.reduce((sum,x)=>sum+x.count,0),blockedBrowserRequestUnique:blocked.length,blockedBrowserRequestSamples:blocked.slice(0,32)});
   await writeFile(`${dir}/evidence.json`,JSON.stringify(results,null,2));
   await browser.close();
 }
