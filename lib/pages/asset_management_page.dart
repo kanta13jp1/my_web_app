@@ -3,6 +3,7 @@ import '../widgets/asset_month_end_snapshot_card.dart';
 import '../widgets/asset_payroll_deductions_section.dart';
 import '../widgets/asset_page_scroll_frame.dart';
 import '../widgets/asset_calendar_shortfall_details.dart';
+import '../widgets/asset_unreconciled_expense_badge.dart';
 import '../widgets/asset_payroll_snapshot_connection.dart';
 import '../services/asset_payroll_snapshot_store.dart';
 import '../widgets/asset_reflection_day_badge.dart';
@@ -112,6 +113,7 @@ import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_mirror_read_policy.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_status.dart';
+import 'package:my_web_app/services/asset_sync_verification.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
@@ -127,6 +129,7 @@ import 'package:my_web_app/services/disposable_balance_service.dart';
 import 'package:my_web_app/services/drink_challenge_service.dart';
 import 'package:my_web_app/services/drink_challenge_store.dart';
 import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
+import 'package:my_web_app/widgets/asset_legacy_meal_rule_card.dart';
 import 'package:my_web_app/services/profile_service.dart';
 import 'package:my_web_app/services/asset_flow_description_service.dart';
 import 'package:my_web_app/services/asset_salary_spending_entries.dart';
@@ -601,11 +604,44 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 起動時の複数ロードからの同時呼び出しを 1 回に集約する再入ガード。
   bool _syncRefreshInFlight = false;
   bool _syncRefreshDirty = false;
+  String? _syncSourcesOwnerId;
+  Map<AssetSyncDomain, Object?> _syncObservedLocalValues = {};
+  int? _syncObservedDirtyGeneration;
+  int? _syncObservedTombstoneGeneration;
 
-  AssetSyncStatusSummary get _syncSummary => AssetSyncStatusSummary(
-        loggedIn: _supabase.auth.currentUser != null,
+  Map<AssetSyncDomain, Object?> _syncCurrentPreferenceValues() => {
+        AssetSyncDomain.mainAccount:
+            AssetManagementMainAccountStore.encodeMirrorValue(
+          _assetManagementMainAccountId,
+        ),
+        AssetSyncDomain.watchlist: AssetWatchlistService.encodeMirrorValue(
+          _watchlistByType.values.toList(),
+        ),
+        AssetSyncDomain.revolving:
+            AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          _revolvingConfigs,
+        ),
+        AssetSyncDomain.debtOverrides:
+            Map<String, int>.from(_debtPaymentDayOverrides),
+      };
+
+  AssetSyncStatusSummary get _syncSummary {
+    return AssetSyncStatusSummary(
+      loggedIn: _supabase.auth.currentUser != null,
+      sources: currentAssetSyncSources(
+        observedOwnerId: _syncSourcesOwnerId,
+        currentOwnerId: _supabase.auth.currentUser?.id,
         sources: _syncSources,
-      );
+        observedLocalValues: _syncObservedLocalValues,
+        currentLocalValues: _syncCurrentPreferenceValues(),
+        observationStable: _syncObservedDirtyGeneration ==
+                AssetSyncDirtyKeysStore.mutationGeneration &&
+            !AssetSyncDirtyKeysStore.hasPendingMutations,
+        tombstoneObservationStable: _syncObservedTombstoneGeneration ==
+            MirrorTombstoneStore.mutationGeneration,
+      ),
+    );
+  }
 
   /// 集約 pref ドメインのローカル最終変更時刻 (LWW 判定用 / Phase B)。
   final AssetSyncTimestampStore _syncTimestampStore =
@@ -1968,14 +2004,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         KgiCsfKpiMetric.number(
           csf: '毎日レビューして改善する',
-          kpi: 'ロックダウン日課達成',
+          kpi: '生活ルールの記録数',
           actual: snapshot.ruleCompletedCount,
           target: ruleTarget,
           unit: '件',
         ),
         KgiCsfKpiMetric.number(
           csf: '逸脱をその日のうちに戻す',
-          kpi: '本日の違反ゼロ',
+          kpi: '本日の振り返り',
           actual: violationClear,
           target: 1,
           unit: '日',
@@ -5081,7 +5117,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(enabled ? '完済までの収監モードを開始しました' : '完済までの収監モードを中断しました'),
+        content: Text(enabled ? '返済中の生活ルールを開始しました' : '返済中の生活ルールを中断しました'),
       ),
     );
   }
@@ -5126,7 +5162,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('違反を記録しました')));
+    ).showSnackBar(const SnackBar(content: Text('振り返りを記録しました')));
   }
 
   Future<void> _showDebtLockdownViolationDialog(double remainingDebt) async {
@@ -5140,7 +5176,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         context: context,
         builder: (dialogContext) => StatefulBuilder(
           builder: (dialogContext, setDialogState) => AlertDialog(
-            title: const Text('収監モード違反を記録'),
+            title: const Text('生活ルールの振り返り'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -5148,7 +5184,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   DropdownButtonFormField<String>(
                     initialValue: selectedCategory,
                     decoration: const InputDecoration(
-                      labelText: '違反カテゴリ',
+                      labelText: '振り返りカテゴリ',
                       border: OutlineInputBorder(),
                       isDense: true,
                     ),
@@ -5220,7 +5256,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('違反内容を入力してください')));
+        ).showSnackBar(const SnackBar(content: Text('振り返り内容を入力してください')));
         return;
       }
 
@@ -5306,302 +5342,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(enabled ? 'うどん縛りを開始しました。完済の日まで。' : 'うどん縛りを中断しました'),
+        content: Text(enabled ? '以前の食費ルールを開始しました' : '以前の食費ルールを中断しました'),
       ),
     );
-  }
-
-  Future<void> _confirmKonbiniUdonPledge(double remainingDebt) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('うどん縛りの誓い'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                KonbiniUdonChallengeService.pledgeText,
-                style: TextStyle(fontWeight: FontWeight.w700, height: 1.6),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                KonbiniUdonChallengeService.healthDisclaimer,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
-                  height: 1.6,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('やめておく'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('誓う'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) {
-      return;
-    }
-    await _setKonbiniUdonEnabled(true, remainingDebt);
-  }
-
-  Future<void> _toggleKonbiniUdonMeal(
-    KonbiniUdonMealSlot slot,
-    bool ateUdon,
-    double remainingDebt,
-  ) async {
-    final snapshot = await _konbiniUdonChallengeService.toggleMealSlot(
-      slot,
-      ateUdon,
-      remainingDebt: remainingDebt,
-    );
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _konbiniUdonSnapshot = snapshot;
-      _konbiniUdonLoadedForDebt = remainingDebt;
-    });
-  }
-
-  Future<void> _recordKonbiniUdonViolation({
-    required String note,
-    required double amount,
-    KonbiniUdonMealSlot? slot,
-    required double remainingDebt,
-  }) async {
-    final snapshot = await _konbiniUdonChallengeService.recordViolation(
-      note: note,
-      amount: amount,
-      slot: slot,
-      remainingDebt: remainingDebt,
-    );
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _konbiniUdonSnapshot = snapshot;
-      _konbiniUdonLoadedForDebt = remainingDebt;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('うどん以外の食事を記録しました。明日また縛り直しです。')),
-    );
-  }
-
-  Future<void> _showKonbiniUdonViolationDialog(double remainingDebt) async {
-    KonbiniUdonMealSlot? selectedSlot;
-    final noteController = TextEditingController();
-    final amountController = TextEditingController();
-
-    try {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => StatefulBuilder(
-          builder: (dialogContext, setDialogState) => AlertDialog(
-            title: const Text('うどん以外を食べた記録'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<KonbiniUdonMealSlot?>(
-                    initialValue: selectedSlot,
-                    decoration: const InputDecoration(
-                      labelText: 'どの食事か',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                    items: [
-                      for (final slot in KonbiniUdonMealSlot.values)
-                        DropdownMenuItem<KonbiniUdonMealSlot?>(
-                          value: slot,
-                          child: Text('${slot.label}食'),
-                        ),
-                      const DropdownMenuItem<KonbiniUdonMealSlot?>(
-                        value: null,
-                        child: Text('間食・その他'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedSlot = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: noteController,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: '何を食べたか',
-                      hintText: '例: 我慢できずに牛丼を食べた',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: amountController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: '支払額（任意）',
-                      hintText: '0',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('キャンセル'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('記録'),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      if (confirmed != true) {
-        return;
-      }
-
-      final note = noteController.text.trim();
-      if (note.isEmpty) {
-        if (!mounted) {
-          return;
-        }
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('何を食べたか入力してください')));
-        return;
-      }
-
-      final amount =
-          double.tryParse(amountController.text.replaceAll(',', '').trim()) ??
-              0;
-      await _recordKonbiniUdonViolation(
-        note: note,
-        amount: amount,
-        slot: selectedSlot,
-        remainingDebt: remainingDebt,
-      );
-    } finally {
-      noteController.dispose();
-      amountController.dispose();
-    }
-  }
-
-  Future<void> _showKonbiniUdonConfigDialog(double remainingDebt) async {
-    final config =
-        _konbiniUdonSnapshot?.config ?? KonbiniUdonChallengeConfig.defaults;
-    final priceController = TextEditingController(
-      text: config.udonUnitPrice.round().toString(),
-    );
-    final baselineController = TextEditingController(
-      text: config.baselineMonthlyFoodCost.round().toString(),
-    );
-
-    try {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('うどん縛りの前提を調整'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'コンビニうどん1食の価格（円）',
-                    helperText: 'トッピング込みの実勢価格に合わせて調整',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: baselineController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: '縛りなしの月間食費（円）',
-                    helperText: '目安: 総務省家計調査の単身世帯食料費 約45,000円',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('キャンセル'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('保存'),
-            ),
-          ],
-        ),
-      );
-
-      if (confirmed != true) {
-        return;
-      }
-
-      final price = double.tryParse(
-        priceController.text.replaceAll(',', '').trim(),
-      );
-      final baseline = double.tryParse(
-        baselineController.text.replaceAll(',', '').trim(),
-      );
-      if (price == null || baseline == null) {
-        if (!mounted) {
-          return;
-        }
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('数値で入力してください')));
-        return;
-      }
-
-      final snapshot = await _konbiniUdonChallengeService.updateConfig(
-        udonUnitPrice: price,
-        baselineMonthlyFoodCost: baseline,
-        remainingDebt: remainingDebt,
-      );
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _konbiniUdonSnapshot = snapshot;
-        _konbiniUdonLoadedForDebt = remainingDebt;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('うどん縛りの前提を更新しました')));
-    } finally {
-      priceController.dispose();
-      baselineController.dispose();
-    }
   }
 
   Future<void> _showDebtPlanDialog() async {
@@ -6227,6 +5970,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 1) セクション (表示中のみ)。
     for (final id in AssetManagementSectionId.values) {
       if (!_isSectionShown(id)) continue;
+      if (id == AssetManagementSectionId.savingsPlan &&
+          _sectionAnchorKey(id).currentContext == null) {
+        continue;
+      }
       if (!matches(id.label)) continue;
       entries.add(
         _AssetSectionSearchEntry(
@@ -10023,6 +9770,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     late final IconData icon;
     late final String text;
     switch (summary.level) {
+      case AssetSyncLevel.unverified:
+        background = warnBg;
+        foreground = warnFg;
+        icon = Icons.help_outline;
+        text = '対象6領域の保存状況：未照合 ${summary.unverifiedDomains.length} 項目';
+      case AssetSyncLevel.noData:
+        background = const Color(0xFFF1F5F9);
+        foreground = const Color(0xFF475569);
+        icon = Icons.cloud_queue;
+        text = '対象6領域に保存対象なし';
       case AssetSyncLevel.loggedOut:
         background = warnBg;
         foreground = warnFg;
@@ -10032,17 +9789,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         background = warnBg;
         foreground = warnFg;
         icon = Icons.sync_problem;
-        text = '未同期 ${summary.localOnlyCount} 項目（この端末のみ）';
+        text =
+            '対象6領域：未同期 ${summary.localOnlyCount}・未照合 ${summary.unverifiedDomains.length} 項目';
       case AssetSyncLevel.allSynced:
         background = okBg;
         foreground = okFg;
         icon = Icons.cloud_done;
-        text = 'サーバ保存済み（残高・明細との照合は別途必要）';
+        text = '対象6領域の現在値をサーバと照合済み（残高・明細照合は別途）';
     }
-    final tappable = summary.level != AssetSyncLevel.allSynced;
     return InkWell(
       key: const Key('asset_sync_status_chip'),
-      onTap: tappable ? _showSyncStatusDetails : null,
+      onTap: _showSyncStatusDetails,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -10066,8 +9823,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
             ),
-            if (tappable)
-              Icon(Icons.chevron_right, size: 18, color: foreground),
+            Icon(Icons.chevron_right, size: 18, color: foreground),
           ],
         ),
       ),
@@ -10128,35 +9884,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('同期ステータス'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (summary.isLoggedOut)
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               const Text(
-                '未ログインのため、資産管理のデータはこの端末にのみ保存されます。\n'
-                'ログインするとサーバに同期され、スマホなど他の端末でも参照できます。',
-                style: TextStyle(fontSize: 13, height: 1.4),
-              )
-            else ...[
-              const Text(
-                '次のデータはまだサーバに同期されていません（この端末のみ）:',
-                style: TextStyle(fontSize: 13, height: 1.4),
+                '以下の6領域だけの保存状況です。残高・明細の正確さや、'
+                'ブラウザ内だけに保存する計画などの同期を保証するものではありません。',
               ),
-              const SizedBox(height: 8),
-              for (final domain in summary.localOnlyDomains)
+              const SizedBox(height: 12),
+              for (final domain in AssetSyncDomain.values)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.cloud_off, size: 16),
-                      const SizedBox(width: 6),
-                      Text(domain.label),
-                    ],
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    '${domain.label}：${switch (summary.sources[domain]) {
+                      AssetSyncSource.synced => '現在値をサーバと照合済み',
+                      AssetSyncSource.localOnly => '現在値または削除の同期が未完了',
+                      AssetSyncSource.empty => '保存対象なし',
+                      AssetSyncSource.unverified || null => '未照合（保存失敗とは未確定）',
+                    }}',
                   ),
                 ),
+              const SizedBox(height: 12),
+              const Text(
+                '入金予定と月次の支払・計画設定は、'
+                'サーバーの現在値との一致が未確認です。保存失敗を意味するものではありません。',
+              ),
             ],
-          ],
+          ),
         ),
         actions: [
           TextButton(
@@ -10256,8 +10012,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
               const SizedBox(height: 12),
               _buildDisplayModeSwitcher(),
-              if (assetLiabilityWorkbook != null &&
-                  _supabase.auth.currentUser != null)
+              if (_isSectionShown(AssetManagementSectionId.savingsPlan) &&
+                  assetLiabilityWorkbook != null &&
+                  _supabase.auth.currentUser != null) ...[
+                _sectionAnchor(AssetManagementSectionId.savingsPlan),
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: SavingsLifePlanCard(
@@ -10279,6 +10037,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     onReviewPayments: () => _scrollTo(_keyCalendar),
                   ),
                 ),
+              ],
               const SizedBox(height: 12),
               if (_isSectionShown(AssetManagementSectionId.monthlyFlow)) ...[
                 _sectionAnchor(AssetManagementSectionId.monthlyFlow),
@@ -11225,11 +10984,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  /// 各データ領域の同期出所を再計算する。サーバに該当データがあれば synced、
-  /// ローカルのみなら localOnly、何も無ければ empty。未ログイン時は同期されない
-  /// ため、データのある領域はすべて localOnly になる。
-  ///
-  /// 起動時の複数ロードや保存後から繰り返し呼ばれるため、再入は 1 回に集約する。
+  /// 対象6領域の保存状況。現在値の一致を確認できない領域を保存済みにしない。
+  /// 読取専用であり、失敗時の再送やローカル値の変更は行わない。
   Future<void> _refreshSyncSources() async {
     if (_syncRefreshInFlight) {
       _syncRefreshDirty = true;
@@ -11237,78 +10993,148 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     _syncRefreshInFlight = true;
     try {
-      final user = _supabase.auth.currentUser;
-      final presentPrefKeys = <String>{};
-      var hasInflowOnServer = false;
-      if (user != null) {
+      final ownerId = _supabase.auth.currentUser?.id;
+      final dirtyGeneration = AssetSyncDirtyKeysStore.mutationGeneration;
+      final tombstoneGeneration = MirrorTombstoneStore.mutationGeneration;
+      var readSucceeded = false;
+      var remote = <String, Map<String, dynamic>>{};
+      if (ownerId != null) {
         try {
-          final boot = _bootPrefMirrorFuture;
-          if (boot != null) {
-            presentPrefKeys.addAll((await boot).keys);
-          } else {
-            final rows = await _supabase
-                .from('asset_pref_mirror')
-                .select('pref_key')
-                .eq('user_id', user.id);
-            for (final row in rows) {
-              final key = row['pref_key'];
-              if (key is String) {
-                presentPrefKeys.add(key);
-              }
-            }
-          }
-        } catch (e) {
-          debugPrint('sync sources: pref mirror fetch failed: $e');
-        }
-        try {
-          final inflowRows = await _supabase
-              .from('asset_expected_inflow_items')
-              .select('id')
-              .eq('user_id', user.id)
-              .limit(1);
-          hasInflowOnServer = inflowRows.isNotEmpty;
-        } catch (e) {
-          debugPrint('sync sources: inflow items fetch failed: $e');
+          // Boot cache and key existence cannot acknowledge the current payload.
+          final rows = await _supabase
+              .from('asset_pref_mirror')
+              .select('user_id,pref_key,value')
+              .eq('user_id', ownerId)
+              .inFilter(
+            'pref_key',
+            const [
+              'main_account_id',
+              'watchlist_entries',
+              'revolving_credit_configs',
+              'debt_payment_day_overrides',
+              'watchlist_entries_deleted',
+              'revolving_credit_configs_deleted',
+              'debt_payment_day_override_deleted',
+            ],
+          );
+          remote = indexPrefMirrorRowsByKey(rows);
+          readSucceeded = true;
+        } catch (error) {
+          debugPrint('sync verification read failed: $error');
         }
       }
-
-      AssetSyncSource prefSource(String prefKey, {required bool hasLocal}) {
-        if (user != null && presentPrefKeys.contains(prefKey)) {
-          return AssetSyncSource.synced;
-        }
-        return hasLocal ? AssetSyncSource.localOnly : AssetSyncSource.empty;
+      final store = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      if (_supabase.auth.currentUser?.id != ownerId) {
+        _syncRefreshDirty = true;
+        return;
+      }
+      // No await from this point to setState: compare the latest local values,
+      // not the values present when the remote read began.
+      final dirty = _syncDirtyKeysStore.readDirtySnapshot(store);
+      final observationStable =
+          dirtyGeneration == AssetSyncDirtyKeysStore.mutationGeneration &&
+              !AssetSyncDirtyKeysStore.hasPendingMutations;
+      final tombstoneObservationStable =
+          tombstoneGeneration == MirrorTombstoneStore.mutationGeneration;
+      bool pendingDeletion(MirrorTombstoneStore tombstones, String remoteKey) {
+        if (ownerId != null && !readSucceeded) return false;
+        final localIds = tombstones.activeIds(store);
+        if (localIds.isEmpty) return false;
+        final raw = remote[remoteKey]?['value'];
+        if (raw is! Map) return true;
+        final remoteIds = MirrorTombstoneStore.decodeMirror(
+          Map<String, dynamic>.from(raw),
+        );
+        return !remoteIds.toSet().containsAll(localIds);
       }
 
+      AssetSyncSource prefSource(
+        String key, {
+        required bool hasLocal,
+        required Object? currentValue,
+        bool deletionPending = false,
+      }) {
+        final row = remote[key];
+        final result = verifyAssetPreferenceSync(
+          loggedIn: ownerId != null,
+          ownerMatches: true,
+          hasLocalData: hasLocal,
+          remoteReadSucceeded:
+              readSucceeded && (row == null || row['user_id'] == ownerId),
+          remoteRowExists: row != null && row['user_id'] == ownerId,
+          currentValue: currentValue,
+          remoteValue: row?['value'],
+          hasDirtyKeys: dirty[key]?.isNotEmpty ?? false,
+          hasPendingDeletion: deletionPending,
+          observationStable: observationStable && tombstoneObservationStable,
+        );
+        return switch (result) {
+          AssetSyncVerification.unverified => AssetSyncSource.unverified,
+          AssetSyncVerification.empty => AssetSyncSource.empty,
+          AssetSyncVerification.localOnly => AssetSyncSource.localOnly,
+          AssetSyncVerification.synced => AssetSyncSource.synced,
+        };
+      }
+
+      final loggedIn = ownerId != null;
+      AssetSyncSource withoutCurrentRemoteProof(bool hasLocal) => loggedIn
+          ? AssetSyncSource.unverified
+          : (hasLocal ? AssetSyncSource.localOnly : AssetSyncSource.empty);
       final next = <AssetSyncDomain, AssetSyncSource>{
         AssetSyncDomain.mainAccount: prefSource(
           'main_account_id',
           hasLocal: _assetManagementMainAccountId != null,
+          currentValue: AssetManagementMainAccountStore.encodeMirrorValue(
+            _assetManagementMainAccountId,
+          ),
         ),
         AssetSyncDomain.watchlist: prefSource(
           'watchlist_entries',
           hasLocal: _watchlistByType.isNotEmpty,
+          currentValue: AssetWatchlistService.encodeMirrorValue(
+            _watchlistByType.values.toList(),
+          ),
+          deletionPending: pendingDeletion(
+            _watchlistTombstones,
+            'watchlist_entries_deleted',
+          ),
         ),
         AssetSyncDomain.revolving: prefSource(
           'revolving_credit_configs',
           hasLocal: _revolvingConfigs.isNotEmpty,
+          currentValue: AssetRevolvingCreditConfigStore.encodeMirrorValue(
+            _revolvingConfigs,
+          ),
+          deletionPending: pendingDeletion(
+            _revolvingConfigTombstones,
+            'revolving_credit_configs_deleted',
+          ),
         ),
         AssetSyncDomain.debtOverrides: prefSource(
           'debt_payment_day_overrides',
           hasLocal: _debtPaymentDayOverrides.isNotEmpty,
+          currentValue: Map<String, int>.from(_debtPaymentDayOverrides),
+          deletionPending: pendingDeletion(
+            _debtOverrideTombstones,
+            'debt_payment_day_override_deleted',
+          ),
         ),
-        AssetSyncDomain.inflow: _inflowSyncSource(
-          loggedIn: user != null,
-          hasInflowOnServer: hasInflowOnServer,
+        // Row existence / enabled writes / idle status do not prove equality.
+        AssetSyncDomain.inflow: withoutCurrentRemoteProof(
+          _expectedInflows.isNotEmpty || _expectedInflowRules.isNotEmpty,
         ),
-        AssetSyncDomain.monthlyState: _monthlyStateSyncSource(
-          loggedIn: user != null,
+        AssetSyncDomain.monthlyState: withoutCurrentRemoteProof(
+          !_currentAssetLiabilityMonthlyState().isEmpty,
         ),
       };
-
-      if (!mounted) {
-        return;
-      }
       setState(() {
+        _syncSourcesOwnerId = ownerId;
+        _syncObservedLocalValues = _syncCurrentPreferenceValues();
+        _syncObservedDirtyGeneration =
+            observationStable ? dirtyGeneration : null;
+        _syncObservedTombstoneGeneration =
+            tombstoneObservationStable ? tombstoneGeneration : null;
         _syncSources
           ..clear()
           ..addAll(next);
@@ -11320,32 +11146,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         unawaited(_refreshSyncSources());
       }
     }
-  }
-
-  AssetSyncSource _inflowSyncSource({
-    required bool loggedIn,
-    required bool hasInflowOnServer,
-  }) {
-    final hasLocal =
-        _expectedInflows.isNotEmpty || _expectedInflowRules.isNotEmpty;
-    if (loggedIn && hasInflowOnServer) {
-      return AssetSyncSource.synced;
-    }
-    return hasLocal ? AssetSyncSource.localOnly : AssetSyncSource.empty;
-  }
-
-  AssetSyncSource _monthlyStateSyncSource({required bool loggedIn}) {
-    final hasLocal = !_currentAssetLiabilityMonthlyState().isEmpty;
-    if (!hasLocal) {
-      return AssetSyncSource.empty;
-    }
-    // リモート書込が無効 / 未ログイン / 直近同期が失敗ならローカルのみ。
-    if (!loggedIn ||
-        !_assetLiabilityRepository.supabaseWritesEnabled ||
-        _assetLiabilitySyncStatus == AssetLiabilityManualSyncStatus.failure) {
-      return AssetSyncSource.localOnly;
-    }
-    return AssetSyncSource.synced;
   }
 
   Future<void> _setMainAccount(String? accountId) async {
@@ -17704,6 +17504,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildCalendarLegendItem(const Color(0xFF2563EB), '収入'),
                 _buildCalendarLegendItem(const Color(0xFF64748B), '振替（支出集計外）'),
                 _buildCalendarLegendItem(const Color(0xFF0EA5E9), '入金予定'),
+                _buildCalendarLegendItem(
+                    const Color(0xFF92400E), '不明: 使途不明金（内訳未照合）'),
               ],
             ),
             const SizedBox(height: 4),
@@ -17782,6 +17584,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ],
               ),
               const SizedBox(height: 6),
+              if (selectedDay.hasUnreconciledExpense)
+                Text(
+                  '使途不明金 ${_formatYen(selectedDay.unreconciledExpenseTotal)}（日別支出に含まれる参考内訳）です。使途の照合が必要です。',
+                  key: const Key('asset_calendar_unreconciled_details'),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                ),
+              if (selectedDay.events.any(
+                (event) => event.balanceDifferenceAutoRecorded,
+              ))
+                const Text(
+                  '残高差分からの自動記録を含みます。消費の確定ではありません。',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                ),
               if (!selectedDay.hasAnyEvent)
                 Text(
                   'この日の収支・支払イベントはありません。',
@@ -17795,29 +17611,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 for (final event in selectedDay.events.take(10))
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          _calendarEventIcon(event.kind),
-                          size: 14,
-                          color: _calendarEventColor(event.kind),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            event.label,
-                            style: const TextStyle(fontSize: 12, height: 1.5),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (event.amount != null)
-                          Text(
-                            _formatYen(event.amount!),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              height: 1.5,
+                        Row(
+                          children: [
+                            Icon(
+                              _calendarEventIcon(event.kind),
+                              size: 14,
+                              color: _calendarEventColor(event.kind),
                             ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                event.label,
+                                style:
+                                    const TextStyle(fontSize: 12, height: 1.5),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (event.amount != null)
+                              Text(
+                                _formatYen(event.amount!),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.5,
+                                ),
+                              ),
+                          ],
+                        ),
+                        if (event.balanceDifferenceAutoRecorded)
+                          const Text(
+                            '残高差分から自動記録された未照合額です。消費を確認した記録ではありません。',
+                            style: TextStyle(
+                                fontSize: 11, color: Color(0xFF92400E)),
                           ),
                       ],
                     ),
@@ -17924,6 +17752,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: Color(0xFFB91C1C),
                   fontWeight: FontWeight.w700,
                   height: 1.2,
+                ),
+              ),
+            if (day.hasUnreconciledExpense)
+              AssetUnreconciledExpenseBadge(
+                key: Key(
+                  'asset_calendar_unreconciled_${day.date.year}_${day.date.month}_${day.date.day}',
                 ),
               ),
             AssetAttentionDayLabel(day: attention),
@@ -20131,7 +19965,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           );
-    if (hasAssetLiabilityData) {
+    if (_supabase.auth.currentUser != null) {
       _ensureDebtLockdownSnapshotLoaded(totalDebt);
       _ensureKonbiniUdonSnapshotLoaded(totalDebt);
     }
@@ -20599,8 +20433,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required bool hasDebtData,
   }) {
     final snapshot = _debtLockdownSnapshot;
-    final isReleased = hasDebtData && remainingDebt <= 0;
-    final isEnabled = snapshot?.isActive == true && hasDebtData && !isReleased;
+    final isReleased = hasDebtData && snapshot?.isReleased == true;
+    final isEnabled = snapshot?.isActive == true && !isReleased;
     final rules = snapshot?.rules ?? DebtLockdownService.builtinRules;
     final completedRuleIds = snapshot?.completedRuleIds ?? const <String>{};
     final todayViolations =
@@ -20609,17 +20443,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         snapshot?.recentViolations ?? const <DebtLockdownViolation>[];
     final statusLabel = !hasDebtData
         ? '判定不可'
-        : isReleased
-            ? '釈放'
+        : remainingDebt <= 0
+            ? '登録残高0円'
             : isEnabled
-                ? '収監中'
+                ? '実施中'
                 : '未開始';
     final statusColor = !hasDebtData
         ? const Color(0xFF64748B)
         : isReleased
             ? const Color(0xFF0D9488)
             : isEnabled
-                ? const Color(0xFFB91C1C)
+                ? const Color(0xFF6366F1)
                 : const Color(0xFF475569);
 
     return Container(
@@ -20630,14 +20464,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ? const Color(0xFFF8FAFC)
             : isReleased
                 ? const Color(0xFFF0FDFA)
-                : const Color(0xFFFFF1F2),
+                : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: !hasDebtData
               ? const Color(0xFFCBD5E1)
               : isReleased
                   ? const Color(0xFF99F6E4)
-                  : const Color(0xFFFCA5A5),
+                  : const Color(0xFFCBD5E1),
         ),
       ),
       child: Column(
@@ -20656,7 +20490,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  '完済までの収監モード',
+                  '返済中の生活ルール',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -20670,9 +20504,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Text(
             !hasDebtData
                 ? '資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'
-                : isReleased
-                    ? '借金は完済済みです。収監モードは解除されました。'
-                    : '借金がゼロになるまでは、生活を最小化し、返済以外の逃避と浪費を止める前提で毎日を管理します。',
+                : remainingDebt <= 0
+                    ? '登録済み負債の合計は0円です。未登録の負債がないか確認してください。'
+                    : '生活費を確保しながら、必要に応じて生活ルールを開始・中断できます。項目ごとの編集はまだできません。',
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurface,
@@ -20694,14 +20528,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 color: statusColor,
               ),
               _buildOverviewStatChip(
-                label: '本日違反',
+                label: '本日の振り返り',
                 value: '${todayViolations.length}件',
                 color: todayViolations.isEmpty
                     ? const Color(0xFF0D9488)
-                    : const Color(0xFFB91C1C),
+                    : const Color(0xFF6366F1),
               ),
               _buildOverviewStatChip(
-                label: '連続遵守',
+                label: '継続記録',
                 value: '${snapshot?.currentCompliantStreakDays ?? 0}日',
                 color: const Color(0xFF6366F1),
               ),
@@ -20729,14 +20563,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     ElevatedButton.icon(
-                      onPressed: !hasDebtData || isReleased
-                          ? null
-                          : () => _setDebtLockdownEnabled(
-                                !isEnabled,
-                                remainingDebt,
-                              ),
+                      onPressed:
+                          !isEnabled && (!hasDebtData || remainingDebt <= 0)
+                              ? null
+                              : () => _setDebtLockdownEnabled(
+                                    !isEnabled,
+                                    remainingDebt,
+                                  ),
                       icon: Icon(isEnabled ? Icons.pause_circle : Icons.shield),
-                      label: Text(isEnabled ? '収監モードを中断' : '収監モードを開始'),
+                      label: Text(isEnabled ? '生活ルールを中断' : '生活ルールを開始'),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
@@ -20745,7 +20580,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               _showDebtLockdownViolationDialog(remainingDebt)
                           : null,
                       icon: const Icon(Icons.report_problem_outlined),
-                      label: const Text('違反を記録'),
+                      label: const Text('振り返りを記録'),
                     ),
                   ],
                 )
@@ -20753,16 +20588,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: !hasDebtData || isReleased
-                            ? null
-                            : () => _setDebtLockdownEnabled(
-                                  !isEnabled,
-                                  remainingDebt,
-                                ),
+                        onPressed:
+                            !isEnabled && (!hasDebtData || remainingDebt <= 0)
+                                ? null
+                                : () => _setDebtLockdownEnabled(
+                                      !isEnabled,
+                                      remainingDebt,
+                                    ),
                         icon: Icon(
                           isEnabled ? Icons.pause_circle : Icons.shield,
                         ),
-                        label: Text(isEnabled ? '収監モードを中断' : '収監モードを開始'),
+                        label: Text(isEnabled ? '生活ルールを中断' : '生活ルールを開始'),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -20772,13 +20608,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               _showDebtLockdownViolationDialog(remainingDebt)
                           : null,
                       icon: const Icon(Icons.report_problem_outlined),
-                      label: const Text('違反を記録'),
+                      label: const Text('振り返りを記録'),
                     ),
                   ],
                 ),
           const SizedBox(height: 12),
           const Text(
-            '本日の規律',
+            '本日の生活ルール（任意）',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -20813,7 +20649,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           }),
           const SizedBox(height: 8),
           const Text(
-            '最近の違反',
+            '最近の振り返り',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -20824,10 +20660,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           if (recentViolations.isEmpty)
             Text(
               isEnabled
-                  ? 'まだ違反記録はありません。今日も浪費と逃避を止めて返済だけに集中します。'
+                  ? 'まだ振り返り記録はありません。必要な生活費を確保して、無理のない範囲で続けられます。'
                   : hasDebtData
-                      ? '収監モードを開始すると、ここに違反ログが溜まります。'
-                      : '資産・負債を登録すると、収監モードを開始できます。',
+                      ? '生活ルールを開始すると、ここに振り返りが残ります。'
+                      : '資産・負債を登録すると、生活ルールを開始できます。',
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -20862,455 +20698,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required bool hasDebtData,
   }) {
     final snapshot = _konbiniUdonSnapshot;
-    final isReleased = hasDebtData && remainingDebt <= 0;
-    final isEnabled = snapshot?.isActive == true && hasDebtData && !isReleased;
-    final config = snapshot?.config ?? KonbiniUdonChallengeConfig.defaults;
-    final savings = KonbiniUdonChallengeService.estimateSavings(config);
-    final udonSlots = snapshot?.todayUdonSlots ?? const <KonbiniUdonMealSlot>{};
-    final recentViolations =
-        snapshot?.recentViolations ?? const <KonbiniUdonViolation>[];
-    final streakDays = snapshot?.currentStreakDays ?? 0;
-    final totalCompliantDays = snapshot?.totalCompliantDays ?? 0;
-    final cumulativeSavings = snapshot?.cumulativeSavings ?? 0;
-    final advisory = KonbiniUdonChallengeService.healthAdvisoryFor(streakDays);
-    final statusLabel = !hasDebtData
-        ? '判定不可'
-        : isReleased
-            ? '釈放'
-            : isEnabled
-                ? '縛り中'
-                : '未開始';
-    final statusColor = !hasDebtData
-        ? const Color(0xFF64748B)
-        : isReleased
-            ? const Color(0xFF0D9488)
-            : isEnabled
-                ? const Color(0xFFB45309)
-                : const Color(0xFF475569);
-
-    int? payoffMonthsWithUdon;
-    int? monthsSaved;
-    double? interestSaved;
-    var baselineNeverFinishes = false;
-    if (workbook != null && savings.hasSavings) {
-      final simulation =
-          _assetLiabilityRepaymentSimulationService.buildComparison(
-        workbook: workbook,
-        extraMonthlyPayment: savings.monthlySavings,
-      );
-      if (simulation.hasEligibleDebt) {
-        final udonPlan = simulation.planFor(
-          AssetLiabilityRepaymentSimulationStrategy.interestRate,
-        );
-        final baselinePlan = simulation.baselinePlanFor(
-          AssetLiabilityRepaymentSimulationStrategy.interestRate,
-        );
-        final udonMonths = udonPlan?.estimatedPayoffMonths;
-        final baselineMonths = baselinePlan?.estimatedPayoffMonths;
-        payoffMonthsWithUdon = udonMonths;
-        if (udonPlan != null && baselinePlan != null && udonMonths != null) {
-          if (baselineMonths != null) {
-            monthsSaved = baselineMonths - udonMonths;
-          } else {
-            baselineNeverFinishes = true;
-          }
-          interestSaved = baselinePlan.estimatedInterestTotal -
-              udonPlan.estimatedInterestTotal;
-        }
-      }
-    }
-
-    final advisoryIsWarning =
-        advisory.level == KonbiniUdonHealthAdvisoryLevel.warning;
-    final advisoryIsDanger =
-        advisory.level == KonbiniUdonHealthAdvisoryLevel.danger;
-    final advisoryBg = advisoryIsDanger
-        ? const Color(0xFFFEF2F2)
-        : advisoryIsWarning
-            ? const Color(0xFFFFF7ED)
-            : const Color(0xFFEFF6FF);
-    final advisoryBorder = advisoryIsDanger
-        ? const Color(0xFFFECACA)
-        : advisoryIsWarning
-            ? const Color(0xFFFED7AA)
-            : const Color(0xFFBFDBFE);
-    final advisoryFg = advisoryIsDanger
-        ? const Color(0xFFB91C1C)
-        : advisoryIsWarning
-            ? const Color(0xFFC05621)
-            : const Color(0xFF1D4ED8);
-    final advisoryIcon = advisoryIsDanger
-        ? Icons.medical_services_outlined
-        : advisoryIsWarning
-            ? Icons.warning_amber_rounded
-            : Icons.restaurant;
-
-    return Container(
-      key: const Key('konbini_udon_challenge_panel'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: !hasDebtData
-            ? const Color(0xFFF8FAFC)
-            : isReleased
-                ? const Color(0xFFF0FDFA)
-                : const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: !hasDebtData
-              ? const Color(0xFFCBD5E1)
-              : isReleased
-                  ? const Color(0xFF99F6E4)
-                  : const Color(0xFFFCD34D),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.ramen_dining, color: statusColor),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'うどん縛り — 完済までの獄中食',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-              IconButton(
-                key: const Key('konbini_udon_config_button'),
-                tooltip: '節約前提を調整',
-                icon: const Icon(Icons.tune, size: 18),
-                onPressed: hasDebtData
-                    ? () => _showKonbiniUdonConfigDialog(remainingDebt)
-                    : null,
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            !hasDebtData
-                ? '資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'
-                : isReleased
-                    ? KonbiniUdonChallengeService.releaseMessage
-                    : '借金を完済するまで、食事はコンビニのうどんのみ。浮いた食費(月 ${_formatYen(savings.monthlySavings)} 想定)は全額返済へ回します。',
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface,
-              height: 1.5,
-            ),
-          ),
-          if (_isLoadingKonbiniUdon && snapshot == null) ...[
-            const SizedBox(height: 10),
-            const LinearProgressIndicator(minHeight: 3),
-          ],
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildOverviewStatChip(
-                label: '状態',
-                value: statusLabel,
-                color: statusColor,
-              ),
-              _buildOverviewStatChip(
-                label: '連続遵守',
-                value: '$streakDays日',
-                color: const Color(0xFF6366F1),
-              ),
-              _buildOverviewStatChip(
-                label: '通算遵守',
-                value: '$totalCompliantDays日',
-                color: const Color(0xFF0D9488),
-              ),
-              _buildOverviewStatChip(
-                label: '累計節約(概算)',
-                value: _formatYen(cumulativeSavings),
-                color: const Color(0xFFB45309),
-              ),
-            ],
-          ),
-          if (snapshot?.startedAt != null && hasDebtData && !isReleased) ...[
-            const SizedBox(height: 8),
-            Text(
-              '誓約日: ${DateFormat('yyyy/MM/dd').format(snapshot!.startedAt!)}',
-              style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.onSurface,
-                height: 1.5,
-              ),
-            ),
-          ],
-          if (isReleased && totalCompliantDays > 0) ...[
-            const SizedBox(height: 8),
-            Text(
-              '通算遵守 $totalCompliantDays日 / 概算節約 ${_formatYen(cumulativeSavings)}。よく耐えました。',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0D9488),
-                height: 1.5,
-              ),
-            ),
-          ],
-          if (hasDebtData && !isReleased) ...[
-            const SizedBox(height: 10),
-            if (savings.hasSavings)
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildRepaymentSimulationMetric(
-                    label: '月間節約見込み',
-                    value: _formatYen(savings.monthlySavings),
-                  ),
-                  if (payoffMonthsWithUdon != null)
-                    _buildRepaymentSimulationMetric(
-                      label: '縛り継続時の完済まで',
-                      value: '$payoffMonthsWithUdonヶ月',
-                    ),
-                  if (monthsSaved != null && monthsSaved > 0)
-                    _buildRepaymentSimulationMetric(
-                      label: '完済前倒し',
-                      value: '$monthsSavedヶ月',
-                    ),
-                  if (baselineNeverFinishes)
-                    _buildRepaymentSimulationMetric(
-                      label: '完済前倒し',
-                      value: '360ヶ月+ → 完済可能に',
-                    ),
-                  if (interestSaved != null && interestSaved > 0)
-                    _buildRepaymentSimulationMetric(
-                      label: '利息圧縮',
-                      value: _formatYen(interestSaved),
-                    ),
-                ],
-              )
-            else
-              Text(
-                '今の前提ではうどん縛りの節約が出ません。右上の調整ボタンから、うどん単価と月間食費の前提を見直してください。',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  height: 1.5,
-                ),
-              ),
-            if (isEnabled && savings.hasSavings) ...[
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                key: const Key('konbini_udon_transfer_inflow_button'),
-                onPressed: () => _showAddExpectedInflowDialog(
-                  _nextSalaryDate(),
-                  initialAmount: savings.monthlySavings,
-                  initialLabel: 'うどん縛り節約分(返済原資)',
-                ),
-                icon: const Icon(Icons.savings, size: 16),
-                label: const Text('節約見込みを入金予定へ転記'),
-              ),
-            ],
-            const SizedBox(height: 12),
-            _isCompact
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ElevatedButton.icon(
-                        key: const Key('konbini_udon_toggle_button'),
-                        onPressed: isEnabled
-                            ? () => _setKonbiniUdonEnabled(false, remainingDebt)
-                            : () => _confirmKonbiniUdonPledge(remainingDebt),
-                        icon: Icon(
-                          isEnabled ? Icons.pause_circle : Icons.ramen_dining,
-                        ),
-                        label: Text(isEnabled ? 'うどん縛りを中断' : 'うどん縛りを誓う'),
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: isEnabled
-                            ? () =>
-                                _showKonbiniUdonViolationDialog(remainingDebt)
-                            : null,
-                        icon: const Icon(Icons.no_food),
-                        label: const Text('うどん以外を食べた'),
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          key: const Key('konbini_udon_toggle_button'),
-                          onPressed: isEnabled
-                              ? () =>
-                                  _setKonbiniUdonEnabled(false, remainingDebt)
-                              : () => _confirmKonbiniUdonPledge(remainingDebt),
-                          icon: Icon(
-                            isEnabled ? Icons.pause_circle : Icons.ramen_dining,
-                          ),
-                          label: Text(isEnabled ? 'うどん縛りを中断' : 'うどん縛りを誓う'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      OutlinedButton.icon(
-                        onPressed: isEnabled
-                            ? () =>
-                                _showKonbiniUdonViolationDialog(remainingDebt)
-                            : null,
-                        icon: const Icon(Icons.no_food),
-                        label: const Text('うどん以外を食べた'),
-                      ),
-                    ],
-                  ),
-            const SizedBox(height: 12),
-            const Text(
-              '今日の三食(うどんで完走)',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final slot in KonbiniUdonMealSlot.values)
-                  FilterChip(
-                    key: Key('konbini_udon_slot_${slot.storageId}'),
-                    selected: udonSlots.contains(slot),
-                    onSelected: isEnabled
-                        ? (value) =>
-                            _toggleKonbiniUdonMeal(slot, value, remainingDebt)
-                        : null,
-                    avatar: Icon(
-                      Icons.ramen_dining,
-                      size: 16,
-                      color: udonSlots.contains(slot)
-                          ? Colors.white
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    selectedColor: const Color(0xFFB45309),
-                    labelStyle: TextStyle(
-                      color: udonSlots.contains(slot)
-                          ? Colors.white
-                          : Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.w700,
-                      height: 1.5,
-                    ),
-                    label: Text('${slot.label}うどん'),
-                  ),
-              ],
-            ),
-            if (snapshot?.isTodayCompliant == true) ...[
-              const SizedBox(height: 6),
-              const Text(
-                '今日は三食うどんで完走。完済が一歩近づきました。',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0D9488),
-                  height: 1.5,
-                ),
-              ),
-            ],
-            if (advisory.level != KonbiniUdonHealthAdvisoryLevel.none) ...[
-              const SizedBox(height: 10),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: advisoryBg,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: advisoryBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(advisoryIcon, size: 16, color: advisoryFg),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            advisory.title,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: advisoryFg,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      advisory.body,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        height: 1.6,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            const Text(
-              '最近のうどん違反',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 6),
-            if (recentViolations.isEmpty)
-              Text(
-                isEnabled
-                    ? 'まだ違反はありません。今日もうどんで生き延びます。'
-                    : '誓いを立てると、ここにうどん以外の食事ログが溜まります。',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  height: 1.5,
-                ),
-              )
-            else
-              ...recentViolations.take(3).map((violation) {
-                final amountLabel = violation.amount > 0
-                    ? ' / ${_formatYen(violation.amount)}'
-                    : '';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(
-                    '${DateFormat('MM/dd HH:mm').format(violation.createdAt)}  ${violation.mealSlotLabel}$amountLabel  ${violation.note}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      height: 1.5,
-                    ),
-                  ),
-                );
-              }),
-          ],
-          const SizedBox(height: 8),
-          Text(
-            KonbiniUdonChallengeService.healthDisclaimer,
-            style: TextStyle(
-              fontSize: 10,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
+    final hasHistory = snapshot != null &&
+        (snapshot.startedAt != null ||
+            snapshot.isEnabled ||
+            snapshot.recentViolations.isNotEmpty ||
+            snapshot.todayUdonSlots.isNotEmpty);
+    return AssetLegacyMealRuleCard(
+      hasHistory: hasHistory,
+      isEnabled: snapshot?.isEnabled ?? false,
+      entries: [
+        for (final entry
+            in snapshot?.recentViolations ?? const <KonbiniUdonViolation>[])
+          '${DateFormat('MM/dd HH:mm').format(entry.createdAt)} ${entry.mealSlotLabel} ${entry.note}',
+      ],
+      onPause: () => _setKonbiniUdonEnabled(false, remainingDebt),
     );
   }
 
