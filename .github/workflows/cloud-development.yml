@@ -509,40 +509,73 @@ jobs:
             savings-server.log
           if-no-files-found: ignore
 
-  repayment-panel-focused:
-    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && github.ref_name == 'codex/repayment-panel-scope-probe'
+  repayment-responsive-qa:
+    name: Repayment panel public responsive six cases
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && github.ref_name == 'codex/salary-repayment-responsive-qa'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
+    env:
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+      PRODUCT_HEAD: 1d2153cf4e53814c81ebfb17750d57ad9f50bbfc
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
-      - name: Verify exact head
+      - name: Verify exact PR product sources
         env:
-          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
-        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          git fetch --depth=1 origin "$PRODUCT_HEAD"
+          git diff --exit-code "$PRODUCT_HEAD" HEAD -- lib assets web pubspec.yaml pubspec.lock .github/actions
+          mkdir -p .ci-logs/repayment-responsive-qa/source/test/fixtures .ci-logs/repayment-responsive-qa/source/scripts
+          printf '%s\n' "$EXPECTED_HEAD_SHA" > .ci-logs/repayment-responsive-qa/harness-head.txt
+          printf '%s\n' "$PRODUCT_HEAD" > .ci-logs/repayment-responsive-qa/product-head.txt
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
-      - name: Format analyze focused contracts
+      - name: Analyze fixture and build once without CDN or service worker
         run: |
           set -euo pipefail
-          mkdir -p .ci-logs/repayment-panel
           flutter pub get
-          dart format lib/services/asset_liability_repayment_simulation_service.dart lib/pages/asset_management_page.dart test/services/asset_liability_repayment_simulation_service_test.dart
-          flutter analyze --no-pub lib/services/asset_liability_repayment_simulation_service.dart lib/pages/asset_management_page.dart test/services/asset_liability_repayment_simulation_service_test.dart | tee .ci-logs/repayment-panel/analyze.log
-          flutter test --no-pub --reporter expanded test/services/asset_liability_repayment_simulation_service_test.dart test/services/asset_liability_planning_service_test.dart test/services/debt_progress_card_service_test.dart test/services/asset_liability_monthly_report_service_test.dart | tee .ci-logs/repayment-panel/tests.log
-      - name: Preserve formatted sources
+          dart format test/fixtures/repayment_responsive_qa.dart
+          flutter analyze --no-pub test/fixtures/repayment_responsive_qa.dart | tee .ci-logs/repayment-responsive-qa/analyze.log
+          flutter build web --release --pwa-strategy=none --no-web-resources-cdn --target=test/fixtures/repayment_responsive_qa.dart | tee .ci-logs/repayment-responsive-qa/build.log
+      - name: Register real SDK Roboto in validation build output only
+        run: python3 scripts/prepare_income_qa_local_fonts.py
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prepare Chromium
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+          node --check scripts/repayment_responsive_qa.mjs
+      - name: Exercise real public UI at both widths
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory build/web > .ci-logs/repayment-responsive-qa/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/repayment_responsive_qa.mjs
+      - name: Preserve evidence and fixture identity
         if: always()
         run: |
-          mkdir -p .ci-logs/repayment-panel/source
-          cp --parents lib/services/asset_liability_repayment_simulation_service.dart lib/pages/asset_management_page.dart test/services/asset_liability_repayment_simulation_service_test.dart .ci-logs/repayment-panel/source/
-          git diff -- lib/services/asset_liability_repayment_simulation_service.dart lib/pages/asset_management_page.dart test/services/asset_liability_repayment_simulation_service_test.dart > .ci-logs/repayment-panel/mechanical.patch
+          mkdir -p .ci-logs/repayment-responsive-qa/source/test/fixtures .ci-logs/repayment-responsive-qa/source/scripts
+          cp test/fixtures/repayment_responsive_qa.dart .ci-logs/repayment-responsive-qa/source/test/fixtures/
+          cp scripts/repayment_responsive_qa.mjs scripts/prepare_income_qa_local_fonts.py .ci-logs/repayment-responsive-qa/source/scripts/
+          git diff -- test/fixtures/repayment_responsive_qa.dart scripts/repayment_responsive_qa.mjs > .ci-logs/repayment-responsive-qa/mechanical.patch
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: repayment-panel-${{ github.run_id }}
-          path: .ci-logs/repayment-panel
+          name: repayment-responsive-qa-${{ github.run_id }}
+          path: .ci-logs/repayment-responsive-qa
           include-hidden-files: true
