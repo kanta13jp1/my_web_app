@@ -27,6 +27,32 @@ void main() {
   const service = AssetCashflowStatementService();
 
   group('AssetCashflowStatementService.build', () {
+    test('adjacent months across a year retain the estimate', () {
+      final statement = service.build(
+        snapshots: [
+          _snapshot('2025-12', netWorth: -1000),
+          _snapshot('2026-01', netWorth: -700),
+        ],
+        asOf: DateTime(2026, 1, 15),
+      );
+      expect(statement.months.last.estimatedCashflowFromNetWorth, 300);
+      expect(statement.yearToDateCashflow, 0);
+    });
+
+    test('tracked income remains actual cashflow despite a missing month', () {
+      final statement = service.build(
+        snapshots: [
+          _snapshot('2026-05', netWorth: -1000),
+          _snapshot('2026-07', income: 500, expense: 100, netWorth: -700),
+        ],
+        asOf: DateTime(2026, 7, 15),
+      );
+      expect(statement.currentMonth!.netWorthDelta, isNull);
+      expect(statement.currentMonthCashflow, 400);
+      expect(statement.yearToDateCashflow, 400);
+      expect(statement.trackedMonthCount, 1);
+    });
+
     test('a missing month is not a one-month net worth estimate', () {
       final statement = service.build(
         snapshots: [

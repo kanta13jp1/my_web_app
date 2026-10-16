@@ -563,9 +563,15 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs/monthly-cf
           flutter pub get
-          dart format test/services/asset_cashflow_statement_service_test.dart
-          flutter analyze --no-pub test/services/asset_cashflow_statement_service_test.dart
-          flutter test --no-pub --reporter expanded test/services/asset_cashflow_statement_service_test.dart | tee .ci-logs/monthly-cf/tests.log
+          dart format lib/services/asset_cashflow_statement_service.dart test/services/asset_cashflow_statement_service_test.dart
+          flutter analyze --no-pub lib/services/asset_cashflow_statement_service.dart test/services/asset_cashflow_statement_service_test.dart
+          flutter test --no-pub --reporter expanded test/services/asset_cashflow_statement_service_test.dart test/widgets/asset_cashflow_statement_card_test.dart | tee .ci-logs/monthly-cf/tests.log
+      - name: Preserve formatted product sources
+        if: always()
+        run: |
+          mkdir -p .ci-logs/monthly-cf/source
+          cp --parents lib/services/asset_cashflow_statement_service.dart test/services/asset_cashflow_statement_service_test.dart .ci-logs/monthly-cf/source/
+          git diff -- lib/services/asset_cashflow_statement_service.dart test/services/asset_cashflow_statement_service_test.dart > .ci-logs/monthly-cf/mechanical.patch
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
