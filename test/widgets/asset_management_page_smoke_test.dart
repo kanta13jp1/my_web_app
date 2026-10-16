@@ -126,6 +126,7 @@ class _FailingIncomeTemplateRepository
     await super.saveMonth(month: month, state: state);
     savedState = state;
   }
+
   @override
   Future<void> saveRecurringIncomeTemplates(
     List<AssetLiabilityRecurringIncomeTemplate> templates,
@@ -287,80 +288,83 @@ void main() {
   }
 
   for (final failure in ['template', 'monthly', 'none']) {
-  testWidgets('income save failure keeps data and retries $failure',
-      (tester) async {
-    SharedPreferences.setMockInitialValues(<String, Object>{
-      'asset_management_display_mode_v1':
-          AssetManagementDisplayMode.standard.storageId,
-    });
-    await tester.binding.setSurfaceSize(const Size(1200, 2400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final repository = _FailingIncomeTemplateRepository()
-      ..failTemplate = failure == 'template'
-      ..failMonth = failure == 'monthly';
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AssetManagementPage(
-          assetLiabilityRepository: repository,
-          debugNow: DateTime(2026, 6, 20),
-          debugCalendarNow: DateTime(2026, 6, 20),
-          debugInitialAssetData: const {
-            '2026-06-20': {'synthetic cash': 1000.0},
-          },
-          debugInitialRecentFlows: [
-            for (final month in [1, 2, 3, 4, 5, 6])
-              <String, dynamic>{
-                'action_type': 'conquer',
-                'amount': 10000,
-                'description': 'synthetic income',
-                'occurred_at': DateTime(2026, month, 15, 12).toIso8601String(),
-              },
-          ],
+    testWidgets('income save failure keeps data and retries $failure',
+        (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1':
+            AssetManagementDisplayMode.standard.storageId,
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repository = _FailingIncomeTemplateRepository()
+        ..failTemplate = failure == 'template'
+        ..failMonth = failure == 'monthly';
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repository,
+            debugNow: DateTime(2026, 6, 20),
+            debugCalendarNow: DateTime(2026, 6, 20),
+            debugInitialAssetData: const {
+              '2026-06-20': {'synthetic cash': 1000.0},
+            },
+            debugInitialRecentFlows: [
+              for (final month in [1, 2, 3, 4, 5, 6])
+                <String, dynamic>{
+                  'action_type': 'conquer',
+                  'amount': 10000,
+                  'description': 'synthetic income',
+                  'occurred_at':
+                      DateTime(2026, month, 15, 12).toIso8601String(),
+                },
+            ],
+          ),
         ),
-      ),
-    );
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pump(const Duration(milliseconds: 300));
-    try {
-      final register = find.byKey(
-        const Key('asset_recurring_income_suggestion_register_0'),
       );
-      expect(register, findsOneWidget);
-      await tester.ensureVisible(register);
-      await tester.tap(register);
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byType(AlertDialog), findsOneWidget);
-      final save = find.widgetWithText(FilledButton, '保存');
-      expect(save, findsOneWidget);
-      await tester.tap(save);
       await tester.pump(const Duration(milliseconds: 300));
-      expect(repository.attempts, 1);
-      if (failure != 'none') {
+      try {
+        final register = find.byKey(
+          const Key('asset_recurring_income_suggestion_register_0'),
+        );
+        expect(register, findsOneWidget);
+        await tester.ensureVisible(register);
+        await tester.tap(register);
+        await tester.pump(const Duration(milliseconds: 300));
         expect(find.byType(AlertDialog), findsOneWidget);
-        expect(find.byKey(const Key('recurring_income_save_error')), findsOneWidget);
-        expect(find.text('synthetic income'), findsWidgets);
-        repository.failTemplate = false;
-        repository.failMonth = false;
+        final save = find.widgetWithText(FilledButton, '保存');
+        expect(save, findsOneWidget);
         await tester.tap(save);
         await tester.pump(const Duration(milliseconds: 300));
-        expect(repository.attempts, 2);
+        expect(repository.attempts, 1);
+        if (failure != 'none') {
+          expect(find.byType(AlertDialog), findsOneWidget);
+          expect(
+            find.byKey(const Key('recurring_income_save_error')),
+            findsOneWidget,
+          );
+          expect(find.text('synthetic income'), findsWidgets);
+          repository.failTemplate = false;
+          repository.failMonth = false;
+          await tester.tap(save);
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(repository.attempts, 2);
+        }
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(repository.attemptedIds.toSet(), hasLength(1));
+        final templates = await repository.loadRecurringIncomeTemplates();
+        expect(templates, hasLength(1));
+        expect(repository.savedState, isNotNull);
+        expect(
+          repository.savedState!.incomePlans.where(
+            (plan) => plan.name == 'synthetic income',
+          ),
+          hasLength(1),
+        );
+      } finally {
+        await _unmount(tester);
       }
-      expect(find.byType(AlertDialog), findsNothing);
-      expect(repository.attemptedIds.toSet(), hasLength(1));
-      final templates = await repository.loadRecurringIncomeTemplates();
-      expect(templates, hasLength(1));
-      expect(repository.savedState, isNotNull);
-      expect(
-        repository.savedState!.incomePlans.where(
-          (plan) => plan.name == 'synthetic income',
-        ),
-        hasLength(1),
-      );
-    } finally {
-      await _unmount(tester);
-    }
-  });
-
+    });
   }
 
   group('AssetManagementPage smoke', () {
