@@ -17,9 +17,12 @@ void main() {
       await tester.tap(find.byKey(const Key('note_task_due_button')));
       await tester.pumpAndSettle();
 
-      final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
-      expect(picker.initialDate.isBefore(picker.firstDate), isFalse);
-      expect(picker.initialDate.isAfter(picker.lastDate), isFalse);
+      final picker = tester.widget<DatePickerDialog>(
+        find.byType(DatePickerDialog),
+      );
+      expect(picker.initialDate, isNotNull);
+      expect(picker.initialDate!.isBefore(picker.firstDate), isFalse);
+      expect(picker.initialDate!.isAfter(picker.lastDate), isFalse);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('CANCEL'));
       await tester.pumpAndSettle();
