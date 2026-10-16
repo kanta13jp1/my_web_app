@@ -31405,7 +31405,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetRepaymentSimulationPanel(AssetLiabilityWorkbook workbook) {
     final extraMonthlyPayment = _parseRepaymentSimulationExtraPayment();
     final simulation =
-        _assetLiabilityRepaymentSimulationService.buildComparison(
+        _assetLiabilityRepaymentSimulationService.buildPanelComparison(
       workbook: workbook,
       extraMonthlyPayment: extraMonthlyPayment,
     );
@@ -31441,7 +31441,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Repayment simulator',
+                  '今月未払いの対象元本の返済試算',
                   style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
                 ),
               ),
@@ -31449,7 +31449,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Compare payoff timing by interest rate, smallest balance, or payment day. Uses direct unpaid liabilities only, so card-billed detail rows are not double counted.',
+            '直接払い・今月未払いの対象だけの試算です。今月支払済みの元本、カード請求に内包する明細、定期支出として追加した固定費は対象外です。全負債の完済時期ではありません。予定返済額を毎月確保し、新規利用・将来の定期請求がない前提で計算します。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
@@ -31472,7 +31472,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ],
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
-                    labelText: 'Extra / month',
+                    labelText: '毎月の追加返済額',
                     prefixText: '¥',
                     border: OutlineInputBorder(),
                     isDense: true,
@@ -31498,34 +31498,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             runSpacing: 8,
             children: [
               _buildRepaymentSimulationMetric(
-                label: 'Monthly budget',
+                label: '対象件数・元本',
+                value: '${simulation.eligibleDebtCount}件 / ${_formatManagementYen(selectedPlan.startingBalanceTotal)}',
+              ),
+              _buildRepaymentSimulationMetric(
+                label: '毎月の予定返済額',
                 value: _formatManagementYen(selectedPlan.monthlyPaymentBudget),
               ),
               _buildRepaymentSimulationMetric(
-                label: 'Payoff timing',
+                label: '対象元本の返済回数（月）',
                 value: _formatRepaymentSimulationMonths(
                   selectedPlan.estimatedPayoffMonths,
                 ),
               ),
               _buildRepaymentSimulationMetric(
-                label: 'Change vs base',
+                label: '追加返済による差',
                 value: _formatRepaymentSimulationDelta(
                   selectedPlan: selectedPlan,
                   baselinePlan: baselinePlan,
                 ),
               ),
               _buildRepaymentSimulationMetric(
-                label: 'Interest estimate',
-                value: _formatManagementYen(
-                  selectedPlan.estimatedInterestTotal,
-                ),
+                label: '対象元本の推定利息',
+                value: selectedPlan.hasInterestEstimate
+                    ? _formatManagementYen(selectedPlan.estimatedInterestTotal)
+                    : '未算出（予定返済額が0円）',
               ),
             ],
           ),
           if (firstMonth != null) ...[
             const SizedBox(height: 10),
             Text(
-              'Month 1 focus: ${firstMonth.focusDebtName ?? '-'} / payment ${_formatManagementYen(firstMonth.paymentTotal)} / interest ${_formatManagementYen(firstMonth.interestTotal)} / remaining ${_formatManagementYen(firstMonth.remainingDebt)}',
+              '1回目の優先先: ${firstMonth.focusDebtName ?? '-'} / 予定支払額 ${_formatManagementYen(firstMonth.paymentTotal)} / 推定利息 ${_formatManagementYen(firstMonth.interestTotal)} / 対象残元本 ${_formatManagementYen(firstMonth.remainingDebt)}',
               style: const TextStyle(fontSize: 12, height: 1.5),
             ),
           ],
@@ -31547,7 +31551,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${entry.value.name} / ${_formatManagementYen(entry.value.balance)} / APR ${_formatManagementPercent(entry.value.annualRate)} / day ${entry.value.paymentDay ?? '-'} / monthly ${_formatManagementYen(entry.value.monthlyPayment)}',
+                      '${entry.value.name} / ${_formatManagementYen(entry.value.balance)} / 年利 ${_formatManagementPercent(entry.value.annualRate)} / 支払日 ${entry.value.paymentDay ?? '-'} / 月額 ${_formatManagementYen(entry.value.monthlyPayment)}',
                       style: const TextStyle(fontSize: 12, height: 1.5),
                     ),
                   ),
@@ -31616,18 +31620,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     switch (strategy) {
       case AssetLiabilityRepaymentSimulationStrategy.interestRate:
-        return 'APR';
+        return '利率が高い順';
       case AssetLiabilityRepaymentSimulationStrategy.smallestBalance:
-        return 'Smallest';
+        return '残高が少ない順';
       case AssetLiabilityRepaymentSimulationStrategy.paymentDay:
-        return 'Payment day';
+        return '支払日順';
     }
   }
 
   String _formatRepaymentSimulationMonths(int? months) {
-    if (months == null) return 'over 360 mo';
-    if (months == 0) return '0 mo';
-    return '$months mo';
+    if (months == null) return '360回以内の返済見通しなし';
+    if (months == 0) return '0回';
+    return '$months回';
   }
 
   String _formatRepaymentSimulationDelta({
@@ -31636,13 +31640,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }) {
     final current = selectedPlan.estimatedPayoffMonths;
     final baseline = baselinePlan?.estimatedPayoffMonths;
-    if (current == null && baseline == null) return 'no payoff';
-    if (current == null) return 'worse';
-    if (baseline == null) return 'now payable';
+    if (current == null && baseline == null) return '返済見通しなし';
+    if (current == null) return '返済回数が増加';
+    if (baseline == null) return '返済見通しあり';
     final delta = current - baseline;
-    if (delta == 0) return 'same';
-    if (delta < 0) return '$delta mo';
-    return '+$delta mo';
+    if (delta == 0) return '変化なし';
+    if (delta < 0) return '$delta回';
+    return '+$delta回';
   }
 
   String _paymentRiskStatusLabel(AssetLiabilityPaymentDayRisk risk) {

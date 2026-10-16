@@ -508,3 +508,41 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  repayment-panel-focused:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && github.ref_name == 'codex/repayment-panel-scope-probe'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+      - name: Verify exact head
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Format analyze focused contracts
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs/repayment-panel
+          flutter pub get
+          dart format lib/services/asset_liability_repayment_simulation_service.dart lib/pages/asset_management_page.dart test/services/asset_liability_repayment_simulation_service_test.dart
+          flutter analyze --no-pub lib/services/asset_liability_repayment_simulation_service.dart lib/pages/asset_management_page.dart test/services/asset_liability_repayment_simulation_service_test.dart | tee .ci-logs/repayment-panel/analyze.log
+          flutter test --no-pub --reporter expanded test/services/asset_liability_repayment_simulation_service_test.dart test/services/asset_liability_planning_service_test.dart test/services/debt_progress_card_service_test.dart test/services/asset_liability_monthly_report_service_test.dart | tee .ci-logs/repayment-panel/tests.log
+      - name: Preserve formatted sources
+        if: always()
+        run: |
+          mkdir -p .ci-logs/repayment-panel/source
+          cp --parents lib/services/asset_liability_repayment_simulation_service.dart lib/pages/asset_management_page.dart test/services/asset_liability_repayment_simulation_service_test.dart .ci-logs/repayment-panel/source/
+          git diff -- lib/services/asset_liability_repayment_simulation_service.dart lib/pages/asset_management_page.dart test/services/asset_liability_repayment_simulation_service_test.dart > .ci-logs/repayment-panel/mechanical.patch
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: repayment-panel-${{ github.run_id }}
+          path: .ci-logs/repayment-panel
+          include-hidden-files: true

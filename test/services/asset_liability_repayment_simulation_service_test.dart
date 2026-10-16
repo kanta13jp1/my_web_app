@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repayment_simulation_service.dart';
 
@@ -132,6 +133,105 @@ void main() {
         isNot(contains('paypay card')),
       );
       expect(after, before);
+    });
+
+    test('panel excludes scheduled recurring expenses but keeps real principal', () {
+      final recurring = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{},
+        baseDate: DateTime(2026, 10, 1),
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'synthetic-recurring',
+            name: 'Synthetic recurring',
+            amount: 1000,
+            paymentDay: 20,
+          ),
+        ],
+      );
+      expect(recurring.scheduledExpenseAccountIds, isNotEmpty);
+      expect(service.buildComparison(workbook: recurring).eligibleDebtCount, 1);
+      expect(service.buildPanelComparison(workbook: recurring).hasEligibleDebt, isFalse,);
+
+      final mixed = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'mobit': -5000},
+        baseDate: DateTime(2026, 10, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 1000},
+        annualRateOverrides: const <String, double>{'mobit': 0},
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'synthetic-recurring',
+            name: 'Synthetic recurring',
+            amount: 1000,
+            paymentDay: 20,
+          ),
+        ],
+      );
+      final before = mixed.debtMasterRows.map((row) => '${row.id}:${row.balance}:${row.paid}').toList();
+      final plan = service.buildPanelComparison(workbook: mixed).plans.first;
+      expect(plan.startingBalanceTotal, 5000);
+      expect(plan.monthlyPaymentBudget, 1000);
+      expect(plan.estimatedPayoffMonths, 5);
+      expect(plan.estimatedInterestTotal, 0);
+      expect(plan.hasInterestEstimate, isTrue);
+      expect(mixed.debtMasterRows.map((row) => '${row.id}:${row.balance}:${row.paid}'), before,);
+    });
+
+    test('panel keeps real full-payment liability and excludes only scheduled ids', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'家賃': -1000},
+        baseDate: DateTime(2026, 10, 1),
+      );
+      expect(workbook.scheduledExpenseAccountIds, isEmpty);
+      expect(service.buildPanelComparison(workbook: workbook).eligibleDebtCount, 1,);
+    });
+
+    test('paid principal stays outside panel but report opt-in is unchanged', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'mobit': -5000},
+        baseDate: DateTime(2026, 10, 1),
+        paidAccountNames: const <String>{'mobit'},
+      );
+      expect(service.buildPanelComparison(workbook: workbook).hasEligibleDebt, isFalse,);
+      expect(service.buildComparison(workbook: workbook, includePaidPrincipal: true).eligibleDebtCount, 1,);
+    });
+
+    test('zero planned payment differs from unknown and actual zero', () {
+      final zero = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'mobit': -5000},
+        baseDate: DateTime(2026, 10, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 0},
+        actualPaymentAmounts: const <String, double>{'mobit': 0},
+      );
+      expect(zero.debtMasterRows.single.manualPaymentAmount, 0);
+      expect(zero.debtMasterRows.single.actualPaymentAmount, 0);
+      final stopped = service.buildPanelComparison(workbook: zero).plans.first;
+      expect(stopped.estimatedPayoffMonths, isNull);
+      expect(stopped.hasInterestEstimate, isFalse);
+
+      final missing = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'mobit': -5000},
+        baseDate: DateTime(2026, 10, 1),
+        actualPaymentAmounts: const <String, double>{'mobit': 0},
+      );
+      expect(missing.debtMasterRows.single.manualPaymentAmount, isNull);
+      expect(missing.debtMasterRows.single.actualPaymentAmount, 0);
+      expect(missing.debtMasterRows.single.paymentAmountEstimated, isTrue);
+      expect(service.buildPanelComparison(workbook: missing).plans.first.monthlyPaymentBudget, greaterThan(0),);
+      final noActual = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'mobit': -5000},
+        baseDate: DateTime(2026, 10, 1),
+      );
+      expect(noActual.debtMasterRows.single.actualPaymentAmount, isNull);
+    });
+
+    test('panel still excludes card-billed details', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'au': -1000, 'aupay card': -5000},
+        baseDate: DateTime(2026, 10, 1),
+      );
+      final plan = service.buildPanelComparison(workbook: workbook).plans.first;
+      expect(plan.priorityRows.map((row) => row.name), isNot(contains('au')));
+      expect(plan.startingBalanceTotal, 5000);
     });
   });
 }
