@@ -297,20 +297,37 @@ void main() {
       findsOneWidget,
     );
   });
-  testWidgets('all four absent sources display uncalculated, never an invented zero', (tester) async {
-    final empty = AssetIncomeSourceEvidence.project(ownerId: 'synthetic', currency: 'JPY', records: const [],);
+  testWidgets(
+      'all four absent sources display uncalculated, never an invented zero',
+      (tester) async {
+    final empty = AssetIncomeSourceEvidence.project(
+      ownerId: 'synthetic',
+      currency: 'JPY',
+      records: const [],
+    );
     expect(empty.sourceRecordedTotals, isEmpty);
     expect(empty.combinedRecordedTotal, isNull);
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
-      child: AssetIncomeReconciliationSection(projection: empty, busy: false,
-        onReload: () {}, onDecision: (left, right, relationship) {}, onClear: () {}, onPage: (page) {},
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: AssetIncomeReconciliationSection(
+              projection: empty,
+              busy: false,
+              onReload: () {},
+              onDecision: (left, right, relationship) {},
+              onClear: () {},
+              onPage: (page) {},
+            ),
+          ),
+        ),
       ),
-    ),),),);
-    await tester.tap(find.text('収入の照合が必要')); await tester.pumpAndSettle();
+    );
+    await tester.tap(find.text('収入の照合が必要'));
+    await tester.pumpAndSettle();
     for (final label in ['収入フロー', '受取済み計画', '給与明細', '給与会計']) {
       expect(find.text('$label記録計: 未計算'), findsOneWidget);
     }
     expect(find.textContaining('JPY 0'), findsNothing);
   });
-
 }

@@ -165,9 +165,18 @@ void main() {
         Future<List<http.BaseRequest>> reload() async {
           final before = client.requests.length;
           await tapReload();
-          for (var i = 0; i < 12; i++) {
-            await tester.pump(const Duration(milliseconds: 100));
+          // Pinned postgrest 2.7.1 retries GET 503 after 1, 2 and 4 seconds.
+          // Wait for the real UI's terminal ready state, not its pending label.
+          var ready = false;
+          for (var i = 0; i < 60; i++) {
+            await tester.pump(const Duration(milliseconds: 200));
+            final button = find.widgetWithText(TextButton, '既存明細を再読込');
+            if (button.evaluate().length == 1 && tester.widget<TextButton>(button).onPressed != null) {
+              ready = true;
+              break;
+            }
           }
+          expect(ready, isTrue, reason: 'reload must finish within the bounded 12-second virtual wait');
           final added = client.requests.sublist(before);
           expect(added, isNotEmpty);
           expect(
@@ -206,7 +215,9 @@ void main() {
         expect(find.textContaining('対応の確認専用・独立加算なし'), findsOneWidget);
         expect(find.text('給与明細記録計: 未計算'), findsOneWidget);
         client.failFinance = true;
-        await reload();
+        final failedReads = await reload();
+        expect(failedReads.where((r) => r.url.path.endsWith('/payslips')), hasLength(4),
+          reason: 'all four SDK attempts fail before the UI exits loading',);
         expect(find.textContaining('読み取り未確認のため合算は未計算'), findsOneWidget);
         client.failFinance = false;
         client.limited = true;
