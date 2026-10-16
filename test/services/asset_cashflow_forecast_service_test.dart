@@ -3,6 +3,64 @@ import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 
 void main() {
   group('AssetCashflowForecastService.project', () {
+    test(
+        'paid salary cycle crosses calendar months without suppressing next bill',
+        () {
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 6, 20),
+        startingBalance: 10000,
+        horizonMonths: 3,
+        recurringOutflow: [
+          AssetCashflowRecurringEntry(
+            dayOfMonth: 24,
+            amount: 2000,
+            paidPeriodStart: DateTime(2026, 5, 25),
+            paidPeriodEndExclusive: DateTime(2026, 6, 25),
+          ),
+        ],
+      );
+      expect(forecast.months.map((m) => m.outflowTotal), [0, 2000, 2000]);
+      expect(forecast.months.last.closingBalance, 6000);
+    });
+
+    test('paid exclusion is end-exclusive and respects month-end clamping', () {
+      final entry = AssetCashflowRecurringEntry(
+        dayOfMonth: 31,
+        amount: 2000,
+        paidPeriodStart: DateTime(2026, 1, 31),
+        paidPeriodEndExclusive: DateTime(2026, 3, 1),
+      );
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 2, 1),
+        startingBalance: 10000,
+        horizonMonths: 2,
+        recurringOutflow: [entry],
+      );
+      expect(forecast.months.map((m) => m.outflowTotal), [0, 2000]);
+      expect(entry.isPaidOn(DateTime(2026, 3, 1)), isFalse);
+      expect(entry.isPaidOn(DateTime(2026, 1, 31)), isTrue);
+    });
+
+    test('missing or invalid paid scopes keep future recurring outflows', () {
+      for (final entry in [
+        const AssetCashflowRecurringEntry(dayOfMonth: 10, amount: 2000),
+        AssetCashflowRecurringEntry(
+          dayOfMonth: 10,
+          amount: 2000,
+          paidPeriodStart: DateTime(2026, 7, 1),
+          paidPeriodEndExclusive: DateTime(2026, 6, 1),
+        ),
+      ]) {
+        final forecast = AssetCashflowForecastService.project(
+          asOf: DateTime(2026, 6, 1),
+          startingBalance: 10000,
+          horizonMonths: 2,
+          recurringOutflow: [entry],
+        );
+        expect(forecast.months.map((m) => m.outflowTotal), [2000, 2000]);
+      }
+    });
+
     test('flat forecast when there are no recurring or dated entries', () {
       final forecast = AssetCashflowForecastService.project(
         asOf: DateTime(2026, 6, 1),

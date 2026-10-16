@@ -16820,10 +16820,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ));
   }
 
+  ({DateTime start, DateTime endExclusive})? _loadedDebtPaidPeriod() {
+    if (_loadedAssetLiabilityMonthKey != _assetLiabilityStateMonthKey(_now)) {
+      return null;
+    }
+    final month = _assetLiabilityStateMonth(_now);
+    final start = DateTime(
+      month.year,
+      month.month,
+      _salaryDay.clamp(1, 28).toInt(),
+    );
+    return (
+      start: start,
+      endExclusive: DateTime(start.year, start.month + 1, start.day),
+    );
+  }
+
   Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
     }
+    final paidPeriod = _loadedDebtPaidPeriod();
     final inputs = AssetCashflowForecastInputs.fromAssetData(
       accounts: workbook.accounts,
       debtRows: workbook.debtMasterRows,
@@ -16832,6 +16849,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       oneTimeInflows: _expectedInflows,
       subscriptions: _subscriptions,
       paymentDayOverrides: _debtPaymentDayOverrides,
+      paidPeriodStart: paidPeriod?.start,
+      paidPeriodEndExclusive: paidPeriod?.endExclusive,
     );
     if (!inputs.hasData) {
       return const SizedBox.shrink();
@@ -17158,18 +17177,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     // Paid flags belong to the loaded effective salary cycle, not whichever
     // future month happens to be selected in the calendar.
-    final paidStateMonth =
-        _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now)
-            ? _assetLiabilityStateMonth(_now)
-            : null;
-    final paidPeriodStart = paidStateMonth == null
-        ? null
-        : DateTime(paidStateMonth.year, paidStateMonth.month,
-            _salaryDay.clamp(1, 28).toInt());
-    final paidPeriodEndExclusive = paidPeriodStart == null
-        ? null
-        : DateTime(paidPeriodStart.year, paidPeriodStart.month + 1,
-            paidPeriodStart.day);
+    final paidPeriod = _loadedDebtPaidPeriod();
     final debtInputs = <AssetCalendarDebtInput>[
       for (final row in debtRows)
         AssetCalendarDebtInput.fromDebtRow(
@@ -17180,8 +17188,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 in workbook?.accounts ?? <AssetLiabilityAccount>[])
               account.id: account.kind,
           },
-          paidPeriodStart: paidPeriodStart,
-          paidPeriodEndExclusive: paidPeriodEndExclusive,
+          paidPeriodStart: paidPeriod?.start,
+          paidPeriodEndExclusive: paidPeriod?.endExclusive,
         ),
     ];
     final inflowInputs = <AssetCalendarInflowInput>[
@@ -24540,6 +24548,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityWorkbook? workbook,
   ) {
     if (workbook == null) return null;
+    final paidPeriod = _loadedDebtPaidPeriod();
     final inputs = AssetCashflowForecastInputs.fromAssetData(
       accounts: workbook.accounts,
       debtRows: workbook.debtMasterRows,
@@ -24548,6 +24557,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       oneTimeInflows: _expectedInflows,
       subscriptions: _subscriptions,
       paymentDayOverrides: _debtPaymentDayOverrides,
+      paidPeriodStart: paidPeriod?.start,
+      paidPeriodEndExclusive: paidPeriod?.endExclusive,
     );
     if (!inputs.hasData) return null;
     return AssetCashflowForecastService.project(
