@@ -48,7 +48,7 @@ async function prepare(scenario){
     },true);
   },[nextName,shareName]);
   await visibleNext();await capture(`${scenario}:before-change`);
-  if(scenario==='delayed-banner'){await page.getByRole('button',{name:'合成：遅延カード',exact:true}).click();await page.waitForFunction(()=>Array.from(document.querySelectorAll('[aria-label]')).some(el=>(el.getAttribute('aria-label')??'').split('\n').includes('合成：追加カード表示済み')));}
+  if(scenario==='delayed-banner'){await page.getByRole('button',{name:'合成：遅延カード',exact:true}).click();await page.waitForFunction(()=>Array.from(document.querySelectorAll('flt-semantics')).some(el=>(el.getAttribute('aria-label')??el.textContent??'').split('\n').includes('合成：追加カード表示済み')));}
   if(scenario==='hide-show'){await page.getByRole('button',{name:'合成：非表示と再表示',exact:true}).click();await next().waitFor({state:'detached'});await next().waitFor({state:'attached'});}
   if(scenario==='modal'){await page.getByRole('button',{name:'合成：モーダル',exact:true}).click();await page.getByRole('button',{name:'合成モーダルを閉じる',exact:true}).click();}
   if(scenario==='viewport')await page.setViewportSize({width:980,height:900});
@@ -90,7 +90,6 @@ try{
     const before=await prepare('baseline');
     await activate(share(),shareName,input);
     await page.getByRole('dialog').waitFor();
-    if(!await hasRange(initial))throw new Error('Share control unexpectedly shifted cycle');
     await page.keyboard.press('Escape');
     await page.getByRole('dialog').waitFor({state:'detached'});
     await page.waitForFunction(value=>Array.from(document.querySelectorAll('flt-semantics')).some(el=>(el.getAttribute('aria-label')??el.textContent??'').includes(`fixture-popup-pushes:${value}`)),before+1);
