@@ -28,7 +28,7 @@ async function visibleNext(){
   for(let i=0;i<40;i++){
     const rect=await next().boundingBox();
     if(rect&&rect.y>=180&&rect.y+rect.height<850)return rect;
-    await page.mouse.move(700,650);await page.mouse.wheel(0,500);await page.waitForTimeout(80);
+    await page.mouse.move(700,650);await page.mouse.wheel(0,rect&&rect.y<180?-500:500);await page.waitForTimeout(80);
   }
   throw new Error('Next button not visibly placed');
 }
