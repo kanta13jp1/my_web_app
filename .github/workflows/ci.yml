@@ -228,7 +228,7 @@ jobs:
 
       - name: Upload deprecated API gate evidence
         if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/deprecated-api-gate/**/result.json') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: deprecated-api-gate-evidence
           path: .ci-logs/deprecated-api-gate
@@ -237,7 +237,7 @@ jobs:
       - name: Upload analyzer evidence
         id: upload_analyzer_evidence
         if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/analyzer/result.json') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: analyzer-evidence
           path: .ci-logs/analyzer
@@ -270,7 +270,7 @@ jobs:
 
       - name: Upload impossible task degradation report
         if: always() && hashFiles('.ci-logs/impossible-task-degradation.json') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: impossible-task-degradation-report
           path: .ci-logs/impossible-task-degradation.json
@@ -292,7 +292,7 @@ jobs:
 
       - name: Upload Deno lint log
         if: always() && steps.changes.outputs.edge == 'true' && hashFiles('.ci-logs/deno-lint.log') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: deno-lint-log
           path: .ci-logs/deno-lint.log
@@ -538,7 +538,7 @@ jobs:
 
       - name: Upload tested-source context
         if: always() && hashFiles('.ci-logs/ci-context/manifest.json') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: tested-source-context
           path: .ci-logs/ci-context
@@ -637,7 +637,7 @@ jobs:
       - name: Download analyzer evidence
         if: needs.lint-and-test.outputs.analyzer_evidence_uploaded == 'true'
         continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: analyzer-evidence
           path: .ci-logs/analyzer

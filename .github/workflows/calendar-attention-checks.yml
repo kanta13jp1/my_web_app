@@ -30,7 +30,7 @@ jobs:
       - run: flutter pub get
       - name: Verify committed scoped formatting
         run: dart format --output=none --set-exit-if-changed lib/services/asset_spending_attention_calendar.dart lib/widgets/asset_attention_day_label.dart lib/pages/asset_management_page.dart test/services/asset_spending_attention_calendar_test.dart test/widgets/asset_attention_day_label_test.dart
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: attention-formatted-source
           retention-days: 1
