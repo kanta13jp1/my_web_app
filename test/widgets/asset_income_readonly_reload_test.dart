@@ -171,12 +171,18 @@ void main() {
           for (var i = 0; i < 60; i++) {
             await tester.pump(const Duration(milliseconds: 200));
             final button = find.widgetWithText(TextButton, '既存明細を再読込');
-            if (button.evaluate().length == 1 && tester.widget<TextButton>(button).onPressed != null) {
+            if (button.evaluate().length == 1 &&
+                tester.widget<TextButton>(button).onPressed != null) {
               ready = true;
               break;
             }
           }
-          expect(ready, isTrue, reason: 'reload must finish within the bounded 12-second virtual wait');
+          expect(
+            ready,
+            isTrue,
+            reason:
+                'reload must finish within the bounded 12-second virtual wait',
+          );
           final added = client.requests.sublist(before);
           expect(added, isNotEmpty);
           expect(
@@ -216,8 +222,11 @@ void main() {
         expect(find.text('給与明細記録計: 未計算'), findsOneWidget);
         client.failFinance = true;
         final failedReads = await reload();
-        expect(failedReads.where((r) => r.url.path.endsWith('/payslips')), hasLength(4),
-          reason: 'all four SDK attempts fail before the UI exits loading',);
+        expect(
+          failedReads.where((r) => r.url.path.endsWith('/payslips')),
+          hasLength(4),
+          reason: 'all four SDK attempts fail before the UI exits loading',
+        );
         expect(find.textContaining('読み取り未確認のため合算は未計算'), findsOneWidget);
         client.failFinance = false;
         client.limited = true;
