@@ -206,6 +206,9 @@ void main() {
     <int>[1, 2, 3, 4, 5, 6],
   ]) {
     testWidgets('income cadence supported registration $months', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': AssetManagementDisplayMode.standard.storageId,
+      });
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(MaterialApp(home: AssetManagementPage(
