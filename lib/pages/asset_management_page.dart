@@ -31409,8 +31409,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       workbook: workbook,
       extraMonthlyPayment: extraMonthlyPayment,
     );
+    const scopeExplanation =
+        '直接払い・今月未払いの対象だけの試算です。今月支払済みの元本、カード請求に内包する明細、定期支出として追加した固定費は対象外です。全負債の完済時期ではありません。予定返済額を毎月確保し、新規利用・将来の定期請求がない前提で計算します。';
     if (!simulation.hasEligibleDebt || simulation.plans.isEmpty) {
-      return const SizedBox.shrink();
+      final hasExcludedScheduledExpenses = workbook.debtMasterRows.any(
+        (row) => workbook.scheduledExpenseAccountIds.contains(row.id) &&
+            row.balance < -0.01 &&
+            !row.paid &&
+            row.isDirectCashflowTarget,
+      );
+      if (!hasExcludedScheduledExpenses) return const SizedBox.shrink();
+      return const Padding(
+        padding: EdgeInsets.all(12),
+        child: Text(
+          '返済試算の対象元本はありません。\n$scopeExplanation',
+          style: TextStyle(fontSize: 12, height: 1.5),
+        ),
+      );
     }
 
     final selectedPlan = simulation.planFor(_repaymentSimulationStrategy) ??
@@ -31449,7 +31464,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            '直接払い・今月未払いの対象だけの試算です。今月支払済みの元本、カード請求に内包する明細、定期支出として追加した固定費は対象外です。全負債の完済時期ではありません。予定返済額を毎月確保し、新規利用・将来の定期請求がない前提で計算します。',
+            scopeExplanation,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
