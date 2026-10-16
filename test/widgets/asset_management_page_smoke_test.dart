@@ -200,6 +200,65 @@ void main() {
     );
   });
 
+  for (final months in <List<int>>[
+    <int>[1, 3, 5],
+    <int>[2, 4, 6],
+    <int>[1, 2, 3, 4, 5, 6],
+  ]) {
+    testWidgets('income cadence supported registration $months',
+        (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1':
+            AssetManagementDisplayMode.standard.storageId,
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 6, 20),
+            debugInitialAssetData: const {
+              '2026-06-20': {'synthetic cash': 1000.0},
+            },
+            debugCalendarNow: DateTime(2026, 6, 20),
+            debugInitialRecentFlows: [
+              for (final month in months)
+                <String, dynamic>{
+                  'action_type': 'conquer',
+                  'amount': 10000,
+                  'description': 'synthetic income',
+                  'occurred_at':
+                      DateTime(2026, month, 15, 12).toIso8601String(),
+                },
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      final cards = tester
+          .widgetList<AssetRecurringTransactionSuggestionCard>(
+            find.byType(AssetRecurringTransactionSuggestionCard),
+          )
+          .where((card) => card.keyPrefix == 'asset_recurring_income')
+          .toList();
+      expect(cards, hasLength(1));
+      final suggestions = cards.single.suggestions;
+      if (months.length == 6) {
+        expect(suggestions, hasLength(1));
+        expect(suggestions.single.typicalAmount, 10000);
+      } else {
+        // The registration destination only supports monthly templates.
+        expect(
+          suggestions,
+          isEmpty,
+          reason: 'Bimonthly income must not become a monthly income plan',
+        );
+      }
+      await _unmount(tester);
+    });
+  }
+
   group('AssetManagementPage smoke', () {
     testWidgets('mobile chat reserves space outside the scrolling content', (
       tester,
