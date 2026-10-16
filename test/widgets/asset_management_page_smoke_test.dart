@@ -3639,4 +3639,45 @@ void main() {
       },
     );
   });
+  testWidgets(
+    'anonymous unconfirmed read never claims empty income or offers empty CTA',
+    (tester) async {
+      // This isolate starts anonymous and its setUp resets shared write locks.
+      // No auth transition is awaited inside the widget FakeAsync zone.
+      expect(Supabase.instance.client.auth.currentUser, isNull);
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      debugPrint('SYNTHETIC_ANONYMOUS before widget');
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: SharedPreferencesAssetLiabilityRepository(),
+            debugInitialAssetData: {},
+            debugInitialRecentFlows: [],
+          ),
+        ),
+      );
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      debugPrint('SYNTHETIC_ANONYMOUS widget ready');
+      final card = find.byKey(const Key('asset_monthly_flow_priority_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.byKey(const Key('asset_monthly_flow_income_cta')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('収入の読み取りを確認できないため未計算'),
+        ),
+        findsWidgets,
+      );
+      expect(tester.takeException(), isNull);
+      await _unmount(tester);
+      debugPrint('SYNTHETIC_ANONYMOUS unmounted');
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
 }

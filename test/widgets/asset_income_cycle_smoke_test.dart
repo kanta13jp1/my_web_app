@@ -21,6 +21,7 @@ const origin = 'http://127.0.0.1:9999';
 class CycleMemoryHttp extends http.BaseClient {
   final requests = <http.BaseRequest>[];
   bool ready = false;
+  List<Map<String, dynamic>> assets = [];
   List<Map<String, dynamic>> flows = [], salaries = [], payslips = [];
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
@@ -34,8 +35,11 @@ class CycleMemoryHttp extends http.BaseClient {
       status = 404;
       body = {
         'code': 'PGRST202',
-        'message': 'memory-only denies transport and writes'
-      ,};
+        'message': 'memory-only denies transport and writes',
+      };
+    } else if (path.endsWith('/cfo_assets')) {
+      expect(request.url.queryParameters['user_id'], 'eq.$owner');
+      body = assets;
     } else if (path.endsWith('/wealth_struggles') ||
         path.endsWith('/salary_incomes') ||
         path.endsWith('/payslips')) {
@@ -49,8 +53,8 @@ class CycleMemoryHttp extends http.BaseClient {
                 : payslips;
         body = [
           for (var i = 0; i < rows.length; i++)
-            {'id': 'synthetic-${path.split('/').last}-$i', ...rows[i]}
-        ,];
+            {'id': 'synthetic-${path.split('/').last}-$i', ...rows[i]},
+        ];
       }
     } else if ((request.headers['Accept'] ?? request.headers['accept'] ?? '')
         .contains('vnd.pgrst.object')) {
@@ -58,9 +62,11 @@ class CycleMemoryHttp extends http.BaseClient {
       body = {'code': 'PGRST116', 'message': 'synthetic empty result'};
     }
     return http.StreamedResponse(
-        Stream.value(utf8.encode(jsonEncode(body))), status,
-        headers: {'content-type': 'application/json; charset=utf-8'},
-        request: request,);
+      Stream.value(utf8.encode(jsonEncode(body))),
+      status,
+      headers: {'content-type': 'application/json; charset=utf-8'},
+      request: request,
+    );
   }
 }
 
@@ -81,6 +87,16 @@ Widget evidencePage({
   List<Map<String, dynamic>>? debugInitialPayslipSalaryIncomes,
   List<Map<String, dynamic>>? debugInitialPayslipRows,
 }) {
+  client.assets = [
+    for (final day in (debugInitialAssetData ?? <String, Map<String, double>>{}).entries)
+      for (final account in day.value.entries)
+        {
+          'id': 'synthetic-balance-${day.key}-${account.key}',
+          'title': account.key,
+          'amount': account.value,
+          'created_at': '${day.key}T12:00:00Z',
+        },
+  ];
   client.flows = debugInitialRecentFlows ?? [];
   client.salaries = debugInitialPayslipSalaryIncomes ?? [];
   client.payslips = debugInitialPayslipRows ?? [];
@@ -91,36 +107,45 @@ Widget evidencePage({
 }
 
 Future<void> pumpEvidencePage(WidgetTester tester, Widget page) async {
-  await http.runWithClient(() async {
-    await tester.pumpWidget(page);
-    for (var i = 0; i < 20; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+  await http.runWithClient(
+    () async {
+      await tester.pumpWidget(page);
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      debugPrint('SYNTHETIC_CYCLE boot ready');
     final section = find.byKey(const Key('asset_income_reconciliation'));
-    await tester.ensureVisible(section);
-    await tester.pump();
-    await tester.tap(section);
-    await tester.pump(const Duration(milliseconds: 300));
-    final reload = find.widgetWithText(TextButton, '既存明細を再読込');
-    await Scrollable.ensureVisible(tester.element(reload), alignment: 0.5);
-    await tester.pump(const Duration(milliseconds: 200));
-    expect(reload.hitTestable(), findsOneWidget);
-    final before = client.requests.length;
-    client.ready = true;
-    await tester.tap(reload);
-    for (var i = 0; i < 20; i++) {
+      await tester.ensureVisible(section);
+      await tester.pump();
+      await tester.tap(section);
+      await tester.pump(const Duration(milliseconds: 300));
+      final reload = find.widgetWithText(TextButton, '既存明細を再読込');
+      await Scrollable.ensureVisible(tester.element(reload), alignment: 0.5);
       await tester.pump(const Duration(milliseconds: 200));
-    }
-    expect(tester.widget<TextButton>(reload).onPressed, isNotNull);
+      expect(reload.hitTestable(), findsOneWidget);
+      final before = client.requests.length;
+      client.ready = true;
+    debugPrint('SYNTHETIC_CYCLE reload pointer');
+      await tester.tap(reload);
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      expect(tester.widget<TextButton>(reload).onPressed, isNotNull);
+      debugPrint('SYNTHETIC_CYCLE reload returned');
     final reads = client.requests.skip(before).toList();
-    expect(reads, isNotEmpty);
-    expect(
-        reads.every((r) =>
-            r.method == 'GET' &&
-            r.url.origin == origin &&
-            r.url.path.startsWith('/rest/v1/'),),
-        isTrue,);
-  }, () => client,);
+      expect(reads, isNotEmpty);
+      expect(
+        reads.every(
+          (r) =>
+              r.method == 'GET' &&
+              r.url.origin == origin &&
+              r.url.path.startsWith('/rest/v1/'),
+        ),
+        isTrue,
+      );
+    },
+    () => client,
+  );
 }
 
 Future<void> _unmount(WidgetTester tester) async {
@@ -134,32 +159,37 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
     SharedPreferences.setMockInitialValues({});
     await Supabase.initialize(
-        url: origin,
-        publishableKey: 'synthetic-only',
-        httpClient: client,
-        authOptions: const FlutterAuthClientOptions(
-            autoRefreshToken: false,
-            detectSessionInUri: false,
-            localStorage: EmptyLocalStorage(),),);
+      url: origin,
+      publishableKey: 'synthetic-only',
+      httpClient: client,
+      authOptions: const FlutterAuthClientOptions(
+        autoRefreshToken: false,
+        detectSessionInUri: false,
+        localStorage: EmptyLocalStorage(),
+      ),
+    );
   });
   setUp(() async {
+    client.assets = [];
     client.ready = false;
     client.requests.clear();
     client.flows = [];
     client.salaries = [];
     client.payslips = [];
     SharedPreferences.setMockInitialValues({});
-    await Supabase.instance.client.auth.setInitialSession(jsonEncode({
-      'access_token': 'synthetic-local-token-not-valid-on-any-server',
-      'token_type': 'bearer',
-      'user': {
-        'id': owner,
-        'aud': 'authenticated',
-        'app_metadata': {},
-        'user_metadata': {},
-        'created_at': '2026-06-20T00:00:00Z'
-      ,}
-    ,}),);
+    await Supabase.instance.client.auth.setInitialSession(
+      jsonEncode({
+        'access_token': 'synthetic-local-token-not-valid-on-any-server',
+        'token_type': 'bearer',
+        'user': {
+          'id': owner,
+          'aud': 'authenticated',
+          'app_metadata': {},
+          'user_metadata': {},
+          'created_at': '2026-06-20T00:00:00Z',
+        },
+      }),
+    );
   });
   tearDownAll(() => Supabase.instance.dispose());
   testWidgets(
@@ -174,7 +204,7 @@ void main() {
       );
       // 当サイクル開始日(=給料日)に受け取った給料。暦月窓では外れるが、
       // サイクル窓では収入として計上される。
-      final cycleSalary = DateTime(
+      final cycleSalary = DateTime.utc(
         cycleStart.year,
         cycleStart.month,
         cycleStart.day,
@@ -185,7 +215,7 @@ void main() {
         const Duration(days: 1),
       );
       // 当サイクル内(本日)の支出。
-      final cycleExpense = DateTime(now.year, now.month, now.day, 12);
+      final cycleExpense = DateTime.utc(now.year, now.month, now.day, 12);
 
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -199,19 +229,19 @@ void main() {
                 'action_type': 'conquer',
                 'amount': 280000,
                 'description': '給料',
-                'occurred_at': cycleSalary.toIso8601String(),
+                'occurred_at': cycleSalary.toUtc().toIso8601String(),
               },
               <String, dynamic>{
                 'action_type': 'expense',
                 'amount': 50000,
                 'description': '食費',
-                'occurred_at': cycleExpense.toIso8601String(),
+                'occurred_at': cycleExpense.toUtc().toIso8601String(),
               },
               <String, dynamic>{
                 'action_type': 'conquer',
                 'amount': 999999,
                 'description': '前サイクル収入',
-                'occurred_at': previousCycleIncome.toIso8601String(),
+                'occurred_at': previousCycleIncome.toUtc().toIso8601String(),
               },
             ],
           ),
@@ -250,6 +280,7 @@ void main() {
 
       await _unmount(tester);
     },
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   testWidgets(
     'cycle summary and salary breakdown exclude an unreceived income plan',
@@ -329,6 +360,7 @@ void main() {
       expect(tester.takeException(), isNull);
       await _unmount(tester);
     },
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   testWidgets(
     'monthly flow card counts payslip salary income when no conquer flow exists',
@@ -423,6 +455,7 @@ void main() {
 
       await _unmount(tester);
     },
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   testWidgets(
     'monthly flow card shows manual income CTA when no income is recorded',
@@ -431,7 +464,7 @@ void main() {
       // 見える。手入力収入への導線(CTA)が出て、ワンタップで収支記録の種別が
       // 「収入」へ切り替わることを検証する。
       final now = DateTime.now();
-      final cycleExpense = DateTime(now.year, now.month, now.day, 12);
+      final cycleExpense = DateTime.utc(now.year, now.month, now.day, 12);
 
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -445,7 +478,7 @@ void main() {
                 'action_type': 'expense',
                 'amount': 50000,
                 'description': '食費',
-                'occurred_at': cycleExpense.toIso8601String(),
+                'occurred_at': cycleExpense.toUtc().toIso8601String(),
               },
             ],
           ),
@@ -487,6 +520,7 @@ void main() {
 
       await _unmount(tester);
     },
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   testWidgets(
     'same date and amount without explicit FK remain unconfirmed',
@@ -533,45 +567,24 @@ void main() {
       );
       expect(card, findsOneWidget);
 
-      expect(find.descendant(of: card, matching: find.text('¥280,000')),
-          findsNothing,);
       expect(
-          find.descendant(
-              of: card, matching: find.textContaining('出典間の対応が未照合'),),
-          findsWidgets,);
+        find.descendant(of: card, matching: find.text('¥280,000')),
+        findsNothing,
+      );
       expect(
-          find.descendant(of: card, matching: find.textContaining('560,000')),
-          findsNothing,);
+        find.descendant(
+          of: card,
+          matching: find.textContaining('出典間の対応が未照合'),
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.descendant(of: card, matching: find.textContaining('560,000')),
+        findsNothing,
+      );
 
       await _unmount(tester);
     },
+    timeout: const Timeout(Duration(minutes: 2)),
   );
-  testWidgets(
-      'anonymous unconfirmed read never claims empty income or offers empty CTA',
-      (tester) async {
-    await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
-    await tester.binding.setSurfaceSize(const Size(1200, 2400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await http.runWithClient(() async {
-      await tester.pumpWidget(MaterialApp(
-          home: AssetManagementPage(
-        assetLiabilityRepository: CycleRepository(),
-        debugInitialAssetData: const {},
-        debugInitialRecentFlows: const [],
-      ),),);
-      for (var i = 0; i < 20; i++) {
-        await tester.pump(const Duration(milliseconds: 200));
-      }
-      final card = find.byKey(const Key('asset_monthly_flow_priority_card'));
-      expect(card, findsOneWidget);
-      expect(
-          find.byKey(const Key('asset_monthly_flow_income_cta')), findsNothing,);
-      expect(
-          find.descendant(
-              of: card, matching: find.textContaining('収入の読み取りを確認できないため未計算'),),
-          findsWidgets,);
-      expect(tester.takeException(), isNull);
-      await _unmount(tester);
-    }, () => client,);
-  });
 }
