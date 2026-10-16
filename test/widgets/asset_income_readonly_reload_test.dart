@@ -32,7 +32,10 @@ class MemoryIncomeHttp extends http.BaseClient {
       };
     } else if (!request.url.path.startsWith('/rest/v1/')) {
       status = 403;
-      body = {'code': 'FIXTURE_PATH_DENIED', 'message': 'no auth or other endpoint transport',};
+      body = {
+        'code': 'FIXTURE_PATH_DENIED',
+        'message': 'no auth or other endpoint transport',
+      };
     } else if (request.url.path.endsWith('/payslips') ||
         request.url.path.endsWith('/salary_incomes')) {
       if (financeGate != null) {
@@ -145,12 +148,20 @@ void main() {
         Future<void> tapReload() async {
           final button = find.widgetWithText(TextButton, '既存明細を再読込');
           expect(tester.widget<TextButton>(button).onPressed, isNotNull);
-          await Scrollable.ensureVisible(tester.element(button), alignment: 0.5);
+          await Scrollable.ensureVisible(
+            tester.element(button),
+            alignment: 0.5,
+          );
           await tester.pump(const Duration(milliseconds: 200));
-          expect(button.hitTestable(), findsOneWidget,
-            reason: 'synthetic reload control must be visibly hit-testable before pointer input: ${tester.getRect(button)}',);
+          expect(
+            button.hitTestable(),
+            findsOneWidget,
+            reason:
+                'synthetic reload control must be visibly hit-testable before pointer input: ${tester.getRect(button)}',
+          );
           await tester.tap(button);
         }
+
         Future<List<http.BaseRequest>> reload() async {
           final before = client.requests.length;
           await tapReload();
@@ -189,7 +200,8 @@ void main() {
         );
         final fk =
             finance.singleWhere((r) => r.url.queryParameters.containsKey('id'));
-        expect(fk.url.queryParameters['id'], 'in.(p0)');
+        // Pinned postgrest 2.7.1 quotes string members in inFilter.
+        expect(fk.url.queryParameters['id'], 'in.("p0")');
         expect(fk.url.queryParameters['limit'], '1');
         expect(find.textContaining('対応の確認専用・独立加算なし'), findsOneWidget);
         expect(find.text('給与明細記録計: 未計算'), findsOneWidget);
