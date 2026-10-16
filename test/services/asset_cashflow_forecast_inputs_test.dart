@@ -23,6 +23,7 @@ AssetLiabilityDebtRow _debt({
   String? recurringFixedCostId,
   AssetLiabilityAccountKind kind = AssetLiabilityAccountKind.utility,
   bool fullPaymentEstimate = false,
+  bool paid = false,
 }) {
   return AssetLiabilityDebtRow(
     id: 'bill',
@@ -51,7 +52,7 @@ AssetLiabilityDebtRow _debt({
     priorityLabel: '',
     paymentAmountEstimated: false,
     billingConfirmed: true,
-    paid: false,
+    paid: paid,
     requiresAction: true,
     fullPaymentEstimate: fullPaymentEstimate,
   );
@@ -94,6 +95,36 @@ double _projectOutflow(AssetCashflowForecastInputs inputs) {
 
 void main() {
   group('forecast and calendar payment schedule agreement', () {
+    test('paid current-period bill is not deducted again before its due day', () {
+      final debt = _debt(paid: true, recurringFixedCostId: 'cost-bill');
+      final inputs = _billInputs(
+        debt: debt,
+        links: const {'legacy-bill': 'cost-bill'},
+      );
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 6),
+        flows: const [],
+        subscriptions: const [],
+        debts: [
+          AssetCalendarDebtInput.fromDebtRow(
+            debt,
+            paidPeriodStart: DateTime(2026, 6, 1),
+            paidPeriodEndExclusive: DateTime(2026, 7, 1),
+          ),
+        ],
+        startingCashBalance: 10000,
+      );
+      expect(calendar.subscriptionTotal, 0);
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 6, 1),
+        startingBalance: 10000,
+        horizonMonths: 2,
+        recurringOutflow: inputs.recurringOutflow,
+      );
+      expect(forecast.months[0].outflowTotal, calendar.subscriptionTotal);
+      expect(forecast.months[1].outflowTotal, 2000);
+    });
+
     test('the same fixed cost in both sources is counted once', () {
       final debt = _debt(recurringFixedCostId: 'cost-bill');
       final inputs =
