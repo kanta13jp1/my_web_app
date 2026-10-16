@@ -1,3 +1,5 @@
+import '../models/asset_income_source_evidence.dart';
+
 class SalarySpendingEntry {
   const SalarySpendingEntry({
     required this.date,
@@ -55,7 +57,7 @@ class SalarySpendingBreakdown {
   final DateTime periodStart;
   final DateTime periodEndExclusive;
   final double totalExpense;
-  final double salaryIncomeTotal;
+  final double? salaryIncomeTotal;
   final int expenseEntryCount;
   final List<SalarySpendingCategorySlice> sections;
 
@@ -63,7 +65,7 @@ class SalarySpendingBreakdown {
       periodEndExclusive.subtract(const Duration(days: 1));
 
   double? get remainingAfterExpense =>
-      salaryIncomeTotal > 0 ? salaryIncomeTotal - totalExpense : null;
+      salaryIncomeTotal == null ? null : salaryIncomeTotal! - totalExpense;
 
   SalarySpendingCategorySlice? get topSection =>
       sections.isEmpty ? null : sections.first;
@@ -98,6 +100,7 @@ class SalarySpendingBreakdownService {
     Iterable<SalarySpendingEntry> expenses = const <SalarySpendingEntry>[],
     Iterable<SalaryIncomeEntry> incomes = const <SalaryIncomeEntry>[],
     int salaryDay = defaultSalaryDay,
+    IncomeEvidenceProjection? incomeEvidence,
   }) {
     final normalizedSalaryDay = salaryDay.clamp(1, 28).toInt();
     final periodStart = salaryPeriodStartFor(
@@ -138,16 +141,8 @@ class SalarySpendingBreakdownService {
       expenseEntryCount += 1;
     }
 
-    final incomeEntries = incomes.toList(growable: false);
-    var salaryIncomeTotal = 0.0;
-    for (final entry in incomeEntries) {
-      if (!_isInRange(entry.date, periodStart, periodEndExclusive)) {
-        continue;
-      }
-      if (_looksLikeSalary(entry.description) || incomeEntries.length == 1) {
-        salaryIncomeTotal += entry.amount.abs();
-      }
-    }
+    // Legacy income lists contain no identity evidence and cannot certify a total.
+    final salaryIncomeTotal = incomeEvidence?.combinedRecordedTotal?.toDouble();
 
     final sections = totalsByCategory.entries
         .map(
@@ -233,18 +228,7 @@ class SalarySpendingBreakdownService {
     return DateTime(firstOfMonth.year, firstOfMonth.month, safeDay);
   }
 
-  static bool _looksLikeSalary(String description) {
-    final text = description.toLowerCase();
-    return text.contains('給料') ||
-        text.contains('給与') ||
-        text.contains('給与明細') ||
-        text.contains('payslip') ||
-        text.contains('pay slip') ||
-        text.contains('salary') ||
-        text.contains('payroll') ||
-        text.contains('賞与') ||
-        text.contains('収入');
-  }
+
 }
 
 class _SalarySpendingCategoryRule {

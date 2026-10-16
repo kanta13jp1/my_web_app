@@ -508,3 +508,52 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  salary_income_connection:
+    name: Salary income evidence connection targeted checks
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && github.ref == 'refs/heads/codex/salary-income-evidence-connection'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+      - name: Assert exact approved head
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Resolve in cloud only
+        run: flutter pub get
+      - name: Format and mechanically fix scoped Dart only
+        run: |
+          set -euo pipefail
+          files=(lib/models/asset_income_source_evidence.dart lib/pages/asset_management_page.dart lib/services/asset_salary_spending_entries.dart lib/services/salary_spending_breakdown_service.dart lib/widgets/asset_income_reconciliation_section.dart test/services/asset_income_evidence_connection_test.dart test/services/asset_income_source_evidence_test.dart test/services/asset_salary_spending_entries_test.dart test/services/salary_spending_breakdown_service_test.dart test/widgets/asset_income_readonly_reload_test.dart test/widgets/asset_income_reconciliation_section_test.dart)
+          dart format "${files[@]}"
+          for file in "${files[@]}"; do
+            dart fix --apply --code=require_trailing_commas,sort_child_properties_last,prefer_const_constructors,prefer_const_literals_to_create_immutables "$file"
+          done
+          dart format "${files[@]}"
+          mkdir -p connection-output/files
+          for file in "${files[@]}"; do
+            mkdir -p "connection-output/files/$(dirname "$file")"
+            cp "$file" "connection-output/files/$file"
+          done
+          git diff --binary > connection-output/mechanical.patch
+      - name: Strict scoped analysis
+        run: flutter analyze lib/models/asset_income_source_evidence.dart lib/pages/asset_management_page.dart lib/services/asset_salary_spending_entries.dart lib/services/salary_spending_breakdown_service.dart lib/widgets/asset_income_reconciliation_section.dart test/services/asset_income_evidence_connection_test.dart test/services/asset_income_source_evidence_test.dart test/services/asset_salary_spending_entries_test.dart test/services/salary_spending_breakdown_service_test.dart test/widgets/asset_income_readonly_reload_test.dart test/widgets/asset_income_reconciliation_section_test.dart
+      - name: Pure, adapter, A06 and focused widget acceptance
+        run: flutter test --concurrency=1 test/services/asset_income_evidence_connection_test.dart test/services/asset_income_source_evidence_test.dart test/services/asset_salary_spending_entries_test.dart test/services/salary_spending_breakdown_service_test.dart test/widgets/asset_income_readonly_reload_test.dart test/widgets/asset_income_reconciliation_section_test.dart test/services/asset_salary_reconciliation_service_test.dart --reporter expanded
+      - name: Preserve scoped source and outcomes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: salary-income-connection-${{ github.run_id }}
+          path: connection-output
+          if-no-files-found: warn
+          retention-days: 2

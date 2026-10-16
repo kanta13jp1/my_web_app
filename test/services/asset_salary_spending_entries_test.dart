@@ -119,11 +119,11 @@ void main() {
         flowDisplayTitle: _title,
       );
 
-      expect(result.incomes, hasLength(1));
-      expect(result.incomes.single.amount, 421277);
+      expect(result.incomes, hasLength(2));
+      expect(result.incomes.every((row) => row.amount == 421277), isTrue);
     });
 
-    test('received plan mirrored in flows and payslips is counted once', () {
+    test('unlinked source observations are retained without monetary dedup', () {
       final result = AssetSalarySpendingEntries.build(
         cardStatementLines: const [],
         recentFlows: const [
@@ -143,11 +143,11 @@ void main() {
         payslipRows: const [],
         flowDisplayTitle: _title,
       );
-      expect(result.incomes, hasLength(1));
-      expect(result.incomes.single.amount, 421277);
+      expect(result.incomes, hasLength(3));
+      expect(result.incomes.every((row) => row.amount == 421277), isTrue);
     });
 
-    test('received income plans dedupe by same date and amount', () {
+    test('same-date same-amount distinct plans are preserved', () {
       final result = AssetSalarySpendingEntries.build(
         cardStatementLines: const [],
         recentFlows: const [],
@@ -161,7 +161,7 @@ void main() {
         flowDisplayTitle: _title,
       );
 
-      expect(result.incomes, hasLength(2));
+      expect(result.incomes, hasLength(3));
     });
 
     test('payslip rows add net amounts as income, skipping non-positive', () {

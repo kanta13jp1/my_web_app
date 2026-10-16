@@ -1,3 +1,5 @@
+import '../models/asset_income_source_evidence.dart';
+import '../widgets/asset_income_reconciliation_section.dart';
 import '../services/asset_month_end_snapshot_service.dart';
 import '../widgets/asset_month_end_snapshot_card.dart';
 import '../widgets/asset_payroll_deductions_section.dart';
@@ -298,6 +300,13 @@ class _PaymentSourceCandidate {
     required this.projectedAfterPayment,
     required this.safetyBalanceDelta,
   });
+}
+
+class _IncomeFinanceReadSnapshot {
+  const _IncomeFinanceReadSnapshot(this.payslips, this.salaries, this.references);
+  final List<Map<String, dynamic>> payslips;
+  final List<Map<String, dynamic>> salaries;
+  final List<Map<String, dynamic>> references;
 }
 
 class AssetManagementPage extends StatefulWidget {
@@ -1019,6 +1028,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   late final AssetManagementAiSummaryService _assetManagementAiSummaryService;
   late final AssetManagementAiAnalysisHistoryService
       _assetManagementAiAnalysisHistoryService;
+  final _incomeEvidenceSession = IncomeEvidenceSession();
+  String? _incomeFinanceOwnerId;
+  String? _incomeFinanceLoadingScope;
+  List<Map<String, dynamic>> _incomeReferencedPayslips = [];
+  bool _incomeEvidenceReadBusy = false;
+  bool _incomeReadLimited = false;
+  bool _incomeFlowLoading = false;
+  bool _incomeFlowFailed = false;
+  DateTime? _incomeFlowCutoff;
+  int _incomeFlowGeneration = 0;
+  int _incomeRelationshipPage = 0;
+
   final SalarySpendingBreakdownService _salarySpendingBreakdownService =
       const SalarySpendingBreakdownService();
   final DisposableBalanceService _disposableBalanceService =
@@ -1760,38 +1781,54 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }).toList();
   }
 
-  /// 給与明細・受取済み計画のうち、収入フローにまだ含まれない金額。
-  /// 使いみちカードと同じ実績入力・重複排除を使う。
-  int _cycleSalaryIncomeTotal(
-    DateTime reference,
-    List<Map<String, dynamic>> cycleFlows,
-  ) {
-    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(
-      reference,
+  String _incomeEvidenceScope(DateTime reference) {
+    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(reference, salaryDay: _salaryDay);
+    return '${_supabase.auth.currentUser?.id ?? ''}|JPY|${_dateOnly(start)}';
+  }
+
+  IncomeEvidenceProjection _cycleIncomeEvidence(DateTime reference) {
+    final owner = _supabase.auth.currentUser?.id ?? '';
+    _incomeEvidenceSession.synchronizeScope(_incomeEvidenceScope(reference));
+    IncomeEvidenceProjection project() => AssetSalarySpendingEntries.projectCycle(
+      ownerId: owner,
+      flowOwnerId: _recentFlowsOwnerId,
+      financeOwnerId: _incomeFinanceOwnerId,
+      reference: reference,
       salaryDay: _salaryDay,
-    );
-    final endExclusive =
-        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
-      reference,
-      salaryDay: _salaryDay,
-    );
-    final entries = AssetSalarySpendingEntries.build(
-      cardStatementLines: const [],
-      recentFlows: cycleFlows,
+      recentFlows: _recentFlows,
       monthlyIncomePlans: _monthlyIncomePlans,
       payslipSalaryIncomes: _payslipSalaryIncomes,
       payslipRows: _payslipRows,
-      flowDisplayTitle: _flowDisplayTitle,
+      referencedPayslips: _incomeReferencedPayslips,
+      decisions: _incomeEvidenceSession.decisions,
+      relationshipPage: _incomeRelationshipPage,
     );
-    final incomeTotal = entries.incomes
-        .where((entry) =>
-            !entry.date.isBefore(start) && entry.date.isBefore(endExclusive))
-        .fold<double>(0, (sum, entry) => sum + entry.amount);
-    final recordedIncome = cycleFlows
-        .where((flow) => flow['action_type'] == 'conquer')
-        .fold<double>(
-            0, (sum, flow) => sum + _numberFromDynamic(flow['amount']));
-    return (incomeTotal - recordedIncome).round();
+    final before = _incomeEvidenceSession.decisions.length;
+    var result = project();
+    _incomeEvidenceSession.retainCurrentRecords(result.records);
+    if (_incomeEvidenceSession.decisions.length != before) result = project();
+    final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(reference, salaryDay: _salaryDay);
+    if (_incomeReadLimited || (_incomeFlowCutoff != null && cycleStart.isBefore(_incomeFlowCutoff!))) {
+      return withholdIncomeEvidence(result, reason: IncomeEvidenceProblem.readLimitReached);
+    }
+    if (!_incomeEvidenceSession.ready || owner.isEmpty || _incomeFinanceOwnerId != owner ||
+        _isLoadingPayslipFinance || _incomeEvidenceReadBusy || _incomeFlowLoading || _incomeFlowFailed ||
+        _recentFlowsOwnerId != owner) {
+      return withholdIncomeEvidence(result);
+    }
+    return result;
+  }
+
+  void _decideIncomeRelationship(IncomeSourceRecord left, IncomeSourceRecord right,
+      IncomeRelationship relationship) {
+    final current = _cycleIncomeEvidence(_now);
+    if (current.issues.any((issue) => issue.problem == IncomeEvidenceProblem.readUnconfirmed || issue.problem == IncomeEvidenceProblem.readLimitReached)) return;
+    final fingerprints = current.records.map((row) => row.fingerprint).toSet();
+    if (!fingerprints.contains(left.fingerprint) || !fingerprints.contains(right.fingerprint)) return;
+    setState(() {
+      _incomeEvidenceSession.decide(left, right, relationship);
+      _incomeRelationshipPage = 0;
+    });
   }
 
   /// 給料日サイクルの期間ラベル (例: "5/25〜6/24")。
@@ -5542,7 +5579,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (f['action_type'] == 'expense') monthlyExpense += amt;
     }
     // 給与明細でのみ管理している給料もサイクル収入へ合算する。
-    monthlyIncome += _cycleSalaryIncomeTotal(planNow, currentMonthFlows);
+    final evidenceIncome = _cycleIncomeEvidence(planNow).combinedRecordedTotal;
+    if (evidenceIncome == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('収入の重複未照合のため返済計画は未計算です。収入の照合を確認してください。'),
+      ));
+      return;
+    }
+    monthlyIncome = evidenceIncome;
 
     final currentFixedCost = _subscriptions.fold<int>(
       0,
@@ -6072,8 +6117,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final expenseCount =
         currentMonthFlows.where((r) => r['action_type'] == 'expense').length;
     // 給与明細でのみ管理している給料も「収支の記録あり」とみなす。
-    final salaryIncome = _cycleSalaryIncomeTotal(checkNow, currentMonthFlows);
-    final flowsOk = (incomeCount + expenseCount) > 0 || salaryIncome > 0;
+    final incomeRecords = _cycleIncomeEvidence(checkNow).records;
+    final flowsOk = (incomeCount + expenseCount) > 0 || incomeRecords.any(
+      (row) => !row.evidenceOnly && row.id != null && row.amount >= 0 && DateTime.tryParse(row.date) != null,
+    );
 
     final now = DateTime.now();
     final mustThisMonth = _mustTasks.where((t) {
@@ -6132,17 +6179,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final totalFixed = fixedCostSummary.total;
 
     final currentMonthFlows = _flowsForCycle(now);
-    int totalIncome = 0;
     int totalExpense = 0;
     int totalTransfer = 0;
     for (final f in currentMonthFlows) {
       final amt = (f['amount'] as num?)?.toInt() ?? 0;
-      if (f['action_type'] == 'conquer') totalIncome += amt;
       if (f['action_type'] == 'expense') totalExpense += amt;
       if (f['action_type'] == 'transfer') totalTransfer += amt;
     }
     // 給与明細でのみ管理している給料もサイクル収入へ合算する。
-    totalIncome += _cycleSalaryIncomeTotal(now, currentMonthFlows);
+    final incomeEvidence = _cycleIncomeEvidence(now);
+    final combinedIncome = incomeEvidence.combinedRecordedTotal;
 
     final monthLabel = '${now.year}/${now.month.toString().padLeft(2, '0')}';
     final flowCycleLabel = _salaryCycleRangeLabel(now);
@@ -6202,11 +6248,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     buf.writeln('');
 
     buf.writeln('### ④ 収支（給料サイクル $flowCycleLabel）');
-    buf.writeln('- 収入合計: ¥${NumberFormat('#,###').format(totalIncome)}');
+    buf.writeln(combinedIncome == null ? '- 収入合計: 収入の重複未照合のため未計算' : '- 収入合計: ¥${NumberFormat('#,###').format(combinedIncome)}');
+    for (final source in incomeEvidence.sourceRecordedTotals.entries) {
+      buf.writeln('- ${AssetIncomeReconciliationSection.sourceLabels[source.key]}記録計: ${source.value ?? '未計算'}');
+    }
     buf.writeln('- 支出合計: ¥${NumberFormat('#,###').format(totalExpense)}');
     buf.writeln('- 振替合計: ¥${NumberFormat('#,###').format(totalTransfer)}');
     buf.writeln(
-      '- 差額: ¥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
+      combinedIncome == null ? '- 差額: 未計算' : '- 差額: ¥${NumberFormat('#,###').format(combinedIncome - totalExpense)}',
     );
     buf.writeln('');
 
@@ -7826,59 +7875,94 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  Future<void> _loadPayslipFinanceData() async {
-    // テスト注入 (debugInitialPayslip*) がある場合はフェッチで上書きしない。
-    if (widget.debugInitialPayslipSalaryIncomes != null ||
-        widget.debugInitialPayslipRows != null) {
-      _reconcileAndSaveSalaryIncomePlansIfPending();
+  Future<_IncomeFinanceReadSnapshot> _readIncomeFinanceSnapshot(String owner) async {
+    final payslips = await _supabase.from('payslips').select(
+      'id,pay_date,company_name,gross_amount,net_amount,confidence,review_status,source_pdf_path',
+    ).eq('user_id', owner).order('pay_date', ascending: false).limit(12);
+    final salaries = await _supabase.from('salary_incomes').select(
+      'id,pay_date,amount,description,source,confidence,payslip_id',
+    ).eq('user_id', owner).order('pay_date', ascending: false).limit(12);
+    final known = payslips.map((row) => row['id']?.toString()).toSet();
+    final missing = salaries.map((row) => row['payslip_id']?.toString()).whereType<String>()
+        .where((id) => id.isNotEmpty && !known.contains(id)).toSet().toList();
+    if (missing.length > 512) throw StateError('給与明細の参照対象が上限を超えています');
+    final references = <Map<String, dynamic>>[];
+    for (var start = 0; start < missing.length; start += 50) {
+      final ids = missing.sublist(start, min(start + 50, missing.length));
+      final rows = await _supabase.from('payslips').select('id,pay_date,net_amount')
+          .eq('user_id', owner).inFilter('id', ids).limit(ids.length);
+      references.addAll(rows.map((row) => Map<String, dynamic>.from(row)));
+    }
+    return _IncomeFinanceReadSnapshot(
+      payslips.map((row) => Map<String, dynamic>.from(row)).toList(),
+      salaries.map((row) => Map<String, dynamic>.from(row)).toList(),
+      references,
+    );
+  }
+
+  Future<void> _loadPayslipFinanceData({bool reconciliationReadOnly = false}) async {
+    final owner = _supabase.auth.currentUser?.id;
+    final scope = _incomeEvidenceScope(_now);
+    final generation = _incomeEvidenceSession.beginRead(scope);
+    if (widget.debugInitialPayslipSalaryIncomes != null || widget.debugInitialPayslipRows != null) {
+      _incomeFinanceOwnerId = owner;
+      _incomeEvidenceSession.completeRead(scope, generation);
+      if (!reconciliationReadOnly) _reconcileAndSaveSalaryIncomePlansIfPending();
       return;
     }
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
+    if (owner == null) {
       if (!mounted) return;
       setState(() {
+        _incomeFinanceOwnerId = null;
+        _incomeReferencedPayslips = [];
         _payslipRows = <Map<String, dynamic>>[];
         _payslipSalaryIncomes = <Map<String, dynamic>>[];
         _isLoadingPayslipFinance = false;
       });
       return;
     }
-    if (mounted) {
-      setState(() => _isLoadingPayslipFinance = true);
-    }
+    if (mounted) setState(() { _isLoadingPayslipFinance = true; _incomeFinanceLoadingScope = scope; });
     try {
-      final payslips = await _supabase
-          .from('payslips')
-          .select(
-            'id,pay_date,company_name,gross_amount,net_amount,confidence,review_status,source_pdf_path',
-          )
-          .eq('user_id', userId)
-          .order('pay_date', ascending: false)
-          .limit(12);
-      final salaryIncomes = await _supabase
-          .from('salary_incomes')
-          .select('id,pay_date,amount,description,source,confidence')
-          .eq('user_id', userId)
-          .order('pay_date', ascending: false)
-          .limit(12);
-      if (!mounted) return;
+      final snapshot = await _readIncomeFinanceSnapshot(owner);
+      if (!mounted || _supabase.auth.currentUser?.id != owner ||
+          _incomeEvidenceScope(_now) != scope || !_incomeEvidenceSession.isCurrent(scope, generation)) return;
       setState(() {
-        _payslipRows = List<Map<String, dynamic>>.from(payslips);
-        _payslipSalaryIncomes = List<Map<String, dynamic>>.from(salaryIncomes);
+        _payslipRows = snapshot.payslips;
+        _payslipSalaryIncomes = snapshot.salaries;
+        // Referenced rows never enter payslip inputs, income plans, or A06.
+        _incomeReferencedPayslips = snapshot.references;
+        _incomeFinanceOwnerId = owner;
+        _incomeReadLimited = snapshot.payslips.length >= 12 || snapshot.salaries.length >= 12;
+        _incomeEvidenceSession.completeRead(scope, generation);
         _isLoadingPayslipFinance = false;
         _payslipIngestionMessage = null;
       });
-      _reconcileAndSaveSalaryIncomePlansIfPending();
-    } catch (e) {
-      debugPrint('Error loading payslip finance data: $e');
-      if (!mounted) return;
+      if (!reconciliationReadOnly) _reconcileAndSaveSalaryIncomePlansIfPending();
+    } catch (_) {
+      if (!mounted || _supabase.auth.currentUser?.id != owner ||
+          !_incomeEvidenceSession.isCurrent(scope, generation)) return;
       setState(() {
+        _incomeEvidenceSession.invalidateRead();
+        _incomeFinanceOwnerId = null;
         _payslipRows = <Map<String, dynamic>>[];
         _payslipSalaryIncomes = <Map<String, dynamic>>[];
         _isLoadingPayslipFinance = false;
-        _payslipIngestionMessage =
-            '給与明細テーブルの準備がまだです。最新マイグレーション適用後に再読み込みしてください。';
+        _payslipIngestionMessage = '給与明細の読み取りを確認できませんでした。再読込してください。';
       });
+    }
+  }
+
+  Future<void> _reloadIncomeEvidence() async {
+    if (_incomeEvidenceReadBusy) return;
+    setState(() { _incomeEvidenceReadBusy = true; _incomeEvidenceSession.invalidateRead(); });
+    try {
+      // Both paths explicitly omit all salary normalization/saving continuations.
+      await _fetchRecentFlows(runSalaryReconciliation: false, reportErrors: true);
+      await _loadPayslipFinanceData(reconciliationReadOnly: true);
+    } catch (_) {
+      _incomeEvidenceSession.invalidateRead();
+    } finally {
+      if (mounted) setState(() => _incomeEvidenceReadBusy = false);
     }
   }
 
@@ -8027,6 +8111,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (reportErrors) throw StateError('ログイン状態を確認してください');
       return;
     }
+    final generation = ++_incomeFlowGeneration;
+    if (mounted) setState(() { _incomeFlowLoading = true; _incomeFlowFailed = false; });
     try {
       final cutoff = AssetManagementEgressPolicy.recentFlowCutoff(
         DateTime.now(),
@@ -8049,9 +8135,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         },
       );
 
-      if (mounted && _supabase.auth.currentUser?.id == userId) {
+      if (mounted && _supabase.auth.currentUser?.id == userId && generation == _incomeFlowGeneration) {
         setState(() {
+          _incomeFlowLoading = false;
+          _incomeFlowFailed = false;
           _recentFlowsOwnerId = userId;
+          _incomeFlowCutoff = DateTime.parse(cutoff);
           _recentFlows = List<Map<String, dynamic>>.from(data);
         });
         if (runSalaryReconciliation) {
@@ -8071,8 +8160,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         throw StateError('ログイン状態が変わりました。再試行してください');
       }
     } catch (e) {
+      if (mounted && generation == _incomeFlowGeneration) {
+        setState(() { _incomeFlowLoading = false; _incomeFlowFailed = true; });
+      }
       debugPrint('Error fetching flows: $e');
       if (reportErrors) rethrow;
+    } finally {
+      if (mounted && generation == _incomeFlowGeneration && _incomeFlowLoading) {
+        setState(() { _incomeFlowLoading = false; _incomeFlowFailed = true; });
+      }
     }
   }
 
@@ -17947,32 +18043,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildMonthlyFlowFirstCard() {
     final cycleRangeLabel = _salaryCycleRangeLabel(_now);
     final flows = _flowsForCycle(_now);
-    var totalIncome = 0;
     var totalExpense = 0;
 
     for (final item in flows) {
       final amount = (item['amount'] as num?)?.toInt() ?? 0;
       final actionType = item['action_type'] as String? ?? '';
-      if (actionType == 'conquer') {
-        totalIncome += amount;
-      } else if (actionType == 'expense') {
+      if (actionType == 'expense') {
         totalExpense += amount;
       }
     }
     // 給与明細(payslips/salary_incomes)でのみ管理している給料も収入へ合算する。
-    final salaryIncome = _cycleSalaryIncomeTotal(_now, flows);
-    totalIncome += salaryIncome;
+    final evidence = _cycleIncomeEvidence(_now);
+    final totalIncome = evidence.combinedRecordedTotal;
 
-    final net = totalIncome - totalExpense;
+    final net = totalIncome == null ? null : totalIncome - totalExpense;
     // フローが無くても給与明細の給料収入があれば「未記録」とは扱わない。
-    final hasNoData = flows.isEmpty && totalIncome == 0;
+    final hasNoData = flows.isEmpty && evidence.records.isEmpty;
     final hasRecordedExpense =
         flows.any((flow) => flow['action_type'] == 'expense');
-    final statusText = hasNoData
+    final netText = net == null ? '未計算' : '${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'}';
+    final statusText = totalIncome == null
+        ? '収入の重複未照合のため、合算収入と差額は未計算です。出典別の記録を確認してください。'
+        : hasNoData
         ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
         : !hasRecordedExpense
             ? '支出はまだ記録されていません。差額は記録済み収入だけの集計で、支払済みチェックや予定額とは異なります。現在残高や今後の支払後に使える額とは異なります。'
-            : 'このサイクルの記録上の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。現在残高や今後の支払後に使える額とは異なります。';
+            : 'このサイクルの記録上の収支差額は $netText です。現在残高や今後の支払後に使える額とは異なります。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -18040,7 +18136,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               children: [
                 _buildFlowPriorityMetric(
                   label: '収入',
-                  value: '¥${NumberFormat('#,###').format(totalIncome)}',
+                  value: totalIncome == null ? '未計算' : '¥${NumberFormat('#,###').format(totalIncome)}',
                   color: const Color(0xFF0F766E),
                 ),
                 _buildFlowPriorityMetric(
@@ -18051,26 +18147,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildFlowPriorityMetric(
                   label: '差額',
                   value:
-                      '${net >= 0 ? '+' : '-'}¥${NumberFormat('#,###').format(net.abs())}',
-                  color: net >= 0
+                      net == null ? '未計算' : '${net >= 0 ? '+' : '-'}¥${NumberFormat('#,###').format(net.abs())}',
+                  color: net != null && net >= 0
                       ? const Color(0xFF065F46)
                       : const Color(0xFF7F1D1D),
                 ),
               ],
             ),
-            if (salaryIncome > 0) ...[
-              const SizedBox(height: 10),
-              Text(
-                '給与明細・受取済み収入予定から計上した '
-                '¥${NumberFormat('#,###').format(salaryIncome)} を含みます。'
-                '口座への入金状況は入出金明細で確認してください。',
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.5,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+            AssetIncomeReconciliationSection(
+              projection: evidence,
+              busy: _incomeEvidenceReadBusy || (_isLoadingPayslipFinance && _incomeFinanceLoadingScope == _incomeEvidenceScope(_now)) || _incomeFlowLoading,
+              onReload: () => unawaited(_reloadIncomeEvidence()),
+              onDecision: _decideIncomeRelationship,
+              onClear: () => setState(() { _incomeEvidenceSession.clearDecisions(); _incomeRelationshipPage = 0; }),
+              onPage: (page) => setState(() => _incomeRelationshipPage = page),
+            ),
             if (totalIncome == 0) ...[
               const SizedBox(height: 14),
               Container(
@@ -18132,7 +18223,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return _salarySpendingBreakdownService.build(
       referenceDate: _now,
       expenses: entries.expenses,
-      incomes: entries.incomes,
+      incomeEvidence: _cycleIncomeEvidence(_now),
       salaryDay: _salaryDay,
     );
   }
@@ -18150,17 +18241,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             confidence: _numberFromDynamic(row['confidence']),
           ),
     ];
-    if (payslips.isEmpty && salaryBreakdown.salaryIncomeTotal > 0) {
-      payslips.add(
-        DisposableBalancePayslip(
-          payDate: salaryBreakdown.periodStart,
-          netAmount: salaryBreakdown.salaryIncomeTotal,
-          companyName: '収入入力',
-          confidence: 0.5,
-        ),
-      );
-    }
-
     final nextPayday = _disposableBalanceService.nextPaydayFor(
       asOfDate: _now,
       salaryDay: _salaryDay,
@@ -18990,10 +19070,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: const Color(0xFFB91C1C),
                 ),
                 _buildFlowPriorityMetric(
-                  label: '給料収入',
-                  value: breakdown.salaryIncomeTotal > 0
-                      ? _formatYen(breakdown.salaryIncomeTotal)
-                      : '未記録',
+                  label: '記録上の合算収入',
+                  value: breakdown.salaryIncomeTotal == null
+                      ? '収入未照合・未計算'
+                      : _formatYen(breakdown.salaryIncomeTotal!),
                   color: const Color(0xFF0F766E),
                 ),
                 _buildFlowPriorityMetric(

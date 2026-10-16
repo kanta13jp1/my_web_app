@@ -76,8 +76,8 @@ void main() {
       expect(breakdown.periodStart, DateTime(2026, 4, 25));
       expect(breakdown.periodEndExclusive, DateTime(2026, 5, 25));
       expect(breakdown.totalExpense, 125000);
-      expect(breakdown.salaryIncomeTotal, 245000);
-      expect(breakdown.remainingAfterExpense, 120000);
+      expect(breakdown.salaryIncomeTotal, isNull);
+      expect(breakdown.remainingAfterExpense, isNull);
     });
 
     test('groups expenses by category and sorts by amount', () {
@@ -115,7 +115,7 @@ void main() {
       expect(breakdown.expenseEntryCount, 3);
     });
 
-    test('falls back to single income entry even without salary keywords', () {
+    test('does not certify unlinked raw income entries', () {
       final breakdown = service.build(
         referenceDate: DateTime(2026, 5, 23),
         incomes: <SalaryIncomeEntry>[
@@ -127,7 +127,7 @@ void main() {
         ],
       );
 
-      expect(breakdown.salaryIncomeTotal, 180000);
+      expect(breakdown.salaryIncomeTotal, isNull);
     });
 
     test('groups auto balance drops as unknown spending', () {
@@ -148,7 +148,7 @@ void main() {
       expect(breakdown.expenseEntryCount, 1);
     });
 
-    test('counts payslip income even when other income entries exist', () {
+    test('payslip text alone cannot certify combined recorded income', () {
       final breakdown = service.build(
         referenceDate: DateTime(2026, 5, 26),
         incomes: <SalaryIncomeEntry>[
@@ -165,7 +165,7 @@ void main() {
         ],
       );
 
-      expect(breakdown.salaryIncomeTotal, 452815);
+      expect(breakdown.salaryIncomeTotal, isNull);
     });
   });
 }
