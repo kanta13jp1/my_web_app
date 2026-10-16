@@ -350,7 +350,12 @@ void main() {
       final templates = await repository.loadRecurringIncomeTemplates();
       expect(templates, hasLength(1));
       expect(repository.savedState, isNotNull);
-      expect(repository.savedState!.incomePlans.where((plan) => plan.name == 'synthetic income'), hasLength(1));
+      expect(
+        repository.savedState!.incomePlans.where(
+          (plan) => plan.name == 'synthetic income',
+        ),
+        hasLength(1),
+      );
     } finally {
       await _unmount(tester);
     }
