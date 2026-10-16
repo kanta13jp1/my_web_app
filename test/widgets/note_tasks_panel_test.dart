@@ -24,7 +24,13 @@ void main() {
       expect(picker.initialDate!.isBefore(picker.firstDate), isFalse);
       expect(picker.initialDate!.isAfter(picker.lastDate), isFalse);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('CANCEL'));
+      final cancelLabel = MaterialLocalizations.of(
+        tester.element(find.byType(DatePickerDialog)),
+      ).cancelButtonLabel;
+      await tester.tap(find.descendant(
+        of: find.byType(DatePickerDialog),
+        matching: find.text(cancelLabel),
+      ));
       await tester.pumpAndSettle();
       await tester.tap(find.text('キャンセル'));
       await tester.pumpAndSettle();
