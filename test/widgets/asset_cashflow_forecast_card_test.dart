@@ -72,8 +72,12 @@ void main() {
         expect(find.textContaining('対象の給与サイクル内だけ反映'), findsOneWidget);
         final details =
             find.byKey(const Key('asset_cashflow_forecast_month_details'));
-        final tile = find.descendant(of: details, matching: find.byType(ListTile));
-        expect(tester.getSemantics(tile).getSemanticsData().hasFlag(SemanticsFlag.isButton), isTrue);
+        final tile = find.descendant(
+          of: details,
+          matching: find.byType(ListTile),
+        );
+        final semanticsData = tester.getSemantics(tile).getSemanticsData();
+        expect(semanticsData.hasFlag(SemanticsFlag.isButton), isTrue);
         await tester.ensureVisible(details);
         await tester.tap(find.text('月別内訳（月末・月内最低）'));
         await tester.pumpAndSettle();
