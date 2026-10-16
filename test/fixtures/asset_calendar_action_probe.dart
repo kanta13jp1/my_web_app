@@ -83,14 +83,19 @@ class _ActionProbeState extends State<ActionProbe> {
           children: [
             ValueListenableBuilder<int>(
               valueListenable: counter.pushes,
-              builder: (_, value, child) => Semantics(
-                container: true,
-                label: 'fixture-popup-pushes:$value',
-                excludeSemantics: true,
-                child: SizedBox(
-                  width: 320,
-                  height: 24,
-                  child: Text('fixture-popup-pushes:$value'),
+              builder: (_, value, child) => Material(
+                child: Semantics(
+                  container: true,
+                  label: 'fixture-popup-pushes:$value',
+                  excludeSemantics: true,
+                  child: SizedBox(
+                    width: 320,
+                    height: 40,
+                    child: Text(
+                      'fixture-popup-pushes:$value',
+                      style: const TextStyle(fontSize: 12, height: 1),
+                    ),
+                  ),
                 ),
               ),
             ),

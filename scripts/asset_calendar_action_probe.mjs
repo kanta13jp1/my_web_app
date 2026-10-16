@@ -37,6 +37,8 @@ async function prepare(scenario){
   const response=await page.goto('http://127.0.0.1:4173/');
   if(!response?.ok())throw new Error(`Fixture HTTP ${response?.status()}`);
   await next().waitFor({state:'attached',timeout:60000});
+  await page.getByText('fixture-popup-pushes:0',{exact:true}).waitFor({state:'visible',timeout:5000});
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll('flt-semantics')).some(e=>/fixture-popup-pushes:0/.test(e.getAttribute('aria-label')??e.textContent??'')),undefined,{timeout:5000});
   await page.locator('#seo-shell').waitFor({state:'hidden',timeout:30000});
   await page.evaluate(names=>{
     window.__probeEvents=[];
@@ -96,6 +98,7 @@ try{
   if(results.some(result=>result.pageError))throw new Error('Fixture emitted a browser runtime error');
 }catch(error){
   results.push({probeFailure:String(error)});
+  await writeFile(`${dir}/synthetic-dom.html`,await page.content());
   await capture('probe-failure');
   await page.screenshot({path:`${dir}/probe-failure.png`});
   throw error;
