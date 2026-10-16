@@ -18,7 +18,6 @@ import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
-import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
@@ -409,14 +408,6 @@ void main() {
       await _unmount(tester);
     });
 
-
-
-
-
-
-
-
-
     testWidgets(
       'monthly flow card hides manual income CTA when income exists',
       (tester) async {
@@ -460,8 +451,6 @@ void main() {
         await _unmount(tester);
       },
     );
-
-
 
     testWidgets('tapping a day reveals the prefill action', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
