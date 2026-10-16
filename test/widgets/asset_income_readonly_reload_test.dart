@@ -30,6 +30,9 @@ class MemoryIncomeHttp extends http.BaseClient {
         'code': 'PGRST202',
         'message': 'memory fixture rejects transport and writes',
       };
+    } else if (!request.url.path.startsWith('/rest/v1/')) {
+      status = 403;
+      body = {'code': 'FIXTURE_PATH_DENIED', 'message': 'no auth or other endpoint transport',};
     } else if (request.url.path.endsWith('/payslips') ||
         request.url.path.endsWith('/salary_incomes')) {
       if (financeGate != null) {
@@ -139,11 +142,18 @@ void main() {
         final beforePrefs = {
           for (final key in prefs.getKeys()) key: prefs.get(key),
         };
+        Future<void> tapReload() async {
+          final button = find.widgetWithText(TextButton, '既存明細を再読込');
+          expect(tester.widget<TextButton>(button).onPressed, isNotNull);
+          await Scrollable.ensureVisible(tester.element(button), alignment: 0.5);
+          await tester.pump(const Duration(milliseconds: 200));
+          expect(button.hitTestable(), findsOneWidget,
+            reason: 'synthetic reload control must be visibly hit-testable before pointer input: ${tester.getRect(button)}',);
+          await tester.tap(button);
+        }
         Future<List<http.BaseRequest>> reload() async {
           final before = client.requests.length;
-          final retry = find.text('既存明細を再読込');
-          await tester.ensureVisible(retry);
-          await tester.tap(retry);
+          await tapReload();
           for (var i = 0; i < 12; i++) {
             await tester.pump(const Duration(milliseconds: 100));
           }
@@ -193,32 +203,55 @@ void main() {
         client.limited = false;
         final gate = Completer<void>();
         client.financeGate = gate;
-        final retry = find.text('既存明細を再読込');
-        await tester.ensureVisible(retry);
-        await tester.tap(retry);
+        await tapReload();
         for (var i = 0; i < 12 && !client.financeGateEntered; i++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
         expect(client.financeGateEntered, isTrue);
         const nextOwner = '00000000-0000-4000-8000-000000000002';
-        await Supabase.instance.client.auth.setInitialSession(jsonEncode({
-          'access_token': 'synthetic-second-owner-not-valid-on-any-server',
-          'token_type': 'bearer',
-          'user': {'id': nextOwner, 'aud': 'authenticated', 'app_metadata': {}, 'user_metadata': {}, 'created_at': '2026-06-20T00:00:00Z',},
-        }),);
+        await Supabase.instance.client.auth.setInitialSession(
+          jsonEncode({
+            'access_token': 'synthetic-second-owner-not-valid-on-any-server',
+            'token_type': 'bearer',
+            'user': {
+              'id': nextOwner,
+              'aud': 'authenticated',
+              'app_metadata': {},
+              'user_metadata': {},
+              'created_at': '2026-06-20T00:00:00Z',
+            },
+          }),
+        );
         client.financeGate = null;
         gate.complete();
         for (var i = 0; i < 12; i++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
-        expect(find.text('給与明細データを読み込んでいます...'), findsNothing,
-          reason: 'stale owner request ends its own spinner without adopting its data',);
-        expect(find.descendant(of: section, matching: find.textContaining('ID: p0')), findsNothing,
-          reason: 'prior owner observations are withheld from the comparison panel',);
+        expect(
+          find.text('給与明細データを読み込んでいます...'),
+          findsNothing,
+          reason:
+              'stale owner request ends its own spinner without adopting its data',
+        );
+        expect(
+          find.descendant(of: section, matching: find.textContaining('ID: p0')),
+          findsNothing,
+          reason:
+              'prior owner observations are withheld from the comparison panel',
+        );
         final newReads = await reload();
-        final newFinance = newReads.where((r) => r.url.path.endsWith('/payslips') || r.url.path.endsWith('/salary_incomes'));
+        final newFinance = newReads.where(
+          (r) =>
+              r.url.path.endsWith('/payslips') ||
+              r.url.path.endsWith('/salary_incomes'),
+        );
         expect(newFinance, isNotEmpty);
-        expect(newFinance.every((r) => r.url.queryParameters['user_id'] == 'eq.$nextOwner'), isTrue);
+        expect(
+          newFinance.every(
+            (r) => r.url.queryParameters['user_id'] == 'eq.$nextOwner',
+          ),
+          isTrue,
+        );
         expect(find.text('既存明細IDで照合'), findsOneWidget);
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pump();

@@ -127,9 +127,10 @@ class AssetIncomeReconciliationSection extends StatelessWidget {
       for (final record in projection.records)
         if (record.key != null) record.key!: record,
     };
-    final ready = !busy && !projection.issues.any(
-      (issue) => issue.problem != IncomeEvidenceProblem.missingRelationship,
-    );
+    final ready = !busy &&
+        !projection.issues.any(
+          (issue) => issue.problem != IncomeEvidenceProblem.missingRelationship,
+        );
     return ExpansionTile(
       key: const Key('asset_income_reconciliation'),
       tilePadding: EdgeInsets.zero,
@@ -277,7 +278,12 @@ class AssetIncomeReconciliationSection extends StatelessWidget {
             ],
           ),
         if (unresolved.isEmpty)
-          for (final record in projection.records.where((record) => !projection.matchedEvents.any((event) => event.recordKeys.contains(record.key))).take(20))
+          for (final record in projection.records
+              .where(
+                (record) => !projection.matchedEvents
+                    .any((event) => event.recordKeys.contains(record.key)),
+              )
+              .take(20))
             recordTile(record),
         if (unresolved.isEmpty && projection.records.length > 20)
           Text('元記録${projection.records.length}件のうち先頭20件を表示しています。'),

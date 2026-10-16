@@ -200,33 +200,79 @@ void main() {
       isNull,
     );
   });
-  testWidgets('existing FK, temporary confirmation and monetary conflict have distinct status', (tester) async {
-    Future<void> mount(IncomeEvidenceProjection value, {int memoryCount = 0}) async {
-      await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
-        child: AssetIncomeReconciliationSection(
-          key: ValueKey(value), projection: value, memoryDecisionCount: memoryCount, busy: false,
-          onReload: () {}, onDecision: (left, right, relationship) {}, onClear: () {}, onPage: (page) {},
+  testWidgets(
+      'existing FK, temporary confirmation and monetary conflict have distinct status',
+      (tester) async {
+    Future<void> mount(
+      IncomeEvidenceProjection value, {
+      int memoryCount = 0,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AssetIncomeReconciliationSection(
+                key: ValueKey(value),
+                projection: value,
+                memoryDecisionCount: memoryCount,
+                busy: false,
+                onReload: () {},
+                onDecision: (left, right, relationship) {},
+                onClear: () {},
+                onPage: (page) {},
+              ),
+            ),
+          ),
         ),
-      ),),),);
-      await tester.tap(find.text(value.combinedRecordedTotal == null ? '収入の照合が必要' : '記録上の収入を照合済み'));
+      );
+      await tester.tap(
+        find.text(
+          value.combinedRecordedTotal == null ? '収入の照合が必要' : '記録上の収入を照合済み',
+        ),
+      );
       await tester.pumpAndSettle();
     }
-    IncomeEvidenceProjection linked(int amount) => AssetSalarySpendingEntries.projectCycle(
-      ownerId: 'synthetic', flowOwnerId: 'synthetic', financeOwnerId: 'synthetic',
-      reference: DateTime(2026, 6, 20), salaryDay: 25,
-      recentFlows: const [], monthlyIncomePlans: const [],
-      payslipSalaryIncomes: const [{'id': 's1', 'payslip_id': 'p1', 'pay_date': '2026-06-20', 'amount': 100,}],
-      payslipRows: [{'id': 'p1', 'pay_date': '2026-06-20', 'net_amount': amount,}],
-    );
+
+    IncomeEvidenceProjection linked(int amount) =>
+        AssetSalarySpendingEntries.projectCycle(
+          ownerId: 'synthetic',
+          flowOwnerId: 'synthetic',
+          financeOwnerId: 'synthetic',
+          reference: DateTime(2026, 6, 20),
+          salaryDay: 25,
+          recentFlows: const [],
+          monthlyIncomePlans: const [],
+          payslipSalaryIncomes: const [
+            {
+              'id': 's1',
+              'payslip_id': 'p1',
+              'pay_date': '2026-06-20',
+              'amount': 100,
+            }
+          ],
+          payslipRows: [
+            {
+              'id': 'p1',
+              'pay_date': '2026-06-20',
+              'net_amount': amount,
+            }
+          ],
+        );
     await mount(linked(100));
     expect(find.text('既存明細IDで照合'), findsOneWidget);
     expect(find.textContaining('この画面で本人確認・未保存'), findsNothing);
     final raw = sample();
     final decision = IncomeRelationshipDecision(
-      leftFingerprint: raw.records[0].fingerprint, rightFingerprint: raw.records[1].fingerprint,
+      leftFingerprint: raw.records[0].fingerprint,
+      rightFingerprint: raw.records[1].fingerprint,
       relationship: IncomeRelationship.sameEvent,
     );
-    final manual = AssetIncomeSourceEvidence.project(ownerId: 'synthetic', currency: 'JPY', records: raw.records, decisions: [decision],);
+    final manual = AssetIncomeSourceEvidence.project(
+      ownerId: 'synthetic',
+      currency: 'JPY',
+      records: raw.records,
+      decisions: [decision],
+    );
     await mount(manual, memoryCount: 1);
     expect(find.text('この画面で本人確認・未保存 1件'), findsOneWidget);
     expect(find.text('この画面で同じ収入として本人確認・未保存'), findsOneWidget);
@@ -234,8 +280,21 @@ void main() {
     await mount(linked(101));
     expect(find.textContaining('矛盾 1件'), findsOneWidget);
     expect(find.text('記録上の収入を照合済み'), findsNothing);
-    expect(tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, '別件として照合')).onPressed, isNull);
-    expect(find.text(AssetIncomeReconciliationSection.issueLabel(IncomeEvidenceProblem.eventAmountConflict)), findsOneWidget);
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, '別件として照合'),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      find.text(
+        AssetIncomeReconciliationSection.issueLabel(
+          IncomeEvidenceProblem.eventAmountConflict,
+        ),
+      ),
+      findsOneWidget,
+    );
   });
-
 }
