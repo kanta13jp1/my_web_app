@@ -536,7 +536,7 @@ jobs:
           files=(lib/models/asset_income_source_evidence.dart lib/pages/asset_management_page.dart lib/services/asset_salary_spending_entries.dart lib/services/salary_spending_breakdown_service.dart lib/widgets/asset_income_reconciliation_section.dart test/services/asset_income_evidence_connection_test.dart test/services/asset_income_source_evidence_test.dart test/services/asset_salary_spending_entries_test.dart test/services/salary_spending_breakdown_service_test.dart test/widgets/asset_income_readonly_reload_test.dart test/widgets/asset_income_reconciliation_section_test.dart)
           dart format "${files[@]}"
           for file in "${files[@]}"; do
-            dart fix --apply --code=require_trailing_commas,sort_child_properties_last,prefer_const_constructors,prefer_const_literals_to_create_immutables "$file"
+            dart fix --apply --code=require_trailing_commas,curly_braces_in_flow_control_structures,sort_child_properties_last,prefer_const_constructors,prefer_const_literals_to_create_immutables "$file"
           done
           dart format "${files[@]}"
           mkdir -p connection-output/files

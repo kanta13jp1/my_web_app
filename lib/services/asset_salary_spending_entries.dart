@@ -177,21 +177,38 @@ class AssetSalarySpendingEntries {
     List<IncomeRelationshipDecision> decisions = const [],
     int relationshipPage = 0,
   }) {
-    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(reference, salaryDay: salaryDay);
-    final end = AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(reference, salaryDay: salaryDay);
+    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+      reference,
+      salaryDay: salaryDay,
+    );
+    final end = AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+      reference,
+      salaryDay: salaryDay,
+    );
     bool belongs(String raw) {
       final date = DateTime.tryParse(raw);
       // Keep malformed observations, so the pure layer reports their problem.
       return date == null || (!date.isBefore(start) && date.isBefore(end));
     }
-    IncomeSourceRecord record(IncomeSourceKind kind, Map<String, dynamic> row,
-        String dateField, String amountField, String? capturedOwner,
-        {bool evidenceOnly = false,}) {
+
+    IncomeSourceRecord record(
+      IncomeSourceKind kind,
+      Map<String, dynamic> row,
+      String dateField,
+      String amountField,
+      String? capturedOwner, {
+      bool evidenceOnly = false,
+    }) {
       final raw = row[amountField];
-      final numeric = raw is num ? raw.toDouble() : double.tryParse(raw?.toString() ?? '');
-      final amount = numeric != null && numeric.isFinite && numeric >= 0 &&
-              numeric <= 9007199254740991 && numeric == numeric.truncateToDouble()
-          ? numeric.toInt() : -1;
+      final numeric =
+          raw is num ? raw.toDouble() : double.tryParse(raw?.toString() ?? '');
+      final amount = numeric != null &&
+              numeric.isFinite &&
+              numeric >= 0 &&
+              numeric <= 9007199254740991 &&
+              numeric == numeric.truncateToDouble()
+          ? numeric.toInt()
+          : -1;
       final date = row[dateField]?.toString() ?? '';
       return IncomeSourceRecord(
         kind: kind,
@@ -200,20 +217,35 @@ class AssetSalarySpendingEntries {
         currency: row['currency']?.toString() ?? 'JPY',
         date: date,
         datePrecision: RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(date)
-            ? IncomeDatePrecision.day : IncomeDatePrecision.instant,
+            ? IncomeDatePrecision.day
+            : IncomeDatePrecision.instant,
         amount: amount,
         observedAmount: raw?.toString(),
         payslipId: row['payslip_id']?.toString(),
-        requiresPayslipLink: kind == IncomeSourceKind.salaryIncome && row['source'] == 'payslip',
+        requiresPayslipLink:
+            kind == IncomeSourceKind.salaryIncome && row['source'] == 'payslip',
         evidenceOnly: evidenceOnly,
       );
     }
-    final salaryRows = payslipSalaryIncomes.where((row) => belongs(row['pay_date']?.toString() ?? '')).toList();
-    final neededIds = salaryRows.map((row) => row['payslip_id']?.toString()).whereType<String>().toSet();
+
+    final salaryRows = payslipSalaryIncomes
+        .where((row) => belongs(row['pay_date']?.toString() ?? ''))
+        .toList();
+    final neededIds = salaryRows
+        .map((row) => row['payslip_id']?.toString())
+        .whereType<String>()
+        .toSet();
     final records = <IncomeSourceRecord>[
       for (final row in recentFlows)
-        if (row['action_type'] == 'conquer' && belongs(row['occurred_at']?.toString() ?? ''))
-          record(IncomeSourceKind.flow, row, 'occurred_at', 'amount', flowOwnerId),
+        if (row['action_type'] == 'conquer' &&
+            belongs(row['occurred_at']?.toString() ?? ''))
+          record(
+            IncomeSourceKind.flow,
+            row,
+            'occurred_at',
+            'amount',
+            flowOwnerId,
+          ),
       for (final plan in monthlyIncomePlans)
         if (plan.received && belongs(_dateKey(plan.date)))
           // Legacy local plans carry no owner provenance. Do not relabel them.
@@ -224,18 +256,42 @@ class AssetSalarySpendingEntries {
             currency: 'JPY',
             date: _dateKey(plan.date),
             datePrecision: IncomeDatePrecision.day,
-            amount: plan.amount.isFinite && plan.amount == plan.amount.truncateToDouble() && plan.amount >= 0 && plan.amount <= 9007199254740991 ? plan.amount.toInt() : -1,
+            amount: plan.amount.isFinite &&
+                    plan.amount == plan.amount.truncateToDouble() &&
+                    plan.amount >= 0 &&
+                    plan.amount <= 9007199254740991
+                ? plan.amount.toInt()
+                : -1,
             observedAmount: plan.amount.toString(),
           ),
       for (final row in payslipRows)
         if (belongs(row['pay_date']?.toString() ?? ''))
-          record(IncomeSourceKind.payslip, row, 'pay_date', 'net_amount', financeOwnerId),
+          record(
+            IncomeSourceKind.payslip,
+            row,
+            'pay_date',
+            'net_amount',
+            financeOwnerId,
+          ),
       for (final row in salaryRows)
-        record(IncomeSourceKind.salaryIncome, row, 'pay_date', 'amount', financeOwnerId),
+        record(
+          IncomeSourceKind.salaryIncome,
+          row,
+          'pay_date',
+          'amount',
+          financeOwnerId,
+        ),
       for (final row in referencedPayslips)
         if (neededIds.contains(row['id']?.toString()) &&
             !payslipRows.any((existing) => existing['id'] == row['id']))
-          record(IncomeSourceKind.payslip, row, 'pay_date', 'net_amount', financeOwnerId, evidenceOnly: true),
+          record(
+            IncomeSourceKind.payslip,
+            row,
+            'pay_date',
+            'net_amount',
+            financeOwnerId,
+            evidenceOnly: true,
+          ),
     ];
     return AssetIncomeSourceEvidence.project(
       ownerId: ownerId,

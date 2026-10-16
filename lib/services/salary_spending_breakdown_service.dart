@@ -227,8 +227,6 @@ class SalarySpendingBreakdownService {
     final safeDay = day.clamp(1, lastDay).toInt();
     return DateTime(firstOfMonth.year, firstOfMonth.month, safeDay);
   }
-
-
 }
 
 class _SalarySpendingCategoryRule {

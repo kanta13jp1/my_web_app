@@ -303,7 +303,8 @@ class _PaymentSourceCandidate {
 }
 
 class _IncomeFinanceReadSnapshot {
-  const _IncomeFinanceReadSnapshot(this.payslips, this.salaries, this.references);
+  const _IncomeFinanceReadSnapshot(
+      this.payslips, this.salaries, this.references);
   final List<Map<String, dynamic>> payslips;
   final List<Map<String, dynamic>> salaries;
   final List<Map<String, dynamic>> references;
@@ -1031,6 +1032,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _incomeEvidenceSession = IncomeEvidenceSession();
   String? _incomeFinanceOwnerId;
   String? _incomeFinanceLoadingScope;
+  int? _incomeFinanceLoadingGeneration;
   List<Map<String, dynamic>> _incomeReferencedPayslips = [];
   bool _incomeEvidenceReadBusy = false;
   bool _incomeReadLimited = false;
@@ -1782,49 +1784,67 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   String _incomeEvidenceScope(DateTime reference) {
-    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(reference, salaryDay: _salaryDay);
+    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(reference,
+        salaryDay: _salaryDay);
     return '${_supabase.auth.currentUser?.id ?? ''}|JPY|${_dateOnly(start)}';
   }
 
   IncomeEvidenceProjection _cycleIncomeEvidence(DateTime reference) {
     final owner = _supabase.auth.currentUser?.id ?? '';
     _incomeEvidenceSession.synchronizeScope(_incomeEvidenceScope(reference));
-    IncomeEvidenceProjection project() => AssetSalarySpendingEntries.projectCycle(
-      ownerId: owner,
-      flowOwnerId: _recentFlowsOwnerId,
-      financeOwnerId: _incomeFinanceOwnerId,
-      reference: reference,
-      salaryDay: _salaryDay,
-      recentFlows: _recentFlows,
-      monthlyIncomePlans: _monthlyIncomePlans,
-      payslipSalaryIncomes: _payslipSalaryIncomes,
-      payslipRows: _payslipRows,
-      referencedPayslips: _incomeReferencedPayslips,
-      decisions: _incomeEvidenceSession.decisions,
-      relationshipPage: _incomeRelationshipPage,
-    );
+    IncomeEvidenceProjection project() =>
+        AssetSalarySpendingEntries.projectCycle(
+          ownerId: owner,
+          flowOwnerId: _recentFlowsOwnerId,
+          financeOwnerId: _incomeFinanceOwnerId,
+          reference: reference,
+          salaryDay: _salaryDay,
+          recentFlows: _recentFlows,
+          monthlyIncomePlans: _monthlyIncomePlans,
+          payslipSalaryIncomes: _payslipSalaryIncomes,
+          payslipRows: _payslipRows,
+          referencedPayslips: _incomeReferencedPayslips,
+          decisions: _incomeEvidenceSession.decisions,
+          relationshipPage: _incomeRelationshipPage,
+        );
     final before = _incomeEvidenceSession.decisions.length;
     var result = project();
     _incomeEvidenceSession.retainCurrentRecords(result.records);
     if (_incomeEvidenceSession.decisions.length != before) result = project();
-    final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(reference, salaryDay: _salaryDay);
-    if (_incomeReadLimited || (_incomeFlowCutoff != null && cycleStart.isBefore(_incomeFlowCutoff!))) {
-      return withholdIncomeEvidence(result, reason: IncomeEvidenceProblem.readLimitReached);
+    final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+        reference,
+        salaryDay: _salaryDay);
+    if (_incomeReadLimited ||
+        (_incomeFlowCutoff != null &&
+            cycleStart.isBefore(_incomeFlowCutoff!))) {
+      return withholdIncomeEvidence(result,
+          reason: IncomeEvidenceProblem.readLimitReached);
     }
-    if (!_incomeEvidenceSession.ready || owner.isEmpty || _incomeFinanceOwnerId != owner ||
-        _isLoadingPayslipFinance || _incomeEvidenceReadBusy || _incomeFlowLoading || _incomeFlowFailed ||
+    if (!_incomeEvidenceSession.ready ||
+        owner.isEmpty ||
+        _incomeFinanceOwnerId != owner ||
+        _isLoadingPayslipFinance ||
+        _incomeEvidenceReadBusy ||
+        _incomeFlowLoading ||
+        _incomeFlowFailed ||
         _recentFlowsOwnerId != owner) {
       return withholdIncomeEvidence(result);
     }
     return result;
   }
 
-  void _decideIncomeRelationship(IncomeSourceRecord left, IncomeSourceRecord right,
-      IncomeRelationship relationship) {
+  void _decideIncomeRelationship(IncomeSourceRecord left,
+      IncomeSourceRecord right, IncomeRelationship relationship) {
     final current = _cycleIncomeEvidence(_now);
-    if (current.issues.any((issue) => issue.problem == IncomeEvidenceProblem.readUnconfirmed || issue.problem == IncomeEvidenceProblem.readLimitReached)) return;
+    if (current.issues.any((issue) =>
+        issue.problem != IncomeEvidenceProblem.missingRelationship)) {
+      return;
+    }
     final fingerprints = current.records.map((row) => row.fingerprint).toSet();
-    if (!fingerprints.contains(left.fingerprint) || !fingerprints.contains(right.fingerprint)) return;
+    if (!fingerprints.contains(left.fingerprint) ||
+        !fingerprints.contains(right.fingerprint)) {
+      return;
+    }
     setState(() {
       _incomeEvidenceSession.decide(left, right, relationship);
       _incomeRelationshipPage = 0;
@@ -6118,9 +6138,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         currentMonthFlows.where((r) => r['action_type'] == 'expense').length;
     // 給与明細でのみ管理している給料も「収支の記録あり」とみなす。
     final incomeRecords = _cycleIncomeEvidence(checkNow).records;
-    final flowsOk = (incomeCount + expenseCount) > 0 || incomeRecords.any(
-      (row) => !row.evidenceOnly && row.id != null && row.amount >= 0 && DateTime.tryParse(row.date) != null,
-    );
+    final flowsOk = (incomeCount + expenseCount) > 0 ||
+        incomeRecords.any(
+          (row) =>
+              !row.evidenceOnly &&
+              row.id != null &&
+              row.amount >= 0 &&
+              DateTime.tryParse(row.date) != null,
+        );
 
     final now = DateTime.now();
     final mustThisMonth = _mustTasks.where((t) {
@@ -6248,14 +6273,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     buf.writeln('');
 
     buf.writeln('### ④ 収支（給料サイクル $flowCycleLabel）');
-    buf.writeln(combinedIncome == null ? '- 収入合計: 収入の重複未照合のため未計算' : '- 収入合計: ¥${NumberFormat('#,###').format(combinedIncome)}');
+    buf.writeln(combinedIncome == null
+        ? '- 収入合計: 収入の重複未照合のため未計算'
+        : '- 収入合計: ¥${NumberFormat('#,###').format(combinedIncome)}');
     for (final source in incomeEvidence.sourceRecordedTotals.entries) {
-      buf.writeln('- ${AssetIncomeReconciliationSection.sourceLabels[source.key]}記録計: ${source.value ?? '未計算'}');
+      buf.writeln(
+          '- ${AssetIncomeReconciliationSection.sourceLabels[source.key]}記録計: ${source.value ?? '未計算'}');
     }
     buf.writeln('- 支出合計: ¥${NumberFormat('#,###').format(totalExpense)}');
     buf.writeln('- 振替合計: ¥${NumberFormat('#,###').format(totalTransfer)}');
     buf.writeln(
-      combinedIncome == null ? '- 差額: 未計算' : '- 差額: ¥${NumberFormat('#,###').format(combinedIncome - totalExpense)}',
+      combinedIncome == null
+          ? '- 差額: 未計算'
+          : '- 差額: ¥${NumberFormat('#,###').format(combinedIncome - totalExpense)}',
     );
     buf.writeln('');
 
@@ -7875,22 +7905,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  Future<_IncomeFinanceReadSnapshot> _readIncomeFinanceSnapshot(String owner) async {
-    final payslips = await _supabase.from('payslips').select(
-      'id,pay_date,company_name,gross_amount,net_amount,confidence,review_status,source_pdf_path',
-    ).eq('user_id', owner).order('pay_date', ascending: false).limit(12);
-    final salaries = await _supabase.from('salary_incomes').select(
-      'id,pay_date,amount,description,source,confidence,payslip_id',
-    ).eq('user_id', owner).order('pay_date', ascending: false).limit(12);
+  Future<_IncomeFinanceReadSnapshot> _readIncomeFinanceSnapshot(
+      String owner) async {
+    final payslips = await _supabase
+        .from('payslips')
+        .select(
+          'id,pay_date,company_name,gross_amount,net_amount,confidence,review_status,source_pdf_path',
+        )
+        .eq('user_id', owner)
+        .order('pay_date', ascending: false)
+        .limit(12);
+    final salaries = await _supabase
+        .from('salary_incomes')
+        .select(
+          'id,pay_date,amount,description,source,confidence,payslip_id',
+        )
+        .eq('user_id', owner)
+        .order('pay_date', ascending: false)
+        .limit(12);
     final known = payslips.map((row) => row['id']?.toString()).toSet();
-    final missing = salaries.map((row) => row['payslip_id']?.toString()).whereType<String>()
-        .where((id) => id.isNotEmpty && !known.contains(id)).toSet().toList();
+    final missing = salaries
+        .map((row) => row['payslip_id']?.toString())
+        .whereType<String>()
+        .where((id) => id.isNotEmpty && !known.contains(id))
+        .toSet()
+        .toList();
     if (missing.length > 512) throw StateError('給与明細の参照対象が上限を超えています');
     final references = <Map<String, dynamic>>[];
     for (var start = 0; start < missing.length; start += 50) {
       final ids = missing.sublist(start, min(start + 50, missing.length));
-      final rows = await _supabase.from('payslips').select('id,pay_date,net_amount')
-          .eq('user_id', owner).inFilter('id', ids).limit(ids.length);
+      final rows = await _supabase
+          .from('payslips')
+          .select('id,pay_date,net_amount')
+          .eq('user_id', owner)
+          .inFilter('id', ids)
+          .limit(ids.length);
       references.addAll(rows.map((row) => Map<String, dynamic>.from(row)));
     }
     return _IncomeFinanceReadSnapshot(
@@ -7900,14 +7949,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Future<void> _loadPayslipFinanceData({bool reconciliationReadOnly = false}) async {
+  Future<void> _loadPayslipFinanceData(
+      {bool reconciliationReadOnly = false}) async {
     final owner = _supabase.auth.currentUser?.id;
     final scope = _incomeEvidenceScope(_now);
     final generation = _incomeEvidenceSession.beginRead(scope);
-    if (widget.debugInitialPayslipSalaryIncomes != null || widget.debugInitialPayslipRows != null) {
+    if (widget.debugInitialPayslipSalaryIncomes != null ||
+        widget.debugInitialPayslipRows != null) {
       _incomeFinanceOwnerId = owner;
       _incomeEvidenceSession.completeRead(scope, generation);
-      if (!reconciliationReadOnly) _reconcileAndSaveSalaryIncomePlansIfPending();
+      if (!reconciliationReadOnly) {
+        _reconcileAndSaveSalaryIncomePlansIfPending();
+      }
       return;
     }
     if (owner == null) {
@@ -7921,26 +7974,42 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       return;
     }
-    if (mounted) setState(() { _isLoadingPayslipFinance = true; _incomeFinanceLoadingScope = scope; });
+    if (mounted) {
+      setState(() {
+        _isLoadingPayslipFinance = true;
+        _incomeFinanceLoadingScope = scope;
+        _incomeFinanceLoadingGeneration = generation;
+      });
+    }
     try {
       final snapshot = await _readIncomeFinanceSnapshot(owner);
-      if (!mounted || _supabase.auth.currentUser?.id != owner ||
-          _incomeEvidenceScope(_now) != scope || !_incomeEvidenceSession.isCurrent(scope, generation)) return;
+      if (!mounted ||
+          _supabase.auth.currentUser?.id != owner ||
+          _incomeEvidenceScope(_now) != scope ||
+          !_incomeEvidenceSession.isCurrent(scope, generation)) {
+        return;
+      }
       setState(() {
         _payslipRows = snapshot.payslips;
         _payslipSalaryIncomes = snapshot.salaries;
         // Referenced rows never enter payslip inputs, income plans, or A06.
         _incomeReferencedPayslips = snapshot.references;
         _incomeFinanceOwnerId = owner;
-        _incomeReadLimited = snapshot.payslips.length >= 12 || snapshot.salaries.length >= 12;
+        _incomeReadLimited =
+            snapshot.payslips.length >= 12 || snapshot.salaries.length >= 12;
         _incomeEvidenceSession.completeRead(scope, generation);
         _isLoadingPayslipFinance = false;
         _payslipIngestionMessage = null;
       });
-      if (!reconciliationReadOnly) _reconcileAndSaveSalaryIncomePlansIfPending();
+      if (!reconciliationReadOnly) {
+        _reconcileAndSaveSalaryIncomePlansIfPending();
+      }
     } catch (_) {
-      if (!mounted || _supabase.auth.currentUser?.id != owner ||
-          !_incomeEvidenceSession.isCurrent(scope, generation)) return;
+      if (!mounted ||
+          _supabase.auth.currentUser?.id != owner ||
+          !_incomeEvidenceSession.isCurrent(scope, generation)) {
+        return;
+      }
       setState(() {
         _incomeEvidenceSession.invalidateRead();
         _incomeFinanceOwnerId = null;
@@ -7949,15 +8018,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isLoadingPayslipFinance = false;
         _payslipIngestionMessage = '給与明細の読み取りを確認できませんでした。再読込してください。';
       });
+    } finally {
+      // A stale response cannot adopt data or clear a newer request's spinner.
+      if (mounted && _incomeFinanceLoadingGeneration == generation) {
+        setState(() {
+          _isLoadingPayslipFinance = false;
+          _incomeFinanceLoadingGeneration = null;
+          _incomeFinanceLoadingScope = null;
+        });
+      }
     }
   }
 
   Future<void> _reloadIncomeEvidence() async {
     if (_incomeEvidenceReadBusy) return;
-    setState(() { _incomeEvidenceReadBusy = true; _incomeEvidenceSession.invalidateRead(); });
+    setState(() {
+      _incomeEvidenceReadBusy = true;
+      _incomeEvidenceSession.invalidateRead();
+    });
     try {
       // Both paths explicitly omit all salary normalization/saving continuations.
-      await _fetchRecentFlows(runSalaryReconciliation: false, reportErrors: true);
+      await _fetchRecentFlows(
+          runSalaryReconciliation: false, reportErrors: true);
       await _loadPayslipFinanceData(reconciliationReadOnly: true);
     } catch (_) {
       _incomeEvidenceSession.invalidateRead();
@@ -8112,7 +8194,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final generation = ++_incomeFlowGeneration;
-    if (mounted) setState(() { _incomeFlowLoading = true; _incomeFlowFailed = false; });
+    if (mounted) {
+      setState(() {
+        _incomeFlowLoading = true;
+        _incomeFlowFailed = false;
+      });
+    }
     try {
       final cutoff = AssetManagementEgressPolicy.recentFlowCutoff(
         DateTime.now(),
@@ -8135,7 +8222,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         },
       );
 
-      if (mounted && _supabase.auth.currentUser?.id == userId && generation == _incomeFlowGeneration) {
+      if (mounted &&
+          _supabase.auth.currentUser?.id == userId &&
+          generation == _incomeFlowGeneration) {
         setState(() {
           _incomeFlowLoading = false;
           _incomeFlowFailed = false;
@@ -8161,13 +8250,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } catch (e) {
       if (mounted && generation == _incomeFlowGeneration) {
-        setState(() { _incomeFlowLoading = false; _incomeFlowFailed = true; });
+        setState(() {
+          _incomeFlowLoading = false;
+          _incomeFlowFailed = true;
+        });
       }
       debugPrint('Error fetching flows: $e');
       if (reportErrors) rethrow;
     } finally {
-      if (mounted && generation == _incomeFlowGeneration && _incomeFlowLoading) {
-        setState(() { _incomeFlowLoading = false; _incomeFlowFailed = true; });
+      if (mounted &&
+          generation == _incomeFlowGeneration &&
+          _incomeFlowLoading) {
+        setState(() {
+          _incomeFlowLoading = false;
+          _incomeFlowFailed = true;
+        });
       }
     }
   }
@@ -18061,14 +18158,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final hasNoData = flows.isEmpty && evidence.records.isEmpty;
     final hasRecordedExpense =
         flows.any((flow) => flow['action_type'] == 'expense');
-    final netText = net == null ? '未計算' : '${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'}';
+    final netText = net == null
+        ? '未計算'
+        : '${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'}';
     final statusText = totalIncome == null
         ? '収入の重複未照合のため、合算収入と差額は未計算です。出典別の記録を確認してください。'
         : hasNoData
-        ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
-        : !hasRecordedExpense
-            ? '支出はまだ記録されていません。差額は記録済み収入だけの集計で、支払済みチェックや予定額とは異なります。現在残高や今後の支払後に使える額とは異なります。'
-            : 'このサイクルの記録上の収支差額は $netText です。現在残高や今後の支払後に使える額とは異なります。';
+            ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
+            : !hasRecordedExpense
+                ? '支出はまだ記録されていません。差額は記録済み収入だけの集計で、支払済みチェックや予定額とは異なります。現在残高や今後の支払後に使える額とは異なります。'
+                : 'このサイクルの記録上の収支差額は $netText です。現在残高や今後の支払後に使える額とは異なります。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -18136,7 +18235,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               children: [
                 _buildFlowPriorityMetric(
                   label: '収入',
-                  value: totalIncome == null ? '未計算' : '¥${NumberFormat('#,###').format(totalIncome)}',
+                  value: totalIncome == null
+                      ? '未計算'
+                      : '¥${NumberFormat('#,###').format(totalIncome)}',
                   color: const Color(0xFF0F766E),
                 ),
                 _buildFlowPriorityMetric(
@@ -18146,8 +18247,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 _buildFlowPriorityMetric(
                   label: '差額',
-                  value:
-                      net == null ? '未計算' : '${net >= 0 ? '+' : '-'}¥${NumberFormat('#,###').format(net.abs())}',
+                  value: net == null
+                      ? '未計算'
+                      : '${net >= 0 ? '+' : '-'}¥${NumberFormat('#,###').format(net.abs())}',
                   color: net != null && net >= 0
                       ? const Color(0xFF065F46)
                       : const Color(0xFF7F1D1D),
@@ -18156,10 +18258,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             AssetIncomeReconciliationSection(
               projection: evidence,
-              busy: _incomeEvidenceReadBusy || (_isLoadingPayslipFinance && _incomeFinanceLoadingScope == _incomeEvidenceScope(_now)) || _incomeFlowLoading,
+              memoryDecisionCount: _incomeEvidenceSession.decisions.length,
+              busy: _incomeEvidenceReadBusy ||
+                  (_isLoadingPayslipFinance &&
+                      _incomeFinanceLoadingScope ==
+                          _incomeEvidenceScope(_now)) ||
+                  _incomeFlowLoading,
               onReload: () => unawaited(_reloadIncomeEvidence()),
               onDecision: _decideIncomeRelationship,
-              onClear: () => setState(() { _incomeEvidenceSession.clearDecisions(); _incomeRelationshipPage = 0; }),
+              onClear: () => setState(() {
+                _incomeEvidenceSession.clearDecisions();
+                _incomeRelationshipPage = 0;
+              }),
               onPage: (page) => setState(() => _incomeRelationshipPage = page),
             ),
             if (totalIncome == 0) ...[

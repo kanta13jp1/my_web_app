@@ -321,10 +321,10 @@ class AssetIncomeSourceEvidence {
         if (left.any((a) => right.any((b) => a.kind == b.kind))) continue;
         final decidedDistinct = distinct.any(
           (pair) =>
-            (root(pair[0]) == root(left.first.key!) &&
-                root(pair[1]) == root(right.first.key!)) ||
-            (root(pair[1]) == root(left.first.key!) &&
-                root(pair[0]) == root(right.first.key!)),
+              (root(pair[0]) == root(left.first.key!) &&
+                  root(pair[1]) == root(right.first.key!)) ||
+              (root(pair[1]) == root(left.first.key!) &&
+                  root(pair[0]) == root(right.first.key!)),
         );
         if (!decidedDistinct) {
           final index = unresolvedCount++;
@@ -340,9 +340,9 @@ class AssetIncomeSourceEvidence {
     final matched = groupList
         .where(
           (group) =>
-            group.any((row) => !row.evidenceOnly) &&
-            group.length > 1 &&
-            group.every((row) => !conflictedKeys.contains(row.key)),
+              group.any((row) => !row.evidenceOnly) &&
+              group.length > 1 &&
+              group.every((row) => !conflictedKeys.contains(row.key)),
         )
         .toList();
     var matchedTotal = matched.isEmpty
@@ -351,7 +351,9 @@ class AssetIncomeSourceEvidence {
     var combinedTotal =
         issues.isNotEmpty || unresolvedCount > 0 || byKey.isEmpty
             ? null
-            : groupList.where((group) => group.any((row) => !row.evidenceOnly)).fold<int>(0, (sum, group) => sum + group.first.amount);
+            : groupList
+                .where((group) => group.any((row) => !row.evidenceOnly))
+                .fold<int>(0, (sum, group) => sum + group.first.amount);
     if ((matchedTotal ?? 0) > _maxSafeInteger ||
         (combinedTotal ?? 0) > _maxSafeInteger) {
       issue(IncomeEvidenceProblem.invalidAmount);
@@ -423,7 +425,8 @@ class IncomeEvidenceSession {
   bool ready = false;
   final _decisions = <IncomeRelationshipDecision>[];
 
-  List<IncomeRelationshipDecision> get decisions => List.unmodifiable(_decisions);
+  List<IncomeRelationshipDecision> get decisions =>
+      List.unmodifiable(_decisions);
 
   void synchronizeScope(String scope) {
     if (_scope == scope) return;
@@ -455,31 +458,47 @@ class IncomeEvidenceSession {
 
   void retainCurrentRecords(List<IncomeSourceRecord> records) {
     final current = records.map((row) => row.fingerprint).toSet();
-    _decisions.removeWhere((decision) =>
-        !current.contains(decision.leftFingerprint) ||
-        !current.contains(decision.rightFingerprint),);
+    _decisions.removeWhere(
+      (decision) =>
+          !current.contains(decision.leftFingerprint) ||
+          !current.contains(decision.rightFingerprint),
+    );
   }
 
-  void decide(IncomeSourceRecord left, IncomeSourceRecord right,
-      IncomeRelationship relationship) {
+  void decide(
+    IncomeSourceRecord left,
+    IncomeSourceRecord right,
+    IncomeRelationship relationship,
+  ) {
     if (!ready || left.ownerId != right.ownerId || left.ownerId.isEmpty) return;
-    _decisions.removeWhere((decision) =>
-        (decision.leftFingerprint == left.fingerprint && decision.rightFingerprint == right.fingerprint) ||
-        (decision.leftFingerprint == right.fingerprint && decision.rightFingerprint == left.fingerprint),);
-    _decisions.add(IncomeRelationshipDecision(
-      leftFingerprint: left.fingerprint,
-      rightFingerprint: right.fingerprint,
-      relationship: relationship,
-    ));
+    _decisions.removeWhere(
+      (decision) =>
+          (decision.leftFingerprint == left.fingerprint &&
+              decision.rightFingerprint == right.fingerprint) ||
+          (decision.leftFingerprint == right.fingerprint &&
+              decision.rightFingerprint == left.fingerprint),
+    );
+    _decisions.add(
+      IncomeRelationshipDecision(
+        leftFingerprint: left.fingerprint,
+        rightFingerprint: right.fingerprint,
+        relationship: relationship,
+      ),
+    );
   }
 
   void clearDecisions() => _decisions.clear();
 }
 
-IncomeEvidenceProjection withholdIncomeEvidence(IncomeEvidenceProjection value, {IncomeEvidenceProblem reason = IncomeEvidenceProblem.readUnconfirmed,}) =>
+IncomeEvidenceProjection withholdIncomeEvidence(
+  IncomeEvidenceProjection value, {
+  IncomeEvidenceProblem reason = IncomeEvidenceProblem.readUnconfirmed,
+}) =>
     IncomeEvidenceProjection(
       records: value.records,
-      sourceRecordedTotals: {for (final kind in value.sourceRecordedTotals.keys) kind: null},
+      sourceRecordedTotals: {
+        for (final kind in value.sourceRecordedTotals.keys) kind: null,
+      },
       matchedEventSubtotal: null,
       combinedRecordedTotal: null,
       issues: [IncomeEvidenceIssue(reason, const []), ...value.issues],

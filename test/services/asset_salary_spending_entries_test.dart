@@ -123,7 +123,8 @@ void main() {
       expect(result.incomes.every((row) => row.amount == 421277), isTrue);
     });
 
-    test('unlinked source observations are retained without monetary dedup', () {
+    test('unlinked source observations are retained without monetary dedup',
+        () {
       final result = AssetSalarySpendingEntries.build(
         cardStatementLines: const [],
         recentFlows: const [
