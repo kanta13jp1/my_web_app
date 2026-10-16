@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-09-29",
+    "date": "2026-10-04",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-09-29T00:00:00Z",
+  "generatedAt": "2026-10-04T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -32,396 +32,396 @@
       "changes": [
         {
           "category": "feature",
-          "id": "pr-5603",
+          "id": "pr-5699",
           "links": [
             {
-              "title": "PR #5603",
+              "title": "PR #5699",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5603"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5699"
             }
           ],
-          "mergedAt": "2026-09-29T18:46:32Z",
-          "summary": "#5603 feat(asset): リボカード照合のUI分岐（『リボ』バッジ・説明ツールチップ）と確定額ロジック表示 (#4901)"
+          "mergedAt": "2026-10-04T05:33:42Z",
+          "summary": "#5699 支出分類の接続失敗時に確認手順と再試行案内を表示する"
         },
         {
           "category": "feature",
-          "id": "pr-5602",
+          "id": "pr-5701",
           "links": [
             {
-              "title": "PR #5602",
+              "title": "PR #5701",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5602"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5701"
             }
           ],
-          "mergedAt": "2026-09-29T18:00:03Z",
-          "summary": "#5602 feat(asset): 『借金しない宣言モニター』に違反根拠・24ヶ月ラインと今後一括固定トグルを連携 (#4902)"
+          "mergedAt": "2026-10-04T04:10:50Z",
+          "summary": "#5701 Jwenvの8択制限と重複入力をモデル読込前に知らせる"
         },
         {
           "category": "feature",
-          "id": "pr-5591",
+          "id": "pr-5698",
           "links": [
             {
-              "title": "PR #5591",
+              "title": "PR #5698",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5591"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5698"
             }
           ],
-          "mergedAt": "2026-09-29T15:37:20Z",
-          "summary": "#5591 支出分類に確信度の読み方と誤分類時の確認を追加"
+          "mergedAt": "2026-10-04T03:31:36Z",
+          "summary": "#5698 1-1の難所の間に走って回収できる報酬区間を追加"
         },
         {
           "category": "feature",
-          "id": "pr-5601",
+          "id": "pr-5696",
           "links": [
             {
-              "title": "PR #5601",
+              "title": "PR #5696",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5601"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5696"
             }
           ],
-          "mergedAt": "2026-09-29T15:19:35Z",
-          "summary": "#5601 feat: Jwenv WebGPU Lab（ブラウザ内WebGPU推論環境）を my_web_app に統合"
+          "mergedAt": "2026-10-04T01:54:15Z",
+          "summary": "#5696 指示ファイル比較に読み込み原因の切分け記録を追加"
         },
         {
           "category": "feature",
-          "id": "pr-5600",
+          "id": "pr-5694",
           "links": [
             {
-              "title": "PR #5600",
+              "title": "PR #5694",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5600"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5694"
             }
           ],
-          "mergedAt": "2026-09-29T15:09:59Z",
-          "summary": "#5600 feat(asset): リボ払い新規利用の内訳可視化と誓約達成状況の連動 (#5372)"
+          "mergedAt": "2026-10-04T01:30:10Z",
+          "summary": "#5694 ボーナス土管の目印と寄り道の強化報酬を追加"
         },
         {
           "category": "fix",
-          "id": "pr-5596",
+          "id": "pr-5690",
           "links": [
             {
-              "title": "PR #5596",
+              "title": "PR #5690",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5596"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5690"
             }
           ],
-          "mergedAt": "2026-09-29T09:01:36Z",
-          "summary": "#5596 fix(ai-hub): provider.chat / provider.chat_auto など有料 LLM アクションの匿名実行を禁止 (P0)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5599",
-          "links": [
-            {
-              "title": "PR #5599",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5599"
-            }
-          ],
-          "mergedAt": "2026-09-29T08:37:39Z",
-          "summary": "#5599 feat(asset): 利息が元金返済額を上回る負債に対する早期警告・利息スパイラル警告 (#5366)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5598",
-          "links": [
-            {
-              "title": "PR #5598",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5598"
-            }
-          ],
-          "mergedAt": "2026-09-29T00:58:01Z",
-          "summary": "#5598 feat(asset): 確定申告export (CSV+e-Tax形式) UI連携 (#2492)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5592",
-          "links": [
-            {
-              "title": "PR #5592",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5592"
-            }
-          ],
-          "mergedAt": "2026-09-28T12:34:34Z",
-          "summary": "#5592 正答・誤答・保留を分けて比較する集計画面を追加"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5585",
-          "links": [
-            {
-              "title": "PR #5585",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5585"
-            }
-          ],
-          "mergedAt": "2026-09-27T19:29:37Z",
-          "summary": "#5585 成功率を変えて時間指標を学べる計算画面を追加"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5583",
-          "links": [
-            {
-              "title": "PR #5583",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5583"
-            }
-          ],
-          "mergedAt": "2026-09-27T19:08:36Z",
-          "summary": "#5583 Fix underwater autoplay and power-up pursuit; add eight-part music"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5579",
-          "links": [
-            {
-              "title": "PR #5579",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5579"
-            }
-          ],
-          "mergedAt": "2026-09-27T18:55:04Z",
-          "summary": "#5579 Add per-platform release verification checklist"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5588",
-          "links": [
-            {
-              "title": "PR #5588",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5588"
-            }
-          ],
-          "mergedAt": "2026-09-27T18:35:14Z",
-          "summary": "#5588 fix: align isolated Storage restore with lifecycle schema"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5587",
-          "links": [
-            {
-              "title": "PR #5587",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5587"
-            }
-          ],
-          "mergedAt": "2026-09-27T18:21:57Z",
-          "summary": "#5587 fix: cover complete Auth 2.197 schema delta in isolated restore"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5586",
-          "links": [
-            {
-              "title": "PR #5586",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5586"
-            }
-          ],
-          "mergedAt": "2026-09-27T18:09:38Z",
-          "summary": "#5586 fix: restore Auth recovery-code tables in isolated backup drill"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5575",
-          "links": [
-            {
-              "title": "PR #5575",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5575"
-            }
-          ],
-          "mergedAt": "2026-09-27T17:56:30Z",
-          "summary": "#5575 実測記録からAIの入力使用量と料金換算を比較する機能を追加"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5578",
-          "links": [
-            {
-              "title": "PR #5578",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5578"
-            }
-          ],
-          "mergedAt": "2026-09-27T17:29:09Z",
-          "summary": "#5578 Improve repeated Mario retries, character variants and seven-part audio"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5581",
-          "links": [
-            {
-              "title": "PR #5581",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5581"
-            }
-          ],
-          "mergedAt": "2026-09-27T17:11:46Z",
-          "summary": "#5581 feat: add Claude Code CLAUDE.md video lesson"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5580",
-          "links": [
-            {
-              "title": "PR #5580",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5580"
-            }
-          ],
-          "mergedAt": "2026-09-27T16:40:46Z",
-          "summary": "#5580 feat: add Claude Code code review video lesson"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5572",
-          "links": [
-            {
-              "title": "PR #5572",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5572"
-            }
-          ],
-          "mergedAt": "2026-09-27T15:56:09Z",
-          "summary": "#5572 Add World 8, six-voice music and live autoplay collision recovery"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5569",
-          "links": [
-            {
-              "title": "PR #5569",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5569"
-            }
-          ],
-          "mergedAt": "2026-09-27T15:38:40Z",
-          "summary": "#5569 Add five-character hiragana tracing and free drawing lab"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5573",
-          "links": [
-            {
-              "title": "PR #5573",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5573"
-            }
-          ],
-          "mergedAt": "2026-09-27T15:20:08Z",
-          "summary": "#5573 feat: add Claude Code context management video lesson"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5570",
-          "links": [
-            {
-              "title": "PR #5570",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5570"
-            }
-          ],
-          "mergedAt": "2026-09-27T14:16:22Z",
-          "summary": "#5570 Add a reader-facing access comparison and delivery audit tool"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5567",
-          "links": [
-            {
-              "title": "PR #5567",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5567"
-            }
-          ],
-          "mergedAt": "2026-09-27T13:53:26Z",
-          "summary": "#5567 Add World 7, five-voice music and automatic shared ranking display"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5564",
-          "links": [
-            {
-              "title": "PR #5564",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5564"
-            }
-          ],
-          "mergedAt": "2026-09-27T13:26:54Z",
-          "summary": "#5564 Verify acquisition measurements and add Search Console collection"
+          "mergedAt": "2026-10-03T16:31:57Z",
+          "summary": "#5690 fix(core-hub): 公開ブログの存在しない列参照を修正"
         },
         {
           "category": "automation",
-          "id": "pr-5566",
+          "id": "pr-5695",
           "links": [
             {
-              "title": "PR #5566",
+              "title": "PR #5695",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5566"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5695"
             }
           ],
-          "mergedAt": "2026-09-27T13:02:22Z",
-          "summary": "#5566 feat: add Claude Code workflow video lesson"
+          "mergedAt": "2026-10-03T16:27:03Z",
+          "summary": "#5695 ci: isolate public blog repair to core-hub-only production deployment"
         },
         {
           "category": "feature",
-          "id": "pr-5562",
+          "id": "pr-5692",
           "links": [
             {
-              "title": "PR #5562",
+              "title": "PR #5692",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5562"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5692"
             }
           ],
-          "mergedAt": "2026-09-27T12:42:12Z",
-          "summary": "#5562 Add World 6, four-voice music and automatic campaign rankings"
+          "mergedAt": "2026-10-03T10:33:19Z",
+          "summary": "#5692 3-3の足場間落下回避と32小節BGMの展開を改善"
         },
         {
           "category": "feature",
-          "id": "pr-5560",
+          "id": "pr-5689",
           "links": [
             {
-              "title": "PR #5560",
+              "title": "PR #5689",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5560"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5689"
             }
           ],
-          "mergedAt": "2026-09-27T12:05:39Z",
-          "summary": "#5560 feat: present saved chat history without resending prompts"
+          "mergedAt": "2026-10-03T08:17:35Z",
+          "summary": "#5689 指示ファイル比較に12試行の実行ログ証跡を表示する"
         },
         {
           "category": "feature",
-          "id": "pr-5559",
+          "id": "pr-5688",
           "links": [
             {
-              "title": "PR #5559",
+              "title": "PR #5688",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5559"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5688"
             }
           ],
-          "mergedAt": "2026-09-27T11:02:03Z",
-          "summary": "#5559 Add Mario World 5, layered audio and shared run rankings"
+          "mergedAt": "2026-10-03T07:55:16Z",
+          "summary": "#5688 マリオのボスアクセント・任意報酬・取得探索を改善"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5678",
+          "links": [
+            {
+              "title": "PR #5678",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5678"
+            }
+          ],
+          "mergedAt": "2026-10-03T04:50:02Z",
+          "summary": "#5678 fix: スマートフォン資産管理のInboxと相談ボタンの重なりを解消"
         },
         {
           "category": "feature",
-          "id": "pr-5556",
+          "id": "pr-5654",
           "links": [
             {
-              "title": "PR #5556",
+              "title": "PR #5654",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5556"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5654"
             }
           ],
-          "mergedAt": "2026-09-27T09:03:23Z",
-          "summary": "#5556 Add Worlds 4-3/4-4, beanstalks, shell throwing and item-seeking assistance"
+          "mergedAt": "2026-10-03T04:29:46Z",
+          "summary": "#5654 資産管理：前サイクルを当月実績に再計上する表示を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5686",
+          "links": [
+            {
+              "title": "PR #5686",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5686"
+            }
+          ],
+          "mergedAt": "2026-10-03T02:52:38Z",
+          "summary": "#5686 指示ファイルの検証目的と照合結果を具体例で説明する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5684",
+          "links": [
+            {
+              "title": "PR #5684",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5684"
+            }
+          ],
+          "mergedAt": "2026-10-03T02:08:04Z",
+          "summary": "#5684 マリオの伴奏休止とフラワー探索・足場導線を改善"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5679",
+          "links": [
+            {
+              "title": "PR #5679",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5679"
+            }
+          ],
+          "mergedAt": "2026-10-03T01:50:07Z",
+          "summary": "#5679 資産管理：振替追加の保存拒否と無反応を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5682",
+          "links": [
+            {
+              "title": "PR #5682",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5682"
+            }
+          ],
+          "mergedAt": "2026-10-02T18:59:56Z",
+          "summary": "#5682 Layaの日本語支出分類を固定版モデルで手動検証する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5681",
+          "links": [
+            {
+              "title": "PR #5681",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5681"
+            }
+          ],
+          "mergedAt": "2026-10-02T15:41:59Z",
+          "summary": "#5681 決めどころのオクターブ重奏と冒頭のジャンプ導線を追加"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5677",
+          "links": [
+            {
+              "title": "PR #5677",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5677"
+            }
+          ],
+          "mergedAt": "2026-10-02T13:52:06Z",
+          "summary": "#5677 支出分類の接続先と要求全体の応答時間を表示する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5676",
+          "links": [
+            {
+              "title": "PR #5676",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5676"
+            }
+          ],
+          "mergedAt": "2026-10-02T10:40:08Z",
+          "summary": "#5676 主旋律を引き立てる低音・撥弦音と踏みつけ入力を改善"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5674",
+          "links": [
+            {
+              "title": "PR #5674",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5674"
+            }
+          ],
+          "mergedAt": "2026-10-02T09:55:59Z",
+          "summary": "#5674 低音の動きとジャンプ・切り返しの操作感を改善"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5672",
+          "links": [
+            {
+              "title": "PR #5672",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5672"
+            }
+          ],
+          "mergedAt": "2026-10-02T08:40:43Z",
+          "summary": "#5672 城BGMにEm→C→D→Bの展開とD♯→Eの解決を追加"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5670",
+          "links": [
+            {
+              "title": "PR #5670",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5670"
+            }
+          ],
+          "mergedAt": "2026-10-02T07:02:28Z",
+          "summary": "#5670 主題とベースの先取り・裏拍アクセントでBGMに勢いを追加"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5655",
+          "links": [
+            {
+              "title": "PR #5655",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5655"
+            }
+          ],
+          "mergedAt": "2026-10-02T04:30:22Z",
+          "summary": "#5655 資産管理の固定費予測の重複と支払日反映を修正し、給与明細と口座入金を区別"
+        },
+        {
+          "category": "automation",
+          "id": "pr-5665",
+          "links": [
+            {
+              "title": "PR #5665",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5665"
+            }
+          ],
+          "mergedAt": "2026-10-02T03:52:28Z",
+          "summary": "#5665 ci: 文書品質検査と承認済み専用失敗通知を追加 (#2625)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5667",
+          "links": [
+            {
+              "title": "PR #5667",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5667"
+            }
+          ],
+          "mergedAt": "2026-10-02T02:25:46Z",
+          "summary": "#5667 4音の主旋律と8分・16分音符の反復伴奏でBGMに緩急を追加"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5664",
+          "links": [
+            {
+              "title": "PR #5664",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5664"
+            }
+          ],
+          "mergedAt": "2026-10-02T00:19:30Z",
+          "summary": "#5664 fix: 停滞脱出の短い操作列をworkerと実状態ガードで検証 (#5661)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5662",
+          "links": [
+            {
+              "title": "PR #5662",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5662"
+            }
+          ],
+          "mergedAt": "2026-10-01T19:34:26Z",
+          "summary": "#5662 8-4で報酬追跡が停滞回復を遅らせる回帰を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5660",
+          "links": [
+            {
+              "title": "PR #5660",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5660"
+            }
+          ],
+          "mergedAt": "2026-10-01T19:13:22Z",
+          "summary": "#5660 ノート検索のログイン案内と結果から本文を開く操作を修正する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5659",
+          "links": [
+            {
+              "title": "PR #5659",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5659"
+            }
+          ],
+          "mergedAt": "2026-10-01T18:30:17Z",
+          "summary": "#5659 4音の決めフレーズと出力増強、空中の反復停滞を改善"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5657",
+          "links": [
+            {
+              "title": "PR #5657",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5657"
+            }
+          ],
+          "mergedAt": "2026-10-01T17:32:02Z",
+          "summary": "#5657 64音の音声枠と出力を強め、アイテム攻略中の停滞誤判定を改善"
         }
       ],
-      "date": "2026-09-29",
+      "date": "2026-10-04",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,
