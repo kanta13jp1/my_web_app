@@ -53,6 +53,34 @@ class AssetIncomeReconciliationSection extends StatelessWidget {
         IncomeEvidenceProblem.readLimitReached => '取得件数の上限に達したため、全体の合算は未計算です',
       };
 
+  /// A missing total does not establish a duplicate or a zero-valued income.
+  static String unavailableReason(
+    IncomeEvidenceProjection projection, {
+    required bool reading,
+  }) {
+    if (reading) {
+      return '収入の記録を読み取り中のため未計算です。';
+    }
+    final problems = projection.issues.map((issue) => issue.problem).toSet();
+    if (problems.contains(IncomeEvidenceProblem.readUnconfirmed)) {
+      return '収入の読み取りを確認できないため未計算です。既存明細を再読込してください。';
+    }
+    if (problems.contains(IncomeEvidenceProblem.readLimitReached) ||
+        problems.contains(IncomeEvidenceProblem.inputLimitExceeded)) {
+      return '取得範囲に上限があるため収入は未計算です。対象範囲を確認してください。';
+    }
+    if (problems.contains(IncomeEvidenceProblem.ownerMismatch)) {
+      return '収入記録の本人範囲を確認できないため未計算です。元の記録を確認してください。';
+    }
+    if (projection.records.isEmpty && problems.isEmpty) {
+      return '根拠となる収入記録がないため未計算です。0円と確定した値ではありません。';
+    }
+    if (problems.contains(IncomeEvidenceProblem.missingRelationship)) {
+      return '出典間の対応が未照合のため収入は未計算です。元の記録を比較してください。';
+    }
+    return '収入記録の矛盾や不足を確認するまで未計算です。元の記録を確認してください。';
+  }
+
   Widget recordTile(IncomeSourceRecord record) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Text(

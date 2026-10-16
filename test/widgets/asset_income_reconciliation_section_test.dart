@@ -26,6 +26,21 @@ IncomeEvidenceProjection sample() => AssetSalarySpendingEntries.projectCycle(
     );
 
 void main() {
+  test('unavailable income explanations distinguish empty, pending, failed, limit and unresolved', () {
+    final empty = AssetIncomeSourceEvidence.project(ownerId: 'synthetic', currency: 'JPY', records: const [],);
+    expect(AssetIncomeReconciliationSection.unavailableReason(empty, reading: false), contains('根拠となる収入記録がない'));
+    expect(AssetIncomeReconciliationSection.unavailableReason(empty, reading: false), contains('0円と確定した値ではありません'));
+    final failed = withholdIncomeEvidence(sample());
+    expect(AssetIncomeReconciliationSection.unavailableReason(failed, reading: false), contains('読み取りを確認できない'));
+    final limited = withholdIncomeEvidence(sample(), reason: IncomeEvidenceProblem.readLimitReached);
+    expect(AssetIncomeReconciliationSection.unavailableReason(limited, reading: false), contains('取得範囲に上限'));
+    expect(AssetIncomeReconciliationSection.unavailableReason(limited, reading: true), '収入の記録を読み取り中のため未計算です。');
+    expect(AssetIncomeReconciliationSection.unavailableReason(sample(), reading: false), contains('出典間の対応が未照合'));
+    for (final value in [empty, failed, limited, sample()]) {
+      expect(AssetIncomeReconciliationSection.unavailableReason(value, reading: false), isNot(contains('重複')));
+      expect(value.combinedRecordedTotal, isNull);
+    }
+  });
   for (final same in [true, false]) {
     testWidgets('confirmation is required before memory decision same=$same',
         (tester) async {

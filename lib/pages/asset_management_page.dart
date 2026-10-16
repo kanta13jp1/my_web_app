@@ -1833,6 +1833,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return result;
   }
 
+  String _incomeEvidenceReason(IncomeEvidenceProjection projection) =>
+      AssetIncomeReconciliationSection.unavailableReason(
+        projection,
+        reading: _incomeEvidenceReadBusy ||
+            _incomeFlowLoading ||
+            _isLoadingPayslipFinance,
+      );
+
   void _decideIncomeRelationship(IncomeSourceRecord left,
       IncomeSourceRecord right, IncomeRelationship relationship) {
     final current = _cycleIncomeEvidence(_now);
@@ -5599,11 +5607,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (f['action_type'] == 'expense') monthlyExpense += amt;
     }
     // 給与明細でのみ管理している給料もサイクル収入へ合算する。
-    final evidenceIncome = _cycleIncomeEvidence(planNow).combinedRecordedTotal;
+    final planIncomeEvidence = _cycleIncomeEvidence(planNow);
+    final evidenceIncome = planIncomeEvidence.combinedRecordedTotal;
     if (evidenceIncome == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('収入の重複未照合のため返済計画は未計算です。収入の照合を確認してください。'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('返済計画は未計算です。${_incomeEvidenceReason(planIncomeEvidence)}'),
       ));
       return;
     }
@@ -6274,7 +6283,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     buf.writeln('### ④ 収支（給料サイクル $flowCycleLabel）');
     buf.writeln(combinedIncome == null
-        ? '- 収入合計: 収入の重複未照合のため未計算'
+        ? '- 収入合計: ${_incomeEvidenceReason(incomeEvidence)}'
         : '- 収入合計: ¥${NumberFormat('#,###').format(combinedIncome)}');
     for (final source in incomeEvidence.sourceRecordedTotals.entries) {
       buf.writeln(
@@ -7954,6 +7963,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final owner = _supabase.auth.currentUser?.id;
     final scope = _incomeEvidenceScope(_now);
     final generation = _incomeEvidenceSession.beginRead(scope);
+    _incomeReadLimited = false;
     if (widget.debugInitialPayslipSalaryIncomes != null ||
         widget.debugInitialPayslipRows != null) {
       _incomeFinanceOwnerId = owner;
@@ -8034,6 +8044,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_incomeEvidenceReadBusy) return;
     setState(() {
       _incomeEvidenceReadBusy = true;
+      _incomeReadLimited = false;
       _incomeEvidenceSession.invalidateRead();
     });
     try {
@@ -18162,7 +18173,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? '未計算'
         : '${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'}';
     final statusText = totalIncome == null
-        ? '収入の重複未照合のため、合算収入と差額は未計算です。出典別の記録を確認してください。'
+        ? _incomeEvidenceReason(evidence)
         : hasNoData
             ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
             : !hasRecordedExpense
