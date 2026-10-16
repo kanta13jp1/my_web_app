@@ -155,9 +155,8 @@ class AssetCashflowForecastCard extends StatelessWidget {
                           ),
                         ),
                       ),
-      
-              ),
-            ],
+                  ],
+                ),
               ),
             ],
           ],
