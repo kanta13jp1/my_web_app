@@ -508,3 +508,73 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  income-responsive-qa:
+    name: Income reconciliation responsive two widths
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && github.ref_name == 'codex/salary-income-responsive-qa'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+      PRODUCT_HEAD: e598c9d35abcebd7c515275a86c7fef38ec5e023
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+      - name: Verify exact PR product sources
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          test "$(gh api repos/kanta13jp1/my_web_app/pulls/5808 --jq .head.sha)" = "$PRODUCT_HEAD"
+          git fetch --depth=1 origin "$PRODUCT_HEAD"
+          git diff --exit-code "$PRODUCT_HEAD" HEAD -- lib assets web pubspec.yaml pubspec.lock .github/actions
+          mkdir -p .ci-logs/income-responsive-qa/source/test/fixtures .ci-logs/income-responsive-qa/source/scripts
+          printf '%s\n' "$EXPECTED_HEAD_SHA" > .ci-logs/income-responsive-qa/harness-head.txt
+          printf '%s\n' "$PRODUCT_HEAD" > .ci-logs/income-responsive-qa/product-head.txt
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Analyze fixture and build once without CDN or service worker
+        run: |
+          set -euo pipefail
+          flutter pub get
+          dart format test/fixtures/asset_income_responsive_qa.dart
+          flutter analyze --no-pub test/fixtures/asset_income_responsive_qa.dart | tee .ci-logs/income-responsive-qa/analyze.log
+          flutter build web --release --pwa-strategy=none --no-web-resources-cdn --target=test/fixtures/asset_income_responsive_qa.dart | tee .ci-logs/income-responsive-qa/build.log
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prepare Chromium
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+          node --check scripts/asset_income_responsive_qa.mjs
+      - name: Exercise real public UI at both widths
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory build/web > .ci-logs/income-responsive-qa/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/asset_income_responsive_qa.mjs
+      - name: Preserve evidence and fixture identity
+        if: always()
+        run: |
+          mkdir -p .ci-logs/income-responsive-qa/source/test/fixtures .ci-logs/income-responsive-qa/source/scripts
+          cp test/fixtures/asset_income_responsive_qa.dart .ci-logs/income-responsive-qa/source/test/fixtures/
+          cp scripts/asset_income_responsive_qa.mjs .ci-logs/income-responsive-qa/source/scripts/
+          git diff -- test/fixtures/asset_income_responsive_qa.dart scripts/asset_income_responsive_qa.mjs > .ci-logs/income-responsive-qa/mechanical.patch
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: income-responsive-qa-${{ github.run_id }}
+          path: .ci-logs/income-responsive-qa
+          include-hidden-files: true
