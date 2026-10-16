@@ -12,11 +12,11 @@ const share=()=>page.getByRole('button',{name:shareName,exact:true});
 const initial='2026/5/25〜6/24',following='2026/6/25〜7/24';
 page.on('pageerror',e=>results.push({pageError:String(e)}));
 async function hasRange(range){return page.evaluate(value=>Array.from(document.querySelectorAll('[role="group"]')).some(el=>(el.getAttribute('aria-label')??'').split('\n').includes(value)),range);}
-async function popupCount(){return page.evaluate(()=>{const labels=Array.from(document.querySelectorAll('[aria-label]')).map(e=>e.getAttribute('aria-label')??'');const text=labels.join('\n').match(/fixture-popup-pushes:(\d+)/);if(!text)throw new Error('Missing popup counter');return Number(text[1]);});}
+async function popupCount(){return page.evaluate(()=>{const labels=Array.from(document.querySelectorAll('flt-semantics')).map(e=>e.getAttribute('aria-label')??e.textContent??'');const text=labels.join('\n').match(/fixture-popup-pushes:(\d+)/);if(!text)throw new Error('Missing popup counter');return Number(text[1]);});}
 async function capture(stage){
   const snapshot=await page.evaluate(names=>{
-    const buttons=Array.from(document.querySelectorAll('[role="button"]')).filter(e=>names.includes(e.getAttribute('aria-label')));
-    const data=e=>{if(!e)return null;const r=e.getBoundingClientRect();return {id:e.id,identifier:e.getAttribute('flt-semantics-identifier'),role:e.getAttribute('role'),label:e.getAttribute('aria-label'),rect:{x:r.x,y:r.y,width:r.width,height:r.height}};};
+    const buttons=Array.from(document.querySelectorAll('[role="button"]')).filter(e=>names.includes(e.getAttribute('aria-label')??e.textContent));
+    const data=e=>{if(!e)return null;const r=e.getBoundingClientRect();return {id:e.id,identifier:e.getAttribute('flt-semantics-identifier'),role:e.getAttribute('role'),label:e.getAttribute('aria-label')??e.textContent,rect:{x:r.x,y:r.y,width:r.width,height:r.height}};};
     const ids=buttons.map(e=>e.id).filter(Boolean);
     return {generation:performance.timeOrigin,buttons:buttons.map(data),active:buttons.includes(document.activeElement)?data(document.activeElement):null,duplicateButtonIds:ids.filter((id,index)=>ids.indexOf(id)!==index),viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio,offsetLeft:visualViewport?.offsetLeft,offsetTop:visualViewport?.offsetTop,scale:visualViewport?.scale},events:window.__probeEvents??[]};
   },[nextName,shareName]);
@@ -41,8 +41,8 @@ async function prepare(scenario){
   await page.evaluate(names=>{
     window.__probeEvents=[];
     for(const type of ['pointerdown','pointerup','click','focusin'])document.addEventListener(type,event=>{
-      const nodes=event.composedPath().filter(e=>e instanceof Element&&e.getAttribute('role')==='button'&&names.includes(e.getAttribute('aria-label')));
-      if(nodes.length)window.__probeEvents.push({type,trusted:event.isTrusted,x:event.clientX,y:event.clientY,targets:nodes.map(e=>({id:e.id,role:e.getAttribute('role'),label:e.getAttribute('aria-label')}))});
+      const nodes=event.composedPath().filter(e=>e instanceof Element&&e.getAttribute('role')==='button'&&names.includes(e.getAttribute('aria-label')??e.textContent));
+      if(nodes.length)window.__probeEvents.push({type,trusted:event.isTrusted,x:event.clientX,y:event.clientY,targets:nodes.map(e=>({id:e.id,role:e.getAttribute('role'),label:e.getAttribute('aria-label')??e.textContent}))});
     },true);
   },[nextName,shareName]);
   await visibleNext();await capture(`${scenario}:before-change`);
@@ -63,7 +63,7 @@ async function activate(locator,name,input){
     let focused=false;
     for(let i=0;i<350;i++){
       await page.keyboard.press('Tab');
-      const label=await page.evaluate(()=>document.activeElement?.getAttribute('aria-label'));
+      const label=await page.evaluate(()=>(document.activeElement?.getAttribute('aria-label')??document.activeElement?.textContent));
       if(label===name){focused=true;break;}
     }
     if(!focused)throw new Error(`Focus not established: ${name}`);
@@ -88,12 +88,17 @@ try{
     const before=await prepare('baseline');
     await activate(share(),shareName,input);
     await page.getByRole('dialog').waitFor();
-    await page.waitForFunction(value=>Array.from(document.querySelectorAll('[aria-label]')).some(el=>(el.getAttribute('aria-label')??'').includes(`fixture-popup-pushes:${value}`)),before+1);
+    await page.waitForFunction(value=>Array.from(document.querySelectorAll('flt-semantics')).some(el=>(el.getAttribute('aria-label')??el.textContent??'').includes(`fixture-popup-pushes:${value}`)),before+1);
     if(await popupCount()!==before+1)throw new Error(`Share control popup count: ${input}`);
     if(!await hasRange(initial))throw new Error('Share control unexpectedly shifted cycle');
     results.push({case:`share-control:${input}`,nextTransitions:0,popupDelta:1,result:'share entry opens one preview; no publish action'});
   }
   if(results.some(result=>result.pageError))throw new Error('Fixture emitted a browser runtime error');
+}catch(error){
+  results.push({probeFailure:String(error)});
+  await capture('probe-failure');
+  await page.screenshot({path:`${dir}/probe-failure.png`});
+  throw error;
 }finally{
   await writeFile(`${dir}/evidence.json`,JSON.stringify(results,null,2));
   await browser.close();

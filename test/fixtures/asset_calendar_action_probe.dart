@@ -86,7 +86,12 @@ class _ActionProbeState extends State<ActionProbe> {
               builder: (_, value, child) => Semantics(
                 container: true,
                 label: 'fixture-popup-pushes:$value',
-                child: const SizedBox(height: 1),
+                excludeSemantics: true,
+                child: SizedBox(
+                  width: 320,
+                  height: 24,
+                  child: Text('fixture-popup-pushes:$value'),
+                ),
               ),
             ),
             Expanded(child: child!),
