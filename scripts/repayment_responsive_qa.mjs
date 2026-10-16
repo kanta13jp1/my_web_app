@@ -40,7 +40,9 @@ for (const viewport of [{ name: 'pc', width: 1440, height: 1000 }, { name: 'narr
     const anchor = async () => {
       for (let i = 0; i < 30; i++) {
         const box = await input.boundingBox();
-        if (box && box.y >= 190 && box.y <= 260 && box.x >= 0 && box.x + box.width <= viewport.width + 1) {
+        result.anchorTrace ??= []; result.anchorTrace.push({ attempt: i, box });
+        const panelTail = viewport.width >= 1000 ? 160 : 480;
+        if (box && box.y >= 70 && box.y + box.height + panelTail <= viewport.height - 20 && box.x >= 0 && box.x + box.width <= viewport.width + 1) {
           result.inputAnchor = box; return box;
         }
         const delta = box ? Math.max(-4000, Math.min(4000, box.y - 220)) : 1000;
