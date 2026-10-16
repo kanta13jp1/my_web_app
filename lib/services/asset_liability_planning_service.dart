@@ -260,6 +260,10 @@ class AssetLiabilityPlanningService {
     // トリアージの「生命線を優先確保」から除外する。名前の再解決ではなく実注入
     // 口座 ID を使うことで、組み込み生命線 ID (rent/gas_bill 等) との部分一致衝突で
     // 本物の生命線を過剰除外する事故を避ける。
+    final recurringFixedCostIds = <String, String>{
+      for (final injected in injectedFixedCosts)
+        injected.account.id: injected.recurringFixedCostId,
+    };
     final subscriptionFixedCostAccountIds = <String>{
       for (final injected in injectedFixedCosts)
         if (injected.isSubscription) injected.account.id,
@@ -361,6 +365,7 @@ class AssetLiabilityPlanningService {
         .map(
           (account) => _buildDebtRow(
             account: account,
+            recurringFixedCostId: recurringFixedCostIds[account.id],
             liabilityTotal: liabilityTotal,
             confirmedPaymentDays: confirmedPaymentDays,
             monthlyPaymentOverrides: effectiveMonthlyPaymentOverrides,
@@ -795,6 +800,7 @@ class AssetLiabilityPlanningService {
 
   AssetLiabilityDebtRow _buildDebtRow({
     required AssetLiabilityAccount account,
+    String? recurringFixedCostId,
     required double liabilityTotal,
     required Map<String, double> monthlyPaymentOverrides,
     Map<String, double> confirmedPaymentDays = const <String, double>{},
@@ -919,6 +925,7 @@ class AssetLiabilityPlanningService {
 
     return AssetLiabilityDebtRow(
       id: account.id,
+      recurringFixedCostId: recurringFixedCostId,
       name: account.name,
       kind: account.kind,
       balance: account.balance,
@@ -2146,6 +2153,7 @@ class AssetLiabilityPlanningService {
   List<
       ({
         AssetLiabilityAccount account,
+        String recurringFixedCostId,
         String? sourceAccountId,
         bool isSubscription,
       })> _buildRecurringFixedCostInjections({
@@ -2157,6 +2165,7 @@ class AssetLiabilityPlanningService {
     if (recurringFixedCosts.isEmpty) {
       return const <({
         AssetLiabilityAccount account,
+        String recurringFixedCostId,
         String? sourceAccountId,
         bool isSubscription,
       })>[];
@@ -2166,6 +2175,7 @@ class AssetLiabilityPlanningService {
         existingAccounts.map((account) => _normalize(account.name)).toSet();
     final result = <({
       AssetLiabilityAccount account,
+      String recurringFixedCostId,
       String? sourceAccountId,
       bool isSubscription,
     })>[];
@@ -2194,6 +2204,7 @@ class AssetLiabilityPlanningService {
       takenNames.add(_normalize(account.name));
       result.add((
         account: account,
+        recurringFixedCostId: cost.id,
         sourceAccountId: cost.sourceAccountId,
         isSubscription:
             cost.category == AssetRecurringFixedCostCategory.subscription,

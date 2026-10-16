@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/asset_payroll_deductions_repository.dart';
 import 'asset_payroll_deductions_card.dart';
+import '../services/asset_payslip_review_store.dart';
+import 'asset_payslip_review_dialog.dart';
 
 class AssetPayrollDeductionsSection extends StatefulWidget {
   const AssetPayrollDeductionsSection({
@@ -20,6 +22,7 @@ class AssetPayrollDeductionsSection extends StatefulWidget {
 class _AssetPayrollDeductionsSectionState
     extends State<AssetPayrollDeductionsSection> {
   late int _year;
+  bool _reviewing = false;
   late Future<PayrollDeductionsYear> _load;
 
   @override
@@ -43,6 +46,26 @@ class _AssetPayrollDeductionsSectionState
     });
   }
 
+  Future<void> _review(String ownerId, String id) async {
+    if (_reviewing || widget.client.auth.currentUser?.id != ownerId) return;
+    setState(() => _reviewing = true);
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AssetPayslipReviewDialog(
+          store: SupabasePayslipReviewStore(widget.client, ownerId),
+          payslipId: id,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _reviewing = false);
+        if (widget.client.auth.currentUser?.id == ownerId) _reload();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ownerId = widget.client.auth.currentUser?.id;
@@ -62,17 +85,19 @@ class _AssetPayrollDeductionsSectionState
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             TextButton(
-              onPressed: _year > 2000 ? () => _reload(_year - 1) : null,
+              onPressed:
+                  !_reviewing && _year > 2000 ? () => _reload(_year - 1) : null,
               child: const Text('前年'),
             ),
             Text('$_year年 給与控除'),
             TextButton(
-              onPressed:
-                  _year < widget.initialYear ? () => _reload(_year + 1) : null,
+              onPressed: !_reviewing && _year < widget.initialYear
+                  ? () => _reload(_year + 1)
+                  : null,
               child: const Text('翌年'),
             ),
             TextButton(
-              onPressed: _reload,
+              onPressed: _reviewing ? null : _reload,
               child: const Text('給与控除を再読込'),
             ),
           ],
@@ -94,7 +119,7 @@ class _AssetPayrollDeductionsSectionState
                     children: [
                       const Text('給与控除を取得できませんでした。再試行してください。'),
                       TextButton(
-                        onPressed: _reload,
+                        onPressed: _reviewing ? null : _reload,
                         child: const Text('再試行'),
                       ),
                     ],
@@ -112,6 +137,7 @@ class _AssetPayrollDeductionsSectionState
                   ownerId: ownerId,
                   year: _year,
                   rows: result.rows,
+                  onReview: _reviewing ? null : (id) => _review(ownerId, id),
                 ),
               ],
             );

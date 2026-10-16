@@ -211,6 +211,33 @@ class PayrollMonthDeductions {
         _socialForComparison,
       );
 
+  /// Availability and verification are independent: parsed is not confirmed.
+  String summaryStatus({required bool social}) {
+    if (statements.isEmpty) return '明細なし';
+    if (conflicting) return '同じ明細の内容が競合・要確認';
+    final reasons = <String>[];
+    if (!confirmed) reasons.add('取得済み・本人未確認');
+    if (social && statements.any((row) => row.conflictingPensionAliases)) {
+      reasons.add('厚生年金の項目名違いが競合');
+    }
+    if (social &&
+        statements.any(
+          (row) => row.socialMismatchYen != null && row.socialMismatchYen != 0,
+        )) {
+      reasons.add('社会保険の記載合計と内訳が不一致');
+    }
+    if (statements.any(
+      (row) => (social ? row.socialTotalYen : row.taxTotalYen) == null,
+    )) {
+      reasons.add('必要項目の記載なし');
+    }
+    if (reasons.isNotEmpty) {
+      final prefix = confirmed ? '取得済み・本人確認済み／' : '';
+      return '$prefix${reasons.join('／')}（確定累計対象外）';
+    }
+    return '本人確認済み';
+  }
+
   static int? _socialForComparison(PayrollDeductions row) {
     if (row.conflictingPensionAliases) return null;
     if (row.socialMismatchYen != null && row.socialMismatchYen != 0) {

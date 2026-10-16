@@ -1544,7 +1544,7 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
+      expect(find.textContaining('期間内の最大不足:'), findsOneWidget);
       expect(
         find.byKey(const Key('asset_shift_payment_mobit')),
         findsOneWidget,
@@ -1567,7 +1567,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
+      expect(find.textContaining('期間内の最大不足:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -1610,7 +1610,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
+      expect(find.textContaining('期間内の最大不足:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -2321,7 +2321,7 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
+      expect(find.textContaining('期間内の最大不足:'), findsOneWidget);
       // ただし26日へ移せば次回支払は 7/26 = 次サイクル(給料日後)扱いになり、
       // 当サイクルの支払が消えるため事前判定が「回避できます」。
       expect(find.textContaining('の設定を26日へ(試算上の不足なし)'), findsOneWidget);
@@ -3895,10 +3895,10 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
         await tester.pump(const Duration(milliseconds: 300));
 
-        expect(find.text('判定不可'), findsNWidgets(2));
+        expect(find.text('判定不可'), findsOneWidget);
         expect(
           find.text('資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'),
-          findsNWidgets(2),
+          findsOneWidget,
         );
         expect(find.text('釈放'), findsNothing);
         expect(
@@ -3906,12 +3906,14 @@ void main() {
           findsNothing,
         );
 
+        expect(find.byKey(const Key('legacy-meal-rule-history')), findsNothing);
+        expect(find.textContaining('獄中食'), findsNothing);
         await _unmount(tester);
       },
     );
 
     testWidgets(
-      'registered zero-debt snapshot still shows the paid-off state',
+      'registered asset-only zero does not prove full repayment',
       (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
           'asset_management_display_mode_v1':
@@ -3934,12 +3936,19 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(find.text('判定不可'), findsNothing);
-        expect(find.text('釈放'), findsNWidgets(2));
+        expect(find.text('釈放'), findsNothing);
+        expect(find.text('登録残高0円'), findsOneWidget);
         expect(
-          find.text('借金は完済済みです。収監モードは解除されました。'),
+          find.text('登録済み負債の合計は0円です。未登録の負債がないか確認してください。'),
           findsOneWidget,
         );
+        expect(
+          find.text('借金は完済済みです。収監モードは解除されました。'),
+          findsNothing,
+        );
 
+        expect(find.byKey(const Key('legacy-meal-rule-history')), findsNothing);
+        expect(find.textContaining('獄中食'), findsNothing);
         await _unmount(tester);
       },
     );
