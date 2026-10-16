@@ -508,3 +508,33 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+# Draft job to append to existing cloud-development.yml after parent review.
+# Dispatch profile=workspace + exact expected_head_sha; do not launch twice.
+  calendar-action-preflight:
+    if: inputs.profile == 'workspace'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Format analyze and run restored regression
+        run: |
+          dart format test/fixtures/asset_calendar_action_probe.dart test/widgets/asset_calendar_action_regression_test.dart
+          flutter analyze test/fixtures/asset_calendar_action_probe.dart test/widgets/asset_calendar_action_regression_test.dart
+          flutter test test/widgets/asset_calendar_action_regression_test.dart --reporter expanded
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: calendar-action-preflight-${{ github.run_id }}
+          path: |
+            test/fixtures/asset_calendar_action_probe.dart
+            test/widgets/asset_calendar_action_regression_test.dart
+          retention-days: 3
