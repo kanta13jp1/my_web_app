@@ -90,6 +90,9 @@ try{
     const before=await prepare('baseline');
     await activate(share(),shareName,input);
     await page.getByRole('dialog').waitFor();
+    if(!await hasRange(initial))throw new Error('Share control unexpectedly shifted cycle');
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog').waitFor({state:'detached'});
     await page.waitForFunction(value=>Array.from(document.querySelectorAll('flt-semantics')).some(el=>(el.getAttribute('aria-label')??el.textContent??'').includes(`fixture-popup-pushes:${value}`)),before+1);
     if(await popupCount()!==before+1)throw new Error(`Share control popup count: ${input}`);
     if(!await hasRange(initial))throw new Error('Share control unexpectedly shifted cycle');

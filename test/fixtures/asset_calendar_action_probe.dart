@@ -79,29 +79,6 @@ class _ActionProbeState extends State<ActionProbe> {
   Widget build(BuildContext context) => MaterialApp(
         navigatorKey: navigator,
         navigatorObservers: [counter],
-        builder: (_, child) => Column(
-          children: [
-            ValueListenableBuilder<int>(
-              valueListenable: counter.pushes,
-              builder: (_, value, child) => Material(
-                child: Semantics(
-                  container: true,
-                  label: 'fixture-popup-pushes:$value',
-                  excludeSemantics: true,
-                  child: SizedBox(
-                    width: 320,
-                    height: 40,
-                    child: Text(
-                      'fixture-popup-pushes:$value',
-                      style: const TextStyle(fontSize: 12, height: 1),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(child: child!),
-          ],
-        ),
         home: Scaffold(
           body: Column(
             children: [
@@ -118,6 +95,22 @@ class _ActionProbeState extends State<ActionProbe> {
                   TextButton(
                     onPressed: openFixtureModal,
                     child: const Text('合成：モーダル'),
+                  ),
+                  ValueListenableBuilder<int>(
+                    valueListenable: counter.pushes,
+                    builder: (_, value, child) => Semantics(
+                      container: true,
+                      label: 'fixture-popup-pushes:$value',
+                      excludeSemantics: true,
+                      child: SizedBox(
+                        width: 320,
+                        height: 40,
+                        child: Text(
+                          'fixture-popup-pushes:$value',
+                          style: const TextStyle(fontSize: 12, height: 1),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -6,6 +6,8 @@ import 'package:my_web_app/widgets/debt_progress_share_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../fixtures/asset_calendar_action_probe.dart' as probe;
+
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +17,30 @@ void main() {
       publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
+  });
+
+  testWidgets('probe counter semantics hides during modal and restores cumulative pushes',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(1440, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    await tester.pumpWidget(const probe.ActionProbe());
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.bySemanticsLabel('fixture-popup-pushes:0'), findsOneWidget);
+    await tester.tap(find.text('合成：モーダル'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('fixture-popup-pushes:')), findsNothing);
+    await tester.tap(find.text('合成モーダルを閉じる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.bySemanticsLabel('fixture-popup-pushes:1'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 
   testWidgets('visible next cycle pointer updates range without share dialog',
