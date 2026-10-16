@@ -145,7 +145,8 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
     }
   }
 
-  Widget _originalItems(String title, Object? raw, PayslipItemGroup group) => Column(
+  Widget _originalItems(String title, Object? raw, PayslipItemGroup group) =>
+      Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title),
@@ -191,9 +192,12 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
                   '総支給：${row.raw['gross_amount']}円／手取り：${row.raw['net_amount']}円',
                 ),
                 Text('課税対象額：${row.raw['taxable_amount'] ?? '未取得'}'),
-                _originalItems('控除の取込値（変更しません）', row.raw['deductions'], PayslipItemGroup.deduction),
-                _originalItems('支給内訳の取込値（変更しません）', row.raw['earnings'], PayslipItemGroup.earning),
-                _originalItems('勤怠の取込値（変更しません）', row.raw['attendance'], PayslipItemGroup.attendance),
+                _originalItems('控除の取込値（変更しません）', row.raw['deductions'],
+                    PayslipItemGroup.deduction,),
+                _originalItems('支給内訳の取込値（変更しません）', row.raw['earnings'],
+                    PayslipItemGroup.earning,),
+                _originalItems('勤怠の取込値（変更しません）', row.raw['attendance'],
+                    PayslipItemGroup.attendance,),
                 Text(
                   '税金合計：${AssetPayrollDeductionsCard.amount(projection.taxTotalYen)}',
                 ),

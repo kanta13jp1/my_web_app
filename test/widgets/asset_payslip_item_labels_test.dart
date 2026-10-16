@@ -4,7 +4,9 @@ import 'package:my_web_app/services/asset_payslip_item_label.dart';
 import '../../integration_test/payslip_review_fixture.dart';
 
 void main() {
-  testWidgets('original dialog labels known keys without changing source or saving', (tester) async {
+  testWidgets(
+      'original dialog labels known keys without changing source or saving',
+      (tester) async {
     final store = SyntheticPayslipReviewStore();
     final earnings = <String, dynamic>{
       for (final key in PayslipItemLabel.earnings.keys) key: 0,
@@ -12,7 +14,12 @@ void main() {
       'missing_key': null,
     };
     store.data['earnings'] = earnings;
-    store.data['attendance'] = {'days_worked': 20, 'work_days': 0, 'overtime_hours': 1.5, 'future_hours': 2};
+    store.data['attendance'] = {
+      'days_worked': 20,
+      'work_days': 0,
+      'overtime_hours': 1.5,
+      'future_hours': 2
+    ,};
     await showPayslipReview(tester, store);
     for (final entry in PayslipItemLabel.earnings.entries) {
       expect(find.text('${entry.value}：0'), findsWidgets);
