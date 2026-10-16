@@ -508,3 +508,66 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  cashflow-paid-period:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && github.ref_name == 'codex/cashflow-paid-period-probe'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Verify exact head
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Focused contracts
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs/cashflow
+          flutter pub get
+          dart format test/services/asset_cashflow_forecast_inputs_test.dart
+          flutter analyze --no-pub test/services/asset_cashflow_forecast_inputs_test.dart
+          flutter test --no-pub --reporter expanded test/services/asset_cashflow_forecast_inputs_test.dart test/services/asset_cashflow_forecast_service_test.dart | tee .ci-logs/cashflow/tests.log
+      - name: Preserve source
+        if: always()
+        run: |
+          mkdir -p .ci-logs/cashflow/source/test/services
+          cp test/services/asset_cashflow_forecast_inputs_test.dart .ci-logs/cashflow/source/test/services/
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: cashflow-${{ github.run_id }}
+          path: .ci-logs/cashflow
+
+  monthly-cf-gap:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && github.ref_name == 'codex/monthly-cf-gap-probe'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Verify exact head
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Focused monthly CF contracts
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs/monthly-cf
+          flutter pub get
+          dart format test/services/asset_cashflow_statement_service_test.dart
+          flutter analyze --no-pub test/services/asset_cashflow_statement_service_test.dart
+          flutter test --no-pub --reporter expanded test/services/asset_cashflow_statement_service_test.dart | tee .ci-logs/monthly-cf/tests.log
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: monthly-cf-${{ github.run_id }}
+          path: .ci-logs/monthly-cf

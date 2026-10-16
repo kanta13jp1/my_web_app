@@ -27,6 +27,24 @@ void main() {
   const service = AssetCashflowStatementService();
 
   group('AssetCashflowStatementService.build', () {
+    test('a missing month is not a one-month net worth estimate', () {
+      final statement = service.build(
+        snapshots: [
+          _snapshot('2026-05', netWorth: -1000),
+          _snapshot('2026-07', netWorth: -1200),
+          _snapshot('2026-08', netWorth: -1100),
+        ],
+        asOf: DateTime(2026, 8, 15),
+      );
+      final july = statement.months[1];
+      final august = statement.months[2];
+      expect(july.netWorthDelta, isNull);
+      expect(july.displayCashflow, isNull);
+      expect(august.estimatedCashflowFromNetWorth, 100);
+      expect(statement.yearToDateCashflow, 0);
+      expect(statement.trackedMonthCount, 0);
+    });
+
     test('empty snapshots produce no data', () {
       final statement = service.build(
         snapshots: const <AssetLiabilityMonthlySnapshot>[],
