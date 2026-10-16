@@ -19,7 +19,8 @@ void main() {
     );
   });
 
-  testWidgets('probe counter semantics hides during modal and restores cumulative pushes',
+  testWidgets(
+      'probe counter semantics hides during modal and restores cumulative pushes',
       (tester) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await tester.binding.setSurfaceSize(const Size(1440, 1000));
@@ -33,7 +34,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('fixture-popup-pushes:')), findsNothing);
+    expect(
+        find.bySemanticsLabel(RegExp('fixture-popup-pushes:')), findsNothing,);
     await tester.tap(find.text('合成モーダルを閉じる'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
