@@ -77,8 +77,10 @@ void main() {
     final next = find.byKey(const Key('asset_calendar_next_month'));
     await tester.ensureVisible(next);
     await tester.pump();
-    bool nextIsFocused() => FocusManager.instance.primaryFocus?.context
-        ?.findAncestorWidgetOfExactType<IconButton>()?.key ==
+    bool nextIsFocused() =>
+        FocusManager.instance.primaryFocus?.context
+            ?.findAncestorWidgetOfExactType<IconButton>()
+            ?.key ==
         const Key('asset_calendar_next_month');
     for (var tabs = 0; tabs < 250 && !nextIsFocused(); tabs++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -93,5 +95,4 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
-
 }
