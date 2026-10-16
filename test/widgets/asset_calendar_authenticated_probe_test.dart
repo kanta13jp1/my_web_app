@@ -28,7 +28,8 @@ void main() {
   });
   tearDownAll(() => Supabase.instance.dispose());
 
-  test('synthetic owner restoration performs no HTTP or persisted login', () async {
+  test('synthetic owner restoration performs no HTTP or persisted login',
+      () async {
     final before = client.requests.length;
     await probe.restoreProbeOwner();
     expect(Supabase.instance.client.auth.currentUser?.id, probe.probeOwner);
@@ -52,7 +53,8 @@ void main() {
   });
 
   for (final lateSemantics in [false, true]) {
-    testWidgets('real page async card then next with late semantics=$lateSemantics',
+    testWidgets(
+        'real page async card then next with late semantics=$lateSemantics',
         (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await probe.restoreProbeOwner();
@@ -68,12 +70,17 @@ void main() {
       }
       try {
         await http.runWithClient(() async {
-          await tester.pumpWidget(probe.AuthenticatedProbe(repository: repository));
+          await tester
+              .pumpWidget(probe.AuthenticatedProbe(repository: repository));
           await tester.pump(const Duration(milliseconds: 600));
           final savings = find.byKey(
             const ValueKey('savings-life-plan:${probe.probeOwner}'),
           );
-          expect(savings, findsNothing, reason: 'real page card waits for its snapshot',);
+          expect(
+            savings,
+            findsNothing,
+            reason: 'real page card waits for its snapshot',
+          );
           expect(repository.loadCalls, 1);
           expect(repository.completedLoads, 0);
           await tester.tap(find.text('Probe: release synthetic data'));
@@ -81,7 +88,11 @@ void main() {
             await tester.pump(const Duration(milliseconds: 200));
           }
           expect(repository.completedLoads, 1);
-          expect(savings, findsOneWidget, reason: 'card is inside the real page, not a harness sibling',);
+          expect(
+            savings,
+            findsOneWidget,
+            reason: 'card is inside the real page, not a harness sibling',
+          );
           if (lateSemantics) {
             await tester.tap(find.text('Probe: enable semantics'));
             await tester.pump();
