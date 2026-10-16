@@ -240,8 +240,11 @@ void main() {
           await tester.pump(const Duration(milliseconds: 100));
         }
         expect(client.financeGateEntered, isTrue);
-        expect(find.textContaining('取得件数の上限に達したため'), findsNothing,
-          reason: 'a new read clears the previous snapshot limit reason',);
+        expect(
+          find.textContaining('取得件数の上限に達したため'),
+          findsNothing,
+          reason: 'a new read clears the previous snapshot limit reason',
+        );
         expect(find.text('収入の記録を読み取り中のため未計算です。'), findsOneWidget);
         const nextOwner = '00000000-0000-4000-8000-000000000002';
         await Supabase.instance.client.auth.setInitialSession(

@@ -5612,7 +5612,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (evidenceIncome == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('返済計画は未計算です。${_incomeEvidenceReason(planIncomeEvidence)}'),
+        content:
+            Text('返済計画は未計算です。${_incomeEvidenceReason(planIncomeEvidence)}'),
       ));
       return;
     }
