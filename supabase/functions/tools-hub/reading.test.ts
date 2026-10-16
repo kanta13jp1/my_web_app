@@ -382,5 +382,57 @@ Deno.test({
 Deno.test("work memo accepts long notes without truncation and rejects overflow", () => {
   const note = "本".repeat(100000);
   assertEquals(validateWork({ ...work, note }).note, note);
-  assertThrows(() => validateWork({ ...work, note: note + "字" }), ReadingError);
+  assertThrows(
+    () => validateWork({ ...work, note: note + "字" }),
+    ReadingError,
+  );
+});
+
+Deno.test({
+  name:
+    "long memo CAS uses POST, preserves metadata and rejects stale or foreign writes",
+  ignore: !databaseUrl,
+  fn: async () => {
+    const client = await readingTestClient();
+    const id = crypto.randomUUID();
+    const owner = "33333333-3333-4333-8333-333333333333";
+    const old = { user_id: owner, note: "長文".repeat(50000), legacy: "keep" };
+    const added = await client.from("hub_data").insert({
+      id,
+      source: "reading",
+      metadata: old,
+    });
+    if (added.error) throw added.error;
+    const next = { ...old, reading_revision: 1 };
+    const args = {
+      p_id: id,
+      p_source: "reading",
+      p_user_id: owner,
+      p_expected: old,
+      p_metadata: next,
+    };
+    for (
+      const patch of [{ p_user_id: "other" }, { p_source: "other" }, {
+        p_metadata: { ...next, user_id: "other" },
+      }]
+    ) {
+      const rejected = await client.rpc("reading_compare_and_swap", {
+        ...args,
+        ...patch,
+      });
+      if (rejected.error) throw rejected.error;
+      assertEquals(rejected.data, []);
+    }
+    const saved = await client.rpc("reading_compare_and_swap", args).single();
+    if (saved.error) throw saved.error;
+    assertEquals((saved.data as Record<string, unknown>).metadata, next);
+    const stale = await client.rpc("reading_compare_and_swap", args);
+    if (stale.error) throw stale.error;
+    assertEquals(stale.data, []);
+    for (const role of ["anon", "authenticated"]) {
+      const unprivileged = await readingTestClient(role, owner);
+      const denied = await unprivileged.rpc("reading_compare_and_swap", args);
+      assertEquals(denied.error?.code, "42501");
+    }
+  },
 });

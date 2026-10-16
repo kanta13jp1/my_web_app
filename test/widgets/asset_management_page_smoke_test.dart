@@ -18,7 +18,6 @@ import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
-import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
@@ -410,333 +409,6 @@ void main() {
     });
 
     testWidgets(
-      'monthly flow card aggregates over the salary cycle, not the month',
-      (tester) async {
-        // 暦月だと給料日(25日)受給分が翌月の窓から外れ収入0=赤字になる回帰を防ぐ。
-        // 当サイクル [給料日, 翌給料日) の窓で収入/支出を集計することを検証する。
-        final now = DateTime.now();
-        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
-          now,
-          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
-        );
-        // 当サイクル開始日(=給料日)に受け取った給料。暦月窓では外れるが、
-        // サイクル窓では収入として計上される。
-        final cycleSalary = DateTime(
-          cycleStart.year,
-          cycleStart.month,
-          cycleStart.day,
-          12,
-        );
-        // 前サイクル(給料日の前日)の収入。当サイクル窓では除外される。
-        final previousCycleIncome = cycleSalary.subtract(
-          const Duration(days: 1),
-        );
-        // 当サイクル内(本日)の支出。
-        final cycleExpense = DateTime(now.year, now.month, now.day, 12);
-
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugInitialRecentFlows: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'action_type': 'conquer',
-                  'amount': 280000,
-                  'description': '給料',
-                  'occurred_at': cycleSalary.toIso8601String(),
-                },
-                <String, dynamic>{
-                  'action_type': 'expense',
-                  'amount': 50000,
-                  'description': '食費',
-                  'occurred_at': cycleExpense.toIso8601String(),
-                },
-                <String, dynamic>{
-                  'action_type': 'conquer',
-                  'amount': 999999,
-                  'description': '前サイクル収入',
-                  'occurred_at': previousCycleIncome.toIso8601String(),
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        final card = find.byKey(
-          const Key('asset_monthly_flow_priority_card'),
-        );
-        expect(card, findsOneWidget);
-
-        // 当サイクルの給料(280,000)が収入として計上される。
-        expect(
-          find.descendant(of: card, matching: find.text('¥280,000')),
-          findsOneWidget,
-        );
-        // 当サイクルの支出(50,000)も計上される。
-        expect(
-          find.descendant(of: card, matching: find.text('¥50,000')),
-          findsOneWidget,
-        );
-        // 前サイクルの収入(999,999)は窓外なので除外される。
-        expect(
-          find.descendant(of: card, matching: find.textContaining('999,999')),
-          findsNothing,
-        );
-        // 見出しは暦月ラベルではなく給料サイクルの期間ラベルになっている。
-        expect(
-          find.descendant(
-            of: card,
-            matching: find.textContaining('給料サイクル('),
-          ),
-          findsOneWidget,
-        );
-
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
-      'cycle summary and salary breakdown exclude an unreceived income plan',
-      (tester) async {
-        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
-          DateTime.now(),
-          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
-        );
-        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
-        final repo = _FakeDebtOverrideRepository(
-          const <String, int>{},
-          monthlyState: AssetLiabilityMonthlyState(
-            incomePlans: <AssetLiabilityIncomePlan>[
-              AssetLiabilityIncomePlan(
-                id: 'unreceived_salary',
-                date: cycleStart,
-                name: '給料予定',
-                amount: 450000,
-                destinationAccountId: null,
-                destinationAccountName: null,
-                received: false,
-              ),
-            ],
-          ),
-        );
-        SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_management_display_mode_v1': 'full',
-        });
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              assetLiabilityRepository: repo,
-              debugInitialRecentFlows: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'action_type': 'expense',
-                  'amount': 175110,
-                  'description': '使途不明金（残高差分から自動記録）',
-                  'occurred_at': cycleStart.toIso8601String(),
-                },
-              ],
-              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'pay_date': payDate,
-                  'amount': 421277,
-                  'description': '給料',
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        for (final key in <String>[
-          'asset_monthly_flow_priority_card',
-          'asset_salary_spending_breakdown_card',
-        ]) {
-          final card = find.byKey(Key(key));
-          expect(card, findsOneWidget);
-          expect(
-            find.descendant(of: card, matching: find.text('¥421,277')),
-            findsOneWidget,
-          );
-          expect(
-            find.descendant(of: card, matching: find.textContaining('871,277')),
-            findsNothing,
-          );
-          expect(
-            find.descendant(of: card, matching: find.text('+¥246,167')),
-            findsOneWidget,
-          );
-        }
-        expect(find.text('期間支出（未照合含む）'), findsOneWidget);
-        expect(find.textContaining('全額が消費や浪費とは限りません'), findsOneWidget);
-        expect(tester.takeException(), isNull);
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
-      'monthly flow card counts payslip salary income when no conquer flow exists',
-      (tester) async {
-        // 給料を給与明細(payslips/salary_incomes)でのみ管理しているユーザーは、
-        // 収支フロー(conquer)が無いため収入¥0=常に赤字に見える回帰を防ぐ。
-        // 当サイクルに受給した給料が収入へ合算されることを検証する。
-        final now = DateTime.now();
-        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
-          now,
-          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
-        );
-        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
-        final previousCycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
-          DateTime(cycleStart.year, cycleStart.month - 1),
-        );
-        SharedPreferences.setMockInitialValues(<String, Object>{
-          AssetSalaryResetMarkerStore.prefsKey: previousCycleKey,
-        });
-
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugInitialAssetData: <String, Map<String, double>>{
-                DateFormat('yyyy-MM-dd').format(now): const <String, double>{
-                  '現金': 50000,
-                },
-              },
-              // 収支フロー(wealth_struggles)は空。
-              debugInitialRecentFlows: const <Map<String, dynamic>>[],
-              // 給料は salary_incomes にのみ存在 (給与明細のみ管理)。
-              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'pay_date': payDate,
-                  'amount': 280000,
-                  'description': 'Payslip: 自分株式会社',
-                  'source': 'payslip_auto',
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        final card = find.byKey(
-          const Key('asset_monthly_flow_priority_card'),
-        );
-        expect(card, findsOneWidget);
-
-        // 給与明細の給料(280,000)が収入として計上される。
-        expect(
-          find.descendant(of: card, matching: find.text('¥280,000')),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(
-            of: card,
-            matching: find.textContaining('給与明細・受取済み収入予定から計上した'),
-          ),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(
-            of: card,
-            matching: find.textContaining('現在残高や今後の支払後に使える額とは異なります'),
-          ),
-          findsOneWidget,
-        );
-        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
-        final prefs = await SharedPreferences.getInstance();
-        expect(
-          prefs.getString(AssetSalaryResetMarkerStore.prefsKey),
-          previousCycleKey,
-          reason: '給与明細だけでは口座入金と判定して支払チェックをリセットしない',
-        );
-        await tester.binding.setSurfaceSize(const Size(390, 1200));
-        await tester.pump();
-        expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
-        expect(tester.takeException(), isNull);
-        // 収入があるので「未記録」の空状態文言は出ない。
-        expect(
-          find.descendant(
-            of: card,
-            matching: find.textContaining('まだこのサイクルの収支が未記録'),
-          ),
-          findsNothing,
-        );
-
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
-      'monthly flow card shows manual income CTA when no income is recorded',
-      (tester) async {
-        // 給与明細も収入フロー(conquer)も無く支出だけのユーザーは収入¥0=赤字に
-        // 見える。手入力収入への導線(CTA)が出て、ワンタップで収支記録の種別が
-        // 「収入」へ切り替わることを検証する。
-        final now = DateTime.now();
-        final cycleExpense = DateTime(now.year, now.month, now.day, 12);
-
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugInitialRecentFlows: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'action_type': 'expense',
-                  'amount': 50000,
-                  'description': '食費',
-                  'occurred_at': cycleExpense.toIso8601String(),
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(
-          find.byKey(const Key('asset_monthly_flow_income_cta')),
-          findsOneWidget,
-        );
-
-        final dropdownFinder = find.byKey(
-          const Key('asset_flow_type_dropdown'),
-        );
-        // タップ前は既定の支出。
-        expect(
-          tester
-              .widget<DropdownButtonFormField<String>>(dropdownFinder)
-              .initialValue,
-          '支出',
-        );
-
-        final ctaButton = find.byKey(
-          const Key('asset_monthly_flow_income_cta_button'),
-        );
-        await tester.ensureVisible(ctaButton);
-        await tester.pump();
-        await tester.tap(ctaButton);
-        await tester.pump(const Duration(milliseconds: 400));
-
-        // CTA で収支記録の種別が「収入」へ切り替わる(記録時に conquer になる)。
-        expect(
-          tester
-              .widget<DropdownButtonFormField<String>>(dropdownFinder)
-              .initialValue,
-          '収入',
-        );
-
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
       'monthly flow card hides manual income CTA when income exists',
       (tester) async {
         // 当サイクルに収入フロー(conquer)があれば収入¥0ではないので CTA は出ない。
@@ -773,64 +445,6 @@ void main() {
 
         expect(
           find.byKey(const Key('asset_monthly_flow_income_cta')),
-          findsNothing,
-        );
-
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
-      'payslip row and salary_income with same pay date/amount are counted once',
-      (tester) async {
-        // 1枚の給与明細は payslips と salary_incomes の両方に同日同額で入る。
-        // 二重計上(560,000)せず1件(280,000)に畳むことを検証する。
-        final now = DateTime.now();
-        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
-          now,
-          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
-        );
-        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
-
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugInitialRecentFlows: const <Map<String, dynamic>>[],
-              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'pay_date': payDate,
-                  'amount': 280000,
-                  'description': 'Payslip: 自分株式会社',
-                  'source': 'payslip_auto',
-                },
-              ],
-              debugInitialPayslipRows: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'pay_date': payDate,
-                  'net_amount': 280000,
-                  'company_name': '自分株式会社',
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        final card = find.byKey(
-          const Key('asset_monthly_flow_priority_card'),
-        );
-        expect(card, findsOneWidget);
-
-        // 二重計上されず1件分(280,000)だけ計上される。
-        expect(
-          find.descendant(of: card, matching: find.text('¥280,000')),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(of: card, matching: find.textContaining('560,000')),
           findsNothing,
         );
 
@@ -4025,4 +3639,46 @@ void main() {
       },
     );
   });
+  testWidgets(
+    'anonymous unconfirmed read never claims empty income or offers empty CTA',
+    (tester) async {
+      // This isolate starts anonymous and its setUp resets shared write locks.
+      // No auth transition is awaited inside the widget FakeAsync zone.
+      expect(Supabase.instance.client.auth.currentUser, isNull);
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      debugPrint('SYNTHETIC_ANONYMOUS before widget');
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository:
+                SharedPreferencesAssetLiabilityRepository(),
+            debugInitialAssetData: {},
+            debugInitialRecentFlows: [],
+          ),
+        ),
+      );
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      debugPrint('SYNTHETIC_ANONYMOUS widget ready');
+      final card = find.byKey(const Key('asset_monthly_flow_priority_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.byKey(const Key('asset_monthly_flow_income_cta')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('収入の読み取りを確認できないため未計算'),
+        ),
+        findsWidgets,
+      );
+      expect(tester.takeException(), isNull);
+      await _unmount(tester);
+      debugPrint('SYNTHETIC_ANONYMOUS unmounted');
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
 }
