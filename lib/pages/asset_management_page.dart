@@ -13284,6 +13284,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _normalizeRecurringLabel(template.name),
     }..removeWhere((name) => name.isEmpty);
     return detected.where((item) {
+      // Income templates generate a plan every month; do not silently
+      // convert a detected bimonthly income into a monthly plan.
+      if (item.cadence != AssetRecurringFixedCostCadence.monthly) {
+        return false;
+      }
       final label = _normalizeRecurringLabel(item.label);
       if (label.isEmpty) {
         return true;
