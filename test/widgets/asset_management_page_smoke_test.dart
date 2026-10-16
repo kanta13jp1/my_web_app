@@ -220,7 +220,9 @@ void main() {
               'occurred_at': DateTime(2026, month, 15, 12).toIso8601String(),
             },
         ],
-      )));
+        ),
+      ),
+    );
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
       final cards = tester.widgetList<AssetRecurringTransactionSuggestionCard>(
@@ -234,7 +236,8 @@ void main() {
       } else {
         // The registration destination only supports monthly templates.
         expect(suggestions, isEmpty,
-          reason: 'Bimonthly income must not become a monthly income plan');
+          reason: 'Bimonthly income must not become a monthly income plan',
+        );
       }
       await _unmount(tester);
     });
