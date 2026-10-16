@@ -20,6 +20,7 @@ class QaHttp extends http.BaseClient {
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     debugPrint('REPAYMENT_QA_HTTP ${jsonEncode({
           'method': request.method,
+      'path': request.url.path,
           'denied': request.method != 'GET',
         })}');
     return http.StreamedResponse(
