@@ -18164,6 +18164,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 給与明細(payslips/salary_incomes)でのみ管理している給料も収入へ合算する。
     final evidence = _cycleIncomeEvidence(_now);
     final totalIncome = evidence.combinedRecordedTotal;
+    // A verified empty snapshot can offer entry without claiming income is zero.
+    // Unready, stale, failed, owner-unknown and limited reads carry issues.
+    final showIncomeEntry = totalIncome == 0 ||
+        (evidence.records.isEmpty && evidence.issues.isEmpty);
 
     final net = totalIncome == null ? null : totalIncome - totalExpense;
     // フローが無くても給与明細の給料収入があれば「未記録」とは扱わない。
@@ -18284,7 +18288,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               }),
               onPage: (page) => setState(() => _incomeRelationshipPage = page),
             ),
-            if (totalIncome == 0) ...[
+            if (showIncomeEntry) ...[
               const SizedBox(height: 14),
               Container(
                 key: const Key('asset_monthly_flow_income_cta'),

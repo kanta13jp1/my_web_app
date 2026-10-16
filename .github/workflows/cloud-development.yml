@@ -508,3 +508,53 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  salary-smoke-review:
+    name: Salary evidence smoke repair focused
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'workspace' && startsWith(github.ref_name, 'codex/salary-smoke-review-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+      PRODUCT_HEAD: 8374d392c0c9644c6e210f771f6878a0257741ad
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+      - name: Verify exact source and PR head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          test "$(gh api repos/kanta13jp1/my_web_app/pulls/5808 --jq .head.sha)" = "$PRODUCT_HEAD"
+          git fetch --depth=1 origin "$PRODUCT_HEAD"
+          test "$(git diff --name-only "$PRODUCT_HEAD" HEAD -- lib)" = "lib/pages/asset_management_page.dart"
+          git diff --exit-code "$PRODUCT_HEAD" HEAD -- assets web pubspec.yaml pubspec.lock .github/actions
+          mkdir -p .ci-logs/salary-smoke-review
+          printf '%s\n' "$EXPECTED_HEAD_SHA" > .ci-logs/salary-smoke-review/head.txt
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Format, analyze and focused contracts
+        run: |
+          set -euo pipefail
+          flutter pub get
+          dart format lib/pages/asset_management_page.dart test/widgets/asset_income_cycle_smoke_test.dart test/widgets/asset_management_page_smoke_test.dart
+          flutter analyze --no-pub lib/pages/asset_management_page.dart test/widgets/asset_income_cycle_smoke_test.dart test/widgets/asset_management_page_smoke_test.dart | tee .ci-logs/salary-smoke-review/analyze.log
+          flutter test --no-pub --reporter expanded test/widgets/asset_income_cycle_smoke_test.dart test/widgets/asset_management_page_smoke_test.dart test/services/asset_income_evidence_connection_test.dart test/services/asset_income_source_evidence_test.dart test/services/asset_salary_spending_entries_test.dart test/services/salary_spending_breakdown_service_test.dart test/widgets/asset_income_readonly_reload_test.dart test/widgets/asset_income_reconciliation_section_test.dart | tee .ci-logs/salary-smoke-review/tests.log
+      - name: Preserve exact formatted sources and evidence
+        if: always()
+        run: |
+          mkdir -p .ci-logs/salary-smoke-review/source/lib/pages .ci-logs/salary-smoke-review/source/test/widgets
+          cp lib/pages/asset_management_page.dart .ci-logs/salary-smoke-review/source/lib/pages/
+          cp test/widgets/asset_income_cycle_smoke_test.dart test/widgets/asset_management_page_smoke_test.dart .ci-logs/salary-smoke-review/source/test/widgets/
+          git diff -- lib/pages/asset_management_page.dart test/widgets/asset_income_cycle_smoke_test.dart test/widgets/asset_management_page_smoke_test.dart > .ci-logs/salary-smoke-review/mechanical.patch
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: salary-smoke-review-${{ github.run_id }}
+          path: .ci-logs/salary-smoke-review
+          include-hidden-files: true
