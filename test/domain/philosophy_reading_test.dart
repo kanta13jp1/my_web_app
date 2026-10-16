@@ -674,12 +674,12 @@ void main() {
         expect(sum % 11, 0, reason: edition.isbn);
       }
     }
-    expect(philosophyCatalogEditions.length, 167);
+    expect(philosophyCatalogEditions.length, 169);
     expect(
       philosophyCatalogEditions
           .where((b) => b.edition.language == '日本語')
           .length,
-      166,
+      168,
     );
     final books = philosophyCatalogEditions
         .where((b) => b.workId == 'confucius:analects')
