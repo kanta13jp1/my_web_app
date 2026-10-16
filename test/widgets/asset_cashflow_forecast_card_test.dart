@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsFlag;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
@@ -51,6 +53,8 @@ void main() {
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
+        final semantics = tester.ensureSemantics();
+        addTearDown(semantics.dispose);
         final forecast = AssetCashflowForecastService.project(
           asOf: DateTime(2026, 6, 1),
           startingBalance: 10000,
@@ -68,6 +72,8 @@ void main() {
         expect(find.textContaining('対象の給与サイクル内だけ反映'), findsOneWidget);
         final details =
             find.byKey(const Key('asset_cashflow_forecast_month_details'));
+        final tile = find.descendant(of: details, matching: find.byType(ListTile));
+        expect(tester.getSemantics(tile).getSemanticsData().hasFlag(SemanticsFlag.isButton), isTrue);
         await tester.ensureVisible(details);
         await tester.tap(find.text('月別内訳（月末・月内最低）'));
         await tester.pumpAndSettle();

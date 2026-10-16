@@ -132,6 +132,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
               _buildSummary(context),
               ExpansionTile(
                 key: const Key('asset_cashflow_forecast_month_details'),
+                internalAddSemanticForOnTap: true,
                 tilePadding: EdgeInsets.zero,
                 title: const Text('月別内訳（月末・月内最低）'),
                 children: [
