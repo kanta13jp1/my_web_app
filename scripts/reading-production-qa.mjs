@@ -87,7 +87,10 @@ async function isbnLink(page) {
 
 // Run the catalog release checks without repeating unrelated historical flows.
 async function verifyCatalogRelease(page, account, version) {
-  const books = [
+  const books = process.env.READING_QA_METAPHYSICS === 'true' ? [
+    {workId:'aristotle:metaphysics',title:'形而上学',label:'形而上学（上）・岩波書店',publisher:'岩波書店',translator:'出隆',isbn:'9784003360439',pages:'420',source:'https://www.hanmoto.com/bd/isbn/9784003360439'},
+    {workId:'aristotle:metaphysics',title:'形而上学',label:'形而上学（下）・岩波書店',publisher:'岩波書店',translator:'出隆',isbn:'9784003360446',pages:'458',source:'https://www.books.or.jp/book-details/9784003360446'},
+  ] : [
     {workId:'laozi:daodejing',title:'道徳経',label:'老子・岩波文庫',publisher:'岩波書店',translator:'蜂屋邦夫（訳注）',isbn:'9784003320518',pages:'',source:'https://www.hanmoto.com/bd/isbn/9784003320518'},
     {workId:'russell:problems',title:'哲学の諸問題',label:'哲学入門・筑摩書房',publisher:'筑摩書房',translator:'高村夏輝',isbn:'9784480089045',pages:'288',source:'https://www.chikumashobo.co.jp/product/9784480089045/'},
     {workId:'epicurus:menoeceus',title:'メノイケウス宛の手紙',label:'自然について他・京都大学学術出版会',publisher:'京都大学学術出版会',translator:'朴一功・和田利博',isbn:'9784814005598',pages:'',source:'https://ndlsearch.ndl.go.jp/books/R100000002-I034002308'},
@@ -428,7 +431,7 @@ try {
     await verifyAuthorSearchRelease(page,a,version);
   } else if(process.env.READING_QA_PROGRESS === 'true') {
     await verifyProgressDisplay(page,a,version);
-  } else if(process.env.READING_QA_CATALOG === 'true') {
+  } else if(process.env.READING_QA_CATALOG === 'true' || process.env.READING_QA_METAPHYSICS === 'true') {
     await verifyCatalogRelease(page,a,version);
   } else {
   await openWork(page);
