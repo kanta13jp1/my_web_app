@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:http/http.dart' as http;
-import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,7 +33,10 @@ class ProbeMemoryHttp extends http.BaseClient {
       deniedWrites++;
       status = 404;
       // The product already falls back from unavailable history RPC to GET.
-      body = {'code': 'PGRST202', 'message': 'fixture rejects all writes and RPC POST'};
+      body = {
+        'code': 'PGRST202',
+        'message': 'fixture rejects all writes and RPC POST',
+      };
     } else if (request.url.path == '/rest/v1/cfo_assets') {
       await historyGate?.future;
       body = [
@@ -83,17 +86,19 @@ class ProbeDelayedRepository extends SharedPreferencesAssetLiabilityRepository {
 }
 
 Future<void> restoreProbeOwner() =>
-    Supabase.instance.client.auth.setInitialSession(jsonEncode({
-      'access_token': 'synthetic-local-token-not-valid-on-any-server',
-      'token_type': 'bearer',
-      'user': {
-        'id': probeOwner,
-        'aud': 'authenticated',
-        'app_metadata': <String, Object>{},
-        'user_metadata': <String, Object>{},
-        'created_at': '2026-06-20T00:00:00Z',
-      },
-    }),);
+    Supabase.instance.client.auth.setInitialSession(
+      jsonEncode({
+        'access_token': 'synthetic-local-token-not-valid-on-any-server',
+        'token_type': 'bearer',
+        'user': {
+          'id': probeOwner,
+          'aud': 'authenticated',
+          'app_metadata': <String, Object>{},
+          'user_metadata': <String, Object>{},
+          'created_at': '2026-06-20T00:00:00Z',
+        },
+      }),
+    );
 
 Widget authenticatedProbePage(ProbeDelayedRepository repository) =>
     AssetManagementPage(
@@ -109,23 +114,23 @@ Widget authenticatedProbePage(ProbeDelayedRepository repository) =>
 Future<void> main() {
   final client = ProbeMemoryHttp();
   return http.runWithClient(() async {
-      WidgetsFlutterBinding.ensureInitialized();
-      SharedPreferences.setMockInitialValues(<String, Object>{});
-      final gate = Completer<void>();
-      client.historyGate = gate;
-      await Supabase.initialize(
-        url: probeOrigin,
-        publishableKey: 'test-publishable-key',
-        httpClient: client,
-        authOptions: const FlutterAuthClientOptions(
-          autoRefreshToken: false,
-          detectSessionInUri: false,
-          localStorage: EmptyLocalStorage(),
-        ),
-      );
-      await restoreProbeOwner();
-      runApp(AuthenticatedProbe(repository: ProbeDelayedRepository(gate)));
-    }, () => client);
+    WidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final gate = Completer<void>();
+    client.historyGate = gate;
+    await Supabase.initialize(
+      url: probeOrigin,
+      publishableKey: 'test-publishable-key',
+      httpClient: client,
+      authOptions: const FlutterAuthClientOptions(
+        autoRefreshToken: false,
+        detectSessionInUri: false,
+        localStorage: EmptyLocalStorage(),
+      ),
+    );
+    await restoreProbeOwner();
+    runApp(AuthenticatedProbe(repository: ProbeDelayedRepository(gate)));
+  }, () => client,);
 }
 
 class AuthenticatedProbe extends StatefulWidget {

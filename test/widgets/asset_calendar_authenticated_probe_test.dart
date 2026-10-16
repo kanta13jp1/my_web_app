@@ -115,7 +115,7 @@ void main() {
           expect(find.byType(AlertDialog), findsNothing);
           await tester.pumpWidget(const SizedBox.shrink());
           await tester.pump();
-        }, () => client);
+        }, () => client,);
       } finally {
         if (!gate.isCompleted) gate.complete();
         await tester.pumpWidget(const SizedBox.shrink());
