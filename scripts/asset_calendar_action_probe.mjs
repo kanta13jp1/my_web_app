@@ -9,6 +9,7 @@ const nextName='次のサイクル';
 const shareName='今月の返済報告カードを作る（実額を公開）';
 const next=()=>page.getByRole('button',{name:nextName,exact:true});
 const share=()=>page.getByRole('button',{name:shareName,exact:true});
+const popup=()=>page.getByRole('dialog').or(page.getByRole('alertdialog'));
 const initial='2026/5/25〜6/24',following='2026/6/25〜7/24';
 page.on('pageerror',e=>results.push({pageError:String(e)}));
 async function hasRange(range){return page.evaluate(value=>Array.from(document.querySelectorAll('[role="group"]')).some(el=>(el.getAttribute('aria-label')??'').split('\n').includes(value)),range);}
@@ -79,7 +80,7 @@ try{
     await capture(`${stage}:immediately-before`);
     await activate(next(),nextName,input);
     await page.waitForFunction(value=>Array.from(document.querySelectorAll('[role="group"]')).some(el=>(el.getAttribute('aria-label')??'').split('\n').includes(value)),following,{timeout:5000});
-    if(await page.getByRole('dialog').count()||await popupCount()!==before)throw new Error(`Unexpected popup: ${stage}`);
+    if(await popup().count()||await popupCount()!==before)throw new Error(`Unexpected popup: ${stage}`);
     await page.waitForTimeout(250);
     if(!await hasRange(following))throw new Error(`Range shifted more than once: ${stage}`);
     results.push({case:stage,nextTransitions:1,popupDelta:0,result:'expected single range change; no share dialog'});
@@ -89,9 +90,10 @@ try{
   for(const input of ['pointer','dom','keyboard']){
     const before=await prepare('baseline');
     await activate(share(),shareName,input);
-    await page.getByRole('dialog').waitFor();
-    await page.keyboard.press('Escape');
-    await page.getByRole('dialog').waitFor({state:'detached'});
+    await popup().waitFor();
+    await page.getByText('今月の返済報告を作る',{exact:true}).waitFor({state:'visible'});
+    await popup().getByRole('button',{name:'閉じる',exact:true}).click();
+    await popup().waitFor({state:'detached'});
     await page.waitForFunction(value=>Array.from(document.querySelectorAll('flt-semantics')).some(el=>(el.getAttribute('aria-label')??el.textContent??'').includes(`fixture-popup-pushes:${value}`)),before+1);
     if(await popupCount()!==before+1)throw new Error(`Share control popup count: ${input}`);
     if(!await hasRange(initial))throw new Error('Share control unexpectedly shifted cycle');
