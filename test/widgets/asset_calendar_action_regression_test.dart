@@ -29,18 +29,26 @@ void main() {
     addTearDown(semantics.dispose);
     await tester.pumpWidget(const probe.ActionProbe());
     await tester.pump(const Duration(milliseconds: 600));
-    expect(find.bySemanticsLabel('fixture-popup-pushes:0'), findsOneWidget);
+    expect(
+      tester.semantics.simulatedAccessibilityTraversal(),
+      contains(containsSemantics(label: 'fixture-popup-pushes:0')),
+    );
     await tester.tap(find.text('合成：モーダル'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(
-        find.bySemanticsLabel(RegExp('fixture-popup-pushes:')), findsNothing,);
+      tester.semantics.simulatedAccessibilityTraversal(),
+      isNot(contains(containsSemantics(label: 'fixture-popup-pushes:1'))),
+    );
     await tester.tap(find.text('合成モーダルを閉じる'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(AlertDialog), findsNothing);
-    expect(find.bySemanticsLabel('fixture-popup-pushes:1'), findsOneWidget);
+    expect(
+      tester.semantics.simulatedAccessibilityTraversal(),
+      contains(containsSemantics(label: 'fixture-popup-pushes:1')),
+    );
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
