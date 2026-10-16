@@ -368,8 +368,11 @@ export async function handleReading(
   }
   // POST body avoids URL limits for long existing notes; compare all metadata.
   const { data, error } = await admin.rpc("reading_compare_and_swap", {
-    p_id: id, p_source: source, p_user_id: userId,
-    p_expected: old, p_metadata: metadata,
+    p_id: id,
+    p_source: source,
+    p_user_id: userId,
+    p_expected: old,
+    p_metadata: metadata,
   }).maybeSingle();
   if (error) throw error;
   if (!data) {
@@ -394,4 +397,3 @@ async function ownedItem(
   if (!data) throw new ReadingError(404, "Reading record not found");
   return data;
 }
-
