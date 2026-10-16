@@ -100,6 +100,7 @@ for (const viewport of [{ name: 'pc', width: 1440, height: 1000 }, { name: 'narr
     const screen = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, documentWidth: document.documentElement.scrollWidth, dpr: devicePixelRatio }));
     result.screen = screen;
     if (screen.width !== viewport.width || screen.height !== viewport.height || screen.documentWidth > viewport.width + 1) throw new Error('Viewport mismatch or horizontal overflow');
+    if (result.blocked.length) throw new Error('Unexpected attempted external resource request');
     if (result.externalResponses.length || result.pageErrors.length) throw new Error('Unexpected external transfer or page exception');
     const layoutErrors = result.console.filter(row => /RenderFlex|overflowed by|EXCEPTION CAUGHT|Unhandled Exception|Uncaught/.test(row.text));
     if (layoutErrors.length) throw new Error('Flutter layout or unhandled exception in console');
