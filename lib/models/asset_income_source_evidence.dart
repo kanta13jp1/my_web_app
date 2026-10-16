@@ -276,7 +276,7 @@ class AssetIncomeSourceEvidence {
     }
 
     final fingerprintRows = {
-      for (final row in byKey.values) row.fingerprint: row
+      for (final row in byKey.values) row.fingerprint: row,
     };
     final distinct = <List<String>>[];
     for (final decision in decisions) {
@@ -310,11 +310,13 @@ class AssetIncomeSourceEvidence {
         final right = groupList[j];
         // Different rows in the same source remain separate recorded events.
         if (left.any((a) => right.any((b) => a.kind == b.kind))) continue;
-        final decidedDistinct = distinct.any((pair) =>
+        final decidedDistinct = distinct.any(
+          (pair) =>
             (root(pair[0]) == root(left.first.key!) &&
                 root(pair[1]) == root(right.first.key!)) ||
             (root(pair[1]) == root(left.first.key!) &&
-                root(pair[0]) == root(right.first.key!)));
+                root(pair[0]) == root(right.first.key!)),
+        );
         if (!decidedDistinct) {
           final index = unresolvedCount++;
           if (index >= page * pageSize && index < (page + 1) * pageSize) {
@@ -327,9 +329,11 @@ class AssetIncomeSourceEvidence {
       }
     }
     final matched = groupList
-        .where((group) =>
+        .where(
+          (group) =>
             group.length > 1 &&
-            group.every((row) => !conflictedKeys.contains(row.key)))
+            group.every((row) => !conflictedKeys.contains(row.key)),
+        )
         .toList();
     var matchedTotal = matched.isEmpty
         ? null
