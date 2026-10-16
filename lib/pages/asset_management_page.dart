@@ -31413,7 +31413,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         '直接払い・今月未払いの対象だけの試算です。今月支払済みの元本、カード請求に内包する明細、定期支出として追加した固定費は対象外です。全負債の完済時期ではありません。予定返済額を毎月確保し、新規利用・将来の定期請求がない前提で計算します。';
     if (!simulation.hasEligibleDebt || simulation.plans.isEmpty) {
       final hasExcludedScheduledExpenses = workbook.debtMasterRows.any(
-        (row) => workbook.scheduledExpenseAccountIds.contains(row.id) &&
+        (row) =>
+            workbook.scheduledExpenseAccountIds.contains(row.id) &&
             row.balance < -0.01 &&
             !row.paid &&
             row.isDirectCashflowTarget,
@@ -31514,7 +31515,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             children: [
               _buildRepaymentSimulationMetric(
                 label: '対象件数・元本',
-                value: '${simulation.eligibleDebtCount}件 / ${_formatManagementYen(selectedPlan.startingBalanceTotal)}',
+                value:
+                    '${simulation.eligibleDebtCount}件 / ${_formatManagementYen(selectedPlan.startingBalanceTotal)}',
               ),
               _buildRepaymentSimulationMetric(
                 label: '毎月の予定返済額',

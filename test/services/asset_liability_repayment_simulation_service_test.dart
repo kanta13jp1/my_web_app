@@ -135,7 +135,8 @@ void main() {
       expect(after, before);
     });
 
-    test('panel excludes scheduled recurring expenses but keeps real principal', () {
+    test('panel excludes scheduled recurring expenses but keeps real principal',
+        () {
       final recurring = planner.buildWorkbook(
         latestSnapshot: const <String, double>{},
         baseDate: DateTime(2026, 10, 1),
@@ -150,7 +151,10 @@ void main() {
       );
       expect(recurring.scheduledExpenseAccountIds, isNotEmpty);
       expect(service.buildComparison(workbook: recurring).eligibleDebtCount, 1);
-      expect(service.buildPanelComparison(workbook: recurring).hasEligibleDebt, isFalse,);
+      expect(
+        service.buildPanelComparison(workbook: recurring).hasEligibleDebt,
+        isFalse,
+      );
 
       final mixed = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'mobit': -5000},
@@ -166,33 +170,53 @@ void main() {
           ),
         ],
       );
-      final before = mixed.debtMasterRows.map((row) => '${row.id}:${row.balance}:${row.paid}').toList();
+      final before = mixed.debtMasterRows
+          .map((row) => '${row.id}:${row.balance}:${row.paid}')
+          .toList();
       final plan = service.buildPanelComparison(workbook: mixed).plans.first;
       expect(plan.startingBalanceTotal, 5000);
       expect(plan.monthlyPaymentBudget, 1000);
       expect(plan.estimatedPayoffMonths, 5);
       expect(plan.estimatedInterestTotal, 0);
       expect(plan.hasInterestEstimate, isTrue);
-      expect(mixed.debtMasterRows.map((row) => '${row.id}:${row.balance}:${row.paid}'), before,);
+      expect(
+        mixed.debtMasterRows
+            .map((row) => '${row.id}:${row.balance}:${row.paid}'),
+        before,
+      );
     });
 
-    test('panel keeps real full-payment liability and excludes only scheduled ids', () {
+    test(
+        'panel keeps real full-payment liability and excludes only scheduled ids',
+        () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'家賃': -1000},
         baseDate: DateTime(2026, 10, 1),
       );
       expect(workbook.scheduledExpenseAccountIds, isEmpty);
-      expect(service.buildPanelComparison(workbook: workbook).eligibleDebtCount, 1,);
+      expect(
+        service.buildPanelComparison(workbook: workbook).eligibleDebtCount,
+        1,
+      );
     });
 
-    test('paid principal stays outside panel but report opt-in is unchanged', () {
+    test('paid principal stays outside panel but report opt-in is unchanged',
+        () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'mobit': -5000},
         baseDate: DateTime(2026, 10, 1),
         paidAccountNames: const <String>{'mobit'},
       );
-      expect(service.buildPanelComparison(workbook: workbook).hasEligibleDebt, isFalse,);
-      expect(service.buildComparison(workbook: workbook, includePaidPrincipal: true).eligibleDebtCount, 1,);
+      expect(
+        service.buildPanelComparison(workbook: workbook).hasEligibleDebt,
+        isFalse,
+      );
+      expect(
+        service
+            .buildComparison(workbook: workbook, includePaidPrincipal: true)
+            .eligibleDebtCount,
+        1,
+      );
     });
 
     test('zero planned payment differs from unknown and actual zero', () {
@@ -216,7 +240,14 @@ void main() {
       expect(missing.debtMasterRows.single.manualPaymentAmount, isNull);
       expect(missing.debtMasterRows.single.actualPaymentAmount, 0);
       expect(missing.debtMasterRows.single.paymentAmountEstimated, isTrue);
-      expect(service.buildPanelComparison(workbook: missing).plans.first.monthlyPaymentBudget, greaterThan(0),);
+      expect(
+        service
+            .buildPanelComparison(workbook: missing)
+            .plans
+            .first
+            .monthlyPaymentBudget,
+        greaterThan(0),
+      );
       final noActual = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'mobit': -5000},
         baseDate: DateTime(2026, 10, 1),
@@ -226,7 +257,10 @@ void main() {
 
     test('panel still excludes card-billed details', () {
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{'au': -1000, 'aupay card': -5000},
+        latestSnapshot: const <String, double>{
+          'au': -1000,
+          'aupay card': -5000,
+        },
         baseDate: DateTime(2026, 10, 1),
       );
       final plan = service.buildPanelComparison(workbook: workbook).plans.first;
@@ -234,30 +268,40 @@ void main() {
       expect(plan.startingBalanceTotal, 5000);
     });
 
-    test('interest availability matches zero-budget epsilon and empty return', () {
+    test('interest availability matches zero-budget epsilon and empty return',
+        () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'mobit': -5000},
         baseDate: DateTime(2026, 10, 1),
         monthlyPaymentOverrides: const <String, double>{'mobit': 0},
       );
-      final atLimit = service.buildPanelComparison(
-        workbook: workbook,
-        extraMonthlyPayment: 0.01,
-      ).plans.first;
+      final atLimit = service
+          .buildPanelComparison(
+            workbook: workbook,
+            extraMonthlyPayment: 0.01,
+          )
+          .plans
+          .first;
       expect(atLimit.monthSnapshots, isEmpty);
       expect(atLimit.hasInterestEstimate, isFalse);
-      final aboveLimit = service.buildPanelComparison(
-        workbook: workbook,
-        extraMonthlyPayment: 0.02,
-      ).plans.first;
+      final aboveLimit = service
+          .buildPanelComparison(
+            workbook: workbook,
+            extraMonthlyPayment: 0.02,
+          )
+          .plans
+          .first;
       expect(aboveLimit.monthSnapshots, isNotEmpty);
       expect(aboveLimit.hasInterestEstimate, isTrue);
-      final empty = service.buildPanelComparison(
-        workbook: planner.buildWorkbook(
-          latestSnapshot: const <String, double>{},
-          baseDate: DateTime(2026, 10, 1),
-        ),
-      ).plans.first;
+      final empty = service
+          .buildPanelComparison(
+            workbook: planner.buildWorkbook(
+              latestSnapshot: const <String, double>{},
+              baseDate: DateTime(2026, 10, 1),
+            ),
+          )
+          .plans
+          .first;
       expect(empty.startingBalanceTotal, 0);
       expect(empty.estimatedPayoffMonths, 0);
       expect(empty.hasInterestEstimate, isTrue);
