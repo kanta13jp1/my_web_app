@@ -67,7 +67,7 @@ class EchoPumpAudioControls extends StatelessWidget {
                               children: [
                                 toggle,
                                 label,
-                                Expanded(child: volume)
+                                Expanded(child: volume),
                               ],
                             );
                           },
