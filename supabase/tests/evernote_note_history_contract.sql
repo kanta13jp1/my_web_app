@@ -331,6 +331,62 @@ begin
 end
 $$;
 
+-- Native note versions remain deletable without an Evernote source gate.
+do $$
+declare
+  v_id uuid;
+begin
+  insert into public.note_versions (note_id, user_id, title, content)
+  select target_note_id, user_id, 'Native control', 'Native control'
+  from public.evernote_migration_items
+  where batch_id = 101 and source_item_key = 'id:note-101'
+  returning id into v_id;
+  delete from public.note_versions where id = v_id;
+  if exists (select 1 from public.note_versions where id = v_id) then
+    raise exception 'History preservation blocked a native note version.';
+  end if;
+end
+$$;
+
+-- Verify allowed imported cleanup, then roll back only this positive fixture.
+do $$
+begin
+  begin
+    perform public.evernote_verify_note_features(
+      101, 'id:note-101',
+      jsonb_build_object(
+        'task_count', true, 'task_hashes', true,
+        'task_reminder_hashes', true, 'note_reminder_hash', true
+      )
+    );
+    update public.evernote_migration_items
+    set status = 'source_deleted'
+    where batch_id = 101 and source_item_key = 'id:note-101';
+    delete from public.note_versions
+    where source_system = 'evernote'
+      and note_id = (
+        select target_note_id from public.evernote_migration_items
+        where batch_id = 101 and source_item_key = 'id:note-101'
+      );
+    if exists (
+      select 1 from public.note_versions where source_system = 'evernote'
+    ) or exists (
+      select 1 from public.evernote_note_history_attachments
+    ) then
+      raise exception 'Verified source-deleted history cleanup did not cascade.';
+    end if;
+    raise exception using errcode = 'PZ001', message = 'Restore positive fixture';
+  exception when sqlstate 'PZ001' then
+    null;
+  end;
+  if (select count(*) from public.note_versions
+      where source_system = 'evernote') <> 1
+     or (select count(*) from public.evernote_note_history_attachments) <> 1 then
+    raise exception 'Positive cleanup fixture rollback lost history evidence.';
+  end if;
+end
+$$;
+
 -- Another authenticated user must see neither history nor attachments.
 select set_config(
   'request.jwt.claim.sub',
