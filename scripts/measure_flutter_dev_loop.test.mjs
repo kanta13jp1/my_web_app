@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { changedSource, decodeDaemonLine, launchArgs, reloadRequest, measure, semanticVolume } from './measure_flutter_dev_loop.mjs';
+import { changedSource, decodeDaemonLine, launchArgs, reloadRequest, measure, semanticVolume, allowedFontTunnel } from './measure_flutter_dev_loop.mjs';
+
+test('external tunnels permit only the exact font hosts and TLS port', () => {
+  assert.ok(allowedFontTunnel('fonts.gstatic.com:443'));
+  assert.ok(allowedFontTunnel('fonts.googleapis.com:443'));
+  for (const value of ['fonts.gstatic.com:80', 'fonts.gstatic.com.evil:443', 'project.supabase.co:443', 'example.com:443', undefined]) {
+    assert.equal(allowedFontTunnel(value), false);
+  }
+});
 
 test('Flutter normalized slider position does not hide a changed application value', () => {
   const before = { now: '1', text: 'BGM・SEの音量 50パーセント' };
@@ -36,6 +44,8 @@ test('entry conditions match except for target and initial route', () => {
   assert.ok(a.includes('--web-launch-url=http://localhost:7359/echo-pump'));
   assert.ok(a.includes('--dart-define=SUPABASE_URL=http://127.0.0.1:1234'));
   assert.ok(a.includes('--no-web-resources-cdn'));
+  assert.ok(a.includes('--web-browser-flag=--proxy-server=http://127.0.0.1:1234'));
+  assert.ok(!a.some(v => v.includes('host-resolver-rules')));
   // Flutter's multi-option parser splits commas into extra Chrome arguments.
   assert.ok(a.filter(v => v.startsWith('--web-browser-flag=')).every(v => !v.includes(',')));
   assert.throws(() => launchArgs('unknown', 1));
