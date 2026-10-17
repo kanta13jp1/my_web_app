@@ -207,10 +207,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     final context = tester.element(find.byType(EchoPumpRoomStage));
-    unawaited(showDialog<void>(
-      context: context,
-      builder: (_) => const AlertDialog(title: Text('所持品テスト')),
-    ),);
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (_) => const AlertDialog(title: Text('所持品テスト')),
+      ),
+    );
     await tester.pumpAndSettle();
     final stopped = steps;
     await tester.pump(const Duration(seconds: 2));

@@ -398,8 +398,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                       ),
                     ]),
                   const SizedBox(height: 12),
-                  const Text('最小版：BGM・SEは下の「音をON」で再生 / 3D・射撃・保存なし。'
-                      '再読込で最初から。敵の位置は全表示。'),
+                  const Text('音は下のボタンでONにできます。保存はされません。'
+                      '再読み込みすると最初から始まります。'),
                 ],
               ),
             ),
