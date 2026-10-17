@@ -32,19 +32,22 @@ void main() {
   testWidgets('separate locations, safe base, noise and nearby threat',
       (tester) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-    final game = EchoPumpGame();
-    await show(tester, game);
-    expect(find.bySemanticsLabel('あなた / 保守員：管理室、安全な拠点'), findsOneWidget);
-    expect(find.bySemanticsLabel('敵 / 音を追う影：ポンプ室、別区画'), findsOneWidget);
-    game.togglePower(PumpCircuit.b);
-    await show(tester, game);
-    expect(find.bySemanticsLabel('敵の誘導先：工具庫の機械音'), findsOneWidget);
-    game.togglePower(PumpCircuit.a);
-    game.move(PumpRoom.hall);
-    await show(tester, game);
-    expect(find.text('接近注意'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+    try {
+      final game = EchoPumpGame();
+      await show(tester, game);
+      expect(find.bySemanticsLabel('あなた / 保守員：管理室、安全な拠点'), findsOneWidget);
+      expect(find.bySemanticsLabel('敵 / 音を追う影：ポンプ室、別区画'), findsOneWidget);
+      game.togglePower(PumpCircuit.b);
+      await show(tester, game);
+      expect(find.bySemanticsLabel('敵の誘導先：工具庫の機械音'), findsOneWidget);
+      game.togglePower(PumpCircuit.a);
+      game.move(PumpRoom.hall);
+      await show(tester, game);
+      expect(find.text('接近注意'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('sealed enemy bars, escape, and retry follow actual rules',
