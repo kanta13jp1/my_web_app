@@ -105,6 +105,9 @@ class SupabaseNoteCommentsService implements NoteCommentsService {
 
   @override
   Stream<void> watchCommentChanges({required int noteId}) {
+    if (const bool.fromEnvironment('PR5125_OFFLINE_PREVIEW')) {
+      return const Stream<void>.empty();
+    }
     return _supabase
         .from('note_comments')
         .stream(primaryKey: ['id'])
