@@ -20,6 +20,8 @@ import 'pr5125_store.dart';
 /// Dedicated entrypoint: intentionally never imports main.dart or Firebase.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Keep accessibility information available for cloud UI verification.
+  WidgetsBinding.instance.ensureSemantics();
   final store = Preview5125Store();
   await Supabase.initialize(
     url: 'https://pr5125.invalid',
@@ -31,23 +33,41 @@ Future<void> main() async {
       localStorage: EmptyLocalStorage(),
     ),
   );
-  String encode(Object value) => base64Url.encode(utf8.encode(jsonEncode(value))).replaceAll('=', '');
-  final payload = {'sub': Preview5125Store.userId, 'exp': 4102444800, 'role': 'authenticated',};
-  final token = '${encode({'alg': 'none', 'typ': 'JWT'})}.${encode(payload)}.preview';
-  await Supabase.instance.client.auth.recoverSession(jsonEncode({
-    'access_token': token, 'refresh_token': 'fictional-preview',
-    'token_type': 'bearer', 'expires_in': 315360000, 'expires_at': 4102444800,
-    'user': {'id': Preview5125Store.userId, 'aud': 'authenticated',
-      'email': 'reader@example.invalid', 'app_metadata': <String, dynamic>{},
-      'user_metadata': <String, dynamic>{}, 'created_at': Preview5125Store.date},
-  }));
-  runApp(MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => GamificationService()),
-      ChangeNotifierProvider(create: (_) => ThemeService()),
-    ],
-    child: const Preview5125App(),
-  ));
+  String encode(Object value) =>
+      base64Url.encode(utf8.encode(jsonEncode(value))).replaceAll('=', '');
+  final payload = {
+    'sub': Preview5125Store.userId,
+    'exp': 4102444800,
+    'role': 'authenticated',
+  };
+  final token =
+      '${encode({'alg': 'none', 'typ': 'JWT'})}.${encode(payload)}.preview';
+  await Supabase.instance.client.auth.recoverSession(
+    jsonEncode({
+      'access_token': token,
+      'refresh_token': 'fictional-preview',
+      'token_type': 'bearer',
+      'expires_in': 315360000,
+      'expires_at': 4102444800,
+      'user': {
+        'id': Preview5125Store.userId,
+        'aud': 'authenticated',
+        'email': 'reader@example.invalid',
+        'app_metadata': <String, dynamic>{},
+        'user_metadata': <String, dynamic>{},
+        'created_at': Preview5125Store.date,
+      },
+    }),
+  );
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => GamificationService()),
+        ChangeNotifierProvider(create: (_) => ThemeService()),
+      ],
+      child: const Preview5125App(),
+    ),
+  );
 }
 
 class Preview5125App extends StatelessWidget {
@@ -72,17 +92,30 @@ class Preview5125App extends StatelessWidget {
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.teal,
-        fontFamily: 'NotoSansJP'),
-      builder: (context, child) => Column(children: [
-        Material(color: const Color(0xFFFFF3CD), child: SafeArea(bottom: false,
-          child: Padding(padding: const EdgeInsets.all(8), child: Text(
-            '架空データ・閲覧専用／DB接続なし\n保存・共有・ファイル取込・AIは実行しません。個人情報を入力しないでください。',
-            textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall,
-          )),
-        )),
-        Expanded(child: child ?? const SizedBox.shrink()),
-      ]),
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.teal,
+        fontFamily: 'NotoSansJP',
+      ),
+      builder: (context, child) => Column(
+        children: [
+          Material(
+            color: const Color(0xFFFFF3CD),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  '架空データ・閲覧専用／DB接続なし\n保存・共有・ファイル取込・AIは実行しません。個人情報を入力しないでください。',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: child ?? const SizedBox.shrink()),
+        ],
+      ),
       home: page,
     );
   }
