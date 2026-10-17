@@ -3,6 +3,7 @@ class SavingsLifePlan {
     required this.start,
     required this.targetDate,
     this.target = 1000000,
+    this.goalName = '',
     this.cashBalance,
     this.income,
     this.livingCosts,
@@ -14,6 +15,7 @@ class SavingsLifePlan {
   final DateTime start;
   final DateTime targetDate;
   final int target;
+  final String goalName;
   final int? cashBalance;
   final int? income;
   final int? livingCosts;
@@ -26,6 +28,7 @@ class SavingsLifePlan {
         'start': dateText(start),
         'targetDate': dateText(targetDate),
         'target': target,
+        'goalName': goalName,
         'cashBalance': cashBalance,
         'income': income,
         'livingCosts': livingCosts,
@@ -47,6 +50,10 @@ class SavingsLifePlan {
       return value;
     }
 
+    final goalName = (json['goalName'] as String?) ?? '';
+    if (goalName.length > 80) {
+      throw const FormatException('invalid goal name');
+    }
     final start = DateTime.parse(json['start'] as String);
     final targetDate = DateTime.parse(json['targetDate'] as String);
     if (!targetDate.isAfter(start)) {
@@ -56,6 +63,7 @@ class SavingsLifePlan {
       start: start,
       targetDate: targetDate,
       target: amount('target')!,
+      goalName: goalName,
       cashBalance: amount('cashBalance', optional: true, signed: true),
       income: amount('income', optional: true),
       livingCosts: amount('livingCosts', optional: true),

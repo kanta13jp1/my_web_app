@@ -12,17 +12,34 @@ class AssetCalendarDebtInput {
     this.isDirectCashflowTarget = true,
     this.isFixedCost = false,
     this.id = '',
+    this.recurringFixedCostId,
+    this.billingAccountId,
+    this.includedInBillingAccount = false,
+    this.paymentMethod,
     this.paid = false,
+    this.paidPeriodStart,
+    this.paidPeriodEndExclusive,
+    this.paymentSourceAccountName,
+    this.paymentSourceAccountKind,
+    this.paymentAmountEstimated = true,
+    this.billingConfirmed = false,
   });
 
   factory AssetCalendarDebtInput.fromDebtRow(
     AssetLiabilityDebtRow row, {
     Map<String, int>? paymentDayOverrides,
+    Map<String, AssetLiabilityAccountKind> sourceAccountKindsById = const {},
+    DateTime? paidPeriodStart,
+    DateTime? paidPeriodEndExclusive,
   }) {
     final overrideDay =
         paymentDayOverrides?[row.id] ?? paymentDayOverrides?[row.name];
     return AssetCalendarDebtInput(
       id: row.id,
+      recurringFixedCostId: row.recurringFixedCostId,
+      billingAccountId: row.billingAccountId,
+      includedInBillingAccount: row.includedInBillingAccount,
+      paymentMethod: row.paymentMethod,
       name: row.name,
       balance: row.balance,
       paymentDay: overrideDay ?? row.paymentDay,
@@ -31,11 +48,22 @@ class AssetCalendarDebtInput {
       isFixedCost: row.kind == AssetLiabilityAccountKind.utility ||
           row.fullPaymentEstimate,
       paid: row.paid,
+      paidPeriodStart: paidPeriodStart,
+      paidPeriodEndExclusive: paidPeriodEndExclusive,
+      paymentSourceAccountKind:
+          sourceAccountKindsById[row.paymentSourceAccountId],
+      paymentSourceAccountName: row.paymentSourceAccountName,
+      paymentAmountEstimated: row.paymentAmountEstimated,
+      billingConfirmed: row.billingConfirmed,
     );
   }
 
   /// workbook 行ID(支払日移動などのアクション連携用)。
   final String id;
+  final String? recurringFixedCostId;
+  final String? billingAccountId;
+  final bool includedInBillingAccount;
+  final AssetLiabilityPaymentMethod? paymentMethod;
   final String name;
   final double balance;
   final int? paymentDay;
@@ -48,6 +76,20 @@ class AssetCalendarDebtInput {
 
   /// 支払完了済みフラグ。
   final bool paid;
+
+  /// Period whose saved paid state this row represents. Null retains the legacy
+  /// conservative rule for future dates; callers must not invent a period.
+  final DateTime? paidPeriodStart;
+  final DateTime? paidPeriodEndExclusive;
+  final AssetLiabilityAccountKind? paymentSourceAccountKind;
+
+  bool get hasPaymentRoutingConflict =>
+      paymentMethod == AssetLiabilityPaymentMethod.direct &&
+      paymentSourceAccountKind == AssetLiabilityAccountKind.creditCard;
+
+  final String? paymentSourceAccountName;
+  final bool paymentAmountEstimated;
+  final bool billingConfirmed;
 }
 
 /// カレンダーに載せる日次イベントの種別。
@@ -58,6 +100,7 @@ enum AssetCalendarEventKind {
   subscription,
   expense,
   income,
+  transfer,
 }
 
 /// 入金予定の入力(ストアのモデルから必要項目だけ写す)。
@@ -81,6 +124,13 @@ class AssetCalendarEvent {
     this.amount,
     this.sourceId,
     this.isPaid = false,
+    this.affectsCashProjection = true,
+    this.paymentMethodUnverified = false,
+    this.paymentSourceAccountName,
+    this.paymentAmountEstimated = true,
+    this.billingConfirmed = false,
+    this.unreconciledExpense = false,
+    this.balanceDifferenceAutoRecorded = false,
   });
 
   final AssetCalendarEventKind kind;
@@ -92,6 +142,15 @@ class AssetCalendarEvent {
 
   /// 支払完了済みフラグ。
   final bool isPaid;
+  final bool affectsCashProjection;
+  final bool paymentMethodUnverified;
+  final String? paymentSourceAccountName;
+  final bool paymentAmountEstimated;
+  final bool billingConfirmed;
+
+  /// 既存expense内の参照フラグ。収支へ追加加算しない。
+  final bool unreconciledExpense;
+  final bool balanceDifferenceAutoRecorded;
 }
 
 /// 1日分のサマリ。支出/収入はフロー記録の合算。
@@ -131,6 +190,25 @@ class AssetCalendarDaySummary {
   bool get hasExpectedInflow => _has(AssetCalendarEventKind.expectedInflow);
 
   bool get hasIncome => incomeTotal > 0;
+
+  bool get hasTransfer => _has(AssetCalendarEventKind.transfer);
+
+  bool get hasUnreconciledExpense => events.any(
+        (event) =>
+            event.kind == AssetCalendarEventKind.expense &&
+            event.unreconciledExpense,
+      );
+
+  double get unreconciledExpenseTotal => events
+      .where(
+        (event) =>
+            event.kind == AssetCalendarEventKind.expense &&
+            event.unreconciledExpense,
+      )
+      .fold<double>(
+        0,
+        (sum, event) => sum + (event.amount ?? 0),
+      );
 
   bool get hasAnyEvent => events.isNotEmpty;
 }
@@ -205,6 +283,51 @@ class AssetPaymentCalendarService {
   static const double _epsilon = 0.01;
 
   /// 31日などが短い月に食い込む場合は月末日に丸める(2月の26日締め等)。
+  /// Only caller-supplied, evidenced legacy-to-recurring identities resolve a
+  /// contract. The two IDs are different namespaces; names and prices do not.
+  static AssetCalendarDebtInput? resolvedSubscriptionDebt(
+    Map<String, dynamic> subscription,
+    List<AssetCalendarDebtInput> debts, {
+    Map<String, String> subscriptionFixedCostIds = const <String, String>{},
+  }) {
+    final legacyId = subscription['id']?.toString();
+    final costId = subscriptionFixedCostIds[legacyId];
+    if (costId == null || costId.isEmpty) return null;
+    final matches = debts.where((row) => row.recurringFixedCostId == costId);
+    return matches.length == 1 ? matches.single : null;
+  }
+
+  static bool subscriptionIsIncludedInCard(
+    Map<String, dynamic> subscription,
+    List<AssetCalendarDebtInput> debts, {
+    Map<String, String> subscriptionFixedCostIds = const <String, String>{},
+  }) {
+    final row = resolvedSubscriptionDebt(
+      subscription,
+      debts,
+      subscriptionFixedCostIds: subscriptionFixedCostIds,
+    );
+    return row != null &&
+        row.includedInBillingAccount &&
+        row.paymentMethod == AssetLiabilityPaymentMethod.includedInCard &&
+        (row.billingAccountId?.isNotEmpty ?? false);
+  }
+
+  static bool _paidAppliesOn(
+    AssetCalendarDebtInput row,
+    DateTime date,
+    DateTime? asOf,
+  ) {
+    if (!row.paid) return false;
+    final start = row.paidPeriodStart;
+    final end = row.paidPeriodEndExclusive;
+    if (start != null && end != null && start.isBefore(end)) {
+      return !date.isBefore(start) && date.isBefore(end);
+    }
+    return asOf == null ||
+        !date.isAfter(DateTime(asOf.year, asOf.month, asOf.day));
+  }
+
   static int clampDayToMonth(int day, DateTime month) {
     final lastDay = DateTime(month.year, month.month + 1, 0).day;
     return max(1, min(day, lastDay));
@@ -215,6 +338,7 @@ class AssetPaymentCalendarService {
     required List<Map<String, dynamic>> flows,
     required List<Map<String, dynamic>> subscriptions,
     required List<AssetCalendarDebtInput> debts,
+    Map<String, String> subscriptionFixedCostIds = const <String, String>{},
     int? salaryDay,
     double? startingCashBalance,
     List<AssetCalendarInflowInput> expectedInflows =
@@ -226,6 +350,7 @@ class AssetPaymentCalendarService {
       flows: flows,
       subscriptions: subscriptions,
       debts: debts,
+      subscriptionFixedCostIds: subscriptionFixedCostIds,
       salaryDay: salaryDay,
       startingCashBalance: startingCashBalance,
       expectedInflows: expectedInflows,
@@ -244,6 +369,7 @@ class AssetPaymentCalendarService {
     required List<Map<String, dynamic>> flows,
     required List<Map<String, dynamic>> subscriptions,
     required List<AssetCalendarDebtInput> debts,
+    Map<String, String> subscriptionFixedCostIds = const <String, String>{},
     int? salaryDay,
     DateTime? asOf,
     double? startingCashBalance,
@@ -267,7 +393,6 @@ class AssetPaymentCalendarService {
     final eventsByDate = <int, List<AssetCalendarEvent>>{};
     var scheduledDebtPaymentTotal = 0.0;
     var subscriptionTotal = 0.0;
-    final scheduledFixedCostKeys = <String>{};
 
     bool inRange(DateTime date) =>
         !date.isBefore(rangeStart) && date.isBefore(rangeEnd);
@@ -279,14 +404,6 @@ class AssetPaymentCalendarService {
       eventsByDate
           .putIfAbsent(_dateKey(date), () => <AssetCalendarEvent>[])
           .add(event);
-    }
-
-    String fixedCostKey(String name, DateTime date, double amount) {
-      final normalizedName = name.trim().toLowerCase().replaceAll(
-            RegExp(r'\s+'),
-            '',
-          );
-      return '$normalizedName|${_dateKey(date)}|${amount.toStringAsFixed(2)}';
     }
 
     // 窓に重なる暦月ごとに「毎月N日」を実日付へ解決する(月末クランプ)。
@@ -363,16 +480,13 @@ class AssetPaymentCalendarService {
         if (!inSchedule(date)) {
           continue;
         }
-        final isFuture = asOf != null &&
-            date.isAfter(DateTime(asOf.year, asOf.month, asOf.day));
-        final effectivePaid = isFuture ? false : row.paid;
+        final effectivePaid = _paidAppliesOn(row, date, asOf);
         final amount = (!effectivePaid && row.scheduledPaymentAmount > _epsilon)
             ? row.scheduledPaymentAmount
             : null;
         if (amount != null) {
           if (row.isFixedCost) {
             subscriptionTotal += amount;
-            scheduledFixedCostKeys.add(fixedCostKey(row.name, date, amount));
           } else {
             scheduledDebtPaymentTotal += amount;
           }
@@ -385,12 +499,19 @@ class AssetPaymentCalendarService {
             kind: row.isFixedCost
                 ? AssetCalendarEventKind.subscription
                 : AssetCalendarEventKind.debtPayment,
-            label: row.isFixedCost
-                ? (effectivePaid ? '${row.name} (支払済)' : row.name)
-                : (effectivePaid ? '${row.name} (支払済)' : '${row.name} 返済'),
+            paymentMethodUnverified: row.hasPaymentRoutingConflict,
+            label: row.hasPaymentRoutingConflict
+                ? '${row.name}（支払方式とカード原資が不一致・要照合）'
+                : row.isFixedCost
+                    ? (effectivePaid ? '${row.name} (支払済)' : row.name)
+                    : (effectivePaid ? '${row.name} (支払済)' : '${row.name} 返済'),
             amount: amount,
             sourceId: row.id.isEmpty ? null : row.id,
             isPaid: effectivePaid,
+            affectsCashProjection: amount != null,
+            paymentSourceAccountName: row.paymentSourceAccountName,
+            paymentAmountEstimated: row.paymentAmountEstimated,
+            billingConfirmed: row.billingConfirmed,
           ),
         );
       }
@@ -409,10 +530,32 @@ class AssetPaymentCalendarService {
       }
       final name = subscription['service_name']?.toString().trim() ?? '';
       final price = (subscription['price'] as num?)?.toDouble();
+      final resolved = resolvedSubscriptionDebt(
+        subscription,
+        debts,
+        subscriptionFixedCostIds: subscriptionFixedCostIds,
+      );
+      if (subscriptionIsIncludedInCard(
+        subscription,
+        debts,
+        subscriptionFixedCostIds: subscriptionFixedCostIds,
+      )) {
+        addEvent(
+          date,
+          AssetCalendarEvent(
+            kind: AssetCalendarEventKind.subscription,
+            label: '${name.isEmpty ? '固定費' : name}（カード利用・現金引落なし）',
+            amount: price,
+            affectsCashProjection: false,
+          ),
+        );
+        continue;
+      }
+      // An explicitly linked direct payment is already represented by its
+      // canonical row's due date/amount/paid period. Unlinked legacy rows stay
+      // visible as uncertain cash assumptions instead of guessed exclusions.
+      if (resolved != null && resolved.isDirectCashflowTarget) continue;
       if (price != null && price > 0) {
-        if (scheduledFixedCostKeys.contains(fixedCostKey(name, date, price))) {
-          continue;
-        }
         subscriptionTotal += price;
         outflowByDate[_dateKey(date)] =
             (outflowByDate[_dateKey(date)] ?? 0) + price;
@@ -421,7 +564,8 @@ class AssetPaymentCalendarService {
         date,
         AssetCalendarEvent(
           kind: AssetCalendarEventKind.subscription,
-          label: name.isEmpty ? '固定費' : name,
+          label: '${name.isEmpty ? '固定費' : name}（支払方法未照合・現金支出を仮置き）',
+          paymentMethodUnverified: true,
           amount: price,
         ),
       );
@@ -442,6 +586,11 @@ class AssetPaymentCalendarService {
       final actionType = flow['action_type']?.toString() ?? '';
       final description = flow['description']?.toString().trim() ?? '';
       if (expenseActionTypes.contains(actionType)) {
+        // 元の記録の見出しに明記されたものだけ。一般購入の説明中の言及は含めない。
+        final unreconciled = RegExp(
+          r'^(?:\[[^\]]+\]\s*)?(?:使途不明金|使途不明|用途不明金|用途不明)(?:[（(:：\s]|$)',
+        ).hasMatch(description);
+
         expenseByDate[_dateKey(date)] =
             (expenseByDate[_dateKey(date)] ?? 0) + amount.abs();
         addEvent(
@@ -449,7 +598,22 @@ class AssetPaymentCalendarService {
           AssetCalendarEvent(
             kind: AssetCalendarEventKind.expense,
             label: description.isEmpty ? '支出' : description,
+            unreconciledExpense: unreconciled,
+            balanceDifferenceAutoRecorded:
+                unreconciled && description.contains('残高差分から自動記録'),
             amount: amount.abs(),
+          ),
+        );
+      } else if (actionType == 'transfer') {
+        // 口座間・口座から現金への移動は支出/収入へ加算しない。
+        addEvent(
+          date,
+          AssetCalendarEvent(
+            kind: AssetCalendarEventKind.transfer,
+            label:
+                description.isEmpty ? '振替（支出集計外）' : '振替（支出集計外）: $description',
+            amount: amount.abs(),
+            sourceId: flow['id']?.toString(),
           ),
         );
       } else if (incomeActionTypes.contains(actionType)) {
@@ -530,6 +694,7 @@ class AssetPaymentCalendarService {
     required List<Map<String, dynamic>> flows,
     required List<Map<String, dynamic>> subscriptions,
     required List<AssetCalendarDebtInput> debts,
+    Map<String, String> subscriptionFixedCostIds = const <String, String>{},
     required List<String> candidateIds,
     required int shiftToDay,
     int? salaryDay,
@@ -549,11 +714,23 @@ class AssetPaymentCalendarService {
         endExclusive: endExclusive,
         flows: flows,
         subscriptions: subscriptions,
+        subscriptionFixedCostIds: subscriptionFixedCostIds,
         debts: [
           for (final debt in debts)
             if (subset.contains(debt.id))
               AssetCalendarDebtInput(
                 id: debt.id,
+                recurringFixedCostId: debt.recurringFixedCostId,
+                billingAccountId: debt.billingAccountId,
+                includedInBillingAccount: debt.includedInBillingAccount,
+                paymentMethod: debt.paymentMethod,
+                paid: debt.paid,
+                paidPeriodStart: debt.paidPeriodStart,
+                paidPeriodEndExclusive: debt.paidPeriodEndExclusive,
+                paymentSourceAccountKind: debt.paymentSourceAccountKind,
+                paymentSourceAccountName: debt.paymentSourceAccountName,
+                paymentAmountEstimated: debt.paymentAmountEstimated,
+                billingConfirmed: debt.billingConfirmed,
                 name: debt.name,
                 balance: debt.balance,
                 paymentDay: shiftToDay,

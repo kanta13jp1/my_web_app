@@ -31,7 +31,8 @@ class SavingsLifePlanService {
     if (deadline.isAfter(today) && (dates.isEmpty || dates.last != deadline)) {
       dates.add(deadline);
     }
-    final ready = plan.cashBalance != null &&
+    final ready = plan.target > 0 &&
+        plan.cashBalance != null &&
         plan.income != null &&
         plan.livingCosts != null &&
         monthlyCommitments >= 0;

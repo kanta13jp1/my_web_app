@@ -366,12 +366,14 @@ export async function handleReading(
   if (new TextEncoder().encode(JSON.stringify(metadata)).byteLength > 1000000) {
     throw new ReadingError(400, "Reading record size limit reached");
   }
-  let query = admin.from("hub_data").update({ metadata })
-    .eq("id", id).eq("source", source).eq("metadata->>user_id", userId);
-  // Compare-and-swap must cover all metadata, including legacy writers.
-  query = query.eq("metadata", JSON.stringify(old));
-  const { data, error } = await query.select("id, metadata, created_at")
-    .maybeSingle();
+  // POST body avoids URL limits for long existing notes; compare all metadata.
+  const { data, error } = await admin.rpc("reading_compare_and_swap", {
+    p_id: id,
+    p_source: source,
+    p_user_id: userId,
+    p_expected: old,
+    p_metadata: metadata,
+  }).maybeSingle();
   if (error) throw error;
   if (!data) {
     throw new ReadingError(

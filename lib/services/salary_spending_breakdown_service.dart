@@ -1,3 +1,5 @@
+import '../models/asset_income_source_evidence.dart';
+
 class SalarySpendingEntry {
   const SalarySpendingEntry({
     required this.date,
@@ -55,7 +57,7 @@ class SalarySpendingBreakdown {
   final DateTime periodStart;
   final DateTime periodEndExclusive;
   final double totalExpense;
-  final double salaryIncomeTotal;
+  final double? salaryIncomeTotal;
   final int expenseEntryCount;
   final List<SalarySpendingCategorySlice> sections;
 
@@ -63,7 +65,7 @@ class SalarySpendingBreakdown {
       periodEndExclusive.subtract(const Duration(days: 1));
 
   double? get remainingAfterExpense =>
-      salaryIncomeTotal > 0 ? salaryIncomeTotal - totalExpense : null;
+      salaryIncomeTotal == null ? null : salaryIncomeTotal! - totalExpense;
 
   SalarySpendingCategorySlice? get topSection =>
       sections.isEmpty ? null : sections.first;
@@ -98,6 +100,7 @@ class SalarySpendingBreakdownService {
     Iterable<SalarySpendingEntry> expenses = const <SalarySpendingEntry>[],
     Iterable<SalaryIncomeEntry> incomes = const <SalaryIncomeEntry>[],
     int salaryDay = defaultSalaryDay,
+    IncomeEvidenceProjection? incomeEvidence,
   }) {
     final normalizedSalaryDay = salaryDay.clamp(1, 28).toInt();
     final periodStart = salaryPeriodStartFor(
@@ -138,16 +141,8 @@ class SalarySpendingBreakdownService {
       expenseEntryCount += 1;
     }
 
-    final incomeEntries = incomes.toList(growable: false);
-    var salaryIncomeTotal = 0.0;
-    for (final entry in incomeEntries) {
-      if (!_isInRange(entry.date, periodStart, periodEndExclusive)) {
-        continue;
-      }
-      if (_looksLikeSalary(entry.description) || incomeEntries.length == 1) {
-        salaryIncomeTotal += entry.amount.abs();
-      }
-    }
+    // Legacy income lists contain no identity evidence and cannot certify a total.
+    final salaryIncomeTotal = incomeEvidence?.combinedRecordedTotal?.toDouble();
 
     final sections = totalsByCategory.entries
         .map(
@@ -202,6 +197,15 @@ class SalarySpendingBreakdownService {
 
   String categorize(String description) {
     final text = description.toLowerCase();
+    // 金融機関名を含む手数料を返済元本へ分類しない。
+    // fee の部分一致は coffee 等も拾うため単語境界を使う。
+    if (text.contains('手数料') || RegExp(r'\bfees?\b').hasMatch(text)) {
+      return '手数料・税金';
+    }
+    if (RegExp(r'\btax(?:es)? payment\b').hasMatch(text) &&
+        !RegExp(r'\btax[- ]free\b').hasMatch(text)) {
+      return '手数料・税金';
+    }
     for (final rule in _categoryRules) {
       for (final keyword in rule.keywords) {
         if (text.contains(keyword.toLowerCase())) {
@@ -222,19 +226,6 @@ class SalarySpendingBreakdownService {
     final lastDay = DateTime(firstOfMonth.year, firstOfMonth.month + 1, 0).day;
     final safeDay = day.clamp(1, lastDay).toInt();
     return DateTime(firstOfMonth.year, firstOfMonth.month, safeDay);
-  }
-
-  static bool _looksLikeSalary(String description) {
-    final text = description.toLowerCase();
-    return text.contains('給料') ||
-        text.contains('給与') ||
-        text.contains('給与明細') ||
-        text.contains('payslip') ||
-        text.contains('pay slip') ||
-        text.contains('salary') ||
-        text.contains('payroll') ||
-        text.contains('賞与') ||
-        text.contains('収入');
   }
 }
 
@@ -393,5 +384,16 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     'ギャンブル',
     'casino',
   ]),
-  _SalarySpendingCategoryRule('手数料・税金', <String>['手数料', '税', 'fee', 'tax']),
+  // 「税込」「税抜」など価格の注記だけでは税金の支払と判定しない。
+  _SalarySpendingCategoryRule('手数料・税金', <String>[
+    '税金',
+    '納税',
+    '所得税',
+    '住民税',
+    '固定資産税',
+    '自動車税',
+    '国税',
+    '地方税',
+    '印紙税',
+  ]),
 ];
