@@ -74,8 +74,7 @@ test('first walk keeps the protagonist while the preloaded sheet is delayed', as
     await page.mouse.wheel(0, -30000);
     await button('保守メモを調べる').click();
     await expect(page.getByText('歩行中…', { exact: true }).first()).toBeVisible();
-    await page.waitForTimeout(150);
-    await page.screenshot({ path: info.outputPath('first-walk-art-pending.png') });
+    await page.screenshot({ path: info.outputPath('first-walk-art-pending.png'), scale: 'css' });
     await expect(page.getByText('夜間保守メモ 1 / 2', { exact: true })).toBeVisible();
     const response = page.waitForResponse(r => r.url().endsWith('/character_walk.png'));
     releaseArt();
@@ -84,8 +83,7 @@ test('first walk keeps the protagonist while the preloaded sheet is delayed', as
     await page.waitForTimeout(300);
     await button('中央廊下の扉を調べる').click();
     await expect(page.getByText('歩行中…', { exact: true }).first()).toBeVisible();
-    await page.waitForTimeout(150);
-    await page.screenshot({ path: info.outputPath('walk-art-ready.png') });
+    await page.screenshot({ path: info.outputPath('walk-art-ready.png'), scale: 'css' });
     await expect(button('扉を開けて進む')).toBeVisible();
     await button('戻る').click();
     await expect(page.getByText('ターン 0', { exact: true })).toBeVisible();
