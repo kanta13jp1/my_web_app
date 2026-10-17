@@ -245,7 +245,7 @@ class AiHubChatService {
 
   Future<AiHubChatResponse> sendProviderChat({
     required String message,
-    String provider = 'deepinfra',
+    String? provider,
     String? model,
     int? maxTokens,
     String? sessionId,
@@ -253,7 +253,25 @@ class AiHubChatService {
     String? providerChoiceReason,
     String? routingUseCase,
   }) async {
-    if (AiHubChatQuotaGuard.isCoolingDown(provider)) {
+    // プロバイダー・モデルとも未指定なら chat_auto に任せ、残高枯渇などで
+    // 特定社が落ちても稼働中の社へ自動で切り替える。モデル指定時は
+    // モデルがプロバイダー固有のため従来どおり deepinfra に固定する。
+    if ((provider == null || provider.trim().isEmpty) &&
+        (model == null || model.trim().isEmpty)) {
+      return sendAutoChat(
+        message: message,
+        maxTokens: maxTokens,
+        sessionId: sessionId,
+        traceId: traceId,
+        providerChoiceReason: providerChoiceReason,
+        routingUseCase: routingUseCase,
+      );
+    }
+    final requested = provider;
+    final resolved = (requested == null || requested.trim().isEmpty)
+        ? 'deepinfra'
+        : requested.trim();
+    if (AiHubChatQuotaGuard.isCoolingDown(resolved)) {
       throw const AiHubChatException('AI quota cooldown');
     }
 
@@ -261,7 +279,7 @@ class AiHubChatService {
       final data = await _invoke(
         await _withOfflinePolicy({
           'action': 'provider.chat',
-          'provider': provider,
+          'provider': resolved,
           'message': message,
           if (model != null && model.trim().isNotEmpty) 'model': model.trim(),
           if (maxTokens != null && maxTokens > 0) 'max_tokens': maxTokens,
@@ -282,10 +300,10 @@ class AiHubChatService {
       if (data['success'] == true && text != null && text.isNotEmpty) {
         return AiHubChatResponse(
           text: text,
-          source: 'ai-hub provider.chat / $provider',
+          source: 'ai-hub provider.chat / $resolved',
           observability: AiHubChatObservability.fromResponseMap(
             data,
-            fallbackProvider: provider,
+            fallbackProvider: resolved,
           ),
         );
       }
@@ -296,7 +314,7 @@ class AiHubChatService {
         r'429|quota|rate.?limit',
         caseSensitive: false,
       ).hasMatch(message)) {
-        AiHubChatQuotaGuard.markQuotaExceeded(provider);
+        AiHubChatQuotaGuard.markQuotaExceeded(resolved);
       }
       if (error is AiHubChatException) {
         rethrow;
