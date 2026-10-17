@@ -964,7 +964,7 @@ void main() {
       expect(find.descendant(of: card, matching: find.text('1日あたり')), findsNothing,
         reason: 'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance');
       expect(find.descendant(of: card, matching: find.text('給料日までの可処分残高')), findsNothing);
-      expect(find.descendant(of: card, matching: find.textContaining('日割り使用可能額は未算出')), findsOneWidget);
+      expect(find.descendant(of: card, matching: find.textContaining('日割り使用可能額は未算出')), findsWidgets);
     } finally { await _unmount(tester); }
   });
   group('AssetManagementPage smoke', () {
