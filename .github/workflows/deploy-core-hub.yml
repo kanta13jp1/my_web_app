@@ -41,7 +41,7 @@ jobs:
 
   deploy:
     name: Deploy only core-hub public blog repair
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: vars.PRODUCTION_DEPLOY_HOLD == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: contract
     runs-on: ubuntu-latest
     timeout-minutes: 45
