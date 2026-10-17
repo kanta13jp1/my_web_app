@@ -555,6 +555,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyTransferSuggestionSection = GlobalKey();
   final _keyIncomePlanSection = GlobalKey();
   final _keyRecurringIncomeEditorButton = GlobalKey();
+  final _keyCategoryBudgetCard = GlobalKey();
   // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
   final _keyDebtControlReviewSection = GlobalKey();
   // セクション検索(アプリバーの🔍)からの各カードへのジャンプ用アンカー。
@@ -855,6 +856,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Set<String> _ignoredRecurringIncomeLabels = <String>{};
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
   Map<String, double> _categoryBudgets = <String, double>{};
+  bool _hasSavedCategoryBudgets = false;
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
   // アクションアイテムからジャンプした直後に、対処すべき支払済みチェックボックスへ
   // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
@@ -6157,6 +6159,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           sublabel: '資産/負債 管理ボード → 収入予定へ移動',
           icon: Icons.event_repeat_outlined,
           onTap: () => _scrollTo(_keyRecurringIncomeEditorButton),
+        ),
+      );
+    }
+
+    if (_keyCategoryBudgetCard.currentContext != null &&
+        matches('予算を設定 予算設定 カテゴリ別の月次予算 予算 カテゴリ予実')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '予算を設定',
+          sublabel: '予算/カテゴリ予実へ移動',
+          icon: Icons.pie_chart_outline,
+          onTap: () => _scrollTo(_keyCategoryBudgetCard),
         ),
       );
     }
@@ -11473,6 +11487,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _loadCategoryBudgets() async {
     try {
       final budgets = await _categoryBudgetStore.load();
+      _hasSavedCategoryBudgets = await _categoryBudgetStore.hasSavedSetting();
       if (mounted && budgets.isNotEmpty) {
         setState(() {
           _categoryBudgets = budgets;
@@ -11510,7 +11525,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_supabase.auth.currentUser == null) {
       return;
     }
-    final hasLocal = _categoryBudgets.isNotEmpty;
+    final hasLocal = _hasSavedCategoryBudgets || _categoryBudgets.isNotEmpty;
     try {
       final rows = await _bootSelectPrefMirror(_categoryBudgetsMirrorKey);
       if (rows.isEmpty) {
@@ -11519,7 +11534,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         return;
       }
-      if (hasLocal) {
+      if (hasLocal || _hasSavedCategoryBudgets) {
         return;
       }
       final serverBudgets = AssetCategoryBudgetStore.decodeMirrorValue(
@@ -11539,6 +11554,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _saveCategoryBudgets(Map<String, double> budgets) async {
     await _categoryBudgetStore.save(budgets);
+    _hasSavedCategoryBudgets = true;
     if (!mounted) return;
     setState(() {
       _categoryBudgets = budgets;
@@ -19121,6 +19137,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final start = breakdown.periodStart;
     final end = breakdown.periodEndInclusive;
     return Padding(
+      key: _keyCategoryBudgetCard,
       padding: const EdgeInsets.only(bottom: 16),
       child: AssetCategoryBudgetCard(
         report: report,
