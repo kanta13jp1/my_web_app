@@ -31,6 +31,45 @@
       "changes": [
         {
           "category": "feature",
+          "id": "pr-5821",
+          "links": [
+            {
+              "title": "PR #5821",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5821"
+            }
+          ],
+          "mergedAt": "2026-10-17T08:15:54Z",
+          "summary": "#5821 予算の全解除後に古い設定が復元される経路を防ぐ"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5820",
+          "links": [
+            {
+              "title": "PR #5820",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5820"
+            }
+          ],
+          "mergedAt": "2026-10-17T07:36:30Z",
+          "summary": "#5820 資産管理の予算設定を検索から見つけられるようにする"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5816",
+          "links": [
+            {
+              "title": "PR #5816",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5816"
+            }
+          ],
+          "mergedAt": "2026-10-17T06:51:20Z",
+          "summary": "#5816 残響ポンプ室に短い導入演出と状態連動のビジュアルを追加"
+        },
+        {
+          "category": "feature",
           "id": "pr-5819",
           "links": [
             {
@@ -369,19 +408,6 @@
         },
         {
           "category": "feature",
-          "id": "pr-5790",
-          "links": [
-            {
-              "title": "PR #5790",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5790"
-            }
-          ],
-          "mergedAt": "2026-10-15T15:15:30Z",
-          "summary": "#5790 引落一括確認で残高・利用枠が不明な行を除外する"
-        },
-        {
-          "category": "feature",
           "id": "pr-5792",
           "links": [
             {
@@ -392,32 +418,6 @@
           ],
           "mergedAt": "2026-10-15T14:44:39Z",
           "summary": "#5792 給与入金直後の本人確認残高を所有者限定で保存する基盤を追加"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5789",
-          "links": [
-            {
-              "title": "PR #5789",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5789"
-            }
-          ],
-          "mergedAt": "2026-10-15T14:02:21Z",
-          "summary": "#5789 給与明細の税金と社会保険料を月別に集計するカードを追加"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5791",
-          "links": [
-            {
-              "title": "PR #5791",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5791"
-            }
-          ],
-          "mergedAt": "2026-10-15T13:26:41Z",
-          "summary": "#5791 銀行CSVの符号付き残高と給与行の確認根拠を保持"
         }
       ],
       "date": "2026-10-17",
