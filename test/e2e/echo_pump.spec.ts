@@ -25,7 +25,7 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
-  const button = (name: string) => page.getByRole('button', { name, exact: true });
+  const button = (name: string) => page.getByRole(/^[ABC] /.test(name) ? 'checkbox' : 'button', { name, exact: true });
   await expect(button('A 搬入')).toBeVisible({ timeout: 30000 });
   await page.screenshot({ path: info.outputPath('start.png'), fullPage: true });
   await page.evaluate(async () => {
@@ -57,7 +57,7 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
 
 test('contact failure can recover with retry', async ({ page }) => {
   await page.goto('/');
-  const button = (name: string) => page.getByRole('button', { name, exact: true });
+  const button = (name: string) => page.getByRole(/^[ABC] /.test(name) ? 'checkbox' : 'button', { name, exact: true });
   await expect(button('中央廊下へ')).toBeVisible({ timeout: 30000 });
   await expect(button('出口へ')).toBeDisabled();
   for (let contact = 0; contact < 3; contact++) {

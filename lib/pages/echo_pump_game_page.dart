@@ -68,23 +68,29 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                       Chip(label: Text('ターン ${_game.turn}')),
                       Chip(label: Text('現在地 ${_game.room.label}')),
                       Chip(
-                          label: Text(_game.repaired
+                        label: Text(
+                          _game.repaired
                               ? '修理済み'
                               : _game.hasFuse
                                   ? 'ヒューズ所持'
-                                  : 'ヒューズ未回収',),),
+                                  : 'ヒューズ未回収',
+                        ),
+                      ),
                       Chip(
-                          label: Text(_game.sealed
-                              ? '敵：封鎖済み'
-                              : '敵：${_game.enemy.label}',),),
+                        label: Text(
+                          _game.sealed ? '敵：封鎖済み' : '敵：${_game.enemy.label}',
+                        ),
+                      ),
                     ],
                   ),
                   _panel(
                     '現在の目標',
                     [
-                      Text(_game.objective,
-                          style: const TextStyle(fontSize: 18),)
-                    ,],
+                      Text(
+                        _game.objective,
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ],
                   ),
                   Semantics(
                     liveRegion: true,
@@ -94,9 +100,11 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                     _panel(
                       _game.escaped ? '脱出成功' : '探索失敗',
                       [
-                        Text(_game.escaped
-                            ? '施設の仕組みを使って、生還できた。'
-                            : '敵の位置と音の行き先を確認してみよう。',),
+                        Text(
+                          _game.escaped
+                              ? '施設の仕組みを使って、生還できた。'
+                              : '敵の位置と音の行き先を確認してみよう。',
+                        ),
                         const SizedBox(height: 8),
                         FilledButton.icon(
                           key: const Key('echo-retry'),
@@ -154,21 +162,28 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                   ]),
                   if (_game.room == PumpRoom.control)
                     _panel('配電盤 / 最大2系統', [
-                      Text(_game.noiseRoom == null
-                          ? '稼働音なし：敵はその場に留まる。'
-                          : '音の行き先：${_game.noiseRoom!.label}',),
+                      Text(
+                        _game.noiseRoom == null
+                            ? '稼働音なし：敵はその場に留まる。'
+                            : '音の行き先：${_game.noiseRoom!.label}',
+                      ),
                       const SizedBox(height: 8),
-                      Wrap(spacing: 8, runSpacing: 8, children: [
-                        for (final circuit in PumpCircuit.values)
-                          FilterChip(
-                            key: Key('echo-power-${circuit.name}'),
-                            label: Text(circuit.label),
-                            selected: _game.power.contains(circuit),
-                            onSelected: _game.finished
-                                ? null
-                                : (_) => _act(() => _game.togglePower(circuit)),
-                          ),
-                      ],),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final circuit in PumpCircuit.values)
+                            FilterChip(
+                              key: Key('echo-power-${circuit.name}'),
+                              label: Text(circuit.label),
+                              selected: _game.power.contains(circuit),
+                              onSelected: _game.finished
+                                  ? null
+                                  : (_) =>
+                                      _act(() => _game.togglePower(circuit)),
+                            ),
+                        ],
+                      ),
                       const Text('3系統目を入れる前に、どれか1つを停止。'
                           '\nA：搬入ファン / B：工具棚とコンプレッサー / C：点検槽のベルと排水'),
                     ]),
@@ -186,36 +201,40 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                     ]),
                   if (_game.room == PumpRoom.pump)
                     _panel('ポンプ制御', [
-                      Wrap(spacing: 8, runSpacing: 8, children: [
-                        FilledButton(
-                          key: const Key('echo-repair'),
-                          onPressed: _game.finished || !_game.hasFuse
-                              ? null
-                              : () => _act(_game.repair),
-                          child: const Text('ヒューズで修理'),
-                        ),
-                        FilledButton(
-                          key: const Key('echo-seal'),
-                          onPressed: _game.finished ||
-                                  _game.sealed ||
-                                  _game.enemy != PumpRoom.inspection ||
-                                  !_game.power.contains(PumpCircuit.c)
-                              ? null
-                              : () => _act(_game.seal),
-                          child: const Text('隔壁を閉じる'),
-                        ),
-                        FilledButton(
-                          key: const Key('echo-drain'),
-                          onPressed: _game.finished ||
-                                  !_game.repaired ||
-                                  !_game.sealed ||
-                                  _game.drained ||
-                                  !_game.power.contains(PumpCircuit.c)
-                              ? null
-                              : () => _act(_game.drain),
-                          child: const Text('排水ポンプを起動'),
-                        ),
-                      ],),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton(
+                            key: const Key('echo-repair'),
+                            onPressed: _game.finished || !_game.hasFuse
+                                ? null
+                                : () => _act(_game.repair),
+                            child: const Text('ヒューズで修理'),
+                          ),
+                          FilledButton(
+                            key: const Key('echo-seal'),
+                            onPressed: _game.finished ||
+                                    _game.sealed ||
+                                    _game.enemy != PumpRoom.inspection ||
+                                    !_game.power.contains(PumpCircuit.c)
+                                ? null
+                                : () => _act(_game.seal),
+                            child: const Text('隔壁を閉じる'),
+                          ),
+                          FilledButton(
+                            key: const Key('echo-drain'),
+                            onPressed: _game.finished ||
+                                    !_game.repaired ||
+                                    !_game.sealed ||
+                                    _game.drained ||
+                                    !_game.power.contains(PumpCircuit.c)
+                                ? null
+                                : () => _act(_game.drain),
+                            child: const Text('排水ポンプを起動'),
+                          ),
+                        ],
+                      ),
                     ]),
                   const SizedBox(height: 12),
                   const Text('最小版：音は表示で表現 / 3D・射撃・音声・保存なし。'
@@ -237,20 +256,25 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
       decoration: BoxDecoration(
         color: current ? const Color(0xFF234F48) : const Color(0xFF233038),
         border: Border.all(
-            color: enemy && !_game.sealed
-                ? const Color(0xFFFFAA91)
-                : const Color(0xFF55706C),),
+          color: enemy && !_game.sealed
+              ? const Color(0xFFFFAA91)
+              : const Color(0xFF55706C),
+        ),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(room.label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        if (current) const Text('● あなた'),
-        if (enemy) Text(_game.sealed ? '■ 敵・隔壁閉鎖' : '▲ 敵'),
-        Text(room.description),
-        const SizedBox(height: 4),
-        Text(
-            '接続：${EchoPumpGame.connections[room]!.map((r) => r.label).join('・')}',),
-      ],),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(room.label, style: const TextStyle(fontWeight: FontWeight.bold)),
+          if (current) const Text('● あなた'),
+          if (enemy) Text(_game.sealed ? '■ 敵・隔壁閉鎖' : '▲ 敵'),
+          Text(room.description),
+          const SizedBox(height: 4),
+          Text(
+            '接続：${EchoPumpGame.connections[room]!.map((r) => r.label).join('・')}',
+          ),
+        ],
+      ),
     );
   }
 
@@ -262,9 +286,10 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             ...children,
           ],

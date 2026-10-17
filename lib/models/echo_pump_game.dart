@@ -227,8 +227,8 @@ class EchoPumpGame {
     final target = noiseRoom;
     if (target != null && _enemy != target) {
       final paths = <List<PumpRoom>>[
-        [_enemy]
-      ,];
+        [_enemy],
+      ];
       final visited = <PumpRoom>{_enemy};
       while (paths.isNotEmpty) {
         final path = paths.removeAt(0);
