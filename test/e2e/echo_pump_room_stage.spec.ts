@@ -50,3 +50,45 @@ test('room walking, memo and door preserve turn rules with real footsteps', asyn
   await page.screenshot({ path: info.outputPath('hall-after-door.png') });
   expect(errors).toEqual([]);
 });
+
+
+test('first walk keeps the protagonist while the preloaded sheet is delayed', async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  let releaseArt!: () => void;
+  const artGate = new Promise<void>(resolve => { releaseArt = resolve; });
+  let requested = false;
+  await page.route('**/assets/echo_pump/character_walk.png', async route => {
+    requested = true;
+    await artGate;
+    await route.continue();
+  });
+  const button = (name: string) => page.getByRole('button', { name, exact: true });
+  try {
+    await page.goto('/');
+    await button('ゲーム開始').click();
+    await button('スキップして開始').click();
+    await expect(button('保守メモを調べる')).toBeVisible();
+    await expect.poll(() => requested).toBe(true);
+    await page.mouse.move(100, 200);
+    await page.mouse.wheel(0, -30000);
+    await button('保守メモを調べる').click();
+    await expect(page.getByText('歩行中…', { exact: true }).first()).toBeVisible();
+    await page.screenshot({ path: info.outputPath('first-walk-art-pending.png'), scale: 'css' });
+    await expect(page.getByText('夜間保守メモ 1 / 2', { exact: true })).toBeVisible();
+    const response = page.waitForResponse(r => r.url().endsWith('/character_walk.png'));
+    releaseArt();
+    await response;
+    await button('メモを閉じる').click();
+    await page.waitForTimeout(300);
+    await button('中央廊下の扉を調べる').click();
+    await expect(page.getByText('歩行中…', { exact: true }).first()).toBeVisible();
+    await page.screenshot({ path: info.outputPath('walk-art-ready.png'), scale: 'css' });
+    await expect(button('扉を開けて進む')).toBeVisible();
+    await button('戻る').click();
+    await expect(page.getByText('ターン 0', { exact: true })).toBeVisible();
+    expect(errors).toEqual([]);
+  } finally {
+    releaseArt();
+  }
+});
