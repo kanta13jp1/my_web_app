@@ -5,6 +5,7 @@ import '../../../../data/services/spreadsheet_file_gateway.dart';
 import '../../../../domain/models/spreadsheet_document.dart';
 import '../../../../domain/use_cases/evaluate_spreadsheet_formula_use_case.dart';
 import '../../../../domain/use_cases/spreadsheet_csv_codec.dart';
+import '../../../../domain/use_cases/spreadsheet_xlsx_codec.dart';
 import '../../../../services/auto_save_service.dart';
 
 enum SpreadsheetLoadStatus { initial, loading, ready, failure }
@@ -16,10 +17,12 @@ class SpreadsheetViewModel extends ChangeNotifier {
     required SpreadsheetCsvCodec csvCodec,
     required SpreadsheetFileGateway fileGateway,
     required AutoSaveService autoSaveService,
+    SpreadsheetXlsxCodec xlsxCodec = const SpreadsheetXlsxCodec(),
     DateTime Function()? clock,
   })  : _repository = repository,
         _evaluateFormula = evaluateFormula,
         _csvCodec = csvCodec,
+        _xlsxCodec = xlsxCodec,
         _fileGateway = fileGateway,
         _autoSaveService = autoSaveService,
         _clock = clock ?? DateTime.now {
@@ -31,6 +34,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
   final SpreadsheetRepository _repository;
   final EvaluateSpreadsheetFormulaUseCase _evaluateFormula;
   final SpreadsheetCsvCodec _csvCodec;
+  final SpreadsheetXlsxCodec _xlsxCodec;
   final SpreadsheetFileGateway _fileGateway;
   final AutoSaveService _autoSaveService;
   final DateTime Function() _clock;
@@ -43,6 +47,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
   CellAddress _selectedCell = const CellAddress(row: 0, column: 0);
   String? _errorMessage;
   String? _noticeMessage;
+  bool _disposed = false;
   bool _isImporting = false;
   bool _isExporting = false;
   int _historyIndex = -1;
@@ -113,7 +118,12 @@ class SpreadsheetViewModel extends ChangeNotifier {
     }
     _commit(
       current.replaceSheet(
-        activeSheet.copyWith(cells: nextCells),
+        activeSheet.copyWith(
+          cells: nextCells,
+          textCells: activeSheet.textCells
+              .where((key) => key != _selectedCell.key)
+              .toList(),
+        ),
         updatedAt: _clock(),
       ),
     );
@@ -145,9 +155,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
     if (current == null) return;
     _commit(
       current.replaceSheet(
-        current.activeSheet.copyWith(
-          columnCount: current.columnCount + 1,
-        ),
+        current.activeSheet.copyWith(columnCount: current.columnCount + 1),
         updatedAt: _clock(),
       ),
     );
@@ -198,7 +206,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
   }
 
   Future<bool> importCsv() async {
-    if (_isImporting) return false;
+    if (_isImporting || _isExporting) return false;
     final current = _document;
     if (current == null) return false;
     _isImporting = true;
@@ -212,10 +220,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
       final imported = _csvCodec.decode(
         bytes: picked.bytes,
         sheetId: id,
-        sheetName: _sheetNameFromFile(
-          picked.name,
-          current.sheets.length + 1,
-        ),
+        sheetName: _sheetNameFromFile(picked.name, current.sheets.length + 1),
       );
       _selectedCell = const CellAddress(row: 0, column: 0);
       _commit(
@@ -240,7 +245,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
   }
 
   Future<bool> exportCsv() async {
-    if (_isExporting) return false;
+    if (_isExporting || _isImporting) return false;
     final current = _document;
     if (current == null) return false;
     _isExporting = true;
@@ -262,6 +267,99 @@ class SpreadsheetViewModel extends ChangeNotifier {
     } finally {
       _isExporting = false;
       notifyListeners();
+    }
+  }
+
+  Future<bool> importXlsx() async {
+    if (_disposed || _isImporting || _isExporting || _document == null) {
+      return false;
+    }
+    _isImporting = true;
+    _errorMessage = null;
+    _noticeMessage = null;
+    notifyListeners();
+    try {
+      final picked = await _fileGateway.pickXlsx();
+      if (_disposed || picked == null) return false;
+      final imported = _xlsxCodec.decode(picked.bytes);
+      final current = _document!;
+      if (current.sheets.length + imported.length > 20) {
+        throw const FormatException('追加後のシート数は20枚までです。');
+      }
+      final names = current.sheets.map((s) => s.name.toLowerCase()).toSet();
+      if (imported.any((s) => names.contains(s.name.toLowerCase()))) {
+        throw const FormatException('同名シートがあります。既存シートの名前を変更してから読み込んでください。');
+      }
+      final sheets = <SpreadsheetSheet>[...current.sheets];
+      for (final sheet in imported) {
+        final id = _nextSheetId(current.copyWith(sheets: sheets));
+        sheets.add(
+          SpreadsheetSheet(
+            id: id,
+            name: sheet.name,
+            rowCount: sheet.rowCount,
+            columnCount: sheet.columnCount,
+            cells: sheet.cells,
+            textCells: sheet.textCells,
+          ),
+        );
+      }
+      _selectedCell = const CellAddress(row: 0, column: 0);
+      _commit(
+        current.copyWith(
+          sheets: sheets,
+          activeSheetId: sheets[current.sheets.length].id,
+          updatedAt: _clock(),
+        ),
+      );
+      _noticeMessage =
+          '${picked.name} の${imported.length}シートを追加しました。${SpreadsheetXlsxCodec.compatibilityNotice}';
+      return true;
+    } on FormatException catch (error) {
+      if (_disposed) return false;
+      _errorMessage = error.message.toString();
+      return false;
+    } catch (_) {
+      if (_disposed) return false;
+      _errorMessage = 'XLSXファイルを読み込めませんでした。';
+      return false;
+    } finally {
+      _isImporting = false;
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  Future<bool> exportXlsx() async {
+    if (_disposed || _isImporting || _isExporting || _document == null) {
+      return false;
+    }
+    _isExporting = true;
+    _errorMessage = null;
+    _noticeMessage = null;
+    notifyListeners();
+    try {
+      final current = _document!;
+      final saved = await _fileGateway.saveXlsx(
+        suggestedName: _safeFileName('${current.title}-export.xlsx'),
+        bytes: _xlsxCodec.encode(current),
+      );
+      if (_disposed) return false;
+      if (saved) {
+        _noticeMessage =
+            'XLSXを書き出しました。${SpreadsheetXlsxCodec.compatibilityNotice}';
+      }
+      return saved;
+    } on FormatException catch (error) {
+      if (_disposed) return false;
+      _errorMessage = error.message.toString();
+      return false;
+    } catch (_) {
+      if (_disposed) return false;
+      _errorMessage = 'XLSXファイルを書き出せませんでした。';
+      return false;
+    } finally {
+      _isExporting = false;
+      if (!_disposed) notifyListeners();
     }
   }
 
@@ -346,10 +444,7 @@ class SpreadsheetViewModel extends ChangeNotifier {
 
   void _handleSaveStateChanged() => notifyListeners();
 
-  SpreadsheetSheet? _sheetById(
-    SpreadsheetDocument document,
-    String sheetId,
-  ) {
+  SpreadsheetSheet? _sheetById(SpreadsheetDocument document, String sheetId) {
     for (final sheet in document.sheets) {
       if (sheet.id == sheetId) return sheet;
     }
@@ -380,6 +475,8 @@ class SpreadsheetViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     _autoSaveService.removeListener(_handleSaveStateChanged);
     _autoSaveService.dispose();
     super.dispose();
