@@ -148,7 +148,9 @@ class EvernoteCommittedAttachmentSnapshot {
       mimeType: json['mime_type']?.toString() ?? '',
       contentSha256: json['content_sha256']?.toString() ?? '',
       recognitionXml: json['source_metadata'] is Map
-          ? (json['source_metadata'] as Map)['recognition_xml'] as String?
+          ? Map<String, dynamic>.from(
+              json['source_metadata'] as Map,
+            )['recognition_xml'] as String?
           : null,
     );
   }
@@ -1394,7 +1396,8 @@ class EvernoteMigrationCommitService {
             attachment.fileSize != expected.fileSize ||
             attachment.mimeType != expected.mimeType ||
             attachment.contentSha256 != expected.contentSha256 ||
-            attachment.recognitionXml != expected.sourceMetadata['recognition_xml']) {
+            attachment.recognitionXml !=
+                expected.sourceMetadata['recognition_xml']) {
           resourceHashesMatch = false;
           break;
         }

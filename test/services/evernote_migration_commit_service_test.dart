@@ -30,12 +30,11 @@ void main() {
             storage: storage,
             database: database,
           );
+          storage.objects['$evernoteArchiveBucket/$_userId/evernote/${fixture.export.exportSha256}/source.enex'] = fixture.bytes;
           final operation = streamed
-              ? service.commitStagedArchive(
+              ? service.commitFromArchive(
                   userId: _userId,
-                  archivePath: 'synthetic/source.enex',
                   archiveBytes: fixture.bytes.length,
-                  archiveSha256: fixture.export.exportSha256,
                   preview: fixture.preview,
                   sourceContext: _sourceContext,
                 )
@@ -45,7 +44,14 @@ void main() {
                   preview: fixture.preview,
                   sourceContext: _sourceContext,
                 );
-          await expectLater(operation, throwsStateError);
+          await expectLater(
+            operation,
+            throwsA(isA<StateError>().having(
+              (error) => error.message,
+              'failed check',
+              contains('resource_sha256'),
+            )),
+          );
           expect(database.verifyCalls, isEmpty);
         });
       }
