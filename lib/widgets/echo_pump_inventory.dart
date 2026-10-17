@@ -8,8 +8,11 @@ enum EchoPumpInventoryAction { repair }
 
 /// A read-only view of the existing fuse flags; game actions stay in the page.
 class EchoPumpInventoryStrip extends StatelessWidget {
-  const EchoPumpInventoryStrip(
-      {super.key, required this.game, required this.onOpen});
+  const EchoPumpInventoryStrip({
+    super.key,
+    required this.game,
+    required this.onOpen,
+  });
   final EchoPumpGame game;
   final VoidCallback onOpen;
 
@@ -27,11 +30,13 @@ class EchoPumpInventoryStrip extends StatelessWidget {
                 key: const Key('echo-inventory-open'),
                 onPressed: onOpen,
                 icon: const Icon(Icons.inventory_2_outlined),
-                label: Text(game.repaired
-                    ? '所持品：装着済み'
-                    : game.hasFuse
-                        ? '所持品：ヒューズ 1'
-                        : '所持品：空'),
+                label: Text(
+                  game.repaired
+                      ? '所持品：装着済み'
+                      : game.hasFuse
+                          ? '所持品：ヒューズ 1'
+                          : '所持品：空',
+                ),
               ),
               _FuseJourney(game: game),
             ],
@@ -67,14 +72,17 @@ class _FuseJourney extends StatelessWidget {
                   [
                     Icons.handyman_outlined,
                     Icons.inventory_2_outlined,
-                    Icons.settings_input_component
+                    Icons.settings_input_component,
                   ][i],
                   color: i <= current ? _mint : Colors.white24,
                   size: 28,
                 ),
-                Text(['工具庫', '所持', '装着'][i],
-                    style: TextStyle(
-                        color: i == current ? _mint : Colors.white54)),
+                Text(
+                  ['工具庫', '所持', '装着'][i],
+                  style: TextStyle(
+                    color: i == current ? _mint : Colors.white54,
+                  ),
+                ),
               ],
             ),
           ),
@@ -116,18 +124,24 @@ class _FusePainter extends CustomPainter {
       ..strokeWidth = 2;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-          const Rect.fromLTWH(26, 28, 96, 32), const Radius.circular(8)),
+        const Rect.fromLTWH(26, 28, 96, 32),
+        const Radius.circular(8),
+      ),
       Paint()..color = color.withValues(alpha: present ? 0.16 : 0.04),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-          const Rect.fromLTWH(26, 28, 96, 32), const Radius.circular(8)),
+        const Rect.fromLTWH(26, 28, 96, 32),
+        const Radius.circular(8),
+      ),
       stroke,
     );
     for (final x in [18.0, 112.0]) {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-            Rect.fromLTWH(x, 24, 18, 40), const Radius.circular(4)),
+          Rect.fromLTWH(x, 24, 18, 40),
+          const Radius.circular(4),
+        ),
         Paint()..color = color.withValues(alpha: present ? 0.85 : 0.2),
       );
     }
@@ -143,11 +157,12 @@ class _FusePainter extends CustomPainter {
     canvas.drawPath(wire, stroke);
     if (present) {
       canvas.drawLine(
-          const Offset(40, 32),
-          const Offset(104, 32),
-          Paint()
-            ..color = Colors.white54
-            ..strokeWidth = 2);
+        const Offset(40, 32),
+        const Offset(104, 32),
+        Paint()
+          ..color = Colors.white54
+          ..strokeWidth = 2,
+      );
     }
     canvas.restore();
   }
@@ -158,8 +173,11 @@ class _FusePainter extends CustomPainter {
 }
 
 class EchoPumpFuseShelf extends StatelessWidget {
-  const EchoPumpFuseShelf(
-      {super.key, required this.game, required this.onCollect});
+  const EchoPumpFuseShelf({
+    super.key,
+    required this.game,
+    required this.onCollect,
+  });
   final EchoPumpGame game;
   final VoidCallback onCollect;
 
@@ -177,8 +195,10 @@ class EchoPumpFuseShelf extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(powered ? Icons.lock_open : Icons.lock_outline,
-                    color: powered ? _mint : Colors.amber),
+                Icon(
+                  powered ? Icons.lock_open : Icons.lock_outline,
+                  color: powered ? _mint : Colors.amber,
+                ),
                 const SizedBox(width: 8),
                 Expanded(child: Text(powered ? 'B 整備 ON' : 'B 整備 OFF')),
                 if (!game.sealed && game.enemy == PumpRoom.workshop)
@@ -190,7 +210,9 @@ class EchoPumpFuseShelf extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 border: Border.all(
-                    color: powered ? _mint : Colors.white24, width: 2),
+                  color: powered ? _mint : Colors.white24,
+                  width: 2,
+                ),
                 borderRadius: BorderRadius.circular(8),
                 color: const Color(0xFF0F1D22),
               ),
@@ -201,14 +223,17 @@ class EchoPumpFuseShelf extends StatelessWidget {
                   key: ValueKey(available),
                   children: [
                     EchoPumpFuseArt(present: available),
-                    Text(available ? '交換ヒューズ' : '回収済み',
-                        style: const TextStyle(color: _mint)),
+                    Text(
+                      available ? '交換ヒューズ' : '回収済み',
+                      style: const TextStyle(color: _mint),
+                    ),
                     const Divider(color: Colors.white24),
                     Icon(
-                        available
-                            ? Icons.arrow_downward
-                            : Icons.check_circle_outline,
-                        color: _mint),
+                      available
+                          ? Icons.arrow_downward
+                          : Icons.check_circle_outline,
+                      color: _mint,
+                    ),
                     const Icon(Icons.inventory_2_outlined, color: _mint),
                   ],
                 ),
@@ -261,16 +286,17 @@ class _EchoPumpInventoryDialogState extends State<EchoPumpInventoryDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
-                  child:
-                      EchoPumpFuseArt(present: game.hasFuse || game.repaired)),
+                child: EchoPumpFuseArt(present: game.hasFuse || game.repaired),
+              ),
               const SizedBox(height: 8),
               Text(
-                  game.hasFuse
-                      ? '交換ヒューズ'
-                      : game.repaired
-                          ? 'ポンプへ装着済み'
-                          : '所持品は空',
-                  style: Theme.of(context).textTheme.titleMedium),
+                game.hasFuse
+                    ? '交換ヒューズ'
+                    : game.repaired
+                        ? 'ポンプへ装着済み'
+                        : '所持品は空',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               Text('所持数 ${game.hasFuse ? 1 : 0}'),
               const SizedBox(height: 16),
               _FuseJourney(game: game),
@@ -279,24 +305,30 @@ class _EchoPumpInventoryDialogState extends State<EchoPumpInventoryDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                      game.repaired
-                          ? Icons.check_circle_outline
-                          : game.hasFuse
-                              ? Icons.build_outlined
-                              : Icons.bolt,
-                      color: _mint),
+                    game.repaired
+                        ? Icons.check_circle_outline
+                        : game.hasFuse
+                            ? Icons.build_outlined
+                            : Icons.bolt,
+                    color: _mint,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
-                      child: Text(game.repaired
+                    child: Text(
+                      game.repaired
                           ? '制御盤は修理済み。'
                           : game.hasFuse
                               ? 'ポンプ室の制御盤に使う。'
-                              : 'B系統を入れ、工具庫で探す。')),
+                              : 'B系統を入れ、工具庫で探す。',
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
-              const Text('閲覧中はターンが進みません。',
-                  style: TextStyle(color: Colors.white54)),
+              const Text(
+                '閲覧中はターンが進みません。',
+                style: TextStyle(color: Colors.white54),
+              ),
             ],
           ),
         ),

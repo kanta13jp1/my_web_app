@@ -11,30 +11,37 @@ EchoPumpGame stockedGame() => EchoPumpGame()
   ..collectFuse();
 
 void main() {
-  Future<void> showInventory(WidgetTester tester, EchoPumpGame game,
-      {ValueChanged<EchoPumpInventoryAction?>? onResult,
-      double scale = 1}) async {
-    await tester.pumpWidget(MaterialApp(
-      theme: ThemeData.dark(useMaterial3: true),
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(scale)),
-        child: child!,
-      ),
-      home: Builder(
+  Future<void> showInventory(
+    WidgetTester tester,
+    EchoPumpGame game, {
+    ValueChanged<EchoPumpInventoryAction?>? onResult,
+    double scale = 1,
+  }) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(useMaterial3: true),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(scale)),
+          child: child!,
+        ),
+        home: Builder(
           builder: (context) => Scaffold(
-                  body: TextButton(
-                key: const Key('open'),
-                onPressed: () async {
-                  final result = await showDialog<EchoPumpInventoryAction>(
-                    context: context,
-                    builder: (_) => EchoPumpInventoryDialog(game: game),
-                  );
-                  onResult?.call(result);
-                },
-                child: const Text('開く'),
-              ))),
-    ));
+            body: TextButton(
+              key: const Key('open'),
+              onPressed: () async {
+                final result = await showDialog<EchoPumpInventoryAction>(
+                  context: context,
+                  builder: (_) => EchoPumpInventoryDialog(game: game),
+                );
+                onResult?.call(result);
+              },
+              child: const Text('開く'),
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.tap(find.byKey(const Key('open')));
     await tester.pumpAndSettle();
   }
@@ -75,7 +82,9 @@ void main() {
     expect(results, [EchoPumpInventoryAction.repair]);
     expect(find.byKey(const Key('open')), findsOneWidget);
     expect(
-        game.hasFuse, isTrue); // The page, not the dialog, executes the rule.
+      game.hasFuse,
+      isTrue,
+    ); // The page, not the dialog, executes the rule.
     expect(tester.takeException(), isNull);
   });
 
