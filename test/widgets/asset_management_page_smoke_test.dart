@@ -907,7 +907,10 @@ void main() {
           expect(search, findsOneWidget);
           await tester.enterText(search, query);
           await settle();
-          final destination = find.text('予算を設定');
+          final destination = find.descendant(
+            of: find.byType(ListTile),
+            matching: find.text('予算を設定'),
+          );
           expect(destination, findsOneWidget);
           await tester.ensureVisible(destination);
           await tester.tap(destination);
