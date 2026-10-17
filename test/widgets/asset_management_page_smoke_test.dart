@@ -471,13 +471,15 @@ void main() {
         expect(edit, findsOneWidget);
         await tester.ensureVisible(edit);
         await tester.tap(edit);
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
         final dialog = find.byType(AlertDialog);
         final field =
             find.descendant(of: dialog, matching: find.byType(TextField)).first;
         await tester.enterText(field, invalid);
         await tester.tap(find.byKey(const Key('asset_category_budget_save')));
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
         expect(dialog, findsOneWidget,
             reason: 'invalid input must remain editable',);
         expect(
@@ -492,7 +494,8 @@ void main() {
             {'食費': 5000},);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
       });
     }
   }
