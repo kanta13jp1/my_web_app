@@ -31,6 +31,8 @@ void main() {
       await tester.tap(find.byKey(const Key('echo-audio-toggle')));
       await tester.pumpAndSettle();
       expect(output.playing, isTrue);
+      await tester.ensureVisible(find.byKey(const Key('echo-start')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('echo-start')));
       await tester.pump();
       await tester.tap(find.byKey(const Key('echo-intro-skip')));
