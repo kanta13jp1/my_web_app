@@ -81,6 +81,12 @@ try {
     // Semantics may be visible while the host's SEO HTML covers the canvas.
     await expect(page.locator('#seo-shell')).toBeHidden();
     await page.waitForLoadState('networkidle');
+    const hostLink = page.locator('#prototype-host-return');
+    const hostArea = await page.locator('#prototype-app-host').boundingBox();
+    const linkArea = await hostLink.boundingBox();
+    if (!hostArea || !linkArea || linkArea.y + linkArea.height > hostArea.y) {
+      throw new Error('Host navigation overlaps the Flutter app');
+    }
     await page.screenshot({ path: path.join(output, `title-${viewport.width}.png`) });
     await start.click();
     await page.getByRole('button', { name: 'スキップして開始', exact: true }).click();

@@ -39,12 +39,28 @@ def main():
         raise SystemExit('Expected exactly one base href before temporary build configuration')
     index = index.replace(matches[0], '<base href="$FLUTTER_BASE_HREF">')
     # A separate app needs an explicit host return, independent of router history.
-    return_link = ('<a id="prototype-host-return" href="/" '
-                   'style="position:fixed;top:8px;right:8px;z-index:2147483647;'
-                   'padding:8px 12px;background:white;color:#123;border-radius:6px;'
-                   'font:14px sans-serif;text-decoration:none">'
-                   '\u5165\u53e3\u3078\u623b\u308b</a>')
-    index = index.replace('</body>', return_link + '</body>')
+    return_link = ('<header style="position:fixed;top:0;left:0;right:0;height:44px;'
+                   'z-index:2147483647;display:flex;align-items:center;'
+                   'justify-content:flex-end;background:#eef4f5;padding:0 12px">'
+                   '<a id="prototype-host-return" href="/" '
+                   'style="color:#123;font:14px sans-serif">'
+                   '\u5165\u53e3\u3078\u623b\u308b</a></header>'
+                   '<div id="prototype-app-host" '
+                   'style="position:fixed;top:44px;bottom:0;left:0;right:0"></div>')
+    index = index.replace('<body>', '<body>' + return_link)
+    bootstrap_path = root / 'web/flutter_bootstrap.js'
+    original_bootstrap = bootstrap_path.read_bytes() if bootstrap_path.exists() else None
+    bootstrap_path.write_text('''{{flutter_js}}
+{{flutter_build_config}}
+_flutter.loader.load({
+  onEntrypointLoaded: async function(initializer) {
+    const app = await initializer.initializeEngine({
+      hostElement: document.getElementById('prototype-app-host')
+    });
+    await app.runApp();
+  }
+});
+''', encoding='utf-8')
     report['conditions']['host_return'] = 'explicit same-origin host link; not browser history'
     report['source_index_before'] = hashlib.sha256(original_index).hexdigest()
     index_path.write_text(index, encoding='utf-8')
@@ -56,6 +72,12 @@ def main():
     finally:
         index_path.write_bytes(original_index)
         report['source_index_restored'] = index_path.read_bytes() == original_index
+        if original_bootstrap is None:
+            bootstrap_path.unlink()
+        else:
+            bootstrap_path.write_bytes(original_bootstrap)
+        report['source_bootstrap_restored'] = (not bootstrap_path.exists() if original_bootstrap is None
+                                               else bootstrap_path.read_bytes() == original_bootstrap)
     report['exit_code'] = code
     if code == 0:
         web = root / 'build/web'
