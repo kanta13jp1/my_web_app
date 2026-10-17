@@ -670,7 +670,7 @@ void main() {
           await tester.ensureVisible(destination);
           await tester.tap(destination);
           await settle();
-          final editor = find.widgetWithText(TextButton, '定期収入');
+          final editor = find.text('定期収入');
           expect(editor.hitTestable(), findsOneWidget);
           await tester.tap(editor);
           await settle();
