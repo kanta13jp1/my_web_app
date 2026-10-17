@@ -83,6 +83,13 @@ class AssetCalendarDebtInput {
   final DateTime? paidPeriodEndExclusive;
   final AssetLiabilityAccountKind? paymentSourceAccountKind;
 
+  /// カード原資の固定費は利用日には現金を減らさない。
+  /// 請求先・引落日は推測せず、カード請求側の照合へ残す。
+  bool get isCardFundedFixedCost =>
+      isFixedCost &&
+      (paymentSourceAccountKind == AssetLiabilityAccountKind.creditCard ||
+          paymentSourceAccountKind == AssetLiabilityAccountKind.shoppingDebt);
+
   bool get hasPaymentRoutingConflict =>
       paymentMethod == AssetLiabilityPaymentMethod.direct &&
       paymentSourceAccountKind == AssetLiabilityAccountKind.creditCard;
@@ -484,7 +491,7 @@ class AssetPaymentCalendarService {
         final amount = (!effectivePaid && row.scheduledPaymentAmount > _epsilon)
             ? row.scheduledPaymentAmount
             : null;
-        if (amount != null) {
+        if (amount != null && !row.isCardFundedFixedCost) {
           if (row.isFixedCost) {
             subscriptionTotal += amount;
           } else {
@@ -500,15 +507,19 @@ class AssetPaymentCalendarService {
                 ? AssetCalendarEventKind.subscription
                 : AssetCalendarEventKind.debtPayment,
             paymentMethodUnverified: row.hasPaymentRoutingConflict,
-            label: row.hasPaymentRoutingConflict
-                ? '${row.name}（支払方式とカード原資が不一致・要照合）'
-                : row.isFixedCost
-                    ? (effectivePaid ? '${row.name} (支払済)' : row.name)
-                    : (effectivePaid ? '${row.name} (支払済)' : '${row.name} 返済'),
+            label: row.isCardFundedFixedCost
+                ? '${row.name}（カード利用・現金引落なし・請求先要照合）'
+                : row.hasPaymentRoutingConflict
+                    ? '${row.name}（支払方式とカード原資が不一致・要照合）'
+                    : row.isFixedCost
+                        ? (effectivePaid ? '${row.name} (支払済)' : row.name)
+                        : (effectivePaid
+                            ? '${row.name} (支払済)'
+                            : '${row.name} 返済'),
             amount: amount,
             sourceId: row.id.isEmpty ? null : row.id,
             isPaid: effectivePaid,
-            affectsCashProjection: amount != null,
+            affectsCashProjection: amount != null && !row.isCardFundedFixedCost,
             paymentSourceAccountName: row.paymentSourceAccountName,
             paymentAmountEstimated: row.paymentAmountEstimated,
             billingConfirmed: row.billingConfirmed,
