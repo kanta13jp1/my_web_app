@@ -12,6 +12,7 @@ void main() {
     await store.save(<String, double>{}, prefs: prefs);
     expect(await store.load(prefs: prefs), isEmpty);
     expect(prefs.containsKey(AssetCategoryBudgetStore.prefsKey), isTrue,
-        reason: 'A cleared budget must remain distinguishable from no local setting before mirror restore.');
+        reason: 'A cleared budget must remain distinguishable from no local setting before mirror restore.',
+    );
   });
 }
