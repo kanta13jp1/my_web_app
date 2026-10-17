@@ -115,3 +115,63 @@ test('failed audio stays silent, game still works, and retry can recover', async
   await expect.poll(() => hasPlayed(page, 'bgm'), { timeout: 15000 }).toBe(true);
   await page.screenshot({ path: info.outputPath('audio-recovered.png') });
 });
+
+
+test('inventory waits for delayed in-flight footsteps, stays quiet, then resumes', async ({ page }, info) => {
+  const button = (name: string) => page.getByRole('button', { name, exact: true });
+  // Simulate slow browser playback while retaining the real decoding/play call.
+  await page.evaluate(() => {
+    const audit = { entered: false, calls: [] as number[] };
+    (window as any).__inventoryDelay = audit;
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      if (!(this.currentSrc || this.src).includes('/step.wav')) return play.call(this);
+      audit.entered = true;
+      return new Promise<void>(resolve => setTimeout(resolve, 600)).then(() => {
+        audit.calls.push(performance.now());
+        return play.call(this);
+      });
+    };
+  });
+  await button('音をON').click();
+  await expect.poll(() => hasPlayed(page, 'bgm')).toBe(true);
+  await enterGame(page);
+  await button('中央廊下へ').click();
+  await page.waitForFunction(() => (window as any).__inventoryDelay.entered);
+  await button('所持品を開く').click();
+  await expect(page.getByText('所持品は空', { exact: true })).toBeVisible();
+  const openedAt = await page.evaluate(() => performance.now());
+  const calls = await page.evaluate(() => (window as any).__inventoryDelay.calls.length);
+  await page.waitForTimeout(1400);
+  expect(await page.evaluate(t => (window as any).__inventoryDelay.calls.filter((time: number) => time >= t).length, openedAt)).toBe(0);
+  expect(await page.evaluate(() => (window as any).__inventoryDelay.calls.length)).toBe(calls);
+  expect(await page.evaluate(() => (window as any).__echoAudioAudit.media.filter((m: HTMLMediaElement) => (m.currentSrc || m.src).includes('/step.wav') && !m.paused && !m.ended).length)).toBe(0);
+  await info.attach('inventory-audio-state', {
+    body: JSON.stringify(await page.evaluate(() => ({
+      media: (window as any).__echoAudioAudit.media.map((m: HTMLMediaElement) => ({ src: m.currentSrc || m.src, paused: m.paused, loop: m.loop, ended: m.ended, time: m.currentTime })),
+      contexts: (window as any).__echoAudioAudit.contexts.map((c: AudioContext) => c.state),
+    }))), contentType: 'application/json',
+  });
+  expect(await page.evaluate(() => (window as any).__echoAudioAudit.media.some((m: HTMLMediaElement) => m.loop && !m.paused))).toBe(true);
+  await page.screenshot({ path: info.outputPath('inventory-quiet-after-delayed-step.png') });
+  await button('所持品を閉じる').click();
+  await expect(page.getByText('ターン 1', { exact: true }).first()).toBeVisible();
+  await button('管理室へ').click();
+  await expect.poll(() => page.evaluate(() => (window as any).__inventoryDelay.calls.length)).toBeGreaterThan(calls);
+  await expect(page.getByText('ターン 2', { exact: true }).first()).toBeVisible();
+  // Repeat after the player is warm; menu stops must never overlap platform play.
+  for (let cycle = 0; cycle < 2; cycle++) {
+    await button('中央廊下へ').click();
+    await button('所持品を開く').click();
+    await expect(page.getByText('所持品は空', { exact: true })).toBeVisible();
+    const visibleAt = await page.evaluate(() => performance.now());
+    await page.waitForTimeout(1000);
+    expect(await page.evaluate(t => (window as any).__inventoryDelay.calls.filter((time: number) => time >= t).length, visibleAt)).toBe(0);
+    expect(await page.evaluate(() => (window as any).__echoAudioAudit.media.some((m: HTMLMediaElement) => (m.currentSrc || m.src).includes('/bgm.wav') && !m.paused))).toBe(true);
+    await button('所持品を閉じる').click();
+    const beforeMove = await page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/step.wav')).length);
+    await button('管理室へ').click();
+    await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/step.wav')).length)).toBeGreaterThan(beforeMove);
+  }
+
+});
