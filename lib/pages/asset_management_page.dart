@@ -315,6 +315,7 @@ class AssetManagementPage extends StatefulWidget {
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
   final AssetLiabilityRepository? assetLiabilityRepository;
+  final AssetCategoryBudgetStore categoryBudgetStore;
   final InvestmentAssetRepository? investmentAssetRepository;
   final AssetAnomalyDetectionRepository? anomalyDetectionRepository;
   final AssetManagementAiSummaryService? aiSummaryService;
@@ -447,6 +448,7 @@ class AssetManagementPage extends StatefulWidget {
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
     this.assetLiabilityRepository,
+    this.categoryBudgetStore = const AssetCategoryBudgetStore(),
     this.investmentAssetRepository,
     this.anomalyDetectionRepository,
     this.aiSummaryService,
@@ -1141,8 +1143,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   );
   static const String _duplicateIgnoredMirrorKey =
       'subscription_duplicate_ignored';
-  final AssetCategoryBudgetStore _categoryBudgetStore =
-      const AssetCategoryBudgetStore();
+  AssetCategoryBudgetStore get _categoryBudgetStore =>
+      widget.categoryBudgetStore;
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
   final DrinkChallengeStore _drinkChallengeStore = const DrinkChallengeStore();
   Map<String, DrinkRecordStatus> _drinkRecords = <String, DrinkRecordStatus>{};
@@ -2489,7 +2491,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  AssetLiabilityMonthlyState _currentAssetLiabilityMonthlyState() {
+  AssetLiabilityMonthlyState _currentAssetLiabilityMonthlyState({
+    List<AssetLiabilityIncomePlan>? incomePlans,
+  }) {
     return AssetLiabilityMonthlyState(
       confirmedPaymentDays: Map<String, double>.from(_confirmedPaymentDays),
       paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
@@ -2510,7 +2514,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
         _cardStatementLines,
       ),
-      incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
+      incomePlans: List<AssetLiabilityIncomePlan>.from(
+          incomePlans ?? _monthlyIncomePlans),
       transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
       // 端末間 last-write-wins 用に、保存(=編集)時刻を毎回刻む。
       updatedAt: DateTime.now(),
@@ -4268,18 +4273,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  Future<void> _saveRecurringIncomeTemplates() async {
-    try {
-      await _assetLiabilityRepository.saveRecurringIncomeTemplates(
-        List<AssetLiabilityRecurringIncomeTemplate>.from(
-          _recurringIncomeTemplates,
-        ),
-      );
-    } catch (e) {
-      debugPrint('Error saving recurring income templates: $e');
-    }
-  }
-
   void _updateDefaultPaymentSourceAccount(
     String liabilityId,
     String? sourceAccountId,
@@ -4757,20 +4750,52 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isBuiltInTransferTask(AssetLiabilityTransferTask task) =>
       task.id == AssetLiabilityPlanningService.auPayCardFundingTransferTaskId;
 
-  void _deleteRecurringIncomeTemplate(String templateId) {
-    final currentMonthKey = _assetLiabilityStateMonthKey(_now);
-    setState(() {
-      _recurringIncomeTemplates = _recurringIncomeTemplates
-          .where((template) => template.id != templateId)
-          .toList(growable: false);
-      _monthlyIncomePlans = _monthlyIncomePlans
-          .where(
-            (plan) => plan.id != 'recurring_${templateId}_$currentMonthKey',
-          )
-          .toList(growable: false);
-    });
-    unawaited(_saveRecurringIncomeTemplates());
-    unawaited(_saveAssetLiabilityMonthlyState());
+  final _deletingRecurringIncomeTemplateIds = <String>{};
+
+  Future<void> _deleteRecurringIncomeTemplate(String templateId) async {
+    if (_deletingRecurringIncomeTemplateIds.isNotEmpty) return;
+    final month = _assetLiabilityStateMonth(_now);
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    final templates = _recurringIncomeTemplates
+        .where((template) => template.id != templateId)
+        .toList(growable: false);
+    final plans = _monthlyIncomePlans
+        .where((plan) => plan.id != 'recurring_${templateId}_$monthKey')
+        .toList(growable: false);
+    final nextState = _currentAssetLiabilityMonthlyState(
+      incomePlans: plans,
+    );
+    setState(() => _deletingRecurringIncomeTemplateIds.add(templateId));
+    var templateDeleted = false;
+    try {
+      await _assetLiabilityRepository.saveRecurringIncomeTemplates(templates);
+      templateDeleted = true;
+      await _assetLiabilityRepository.saveMonth(month: month, state: nextState);
+      if (!mounted) return;
+      setState(() {
+        _recurringIncomeTemplates = templates;
+        if (_assetLiabilityStateMonthKey(_now) == monthKey) {
+          _monthlyIncomePlans = plans;
+        }
+      });
+    } catch (error) {
+      debugPrint('Error deleting recurring income template: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              templateDeleted
+                  ? '定期収入は削除済みですが、今月の予定を削除できませんでした。もう一度削除してください。'
+                  : '削除できませんでした。項目を残しています。もう一度削除してください。',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _deletingRecurringIncomeTemplateIds.remove(templateId));
+      }
+    }
   }
 
   Future<void> _showIncomePlanDialog(
@@ -4926,6 +4951,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityRecurringIncomeTemplate? existing,
     AssetLiabilityRecurringIncomeTemplate? prefill,
   }) async {
+    if (_deletingRecurringIncomeTemplateIds.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('削除の保存中です。完了してから編集してください。')),
+      );
+      return;
+    }
     // existing(編集)優先。なければ prefill(検出結果からの追加)を初期値に使う。
     final initial = existing ?? prefill;
     final nameController = TextEditingController(text: initial?.name ?? '');
@@ -11493,10 +11524,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _saveCategoryBudgets(Map<String, double> budgets) async {
+    await _categoryBudgetStore.save(budgets);
+    if (!mounted) return;
     setState(() {
       _categoryBudgets = budgets;
     });
-    await _categoryBudgetStore.save(budgets);
     unawaited(_mirrorCategoryBudgets());
   }
 
@@ -19109,78 +19141,127 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               : '',
         ),
     };
-    final saved = await showDialog<bool>(
+    var isSaving = false;
+    String? saveError;
+    final route = DialogRoute<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('カテゴリ別の月次予算'),
-        content: SizedBox(
-          width: 420,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '給料サイクル(25日始まり)あたりの予算を入力します。空欄は予算なし。',
-                  style: TextStyle(fontSize: 12, height: 1.5),
-                ),
-                const SizedBox(height: 8),
-                for (final category in categories)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            category,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 130,
-                          child: TextField(
-                            controller: controllers[category],
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              prefixText: '¥',
-                              isDense: true,
-                            ),
-                          ),
-                        ),
-                      ],
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => PopScope(
+          canPop: !isSaving,
+          child: AlertDialog(
+            title: const Text('カテゴリ別の月次予算'),
+            content: SizedBox(
+              width: 420,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '給料サイクル(25日始まり)あたりの予算を入力します。空欄・0は予算なし。',
+                      style: TextStyle(fontSize: 12, height: 1.5),
                     ),
-                  ),
-              ],
+                    if (saveError != null)
+                      Text(
+                        saveError!,
+                        key: const Key('asset_category_budget_save_error'),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error),
+                      ),
+                    const SizedBox(height: 8),
+                    for (final category in categories)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                                child: Text(category,
+                                    style: const TextStyle(fontSize: 13))),
+                            SizedBox(
+                              width: 130,
+                              child: TextField(
+                                key: ValueKey(
+                                    'asset_category_budget_input_$category'),
+                                controller: controllers[category],
+                                enabled: !isSaving,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  labelText: category,
+                                  prefixText: '¥',
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                key: const Key('asset_category_budget_save'),
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final next = <String, double>{};
+                        for (final category in categories) {
+                          final text = controllers[category]!
+                              .text
+                              .replaceAll(',', '')
+                              .trim();
+                          if (text.isEmpty) continue;
+                          final parsed = double.tryParse(text);
+                          if (parsed == null ||
+                              !parsed.isFinite ||
+                              parsed < 0) {
+                            setDialogState(() {
+                              saveError =
+                                  '$category は0以上の金額を入力してください。空欄は予算なしです。';
+                            });
+                            return;
+                          }
+                          if (parsed > 0) next[category] = parsed;
+                        }
+                        setDialogState(() {
+                          isSaving = true;
+                          saveError = null;
+                        });
+                        try {
+                          await _saveCategoryBudgets(next);
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                        } catch (error) {
+                          debugPrint('Error saving category budgets: $error');
+                          if (dialogContext.mounted) {
+                            setDialogState(() {
+                              isSaving = false;
+                              saveError = '予算を保存できませんでした。入力を確認し、もう一度保存してください。';
+                            });
+                          }
+                        }
+                      },
+                child: Text(isSaving ? '保存中…' : '保存'),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            key: const Key('asset_category_budget_save'),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('保存'),
-          ),
-        ],
       ),
     );
-    if (saved == true && mounted) {
-      final next = <String, double>{};
-      controllers.forEach((category, controller) {
-        final parsed = double.tryParse(
-          controller.text.replaceAll(',', '').trim(),
-        );
-        if (parsed != null && parsed > 0) {
-          next[category] = parsed;
-        }
-      });
-      await _saveCategoryBudgets(next);
-    }
-    for (final controller in controllers.values) {
-      controller.dispose();
+    try {
+      await Navigator.of(context).push(route);
+      await route.completed;
+    } finally {
+      for (final controller in controllers.values) {
+        controller.dispose();
+      }
     }
   }
 
@@ -28589,7 +28670,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               workbook,
               existing: template,
             ),
-            onDeleted: () => _deleteRecurringIncomeTemplate(template.id),
+            onDeleted: _deletingRecurringIncomeTemplateIds.contains(template.id)
+                ? null
+                : () => _deleteRecurringIncomeTemplate(template.id),
           ),
       ],
     );
