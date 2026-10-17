@@ -128,6 +128,7 @@ class EvernoteCommittedAttachmentSnapshot {
     required this.fileSize,
     required this.mimeType,
     required this.contentSha256,
+    this.recognitionXml,
   });
 
   final String fileName;
@@ -135,6 +136,7 @@ class EvernoteCommittedAttachmentSnapshot {
   final int fileSize;
   final String mimeType;
   final String contentSha256;
+  final String? recognitionXml;
 
   factory EvernoteCommittedAttachmentSnapshot.fromJson(
     Map<String, dynamic> json,
@@ -145,6 +147,9 @@ class EvernoteCommittedAttachmentSnapshot {
       fileSize: _asInt(json['file_size']),
       mimeType: json['mime_type']?.toString() ?? '',
       contentSha256: json['content_sha256']?.toString() ?? '',
+      recognitionXml: json['source_metadata'] is Map
+          ? (json['source_metadata'] as Map)['recognition_xml'] as String?
+          : null,
     );
   }
 }
@@ -584,7 +589,7 @@ class SupabaseEvernoteMigrationDatabaseGateway
     final attachmentResponse = await _client
         .from('attachments')
         .select(
-          'file_name,file_path,file_size,mime_type,content_sha256',
+          'file_name,file_path,file_size,mime_type,content_sha256,source_metadata',
         )
         .eq('note_id', noteId)
         .eq('source_system', 'evernote')
@@ -1388,7 +1393,8 @@ class EvernoteMigrationCommitService {
         if (attachment.fileName != expected.fileName ||
             attachment.fileSize != expected.fileSize ||
             attachment.mimeType != expected.mimeType ||
-            attachment.contentSha256 != expected.contentSha256) {
+            attachment.contentSha256 != expected.contentSha256 ||
+            attachment.recognitionXml != expected.sourceMetadata['recognition_xml']) {
           resourceHashesMatch = false;
           break;
         }

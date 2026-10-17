@@ -15,6 +15,41 @@ const _sourceContext = EvernoteMigrationSourceContext(
 
 void main() {
   group('EvernoteMigrationCommitService', () {
+    for (final streamed in <bool>[false, true]) {
+      for (final missing in <bool>[false, true]) {
+        test('blocks OCR metadata loss: streamed=$streamed missing=$missing',
+            () async {
+          final fixture = _fixture();
+          final storage = _FakeStorageGateway();
+          final database = _FakeDatabaseGateway(
+            loseRecognition: missing,
+            tamperRecognition: !missing,
+          );
+          final service = EvernoteMigrationCommitService(
+            ledger: _FakeLedgerGateway(),
+            storage: storage,
+            database: database,
+          );
+          final operation = streamed
+              ? service.commitStagedArchive(
+                  userId: _userId,
+                  archivePath: 'synthetic/source.enex',
+                  archiveBytes: fixture.bytes.length,
+                  archiveSha256: fixture.export.exportSha256,
+                  preview: fixture.preview,
+                  sourceContext: _sourceContext,
+                )
+              : service.commit(
+                  userId: _userId,
+                  exportBytes: fixture.bytes,
+                  preview: fixture.preview,
+                  sourceContext: _sourceContext,
+                );
+          await expectLater(operation, throwsStateError);
+          expect(database.verifyCalls, isEmpty);
+        });
+      }
+    }
     test('archives, atomically commits, and hash-verifies a batch', () async {
       final fixture = _fixture();
       final storage = _FakeStorageGateway();
@@ -412,6 +447,7 @@ _Fixture _fixture() {
     <resource>
       <data encoding="base64" hash="fixturehash">$encodedResource</data>
       <mime>text/plain</mime>
+      <recognition><![CDATA[<recoIndex><item x="0" y="0" w="1" h="1"><t w="1">Synthetic OCR</t></item></recoIndex>]]></recognition>
       <resource-attributes><file-name>fixture.txt</file-name></resource-attributes>
     </resource>
   </note>
@@ -568,10 +604,14 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
   _FakeDatabaseGateway({
     this.notebookCollectionId = 9901,
     this.corruptTaskHashes = false,
+    this.loseRecognition = false,
+    this.tamperRecognition = false,
   });
 
   final int? notebookCollectionId;
   final bool corruptTaskHashes;
+  final bool loseRecognition;
+  final bool tamperRecognition;
   final List<String> commitCalls = <String>[];
   final List<String> committedContents = <String>[];
   final List<Map<String, dynamic>> committedMetadata = <Map<String, dynamic>>[];
@@ -633,6 +673,11 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
               fileSize: resource.fileSize,
               mimeType: resource.mimeType,
               contentSha256: resource.contentSha256,
+              recognitionXml: loseRecognition
+                  ? null
+                  : tamperRecognition
+                      ? '<recoIndex/>'
+                      : resource.sourceMetadata['recognition_xml'] as String?,
             ),
           )
           .toList(growable: false),
