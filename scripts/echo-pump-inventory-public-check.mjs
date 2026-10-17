@@ -58,7 +58,8 @@ try {
    assert.equal(await text('夜間保守メモ 1 / 2').count(),0);
    const audibleSteps=await page.evaluate(()=>window.__roomAudit.media.filter(m=>(m.currentSrc||m.src).includes('/step.wav')&&!m.paused&&!m.ended).length);
    const lateRequests=await page.evaluate(t=>window.__roomAudit.requests.filter(x=>x.src.includes('/step.wav')&&x.calledAt>=t),openedAt);
-   observed.menu={stepBefore,initialResolved,stopped,afterWait,waitMs:1800,openedAt,audibleSteps,lateRequests,passed:afterWait===stopped&&audibleSteps===0&&lateRequests.length===0};
+   const bgmPlaying=await page.evaluate(()=>window.__roomAudit.media.some(m=>(m.currentSrc||m.src).includes('/bgm.wav')&&!m.paused&&!m.ended));
+   observed.menu={stepBefore,initialResolved,stopped,afterWait,waitMs:1800,openedAt,audibleSteps,lateRequests,bgmPlaying,passed:afterWait===stopped&&audibleSteps===0&&lateRequests.length===0&&bgmPlaying};
    await shot('inventory-still-stopped');
    await button('所持品を閉じる').click();await text('ターン 0').waitFor();
    await button('保守メモを調べる').click();await text('夜間保守メモ 1 / 2').waitFor();
