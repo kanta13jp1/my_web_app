@@ -5,6 +5,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized().ensureSemantics();
   runApp(
     MaterialApp(
+      theme: ThemeData(fontFamily: 'NotoSansJP'),
       initialRoute: '/game',
       routes: {
         '/': (context) => const Scaffold(

@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
+import { connect } from 'node:net';
 import { createInterface } from 'node:readline';
 import { EventEmitter } from 'node:events';
 import { promises as fs, createWriteStream } from 'node:fs';
@@ -31,13 +32,18 @@ export function semanticVolume(attributes) {
   return attributes.text;
 }
 
+export function allowedFontTunnel(authority) {
+  return ['fonts.gstatic.com:443', 'fonts.googleapis.com:443'].includes(authority);
+}
+
 export function launchArgs(entry, mockPort) {
   if (!['normal', 'isolated'].includes(entry)) throw new Error('Unknown entry');
   return ['run', '--machine', '--debug', '-d', 'chrome', '--web-port=7359',
     '--web-browser-debug-port=9222', '--web-run-headless',
     '--web-browser-flag=--headless=new', '--web-browser-flag=--no-sandbox',
     '--web-browser-flag=--disable-dev-shm-usage',
-    '--web-browser-flag=--host-resolver-rules=MAP * 127.0.0.1',
+    `--web-browser-flag=--proxy-server=http://127.0.0.1:${mockPort}`,
+    '--web-browser-flag=--disable-quic',
     '--no-web-resources-cdn', '--web-experimental-hot-reload',
     `--web-launch-url=http://localhost:7359/${entry === 'normal' ? 'echo-pump' : ''}`,
     '--target=' + (entry === 'normal' ? 'lib/main.dart' : 'test/fixtures/echo_pump_app.dart'),
@@ -73,15 +79,33 @@ export async function measure(entry) {
   const sourcePath = path.join(root, 'lib/widgets/echo_pump_audio_controls.dart');
   const original = await fs.readFile(sourcePath, 'utf8');
   const report = { schema: 1, entry, head_sha: process.env.GITHUB_SHA, started_at: new Date().toISOString(),
-    source_before: digest(original), result: 'failure', hot_reload: [], mock_requests: [],
+    source_before: digest(original), result: 'failure', hot_reload: [], mock_requests: [], font_tunnels: [],
     conditions: { cold_start_samples: 1, reload_samples: 3, mode: 'debug', browser: 'headless Chrome',
-      viewport: '1280x900', backend: 'loopback synthetic only', external_dns: 'mapped to loopback',
+      viewport: '1280x900', backend: 'loopback synthetic only', external_network: 'font HTTPS allowlist proxy; other external destinations blocked',
       setup_and_queue_excluded: true } };
   const server = createServer((req, res) => {
+    if (!req.url?.startsWith('/')) { res.writeHead(403); res.end(); return; }
     report.mock_requests.push({ method: req.method, path: req.url });
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' });
     res.end(JSON.stringify(req.url?.startsWith('/rest/v1/') ? [] : {}));
+  });
+  const tunnels = new Set();
+  server.on('connect', (req, client, head) => {
+    const allowed = allowedFontTunnel(req.url);
+    report.font_tunnels.push({ authority: req.url, allowed });
+    if (!allowed) { client.end('HTTP/1.1 403 Forbidden\r\n\r\n'); return; }
+    const upstream = connect(443, req.url.split(':')[0]);
+    for (const socket of [client, upstream]) {
+      tunnels.add(socket); socket.on('close', () => tunnels.delete(socket));
+      socket.on('error', () => { client.destroy(); upstream.destroy(); });
+    }
+    upstream.setTimeout(30000, () => { client.destroy(); upstream.destroy(); });
+    upstream.on('connect', () => {
+      client.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+      if (head.length) upstream.write(head);
+      client.pipe(upstream); upstream.pipe(client);
+    });
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const args = launchArgs(entry, server.address().port);
@@ -152,6 +176,7 @@ export async function measure(entry) {
         full_restart: message.params.fullRestart, state_preserved: true, navigations });
       await page.screenshot({ path: path.join(output, `reload-${sample}.png`) });
     }
+    if (report.page_errors.length) throw new Error('Browser runtime errors: ' + report.page_errors.join('; '));
     report.result = 'success';
   } catch (error) {
     report.failure = { phase, message: error.stack || String(error) };
@@ -183,6 +208,7 @@ export async function measure(entry) {
       report.source_restored = digest(await fs.readFile(sourcePath)) === report.source_before;
       report.runner_stopped = stopped(runner);
       if (!report.source_restored || !report.runner_stopped) { report.result = 'failure'; process.exitCode = 1; }
+      for (const socket of tunnels) socket.destroy();
       await new Promise(resolve => server.close(resolve));
       log.end();
       await fs.writeFile(path.join(output, 'RESULT.json'), JSON.stringify(report, null, 2));

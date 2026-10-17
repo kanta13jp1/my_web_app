@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 test.use({ trace: 'retain-on-failure' });
 test.afterEach(async ({ page }, info) => {
@@ -19,10 +19,18 @@ test.afterEach(async ({ page }, info) => {
 
 
 
-async function enterAmount(page: Page, name: string, value: string) {
+async function enterAmount(page: Page, name: string, value: string, previous?: Locator) {
   const input = page.getByRole('textbox', { name });
-  await input.click();
-  await input.focus();
+  if (previous) {
+    // Use the public keyboard order after expanding Flutter's monthly section.
+    // Clicking a distant semantics input can leave the old editing field active.
+    await previous.focus();
+    await expect(previous).toBeFocused();
+    await previous.press('Tab');
+  } else {
+    await input.click();
+    await input.focus();
+  }
   await expect(input).toBeFocused();
   await page.evaluate(() => new Promise<void>(resolve =>
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
@@ -59,9 +67,10 @@ test('savings goal, daily design, and reload preserve planning values without fi
   await enterAmount(page, '毎月の生活費（食費・交通・日用品等）', '50000');
   await page.getByRole('button', { name: '計画を保存・再計算' }).click();
   await expect(page.getByRole('heading', { name: '必要な積立：月 ¥70,834', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '月ごとの目標と現計画の見込み' }).click();
+  const checkpoints = page.getByRole('button', { name: '月ごとの目標と現計画の見込み' });
+  await checkpoints.click();
   await expect(page.getByRole('heading', { name: '2027-10-13 自由資金目標 ¥1,000,000 / 現計画 ¥1,950,000', exact: true })).toBeVisible();
-  await enterAmount(page, '今日の生活費合計（計画用メモ）', '1200');
+  await enterAmount(page, '今日の生活費合計（計画用メモ）', '1200', checkpoints);
   await page.getByRole('button', { name: '生活費メモを保存', exact: true }).click();
   const morning = page.getByRole('checkbox', { name: '朝：朝食・食器洗い・歯磨き、今日の予定を確認' });
   await morning.click();
