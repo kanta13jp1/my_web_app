@@ -647,14 +647,14 @@ void main() {
           RepaintBoundary(
             key: const Key('income_search_diagnostic_boundary'),
             child: MaterialApp(
-            home: AssetManagementPage(
-              debugNow: DateTime(2026, 6, 20),
-              debugCalendarNow: DateTime(2026, 6, 20),
-              debugInitialAssetData: const {
-                '2026-06-20': {'synthetic cash': 1000.0},
-              },
+              home: AssetManagementPage(
+                debugNow: DateTime(2026, 6, 20),
+                debugCalendarNow: DateTime(2026, 6, 20),
+                debugInitialAssetData: const {
+                  '2026-06-20': {'synthetic cash': 1000.0},
+                },
+              ),
             ),
-          ),
           ),
         );
         Future<void> settle() async {
@@ -686,22 +686,27 @@ void main() {
           final ancestors = <String>[];
           editor.evaluate().single.visitAncestorElements((element) {
             final render = element.findRenderObject();
-            ancestors.add('${element.widget.runtimeType}: ${render is RenderBox && render.hasSize ? render.size : render.runtimeType}');
+            ancestors.add(
+                '${element.widget.runtimeType}: ${render is RenderBox && render.hasSize ? render.size : render.runtimeType}',);
             return ancestors.length < 40;
           });
           debugPrint('SEARCH_ANCESTORS $size: $ancestors');
           await tester.runAsync(() async {
-            final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(const Key('income_search_diagnostic_boundary')),);
+            final boundary = tester.renderObject<RenderRepaintBoundary>(
+              find.byKey(const Key('income_search_diagnostic_boundary')),
+            );
             final image = await boundary.toImage(pixelRatio: 1);
             final data = await image.toByteData(format: ui.ImageByteFormat.png);
-            await File('.ci-logs/recurring-income/layout-${size.width}.png').writeAsBytes(data!.buffer.asUint8List());
+            await File('.ci-logs/recurring-income/layout-${size.width}.png')
+                .writeAsBytes(data!.buffer.asUint8List());
             image.dispose();
           });
 
           expect(
             editor.hitTestable(),
             findsOneWidget,
-            reason: 'editor rect ${tester.getRect(editor)} / surface $size / view ${tester.view.physicalSize} / hits ${tester.hitTestOnBinding(tester.getCenter(editor)).path.map((entry) => entry.target.runtimeType).toList()}',
+            reason:
+                'editor rect ${tester.getRect(editor)} / surface $size / view ${tester.view.physicalSize} / hits ${tester.hitTestOnBinding(tester.getCenter(editor)).path.map((entry) => entry.target.runtimeType).toList()}',
           );
           await tester.tap(editor);
           await settle();
