@@ -195,7 +195,11 @@ class EvernoteEnmlMarkdownConverter {
       var encrypted = 0;
       for (final child in node.children) {
         encrypted += _writeNode(
-          child, quoted, resourcesByHash, unresolved, listDepth: listDepth,
+          child,
+          quoted,
+          resourcesByHash,
+          unresolved,
+          listDepth: listDepth,
         );
       }
       final lines = _normalize(quoted.toString()).split('\n');
@@ -290,26 +294,29 @@ class EvernoteEnmlMarkdownConverter {
         .map(
           (row) => row.childElements
               .where(
-                (cell) => <String>{'th', 'td'}.contains(
-                  cell.localName.toLowerCase(),
-                ),
-              )
+            (cell) => <String>{'th', 'td'}.contains(
+              cell.localName.toLowerCase(),
+            ),
+          )
               .map(
-                (cell) {
-                  final content = StringBuffer();
-                  for (final child in cell.children) {
-                    encrypted += _writeNode(
-                      child, content, resourcesByHash, unresolved,
-                      listDepth: listDepth,
-                    );
-                  }
-                  return content.toString()
-                      .replaceAll('|', r'\|')
-                      .replaceAll(RegExp(r'\s+'), ' ')
-                      .trim();
-                },
-              )
-              .toList(growable: false),
+            (cell) {
+              final content = StringBuffer();
+              for (final child in cell.children) {
+                encrypted += _writeNode(
+                  child,
+                  content,
+                  resourcesByHash,
+                  unresolved,
+                  listDepth: listDepth,
+                );
+              }
+              return content
+                  .toString()
+                  .replaceAll('|', r'\|')
+                  .replaceAll(RegExp(r'\s+'), ' ')
+                  .trim();
+            },
+          ).toList(growable: false),
         )
         .where((row) => row.isNotEmpty)
         .toList(growable: false);

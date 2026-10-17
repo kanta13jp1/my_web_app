@@ -9,20 +9,25 @@ void main() {
         : '<blockquote>$content</blockquote>';
     test('$wrapper retains attachment position and formatted text', () {
       final result = converter.convert(
-        enml: '<en-note>${wrap('before <b>bold</b> <en-media hash="abc"/> after')}</en-note>',
+        enml:
+            '<en-note>${wrap('before <b>bold</b> <en-media hash="abc"/> after')}</en-note>',
         resources: const <EvernoteEnmlResourceReference>[
           EvernoteEnmlResourceReference(
-            hash: 'abc', mimeType: 'image/png', label: 'sample',
+            hash: 'abc',
+            mimeType: 'image/png',
+            label: 'sample',
           ),
         ],
       );
-      expect(result.markdown, contains('before **bold** ![sample](evernote-resource:abc) after'));
+      expect(result.markdown,
+          contains('before **bold** ![sample](evernote-resource:abc) after'));
       expect(result.unresolvedResourceHashes, isEmpty);
       expect(result.encryptedSectionCount, 0);
     });
     test('$wrapper propagates unresolved media and encrypted warnings', () {
       final result = converter.convert(
-        enml: '<en-note>${wrap('<en-media hash="missing"/><en-crypt>ciphertext</en-crypt>')}</en-note>',
+        enml:
+            '<en-note>${wrap('<en-media hash="missing"/><en-crypt>ciphertext</en-crypt>')}</en-note>',
         resources: const <EvernoteEnmlResourceReference>[],
       );
       expect(result.unresolvedResourceHashes, <String>['missing']);
