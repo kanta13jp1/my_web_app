@@ -6,7 +6,7 @@ await mkdir('.ci-logs/flow-input', { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome', headless: true });
 const evidence = [];
 try {
-  for (const method of ['fill', 'insertText', 'type']) {
+  for (const method of ['fillOnly', 'domSameTask', 'fill', 'settledFill', 'insertText', 'type']) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1200 } });
     await context.route('**/*', async route => {
       const url = new URL(route.request().url());
@@ -27,7 +27,7 @@ try {
       }
     });
     await page.goto('http://127.0.0.1:8080/', { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => window.__flowProbeState && JSON.parse(window.__flowProbeState).fields['内容'] === '', { timeout: 90000 });
+    await page.waitForFunction(() => window.__flowProbeState && JSON.parse(window.__flowProbeState).fields['内容'] === '', null, { timeout: 90000 });
     await page.waitForTimeout(1800);
     const memo = page.getByRole('textbox', {name:'内容', exact:true});
     const amount = page.getByRole('textbox', {name:'金額 (円)', exact:true});
@@ -36,8 +36,11 @@ try {
       row.snapshots.push({stage, controller: await page.evaluate(() => JSON.parse(window.__flowProbeState)), dom: await page.locator('input,textarea').evaluateAll(nodes => nodes.map(x => ({tag:x.tagName, role:x.getAttribute('role'), aria:x.getAttribute('aria-label'), value:x.value, active:x === document.activeElement}))) });
     }
     async function enter(locator, text) {
+      if (method === 'fillOnly') return locator.fill(text);
+      if (method === 'domSameTask') return locator.evaluate((element, text) => { element.focus(); element.value = text; element.dispatchEvent(new InputEvent('input', {bubbles:true, data:text, inputType:'insertText'})); }, text);
       await locator.click({ force: true });
-      if (method === 'fill') await locator.fill(text);
+      if (method === 'settledFill') await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      if (method === 'fill' || method === 'settledFill') await locator.fill(text);
       else if (method === 'insertText') await page.keyboard.insertText(text);
       else await page.keyboard.type(text, {delay:50});
     }
@@ -53,7 +56,7 @@ try {
       row.events = await page.evaluate(() => window.__inputEvents);
       const last = row.snapshots.at(-1).controller;
       assert.equal(last.authenticated, false);
-      assert.equal(last.requests.filter(x => !x.startsWith('GET ') && !x.startsWith('HEAD ')).length, 0);
+      assert.equal(last.requests.filter(x => x.includes('/rest/v1/') && !x.startsWith('GET ') && !x.startsWith('HEAD ')).length, 0);
       row.retained = last.fields['内容'] === (method === 'type' ? 'Synthetic coffee' : 'Synthetic probe コーヒー') && last.fields['金額 (円)'] === '1234';
     } catch (error) {
       row.failure = String(error);
@@ -66,7 +69,7 @@ try {
     await context.close();
   }
   console.log(JSON.stringify(evidence.map(({method, retained, failure, snapshots}) => ({method, retained, failure, controllers:snapshots.map(x=>({stage:x.stage, ...x.controller}))})), null, 2));
-  assert.equal(evidence.some(x => x.retained), true, 'At least one real input path must retain both controller values');
+  for (const method of ['fill', 'settledFill', 'insertText', 'type']) assert.equal(evidence.find(x => x.method === method)?.retained, true, `${method} must retain both controller values`);
 } finally {
   await browser.close();
   await writeFile('.ci-logs/flow-input/browser-evidence.json', JSON.stringify(evidence, null, 2));

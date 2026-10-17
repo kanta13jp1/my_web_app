@@ -33,6 +33,8 @@ jobs:
           mkdir -p .ci-logs/flow-input
           flutter pub get
           dart format test/widgets/asset_flow_input_retention_probe_test.dart test/probes/flow_input_probe_main.dart
+          cp test/widgets/asset_flow_input_retention_probe_test.dart .ci-logs/flow-input/
+          cp test/probes/flow_input_probe_main.dart .ci-logs/flow-input/
           flutter analyze --no-pub test/widgets/asset_flow_input_retention_probe_test.dart test/probes/flow_input_probe_main.dart
       - name: Actual page controller regression
         run: |
