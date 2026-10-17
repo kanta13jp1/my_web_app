@@ -188,7 +188,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                           children: [
                             Text(_game.objective),
                             const SizedBox(height: 8),
-                            Text(_game.message)
+                            Text(_game.message),
                           ],
                         ),
                       ),
