@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,6 +36,72 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('preloads before input and keeps the actor while art is pending',
+      (tester) async {
+    final bundle = _DelayedWalkArt();
+    await show(tester, bundle: bundle);
+    expect(bundle.requested, isTrue);
+    Finder actorImage(String asset) => find.descendant(
+          of: find.byKey(const Key('echo-room-actor')),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is Image &&
+                widget.image is AssetImage &&
+                (widget.image as AssetImage).assetName == asset,
+          ),
+        );
+    const standing = 'assets/echo_pump/character_technician.png';
+    const walking = 'assets/echo_pump/character_walk.png';
+    expect(actorImage(standing), findsOneWidget);
+    await tester.tap(find.text('保守メモを調べる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('歩行中…'), findsOneWidget);
+    expect(actorImage(standing), findsOneWidget);
+    expect(actorImage(walking), findsNothing);
+    await tester.runAsync(() async {
+      bundle.complete(await rootBundle.load(walking));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pump();
+    expect(actorImage(walking), findsOneWidget);
+    expect(actorImage(standing), findsNothing);
+    await tester.pumpAndSettle();
+    expect(find.text('夜間保守メモ 1 / 2'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('failed preload keeps the actor and does not block the memo',
+      (tester) async {
+    final bundle = _DelayedWalkArt();
+    await show(tester, bundle: bundle);
+    bundle.fail();
+    await tester.pump();
+    await tester.tap(find.text('保守メモを調べる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('歩行中…'), findsOneWidget);
+    expect(find.descendant(
+      of: find.byKey(const Key('echo-room-actor')),
+      matching: find.byType(Image),
+    ), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('夜間保守メモ 1 / 2'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('preload completion after leaving does not update disposed state',
+      (tester) async {
+    final bundle = _DelayedWalkArt();
+    await show(tester, bundle: bundle);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await tester.runAsync(() async {
+      bundle.complete(await rootBundle.load('assets/echo_pump/character_walk.png'));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('approach animates, emits steps once and opens a paged memo',
       (tester) async {
@@ -169,4 +237,21 @@ class _MissingArt extends CachingAssetBundle {
   @override
   Future<ByteData> load(String key) async =>
       throw StateError('Synthetic missing image');
+}
+
+class _DelayedWalkArt extends CachingAssetBundle {
+  final _pending = Completer<ByteData>();
+  bool requested = false;
+
+  void complete(ByteData bytes) => _pending.complete(bytes);
+  void fail() => _pending.completeError(StateError('Synthetic walk preload failure'));
+
+  @override
+  Future<ByteData> load(String key) {
+    if (key == 'assets/echo_pump/character_walk.png') {
+      requested = true;
+      return _pending.future;
+    }
+    return rootBundle.load(key);
+  }
 }
