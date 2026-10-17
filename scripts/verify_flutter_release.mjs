@@ -78,10 +78,14 @@ try {
     await page.getByRole('link', { name: '試作を開く', exact: true }).click();
     const start = page.getByRole('button', { name: 'ゲーム開始', exact: true });
     await expect(start).toBeVisible({ timeout: 90000 });
+    // Semantics may be visible while the host's SEO HTML covers the canvas.
+    await expect(page.locator('#seo-shell')).toBeHidden();
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: path.join(output, `title-${viewport.width}.png`) });
     await start.click();
     await page.getByRole('button', { name: 'スキップして開始', exact: true }).click();
     await expect(page.getByRole('checkbox', { name: 'A 搬入', exact: true })).toBeVisible();
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: path.join(output, `play-${viewport.width}.png`) });
     await page.reload();
     await expect(start).toBeVisible({ timeout: 90000 });
