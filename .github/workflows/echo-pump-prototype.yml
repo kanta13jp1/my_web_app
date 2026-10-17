@@ -50,8 +50,6 @@ jobs:
       - run: flutter pub get
       - name: Analyze and test the prototype
         run: |
-          dart fix --apply --code=require_trailing_commas lib/widgets
-          dart fix --apply --code=require_trailing_commas test/widgets
           dart format lib/widgets/echo_pump_cast.dart test/widgets/echo_pump_cast_test.dart
           dart analyze lib/widgets/echo_pump_cast.dart test/widgets/echo_pump_cast_test.dart
           flutter test test/widgets/echo_pump_cast_test.dart

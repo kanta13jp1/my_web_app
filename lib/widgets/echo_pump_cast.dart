@@ -91,8 +91,11 @@ class EchoPumpCast extends StatelessWidget {
                   runSpacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Icon(Icons.graphic_eq,
-                        color: Color(0xFFFFB49B), size: 20),
+                    const Icon(
+                      Icons.graphic_eq,
+                      color: Color(0xFFFFB49B),
+                      size: 20,
+                    ),
                     Text(game.noiseRoom!.label),
                     const Icon(Icons.arrow_back, size: 18),
                     const Icon(Icons.hearing, size: 20),
@@ -147,8 +150,10 @@ class _Figure extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(title,
-                  style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: TextStyle(color: color, fontWeight: FontWeight.bold),
+              ),
               SizedBox(
                 height: 184,
                 child: ClipRect(
@@ -161,9 +166,9 @@ class _Figure extends StatelessWidget {
                           opacity: animation,
                           child: SlideTransition(
                             position: Tween<Offset>(
-                                    begin: const Offset(0.12, 0),
-                                    end: Offset.zero)
-                                .animate(animation),
+                              begin: const Offset(0.12, 0),
+                              end: Offset.zero,
+                            ).animate(animation),
                             child: child,
                           ),
                         ),
@@ -185,23 +190,28 @@ class _Figure extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: List.generate(
-                              5,
-                              (_) => Container(
-                                  width: 5, color: const Color(0xB39BE0CF))),
+                            5,
+                            (_) => Container(
+                              width: 5,
+                              color: const Color(0xB39BE0CF),
+                            ),
+                          ),
                         ),
                     ],
                   ),
                 ),
               ),
-              Text(location,
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(
+                location,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 4),
               Wrap(
                 spacing: 5,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Icon(statusIcon, color: color, size: 18),
-                  Text(state, style: TextStyle(color: color))
+                  Text(state, style: TextStyle(color: color)),
                 ],
               ),
             ],

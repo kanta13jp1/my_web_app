@@ -52,6 +52,10 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   ]) {
     await click(label);
     if (label === '隔壁を閉じる') {
+      await page.mouse.move(100, 200);
+      await page.mouse.wheel(0, -30000);
+      await page.waitForTimeout(650);
+      await page.screenshot({ path: info.outputPath('character-sealed.png') });
       // Flutter's semantic nodes do not scroll the painted canvas themselves.
       const viewport = page.viewportSize()!;
       await page.mouse.move(viewport.width / 2, viewport.height / 2);
@@ -63,6 +67,10 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
     }
   }
   await expect(button('リトライ')).toBeVisible();
+  await page.mouse.move(100, 200);
+  await page.mouse.wheel(0, -30000);
+  await page.waitForTimeout(650);
+  await page.screenshot({ path: info.outputPath('character-escaped.png') });
   await page.screenshot({ path: info.outputPath('escaped.png'), fullPage: true });
   await click('リトライ');
   await expect(button('B 整備')).toBeVisible();
