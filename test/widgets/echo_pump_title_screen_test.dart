@@ -31,7 +31,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('short narrow screen with large text scrolls to start', (tester) async {
+  testWidgets('short narrow screen with large text scrolls to start',
+      (tester) async {
     tester.view.physicalSize = const Size(320, 400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -39,7 +40,8 @@ void main() {
     var starts = 0;
     await tester.pumpWidget(MaterialApp(
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(2)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: const TextScaler.linear(2)),
         child: child!,
       ),
       home: EchoPumpTitleScreen(onStart: () => starts++),
