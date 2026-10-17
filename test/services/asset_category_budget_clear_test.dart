@@ -43,6 +43,9 @@ void main() {
       AssetCategoryBudgetStore.prefsKey: 'broken-json',
     });
     final prefs = await SharedPreferences.getInstance();
-    expect(await const AssetCategoryBudgetStore().hasSavedSetting(prefs: prefs), isFalse);
+    expect(
+      await const AssetCategoryBudgetStore().hasSavedSetting(prefs: prefs),
+      isFalse,
+    );
   });
 }
