@@ -291,117 +291,131 @@ void main() {
   }
 
   for (final width in [1200.0, 390.0]) {
-  for (final failure in ['template', 'monthly', 'none', 'pending', 'delete']) {
-    testWidgets('income save failure keeps data and retries $failure width $width',
-        (tester) async {
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        'asset_management_display_mode_v1':
-            AssetManagementDisplayMode.standard.storageId,
-      });
-      await tester.binding.setSurfaceSize(Size(width, width == 390 ? 844 : 2400));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      final repository = _FailingIncomeTemplateRepository()
-        ..failTemplate = failure == 'template'
-        ..failMonth = failure == 'monthly';
-      if (failure == 'pending') repository.pendingSave = Completer<void>();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: AssetManagementPage(
-            assetLiabilityRepository: repository,
-            debugNow: DateTime(2026, 6, 20),
-            debugCalendarNow: DateTime(2026, 6, 20),
-            debugInitialAssetData: const {
-              '2026-06-20': {'synthetic cash': 1000.0},
-            },
-            debugInitialRecentFlows: [
-              for (final month in [1, 2, 3, 4, 5, 6])
-                <String, dynamic>{
-                  'action_type': 'conquer',
-                  'amount': 10000,
-                  'description': 'synthetic income',
-                  'occurred_at':
-                      DateTime(2026, month, 15, 12).toIso8601String(),
-                },
-            ],
+    for (final failure in [
+      'template',
+      'monthly',
+      'none',
+      'pending',
+      'delete',
+    ]) {
+      testWidgets(
+          'income save failure keeps data and retries $failure width $width',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+        });
+        await tester.binding
+            .setSurfaceSize(Size(width, width == 390 ? 844 : 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final repository = _FailingIncomeTemplateRepository()
+          ..failTemplate = failure == 'template'
+          ..failMonth = failure == 'monthly';
+        if (failure == 'pending') repository.pendingSave = Completer<void>();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              assetLiabilityRepository: repository,
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 1000.0},
+              },
+              debugInitialRecentFlows: [
+                for (final month in [1, 2, 3, 4, 5, 6])
+                  <String, dynamic>{
+                    'action_type': 'conquer',
+                    'amount': 10000,
+                    'description': 'synthetic income',
+                    'occurred_at':
+                        DateTime(2026, month, 15, 12).toIso8601String(),
+                  },
+              ],
+            ),
           ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
-      try {
-        final register = find.byKey(
-          const Key('asset_recurring_income_suggestion_register_0'),
         );
-        expect(register, findsOneWidget);
-        await tester.ensureVisible(register);
-        await tester.tap(register);
         await tester.pump(const Duration(milliseconds: 300));
-        expect(find.byType(AlertDialog), findsOneWidget);
-        final save = find.widgetWithText(FilledButton, '保存');
-        expect(save, findsOneWidget);
-        await tester.ensureVisible(save);
-        await tester.tap(save);
         await tester.pump(const Duration(milliseconds: 300));
-        expect(repository.attempts, 1);
-        if (failure == 'pending') {
-          expect(tester.widget<FilledButton>(save).onPressed, isNull);
-          final cancel = find.widgetWithText(TextButton, 'キャンセル');
-          expect(tester.widget<TextButton>(cancel).onPressed, isNull);
-          await tester.tap(save);
-          await tester.binding.handlePopRoute();
-          await tester.pump();
-          expect(repository.attempts, 1);
-          expect(find.byType(AlertDialog), findsOneWidget);
-          repository.pendingSave!.complete();
-          await tester.pump();
-        }
-        if (failure == 'template' || failure == 'monthly') {
-          expect(find.byType(AlertDialog), findsOneWidget);
-          expect(
-            find.byKey(const Key('recurring_income_save_error')),
-            findsOneWidget,
+        try {
+          final register = find.byKey(
+            const Key('asset_recurring_income_suggestion_register_0'),
           );
-          expect(find.text('synthetic income'), findsWidgets);
-          repository.failTemplate = false;
-          repository.failMonth = false;
+          expect(register, findsOneWidget);
+          await tester.ensureVisible(register);
+          await tester.tap(register);
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(AlertDialog), findsOneWidget);
+          final save = find.widgetWithText(FilledButton, '保存');
+          expect(save, findsOneWidget);
+          await tester.ensureVisible(save);
           await tester.tap(save);
           await tester.pump(const Duration(milliseconds: 300));
-          expect(repository.attempts, 2);
-        }
-        // Allow the dismissal animation started after async persistence to finish.
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-        expect(find.byType(AlertDialog), findsNothing);
-        expect(repository.attemptedIds.toSet(), hasLength(1));
-        final templates = await repository.loadRecurringIncomeTemplates();
-        expect(templates, hasLength(1));
-        expect(repository.savedState, isNotNull);
-        expect(
-          repository.savedState!.incomePlans.where(
-            (plan) => plan.name == 'synthetic income',
-          ),
-          hasLength(1),
-        );
-      if (failure == 'delete') {
-          repository.failTemplate = true;
-          final chip = find.byWidgetPredicate((widget) =>
-              widget is InputChip && widget.label is Text &&
-              ((widget.label as Text).data ?? '').contains('synthetic income'));
-          expect(chip, findsOneWidget);
-          await tester.ensureVisible(chip);
-          final delete = find.descendant(of: chip, matching: find.byTooltip('Delete'));
-          expect(delete, findsOneWidget);
-          await tester.tap(delete);
+          expect(repository.attempts, 1);
+          if (failure == 'pending') {
+            expect(tester.widget<FilledButton>(save).onPressed, isNull);
+            final cancel = find.widgetWithText(TextButton, 'キャンセル');
+            expect(tester.widget<TextButton>(cancel).onPressed, isNull);
+            await tester.tap(save);
+            await tester.binding.handlePopRoute();
+            await tester.pump();
+            expect(repository.attempts, 1);
+            expect(find.byType(AlertDialog), findsOneWidget);
+            repository.pendingSave!.complete();
+            await tester.pump();
+          }
+          if (failure == 'template' || failure == 'monthly') {
+            expect(find.byType(AlertDialog), findsOneWidget);
+            expect(
+              find.byKey(const Key('recurring_income_save_error')),
+              findsOneWidget,
+            );
+            expect(find.text('synthetic income'), findsWidgets);
+            repository.failTemplate = false;
+            repository.failMonth = false;
+            await tester.tap(save);
+            await tester.pump(const Duration(milliseconds: 300));
+            expect(repository.attempts, 2);
+          }
+          // Allow the dismissal animation started after async persistence to finish.
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 300));
-          expect(chip, findsOneWidget,
-              reason: 'A failed delete must remain visible so it is not reported as saved');
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(repository.attemptedIds.toSet(), hasLength(1));
+          final templates = await repository.loadRecurringIncomeTemplates();
+          expect(templates, hasLength(1));
+          expect(repository.savedState, isNotNull);
+          expect(
+            repository.savedState!.incomePlans.where(
+              (plan) => plan.name == 'synthetic income',
+            ),
+            hasLength(1),
+          );
+          if (failure == 'delete') {
+            repository.failTemplate = true;
+            final chip = find.byWidgetPredicate((widget) =>
+                widget is InputChip &&
+                widget.label is Text &&
+                ((widget.label as Text).data ?? '')
+                    .contains('synthetic income'),
+            );
+            expect(chip, findsOneWidget);
+            await tester.ensureVisible(chip);
+            final delete =
+                find.descendant(of: chip, matching: find.byTooltip('Delete'));
+            expect(delete, findsOneWidget);
+            await tester.tap(delete);
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 300));
+            expect(chip, findsOneWidget,
+                reason:
+                    'A failed delete must remain visible so it is not reported as saved',
+            );
+          }
+        } finally {
+          await _unmount(tester);
         }
-      } finally {
-        await _unmount(tester);
-      }
-    });
-  }
+      });
+    }
   }
 
   group('AssetManagementPage smoke', () {
