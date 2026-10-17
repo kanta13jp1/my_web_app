@@ -291,7 +291,16 @@ void main() {
   }
 
   for (final width in [1200.0, 390.0]) {
-    for (final failure in ['template', 'monthly', 'none', 'pending']) {
+    for (final failure in [
+      'template',
+      'monthly',
+      'none',
+      'pending',
+      'delete',
+      'delete_monthly',
+      'delete_none',
+      'delete_pending',
+    ]) {
       testWidgets(
           'income save failure keeps data and retries $failure width $width',
           (tester) async {
@@ -384,6 +393,55 @@ void main() {
             ),
             hasLength(1),
           );
+          if (failure.startsWith('delete')) {
+            repository.failTemplate = failure == 'delete';
+            repository.failMonth = failure == 'delete_monthly';
+            if (failure == 'delete_pending') {
+              repository.pendingSave = Completer<void>();
+            }
+            final chip = find.byWidgetPredicate(
+              (widget) =>
+                  widget is InputChip &&
+                  widget.label is Text &&
+                  ((widget.label as Text).data ?? '')
+                      .contains('synthetic income'),
+            );
+            expect(chip, findsOneWidget);
+            await tester.ensureVisible(chip);
+            final delete = find.descendant(
+              of: chip,
+              matching: find.byTooltip('Delete'),
+            );
+            expect(delete, findsOneWidget);
+            await tester.tap(delete);
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 300));
+            if (failure == 'delete_pending') {
+              expect(chip, findsOneWidget);
+              expect(tester.widget<InputChip>(chip).onDeleted, isNull);
+              await tester.tap(chip);
+              await tester.pump();
+              expect(find.byType(AlertDialog), findsNothing);
+              expect(repository.attempts, 2);
+              repository.pendingSave!.complete();
+              await tester.pump();
+              await tester.pump(const Duration(milliseconds: 300));
+            }
+            if (failure == 'delete' || failure == 'delete_monthly') {
+              expect(chip, findsOneWidget);
+              expect(find.textContaining('もう一度削除してください'), findsOneWidget);
+              repository.failTemplate = false;
+              repository.failMonth = false;
+              await tester.tap(delete);
+              await tester.pump();
+              await tester.pump(const Duration(milliseconds: 300));
+            }
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 300));
+            expect(chip, findsNothing);
+            expect(await repository.loadRecurringIncomeTemplates(), isEmpty);
+            expect(repository.savedState!.incomePlans, isEmpty);
+          }
         } finally {
           await _unmount(tester);
         }
