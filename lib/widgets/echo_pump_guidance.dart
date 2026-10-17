@@ -81,7 +81,9 @@ class EchoPumpProgress extends StatelessWidget {
                       key: Key('echo-goal-$i'),
                       width: width,
                       padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 4,),
+                        vertical: 12,
+                        horizontal: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: completed[i]
                             ? const Color(0xFF234F48)
@@ -110,8 +112,9 @@ class EchoPumpProgress extends StatelessWidget {
                                     ? 'NEXT'
                                     : '—',
                             style: TextStyle(
-                                color: i == current ? _mint : Colors.white54,
-                                fontSize: 11,),
+                              color: i == current ? _mint : Colors.white54,
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),
@@ -193,7 +196,10 @@ class EchoPumpActionVisual extends StatelessWidget {
                   width: double.infinity,
                   child: CustomPaint(
                     painter: _ActionPainter(
-                        cue: cue, progress: progress, color: color,),
+                      cue: cue,
+                      progress: progress,
+                      color: color,
+                    ),
                     child: Center(
                       child: Transform.scale(
                         scale: 0.85 + 0.15 * Curves.easeOut.transform(progress),
@@ -218,8 +224,11 @@ class EchoPumpActionVisual extends StatelessWidget {
 }
 
 class _ActionPainter extends CustomPainter {
-  const _ActionPainter(
-      {required this.cue, required this.progress, required this.color,});
+  const _ActionPainter({
+    required this.cue,
+    required this.progress,
+    required this.color,
+  });
   final EchoPumpCue? cue;
   final double progress;
   final Color color;
@@ -235,9 +244,13 @@ class _ActionPainter extends CustomPainter {
         // Leave the central walk icon unobscured.
         if ((x - size.width / 2).abs() < 28) continue;
         canvas.drawOval(
-            Rect.fromCenter(
-                center: Offset(x, i.isEven ? 25 : 48), width: 10, height: 18,),
-            paint,);
+          Rect.fromCenter(
+            center: Offset(x, i.isEven ? 25 : 48),
+            width: 10,
+            height: 18,
+          ),
+          paint,
+        );
       }
     } else if (cue == EchoPumpCue.drain) {
       final path = Path();
@@ -265,9 +278,15 @@ class _ActionPainter extends CustomPainter {
       for (var i = 0; i < 3; i++) {
         final width = math.min(size.width * 0.18, 64.0) * progress;
         canvas.drawLine(
-            Offset(8, 20 + i * 16), Offset(8 + width, 20 + i * 16), paint,);
-        canvas.drawLine(Offset(size.width - 8 - width, 20 + i * 16),
-            Offset(size.width - 8, 20 + i * 16), paint,);
+          Offset(8, 20 + i * 16),
+          Offset(8 + width, 20 + i * 16),
+          paint,
+        );
+        canvas.drawLine(
+          Offset(size.width - 8 - width, 20 + i * 16),
+          Offset(size.width - 8, 20 + i * 16),
+          paint,
+        );
       }
     }
   }

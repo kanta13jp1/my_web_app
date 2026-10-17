@@ -287,22 +287,28 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Row(children: [
-                        for (var i = 0; i < 2; i++)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Icon(Icons.bolt,
+                      Row(
+                        children: [
+                          for (var i = 0; i < 2; i++)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Icon(
+                                Icons.bolt,
                                 color: i < _game.power.length
                                     ? const Color(0xFF9BE0CF)
-                                    : Colors.white24),
-                          ),
-                        Text('${_game.power.length} / 2'),
-                      ]),
+                                    : Colors.white24,
+                              ),
+                            ),
+                          Text('${_game.power.length} / 2'),
+                        ],
+                      ),
                       const ExpansionTile(
                         title: Text('電源の使い方'),
                         children: [
-                          Text('3系統目を入れる前に、どれか1つを停止。'
-                              '\nA：搬入ファン / B：工具棚とコンプレッサー / C：点検槽のベルと排水')
+                          Text(
+                            '3系統目を入れる前に、どれか1つを停止。'
+                            '\nA：搬入ファン / B：工具棚とコンプレッサー / C：点検槽のベルと排水',
+                          ),
                         ],
                       ),
                     ]),
