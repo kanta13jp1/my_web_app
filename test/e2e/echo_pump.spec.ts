@@ -51,7 +51,7 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   ]) {
     await click(label);
     if (label === '隔壁を閉じる') {
-      await page.getByText('施設の見取り図', { exact: true }).scrollIntoViewIfNeeded();
+      await page.getByText(/^施設の見取り図 /).scrollIntoViewIfNeeded();
       await page.screenshot({ path: info.outputPath('sealed-map.png'), fullPage: true });
     }
   }
