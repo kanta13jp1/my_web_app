@@ -51,8 +51,14 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   ]) {
     await click(label);
     if (label === '隔壁を閉じる') {
-      await page.getByRole('heading', { name: '施設の見取り図', exact: true }).scrollIntoViewIfNeeded();
+      // Flutter's semantic nodes do not scroll the painted canvas themselves.
+      const viewport = page.viewportSize()!;
+      await page.mouse.move(viewport.width / 2, viewport.height / 2);
+      await page.mouse.wheel(0, 600);
+      await page.waitForTimeout(300);
       await page.screenshot({ path: info.outputPath('sealed-map.png'), fullPage: true });
+      await page.mouse.wheel(0, -600);
+      await page.waitForTimeout(300);
     }
   }
   await expect(button('リトライ')).toBeVisible();
