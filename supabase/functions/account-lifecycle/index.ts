@@ -11,6 +11,7 @@ import {
   ACCOUNT_DELETION_POLICY_VERSION,
   bearerToken,
   blockingDependencyCount,
+  importedHistoryBlockerCount,
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
@@ -446,7 +447,16 @@ async function dependencyBlockers(
     { p_user_id: userId },
   );
   if (error) throw error;
-  return blockingDependencyCount(data);
+  // Imported recovery evidence has BEFORE DELETE guards. Do not cancel billing
+  // or remove Storage objects before discovering that the auth cascade is blocked.
+  // Deliberate account-deletion cleanup remains a separate reviewed operation.
+  const { count, error: historyError } = await admin
+    .from("note_versions")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("source_system", "evernote");
+  if (historyError) throw historyError;
+  return blockingDependencyCount(data) + importedHistoryBlockerCount(count);
 }
 
 async function dependencyMatches(

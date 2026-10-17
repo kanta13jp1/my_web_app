@@ -168,3 +168,12 @@ export function safeErrorCode(error: unknown): string {
   if (message.includes("auth")) return "auth_deletion_failed";
   return "account_deletion_failed";
 }
+
+
+// Missing or malformed exact-count metadata must never mean no blockers.
+export function importedHistoryBlockerCount(count: unknown): number {
+  if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 0) {
+    throw new Error("imported_history_count_unavailable");
+  }
+  return count;
+}

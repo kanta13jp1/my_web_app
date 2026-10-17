@@ -1,11 +1,13 @@
 import {
   assertEquals,
   assertFalse,
+  assertThrows,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   ACCOUNT_DELETION_CONFIRMATION,
   ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS,
   blockingDependencyCount,
+  importedHistoryBlockerCount,
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
@@ -145,4 +147,20 @@ Deno.test("staged worker accepts only positive safe request identifiers", () => 
   assertEquals(positiveRequestId("1.5"), null);
   assertEquals(positiveRequestId(Number.MAX_SAFE_INTEGER + 1), null);
   assertEquals(positiveRequestId(null), null);
+});
+
+
+Deno.test("imported history remains an account cleanup blocker", () => {
+  assertEquals(importedHistoryBlockerCount(0), 0);
+  assertEquals(importedHistoryBlockerCount(2), 2);
+});
+
+Deno.test("missing or invalid history counts fail closed before cleanup", () => {
+  for (const value of [null, undefined, "0", -1, 0.5, NaN, Infinity]) {
+    assertThrows(
+      () => importedHistoryBlockerCount(value),
+      Error,
+      "imported_history_count_unavailable",
+    );
+  }
 });
