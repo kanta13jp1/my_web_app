@@ -4752,7 +4752,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _deleteRecurringIncomeTemplate(String templateId) async {
     if (_deletingRecurringIncomeTemplateIds.isNotEmpty) return;
     final month = _assetLiabilityStateMonth(_now);
-    final monthKey = _assetLiabilityStateMonthKey(month);
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
     final templates = _recurringIncomeTemplates
         .where((template) => template.id != templateId)
         .toList(growable: false);
