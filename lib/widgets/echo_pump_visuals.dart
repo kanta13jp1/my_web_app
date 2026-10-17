@@ -241,13 +241,13 @@ class EchoPumpFacilityMap extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(_icons[room], color: powered ? _mint : Colors.white70, size: 22),
+              Icon(_icons[room], color: powered ? _mint : Colors.white70, size: 22,),
               const SizedBox(height: 4),
               Text(room.label, textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold,),),
               if (status.isNotEmpty)
                 Text(status, textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: enemy && !game.sealed ? _warning : _mint),),
+                    style: TextStyle(fontSize: 11, color: enemy && !game.sealed ? _warning : _mint,),),
             ],
           ),
         ),
@@ -257,7 +257,7 @@ class EchoPumpFacilityMap extends StatelessWidget {
 }
 
 class _PassagesPainter extends CustomPainter {
-  const _PassagesPainter({required this.bounds, required this.current, required this.sealed});
+  const _PassagesPainter({required this.bounds, required this.current, required this.sealed,});
 
   final Map<PumpRoom, Rect> bounds;
   final PumpRoom current;
@@ -286,7 +286,7 @@ class _PassagesPainter extends CustomPainter {
             ..color = closed ? _warning : current == entry.key || current == destination ? _mint : const Color(0xFF486466),
         );
         if (closed) {
-          canvas.drawCircle(Offset((from.dx + to.dx) / 2, from.dy), 6, Paint()..color = _warning);
+          canvas.drawCircle(Offset((from.dx + to.dx) / 2, from.dy), 6, Paint()..color = _warning,);
         }
       }
     }
