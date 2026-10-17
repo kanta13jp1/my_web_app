@@ -3,8 +3,8 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 void main() {
   test('card funded fixed costs do not create cash shortfall on usage date', () {
-    final calendar = AssetPaymentCalendarService.buildMonth(
-      month: DateTime(2026, 10), asOf: DateTime(2026, 10, 17),
+    final calendar = AssetPaymentCalendarService.buildRange(
+      start: DateTime(2026, 9, 25), endExclusive: DateTime(2026, 10, 25), asOf: DateTime(2026, 10, 17),
       flows: const <Map<String, dynamic>>[], subscriptions: const <Map<String, dynamic>>[],
       startingCashBalance: 13071,
       debts: const <AssetCalendarDebtInput>[
