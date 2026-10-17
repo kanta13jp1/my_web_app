@@ -48,7 +48,18 @@ try {
       };
     });
     const button = text => page.getByRole(/^[ABC] /.test(text) ? 'checkbox' : 'button', {name: text, exact: true});
-    async function click(text) { await button(text).click({timeout: 15000}); mark(text); }
+    async function click(text) {
+      const counter = page.getByText(/^ターン \d+$/).first();
+      const previous = await counter.count() ? await counter.textContent() : null;
+      await button(text).click({timeout: 15000}); mark(text);
+      if (previous && !['音をON', '音をOFF'].includes(text)) {
+        await page.waitForFunction(previous => Array.from(document.querySelectorAll('flt-semantics > span')).some(e => /^ターン \d+$/.test(e.textContent) && e.textContent !== previous), previous, {timeout: 15000});
+      }
+    }
+    async function progressHas(text) {
+      const progress = await page.getByText(/探索の進行/).first().textContent();
+      assert(progress.includes(text), `Missing progress: ${text}`);
+    }
     async function played(file) {
       await page.waitForFunction(file => window.__echoPublicAudit.plays.some(x => x.includes(`/${file}.wav`)), file, {timeout: 15000});
     }
@@ -57,7 +68,7 @@ try {
       await page.mouse.move(viewport.width / 2, viewport.height / 2);
       await page.mouse.wheel(0, -30000);
       await page.waitForTimeout(80);
-      const box = await page.locator(`[aria-label="${message}"]`).first().boundingBox();
+      const box = await page.locator('flt-semantics > span').filter({hasText: message}).last().locator('..').boundingBox();
       assert(box && box.width > 100 && box.height > 40 && box.y >= 0 && box.y + box.height < viewport.height - 40);
       const hashes = [];
       for (let i = 0; i < 3; i++) {
@@ -82,7 +93,7 @@ try {
       await page.waitForFunction(() => window.__echoPublicAudit.contexts.some(c => c.state === 'running') && window.__echoPublicAudit.media.some(m => m.loop && !m.paused && m.currentTime > 0.1), null, {timeout: 15000});
       await click('ゲーム開始'); await click('スキップして開始');
       await button('B 整備').waitFor({timeout: 15000});
-      assert(await page.locator('[aria-label*="回収：次の目標"]').count());
+      await progressHas('回収：次の目標');
       await page.screenshot({path: `${out}/${name}-goals.png`});
       await click('B 整備'); await played('power');
       await click('A 搬入');
@@ -95,14 +106,14 @@ try {
       if (name === 'desktop') {
         for (const label of ['工具庫へ','ヒューズを回収','中央廊下へ','ポンプ室へ','ヒューズで修理','中央廊下へ','管理室へ','B 整備','C 排水','1ターン待つ','1ターン待つ','中央廊下へ','ポンプ室へ','隔壁を閉じる','排水ポンプを起動','中央廊下へ','管理室へ','出口へ']) {
           await click(label);
-          if (label === 'ヒューズを回収') assert(await page.locator('[aria-label*="回収：完了"]').count());
-          if (label === 'ヒューズで修理') assert(await page.locator('[aria-label*="修理：完了"]').count());
+          if (label === 'ヒューズを回収') await progressHas('回収：完了');
+          if (label === 'ヒューズで修理') await progressHas('修理：完了');
           if (label === '隔壁を閉じる') otherAnimationHashes.seal = await sampleAnimation('seal', '隔壁を閉鎖！ 敵を点検槽に封じ込めた。');
           if (label === '排水ポンプを起動') otherAnimationHashes.drain = await sampleAnimation('drain', '排水完了。管理室から出口へ戻ろう。');
         }
         await button('リトライ').waitFor({timeout: 15000});
         await played('escape');
-        for (const label of ['回収','修理','封鎖','排水','脱出']) assert(await page.locator(`[aria-label*="${label}：完了"]`).count());
+        for (const label of ['回収','修理','封鎖','排水','脱出']) await progressHas(`${label}：完了`);
         await page.mouse.wheel(0, -30000); await page.waitForTimeout(250);
         await page.screenshot({path: `${out}/desktop-complete.png`});
       }
