@@ -485,6 +485,9 @@ void main() {
       expect(step.detail.contains('電気代'), isFalse);
       // 合計 (30,000 + 36,000 = 66,000) を提示。
       expect(step.detail.contains('66,000円'), isTrue);
+      // 解約以外の選択肢 (一時停止・ダウングレード) も提示する。
+      expect(step.detail.contains('一時停止'), isTrue);
+      expect(step.detail.contains('ダウングレード'), isTrue);
     });
 
     test('no cancelSubscriptions step when there are no subscriptions', () {
