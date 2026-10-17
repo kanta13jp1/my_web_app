@@ -85,16 +85,30 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
   Future<void> _openInventory(BuildContext inventoryContext) async {
     if (_inventoryOpen) return;
     _inventoryOpen = true;
+    final effectsStopped = _audio.suspendEffects();
     final inspectedGame = _game;
     EchoPumpInventoryAction? result;
     try {
       result = await showDialog<EchoPumpInventoryAction>(
         context: inventoryContext,
         useRootNavigator: false,
-        builder: (_) => EchoPumpInventoryDialog(game: inspectedGame),
+        builder: (_) => FutureBuilder<void>(
+          future: effectsStopped,
+          builder: (_, snapshot) =>
+              snapshot.connectionState == ConnectionState.done
+                  ? EchoPumpInventoryDialog(game: inspectedGame)
+                  : const AlertDialog(
+                      title: Text('所持品を準備中…'),
+                      content: SizedBox(
+                        height: 32,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+        ),
       );
     } finally {
       _inventoryOpen = false;
+      _audio.resumeEffects();
     }
     if (!mounted || !identical(inspectedGame, _game)) return;
     if (result == EchoPumpInventoryAction.repair &&

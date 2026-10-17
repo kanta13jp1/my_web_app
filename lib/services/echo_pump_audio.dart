@@ -29,6 +29,7 @@ class EchoPumpPlayerOutput implements EchoPumpAudioOutput {
   AudioPlayer? _effect;
   bool _closed = false;
   bool _musicReady = false;
+  int _effectRequest = 0;
 
   @override
   Future<void> music(bool playing, double volume) async {
@@ -56,15 +57,25 @@ class EchoPumpPlayerOutput implements EchoPumpAudioOutput {
   @override
   Future<void> effect(EchoPumpCue cue, double volume) async {
     if (_closed) return;
+    final request = ++_effectRequest;
     final player = _effect ??= AudioPlayer();
-    await player.stop();
-    if (_closed) return;
-    await player.play(AssetSource('echo_pump/${cue.name}.wav'), volume: volume);
-    if (_closed) await player.stop();
+    try {
+      await player.stop();
+      if (_closed || request != _effectRequest) return;
+      await player.play(
+        AssetSource('echo_pump/${cue.name}.wav'),
+        volume: volume,
+      );
+    } catch (_) {
+      // A stopped platform play may reject; cancellation is not a BGM failure.
+      if (!_closed && request == _effectRequest) rethrow;
+    }
+    if (_closed || request != _effectRequest) await player.stop();
   }
 
   @override
   Future<void> silenceEffects() async {
+    _effectRequest++;
     await _effect?.stop();
   }
 
@@ -89,6 +100,7 @@ class EchoPumpAudio extends ChangeNotifier {
   bool _enabled = false;
   bool _foreground = true;
   bool _musicActive = true;
+  bool _effectsSuspended = false;
   bool _closed = false;
   double _volume = 0.35;
   String? _error;
@@ -163,11 +175,32 @@ class EchoPumpAudio extends ChangeNotifier {
     _sync();
   }
 
+  /// Invalidates queued effects and waits for an in-flight platform play to stop.
+  /// Music and the user's sound preference stay active.
+  Future<void> suspendEffects() {
+    if (_closed) return Future<void>.value();
+    _effectsSuspended = true;
+    _effectGeneration++;
+    unawaited(_output.silenceEffects().catchError((Object _) {}));
+    _enqueue(() async {
+      if (_effectsSuspended) await _output.silenceEffects();
+    });
+    return _pending;
+  }
+
+  void resumeEffects() {
+    if (_closed || !_effectsSuspended) return;
+    _effectsSuspended = false;
+    _effectGeneration++;
+  }
+
   void cue(EchoPumpCue cue) {
-    if (!_audible) return;
+    if (!_audible || _effectsSuspended) return;
     final generation = ++_effectGeneration;
     _enqueue(() async {
-      if (!_audible || generation != _effectGeneration) return;
+      if (!_audible || _effectsSuspended || generation != _effectGeneration) {
+        return;
+      }
       await _output.effect(cue, _volume);
     });
   }
