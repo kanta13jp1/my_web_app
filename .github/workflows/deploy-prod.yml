@@ -64,7 +64,7 @@ jobs:
     name: Run CI Checks
     # Pull requests already passed this required workflow. Re-run it only for
     # an operator-triggered deployment that has no preceding protected PR.
-    if: vars.PRODUCTION_DEPLOY_HOLD == 'false' && github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && vars.PRODUCTION_DEPLOY_HOLD == 'false'
     uses: ./.github/workflows/ci.yml
     with:
       expected_head_sha: ${{ github.sha }}

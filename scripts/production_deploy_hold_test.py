@@ -16,7 +16,7 @@ class ProductionHoldTests(unittest.TestCase):
             for job in jobs:
                 condition = job_condition(text, job)
                 expected = {
-                    ("deploy-prod.yml", "ci"): GUARD + " && github.event_name == 'workflow_dispatch'",
+                    ("deploy-prod.yml", "ci"): "github.event_name == 'workflow_dispatch' && " + GUARD,
                     ("deploy-prod.yml", "deploy"): "always() && " + GUARD + " && (needs.ci.result == 'success' || needs.ci.result == 'skipped')",
                     ("deploy-prod.yml", "notify"): "always() && " + GUARD,
                     ("deploy-core-hub.yml", "deploy"): GUARD + " && github.event_name == 'push' && github.ref == 'refs/heads/main'",
