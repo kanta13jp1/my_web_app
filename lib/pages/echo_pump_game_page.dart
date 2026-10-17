@@ -117,7 +117,11 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       return EchoPumpTitleScreen(onStart: _beginIntro);
     }
     return Theme(
-      data: ThemeData.dark(useMaterial3: true).copyWith(
+      data: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: true,
+        fontFamily: 'NotoSansJP',
+      ).copyWith(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF64D8C2),
           brightness: Brightness.dark,

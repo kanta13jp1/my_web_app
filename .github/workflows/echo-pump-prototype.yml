@@ -12,7 +12,7 @@ on:
         required: true
         default: full
         type: choice
-        options: [full, quick, interactive]
+        options: [full, quick, interactive, release-prototype]
       check_mode:
         description: Grouped checks or the captured sequential baseline
         required: true
@@ -52,6 +52,9 @@ on:
       - test/e2e/echo_pump.spec.ts
       - .github/workflows/echo-pump-prototype.yml
       - scripts/echo_pump_dev_checks.py
+      - scripts/measure_flutter_release.py
+      - scripts/verify_flutter_release.mjs
+      - docs/ECHO_PUMP_STANDALONE_TRIAL.md
       - scripts/measure_flutter_dev_loop.mjs
       - scripts/measure_flutter_dev_loop.test.mjs
       - scripts/echo_pump_dev_commands.json
@@ -66,7 +69,7 @@ concurrency:
 
 jobs:
   prototype:
-    if: github.event_name != 'workflow_dispatch' || inputs.profile != 'interactive'
+    if: github.event_name != 'workflow_dispatch' || !contains(fromJSON('["interactive","release-prototype"]'), inputs.profile)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -86,6 +89,10 @@ jobs:
             echo "::error::Manual feature check must match the requested immutable SHA."
             exit 1
           fi
+      - name: Verify release measurement syntax
+        run: |
+          python3 -m py_compile scripts/measure_flutter_release.py
+          node --check scripts/verify_flutter_release.mjs
       - name: Verify development check contracts
         run: python3 scripts/echo_pump_dev_checks_test.py
       - uses: ./.github/actions/setup-flutter-sdk
@@ -192,5 +199,77 @@ jobs:
           name: flutter-dev-loop-${{ matrix.entry }}-${{ github.run_id }}
           path: .ci-logs/flutter-dev-loop/
           include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  release-prototype:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'release-prototype'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: [normal, isolated]
+    env:
+      BENCH_ENTRY: ${{ matrix.entry }}
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Verify exact prototype source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$(git rev-parse HEAD)" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Prototype source SHA mismatch."
+            exit 1
+          fi
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prepare dependencies outside measured interval
+        run: |
+          flutter config --no-analytics
+          flutter --version
+          flutter pub get
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Measure release compilation and inventory
+        run: python3 scripts/measure_flutter_release.py --entry "$BENCH_ENTRY"
+      - name: Package and read back independent static artifact
+        if: matrix.entry == 'isolated'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf .ci-logs/release-prototype/echo-pump-standalone.tar.gz -C build/web .
+          sha256sum .ci-logs/release-prototype/echo-pump-standalone.tar.gz > .ci-logs/release-prototype/PACKAGE.sha256
+          mkdir -p "$RUNNER_TEMP/echo-pump-standalone"
+          tar -xzf .ci-logs/release-prototype/echo-pump-standalone.tar.gz -C "$RUNNER_TEMP/echo-pump-standalone"
+          echo "RELEASE_ARTIFACT_ROOT=$RUNNER_TEMP/echo-pump-standalone" >> "$GITHUB_ENV"
+      - name: Verify nested deployment on desktop and mobile
+        run: node scripts/verify_flutter_release.mjs
+      - name: Preserve results and independent artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-prototype-${{ matrix.entry }}-${{ github.run_id }}
+          path: |
+            .ci-logs/release-prototype/
+            !.ci-logs/release-prototype/echo-pump-standalone.tar.gz
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve independently deployable static package
+        if: success() && matrix.entry == 'isolated'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: echo-pump-standalone-${{ github.run_id }}
+          path: .ci-logs/release-prototype/echo-pump-standalone.tar.gz
+          compression-level: 0
           if-no-files-found: error
           retention-days: 7

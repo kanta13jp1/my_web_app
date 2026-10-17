@@ -31,6 +31,12 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   await page.getByRole('button', { name: 'スキップして開始', exact: true }).click();
   const button = (name: string) => page.getByRole(/^[ABC] /.test(name) ? 'checkbox' : 'button', { name, exact: true });
   await expect(button('A 搬入')).toBeVisible({ timeout: 30000 });
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByText('管理室', { exact: true }).first()).toBeVisible();
+  const exploration = page.getByRole('group').filter({
+    has: page.getByRole('button', { name: '保守メモを調べる', exact: true }),
+  });
+  await expect(exploration.getByText('安全な管理室 / 室内の確認はターンを消費しません。', { exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('start.png'), fullPage: true });
   await page.evaluate(async () => {
     await Promise.all(document.getAnimations({ subtree: true }).map(animation =>
