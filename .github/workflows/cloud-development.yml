@@ -31,6 +31,10 @@ jobs:
           mkdir -p .ci-logs/recurring-income
           flutter pub get
           dart format lib/widgets/recurring_fixed_cost_editor_dialog.dart lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
+          dart fix --apply --code=require_trailing_commas
+          mkdir -p .ci-logs/recurring-income/source/lib/widgets .ci-logs/recurring-income/source/lib/pages
+          cp lib/widgets/recurring_fixed_cost_editor_dialog.dart .ci-logs/recurring-income/source/lib/widgets/
+          cp lib/pages/asset_management_page.dart .ci-logs/recurring-income/source/lib/pages/
           flutter analyze --no-pub lib/widgets/recurring_fixed_cost_editor_dialog.dart lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
           flutter test --no-pub --reporter expanded test/widgets/asset_management_page_smoke_test.dart --plain-name 'fixed cost persistence failure retains' | tee .ci-logs/recurring-income/tests.log
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
