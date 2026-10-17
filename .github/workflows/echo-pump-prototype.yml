@@ -2,6 +2,23 @@ name: Echo Pump Prototype
 
 on:
   workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact 40-character branch SHA to validate
+        required: true
+        type: string
+      profile:
+        description: Quick feedback or full browser regression
+        required: true
+        default: full
+        type: choice
+        options: [full, quick]
+      check_mode:
+        description: Grouped checks or the captured sequential baseline
+        required: true
+        default: grouped
+        type: choice
+        options: [grouped, baseline]
   pull_request:
     paths:
       - lib/models/echo_pump_game.dart
@@ -29,11 +46,15 @@ on:
       - test/fixtures/echo_pump_app.dart
       - test/e2e/echo_pump.spec.ts
       - .github/workflows/echo-pump-prototype.yml
+      - scripts/echo_pump_dev_checks.py
+      - scripts/echo_pump_dev_commands.json
+      - scripts/echo_pump_dev_checks_test.py
+      - docs/ECHO_PUMP_DEVELOPMENT_LOOP.md
 
 permissions: {}
 
 concurrency:
-  group: echo-pump-${{ github.ref }}
+  group: echo-pump-${{ github.ref }}-${{ inputs.check_mode || 'grouped' }}-${{ inputs.profile || 'full' }}
   cancel-in-progress: true
 
 jobs:
@@ -42,38 +63,44 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    env:
+      DEV_CHECK_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.check_mode || 'grouped' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Verify exact manual source
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$(git rev-parse HEAD)" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Manual feature check must match the requested immutable SHA."
+            exit 1
+          fi
+      - name: Verify development check contracts
+        run: python3 scripts/echo_pump_dev_checks_test.py
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
       - name: Analyze and test the prototype
-        run: |
-          dart format --output=none --set-exit-if-changed lib/widgets/echo_pump_cast.dart test/widgets/echo_pump_cast_test.dart
-          dart analyze lib/widgets/echo_pump_cast.dart test/widgets/echo_pump_cast_test.dart
-          flutter test test/widgets/echo_pump_cast_test.dart
-          python3 scripts/generate_echo_pump_audio.py --check
-          dart format --output=none --set-exit-if-changed lib/widgets/echo_pump_guidance.dart test/widgets/echo_pump_guidance_test.dart
-          dart analyze lib/widgets/echo_pump_guidance.dart test/widgets/echo_pump_guidance_test.dart
-          flutter test test/widgets/echo_pump_guidance_test.dart
-          dart format --output=none --set-exit-if-changed lib/services/echo_pump_audio.dart lib/widgets/echo_pump_audio_controls.dart test/services/echo_pump_audio_test.dart test/widgets/echo_pump_audio_controls_test.dart test/fixtures/echo_pump_app.dart
-          dart analyze lib/services/echo_pump_audio.dart lib/widgets/echo_pump_audio_controls.dart test/services/echo_pump_audio_test.dart test/widgets/echo_pump_audio_controls_test.dart
-          flutter test test/services/echo_pump_audio_test.dart test/widgets/echo_pump_audio_controls_test.dart
-          dart format --output=none --set-exit-if-changed lib/widgets/echo_pump_intro.dart lib/pages/echo_pump_game_page.dart test/widgets/echo_pump_intro_test.dart test/pages/echo_pump_game_page_test.dart
-          dart analyze lib/widgets/echo_pump_intro.dart test/widgets/echo_pump_intro_test.dart lib/widgets/echo_pump_visuals.dart test/widgets/echo_pump_visuals_test.dart lib/widgets/echo_pump_title_screen.dart test/widgets/echo_pump_title_screen_test.dart lib/models/echo_pump_game.dart lib/pages/echo_pump_game_page.dart test/models/echo_pump_game_test.dart test/pages/echo_pump_game_page_test.dart test/fixtures/echo_pump_app.dart
-          flutter test test/widgets/echo_pump_intro_test.dart test/widgets/echo_pump_visuals_test.dart test/widgets/echo_pump_title_screen_test.dart test/models/echo_pump_game_test.dart test/pages/echo_pump_game_page_test.dart
+        run: python3 scripts/echo_pump_dev_checks.py --mode "$DEV_CHECK_MODE"
       - name: Build isolated browser fixture
+        if: github.event_name != 'workflow_dispatch' || inputs.profile != 'quick'
         run: flutter build web --release --pwa-strategy=none --target=test/fixtures/echo_pump_app.dart
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        if: github.event_name != 'workflow_dispatch' || inputs.profile != 'quick'
         with:
           node-version: '22'
           cache: npm
       - name: Install browser testing tools
+        if: github.event_name != 'workflow_dispatch' || inputs.profile != 'quick'
         run: |
           npm ci
           npx playwright install --with-deps chromium
       - name: Play on desktop and mobile
+        if: github.event_name != 'workflow_dispatch' || inputs.profile != 'quick'
         shell: bash
         run: |
           set -euo pipefail
@@ -90,7 +117,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: echo-pump-evidence-${{ github.run_id }}
+          include-hidden-files: true
           path: |
+            .ci-logs/echo-pump-dev-checks.json
             lib/widgets/echo_pump_cast.dart
             test/widgets/echo_pump_cast_test.dart
             playwright-report/
