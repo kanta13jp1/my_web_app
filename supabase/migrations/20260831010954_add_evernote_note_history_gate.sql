@@ -301,6 +301,15 @@ begin
       message =
         'Evernote note history must be verified or explicitly reviewed as empty before source deletion.';
   end if;
+  if new.status in ('source_deleting', 'source_deleted')
+     and (
+       new.imported_history_version_count <> new.source_history_version_count
+       or new.verified_history_version_count <> new.source_history_version_count
+     ) then
+    raise exception using
+      errcode = '23514',
+      message = 'Evernote note history counts must match before source deletion.';
+  end if;
   return new;
 end
 $$;
@@ -312,7 +321,9 @@ revoke all on function
 drop trigger if exists enforce_evernote_history_before_source_deletion
   on public.evernote_migration_items;
 create trigger enforce_evernote_history_before_source_deletion
-  before insert or update of status, history_status
+  before insert or update of status, history_status,
+    source_history_version_count, imported_history_version_count,
+    verified_history_version_count
   on public.evernote_migration_items
   for each row
   execute function

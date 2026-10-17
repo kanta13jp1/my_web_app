@@ -13,6 +13,27 @@ select public.evernote_mark_note_history_reviewed(
   1
 );
 
+-- A caller-controlled status must not override an incomplete history inventory.
+do $$
+declare
+  v_status text;
+begin
+  foreach v_status in array array['source_deleting', 'source_deleted'] loop
+    begin
+      update public.evernote_migration_items
+      set status = v_status, history_status = 'verified'
+      where batch_id = 101 and source_item_key = 'id:note-101';
+      raise exception 'Incomplete history was allowed into deletion state.';
+    exception when check_violation then
+      if sqlerrm <>
+        'Evernote note history counts must match before source deletion.' then
+        raise;
+      end if;
+    end;
+  end loop;
+end
+$$;
+
 insert into storage.objects (
   bucket_id,
   name,
