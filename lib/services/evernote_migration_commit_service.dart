@@ -335,7 +335,7 @@ class SupabaseEvernoteMigrationStorageGateway
     if (totalBytes <= 0 || totalBytes > evernoteMigrationMaxObjectBytes) {
       throw StateError(
         'Evernoteから転送するデータは1バイト以上、上限は'
-        '${evernoteMigrationMaxObjectBytes}バイトです。',
+        '$evernoteMigrationMaxObjectBytes バイトです。',
       );
     }
     await _uploadResumableStream(
@@ -709,7 +709,7 @@ class EvernoteMigrationCommitService {
         exportBytes.length > evernoteMigrationMaxObjectBytes) {
       throw StateError(
         'The ENEX batch must be between 1 byte and '
-        '${evernoteMigrationMaxObjectBytes}バイトです。',
+        '$evernoteMigrationMaxObjectBytes バイトです。',
       );
     }
     if (preview.sourceType != 'evernote') {
@@ -756,7 +756,7 @@ class EvernoteMigrationCommitService {
     )) {
       throw StateError(
         'Every attachment must contain data and be no larger than '
-        '${evernoteMigrationMaxObjectBytes}バイトです。',
+        '$evernoteMigrationMaxObjectBytes バイトです。',
       );
     }
 
@@ -1022,7 +1022,7 @@ class EvernoteMigrationCommitService {
     if (archiveBytes <= 0 || archiveBytes > evernoteMigrationMaxObjectBytes) {
       throw StateError(
         'The ENEX archive must be between 1 byte and '
-        '${evernoteMigrationMaxObjectBytes}バイトです。',
+        '$evernoteMigrationMaxObjectBytes バイトです。',
       );
     }
     if (preview.sourceType != 'evernote') {
@@ -1091,7 +1091,7 @@ class EvernoteMigrationCommitService {
               resource.data.length > evernoteMigrationMaxObjectBytes) {
             throw StateError(
               'Every attachment must contain data and be no larger than '
-              '${evernoteMigrationMaxObjectBytes}バイトです。',
+              '$evernoteMigrationMaxObjectBytes バイトです。',
             );
           }
           resourceBytes += resource.data.length;

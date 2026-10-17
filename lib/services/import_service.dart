@@ -750,7 +750,7 @@ class ImportService {
     }
     await _gamificationService.awardPoints(
       insertedCount * 10,
-      reason: '${insertedCount}件のノートを取り込みました',
+      reason: '$insertedCount 件のノートを取り込みました',
     );
   }
 
