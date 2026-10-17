@@ -210,7 +210,7 @@ void main() {
     unawaited(showDialog<void>(
       context: context,
       builder: (_) => const AlertDialog(title: Text('所持品テスト')),
-    ));
+    ),);
     await tester.pumpAndSettle();
     final stopped = steps;
     await tester.pump(const Duration(seconds: 2));
