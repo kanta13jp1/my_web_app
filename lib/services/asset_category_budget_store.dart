@@ -14,6 +14,17 @@ class AssetCategoryBudgetStore {
 
   const AssetCategoryBudgetStore();
 
+  Future<bool> hasSavedSetting({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final raw = store.getString(prefsKey);
+    if (raw == null || raw.isEmpty) return false;
+    try {
+      return jsonDecode(raw) is Map;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<Map<String, double>> load({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     final raw = store.getString(prefsKey);
@@ -33,12 +44,6 @@ class AssetCategoryBudgetStore {
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     final sanitized = encodeMirrorValue(budgets);
-    if (sanitized.isEmpty) {
-      if (!await store.remove(prefsKey)) {
-        throw StateError('Could not remove category budgets');
-      }
-      return;
-    }
     if (!await store.setString(prefsKey, jsonEncode(sanitized))) {
       throw StateError('Could not save category budgets');
     }
