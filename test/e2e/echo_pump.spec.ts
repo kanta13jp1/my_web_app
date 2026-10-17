@@ -147,8 +147,7 @@ test('character art, locations and threat update with play', async ({ page }, in
   await page.getByRole('button', { name: 'ゲーム開始', exact: true }).click();
   await page.getByRole('button', { name: 'スキップして開始', exact: true }).click();
   const cast = (label: string) => page.getByText(label, { exact: true }).or(page.getByLabel(label, { exact: true })).first();
-  await expect(cast('あなた / 保守員：管理室、安全な拠点')).toBeVisible();
-  await expect(cast('敵 / 音を追う影：ポンプ室、別区画')).toBeVisible();
+  await expect(cast('管理室の探索ビュー')).toBeVisible();
   for (const name of ['character_technician.png', 'character_stalker.png']) {
     const response = await page.request.get(`/assets/assets/echo_pump/${name}`);
     expect(response.ok()).toBeTruthy();

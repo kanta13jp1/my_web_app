@@ -144,7 +144,19 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  EchoPumpScene(game: _game),
+                  EchoPumpScene(
+                    game: _game,
+                    onExploreMove: (room) {
+                      if (_game.room == PumpRoom.control && !_game.finished) {
+                        _act(() => _game.move(room), EchoPumpCue.step);
+                      }
+                    },
+                    onFootstep: () {
+                      if (_game.room == PumpRoom.control && !_game.finished) {
+                        _audio.cue(EchoPumpCue.step);
+                      }
+                    },
+                  ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
