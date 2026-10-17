@@ -259,6 +259,45 @@ begin
 end
 $$;
 
+-- Count-only updates must re-run the gate after a valid deletion transition.
+-- Fixture 102 above proves the zero-version reviewed path is still permitted.
+do $$
+declare
+  v_column text;
+begin
+  foreach v_column in array array[
+    'source_history_version_count',
+    'imported_history_version_count',
+    'verified_history_version_count'
+  ] loop
+    begin
+      execute format(
+        'update public.evernote_migration_items set %I = 1 '
+        'where batch_id = 102 and source_item_key = %L',
+        v_column,
+        'id:note-102'
+      );
+      raise exception 'Count-only update evaded the history deletion gate.';
+    exception when check_violation then
+      if sqlerrm <>
+        'Evernote note history counts must match before source deletion.' then
+        raise;
+      end if;
+    end;
+  end loop;
+  if not exists (
+    select 1 from public.evernote_migration_items
+    where batch_id = 102 and source_item_key = 'id:note-102'
+      and status = 'source_deleting'
+      and source_history_version_count = 0
+      and imported_history_version_count = 0
+      and verified_history_version_count = 0
+  ) then
+    raise exception 'Rejected counter updates changed the valid fixture.';
+  end if;
+end
+$$;
+
 -- Another authenticated user must see neither history nor attachments.
 select set_config(
   'request.jwt.claim.sub',
