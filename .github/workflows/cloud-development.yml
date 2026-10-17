@@ -26,6 +26,7 @@ jobs:
       - run: node --check scripts/echo-pump-public-check.mjs
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Verify the public game and native audio playback
         env:
           EXPECTED_PRODUCTION_SHA: ${{ inputs.production_sha }}
