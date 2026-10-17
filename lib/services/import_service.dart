@@ -761,7 +761,7 @@ class ImportService {
     if (value is Map) {
       return Map<String, dynamic>.from(value);
     }
-    throw Exception('Expected a JSON object response.');
+    throw Exception('想定した形式の応答を取得できませんでした。');
   }
 
   static int _toIntValue(dynamic value) {
