@@ -706,7 +706,7 @@ void main() {
       testWidgets('budget save retains invalid input $invalid at ${size.width}',
           (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_category_budgets_v1': '{"食費":10000}',
+          'asset_category_budgets_v1': jsonEncode({'食費': 5000}),
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
         });
@@ -767,7 +767,7 @@ void main() {
       testWidgets('budget save lifecycle $mode at ${size.width}',
           (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_category_budgets_v1': '{"食費":10000}',
+          'asset_category_budgets_v1': jsonEncode({'食費': 5000}),
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
         });
