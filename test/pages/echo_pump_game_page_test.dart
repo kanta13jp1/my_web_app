@@ -31,6 +31,9 @@ void main() {
       expect(find.text('所持品は空'), findsOneWidget);
       await tap('echo-inventory-close');
       expect(find.text('ターン 0'), findsOneWidget);
+      final gameTheme = Theme.of(tester.element(find.byType(AppBar)));
+      expect(gameTheme.textTheme.bodyMedium?.fontFamily, 'NotoSansJP');
+      expect(gameTheme.brightness, Brightness.dark);
       await tap('echo-power-b');
       await tap('echo-power-a');
       await tap('echo-move-hall');
