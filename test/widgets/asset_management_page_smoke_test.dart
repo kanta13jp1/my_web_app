@@ -1,4 +1,3 @@
-import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -27,6 +26,7 @@ import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'package:my_web_app/widgets/subscription_audit_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
