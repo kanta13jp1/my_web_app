@@ -1,0 +1,38 @@
+{
+  "created": "2026-10-17",
+  "generator": "image_gen",
+  "model": "not exposed",
+  "assets": [
+    {
+      "file": "character_technician.png",
+      "sha256": "d7ded57e82f44f83910d2a7dc06fc761e949dc76b3e5c5aa7438044238f77f40",
+      "bytes": 1869600,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "origin": "built-in image_gen, original prompt, no reference game artwork"
+    },
+    {
+      "file": "character_stalker.png",
+      "sha256": "dcc9ce3453e703b42a395ba080de19f1ecaa54cc4997ffa974ba55b51feccaa4",
+      "bytes": 1397568,
+      "dimensions": [
+        1145,
+        1374
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "origin": "built-in image_gen, original prompt, no reference game artwork"
+    }
+  ],
+  "commercial_rights": "pending",
+  "privacy": "pending",
+  "prompt_file": "docs/ECHO_PUMP_CHARACTERS.md"
+}
