@@ -25,7 +25,7 @@ const assert = require('node:assert/strict');
         if(await placeholder.count()) await placeholder.evaluate(e=>e.click());
         await page.waitForTimeout(700);
         assert.equal(await page.locator('#screen').inputValue(),screen);
-        const semantics=(await page.locator('[aria-label]').evaluateAll(nodes=>nodes.map(e=>e.getAttribute('aria-label')).join(' ')))+' '+(await page.locator('flt-semantics').allTextContents()).join(' ');
+        const semantics=(await page.locator('[aria-label], input, textarea').evaluateAll(nodes=>nodes.map(e=>(e.getAttribute('aria-label')||'')+' '+(e.value||'')).join(' ')))+' '+(await page.locator('flt-semantics').allTextContents()).join(' ');
         await page.screenshot({path:`preview-evidence/${device}-${screen}.png`,fullPage:true});
         fs.writeFileSync(`preview-evidence/${device}-${screen}.json`,JSON.stringify({semantics,errors,external},null,2));
         assert(semantics.includes('閲覧専用／DB接続なし'), 'Missing offline banner: '+device+'/'+screen+' '+semantics.slice(0,1500)+' errors='+errors.join(','));
@@ -34,6 +34,9 @@ const assert = require('node:assert/strict');
         await page.screenshot({path:`preview-evidence/${device}-${screen}.png`,fullPage:true});
         assert.equal(errors.length,start, 'Browser error: '+errors.slice(start).join('\n'));
         assert.equal(external.length,0,'External request attempted: '+external.join(','));
+        const blocked=await page.evaluate(async()=>{try{await fetch('https://pr5125.invalid/rest/v1/notes');return false;}catch(_){return true;}});
+        assert(blocked,'Off-origin browser guard failed');
+        assert.equal(external.length,0,'Guard leaked an external request');
         report.push({device,screen,semantics:semantics.slice(0,6000),externalRequests:0});
       }
       await context.close();

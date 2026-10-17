@@ -18,6 +18,10 @@ const realOpen=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=funct
 window.WebSocket=class{constructor(){throw new Error('Realtime is disabled in the offline preview');}};
 window.EventSource=class{constructor(){throw new Error('External events are disabled in the offline preview');}};
 navigator.sendBeacon=()=>false;
+window.open=(url)=>{checkURL(url);throw new Error('Popups are disabled in the offline preview');};
+if('showOpenFilePicker' in window) window.showOpenFilePicker=async()=>{throw new Error('Personal files are disabled in the offline preview');};
+document.addEventListener('submit',e=>e.preventDefault(),true);
+document.addEventListener('click',e=>{const a=e.target instanceof Element?e.target.closest('a[href]'):null;if(a){try{checkURL(a.href);}catch(_){e.preventDefault();}}},true);
 document.addEventListener('click',e=>{if(e.target instanceof HTMLInputElement && e.target.type==='file'){e.preventDefault();alert('架空データ版ではファイルを選択できません。');}},true);
 const select=document.getElementById('screen');select.value=new URL(location.href).searchParams.get('screen')||'note-list';select.onchange=()=>{location.href='/?screen='+encodeURIComponent(select.value);};
 </script>
