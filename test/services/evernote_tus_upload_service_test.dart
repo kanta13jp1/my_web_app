@@ -31,6 +31,55 @@ void main() {
   const endpoint = 'https://project.storage.supabase.co'
       '/storage/v1/upload/resumable';
 
+  for (final redirectMethod in <String>['POST', 'HEAD', 'PATCH']) {
+    test('rejects redirects during TUS $redirectMethod', () async {
+      final client = _RecordingClient((request, body) async {
+        expect(request.followRedirects, isFalse);
+        if (request.method == redirectMethod) {
+          return _response(
+            307,
+            headers: const <String, String>{
+              'location': 'https://attacker.example/redirect',
+            },
+          );
+        }
+        expect(request.method, 'POST');
+        return _response(
+          201,
+          headers: const <String, String>{'location': 'upload-1'},
+        );
+      });
+      final service = EvernoteTusUploadService.forTesting(
+        client: client,
+        chunkSize: 4,
+      );
+      await expectLater(
+        service.upload(
+          endpoint: Uri.parse(endpoint),
+          accessToken: 'synthetic-test-token',
+          source: Stream<List<int>>.value(<int>[1]),
+          totalBytes: 1,
+          bucketId: 'evernote-migration-archives',
+          objectPath: 'owner/source.enex',
+          contentType: 'application/xml',
+          previousUploadUrl: redirectMethod == 'HEAD'
+              ? Uri.parse('$endpoint/upload-1')
+              : null,
+        ),
+        throwsStateError,
+      );
+      expect(
+        client.requests.map((request) => request.method).toList(),
+        redirectMethod == 'PATCH'
+            ? <String>['POST', 'PATCH']
+            : <String>[redirectMethod],
+      );
+      expect(
+        client.requests.every((request) => request.url.host == 'project.storage.supabase.co'),
+        isTrue,
+      );
+    });
+  }
   test('uploads fixed chunks and sends owner-private object metadata',
       () async {
     var remoteOffset = 0;

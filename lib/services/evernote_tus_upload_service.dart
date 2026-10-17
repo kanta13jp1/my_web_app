@@ -209,6 +209,7 @@ class EvernoteTusUploadService {
     required bool upsert,
   }) async {
     final request = http.Request('POST', endpoint)
+      ..followRedirects = false
       ..headers.addAll(<String, String>{
         'Authorization': 'Bearer $accessToken',
         'Tus-Resumable': '1.0.0',
@@ -244,6 +245,7 @@ class EvernoteTusUploadService {
     required String accessToken,
   }) async {
     final request = http.Request('HEAD', uploadUrl)
+      ..followRedirects = false
       ..headers.addAll(<String, String>{
         'Authorization': 'Bearer $accessToken',
         'Tus-Resumable': '1.0.0',
@@ -273,6 +275,7 @@ class EvernoteTusUploadService {
     required Uint8List chunk,
   }) async {
     final request = http.StreamedRequest('PATCH', uploadUrl)
+      ..followRedirects = false
       ..headers.addAll(<String, String>{
         'Authorization': 'Bearer $accessToken',
         'Tus-Resumable': '1.0.0',
