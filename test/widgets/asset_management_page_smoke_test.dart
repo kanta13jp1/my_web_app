@@ -650,6 +650,7 @@ void main() {
         Future<void> settle() async {
           await tester.pump(const Duration(milliseconds: 300));
           await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
         }
 
         await settle();
@@ -671,7 +672,12 @@ void main() {
           await tester.tap(destination);
           await settle();
           final editor = find.text('定期収入');
-          expect(editor.hitTestable(), findsOneWidget);
+          expect(editor, findsOneWidget);
+          expect(
+            editor.hitTestable(),
+            findsOneWidget,
+            reason: 'editor rect ${tester.getRect(editor)} / surface $size',
+          );
           await tester.tap(editor);
           await settle();
           expect(find.text('定期収入を追加'), findsOneWidget);
