@@ -6147,6 +6147,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     }
 
+    if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
+        _keyIncomePlanSection.currentContext != null &&
+        matches('定期収入 収入予定 毎月の収入 給料 給与 入金予定')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '定期収入・収入予定',
+          sublabel: '資産/負債 管理ボード → 収入予定へ移動',
+          icon: Icons.event_repeat_outlined,
+          onTap: () => _scrollTo(_keyIncomePlanSection),
+        ),
+      );
+    }
+
     // The payroll card is nested in the workbook. Offer a jump only while
     // its authenticated, visible destination is actually mounted.
     if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&

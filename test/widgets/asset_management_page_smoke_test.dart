@@ -625,6 +625,57 @@ void main() {
       });
     }
   }
+
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final query in ['定期収入', '収入予定', '毎月の収入']) {
+      testWidgets('income search reaches editor $query at ${size.width}', (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1': AssetManagementDisplayMode.full.storageId,
+        });
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {'2026-06-20': {'synthetic cash': 1000.0}},
+            ),
+          ),
+        );
+        Future<void> settle() async {
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+        }
+        await settle();
+        try {
+          await tester.tap(find.byKey(const Key('asset_section_search_appbar_button')));
+          await settle();
+          final search = find.byWidgetPredicate((w) => w is TextField && (w.decoration?.hintText?.startsWith('カード名・項目名で検索') ?? false),);
+          expect(search, findsOneWidget);
+          await tester.enterText(search, query);
+          await settle();
+          final destination = find.text('定期収入・収入予定');
+          expect(destination, findsOneWidget);
+          await tester.ensureVisible(destination);
+          await tester.tap(destination);
+          await settle();
+          final editor = find.widgetWithText(TextButton, '定期収入');
+          expect(editor.hitTestable(), findsOneWidget);
+          await tester.tap(editor);
+          await settle();
+          expect(find.text('定期収入を追加'), findsOneWidget);
+          await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+          await settle();
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(tester.takeException(), isNull);
+        } finally {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await settle();
+        }
+      });
+    }
+  }
   group('AssetManagementPage smoke', () {
     testWidgets('mobile chat reserves space outside the scrolling content', (
       tester,
