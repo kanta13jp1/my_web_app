@@ -15,9 +15,14 @@ void main() {
       MaterialApp(
         home: MediaQuery(
           data: MediaQueryData(
-              disableAnimations: reduced, textScaler: TextScaler.linear(scale),),
+            disableAnimations: reduced,
+            textScaler: TextScaler.linear(scale),
+          ),
           child: Scaffold(
-              body: SingleChildScrollView(child: EchoPumpCast(game: game),),),
+            body: SingleChildScrollView(
+              child: EchoPumpCast(game: game),
+            ),
+          ),
         ),
       ),
     );
@@ -35,6 +40,7 @@ void main() {
     game.togglePower(PumpCircuit.b);
     await show(tester, game);
     expect(find.bySemanticsLabel('敵の誘導先：工具庫の機械音'), findsOneWidget);
+    game.togglePower(PumpCircuit.a);
     game.move(PumpRoom.hall);
     await show(tester, game);
     expect(find.text('接近注意'), findsOneWidget);
@@ -103,7 +109,10 @@ void main() {
         home: MediaQuery(
           data: const MediaQueryData(),
           child: Scaffold(
-              body: SingleChildScrollView(child: EchoPumpCast(game: game),),),
+            body: SingleChildScrollView(
+              child: EchoPumpCast(game: game),
+            ),
+          ),
         ),
       ),
     );
@@ -111,9 +120,10 @@ void main() {
     final transitions =
         tester.widgetList<SlideTransition>(find.byType(SlideTransition));
     expect(
-        transitions
-            .any((w) => w.position.value.dx > 0 && w.position.value.dx < 0.12),
-        isTrue,);
+      transitions
+          .any((w) => w.position.value.dx > 0 && w.position.value.dx < 0.12),
+      isTrue,
+    );
     await tester.pumpAndSettle();
     expect(tester.hasRunningAnimations, isFalse);
     expect(tester.takeException(), isNull);

@@ -157,11 +157,12 @@ test('character art, locations and threat update with play', async ({ page }, in
   }
   await page.screenshot({ path: info.outputPath('character-start.png') });
   await page.getByRole('checkbox', { name: 'B 整備', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'A 搬入', exact: true }).click();
   await page.getByRole('button', { name: '中央廊下へ', exact: true }).click();
   await page.mouse.move(100, 200);
   await page.mouse.wheel(0, -20000);
   await expect(cast('あなた / 保守員：中央廊下、探索中')).toBeVisible();
-  await expect(cast('敵 / 音を追う影：工具庫、接近注意')).toBeVisible();
+  await expect(cast('敵 / 音を追う影：搬入区画、接近注意')).toBeVisible();
   await page.waitForTimeout(650);
   await page.screenshot({ path: info.outputPath('character-nearby.png') });
 });

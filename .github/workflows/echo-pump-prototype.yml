@@ -50,7 +50,7 @@ jobs:
       - run: flutter pub get
       - name: Analyze and test the prototype
         run: |
-          dart format lib/widgets/echo_pump_cast.dart test/widgets/echo_pump_cast_test.dart
+          dart format --output=none --set-exit-if-changed lib/widgets/echo_pump_cast.dart test/widgets/echo_pump_cast_test.dart
           dart analyze lib/widgets/echo_pump_cast.dart test/widgets/echo_pump_cast_test.dart
           flutter test test/widgets/echo_pump_cast_test.dart
           python3 scripts/generate_echo_pump_audio.py --check
