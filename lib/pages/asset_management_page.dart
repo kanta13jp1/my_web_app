@@ -4945,141 +4945,197 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ? initial?.destinationAccountId
             : null;
 
-    await showDialog<void>(
+    final templateId = existing?.id ??
+        'income_template_${DateTime.now().microsecondsSinceEpoch}';
+    var isSaving = false;
+    String? saveError;
+
+    final dialogRoute = DialogRoute<void>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(existing == null ? '定期収入を追加' : '定期収入を編集'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(labelText: '名称'),
-                    ),
-                    TextField(
-                      controller: dayController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(labelText: '毎月の日付'),
-                    ),
-                    TextField(
-                      controller: amountController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
-                      ],
-                      decoration: const InputDecoration(labelText: '金額'),
-                    ),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedDestinationId ?? '',
-                      decoration: const InputDecoration(labelText: '入金先口座'),
-                      items: [
-                        const DropdownMenuItem<String>(
-                          value: '',
-                          child: Text('未設定'),
+            return PopScope(
+              canPop: !isSaving,
+              child: AlertDialog(
+                title: Text(existing == null ? '定期収入を追加' : '定期収入を編集'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (saveError != null)
+                        Text(
+                          saveError!,
+                          key: const Key('recurring_income_save_error'),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.error),
                         ),
-                        for (final account in destinationOptions)
-                          DropdownMenuItem<String>(
-                            value: account.id,
-                            child: Text(account.name),
+                      TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(labelText: '名称'),
+                      ),
+                      TextField(
+                        controller: dayController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        decoration: const InputDecoration(labelText: '毎月の日付'),
+                      ),
+                      TextField(
+                        controller: amountController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                        ],
+                        decoration: const InputDecoration(labelText: '金額'),
+                      ),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedDestinationId ?? '',
+                        decoration: const InputDecoration(labelText: '入金先口座'),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: '',
+                            child: Text('未設定'),
                           ),
-                      ],
-                      onChanged: (value) {
-                        setDialogState(() {
-                          selectedDestinationId =
-                              value == null || value.isEmpty ? null : value;
-                        });
-                      },
-                    ),
-                  ],
+                          for (final account in destinationOptions)
+                            DropdownMenuItem<String>(
+                              value: account.id,
+                              child: Text(account.name),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          setDialogState(() {
+                            selectedDestinationId =
+                                value == null || value.isEmpty ? null : value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
+                actions: [
+                  TextButton(
+                    onPressed:
+                        isSaving ? null : () => Navigator.of(context).pop(),
+                    child: const Text('キャンセル'),
+                  ),
+                  FilledButton(
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            final name = nameController.text.trim();
+                            final day = int.tryParse(dayController.text.trim());
+                            final amount = double.tryParse(
+                              amountController.text.replaceAll(',', '').trim(),
+                            );
+                            if (name.isEmpty ||
+                                day == null ||
+                                day < 1 ||
+                                amount == null ||
+                                amount <= 0) {
+                              return;
+                            }
+                            String? destinationName;
+                            for (final account in destinationOptions) {
+                              if (account.id == selectedDestinationId) {
+                                destinationName = account.name;
+                                break;
+                              }
+                            }
+                            final template =
+                                AssetLiabilityRecurringIncomeTemplate(
+                              id: templateId,
+                              dayOfMonth: day.clamp(1, 31).toInt(),
+                              name: name,
+                              amount: amount,
+                              destinationAccountId: selectedDestinationId,
+                              destinationAccountName: destinationName,
+                            );
+                            final stateMonth = _assetLiabilityStateMonth(_now);
+                            final generatedId = _generatedPlanIdForTemplate(
+                              template,
+                              stateMonth,
+                            );
+                            final previousGeneratedPlan =
+                                _monthlyIncomePlans.where((
+                              plan,
+                            ) {
+                              return plan.id == generatedId;
+                            }).toList();
+                            final generatedPlan = _incomePlanForTemplate(
+                              template,
+                              stateMonth,
+                              received: previousGeneratedPlan.isNotEmpty
+                                  ? previousGeneratedPlan.first.received
+                                  : false,
+                            );
+                            setDialogState(() {
+                              isSaving = true;
+                              saveError = null;
+                            });
+                            var templateSaved = false;
+                            try {
+                              final templates =
+                                  <AssetLiabilityRecurringIncomeTemplate>[
+                                for (final current in _recurringIncomeTemplates)
+                                  if (current.id != template.id) current,
+                                template,
+                              ];
+                              await _assetLiabilityRepository
+                                  .saveRecurringIncomeTemplates(
+                                templates,
+                              );
+                              templateSaved = true;
+                              if (!mounted) return;
+                              setState(() {
+                                _recurringIncomeTemplates = [
+                                  for (final current
+                                      in _recurringIncomeTemplates)
+                                    if (current.id != template.id) current,
+                                  template,
+                                ]..sort((a, b) {
+                                    final day =
+                                        a.dayOfMonth.compareTo(b.dayOfMonth);
+                                    if (day != 0) {
+                                      return day;
+                                    }
+                                    return a.name.compareTo(b.name);
+                                  });
+                                _monthlyIncomePlans = [
+                                  for (final current in _monthlyIncomePlans)
+                                    if (current.id != generatedId) current,
+                                  generatedPlan,
+                                ]..sort((a, b) => a.date.compareTo(b.date));
+                              });
+                              await _persistAssetLiabilityMonthlyState();
+                              if (context.mounted) Navigator.of(context).pop();
+                            } catch (error) {
+                              debugPrint(
+                                  'Error saving recurring income editor: $error');
+                              if (context.mounted) {
+                                setDialogState(() {
+                                  isSaving = false;
+                                  saveError = templateSaved
+                                      ? '定期収入は保存済みですが、今月の予定を保存できませんでした。もう一度保存してください。'
+                                      : '保存できませんでした。入力内容を残しています。もう一度保存してください。';
+                                });
+                              }
+                            }
+                          },
+                    child: const Text('保存'),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('キャンセル'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    final name = nameController.text.trim();
-                    final day = int.tryParse(dayController.text.trim());
-                    final amount = double.tryParse(
-                      amountController.text.replaceAll(',', '').trim(),
-                    );
-                    if (name.isEmpty ||
-                        day == null ||
-                        day < 1 ||
-                        amount == null ||
-                        amount <= 0) {
-                      return;
-                    }
-                    String? destinationName;
-                    for (final account in destinationOptions) {
-                      if (account.id == selectedDestinationId) {
-                        destinationName = account.name;
-                        break;
-                      }
-                    }
-                    final template = AssetLiabilityRecurringIncomeTemplate(
-                      id: existing?.id ??
-                          'income_template_${DateTime.now().microsecondsSinceEpoch}',
-                      dayOfMonth: day.clamp(1, 31).toInt(),
-                      name: name,
-                      amount: amount,
-                      destinationAccountId: selectedDestinationId,
-                      destinationAccountName: destinationName,
-                    );
-                    final stateMonth = _assetLiabilityStateMonth(_now);
-                    final generatedId = _generatedPlanIdForTemplate(
-                      template,
-                      stateMonth,
-                    );
-                    final previousGeneratedPlan = _monthlyIncomePlans.where((
-                      plan,
-                    ) {
-                      return plan.id == generatedId;
-                    }).toList();
-                    final generatedPlan = _incomePlanForTemplate(
-                      template,
-                      stateMonth,
-                      received: previousGeneratedPlan.isNotEmpty
-                          ? previousGeneratedPlan.first.received
-                          : false,
-                    );
-                    setState(() {
-                      _recurringIncomeTemplates = [
-                        for (final current in _recurringIncomeTemplates)
-                          if (current.id != template.id) current,
-                        template,
-                      ]..sort((a, b) {
-                          final day = a.dayOfMonth.compareTo(b.dayOfMonth);
-                          if (day != 0) {
-                            return day;
-                          }
-                          return a.name.compareTo(b.name);
-                        });
-                      _monthlyIncomePlans = [
-                        for (final current in _monthlyIncomePlans)
-                          if (current.id != generatedId) current,
-                        generatedPlan,
-                      ]..sort((a, b) => a.date.compareTo(b.date));
-                    });
-                    unawaited(_saveRecurringIncomeTemplates());
-                    unawaited(_saveAssetLiabilityMonthlyState());
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('保存'),
-                ),
-              ],
             );
           },
         );
       },
     );
+
+    await Navigator.of(context).push(dialogRoute);
+    await dialogRoute.completed;
 
     nameController.dispose();
     amountController.dispose();
