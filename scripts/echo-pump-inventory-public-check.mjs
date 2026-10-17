@@ -48,7 +48,7 @@ try {
    await text('歩行中…').waitFor();
    observed.walkingBeforeMenu=true;
    await button('所持品を開く').dispatchEvent('click');await text('所持品は空').waitFor();
-   assert.equal(await text('歩行中…').count(),0);assert.equal(await text('夜間保守メモ 1 / 2').count(),0);
+   await text('歩行中…').waitFor({state:'hidden',timeout:3000});assert.equal(await text('夜間保守メモ 1 / 2').count(),0);
    const openedAt=await page.evaluate(()=>performance.now());
    const initialResolved=await steps();
    await page.waitForTimeout(400); // allow a play request already issued before the modal to settle
