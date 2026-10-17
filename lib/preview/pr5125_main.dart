@@ -59,6 +59,9 @@ Future<void> main() async {
       },
     }),
   );
+  if (Supabase.instance.client.auth.currentUser?.id != Preview5125Store.userId) {
+    throw StateError('Synthetic preview identity was not initialized');
+  }
   runApp(
     MultiProvider(
       providers: [

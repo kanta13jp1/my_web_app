@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -209,6 +211,7 @@ class Preview5125Store {
   late final http.Client client = MockClient(respond);
 
   Future<http.Response> respond(http.Request request) async {
+    debugPrint('PR5125 adapter ${request.method} ${request.url}');
     const headers = {'content-type': 'application/json; charset=utf-8'};
     http.Response json(Object? value, {int status = 200}) =>
         http.Response(jsonEncode(value), status, headers: headers);
@@ -249,6 +252,7 @@ class Preview5125Store {
     final limit =
         int.tryParse(request.url.queryParameters['limit'] ?? '') ?? total;
     rows = rows.skip(offset).take(limit).toList();
+    debugPrint('PR5125 adapter $table returns ${rows.length} synthetic rows');
     final single = request.headers['Accept']?.contains('vnd.pgrst.object') ??
         request.headers['accept']?.contains('vnd.pgrst.object') ??
         false;

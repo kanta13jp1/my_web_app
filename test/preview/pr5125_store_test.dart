@@ -2,8 +2,16 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_web_app/preview/pr5125_store.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
+  test('real client queries the offline adapter with page filters', () async {
+    final store = Preview5125Store();
+    final client = SupabaseClient('https://pr5125.invalid', 'fictional-preview', httpClient: store.client,);
+    final rows = await client.from('notes').select().eq('user_id', Preview5125Store.userId).eq('is_archived', false).range(0, 499);
+    expect(rows.length, 2);
+    await client.dispose();
+  });
   test('reads only synthetic rows from the in-memory adapter', () async {
     final store = Preview5125Store();
     final response = await store.client
