@@ -4945,141 +4945,197 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ? initial?.destinationAccountId
             : null;
 
-    await showDialog<void>(
+    final templateId = existing?.id ??
+        'income_template_${DateTime.now().microsecondsSinceEpoch}';
+    var isSaving = false;
+    String? saveError;
+
+    final dialogRoute = DialogRoute<void>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(existing == null ? '定期収入を追加' : '定期収入を編集'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(labelText: '名称'),
-                    ),
-                    TextField(
-                      controller: dayController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(labelText: '毎月の日付'),
-                    ),
-                    TextField(
-                      controller: amountController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
-                      ],
-                      decoration: const InputDecoration(labelText: '金額'),
-                    ),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedDestinationId ?? '',
-                      decoration: const InputDecoration(labelText: '入金先口座'),
-                      items: [
-                        const DropdownMenuItem<String>(
-                          value: '',
-                          child: Text('未設定'),
+            return PopScope(
+              canPop: !isSaving,
+              child: AlertDialog(
+                title: Text(existing == null ? '定期収入を追加' : '定期収入を編集'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (saveError != null)
+                        Text(
+                          saveError!,
+                          key: const Key('recurring_income_save_error'),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.error),
                         ),
-                        for (final account in destinationOptions)
-                          DropdownMenuItem<String>(
-                            value: account.id,
-                            child: Text(account.name),
+                      TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(labelText: '名称'),
+                      ),
+                      TextField(
+                        controller: dayController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        decoration: const InputDecoration(labelText: '毎月の日付'),
+                      ),
+                      TextField(
+                        controller: amountController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                        ],
+                        decoration: const InputDecoration(labelText: '金額'),
+                      ),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedDestinationId ?? '',
+                        decoration: const InputDecoration(labelText: '入金先口座'),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: '',
+                            child: Text('未設定'),
                           ),
-                      ],
-                      onChanged: (value) {
-                        setDialogState(() {
-                          selectedDestinationId =
-                              value == null || value.isEmpty ? null : value;
-                        });
-                      },
-                    ),
-                  ],
+                          for (final account in destinationOptions)
+                            DropdownMenuItem<String>(
+                              value: account.id,
+                              child: Text(account.name),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          setDialogState(() {
+                            selectedDestinationId =
+                                value == null || value.isEmpty ? null : value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
+                actions: [
+                  TextButton(
+                    onPressed:
+                        isSaving ? null : () => Navigator.of(context).pop(),
+                    child: const Text('キャンセル'),
+                  ),
+                  FilledButton(
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            final name = nameController.text.trim();
+                            final day = int.tryParse(dayController.text.trim());
+                            final amount = double.tryParse(
+                              amountController.text.replaceAll(',', '').trim(),
+                            );
+                            if (name.isEmpty ||
+                                day == null ||
+                                day < 1 ||
+                                amount == null ||
+                                amount <= 0) {
+                              return;
+                            }
+                            String? destinationName;
+                            for (final account in destinationOptions) {
+                              if (account.id == selectedDestinationId) {
+                                destinationName = account.name;
+                                break;
+                              }
+                            }
+                            final template =
+                                AssetLiabilityRecurringIncomeTemplate(
+                              id: templateId,
+                              dayOfMonth: day.clamp(1, 31).toInt(),
+                              name: name,
+                              amount: amount,
+                              destinationAccountId: selectedDestinationId,
+                              destinationAccountName: destinationName,
+                            );
+                            final stateMonth = _assetLiabilityStateMonth(_now);
+                            final generatedId = _generatedPlanIdForTemplate(
+                              template,
+                              stateMonth,
+                            );
+                            final previousGeneratedPlan =
+                                _monthlyIncomePlans.where((
+                              plan,
+                            ) {
+                              return plan.id == generatedId;
+                            }).toList();
+                            final generatedPlan = _incomePlanForTemplate(
+                              template,
+                              stateMonth,
+                              received: previousGeneratedPlan.isNotEmpty
+                                  ? previousGeneratedPlan.first.received
+                                  : false,
+                            );
+                            setDialogState(() {
+                              isSaving = true;
+                              saveError = null;
+                            });
+                            var templateSaved = false;
+                            try {
+                              final templates =
+                                  <AssetLiabilityRecurringIncomeTemplate>[
+                                for (final current in _recurringIncomeTemplates)
+                                  if (current.id != template.id) current,
+                                template,
+                              ];
+                              await _assetLiabilityRepository
+                                  .saveRecurringIncomeTemplates(
+                                templates,
+                              );
+                              templateSaved = true;
+                              if (!mounted) return;
+                              setState(() {
+                                _recurringIncomeTemplates = [
+                                  for (final current
+                                      in _recurringIncomeTemplates)
+                                    if (current.id != template.id) current,
+                                  template,
+                                ]..sort((a, b) {
+                                    final day =
+                                        a.dayOfMonth.compareTo(b.dayOfMonth);
+                                    if (day != 0) {
+                                      return day;
+                                    }
+                                    return a.name.compareTo(b.name);
+                                  });
+                                _monthlyIncomePlans = [
+                                  for (final current in _monthlyIncomePlans)
+                                    if (current.id != generatedId) current,
+                                  generatedPlan,
+                                ]..sort((a, b) => a.date.compareTo(b.date));
+                              });
+                              await _persistAssetLiabilityMonthlyState();
+                              if (context.mounted) Navigator.of(context).pop();
+                            } catch (error) {
+                              debugPrint(
+                                  'Error saving recurring income editor: $error');
+                              if (context.mounted) {
+                                setDialogState(() {
+                                  isSaving = false;
+                                  saveError = templateSaved
+                                      ? '定期収入は保存済みですが、今月の予定を保存できませんでした。もう一度保存してください。'
+                                      : '保存できませんでした。入力内容を残しています。もう一度保存してください。';
+                                });
+                              }
+                            }
+                          },
+                    child: const Text('保存'),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('キャンセル'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    final name = nameController.text.trim();
-                    final day = int.tryParse(dayController.text.trim());
-                    final amount = double.tryParse(
-                      amountController.text.replaceAll(',', '').trim(),
-                    );
-                    if (name.isEmpty ||
-                        day == null ||
-                        day < 1 ||
-                        amount == null ||
-                        amount <= 0) {
-                      return;
-                    }
-                    String? destinationName;
-                    for (final account in destinationOptions) {
-                      if (account.id == selectedDestinationId) {
-                        destinationName = account.name;
-                        break;
-                      }
-                    }
-                    final template = AssetLiabilityRecurringIncomeTemplate(
-                      id: existing?.id ??
-                          'income_template_${DateTime.now().microsecondsSinceEpoch}',
-                      dayOfMonth: day.clamp(1, 31).toInt(),
-                      name: name,
-                      amount: amount,
-                      destinationAccountId: selectedDestinationId,
-                      destinationAccountName: destinationName,
-                    );
-                    final stateMonth = _assetLiabilityStateMonth(_now);
-                    final generatedId = _generatedPlanIdForTemplate(
-                      template,
-                      stateMonth,
-                    );
-                    final previousGeneratedPlan = _monthlyIncomePlans.where((
-                      plan,
-                    ) {
-                      return plan.id == generatedId;
-                    }).toList();
-                    final generatedPlan = _incomePlanForTemplate(
-                      template,
-                      stateMonth,
-                      received: previousGeneratedPlan.isNotEmpty
-                          ? previousGeneratedPlan.first.received
-                          : false,
-                    );
-                    setState(() {
-                      _recurringIncomeTemplates = [
-                        for (final current in _recurringIncomeTemplates)
-                          if (current.id != template.id) current,
-                        template,
-                      ]..sort((a, b) {
-                          final day = a.dayOfMonth.compareTo(b.dayOfMonth);
-                          if (day != 0) {
-                            return day;
-                          }
-                          return a.name.compareTo(b.name);
-                        });
-                      _monthlyIncomePlans = [
-                        for (final current in _monthlyIncomePlans)
-                          if (current.id != generatedId) current,
-                        generatedPlan,
-                      ]..sort((a, b) => a.date.compareTo(b.date));
-                    });
-                    unawaited(_saveRecurringIncomeTemplates());
-                    unawaited(_saveAssetLiabilityMonthlyState());
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('保存'),
-                ),
-              ],
             );
           },
         );
       },
     );
+
+    await Navigator.of(context).push(dialogRoute);
+    await dialogRoute.completed;
 
     nameController.dispose();
     amountController.dispose();
@@ -13284,6 +13340,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _normalizeRecurringLabel(template.name),
     }..removeWhere((name) => name.isEmpty);
     return detected.where((item) {
+      // Income templates generate a plan every month; do not silently
+      // convert a detected bimonthly income into a monthly plan.
+      if (item.cadence != AssetRecurringFixedCostCadence.monthly) {
+        return false;
+      }
       final label = _normalizeRecurringLabel(item.label);
       if (label.isEmpty) {
         return true;
@@ -16820,10 +16881,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ));
   }
 
+  ({DateTime start, DateTime endExclusive})? _loadedDebtPaidPeriod() {
+    if (_loadedAssetLiabilityMonthKey != _assetLiabilityStateMonthKey(_now)) {
+      return null;
+    }
+    final month = _assetLiabilityStateMonth(_now);
+    final start = DateTime(
+      month.year,
+      month.month,
+      _salaryDay.clamp(1, 28).toInt(),
+    );
+    return (
+      start: start,
+      endExclusive: DateTime(start.year, start.month + 1, start.day),
+    );
+  }
+
   Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
     }
+    final paidPeriod = _loadedDebtPaidPeriod();
     final inputs = AssetCashflowForecastInputs.fromAssetData(
       accounts: workbook.accounts,
       debtRows: workbook.debtMasterRows,
@@ -16832,6 +16910,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       oneTimeInflows: _expectedInflows,
       subscriptions: _subscriptions,
       paymentDayOverrides: _debtPaymentDayOverrides,
+      paidPeriodStart: paidPeriod?.start,
+      paidPeriodEndExclusive: paidPeriod?.endExclusive,
     );
     if (!inputs.hasData) {
       return const SizedBox.shrink();
@@ -17158,18 +17238,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     // Paid flags belong to the loaded effective salary cycle, not whichever
     // future month happens to be selected in the calendar.
-    final paidStateMonth =
-        _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now)
-            ? _assetLiabilityStateMonth(_now)
-            : null;
-    final paidPeriodStart = paidStateMonth == null
-        ? null
-        : DateTime(paidStateMonth.year, paidStateMonth.month,
-            _salaryDay.clamp(1, 28).toInt());
-    final paidPeriodEndExclusive = paidPeriodStart == null
-        ? null
-        : DateTime(paidPeriodStart.year, paidPeriodStart.month + 1,
-            paidPeriodStart.day);
+    final paidPeriod = _loadedDebtPaidPeriod();
     final debtInputs = <AssetCalendarDebtInput>[
       for (final row in debtRows)
         AssetCalendarDebtInput.fromDebtRow(
@@ -17180,8 +17249,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 in workbook?.accounts ?? <AssetLiabilityAccount>[])
               account.id: account.kind,
           },
-          paidPeriodStart: paidPeriodStart,
-          paidPeriodEndExclusive: paidPeriodEndExclusive,
+          paidPeriodStart: paidPeriod?.start,
+          paidPeriodEndExclusive: paidPeriod?.endExclusive,
         ),
     ];
     final inflowInputs = <AssetCalendarInflowInput>[
@@ -24540,6 +24609,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityWorkbook? workbook,
   ) {
     if (workbook == null) return null;
+    final paidPeriod = _loadedDebtPaidPeriod();
     final inputs = AssetCashflowForecastInputs.fromAssetData(
       accounts: workbook.accounts,
       debtRows: workbook.debtMasterRows,
@@ -24548,6 +24618,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       oneTimeInflows: _expectedInflows,
       subscriptions: _subscriptions,
       paymentDayOverrides: _debtPaymentDayOverrides,
+      paidPeriodStart: paidPeriod?.start,
+      paidPeriodEndExclusive: paidPeriod?.endExclusive,
     );
     if (!inputs.hasData) return null;
     return AssetCashflowForecastService.project(
@@ -31405,12 +31477,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetRepaymentSimulationPanel(AssetLiabilityWorkbook workbook) {
     final extraMonthlyPayment = _parseRepaymentSimulationExtraPayment();
     final simulation =
-        _assetLiabilityRepaymentSimulationService.buildComparison(
+        _assetLiabilityRepaymentSimulationService.buildPanelComparison(
       workbook: workbook,
       extraMonthlyPayment: extraMonthlyPayment,
     );
+    const scopeExplanation =
+        '直接払い・今月未払いの対象だけの試算です。今月支払済みの元本、カード請求に内包する明細、定期支出として追加した固定費は対象外です。全負債の完済時期ではありません。予定返済額を毎月確保し、新規利用・将来の定期請求がない前提で計算します。';
     if (!simulation.hasEligibleDebt || simulation.plans.isEmpty) {
-      return const SizedBox.shrink();
+      final hasExcludedScheduledExpenses = workbook.debtMasterRows.any(
+        (row) =>
+            workbook.scheduledExpenseAccountIds.contains(row.id) &&
+            row.balance < -0.01 &&
+            !row.paid &&
+            row.isDirectCashflowTarget,
+      );
+      if (!hasExcludedScheduledExpenses) return const SizedBox.shrink();
+      return const Padding(
+        padding: EdgeInsets.all(12),
+        child: Text(
+          '返済試算の対象元本はありません。\n$scopeExplanation',
+          style: TextStyle(fontSize: 12, height: 1.5),
+        ),
+      );
     }
 
     final selectedPlan = simulation.planFor(_repaymentSimulationStrategy) ??
@@ -31441,7 +31529,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Repayment simulator',
+                  '今月未払いの対象元本の返済試算',
                   style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
                 ),
               ),
@@ -31449,7 +31537,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Compare payoff timing by interest rate, smallest balance, or payment day. Uses direct unpaid liabilities only, so card-billed detail rows are not double counted.',
+            scopeExplanation,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
@@ -31472,7 +31560,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ],
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
-                    labelText: 'Extra / month',
+                    labelText: '毎月の追加返済額',
                     prefixText: '¥',
                     border: OutlineInputBorder(),
                     isDense: true,
@@ -31498,34 +31586,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             runSpacing: 8,
             children: [
               _buildRepaymentSimulationMetric(
-                label: 'Monthly budget',
+                label: '対象件数・元本',
+                value:
+                    '${simulation.eligibleDebtCount}件 / ${_formatManagementYen(selectedPlan.startingBalanceTotal)}',
+              ),
+              _buildRepaymentSimulationMetric(
+                label: '毎月の予定返済額',
                 value: _formatManagementYen(selectedPlan.monthlyPaymentBudget),
               ),
               _buildRepaymentSimulationMetric(
-                label: 'Payoff timing',
+                label: '対象元本の返済回数（月）',
                 value: _formatRepaymentSimulationMonths(
                   selectedPlan.estimatedPayoffMonths,
                 ),
               ),
               _buildRepaymentSimulationMetric(
-                label: 'Change vs base',
+                label: '追加返済による差',
                 value: _formatRepaymentSimulationDelta(
                   selectedPlan: selectedPlan,
                   baselinePlan: baselinePlan,
                 ),
               ),
               _buildRepaymentSimulationMetric(
-                label: 'Interest estimate',
-                value: _formatManagementYen(
-                  selectedPlan.estimatedInterestTotal,
-                ),
+                label: '対象元本の推定利息',
+                value: selectedPlan.hasInterestEstimate
+                    ? _formatManagementYen(selectedPlan.estimatedInterestTotal)
+                    : '未算出（予定返済額が0円）',
               ),
             ],
           ),
           if (firstMonth != null) ...[
             const SizedBox(height: 10),
             Text(
-              'Month 1 focus: ${firstMonth.focusDebtName ?? '-'} / payment ${_formatManagementYen(firstMonth.paymentTotal)} / interest ${_formatManagementYen(firstMonth.interestTotal)} / remaining ${_formatManagementYen(firstMonth.remainingDebt)}',
+              '1回目の優先先: ${firstMonth.focusDebtName ?? '-'} / 予定支払額 ${_formatManagementYen(firstMonth.paymentTotal)} / 推定利息 ${_formatManagementYen(firstMonth.interestTotal)} / 対象残元本 ${_formatManagementYen(firstMonth.remainingDebt)}',
               style: const TextStyle(fontSize: 12, height: 1.5),
             ),
           ],
@@ -31547,7 +31640,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${entry.value.name} / ${_formatManagementYen(entry.value.balance)} / APR ${_formatManagementPercent(entry.value.annualRate)} / day ${entry.value.paymentDay ?? '-'} / monthly ${_formatManagementYen(entry.value.monthlyPayment)}',
+                      '${entry.value.name} / ${_formatManagementYen(entry.value.balance)} / 年利 ${_formatManagementPercent(entry.value.annualRate)} / 支払日 ${entry.value.paymentDay ?? '-'} / 月額 ${_formatManagementYen(entry.value.monthlyPayment)}',
                       style: const TextStyle(fontSize: 12, height: 1.5),
                     ),
                   ),
@@ -31616,18 +31709,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     switch (strategy) {
       case AssetLiabilityRepaymentSimulationStrategy.interestRate:
-        return 'APR';
+        return '利率が高い順';
       case AssetLiabilityRepaymentSimulationStrategy.smallestBalance:
-        return 'Smallest';
+        return '残高が少ない順';
       case AssetLiabilityRepaymentSimulationStrategy.paymentDay:
-        return 'Payment day';
+        return '支払日順';
     }
   }
 
   String _formatRepaymentSimulationMonths(int? months) {
-    if (months == null) return 'over 360 mo';
-    if (months == 0) return '0 mo';
-    return '$months mo';
+    if (months == null) return '360回以内の返済見通しなし';
+    if (months == 0) return '0回';
+    return '$months回';
   }
 
   String _formatRepaymentSimulationDelta({
@@ -31636,13 +31729,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }) {
     final current = selectedPlan.estimatedPayoffMonths;
     final baseline = baselinePlan?.estimatedPayoffMonths;
-    if (current == null && baseline == null) return 'no payoff';
-    if (current == null) return 'worse';
-    if (baseline == null) return 'now payable';
+    if (current == null && baseline == null) return '返済見通しなし';
+    if (current == null) return '返済回数が増加';
+    if (baseline == null) return '返済見通しあり';
     final delta = current - baseline;
-    if (delta == 0) return 'same';
-    if (delta < 0) return '$delta mo';
-    return '+$delta mo';
+    if (delta == 0) return '変化なし';
+    if (delta < 0) return '$delta回';
+    return '+$delta回';
   }
 
   String _paymentRiskStatusLabel(AssetLiabilityPaymentDayRisk risk) {

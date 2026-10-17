@@ -51,6 +51,8 @@ class AssetCashflowForecastInputs {
     required List<Map<String, dynamic>> subscriptions,
     Map<String, String> subscriptionFixedCostIds = const <String, String>{},
     Map<String, int> paymentDayOverrides = const <String, int>{},
+    DateTime? paidPeriodStart,
+    DateTime? paidPeriodEndExclusive,
   }) {
     var startingBalance = 0.0;
     for (final account in accounts) {
@@ -130,6 +132,8 @@ class AssetCashflowForecastInputs {
           amount: debt.scheduledPaymentAmount,
           label: debt.name,
           isFixedCostRow: debt.isFixedCost,
+          paidPeriodStart: debt.paid ? paidPeriodStart : null,
+          paidPeriodEndExclusive: debt.paid ? paidPeriodEndExclusive : null,
           fixedCostMatchKey: debt.isFixedCost
               ? _fixedCostMatchKey(debt.name, debt.scheduledPaymentAmount)
               : null,
