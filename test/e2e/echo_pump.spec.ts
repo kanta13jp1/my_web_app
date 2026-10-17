@@ -28,6 +28,7 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   await expect(page.getByRole('button', { name: 'ゲーム開始', exact: true })).toBeVisible({ timeout: 30000 });
   await expect(page.locator('#seo-shell')).toBeHidden();
   await page.getByRole('button', { name: 'ゲーム開始', exact: true }).click();
+  await page.getByRole('button', { name: 'スキップして開始', exact: true }).click();
   const button = (name: string) => page.getByRole(/^[ABC] /.test(name) ? 'checkbox' : 'button', { name, exact: true });
   await expect(button('A 搬入')).toBeVisible({ timeout: 30000 });
   await page.screenshot({ path: info.outputPath('start.png'), fullPage: true });
@@ -76,6 +77,7 @@ test('contact failure can recover with retry', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'ゲーム開始', exact: true })).toBeVisible({ timeout: 30000 });
   await expect(page.locator('#seo-shell')).toBeHidden();
   await page.getByRole('button', { name: 'ゲーム開始', exact: true }).click();
+  await page.getByRole('button', { name: 'スキップして開始', exact: true }).click();
   const button = (name: string) => page.getByRole(/^[ABC] /.test(name) ? 'checkbox' : 'button', { name, exact: true });
   await expect(button('中央廊下へ')).toBeVisible({ timeout: 30000 });
   await expect(button('出口へ')).toBeDisabled();
@@ -105,6 +107,28 @@ test('opening artwork and keyboard start', async ({ page }, info) => {
   }
   await start.focus();
   await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'スキップして開始', exact: true })).toBeVisible();
+  await page.keyboard.press('Enter');
   await expect(page.getByRole('checkbox', { name: 'A 搬入', exact: true })).toBeVisible();
   await expect(start).toHaveCount(0);
+});
+
+
+test('intro can pause, resume and finish automatically', async ({ page }, info) => {
+  test.setTimeout(60000);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'ゲーム開始', exact: true }).click();
+  await page.getByRole('button', { name: '一時停止', exact: true }).click();
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: info.outputPath('intro-paused.png') });
+  await expect(page.getByRole('checkbox', { name: 'A 搬入', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '再開', exact: true }).click();
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: info.outputPath('intro-first.png') });
+  await page.waitForTimeout(6000);
+  await page.screenshot({ path: info.outputPath('intro-second.png') });
+  await page.waitForTimeout(6000);
+  await page.screenshot({ path: info.outputPath('intro-third.png') });
+  await expect(page.getByRole('checkbox', { name: 'A 搬入', exact: true })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('button', { name: 'スキップして開始', exact: true })).toHaveCount(0);
 });
