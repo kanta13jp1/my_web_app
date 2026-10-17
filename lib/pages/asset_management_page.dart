@@ -12896,7 +12896,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return synced;
   }
 
-  Future<void> _saveRecurringFixedCost(AssetRecurringFixedCost cost) async {
+  Future<void> _saveRecurringFixedCost(AssetRecurringFixedCost cost,
+      {bool rethrowOnFailure = false}) async {
     try {
       await _recurringTombstoneSyncService.runSerialized(() async {
         final previous = List<AssetRecurringFixedCost>.from(
@@ -12918,6 +12919,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
     } catch (error) {
       debugPrint('recurring fixed cost save failed: $error');
+      if (rethrowOnFailure) rethrow;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -13012,7 +13014,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetSubscriptionBillingGateway gateway =
         AssetSubscriptionBillingGateway.direct,
   }) async {
-    final result = await showRecurringFixedCostEditor(
+    await showRecurringFixedCostEditor(
       context,
       existing: existing,
       prefill: prefill,
@@ -13021,10 +13023,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       gateway: gateway,
       usdJpyRate: _usdJpyRate?.jpyPerUnit,
       usdJpyRateAsOf: _usdJpyRate?.asOf,
+      onSave: (cost) => _saveRecurringFixedCost(cost, rethrowOnFailure: true),
     );
-    if (result != null) {
-      await _saveRecurringFixedCost(result);
-    }
   }
 
   Future<void> _confirmDeleteRecurringFixedCost(
