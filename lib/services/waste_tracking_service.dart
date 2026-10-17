@@ -154,7 +154,7 @@ class WasteTrackingService {
 
   /// 一件の履歴の総額は変えず、照合できる場合だけ分類内訳を表示する。
   static String expenseClassificationLabel(String description, int totalAmount) {
-    final waste = reconciledWasteAmount(description, totalAmount);
+    final waste = reconciledWasteAmount(description, totalAmount,);
     if (waste > 0 && waste < totalAmount) {
       return '内訳:食品${totalAmount - waste}円・喫煙$waste円';
     }
