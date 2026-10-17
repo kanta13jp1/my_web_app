@@ -228,7 +228,7 @@ class EchoPumpGame {
     if (target != null && _enemy != target) {
       final paths = <List<PumpRoom>>[
         [_enemy]
-      ];
+      ,];
       final visited = <PumpRoom>{_enemy};
       while (paths.isNotEmpty) {
         final path = paths.removeAt(0);
