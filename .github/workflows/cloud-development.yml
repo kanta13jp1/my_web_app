@@ -3,6 +3,10 @@ name: Approved PR5829 Web Release
 on:
   workflow_dispatch:
     inputs:
+      expected_head_sha:
+        description: Exact approved release branch HEAD
+        required: true
+        type: string
       deploy_scope:
         description: "Deployment scope (use web_only for asset-only releases)"
         required: true
@@ -64,6 +68,8 @@ jobs:
     steps:
       - name: Checkout code
         shell: bash
+        env:
+          EXPECTED_RELEASE_SHA: ${{ inputs.expected_head_sha }}
         run: |
           set -euo pipefail
           git init .
@@ -76,7 +82,12 @@ jobs:
           fi
           git fetch --tags --prune origin "$GITHUB_SHA"
           git checkout --force --detach FETCH_HEAD
-          if [ "$(git rev-parse HEAD)" != "$GITHUB_SHA" ]; then
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$actual_head_sha" != "$EXPECTED_RELEASE_SHA" ]; then
+            echo "::error::Approved release source does not match the expected SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$GITHUB_SHA" ]; then
             echo "::error::Deployment checkout does not match the event SHA."
             exit 1
           fi
