@@ -1,3 +1,4 @@
+import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -940,6 +941,46 @@ void main() {
       });
     }
   }
+
+  testWidgets('fixed cost persistence failure retains edited input', (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+        AssetRecurringFixedCostStore.encodeMirrorValue(
+          const <AssetRecurringFixedCost>[
+            AssetRecurringFixedCost(id: 'synthetic_cost', name: 'Synthetic utility',
+              amount: 2000, paymentDay: 7),
+          ],
+        ),
+      ),
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1200, 3000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(const MaterialApp(home: AssetManagementPage(
+      debugRecurringFixedCostStore: _ThrowingRecurringFixedCostStore(),
+    )));
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final edit = find.byTooltip('Synthetic utility を編集');
+      expect(edit, findsOneWidget);
+      await tester.ensureVisible(edit);
+      await tester.tap(edit);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(RecurringFixedCostEditorDialog), findsOneWidget);
+      final name = find.widgetWithText(TextFormField, '名称');
+      await tester.enterText(name, 'Synthetic utility changed');
+      await tester.tap(find.widgetWithText(FilledButton, '保存'));
+      await tester.pump(const Duration(milliseconds: 500));
+      final persisted = await const AssetRecurringFixedCostStore().load();
+      expect(persisted.single.name, 'Synthetic utility');
+      expect(find.byType(RecurringFixedCostEditorDialog), findsOneWidget,
+        reason: 'Failed persistence must keep entered data for retry');
+      expect(find.text('Synthetic utility changed'), findsOneWidget);
+    } finally {
+      await _unmount(tester);
+    }
+  });
   group('AssetManagementPage smoke', () {
     testWidgets('mobile chat reserves space outside the scrolling content', (
       tester,
