@@ -24,6 +24,11 @@ on:
         description: Published application commit (defaults to verification source revision)
         required: false
         type: string
+      iwanami_audit:
+        description: Verify all 15 added Iwanami editions on desktop and seven representative editions on mobile
+        required: false
+        default: false
+        type: boolean
       metaphysics:
         description: Verify Iwanami Metaphysics upper and lower volume title and ISBN search, registration and editing
         required: false
@@ -211,6 +216,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Published reading catalog and authenticated persistence
         env:
+          READING_QA_IWANAMI_AUDIT: ${{ inputs.iwanami_audit }}
           READING_QA_METAPHYSICS: ${{ inputs.metaphysics }}
           READING_QA_GROUPS: ${{ inputs.groups }}
           READING_QA_AUTHORS: ${{ inputs.authors }}

@@ -594,7 +594,7 @@ void main() {
     }
     expect(
       philosophyCatalogEditions
-          .singleWhere((b) => b.workId == 'dogen:zuimonki')
+          .singleWhere((b) => b.edition.isbn == '9784480080226')
           .edition
           .editor,
       contains('懐奘'),
@@ -649,6 +649,10 @@ void main() {
           .contains(book.workId)) {
         expect(edition.translator, isEmpty);
         expect(book.note, contains('日本語原著'));
+      } else if (edition.isbn == '9784003331941') {
+        expect(edition.translator, isEmpty);
+        expect(edition.editor, '懐奘（編）・和辻哲郎（校訂）');
+        expect(book.note, contains('現代語訳とは区別'));
       } else {
         expect(edition.translator, isNotEmpty);
       }
@@ -674,12 +678,12 @@ void main() {
         expect(sum % 11, 0, reason: edition.isbn);
       }
     }
-    expect(philosophyCatalogEditions.length, 169);
+    expect(philosophyCatalogEditions.length, 184);
     expect(
       philosophyCatalogEditions
           .where((b) => b.edition.language == '日本語')
           .length,
-      168,
+      183,
     );
     final books = philosophyCatalogEditions
         .where((b) => b.workId == 'confucius:analects')
