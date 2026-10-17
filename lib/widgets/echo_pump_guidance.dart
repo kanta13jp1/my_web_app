@@ -267,7 +267,7 @@ class _ActionPainter extends CustomPainter {
       path.close();
       canvas.drawPath(path, paint);
     } else if (cue == EchoPumpCue.seal) {
-      final width = size.width * 0.35 * progress;
+      final width = size.width * 0.5 * progress;
       canvas.drawRect(Rect.fromLTWH(0, 8, width, 56), paint);
       canvas.drawRect(Rect.fromLTWH(size.width - width, 8, width, 56), paint);
     } else {
