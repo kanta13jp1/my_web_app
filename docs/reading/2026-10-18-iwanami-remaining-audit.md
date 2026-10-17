@@ -2,7 +2,7 @@
 
 共有目録80著作を再照合し、岩波文庫が未登録の51著作を優先した。出版社提供書誌・図書館書誌で同定した18著作へ44件（ISBNで43種の物理的な版）を追加する。既存184件は順序・内容を保持して末尾に追加し、計228件になる。著作・著者ID、個人の版、読書回、ページ記録、感想は移行・更新しない。
 
-全世界の刊行履歴を網羅した判定ではない。「未同定」は未刊・絶版を意味しない。NDLの出版社・書名検索を全51著作で実施したが、14件は通信タイムアウトになった。追加版の同定は検索件数でなく下記の個別書誌による。未同定・再照合対象も台帳へ残す。
+全世界の刊行履歴を網羅した判定ではない。「未同定」は未刊・絶版を意味しない。NDLの出版社・書名検索を全51著作で実施したが、初回14件は通信タイムアウトになり、少数件で再照合した結果4件が未解消。追加版の同定は検索件数でなく下記の個別書誌による。未同定・再照合対象も台帳へ残す。
 
 ## 追加版と出典
 
@@ -90,8 +90,8 @@
 |善の研究|1|0|既存版を維持|
 |第二の性|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E7%AC%AC%E4%BA%8C%E3%81%AE%E6%80%A7&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |メノイケウス宛の手紙|0|1|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E3%82%A8%E3%83%94%E3%82%AF%E3%83%AD%E3%82%B9&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
-|語録|0|2|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E4%BA%BA%E7%94%9F%E8%AB%87%E7%BE%A9&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
-|提要|0|1|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E4%BA%BA%E7%94%9F%E8%AB%87%E7%BE%A9&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
+|語録|0|2|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E4%BA%BA%E7%94%9F%E8%AB%87%E7%BE%A9&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
+|提要|0|1|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E4%BA%BA%E7%94%9F%E8%AB%87%E7%BE%A9&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
 |自省録|1|0|既存版を維持|
 |エネアデス|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E3%82%A8%E3%83%8D%E3%82%A2%E3%83%87%E3%82%B9&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |告白|0|2|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%91%8A%E7%99%BD&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
@@ -127,7 +127,7 @@
 |資本論|0|9|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E8%B3%87%E6%9C%AC%E8%AB%96&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |共産党宣言|1|0|既存版を維持|
 |ツァラトゥストラはこう語った|0|2|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E3%83%84%E3%82%A1%E3%83%A9%E3%83%88%E3%82%A5%E3%82%B9%E3%83%88%E3%83%A9&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
-|道徳の系譜|0|1|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E9%81%93%E5%BE%B3%E3%81%AE%E7%B3%BB%E8%AD%9C&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
+|道徳の系譜|0|1|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E9%81%93%E5%BE%B3%E3%81%AE%E7%B3%BB%E8%AD%9C&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
 |論理学研究|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E8%AB%96%E7%90%86%E5%AD%A6%E7%A0%94%E7%A9%B6&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |イデーン I|0|2|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E7%B4%94%E7%B2%8B%E7%8F%BE%E8%B1%A1%E5%AD%A6&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |存在と時間|4|0|既存版を維持|
@@ -135,26 +135,26 @@
 |哲学探究|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%93%B2%E5%AD%A6%E6%8E%A2%E7%A9%B6&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |哲学の諸問題|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%93%B2%E5%AD%A6%E3%81%AE%E8%AB%B8%E5%95%8F%E9%A1%8C&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |存在と無|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%AD%98%E5%9C%A8%E3%81%A8%E7%84%A1&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
-|実存主義はヒューマニズムである|0|0|NDL通信エラー、未同定（未刊との判定はしない） / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%AE%9F%E5%AD%98%E4%B8%BB%E7%BE%A9%E3%81%AF%E3%83%92%E3%83%A5%E3%83%BC%E3%83%9E%E3%83%8B%E3%82%BA%E3%83%A0%E3%81%A7%E3%81%82%E3%82%8B&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
-|人間の条件|0|0|NDL通信エラー、未同定（未刊との判定はしない） / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E4%BA%BA%E9%96%93%E3%81%AE%E6%9D%A1%E4%BB%B6&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
-|全体主義の起原|0|0|NDL通信エラー、未同定（未刊との判定はしない） / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%85%A8%E4%BD%93%E4%B8%BB%E7%BE%A9%E3%81%AE%E8%B5%B7%E5%8E%9F&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
+|実存主義はヒューマニズムである|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%AE%9F%E5%AD%98%E4%B8%BB%E7%BE%A9%E3%81%AF%E3%83%92%E3%83%A5%E3%83%BC%E3%83%9E%E3%83%8B%E3%82%BA%E3%83%A0%E3%81%A7%E3%81%82%E3%82%8B&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
+|人間の条件|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E4%BA%BA%E9%96%93%E3%81%AE%E6%9D%A1%E4%BB%B6&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
+|全体主義の起原|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%85%A8%E4%BD%93%E4%B8%BB%E7%BE%A9%E3%81%AE%E8%B5%B7%E5%8E%9F&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
 |監獄の誕生|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E7%9B%A3%E7%8D%84%E3%81%AE%E8%AA%95%E7%94%9F&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |性の歴史|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E6%80%A7%E3%81%AE%E6%AD%B4%E5%8F%B2&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
-|正義論|0|0|NDL通信エラー、未同定（未刊との判定はしない） / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E6%AD%A3%E7%BE%A9%E8%AB%96&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
-|政治的リベラリズム|0|0|NDL通信エラー、未同定（未刊との判定はしない） / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E6%94%BF%E6%B2%BB%E7%9A%84%E3%83%AA%E3%83%99%E3%83%A9%E3%83%AA%E3%82%BA%E3%83%A0&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
+|正義論|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E6%AD%A3%E7%BE%A9%E8%AB%96&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
+|政治的リベラリズム|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E6%94%BF%E6%B2%BB%E7%9A%84%E3%83%AA%E3%83%99%E3%83%A9%E3%83%AA%E3%82%BA%E3%83%A0&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
 |コミュニケーション的行為の理論|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E3%82%B3%E3%83%9F%E3%83%A5%E3%83%8B%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E7%9A%84%E8%A1%8C%E7%82%BA%E3%81%AE%E7%90%86%E8%AB%96&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |事実性と妥当性|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E4%BA%8B%E5%AE%9F%E6%80%A7%E3%81%A8%E5%A6%A5%E5%BD%93%E6%80%A7&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
-|ジェンダー・トラブル|0|0|NDL通信エラー、未同定（未刊との判定はしない） / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%80%E3%83%BC%E3%83%BB%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
+|ジェンダー・トラブル|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%80%E3%83%BC%E3%83%BB%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
 |Who’s Afraid of Gender?|0|0|NDL通信エラー、未同定（未刊との判定はしない） / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=Who%E2%80%99s+Afraid+of+Gender%3F&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |正義のアイデア|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E6%AD%A3%E7%BE%A9%E3%81%AE%E3%82%A2%E3%82%A4%E3%83%87%E3%82%A2&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |リヴァイアサン|0|4|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E3%83%AA%E3%83%B4%E3%82%A1%E3%82%A4%E3%82%A2%E3%82%B5%E3%83%B3&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 |自由論|1|0|既存版を維持|
 |功利主義|1|0|既存版を維持|
-|女性の権利の擁護|0|0|NDL通信エラー、未同定（未刊との判定はしない） / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%A5%B3%E6%80%A7%E3%81%AE%E8%A7%A3%E6%94%BE&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
+|女性の権利の擁護|0|0|今回の書名・別邦題検索で同一著作の岩波文庫版を未同定 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E5%A5%B3%E6%80%A7%E3%81%AE%E6%A8%A9%E5%88%A9%E3%81%AE%E6%93%81%E8%AD%B7&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=20&dpid=iss-ndl-opac)|
 |ノヴム・オルガヌム|0|1|個別書誌で同定・上記出典参照 / [NDL再照合](https://ndlsearch.ndl.go.jp/api/opensearch?title=%E3%83%8E%E3%83%B4%E3%83%A0%E3%83%BB%E3%82%AA%E3%83%AB%E3%82%AC%E3%83%8C%E3%83%A0&publisher=%E5%B2%A9%E6%B3%A2%E6%9B%B8%E5%BA%97&cnt=100&dpid=iss-ndl-opac)|
 
 ## 検証範囲
 
-追加44件すべてを著作名・ISBN-13・ISBN-10で外部通信なしに検索し、出版社・訳者・編集者・年・巻・ページ・出典・購入URLを検証する。同一ISBNの合本は同じ物理版情報を保持する。ブラウザーでは6版（人性論1、純粋理性批判下、教説と手紙、提要収録の人生談義下、正法眼蔵4、資本論9）をPC／スマートフォンで選択・自動入力・登録・再読込・ISBN自動再検索・編集・再読込する。既存の検索・記録保存・失敗回復のテストも継続する。
+追加44件すべてを著作名・ISBN-13・ISBN-10で外部通信なしに検索し、出版社・訳者・編集者・年・巻・ページ・出典・購入URLを検証する。同一ISBNの合本は同じ物理版情報を保持する。完全に同じ表示名・書誌情報の候補は検索結果で一件にまとめ、著作との関連は保持する。ブラウザーでは6版（人性論1、純粋理性批判下、教説と手紙、提要収録の人生談義下、正法眼蔵4、資本論9）をPC／スマートフォンで選択・自動入力・登録・再読込・ISBN自動再検索・編集・再読込する。既存の検索・記録保存・失敗回復のテストも継続する。
 
 本番マージ・公開後検証は別途依頼後に行う。

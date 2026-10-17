@@ -649,7 +649,8 @@ void main() {
           .contains(book.workId)) {
         expect(edition.translator, isEmpty);
         expect(book.note, contains('日本語原著'));
-      } else if (book.workId == 'dogen:shobogenzo' && edition.isbn.startsWith('97840033319')) {
+      } else if (book.workId == 'dogen:shobogenzo' &&
+          edition.isbn.startsWith('97840033319')) {
         expect(edition.translator, isEmpty);
         expect(edition.editor, '水野弥穂子（校注）');
         expect(book.note, contains('現代語訳とは区別'));

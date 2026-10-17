@@ -171,7 +171,12 @@ class ReadingBookSearch {
       // Keep their catalog links, but show an identical edition only once.
       final seen = <String>{};
       return matches
-          .where((book) => seen.add(jsonEncode([book.title, book.edition.toJson()])))
+          .where(
+            (book) {
+              final identity = jsonEncode([book.title, book.edition.toJson()]);
+              return seen.add(identity);
+            },
+          )
           .toList();
     }
     if (!isIsbn && RegExp(r'^[0-9Xx\s-]+$').hasMatch(text)) return [];

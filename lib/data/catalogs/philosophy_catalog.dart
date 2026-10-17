@@ -2522,10 +2522,12 @@ const philosophyCatalogEditions = [
       year: '1948',
       isbn: '9784003361917',
       volume: '岩波文庫 青619-1・第1巻',
-      sourceUrl: 'https://opac.dokkyomed.ac.jp/iwjs0006opc/ctlsrh.do?locale=ja&ncid=BN01044991&search_mode=detail&tab_num=0',
+      sourceUrl:
+          'https://opac.dokkyomed.ac.jp/iwjs0006opc/ctlsrh.do?locale=ja&ncid=BN01044991&search_mode=detail&tab_num=0',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361917',
     ),
-    note: '第1巻「知性に就いて 上」。ISBN-10 4003361911・1948年は大学図書館書誌で同定。集約書誌の巻次・数量に差があるためページ数は未設定。第4巻は今回未追加。',
+    note:
+        '第1巻「知性に就いて 上」。ISBN-10 4003361911・1948年は大学図書館書誌で同定。集約書誌の巻次・数量に差があるためページ数は未設定。第4巻は今回未追加。',
   ),
   PhilosophyCatalogEdition(
     'hume:treatise',
@@ -2855,7 +2857,8 @@ const philosophyCatalogEditions = [
       sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003360842',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360842',
     ),
-    note: '目録の『提要』（Enchiridion）は本書の『要録』に対応。『語録』第三・四巻等との合本で、ISBN・504ページは合本全体。語録と提要は別著作として読書回を保持します。',
+    note:
+        '目録の『提要』（Enchiridion）は本書の『要録』に対応。『語録』第三・四巻等との合本で、ISBN・504ページは合本全体。語録と提要は別著作として読書回を保持します。',
   ),
   PhilosophyCatalogEdition(
     'epicurus:menoeceus',
