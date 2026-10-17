@@ -214,7 +214,7 @@ class Preview5125Store {
     debugPrint('PR5125 adapter ${request.method} ${request.url}');
     const headers = {'content-type': 'application/json; charset=utf-8'};
     http.Response json(Object? value, {int status = 200}) =>
-        http.Response(jsonEncode(value), status, headers: headers, request: request);
+        http.Response(jsonEncode(value), status, headers: headers, request: request,);
 
     if (request.url.host != 'pr5125.invalid') {
       return json(

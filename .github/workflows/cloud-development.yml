@@ -33,6 +33,7 @@ jobs:
         run: flutter pub get
       - name: Analyze and test the isolated adapter
         run: |
+          dart format lib/preview test/preview
           dart fix --apply --code=require_trailing_commas lib/preview
           dart fix --apply --code=require_trailing_commas test/preview
           dart format lib/preview test/preview
