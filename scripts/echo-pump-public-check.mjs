@@ -100,6 +100,12 @@ try {
       assert.deepEqual(errors, []);
       passed = true;
     } finally {
+      if (!passed) {
+        await page.screenshot({path: `${out}/${name}-failure.png`}).catch(() => {});
+        const labels = await page.locator('[aria-label]').evaluateAll(nodes => nodes.map(n => n.getAttribute('aria-label'))).catch(() => []);
+        writeFileSync(`${out}/${name}-failure-labels.json`, JSON.stringify(labels, null, 2));
+        audio ??= await page.evaluate(() => ({plays: window.__echoPublicAudit?.plays, contexts: window.__echoPublicAudit?.contexts.map(c => c.state)})).catch(() => ({}));
+      }
       const report = {name, passed, errors, events, audio, frameHashes, otherAnimationHashes};
       reports.push(report);
       writeFileSync(`${out}/${name}-result.json`, JSON.stringify(report, null, 2));
