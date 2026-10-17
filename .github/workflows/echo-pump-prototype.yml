@@ -56,7 +56,8 @@ jobs:
       - name: Analyze and test the prototype
         run: |
           dart format lib/models/echo_pump_room_walk.dart lib/widgets/echo_pump_room_stage.dart test/models/echo_pump_room_walk_test.dart test/widgets/echo_pump_room_stage_test.dart lib/pages/echo_pump_game_page.dart lib/widgets/echo_pump_visuals.dart
-          dart fix --apply --code=require_trailing_commas lib test
+          dart fix --apply --code=require_trailing_commas lib
+          dart fix --apply --code=require_trailing_commas test
           dart format lib/models/echo_pump_room_walk.dart lib/widgets/echo_pump_room_stage.dart test/models/echo_pump_room_walk_test.dart test/widgets/echo_pump_room_stage_test.dart lib/pages/echo_pump_game_page.dart lib/widgets/echo_pump_visuals.dart
           dart analyze lib/models/echo_pump_room_walk.dart lib/widgets/echo_pump_room_stage.dart test/models/echo_pump_room_walk_test.dart test/widgets/echo_pump_room_stage_test.dart
           flutter test test/models/echo_pump_room_walk_test.dart test/widgets/echo_pump_room_stage_test.dart

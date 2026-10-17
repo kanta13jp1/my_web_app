@@ -9,7 +9,8 @@ const _warning = Color(0xFFFFB49B);
 
 /// Establishing artwork, with live game state kept in real accessible widgets.
 class EchoPumpScene extends StatelessWidget {
-  const EchoPumpScene({super.key, required this.game, this.onExploreMove, this.onFootstep});
+  const EchoPumpScene(
+      {super.key, required this.game, this.onExploreMove, this.onFootstep});
 
   final ValueChanged<PumpRoom>? onExploreMove;
   final VoidCallback? onFootstep;
@@ -73,7 +74,10 @@ class EchoPumpScene extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   if (game.room == PumpRoom.control && !game.finished)
-                    EchoPumpRoomStage(key: ObjectKey(game), onMove: onExploreMove, onFootstep: onFootstep)
+                    EchoPumpRoomStage(
+                        key: ObjectKey(game),
+                        onMove: onExploreMove,
+                        onFootstep: onFootstep)
                   else
                     EchoPumpCast(game: game),
                   const SizedBox(height: 20),

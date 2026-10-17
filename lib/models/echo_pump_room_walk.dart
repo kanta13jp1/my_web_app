@@ -20,15 +20,24 @@ abstract final class EchoPumpRoomWalk {
 
   /// Side aisles and a lower cross-aisle leave the central equipment blocked.
   static bool isWalkable(EchoRoomPoint p) =>
-      p.x.isFinite && p.y.isFinite &&
-      p.x >= 0.12 && p.x <= 0.88 && p.y >= 0.6 && p.y <= 0.92 &&
+      p.x.isFinite &&
+      p.y.isFinite &&
+      p.x >= 0.12 &&
+      p.x <= 0.88 &&
+      p.y >= 0.6 &&
+      p.y <= 0.92 &&
       (p.x <= 0.28 || p.x >= 0.72 || p.y >= 0.86);
 
   static List<EchoRoomPoint> route(EchoRoomPoint from, EchoRoomTarget target) {
     if (!isWalkable(from)) throw ArgumentError('Outside the room aisles');
     final to = destinations[target]!;
     if (from.distanceTo(to) < 0.00001) return [from];
-    final points = [from, EchoRoomPoint(from.x, 0.9), EchoRoomPoint(to.x, 0.9), to];
+    final points = [
+      from,
+      EchoRoomPoint(from.x, 0.9),
+      EchoRoomPoint(to.x, 0.9),
+      to
+    ];
     final result = <EchoRoomPoint>[];
     for (final point in points) {
       if (result.isEmpty || result.last.distanceTo(point) > 0.00001) {
@@ -54,7 +63,8 @@ abstract final class EchoPumpRoomWalk {
       final distance = from.distanceTo(to);
       if (remaining <= distance && distance > 0) {
         final t = remaining / distance;
-        return EchoRoomPoint(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
+        return EchoRoomPoint(
+            from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
       }
       remaining -= distance;
     }

@@ -30,7 +30,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
     super.initState();
     final lifecycle = WidgetsBinding.instance.lifecycleState;
     _foreground = lifecycle == null || lifecycle == AppLifecycleState.resumed;
-    _walk = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))
+    _walk = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1000))
       ..addListener(_tick);
     WidgetsBinding.instance.addObserver(this);
   }
@@ -70,7 +71,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
     _animateSteps = !reduced && distance >= 0.0001;
     _walk.duration = reduced || distance < 0.0001
         ? Duration.zero
-        : Duration(milliseconds: (distance * 1800).round().clamp(700, 1600).toInt());
+        : Duration(
+            milliseconds: (distance * 1800).round().clamp(700, 1600).toInt());
     setState(() => _walking = true);
     try {
       await _walk.forward(from: 0).orCancel;
@@ -83,25 +85,36 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
       _walking = false;
     });
     if (target == EchoRoomTarget.memo) {
-      await showDialog<void>(context: context, builder: (_) => const _MaintenanceMemo());
+      await showDialog<void>(
+          context: context, builder: (_) => const _MaintenanceMemo());
     } else {
       final enter = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('中央廊下の扉'),
-          content: const SingleChildScrollView(child: Column(
+          content: const SingleChildScrollView(
+              child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [Icon(Icons.door_front_door, color: _mint, size: 72), SizedBox(height: 12),
-              Text('中央廊下へ進むと1ターン経過します。敵の位置を確認してから進もう。')],
+            children: [
+              Icon(Icons.door_front_door, color: _mint, size: 72),
+              SizedBox(height: 12),
+              Text('中央廊下へ進むと1ターン経過します。敵の位置を確認してから進もう。')
+            ],
           )),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('戻る')),
-            FilledButton(onPressed: widget.onMove == null ? null : () => Navigator.pop(context, true),
-              child: const Text('扉を開けて進む')),
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('戻る')),
+            FilledButton(
+                onPressed: widget.onMove == null
+                    ? null
+                    : () => Navigator.pop(context, true),
+                child: const Text('扉を開けて進む')),
           ],
         ),
       );
-      if (mounted && _foreground && enter == true) widget.onMove?.call(PumpRoom.hall);
+      if (mounted && _foreground && enter == true)
+        widget.onMove?.call(PumpRoom.hall);
     }
   }
 
@@ -114,67 +127,115 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.disableAnimationsOf(context) || MediaQuery.accessibleNavigationOf(context);
+    final reduced = MediaQuery.disableAnimationsOf(context) ||
+        MediaQuery.accessibleNavigationOf(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
-          const Text('管理室を探索', style: TextStyle(fontWeight: FontWeight.bold)),
-          TextButton.icon(
-            onPressed: _walking ? null : () => setState(() => _detail = !_detail),
-            icon: Icon(_detail ? Icons.zoom_out : Icons.zoom_in),
-            label: Text(_detail ? '全景へ' : '設備寄りに見る'),
-          ),
-        ]),
+        Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Text('管理室を探索',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              TextButton.icon(
+                onPressed:
+                    _walking ? null : () => setState(() => _detail = !_detail),
+                icon: Icon(_detail ? Icons.zoom_out : Icons.zoom_in),
+                label: Text(_detail ? '全景へ' : '設備寄りに見る'),
+              ),
+            ]),
         Semantics(
           container: true,
           label: '管理室の探索ビュー',
-          child: ExcludeSemantics(child: ClipRRect(
+          child: ExcludeSemantics(
+              child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: SizedBox(height: 240, child: ColoredBox(
-              color: const Color(0xFF10282E),
-              child: AnimatedScale(
-                scale: _detail ? 1.12 : 1,
-                duration: reduced ? Duration.zero : const Duration(milliseconds: 400),
-                child: LayoutBuilder(builder: (context, bounds) {
-                  const side = 112.0;
-                  return Stack(children: [
-                    Positioned.fill(child: Opacity(opacity: 0.35, child: Image.asset(
-                      'assets/echo_pump/opening_background.png', fit: BoxFit.cover,
-                      errorBuilder: (_, error, stack) => const SizedBox(),
-                    ))),
-                    Positioned.fill(child: CustomPaint(painter: _RoomFloor(_position, _route, _walking))),
-                    Positioned(left: bounds.maxWidth * 0.1, top: 72, child: const Icon(Icons.menu_book, color: _mint, size: 34)),
-                    Positioned(right: bounds.maxWidth * 0.1, top: 45, child: const Icon(Icons.door_front_door, color: _mint, size: 64)),
-                    Positioned(
-                      key: const Key('echo-room-actor'),
-                      left: _position.x * bounds.maxWidth - side / 2,
-                      top: _position.y * 240 - side,
-                      child: Transform(
-                        alignment: Alignment.center,
-                        transform: Matrix4.diagonal3Values(_left ? -1 : 1, 1, 1),
-                        child: _walking
-                            ? _WalkingSprite(frame: (_walk.value * 4).floor().clamp(0, 3).toInt(), side: side)
-                            : Image.asset('assets/echo_pump/character_technician.png', width: side, height: side,
-                                fit: BoxFit.contain, errorBuilder: (_, error, stack) => const SizedBox(
-                                  width: side, height: side, child: Icon(Icons.engineering, color: _mint, size: 70),
-                                )),
-                      ),
-                    ),
-                  ]);
-                }),
-              ),
-            )),
+            child: SizedBox(
+                height: 240,
+                child: ColoredBox(
+                  color: const Color(0xFF10282E),
+                  child: AnimatedScale(
+                    scale: _detail ? 1.12 : 1,
+                    duration: reduced
+                        ? Duration.zero
+                        : const Duration(milliseconds: 400),
+                    child: LayoutBuilder(builder: (context, bounds) {
+                      const side = 112.0;
+                      return Stack(children: [
+                        Positioned.fill(
+                            child: Opacity(
+                                opacity: 0.35,
+                                child: Image.asset(
+                                  'assets/echo_pump/opening_background.png',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, error, stack) =>
+                                      const SizedBox(),
+                                ))),
+                        Positioned.fill(
+                            child: CustomPaint(
+                                painter:
+                                    _RoomFloor(_position, _route, _walking))),
+                        Positioned(
+                            left: bounds.maxWidth * 0.1,
+                            top: 72,
+                            child: const Icon(Icons.menu_book,
+                                color: _mint, size: 34)),
+                        Positioned(
+                            right: bounds.maxWidth * 0.1,
+                            top: 45,
+                            child: const Icon(Icons.door_front_door,
+                                color: _mint, size: 64)),
+                        Positioned(
+                          key: const Key('echo-room-actor'),
+                          left: _position.x * bounds.maxWidth - side / 2,
+                          top: _position.y * 240 - side,
+                          child: Transform(
+                            alignment: Alignment.center,
+                            transform:
+                                Matrix4.diagonal3Values(_left ? -1 : 1, 1, 1),
+                            child: _walking
+                                ? _WalkingSprite(
+                                    frame: (_walk.value * 4)
+                                        .floor()
+                                        .clamp(0, 3)
+                                        .toInt(),
+                                    side: side)
+                                : Image.asset(
+                                    'assets/echo_pump/character_technician.png',
+                                    width: side,
+                                    height: side,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, error, stack) =>
+                                        const SizedBox(
+                                          width: side,
+                                          height: side,
+                                          child: Icon(Icons.engineering,
+                                              color: _mint, size: 70),
+                                        )),
+                          ),
+                        ),
+                      ]);
+                    }),
+                  ),
+                )),
           )),
         ),
         const SizedBox(height: 8),
-        Semantics(liveRegion: true, child: Text(_walking ? '歩行中…' : '安全な管理室 / 室内の確認はターンを消費しません。')),
+        Semantics(
+            liveRegion: true,
+            child: Text(_walking ? '歩行中…' : '安全な管理室 / 室内の確認はターンを消費しません。')),
         const SizedBox(height: 8),
         Wrap(spacing: 8, runSpacing: 8, children: [
-          OutlinedButton.icon(onPressed: _walking ? null : () => _approach(EchoRoomTarget.memo),
-            icon: const Icon(Icons.menu_book), label: const Text('保守メモを調べる')),
-          OutlinedButton.icon(onPressed: _walking ? null : () => _approach(EchoRoomTarget.door),
-            icon: const Icon(Icons.door_front_door), label: const Text('中央廊下の扉を調べる')),
+          OutlinedButton.icon(
+              onPressed: _walking ? null : () => _approach(EchoRoomTarget.memo),
+              icon: const Icon(Icons.menu_book),
+              label: const Text('保守メモを調べる')),
+          OutlinedButton.icon(
+              onPressed: _walking ? null : () => _approach(EchoRoomTarget.door),
+              icon: const Icon(Icons.door_front_door),
+              label: const Text('中央廊下の扉を調べる')),
         ]),
       ],
     );
@@ -187,18 +248,38 @@ class _WalkingSprite extends StatelessWidget {
   final double side;
 
   @override
-  Widget build(BuildContext context) => SizedBox(width: side, height: side, child: ClipRect(
-    child: OverflowBox(alignment: Alignment.topLeft,
-      minWidth: side * 2, maxWidth: side * 2, minHeight: side * 2, maxHeight: side * 2,
-      child: Transform.translate(offset: Offset(-(frame % 2) * side, -(frame ~/ 2) * side),
-        child: Image.asset('assets/echo_pump/character_walk.png', width: side * 2, height: side * 2, fit: BoxFit.fill,
-          errorBuilder: (_, error, stack) => Column(children: List.generate(2, (_) => Expanded(child: Row(
-            children: List.generate(2, (_) => Expanded(child: Icon(Icons.engineering, color: _mint, size: side * 0.6))),
-          )))),
+  Widget build(BuildContext context) => SizedBox(
+      width: side,
+      height: side,
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: side * 2,
+          maxWidth: side * 2,
+          minHeight: side * 2,
+          maxHeight: side * 2,
+          child: Transform.translate(
+            offset: Offset(-(frame % 2) * side, -(frame ~/ 2) * side),
+            child: Image.asset(
+              'assets/echo_pump/character_walk.png',
+              width: side * 2,
+              height: side * 2,
+              fit: BoxFit.fill,
+              errorBuilder: (_, error, stack) => Column(
+                  children: List.generate(
+                      2,
+                      (_) => Expanded(
+                              child: Row(
+                            children: List.generate(
+                                2,
+                                (_) => Expanded(
+                                    child: Icon(Icons.engineering,
+                                        color: _mint, size: side * 0.6))),
+                          )))),
+            ),
+          ),
         ),
-      ),
-    ),
-  ));
+      ));
 }
 
 class _RoomFloor extends CustomPainter {
@@ -210,22 +291,52 @@ class _RoomFloor extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final fill = Paint()..color = const Color(0x303AA68D);
-    canvas.drawRect(Rect.fromLTRB(size.width * 0.12, size.height * 0.6, size.width * 0.28, size.height * 0.92), fill);
-    canvas.drawRect(Rect.fromLTRB(size.width * 0.72, size.height * 0.6, size.width * 0.88, size.height * 0.92), fill);
-    canvas.drawRect(Rect.fromLTRB(size.width * 0.12, size.height * 0.86, size.width * 0.88, size.height * 0.92), fill);
-    final machine = Rect.fromLTRB(size.width * 0.4, size.height * 0.45, size.width * 0.6, size.height * 0.82);
-    canvas.drawRRect(RRect.fromRectAndRadius(machine, const Radius.circular(6)), Paint()..color = const Color(0xEE20373D));
-    canvas.drawLine(Offset(machine.left + 8, machine.top + 15), Offset(machine.right - 8, machine.top + 15), Paint()..color = _mint..strokeWidth = 3);
+    canvas.drawRect(
+        Rect.fromLTRB(size.width * 0.12, size.height * 0.6, size.width * 0.28,
+            size.height * 0.92),
+        fill);
+    canvas.drawRect(
+        Rect.fromLTRB(size.width * 0.72, size.height * 0.6, size.width * 0.88,
+            size.height * 0.92),
+        fill);
+    canvas.drawRect(
+        Rect.fromLTRB(size.width * 0.12, size.height * 0.86, size.width * 0.88,
+            size.height * 0.92),
+        fill);
+    final machine = Rect.fromLTRB(size.width * 0.4, size.height * 0.45,
+        size.width * 0.6, size.height * 0.82);
+    canvas.drawRRect(RRect.fromRectAndRadius(machine, const Radius.circular(6)),
+        Paint()..color = const Color(0xEE20373D));
+    canvas.drawLine(
+        Offset(machine.left + 8, machine.top + 15),
+        Offset(machine.right - 8, machine.top + 15),
+        Paint()
+          ..color = _mint
+          ..strokeWidth = 3);
     if (walking && route.length > 1) {
-      final path = Path()..moveTo(route.first.x * size.width, route.first.y * size.height);
-      for (final p in route.skip(1)) { path.lineTo(p.x * size.width, p.y * size.height); }
-      canvas.drawPath(path, Paint()..style = PaintingStyle.stroke..color = _mint.withValues(alpha: 0.5)..strokeWidth = 2);
+      final path = Path()
+        ..moveTo(route.first.x * size.width, route.first.y * size.height);
+      for (final p in route.skip(1)) {
+        path.lineTo(p.x * size.width, p.y * size.height);
+      }
+      canvas.drawPath(
+          path,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..color = _mint.withValues(alpha: 0.5)
+            ..strokeWidth = 2);
     }
-    canvas.drawOval(Rect.fromCenter(center: Offset(position.x * size.width, position.y * size.height), width: 40, height: 8), Paint()..color = const Color(0x90000000));
+    canvas.drawOval(
+        Rect.fromCenter(
+            center: Offset(position.x * size.width, position.y * size.height),
+            width: 40,
+            height: 8),
+        Paint()..color = const Color(0x90000000));
   }
 
   @override
-  bool shouldRepaint(covariant _RoomFloor old) => old.position != position || old.walking != walking || old.route != route;
+  bool shouldRepaint(covariant _RoomFloor old) =>
+      old.position != position || old.walking != walking || old.route != route;
 }
 
 class _MaintenanceMemo extends StatefulWidget {
@@ -237,32 +348,56 @@ class _MaintenanceMemo extends StatefulWidget {
 class _MaintenanceMemoState extends State<_MaintenanceMemo> {
   int _page = 0;
 
-  Widget _line(IconData from, String label, IconData to, String destination) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Wrap(spacing: 10, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
-      Icon(from, color: _mint), Text(label), const Icon(Icons.arrow_forward), Icon(to, color: _mint), Text(destination),
-    ]),
-  );
+  Widget _line(IconData from, String label, IconData to, String destination) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Wrap(
+            spacing: 10,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Icon(from, color: _mint),
+              Text(label),
+              const Icon(Icons.arrow_forward),
+              Icon(to, color: _mint),
+              Text(destination),
+            ]),
+      );
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text('夜間保守メモ ${_page + 1} / 2'),
-    content: SizedBox(width: 420, child: SingleChildScrollView(child: Column(
-      mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
-      children: _page == 0 ? [
-        const Text('同時に通電できるのは2系統。'),
-        _line(Icons.bolt, 'B 整備', Icons.build, '工具庫のヒューズ'),
-        _line(Icons.bolt, 'C 排水', Icons.notifications_active, '点検槽のベル'),
-      ] : [
-        _line(Icons.electrical_services, 'ヒューズ', Icons.settings, 'ポンプ修理'),
-        _line(Icons.hearing, 'ベルで誘導', Icons.lock, '隔壁を閉じる'),
-        _line(Icons.water_drop, '排水', Icons.exit_to_app, '管理室から出口'),
-      ],
-    ))),
-    actions: [
-      TextButton(onPressed: _page == 0 ? null : () => setState(() => _page--), child: const Text('前のページ')),
-      TextButton(onPressed: _page == 1 ? null : () => setState(() => _page++), child: const Text('次のページ')),
-      FilledButton(onPressed: () => Navigator.pop(context), child: const Text('メモを閉じる')),
-    ],
-  );
+        title: Text('夜間保守メモ ${_page + 1} / 2'),
+        content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+                child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _page == 0
+                  ? [
+                      const Text('同時に通電できるのは2系統。'),
+                      _line(Icons.bolt, 'B 整備', Icons.build, '工具庫のヒューズ'),
+                      _line(Icons.bolt, 'C 排水', Icons.notifications_active,
+                          '点検槽のベル'),
+                    ]
+                  : [
+                      _line(Icons.electrical_services, 'ヒューズ', Icons.settings,
+                          'ポンプ修理'),
+                      _line(Icons.hearing, 'ベルで誘導', Icons.lock, '隔壁を閉じる'),
+                      _line(
+                          Icons.water_drop, '排水', Icons.exit_to_app, '管理室から出口'),
+                    ],
+            ))),
+        actions: [
+          TextButton(
+              onPressed: _page == 0 ? null : () => setState(() => _page--),
+              child: const Text('前のページ')),
+          TextButton(
+              onPressed: _page == 1 ? null : () => setState(() => _page++),
+              child: const Text('次のページ')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('メモを閉じる')),
+        ],
+      );
 }

@@ -5,28 +5,49 @@ import 'package:my_web_app/models/echo_pump_game.dart';
 import 'package:my_web_app/widgets/echo_pump_room_stage.dart';
 
 void main() {
-  Future<void> show(WidgetTester tester, {VoidCallback? step, ValueChanged<PumpRoom>? move,
-      bool reduced = false, double textScale = 1, AssetBundle? bundle}) async {
+  Future<void> show(WidgetTester tester,
+      {VoidCallback? step,
+      ValueChanged<PumpRoom>? move,
+      bool reduced = false,
+      double textScale = 1,
+      AssetBundle? bundle}) async {
     final stage = EchoPumpRoomStage(onFootstep: step, onMove: move);
-    await tester.pumpWidget(MaterialApp(builder: (context, child) => MediaQuery(
-      data: MediaQueryData(disableAnimations: reduced, textScaler: TextScaler.linear(textScale)),
-      child: child!), home: Scaffold(body: SingleChildScrollView(child: bundle == null ? stage : DefaultAssetBundle(bundle: bundle, child: stage))),
+    await tester.pumpWidget(MaterialApp(
+      builder: (context, child) => MediaQuery(
+          data: MediaQueryData(
+              disableAnimations: reduced,
+              textScaler: TextScaler.linear(textScale)),
+          child: child!),
+      home: Scaffold(
+          body: SingleChildScrollView(
+              child: bundle == null
+                  ? stage
+                  : DefaultAssetBundle(bundle: bundle, child: stage))),
     ));
     await tester.pumpAndSettle();
   }
 
-  testWidgets('approach animates, emits steps once and opens a paged memo', (tester) async {
+  testWidgets('approach animates, emits steps once and opens a paged memo',
+      (tester) async {
     var steps = 0;
     await show(tester, step: () => steps++);
-    final before = tester.widget<Positioned>(find.byKey(const Key('echo-room-actor'))).left;
+    final before = tester
+        .widget<Positioned>(find.byKey(const Key('echo-room-actor')))
+        .left;
     await tester.tap(find.text('保守メモを調べる'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    final after = tester.widget<Positioned>(find.byKey(const Key('echo-room-actor'))).top;
+    final after =
+        tester.widget<Positioned>(find.byKey(const Key('echo-room-actor'))).top;
     expect(after, lessThan(104));
     expect(before, isNotNull);
     expect(find.text('歩行中…'), findsOneWidget);
-    expect(tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, '中央廊下の扉を調べる')).onPressed, isNull);
+    expect(
+        tester
+            .widget<OutlinedButton>(
+                find.widgetWithText(OutlinedButton, '中央廊下の扉を調べる'))
+            .onPressed,
+        isNull);
     await tester.pumpAndSettle();
     expect(steps, 2);
     expect(find.text('夜間保守メモ 1 / 2'), findsOneWidget);
@@ -42,10 +63,14 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('camera and memo do not advance turns; door commits exactly once', (tester) async {
+  testWidgets('camera and memo do not advance turns; door commits exactly once',
+      (tester) async {
     final game = EchoPumpGame();
     var moves = 0;
-    await show(tester, move: (room) { moves++; game.move(room); });
+    await show(tester, move: (room) {
+      moves++;
+      game.move(room);
+    });
     await tester.tap(find.text('設備寄りに見る'));
     await tester.pumpAndSettle();
     expect(find.text('全景へ'), findsOneWidget);
@@ -62,7 +87,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('backgrounding cancels the walk and does not open a dialog on return', (tester) async {
+  testWidgets(
+      'backgrounding cancels the walk and does not open a dialog on return',
+      (tester) async {
     var steps = 0;
     await show(tester, step: () => steps++);
     await tester.tap(find.text('中央廊下の扉を調べる'));
@@ -79,7 +106,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('leaving during walking stops callbacks and disposes the ticker', (tester) async {
+  testWidgets('leaving during walking stops callbacks and disposes the ticker',
+      (tester) async {
     var steps = 0;
     await show(tester, step: () => steps++);
     await tester.tap(find.text('中央廊下の扉を調べる'));
@@ -113,7 +141,8 @@ void main() {
     });
   }
 
-  testWidgets('missing images retain the floor, controls and memo', (tester) async {
+  testWidgets('missing images retain the floor, controls and memo',
+      (tester) async {
     await show(tester, bundle: _MissingArt(), reduced: true);
     expect(find.byIcon(Icons.engineering), findsOneWidget);
     await tester.tap(find.text('保守メモを調べる'));
@@ -125,5 +154,6 @@ void main() {
 
 class _MissingArt extends CachingAssetBundle {
   @override
-  Future<ByteData> load(String key) async => throw StateError('Synthetic missing image');
+  Future<ByteData> load(String key) async =>
+      throw StateError('Synthetic missing image');
 }
