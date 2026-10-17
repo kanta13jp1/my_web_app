@@ -12,7 +12,7 @@ on:
         required: true
         default: full
         type: choice
-        options: [full, quick]
+        options: [full, quick, interactive]
       check_mode:
         description: Grouped checks or the captured sequential baseline
         required: true
@@ -52,6 +52,8 @@ on:
       - test/e2e/echo_pump.spec.ts
       - .github/workflows/echo-pump-prototype.yml
       - scripts/echo_pump_dev_checks.py
+      - scripts/measure_flutter_dev_loop.mjs
+      - scripts/measure_flutter_dev_loop.test.mjs
       - scripts/echo_pump_dev_commands.json
       - scripts/echo_pump_dev_checks_test.py
       - docs/ECHO_PUMP_DEVELOPMENT_LOOP.md
@@ -64,6 +66,7 @@ concurrency:
 
 jobs:
   prototype:
+    if: github.event_name != 'workflow_dispatch' || inputs.profile != 'interactive'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -141,3 +144,53 @@ jobs:
             test/pages/echo_pump_game_page_test.dart
           if-no-files-found: ignore
           retention-days: 3
+
+  interactive-benchmark:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'interactive'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: [normal, isolated]
+    env:
+      BENCH_ENTRY: ${{ matrix.entry }}
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Verify exact benchmark source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$(git rev-parse HEAD)" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Benchmark source SHA mismatch."
+            exit 1
+          fi
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Verify measurement contracts
+        run: node --test scripts/measure_flutter_dev_loop.test.mjs
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Prepare dependencies outside measured interval
+        run: |
+          flutter config --no-analytics
+          flutter --version
+          flutter pub get
+          npm ci
+      - name: Measure real debug startup and stateful Hot Reload
+        run: node scripts/measure_flutter_dev_loop.mjs --entry "$BENCH_ENTRY"
+      - name: Preserve measurement and browser evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: flutter-dev-loop-${{ matrix.entry }}-${{ github.run_id }}
+          path: .ci-logs/flutter-dev-loop/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
