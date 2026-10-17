@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/echo_pump_game.dart';
@@ -50,6 +53,35 @@ void main() {
     expect(find.text('安全な拠点'), findsOneWidget);
   });
 
+  testWidgets('missing artwork retains state and fallback icons', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: DefaultAssetBundle(
+      bundle: _MissingArtBundle(),
+      child: Scaffold(body: EchoPumpCast(game: EchoPumpGame())),
+    )));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.engineering), findsOneWidget);
+    expect(find.byIcon(Icons.visibility), findsOneWidget);
+    expect(find.text('安全な拠点'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('location change animates and settles without a loop', (tester) async {
+    final game = EchoPumpGame();
+    await show(tester, game);
+    game.move(PumpRoom.hall);
+    await tester.pumpWidget(MaterialApp(
+      home: MediaQuery(data: const MediaQueryData(),
+        child: Scaffold(body: SingleChildScrollView(child: EchoPumpCast(game: game))),
+      ),
+    ));
+    await tester.pump(const Duration(milliseconds: 160));
+    final transitions = tester.widgetList<SlideTransition>(find.byType(SlideTransition));
+    expect(transitions.any((w) => w.position.value.dx > 0 && w.position.value.dx < 0.12), isTrue);
+    await tester.pumpAndSettle();
+    expect(tester.hasRunningAnimations, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('contact failure is visible', (tester) async {
     final game = EchoPumpGame();
     for (var i = 0; i < 3; i++) { game.move(PumpRoom.hall); game.move(PumpRoom.pump); }
@@ -73,4 +105,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+}
+
+class _MissingArtBundle extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async => throw StateError('Synthetic missing asset');
 }

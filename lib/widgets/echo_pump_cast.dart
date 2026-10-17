@@ -12,8 +12,10 @@ class EchoPumpCast extends StatelessWidget {
   Widget build(BuildContext context) {
     final reduced = MediaQuery.disableAnimationsOf(context) ||
         MediaQuery.accessibleNavigationOf(context);
-    final duration = reduced ? Duration.zero : const Duration(milliseconds: 560);
-    final nearby = !game.sealed && !game.finished &&
+    final duration =
+        reduced ? Duration.zero : const Duration(milliseconds: 560);
+    final nearby = !game.sealed &&
+        !game.finished &&
         (game.room == game.enemy ||
             (game.room != PumpRoom.control &&
                 EchoPumpGame.connections[game.room]!.contains(game.enemy)));
@@ -45,7 +47,8 @@ class EchoPumpCast extends StatelessWidget {
                 state: heroState,
                 asset: 'assets/echo_pump/character_technician.png',
                 fallback: Icons.engineering,
-                statusIcon: game.escaped ? Icons.wb_twilight : Icons.person_pin_circle,
+                statusIcon:
+                    game.escaped ? Icons.wb_twilight : Icons.person_pin_circle,
                 color: const Color(0xFF9BE0CF),
                 duration: duration,
                 revision: '${game.room.name}-${game.health}-${game.escaped}',
@@ -61,8 +64,14 @@ class EchoPumpCast extends StatelessWidget {
                 state: enemyState,
                 asset: 'assets/echo_pump/character_stalker.png',
                 fallback: Icons.visibility,
-                statusIcon: game.sealed ? Icons.lock : nearby ? Icons.warning_amber : Icons.hearing,
-                color: game.sealed ? const Color(0xFF9BE0CF) : const Color(0xFFFFB49B),
+                statusIcon: game.sealed
+                    ? Icons.lock
+                    : nearby
+                        ? Icons.warning_amber
+                        : Icons.hearing,
+                color: game.sealed
+                    ? const Color(0xFF9BE0CF)
+                    : const Color(0xFFFFB49B),
                 duration: duration,
                 revision: '${game.enemy.name}-${game.sealed}-${game.escaped}',
                 dimmed: game.sealed || game.escaped,
@@ -82,7 +91,8 @@ class EchoPumpCast extends StatelessWidget {
                   runSpacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Icon(Icons.graphic_eq, color: Color(0xFFFFB49B), size: 20),
+                    const Icon(Icons.graphic_eq,
+                        color: Color(0xFFFFB49B), size: 20),
                     Text(game.noiseRoom!.label),
                     const Icon(Icons.arrow_back, size: 18),
                     const Icon(Icons.hearing, size: 20),
@@ -137,7 +147,8 @@ class _Figure extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+              Text(title,
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold)),
               SizedBox(
                 height: 184,
                 child: ClipRect(
@@ -149,7 +160,9 @@ class _Figure extends StatelessWidget {
                         transitionBuilder: (child, animation) => FadeTransition(
                           opacity: animation,
                           child: SlideTransition(
-                            position: Tween<Offset>(begin: const Offset(0.12, 0), end: Offset.zero)
+                            position: Tween<Offset>(
+                                    begin: const Offset(0.12, 0),
+                                    end: Offset.zero)
                                 .animate(animation),
                             child: child,
                           ),
@@ -161,7 +174,8 @@ class _Figure extends StatelessWidget {
                             asset,
                             fit: BoxFit.contain,
                             excludeFromSemantics: true,
-                            errorBuilder: (context, error, stackTrace) => Center(
+                            errorBuilder: (context, error, stackTrace) =>
+                                Center(
                               child: Icon(fallback, color: color, size: 80),
                             ),
                           ),
@@ -170,18 +184,25 @@ class _Figure extends StatelessWidget {
                       if (sealed)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: List.generate(5, (_) => Container(width: 5, color: const Color(0xB39BE0CF))),
+                          children: List.generate(
+                              5,
+                              (_) => Container(
+                                  width: 5, color: const Color(0xB39BE0CF))),
                         ),
                     ],
                   ),
                 ),
               ),
-              Text(location, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(location,
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 4),
               Wrap(
                 spacing: 5,
                 crossAxisAlignment: WrapCrossAlignment.center,
-                children: [Icon(statusIcon, color: color, size: 18), Text(state, style: TextStyle(color: color))],
+                children: [
+                  Icon(statusIcon, color: color, size: 18),
+                  Text(state, style: TextStyle(color: color))
+                ],
               ),
             ],
           ),
