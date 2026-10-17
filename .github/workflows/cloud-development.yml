@@ -33,10 +33,12 @@ jobs:
           dart format lib/widgets/recurring_fixed_cost_editor_dialog.dart lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
           dart format test/widgets/recurring_fixed_cost_save_test.dart
           dart fix --apply --code=require_trailing_commas
+          dart format lib/widgets/recurring_fixed_cost_editor_dialog.dart lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart test/widgets/recurring_fixed_cost_save_test.dart
           mkdir -p .ci-logs/recurring-income/source/lib/widgets .ci-logs/recurring-income/source/lib/pages
           cp lib/widgets/recurring_fixed_cost_editor_dialog.dart .ci-logs/recurring-income/source/lib/widgets/
           cp lib/pages/asset_management_page.dart .ci-logs/recurring-income/source/lib/pages/
           mkdir -p .ci-logs/recurring-income/source/test/widgets
+          cp test/widgets/asset_management_page_smoke_test.dart .ci-logs/recurring-income/source/test/widgets/
           cp test/widgets/recurring_fixed_cost_save_test.dart .ci-logs/recurring-income/source/test/widgets/
           flutter analyze --no-pub test/widgets/recurring_fixed_cost_save_test.dart lib/widgets/recurring_fixed_cost_editor_dialog.dart lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
           flutter test --no-pub --reporter expanded test/widgets/asset_management_page_smoke_test.dart --plain-name 'fixed cost persistence failure retains' | tee .ci-logs/recurring-income/tests.log
