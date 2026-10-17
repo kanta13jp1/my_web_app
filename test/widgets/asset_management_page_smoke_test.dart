@@ -350,6 +350,9 @@ void main() {
           await tester.pump(const Duration(milliseconds: 300));
           expect(repository.attempts, 2);
         }
+        // Allow the dismissal animation started after async persistence to finish.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
         expect(find.byType(AlertDialog), findsNothing);
         expect(repository.attemptedIds.toSet(), hasLength(1));
         final templates = await repository.loadRecurringIncomeTemplates();
