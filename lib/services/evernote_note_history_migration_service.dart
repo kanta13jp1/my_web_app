@@ -184,7 +184,7 @@ class SupabaseEvernoteNoteHistoryDatabaseGateway
           .select('file_path,file_size,mime_type,content_sha256')
           .eq('note_version_id', noteVersionId);
       if (cursor != null) query = query.gt('file_path', cursor);
-      final page = await query.order('file_path').limit(100);
+      final page = await query.order('file_path', ascending: true).limit(100);
       if (page.isEmpty) break;
       attachmentResponse.addAll(page);
       final next = page.last['file_path']?.toString();

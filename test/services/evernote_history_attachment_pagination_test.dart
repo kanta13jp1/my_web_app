@@ -37,7 +37,7 @@ void main() {
             request.url.queryParameters['note_version_id'],
             'eq.version-fixture',
           );
-          expect(request.url.queryParameters['order'], 'file_path.asc');
+          expect(request.url.queryParameters['order'], 'file_path.asc.nullslast');
           expect(request.url.queryParameters['limit'], '100');
           final filter = request.url.queryParameters['file_path'];
           final cursor = filter == null ? '' : filter.substring(3);
