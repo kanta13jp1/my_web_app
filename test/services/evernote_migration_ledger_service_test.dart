@@ -20,7 +20,7 @@ void main() {
         cursors.add(cursor);
         final rows = List<Map<String, dynamic>>.generate(205, (index) {
           return <String, dynamic>{
-            ...items ? _itemJson() : _batchJson(),
+            ...(items ? _itemJson() : _batchJson()),
             'id': index + 1,
           };
         }).where((row) => (row['id'] as int) > cursor).take(100).toList();
@@ -39,6 +39,62 @@ void main() {
       expect(cursors, <int>[0, 100, 200]);
     });
   }
+  test('retry after a partial manifest write reuses keys and preserves status',
+      () async {
+    var itemCalls = 0;
+    final payloads = <List<dynamic>>[];
+    final service = _service((request) async {
+      if (request.url.path.endsWith('/evernote_migration_batches')) {
+        return http.Response(
+          jsonEncode(_batchJson()),
+          201,
+          headers: const {'content-type': 'application/json'},
+          request: request,
+        );
+      }
+      itemCalls += 1;
+      payloads.add(jsonDecode(request.body) as List<dynamic>);
+      return http.Response(
+        itemCalls == 2 ? '{"message":"synthetic transient failure"}' : '',
+        itemCalls == 2 ? 500 : 201,
+        headers: const {'content-type': 'application/json'},
+        request: request,
+      );
+    });
+    final preview = ImportPreviewResult(
+      sourceType: 'evernote',
+      sourceLabel: 'Evernote',
+      fileName: 'retry.enex',
+      sourceExportSha256: _hash('a'),
+      notes: List<ImportedNoteDraft>.generate(101, (index) {
+        return ImportedNoteDraft(
+          title: 'Synthetic note',
+          content: 'Synthetic body',
+          source: 'evernote',
+          sourceId: 'note-$index',
+          sourceContentSha256: _hash('b'),
+        );
+      }),
+    );
+    await expectLater(
+      service.recordPreview(userId: 'user-a', preview: preview),
+      throwsA(isA<PostgrestException>()),
+    );
+    await service.recordPreview(userId: 'user-a', preview: preview);
+    expect(payloads.map((rows) => rows.length).toList(), <int>[100, 1, 100, 1]);
+    for (var page = 0; page < 2; page += 1) {
+      expect(
+        payloads[page].map((row) => row['source_item_key']).toList(),
+        payloads[page + 2].map((row) => row['source_item_key']).toList(),
+      );
+    }
+    for (final row in payloads.expand((rows) => rows)) {
+      expect(row.containsKey('status'), isFalse);
+      expect(row.containsKey('history_status'), isFalse);
+      expect(row.containsKey('task_status'), isFalse);
+      expect(row.containsKey('target_note_id'), isFalse);
+    }
+  });
   group('EvernoteMigrationProgress', () {
     test('reports transparent four-stage progress', () {
       final progress =
