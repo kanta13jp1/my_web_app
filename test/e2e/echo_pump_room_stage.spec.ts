@@ -92,3 +92,46 @@ test('first walk keeps the protagonist while the preloaded sheet is delayed', as
     releaseArt();
   }
 });
+
+
+test('find, inspect and install the fuse without spending turns on the inventory', async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const button = (name: string) => page.getByRole('button', { name, exact: true });
+  await page.goto('/');
+  await button('ゲーム開始').click();
+  await button('スキップして開始').click();
+  await button('所持品を開く').click();
+  await expect(page.getByText('所持品は空', { exact: true })).toBeVisible();
+  await button('所持品を閉じる').click();
+  await expect(page.getByText('ターン 0', { exact: true })).toBeVisible();
+  await page.getByRole('checkbox', { name: 'B 整備', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'A 搬入', exact: true }).click();
+  await button('中央廊下へ').click();
+  await button('工具庫へ').click();
+  await page.mouse.move(100, 200);
+  await page.mouse.wheel(0, 30000);
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: info.outputPath('fuse-shelf.png'), scale: 'css' });
+  await button('ヒューズを回収').click();
+  await expect(button('ヒューズを回収')).toBeDisabled();
+  await button('所持品を開く').click();
+  await expect(page.getByText('所持数 1', { exact: true })).toBeVisible();
+  await expect(button('このヒューズで修理')).toHaveCount(0);
+  await page.screenshot({ path: info.outputPath('inventory-carried.png'), scale: 'css' });
+  await button('所持品を閉じる').click();
+  await expect(page.getByText('ターン 5', { exact: true })).toBeVisible();
+  await button('中央廊下へ').click();
+  await button('ポンプ室へ').click();
+  await button('所持品を開く').click();
+  await button('このヒューズで修理').click();
+  await expect(page.getByText('ターン 8', { exact: true })).toBeVisible();
+  await button('所持品を開く').click();
+  await expect(page.getByText('ポンプへ装着済み', { exact: true })).toBeVisible();
+  await expect(page.getByText('所持数 0', { exact: true })).toBeVisible();
+  await expect(button('このヒューズで修理')).toHaveCount(0);
+  await page.screenshot({ path: info.outputPath('inventory-installed.png'), scale: 'css' });
+  await button('所持品を閉じる').click();
+  await expect(page.getByText('ターン 8', { exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+});
