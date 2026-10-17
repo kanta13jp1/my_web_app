@@ -30,8 +30,8 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs/recurring-income
           flutter pub get
-          dart format test/widgets/asset_management_page_smoke_test.dart
-          flutter analyze --no-pub test/widgets/asset_management_page_smoke_test.dart
+          dart format lib/widgets/recurring_fixed_cost_editor_dialog.dart lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
+          flutter analyze --no-pub lib/widgets/recurring_fixed_cost_editor_dialog.dart lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
           flutter test --no-pub --reporter expanded test/widgets/asset_management_page_smoke_test.dart --plain-name 'fixed cost persistence failure retains' | tee .ci-logs/recurring-income/tests.log
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()

@@ -67,9 +67,11 @@ Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
       AssetSubscriptionBillingGateway.direct,
   double? usdJpyRate,
   DateTime? usdJpyRateAsOf,
+  Future<void> Function(AssetRecurringFixedCost)? onSave,
 }) {
   return showDialog<AssetRecurringFixedCost>(
     context: context,
+    barrierDismissible: onSave == null,
     builder: (context) => RecurringFixedCostEditorDialog(
       existing: existing,
       prefill: prefill,
@@ -78,6 +80,7 @@ Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
       gateway: gateway,
       usdJpyRate: usdJpyRate,
       usdJpyRateAsOf: usdJpyRateAsOf,
+      onSave: onSave,
     ),
   );
 }
@@ -94,7 +97,10 @@ class RecurringFixedCostEditorDialog extends StatefulWidget {
     this.gateway = AssetSubscriptionBillingGateway.direct,
     this.usdJpyRate,
     this.usdJpyRateAsOf,
+    this.onSave,
   });
+
+  final Future<void> Function(AssetRecurringFixedCost)? onSave;
 
   final AssetRecurringFixedCost? existing;
 
@@ -133,6 +139,8 @@ class _RecurringFixedCostEditorDialogState
   late AssetSubscriptionBillingGateway _gateway;
   late AssetRecurringFixedCostCurrency _currency;
   String? _sourceAccountId;
+  bool _saving = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -180,7 +188,8 @@ class _RecurringFixedCostEditorDialogState
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
+    if (_saving) return;
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -222,7 +231,17 @@ class _RecurringFixedCostEditorDialogState
       currency: _currency,
       usdAmount: usdAmount,
     );
-    Navigator.of(context).pop(cost);
+    setState(() { _saving = true; _saveError = null; });
+    try {
+      await widget.onSave?.call(cost);
+      if (mounted) Navigator.of(context).pop(cost);
+    } catch (_) {
+      if (mounted) {
+        setState(() { _saveError = '保存できませんでした。入力を保持しています。'; });
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   String _formatYen(double value) {
@@ -310,14 +329,20 @@ class _RecurringFixedCostEditorDialogState
   @override
   Widget build(BuildContext context) {
     final label = categoryLabel(_category);
-    return AlertDialog(
+    return PopScope(
+      canPop: !_saving,
+      child: AlertDialog(
       title: Text(widget.existing == null ? '$labelを追加' : '$labelを編集'),
-      content: SingleChildScrollView(
+      content: AbsorbPointer(
+        absorbing: _saving,
+        child: SingleChildScrollView(
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (_saveError != null)
+                Text(_saveError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
               DropdownButtonFormField<AssetRecurringFixedCostCategory>(
                 initialValue: _category,
                 decoration: const InputDecoration(labelText: '区分'),
@@ -472,13 +497,15 @@ class _RecurringFixedCostEditorDialogState
           ),
         ),
       ),
+      ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _saving ? null : () => Navigator.of(context).pop(),
           child: const Text('キャンセル'),
         ),
-        FilledButton(onPressed: _submit, child: const Text('保存')),
+        FilledButton(onPressed: _saving ? null : _submit, child: Text(_saving ? '保存中…' : '保存')),
       ],
+      ),
     );
   }
 }
