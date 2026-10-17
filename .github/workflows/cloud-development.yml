@@ -33,9 +33,16 @@ jobs:
         run: flutter pub get
       - name: Analyze and test the isolated adapter
         run: |
+          dart fix --apply --code=require_trailing_commas lib/preview
+          dart fix --apply --code=require_trailing_commas test/preview
           dart format lib/preview test/preview
           flutter analyze lib/preview test/preview
           flutter test test/preview/pr5125_store_test.dart
+      - name: Capture mechanical formatting patch
+        if: always()
+        run: |
+          mkdir -p preview-evidence
+          git diff -- lib/preview test/preview > preview-evidence/source-format.patch
       - name: Build without DB configuration or external runtime resources
         run: |
           flutter build web --release --target lib/preview/pr5125_main.dart --no-web-resources-cdn --pwa-strategy=none --dart-define=PR5125_OFFLINE_PREVIEW=true

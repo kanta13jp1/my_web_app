@@ -24,7 +24,7 @@ const assert = require('node:assert/strict');
         if(await placeholder.count()) await placeholder.evaluate(e=>e.click());
         await page.waitForTimeout(700);
         assert.equal(await page.locator('#screen').inputValue(),screen);
-        const semantics=await page.locator('flt-semantics-host').innerText().catch(()=>'');
+        const semantics=await page.locator('flt-semantics-host').evaluateAll(hosts=>hosts.map(h=>h.innerText+' '+Array.from(h.querySelectorAll('[aria-label]')).map(e=>e.getAttribute('aria-label')).join(' ')).join(' '));
         assert(semantics.includes('架空データ'), 'Missing offline banner: '+device+'/'+screen);
         assert(!/Assertion failed|ProviderNotFoundException|Supabase has not been initialized|ErrorWidget/.test(semantics), 'Broken screen: '+device+'/'+screen);
         await page.screenshot({path:`preview-evidence/${device}-${screen}.png`,fullPage:true});

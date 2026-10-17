@@ -23,7 +23,7 @@ Future<void> main() async {
   final store = Preview5125Store();
   await Supabase.initialize(
     url: 'https://pr5125.invalid',
-    anonKey: 'fictional-preview-not-a-secret',
+    publishableKey: 'fictional-preview-not-a-secret',
     httpClient: store.client,
     authOptions: const FlutterAuthClientOptions(
       autoRefreshToken: false,

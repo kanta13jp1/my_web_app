@@ -9,7 +9,7 @@ void main() {
     final response = await store.client.get(Uri.parse('https://pr5125.invalid/rest/v1/notes?id=eq.1'));
     final rows = jsonDecode(response.body) as List;
     expect(rows.length, 1);
-    expect(rows.first['title'], contains('架空データ'));
+    expect((rows.first as Map<String, dynamic>)['title'], contains('架空データ'));
     store.client.close();
   });
   test('all mutations and external destinations fail closed', () async {
