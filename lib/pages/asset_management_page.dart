@@ -855,6 +855,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Set<String> _ignoredRecurringIncomeLabels = <String>{};
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
   Map<String, double> _categoryBudgets = <String, double>{};
+  bool _hasSavedCategoryBudgets = false;
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
   // アクションアイテムからジャンプした直後に、対処すべき支払済みチェックボックスへ
   // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
@@ -11473,6 +11474,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _loadCategoryBudgets() async {
     try {
       final budgets = await _categoryBudgetStore.load();
+      _hasSavedCategoryBudgets = await _categoryBudgetStore.hasSavedSetting();
       if (mounted && budgets.isNotEmpty) {
         setState(() {
           _categoryBudgets = budgets;
@@ -11510,7 +11512,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_supabase.auth.currentUser == null) {
       return;
     }
-    final hasLocal = _categoryBudgets.isNotEmpty;
+    final hasLocal = _hasSavedCategoryBudgets || _categoryBudgets.isNotEmpty;
     try {
       final rows = await _bootSelectPrefMirror(_categoryBudgetsMirrorKey);
       if (rows.isEmpty) {
@@ -11519,7 +11521,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         return;
       }
-      if (hasLocal) {
+      if (hasLocal || _hasSavedCategoryBudgets) {
         return;
       }
       final serverBudgets = AssetCategoryBudgetStore.decodeMirrorValue(
@@ -11539,6 +11541,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _saveCategoryBudgets(Map<String, double> budgets) async {
     await _categoryBudgetStore.save(budgets);
+    _hasSavedCategoryBudgets = true;
     if (!mounted) return;
     setState(() {
       _categoryBudgets = budgets;
