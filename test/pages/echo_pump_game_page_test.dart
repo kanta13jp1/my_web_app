@@ -21,6 +21,12 @@ void main() {
         expect(tester.takeException(), isNull);
       }
 
+      expect(find.byKey(const Key('echo-title-screen')), findsOneWidget);
+      expect(find.byKey(const Key('echo-power-b')), findsNothing);
+      await tester.tap(find.byKey(const Key('echo-start')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('echo-intro-skip')));
+      await tester.pumpAndSettle();
       await tap('echo-power-b');
       await tap('echo-power-a');
       await tap('echo-move-hall');
