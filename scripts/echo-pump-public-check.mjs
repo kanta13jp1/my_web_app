@@ -40,6 +40,7 @@ try {
       await shot('overview');
       await button('設備寄りに見る').click();await button('全景へ').waitFor();
       await button('保守メモを調べる').click();
+      await page.getByText('歩行中…',{exact:true}).waitFor({timeout:5000});
       await page.waitForTimeout(150);await shot('walking');
       await page.getByText('夜間保守メモ 1 / 2',{exact:true}).waitFor();
       await page.waitForFunction(()=>window.__roomAudit.plays.filter(src=>src.includes('/step.wav')).length===2);
