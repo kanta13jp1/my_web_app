@@ -354,7 +354,7 @@ class EvernoteMigrationLedgerService {
     while (true) {
       var query = _client.from(table).select(columns).eq('user_id', ownerId);
       if (afterId != null) query = query.gt('id', afterId);
-      final page = await query.order('id').limit(pageSize);
+      final page = await query.order('id', ascending: true).limit(pageSize);
       if (page.isEmpty) break;
       rows.addAll(page);
       final nextId = _asIntValue(page.last['id']);
