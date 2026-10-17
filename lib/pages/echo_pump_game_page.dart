@@ -255,7 +255,10 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
               header: true,
               child: Text(
                 title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 8),
