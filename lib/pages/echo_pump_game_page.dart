@@ -1,27 +1,70 @@
 import 'package:flutter/material.dart';
 
 import '../models/echo_pump_game.dart';
+import '../services/echo_pump_audio.dart';
+import '../widgets/echo_pump_audio_controls.dart';
 import '../widgets/echo_pump_title_screen.dart';
 import '../widgets/echo_pump_intro.dart';
 import '../widgets/echo_pump_visuals.dart';
 
 class EchoPumpGamePage extends StatefulWidget {
-  const EchoPumpGamePage({super.key});
+  const EchoPumpGamePage({super.key, this.audio});
+
+  final EchoPumpAudio? audio;
 
   @override
   State<EchoPumpGamePage> createState() => _EchoPumpGamePageState();
 }
 
-class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
+class _EchoPumpGamePageState extends State<EchoPumpGamePage>
+    with WidgetsBindingObserver {
   EchoPumpGame _game = EchoPumpGame();
   bool _started = false;
   bool _introPlaying = false;
 
-  void _act(VoidCallback action) => setState(action);
+  late final EchoPumpAudio _audio;
+
+  @override
+  void initState() {
+    super.initState();
+    _audio = widget.audio ?? EchoPumpAudio();
+    _audio.setForeground(true);
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _audio.setForeground(state == AppLifecycleState.resumed);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _audio.setForeground(false);
+    if (widget.audio == null) _audio.dispose();
+    super.dispose();
+  }
+
+  void _act(VoidCallback action, [EchoPumpCue? cue]) {
+    final health = _game.health;
+    final turn = _game.turn;
+    setState(action);
+    _audio.setMusicActive(!_game.finished);
+    if (_game.escaped) {
+      _audio.cue(EchoPumpCue.escape);
+    } else if (_game.health == 0) {
+      _audio.cue(EchoPumpCue.fail);
+    } else if (_game.health < health) {
+      _audio.cue(EchoPumpCue.damage);
+    } else if (cue != null && (_game.turn != turn || cue == EchoPumpCue.start)) {
+      _audio.cue(cue);
+    }
+  }
 
   void _beginIntro() {
     if (_started || _introPlaying) return;
     setState(() => _introPlaying = true);
+    _audio.cue(EchoPumpCue.start);
   }
 
   void _startGame() {
@@ -33,10 +76,21 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
       _started = true;
       _introPlaying = false;
     });
+    _audio.setMusicActive(true);
+    _audio.cue(EchoPumpCue.start);
   }
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(child: _buildScreen(context)),
+        EchoPumpAudioControls(audio: _audio),
+      ],
+    );
+  }
+
+  Widget _buildScreen(BuildContext context) {
     if (_introPlaying) {
       return EchoPumpIntro(onFinished: _startGame);
     }
@@ -57,7 +111,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
           actions: [
             IconButton(
               tooltip: '最初からやり直す',
-              onPressed: () => _act(() => _game = EchoPumpGame()),
+              onPressed: () => _act(() => _game = EchoPumpGame(), EchoPumpCue.start),
               icon: const Icon(Icons.refresh),
             ),
           ],
@@ -117,7 +171,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                         const SizedBox(height: 8),
                         FilledButton.icon(
                           key: const Key('echo-retry'),
-                          onPressed: () => _act(() => _game = EchoPumpGame()),
+                          onPressed: () => _act(() => _game = EchoPumpGame(), EchoPumpCue.start),
                           icon: const Icon(Icons.replay),
                           label: const Text('リトライ'),
                         ),
@@ -152,7 +206,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                                     (room == PumpRoom.inspection &&
                                         _game.sealed)
                                 ? null
-                                : () => _act(() => _game.move(room)),
+                                : () => _act(() => _game.move(room), EchoPumpCue.step),
                             child: Text('${room.label}へ'),
                           ),
                         OutlinedButton.icon(
@@ -185,7 +239,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                               onSelected: _game.finished
                                   ? null
                                   : (_) =>
-                                      _act(() => _game.togglePower(circuit)),
+                                      _act(() => _game.togglePower(circuit), EchoPumpCue.power),
                             ),
                         ],
                       ),
@@ -199,7 +253,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                         onPressed:
                             _game.finished || _game.hasFuse || _game.repaired
                                 ? null
-                                : () => _act(_game.collectFuse),
+                                : () => _act(_game.collectFuse, EchoPumpCue.collect),
                         child: const Text('ヒューズを回収'),
                       ),
                       const Text('B系統が必要。敵が工具庫へ来る前に、別の音へ誘おう。'),
@@ -214,7 +268,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                             key: const Key('echo-repair'),
                             onPressed: _game.finished || !_game.hasFuse
                                 ? null
-                                : () => _act(_game.repair),
+                                : () => _act(_game.repair, EchoPumpCue.repair),
                             child: const Text('ヒューズで修理'),
                           ),
                           FilledButton(
@@ -224,7 +278,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                                     _game.enemy != PumpRoom.inspection ||
                                     !_game.power.contains(PumpCircuit.c)
                                 ? null
-                                : () => _act(_game.seal),
+                                : () => _act(_game.seal, EchoPumpCue.seal),
                             child: const Text('隔壁を閉じる'),
                           ),
                           FilledButton(
@@ -235,14 +289,14 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                                     _game.drained ||
                                     !_game.power.contains(PumpCircuit.c)
                                 ? null
-                                : () => _act(_game.drain),
+                                : () => _act(_game.drain, EchoPumpCue.drain),
                             child: const Text('排水ポンプを起動'),
                           ),
                         ],
                       ),
                     ]),
                   const SizedBox(height: 12),
-                  const Text('最小版：音は表示で表現 / 3D・射撃・音声・保存なし。'
+                  const Text('最小版：BGM・SEは下の「音をON」で再生 / 3D・射撃・保存なし。'
                       '再読込で最初から。敵の位置は全表示。'),
                 ],
               ),
