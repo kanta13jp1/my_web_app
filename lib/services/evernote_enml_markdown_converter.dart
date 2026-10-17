@@ -134,8 +134,7 @@ class EvernoteEnmlMarkdownConverter {
       return 1;
     }
     if (name == 'table') {
-      _writeTable(node, buffer);
-      return 0;
+      return _writeTable(node, buffer, resourcesByHash, unresolved, listDepth);
     }
     if (name == 'ul' || name == 'ol') {
       return _writeList(
@@ -192,13 +191,17 @@ class EvernoteEnmlMarkdownConverter {
       buffer.write('${List<String>.filled(headingLevel, '#').join()} ');
     } else if (name == 'blockquote') {
       _blankLine(buffer);
-      final lines = node.innerText
-          .replaceAll('\r\n', '\n')
-          .replaceAll('\r', '\n')
-          .split('\n');
-      buffer.write(lines.map((line) => '> ${line.trim()}').join('\n'));
+      final quoted = StringBuffer();
+      var encrypted = 0;
+      for (final child in node.children) {
+        encrypted += _writeNode(
+          child, quoted, resourcesByHash, unresolved, listDepth: listDepth,
+        );
+      }
+      final lines = _normalize(quoted.toString()).split('\n');
+      buffer.write(lines.map((line) => '> $line').join('\n'));
       _blankLine(buffer);
-      return 0;
+      return encrypted;
     }
 
     var encrypted = 0;
@@ -273,7 +276,14 @@ class EvernoteEnmlMarkdownConverter {
     }
   }
 
-  void _writeTable(XmlElement table, StringBuffer buffer) {
+  int _writeTable(
+    XmlElement table,
+    StringBuffer buffer,
+    Map<String, EvernoteEnmlResourceReference> resourcesByHash,
+    Set<String> unresolved,
+    int listDepth,
+  ) {
+    var encrypted = 0;
     final rows = table.descendants
         .whereType<XmlElement>()
         .where((element) => element.localName.toLowerCase() == 'tr')
@@ -285,16 +295,25 @@ class EvernoteEnmlMarkdownConverter {
                 ),
               )
               .map(
-                (cell) => cell.innerText
-                    .replaceAll('|', r'\|')
-                    .replaceAll(RegExp(r'\s+'), ' ')
-                    .trim(),
+                (cell) {
+                  final content = StringBuffer();
+                  for (final child in cell.children) {
+                    encrypted += _writeNode(
+                      child, content, resourcesByHash, unresolved,
+                      listDepth: listDepth,
+                    );
+                  }
+                  return content.toString()
+                      .replaceAll('|', r'\|')
+                      .replaceAll(RegExp(r'\s+'), ' ')
+                      .trim();
+                },
               )
               .toList(growable: false),
         )
         .where((row) => row.isNotEmpty)
         .toList(growable: false);
-    if (rows.isEmpty) return;
+    if (rows.isEmpty) return encrypted;
 
     final columnCount =
         rows.map((row) => row.length).fold(0, (a, b) => a > b ? a : b);
@@ -314,6 +333,7 @@ class EvernoteEnmlMarkdownConverter {
       buffer.writeln(renderRow(row));
     }
     _blankLine(buffer);
+    return encrypted;
   }
 
   int? _headingLevel(String name) {
