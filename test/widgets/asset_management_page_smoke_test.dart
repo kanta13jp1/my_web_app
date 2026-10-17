@@ -709,7 +709,6 @@ void main() {
           'asset_category_budgets_v1': '{"食費":10000}',
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
-          'asset_category_budgets_v1': jsonEncode({'食費': 5000}),
         });
         await tester.binding.setSurfaceSize(size);
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -771,7 +770,6 @@ void main() {
           'asset_category_budgets_v1': '{"食費":10000}',
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
-          'asset_category_budgets_v1': jsonEncode({'食費': 5000}),
         });
         await tester.binding.setSurfaceSize(size);
         addTearDown(() => tester.binding.setSurfaceSize(null));
