@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/echo_pump_game.dart';
 import '../models/echo_pump_room_walk.dart';
 
 const _mint = Color(0xFF9BE0CF);
+const _walkArt = AssetImage('assets/echo_pump/character_walk.png');
 
 /// A small, safe-room exploration layer over the existing turn-based game.
 class EchoPumpRoomStage extends StatefulWidget {
@@ -23,6 +26,9 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
   bool _walking = false, _detail = false, _left = false, _foreground = true;
   bool _animateSteps = true;
   int _steps = 0;
+  AssetBundle? _artBundle;
+  int _artRequest = 0;
+  bool _walkArtReady = false;
 
   @override
   void initState() {
@@ -34,6 +40,27 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
       duration: const Duration(milliseconds: 1000),
     )..addListener(_tick);
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final bundle = DefaultAssetBundle.of(context);
+    if (identical(bundle, _artBundle)) return;
+    _artBundle = bundle;
+    _walkArtReady = false;
+    unawaited(_precacheWalkArt(++_artRequest));
+  }
+
+  Future<void> _precacheWalkArt(int request) async {
+    var failed = false;
+    await precacheImage(
+      _walkArt,
+      context,
+      onError: (Object error, StackTrace? stack) => failed = true,
+    );
+    if (!mounted || request != _artRequest || failed) return;
+    setState(() => _walkArtReady = true);
   }
 
   @override
@@ -220,7 +247,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
                                   1,
                                   1,
                                 ),
-                                child: _walking
+                                child: _walking && _walkArtReady
                                     ? _WalkingSprite(
                                         frame: (_walk.value * 4)
                                             .floor()

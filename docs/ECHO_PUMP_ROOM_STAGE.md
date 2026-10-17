@@ -15,3 +15,10 @@ image_genで独自の保守員原画(character_technician.png、原本20261017-1
 修正プロンプト: Edit this 2x2 animation sheet. Keep same woman/costume/style/four equal square cells transparent. Smaller figures 78% own cell height with 10% margins, preserve ground line. Top-left contact left foot forward; top-right passing compact feet under hips; bottom-left opposite contact right foot forward; bottom-right opposite passing other knee raised. Do not use four wide-stride poses, no labels/borders/environment.
 
 原画は変更せず保存し、アプリでは描画時に等分セルを切り出します。生成イラストのため各ポーズの精密な骨格連続性は今後の改善対象です。
+
+
+## 初回歩行の画像先読み
+
+管理室の依存関係が確定した時点でcharacter_walk.pngをprecacheImageで読み込み・デコードする。完了前に歩き始めても静止姿勢の主人公を移動経路上に残し、準備完了後に4コマへ切り替える。読み込み失敗時も主人公と調べる操作を維持する。遅れて完了した処理は破棄済みStateや変更後のAssetBundleへ反映しない。ターン・足音・移動時間は変更しない。
+
+Widget試験で先読み開始・遅延中の表示・デコード後の切替・失敗後の進行・画面離脱を確認する。ブラウザーでは歩行画像だけの取得を遅らせ、初回の代替姿勢と読込後の歩行をPC/mobileで撮影する。
