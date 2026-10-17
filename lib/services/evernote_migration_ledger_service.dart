@@ -114,7 +114,10 @@ class EvernoteMigrationItem {
       taskStatus == 'verified' || taskStatus == 'verified_no_features';
 
   bool get sourceDeletionGatePassed =>
-      historyDeletionGatePassed && taskDeletionGatePassed;
+      targetNoteId != null &&
+      <String>{'verified', 'source_deleting', 'source_deleted'}.contains(status) &&
+      historyDeletionGatePassed &&
+      taskDeletionGatePassed;
 
   String get displayTitle {
     final title = noteTitle?.trim();
