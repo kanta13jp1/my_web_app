@@ -19,8 +19,10 @@ void main() {
           ),
         ],
       );
-      expect(result.markdown,
-          contains('before **bold** ![sample](evernote-resource:abc) after'));
+      expect(
+        result.markdown,
+        contains('before **bold** ![sample](evernote-resource:abc) after'),
+      );
       expect(result.unresolvedResourceHashes, isEmpty);
       expect(result.encryptedSectionCount, 0);
     });
