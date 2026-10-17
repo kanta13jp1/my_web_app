@@ -554,6 +554,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 口座間移動の提案セクションへのスクロール用 (残高不足バナーからのジャンプ)。
   final _keyTransferSuggestionSection = GlobalKey();
   final _keyIncomePlanSection = GlobalKey();
+  final _keyRecurringIncomeEditorButton = GlobalKey();
   // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
   final _keyDebtControlReviewSection = GlobalKey();
   // セクション検索(アプリバーの🔍)からの各カードへのジャンプ用アンカー。
@@ -6143,6 +6144,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           sublabel: 'セクション',
           icon: Icons.view_agenda_outlined,
           onTap: () => _scrollTo(_sectionAnchorKey(id)),
+        ),
+      );
+    }
+
+    if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
+        _keyRecurringIncomeEditorButton.currentContext != null &&
+        matches('定期収入 収入予定 毎月の収入 給料 給与 入金予定')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '定期収入・収入予定',
+          sublabel: '資産/負債 管理ボード → 収入予定へ移動',
+          icon: Icons.event_repeat_outlined,
+          onTap: () => _scrollTo(_keyRecurringIncomeEditorButton),
         ),
       );
     }
@@ -28522,6 +28536,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   label: const Text('前サイクルコピー'),
                 ),
                 TextButton.icon(
+                  key: _keyRecurringIncomeEditorButton,
                   onPressed: () => _showRecurringIncomeTemplateDialog(workbook),
                   icon: const Icon(Icons.event_repeat_outlined),
                   label: const Text('定期収入'),
