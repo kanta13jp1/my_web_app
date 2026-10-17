@@ -159,7 +159,7 @@ void main() {
       expect(export.warnings, hasLength(2));
       expect(
         export.warnings,
-        anyElement(contains('attachment reference(s) could not be matched')),
+        anyElement(contains('attachment reference(s) could not be safely represented or matched')),
       );
       expect(
         export.warnings,

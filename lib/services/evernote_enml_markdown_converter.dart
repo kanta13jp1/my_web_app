@@ -307,6 +307,11 @@ class EvernoteEnmlMarkdownConverter {
     final rows = table.descendants
         .whereType<XmlElement>()
         .where((element) => element.localName.toLowerCase() == 'tr')
+        .where(
+          (row) => row.ancestors.whereType<XmlElement>().firstWhere(
+                (parent) => parent.localName.toLowerCase() == 'table',
+              ) == table,
+        )
         .map(
           (row) => row.childElements
               .where(
