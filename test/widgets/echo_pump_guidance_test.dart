@@ -9,7 +9,7 @@ void main() {
       (tester) async {
     final game = EchoPumpGame();
     Future<void> show() => tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: EchoPumpProgress(game: game))));
+        MaterialApp(home: Scaffold(body: EchoPumpProgress(game: game)),),);
     await show();
     expect(find.text('NEXT'), findsOneWidget);
     expect(find.byIcon(Icons.check_circle), findsNothing);
@@ -42,7 +42,7 @@ void main() {
           home: MediaQuery(
         data: MediaQueryData(
             disableAnimations: reducedMotion,
-            textScaler: const TextScaler.linear(2)),
+            textScaler: const TextScaler.linear(2),),
         child: Scaffold(
             body: SingleChildScrollView(
                 child: Column(children: [
@@ -53,9 +53,9 @@ void main() {
               from: PumpRoom.control,
               to: PumpRoom.hall,
               message: '中央廊下へ移動した。',
-              blocked: false),
-        ]))),
-      )));
+              blocked: false,),
+        ],),),),
+      ),),);
       await tester.pumpAndSettle();
       expect(find.text('管理室 → 中央廊下'), findsOneWidget);
       expect(find.byIcon(Icons.directions_walk), findsOneWidget);
