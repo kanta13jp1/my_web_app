@@ -68,17 +68,31 @@ class EchoPumpGame {
   List<PumpRoom> get destinations => connections[_room]!;
 
   String get objective {
-    if (_escaped) { return '脱出成功。雨の向こうに、朝の光が見える。'; }
-    if (_health == 0) { return '探索失敗。もう一度、電源と敵の位置を確かめよう。'; }
-    if (_drained) { return '管理室から出口へ戻り、脱出する。'; }
-    if (_sealed && _repaired) { return 'C系統を入れた状態でポンプ室から排水する。'; }
-    if (_repaired) { return 'C系統のベルで敵を点検槽へ誘い、ポンプ室で隔壁を閉じる。'; }
-    if (_fuse) { return 'ポンプ室でヒューズを取り付ける。'; }
+    if (_escaped) {
+      return '脱出成功。雨の向こうに、朝の光が見える。';
+    }
+    if (_health == 0) {
+      return '探索失敗。もう一度、電源と敵の位置を確かめよう。';
+    }
+    if (_drained) {
+      return '管理室から出口へ戻り、脱出する。';
+    }
+    if (_sealed && _repaired) {
+      return 'C系統を入れた状態でポンプ室から排水する。';
+    }
+    if (_repaired) {
+      return 'C系統のベルで敵を点検槽へ誘い、ポンプ室で隔壁を閉じる。';
+    }
+    if (_fuse) {
+      return 'ポンプ室でヒューズを取り付ける。';
+    }
     return 'B系統を通電し、工具庫で交換ヒューズを回収する。';
   }
 
   void togglePower(PumpCircuit circuit) {
-    if (finished) { return; }
+    if (finished) {
+      return;
+    }
     if (_room != PumpRoom.control) {
       _message = '配電盤は管理室にある。';
       return;
@@ -102,7 +116,9 @@ class EchoPumpGame {
   }
 
   void move(PumpRoom destination) {
-    if (finished) { return; }
+    if (finished) {
+      return;
+    }
     if (!destinations.contains(destination)) {
       _message = '隣接する部屋だけ移動できる。';
       return;
@@ -132,7 +148,9 @@ class EchoPumpGame {
   }
 
   void collectFuse() {
-    if (finished) { return; }
+    if (finished) {
+      return;
+    }
     if (_room != PumpRoom.workshop || _fuse || _repaired) {
       _message = '回収できるヒューズはここにはない。';
       return;
@@ -147,7 +165,9 @@ class EchoPumpGame {
   }
 
   void repair() {
-    if (finished) { return; }
+    if (finished) {
+      return;
+    }
     if (_room != PumpRoom.pump || !_fuse || _repaired) {
       _message = 'ポンプ室で交換ヒューズを取り付けよう。';
       return;
@@ -159,9 +179,13 @@ class EchoPumpGame {
   }
 
   void seal() {
-    if (finished) { return; }
-    if (_room != PumpRoom.pump || _enemy != PumpRoom.inspection ||
-        !_power.contains(PumpCircuit.c) || _sealed) {
+    if (finished) {
+      return;
+    }
+    if (_room != PumpRoom.pump ||
+        _enemy != PumpRoom.inspection ||
+        !_power.contains(PumpCircuit.c) ||
+        _sealed) {
       _message = 'C系統で敵を点検槽へ誘い、ポンプ室から隔壁を閉じよう。';
       return;
     }
@@ -171,9 +195,14 @@ class EchoPumpGame {
   }
 
   void drain() {
-    if (finished) { return; }
-    if (_room != PumpRoom.pump || !_repaired || !_sealed ||
-        !_power.contains(PumpCircuit.c) || _drained) {
+    if (finished) {
+      return;
+    }
+    if (_room != PumpRoom.pump ||
+        !_repaired ||
+        !_sealed ||
+        !_power.contains(PumpCircuit.c) ||
+        _drained) {
       _message = '排水には修理・隔壁閉鎖・C系統の通電が必要だ。';
       return;
     }
@@ -183,17 +212,23 @@ class EchoPumpGame {
   }
 
   void wait() {
-    if (finished) { return; }
+    if (finished) {
+      return;
+    }
     _message = '耳を澄ませた。機械音に応じて敵が動く。';
     _advance();
   }
 
   void _advance() {
     _turn++;
-    if (_sealed) { return; }
+    if (_sealed) {
+      return;
+    }
     final target = noiseRoom;
     if (target != null && _enemy != target) {
-      final paths = <List<PumpRoom>>[[_enemy]];
+      final paths = <List<PumpRoom>>[
+        [_enemy]
+      ];
       final visited = <PumpRoom>{_enemy};
       while (paths.isNotEmpty) {
         final path = paths.removeAt(0);
@@ -202,13 +237,18 @@ class EchoPumpGame {
           break;
         }
         for (final next in connections[path.last]!) {
-          if (next == PumpRoom.control || next == PumpRoom.exit ||
-              !visited.add(next)) { continue; }
+          if (next == PumpRoom.control ||
+              next == PumpRoom.exit ||
+              !visited.add(next)) {
+            continue;
+          }
           paths.add([...path, next]);
         }
       }
     }
-    if (_room == _enemy) { _hit(); }
+    if (_room == _enemy) {
+      _hit();
+    }
   }
 
   void _hit() {

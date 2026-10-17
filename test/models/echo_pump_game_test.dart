@@ -44,7 +44,8 @@ void main() {
     expect(game.health, 3);
   });
 
-  test('collision retreats, loses health and eventually freezes at failure', () {
+  test('collision retreats, loses health and eventually freezes at failure',
+      () {
     final game = EchoPumpGame();
     for (var i = 0; i < 3; i++) {
       game.move(PumpRoom.hall);
@@ -61,7 +62,8 @@ void main() {
     expect(game.power, isEmpty);
   });
 
-  test('full run collects, repairs, lures, seals, drains and escapes unhurt', () {
+  test('full run collects, repairs, lures, seals, drains and escapes unhurt',
+      () {
     final game = EchoPumpGame();
     game.togglePower(PumpCircuit.b);
     game.togglePower(PumpCircuit.a);

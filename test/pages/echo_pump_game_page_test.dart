@@ -4,7 +4,8 @@ import 'package:my_web_app/pages/echo_pump_game_page.dart';
 
 void main() {
   for (final width in [360.0, 1200.0]) {
-    testWidgets('play and retry at width $width without overflow', (tester) async {
+    testWidgets('play and retry at width $width without overflow',
+        (tester) async {
       tester.view.physicalSize = Size(width, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
