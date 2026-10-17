@@ -31,7 +31,7 @@ export function launchArgs(entry, mockPort) {
     '--web-browser-debug-port=9222', '--web-run-headless',
     '--web-browser-flag=--headless=new', '--web-browser-flag=--no-sandbox',
     '--web-browser-flag=--disable-dev-shm-usage',
-    '--web-browser-flag=--host-resolver-rules=MAP * 127.0.0.1,EXCLUDE localhost',
+    '--web-browser-flag=--host-resolver-rules=MAP * 127.0.0.1',
     '--no-web-resources-cdn', '--web-experimental-hot-reload',
     `--web-launch-url=http://localhost:7359/${entry === 'normal' ? 'echo-pump' : ''}`,
     '--target=' + (entry === 'normal' ? 'lib/main.dart' : 'test/fixtures/echo_pump_app.dart'),

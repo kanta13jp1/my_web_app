@@ -28,6 +28,8 @@ test('entry conditions match except for target and initial route', () => {
   assert.ok(a.includes('--web-launch-url=http://localhost:7359/echo-pump'));
   assert.ok(a.includes('--dart-define=SUPABASE_URL=http://127.0.0.1:1234'));
   assert.ok(a.includes('--no-web-resources-cdn'));
+  // Flutter's multi-option parser splits commas into extra Chrome arguments.
+  assert.ok(a.filter(v => v.startsWith('--web-browser-flag=')).every(v => !v.includes(',')));
   assert.throws(() => launchArgs('unknown', 1));
 });
 test('the benchmark refuses local execution', async () => {
