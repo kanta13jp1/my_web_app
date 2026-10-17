@@ -517,7 +517,24 @@ class DebtRepaymentPlannerService {
   _DebtAssumption _assumptionForName(String name) {
     final key = name.toLowerCase();
 
-    if (_containsAny(key, const ['アコム', 'モビット', 'プロミス', 'レイク', 'アイフル'])) {
+    if (_containsAll(key, const ['アコム', 'ショッピング'])) {
+      return const _DebtAssumption(
+        annualRate: 0.146,
+        minimumPaymentRate: 0.03,
+        minimumPaymentFloor: 3000,
+      );
+    }
+
+    if (_containsAll(key, const ['アコム', 'ローン']) ||
+        _containsAny(key, const ['モビット', 'mobit'])) {
+      return const _DebtAssumption(
+        annualRate: 0.15,
+        minimumPaymentRate: 0.04,
+        minimumPaymentFloor: 4000,
+      );
+    }
+
+    if (_containsAny(key, const ['プロミス', 'レイク', 'アイフル'])) {
       return const _DebtAssumption(
         annualRate: 0.18,
         minimumPaymentRate: 0.04,
@@ -568,6 +585,13 @@ class DebtRepaymentPlannerService {
       if (source.contains(keyword.toLowerCase())) return true;
     }
     return false;
+  }
+
+  bool _containsAll(String source, List<String> keywords) {
+    for (final keyword in keywords) {
+      if (!source.contains(keyword.toLowerCase())) return false;
+    }
+    return true;
   }
 
   int? _normalizePaymentDay(int? paymentDay) {
@@ -634,7 +658,10 @@ class DebtRepaymentPlannerService {
     buffer.writeln('### 返済優先順位（$strategyTitle）');
     buffer.writeln('');
     buffer.writeln('※以下の金利は仮定値です。実際の金利は契約内容により異なりますので、必ずご確認ください。');
-    buffer.writeln('* 消費者金融系（アコム、モビットなど）: 年利18.0%');
+    buffer.writeln('* 消費者金融系（プロミス、レイクなど）: 年利18.0%');
+    buffer.writeln(
+      '* カードローン・ショッピング（モビット、アコムカードローン: 年利15.0%、アコムショッピング: 年利14.6%など）',
+    );
     buffer.writeln('* 銀行系カードローン（じぶんローン、三井住友、横浜銀行など）: 年利14.0%');
     buffer.writeln('* クレジットカードのリボ・キャッシング（auPAY、PayPayカードなど）: 年利15.0%');
     buffer.writeln('* その他（通信料滞納等）: 年利6.0%');

@@ -1126,9 +1126,11 @@ serve(async (req) => {
 
       // ── Wiki / Knowledge Base ─────────────────────────────────────────────────
       case "wiki.list": {
-        const { data } = await admin.from("hub_data")
+        const { data, error } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "wiki_page")
+            .filter("metadata->>user_id", "eq", userId)
           .order("created_at", { ascending: false }).limit(50);
+        if (error) throw new Error(error.message);
         return json({ success: true, pages: data ?? [] });
       }
       case "wiki.create": {
@@ -1142,25 +1144,42 @@ serve(async (req) => {
         return json({ success: true, page: item });
       }
       case "wiki.update": {
-        const { error } = await admin.from("hub_data")
+        const id = String(body.id ?? "");
+        const { data: current, error: readError } = await admin.from("hub_data")
+          .select("metadata").eq("id", id).eq("source", "wiki_page")
+          .filter("metadata->>user_id", "eq", userId).maybeSingle();
+        if (readError) throw new Error(readError.message);
+        if (!current) return json({ error: "Not found" }, 404);
+        const changes: Record<string, unknown> = {};
+        for (const key of ["title", "content", "category", "tags", "is_public"]) {
+          if (Object.hasOwn(body, key)) changes[key] = body[key];
+        }
+        const { data, error } = await admin.from("hub_data")
           .update({
             metadata: {
-              ...body,
+              ...current.metadata,
+              ...changes,
               user_id: userId,
               updated_at: new Date().toISOString(),
             },
           })
-          .eq("id", String(body.id ?? "")).eq("source", "wiki_page");
+          .eq("id", id).eq("source", "wiki_page")
+          .filter("metadata->>user_id", "eq", userId)
+          .eq("metadata", JSON.stringify(current.metadata))
+          .select("id").maybeSingle();
         if (error) throw new Error(error.message);
+        if (!data) return json({ error: "Page changed; reload before retrying" }, 409);
         return json({ success: true });
       }
       case "kb.search": {
         const query = String(body.query ?? "");
-        const { data } = await admin.from("hub_data")
+        const { data, error } = await admin.from("hub_data")
           .select("id, metadata, created_at")
           .eq("source", "wiki_page")
+          .filter("metadata->>user_id", "eq", userId)
           .ilike("metadata->>title", `%${query}%`)
           .limit(20);
+        if (error) throw new Error(error.message);
         return json({ success: true, results: data ?? [] });
       }
 

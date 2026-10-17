@@ -13,6 +13,11 @@ void main() {
     await analytics.record(AiUniversityContentEvent.retryRequested);
     await analytics.record(AiUniversityContentEvent.retrySucceeded);
     await analytics.record(AiUniversityContentEvent.retryFailed);
+    await analytics.record(AiUniversityContentEvent.providerSearch);
+    await analytics.record(AiUniversityContentEvent.providerSelected);
+    await analytics.record(AiUniversityContentEvent.contentOpened);
+    await analytics.record(AiUniversityContentEvent.quizCompleted);
+    await analytics.record(AiUniversityContentEvent.reviewReturned);
 
     expect(
       rows.map((row) => row['event_name']).toSet(),

@@ -105,4 +105,54 @@ void main() {
     await tester.pump();
     expect(cancelled, isTrue);
   });
+
+  testWidgets(
+    'compact mobile flow keeps the current action short and visible',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: LandingTrialGuidedIntake(
+                concern: 'スマホで今日の1件を決めたい',
+                compact: true,
+                onCancel: () {},
+                onSubmit: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final answer = tester.widget<TextField>(
+        find.byKey(const Key('landing_trial_guided_answer')),
+      );
+      expect(answer.minLines, 1);
+      expect(answer.maxLines, 2);
+      expect(
+        tester
+            .getBottomRight(find.byKey(const Key('landing_trial_guided_next')))
+            .dy,
+        lessThanOrEqualTo(640),
+      );
+
+      for (var step = 1; step <= 5; step++) {
+        await tester.tap(
+          find.byKey(const Key('landing_trial_guided_quick_answer')),
+        );
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('landing_trial_guided_next')));
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.text('AIに提案してもらう'), findsOneWidget);
+      expect(find.text('この内容でAIに提案してもらう'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

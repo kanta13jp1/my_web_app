@@ -1,0 +1,377 @@
+{
+  "observed_at": "2026-09-27",
+  "app_commit": "83cd7dcab30b689dfba14c487e6f55d3a84ca636",
+  "metrics": {
+    "landing": {
+      "weeks": [
+        {
+          "start": "2026-08-30",
+          "missing": [
+            "2026-09-04"
+          ],
+          "total": null
+        },
+        {
+          "start": "2026-09-06",
+          "missing": [],
+          "total": 83
+        },
+        {
+          "start": "2026-09-13",
+          "missing": [],
+          "total": 39
+        },
+        {
+          "start": "2026-09-20",
+          "missing": [],
+          "total": 73
+        }
+      ],
+      "before": [
+        7,
+        10,
+        7,
+        2,
+        7,
+        3,
+        3
+      ],
+      "after": [
+        8,
+        28,
+        17,
+        2,
+        8,
+        5,
+        5
+      ],
+      "daily_rate_ratio": 1.8717948717948718,
+      "sign_test": {
+        "positive": 6,
+        "negative": 0,
+        "ties": 1,
+        "two_sided_p": 0.03125,
+        "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+      },
+      "leave_one_pair_out": [
+        {
+          "omitted_pair": 0,
+          "positive": 5,
+          "negative": 0,
+          "ties": 1,
+          "two_sided_p": 0.0625,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 1,
+          "positive": 5,
+          "negative": 0,
+          "ties": 1,
+          "two_sided_p": 0.0625,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 2,
+          "positive": 5,
+          "negative": 0,
+          "ties": 1,
+          "two_sided_p": 0.0625,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 3,
+          "positive": 6,
+          "negative": 0,
+          "ties": 0,
+          "two_sided_p": 0.03125,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 4,
+          "positive": 5,
+          "negative": 0,
+          "ties": 1,
+          "two_sided_p": 0.0625,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 5,
+          "positive": 5,
+          "negative": 0,
+          "ties": 1,
+          "two_sided_p": 0.0625,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 6,
+          "positive": 5,
+          "negative": 0,
+          "ties": 1,
+          "two_sided_p": 0.0625,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        }
+      ]
+    },
+    "signup_submit": {
+      "weeks": [
+        {
+          "start": "2026-08-30",
+          "missing": [
+            "2026-09-04"
+          ],
+          "total": null
+        },
+        {
+          "start": "2026-09-06",
+          "missing": [],
+          "total": 1
+        },
+        {
+          "start": "2026-09-13",
+          "missing": [],
+          "total": 1
+        },
+        {
+          "start": "2026-09-20",
+          "missing": [],
+          "total": 3
+        }
+      ],
+      "before": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "after": [
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "daily_rate_ratio": 3.0,
+      "sign_test": {
+        "positive": 2,
+        "negative": 0,
+        "ties": 5,
+        "two_sided_p": 0.5,
+        "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+      },
+      "leave_one_pair_out": [
+        {
+          "omitted_pair": 0,
+          "positive": 1,
+          "negative": 0,
+          "ties": 5,
+          "two_sided_p": 1.0,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 1,
+          "positive": 1,
+          "negative": 0,
+          "ties": 5,
+          "two_sided_p": 1.0,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 2,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 3,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 4,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 5,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 6,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        }
+      ]
+    },
+    "public_memo": {
+      "weeks": [
+        {
+          "start": "2026-08-30",
+          "missing": [
+            "2026-09-04"
+          ],
+          "total": null
+        },
+        {
+          "start": "2026-09-06",
+          "missing": [],
+          "total": 2
+        },
+        {
+          "start": "2026-09-13",
+          "missing": [],
+          "total": 0
+        },
+        {
+          "start": "2026-09-20",
+          "missing": [],
+          "total": 2
+        }
+      ],
+      "before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "after": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "daily_rate_ratio": null,
+      "sign_test": {
+        "positive": 2,
+        "negative": 0,
+        "ties": 5,
+        "two_sided_p": 0.5,
+        "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+      },
+      "leave_one_pair_out": [
+        {
+          "omitted_pair": 0,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 1,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 2,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 3,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 4,
+          "positive": 2,
+          "negative": 0,
+          "ties": 4,
+          "two_sided_p": 0.5,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 5,
+          "positive": 1,
+          "negative": 0,
+          "ties": 5,
+          "two_sided_p": 1.0,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        },
+        {
+          "omitted_pair": 6,
+          "positive": 1,
+          "negative": 0,
+          "ties": 5,
+          "two_sided_p": 1.0,
+          "assumptions": "Independent paired signs with probability 0.5 under null; exploratory, not a causal test."
+        }
+      ]
+    }
+  },
+  "timezone": {
+    "cohort_size": 112,
+    "different_calendar_day": 41,
+    "japan": {
+      "2026-09-13": 7,
+      "2026-09-14": 10,
+      "2026-09-15": 7,
+      "2026-09-16": 2,
+      "2026-09-17": 7,
+      "2026-09-18": 3,
+      "2026-09-19": 3,
+      "2026-09-20": 8,
+      "2026-09-21": 28,
+      "2026-09-22": 17,
+      "2026-09-23": 2,
+      "2026-09-24": 8,
+      "2026-09-25": 5,
+      "2026-09-26": 5
+    },
+    "utc_same_cohort": {
+      "2026-09-12": 1,
+      "2026-09-13": 8,
+      "2026-09-14": 11,
+      "2026-09-15": 4,
+      "2026-09-16": 7,
+      "2026-09-17": 3,
+      "2026-09-18": 5,
+      "2026-09-19": 1,
+      "2026-09-20": 19,
+      "2026-09-21": 24,
+      "2026-09-22": 10,
+      "2026-09-23": 3,
+      "2026-09-24": 8,
+      "2026-09-25": 3,
+      "2026-09-26": 5
+    },
+    "scope": "Same Japan-selected receipt cohort, not a complete UTC-window recount; deduplication remains Japan-day based."
+  },
+  "causal_effect": null,
+  "causal_status": "Not identified: aggregate receipt counts do not establish randomized exposure, stable intervention, loss-free measurement or a valid unchanged control.",
+  "seasonal_status": "Three complete weekly observations cannot estimate annual seasonality or search demand; the preceding week is incomplete."
+}

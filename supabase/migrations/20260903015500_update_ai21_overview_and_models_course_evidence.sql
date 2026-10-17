@@ -1,7 +1,8 @@
+-- Repair unapplied schema typo; target stable provider/category, preserving newer revisions.
 -- Issues #5157 & #5150: AI21 Labs 概要・モデルコースのエビデンス契約・Maestro/Jamba/プライベートデプロイ選定基準・更新日付の強化
-UPDATE ai_university_contents
+UPDATE public.ai_university_content
 SET
-  description = $md$
+  content = $md$
 # AI21 Labs 概要 — Maestro / Jamba / エンタープライズ導入基盤
 
 **AI21 Labs** はイスラエル発のエンタープライズ特化型 AI 企業。
@@ -27,11 +28,12 @@ SET
 $md$,
   source_url = 'https://www.ai21.com/',
   published_at = '2026-09-02'
-WHERE provider_id = 'ai21' AND (title LIKE '%AI21 Labs 概要%' OR id = '9138a4ef-d8e8-4308-aa4f-4b93aac6ff39' OR sort_order = 1);
+WHERE provider = 'ai21' AND category = 'overview'
+  AND (published_at IS NULL OR published_at <= DATE '2026-09-02');
 
-UPDATE ai_university_contents
+UPDATE public.ai_university_content
 SET
-  description = $md$
+  content = $md$
 # AI21 Labs — 利用可能モデル & Jamba アーキテクチャ (2026)
 
 Jamba (Joint Attention and Mamba) は、**SSM (State Space Model) の推論速度・メモリ効率** と **Transformer の注意機構・文脈理解力** を融合したハイブリッド MoE (Mixture-of-Experts) モデルです。
@@ -50,4 +52,5 @@ Jamba (Joint Attention and Mamba) は、**SSM (State Space Model) の推論速�
 $md$,
   source_url = 'https://docs.ai21.com/docs/jamba-models',
   published_at = '2026-09-02'
-WHERE provider_id = 'ai21' AND (title LIKE '%利用可能モデル%' OR sort_order = 2);
+WHERE provider = 'ai21' AND category = 'models'
+  AND (published_at IS NULL OR published_at <= DATE '2026-09-02');

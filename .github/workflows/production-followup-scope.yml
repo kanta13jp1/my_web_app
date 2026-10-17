@@ -1,0 +1,62 @@
+name: Production follow-up scope
+
+on:
+  workflow_call:
+    outputs:
+      skip:
+        description: True only for a positively confirmed no-op production run
+        value: ${{ jobs.scope.outputs.skip }}
+
+permissions: {}
+
+concurrency:
+  group: production-followup-scope-${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}
+  cancel-in-progress: false
+
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+    outputs:
+      skip: ${{ steps.evidence.outputs.skip }}
+    steps:
+      - name: Inspect exact upstream attempt
+        id: evidence
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            core.setOutput('skip', 'false');
+            if (context.eventName !== 'workflow_run') return;
+            const eventRun = context.payload.workflow_run;
+            if (!eventRun || eventRun.conclusion !== 'success') return;
+            try {
+              const {data: run} = await github.rest.actions.getWorkflowRun({
+                ...context.repo, run_id: eventRun.id,
+              });
+              if (run.id !== eventRun.id || run.head_sha !== eventRun.head_sha ||
+                  run.run_attempt !== eventRun.run_attempt ||
+                  run.repository?.full_name !== context.payload.repository?.full_name ||
+                  run.head_repository?.full_name !== context.payload.repository?.full_name ||
+                  run.path !== '.github/workflows/deploy-prod.yml' ||
+                  run.head_branch !== 'main' || run.event !== 'push' ||
+                  run.status !== 'completed' || run.conclusion !== 'success') return;
+              const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRunAttempt, {
+                ...context.repo, run_id: run.id, attempt_number: eventRun.run_attempt,
+                per_page: 100,
+              });
+              const deploys = jobs.filter(job => job.name === 'Deploy to Production Environment');
+              if (deploys.length !== 1) return;
+              const deploy = deploys[0];
+              if (deploy.head_sha !== eventRun.head_sha || deploy.status !== 'completed' ||
+                  deploy.conclusion !== 'success') return;
+              const markers = (deploy.steps || []).filter(
+                step => step.name === 'Confirmed production no-op');
+              if (markers.length !== 1 || markers[0].status !== 'completed' ||
+                  markers[0].conclusion !== 'success') return;
+              core.setOutput('skip', 'true');
+              core.info('Skipping follow-up: exact upstream attempt positively confirmed no-op.');
+            } catch (error) {
+              core.warning('No reliable no-op evidence; retain validation: ' + error.message);
+            }

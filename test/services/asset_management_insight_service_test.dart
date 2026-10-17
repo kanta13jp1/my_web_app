@@ -10,6 +10,70 @@ void main() {
     const service = AssetManagementInsightService();
     const planner = AssetLiabilityPlanningService();
 
+    test('advice dates match the cashflow salary cycle across boundaries', () {
+      for (final baseDate in <DateTime>[
+        DateTime(2026, 10, 8),
+        DateTime(2026, 10, 25),
+        DateTime(2027, 1, 8),
+        DateTime(2026, 2, 26),
+      ]) {
+        for (final salaryDay in <int?>[null, 25]) {
+          final workbook = planner.buildWorkbook(
+            latestSnapshot: const <String, double>{
+              'bank': 50000,
+              'Custom Card': -10000,
+            },
+            baseDate: baseDate,
+            salaryDay: salaryDay,
+            paymentDayOverrides: const <String, int>{'Custom Card': 31},
+          );
+          final debt = workbook.currentDebtRows.singleWhere(
+            (row) => row.name == 'Custom Card',
+          );
+          final payment = workbook.cashflowRows.singleWhere(
+            (row) => row.isPayment && row.accountId == debt.id,
+          );
+          final report = service.buildReport(workbook: workbook);
+          final prompt = const AssetManagementInsightPromptBuilder()
+              .buildDetailedAdvicePrompt(report);
+          final date = payment.paymentDate;
+          final formatted = '${date.year}/'
+              '${date.month.toString().padLeft(2, '0')}/'
+              '${date.day.toString().padLeft(2, '0')}';
+          final detail = prompt.split('\n').singleWhere(
+                (line) =>
+                    line.startsWith('- Custom Card / 種別:') &&
+                    line.contains('今月支払予定日:'),
+              );
+          expect(detail, contains('今月支払予定日:$formatted'));
+          for (final action in report.actionItems.where(
+            (item) => item.relatedAccountId == debt.id && item.dueDate != null,
+          )) {
+            expect(action.dueDate, date);
+          }
+        }
+      }
+    });
+
+    test('repayment simulation uses fractional annual rates', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'auPAYカード': -505608,
+        },
+        baseDate: DateTime(2026, 10, 8),
+        monthlyPaymentOverrides: const <String, double>{'auPAYカード': 10000},
+      );
+      final report = service.buildReport(workbook: workbook);
+      final warning = report.actionItems.singleWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.debtSpiralWarning,
+      );
+      // 15% APR, monthly compounding, no new borrowing: 81 payments.
+      expect(warning.description, contains('約81ヶ月'));
+      expect(warning.suggestedAction, contains('24ヶ月完済目標額24,516円'));
+    });
+
     test('does not present inferred discipline results as facts', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000},
@@ -216,7 +280,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
       );
 
@@ -238,7 +302,7 @@ void main() {
           '財布': 3000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
       );
@@ -262,7 +326,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
       );
@@ -287,7 +351,7 @@ void main() {
           'モビット': -300000,
           'auPayカード': -200000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{
           'mobit': 30000,
           AssetLiabilityPlanningService.auPayCardAccountId: 30000,
@@ -320,7 +384,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{
           'mobit': 'ghost_account',
@@ -897,9 +961,145 @@ void main() {
       expect(prompt.contains('負債マスタ詳細'), true);
       expect(prompt.contains('現実装コンテキスト'), true);
       expect(prompt.contains('asset_management_page.dart'), true);
+      expect(prompt.contains('Claude（Claude AI SUBSCRIPTION）の扱い'), true);
+      expect(prompt.contains('Claude Pro'), true);
       expect(prompt.contains('開発者向け改善提案候補'), true);
       expect(prompt.contains('受け入れ条件'), true);
       expect(prompt.contains(report.actionItems.first.title), true);
+    });
+
+    test(
+        'detects debt spiral warning when principal payment is zero or below interest',
+        () {
+      const zeroPrincipalDebt = AssetLiabilityDebtRow(
+        id: 'jibun_loan',
+        name: 'じぶんローン',
+        kind: AssetLiabilityAccountKind.cardLoan,
+        balance: -1000827,
+        paymentDay: 10,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.145,
+        minimumPaymentEstimate: 15000,
+        manualPaymentAmount: 0,
+        scheduledPaymentAmount: 0,
+        monthlyInterestEstimate: 11949,
+        principalPaymentEstimate: 0,
+        balanceAfterPaymentEstimate: -1000827,
+        liabilityShare: 0.6,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+      );
+
+      const spiralDebt = AssetLiabilityDebtRow(
+        id: 'au_pay_card',
+        name: 'auPAYカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -525792,
+        paymentDay: 10,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.15,
+        minimumPaymentEstimate: 10000,
+        manualPaymentAmount: 10000,
+        scheduledPaymentAmount: 10000,
+        monthlyInterestEstimate: 6572,
+        principalPaymentEstimate: 3428,
+        balanceAfterPaymentEstimate: -522364,
+        liabilityShare: 0.4,
+        priorityLabel: '中金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+      );
+
+      const healthyDebt = AssetLiabilityDebtRow(
+        id: 'healthy_loan',
+        name: '奨学金',
+        kind: AssetLiabilityAccountKind.otherLiability,
+        balance: -200000,
+        paymentDay: 20,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.01,
+        minimumPaymentEstimate: 10000,
+        manualPaymentAmount: 10000,
+        scheduledPaymentAmount: 10000,
+        monthlyInterestEstimate: 167,
+        principalPaymentEstimate: 9833,
+        balanceAfterPaymentEstimate: -190167,
+        liabilityShare: 0.1,
+        priorityLabel: '低金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+      );
+
+      final workbook = _workbook(
+        debtRows: [zeroPrincipalDebt, spiralDebt, healthyDebt],
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final spiralWarnings = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.debtSpiralWarning,
+          )
+          .toList();
+
+      expect(spiralWarnings.length, 2);
+
+      final zeroItem = spiralWarnings.firstWhere(
+        (item) => item.relatedAccountId == 'jibun_loan',
+      );
+      expect(zeroItem.severity, AssetManagementInsightSeverity.critical);
+      expect(zeroItem.title, contains('じぶんローンが利息スパイラル状態です（元金返済0円）'));
+      expect(zeroItem.description, contains('月利息11,949円が発生'));
+      expect(zeroItem.description, contains('増加し続けます'));
+      expect(zeroItem.suggestedAction, contains('24ヶ月完済目標額'));
+
+      final slowItem = spiralWarnings.firstWhere(
+        (item) => item.relatedAccountId == 'au_pay_card',
+      );
+      expect(slowItem.severity, AssetManagementInsightSeverity.critical);
+      expect(slowItem.title, contains('auPAYカードの利息負担が元金返済を上回っています'));
+      expect(slowItem.description, contains('利息が6,572円を占め'));
+      expect(slowItem.description, contains('元金返済は3,428円'));
+      expect(slowItem.description, contains('完済まで約'));
+      expect(slowItem.description, contains('追加利息'));
+      expect(slowItem.suggestedAction, contains('24ヶ月完済目標額'));
+
+      expect(
+        spiralWarnings.any((item) => item.relatedAccountId == 'healthy_loan'),
+        false,
+      );
     });
   });
 }

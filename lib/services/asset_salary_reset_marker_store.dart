@@ -40,7 +40,9 @@ class AssetSalaryResetMarkerStore {
     required String dateCycleKey,
     required String? ackedCycleKey,
   }) {
-    return ackedCycleKey != null && ackedCycleKey != dateCycleKey;
+    final acked = _normalize(ackedCycleKey);
+    final current = _normalize(dateCycleKey);
+    return acked != null && current != null && acked.compareTo(current) < 0;
   }
 
   /// 2 つのサイクルキーのうち新しい方(`yyyy-MM` 文字列比較で大きい方)を返す。
@@ -76,6 +78,8 @@ class AssetSalaryResetMarkerStore {
       return null;
     }
     final trimmed = raw.trim();
-    return RegExp(r'^\d{4}-\d{2}$').hasMatch(trimmed) ? trimmed : null;
+    return RegExp(r'^\d{4}-(0[1-9]|1[0-2])$').hasMatch(trimmed)
+        ? trimmed
+        : null;
   }
 }

@@ -1,0 +1,46 @@
+name: AI usage comparison checks
+on:
+  pull_request:
+    paths:
+      - 'web/labs/ai-usage-compare/**'
+      - 'test/ai_usage_compare/**'
+      - 'test/e2e/ai_usage_compare.spec.ts'
+      - 'playwright.ai-usage-compare.config.ts'
+      - '.github/workflows/ai-usage-compare.yml'
+  workflow_dispatch:
+    inputs:
+      production:
+        description: Verify the deployed production tool
+        type: boolean
+        default: false
+permissions: {}
+concurrency:
+  group: ai-usage-compare-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: node --test test/ai_usage_compare/model.test.mjs
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Verify desktop and mobile interaction
+        env:
+          E2E_BASE_URL: ${{ inputs.production && 'https://my-web-app-b67f4.web.app' || '' }}
+        run: npx playwright test --config=playwright.ai-usage-compare.config.ts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: ai-usage-compare-evidence
+          path: |
+            ai-usage-report/
+            test-results/
+          retention-days: 7

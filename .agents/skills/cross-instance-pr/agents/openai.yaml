@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cross-Instance Handoff"
+  short_description: "Claude CodeとCodex間の構造化ハンドオフを作成"
+  default_prompt: "Use $cross-instance-pr to create a structured Claude Code and Codex handoff."

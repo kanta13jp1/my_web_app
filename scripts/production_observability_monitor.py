@@ -233,5 +233,29 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+
+def select_alert_issue(issues, forced=False):
+    """Match the oldest canonical alert, never a fuzzy dashboard match.
+
+    Fingerprints describe changing symptoms; the title is the canonical incident
+    identity used by repository duplicate consolidation. Validation is isolated.
+    """
+    import re
+
+    title = ("[Validation][Observability] Dedupe alert live proof" if forced else
+             "[Alert][Observability] Production telemetry threshold breach")
+    candidates = []
+    for issue in issues:
+        body = issue.get("body") or ""
+        if (issue.get("state", "").lower() != "open"
+                or "pull_request" in issue
+                or issue.get("title") != title
+                or "[observability-dashboard:" in body
+                or not re.search(r"^\[observability-dedupe:[0-9a-f]{16}\]$",
+                                 body, re.MULTILINE)):
+            continue
+        candidates.append(issue["number"])
+    return min(candidates) if candidates else None
+
 if __name__ == "__main__":
     raise SystemExit(main())

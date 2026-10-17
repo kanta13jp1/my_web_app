@@ -33,22 +33,21 @@ export interface BlogPostRow {
   id: string;
   title: string | null;
   content: string | null;
-  excerpt: string | null;
+  content_preview: string | null;
   posted_at: string | null;
-  published_at: string | null;
   url: string | null;
   tags?: unknown;
 }
 
 export const BLOG_VIEW_COLUMNS =
-  "id, title, content, excerpt, posted_at, published_at, url, tags";
+  "id, title, content, content_preview, posted_at, url, tags";
 
 export function buildBlogPostUrl(id: string): string {
   return `${BLOG_APP_BASE_URL}?id=${encodeURIComponent(id)}`;
 }
 
 function blogExcerpt(row: BlogPostRow): string {
-  const raw = (row.excerpt ?? "").trim();
+  const raw = (row.content_preview ?? "").trim();
   return raw || buildPublicMemoExcerpt(row.content);
 }
 
@@ -73,7 +72,7 @@ export function blogPostToPayload(row: BlogPostRow): Record<string, unknown> {
     excerpt: blogExcerpt(row),
     tags: extractBlogTags(row),
     postedAt: row.posted_at,
-    publishedAt: row.published_at,
+    publishedAt: row.posted_at,
     externalUrl: row.url,
     appUrl: buildBlogPostUrl(row.id),
   };
@@ -105,7 +104,7 @@ export function renderBlogArticleJsonLd(row: BlogPostRow): string {
   };
   const tags = extractBlogTags(row);
   if (tags.length > 0) article.keywords = tags.join(", ");
-  const published = row.posted_at ?? row.published_at;
+  const published = row.posted_at;
   if (published) {
     article.datePublished = published;
     article.dateModified = published;
@@ -151,7 +150,7 @@ export function renderBlogHtml(row: BlogPostRow): string {
   const title = row.title ?? `Blog #${row.id}`;
   const appUrl = buildBlogPostUrl(row.id);
   const meta: string[] = [];
-  const posted = blogDate(row.posted_at ?? row.published_at);
+  const posted = blogDate(row.posted_at);
   if (posted) meta.push(`公開日: ${posted}`);
   const tags = extractBlogTags(row);
   if (tags.length) meta.push(`タグ: ${tags.join(", ")}`);
@@ -176,7 +175,7 @@ export function renderBlogHtml(row: BlogPostRow): string {
 
 export function renderBlogMarkdown(row: BlogPostRow): string {
   const title = row.title ?? `Blog #${row.id}`;
-  const posted = blogDate(row.posted_at ?? row.published_at);
+  const posted = blogDate(row.posted_at);
   const lines = [
     `# ${title}`,
     "",
@@ -205,7 +204,7 @@ export function renderBlogListHtml(rows: BlogPostRow[]): string {
     const href = escapeHtml(buildBlogPostUrl(row.id));
     const title = escapeHtml(row.title ?? `Blog #${row.id}`);
     const ex = escapeHtml(blogExcerpt(row));
-    const posted = escapeHtml(blogDate(row.posted_at ?? row.published_at));
+    const posted = escapeHtml(blogDate(row.posted_at));
     return `<li style="margin-bottom:16px"><a href="${href}">${title}</a>` +
       `<small> (${posted})</small><p style="margin:4px 0">${ex}</p></li>`;
   }).join("\n");
@@ -220,7 +219,7 @@ export function renderBlogListHtml(rows: BlogPostRow[]): string {
 export function renderBlogListMarkdown(rows: BlogPostRow[]): string {
   const items = rows.map((row) =>
     `- [${row.title ?? `Blog #${row.id}`}](${buildBlogPostUrl(row.id)}) (${
-      blogDate(row.posted_at ?? row.published_at)
+      blogDate(row.posted_at)
     })`
   );
   return [`# ブログ (${rows.length}件)`, "", ...items, ""].join("\n");

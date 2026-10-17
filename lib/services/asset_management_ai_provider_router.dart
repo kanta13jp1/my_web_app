@@ -1,3 +1,5 @@
+import 'jev_client.dart';
+
 class AssetManagementAiProviderRoutingFeatureFlag {
   static const String dartDefineName =
       'ASSET_MANAGEMENT_AI_PROVIDER_ROUTING_ENABLED';
@@ -8,6 +10,28 @@ class AssetManagementAiProviderRoutingFeatureFlag {
   );
 
   const AssetManagementAiProviderRoutingFeatureFlag._();
+}
+
+class JevRoutingFeatureFlag {
+  static const String dartDefineName = 'JEV_ROUTING_ENABLED';
+
+  static const bool enabled = bool.fromEnvironment(
+    dartDefineName,
+    defaultValue: false,
+  );
+
+  const JevRoutingFeatureFlag._();
+}
+
+class JevApiKeyConfig {
+  static const String dartDefineName = 'TYPESAFE_API_KEY';
+
+  static const String value = String.fromEnvironment(
+    dartDefineName,
+    defaultValue: '',
+  );
+
+  const JevApiKeyConfig._();
 }
 
 enum AssetManagementAiProviderUseCase {
@@ -62,6 +86,7 @@ class AssetManagementAiProviderRouteDecision {
   final List<AssetManagementAiProviderCandidate> candidates;
   final String reason;
   final String localFallbackReason;
+  final JevClassificationResult? jevClassification;
 
   const AssetManagementAiProviderRouteDecision({
     required this.useCase,
@@ -69,6 +94,7 @@ class AssetManagementAiProviderRouteDecision {
     required this.candidates,
     required this.reason,
     required this.localFallbackReason,
+    this.jevClassification,
   });
 
   AssetManagementAiProviderCandidate? get primaryExternalCandidate {
@@ -82,7 +108,10 @@ class AssetManagementAiProviderRouteDecision {
     final suffix = chain.isEmpty
         ? 'fallback=local-deterministic'
         : 'chain=$chain > local-deterministic';
-    return 'asset:${useCase.id}; routing=$routingEnabled; $reason; $suffix';
+    final jevInfo = jevClassification != null
+        ? '; jev=${jevClassification!.bestChoiceId}(${(jevClassification!.confidence * 100).toStringAsFixed(0)}%)'
+        : '';
+    return 'asset:${useCase.id}; routing=$routingEnabled$jevInfo; $reason; $suffix';
   }
 
   Map<String, dynamic> toLogPayload() {
@@ -91,6 +120,8 @@ class AssetManagementAiProviderRouteDecision {
       'routing_enabled': routingEnabled,
       'reason': reason,
       'fallback': localFallbackReason,
+      if (jevClassification != null)
+        'jev_classification': jevClassification!.toJson(),
       'providers': candidates
           .map((candidate) => candidate.toJson())
           .toList(growable: false),
@@ -100,9 +131,13 @@ class AssetManagementAiProviderRouteDecision {
 
 class AssetManagementAiProviderRouter {
   final bool routingEnabled;
+  final bool jevEnabled;
+  final JevClient? jevClient;
 
   const AssetManagementAiProviderRouter({
     this.routingEnabled = AssetManagementAiProviderRoutingFeatureFlag.enabled,
+    this.jevEnabled = JevRoutingFeatureFlag.enabled,
+    this.jevClient,
   });
 
   AssetManagementAiProviderRouteDecision routeFor({
@@ -131,6 +166,104 @@ class AssetManagementAiProviderRouter {
       reason: _reasonFor(useCase),
       localFallbackReason:
           'local deterministic summary after all configured providers fail',
+    );
+  }
+
+  /// TypeSafe AI (Jev) による一次判定を伴う非同期ルーティング。
+  ///
+  /// Jev によりプロンプトの計算複雑度（lightweight / performance / premium）
+  /// を超低遅延（~500ms）・低コスト（$0.0001）でスコアリングし、
+  /// 最適なモデルチェーンを選択する。
+  ///
+  /// Jev が無効、未設定、または確信度不足（<= 0.40）の場合は、
+  /// 自動的に従来の決定論的チェーンへフォールバックする（Fail-Open）。
+  Future<AssetManagementAiProviderRouteDecision> routeForWithJev({
+    required AssetManagementAiProviderUseCase useCase,
+    String? prompt,
+    String? explicitProvider,
+  }) async {
+    final normalizedProvider = explicitProvider?.trim();
+    if (normalizedProvider != null &&
+        normalizedProvider.isNotEmpty &&
+        normalizedProvider != 'auto') {
+      return routeFor(useCase: useCase, explicitProvider: explicitProvider);
+    }
+
+    if (!jevEnabled ||
+        jevClient == null ||
+        prompt == null ||
+        prompt.trim().isEmpty) {
+      return routeFor(useCase: useCase, explicitProvider: explicitProvider);
+    }
+
+    const choices = <JevChoice>[
+      JevChoice(
+        id: 'lightweight',
+        label: 'Lightweight / Fast',
+        description: 'Simple summaries, greetings, deterministic formatting',
+      ),
+      JevChoice(
+        id: 'performance',
+        label: 'Performance / Standard',
+        description:
+            'Standard risk analysis, balance reconciliation, moderate reasoning',
+      ),
+      JevChoice(
+        id: 'premium',
+        label: 'Premium / Deep Reasoning',
+        description:
+            'Complex financial advisory, multi-step code generation, high ambiguity',
+      ),
+    ];
+
+    final jevResult = await jevClient!.classify(
+      input: prompt,
+      choices: choices,
+      context: 'Asset management AI routing: useCase=${useCase.id}',
+    );
+
+    if (jevResult == null || jevResult.shouldFallbackToHeavyLlm) {
+      final baseDecision =
+          routeFor(useCase: useCase, explicitProvider: explicitProvider);
+      return AssetManagementAiProviderRouteDecision(
+        useCase: baseDecision.useCase,
+        routingEnabled: baseDecision.routingEnabled,
+        candidates: baseDecision.candidates,
+        reason:
+            '${baseDecision.reason} (jev fallback: ${jevResult == null ? "offline or unconfigured" : "low confidence ${(jevResult.confidence * 100).toStringAsFixed(0)}%"})',
+        localFallbackReason: baseDecision.localFallbackReason,
+        jevClassification: jevResult,
+      );
+    }
+
+    List<AssetManagementAiProviderCandidate> reorderedCandidates;
+    if (jevResult.bestChoiceId == 'lightweight') {
+      reorderedCandidates = <AssetManagementAiProviderCandidate>[
+        _defaultFallbackChain[3], // google_flash_lite
+        _defaultFallbackChain[2], // google (gemini-3.1-pro)
+        _defaultFallbackChain[1], // openai (gpt-5)
+        _defaultFallbackChain[0], // anthropic (claude-opus-4-7)
+      ];
+    } else if (jevResult.bestChoiceId == 'performance') {
+      reorderedCandidates = <AssetManagementAiProviderCandidate>[
+        _defaultFallbackChain[2], // google (gemini-3.1-pro)
+        _defaultFallbackChain[1], // openai (gpt-5)
+        _defaultFallbackChain[0], // anthropic (claude-opus-4-7)
+        _defaultFallbackChain[3], // google_flash_lite
+      ];
+    } else {
+      reorderedCandidates = _defaultFallbackChain;
+    }
+
+    return AssetManagementAiProviderRouteDecision(
+      useCase: useCase,
+      routingEnabled: routingEnabled,
+      candidates: reorderedCandidates,
+      reason:
+          'jev classified as ${jevResult.bestChoiceId} (confidence: ${(jevResult.confidence * 100).toStringAsFixed(1)}%)',
+      localFallbackReason:
+          'local deterministic summary after all configured providers fail',
+      jevClassification: jevResult,
     );
   }
 

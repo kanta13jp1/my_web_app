@@ -7,6 +7,7 @@ import json
 import sys
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -107,6 +108,38 @@ class KgIndexCommonTest(unittest.TestCase):
         self.assertEqual(applied, 51)
         self.assertEqual([len(json.loads(item[0].data)) for item in requests], [25, 25, 1])
         self.assertTrue(all(item[1] == 60 for item in requests))
+
+
+class RetryTest(unittest.TestCase):
+    def run_upsert(self):
+        return upsert_supabase([{'source_type':'wbs', 'source_id':str(i)} for i in range(51)], supabase_url='https://example.invalid', service_role_key='test')
+
+    @patch('kg_index_common.time.sleep')
+    @patch('urllib.request.urlopen')
+    def test_failed_batch_only(self, request, sleep):
+        request.side_effect = [_Response(), urllib.error.HTTPError('test',504,'timeout',{},None), _Response(), _Response()]
+        self.assertEqual(self.run_upsert(), 51)
+        sent = [call.args[0].data for call in request.call_args_list]
+        self.assertEqual(sent[1], sent[2])
+        self.assertNotEqual(sent[0], sent[1])
+        self.assertEqual(len(sent), 4)
+        sleep.assert_called_once_with(2)
+
+    @patch('kg_index_common.time.sleep')
+    @patch('urllib.request.urlopen')
+    def test_bounded(self, request, sleep):
+        request.side_effect = lambda *a, **k: (_ for _ in ()).throw(urllib.error.HTTPError('test',504,'timeout',{},None))
+        with self.assertRaises(urllib.error.HTTPError): self.run_upsert()
+        self.assertEqual(request.call_count,3)
+        self.assertEqual([c.args[0] for c in sleep.call_args_list],[2,4])
+
+    @patch('kg_index_common.time.sleep')
+    @patch('urllib.request.urlopen')
+    def test_auth_not_retried(self, request, sleep):
+        request.side_effect = urllib.error.HTTPError('test',401,'unauthorized',{},None)
+        with self.assertRaises(urllib.error.HTTPError): self.run_upsert()
+        self.assertEqual(request.call_count,1)
+        sleep.assert_not_called()
 
 
 if __name__ == "__main__":

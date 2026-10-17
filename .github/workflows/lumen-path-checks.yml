@@ -1,0 +1,46 @@
+name: Lumen Path prototype checks
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/lumen-path-20260912]
+    paths: ['web/labs/lumen-path/**', 'test/e2e/lumen_path.spec.ts', '.github/workflows/lumen-path-checks.yml']
+permissions: {}
+concurrency:
+  group: lumen-path-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  prototype:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: node --test web/labs/lumen-path/model.test.mjs
+      - run: node --check web/labs/lumen-path/app.mjs
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Candidate browser tests
+        shell: bash
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory web &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8765/labs/lumen-path/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/lumen_path.spec.ts --workers=1 --retries=0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: lumen-path-browser-evidence
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7

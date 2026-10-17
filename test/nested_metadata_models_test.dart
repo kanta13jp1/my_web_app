@@ -208,6 +208,74 @@ void main() {
     });
   });
 
+  group('ParkingReservationDraft', () {
+    final start = DateTime.utc(2026, 9, 28, 10);
+    final end = DateTime.utc(2026, 9, 28, 12);
+
+    test('送信 body を一覧側が読めるキーで組み、読み戻せる', () {
+      final body = ParkingReservationDraft(
+        lotName: ' 駅前P ',
+        spot: 'A-3',
+        start: start,
+        end: end,
+        plate: '品川300',
+        feeText: '1,200',
+      ).toRequestBody();
+      expect(body['action'], 'parking.reserve');
+      expect(body['fee'], 1200);
+      // EF は body を metadata へそのまま保存する → 一覧モデルで往復確認。
+      final entry = ParkingReservationEntry.fromMap(
+        row(Map<String, dynamic>.from(body)..remove('action')),
+      );
+      expect(entry.spotLabel, 'A-3 (駅前P)');
+      expect(entry.fee, 1200);
+      expect(entry.plate, '品川300');
+      expect(DateTime.parse(entry.startTime), start);
+      expect(DateTime.parse(entry.endTime), end);
+    });
+
+    test('料金空欄は null で送る (¥0 と偽らない)', () {
+      final body = ParkingReservationDraft(
+        lotName: 'P',
+        start: start,
+        end: end,
+      ).toRequestBody();
+      expect(body['fee'], isNull);
+    });
+
+    test('駐車場名なし・時間帯逆転・不正料金を弾く', () {
+      expect(
+        ParkingReservationDraft(lotName: '  ', start: start, end: end)
+            .validate(),
+        isNotNull,
+      );
+      expect(
+        ParkingReservationDraft(lotName: 'P', start: end, end: start)
+            .validate(),
+        isNotNull,
+      );
+      expect(
+        ParkingReservationDraft(lotName: 'P', start: start, end: start)
+            .validate(),
+        isNotNull,
+      );
+      expect(
+        ParkingReservationDraft(
+          lotName: 'P',
+          start: start,
+          end: end,
+          feeText: '-5',
+        ).validate(),
+        isNotNull,
+      );
+      expect(
+        ParkingReservationDraft(lotName: 'P', start: start, end: end)
+            .validate(),
+        isNull,
+      );
+    });
+  });
+
   group('ELearningCourse', () {
     test('コースに progress を join し受講中のみ抽出', () {
       final courses = ELearningCourse.listFromResponse({

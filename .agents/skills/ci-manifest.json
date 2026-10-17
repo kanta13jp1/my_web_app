@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "skills": [
+    {
+      "name": "digital-product-publishing-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", "scripts/artifact_intake.py", "--help"]}]
+    },
+    {
+      "name": "github-issue-completion-forecast",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", ".agents/skills/github-issue-completion-forecast/scripts/issue_completion_forecast.py", "--help"]}]
+    },
+    {
+      "name": "life-foundations-improvement-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["git", "--version"]}]
+    },
+    {
+      "name": "local-election-candidate-release",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", "scripts/check_minimal_e2e_gate.py", "--help"]}]
+    },
+    {
+      "name": "site-feature-consolidation-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", "scripts/codex_session_check.py", "--help"]}]
+    },
+    {
+      "name": "site-trust-improvement-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["{python}", "scripts/cloud_first_route.py", "--help"]}]
+    },
+    {
+      "name": "video-artifact-improvement-loop",
+      "grade": "A",
+      "cli_smoke": [{"argv": ["git", "--version"]}]
+    },
+    {
+      "name": "ai-university-add-provider",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/check_migration_timestamps.py", "--help"]}
+      ]
+    },
+    {
+      "name": "asset-management-wbs-release",
+      "grade": "A",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/codex_session_check.py", "--help"]}
+      ]
+    },
+    {
+      "name": "cross-instance-pr",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["git", "--version"]}
+      ]
+    },
+    {
+      "name": "github-backlog-worktree-drain",
+      "grade": "A",
+      "cli_smoke": [
+        {"argv": ["{python}", ".agents/skills/github-backlog-worktree-drain/scripts/worktree_state.py", "--help"]}
+      ]
+    },
+    {
+      "name": "hook-rule-audit",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/sync_inject_rules.py", "--help"]}
+      ]
+    },
+    {
+      "name": "musubi-social-release-pipeline",
+      "grade": "A",
+      "cli_smoke": [
+        {"argv": ["{python}", ".agents/skills/musubi-social-release-pipeline/scripts/preflight.py", "--help"]},
+        {"argv": ["{python}", ".agents/skills/musubi-social-release-pipeline/scripts/checkpoint.py", "--help"]}
+      ]
+    },
+    {
+      "name": "session-start-check",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/codex_session_check.py", "--help"]},
+        {"argv": ["{python}", "scripts/ai_tool_watch.py", "--help"]}
+      ]
+    },
+    {
+      "name": "wiki-broken-cleanup",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/knowledge_vault_lint.py", "--help"]},
+        {"argv": ["{python}", "scripts/wiki_broken_cleanup.py", "--help"]}
+      ]
+    },
+    {
+      "name": "wiki-compile",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/wiki_compile.py", "--help"]}
+      ]
+    },
+    {
+      "name": "wiki-dup-h1-cleanup",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/wiki_dup_h1_cleanup.py", "--help"]}
+      ]
+    },
+    {
+      "name": "wiki-ingest",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/memory_ingest.py", "--help"]}
+      ]
+    },
+    {
+      "name": "wiki-lint",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/knowledge_vault_lint.py", "--help"]}
+      ]
+    },
+    {
+      "name": "wiki-orphan-batch",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["{python}", "scripts/wiki_orphan_batch.py", "--help"]}
+      ]
+    },
+    {
+      "name": "wiki-query",
+      "grade": "B",
+      "cli_smoke": [
+        {"argv": ["notebooklm", "ask", "--help"], "required": false}
+      ]
+    },
+    {
+      "name": "youtube-video-pipeline",
+      "grade": "A",
+      "cli_smoke": [
+        {"argv": ["{python}", ".agents/skills/youtube-video-pipeline/scripts/media_pipeline.py", "--help"]},
+        {"argv": ["{python}", ".agents/skills/youtube-video-pipeline/scripts/youtube_release.py", "--help"]},
+        {"argv": ["{python}", ".agents/skills/youtube-video-pipeline/scripts/ai_university_content.py", "--help"]}
+      ]
+    }
+  ]
+}

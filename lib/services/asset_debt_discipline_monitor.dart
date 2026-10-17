@@ -50,6 +50,21 @@ class AssetDebtDisciplineViolation {
   /// この記録だけを返済実績とは見なさず、true でも不足判定と返済月額目標を維持する。
   final bool oneShotChangeCompleted;
 
+  /// リボ払い新規利用の内訳明細リスト。
+  final List<AssetLiabilityRevolvingUsageItem> usageItems;
+
+  /// カード明細が取り込まれているか（未取り込みなら手入力推定値）。
+  final bool hasImportedStatement;
+
+  /// 当月の新規利用額。
+  final double? newUsageAmount;
+
+  /// 前月末からの残高変動（前月比増加額）。履歴がない場合は null。
+  final double? balanceDelta;
+
+  /// 24ヶ月完済ラインの目安月額。
+  final double? payoffIn24MonthsPayment;
+
   const AssetDebtDisciplineViolation({
     required this.type,
     required this.severity,
@@ -65,6 +80,11 @@ class AssetDebtDisciplineViolation {
     this.currentPlanPayoffMonths,
     this.currentPlanTotalInterest,
     this.oneShotChangeCompleted = false,
+    this.usageItems = const <AssetLiabilityRevolvingUsageItem>[],
+    this.hasImportedStatement = false,
+    this.newUsageAmount,
+    this.balanceDelta,
+    this.payoffIn24MonthsPayment,
   });
 
   /// 具体的な脱却プラン（月額×期間）を提示できるか。
@@ -90,6 +110,10 @@ class AssetDebtDisciplineReport {
   /// 0 のときは監視対象が無い＝モニター自体を表示しない判断に使う。
   final int monitoredAccountCount;
 
+  /// 誓約②の根拠となるリボ払いカードの請求・明細内訳（達成・違反問わず保持）。
+  final Map<String, AssetLiabilityRevolvingCreditBilling>
+      revolvingBillingsByAccountId;
+
   const AssetDebtDisciplineReport({
     required this.newBorrowingViolations,
     required this.revolvingCardViolations,
@@ -97,6 +121,8 @@ class AssetDebtDisciplineReport {
     required this.totalNewBorrowing,
     required this.totalCarriedOver,
     required this.monitoredAccountCount,
+    this.revolvingBillingsByAccountId =
+        const <String, AssetLiabilityRevolvingCreditBilling>{},
   });
 
   /// 表示対象か（監視すべき借入系口座が 1 件以上あるか）。
@@ -107,6 +133,14 @@ class AssetDebtDisciplineReport {
         ...newBorrowingViolations,
         ...revolvingCardViolations,
       ];
+
+  /// カード会社での「今後一括に固定」完了済みを除く未対応違反一覧。
+  /// ワンタップで意思記録すると次回レポートの未対応違反カウントが減少する。
+  List<AssetDebtDisciplineViolation> get unresolvedViolations =>
+      allViolations.where((v) => !v.oneShotChangeCompleted).toList();
+
+  /// 未対応の違反件数。
+  int get unresolvedViolationCount => unresolvedViolations.length;
 
   bool get isCompliant => allViolations.isEmpty;
 
@@ -174,6 +208,7 @@ class AssetDebtDisciplineMonitor {
   }) {
     final newBorrowing = <AssetDebtDisciplineViolation>[];
     final revolving = <AssetDebtDisciplineViolation>[];
+    final revolvingBillings = <String, AssetLiabilityRevolvingCreditBilling>{};
     var hasPrior = false;
     var totalNew = 0.0;
     var totalCarried = 0.0;
@@ -198,11 +233,15 @@ class AssetDebtDisciplineMonitor {
 
       // 前月比＋返済−利息で「今月の新規利用」を推定する。リボカードは明細から
       // 算出済みの newUsageAmount を優先し、カード以外だけを誓約①で判定する。
+      // 【重要】返済日到来前の元金返済見込み額を誤検知しないよう、
+      // 未返済の予定額は加算しない。返済済みなら残高不変でも再借入が相殺され得る。
       final prior = priorBalancesByAccountId[row.id];
       double? inferredNewUsage;
       if (prior != null) {
         hasPrior = true;
-        inferredNewUsage = (balance - prior) + payment - interest;
+        final balanceDiff = balance - prior;
+        final effectivePayment = row.paid ? payment : 0;
+        inferredNewUsage = max(0, balanceDiff + effectivePayment - interest);
         if (!isLumpSumCardKind(row.kind) &&
             inferredNewUsage > newBorrowingThreshold) {
           totalNew += inferredNewUsage;
@@ -215,6 +254,7 @@ class AssetDebtDisciplineMonitor {
               kind: row.kind,
               amount: inferredNewUsage,
               currentBalance: balance,
+              balanceDelta: balanceDiff,
               problem: '${row.name}で今月 約${_yen(inferredNewUsage)}の新規借入が発生しました。'
                   '「追加の借金をしない」誓約に反しています。',
               action: '翌月はこのローン・借入の新規利用を止め、既存の返済計画を優先してください。',
@@ -247,6 +287,11 @@ class AssetDebtDisciplineMonitor {
             balance,
             monthlyRate,
             escapeTargetMonths,
+          );
+          final payoff24Payment = AssetDebtTrendAnalyzer.paymentToClearIn(
+            balance,
+            monthlyRate,
+            24,
           );
           final currentPlan = payment > 0
               ? AssetDebtTrendAnalyzer.estimatePayoff(
@@ -282,6 +327,7 @@ class AssetDebtDisciplineMonitor {
               '既存残高${_yen(balance)}の一括返済は求めません。'
               '無理のない範囲で残高圧縮を続ける場合、月${_yen(escapePayment)}なら'
               '約$escapeTargetMonthsヶ月で完済できる目安です。$currentPlanText';
+          final balanceDelta = prior != null ? balance - prior : null;
           revolving.add(
             AssetDebtDisciplineViolation(
               type: AssetDebtDisciplineViolationType.revolvingCard,
@@ -302,8 +348,18 @@ class AssetDebtDisciplineMonitor {
               currentPlanTotalInterest:
                   currentPlanMonths == null ? null : currentPlan!.totalInterest,
               oneShotChangeCompleted: oneShotChangeCompleted,
+              usageItems: revolvingBilling?.usageItems ??
+                  const <AssetLiabilityRevolvingUsageItem>[],
+              hasImportedStatement:
+                  revolvingBilling?.hasImportedStatement ?? false,
+              newUsageAmount: newUsage,
+              balanceDelta: balanceDelta,
+              payoffIn24MonthsPayment: payoff24Payment,
             ),
           );
+        }
+        if (row.revolvingBilling != null) {
+          revolvingBillings[row.id] = row.revolvingBilling!;
         }
       }
     }
@@ -322,6 +378,10 @@ class AssetDebtDisciplineMonitor {
       totalNewBorrowing: totalNew,
       totalCarriedOver: totalCarried,
       monitoredAccountCount: monitoredCount,
+      revolvingBillingsByAccountId:
+          Map<String, AssetLiabilityRevolvingCreditBilling>.unmodifiable(
+        revolvingBillings,
+      ),
     );
   }
 

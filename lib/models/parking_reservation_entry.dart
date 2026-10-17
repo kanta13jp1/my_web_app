@@ -62,3 +62,55 @@ class ParkingReservationEntry {
           .map(ParkingReservationEntry.fromMap)
           .toList();
 }
+
+/// `parking.reserve` へ送る入力。EF 側は無検証で hub_data に保存するため、
+/// 必須項目と時間帯の前後関係はここで弾く (壊れた行を一覧に残さない)。
+///
+/// 駐車場事業者への実予約ではなく、自分の予約内容の記録である。
+class ParkingReservationDraft {
+  const ParkingReservationDraft({
+    required this.lotName,
+    required this.start,
+    required this.end,
+    this.spot = '',
+    this.plate = '',
+    this.feeText = '',
+  });
+
+  final String lotName;
+  final DateTime start;
+  final DateTime end;
+  final String spot;
+  final String plate;
+
+  /// 料金の入力文字列 (空なら未設定 = null で送る)。
+  final String feeText;
+
+  /// 入力エラー文言。問題なければ null。
+  String? validate() {
+    if (lotName.trim().isEmpty) return '駐車場名を入力してください';
+    if (!end.isAfter(start)) return '終了日時は開始日時より後にしてください';
+    final fee = feeText.trim();
+    if (fee.isNotEmpty) {
+      final parsed = int.tryParse(fee.replaceAll(',', ''));
+      if (parsed == null || parsed < 0) {
+        return '料金は0以上の整数(円)で入力してください';
+      }
+    }
+    return null;
+  }
+
+  /// `lifestyle-hub` へ渡す body。時刻は UTC ISO8601 (一覧側で local 表示)。
+  Map<String, dynamic> toRequestBody() {
+    final fee = feeText.trim().replaceAll(',', '');
+    return {
+      'action': 'parking.reserve',
+      'lot_id': lotName.trim(),
+      'spot': spot.trim(),
+      'start_time': start.toUtc().toIso8601String(),
+      'end_time': end.toUtc().toIso8601String(),
+      'plate': plate.trim(),
+      'fee': fee.isEmpty ? null : int.parse(fee),
+    };
+  }
+}

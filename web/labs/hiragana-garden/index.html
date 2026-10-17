@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ひらがなの小庭 — ゆっくり、ひと文字。</title>
+  <meta name="description" content="く・し・つ・へ・の。5つのひらがなを、なぞったり自由に書いたりする小さな練習帳。">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+<main>
+  <header><a href="/">自分株式会社</a><span>ひらがなの小庭</span></header>
+  <section class="intro"><p class="eyebrow">ひとつずつ、じぶんのペースで</p><h1>ゆっくり、<br>ひと文字。</h1><p>線をたどって、形をたしかめよう。<br>指でも、ペンでも、マウスでも。</p></section>
+  <section class="workspace" aria-label="ひらがなの練習">
+    <aside>
+      <fieldset id="settings" disabled>
+        <legend>れんしゅうの準備</legend>
+        <label for="letter">もじを えらぶ</label>
+        <select id="letter"><option>く</option><option>し</option><option>つ</option><option>へ</option><option>の</option></select>
+        <label for="mode">れんしゅうの しかた</label>
+        <select id="mode"><option value="trace">なぞる</option><option value="free">じゆうに かく</option></select>
+        <button id="reset" type="button">もういちど</button>
+        <button id="guide" type="button" aria-pressed="false">おてほんの順番を見る</button>
+      </fieldset>
+      <p id="help">1の丸から、線にそって指を動かします。途中で離しても、続きからなぞれます。</p>
+      <p class="small">「おてほんの順番を見る」はキーボードでも操作できます。手書きの代わりに、線の順番を数字で確認できます。</p>
+    </aside>
+    <div class="paper">
+      <div class="paper-head"><h2 id="current">く</h2><span id="mode-label">なぞる</span></div>
+      <svg id="board" viewBox="0 0 400 400" role="img" aria-labelledby="board-title board-desc">
+        <title id="board-title">く の練習用紙</title>
+        <desc id="board-desc">1の丸からお手本の線に沿ってなぞります。</desc>
+        <path class="grid" d="M200 20V380 M20 200H380"/>
+        <path id="track" d="M270 75 L125 200 L270 325"/>
+        <path id="progress"/>
+        <g id="ink"></g><g id="numbers"></g>
+        <g id="cursor"><circle r="19"/><text text-anchor="middle" dy="6">1</text></g>
+      </svg>
+      <p id="status" role="status" aria-live="polite">準備中です。</p>
+    </div>
+  </section>
+  <p id="fallback">操作にはJavaScriptが必要です。読み込めない場合は、設定や接続を確認して再読み込みしてください。お手本の「く」はそのまま見られます。</p>
+  <section class="notes"><h2>保護者・いっしょに練習する方へ</h2><p>5文字を試す小さな練習帳です。線を順にたどったことを確認しますが、文字の上手さを採点したり、学習効果を測ったりする機能ではありません。書いた線はこの画面だけで扱い、保存・送信しません。文字やモードの変更、再読み込みで消えます。</p><p>お手本は独自に作成した練習用の線です。手書きには形の違いがあります。教材や先生のお手本とも見比べてください。</p></section>
+  <footer><a href="https://x.com/omochimetaru/status/2098677091315449944" target="_blank" rel="noopener noreferrer">着想元：おもちメタル（@omochimetaru）の投稿</a><p>元アプリの画像・音声・コードは使用していません。</p></footer>
+</main>
+</body>
+</html>

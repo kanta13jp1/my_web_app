@@ -1,0 +1,31 @@
+name: Interest History Validation
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/interest-history-validation.yml'
+permissions: {}
+concurrency:
+  group: interest-history-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Check feature formatting
+        run: |
+          dart format --output=none --set-exit-if-changed lib/pages/asset_management_page.dart lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart
+      - run: flutter analyze lib/models/asset_interest_history.dart lib/services/asset_interest_repository.dart lib/widgets/asset_interest_history_card.dart test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart
+      - run: flutter test --concurrency=2 test/services/asset_interest_history_test.dart test/services/asset_interest_repository_test.dart test/widgets/asset_interest_history_card_test.dart
+      - name: Verify living expense priority regression
+        run: flutter test test/widgets/asset_management_page_smoke_test.dart --plain-name 'living expense priority toggle immediately reorders actions'

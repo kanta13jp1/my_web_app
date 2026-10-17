@@ -41,7 +41,19 @@ class AssetRecurringFixedCostStore {
       await store.remove(prefsKey);
       return;
     }
-    await store.setString(prefsKey, jsonEncode(encodeMirrorValue(costs)));
+    final normalized = costs.map(normalizeCost).toList();
+    await store.setString(prefsKey, jsonEncode(encodeMirrorValue(normalized)));
+  }
+
+  /// Persist user-entered billing details without vendor-specific guesses.
+  static AssetRecurringFixedCost normalizeCost(AssetRecurringFixedCost cost) {
+    return cost;
+  }
+
+  static List<AssetRecurringFixedCost> normalizeCosts(
+    Iterable<AssetRecurringFixedCost> costs,
+  ) {
+    return costs.map(normalizeCost).toList();
   }
 
   /// リストを `asset_pref_mirror.value` (jsonb) 形 `{id: {...}}` へ変換する。
@@ -50,7 +62,7 @@ class AssetRecurringFixedCostStore {
     List<AssetRecurringFixedCost> costs,
   ) {
     return <String, dynamic>{
-      for (final cost in costs) cost.id: cost.toJson(),
+      for (final cost in costs) cost.id: normalizeCost(cost).toJson(),
     };
   }
 
@@ -69,7 +81,7 @@ class AssetRecurringFixedCostStore {
           Map<String, dynamic>.from(raw),
         );
         if (cost != null) {
-          result.add(cost);
+          result.add(normalizeCost(cost));
         }
       }
     });

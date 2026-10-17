@@ -1,3 +1,4 @@
+import { downloadJson } from '../shared/download-json.mjs';
 import { TRACKS, preset, validate, toggle, frequency, activeAt } from './pattern.mjs';
 const $ = id => document.getElementById(id);
 let state = preset(), history = [], playing = false, context, master, timer, nextTime = 0, step = 0;
@@ -82,8 +83,7 @@ document.querySelectorAll('[data-preset]').forEach(button => button.addEventList
 $('undo').addEventListener('click', () => { if (history.length) { state = validate(JSON.parse(history.pop())); update(); message('ひとつ前の構成に戻しました。'); } });
 $('clear').addEventListener('click', () => { remember(); state.notes = state.notes.map(row => row.map(() => false)); update(); message('空の庭になりました。点を押して音を植えてください。'); });
 $('save').addEventListener('click', () => {
-  const url = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }));
-  const a = document.createElement('a'); a.href = url; a.download = 'sound-bloom.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); message('構成ファイルを保存しました。');
+  downloadJson(state, 'sound-bloom.json'); message('構成ファイルを保存しました。');
 });
 $('load').addEventListener('change', async event => {
   try { const file = event.target.files?.[0]; if (!file) return; if (file.size > 4096) throw new Error('構成ファイルは4KB以内にしてください。'); const next = validate(JSON.parse(await file.text())); remember(); state = next; update(); message('保存した構成を復元しました。'); }

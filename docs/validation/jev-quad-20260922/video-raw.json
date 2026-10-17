@@ -1,0 +1,44 @@
+{
+  "mode": "raw",
+  "frames": 3600,
+  "replayParity": true,
+  "results": [
+    {
+      "lane": "cloud_jev",
+      "clear": false,
+      "x": 306.01,
+      "wall_ms": 2807.535183,
+      "accepted": 24,
+      "overrides": 0,
+      "apiCalls": 6
+    },
+    {
+      "lane": "localjev",
+      "clear": false,
+      "x": 32,
+      "wall_ms": 60006.065134,
+      "accepted": 543,
+      "overrides": 0,
+      "apiCalls": 60
+    },
+    {
+      "lane": "lightgbm",
+      "clear": false,
+      "x": 295.33000000000067,
+      "wall_ms": 3170.879391,
+      "accepted": 32,
+      "overrides": 0,
+      "apiCalls": 0
+    },
+    {
+      "lane": "laya",
+      "clear": false,
+      "x": 314.1000000000001,
+      "wall_ms": 4875.259163000001,
+      "accepted": 20,
+      "overrides": 0,
+      "apiCalls": 2
+    }
+  ],
+  "label": "Measured parallel trials aligned to t=0; action replay, not live capture"
+}

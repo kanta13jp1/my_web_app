@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>成功率で変わる時間指標 | 自分株式会社</title>
+<link rel="stylesheet" href="style.css"><script type="module" src="app.mjs"></script>
+<main><a href="/">自分株式会社へ</a><p class="eyebrow">AIの測定値を読む練習</p><h1>成功率を変えると、時間の目安はどう変わる？</h1>
+<p>同じ課題の難しさでも、求める成功率が違えば時間指標は変わります。下の<strong>合成例</strong>で試せます。実際のAIの能力や納期を予測する道具ではありません。</p>
+<section aria-labelledby="try"><h2 id="try">合成曲線で試す</h2><p>この例では、人間基準120分の課題の成功率を50%と仮定します。</p>
+<form novalidate><label for="percent">必要な成功率（%）</label><div class="entry"><input id="percent" type="number" inputmode="decimal" min="0.01" max="99.99" step="any" value="80" required><button type="submit">計算する</button></div></form>
+<div class="presets" aria-label="例の成功率"><button type="button" data-p="50">50%で試す</button><button type="button" data-p="80">80%で試す</button><button type="button" data-p="90">90%で試す</button></div>
+<p id="error" role="alert"></p><div id="result" role="status" aria-live="polite">成功率を選んで計算してください。</div>
+<p>時間は<strong>人間が課題を終える所要時間を基準とした難しさ</strong>です。AIを放置してよい時間ではありません。</p>
+<details><summary>計算式と限界</summary><p>p(t) = 1 / (1 + (t / 120)²)。tは人間基準の分、pは0〜1の成功確率です。逆算は t = 120 × √((1 − p) / p)。この曲線は説明のために固定した例で、測定データへの当てはめではありません。</p><p>0%と100%はこの式から有限の実用的な指標を求める入力として受け付けません。各実務の成功確率や作業分割の効果は、この例では分かりません。</p></details></section>
+<section><h2>公式の測定値は別の根拠</h2><p>METRはAIが課題を完了する能力を測定する研究団体です。次は2026年5月8日更新のTime Horizon 1.1公開集計にある Claude Mythos Preview (early) の値です。上の合成曲線から計算した値ではありません。</p>
+<div class="table"><table><caption>公式集計の分を時間へ換算（2026年9月28日取得）</caption><thead><tr><th>成功率</th><th>点推定</th><th>公開区間の下限〜上限</th></tr></thead><tbody><tr><td>50%</td><td>約17.4時間</td><td>約8.5〜55.1時間</td></tr><tr><td>80%</td><td>約3.1時間</td><td>約1.6〜6.6時間</td></tr></tbody></table></div>
+<p class="warning"><strong>METRは、現行の課題群では16時間超の測定は信頼性が低いと注意しています。</strong>17.4時間を確かな能力上限として扱わないでください。</p>
+<p>対象は主にソフトウェアなどの課題です。あらゆる仕事や、特定の仕事の成功率を保証する値ではありません。</p>
+<p><a href="https://metr.org/time-horizons/">METRの定義・測定限界</a> · <a href="https://metr.org/assets/benchmark_results_1_1.yaml">公式の公開集計</a></p></section>
+<footer>入力はこの画面内だけで計算し、送信・保存しません。学習用バージョン 1</footer></main></html>

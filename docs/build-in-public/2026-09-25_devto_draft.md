@@ -1,0 +1,82 @@
+---
+title: Building 自分株式会社 — Last 7 Days of AI Fleet Development
+published: false
+tags: ai, indiedev, buildinpublic, claude
+date: 2026-09-25
+---
+
+## TL;DR
+
+Last 7 days of building **自分株式会社** (= Jibun Inc. / a personal life-management AI app) with a **12-instance AI fleet** (10 Claude Code + 2 Codex CLI). This post extracts the recent ROADMAP-LOG entries as a build-in-public update.
+
+## Recent activity (auto-extracted)
+
+## 2026-09-21 Expense classification review (#5452)
+Added read-only category suggestions beneath the asset-management expense memo. Local rules run without sending data; configured AI requires an explicit action. Every candidate is labelled for human review; fixed rule scores are not accuracy. No booking or financial data mutation is added. Cloud widget tests cover fallback, recovery, stale responses and narrow text-scaled layout. See [operation guide](EXPENSE_CLASSIFICATION_REVIEW.md).
+
+
+### 2026-09-21 Jev分類候補のサーバー接続（#5459）
+
+認証済みユーザーの明示操作に限定し、TypeSafeキーをサーバーSecretへ分離。固定カテゴリ・500文字制限・原子的な分/日/全体上限で利用を制御。分類候補の参考表示に限定し、自動記帳は追加しない。CIと本番確認はPRへ記録する。
+
+---
+
+## 2026-09-21 Jev Mario latency experiment (#5466)
+PR #5467 adds a local-ROM SMB1 controller and a ROM-free synthetic-state API benchmark at `/jev-mario-lab`. Browser RTT and upstream HTTP time are separate from pure inference. Server-only credentials, verified-account allowlist, atomic request caps, stop/late-response guards and JSON export are included. Cloud contract and browser fixture tests validate the implementation; actual SMB1 gameplay is unverified because the user has no ROM. Production activation and auth/quota migration remain pending explicit owner review. See [operation guide](JEV_MARIO_LAB.md).
+
+
+### 2026-09-21 Jev Mario motion and crouching (#5482)
+
+Added independent pixel-art poses for walking/running, facing, jumping/falling and crouching. Crouch collision height preserves feet and checks standing headroom. Cloud engine and desktop/mobile UI checks accompany PR #5483. This is a manual-play/visual improvement, not evidence of improved Jev control quality.
+
+
+### 2026-09-21: Mario presentation and diagnostic snapshots (#5484)
+
+- Add skidding, death/flag/castle sequences, block/enemy feedback and original contextual chiptunes.
+- Export immutable observation/arrival snapshots and separate cancellation counts to distinguish Jev decisions from latency.
+- Validate cloud engine/audio/browser contracts before production; no claim of ROM fidelity, article latency reproduction or AI completion.
+
+
+## Jev Mario gameplay recording — 2026-09-21
+
+- Issue #5486: local canvas recording with optional game audio, 60-second/32MiB bounds, replay and timestamped WebM/MP4 download selected by browser capability. No external media upload or new API call.
+- Verify actual encoded audio/video playback and download, repeat/mute, unsupported capability, and mode-change cleanup in cloud tests before production release.
+
+
+### 2026-09-21 Jev Mario deployment cache correction (#5488)
+
+- Reported outer build 5591 still exported independent-world11-v1; live lab HTML/modules used max-age=3600.
+- Revalidate all /labs/jev-mario assets and migrate iframe/HTML/module URLs together so fresh old browser caches cannot mix releases. JSON includes lab_revision for diagnosis.
+- Keep query revision as a one-time migration; subsequent stable URLs must revalidate on navigation. Existing open pages must reload.
+- Validation: hosting dependency-graph/cache contract and existing cloud game/recording browser suite. No new Jev API experiment or latency improvement is claimed.
+
+
+### 2026-09-22 Jev Mario measured collision comparison (#5490)
+
+- Add explicit Jev-only/default versus Jev plus local reaction rules, logging interventions separately from raw API timings. Recreate the supplied near-enemy state in deterministic cloud tests without additional model calls.
+- Improve block/enemy reactions, 100-coin lives, item emergence/life effects and synthesized 25% pulse audio. These are independent approximations, not cycle-accurate NES emulation.
+- Validate UI mode change/recovery/export, sound, game and recording regressions in cloud CI; report source claims and our measurements separately in the requested article.
+
+
+### 2026-09-22 Jev Mario course verification
+
+- Compare deterministic full-course lookahead, held-right and local assistance without labelling rules as Jev performance. Save bounded experiment artifacts.
+- Refine flag descent, left-facing fire, differentiated enemies/items and original noise/percussion/flag/tally effects. Cloud tests and production verification required.
+
+
+### 2026-09-22 Jev入力予測と走行ジャンプの比較
+
+- Issue #5495: 最新のJev単独ログ（右→右→ダッシュ、frame218/x308.26で死亡）を再現。予測値を追加する入力を明示選択し、基準入力とJSONで区別。認証・同意・利用枠は維持。
+- 回避補助はダッシュを保持し、アイテム出現動作とブレーキSEを改善。API性能とシミュレーションは区別してクラウドで検証。
+
+---
+
+
+## Stack
+
+- Frontend: Flutter Web (Dart)
+- Backend: Supabase (PostgreSQL + Edge Functions / Deno)
+- Hosting: Firebase Hosting
+- AI: Claude Code (10 instances) + Codex CLI (2 instances)
+
+Auto-generated by `scripts/build_in_public_extract.py` (= INDIE_DEV_VELOCITY #7 Community Engagement Discipline dogfood).
