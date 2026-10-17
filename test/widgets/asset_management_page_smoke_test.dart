@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -112,6 +113,7 @@ Future<void> _unmount(WidgetTester tester) async {
 
 class _FailingIncomeTemplateRepository
     extends SharedPreferencesAssetLiabilityRepository {
+  Completer<void>? pendingSave;
   int attempts = 0;
   bool failTemplate = true;
   bool failMonth = false;
@@ -132,6 +134,7 @@ class _FailingIncomeTemplateRepository
     List<AssetLiabilityRecurringIncomeTemplate> templates,
   ) async {
     attempts++;
+    await pendingSave?.future;
     attemptedIds.addAll(templates.map((template) => template.id));
     if (failTemplate) throw StateError('synthetic local save failure');
     await super.saveRecurringIncomeTemplates(templates);
@@ -287,18 +290,20 @@ void main() {
     });
   }
 
-  for (final failure in ['template', 'monthly', 'none']) {
-    testWidgets('income save failure keeps data and retries $failure',
+  for (final width in [1200.0, 390.0]) {
+  for (final failure in ['template', 'monthly', 'none', 'pending']) {
+    testWidgets('income save failure keeps data and retries $failure width $width',
         (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_management_display_mode_v1':
             AssetManagementDisplayMode.standard.storageId,
       });
-      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      await tester.binding.setSurfaceSize(Size(width, width == 390 ? 844 : 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       final repository = _FailingIncomeTemplateRepository()
         ..failTemplate = failure == 'template'
         ..failMonth = failure == 'monthly';
+      if (failure == 'pending') repository.pendingSave = Completer<void>();
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
@@ -334,10 +339,23 @@ void main() {
         expect(find.byType(AlertDialog), findsOneWidget);
         final save = find.widgetWithText(FilledButton, '保存');
         expect(save, findsOneWidget);
+        await tester.ensureVisible(save);
         await tester.tap(save);
         await tester.pump(const Duration(milliseconds: 300));
         expect(repository.attempts, 1);
-        if (failure != 'none') {
+        if (failure == 'pending') {
+          expect(tester.widget<FilledButton>(save).onPressed, isNull);
+          final cancel = find.widgetWithText(TextButton, 'キャンセル');
+          expect(tester.widget<TextButton>(cancel).onPressed, isNull);
+          await tester.tap(save);
+          await tester.binding.handlePopRoute();
+          await tester.pump();
+          expect(repository.attempts, 1);
+          expect(find.byType(AlertDialog), findsOneWidget);
+          repository.pendingSave!.complete();
+          await tester.pump();
+        }
+        if (failure == 'template' || failure == 'monthly') {
           expect(find.byType(AlertDialog), findsOneWidget);
           expect(
             find.byKey(const Key('recurring_income_save_error')),
@@ -368,6 +386,7 @@ void main() {
         await _unmount(tester);
       }
     });
+  }
   }
 
   group('AssetManagementPage smoke', () {
