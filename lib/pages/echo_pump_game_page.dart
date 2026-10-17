@@ -97,7 +97,9 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
     }
     if (!mounted || !identical(inspectedGame, _game)) return;
     if (result == EchoPumpInventoryAction.repair &&
-        !_game.finished && _game.hasFuse && _game.room == PumpRoom.pump) {
+        !_game.finished &&
+        _game.hasFuse &&
+        _game.room == PumpRoom.pump) {
       _act(_game.repair, EchoPumpCue.repair);
     }
   }
@@ -355,7 +357,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                   if (_game.room == PumpRoom.workshop)
                     EchoPumpFuseShelf(
                       game: _game,
-                      onCollect: () => _act(_game.collectFuse, EchoPumpCue.collect),
+                      onCollect: () =>
+                          _act(_game.collectFuse, EchoPumpCue.collect),
                     ),
                   if (_game.room == PumpRoom.pump)
                     _panel('ポンプ制御', [

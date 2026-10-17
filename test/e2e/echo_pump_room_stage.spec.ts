@@ -109,7 +109,9 @@ test('find, inspect and install the fuse without spending turns on the inventory
   await page.getByRole('checkbox', { name: 'A 搬入', exact: true }).click();
   await button('中央廊下へ').click();
   await button('工具庫へ').click();
-  await button('ヒューズを回収').scrollIntoViewIfNeeded();
+  await page.mouse.move(100, 200);
+  await page.mouse.wheel(0, 30000);
+  await page.waitForTimeout(300);
   await page.screenshot({ path: info.outputPath('fuse-shelf.png'), scale: 'css' });
   await button('ヒューズを回収').click();
   await expect(button('ヒューズを回収')).toBeDisabled();

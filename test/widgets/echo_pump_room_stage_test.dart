@@ -199,7 +199,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('an inventory-like modal stops walking and footsteps', (tester) async {
+  testWidgets('an inventory-like modal stops walking and footsteps',
+      (tester) async {
     var steps = 0;
     await show(tester, step: () => steps++);
     await tester.tap(find.text('保守メモを調べる'));
