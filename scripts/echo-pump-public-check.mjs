@@ -75,7 +75,7 @@ try {
         button('ゲーム開始').waitFor({timeout: 60000}),
         activate.waitFor({state: 'attached', timeout: 60000}),
       ]);
-      if (await activate.count()) await activate.click({force: true});
+      if (await activate.count()) await activate.dispatchEvent('click');
       await button('ゲーム開始').waitFor({timeout: 60000});
       assert.equal(await page.evaluate(() => window.__echoPublicAudit.media.length), 0);
       await click('音をON'); await played('bgm');
