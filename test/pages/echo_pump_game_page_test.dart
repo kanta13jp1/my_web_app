@@ -27,6 +27,9 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('echo-intro-skip')));
       await tester.pumpAndSettle();
+      final gameTheme = Theme.of(tester.element(find.byType(AppBar)));
+      expect(gameTheme.textTheme.bodyMedium?.fontFamily, 'NotoSansJP');
+      expect(gameTheme.brightness, Brightness.dark);
       await tap('echo-power-b');
       await tap('echo-power-a');
       await tap('echo-move-hall');
