@@ -62,7 +62,10 @@ void main() {
     expect(actorImage(walking), findsNothing);
     await tester.runAsync(() async {
       bundle.complete(await rootBundle.load(walking));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await precacheImage(
+        AssetImage('assets/echo_pump/character_walk.png', bundle: bundle),
+        tester.element(find.byType(MaterialApp)),
+      );
     });
     await tester.pump();
     expect(actorImage(walking), findsOneWidget);
@@ -83,11 +86,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('歩行中…'), findsOneWidget);
     expect(
-        find.descendant(
-          of: find.byKey(const Key('echo-room-actor')),
-          matching: find.byType(Image),
-        ),
-        findsOneWidget);
+      find.descendant(
+        of: find.byKey(const Key('echo-room-actor')),
+        matching: find.byType(Image),
+      ),
+      findsOneWidget,
+    );
     await tester.pumpAndSettle();
     expect(find.text('夜間保守メモ 1 / 2'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -100,8 +104,12 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
     await tester.runAsync(() async {
       bundle.complete(
-          await rootBundle.load('assets/echo_pump/character_walk.png'));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+          await rootBundle.load('assets/echo_pump/character_walk.png'),
+      );
+      await precacheImage(
+        AssetImage('assets/echo_pump/character_walk.png', bundle: bundle),
+        tester.element(find.byType(MaterialApp)),
+      );
     });
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
