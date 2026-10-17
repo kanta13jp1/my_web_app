@@ -59,9 +59,13 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       _actionRevision++;
       _fromRoom = from;
       _blocked = _game.turn == turn && cue != EchoPumpCue.start;
-      _visualCue = _game.escaped ? EchoPumpCue.escape
-          : _game.health == 0 ? EchoPumpCue.fail
-          : _game.health < health ? EchoPumpCue.damage : cue;
+      _visualCue = _game.escaped
+          ? EchoPumpCue.escape
+          : _game.health == 0
+              ? EchoPumpCue.fail
+              : _game.health < health
+                  ? EchoPumpCue.damage
+                  : cue;
     });
     _audio.setMusicActive(!_game.finished);
     if (_game.escaped) {
@@ -166,9 +170,12 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                   EchoPumpProgress(game: _game),
                   const SizedBox(height: 12),
                   EchoPumpActionVisual(
-                    revision: _actionRevision, cue: _visualCue,
-                    from: _fromRoom, to: _game.room,
-                    message: _game.message, blocked: _blocked,
+                    revision: _actionRevision,
+                    cue: _visualCue,
+                    from: _fromRoom,
+                    to: _game.room,
+                    message: _game.message,
+                    blocked: _blocked,
                   ),
                   ExpansionTile(
                     key: const Key('echo-details'),
@@ -178,7 +185,11 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                         padding: const EdgeInsets.all(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [Text(_game.objective), const SizedBox(height: 8), Text(_game.message)],
+                          children: [
+                            Text(_game.objective),
+                            const SizedBox(height: 8),
+                            Text(_game.message)
+                          ],
                         ),
                       ),
                     ],
@@ -280,14 +291,19 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                         for (var i = 0; i < 2; i++)
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
-                            child: Icon(Icons.bolt, color: i < _game.power.length ? const Color(0xFF9BE0CF) : Colors.white24),
+                            child: Icon(Icons.bolt,
+                                color: i < _game.power.length
+                                    ? const Color(0xFF9BE0CF)
+                                    : Colors.white24),
                           ),
                         Text('${_game.power.length} / 2'),
                       ]),
                       const ExpansionTile(
                         title: Text('電源の使い方'),
-                        children: [Text('3系統目を入れる前に、どれか1つを停止。'
-                            '\nA：搬入ファン / B：工具棚とコンプレッサー / C：点検槽のベルと排水')],
+                        children: [
+                          Text('3系統目を入れる前に、どれか1つを停止。'
+                              '\nA：搬入ファン / B：工具棚とコンプレッサー / C：点検槽のベルと排水')
+                        ],
                       ),
                     ]),
                   if (_game.room == PumpRoom.workshop)

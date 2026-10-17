@@ -34,7 +34,12 @@ class EchoPumpProgress extends StatelessWidget {
     final route = switch (current) {
       0 => (Icons.bolt, 'B系統', Icons.electrical_services, '工具庫'),
       1 => (Icons.electrical_services, 'ヒューズ', Icons.build_outlined, 'ポンプ室'),
-      2 => (Icons.notifications_active_outlined, 'C系統・点検槽', Icons.lock_outline, 'ポンプ室'),
+      2 => (
+          Icons.notifications_active_outlined,
+          'C系統・点検槽',
+          Icons.lock_outline,
+          'ポンプ室'
+        ),
       3 => (Icons.bolt, 'C系統', Icons.water_drop_outlined, 'ポンプ室'),
       _ => (Icons.home_outlined, '管理室', Icons.exit_to_app, '出口'),
     };
@@ -54,24 +59,29 @@ class EchoPumpProgress extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Wrap(
-                    spacing: 8, runSpacing: 8,
+                    spacing: 8,
+                    runSpacing: 8,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Icon(route.$1, color: _mint), Text(route.$2),
+                      Icon(route.$1, color: _mint),
+                      Text(route.$2),
                       const Icon(Icons.arrow_forward, size: 18),
-                      Icon(route.$3, color: _mint), Text(route.$4),
+                      Icon(route.$3, color: _mint),
+                      Text(route.$4),
                     ],
                   ),
                 ),
               ),
               for (var i = 0; i < labels.length; i++)
                 Semantics(
-                  label: '${labels[i]}：${completed[i] ? '完了' : i == current ? '次の目標' : '未完了'}',
+                  label:
+                      '${labels[i]}：${completed[i] ? '完了' : i == current ? '次の目標' : '未完了'}',
                   child: ExcludeSemantics(
                     child: Container(
                       key: Key('echo-goal-$i'),
                       width: width,
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 4),
                       decoration: BoxDecoration(
                         color: completed[i]
                             ? const Color(0xFF234F48)
@@ -84,14 +94,24 @@ class EchoPumpProgress extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          Icon(completed[i] ? Icons.check_circle : icons[i],
-                            color: completed[i] || i == current ? _mint : Colors.white38,
+                          Icon(
+                            completed[i] ? Icons.check_circle : icons[i],
+                            color: completed[i] || i == current
+                                ? _mint
+                                : Colors.white38,
                             size: 28,
                           ),
                           const SizedBox(height: 6),
                           Text(labels[i], textAlign: TextAlign.center),
-                          Text(completed[i] ? '完了' : i == current ? 'NEXT' : '—',
-                            style: TextStyle(color: i == current ? _mint : Colors.white54, fontSize: 11),
+                          Text(
+                            completed[i]
+                                ? '完了'
+                                : i == current
+                                    ? 'NEXT'
+                                    : '—',
+                            style: TextStyle(
+                                color: i == current ? _mint : Colors.white54,
+                                fontSize: 11),
                           ),
                         ],
                       ),
@@ -127,19 +147,23 @@ class EchoPumpActionVisual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final danger = cue == EchoPumpCue.damage || cue == EchoPumpCue.fail || blocked;
+    final danger =
+        cue == EchoPumpCue.damage || cue == EchoPumpCue.fail || blocked;
     final color = danger ? const Color(0xFFFFB49B) : _mint;
     final (icon, title) = blocked
         ? (Icons.info_outline, '操作を確認')
         : switch (cue) {
-            EchoPumpCue.step => (Icons.directions_walk, '${from.label} → ${to.label}'),
+            EchoPumpCue.step => (
+                Icons.directions_walk,
+                '${from.label} → ${to.label}'
+              ),
             EchoPumpCue.power => (Icons.bolt, '電源切替'),
             EchoPumpCue.collect => (Icons.electrical_services, 'ヒューズ回収'),
             EchoPumpCue.repair => (Icons.build_outlined, '修理完了'),
             EchoPumpCue.seal => (Icons.lock_outline, '隔壁閉鎖'),
             EchoPumpCue.drain => (Icons.water_drop, '排水完了'),
             EchoPumpCue.damage => (Icons.heart_broken, '接触・体力低下'),
-            EchoPumpCue.escape => (Icons.wb_twilight, '脱出成功'),
+            EchoPumpCue.escape => (Icons.wb_twilight, '外へ到達'),
             EchoPumpCue.fail => (Icons.warning_amber, '探索失敗'),
             EchoPumpCue.start => (Icons.explore_outlined, '探索開始'),
             null => (Icons.hearing, '耳を澄ます'),
@@ -168,7 +192,8 @@ class EchoPumpActionVisual extends StatelessWidget {
                   height: 72,
                   width: double.infinity,
                   child: CustomPaint(
-                    painter: _ActionPainter(cue: cue, progress: progress, color: color),
+                    painter: _ActionPainter(
+                        cue: cue, progress: progress, color: color),
                     child: Center(
                       child: Transform.scale(
                         scale: 0.85 + 0.15 * Curves.easeOut.transform(progress),
@@ -178,7 +203,9 @@ class EchoPumpActionVisual extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(title, textAlign: TextAlign.center,
+              Text(
+                title,
+                textAlign: TextAlign.center,
                 style: TextStyle(color: color, fontWeight: FontWeight.bold),
               ),
               if (blocked) Text(message, textAlign: TextAlign.center),
@@ -191,46 +218,63 @@ class EchoPumpActionVisual extends StatelessWidget {
 }
 
 class _ActionPainter extends CustomPainter {
-  const _ActionPainter({required this.cue, required this.progress, required this.color});
+  const _ActionPainter(
+      {required this.cue, required this.progress, required this.color});
   final EchoPumpCue? cue;
   final double progress;
   final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color.withValues(alpha: 0.25 + 0.35 * progress);
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.25 + 0.35 * progress);
     if (cue == EchoPumpCue.step) {
       for (var i = 0; i < 6; i++) {
         if (progress < (i + 1) / 7) continue;
         final x = size.width * (i + 1) / 7;
         // Leave the central walk icon unobscured.
         if ((x - size.width / 2).abs() < 28) continue;
-        canvas.drawOval(Rect.fromCenter(center: Offset(x, i.isEven ? 25 : 48), width: 10, height: 18), paint);
+        canvas.drawOval(
+            Rect.fromCenter(
+                center: Offset(x, i.isEven ? 25 : 48), width: 10, height: 18),
+            paint);
       }
     } else if (cue == EchoPumpCue.drain) {
       final path = Path();
       for (var x = 0.0; x <= size.width; x += 4) {
         final y = 20 + progress * 42 + math.sin(x / 20 + progress * 8) * 4;
-        if (x == 0) { path.moveTo(x, y); } else { path.lineTo(x, y); }
+        if (x == 0) {
+          path.moveTo(x, y);
+        } else {
+          path.lineTo(x, y);
+        }
       }
-      path.lineTo(size.width, size.height);path.lineTo(0, size.height);path.close();
+      path.lineTo(size.width, size.height);
+      path.lineTo(0, size.height);
+      path.close();
       canvas.drawPath(path, paint);
     } else if (cue == EchoPumpCue.seal) {
       final width = size.width * 0.35 * progress;
       canvas.drawRect(Rect.fromLTWH(0, 8, width, 56), paint);
       canvas.drawRect(Rect.fromLTWH(size.width - width, 8, width, 56), paint);
     } else {
-      paint..style = PaintingStyle.stroke..strokeWidth = 2;
+      paint
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2;
       canvas.drawCircle(Offset(size.width / 2, 36), 24 + 10 * progress, paint);
       for (var i = 0; i < 3; i++) {
         final width = math.min(size.width * 0.18, 64.0) * progress;
-        canvas.drawLine(Offset(8, 20 + i * 16), Offset(8 + width, 20 + i * 16), paint);
-        canvas.drawLine(Offset(size.width - 8 - width, 20 + i * 16), Offset(size.width - 8, 20 + i * 16), paint);
+        canvas.drawLine(
+            Offset(8, 20 + i * 16), Offset(8 + width, 20 + i * 16), paint);
+        canvas.drawLine(Offset(size.width - 8 - width, 20 + i * 16),
+            Offset(size.width - 8, 20 + i * 16), paint);
       }
     }
   }
 
   @override
   bool shouldRepaint(_ActionPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.cue != cue || oldDelegate.color != color;
+      oldDelegate.progress != progress ||
+      oldDelegate.cue != cue ||
+      oldDelegate.color != color;
 }
