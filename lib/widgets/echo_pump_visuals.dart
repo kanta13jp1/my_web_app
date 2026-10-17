@@ -48,7 +48,12 @@ class EchoPumpScene extends StatelessWidget {
                     children: [
                       Icon(Icons.grain, color: _mint, size: 18),
                       SizedBox(width: 8),
-                      Flexible(child: Text('夜間排水施設 / 施設全景', style: TextStyle(color: _mint),),),
+                      Flexible(
+                        child: Text(
+                          '夜間排水施設 / 施設全景',
+                          style: TextStyle(color: _mint),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 104),
@@ -80,7 +85,9 @@ class EchoPumpScene extends StatelessWidget {
                                   index < game.health
                                       ? Icons.favorite
                                       : Icons.favorite_border,
-                                  color: index < game.health ? _mint : Colors.white54,
+                                  color: index < game.health
+                                      ? _mint
+                                      : Colors.white54,
                                   size: 22,
                                 ),
                             ],
@@ -204,11 +211,15 @@ class EchoPumpFacilityMap extends StatelessWidget {
           },
         ),
         const SizedBox(height: 12),
-        const Text('● 現在地　▲ 敵　通電中：稼働設備　線：区画の接続',
-            style: TextStyle(color: Colors.white70, fontSize: 12),),
+        const Text(
+          '● 現在地　▲ 敵　通電中：稼働設備　線：区画の接続',
+          style: TextStyle(color: Colors.white70, fontSize: 12),
+        ),
         if (game.noiseRoom != null)
-          Text('機械音の行き先 → ${game.noiseRoom!.label}',
-              style: const TextStyle(color: _mint),),
+          Text(
+            '機械音の行き先 → ${game.noiseRoom!.label}',
+            style: const TextStyle(color: _mint),
+          ),
       ],
     );
   }
@@ -234,20 +245,40 @@ class EchoPumpFacilityMap extends StatelessWidget {
             color: current ? const Color(0xFF234F48) : const Color(0xFF17292E),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: current ? _mint : enemy && !game.sealed ? _warning : const Color(0xFF54716F),
+              color: current
+                  ? _mint
+                  : enemy && !game.sealed
+                      ? _warning
+                      : const Color(0xFF54716F),
               width: current ? 2 : 1,
             ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(_icons[room], color: powered ? _mint : Colors.white70, size: 22,),
+              Icon(
+                _icons[room],
+                color: powered ? _mint : Colors.white70,
+                size: 22,
+              ),
               const SizedBox(height: 4),
-              Text(room.label, textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold,),),
+              Text(
+                room.label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               if (status.isNotEmpty)
-                Text(status, textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: enemy && !game.sealed ? _warning : _mint,),),
+                Text(
+                  status,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: enemy && !game.sealed ? _warning : _mint,
+                  ),
+                ),
             ],
           ),
         ),
@@ -257,7 +288,11 @@ class EchoPumpFacilityMap extends StatelessWidget {
 }
 
 class _PassagesPainter extends CustomPainter {
-  const _PassagesPainter({required this.bounds, required this.current, required this.sealed,});
+  const _PassagesPainter({
+    required this.bounds,
+    required this.current,
+    required this.sealed,
+  });
 
   final Map<PumpRoom, Rect> bounds;
   final PumpRoom current;
@@ -283,10 +318,18 @@ class _PassagesPainter extends CustomPainter {
           Paint()
             ..style = PaintingStyle.stroke
             ..strokeWidth = 4
-            ..color = closed ? _warning : current == entry.key || current == destination ? _mint : const Color(0xFF486466),
+            ..color = closed
+                ? _warning
+                : current == entry.key || current == destination
+                    ? _mint
+                    : const Color(0xFF486466),
         );
         if (closed) {
-          canvas.drawCircle(Offset((from.dx + to.dx) / 2, from.dy), 6, Paint()..color = _warning,);
+          canvas.drawCircle(
+            Offset((from.dx + to.dx) / 2, from.dy),
+            6,
+            Paint()..color = _warning,
+          );
         }
       }
     }
@@ -294,5 +337,7 @@ class _PassagesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_PassagesPainter oldDelegate) =>
-      oldDelegate.bounds != bounds || oldDelegate.current != current || oldDelegate.sealed != sealed;
+      oldDelegate.bounds != bounds ||
+      oldDelegate.current != current ||
+      oldDelegate.sealed != sealed;
 }
