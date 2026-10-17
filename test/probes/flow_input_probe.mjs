@@ -6,7 +6,7 @@ await mkdir('.ci-logs/flow-input', { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome', headless: true });
 const evidence = [];
 try {
-  for (const method of ['fillOnly', 'domSameTask', 'fill', 'settledFill', 'insertText', 'type']) {
+  for (const method of ['fillOnly', 'domSameTask', 'domAfterFocus', 'fill', 'settledFill', 'insertText', 'type']) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1200 } });
     await context.route('**/*', async route => {
       const url = new URL(route.request().url());
@@ -37,7 +37,8 @@ try {
     }
     async function enter(locator, text) {
       if (method === 'fillOnly') return locator.fill(text);
-      if (method === 'domSameTask') return locator.evaluate((element, text) => { element.focus(); element.value = text; element.dispatchEvent(new InputEvent('input', {bubbles:true, data:text, inputType:'insertText'})); }, text);
+      if (method === 'domAfterFocus') { await locator.focus(); await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))); }
+      if (method === 'domSameTask' || method === 'domAfterFocus') return locator.evaluate((element, text) => { element.focus(); element.value = text; element.dispatchEvent(new InputEvent('input', {bubbles:true, data:text, inputType:'insertText'})); }, text);
       await locator.click({ force: true });
       if (method === 'settledFill') await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       if (method === 'fill' || method === 'settledFill') await locator.fill(text);
@@ -69,7 +70,7 @@ try {
     await context.close();
   }
   console.log(JSON.stringify(evidence.map(({method, retained, failure, snapshots}) => ({method, retained, failure, controllers:snapshots.map(x=>({stage:x.stage, ...x.controller}))})), null, 2));
-  for (const method of ['fill', 'settledFill', 'insertText', 'type']) assert.equal(evidence.find(x => x.method === method)?.retained, true, `${method} must retain both controller values`);
+  for (const method of ['domAfterFocus', 'fill', 'settledFill', 'insertText', 'type']) assert.equal(evidence.find(x => x.method === method)?.retained, true, `${method} must retain both controller values`);
 } finally {
   await browser.close();
   await writeFile('.ci-logs/flow-input/browser-evidence.json', JSON.stringify(evidence, null, 2));

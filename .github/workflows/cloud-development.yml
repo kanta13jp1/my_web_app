@@ -37,6 +37,7 @@ jobs:
           cp test/probes/flow_input_probe_main.dart .ci-logs/flow-input/
           flutter analyze --no-pub test/widgets/asset_flow_input_retention_probe_test.dart test/probes/flow_input_probe_main.dart
       - name: Actual page controller regression
+        if: ${{ !cancelled() }}
         run: |
           set -o pipefail
           flutter test --no-pub --reporter expanded test/widgets/asset_flow_input_retention_probe_test.dart 2>&1 | tee .ci-logs/flow-input/widget.log
