@@ -16,7 +16,9 @@ PATHS = [
     'lib/services/evernote_migration_commit_service.dart',
 ]
 translations = json.loads(Path('config/pr5125-ja-copy.json').read_text(encoding='utf-8'))
-assert len(translations) >= 200
+required = {'Switch from Notion or Evernote', 'Evernote migration ledger',
+            'Verify', 'Cancel subscription', 'Claude Workbench-style prompts'}
+assert required <= translations.keys(), 'Critical Japanese copy mappings missing'
 failures = []
 for name in PATHS:
     source = Path(name).read_text(encoding='utf-8')
