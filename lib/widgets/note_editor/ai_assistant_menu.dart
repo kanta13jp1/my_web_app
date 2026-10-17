@@ -65,9 +65,9 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onSelected: _handleAiAction,
       itemBuilder: (context) => const [
-        PopupMenuItem(value: 'improve', child: Text('Improve Writing')),
-        PopupMenuItem(value: 'summarize', child: Text('Summarize')),
-        PopupMenuItem(value: 'expand', child: Text('Expand Ideas')),
+        PopupMenuItem(value: 'improve', child: Text('文章を改善')),
+        PopupMenuItem(value: 'summarize', child: Text('要約する')),
+        PopupMenuItem(value: 'expand', child: Text('アイデアを広げる')),
       ],
     );
   }
@@ -104,17 +104,17 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
             (response.data as Map<String, dynamic>)['result'] as String;
         widget.onApply(result);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('AI action completed.')),
+          const SnackBar(content: Text('AIによる処理が完了しました。')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI action failed: ${response.data}')),
+          SnackBar(content: Text('AIによる処理に失敗しました：${response.data}')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI action errored: $e')),
+          SnackBar(content: Text('AIによる処理中に問題が発生しました：$e')),
         );
       }
     } finally {

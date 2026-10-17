@@ -33,17 +33,17 @@ enum EvernoteMigrationTransferState {
   String get label {
     switch (this) {
       case EvernoteMigrationTransferState.preparing:
-        return 'Preparing';
+        return '準備中';
       case EvernoteMigrationTransferState.uploading:
-        return 'Uploading';
+        return '送信中';
       case EvernoteMigrationTransferState.resuming:
-        return 'Resuming';
+        return '再開中';
       case EvernoteMigrationTransferState.verifying:
-        return 'Verifying';
+        return '照合中';
       case EvernoteMigrationTransferState.completed:
-        return 'Completed';
+        return '完了';
       case EvernoteMigrationTransferState.failed:
-        return 'Failed';
+        return '失敗';
     }
   }
 }
@@ -334,8 +334,8 @@ class SupabaseEvernoteMigrationStorageGateway
   }) async {
     if (totalBytes <= 0 || totalBytes > evernoteMigrationMaxObjectBytes) {
       throw StateError(
-        'The streamed Evernote object must be between 1 byte and '
-        '$evernoteMigrationMaxObjectBytes bytes.',
+        'Evernoteから転送するデータは1バイト以上、上限は'
+        '${evernoteMigrationMaxObjectBytes}バイトです。',
       );
     }
     await _uploadResumableStream(
@@ -358,7 +358,7 @@ class SupabaseEvernoteMigrationStorageGateway
   }) async {
     final session = _client.auth.currentSession;
     if (session == null || session.accessToken.trim().isEmpty) {
-      throw StateError('Sign in again before uploading the Evernote batch.');
+      throw StateError('Evernoteのデータを送信する前に、もう一度ログインしてください。');
     }
     final endpoint = EvernoteTusUploadService.endpointForSupabaseUrl(
       _client.storage.url,
@@ -460,7 +460,7 @@ class SupabaseEvernoteMigrationStorageGateway
   }) async* {
     final session = _client.auth.currentSession;
     if (session == null || session.accessToken.trim().isEmpty) {
-      throw StateError('Sign in again before reading the Evernote batch.');
+      throw StateError('Evernoteのデータを読み込む前に、もう一度ログインしてください。');
     }
     final transport = http.Client();
     try {
@@ -496,7 +496,7 @@ class SupabaseEvernoteMigrationStorageGateway
     final segments = path.split('/');
     if (segments.isEmpty ||
         segments.any((segment) => segment.isEmpty || segment == '..')) {
-      throw ArgumentError.value(path, 'path', 'Invalid Storage object path.');
+      throw ArgumentError.value(path, 'path', '保存先の指定が正しくありません。');
     }
     final fileName = segments.removeLast();
     final folder = segments.join('/');
@@ -570,7 +570,7 @@ class SupabaseEvernoteMigrationDatabaseGateway
     final json = _asStringMap(response);
     final noteId = _asInt(json['note_id']);
     if (noteId <= 0) {
-      throw StateError('Evernote commit did not return a target note id.');
+      throw StateError('Evernoteの取込結果に、保存先のノート識別子がありません。');
     }
     return noteId;
   }
@@ -709,7 +709,7 @@ class EvernoteMigrationCommitService {
         exportBytes.length > evernoteMigrationMaxObjectBytes) {
       throw StateError(
         'The ENEX batch must be between 1 byte and '
-        '$evernoteMigrationMaxObjectBytes bytes.',
+        '${evernoteMigrationMaxObjectBytes}バイトです。',
       );
     }
     if (preview.sourceType != 'evernote') {
@@ -756,7 +756,7 @@ class EvernoteMigrationCommitService {
     )) {
       throw StateError(
         'Every attachment must contain data and be no larger than '
-        '$evernoteMigrationMaxObjectBytes bytes.',
+        '${evernoteMigrationMaxObjectBytes}バイトです。',
       );
     }
 
@@ -859,7 +859,7 @@ class EvernoteMigrationCommitService {
     );
     final archivePath = '$ownerId/evernote/${export.exportSha256}/source.enex';
     await transferObject(
-      stageLabel: 'Recovery archive',
+      stageLabel: '復旧用バックアップ',
       bucketId: evernoteArchiveBucket,
       path: archivePath,
       bytes: exportBytes,
@@ -894,7 +894,7 @@ class EvernoteMigrationCommitService {
           resourceUrlsByHash[sourceHash] = _attachmentMarkdownUrl(path);
         }
         await transferObject(
-          stageLabel: 'Attachment',
+          stageLabel: '添付ファイル',
           bucketId: evernoteAttachmentBucket,
           path: path,
           bytes: resource.data,
@@ -1022,7 +1022,7 @@ class EvernoteMigrationCommitService {
     if (archiveBytes <= 0 || archiveBytes > evernoteMigrationMaxObjectBytes) {
       throw StateError(
         'The ENEX archive must be between 1 byte and '
-        '$evernoteMigrationMaxObjectBytes bytes.',
+        '${evernoteMigrationMaxObjectBytes}バイトです。',
       );
     }
     if (preview.sourceType != 'evernote') {
@@ -1091,7 +1091,7 @@ class EvernoteMigrationCommitService {
               resource.data.length > evernoteMigrationMaxObjectBytes) {
             throw StateError(
               'Every attachment must contain data and be no larger than '
-              '$evernoteMigrationMaxObjectBytes bytes.',
+              '${evernoteMigrationMaxObjectBytes}バイトです。',
             );
           }
           resourceBytes += resource.data.length;
@@ -1117,7 +1117,7 @@ class EvernoteMigrationCommitService {
     onTransferProgress?.call(
       EvernoteMigrationTransferProgress(
         state: EvernoteMigrationTransferState.completed,
-        stageLabel: 'Recovery archive',
+        stageLabel: '復旧用バックアップ',
         objectIndex: transferObjectIndex,
         objectCount: transferObjectCount,
         transferredBytes: transferredBytes,
@@ -1143,7 +1143,7 @@ class EvernoteMigrationCommitService {
       onTransferProgress?.call(
         EvernoteMigrationTransferProgress(
           state: EvernoteMigrationTransferState.preparing,
-          stageLabel: 'Attachment',
+          stageLabel: '添付ファイル',
           objectIndex: transferObjectIndex,
           objectCount: transferObjectCount,
           transferredBytes: objectStartBytes,
@@ -1171,7 +1171,7 @@ class EvernoteMigrationCommitService {
             onTransferProgress?.call(
               EvernoteMigrationTransferProgress(
                 state: state,
-                stageLabel: 'Attachment',
+                stageLabel: '添付ファイル',
                 objectIndex: transferObjectIndex,
                 objectCount: transferObjectCount,
                 transferredBytes: objectStartBytes + boundedObjectBytes,
@@ -1184,7 +1184,7 @@ class EvernoteMigrationCommitService {
         onTransferProgress?.call(
           EvernoteMigrationTransferProgress(
             state: EvernoteMigrationTransferState.failed,
-            stageLabel: 'Attachment',
+            stageLabel: '添付ファイル',
             objectIndex: transferObjectIndex,
             objectCount: transferObjectCount,
             transferredBytes: objectStartBytes + lastObjectBytes,
@@ -1197,7 +1197,7 @@ class EvernoteMigrationCommitService {
       onTransferProgress?.call(
         EvernoteMigrationTransferProgress(
           state: EvernoteMigrationTransferState.completed,
-          stageLabel: 'Attachment',
+          stageLabel: '添付ファイル',
           objectIndex: transferObjectIndex,
           objectCount: transferObjectCount,
           transferredBytes: transferredBytes,

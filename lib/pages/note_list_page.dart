@@ -1465,7 +1465,7 @@ class _NoteListPageState extends State<NoteListPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  if (shareScore != null) _buildReasonChip('score $shareScore'),
+                  if (shareScore != null) _buildReasonChip('共有しやすさ：$shareScore'),
                   ...shareReasons.take(4).map(_buildReasonChip),
                 ],
               ),
@@ -1709,8 +1709,8 @@ class _NoteListPageState extends State<NoteListPage> {
             _draftEntries.isNotEmpty) ||
         visibleNotes.isNotEmpty;
     final pageTitle = _showInboxOnly
-        ? 'CKO OFFICE (Inbox)'
-        : (_showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)');
+        ? 'メモ管理（受信箱）'
+        : (_showFavoritesOnly ? 'メモ管理（お気に入り）' : 'メモ管理（一覧）');
 
     return Scaffold(
       key: const Key('note_list_page_scaffold'),
@@ -1838,7 +1838,7 @@ class _NoteListPageState extends State<NoteListPage> {
                       Icons.inbox_outlined,
                       key: Key('note_list_page_inbox_filter'),
                     ),
-                    label: Text('Inbox'),
+                    label: Text('受信箱'),
                   ),
                 ],
                 selected: <_NoteListView>{

@@ -85,7 +85,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
     return Scaffold(
       key: const Key('space_sharing_page'),
       appBar: AppBar(
-        title: const Text('Space共有'),
+        title: const Text('スペースの共有'),
         actions: [
           IconButton(
             key: const Key('space_sharing_reload'),
@@ -112,7 +112,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
             children: [
               const Icon(Icons.cloud_off_outlined, size: 48),
               const SizedBox(height: 12),
-              Text('Space共有情報を読み込めませんでした。\n$_error'),
+              Text('共有スペース共有情報を読み込めませんでした。\n$_error'),
               const SizedBox(height: 12),
               FilledButton(onPressed: _load, child: const Text('再試行')),
             ],
@@ -154,16 +154,16 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
       children: [
         Text('共有状況', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 16),
-        _metric('利用可能なSpace', snapshot.spaces.length),
-        _metric('管理できるSpace', managed),
-        _metric('共有されたSpace', shared),
+        _metric('利用可能な共有スペース', snapshot.spaces.length),
+        _metric('管理できる共有スペース', managed),
+        _metric('共有された共有スペース', shared),
         _metric('保留中の招待', snapshot.incomingInvitations.length),
         const SizedBox(height: 16),
         const Card(
           child: Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Space内のノートとノートブックは同じ権限を継承します。'
+              '共有スペース内のノートとノートブックは同じ権限を継承します。'
               '閲覧のみのメンバーは内容を変更できません。',
             ),
           ),
@@ -213,8 +213,8 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  '共有Spaceはまだありません。'
-                  'コレクション画面でSpaceを作成してから招待できます。',
+                  '共有共有スペースはまだありません。'
+                  'コレクション画面で共有スペースを作成してから招待できます。',
                 ),
               ),
             ),
@@ -255,7 +255,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
                   ? null
                   : () => _mutate(
                         () => _dataSource.acceptInvitation(invitation.id),
-                        'Spaceに参加しました。',
+                        '共有スペースに参加しました。',
                       ),
               child: const Text('参加'),
             ),
@@ -364,7 +364,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
           if (space.notes.isEmpty)
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('このSpaceにはノートがありません。'),
+              child: Text('この共有スペースにはノートがありません。'),
             ),
           for (final note in space.notes) _noteTile(space, note),
         ],
@@ -450,7 +450,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
       dense: true,
       leading: const Icon(Icons.description_outlined),
       title: Text(note.title.isEmpty ? '無題' : note.title),
-      subtitle: Text(notebookName ?? 'Space直下'),
+      subtitle: Text(notebookName ?? '共有スペース直下'),
       onTap: () => _openNote(note.id),
       trailing: Wrap(
         spacing: 2,
@@ -600,7 +600,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
             items: <DropdownMenuItem<int?>>[
               const DropdownMenuItem<int?>(
                 value: null,
-                child: Text('Space直下'),
+                child: Text('共有スペース直下'),
               ),
               for (final notebook in space.notebooks)
                 DropdownMenuItem<int?>(
@@ -646,7 +646,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
           leaving ? '${space.name}から退出しますか？' : 'メンバーを削除しますか？',
         ),
         content: const Text(
-          '共有権限は直ちに失われます。既に作成されたノートはSpaceに残ります。',
+          '共有権限は直ちに失われます。既に作成されたノートは共有スペースに残ります。',
         ),
         actions: [
           TextButton(
@@ -667,7 +667,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
         spaceId: space.id,
         memberUserId: memberUserId,
       ),
-      leaving ? 'Spaceから退出しました。' : 'メンバーを削除しました。',
+      leaving ? '共有スペースから退出しました。' : 'メンバーを削除しました。',
     );
   }
 }

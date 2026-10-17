@@ -201,23 +201,23 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       <NotePromptTemplate>[
     NotePromptTemplate(
       id: 'executive-brief',
-      title: 'Executive Brief',
+      title: '意思決定用の要点整理',
       prompt:
-          'Rewrite the current note as a concise executive brief.\n\nInclude:\n- Executive summary\n- Decisions made\n- Risks or blockers\n- Next steps with owners\n\nContext\nTitle: {{note_title}}\nContent:\n{{note_content}}',
+          '現在のノートを、意思決定に使える簡潔な要点整理に書き直してください。\n\n含める内容：\n- 全体の要約\n- 決定事項\n- リスクや妨げとなる事項\n- 次の行動と担当者\n\n元の情報\nタイトル：{{note_title}}\n本文：\n{{note_content}}',
       updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
     ),
     NotePromptTemplate(
       id: 'follow-up-message',
-      title: 'Follow-up Message',
+      title: '共有・確認用のメッセージ',
       prompt:
-          'Turn the current note into a clear follow-up message that can be shared with teammates.\n\nUse this information:\nTitle: {{note_title}}\nContent:\n{{note_content}}\n\nKeep the tone aligned with {{writing_style}}.',
+          '現在のノートを、チームに共有できる分かりやすい確認用メッセージにしてください。\n\n元の情報：\nタイトル：{{note_title}}\n本文：\n{{note_content}}\n\n文体は{{writing_style}}に合わせてください。',
       updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
     ),
     NotePromptTemplate(
       id: 'counterpoint-review',
-      title: 'Counterpoint Review',
+      title: '別の視点からの見直し',
       prompt:
-          'Review the current note like a skeptical partner.\n\nContext\nTitle: {{note_title}}\nContent:\n{{note_content}}\n\nList blind spots, assumptions, and questions that should be answered before acting.',
+          '現在のノートを、慎重な協力者の視点から見直してください。\n\n元の情報\nタイトル：{{note_title}}\n本文：\n{{note_content}}\n\n行動前に確認すべき見落とし、前提、疑問点を挙げてください。',
       updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
     ),
   ];
@@ -643,7 +643,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
     final user = _supabase.auth.currentUser;
     if (user == null) {
-      throw Exception('Login is required.');
+      throw Exception('ログインしてください。');
     }
 
     final dynamic inserted = await _supabase
@@ -991,8 +991,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final noteTitle = _titleController.text.trim();
     final noteContent = _contentController.text.trim();
     final replacements = <String, String>{
-      '{{note_title}}': noteTitle.isEmpty ? '(untitled note)' : noteTitle,
-      '{{note_content}}': noteContent.isEmpty ? '(empty note)' : noteContent,
+      '{{note_title}}': noteTitle.isEmpty ? '（タイトルなし）' : noteTitle,
+      '{{note_content}}': noteContent.isEmpty ? '（本文なし）' : noteContent,
       '{{writing_style}}': _selectedAiStyle.commandValue,
       '{{today}}':
           '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}',
@@ -1015,9 +1015,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       'You are running a saved prompt from a Claude-style workbench.',
       'Template title: ${template.title}',
       'Selected writing style: ${_selectedAiStyle.commandValue}',
-      'Current note title: ${noteTitle.isEmpty ? '(untitled note)' : noteTitle}',
+      'Current note title: ${noteTitle.isEmpty ? '（タイトルなし）' : noteTitle}',
       'Current note content:',
-      noteContent.isEmpty ? '(empty note)' : noteContent,
+      noteContent.isEmpty ? '（本文なし）' : noteContent,
       'Saved prompt:',
       resolvedTemplate,
       'Return only the final result requested by the saved prompt.',
@@ -1033,7 +1033,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _contentController.text.trim().isNotEmpty;
     if (!hasNoteContext) {
       _showMessage(
-        'Add a note title or content before running a saved prompt.',
+        '保存した指示を実行する前に、ノートのタイトルまたは本文を入力してください。',
       );
       return;
     }
@@ -1050,12 +1050,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         styleInstruction: _selectedAiStyle.instruction,
       );
       _setContentText(result);
-      _showMessage('Prompt applied: ${template.title}');
+      _showMessage('指示を適用しました：${template.title}');
     } catch (e) {
       if (await _showUpgradeDialogIfNeeded(e)) {
         return;
       }
-      _showMessage('Prompt failed: $e');
+      _showMessage('指示の実行に失敗しました：$e');
     } finally {
       if (mounted) {
         setState(() {
@@ -1078,7 +1078,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     setState(() {
       _savedPromptTemplates = nextTemplates;
     });
-    _showMessage('Saved prompt: ${template.title}');
+    _showMessage('指示を保存しました：${template.title}');
   }
 
   Future<void> _deletePromptTemplate(NotePromptTemplate template) async {
@@ -1092,7 +1092,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     setState(() {
       _savedPromptTemplates = nextTemplates;
     });
-    _showMessage('Removed prompt: ${template.title}');
+    _showMessage('指示を削除しました：${template.title}');
   }
 
   Future<void> _showPromptTemplateDialog() async {
@@ -1103,7 +1103,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final titleController = TextEditingController();
     final promptController = TextEditingController(
       text:
-          'Rewrite this note for a new audience.\n\nTitle: {{note_title}}\nContent:\n{{note_content}}',
+          '新しい読み手に向けて、このノートを書き直してください。\n\nタイトル：{{note_title}}\n本文：\n{{note_content}}',
     );
 
     final createdTemplate = await showDialog<NotePromptTemplate>(
@@ -1113,7 +1113,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Save Prompt Template'),
+              title: const Text('AIへの指示をひな形として保存'),
               content: SizedBox(
                 width: 480,
                 child: SingleChildScrollView(
@@ -1127,8 +1127,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                         ),
                         controller: titleController,
                         decoration: const InputDecoration(
-                          labelText: 'Template Name',
-                          hintText: 'Board Brief',
+                          labelText: 'ひな形の名前',
+                          hintText: '会議用の要点整理',
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -1140,9 +1140,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                         minLines: 4,
                         maxLines: 8,
                         decoration: const InputDecoration(
-                          labelText: 'Prompt',
+                          labelText: 'AIへの指示',
                           hintText:
-                              'Use {{note_title}}, {{note_content}}, {{writing_style}}, {{today}}, or {{default_model}}.',
+                              '次の変数を使えます：{{note_title}}＝タイトル、{{note_content}}＝本文、{{writing_style}}＝文体、{{today}}＝今日の日付、{{default_model}}＝既定のAIモデル。',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -1168,7 +1168,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                  child: const Text('キャンセル'),
                 ),
                 FilledButton(
                   key: const Key('note_editor_prompt_template_save_button'),
@@ -1177,7 +1177,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     final prompt = promptController.text.trim();
                     if (title.isEmpty || prompt.isEmpty) {
                       setDialogState(() {
-                        errorText = 'Name and prompt are both required.';
+                        errorText = '名前と指示の両方を入力してください。';
                       });
                       return;
                     }
@@ -1190,7 +1190,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                       ),
                     );
                   },
-                  child: const Text('Save Prompt'),
+                  child: const Text('指示を保存'),
                 ),
               ],
             );
@@ -1238,28 +1238,28 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Slash Commands'),
+        title: const Text('入力して使う操作コマンド'),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('/help Show available commands'),
+            Text('/help：使えるコマンドを表示'),
             SizedBox(height: 8),
-            Text('/improve Improve the current note'),
+            Text('/improve：現在のノートの文章を改善'),
             SizedBox(height: 8),
-            Text('/summarize Summarize the current note'),
+            Text('/summarize：現在のノートを要約'),
             SizedBox(height: 8),
-            Text('/prompt <name> Run a saved prompt template'),
+            Text('/prompt <名前>：保存した指示のひな形を実行'),
             SizedBox(height: 8),
-            Text('/title Suggest a title from the current note'),
+            Text('/title：現在のノートからタイトルを提案'),
             SizedBox(height: 8),
-            Text('/translate en Translate the current note'),
+            Text('/translate en：現在のノートを英語に翻訳'),
             SizedBox(height: 8),
-            Text('/favorite Toggle favorite for this note'),
+            Text('/favorite：お気に入りを切替'),
             SizedBox(height: 8),
-            Text('/stamp Insert the current timestamp'),
+            Text('/stamp：現在の日時を挿入'),
             SizedBox(height: 8),
-            Text('/tabs Insert a 3-tab block template'),
+            Text('/tabs：3つのタブからなるひな形を挿入'),
           ],
         ),
         actions: [
@@ -1310,14 +1310,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       case 'tone':
         if (arguments.isEmpty) {
           _showMessage(
-            'Available AI styles: normal, concise, formal, explanatory',
+            '使える文体：normal＝標準、concise＝簡潔、formal＝硬め、explanatory＝詳しく',
           );
           return;
         }
         final nextStyle = _tryParseNoteEditorAiStyle(arguments.join(' '));
         if (nextStyle == null) {
           _showMessage(
-            'Unknown AI style. Use: normal, concise, formal, explanatory',
+            '指定された文体が見つかりません。normal（標準）、concise（簡潔）、formal（硬め）、explanatory（詳しく）を指定してください。',
           );
           return;
         }
@@ -1342,12 +1342,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           final available = _availablePromptTemplates
               .map((template) => template.id)
               .join(', ');
-          _showMessage('Available prompts: $available');
+          _showMessage('使える指示：$available');
           return;
         }
         final template = _findPromptTemplate(arguments.join(' '));
         if (template == null) {
-          _showMessage('Prompt not found. Try /prompt executive-brief');
+          _showMessage('指示が見つかりません。「/prompt executive-brief」を試してください。');
           return;
         }
         _slashCommandController.clear();
@@ -1565,7 +1565,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
 
     final user = _supabase.auth.currentUser;
-    if (user == null) throw Exception('Login is required.');
+    if (user == null) throw Exception('ログインしてください。');
 
     if (_currentNoteId != null) {
       // 保存済みの内容と完全一致するなら PATCH を送らない。
@@ -2169,13 +2169,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             color: theme.colorScheme.primary,
           ),
           title: Text(
-            'Claude Workbench-style prompts',
+            '保存したAIへの指示を使う',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           subtitle: Text(
-            'Save prompts you want to test repeatedly, then rerun them against the current note.',
+            '繰り返し使いたい指示を保存し、現在のノートに対して再利用できます。',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -2188,7 +2188,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 onPressed:
                     _isRunningSlashCommand ? null : _showPromptTemplateDialog,
                 icon: const Icon(Icons.add_rounded),
-                label: const Text('New Prompt'),
+                label: const Text('新しい指示'),
               ),
             ),
             ConstrainedBox(
@@ -2198,7 +2198,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Built-in prompts',
+                      '用意されている指示',
                       style: theme.textTheme.labelLarge,
                     ),
                     const SizedBox(height: 8),
@@ -2211,13 +2211,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Saved prompts',
+                      '保存した指示',
                       style: theme.textTheme.labelLarge,
                     ),
                     const SizedBox(height: 8),
                     if (_savedPromptTemplates.isEmpty)
                       Text(
-                        'No saved prompts yet. Create one with variables like {{note_content}}.',
+                        '保存した指示はまだありません。{{note_content}}などの変数を使って作成できます。',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -2526,7 +2526,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           controller: _contentController,
                           focusNode: _contentFocusNode,
                           decoration: const InputDecoration(
-                            hintText: 'Write your note here...',
+                            hintText: 'ここにノートの本文を入力してください…',
                             border: InputBorder.none,
                           ),
                           maxLines: null,

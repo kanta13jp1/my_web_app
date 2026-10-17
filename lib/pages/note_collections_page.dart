@@ -86,7 +86,7 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
     return Scaffold(
       key: const Key('note_collections_page'),
       appBar: AppBar(
-        title: const Text('ノートブック・スタック・Space'),
+        title: const Text('ノートブック・スタック・共有スペース'),
         actions: [
           IconButton(
             key: const Key('note_collections_space_sharing'),
@@ -96,7 +96,7 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
                 builder: (_) => const SpaceSharingPage(),
               ),
             ),
-            tooltip: 'Space共有',
+            tooltip: 'スペースの共有',
             icon: const Icon(Icons.group_outlined),
           ),
           IconButton(
@@ -166,7 +166,7 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 12),
-                Text('Space: ${count(NoteCollectionType.space)}'),
+                Text('共有スペース：${count(NoteCollectionType.space)}'),
                 Text('スタック: ${count(NoteCollectionType.stack)}'),
                 Text('ノートブック: ${count(NoteCollectionType.notebook)}'),
                 Text('Evernote原本: $imported'),
@@ -178,7 +178,7 @@ class _NoteCollectionsPageState extends State<NoteCollectionsPage> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Spaceとスタックはルートに作成し、ノートブックを配下へ移動できます。'
+                  '共有スペースとスタックは最上位に作成し、その配下へノートブックを移動できます。'
                   '既定ノートブックは削除できません。',
                 ),
               ],

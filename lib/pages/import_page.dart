@@ -158,7 +158,7 @@ class _ImportPageState extends State<ImportPage> {
       if (!mounted) return;
       setState(() => _migrationLedgerError = error.toString());
       _showMessage(
-        'ENEX preview is safe, but the migration ledger could not be saved: '
+        '取込前の確認結果は保持されていますが、移行台帳を保存できませんでした：'
         '$error',
       );
     }
@@ -271,7 +271,7 @@ class _ImportPageState extends State<ImportPage> {
   Future<void> _pickFile(String sourceType) async {
     final currentUser = Supabase.instance.client.auth.currentUser;
     if (sourceType == 'evernote' && currentUser == null) {
-      _showMessage('Log in before selecting an ENEX batch for cloud staging.');
+      _showMessage('クラウドに一時保管するENEXファイルを選ぶ前に、ログインしてください。');
       return;
     }
     setState(() {
@@ -303,7 +303,7 @@ class _ImportPageState extends State<ImportPage> {
       if (isEvernote) {
         final readStream = file.readStream;
         if (readStream == null) {
-          throw StateError('The selected ENEX stream could not be opened.');
+          throw StateError('選択したENEXファイルを開けませんでした。');
         }
         final staged = await _evernoteCloudStageService.stage(
           userId: currentUser!.id,
@@ -328,7 +328,7 @@ class _ImportPageState extends State<ImportPage> {
 
       final bytes = file.bytes;
       if (bytes == null) {
-        throw Exception('The selected file could not be read.');
+        throw Exception('選択したファイルを読み込めませんでした。');
       }
 
       if (sourceType == 'business_csv') {
@@ -363,7 +363,7 @@ class _ImportPageState extends State<ImportPage> {
       unawaited(_acquisitionService.recordImportPreview(sourceType));
     } catch (error) {
       if (!mounted) return;
-      _showMessage('Import preview failed: $error');
+      _showMessage('取込前の確認に失敗しました：$error');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -376,20 +376,20 @@ class _ImportPageState extends State<ImportPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx2, setDialogState) => AlertDialog(
-          title: const Text('Notion API 連携'),
+          title: const Text('Notionとの直接連携'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 'Notion インテグレーションのトークンを入力してください。\n'
-                'Notion → Settings → Integrations から発行できます。ページ本文、ネストしたブロック、データベース項目を直接プレビューします。',
+                'Notionの「設定」→「インテグレーション」から発行できます。ページ本文、入れ子のブロック、データベース項目を直接確認します。',
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _notionTokenController,
                 decoration: const InputDecoration(
-                  labelText: 'Integration Token (secret_xxx)',
+                  labelText: '連携用トークン（secret_xxxで始まる値）',
                   border: OutlineInputBorder(),
                 ),
                 obscureText: true,
@@ -449,7 +449,7 @@ class _ImportPageState extends State<ImportPage> {
       unawaited(_acquisitionService.recordImportPreview('notion_api'));
     } catch (error) {
       if (!mounted) return;
-      _showMessage('Notion API preview failed: $error');
+      _showMessage('Notionとの直接連携による取込前の確認に失敗しました：$error');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -460,7 +460,7 @@ class _ImportPageState extends State<ImportPage> {
     final user = Supabase.instance.client.auth.currentUser;
     if (preview == null) return;
     if (user == null) {
-      _showMessage('Log in before importing notes.');
+      _showMessage('ノートを取り込む前に、ログインしてください。');
       return;
     }
 
@@ -473,7 +473,7 @@ class _ImportPageState extends State<ImportPage> {
       if (preview.sourceType == 'evernote') {
         final staged = _evernoteCloudStageResult;
         if (staged == null) {
-          throw StateError('Select the ENEX batch again for cloud staging.');
+          throw StateError('クラウドに一時保管するENEXファイルをもう一度選択してください。');
         }
         final evernoteResult =
             await _evernoteMigrationCommitService.commitFromArchive(
@@ -503,7 +503,7 @@ class _ImportPageState extends State<ImportPage> {
       }
       if (!mounted) return;
       _showMessage(
-        'Imported ${result.insertedCount} notes via '
+        '${result.insertedCount}件のノートを取り込みました。処理方法：'
         '${result.importModeLabel.toLowerCase()}.',
       );
       setState(() {
@@ -517,12 +517,12 @@ class _ImportPageState extends State<ImportPage> {
       if (!mounted) return;
       if (preview.sourceType == 'evernote') {
         _showMessage(
-          'Import failed, but the verified private cloud archive was kept. '
-          'You can retry without selecting the ENEX again: $error',
+          '取込に失敗しましたが、確認済みの非公開バックアップはクラウドに保持されています。'
+          'ENEXファイルを選び直さずに再試行できます：$error',
         );
         unawaited(_loadEvernoteMigrationLedger());
       } else {
-        _showMessage('Import failed: $error');
+        _showMessage('取込に失敗しました：$error');
       }
     } finally {
       if (mounted) setState(() => _isImporting = false);
@@ -536,11 +536,11 @@ class _ImportPageState extends State<ImportPage> {
       return;
     }
     if (user == null) {
-      _showMessage('Log in before importing business CSV rows.');
+      _showMessage('業務用CSVを取り込む前に、ログインしてください。');
       return;
     }
     if (preview.validRows.isEmpty) {
-      _showMessage('No valid CSV rows are ready to commit.');
+      _showMessage('保存できる正常なCSV行がありません。');
       return;
     }
 
@@ -557,8 +557,8 @@ class _ImportPageState extends State<ImportPage> {
         return;
       }
       final message = result.rolledBack
-          ? 'CSV commit rolled back because ${result.dryRun.errorCount} rows still have errors.'
-          : 'Imported ${result.insertedCount} valid CSV rows.';
+          ? '${result.dryRun.errorCount}行に問題があるため、CSVの保存をすべて取り消しました。'
+          : '正常なCSVデータを${result.insertedCount}行取り込みました。';
       _showMessage(message);
       setState(() {
         _lastBusinessCsvCommitResult = result;
@@ -568,7 +568,7 @@ class _ImportPageState extends State<ImportPage> {
       if (!mounted) {
         return;
       }
-      _showMessage('Business CSV commit failed: $error');
+      _showMessage('業務用CSVの保存に失敗しました：$error');
     } finally {
       if (mounted) {
         setState(() => _isImporting = false);
@@ -585,7 +585,7 @@ class _ImportPageState extends State<ImportPage> {
         ? 'business-csv-errors'
         : preview.fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
     downloadCsvFile(preview.errorCsv, '$baseName-errors.csv');
-    _showMessage('CSV error list saved.');
+    _showMessage('修正が必要な行の一覧を保存しました。');
   }
 
   Future<void> _copyBusinessCsvErrors() async {
@@ -597,7 +597,7 @@ class _ImportPageState extends State<ImportPage> {
     if (!mounted) {
       return;
     }
-    _showMessage('CSV error list copied.');
+    _showMessage('修正が必要な行の一覧をコピーしました。');
   }
 
   void _setEvernoteSourceContextDefaults(String fileName) {
@@ -607,7 +607,7 @@ class _ImportPageState extends State<ImportPage> {
     final inferredNotebook =
         (dotIndex > 0 ? leaf.substring(0, dotIndex) : leaf).trim();
     _evernoteNotebookNameController.text =
-        inferredNotebook.isEmpty ? 'Evernote import' : inferredNotebook;
+        inferredNotebook.isEmpty ? 'Evernoteからの取込' : inferredNotebook;
     _evernoteStackNameController.clear();
     _evernoteSpaceNameController.clear();
   }
@@ -727,12 +727,12 @@ class _ImportPageState extends State<ImportPage> {
     final currentUser = Supabase.instance.client.auth.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Import')),
+      appBar: AppBar(title: const Text('データ取込')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
-            'Switch from Notion or Evernote',
+            'Notion・Evernoteからノートを移す',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
@@ -741,11 +741,11 @@ class _ImportPageState extends State<ImportPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'This page is part of the growth roadmap. Preview parsing now runs on a Supabase Edge Function first, with a local fallback only when the function is unavailable.',
+            'ノートを取り込む前に、内容を確認できます。通常版ではクラウドで確認処理を行い、利用できない場合だけ端末内で処理します。この架空データ版では外部サービスに接続しません。',
           ),
           const SizedBox(height: 8),
           const Text(
-            'Full note import now also runs on a Supabase Edge Function first, so larger competitor migrations do not depend entirely on browser-side batching.',
+            '通常版では、大量のノートもブラウザーだけに負担をかけず、クラウド側で順番に取り込みます。この画面は確認用のため、実際の取込は行いません。',
           ),
           const SizedBox(height: 20),
           _buildEvernoteMigrationProgressPanel(currentUser),
@@ -768,42 +768,42 @@ class _ImportPageState extends State<ImportPage> {
               _notionApiCard(),
               _sourceCard(
                 sourceType: 'notion',
-                title: 'Notion (CSV)',
+                title: 'Notionの書き出しファイル（CSV）',
                 subtitle:
-                    'Preview exported CSV files and migrate titles, text, and tags.',
+                    '書き出したCSVの内容を確認し、タイトル・本文・タグを移します。',
                 icon: Icons.table_chart,
               ),
               _sourceCard(
                 sourceType: 'evernote',
-                title: 'Evernote (ENEX)',
+                title: 'Evernoteの書き出しファイル（ENEX）',
                 subtitle:
-                    'Archive ENEX, import notes and attachments, then verify hashes before source deletion.',
+                    'ENEXのバックアップを保管し、ノートと添付ファイルを取り込みます。移行元を削除する前に、データが一致しているか確認します。',
                 icon: Icons.note_alt,
               ),
               _sourceCard(
                 sourceType: 'markdown',
-                title: 'Markdown',
+                title: 'マークダウン',
                 subtitle:
-                    'Preview a Markdown file as a note before importing it.',
+                    'マークダウン形式のファイルを、ノートとして取り込む前に確認します。',
                 icon: Icons.description,
               ),
               _sourceCard(
                 sourceType: 'xlsx',
-                title: 'Excel (XLSX)',
+                title: 'Excelの表計算ファイル（XLSX）',
                 subtitle: 'Notionの表エクスポート等を行ごと・列見出し対応でノート化。',
                 icon: Icons.grid_on,
               ),
               _sourceCard(
                 sourceType: 'docx',
-                title: 'Word (DOCX)',
+                title: 'Wordの文書ファイル（DOCX）',
                 subtitle: 'Word文書の段落を1つのノートとして取り込みます。',
                 icon: Icons.article_outlined,
               ),
               _sourceCard(
                 sourceType: 'business_csv',
-                title: 'Business CSV',
+                title: '業務用CSV',
                 subtitle:
-                    'Dry-run rows, export only errors, then commit valid rows or roll back the batch.',
+                    '保存せずに各行を検査します。問題のある行だけ書き出し、正常な行を保存するか、まとめて取り消すかを選べます。',
                 icon: Icons.rule_folder_outlined,
               ),
             ],
@@ -850,7 +850,7 @@ class _ImportPageState extends State<ImportPage> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          '${preview.sourceLabel} preview',
+                          '${preview.sourceLabel}：取込前の確認',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -869,15 +869,15 @@ class _ImportPageState extends State<ImportPage> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text('File: ${preview.fileName}'),
+                    Text('ファイル名：${preview.fileName}'),
                     const SizedBox(height: 4),
-                    Text('Notes ready to import: ${preview.notes.length}'),
+                    Text('取込可能なノート：${preview.notes.length}件'),
                     if (preview.sourceExportSha256 != null) ...[
                       const SizedBox(height: 4),
-                      Text('Attachments detected: ${preview.resourceCount}'),
+                      Text('添付ファイル：${preview.resourceCount}件'),
                       const SizedBox(height: 4),
                       SelectableText(
-                        'Export SHA-256: ${preview.sourceExportSha256}',
+                        '書き出しデータの照合用ハッシュ値：${preview.sourceExportSha256}',
                       ),
                     ],
                     if (!preview.canCommit) ...[
@@ -894,14 +894,14 @@ class _ImportPageState extends State<ImportPage> {
                     ] else if (currentUser == null) ...[
                       const SizedBox(height: 12),
                       const Text(
-                        'Preview is ready. Sign in or create an account from the landing page, then come back to import the full batch.',
+                        '内容を確認できました。通常版で全件取り込むには、案内ページでログインまたはアカウントを作成し、この画面に戻ってください。',
                       ),
                     ] else ...[
                       const SizedBox(height: 12),
                       Text(
                         preview.sourceType == 'evernote'
-                            ? 'Import stores a private ENEX recovery archive, commits each note with all attachments, and verifies downloaded hashes before marking the batch verified.'
-                            : 'When you confirm import, the full batch will use the Edge Function pipeline first and fall back locally only if needed.',
+                            ? '復旧用のENEXバックアップを非公開で保管し、ノートと添付ファイルを一緒に保存します。保存後のデータを取り出して元と照合してから、確認済みとします。'
+                            : '通常版では、取込の確定後に全件をクラウドで処理し、必要な場合だけ端末内の処理に切り替えます。',
                       ),
                     ],
                     if (preview.warnings.isNotEmpty) ...[
@@ -953,12 +953,12 @@ class _ImportPageState extends State<ImportPage> {
                       ),
                       label: Text(
                         _isImporting
-                            ? 'Importing...'
+                            ? '取込中…'
                             : !preview.canCommit
-                                ? 'Migration safety gate active'
+                                ? '移行の安全確認が未完了です'
                                 : currentUser == null
-                                    ? 'Open sign-up to import'
-                                    : 'Import these notes',
+                                    ? '取込に必要なアカウントを作成'
+                                    : 'このノートを取り込む',
                       ),
                     ),
                   ],
@@ -991,7 +991,7 @@ class _ImportPageState extends State<ImportPage> {
                                 Chip(
                                   label: Text(
                                     note.source == 'notion_database'
-                                        ? 'DB entry'
+                                        ? 'データベースの項目'
                                         : 'Page',
                                     style: const TextStyle(
                                       fontSize: 11,
@@ -1029,7 +1029,7 @@ class _ImportPageState extends State<ImportPage> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  '${preview.notes.length - 12} more notes are ready in this batch.',
+                  'このほかに${preview.notes.length - 12}件の取込可能なノートがあります。',
                 ),
               ),
           ],
@@ -1054,7 +1054,7 @@ class _ImportPageState extends State<ImportPage> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Text(
-                  'Business CSV dry-run',
+                  '業務用CSVの保存前チェック',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -1069,12 +1069,12 @@ class _ImportPageState extends State<ImportPage> {
                     size: 18,
                   ),
                   label: Text(
-                    preview.usedServerDryRun ? 'DB dry-run' : 'Local dry-run',
+                    preview.usedServerDryRun ? 'データベース側で検査' : '端末内で検査',
                   ),
                 ),
-                Chip(label: Text('${preview.validCount} valid')),
+                Chip(label: Text('正常：${preview.validCount}行')),
                 Chip(
-                  label: Text('${preview.errorCount} errors'),
+                  label: Text('要修正：${preview.errorCount}行'),
                   backgroundColor: preview.hasErrors
                       ? Theme.of(context).colorScheme.errorContainer
                       : null,
@@ -1082,7 +1082,7 @@ class _ImportPageState extends State<ImportPage> {
               ],
             ),
             const SizedBox(height: 8),
-            Text('File: ${preview.fileName}'),
+            Text('ファイル名：${preview.fileName}'),
             if (preview.warnings.isNotEmpty) ...[
               const SizedBox(height: 8),
               ...preview.warnings.map(
@@ -1098,7 +1098,7 @@ class _ImportPageState extends State<ImportPage> {
             const SizedBox(height: 12),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Rollback whole batch when any row has errors'),
+              title: const Text('問題のある行が1行でもあれば、全件の保存を取り消す'),
               value: _rollbackOnBusinessCsvErrors,
               onChanged: (value) {
                 setState(() => _rollbackOnBusinessCsvErrors = value);
@@ -1122,10 +1122,10 @@ class _ImportPageState extends State<ImportPage> {
                   ),
                   label: Text(
                     _isImporting
-                        ? 'Committing...'
+                        ? '保存中…'
                         : currentUser == null
-                            ? 'Open sign-up to commit'
-                            : 'Commit CSV rows',
+                            ? '保存に必要なアカウントを作成'
+                            : 'CSVのデータを保存',
                   ),
                 ),
                 OutlinedButton.icon(
@@ -1133,20 +1133,20 @@ class _ImportPageState extends State<ImportPage> {
                       ? null
                       : _downloadBusinessCsvErrors,
                   icon: const Icon(Icons.file_download_outlined),
-                  label: const Text('Save error CSV'),
+                  label: const Text('要修正の行をCSVで保存'),
                 ),
                 OutlinedButton.icon(
                   onPressed:
                       preview.errorRows.isEmpty ? null : _copyBusinessCsvErrors,
                   icon: const Icon(Icons.copy_outlined),
-                  label: const Text('Copy error CSV'),
+                  label: const Text('要修正の行をCSVでコピー'),
                 ),
               ],
             ),
             if (preview.errorRows.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'Rows needing correction',
+                '修正が必要な行',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -1156,9 +1156,9 @@ class _ImportPageState extends State<ImportPage> {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: const [
-                    DataColumn(label: Text('Row')),
-                    DataColumn(label: Text('Title')),
-                    DataColumn(label: Text('Reason')),
+                    DataColumn(label: Text('行番号')),
+                    DataColumn(label: Text('タイトル')),
+                    DataColumn(label: Text('問題の内容')),
                   ],
                   rows: preview.errorRows.take(8).map((row) {
                     return DataRow(
@@ -1175,14 +1175,14 @@ class _ImportPageState extends State<ImportPage> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    '${preview.errorRows.length - 8} more error rows are included in the CSV.',
+                    'CSVには、このほかに${preview.errorRows.length - 8}行の要修正データが含まれます。',
                   ),
                 ),
             ],
             if (preview.validRows.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'Valid rows',
+                '正常な行',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -1192,9 +1192,9 @@ class _ImportPageState extends State<ImportPage> {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: const [
-                    DataColumn(label: Text('Row')),
-                    DataColumn(label: Text('Title')),
-                    DataColumn(label: Text('Tags')),
+                    DataColumn(label: Text('行番号')),
+                    DataColumn(label: Text('タイトル')),
+                    DataColumn(label: Text('タグ')),
                   ],
                   rows: preview.validRows.take(6).map((row) {
                     return DataRow(
@@ -1236,8 +1236,8 @@ class _ImportPageState extends State<ImportPage> {
             Expanded(
               child: Text(
                 result.rolledBack
-                    ? 'CSV commit rolled back. ${result.dryRun.errorCount} rows need correction.'
-                    : 'Imported ${result.insertedCount} business CSV rows.',
+                    ? 'CSVの保存を取り消しました。${result.dryRun.errorCount}行を修正してください。'
+                    : '業務用CSVを${result.insertedCount}行取り込みました。',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: result.rolledBack
@@ -1357,10 +1357,10 @@ class _ImportPageState extends State<ImportPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  Chip(label: Text('${preview.rows.length} rows')),
-                  Chip(label: Text('${preview.outputFields.length} fields')),
+                  Chip(label: Text('${preview.rows.length}行')),
+                  Chip(label: Text('${preview.outputFields.length}項目')),
                   if (preview.warnings.isNotEmpty)
-                    Chip(label: Text('${preview.warnings.length} warnings')),
+                    Chip(label: Text('注意：${preview.warnings.length}件')),
                 ],
               ),
               if (preview.warnings.isNotEmpty) ...[
@@ -1487,7 +1487,7 @@ class _ImportPageState extends State<ImportPage> {
               children: [
                 const Expanded(
                   child: Text(
-                    'Evernote migration ledger',
+                    'Evernoteの移行台帳',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -1503,7 +1503,7 @@ class _ImportPageState extends State<ImportPage> {
                   )
                 else
                   IconButton(
-                    tooltip: 'Refresh migration ledger',
+                    tooltip: '移行台帳を更新',
                     onPressed: currentUser == null
                         ? null
                         : _loadEvernoteMigrationLedger,
@@ -1514,13 +1514,13 @@ class _ImportPageState extends State<ImportPage> {
             const SizedBox(height: 8),
             if (currentUser == null)
               const Text(
-                'Sign in to save staged Evernote migration batches and their verification state.',
+                '通常版ではログインすると、Evernoteの取込単位ごとの進捗と確認状況を保存できます。',
               )
             else ...[
               LinearProgressIndicator(value: progress.overallFraction),
               const SizedBox(height: 8),
               Text(
-                '${progress.overallPercent}% across export preview, import, verification, and Evernote source deletion',
+                '全体の進捗：${progress.overallPercent}%（書き出し内容の確認・取込・照合・移行元の削除）',
                 key: const Key('evernote-migration-overall-progress'),
               ),
               const SizedBox(height: 12),
@@ -1529,18 +1529,18 @@ class _ImportPageState extends State<ImportPage> {
                 runSpacing: 8,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  _migrationStageChip('ENEX export + preview', hasPreview),
+                  _migrationStageChip('書き出し・内容確認', hasPreview),
                   const Icon(Icons.arrow_forward, size: 16),
-                  _migrationStageChip('Import', hasImported),
+                  _migrationStageChip('データ取込', hasImported),
                   const Icon(Icons.arrow_forward, size: 16),
-                  _migrationStageChip('Verify', hasVerified),
+                  _migrationStageChip('データ照合', hasVerified),
                   const Icon(Icons.arrow_forward, size: 16),
                   _migrationStageChip(
-                    'Delete from Evernote',
+                    'Evernoteの移行元を削除',
                     hasSourceDeleted,
                   ),
                   const Icon(Icons.arrow_forward, size: 16),
-                  _migrationStageChip('Cancel subscription', false),
+                  _migrationStageChip('有料契約を解約', false),
                 ],
               ),
               const SizedBox(height: 12),
@@ -1548,13 +1548,13 @@ class _ImportPageState extends State<ImportPage> {
                 spacing: 16,
                 runSpacing: 8,
                 children: [
-                  Text('Batches: ${progress.batchCount}'),
-                  Text('Previewed: ${progress.sourceNoteCount} notes'),
-                  Text('Attachments: ${progress.sourceResourceCount}'),
-                  Text('Imported: ${progress.importedNoteCount}'),
-                  Text('Verified: ${progress.verifiedNoteCount}'),
+                  Text('取込単位：${progress.batchCount}件'),
+                  Text('内容確認済み：${progress.sourceNoteCount}件'),
+                  Text('添付ファイル：${progress.sourceResourceCount}件'),
+                  Text('取込済み：${progress.importedNoteCount}件'),
+                  Text('照合済み：${progress.verifiedNoteCount}件'),
                   Text(
-                    'Deleted from Evernote: '
+                    'Evernoteから削除済み：'
                     '${progress.sourceDeletedNoteCount}',
                   ),
                 ],
@@ -1563,13 +1563,13 @@ class _ImportPageState extends State<ImportPage> {
             if (_migrationLedgerError != null) ...[
               const SizedBox(height: 12),
               Text(
-                'Migration ledger unavailable: $_migrationLedgerError',
+                '移行台帳を読み込めませんでした：$_migrationLedgerError',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ],
             const SizedBox(height: 12),
             const Text(
-              'Evernote notes are deleted only after the matching imported batch passes note, attachment, metadata, recovery, hierarchy, and note-history checks.',
+              'Evernote側のノートを削除できるのは、対応する取込データについて、本文・添付ファイル・付随情報・復旧方法・階層・変更履歴の確認がすべて完了した後だけです。',
               style: TextStyle(height: 1.5),
             ),
           ],
@@ -1694,7 +1694,7 @@ class _ImportPageState extends State<ImportPage> {
     final sourceName = switch (sourceType) {
       'notion' || 'notion_api' => 'Notion',
       'evernote' => 'Evernote',
-      'markdown' => 'Markdown',
+      'markdown' => 'マークダウン',
       'xlsx' => 'Excel',
       'docx' => 'Word',
       _ => '競合ツール',

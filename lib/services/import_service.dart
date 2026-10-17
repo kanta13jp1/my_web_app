@@ -99,7 +99,7 @@ class ImportPreviewResult {
   factory ImportPreviewResult.fromJson(Map<String, dynamic> json) {
     return ImportPreviewResult(
       sourceType: json['sourceType']?.toString() ?? 'import',
-      sourceLabel: json['sourceLabel']?.toString() ?? 'Import',
+      sourceLabel: json['sourceLabel']?.toString() ?? 'データ取込',
       fileName: json['fileName']?.toString() ?? '',
       notes: (json['notes'] as List<dynamic>? ?? const <dynamic>[])
           .whereType<Map>()
@@ -123,9 +123,9 @@ class ImportPreviewResult {
   bool get usedEdgeFunction => previewMode == 'edge-function';
 
   String get previewModeLabel => switch (previewMode) {
-        'edge-function' => 'Edge Function preview',
-        'local-streaming' => 'Memory-bounded streaming preview',
-        _ => 'Local fallback preview',
+        'edge-function' => 'クラウドで内容を確認',
+        'local-streaming' => 'メモリ使用量を抑えて順次確認',
+        _ => '代替処理として端末内で内容を確認',
       };
 
   bool get canCommit => commitBlockedReason == null;
@@ -164,9 +164,9 @@ class ImportExecutionResult {
   bool get usedEdgeFunction => importMode == 'edge-function';
 
   String get importModeLabel => switch (importMode) {
-        'edge-function' => 'Edge Function import',
-        'evernote-lossless' => 'Lossless Evernote import + verification',
-        _ => 'Local fallback import',
+        'edge-function' => 'クラウドで取込',
+        'evernote-lossless' => 'Evernoteのデータを保持して取込・照合',
+        _ => '代替処理として端末内で取込',
       };
 }
 
@@ -211,7 +211,7 @@ class ImportService {
         fileName: fileName,
         bytes: bytes,
         fallbackWarning:
-            'Edge Function preview is unavailable right now, so a local preview was used.',
+            'クラウド側で内容を確認できなかったため、端末内で確認しました。',
       );
     }
   }
@@ -241,8 +241,8 @@ class ImportService {
       },
     );
     final commitBlockedReason = summary.warnings.isNotEmpty || hasEmptyResource
-        ? 'Evernote commit remains paused because at least one attachment '
-            'could not be decoded without warnings.'
+        ? '添付ファイルの一部に問題があるため、Evernoteの取込は停止しています。'
+            '添付ファイルを問題なく読み取れることを確認してください。'
         : null;
 
     return ImportPreviewResult(
@@ -252,8 +252,8 @@ class ImportService {
       notes: List<ImportedNoteDraft>.unmodifiable(notes),
       warnings: <String>[
         'Memory-bounded streaming preview parsed ${summary.noteCount} note(s).',
-        'Only the first 12 note previews retain up to 2,000 characters; all note ids and hashes remain available for verification.',
-        '${summary.resourceCount} attachment resource(s) were detected.',
+        '画面には先頭12件の本文を最大2,000文字まで表示します。照合に必要な全ノートの識別子とハッシュ値は保持されています。',
+        '添付ファイルを${summary.resourceCount}件検出しました。',
         ...summary.warnings,
       ],
       previewMode: 'local-streaming',
@@ -280,7 +280,7 @@ class ImportService {
     final data = _asMap(response.data);
     if (data['success'] != true) {
       throw Exception(
-        data['error']?.toString() ?? 'Notion API preview failed.',
+        data['error']?.toString() ?? 'Notionとの連携による内容確認に失敗しました。',
       );
     }
     return ImportPreviewResult.fromJson(_asMap(data['preview']));
@@ -303,7 +303,7 @@ class ImportService {
 
     final data = _asMap(response.data);
     if (data['success'] != true) {
-      throw Exception(data['error']?.toString() ?? 'Import preview failed.');
+      throw Exception(data['error']?.toString() ?? '取込前の内容確認に失敗しました。');
     }
 
     final previewJson = _asMap(data['preview']);
@@ -324,7 +324,7 @@ class ImportService {
           fileName: fileName,
           notes: parseNotionCsvBytes(bytes),
           warnings: <String>[
-            'The preview checks Title / Name / Content / Text columns when available.',
+            'タイトル・名前・本文に相当する列（Title／Name／Content／Text）があれば、内容を確認します。',
             if (fallbackWarning != null) fallbackWarning,
           ],
           previewMode: 'local-fallback',
@@ -338,7 +338,7 @@ class ImportService {
       case 'markdown':
         return ImportPreviewResult(
           sourceType: 'markdown',
-          sourceLabel: 'Markdown',
+          sourceLabel: 'マークダウン',
           fileName: fileName,
           notes: <ImportedNoteDraft>[
             parseMarkdownBytes(bytes, fileName: fileName),
@@ -351,7 +351,7 @@ class ImportService {
       case 'xlsx':
         return ImportPreviewResult(
           sourceType: 'xlsx',
-          sourceLabel: 'Excel (XLSX)',
+          sourceLabel: 'Excelの表計算ファイル（XLSX）',
           fileName: fileName,
           notes: parseXlsxBytes(bytes),
           warnings: <String>[
@@ -363,7 +363,7 @@ class ImportService {
       case 'docx':
         return ImportPreviewResult(
           sourceType: 'docx',
-          sourceLabel: 'Word (DOCX)',
+          sourceLabel: 'Wordの文書ファイル（DOCX）',
           fileName: fileName,
           notes: <ImportedNoteDraft>[
             parseDocxBytes(bytes, fileName: fileName),
@@ -378,7 +378,7 @@ class ImportService {
         throw ArgumentError.value(
           sourceType,
           'sourceType',
-          'Unsupported source',
+          '対応していない取込元です',
         );
     }
   }
@@ -424,7 +424,7 @@ class ImportService {
 
       drafts.add(
         ImportedNoteDraft(
-          title: title.isEmpty ? 'Notion import' : title,
+          title: title.isEmpty ? 'Notionからの取込' : title,
           content: content,
           source: 'notion',
           tags: tags,
@@ -464,8 +464,8 @@ class ImportService {
       (note) => note.resources.any((resource) => resource.data.isEmpty),
     );
     final commitBlockedReason = export.warnings.isNotEmpty || hasEmptyResource
-        ? 'Evernote commit remains paused because at least one attachment '
-            'could not be decoded without warnings.'
+        ? '添付ファイルの一部に問題があるため、Evernoteの取込は停止しています。'
+            '添付ファイルを問題なく読み取れることを確認してください。'
         : null;
     return ImportPreviewResult(
       sourceType: 'evernote',
@@ -473,8 +473,8 @@ class ImportService {
       fileName: fileName,
       notes: export.notes.map(_toImportedEvernoteDraft).toList(growable: false),
       warnings: <String>[
-        'ENML, timestamps, note attributes, links, and attachment manifests were preserved for verification.',
-        '${export.resourceCount} attachment resource(s) were detected.',
+        '照合のため、元の本文形式・日時・ノートの属性・リンク・添付ファイル一覧を保持しています。',
+        '添付ファイルを${export.resourceCount}件検出しました。',
         ...export.warnings,
         if (fallbackWarning != null) fallbackWarning,
       ],
@@ -544,7 +544,7 @@ class ImportService {
   /// 列があればそれを尊重し、無ければ各行を1ノート化する。
   List<ImportedNoteDraft> parseXlsxBytes(Uint8List bytes) {
     final rows = _officeParser.parseXlsxToRows(bytes);
-    return _rowsToNotes(rows, source: 'xlsx', fallbackTitle: 'Spreadsheet row');
+    return _rowsToNotes(rows, source: 'xlsx', fallbackTitle: '表計算ファイルの行');
   }
 
   /// DOCX (Word) を単一ノートに変換する。段落を改行結合し、先頭の非空行を
@@ -660,7 +660,7 @@ class ImportService {
     }
     if (notes.any((note) => note.source == 'evernote')) {
       throw StateError(
-        'Evernote import requires the lossless migration commit pipeline.',
+        'Evernoteの取込には、元のデータを保持して照合する専用の移行処理が必要です。',
       );
     }
 
@@ -694,7 +694,7 @@ class ImportService {
 
     final data = _asMap(response.data);
     if (data['success'] != true) {
-      throw Exception(data['error']?.toString() ?? 'Import commit failed.');
+      throw Exception(data['error']?.toString() ?? '取込データの保存に失敗しました。');
     }
 
     final result = ImportExecutionResult.fromJson(data);
@@ -750,7 +750,7 @@ class ImportService {
     }
     await _gamificationService.awardPoints(
       insertedCount * 10,
-      reason: 'Imported $insertedCount notes',
+      reason: '${insertedCount}件のノートを取り込みました',
     );
   }
 

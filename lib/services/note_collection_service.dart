@@ -8,7 +8,7 @@ enum NoteCollectionType {
   String get databaseValue => name;
 
   String get label => switch (this) {
-        NoteCollectionType.space => 'Space',
+        NoteCollectionType.space => '共有スペース',
         NoteCollectionType.stack => 'スタック',
         NoteCollectionType.notebook => 'ノートブック',
       };
@@ -17,7 +17,7 @@ enum NoteCollectionType {
         'space' => NoteCollectionType.space,
         'stack' => NoteCollectionType.stack,
         'notebook' => NoteCollectionType.notebook,
-        _ => throw FormatException('Unsupported note collection type: $value'),
+        _ => throw FormatException('対応していないコレクションの種類です：$value'),
       };
 }
 
@@ -54,7 +54,7 @@ class NoteCollectionRecord {
   }) {
     final id = int.tryParse(json['id']?.toString() ?? '');
     if (id == null) {
-      throw StateError('Collection id is missing.');
+      throw StateError('コレクションの識別子がありません。');
     }
     return NoteCollectionRecord(
       id: id,
@@ -254,7 +254,7 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
     String description = '',
   }) async {
     if (type != NoteCollectionType.notebook && parentId != null) {
-      throw ArgumentError('Spaces and stacks are root collections.');
+      throw ArgumentError('共有スペースとスタックは最上位に配置してください。');
     }
     final userId = _requireUserId();
     await _client.from('note_collections').insert(<String, dynamic>{
@@ -288,7 +288,7 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
   @override
   Future<void> moveCollection({required int id, int? parentId}) async {
     if (id == parentId) {
-      throw ArgumentError('A collection cannot be its own parent.');
+      throw ArgumentError('コレクション自身を親にすることはできません。');
     }
     final userId = _requireUserId();
     await _client
@@ -327,7 +327,7 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
     required int id,
     required int sortOrder,
   }) async {
-    if (sortOrder < 0) throw ArgumentError('Sort order cannot be negative.');
+    if (sortOrder < 0) throw ArgumentError('表示順には0以上の値を指定してください。');
     final userId = _requireUserId();
     await _client
         .from('note_collections')
@@ -350,7 +350,7 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
   String _requireUserId() {
     final id = _client.auth.currentUser?.id;
     if (id == null || id.trim().isEmpty) {
-      throw StateError('Sign in before managing note collections.');
+      throw StateError('コレクションを管理する前に、ログインしてください。');
     }
     return id;
   }
@@ -358,7 +358,7 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
   String _validName(String raw) {
     final value = raw.trim();
     if (value.isEmpty || value.length > 200) {
-      throw ArgumentError('Names must contain 1 to 200 characters.');
+      throw ArgumentError('名前は1文字以上200文字以内で入力してください。');
     }
     return value;
   }
@@ -366,7 +366,7 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
   String _validDescription(String raw) {
     final value = raw.trim();
     if (value.length > 2000) {
-      throw ArgumentError('Descriptions cannot exceed 2000 characters.');
+      throw ArgumentError('説明は2,000文字以内で入力してください。');
     }
     return value;
   }

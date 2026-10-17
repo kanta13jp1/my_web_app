@@ -16,6 +16,15 @@ class EvernoteCloudStageStatus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percent = (progress.fraction * 100).round();
+    final stateLabel = switch (progress.state) {
+      EvernoteCloudStageState.preparing => '準備中',
+      EvernoteCloudStageState.uploading => '送信中',
+      EvernoteCloudStageState.parsing => '内容を解析中',
+      EvernoteCloudStageState.copying => 'バックアップを作成中',
+      EvernoteCloudStageState.verifying => '照合中',
+      EvernoteCloudStageState.completed => '完了',
+      EvernoteCloudStageState.failed => '失敗',
+    };
     final failed = progress.state == EvernoteCloudStageState.failed;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,7 +35,7 @@ class EvernoteCloudStageStatus extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Private cloud archive: $percent% · ${progress.state.name}',
+          '非公開バックアップの保管：$percent%・$stateLabel',
           key: const Key('evernote-cloud-stage-progress-label'),
           style: failed
               ? TextStyle(
@@ -76,7 +85,7 @@ class EvernoteSourceContextFields extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Evernote source hierarchy',
+          'Evernoteの移行元の階層',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
@@ -102,7 +111,7 @@ class EvernoteSourceContextFields extends StatelessWidget {
             final space = optionalField(
               key: const Key('evernote-source-space-name'),
               controller: spaceController,
-              label: '元Space名（任意）',
+              label: '元共有スペース名（任意）',
             );
             if (constraints.maxWidth >= evernoteContextWideBreakpoint) {
               return Row(
@@ -141,9 +150,9 @@ class EvernoteCloudTransferStatus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final failed = progress.state == EvernoteMigrationTransferState.failed;
-    final label = 'Cloud transfer: ${progress.percent}% · '
+    final label = 'クラウドへの転送：${progress.percent}%・'
         '${progress.state.label} · ${progress.stageLabel} · '
-        'object ${progress.objectIndex}/${progress.objectCount}';
+        '対象 ${progress.objectIndex}/${progress.objectCount}件';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

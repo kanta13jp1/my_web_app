@@ -38,7 +38,9 @@ jobs:
           dart fix --apply --code=require_trailing_commas test/preview
           dart format lib/preview test/preview
           flutter analyze lib/preview test/preview
-          flutter test test/preview/pr5125_store_test.dart
+          flutter analyze lib/pages/import_page.dart lib/pages/note_editor_page.dart lib/pages/note_list_page.dart lib/pages/note_collections_page.dart lib/pages/note_navigation_page.dart lib/pages/space_sharing_page.dart lib/widgets/evernote_cloud_migration_controls.dart lib/widgets/note_editor/ai_assistant_menu.dart lib/services/import_service.dart lib/services/note_collection_service.dart lib/services/evernote_migration_commit_service.dart
+          flutter test test/preview
+          python scripts/check_pr5125_japanese.py
       - name: Capture mechanical formatting patch
         if: always()
         run: |
@@ -50,7 +52,7 @@ jobs:
           python - <<'PY'
           import json, os
           from pathlib import Path
-          Path('build/web/preview-version.json').write_text(json.dumps({'source_pr':5125,'source_head':'0de740ae4223390dc9da7c9185947206834d61a7','preview_head':os.environ['GITHUB_SHA'],'database':'none','mode':'synthetic-read-only'}))
+          Path('build/web/preview-version.json').write_text(json.dumps({'source_pr':5125,'source_head':'0de740ae4223390dc9da7c9185947206834d61a7','preview_head':os.environ['GITHUB_SHA'],'database':'none','mode':'synthetic-read-only','language':'ja'}))
           PY
       - name: Install cloud browser tooling from repository lock
         run: |

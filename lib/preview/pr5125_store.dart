@@ -49,7 +49,7 @@ class Preview5125Store {
         'id': 1,
         'user_id': userId,
         'collection_type': 'space',
-        'name': '架空の共同Space',
+        'name': '架空の共同スペース',
         'source_system': 'native',
         'sort_order': 0,
         'is_default': false,

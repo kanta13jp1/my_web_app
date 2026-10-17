@@ -6,7 +6,8 @@ const assert = require('node:assert/strict');
   fs.mkdirSync('preview-evidence', { recursive: true });
   const browser = await chromium.launch();
   const screens = ['note-list','note-editor','import','note-collections','note-tags','note-navigation','note-tasks','space-sharing'];
-  const labels = {'note-list':'架空データ：秋の読書メモ','note-editor':'メモを編集',import:'Import','note-collections':'ノートブック・スタック・Space','note-tags':'階層タグ','note-navigation':'保存済み検索・ショートカット','note-tasks':'ノートタスク','space-sharing':'Space共有'};
+  const labels = {'note-list':'架空データ：秋の読書メモ','note-editor':'メモを編集',import:'データ取込','note-collections':'ノートブック・スタック・共有スペース','note-tags':'階層タグ','note-navigation':'保存済み検索・ショートカット','note-tasks':'ノートタスク','space-sharing':'スペースの共有'};
+  const oldCopy=Object.keys(JSON.parse(fs.readFileSync('config/pr5125-ja-copy.json','utf8'))).filter(s=>!s.includes('$') && /^[A-Za-z]/.test(s) && s.length>3);
   const report = [];
   try {
     for (const [device, viewport] of Object.entries({pc:{width:1440,height:1000},mobile:{width:390,height:844}})) {
@@ -32,6 +33,12 @@ const assert = require('node:assert/strict');
         fs.writeFileSync(`preview-evidence/${device}-${screen}.json`,JSON.stringify({semantics,errors,external,consoleMessages},null,2));
         assert((await page.locator('nav').innerText()).includes('架空データ・DB接続なし'), 'Missing offline header');
         assert(semantics.includes(labels[screen]), 'Missing actual screen content: '+device+'/'+screen+' '+semantics.slice(0,1000));
+        const untranslated=oldCopy.filter(copy=>semantics.includes(copy));
+        assert.deepEqual(untranslated,[], 'Untranslated English interface copy: '+device+'/'+screen);
+        if(screen==='import') {
+          assert(semantics.includes('Notion・Evernoteからノートを移す'));
+          assert(semantics.includes('Evernoteの移行台帳'));
+        }
         assert(!/Assertion failed|ProviderNotFoundException|Supabase has not been initialized|ErrorWidget/.test(semantics), 'Broken screen: '+device+'/'+screen);
         await page.screenshot({path:`preview-evidence/${device}-${screen}.png`,fullPage:true});
         assert.equal(errors.length,start, 'Browser error: '+errors.slice(start).join('\n'));

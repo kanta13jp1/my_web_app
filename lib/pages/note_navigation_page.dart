@@ -97,7 +97,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
                         builder: (_) => const NoteCollectionsPage(),
                       ),
                     ),
-            tooltip: 'ノートブック・スタック・Space',
+            tooltip: 'ノートブック・スタック・共有スペース',
             icon: const Icon(Icons.library_books_outlined),
           ),
           IconButton(
