@@ -20,6 +20,7 @@ AssetLiabilityAccount _account(
 
 AssetLiabilityDebtRow _debt({
   int? day = 10,
+  String? sourceAccountId,
   String? recurringFixedCostId,
   AssetLiabilityAccountKind kind = AssetLiabilityAccountKind.utility,
   bool fullPaymentEstimate = false,
@@ -32,7 +33,7 @@ AssetLiabilityDebtRow _debt({
     kind: kind,
     balance: -20000,
     paymentDay: day,
-    paymentSourceAccountId: null,
+    paymentSourceAccountId: sourceAccountId,
     paymentSourceAccountName: null,
     paymentMethod: AssetLiabilityPaymentMethod.direct,
     paymentMethodLabel: null,
@@ -98,6 +99,41 @@ double _projectOutflow(AssetCashflowForecastInputs inputs) {
 }
 
 void main() {
+  test('card funded fixed costs are not cash outflow in six month inputs', () {
+    for (final kind in [
+      AssetLiabilityAccountKind.creditCard,
+      AssetLiabilityAccountKind.shoppingDebt,
+    ]) {
+      final inputs = AssetCashflowForecastInputs.fromAssetData(
+        accounts: [
+          _account('card', kind, -20000),
+          _account('cash', AssetLiabilityAccountKind.cash, 13071),
+        ],
+        debtRows: [_debt(sourceAccountId: 'card')],
+        recurringIncomeTemplates: const [],
+        inflowRules: const [],
+        oneTimeInflows: const [],
+        subscriptions: const [],
+      );
+      expect(inputs.recurringOutflow, isEmpty);
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 10, 17),
+        startingBalance: inputs.startingBalance,
+        horizonMonths: 6,
+        recurringOutflow: inputs.recurringOutflow,
+      );
+      expect(forecast.months.every((month) => month.outflowTotal == 0), isTrue);
+    }
+    final bank = AssetCashflowForecastInputs.fromAssetData(
+      accounts: [_account('bank', AssetLiabilityAccountKind.deposit, 13071)],
+      debtRows: [_debt(sourceAccountId: 'bank')],
+      recurringIncomeTemplates: const [],
+      inflowRules: const [],
+      oneTimeInflows: const [],
+      subscriptions: const [],
+    );
+    expect(bank.recurringOutflow.single.amount, 2000);
+  });
   group('forecast and calendar payment schedule agreement', () {
     test('only paid rows in a known cycle suppress the due occurrence', () {
       for (final paid in [false, true]) {
