@@ -8,6 +8,37 @@ import 'package:my_web_app/services/import_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
+  for (final items in <bool>[false, true]) {
+    test('loads all owner ledger pages, items=$items', () async {
+      final cursors = <int>[];
+      final service = _service((request) async {
+        expect(request.url.queryParameters['user_id'], 'eq.user-a');
+        expect(request.url.queryParameters['order'], 'id.asc.nullslast');
+        final cursor = int.parse(
+          (request.url.queryParameters['id'] ?? 'gt.0').substring(3),
+        );
+        cursors.add(cursor);
+        final rows = List<Map<String, dynamic>>.generate(205, (index) {
+          return <String, dynamic>{
+            ...items ? _itemJson() : _batchJson(),
+            'id': index + 1,
+          };
+        }).where((row) => (row['id'] as int) > cursor).take(100).toList();
+        return http.Response(
+          jsonEncode(rows),
+          200,
+          headers: const {'content-type': 'application/json'},
+          request: request,
+        );
+      });
+      final ids = items
+          ? (await service.loadItems(userId: 'user-a')).map((row) => row.id)
+          : (await service.loadBatches(userId: 'user-a')).map((row) => row.id);
+      expect(ids.toSet(), hasLength(205));
+      expect(ids.first, 205);
+      expect(cursors, <int>[0, 100, 200]);
+    });
+  }
   group('EvernoteMigrationProgress', () {
     test('reports transparent four-stage progress', () {
       final progress =
@@ -113,7 +144,7 @@ void main() {
       expect(captured.url.queryParameters['user_id'], 'eq.user-a');
       expect(
         captured.url.queryParameters['order'],
-        'updated_at.desc.nullslast',
+        'id.asc.nullslast',
       );
       expect(captured.headers['authorization'], 'Bearer user-a-jwt');
     });
