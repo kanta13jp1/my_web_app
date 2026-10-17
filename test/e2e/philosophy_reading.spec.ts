@@ -1097,11 +1097,11 @@ test('Iwanami catalog audit editions preserve single, split, unknown-total and e
 
 test('Remaining Iwanami editions preserve alternate titles, shared books, split volumes and attribution', async ({ page }, info) => {
   test.setTimeout(600000);
-  const books=[{"work": "hume:treatise", "title": "人性論 第1巻", "isbn": "9784003361917", "translator": "大槻春彦", "editor": "", "year": "1948", "pages": null, "volume": "岩波文庫 青619-1・第1巻", "note": "第1巻「知性に就いて 上」。ISBN-10 4003361911・1948年は大学図書館書誌で同定。集約書誌の巻次・数量に差があるためページ数は未設定。第4巻は今回未追加。", "source": "https://opac.dokkyomed.ac.jp/iwjs0006opc/ctlsrh.do?locale=ja&ncid=BN01044991&search_mode=detail&tab_num=0"}, {"work": "kant:pure-reason", "title": "純粋理性批判（下）", "isbn": "9784003362556", "translator": "篠田英雄", "editor": "", "year": "1962", "pages": 434, "volume": "岩波文庫・下巻", "note": "", "source": "https://www.hanmoto.com/bd/isbn/9784003362556"}, {"work": "epicurus:menoeceus", "title": "エピクロス 教説と手紙", "isbn": "9784003360613", "translator": "出隆・岩崎允胤", "editor": "", "year": "1959", "pages": 216, "volume": "岩波文庫 青606-1", "note": "『メノイケウス宛の手紙』を収録。ほかの手紙・教説等との合本で、ISBN・216ページは合本全体。", "source": "https://www.hanmoto.com/bd/isbn/9784003360613"}, {"work": "epictetus:enchiridion", "title": "エピクテトス 人生談義（下）", "isbn": "9784003360842", "translator": "國方栄二", "editor": "", "year": "2021", "pages": 504, "volume": "岩波文庫・下巻", "note": "目録の『提要』（Enchiridion）は本書の『要録』に対応。『語録』第三・四巻等との合本で、ISBN・504ページは合本全体。語録と提要は別著作として読書回を保持します。", "source": "https://www.hanmoto.com/bd/isbn/9784003360842"}, {"work": "dogen:shobogenzo", "title": "正法眼蔵 第4巻", "isbn": "9784003331934", "translator": "", "editor": "水野弥穂子（校注）", "year": "1993", "pages": 518, "volume": "岩波文庫・第4巻", "note": "全四冊のうちこの巻。現代語訳とは区別し、校注者を編集者欄に記録。", "source": "https://www.hanmoto.com/bd/isbn/9784003331934"}, {"work": "marx:capital", "title": "資本論 第9巻", "isbn": "9784003412596", "translator": "向坂逸郎", "editor": "フリードリヒ・エンゲルス（編）", "year": "1970", "pages": 364, "volume": "岩波文庫 白125-9・第9巻", "note": "全九冊のうちこの巻のページ数。巻ごとに別の読書回として登録できます。", "source": "https://www.hanmoto.com/bd/isbn/9784003412596"}];
+  const books: Array<{work:string;title:string;isbn:string;translator:string;editor:string;year:string;pages:number|null;volume:string;source:string;bookUrl?:string;note:string}>=[{"work": "schopenhauer:world", "title": "意志と表象としての世界 正篇第1巻", "isbn": "", "translator": "岡本信二郎", "editor": "", "year": "1941", "pages": null, "volume": "岩波文庫 2843-2844・正篇第1巻", "note": "CiNiiで確認できる正篇第1巻のみ。全著作を収録する版とは扱いません。ISBN・総ページ数は書誌で未記載のため空欄。手元の本に応じて編集できます。", "source": "https://ci.nii.ac.jp/ncid/BA31007223", "bookUrl": "https://www.amazon.co.jp/s/?i=stripbooks&k=意志と表象としての世界+岡本信二郎+岩波文庫"},{"work": "hume:treatise", "title": "人性論 第1巻", "isbn": "9784003361917", "translator": "大槻春彦", "editor": "", "year": "1948", "pages": null, "volume": "岩波文庫 青619-1・第1巻", "note": "第1巻「知性に就いて 上」。ISBN-10 4003361911・1948年は大学図書館書誌で同定。集約書誌の巻次・数量に差があるためページ数は未設定。第4巻は今回未追加。", "source": "https://opac.dokkyomed.ac.jp/iwjs0006opc/ctlsrh.do?locale=ja&ncid=BN01044991&search_mode=detail&tab_num=0"}, {"work": "kant:pure-reason", "title": "純粋理性批判（下）", "isbn": "9784003362556", "translator": "篠田英雄", "editor": "", "year": "1962", "pages": 434, "volume": "岩波文庫・下巻", "note": "", "source": "https://www.hanmoto.com/bd/isbn/9784003362556"}, {"work": "epicurus:menoeceus", "title": "エピクロス 教説と手紙", "isbn": "9784003360613", "translator": "出隆・岩崎允胤", "editor": "", "year": "1959", "pages": 216, "volume": "岩波文庫 青606-1", "note": "『メノイケウス宛の手紙』を収録。ほかの手紙・教説等との合本で、ISBN・216ページは合本全体。", "source": "https://www.hanmoto.com/bd/isbn/9784003360613"}, {"work": "epictetus:enchiridion", "title": "エピクテトス 人生談義（下）", "isbn": "9784003360842", "translator": "國方栄二", "editor": "", "year": "2021", "pages": 504, "volume": "岩波文庫・下巻", "note": "目録の『提要』（Enchiridion）は本書の『要録』に対応。『語録』第三・四巻等との合本で、ISBN・504ページは合本全体。語録と提要は別著作として読書回を保持します。", "source": "https://www.hanmoto.com/bd/isbn/9784003360842"}, {"work": "dogen:shobogenzo", "title": "正法眼蔵 第4巻", "isbn": "9784003331934", "translator": "", "editor": "水野弥穂子（校注）", "year": "1993", "pages": 518, "volume": "岩波文庫・第4巻", "note": "全四冊のうちこの巻。現代語訳とは区別し、校注者を編集者欄に記録。", "source": "https://www.hanmoto.com/bd/isbn/9784003331934"}, {"work": "marx:capital", "title": "資本論 第9巻", "isbn": "9784003412596", "translator": "向坂逸郎", "editor": "フリードリヒ・エンゲルス（編）", "year": "1970", "pages": 364, "volume": "岩波文庫 白125-9・第9巻", "note": "全九冊のうちこの巻のページ数。巻ごとに別の読書回として登録できます。", "source": "https://www.hanmoto.com/bd/isbn/9784003412596"}];
   for(const [index,book] of books.entries()) {
     await page.goto('/');
     await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
-    const titles: Record<string,string>={"hume:treatise": "人間本性論", "kant:pure-reason": "純粋理性批判", "epicurus:menoeceus": "メノイケウス宛の手紙", "epictetus:enchiridion": "提要", "dogen:shobogenzo": "正法眼蔵", "marx:capital": "資本論"};
+    const titles: Record<string,string>={"schopenhauer:world":"意志と表象としての世界","hume:treatise": "人間本性論", "kant:pure-reason": "純粋理性批判", "epicurus:menoeceus": "メノイケウス宛の手紙", "epictetus:enchiridion": "提要", "dogen:shobogenzo": "正法眼蔵", "marx:capital": "資本論"};
     const open=async()=>{await openWork(page,titles[book.work]);};
     await open();
     const start=page.getByRole('button',{name:/^(読書を始める|別の版・再読を始める)$/});
@@ -1119,17 +1119,17 @@ test('Remaining Iwanami editions preserve alternate titles, shared books, split 
       await restoredField(page,/^総ページ数/,book.pages===null?'':String(book.pages));
       await restoredField(page,/^出版年/,book.year);
       await restoredField(page,/^巻・版の名前/,volume);
-      await restoredField(page,/^書籍・購入URL/,'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn);
+      await restoredField(page,/^書籍・購入URL/,book.bookUrl || 'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn);
       await restoredField(page,/^版情報の出典URL/,book.source);
     };
     await verify();await capture(page,info,'remaining-iwanami-'+book.isbn+'-prefilled');
     await page.getByRole('button',{name:'保存',exact:true}).click();
     await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
     await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await open();
-    await editRegisteredEdition(page,book.isbn);await verify();
+    if(book.isbn) await editRegisteredEdition(page,book.isbn); else await page.getByRole('button',{name:'版を編集',exact:true}).last().click();await verify();
     // Editing a registered book searches by its ISBN automatically.
     await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
-    await restoredField(page,/^書籍情報を検索/,book.isbn);
+    await restoredField(page,/^書籍情報を検索/,book.isbn || titles[book.work]);
     await revealReadingControl(page,candidate);await candidate.click();
     await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();await verify();
     const volume=book.volume+'・手元の版を確認';
@@ -1137,7 +1137,7 @@ test('Remaining Iwanami editions preserve alternate titles, shared books, split 
     await page.getByRole('button',{name:'保存',exact:true}).click();
     await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
     await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await open();
-    await editRegisteredEdition(page,book.isbn);await verify(volume);
+    if(book.isbn) await editRegisteredEdition(page,book.isbn); else await page.getByRole('button',{name:'版を編集',exact:true}).last().click();await verify(volume);
     await capture(page,info,'remaining-iwanami-'+book.isbn+'-edited-reloaded');
     await page.getByRole('button',{name:'キャンセル',exact:true}).click();
   }

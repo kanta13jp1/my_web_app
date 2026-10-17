@@ -666,6 +666,12 @@ void main() {
         ReadingEdition.fromJson(edition.toJson()).toJson(),
         edition.toJson(),
       );
+      if (edition.isbn.isEmpty && book.workId == 'schopenhauer:world') {
+        expect(edition.translator, '岡本信二郎');
+        expect(edition.volume, contains('正篇第1巻'));
+        expect(book.note, contains('未記載'));
+        continue;
+      }
       if (edition.isbn.isEmpty) {
         expect(book.workId, 'husserl:ideas');
         expect(edition.volume, '1-1');
@@ -683,12 +689,12 @@ void main() {
         expect(sum % 11, 0, reason: edition.isbn);
       }
     }
-    expect(philosophyCatalogEditions.length, 228);
+    expect(philosophyCatalogEditions.length, 229);
     expect(
       philosophyCatalogEditions
           .where((b) => b.edition.language == '日本語')
           .length,
-      227,
+      228,
     );
     final books = philosophyCatalogEditions
         .where((b) => b.workId == 'confucius:analects')
