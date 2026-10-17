@@ -1,4 +1,4 @@
-name: Cloud Development Checks
+name: Approved PR5852 Web Release
 
 on:
   pull_request:
@@ -45,6 +45,17 @@ on:
       - AGENTS.md
   workflow_dispatch:
     inputs:
+      approved_release:
+        description: Explicit owner approved PR5852-only release
+        required: true
+        default: false
+        type: boolean
+      deploy_scope:
+        required: true
+        default: web_only
+        type: choice
+        options:
+          - web_only
       expected_head_sha:
         description: Exact 40-character pushed HEAD that this run must validate
         required: true
@@ -77,8 +88,13 @@ on:
 permissions: {}
 
 concurrency:
-  group: cloud-development-${{ github.ref }}-${{ inputs.profile || 'full' }}
-  cancel-in-progress: true
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  ENVIRONMENT: production
+  FLUTTER_VERSION: "3.38.x"
+  LANDING_GOOGLE_LOGIN_ENABLED: "true"
 
 jobs:
   validate:
@@ -508,3 +524,932 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  ci:
+    name: Run CI Checks
+    # Pull requests already passed this required workflow. Re-run it only for
+    # an operator-triggered deployment that has no preceding protected PR.
+    if: github.event_name == 'workflow_dispatch' && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && vars.PRODUCTION_DEPLOY_HOLD == 'false'
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+    with:
+      expected_head_sha: ${{ github.sha }}
+    permissions:
+      contents: read
+      pull-requests: write
+
+  deploy:
+    name: Deploy to Production Environment
+    runs-on: ubuntu-latest
+    needs: [validate, ci]
+    if: always() && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && vars.PRODUCTION_DEPLOY_HOLD == 'false' && needs.validate.result == 'success' && needs.ci.result == 'success'
+    timeout-minutes: 45
+    environment:
+      name: production
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      deployable: ${{ steps.changes.outputs.deployable }}
+      web: ${{ steps.changes.outputs.web }}
+      edge: ${{ steps.changes.outputs.edge }}
+      migration: ${{ steps.changes.outputs.migration }}
+
+    permissions:
+      contents: write
+      # Win版#131 part 9: tag push が workflow file 変更を含む commit を指す場合の
+      # GitHub App `workflows` permission 拒否を回避
+      actions: write
+
+    steps:
+      - name: Checkout code
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          # Keep source, event change scope, release metadata, and tags on one SHA.
+          # A queued run must not silently build a newer moving branch head.
+          if [[ ! "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Deployment requires a full immutable event SHA."
+            exit 1
+          fi
+          git fetch --tags --prune origin "$GITHUB_SHA"
+          git checkout --force --detach FETCH_HEAD
+          if [ "$(git rev-parse HEAD)" != "$GITHUB_SHA" ]; then
+            echo "::error::Deployment checkout does not match the event SHA."
+            exit 1
+          fi
+
+      - name: Collect pushed files
+        if: github.event_name == 'push'
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          [[ "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE_SHA" != 0000000000000000000000000000000000000000 ]]
+          git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
+          mkdir -p .deploy-logs
+          git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" > .deploy-logs/changed-files.txt
+
+      - name: Reject mixed public-blog deployments
+        if: github.event_name == 'push'
+        run: python scripts/production_core_hub_scope.py guard --changed-files .deploy-logs/changed-files.txt
+
+      - name: Classify deploy scope
+        id: changes
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'push' && inputs.deploy_scope != 'web_only' }}
+          WEB_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_scope == 'web_only' }}
+        run: |
+          mkdir -p .deploy-logs
+          touch .deploy-logs/changed-files.txt
+          if [ "$WEB_ONLY" = "true" ]; then
+            printf 'web/index.html\n' >> .deploy-logs/changed-files.txt
+          fi
+          args=()
+          if [ "$FORCE_ALL" = "true" ]; then
+            args+=(--all)
+          fi
+          python scripts/classify_ci_changes.py \
+            --changed-files .deploy-logs/changed-files.txt \
+            --github-output "$GITHUB_OUTPUT" \
+            "${args[@]}"
+
+      - name: Detect DB and Edge smoke scope
+        id: db_edge_smoke
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'push' && inputs.deploy_scope != 'web_only' }}
+        run: |
+          if [ "$FORCE_ALL" = "true" ] || grep -Eq \
+            '^(supabase/(migrations|functions)/|scripts/(testcontainers_supabase_smoke.py|requirements-testcontainers.txt)|test/fixtures/testcontainers/|test/scripts/test_testcontainers_supabase_smoke.py)' \
+            .deploy-logs/changed-files.txt; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Flutter
+        if: steps.changes.outputs.web == 'true'
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Cache Flutter pub
+        if: steps.changes.outputs.web == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Install dependencies
+        if: steps.changes.outputs.web == 'true'
+        run: flutter pub get
+
+      - name: Generate version
+        id: version
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          # `git describe` only sees tags reachable from the checked-out commit.
+          # Release tags created on another merged branch can therefore be missed,
+          # causing an existing version/tag to be reused. Select the highest global
+          # three-part SemVer tag instead.
+          LATEST_TAG=$(
+            git tag --list 'v[0-9]*.[0-9]*.[0-9]*' \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+              | sort -V \
+              | tail -n 1
+          )
+          LATEST_TAG=${LATEST_TAG:-v1.0.0}
+          VERSION=${LATEST_TAG#v}
+          IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update pubspec.yaml version
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          sed -i "s/^version: .*/version: ${{ steps.version.outputs.version }}+${{ github.run_number }}/" pubspec.yaml
+
+      - name: Generate Release Notes data
+        if: steps.changes.outputs.web == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/generate_release_notes.py \
+            --repo "${{ github.repository }}" \
+            --version "${{ steps.version.outputs.version }}" \
+            --build "${{ github.run_number }}" \
+            --commit "${{ github.sha }}" \
+            --date "$(date -u +%Y-%m-%d)" \
+            --deploy-url "https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app" \
+            --output web/release-notes.json
+
+      - name: Check migration timestamp collisions
+        if: steps.changes.outputs.migration == 'true'
+        run: python scripts/check_migration_timestamps.py
+
+      - name: Setup Python for DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+
+      - name: Setup Deno for DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        shell: bash
+        env:
+          DENO_VERSION: v2.9.1
+        run: bash scripts/ci/install_deno_from_github.sh
+
+      - name: Install DB and Edge smoke dependencies
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        run: python -m pip install --requirement scripts/requirements-testcontainers.txt
+
+      - name: Gate production changes with DB and Edge smoke
+        if: steps.db_edge_smoke.outputs.required == 'true'
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+        run: |
+          python test/scripts/test_testcontainers_supabase_smoke.py
+          python scripts/testcontainers_supabase_smoke.py --plan
+          python scripts/testcontainers_supabase_smoke.py --artifacts-dir .testcontainers-logs
+
+      - name: Upload production DB and Edge smoke artifacts
+        if: always() && steps.db_edge_smoke.outputs.required == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: production-testcontainers-smoke-logs
+          path: .testcontainers-logs/
+          if-no-files-found: ignore
+          include-hidden-files: true
+
+      - name: Setup Supabase CLI
+        if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
+        with:
+          version: 2.84.2
+
+      - name: Run Supabase migrations
+        if: steps.changes.outputs.migration == 'true'
+        run: |
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }} --password ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
+          # Detect the exact failed version and repair only after a classified push error.
+          # Unknown failures remain blocking; no migration history is changed speculatively.
+          python scripts/ci_failure_digest.py supabase-db-push \
+            --include-all \
+            --recent-limit 10 \
+            --log-dir .deploy-logs \
+            --summary "$GITHUB_STEP_SUMMARY"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
+
+      - name: Upload Supabase migration logs
+        if: always() && steps.changes.outputs.migration == 'true' && hashFiles('.deploy-logs/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: supabase-migration-logs
+          path: .deploy-logs/
+          if-no-files-found: ignore
+
+      - name: Cleanup consolidated Edge Functions
+        if: steps.changes.outputs.edge == 'true'
+        run: |
+          # EFハードキャップ: 50本以下。Tier1/Tier2廃止。
+          # 旧スタンドアロンEFを全削除 — 6つのmacro-hubに統合済み。
+          # 2026-04-20 PS版#6 S12: dynamic filter — Supabase に実存する EF のみ delete
+          # → 429 ThrottlerException 回避 (178 連続 API call → 実存分のみに削減)
+          DEAD_LIST=(
+            public-memo-share
+            api-docs-generator
+            api-key-manager
+            audit-trail
+            backup-restore
+            changelog-manager
+            ci-cd-pipeline
+            cloud-storage-sync
+            code-playground
+            code-review-issues
+            cohort-analysis
+            compensation-manager
+            compliance-checker
+            content-versioning
+            crm-sales-pipeline
+            custom-dashboard-builder
+            data-pipeline
+            data-visualization
+            document-collaboration
+            edge-function-test-runner
+            edge-function-ui-checker
+            encrypted-messaging
+            financial-report
+            gantt-timeline-manager
+            geo-checkin
+            habit-gamification
+            horse-racing-predictor
+            integration-connector
+            inventory-manager
+            live-streaming
+            marketplace
+            marketplace-reviews
+            multi-language
+            news-rss-aggregator
+            note-sharing-enhanced
+            oauth-sso-provider
+            ocr-document-scanner
+            order-tracker
+            payment-processor
+            push-notification-manager
+            rate-limiter-enhanced
+            real-estate-tracker
+            realtime-presence
+            scheduled-notifications
+            smart-home-automation
+            smart-search
+            social-stories
+            spreadsheet-database
+            status-page
+            task-dependency
+            user-onboarding
+            video-audio-manager
+            voice-memo-transcriber
+            whiteboard-canvas
+            wiki-database
+            get-ogp
+            get-public-memo-ogp
+            note-comments
+            notification-center
+            user-profile-manager
+            onboarding-flow
+            feature-request-manager
+            user-feedback-collector
+            growth-referral
+            get-growth-roadmap-progress
+            viral-share-engine
+            x-media-post
+            growth-automation-controller
+            share-quote
+            generate-quote-image
+            seo-optimizer
+            send-waitlist-notification
+            viral-ad-generator
+            ai-search
+            ai-suggest-tags
+            ai-secretary
+            ai-summarizer
+            agent-hub
+            my-ai-agent
+            trigger-analysis
+            get-admin-users
+            submit-feedback
+            get-support-tickets
+            get-competitor-features
+            import-from-competitors
+            get-competitor-monitoring
+            edge-function-coverage
+            content-moderation
+            user-activity-tracker
+            department-reporting
+            issue-auto-resolver
+            subscription-management
+            subscription-billing
+            email-service
+            gamification-engine
+            calendar-events
+            kanban-board
+            chat-messaging
+            team-task-manager
+            team-collaboration-sync
+            file-storage-manager
+            expense-tracker
+            time-tracker
+            automation-workflows
+            webhook-manager
+            api-rate-limiter
+            music-collaboration
+            schedule-manager
+            post-x-update
+            blog-post-manager
+            blog-auto-publisher
+            poll-survey
+            reading-list
+            password-generator
+            clipboard-history
+            quick-note
+            pomodoro-timer
+            weather-widget
+            currency-converter
+            markdown-renderer
+            social-proof-generator
+            contact-manager
+            goal-tracker
+            template-library
+            tag-manager
+            habit-tracker
+            bookmark-manager
+            invoice-generator
+            notification-preferences
+            revenue-forecaster
+            ab-testing-manager
+            search-analytics
+            competitor-feature-sync
+            user-growth-analytics
+            growth-acquisition-signal
+            growth-acquisition-report
+            schedule-task-monitor
+            schedule-health-check
+            schedule-result-tracker
+            schedule-execution-logger
+            agent-runtime-cycle
+            agent-personality
+            agent-department-manager
+            agent-task-router
+            agent-performance-monitor
+            reply-support-request
+            development-stats
+            check-competitor-updates
+            viral-growth-pipeline
+            qr-code-generator
+            mindmap-diagram
+            bookmark-sync
+            focus-timer
+            audio-effects-processor
+            screen-recorder
+            podcast-manager
+            music-playlist-manager
+            photo-gallery-manager
+            video-meeting-manager
+            social-media-scheduler
+            pet-care-manager
+            recipe-meal-planner
+            carbon-footprint-tracker
+            travel-itinerary-planner
+            appointment-scheduler
+            gift-registry
+            digital-wallet
+            loyalty-points
+            emergency-contacts
+            donation-crowdfunding
+            parking-reservation
+            affiliate-marketing
+            auction-marketplace
+            password-vault
+            virtual-pet
+            social-feed
+            workflow-templates
+            event-ticketing
+            address-book
+            notification-digest
+            inventory-barcode
+            form-builder
+            sitemap-analytics
+            memo-reactions
+            access-control
+            ai-workflow-automation
+            ar-navigation
+            customer-feedback
+            discord-notifications
+            document-esignature
+            family-sharing-manager
+            feature-flags
+            fitness-health-tracker
+            home-iot-manager
+            knowledge-base
+            line-notifications
+            meeting-manager
+            slack-notifications
+            smart-inbox-triage
+            two-factor-auth
+            analytics-export
+            budget-financial-planner
+            dns-domain-manager
+            elearning-course-manager
+            email-template-builder
+            get-stoic-leaderboard
+            github-pr-manager
+            google-calendar-sync
+            language-learning
+            legal-compliance-manager
+            moneyforward-sync
+            recruitment-job-board
+            semantic-search
+            vehicle-fleet-manager
+            viral-video-generator
+            virtual-whiteboard
+            schedule-daily-digest
+          )
+          EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")
+          if [ -z "$EXISTING" ]; then
+            echo "::warning::supabase functions list returned empty — skipping cleanup"
+            exit 0
+          fi
+          DELETED=0
+          for fn in "${DEAD_LIST[@]}"; do
+            if echo "$EXISTING" | grep -qx "$fn"; then
+              echo "deleting $fn"
+              supabase functions delete "$fn" || true
+              DELETED=$((DELETED+1))
+              sleep 0.3
+            fi
+          done
+          echo "::notice::cleanup deleted $DELETED stale EF(s)"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy Supabase Edge Functions
+        if: steps.changes.outputs.edge == 'true'
+        run: |
+          required_video_secrets=(
+            VIDEO_WORKER_TOKEN
+            VIDEO_WORKER_WAKE_TOKEN
+            VIDEO_WORKER_WAKE_URL
+          )
+          available_secret_names="$(
+            supabase secrets list --output json |
+              jq -r '.[] | .name // empty'
+          )"
+          for secret_name in "${required_video_secrets[@]}"; do
+            if ! grep -qx "${secret_name}" <<<"${available_secret_names}"; then
+              echo "::error::Required first-party video secret is missing: ${secret_name}"
+              exit 1
+            fi
+          done
+
+          # EFハードキャップ: 50本以下 (Tier1/Tier2廃止 — 2026-04-12 VSCode版#61)
+          # 全250本を16本のhubにaction分岐統合 (11 hub + 5 standalone)。新規機能は既存hubへのaction追加のみ。
+          # 新しいEFを作成する場合は必ず既存hubの数を減らして50本以下を維持すること。
+          #
+          # Public/browser functions that own a custom auth handshake use
+          # --no-verify-jwt. Sensitive owner-only endpoints keep gateway JWT
+          # verification and repeat authorization inside the handler.
+          #
+          # Remote dependency CDNs can occasionally return transient 5xx errors
+          # while the Supabase CLI builds each function graph. Retry per
+          # function so one flaky import does not block the whole deploy lane.
+          deploy_function() {
+            local function_name="$1"
+            shift
+            local attempt
+            local sleep_seconds
+
+            for attempt in 1 2 3; do
+              echo "::group::Deploy ${function_name} (attempt ${attempt}/3)"
+              if supabase functions deploy "$function_name" "$@"; then
+                echo "::endgroup::"
+                return 0
+              fi
+
+              local exit_code=$?
+              echo "::endgroup::"
+
+              if [ "$attempt" -eq 3 ]; then
+                echo "::error::supabase functions deploy ${function_name} failed after ${attempt} attempts (exit ${exit_code})"
+                return "$exit_code"
+              fi
+
+              sleep_seconds=$((attempt * 20))
+              echo "::warning::supabase functions deploy ${function_name} failed with ${exit_code}; retrying in ${sleep_seconds}s"
+              sleep "$sleep_seconds"
+            done
+          }
+
+          supabase_deploy_attempt() {
+            local attempt=1
+            local max_attempts=3
+            local delay=20
+            while true; do
+              if command supabase "$@"; then
+                return 0
+              fi
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::supabase $* failed after ${max_attempts} attempts"
+                return 1
+              fi
+              echo "::warning::supabase $* failed (attempt ${attempt}/${max_attempts}); retrying in ${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          supabase() {
+            if [ "${1:-}" = "functions" ] && [ "${2:-}" = "deploy" ]; then
+              supabase_deploy_attempt "$@"
+            else
+              command supabase "$@"
+            fi
+          }
+
+          # --- Standalone (8本: 複雑すぎてhub統合困難) ---
+          # local-election-intelligence は line 275 にあり (並び順維持のため)
+          deploy_function get-home-dashboard --no-verify-jwt
+          deploy_function ai-assistant --no-verify-jwt
+          # Owner-only growth aggregates. Gateway JWT verification remains on;
+          # the handler also requires user_profiles admin or service role.
+          deploy_function growth-weekly-digest
+          deploy_function guitar-recording-studio --no-verify-jwt
+          deploy_function autonomous-ops --no-verify-jwt
+          # Owner-only Notion inventory. Browser JWT + user_profiles.is_admin
+          # are both checked in-function before NOTION_API_TOKEN is used.
+          deploy_function notion-migration-hub --no-verify-jwt
+          # User JWT is verified at the gateway and again in-function. The
+          # caller's JWT is forwarded to the security-invoker/RLS RPC.
+          deploy_function resource-optimizer
+          # Internal Issue #1352 decision-chain writer. Gateway JWT verification
+          # plus an exact service-role bearer check is enforced in-function.
+          deploy_function decision-events
+
+          # --- Macro-Hub (6本: 旧Tier1全統合) ---
+          deploy_function core-hub --no-verify-jwt
+          deploy_function growth-hub --no-verify-jwt
+          deploy_function ai-hub --no-verify-jwt
+          deploy_function admin-hub --no-verify-jwt
+          deploy_function app-hub --no-verify-jwt
+          deploy_function schedule-hub --no-verify-jwt
+          deploy_function stripe-webhook --no-verify-jwt
+
+          # --- 買い切り販売 (2026-07-28 追加) ---
+          # ここへ足し忘れると migration だけ本番へ入り、購入ボタンが存在しない
+          # 関数を叩く半着地になる (CI は緑のまま通るので気づけない)。
+          # 認証は関数内で auth.getUser() により行う。
+          deploy_function shop-checkout --no-verify-jwt
+          deploy_function shop-download --no-verify-jwt
+          # 販売 funnel の計測 (2026-07-29 追加)。未ログインの閲覧者も数えるため
+          # 認証は要求せず、書き込める内容を列挙値に限定して守っている。
+          deploy_function shop-funnel --no-verify-jwt
+
+          # --- 自社GPUによる有償AI動画生成 ---
+          # 利用者APIはCORSを通し、関数内auth.getUser()でJWTを必須化する。
+          # worker APIは用途を分けた専用tokenで認証する。
+          deploy_function video-generation-hub --no-verify-jwt
+          deploy_function video-worker-hub --no-verify-jwt
+          # 承認済みの exact artifact/review だけを、非公開配信・Stripe固定価格・
+          # /shop 検証・rollback の順に公開する。service role定期実行も関数内で再認証。
+          deploy_function video-commerce-hub --no-verify-jwt
+          # 退会申請は user JWT、期限到来後の破壊的 worker は service_role を
+          # 関数内で再検証する。scheduled workflow は owner/legal 承認後に
+          # ACCOUNT_DELETION_AUTOMATION_ENABLED=true で有効化する。
+          deploy_function account-lifecycle --no-verify-jwt
+
+          # --- Mega-Hub (5本: 旧Tier2全統合) ---
+          deploy_function tools-hub --no-verify-jwt
+          deploy_function media-hub --no-verify-jwt
+          deploy_function enterprise-hub --no-verify-jwt
+          deploy_function social-commerce-hub --no-verify-jwt
+          deploy_function lifestyle-hub --no-verify-jwt
+          deploy_function local-election-intelligence --no-verify-jwt
+
+          # --- Public health-check (認証不要・スケジュールタスクからの死活監視用) ---
+          deploy_function health-check --no-verify-jwt
+          deploy_function ai-writing-assistant --no-verify-jwt
+          deploy_function viral-video-ad-generator --no-verify-jwt
+          deploy_function memory-search-hub --no-verify-jwt
+          deploy_function mcp-well-known --no-verify-jwt
+
+          # Total: 33 functions deployed (ハードキャップ50本に対し33本 — 余裕17本)
+          # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
+          #
+          # Hub対応表:
+          # core-hub:         public-memo-share, memo-reactions, get-ogp, get-public-memo-ogp,
+          #   note-comments, notification-center, user-profile-manager, onboarding-flow,
+          #   feature-request-manager, user-feedback-collector, notify-feature-request,
+          #   personal-dashboard, system-status, development-achievements, app-analytics-dashboard
+          # growth-hub:       growth-acquisition, growth-command-center, growth-referral,
+          #   growth-share-signal, growth-achievement-summary, growth-import-preview,
+          #   growth-import-commit, get-growth-roadmap-progress, video-ad-generator,
+          #   viral-share-engine, x-media-post, growth-automation-controller, landing-ab-test,
+          #   referral-program, share-quote, generate-quote-image, seo-optimizer,
+          #   send-waitlist-notification, viral-ad-generator, viral-growth-engine
+          # ai-hub:           daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
+          #   ai-summarizer, agent-hub, virtual-organization, my-ai-agent, generate-daily-challenges,
+          #   trigger-analysis, analyze-reality, local-election-intelligence,
+          #   ai-university-content, ai-university-streaks, ai-university-badges
+          # admin-hub:        get-admin-users, submit-feedback, get-support-tickets,
+          #   get-competitor-features, import-from-competitors, health-check,
+          #   get-competitor-monitoring, edge-function-coverage, content-moderation,
+          #   user-activity-tracker, department-reporting, admin-notification-hub, issue-auto-resolver
+          # app-hub:          subscription-management, subscription-billing, email-service,
+          #   gamification-engine, calendar-events, kanban-board, chat-messaging, team-task-manager,
+          #   team-collaboration-sync, file-storage-manager, expense-tracker, time-tracker,
+          #   automation-workflows, data-export-manager, webhook-manager, api-rate-limiter,
+          #   music-collaboration
+          # schedule-hub:     schedule-daily-digest, schedule-manager, post-x-update,
+          #   blog-post-manager, blog-auto-publisher
+          # tools-hub:        30本 (password/qr/weather/bookmark/habit/pomodoro等)
+          # media-hub:        18本 (video/audio/whiteboard/esign等) + music-collaboration
+          # enterprise-hub:   42本 (HR/analytics/CI/AI-writing/CRM等)
+          # social-commerce-hub: 26本 (SNS/EC/payment/loyalty等)
+          # lifestyle-hub:    29本 (health/travel/IoT/notification等)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Validate Flutter Supabase configuration
+        if: steps.changes.outputs.web == 'true'
+        run: python scripts/validate_flutter_supabase_env.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+
+      - name: Resolve normalized AI University provider catalog
+        id: ai_university_catalog
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          mkdir -p .ci-generated
+          provider_count=$(python3 scripts/ai_university_provider_catalog.py \
+            --output .ci-generated/ai-university-catalog.json)
+          echo "provider_count=$provider_count" >> "$GITHUB_OUTPUT"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+      - name: Build Flutter Web (Production)
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          flutter build web \
+            --release \
+            --pwa-strategy=none \
+            --build-name=${{ steps.version.outputs.version }} \
+            --build-number=${{ github.run_number }} \
+            --dart-define=ENVIRONMENT=production \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
+            --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
+            --dart-define=BUILD_NUMBER=${{ github.run_number }} \
+            --dart-define=AI_UNIVERSITY_PROVIDER_COUNT=${{ steps.ai_university_catalog.outputs.provider_count }} \
+            --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
+            --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
+            --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
+            --dart-define=ASSET_MANAGEMENT_AI_PROVIDER_ROUTING_ENABLED=true \
+            --dart-define=POSTHOG_PROJECT_TOKEN=$POSTHOG_PROJECT_TOKEN \
+            --dart-define=POSTHOG_HOST=$POSTHOG_HOST \
+            --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
+
+      - name: Render public Supabase URL into web shell
+        if: steps.changes.outputs.web == 'true'
+        run: python scripts/render_web_supabase_config.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+
+      - name: Write version.json
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
+          cp web/release-notes.json build/web/release-notes.json
+          cp .ci-generated/ai-university-catalog.json build/web/ai-university-catalog.json
+
+      - name: Cache-bust OGP image URLs
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
+
+      - name: Prerender per-route static HTML + sitemap (SEO)
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          # SEO 監査 H1/H2/H4/H3 対応。厳選 /vs-<slug> の静的HTML (自己参照
+          # canonical + 固有 meta/JSON-LD + クロール可能本文) を build/web に生成。
+          # Firebase は一致する静的ファイルを ** rewrite より優先配信するため、
+          # firebase.json 変更なし・SPA 無破壊で per-route インデックス性を回復する。
+          python3 scripts/prerender_seo_routes.py \
+            --template build/web/index.html \
+            --outdir build/web \
+            --routes web/seo/comparison-routes.json \
+            --public-routes web/seo/public-routes.json \
+            --ai-university-catalog .ci-generated/ai-university-catalog.json
+          # 実在ルートのみの sitemap を当日 lastmod で再生成 (build 済みへ出力)
+          python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
+          echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
+
+      - name: Verify production journey static route contract
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          python3 scripts/production_journey_probe.py \
+            --root-dir build/web \
+            --public-routes web/seo/public-routes.json
+
+      - name: Setup Node for Firebase CLI
+        if: steps.changes.outputs.web == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Deploy to Firebase Hosting (Production)
+        if: steps.changes.outputs.web == 'true'
+        id: firebase_cli_deploy
+        continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          key_file="$(mktemp)"
+          output_file="$(mktemp)"
+          cleanup() {
+            rm -f "$key_file" "$output_file"
+          }
+          trap cleanup EXIT
+
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
+          export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
+
+          npx -y firebase-tools@latest deploy \
+            --only hosting \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
+            --json > "$output_file"
+
+          cat "$output_file"
+
+          deploy_url="$(jq -r '.result.hosting[]?.url // empty' "$output_file" | head -n 1)"
+          if [ -z "$deploy_url" ]; then
+            deploy_url="https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
+          fi
+
+          echo "details_url=$deploy_url" >> "$GITHUB_OUTPUT"
+          echo "Firebase Hosting live deploy complete: $deploy_url"
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
+
+      - name: Verify deploy reflects current commit
+        if: steps.changes.outputs.web == 'true'
+        continue-on-error: true
+        run: |
+          EXPECTED="${{ github.sha }}"
+          SITE="https://my-web-app-b67f4.web.app/version.json"
+          for i in 1 2 3 4; do
+            sleep 15
+            DEPLOYED=$(curl -sf "$SITE" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")
+            if [ "$DEPLOYED" = "$EXPECTED" ]; then
+              echo "Deploy verified: $EXPECTED is live"
+              exit 0
+            fi
+            echo "  attempt $i: deployed=$DEPLOYED expected=$EXPECTED"
+          done
+          echo "::warning::Deploy verification: production shows $DEPLOYED, expected $EXPECTED. A later queued run may have superseded this one."
+
+      - name: Push Release Tag
+        if: steps.changes.outputs.web == 'true'
+        id: push_tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          REMOTE_TAG=$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}")
+          if [ -n "$REMOTE_TAG" ]; then
+            EXISTING_TARGET=$(printf '%s\n' "$REMOTE_TAG" | awk '$2 ~ /\^\{\}$/ {print $1; exit}')
+            if [ -z "$EXISTING_TARGET" ]; then
+              EXISTING_TARGET=$(printf '%s\n' "$REMOTE_TAG" | awk 'NR == 1 {print $1}')
+            fi
+            if [ "$EXISTING_TARGET" != "$GITHUB_SHA" ]; then
+              echo "::error::Existing tag $TAG points to $EXISTING_TARGET, expected $GITHUB_SHA"
+              exit 1
+            fi
+            echo "Tag $TAG already points to the current commit."
+          else
+            # The custom checkout intentionally has no persisted Git credentials.
+            # Create the ref through the authenticated API so it always targets
+            # the commit that was actually built and deployed, even if main moves.
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+              -f ref="refs/tags/$TAG" \
+              -f sha="$GITHUB_SHA" \
+              --silent
+          fi
+
+      - name: Create GitHub Release
+        if: steps.changes.outputs.web == 'true'
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## Release ${{ steps.version.outputs.version }}
+            - **Environment**: Production
+            - **Commit**: ${{ github.sha }}
+            - **Deployed Site**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app
+            - **Release Notes JSON**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app/release-notes.json
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify Release Tag Target
+        if: steps.changes.outputs.web == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          REF_TYPE=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type')
+          REF_SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.sha')
+          if [ "$REF_TYPE" = "tag" ]; then
+            REF_SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$REF_SHA" --jq '.object.sha')
+          fi
+          if [ "$REF_SHA" != "$GITHUB_SHA" ]; then
+            echo "::error::Release tag $TAG points to $REF_SHA, expected $GITHUB_SHA"
+            exit 1
+          fi
+          echo "Release tag $TAG verified at $GITHUB_SHA."
+
+      - name: Broadcast release notification
+        if: steps.changes.outputs.web == 'true'
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          curl -fsS -X POST \
+            "$SUPABASE_URL/functions/v1/core-hub" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"action\":\"notification.broadcast_release\",\"version\":\"${{ steps.version.outputs.version }}\",\"commit\":\"${{ github.sha }}\",\"releaseUrl\":\"https://github.com/kanta13jp1/my_web_app/releases/tag/${{ steps.version.outputs.tag }}\"}" \
+            || true
+
+      # Positive evidence only; missing/unknown classifier outputs never suppress gates.
+      - name: Confirmed production no-op
+        if: >-
+          success() &&
+          github.event_name == 'push' &&
+          steps.changes.outputs.deployable == 'false' &&
+          steps.changes.outputs.web == 'false' &&
+          steps.changes.outputs.edge == 'false' &&
+          steps.changes.outputs.migration == 'false' &&
+          steps.db_edge_smoke.outputs.required == 'false'
+        run: echo "No production deployment or DB/Edge smoke was required for this exact run."
+
+      - name: Job Summary
+        if: always()
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          SHA="${GITHUB_SHA:0:7}"
+          {
+            echo "## 🚀 Production Deploy (${SHA})"
+            echo ""
+            echo "| 項目 | 値 |"
+            echo "|-----|---|"
+            echo "| Web / Firebase | ${{ steps.changes.outputs.web }} |"
+            echo "| Edge Functions | ${{ steps.changes.outputs.edge }} |"
+            echo "| SQL migrations | ${{ steps.changes.outputs.migration }} |"
+            echo "| バージョン | \`${TAG:-unchanged}\` |"
+            echo "| コミット | \`${SHA}\` |"
+            echo "| Actor | ${{ github.actor }} |"
+            echo "| 本番URL | https://my-web-app-b67f4.web.app/ |"
+          } >> $GITHUB_STEP_SUMMARY
+
+  # -----------------------------------------------------------------
+  # 通知ジョブ
+  # -----------------------------------------------------------------
