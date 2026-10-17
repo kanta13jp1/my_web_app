@@ -29,6 +29,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
   AssetBundle? _artBundle;
   int _artRequest = 0;
   bool _walkArtReady = false;
+  bool _routeActive = true;
 
   @override
   void initState() {
@@ -45,6 +46,11 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _routeActive = ModalRoute.of(context)?.isCurrent ?? true;
+    if (!_routeActive && _walking) {
+      _walk.stop(canceled: true);
+      _walking = false;
+    }
     final bundle = DefaultAssetBundle.of(context);
     if (identical(bundle, _artBundle)) return;
     _artBundle = bundle;
@@ -73,7 +79,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
   }
 
   void _tick() {
-    if (!_walking || !mounted) return;
+    if (!_walking || !mounted || !_routeActive) return;
     final next = EchoPumpRoomWalk.sample(_route, _walk.value);
     if ((next.x - _position.x).abs() > 0.0001) _left = next.x < _position.x;
     setState(() => _position = next);
@@ -89,7 +95,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
   }
 
   Future<void> _approach(EchoRoomTarget target) async {
-    if (_walking || !_foreground) return;
+    if (_walking || !_foreground || !_routeActive) return;
     final reduced = MediaQuery.disableAnimationsOf(context);
     _route = EchoPumpRoomWalk.route(_position, target);
     _steps = 0;
