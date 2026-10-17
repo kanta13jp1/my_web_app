@@ -33687,7 +33687,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     subtitleParts.add(_sourceLabel(parsed.source));
                   }
                   if (parsed.wasteCategory != null) {
-                    subtitleParts.add('浪費:${parsed.wasteCategory}');
+                    subtitleParts.add(WasteTrackingService.expenseClassificationLabel(
+                      item['description']?.toString() ?? '',
+                      amount.abs(),
+                    ));
                   }
                   if (_isAutoAssetDeltaFlow(item)) {
                     subtitleParts.add('残高差分から自動記録');
