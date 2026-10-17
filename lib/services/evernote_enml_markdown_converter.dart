@@ -51,6 +51,18 @@ class EvernoteEnmlMarkdownConverter {
           resource.hash.trim().toLowerCase(): resource,
     };
     final unresolved = <String>{};
+    // These renderers flatten their descendants. Never silently commit a note
+    // whose embedded media cannot be represented, even when its bytes exist.
+    for (final element in document.descendants.whereType<XmlElement>()) {
+      if (element.localName.toLowerCase() != 'en-media') continue;
+      if (element.ancestors.whereType<XmlElement>().any(
+            (ancestor) => <String>{'pre', 'a'}.contains(
+              ancestor.localName.toLowerCase(),
+            ),
+          )) {
+        unresolved.add('<unsupported-media-context>');
+      }
+    }
     final buffer = StringBuffer();
     for (final child in document.rootElement.children) {
       _writeNode(
