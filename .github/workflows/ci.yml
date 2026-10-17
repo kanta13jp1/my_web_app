@@ -50,7 +50,7 @@ concurrency:
 
 jobs:
   lint-and-test:
-    name: Lint, Format, and Test
+    name: Static checks and web
     outputs:
       analyzer_evidence_uploaded: ${{ steps.upload_analyzer_evidence.outcome == 'success' }}
     runs-on: ubuntu-latest
@@ -148,6 +148,7 @@ jobs:
           python -m unittest scripts/kg_index_common_test.py scripts/kg_index_workflow_test.py
           python scripts/generate_infrastructure_map_test.py
           python scripts/cicd_efficiency_test.py
+          python scripts/ci_parallel_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
           python scripts/check_rootless_container_setup_test.py
@@ -489,13 +490,6 @@ jobs:
         # #1372: treat Dart formatting as a required static-analysis gate.
         run: dart format --output=none --set-exit-if-changed .
 
-      - name: Run VM tests
-        if: steps.changes.outputs.flutter == 'true'
-        id: flutter_test
-        # Keep coverage while bounding Dart VM workers on Windows-sized runners.
-        run: flutter test --coverage --concurrency=2
-        continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
-
       - name: Run web import smoke tests
         if: steps.changes.outputs.web == 'true'
         id: flutter_web_test
@@ -544,6 +538,159 @@ jobs:
           path: .ci-logs/ci-context
           if-no-files-found: error
 
+
+  vm-tests:
+    name: VM tests (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1]
+    steps:
+      - name: Checkout code
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+            if ! git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"; then
+              echo "::warning::PR merge ref ${ref} is unavailable; falling back to PR head SHA."
+              git fetch --depth=1 \
+                "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
+                "${{ github.event.pull_request.head.sha }}"
+              git checkout --force FETCH_HEAD
+              exit 0
+            fi
+          else
+            # Pin push, workflow_call, and cloud-first manual runs to the event
+            # SHA. Fetching a moving branch ref here could silently validate a
+            # later commit than the one handed off from the local control plane.
+            ref="${GITHUB_SHA}"
+            git fetch --depth=1 origin "${ref}"
+            git checkout --force FETCH_HEAD
+            exit 0
+          fi
+          git checkout --force refs/remotes/origin/checkout
+
+      - name: Verify manual cloud gate SHA
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Cloud handoff mismatch: expected $EXPECTED_HEAD_SHA, checked out $actual_head_sha."
+            exit 1
+          fi
+          echo "Verified exact cloud handoff SHA: $actual_head_sha"
+
+      - name: Collect PR changed files
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const fs = require('fs');
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            fs.mkdirSync('.ci-logs', { recursive: true });
+            fs.writeFileSync(
+              '.ci-logs/changed-files.txt',
+              files.map((file) => file.filename).join('\n') + '\n',
+            );
+
+      - name: Classify CI scope
+        id: changes
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'pull_request' }}
+        run: |
+          mkdir -p .ci-logs
+          touch .ci-logs/changed-files.txt
+          args=()
+          if [ "$FORCE_ALL" = "true" ]; then
+            args+=(--all)
+          fi
+          python scripts/classify_ci_changes.py \
+            --changed-files .ci-logs/changed-files.txt \
+            --github-output "$GITHUB_OUTPUT" \
+            "${args[@]}"
+
+      - name: Setup Flutter
+        if: steps.changes.outputs.flutter == 'true'
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x' # 指定のバージョンに戻しました
+
+      - name: Get Flutter version
+        if: steps.changes.outputs.flutter == 'true'
+        run: flutter --version
+
+      - name: Cache Flutter pub
+        if: steps.changes.outputs.flutter == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Install dependencies
+        id: flutter_dependencies
+        if: steps.changes.outputs.flutter == 'true'
+        run: flutter pub get
+
+      - name: Run VM tests
+        if: steps.changes.outputs.flutter == 'true'
+        id: flutter_test
+        # Keep coverage while bounding Dart VM workers on Windows-sized runners.
+        run: flutter test --coverage --concurrency=2 --total-shards=2 --shard-index=${{ matrix.shard }}
+        continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
+
+      - name: Upload VM shard coverage
+        if: success() && steps.changes.outputs.flutter == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: vm-coverage-${{ matrix.shard }}
+          path: coverage/lcov.info
+          if-no-files-found: error
+
+      - name: VM shard summary
+        if: always()
+        env:
+          CI_STEPS_JSON: ${{ toJSON(steps) }}
+        run: python scripts/ci_job_summary.py
+
+  ci-complete:
+    # Keep the protected check name; no failed/cancelled shard may turn green.
+    name: Lint, Format, and Test
+    needs: [lint-and-test, vm-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Require every parallel check
+        env:
+          STATIC_RESULT: ${{ needs.lint-and-test.result }}
+          VM_RESULT: ${{ needs.vm-tests.result }}
+        run: |
+          test "$STATIC_RESULT" = success
+          test "$VM_RESULT" = success
 
   actionlint:
     name: GitHub Actions syntax
@@ -628,7 +775,7 @@ jobs:
     timeout-minutes: 5
     name: PR Comment
     runs-on: ubuntu-latest
-    needs: [lint-and-test, security-check]
+    needs: [lint-and-test, vm-tests, ci-complete, security-check]
     if: github.event_name == 'pull_request' && always()
     permissions:
       pull-requests: write
@@ -650,7 +797,7 @@ jobs:
           script: |
             const fs = require('fs');
             const passed =
-              '${{ needs.lint-and-test.result }}' === 'success' &&
+              '${{ needs.ci-complete.result }}' === 'success' &&
               '${{ needs.security-check.result }}' === 'success';
             let body = passed
               ? '✅ 変更パスに対応するCIチェックが通過しました。不要なFlutter・Web・Deno処理はスキップされています。'
