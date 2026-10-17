@@ -63,8 +63,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
 
   Future<void> _approach(EchoRoomTarget target) async {
     if (_walking || !_foreground) return;
-    final reduced = MediaQuery.disableAnimationsOf(context) ||
-        MediaQuery.accessibleNavigationOf(context);
+    final reduced = MediaQuery.disableAnimationsOf(context);
     _route = EchoPumpRoomWalk.route(_position, target);
     _steps = 0;
     final distance = EchoPumpRoomWalk.length(_route);
@@ -134,8 +133,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.disableAnimationsOf(context) ||
-        MediaQuery.accessibleNavigationOf(context);
+    final reduced = MediaQuery.disableAnimationsOf(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
