@@ -75,7 +75,9 @@ void main() {
             : <String>[redirectMethod],
       );
       expect(
-        client.requests.every((request) => request.url.host == 'project.storage.supabase.co'),
+        client.requests.every(
+          (request) => request.url.host == 'project.storage.supabase.co',
+        ),
         isTrue,
       );
     });
