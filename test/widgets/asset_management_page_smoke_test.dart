@@ -940,6 +940,33 @@ void main() {
       });
     }
   }
+
+  testWidgets('disposable cycle budget does not claim a spendable daily balance', (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MaterialApp(home: AssetManagementPage(
+      debugNow: DateTime(2026, 6, 20),
+      debugCalendarNow: DateTime(2026, 6, 20),
+      debugInitialPayslipRows: const <Map<String, dynamic>>[
+        <String, dynamic>{'pay_date': '2026-05-25', 'net_amount': 300000, 'confidence': 1},
+      ],
+      debugInitialAssetData: const {'2026-06-20': {'synthetic cash': 1000.0}},
+      debugInitialRecentFlows: <Map<String, dynamic>>[
+        <String, dynamic>{'action_type': 'spend', 'amount': 200000,
+          'description': 'synthetic living expense', 'occurred_at': '2026-06-15T12:00:00'},
+      ],
+    )));
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(find.descendant(of: card, matching: find.text('1日あたり')), findsNothing,
+        reason: 'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance');
+      expect(find.descendant(of: card, matching: find.text('給料日までの可処分残高')), findsNothing);
+      expect(find.descendant(of: card, matching: find.textContaining('日割り使用可能額は未算出')), findsOneWidget);
+    } finally { await _unmount(tester); }
+  });
   group('AssetManagementPage smoke', () {
     testWidgets('mobile chat reserves space outside the scrolling content', (
       tester,
