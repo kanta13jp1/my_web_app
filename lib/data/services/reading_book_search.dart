@@ -166,7 +166,14 @@ class ReadingBookSearch {
                       '${book.title} ${book.edition.translator} ${book.edition.publisher}',
                     ).contains(normalized)),
     );
-    if (matches.isNotEmpty && !external) return matches.toList();
+    if (matches.isNotEmpty && !external) {
+      // One physical book may contain several separately tracked works.
+      // Keep their catalog links, but show an identical edition only once.
+      final seen = <String>{};
+      return matches
+          .where((book) => seen.add(jsonEncode([book.title, book.edition.toJson()])))
+          .toList();
+    }
     if (!isIsbn && RegExp(r'^[0-9Xx\s-]+$').hasMatch(text)) return [];
     final ownedClient = client == null;
     final transport = client ?? http.Client();
