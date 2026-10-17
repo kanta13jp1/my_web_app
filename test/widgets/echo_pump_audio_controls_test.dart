@@ -17,7 +17,15 @@ void main() {
       final audio = EchoPumpAudio(output: output);
       addTearDown(audio.dispose);
       await tester.pumpWidget(
-        MaterialApp(home: EchoPumpGamePage(audio: audio)),
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: TextScaler.linear(width == 320 ? 2 : 1),
+            ),
+            child: child!,
+          ),
+          home: EchoPumpGamePage(audio: audio),
+        ),
       );
       expect(find.text('音をON'), findsOneWidget);
       await tester.tap(find.byKey(const Key('echo-audio-toggle')));

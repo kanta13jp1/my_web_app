@@ -55,6 +55,7 @@ test('real BGM and SE play, volume and mute work, leaving closes audio', async (
   await page.getByRole('button', { name: '音をON', exact: true }).click();
   await expect.poll(() => hasPlayed(page, 'bgm'), { timeout: 15000 }).toBe(true);
   await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.contexts.some((c: AudioContext) => c.state === 'running'))).toBe(true);
+  await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.media.some((m: HTMLMediaElement) => m.loop && !m.paused && m.currentTime > 0.1))).toBe(true);
   await enterGame(page);
   await expect.poll(() => hasPlayed(page, 'start')).toBe(true);
   await page.getByRole('checkbox', { name: 'B 整備', exact: true }).click();

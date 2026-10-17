@@ -55,8 +55,10 @@ class EchoPumpAudioControls extends StatelessWidget {
                                   Row(
                                     children: [
                                       toggle,
-                                      const Spacer(),
-                                      Flexible(child: label),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text('音量 ${(audio.volume * 100).round()}%'),
+                                      ),
                                     ],
                                   ),
                                   volume,
