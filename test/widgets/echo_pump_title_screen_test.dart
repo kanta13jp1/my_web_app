@@ -8,7 +8,7 @@ void main() {
     var starts = 0;
     await tester.pumpWidget(
       MaterialApp(
-      home: EchoPumpTitleScreen(onStart: () => starts++),
+        home: EchoPumpTitleScreen(onStart: () => starts++),
       ),
     );
     await tester.pumpAndSettle();
@@ -22,10 +22,10 @@ void main() {
     var starts = 0;
     await tester.pumpWidget(
       MaterialApp(
-      home: EchoPumpTitleScreen(
-        onStart: () => starts++,
-        backgroundAsset: 'missing-opening.png',
-      ),
+        home: EchoPumpTitleScreen(
+          onStart: () => starts++,
+          backgroundAsset: 'missing-opening.png',
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -44,12 +44,12 @@ void main() {
     var starts = 0;
     await tester.pumpWidget(
       MaterialApp(
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: const TextScaler.linear(2)),
-        child: child!,
-      ),
-      home: EchoPumpTitleScreen(onStart: () => starts++),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: EchoPumpTitleScreen(onStart: () => starts++),
       ),
     );
     await tester.pumpAndSettle();

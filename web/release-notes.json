@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-09-29",
+    "date": "2026-10-17",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-09-29T00:00:00Z",
+  "generatedAt": "2026-10-17T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -25,403 +25,402 @@
       "build": "1",
       "category": "release",
       "changeCategories": [
-        "automation",
         "feature",
         "fix"
       ],
       "changes": [
         {
           "category": "feature",
-          "id": "pr-5603",
+          "id": "pr-5815",
           "links": [
             {
-              "title": "PR #5603",
+              "title": "PR #5815",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5603"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5815"
             }
           ],
-          "mergedAt": "2026-09-29T18:46:32Z",
-          "summary": "#5603 feat(asset): リボカード照合のUI分岐（『リボ』バッジ・説明ツールチップ）と確定額ロジック表示 (#4901)"
+          "mergedAt": "2026-10-17T01:19:17Z",
+          "summary": "#5815 残響ポンプ室の最小脱出ゲームを追加"
         },
         {
           "category": "feature",
-          "id": "pr-5602",
+          "id": "pr-5814",
           "links": [
             {
-              "title": "PR #5602",
+              "title": "PR #5814",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5602"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5814"
             }
           ],
-          "mergedAt": "2026-09-29T18:00:03Z",
-          "summary": "#5602 feat(asset): 『借金しない宣言モニター』に違反根拠・24ヶ月ラインと今後一括固定トグルを連携 (#4902)"
+          "mergedAt": "2026-10-17T00:39:05Z",
+          "summary": "#5814 資産管理：定期収入の保存失敗で入力を保持し再試行できるよう修正"
         },
         {
           "category": "feature",
-          "id": "pr-5591",
+          "id": "pr-5813",
           "links": [
             {
-              "title": "PR #5591",
+              "title": "PR #5813",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5591"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5813"
             }
           ],
-          "mergedAt": "2026-09-29T15:37:20Z",
-          "summary": "#5591 支出分類に確信度の読み方と誤分類時の確認を追加"
+          "mergedAt": "2026-10-16T23:43:09Z",
+          "summary": "#5813 資産管理：隔月収入を毎月の登録候補へ表示しない"
         },
         {
           "category": "feature",
-          "id": "pr-5601",
+          "id": "pr-5812",
           "links": [
             {
-              "title": "PR #5601",
+              "title": "PR #5812",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5601"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5812"
             }
           ],
-          "mergedAt": "2026-09-29T15:19:35Z",
-          "summary": "#5601 feat: Jwenv WebGPU Lab（ブラウザ内WebGPU推論環境）を my_web_app に統合"
+          "mergedAt": "2026-10-16T12:43:00Z",
+          "summary": "#5812 資産管理：欠損月をまたぐ純資産差を月次CFへ表示しない"
         },
         {
           "category": "feature",
-          "id": "pr-5600",
+          "id": "pr-5811",
           "links": [
             {
-              "title": "PR #5600",
+              "title": "PR #5811",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5600"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5811"
             }
           ],
-          "mergedAt": "2026-09-29T15:09:59Z",
-          "summary": "#5600 feat(asset): リボ払い新規利用の内訳可視化と誓約達成状況の連動 (#5372)"
+          "mergedAt": "2026-10-16T12:22:49Z",
+          "summary": "#5811 資産管理：将来予測の二重控除と月別内訳の操作を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5810",
+          "links": [
+            {
+              "title": "PR #5810",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5810"
+            }
+          ],
+          "mergedAt": "2026-10-16T09:35:50Z",
+          "summary": "#5810 返済試算から継続固定費を除外し対象元本と未算出を明示する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5809",
+          "links": [
+            {
+              "title": "PR #5809",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5809"
+            }
+          ],
+          "mergedAt": "2026-10-16T08:40:18Z",
+          "summary": "#5809 長い読書メモの保存条件をPOST本文へ移して競合保護を維持"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5808",
+          "links": [
+            {
+              "title": "PR #5808",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5808"
+            }
+          ],
+          "mergedAt": "2026-10-16T06:53:37Z",
+          "summary": "#5808 給与サイクルの収入を出典単位で照合し未確認の合算を保留する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5807",
+          "links": [
+            {
+              "title": "PR #5807",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5807"
+            }
+          ],
+          "mergedAt": "2026-10-16T01:14:53Z",
+          "summary": "#5807 給与照合の支給・勤怠項目を日本語で表示する"
         },
         {
           "category": "fix",
-          "id": "pr-5596",
+          "id": "pr-5797",
           "links": [
             {
-              "title": "PR #5596",
+              "title": "PR #5797",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5596"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5797"
             }
           ],
-          "mergedAt": "2026-09-29T09:01:36Z",
-          "summary": "#5596 fix(ai-hub): provider.chat / provider.chat_auto など有料 LLM アクションの匿名実行を禁止 (P0)"
+          "mergedAt": "2026-10-16T00:45:40Z",
+          "summary": "#5797 fix(reading): 形而上学の岩波文庫上下巻を版候補・自動検索に追加"
         },
         {
           "category": "feature",
-          "id": "pr-5599",
+          "id": "pr-5806",
           "links": [
             {
-              "title": "PR #5599",
+              "title": "PR #5806",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5599"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5806"
             }
           ],
-          "mergedAt": "2026-09-29T08:37:39Z",
-          "summary": "#5599 feat(asset): 利息が元金返済額を上回る負債に対する早期警告・利息スパイラル警告 (#5366)"
+          "mergedAt": "2026-10-15T23:24:58Z",
+          "summary": "#5806 返済生活ルールの未照合残高表示と旧食費履歴を改善"
         },
         {
           "category": "feature",
-          "id": "pr-5598",
+          "id": "pr-5805",
           "links": [
             {
-              "title": "PR #5598",
+              "title": "PR #5805",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5598"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5805"
             }
           ],
-          "mergedAt": "2026-09-29T00:58:01Z",
-          "summary": "#5598 feat(asset): 確定申告export (CSV+e-Tax形式) UI連携 (#2492)"
+          "mergedAt": "2026-10-15T21:58:52Z",
+          "summary": "#5805 貯蓄計画の表示設定と検索の連動を修正"
         },
         {
           "category": "feature",
-          "id": "pr-5592",
+          "id": "pr-5804",
           "links": [
             {
-              "title": "PR #5592",
+              "title": "PR #5804",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5592"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5804"
             }
           ],
-          "mergedAt": "2026-09-28T12:34:34Z",
-          "summary": "#5592 正答・誤答・保留を分けて比較する集計画面を追加"
+          "mergedAt": "2026-10-15T21:04:11Z",
+          "summary": "#5804 資産管理の保存状況を現在値と観測世代で確認する"
         },
         {
           "category": "feature",
-          "id": "pr-5585",
+          "id": "pr-5803",
           "links": [
             {
-              "title": "PR #5585",
+              "title": "PR #5803",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5585"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5803"
             }
           ],
-          "mergedAt": "2026-09-27T19:29:37Z",
-          "summary": "#5585 成功率を変えて時間指標を学べる計算画面を追加"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5583",
-          "links": [
-            {
-              "title": "PR #5583",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5583"
-            }
-          ],
-          "mergedAt": "2026-09-27T19:08:36Z",
-          "summary": "#5583 Fix underwater autoplay and power-up pursuit; add eight-part music"
+          "mergedAt": "2026-10-15T19:33:40Z",
+          "summary": "#5803 カレンダーで使途不明金の参考内訳と自動由来を表示"
         },
         {
           "category": "feature",
-          "id": "pr-5579",
+          "id": "pr-5802",
           "links": [
             {
-              "title": "PR #5579",
+              "title": "PR #5802",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5579"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5802"
             }
           ],
-          "mergedAt": "2026-09-27T18:55:04Z",
-          "summary": "#5579 Add per-platform release verification checklist"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5588",
-          "links": [
-            {
-              "title": "PR #5588",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5588"
-            }
-          ],
-          "mergedAt": "2026-09-27T18:35:14Z",
-          "summary": "#5588 fix: align isolated Storage restore with lifecycle schema"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5587",
-          "links": [
-            {
-              "title": "PR #5587",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5587"
-            }
-          ],
-          "mergedAt": "2026-09-27T18:21:57Z",
-          "summary": "#5587 fix: cover complete Auth 2.197 schema delta in isolated restore"
-        },
-        {
-          "category": "fix",
-          "id": "pr-5586",
-          "links": [
-            {
-              "title": "PR #5586",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5586"
-            }
-          ],
-          "mergedAt": "2026-09-27T18:09:38Z",
-          "summary": "#5586 fix: restore Auth recovery-code tables in isolated backup drill"
+          "mergedAt": "2026-10-15T19:05:51Z",
+          "summary": "#5802 給与明細を元値照合して本人確認済みにする導線を追加"
         },
         {
           "category": "feature",
-          "id": "pr-5575",
+          "id": "pr-5801",
           "links": [
             {
-              "title": "PR #5575",
+              "title": "PR #5801",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5575"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5801"
             }
           ],
-          "mergedAt": "2026-09-27T17:56:30Z",
-          "summary": "#5575 実測記録からAIの入力使用量と料金換算を比較する機能を追加"
+          "mergedAt": "2026-10-15T18:47:51Z",
+          "summary": "#5801 返済報告で元本と支払予定を分け根拠未確認を表示"
         },
         {
           "category": "feature",
-          "id": "pr-5578",
+          "id": "pr-5800",
           "links": [
             {
-              "title": "PR #5578",
+              "title": "PR #5800",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5578"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5800"
             }
           ],
-          "mergedAt": "2026-09-27T17:29:09Z",
-          "summary": "#5578 Improve repeated Mario retries, character variants and seven-part audio"
+          "mergedAt": "2026-10-15T18:30:53Z",
+          "summary": "#5800 不足試算の二重控除を防ぎ支払根拠と未照合を表示"
         },
         {
           "category": "feature",
-          "id": "pr-5581",
+          "id": "pr-5799",
           "links": [
             {
-              "title": "PR #5581",
+              "title": "PR #5799",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5581"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5799"
             }
           ],
-          "mergedAt": "2026-09-27T17:11:46Z",
-          "summary": "#5581 feat: add Claude Code CLAUDE.md video lesson"
+          "mergedAt": "2026-10-15T18:11:20Z",
+          "summary": "#5799 給与入金直後残高の前月比目標を口座別に設定"
         },
         {
           "category": "feature",
-          "id": "pr-5580",
+          "id": "pr-5798",
           "links": [
             {
-              "title": "PR #5580",
+              "title": "PR #5798",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5580"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5798"
             }
           ],
-          "mergedAt": "2026-09-27T16:40:46Z",
-          "summary": "#5580 feat: add Claude Code code review video lesson"
+          "mergedAt": "2026-10-15T17:46:32Z",
+          "summary": "#5798 資産管理ページに操作可能なスクロールバーと記録欄検索を追加"
         },
         {
           "category": "feature",
-          "id": "pr-5572",
+          "id": "pr-5796",
           "links": [
             {
-              "title": "PR #5572",
+              "title": "PR #5796",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5572"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5796"
             }
           ],
-          "mergedAt": "2026-09-27T15:56:09Z",
-          "summary": "#5572 Add World 8, six-voice music and live autoplay collision recovery"
+          "mergedAt": "2026-10-15T16:56:58Z",
+          "summary": "#5796 給与控除の取得状態と本人確認状態をサマリーで区別"
         },
         {
           "category": "feature",
-          "id": "pr-5569",
+          "id": "pr-5794",
           "links": [
             {
-              "title": "PR #5569",
+              "title": "PR #5794",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5569"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5794"
             }
           ],
-          "mergedAt": "2026-09-27T15:38:40Z",
-          "summary": "#5569 Add five-character hiragana tracing and free drawing lab"
+          "mergedAt": "2026-10-15T16:39:36Z",
+          "summary": "#5794 給与入金直後の本人確認残高を保存前確認して記録する画面を追加"
         },
         {
           "category": "feature",
-          "id": "pr-5573",
+          "id": "pr-5795",
           "links": [
             {
-              "title": "PR #5573",
+              "title": "PR #5795",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5573"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5795"
             }
           ],
-          "mergedAt": "2026-09-27T15:20:08Z",
-          "summary": "#5573 feat: add Claude Code context management video lesson"
+          "mergedAt": "2026-10-15T16:08:31Z",
+          "summary": "#5795 給与入金の推定候補と本人の着金確認を分離する"
         },
         {
           "category": "feature",
-          "id": "pr-5570",
+          "id": "pr-5793",
           "links": [
             {
-              "title": "PR #5570",
+              "title": "PR #5793",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5570"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5793"
             }
           ],
-          "mergedAt": "2026-09-27T14:16:22Z",
-          "summary": "#5570 Add a reader-facing access comparison and delivery audit tool"
+          "mergedAt": "2026-10-15T15:48:17Z",
+          "summary": "#5793 給与控除の別名と介護・年金基金の内訳表示を修正"
         },
         {
           "category": "feature",
-          "id": "pr-5567",
+          "id": "pr-5790",
           "links": [
             {
-              "title": "PR #5567",
+              "title": "PR #5790",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5567"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5790"
             }
           ],
-          "mergedAt": "2026-09-27T13:53:26Z",
-          "summary": "#5567 Add World 7, five-voice music and automatic shared ranking display"
+          "mergedAt": "2026-10-15T15:15:30Z",
+          "summary": "#5790 引落一括確認で残高・利用枠が不明な行を除外する"
         },
         {
           "category": "feature",
-          "id": "pr-5564",
+          "id": "pr-5792",
           "links": [
             {
-              "title": "PR #5564",
+              "title": "PR #5792",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5564"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5792"
             }
           ],
-          "mergedAt": "2026-09-27T13:26:54Z",
-          "summary": "#5564 Verify acquisition measurements and add Search Console collection"
-        },
-        {
-          "category": "automation",
-          "id": "pr-5566",
-          "links": [
-            {
-              "title": "PR #5566",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5566"
-            }
-          ],
-          "mergedAt": "2026-09-27T13:02:22Z",
-          "summary": "#5566 feat: add Claude Code workflow video lesson"
+          "mergedAt": "2026-10-15T14:44:39Z",
+          "summary": "#5792 給与入金直後の本人確認残高を所有者限定で保存する基盤を追加"
         },
         {
           "category": "feature",
-          "id": "pr-5562",
+          "id": "pr-5789",
           "links": [
             {
-              "title": "PR #5562",
+              "title": "PR #5789",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5562"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5789"
             }
           ],
-          "mergedAt": "2026-09-27T12:42:12Z",
-          "summary": "#5562 Add World 6, four-voice music and automatic campaign rankings"
+          "mergedAt": "2026-10-15T14:02:21Z",
+          "summary": "#5789 給与明細の税金と社会保険料を月別に集計するカードを追加"
         },
         {
           "category": "feature",
-          "id": "pr-5560",
+          "id": "pr-5791",
           "links": [
             {
-              "title": "PR #5560",
+              "title": "PR #5791",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5560"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5791"
             }
           ],
-          "mergedAt": "2026-09-27T12:05:39Z",
-          "summary": "#5560 feat: present saved chat history without resending prompts"
+          "mergedAt": "2026-10-15T13:26:41Z",
+          "summary": "#5791 銀行CSVの符号付き残高と給与行の確認根拠を保持"
         },
         {
           "category": "feature",
-          "id": "pr-5559",
+          "id": "pr-5787",
           "links": [
             {
-              "title": "PR #5559",
+              "title": "PR #5787",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5559"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5787"
             }
           ],
-          "mergedAt": "2026-09-27T11:02:03Z",
-          "summary": "#5559 Add Mario World 5, layered audio and shared run rankings"
+          "mergedAt": "2026-10-15T12:58:42Z",
+          "summary": "#5787 給与入金直後の確定残高比較の基盤を追加"
         },
         {
           "category": "feature",
-          "id": "pr-5556",
+          "id": "pr-5788",
           "links": [
             {
-              "title": "PR #5556",
+              "title": "PR #5788",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5556"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5788"
             }
           ],
-          "mergedAt": "2026-09-27T09:03:23Z",
-          "summary": "#5556 Add Worlds 4-3/4-4, beanstalks, shell throwing and item-seeking assistance"
+          "mergedAt": "2026-10-15T12:38:03Z",
+          "summary": "#5788 振替元本のカレンダー表示と手数料・税込表記の分類を修正する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5786",
+          "links": [
+            {
+              "title": "PR #5786",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5786"
+            }
+          ],
+          "mergedAt": "2026-10-15T11:58:06Z",
+          "summary": "#5786 貯蓄目標の目的・金額・期限を各自で設定できるようにする"
         }
       ],
-      "date": "2026-09-29",
+      "date": "2026-10-17",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,
