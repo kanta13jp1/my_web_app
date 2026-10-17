@@ -15,8 +15,13 @@ class ProductionHoldTests(unittest.TestCase):
             text = (ROOT / ".github/workflows" / file).read_text(encoding="utf-8")
             for job in jobs:
                 condition = job_condition(text, job)
-                self.assertIn(GUARD + " && ", condition)
-                self.assertNotIn("||", condition.split(GUARD)[0])
+                expected = {
+                    ("deploy-prod.yml", "ci"): GUARD + " && github.event_name == 'workflow_dispatch'",
+                    ("deploy-prod.yml", "deploy"): "always() && " + GUARD + " && (needs.ci.result == 'success' || needs.ci.result == 'skipped')",
+                    ("deploy-prod.yml", "notify"): "always() && " + GUARD,
+                    ("deploy-core-hub.yml", "deploy"): GUARD + " && github.event_name == 'push' && github.ref == 'refs/heads/main'",
+                }
+                self.assertEqual(condition, expected[(file, job)])
     def test_unset_invalid_true_stay_held_for_push_and_manual(self):
         for event in ("push", "workflow_dispatch"):
             for value in ("", "true", "TRUE", "False", "0", "garbage"):
