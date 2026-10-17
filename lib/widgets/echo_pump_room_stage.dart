@@ -164,7 +164,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
                   ]);
                 }),
               ),
-            ))),
+            )),
           )),
         ),
         const SizedBox(height: 8),
