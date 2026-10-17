@@ -90,7 +90,8 @@ const philosophyCatalogEditions = [
       isbn: '9784003361320',
       volume: '岩波文庫 青613-2',
       totalPages: 167,
-      sourceUrl: 'https://opactmu.lib.tmu.ac.jp/iwjs0013opc/catdbl.do?hidden_return_link=true&pkey=BB00123729',
+      sourceUrl:
+          'https://opactmu.lib.tmu.ac.jp/iwjs0013opc/catdbl.do?hidden_return_link=true&pkey=BB00123729',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361320',
     ),
     note: '東京都立大学図書館書誌の1949年刊・167ページ。手元の刷の発行年は別途確認してください。',
