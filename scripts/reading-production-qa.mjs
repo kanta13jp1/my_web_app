@@ -404,7 +404,7 @@ try {
     await page.getByRole('button',{name:/版・入手先/}).click();
     await expect(page.getByRole('button',{name:'この版の書誌出典を開く',exact:true})).toBeVisible();
     await isbnLink(page);
-    await expect(page.getByRole('button',{name:'この版で読書を始める',exact:true})).toBeDisabled();
+    await expect(page.getByRole('group',{name:'版候補: 正法眼蔵随聞記・ちくま学芸文庫',exact:true}).getByRole('button',{name:'この版で読書を始める',exact:true})).toBeDisabled();
     await capture(page,`${name}-book-links`);
     await context.close();
   }
@@ -495,8 +495,8 @@ try {
   await page.goto(base+'/reading-list');await semantics(page);
   await openWork(page,'正法眼蔵随聞記');
   await page.getByRole('button',{name:/版・入手先/}).click();
-  await expect(page.getByRole('button',{name:'この版で読書を始める',exact:true})).toBeEnabled({timeout:90000});
-  await page.getByRole('button',{name:'この版で読書を始める',exact:true}).click();
+  await expect(page.getByRole('group',{name:'版候補: 正法眼蔵随聞記・ちくま学芸文庫',exact:true}).getByRole('button',{name:'この版で読書を始める',exact:true})).toBeEnabled({timeout:90000});
+  await page.getByRole('group',{name:'版候補: 正法眼蔵随聞記・ちくま学芸文庫',exact:true}).getByRole('button',{name:'この版で読書を始める',exact:true}).click();
   await restoredField(page,/^出版社/,'筑摩書房');
   await restoredField(page,/^訳者/,'水野弥穂子');
   await restoredField(page,/^編集者・編者/,'懐奘（記録・編纂）');
