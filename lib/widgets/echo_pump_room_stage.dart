@@ -216,7 +216,10 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
                               child: Transform(
                                 alignment: Alignment.center,
                                 transform: Matrix4.diagonal3Values(
-                                    _left ? -1 : 1, 1, 1),
+                                  _left ? -1 : 1,
+                                  1,
+                                  1,
+                                ),
                                 child: _walking
                                     ? _WalkingSprite(
                                         frame: (_walk.value * 4)
