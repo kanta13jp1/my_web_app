@@ -94,15 +94,16 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
         useRootNavigator: false,
         builder: (_) => FutureBuilder<void>(
           future: effectsStopped,
-          builder: (_, snapshot) => snapshot.connectionState == ConnectionState.done
-              ? EchoPumpInventoryDialog(game: inspectedGame)
-              : const AlertDialog(
-                  title: Text('所持品を準備中…'),
-                  content: SizedBox(
-                    height: 32,
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                ),
+          builder: (_, snapshot) =>
+              snapshot.connectionState == ConnectionState.done
+                  ? EchoPumpInventoryDialog(game: inspectedGame)
+                  : const AlertDialog(
+                      title: Text('所持品を準備中…'),
+                      content: SizedBox(
+                        height: 32,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
         ),
       );
     } finally {
