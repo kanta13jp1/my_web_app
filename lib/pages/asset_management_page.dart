@@ -18624,7 +18624,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       serverActions: serverActions,
       localActions: localActions,
     );
-    final periodLabel = '${DateFormat('yyyy/MM/dd').format(balance.asOfDate)}〜'
+    final periodLabel =
+        '${DateFormat('yyyy/MM/dd').format(_disposableBalanceService.salaryCycleStartFor(asOfDate: balance.asOfDate, salaryDay: balance.salaryDay))}〜'
         '${DateFormat('yyyy/MM/dd').format(balance.nextPayday.subtract(const Duration(days: 1)))}';
     final breakdownMessage = switch (_disposableBalanceBreakdownKey) {
       'fixed' => _buildDisposableBalanceFixedBreakdown(balance),
@@ -18666,7 +18667,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        '給料日までの可処分残高',
+                        '給与サイクルの収支計画',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -18675,7 +18676,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$periodLabel / 残り${balance.daysRemaining}日。収入は給与明細の解析結果を優先します。支出未入力時は上限目安です。',
+                        '$periodLabel の給与ベースの計画です。現在残高・支払結果・記録済み支出を照合した使用可能額ではありません。日割り使用可能額は未算出です。',
                         style: TextStyle(
                           fontSize: 12,
                           height: 1.5,
@@ -18730,15 +18731,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   onHoverEnd: () => _clearDisposableBalanceBreakdown('debt'),
                 ),
                 _buildFlowPriorityMetric(
-                  label: '借金減少ライン',
+                  label: '固定費・返済を除いた計画額',
                   value: _formatSignedYen(balance.debtReductionSpendingLimit),
                   color: balance.debtReductionSpendingLimit >= 0
                       ? const Color(0xFF065F46)
                       : const Color(0xFF7F1D1D),
                 ),
                 _buildFlowPriorityMetric(
-                  label: '1日あたり',
-                  value: _formatSignedYen(balance.dailyPace),
+                  label: '日割り使用可能額',
+                  value: '未算出',
                   color: const Color(0xFF2563EB),
                 ),
               ],
@@ -18808,7 +18809,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 14),
             if (actions.isEmpty)
               Text(
-                '必要なアクションはありません。今の支出ペースを維持しましょう。',
+                '自動提案がない場合も、現在残高・支払日・生活費を確認してください。',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.5,
@@ -18834,26 +18835,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     SalarySpendingBreakdown salaryBreakdown,
     DisposableBalanceResult balance,
   ) {
-    final formula = '計算: ${_formatYen(balance.income)} - '
+    final formula = '計画式: ${_formatYen(balance.income)} - '
         '${_formatYen(balance.fixedTotal)} - ${_formatYen(balance.debtTotal)} = '
         '${_formatSignedYen(balance.debtReductionSpendingLimit)}。';
-    final debtSplit =
-        '返済${_formatYen(balance.debtTotal)}の内訳は、元金${_formatYen(balance.debtPrincipalTotal)} / 金利${_formatYen(balance.debtInterestTotal)}です。';
-    final String debtGuard;
-    if (balance.debtTotal <= 0) {
-      debtGuard = '今月の返済予定はありません。新規借入をしなければ債務残高は増えません。';
-    } else if (balance.debtPrincipalTotal <= 0) {
-      debtGuard = '今月の返済は元金減少が見込めないため、残高を減らすには追加返済か金利条件の見直しが必要です。';
-    } else if (balance.debtReductionSpendingLimit >= 0) {
-      debtGuard =
-          'この借金減少ライン以内に使用額を抑えると、新規借入なしで元金${_formatYen(balance.debtPrincipalTotal)}分だけ先月より債務総額が減る見込みです。';
-    } else {
-      debtGuard = '固定費と返済で給与を超えているため、このままでは債務残高を増やさない運用ができません。支出削減か入金追加が必要です。';
-    }
-    if (salaryBreakdown.expenseEntryCount == 0) {
-      return '$formula $debtSplit $debtGuard 給与日後の支出明細が未入力のため、これは「使ってよい確定額」ではなく給与ベースの上限目安です。銀行・カード明細を取り込むと実額に近づきます。';
-    }
-    return '$formula $debtSplit $debtGuard 給与日後の記録済み支出は${_formatYen(salaryBreakdown.totalExpense)}です。未取り込み支出がある場合は、この目安からさらに差し引いてください。';
+    final recorded = salaryBreakdown.expenseEntryCount == 0
+        ? '給与日後の支出明細は未入力です。'
+        : '給与日後の記録済み支出は${_formatYen(salaryBreakdown.totalExpense)}です。';
+    return '$formula $recorded 記録済み支出は上の計画額から未控除です。'
+        '固定費・返済との重複やカード請求の内包を照合せず、支出全額を単純に引くこともできません。'
+        '現在の口座残高、未払い予定、必要な生活費が未照合のため、日割り使用可能額は未算出です。'
+        'この計画額だけで追加支出や債務減少を判断しないでください。';
   }
 
   String _buildDisposableBalanceFixedBreakdown(
