@@ -27,7 +27,7 @@ try{
   // Keep this warm-up in the raw recording; trim only the continuous prefix.
   await page.goto(`${origin}/echo-pump`,{waitUntil:'domcontentloaded'});
   const warmAccessibility=page.locator('flt-semantics-placeholder');
-  if(await warmAccessibility.count())await warmAccessibility.click({force:true});
+  if(await warmAccessibility.count())await warmAccessibility.dispatchEvent('click');
   await button('ゲーム開始').waitFor({timeout:60000});await hold(3000);
   await click('ゲーム開始');await hold(20000);
   if(await button('スキップして開始').count())await click('スキップして開始');
@@ -38,7 +38,7 @@ try{
   await page.goto(`${origin}/echo-pump`,{waitUntil:'domcontentloaded'});
   // Enable Flutter's documented accessibility activation control when necessary.
   const accessibility=page.locator('flt-semantics-placeholder');
-  if(await accessibility.count())await accessibility.click({force:true});
+  if(await accessibility.count())await accessibility.dispatchEvent('click');
   await button('ゲーム開始').waitFor({timeout:60000});
   await page.evaluate(()=>document.fonts.ready);await hold(4000);ready=(Date.now()-started)/1000;mark('title-ready');
   await click('音をON');
