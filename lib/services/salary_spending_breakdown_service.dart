@@ -129,11 +129,11 @@ class SalarySpendingBreakdownService {
         continue;
       }
       final smoking = amount.isFinite && amount == amount.truncateToDouble()
-          ? WasteTrackingService.reconciledWasteAmount(entry.description, amount.toInt())
+          ? WasteTrackingService.reconciledWasteAmount(entry.description, amount.toInt(),)
           : amount;
       final reconciled = smoking > 0 && smoking < amount;
       final allocations = reconciled
-          ? <String, double>{'食費': amount - smoking, '娯楽・浪費': smoking.toDouble()}
+          ? <String, double>{'食費': amount - smoking, '娯楽・浪費': smoking.toDouble(),}
           : <String, double>{categorize(entry.description): amount};
       for (final allocation in allocations.entries) {
         final category = allocation.key;
@@ -143,7 +143,7 @@ class SalarySpendingBreakdownService {
         if (samplesByCategory[category]!.length < 2) {
           samplesByCategory[category]!.add(entry.description.trim().isEmpty
               ? entry.sourceLabel
-              : entry.description.trim());
+              : entry.description.trim(),);
         }
       }
       totalExpense += amount;
