@@ -16,6 +16,6 @@ void main() {
       todayViolationCount: 0, compliantStreakDays: 0, lockdownActive: false,
     );
     expect(snapshot.totalExpense, 736);
-    expect(snapshot.wasteExpense, lessThan(736), reason: 'A mixed receipt must not count its food amount as smoking. Exact components need explicit reconciliation.');
+    expect(snapshot.wasteExpense, lessThan(736), reason: 'A mixed receipt must not count its food amount as smoking. Exact components need explicit reconciliation.',);
   });
 }
