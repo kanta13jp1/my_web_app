@@ -13,7 +13,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       try {
         final game = EchoPumpGame()..togglePower(PumpCircuit.b);
-  
+
         Future<void> show() async {
           await tester.pumpWidget(
             MaterialApp(
@@ -37,7 +37,7 @@ void main() {
           );
           await tester.pumpAndSettle();
         }
-  
+
         await show();
         expect(find.text('● B 整備 ON'), findsOneWidget);
         await tester.ensureVisible(find.byKey(const Key('echo-map-control')));
