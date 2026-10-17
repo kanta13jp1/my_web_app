@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -641,7 +644,9 @@ void main() {
         await tester.binding.setSurfaceSize(size);
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.pumpWidget(
-          MaterialApp(
+          RepaintBoundary(
+            key: const Key('income_search_diagnostic_boundary'),
+            child: MaterialApp(
             home: AssetManagementPage(
               debugNow: DateTime(2026, 6, 20),
               debugCalendarNow: DateTime(2026, 6, 20),
@@ -649,6 +654,7 @@ void main() {
                 '2026-06-20': {'synthetic cash': 1000.0},
               },
             ),
+          ),
           ),
         );
         Future<void> settle() async {
@@ -677,6 +683,21 @@ void main() {
           await settle();
           final editor = find.text('定期収入');
           expect(editor, findsOneWidget);
+          final ancestors = <String>[];
+          editor.evaluate().single.visitAncestorElements((element) {
+            final render = element.findRenderObject();
+            ancestors.add('${element.widget.runtimeType}: ${render is RenderBox && render.hasSize ? render.size : render.runtimeType}');
+            return ancestors.length < 40;
+          });
+          debugPrint('SEARCH_ANCESTORS $size: $ancestors');
+          await tester.runAsync(() async {
+            final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(const Key('income_search_diagnostic_boundary')),);
+            final image = await boundary.toImage(pixelRatio: 1);
+            final data = await image.toByteData(format: ui.ImageByteFormat.png);
+            await File('.ci-logs/recurring-income/layout-${size.width}.png').writeAsBytes(data!.buffer.asUint8List());
+            image.dispose();
+          });
+
           expect(
             editor.hitTestable(),
             findsOneWidget,
