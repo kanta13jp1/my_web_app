@@ -42,7 +42,7 @@ void main() {
   test('retry after a partial manifest write reuses keys and preserves status',
       () async {
     var itemCalls = 0;
-    final payloads = <List<dynamic>>[];
+    final payloads = <List<Map<String, dynamic>>>[];
     final service = _service((request) async {
       if (request.url.path.endsWith('/evernote_migration_batches')) {
         return http.Response(
@@ -53,7 +53,11 @@ void main() {
         );
       }
       itemCalls += 1;
-      payloads.add(jsonDecode(request.body) as List<dynamic>);
+      payloads.add(
+        (jsonDecode(request.body) as List<dynamic>)
+            .map((value) => Map<String, dynamic>.from(value as Map))
+            .toList(),
+      );
       return http.Response(
         itemCalls == 2 ? '{"message":"synthetic transient failure"}' : '',
         itemCalls == 2 ? 500 : 201,
