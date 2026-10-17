@@ -4757,20 +4757,52 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isBuiltInTransferTask(AssetLiabilityTransferTask task) =>
       task.id == AssetLiabilityPlanningService.auPayCardFundingTransferTaskId;
 
-  void _deleteRecurringIncomeTemplate(String templateId) {
-    final currentMonthKey = _assetLiabilityStateMonthKey(_now);
-    setState(() {
-      _recurringIncomeTemplates = _recurringIncomeTemplates
-          .where((template) => template.id != templateId)
-          .toList(growable: false);
-      _monthlyIncomePlans = _monthlyIncomePlans
-          .where(
-            (plan) => plan.id != 'recurring_${templateId}_$currentMonthKey',
-          )
-          .toList(growable: false);
-    });
-    unawaited(_saveRecurringIncomeTemplates());
-    unawaited(_saveAssetLiabilityMonthlyState());
+  final _deletingRecurringIncomeTemplateIds = <String>{};
+
+  Future<void> _deleteRecurringIncomeTemplate(String templateId) async {
+    if (_deletingRecurringIncomeTemplateIds.contains(templateId)) return;
+    final month = _assetLiabilityStateMonth(_now);
+    final monthKey = _assetLiabilityStateMonthKey(month);
+    final templates = _recurringIncomeTemplates
+        .where((template) => template.id != templateId)
+        .toList(growable: false);
+    final plans = _monthlyIncomePlans
+        .where((plan) => plan.id != 'recurring_${templateId}_$monthKey')
+        .toList(growable: false);
+    final nextState = _currentAssetLiabilityMonthlyState().copyWith(
+      incomePlans: plans,
+    );
+    setState(() => _deletingRecurringIncomeTemplateIds.add(templateId));
+    var templateDeleted = false;
+    try {
+      await _assetLiabilityRepository.saveRecurringIncomeTemplates(templates);
+      templateDeleted = true;
+      await _assetLiabilityRepository.saveMonth(month: month, state: nextState);
+      if (!mounted) return;
+      setState(() {
+        _recurringIncomeTemplates = templates;
+        if (_assetLiabilityStateMonthKey(_now) == monthKey) {
+          _monthlyIncomePlans = plans;
+        }
+      });
+    } catch (error) {
+      debugPrint('Error deleting recurring income template: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              templateDeleted
+                  ? '定期収入は削除済みですが、今月の予定を削除できませんでした。もう一度削除してください。'
+                  : '削除できませんでした。項目を残しています。もう一度削除してください。',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _deletingRecurringIncomeTemplateIds.remove(templateId));
+      }
+    }
   }
 
   Future<void> _showIncomePlanDialog(
@@ -28589,7 +28621,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               workbook,
               existing: template,
             ),
-            onDeleted: () => _deleteRecurringIncomeTemplate(template.id),
+            onDeleted: _deletingRecurringIncomeTemplateIds.contains(template.id)
+                ? null
+                : () => _deleteRecurringIncomeTemplate(template.id),
           ),
       ],
     );
