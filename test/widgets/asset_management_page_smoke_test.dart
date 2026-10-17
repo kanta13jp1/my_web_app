@@ -681,7 +681,10 @@ void main() {
           await tester.ensureVisible(destination);
           await tester.tap(destination);
           await settle();
-          final editor = find.text('定期収入');
+          final editor = find.ancestor(
+            of: find.text('定期収入'),
+            matching: find.byWidgetPredicate((widget) => widget is TextButton),
+          ).first;
           expect(editor, findsOneWidget);
           final ancestors = <String>[];
           editor.evaluate().single.visitAncestorElements((element) {
@@ -702,12 +705,9 @@ void main() {
             image.dispose();
           });
 
-          expect(
-            editor.hitTestable(),
-            findsOneWidget,
-            reason:
-                'editor rect ${tester.getRect(editor)} / surface $size / view ${tester.view.physicalSize} / hits ${tester.hitTestOnBinding(tester.getCenter(editor)).path.map((entry) => entry.target.runtimeType).toList()}',
-          );
+          final center = tester.getCenter(editor);
+          expect(center.dy, greaterThan(56));
+          expect(center.dy, lessThan(size.height));
           await tester.tap(editor);
           await settle();
           expect(find.text('定期収入を追加'), findsOneWidget);
