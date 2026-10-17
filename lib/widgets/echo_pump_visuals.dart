@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/echo_pump_game.dart';
+import 'echo_pump_cast.dart';
 
 const _mint = Color(0xFF9BE0CF);
 const _warning = Color(0xFFFFB49B);
@@ -56,7 +57,7 @@ class EchoPumpScene extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 104),
+                  const SizedBox(height: 20),
                   Text(
                     game.escaped ? '雨の向こうへ。' : game.room.label,
                     key: const Key('echo-scene-location'),
@@ -67,7 +68,7 @@ class EchoPumpScene extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(game.room.description),
+                  EchoPumpCast(game: game),
                   const SizedBox(height: 20),
                   Wrap(
                     spacing: 20,
