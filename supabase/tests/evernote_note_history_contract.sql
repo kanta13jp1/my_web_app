@@ -409,3 +409,29 @@ end
 $$;
 
 reset role;
+
+-- Account deletion must not silently bypass imported recovery-evidence guards.
+-- This captures the current blocking integration; it does not prove that the
+-- account-lifecycle external-cleanup preflight is safe or complete.
+do $$
+declare
+  v_user_id uuid := '00000000-0000-4000-8000-000000000101';
+begin
+  if not exists (select 1 from auth.users where id = v_user_id) then
+    raise exception 'Account cascade fixture user is missing.';
+  end if;
+  begin
+    delete from auth.users where id = v_user_id;
+    raise exception 'Account deletion unexpectedly bypassed migration evidence guards.';
+  exception when check_violation then
+    raise notice 'Account cascade blocked before completion: %', sqlerrm;
+  end;
+  if not exists (select 1 from auth.users where id = v_user_id)
+     or (select count(*) from public.note_versions
+         where user_id = v_user_id and source_system = 'evernote') <> 1
+     or (select count(*) from public.evernote_note_history_attachments
+         where user_id = v_user_id) <> 1 then
+    raise exception 'Rejected account cascade lost its user or recovery evidence.';
+  end if;
+end
+$$;
