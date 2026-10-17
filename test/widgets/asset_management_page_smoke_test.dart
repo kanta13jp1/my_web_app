@@ -628,9 +628,11 @@ void main() {
 
   for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
     for (final query in ['定期収入', '収入予定', '毎月の収入']) {
-      testWidgets('income search reaches editor $query at ${size.width}', (tester) async {
+      testWidgets('income search reaches editor $query at ${size.width}',
+          (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_management_display_mode_v1': AssetManagementDisplayMode.full.storageId,
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
         });
         await tester.binding.setSurfaceSize(size);
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -639,7 +641,9 @@ void main() {
             home: AssetManagementPage(
               debugNow: DateTime(2026, 6, 20),
               debugCalendarNow: DateTime(2026, 6, 20),
-              debugInitialAssetData: const {'2026-06-20': {'synthetic cash': 1000.0}},
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 1000.0},
+              },
             ),
           ),
         );
@@ -647,11 +651,17 @@ void main() {
           await tester.pump(const Duration(milliseconds: 300));
           await tester.pump(const Duration(milliseconds: 300));
         }
+
         await settle();
         try {
-          await tester.tap(find.byKey(const Key('asset_section_search_appbar_button')));
+          await tester
+              .tap(find.byKey(const Key('asset_section_search_appbar_button')));
           await settle();
-          final search = find.byWidgetPredicate((w) => w is TextField && (w.decoration?.hintText?.startsWith('カード名・項目名で検索') ?? false),);
+          final search = find.byWidgetPredicate(
+            (w) =>
+                w is TextField &&
+                (w.decoration?.hintText?.startsWith('カード名・項目名で検索') ?? false),
+          );
           expect(search, findsOneWidget);
           await tester.enterText(search, query);
           await settle();
