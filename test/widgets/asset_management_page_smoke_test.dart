@@ -952,7 +952,7 @@ void main() {
         <String, dynamic>{'pay_date': '2026-05-25', 'net_amount': 300000, 'confidence': 1},
       ],
       debugInitialAssetData: const {'2026-06-20': {'synthetic cash': 1000.0}},
-      debugInitialRecentFlows: <Map<String, dynamic>>[
+      debugInitialRecentFlows: const <Map<String, dynamic>>[
         <String, dynamic>{'action_type': 'spend', 'amount': 200000,
           'description': 'synthetic living expense', 'occurred_at': '2026-06-15T12:00:00'},
       ],
