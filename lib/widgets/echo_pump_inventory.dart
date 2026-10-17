@@ -56,38 +56,43 @@ class _FuseJourney extends StatelessWidget {
         : game.hasFuse
             ? 1
             : 0;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        for (var i = 0; i < 3; i++) ...[
-          if (i > 0)
-            const Icon(Icons.arrow_forward, size: 18, color: Colors.white38),
-          SizedBox(
-            width: 68,
-            child: Column(
-              children: [
-                Icon(
-                  [
-                    Icons.handyman_outlined,
-                    Icons.inventory_2_outlined,
-                    Icons.settings_input_component,
-                  ][i],
-                  color: i <= current ? _mint : Colors.white24,
-                  size: 28,
-                ),
-                Text(
-                  ['工具庫', '所持', '装着'][i],
-                  style: TextStyle(
-                    color: i == current ? _mint : Colors.white54,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < 3; i++) ...[
+            if (i > 0)
+              const Padding(
+                padding: EdgeInsets.only(left: 4, right: 4, top: 6),
+                child:
+                    Icon(Icons.arrow_forward, size: 18, color: Colors.white38),
+              ),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    [
+                      Icons.handyman_outlined,
+                      Icons.inventory_2_outlined,
+                      Icons.settings_input_component,
+                    ][i],
+                    color: i <= current ? _mint : Colors.white24,
+                    size: 28,
                   ),
-                ),
-              ],
+                  Text(
+                    ['工具庫', '所持', '装着'][i],
+                    textAlign: TextAlign.center,
+                    style:
+                        TextStyle(color: i == current ? _mint : Colors.white54),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
