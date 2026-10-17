@@ -7,9 +7,11 @@ void main() {
   testWidgets('three scenes finish once, then skip cannot finish again',
       (tester) async {
     var finishes = 0;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
       home: EchoPumpIntro(onFinished: () => finishes++),
-    ));
+      ),
+    );
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('23:47 / 豪雨'), findsOneWidget);
     await tester.pump(const Duration(seconds: 6));
@@ -26,9 +28,11 @@ void main() {
   testWidgets('pause and lifecycle suspension preserve the timeline',
       (tester) async {
     var finishes = 0;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
       home: EchoPumpIntro(onFinished: () => finishes++),
-    ));
+      ),
+    );
     await tester.pump(const Duration(seconds: 2));
     await tester.tap(find.byKey(const Key('echo-intro-pause')));
     await tester.pump(const Duration(seconds: 25));
@@ -48,9 +52,11 @@ void main() {
   testWidgets('disposing during intro never starts the game later',
       (tester) async {
     var finishes = 0;
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
       home: EchoPumpIntro(onFinished: () => finishes++),
-    ));
+      ),
+    );
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 30));
@@ -65,7 +71,8 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       var finishes = 0;
-      await tester.pumpWidget(MaterialApp(
+      await tester.pumpWidget(
+      MaterialApp(
         home: MediaQuery(
           data: MediaQueryData(
             size: size,
@@ -74,7 +81,8 @@ void main() {
           ),
           child: EchoPumpIntro(onFinished: () => finishes++),
         ),
-      ));
+        ),
+    );
       await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
       expect(finishes, 0);

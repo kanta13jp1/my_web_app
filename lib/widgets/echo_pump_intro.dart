@@ -182,7 +182,9 @@ class _EchoPumpIntroState extends State<EchoPumpIntro>
                             TextButton.icon(
                               key: const Key('echo-intro-pause'),
                               onPressed: _togglePause,
-                              icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
+                              icon: Icon(
+                                _paused ? Icons.play_arrow : Icons.pause,
+                              ),
                               label: Text(_paused ? '再開' : '一時停止'),
                             ),
                           ],
