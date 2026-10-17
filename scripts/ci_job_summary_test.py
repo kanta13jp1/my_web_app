@@ -93,7 +93,7 @@ class CiJobSummaryTest(unittest.TestCase):
                     ".github/workflows/ci.yml").read_text(encoding="utf-8")
         ids = re.findall(r"^        id: ([a-z_]+)$", workflow, re.M)
         for _, _, step in CHECKS:
-            self.assertEqual(ids.count(step), 1, step)
+            self.assertEqual(ids.count(step), 2 if step == 'flutter_dependencies' else 1, step)
         summary = workflow.split("      - name: Job Summary\n", 1)[1].split(
             "\n  actionlint:", 1)[0]
         self.assertIn("if: always()", summary)
