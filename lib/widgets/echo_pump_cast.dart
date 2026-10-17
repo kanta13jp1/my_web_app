@@ -27,9 +27,9 @@ class EchoPumpCast extends StatelessWidget {
                 ? '接近注意'
                 : '別区画';
     final heroState = game.escaped
-        ? '脱出成功'
+        ? '生還'
         : game.health == 0
-            ? '探索失敗'
+            ? '行動不能'
             : game.room == PumpRoom.control
                 ? '安全な拠点'
                 : '探索中';

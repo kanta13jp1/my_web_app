@@ -79,7 +79,7 @@ void main() {
     game.move(PumpRoom.control);
     game.move(PumpRoom.exit);
     await show(tester, game);
-    expect(find.text('脱出成功'), findsOneWidget);
+    expect(find.text('生還'), findsOneWidget);
     await show(tester, EchoPumpGame());
     expect(find.text('封鎖済み'), findsNothing);
     expect(find.text('安全な拠点'), findsOneWidget);
@@ -140,7 +140,7 @@ void main() {
     }
     expect(game.health, 0);
     await show(tester, game);
-    expect(find.text('探索失敗'), findsOneWidget);
+    expect(find.text('行動不能'), findsOneWidget);
   });
 
   for (final width in [320.0, 1120.0]) {
