@@ -30,12 +30,14 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs/recurring-income
           flutter pub get
-          dart format test/widgets/asset_management_page_smoke_test.dart
+          dart format lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
           dart fix --apply --code=require_trailing_commas
-          dart format test/widgets/asset_management_page_smoke_test.dart
+          dart format lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
           mkdir -p .ci-logs/recurring-income/source/test/widgets
           cp test/widgets/asset_management_page_smoke_test.dart .ci-logs/recurring-income/source/test/widgets/
-          flutter analyze --no-pub test/widgets/asset_management_page_smoke_test.dart
+          mkdir -p .ci-logs/recurring-income/source/lib/pages
+          cp lib/pages/asset_management_page.dart .ci-logs/recurring-income/source/lib/pages/
+          flutter analyze --no-pub lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
           flutter test --no-pub --reporter expanded test/widgets/asset_management_page_smoke_test.dart --plain-name 'disposable cycle budget does not claim' | tee .ci-logs/recurring-income/tests.log
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
