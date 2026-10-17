@@ -5,18 +5,29 @@
     "--output=none",
     "--set-exit-if-changed",
     "lib/widgets/echo_pump_cast.dart",
-    "test/widgets/echo_pump_cast_test.dart"
+    "test/widgets/echo_pump_cast_test.dart",
+    "lib/models/echo_pump_room_walk.dart",
+    "lib/widgets/echo_pump_room_stage.dart",
+    "test/models/echo_pump_room_walk_test.dart",
+    "test/widgets/echo_pump_room_stage_test.dart",
+    "lib/widgets/echo_pump_visuals.dart"
   ],
   [
     "dart",
     "analyze",
     "lib/widgets/echo_pump_cast.dart",
-    "test/widgets/echo_pump_cast_test.dart"
+    "test/widgets/echo_pump_cast_test.dart",
+    "lib/models/echo_pump_room_walk.dart",
+    "lib/widgets/echo_pump_room_stage.dart",
+    "test/models/echo_pump_room_walk_test.dart",
+    "test/widgets/echo_pump_room_stage_test.dart"
   ],
   [
     "flutter",
     "test",
-    "test/widgets/echo_pump_cast_test.dart"
+    "test/widgets/echo_pump_cast_test.dart",
+    "test/models/echo_pump_room_walk_test.dart",
+    "test/widgets/echo_pump_room_stage_test.dart"
   ],
   [
     "python3",

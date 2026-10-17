@@ -21,6 +21,11 @@ on:
         options: [grouped, baseline]
   pull_request:
     paths:
+      - lib/models/echo_pump_room_walk.dart
+      - lib/widgets/echo_pump_room_stage.dart
+      - test/models/echo_pump_room_walk_test.dart
+      - test/widgets/echo_pump_room_stage_test.dart
+      - test/e2e/echo_pump_room_stage.spec.ts
       - lib/models/echo_pump_game.dart
       - lib/pages/echo_pump_game_page.dart
       - lib/services/echo_pump_audio.dart
@@ -114,7 +119,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/echo_pump.spec.ts test/e2e/echo_pump_audio.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/echo_pump.spec.ts test/e2e/echo_pump_audio.spec.ts test/e2e/echo_pump_room_stage.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
       - name: Preserve browser evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -123,10 +128,15 @@ jobs:
           include-hidden-files: true
           path: |
             .ci-logs/echo-pump-dev-checks.json
+            lib/models/echo_pump_room_walk.dart
+            lib/widgets/echo_pump_room_stage.dart
+            test/models/echo_pump_room_walk_test.dart
+            test/widgets/echo_pump_room_stage_test.dart
+            lib/widgets/echo_pump_visuals.dart
             lib/widgets/echo_pump_cast.dart
             test/widgets/echo_pump_cast_test.dart
-            playwright-report/
-            test-results/
+            test-results/**/*.png
+            test-results/**/error-context.md
             echo-server.log
             lib/widgets/echo_pump_intro.dart
             lib/pages/echo_pump_game_page.dart
