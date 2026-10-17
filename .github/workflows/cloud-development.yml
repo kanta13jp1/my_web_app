@@ -38,8 +38,8 @@ jobs:
         if: always()
         run: |
           mkdir -p .ci-logs/recurring-income/source
-          cp --parents lib/services/asset_category_budget_store.dart test/services/asset_category_budget_clear_test.dart .ci-logs/recurring-income/source/
-          git diff -- lib/services/asset_category_budget_store.dart test/services/asset_category_budget_clear_test.dart > .ci-logs/recurring-income/mechanical.patch
+          cp --parents lib/services/asset_category_budget_store.dart lib/pages/asset_management_page.dart test/services/asset_category_budget_clear_test.dart .ci-logs/recurring-income/source/
+          git diff -- lib/services/asset_category_budget_store.dart lib/pages/asset_management_page.dart test/services/asset_category_budget_clear_test.dart > .ci-logs/recurring-income/mechanical.patch
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

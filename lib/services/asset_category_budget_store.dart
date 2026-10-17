@@ -16,7 +16,13 @@ class AssetCategoryBudgetStore {
 
   Future<bool> hasSavedSetting({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    return store.containsKey(prefsKey);
+    final raw = store.getString(prefsKey);
+    if (raw == null || raw.isEmpty) return false;
+    try {
+      return jsonDecode(raw) is Map;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<Map<String, double>> load({SharedPreferences? prefs}) async {
