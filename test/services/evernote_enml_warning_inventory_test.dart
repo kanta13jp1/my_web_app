@@ -6,7 +6,8 @@ void main() {
   for (final wrapper in <String>['pre', 'a']) {
     final content = '<en-note><$wrapper>'
         '<en-crypt>ciphertext</en-crypt></$wrapper></en-note>';
-    test('$wrapper cannot hide encrypted content from the safety inventory', () {
+    test('$wrapper cannot hide encrypted content from the safety inventory',
+        () {
       final result = const EvernoteEnmlMarkdownConverter().convert(
         enml: content,
         resources: const <EvernoteEnmlResourceReference>[],
