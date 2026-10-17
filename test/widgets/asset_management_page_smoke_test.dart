@@ -291,7 +291,7 @@ void main() {
   }
 
   for (final width in [1200.0, 390.0]) {
-  for (final failure in ['template', 'monthly', 'none', 'pending']) {
+  for (final failure in ['template', 'monthly', 'none', 'pending', 'delete']) {
     testWidgets('income save failure keeps data and retries $failure width $width',
         (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
@@ -382,6 +382,21 @@ void main() {
           ),
           hasLength(1),
         );
+      if (failure == 'delete') {
+          repository.failTemplate = true;
+          final chip = find.byWidgetPredicate((widget) =>
+              widget is InputChip && widget.label is Text &&
+              ((widget.label as Text).data ?? '').contains('synthetic income'));
+          expect(chip, findsOneWidget);
+          await tester.ensureVisible(chip);
+          final delete = find.descendant(of: chip, matching: find.byTooltip('Delete'));
+          expect(delete, findsOneWidget);
+          await tester.tap(delete);
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(chip, findsOneWidget,
+              reason: 'A failed delete must remain visible so it is not reported as saved');
+        }
       } finally {
         await _unmount(tester);
       }
