@@ -231,13 +231,18 @@ class _RecurringFixedCostEditorDialogState
       currency: _currency,
       usdAmount: usdAmount,
     );
-    setState(() { _saving = true; _saveError = null; });
+    setState(() {
+      _saving = true;
+      _saveError = null;
+    });
     try {
       await widget.onSave?.call(cost);
       if (mounted) Navigator.of(context).pop(cost);
     } catch (_) {
       if (mounted) {
-        setState(() { _saveError = '保存できませんでした。入力を保持しています。'; });
+        setState(() {
+          _saveError = '保存できませんでした。入力を保持しています。';
+        });
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -332,179 +337,190 @@ class _RecurringFixedCostEditorDialogState
     return PopScope(
       canPop: !_saving,
       child: AlertDialog(
-      title: Text(widget.existing == null ? '$labelを追加' : '$labelを編集'),
-      content: AbsorbPointer(
-        absorbing: _saving,
-        child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_saveError != null)
-                Text(_saveError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-              DropdownButtonFormField<AssetRecurringFixedCostCategory>(
-                initialValue: _category,
-                decoration: const InputDecoration(labelText: '区分'),
-                items: [
-                  for (final category in AssetRecurringFixedCostCategory.values)
-                    DropdownMenuItem<AssetRecurringFixedCostCategory>(
-                      value: category,
-                      child: Text(categoryLabel(category)),
-                    ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _category = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: '名称',
-                  hintText:
-                      _category == AssetRecurringFixedCostCategory.subscription
+        title: Text(widget.existing == null ? '$labelを追加' : '$labelを編集'),
+        content: AbsorbPointer(
+          absorbing: _saving,
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_saveError != null)
+                    Text(_saveError!,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,),),
+                  DropdownButtonFormField<AssetRecurringFixedCostCategory>(
+                    initialValue: _category,
+                    decoration: const InputDecoration(labelText: '区分'),
+                    items: [
+                      for (final category
+                          in AssetRecurringFixedCostCategory.values)
+                        DropdownMenuItem<AssetRecurringFixedCostCategory>(
+                          value: category,
+                          child: Text(categoryLabel(category)),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _category = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: '名称',
+                      hintText: _category ==
+                              AssetRecurringFixedCostCategory.subscription
                           ? '例: Anthropic (Claude)'
                           : '例: 電気代',
-                ),
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? '名称を入力してください'
-                    : null,
-              ),
-              const SizedBox(height: 8),
-              // 通貨トグル。ドル建て (Claude/Notion 等) は毎月の為替で円額が
-              // 変わるため、USD 原資を保持し最新レートで円換算する。
-              SegmentedButton<AssetRecurringFixedCostCurrency>(
-                segments: const [
-                  ButtonSegment(
-                    value: AssetRecurringFixedCostCurrency.jpy,
-                    label: Text('円'),
-                    icon: Icon(Icons.currency_yen, size: 16),
-                  ),
-                  ButtonSegment(
-                    value: AssetRecurringFixedCostCurrency.usd,
-                    label: Text('USD'),
-                    icon: Icon(Icons.attach_money, size: 16),
-                  ),
-                ],
-                selected: {_currency},
-                onSelectionChanged: (selection) {
-                  setState(() => _currency = selection.first);
-                },
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _amountController,
-                decoration: InputDecoration(
-                  labelText: _isUsd ? '月額 (USD)' : '月額 (円)',
-                  hintText: _isUsd ? '例: 20' : '例: 8000',
-                  prefixText: _isUsd ? r'$ ' : null,
-                ),
-                keyboardType: TextInputType.numberWithOptions(
-                  decimal: _isUsd,
-                ),
-                inputFormatters: _isUsd
-                    ? [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'[0-9.]'),
-                        ),
-                      ]
-                    : [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (_) => setState(() {}),
-                validator: (value) {
-                  final amount = double.tryParse((value ?? '').trim());
-                  if (amount == null || amount <= 0) {
-                    return _isUsd ? '0より大きい金額を入力してください' : '1円以上の金額を入力してください';
-                  }
-                  return null;
-                },
-              ),
-              if (_isUsd) _buildUsdConversionHint(),
-              TextFormField(
-                controller: _dayController,
-                decoration: const InputDecoration(
-                  labelText: '振替日 (1〜31)',
-                  hintText: '例: 27',
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (value) {
-                  final day = int.tryParse((value ?? '').trim());
-                  if (day == null || day < 1 || day > 31) {
-                    return '1〜31 の日付を入力してください';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<AssetRecurringFixedCostCadence>(
-                initialValue: _cadence,
-                decoration: const InputDecoration(labelText: '周期'),
-                items: [
-                  for (final cadence in AssetRecurringFixedCostCadence.values)
-                    DropdownMenuItem<AssetRecurringFixedCostCadence>(
-                      value: cadence,
-                      child: Text(RecurringFixedCostCard.cadenceLabel(cadence)),
                     ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _cadence = value);
-                  }
-                },
-              ),
-              if (_category ==
-                  AssetRecurringFixedCostCategory.subscription) ...[
-                const SizedBox(height: 8),
-                DropdownButtonFormField<AssetSubscriptionBillingGateway>(
-                  initialValue: _gateway,
-                  decoration: const InputDecoration(
-                    labelText: '請求経路',
-                    helperText: 'Apple/Google/au 経由は明細に集約名義で出ます',
+                    validator: (value) =>
+                        (value == null || value.trim().isEmpty)
+                            ? '名称を入力してください'
+                            : null,
                   ),
-                  items: [
-                    for (final gateway
-                        in AssetSubscriptionBillingGateway.values)
-                      DropdownMenuItem<AssetSubscriptionBillingGateway>(
-                        value: gateway,
-                        child: Text(gatewayLabel(gateway)),
+                  const SizedBox(height: 8),
+                  // 通貨トグル。ドル建て (Claude/Notion 等) は毎月の為替で円額が
+                  // 変わるため、USD 原資を保持し最新レートで円換算する。
+                  SegmentedButton<AssetRecurringFixedCostCurrency>(
+                    segments: const [
+                      ButtonSegment(
+                        value: AssetRecurringFixedCostCurrency.jpy,
+                        label: Text('円'),
+                        icon: Icon(Icons.currency_yen, size: 16),
                       ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _gateway = value);
-                    }
-                  },
-                ),
-              ],
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String?>(
-                initialValue: _sourceAccountId,
-                decoration: const InputDecoration(labelText: '振替元 (任意)'),
-                items: [
-                  const DropdownMenuItem<String?>(child: Text('未設定')),
-                  for (final option in widget.sourceAccounts)
-                    DropdownMenuItem<String?>(
-                      value: option.id,
-                      child: Text(option.name),
+                      ButtonSegment(
+                        value: AssetRecurringFixedCostCurrency.usd,
+                        label: Text('USD'),
+                        icon: Icon(Icons.attach_money, size: 16),
+                      ),
+                    ],
+                    selected: {_currency},
+                    onSelectionChanged: (selection) {
+                      setState(() => _currency = selection.first);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _amountController,
+                    decoration: InputDecoration(
+                      labelText: _isUsd ? '月額 (USD)' : '月額 (円)',
+                      hintText: _isUsd ? '例: 20' : '例: 8000',
+                      prefixText: _isUsd ? r'$ ' : null,
                     ),
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: _isUsd,
+                    ),
+                    inputFormatters: _isUsd
+                        ? [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
+                            ),
+                          ]
+                        : [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (_) => setState(() {}),
+                    validator: (value) {
+                      final amount = double.tryParse((value ?? '').trim());
+                      if (amount == null || amount <= 0) {
+                        return _isUsd
+                            ? '0より大きい金額を入力してください'
+                            : '1円以上の金額を入力してください';
+                      }
+                      return null;
+                    },
+                  ),
+                  if (_isUsd) _buildUsdConversionHint(),
+                  TextFormField(
+                    controller: _dayController,
+                    decoration: const InputDecoration(
+                      labelText: '振替日 (1〜31)',
+                      hintText: '例: 27',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) {
+                      final day = int.tryParse((value ?? '').trim());
+                      if (day == null || day < 1 || day > 31) {
+                        return '1〜31 の日付を入力してください';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<AssetRecurringFixedCostCadence>(
+                    initialValue: _cadence,
+                    decoration: const InputDecoration(labelText: '周期'),
+                    items: [
+                      for (final cadence
+                          in AssetRecurringFixedCostCadence.values)
+                        DropdownMenuItem<AssetRecurringFixedCostCadence>(
+                          value: cadence,
+                          child: Text(
+                              RecurringFixedCostCard.cadenceLabel(cadence),),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _cadence = value);
+                      }
+                    },
+                  ),
+                  if (_category ==
+                      AssetRecurringFixedCostCategory.subscription) ...[
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<AssetSubscriptionBillingGateway>(
+                      initialValue: _gateway,
+                      decoration: const InputDecoration(
+                        labelText: '請求経路',
+                        helperText: 'Apple/Google/au 経由は明細に集約名義で出ます',
+                      ),
+                      items: [
+                        for (final gateway
+                            in AssetSubscriptionBillingGateway.values)
+                          DropdownMenuItem<AssetSubscriptionBillingGateway>(
+                            value: gateway,
+                            child: Text(gatewayLabel(gateway)),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _gateway = value);
+                        }
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String?>(
+                    initialValue: _sourceAccountId,
+                    decoration: const InputDecoration(labelText: '振替元 (任意)'),
+                    items: [
+                      const DropdownMenuItem<String?>(child: Text('未設定')),
+                      for (final option in widget.sourceAccounts)
+                        DropdownMenuItem<String?>(
+                          value: option.id,
+                          child: Text(option.name),
+                        ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _sourceAccountId = value),
+                  ),
                 ],
-                onChanged: (value) => setState(() => _sourceAccountId = value),
               ),
-            ],
+            ),
           ),
         ),
-      ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(),
-          child: const Text('キャンセル'),
-        ),
-        FilledButton(onPressed: _saving ? null : _submit, child: Text(_saving ? '保存中…' : '保存')),
-      ],
+        actions: [
+          TextButton(
+            onPressed: _saving ? null : () => Navigator.of(context).pop(),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+              onPressed: _saving ? null : _submit,
+              child: Text(_saving ? '保存中…' : '保存'),),
+        ],
       ),
     );
   }

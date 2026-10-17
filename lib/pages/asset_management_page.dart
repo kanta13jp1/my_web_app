@@ -12896,7 +12896,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return synced;
   }
 
-  Future<void> _saveRecurringFixedCost(AssetRecurringFixedCost cost, {bool rethrowOnFailure = false}) async {
+  Future<void> _saveRecurringFixedCost(AssetRecurringFixedCost cost,
+      {bool rethrowOnFailure = false}) async {
     try {
       await _recurringTombstoneSyncService.runSerialized(() async {
         final previous = List<AssetRecurringFixedCost>.from(
