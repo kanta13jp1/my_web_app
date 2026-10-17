@@ -59,10 +59,21 @@ test('real BGM and SE play, volume and mute work, leaving closes audio', async (
   await enterGame(page);
   await expect.poll(() => hasPlayed(page, 'start')).toBe(true);
   await page.getByRole('checkbox', { name: 'B 整備', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: 'B 整備', exact: true })).toBeChecked();
   await expect.poll(() => hasPlayed(page, 'power')).toBe(true);
   const gainBefore = await page.evaluate(() => (window as any).__echoAudioAudit.gains[0].gain.value);
   const bgmPlaysBefore = await page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/bgm.wav')).length);
-  await page.getByRole('slider').press('ArrowLeft');
+  const slider = page.getByRole('slider');
+  await slider.focus();
+  await expect(slider).toBeFocused();
+  // Flutter applies focus during its render frame after the power toggle.
+  await page.evaluate(() => new Promise<void>(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  }));
+  await expect(slider).toBeFocused();
+  const volumeBefore = await slider.getAttribute('aria-valuetext');
+  await slider.press('ArrowLeft');
+  await expect.poll(() => slider.getAttribute('aria-valuetext')).not.toBe(volumeBefore);
   await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.gains[0].gain.value)).toBeLessThan(gainBefore);
   expect(await page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/bgm.wav')).length)).toBe(bgmPlaysBefore);
   await page.screenshot({ path: info.outputPath('audio-on.png') });
