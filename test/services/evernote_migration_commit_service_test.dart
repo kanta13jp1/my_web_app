@@ -14,6 +14,21 @@ const _sourceContext = EvernoteMigrationSourceContext(
 );
 
 void main() {
+  test('reads exact OCR XML from persisted attachment metadata', () {
+    for (final raw in <String>['<recoIndex/>', '<malformed OCR']) {
+      final snapshot = EvernoteCommittedAttachmentSnapshot.fromJson(
+        <String, dynamic>{
+          'file_name': 'synthetic.txt',
+          'file_path': 'owner/synthetic.txt',
+          'file_size': 1,
+          'mime_type': 'text/plain',
+          'content_sha256': 'synthetic',
+          'source_metadata': <String, dynamic>{'recognition_xml': raw},
+        },
+      );
+      expect(snapshot.recognitionXml, raw);
+    }
+  });
   group('EvernoteMigrationCommitService', () {
     for (final streamed in <bool>[false, true]) {
       for (final missing in <bool>[false, true]) {
@@ -30,7 +45,9 @@ void main() {
             storage: storage,
             database: database,
           );
-          storage.objects['$evernoteArchiveBucket/$_userId/evernote/${fixture.export.exportSha256}/source.enex'] = fixture.bytes;
+          storage.objects[
+                  '$evernoteArchiveBucket/$_userId/evernote/${fixture.export.exportSha256}/source.enex'] =
+              fixture.bytes;
           final operation = streamed
               ? service.commitFromArchive(
                   userId: _userId,
