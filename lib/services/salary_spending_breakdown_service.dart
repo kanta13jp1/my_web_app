@@ -1,3 +1,4 @@
+import 'waste_tracking_service.dart';
 import '../models/asset_income_source_evidence.dart';
 
 class SalarySpendingEntry {
@@ -127,15 +128,23 @@ class SalarySpendingBreakdownService {
       if (amount <= 0) {
         continue;
       }
-      final category = categorize(entry.description);
-      totalsByCategory[category] = (totalsByCategory[category] ?? 0) + amount;
-      countsByCategory[category] = (countsByCategory[category] ?? 0) + 1;
-      samplesByCategory.putIfAbsent(category, () => <String>[]);
-      if (samplesByCategory[category]!.length < 2) {
-        final sample = entry.description.trim().isEmpty
-            ? entry.sourceLabel
-            : entry.description.trim();
-        samplesByCategory[category]!.add(sample);
+      final smoking = amount.isFinite && amount == amount.truncateToDouble()
+          ? WasteTrackingService.reconciledWasteAmount(entry.description, amount.toInt())
+          : amount;
+      final reconciled = smoking > 0 && smoking < amount;
+      final allocations = reconciled
+          ? <String, double>{'食費': amount - smoking, '娯楽・浪費': smoking.toDouble()}
+          : <String, double>{categorize(entry.description): amount};
+      for (final allocation in allocations.entries) {
+        final category = allocation.key;
+        totalsByCategory[category] = (totalsByCategory[category] ?? 0) + allocation.value;
+        countsByCategory[category] = (countsByCategory[category] ?? 0) + 1;
+        samplesByCategory.putIfAbsent(category, () => <String>[]);
+        if (samplesByCategory[category]!.length < 2) {
+          samplesByCategory[category]!.add(entry.description.trim().isEmpty
+              ? entry.sourceLabel
+              : entry.description.trim());
+        }
       }
       totalExpense += amount;
       expenseEntryCount += 1;

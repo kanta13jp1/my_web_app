@@ -30,9 +30,9 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs/recurring-income
           flutter pub get
-          dart format test/services/mixed_receipt_budget_regression_test.dart
-          flutter analyze --no-pub test/services/mixed_receipt_budget_regression_test.dart
-          flutter test --no-pub --reporter expanded test/services/mixed_receipt_budget_regression_test.dart | tee .ci-logs/recurring-income/tests.log
+          dart format lib/services/salary_spending_breakdown_service.dart lib/services/waste_tracking_service.dart test/services/mixed_receipt_budget_regression_test.dart
+          flutter analyze --no-pub lib/services/salary_spending_breakdown_service.dart lib/services/waste_tracking_service.dart test/services/mixed_receipt_budget_regression_test.dart
+          flutter test --no-pub --reporter expanded test/services/mixed_receipt_budget_regression_test.dart test/services/salary_spending_breakdown_service_test.dart | tee .ci-logs/recurring-income/tests.log
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
