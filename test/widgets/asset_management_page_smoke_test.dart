@@ -634,6 +634,10 @@ void main() {
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
         });
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
         await tester.binding.setSurfaceSize(size);
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.pumpWidget(
@@ -676,7 +680,7 @@ void main() {
           expect(
             editor.hitTestable(),
             findsOneWidget,
-            reason: 'editor rect ${tester.getRect(editor)} / surface $size',
+            reason: 'editor rect ${tester.getRect(editor)} / surface $size / view ${tester.view.physicalSize} / hits ${tester.hitTestOnBinding(tester.getCenter(editor)).path.map((entry) => entry.target.runtimeType).toList()}',
           );
           await tester.tap(editor);
           await settle();
