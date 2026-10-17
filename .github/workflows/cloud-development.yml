@@ -39,6 +39,7 @@ jobs:
           cp lib/pages/asset_management_page.dart .ci-logs/recurring-income/source/lib/pages/
           flutter analyze --no-pub lib/pages/asset_management_page.dart test/widgets/asset_management_page_smoke_test.dart
           flutter test --no-pub --reporter expanded test/widgets/asset_management_page_smoke_test.dart --plain-name 'disposable cycle budget does not claim' | tee .ci-logs/recurring-income/tests.log
+          flutter test --no-pub --reporter expanded test/services/disposable_balance_service_test.dart test/services/disposable_balance_asset_liability_adapter_test.dart | tee .ci-logs/recurring-income/service-tests.log
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
