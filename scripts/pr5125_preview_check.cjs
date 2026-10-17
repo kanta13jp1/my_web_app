@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
   fs.mkdirSync('preview-evidence', { recursive: true });
   const browser = await chromium.launch();
   const screens = ['note-list','note-editor','import','note-collections','note-tags','note-navigation','note-tasks','space-sharing'];
+  const labels = {'note-list':'架空データ：秋の読書メモ','note-editor':'秋の読書メモ',import:'Import','note-collections':'ノートブック・スタック・Space','note-tags':'階層タグ','note-navigation':'保存済み検索・ショートカット','note-tasks':'ノートタスク','space-sharing':'Space共有'};
   const report = [];
   try {
     for (const [device, viewport] of Object.entries({pc:{width:1440,height:1000},mobile:{width:390,height:844}})) {
@@ -26,6 +27,7 @@ const assert = require('node:assert/strict');
         assert.equal(await page.locator('#screen').inputValue(),screen);
         const semantics=await page.locator('flt-semantics-host').evaluateAll(hosts=>hosts.map(h=>h.innerText+' '+Array.from(h.querySelectorAll('[aria-label]')).map(e=>e.getAttribute('aria-label')).join(' ')).join(' '));
         assert(semantics.includes('架空データ'), 'Missing offline banner: '+device+'/'+screen);
+        assert(semantics.includes(labels[screen]), 'Missing actual screen content: '+device+'/'+screen+' '+semantics.slice(0,1000));
         assert(!/Assertion failed|ProviderNotFoundException|Supabase has not been initialized|ErrorWidget/.test(semantics), 'Broken screen: '+device+'/'+screen);
         await page.screenshot({path:`preview-evidence/${device}-${screen}.png`,fullPage:true});
         assert.equal(errors.length,start, 'Browser error: '+errors.slice(start).join('\n'));

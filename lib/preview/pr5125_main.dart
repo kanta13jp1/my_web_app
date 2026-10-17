@@ -32,7 +32,8 @@ Future<void> main() async {
     ),
   );
   String encode(Object value) => base64Url.encode(utf8.encode(jsonEncode(value))).replaceAll('=', '');
-  final token = '${encode({'alg': 'none', 'typ': 'JWT'})}.${encode({'sub': Preview5125Store.userId, 'exp': 4102444800, 'role': 'authenticated'})}.preview';
+  final payload = {'sub': Preview5125Store.userId, 'exp': 4102444800, 'role': 'authenticated',};
+  final token = '${encode({'alg': 'none', 'typ': 'JWT'})}.${encode(payload)}.preview';
   await Supabase.instance.client.auth.recoverSession(jsonEncode({
     'access_token': token, 'refresh_token': 'fictional-preview',
     'token_type': 'bearer', 'expires_in': 315360000, 'expires_at': 4102444800,

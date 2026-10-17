@@ -15,7 +15,7 @@ void main() {
   test('all mutations and external destinations fail closed', () async {
     final store = Preview5125Store();
     for (final method in ['POST', 'PATCH', 'DELETE', 'PUT']) {
-      final response = await store.client.send(http.Request(method, Uri.parse('https://pr5125.invalid/rest/v1/notes')));
+      final response = await store.client.send(http.Request(method, Uri.parse('https://pr5125.invalid/rest/v1/notes'),),);
       expect(response.statusCode, 403);
     }
     final external = await store.client.get(Uri.parse('https://example.com/rest/v1/notes'));
