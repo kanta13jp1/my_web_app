@@ -7,6 +7,8 @@ on:
       - lib/pages/echo_pump_game_page.dart
       - lib/services/echo_pump_audio.dart
       - lib/widgets/echo_pump_audio_controls.dart
+      - lib/widgets/echo_pump_guidance.dart
+      - test/widgets/echo_pump_guidance_test.dart
       - test/services/echo_pump_audio_test.dart
       - test/widgets/echo_pump_audio_controls_test.dart
       - test/e2e/echo_pump_audio.spec.ts
@@ -46,6 +48,9 @@ jobs:
       - name: Analyze and test the prototype
         run: |
           python3 scripts/generate_echo_pump_audio.py --check
+          dart format --output=none --set-exit-if-changed lib/widgets/echo_pump_guidance.dart test/widgets/echo_pump_guidance_test.dart
+          dart analyze lib/widgets/echo_pump_guidance.dart test/widgets/echo_pump_guidance_test.dart
+          flutter test test/widgets/echo_pump_guidance_test.dart
           dart format --output=none --set-exit-if-changed lib/services/echo_pump_audio.dart lib/widgets/echo_pump_audio_controls.dart test/services/echo_pump_audio_test.dart test/widgets/echo_pump_audio_controls_test.dart test/fixtures/echo_pump_app.dart
           dart analyze lib/services/echo_pump_audio.dart lib/widgets/echo_pump_audio_controls.dart test/services/echo_pump_audio_test.dart test/widgets/echo_pump_audio_controls_test.dart
           flutter test test/services/echo_pump_audio_test.dart test/widgets/echo_pump_audio_controls_test.dart

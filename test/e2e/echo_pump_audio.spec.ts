@@ -74,6 +74,12 @@ test('real BGM and SE play, volume and mute work, leaving closes audio', async (
   expect(await page.evaluate(() => (window as any).__echoAudioAudit.plays.length)).toBe(plays);
   await page.getByRole('button', { name: '音をON', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.media.some((m: HTMLMediaElement) => !m.paused && m.loop))).toBe(true);
+  await page.getByRole('button', { name: '中央廊下へ', exact: true }).click();
+  await expect.poll(() => hasPlayed(page, 'step')).toBe(true);
+  await page.mouse.move(page.viewportSize()!.width / 2, page.viewportSize()!.height / 2);
+  await page.mouse.wheel(0, -4000);
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: info.outputPath('visual-guidance.png') });
   await info.attach('actual-audio-playback', {
     body: JSON.stringify(await page.evaluate(() => ({
       plays: (window as any).__echoAudioAudit.plays,

@@ -6,6 +6,7 @@ import '../widgets/echo_pump_audio_controls.dart';
 import '../widgets/echo_pump_title_screen.dart';
 import '../widgets/echo_pump_intro.dart';
 import '../widgets/echo_pump_visuals.dart';
+import '../widgets/echo_pump_guidance.dart';
 
 class EchoPumpGamePage extends StatefulWidget {
   const EchoPumpGamePage({super.key, this.audio});
@@ -21,6 +22,10 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
   EchoPumpGame _game = EchoPumpGame();
   bool _started = false;
   bool _introPlaying = false;
+  int _actionRevision = 0;
+  EchoPumpCue? _visualCue = EchoPumpCue.start;
+  PumpRoom _fromRoom = PumpRoom.control;
+  bool _blocked = false;
 
   late final EchoPumpAudio _audio;
 
@@ -48,7 +53,16 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
   void _act(VoidCallback action, [EchoPumpCue? cue]) {
     final health = _game.health;
     final turn = _game.turn;
-    setState(action);
+    final from = _game.room;
+    setState(() {
+      action();
+      _actionRevision++;
+      _fromRoom = from;
+      _blocked = _game.turn == turn && cue != EchoPumpCue.start;
+      _visualCue = _game.escaped ? EchoPumpCue.escape
+          : _game.health == 0 ? EchoPumpCue.fail
+          : _game.health < health ? EchoPumpCue.damage : cue;
+    });
     _audio.setMusicActive(!_game.finished);
     if (_game.escaped) {
       _audio.cue(EchoPumpCue.escape);
@@ -148,18 +162,26 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                       ),
                     ],
                   ),
-                  _panel(
-                    '現在の目標',
-                    [
-                      Text(
-                        _game.objective,
-                        style: const TextStyle(fontSize: 18),
+                  const SizedBox(height: 12),
+                  EchoPumpProgress(game: _game),
+                  const SizedBox(height: 12),
+                  EchoPumpActionVisual(
+                    revision: _actionRevision, cue: _visualCue,
+                    from: _fromRoom, to: _game.room,
+                    message: _game.message, blocked: _blocked,
+                  ),
+                  ExpansionTile(
+                    key: const Key('echo-details'),
+                    title: const Text('詳しい目標・状況'),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [Text(_game.objective), const SizedBox(height: 8), Text(_game.message)],
+                        ),
                       ),
                     ],
-                  ),
-                  Semantics(
-                    liveRegion: true,
-                    child: _panel('状況', [Text(_game.message)]),
                   ),
                   if (_game.finished)
                     _panel(
@@ -253,8 +275,20 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                             ),
                         ],
                       ),
-                      const Text('3系統目を入れる前に、どれか1つを停止。'
-                          '\nA：搬入ファン / B：工具棚とコンプレッサー / C：点検槽のベルと排水'),
+                      const SizedBox(height: 8),
+                      Row(children: [
+                        for (var i = 0; i < 2; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(Icons.bolt, color: i < _game.power.length ? const Color(0xFF9BE0CF) : Colors.white24),
+                          ),
+                        Text('${_game.power.length} / 2'),
+                      ]),
+                      const ExpansionTile(
+                        title: Text('電源の使い方'),
+                        children: [Text('3系統目を入れる前に、どれか1つを停止。'
+                            '\nA：搬入ファン / B：工具棚とコンプレッサー / C：点検槽のベルと排水')],
+                      ),
                     ]),
                   if (_game.room == PumpRoom.workshop)
                     _panel('工具棚', [
