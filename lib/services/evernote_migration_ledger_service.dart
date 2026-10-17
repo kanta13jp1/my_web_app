@@ -373,6 +373,7 @@ class EvernoteMigrationLedgerService {
     });
     return rows;
   }
+
   static String _sourceItemKey(ImportedNoteDraft note, int index) {
     final sourceId = note.sourceId?.trim();
     if (sourceId != null && sourceId.isNotEmpty) return 'id:$sourceId';
