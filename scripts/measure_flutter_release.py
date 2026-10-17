@@ -38,6 +38,14 @@ def main():
     if len(matches) != 1:
         raise SystemExit('Expected exactly one base href before temporary build configuration')
     index = index.replace(matches[0], '<base href="$FLUTTER_BASE_HREF">')
+    # A separate app needs an explicit host return, independent of router history.
+    return_link = ('<a id="prototype-host-return" href="/" '
+                   'style="position:fixed;top:8px;right:8px;z-index:2147483647;'
+                   'padding:8px 12px;background:white;color:#123;border-radius:6px;'
+                   'font:14px sans-serif;text-decoration:none">'
+                   '\u5165\u53e3\u3078\u623b\u308b</a>')
+    index = index.replace('</body>', return_link + '</body>')
+    report['conditions']['host_return'] = 'explicit same-origin host link; not browser history'
     report['source_index_before'] = hashlib.sha256(original_index).hexdigest()
     index_path.write_text(index, encoding='utf-8')
     start = time.monotonic()

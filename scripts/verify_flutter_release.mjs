@@ -89,11 +89,12 @@ try {
     await page.screenshot({ path: path.join(output, `play-${viewport.width}.png`) });
     await page.reload();
     await expect(start).toBeVisible({ timeout: 90000 });
-    for (let back = 0; back < 3 && page.url() !== origin + '/'; back++) await page.goBack();
+    await page.locator('#prototype-host-return').click();
+    await page.waitForURL(origin + '/');
     await expect(page.getByRole('heading', { name: 'CI配信試作', exact: true })).toBeVisible();
     if (errors.length || missing.length) throw new Error(JSON.stringify({ errors, missing }));
     report.samples.push({ viewport, launch: true, start_game: true, direct_reload: true,
-      browser_back_to_host: true, browser_errors: errors, missing_local_assets: missing });
+      explicit_link_to_host: true, browser_errors: errors, missing_local_assets: missing });
     await context.close();
   }
   report.result = 'success';
