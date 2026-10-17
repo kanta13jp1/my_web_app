@@ -11,6 +11,8 @@ class FakeOutput implements EchoPumpAudioOutput {
   int stops = 0;
   final effects = <EchoPumpCue>[];
   Completer<void>? gate;
+  Completer<void>? effectGate;
+  int effectRequest = 0;
 
   @override
   Future<void> music(bool value, double level) async {
@@ -23,11 +25,14 @@ class FakeOutput implements EchoPumpAudioOutput {
 
   @override
   Future<void> effect(EchoPumpCue cue, double volume) async {
-    if (!closed) effects.add(cue);
+    final request = ++effectRequest;
+    if (effectGate != null) await effectGate!.future;
+    if (!closed && request == effectRequest) effects.add(cue);
   }
 
   @override
   Future<void> silenceEffects() async {
+    effectRequest++;
     stops++;
   }
 
@@ -137,6 +142,44 @@ void main() {
     await audio.settled;
     expect(output.playing, isFalse);
     expect(output.effects, isEmpty);
+  });
+
+  test('inventory cancels effects queued during initialization and keeps BGM',
+      () async {
+    output.gate = Completer<void>();
+    audio.setEnabled(true);
+    await Future<void>.delayed(Duration.zero);
+    audio.cue(EchoPumpCue.step);
+    final stopped = audio.suspendEffects();
+    audio.cue(EchoPumpCue.step);
+    output.gate!.complete();
+    await stopped;
+    expect(output.effects, isEmpty);
+    expect(output.playing, isTrue);
+    audio.resumeEffects();
+    audio.cue(EchoPumpCue.collect);
+    await audio.settled;
+    expect(output.effects, [EchoPumpCue.collect]);
+  });
+
+  test('inventory cancels an in-flight effect before the menu becomes ready',
+      () async {
+    audio.setEnabled(true);
+    await audio.settled;
+    output.effectGate = Completer<void>();
+    audio.cue(EchoPumpCue.step);
+    await Future<void>.delayed(Duration.zero);
+    final stopped = audio.suspendEffects();
+    expect(output.stops, greaterThan(0));
+    output.effectGate!.complete();
+    await stopped;
+    expect(output.effects, isEmpty);
+    expect(output.playing, isTrue);
+    audio.resumeEffects();
+    output.effectGate = null;
+    audio.cue(EchoPumpCue.step);
+    await audio.settled;
+    expect(output.effects, [EchoPumpCue.step]);
   });
 
   test('dispose closes output and prevents subsequent playback', () async {
