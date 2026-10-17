@@ -26,11 +26,15 @@ jobs:
       - run: node --check scripts/echo-record.mjs
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto-cjk
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto-cjk pulseaudio xvfb
       - name: Record verified public game
         env:
           EXPECTED_PRODUCTION_SHA: ${{ inputs.production_sha }}
-        run: node scripts/echo-record.mjs
+        run: |
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=echo
+          pactl set-default-sink echo
+          xvfb-run -a node scripts/echo-record.mjs
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:

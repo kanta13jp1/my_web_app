@@ -1,17 +1,19 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import {mkdirSync,writeFileSync} from 'node:fs';
-import {execFileSync} from 'node:child_process';
+import {mkdirSync,writeFileSync,statSync} from 'node:fs';
+import {execFileSync,spawn} from 'node:child_process';
 const origin='https://my-web-app-b67f4.web.app',out='echo-recording';
 const expected=process.env.EXPECTED_PRODUCTION_SHA;
 assert.match(expected??'',/^[a-f0-9]{40}$/);mkdirSync(out,{recursive:true});
 const hold=ms=>new Promise(r=>setTimeout(r,ms));
 async function version(){const r=await fetch(`${origin}/version.json`,{cache:'no-store'});assert(r.ok);const v=await r.json();assert.equal(v.commit,expected);return v;}
-const before=await version();const browser=await chromium.launch({headless:true});
+const before=await version();const browser=await chromium.launch({headless:false,ignoreDefaultArgs:['--mute-audio']});
 const errors=[],events=[],fontRequests=[];
 // A clean context, no authentication cookies or user data.
 const context=await browser.newContext({viewport:{width:1440,height:1080},locale:'ja-JP',recordVideo:{dir:out,size:{width:1440,height:1080}}});
 const page=await context.newPage(),video=page.video(),started=Date.now();
+const audio=spawn('ffmpeg',['-y','-f','pulse','-i','echo.monitor','-c:a','pcm_s16le',`${out}/browser-audio.wav`],{stdio:['pipe','ignore','inherit']});
+const audioEnded=new Promise((resolve,reject)=>audio.once('exit',code=>code===0?resolve():reject(new Error(`audio recorder ${code}`))));
 page.on('response',r=>{if(/font|\.woff|\.ttf|\.otf/i.test(r.url()))fontRequests.push({seconds:(Date.now()-started)/1000,url:r.url(),status:r.status()});});
 const mark=action=>events.push({seconds:(Date.now()-started)/1000,action});
 page.on('pageerror',e=>errors.push(e.message));
@@ -39,6 +41,7 @@ try{
   if(await accessibility.count())await accessibility.click({force:true});
   await button('ゲーム開始').waitFor({timeout:60000});
   await page.evaluate(()=>document.fonts.ready);await hold(4000);ready=(Date.now()-started)/1000;mark('title-ready');
+  await click('音をON');
   await page.screenshot({path:`${out}/title.png`});await hold(2200);
   await click('ゲーム開始');await hold(4500);
   await page.screenshot({path:`${out}/intro.png`});await click('スキップして開始');
@@ -60,13 +63,18 @@ try{
   await page.screenshot({path:`${out}/escape.png`});await hold(4500);
   after=await version();assert.deepEqual(errors,[]);
 }finally{
-  writeFileSync(`${out}/evidence.json`,JSON.stringify({before,after,ready,events,errors,fontRequests,method:'Actual public production UI; full ordinary-UI font warm-up before retained continuous take; no cookies/state injection; no audio',passed:!!after&&errors.length===0},null,2));
+  writeFileSync(`${out}/evidence.json`,JSON.stringify({before,after,ready,events,errors,fontRequests,method:'Actual public production UI; full ordinary-UI font warm-up; clean headed Chromium video with dedicated PulseAudio sink recording; no microphone/cookies/state injection',passed:!!after&&errors.length===0},null,2));
   await context.close();await browser.close();
+  audio.stdin.write('q');await audioEnded;
 }
 const raw=await video.path(),final=`${out}/echo-pump-x.mp4`;
-execFileSync('ffmpeg',['-y','-ss',String(ready),'-i',raw,'-an','-c:v','libx264','-preset','medium','-crf','18','-pix_fmt','yuv420p','-movflags','+faststart',final],{stdio:'inherit'});
+const encode=['-ss',String(ready),'-i',raw,'-ss',String(ready),'-i',`${out}/browser-audio.wav`,'-map','0:v:0','-map','1:a:0','-shortest','-c:v','libx264','-preset','medium','-b:v','780k','-pix_fmt','yuv420p'];
+execFileSync('ffmpeg',['-y',...encode,'-c:a','aac','-b:a','64k','-movflags','+faststart',final],{stdio:'inherit'});
+assert(statSync(final).size<5000000,'X media must be under 5MB');
+const level=execFileSync('ffmpeg',['-i',final,'-af','volumedetect','-vn','-f','null','-'],{encoding:'utf8',stdio:['ignore','pipe','pipe']});
 const probe=JSON.parse(execFileSync('ffprobe',['-v','quiet','-show_format','-show_streams','-of','json',final],{encoding:'utf8'}));
 assert(+probe.format.duration>=30&&+probe.format.duration<=65);
+assert(probe.streams.some(s=>s.codec_name==='aac'));
 for(const t of [1,9,20,30])execFileSync('ffmpeg',['-y','-ss',String(t),'-i',final,'-frames:v','1',`${out}/frame-${t}.jpg`],{stdio:'ignore'});
 // Dense transition samples, not just four stills. Retain for visual review.
 execFileSync('ffmpeg',['-y','-i',final,'-vf','fps=5,scale=480:360,tile=5x5','-vsync','vfr',`${out}/contact-%02d.jpg`],{stdio:'ignore'});
