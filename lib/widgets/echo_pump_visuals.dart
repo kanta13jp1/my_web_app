@@ -77,8 +77,9 @@ class EchoPumpScene extends StatelessWidget {
                       Semantics(
                         label: '体力 ${game.health} / 3',
                         child: ExcludeSemantics(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 2,
                             children: [
                               for (var index = 0; index < 3; index++)
                                 Icon(
@@ -90,11 +91,12 @@ class EchoPumpScene extends StatelessWidget {
                                       : Colors.white54,
                                   size: 22,
                                 ),
+                              Text('体力 ${game.health} / 3'),
                             ],
                           ),
                         ),
                       ),
-                      Text('TURN ${game.turn.toString().padLeft(2, '0')}'),
+                      Text('ターン ${game.turn}'),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
