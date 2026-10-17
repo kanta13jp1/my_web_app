@@ -21,6 +21,8 @@ on:
         options: [grouped, baseline]
   pull_request:
     paths:
+      - lib/widgets/echo_pump_inventory.dart
+      - test/widgets/echo_pump_inventory_test.dart
       - lib/models/echo_pump_room_walk.dart
       - lib/widgets/echo_pump_room_stage.dart
       - test/models/echo_pump_room_walk_test.dart
@@ -137,6 +139,8 @@ jobs:
             .ci-logs/echo-pump-dev-checks.json
             lib/models/echo_pump_room_walk.dart
             lib/widgets/echo_pump_room_stage.dart
+            lib/widgets/echo_pump_inventory.dart
+            test/widgets/echo_pump_inventory_test.dart
             test/models/echo_pump_room_walk_test.dart
             test/widgets/echo_pump_room_stage_test.dart
             lib/widgets/echo_pump_visuals.dart
