@@ -948,7 +948,7 @@ void main() {
         AssetRecurringFixedCostStore.encodeMirrorValue(
           const <AssetRecurringFixedCost>[
             AssetRecurringFixedCost(id: 'synthetic_cost', name: 'Synthetic utility',
-              amount: 2000, paymentDay: 7),
+              amount: 2000, paymentDay: 7,),
           ],
         ),
       ),
@@ -959,7 +959,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(const MaterialApp(home: AssetManagementPage(
       debugRecurringFixedCostStore: _ThrowingRecurringFixedCostStore(),
-    )));
+    ),),);
     await tester.pump(const Duration(milliseconds: 500));
     try {
       final edit = find.byTooltip('Synthetic utility を編集');
@@ -975,7 +975,7 @@ void main() {
       final persisted = await const AssetRecurringFixedCostStore().load();
       expect(persisted.single.name, 'Synthetic utility');
       expect(find.byType(RecurringFixedCostEditorDialog), findsOneWidget,
-        reason: 'Failed persistence must keep entered data for retry');
+        reason: 'Failed persistence must keep entered data for retry',);
       expect(find.text('Synthetic utility changed'), findsOneWidget);
     } finally {
       await _unmount(tester);
