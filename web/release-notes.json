@@ -31,6 +31,19 @@
       "changes": [
         {
           "category": "feature",
+          "id": "pr-5818",
+          "links": [
+            {
+              "title": "PR #5818",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5818"
+            }
+          ],
+          "mergedAt": "2026-10-17T02:24:15Z",
+          "summary": "#5818 資産管理：予算保存の無効入力と保存失敗から復帰できるようにする"
+        },
+        {
+          "category": "feature",
           "id": "pr-5817",
           "links": [
             {
@@ -392,19 +405,6 @@
           ],
           "mergedAt": "2026-10-15T13:26:41Z",
           "summary": "#5791 銀行CSVの符号付き残高と給与行の確認根拠を保持"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5787",
-          "links": [
-            {
-              "title": "PR #5787",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5787"
-            }
-          ],
-          "mergedAt": "2026-10-15T12:58:42Z",
-          "summary": "#5787 給与入金直後の確定残高比較の基盤を追加"
         },
         {
           "category": "feature",
