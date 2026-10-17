@@ -29,6 +29,7 @@ class _EchoPumpIntroState extends State<EchoPumpIntro>
     WidgetsBinding.instance.addObserver(this);
     _controller = AnimationController(
       vsync: this,
+      animationBehavior: AnimationBehavior.preserve,
       duration: const Duration(seconds: 18),
     )..addStatusListener((status) {
         if (status == AnimationStatus.completed) _finish();

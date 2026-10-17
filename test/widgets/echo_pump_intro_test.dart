@@ -77,6 +77,7 @@ void main() {
       ));
       await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
+      expect(finishes, 0);
       await tester.tap(find.byKey(const Key('echo-intro-skip')));
       expect(finishes, 1);
     });
