@@ -31,6 +31,7 @@ jobs:
           mkdir -p .ci-logs/recurring-income
           flutter pub get
           dart format test/services/card_funded_workbook_cash_regression_test.dart
+          dart format lib/services/asset_liability_planning_service.dart
           dart fix --apply --code=require_trailing_commas test/services/card_funded_workbook_cash_regression_test.dart
           dart fix --apply --code=require_trailing_commas lib/services/asset_liability_planning_service.dart
           dart format test/services/card_funded_workbook_cash_regression_test.dart
