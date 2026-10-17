@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/echo_pump_game.dart';
 import '../widgets/echo_pump_title_screen.dart';
+import '../widgets/echo_pump_visuals.dart';
 
 class EchoPumpGamePage extends StatefulWidget {
   const EchoPumpGamePage({super.key});
@@ -54,34 +55,16 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
           padding: const EdgeInsets.all(16),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 960),
+              constraints: const BoxConstraints(maxWidth: 1120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    '夜間排水施設 / 見取り図プロトタイプ',
-                    style: TextStyle(color: Color(0xFF8FE3D0)),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '電源を選び、音で誘い、生きて帰る。',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '豪雨で出口が冠水した。ヒューズを回収してポンプを修理し、'
-                    '敵を点検槽に閉じ込めて排水しよう。'
-                    '\n移動・通電・作業・待機の1操作で敵が1部屋動く。'
-                    '最後に入れた電源の機械音へ向かう。管理室は安全。',
-                  ),
-                  const SizedBox(height: 16),
+                  EchoPumpScene(game: _game),
+                  const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      Chip(label: Text('体力 ${_game.health} / 3')),
-                      Chip(label: Text('ターン ${_game.turn}')),
-                      Chip(label: Text('現在地 ${_game.room.label}')),
                       Chip(
                         label: Text(
                           _game.repaired
@@ -130,25 +113,21 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
                       ],
                     ),
                   _panel('施設の見取り図', [
-                    const Text('線の代わりに接続先を各区画に表示。隣の部屋は下の移動ボタンから選べる。'),
-                    const SizedBox(height: 12),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final columns = constraints.maxWidth >= 600 ? 3 : 2;
-                        final width =
-                            (constraints.maxWidth - (columns - 1) * 8) /
-                                columns;
-                        return Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            for (final room in PumpRoom.values)
-                              SizedBox(width: width, child: _roomCard(room)),
-                          ],
-                        );
-                      },
-                    ),
+                    EchoPumpFacilityMap(game: _game),
+                    const SizedBox(height: 8),
+                    const Text('隣の部屋へは下の移動ボタンから進める。管理室は安全。'),
                   ]),
+                  const ExpansionTile(
+                    title: Text('探索のヒント'),
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text('移動・通電・作業・待機の1操作で敵が1部屋動く。'
+                            '最後に入れた電源の機械音へ向かう。通電は最大2系統。'
+                            'ヒューズで修理し、敵を点検槽に封鎖してから排水する。'),
+                      ),
+                    ],
+                  ),
                   _panel('移動・待機', [
                     Wrap(
                       spacing: 8,
@@ -259,36 +238,6 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _roomCard(PumpRoom room) {
-    final current = room == _game.room;
-    final enemy = room == _game.enemy;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: current ? const Color(0xFF234F48) : const Color(0xFF233038),
-        border: Border.all(
-          color: enemy && !_game.sealed
-              ? const Color(0xFFFFAA91)
-              : const Color(0xFF55706C),
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(room.label, style: const TextStyle(fontWeight: FontWeight.bold)),
-          if (current) const Text('● あなた'),
-          if (enemy) Text(_game.sealed ? '■ 敵・隔壁閉鎖' : '▲ 敵'),
-          Text(room.description),
-          const SizedBox(height: 4),
-          Text(
-            '接続：${EchoPumpGame.connections[room]!.map((r) => r.label).join('・')}',
-          ),
-        ],
       ),
     );
   }

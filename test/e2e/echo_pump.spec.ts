@@ -48,7 +48,13 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
     '中央廊下へ', 'ポンプ室へ', 'ヒューズで修理', '中央廊下へ', '管理室へ',
     'B 整備', 'C 排水', '1ターン待つ', '1ターン待つ', '中央廊下へ',
     'ポンプ室へ', '隔壁を閉じる', '排水ポンプを起動', '中央廊下へ', '管理室へ', '出口へ',
-  ]) await click(label);
+  ]) {
+    await click(label);
+    if (label === '隔壁を閉じる') {
+      await page.getByText('施設の見取り図', { exact: true }).scrollIntoViewIfNeeded();
+      await page.screenshot({ path: info.outputPath('sealed-map.png'), fullPage: true });
+    }
+  }
   await expect(button('リトライ')).toBeVisible();
   await page.screenshot({ path: info.outputPath('escaped.png'), fullPage: true });
   await click('リトライ');
