@@ -20,7 +20,9 @@ try {
     });
     page.on('pageerror',e=>errors.push(e.message));
     await page.addInitScript(()=>{
-      window.__roomAudit={plays:[],media:[]};
+      window.__roomAudit={plays:[],media:[],contexts:[],gains:[]};
+      const createGain=AudioContext.prototype.createGain;
+      AudioContext.prototype.createGain=function(){const node=createGain.call(this);if(!window.__roomAudit.contexts.includes(this)) window.__roomAudit.contexts.push(this);window.__roomAudit.gains.push(node);return node;};
       const play=HTMLMediaElement.prototype.play;
       HTMLMediaElement.prototype.play=function(){
         if(!window.__roomAudit.media.includes(this)) window.__roomAudit.media.push(this);
@@ -40,6 +42,7 @@ try {
       await button('ゲーム開始').waitFor({timeout:60000});
       await button('音をON').click();
       await page.waitForFunction(()=>window.__roomAudit.plays.some(src=>src.includes('/bgm.wav')));
+      await page.waitForFunction(()=>window.__roomAudit.contexts.some(c=>c.state==='running')&&window.__roomAudit.gains.some(g=>g.gain.value>0));
       await button('ゲーム開始').click();await button('スキップして開始').click();
       await button('保守メモを調べる').waitFor();
       await page.mouse.move(150,250);await page.mouse.wheel(0,-30000);await page.waitForTimeout(300);
@@ -64,7 +67,8 @@ try {
       await page.waitForFunction(()=>window.__roomAudit.media.every(m=>m.paused||m.ended||!m.getAttribute('src')));
       assert.deepEqual(errors,[]); passed=true;
     } finally {
-      reports.push({name,passed,errors,consoleCounts,audio:await page.evaluate(()=>window.__roomAudit.plays).catch(()=>[])});
+      reports.push({name,viewport,passed,errors,consoleCounts,audio:await page.evaluate(()=>window.__roomAudit.plays).catch(()=>[])});
+      reports[reports.length-1].playback=await page.evaluate(()=>({contexts:window.__roomAudit.contexts.map(c=>c.state),gains:window.__roomAudit.gains.map(g=>g.gain.value),media:window.__roomAudit.media.map(m=>({src:m.currentSrc||m.src,paused:m.paused,currentTime:m.currentTime,ended:m.ended,muted:m.muted}))})).catch(()=>null);
       await shot('final').catch(()=>{});await context.close();if(video) reports[reports.length-1].video=await video.path();
       writeFileSync(`${out}/report.json`,JSON.stringify({before,expected,reports},null,2));
     }
