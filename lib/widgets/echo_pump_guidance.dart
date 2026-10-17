@@ -31,6 +31,13 @@ class EchoPumpProgress extends StatelessWidget {
       Icons.water_drop_outlined,
       Icons.exit_to_app,
     ];
+    final route = switch (current) {
+      0 => (Icons.bolt, 'B系統', Icons.electrical_services, '工具庫'),
+      1 => (Icons.electrical_services, 'ヒューズ', Icons.build_outlined, 'ポンプ室'),
+      2 => (Icons.notifications_active_outlined, 'C系統・点検槽', Icons.lock_outline, 'ポンプ室'),
+      3 => (Icons.bolt, 'C系統', Icons.water_drop_outlined, 'ポンプ室'),
+      _ => (Icons.home_outlined, '管理室', Icons.exit_to_app, '出口'),
+    };
     return Semantics(
       container: true,
       label: '探索の進行',
@@ -42,6 +49,21 @@ class EchoPumpProgress extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
+              SizedBox(
+                width: constraints.maxWidth,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Wrap(
+                    spacing: 8, runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Icon(route.$1, color: _mint), Text(route.$2),
+                      const Icon(Icons.arrow_forward, size: 18),
+                      Icon(route.$3, color: _mint), Text(route.$4),
+                    ],
+                  ),
+                ),
+              ),
               for (var i = 0; i < labels.length; i++)
                 Semantics(
                   label: '${labels[i]}：${completed[i] ? '完了' : i == current ? '次の目標' : '未完了'}',
