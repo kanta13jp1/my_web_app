@@ -13,7 +13,15 @@ async function version() {
   assert(r.ok);
   const v = await r.json(); assert.equal(v.commit, expected); return v;
 }
-const before = await version();
+let before;
+// Overlap dependency setup with deployment, but never test an older revision.
+for (let attempt = 0; attempt < 30; attempt++) {
+  try { before = await version(); break; }
+  catch (error) {
+    if (attempt === 29) throw error;
+    await new Promise(resolve => setTimeout(resolve, 10000));
+  }
+}
 const browser = await chromium.launch({headless: true});
 const reports = [];
 try {
@@ -63,6 +71,10 @@ try {
     try {
       await page.goto(`${origin}/echo-pump`, {waitUntil: 'domcontentloaded'});
       const activate = page.locator('flt-semantics-placeholder');
+      await Promise.race([
+        button('ゲーム開始').waitFor({timeout: 60000}),
+        activate.waitFor({state: 'attached', timeout: 60000}),
+      ]);
       if (await activate.count()) await activate.click({force: true});
       await button('ゲーム開始').waitFor({timeout: 60000});
       assert.equal(await page.evaluate(() => window.__echoPublicAudit.media.length), 0);
