@@ -3,6 +3,180 @@ import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 import 'package:my_web_app/domain/models/philosophy_reading.dart';
 
 void main() {
+  test('work identity is exact, conservative and independent of record order',
+      () {
+    const plato =
+        PhilosophyAuthor(id: 'plato', name: 'プラトン', aliases: ['Plato']);
+    const other = PhilosophyAuthor(id: 'other', name: '別の著者');
+    const shared = PhilosophyWork(
+      id: 'plato:republic',
+      title: '国家',
+      originalTitle: 'Republic',
+      author: plato,
+    );
+    const legacy = PhilosophyWork(
+      id: 'old',
+      title: '国家',
+      author: PhilosophyAuthor(id: 'old-author', name: 'Plato'),
+    );
+    const english =
+        PhilosophyWork(id: 'english', title: ' Republic ', author: plato);
+    const conflict = PhilosophyWork(
+      id: 'conflict',
+      title: '国家',
+      originalTitle: 'Different work',
+      author: plato,
+    );
+    const different =
+        PhilosophyWork(id: 'different', title: '国家', author: other);
+    const empty = PhilosophyWork(id: 'empty', title: '', author: plato);
+    final authors = ReadingAuthorIndex([plato, other]);
+    final index = ReadingWorkIndex(
+      [shared],
+      [legacy, english, conflict, different, empty],
+      authors,
+    );
+    expect(index.resolve(legacy).id, shared.id);
+    expect(index.resolve(english).id, shared.id);
+    expect(index.resolve(conflict).id, conflict.id);
+    expect(index.resolve(different).id, different.id);
+    expect(index.resolve(empty).id, empty.id);
+    const ambiguous = PhilosophyWork(
+      id: 'another',
+      title: '国家',
+      originalTitle: 'Another',
+      author: plato,
+    );
+    expect(
+      ReadingWorkIndex([shared, ambiguous], [legacy], authors)
+          .resolve(legacy)
+          .id,
+      legacy.id,
+    );
+    const a = PhilosophyWork(id: 'a', title: '個人の本', author: plato);
+    const b = PhilosophyWork(id: 'b', title: '個人の本', author: plato);
+    expect(ReadingWorkIndex([], [b, a], authors).resolve(b).id, 'a');
+    expect(ReadingWorkIndex([], [a, b], authors).resolve(b).id, 'a');
+  });
+
+  test('grouped progress counts works once and each stored record once', () {
+    const author = PhilosophyAuthor(id: 'a', name: '著者');
+    const work = PhilosophyWork(id: 'w', title: '本', author: author);
+    const legacy = PhilosophyWork(id: 'old', title: '本', author: author);
+    const first = ReadingRecord(
+      id: 'one',
+      revision: 1,
+      work: work,
+      cycles: [
+        ReadingCycle(
+          id: 'cycle',
+          startedAt: '2026-10-12',
+          status: 'read',
+          entries: [ReadingEntry(id: 'e1', date: '2026-10-12', pages: 10)],
+        ),
+      ],
+    );
+    const second = ReadingRecord(
+      id: 'two',
+      revision: 2,
+      work: legacy,
+      cycles: [
+        ReadingCycle(
+          id: 'cycle',
+          startedAt: '2026-10-14',
+          entries: [ReadingEntry(id: 'e2', date: '2026-10-14', pages: 20)],
+        ),
+      ],
+    );
+    final index =
+        ReadingWorkIndex([work], [legacy], ReadingAuthorIndex([author]));
+    final progress = ReadingProgress(
+      [work, legacy],
+      [first, second, second],
+      workId: (item) => index.resolve(item).id,
+    );
+    expect(progress.total, 1);
+    expect(progress.completed, 1);
+    expect(progress.reading, 1);
+    expect(progress.pages, 30);
+  });
+
+  test('author search matches related titles with author and genre filters',
+      () {
+    final author = philosophyAuthors.firstWhere((a) => a.id == 'schopenhauer');
+    final work = PhilosophyWork(
+      id: 'private:reading',
+      title: '読書について',
+      originalTitle: 'On Reading',
+      author: author,
+      genres: const ['認識論'],
+    );
+    expect(
+      const ReadingFilter(query: ' 読書について ')
+          .authorMatches(author, works: [work]),
+      isTrue,
+    );
+    expect(
+      const ReadingFilter(query: 'on reading')
+          .authorMatches(author, works: [work]),
+      isTrue,
+    );
+    expect(
+      const ReadingFilter(query: '読書について', century: '19世紀', genre: '認識論')
+          .authorMatches(author, works: [work]),
+      isTrue,
+    );
+    expect(
+      const ReadingFilter(query: '読書について', century: '20世紀')
+          .authorMatches(author, works: [work]),
+      isFalse,
+    );
+    expect(
+      const ReadingFilter(query: '読書について', genre: '政治哲学')
+          .authorMatches(author, works: [work]),
+      isFalse,
+    );
+    expect(
+      const ReadingFilter(query: '読書について', region: '中国')
+          .authorMatches(author, works: [work]),
+      isFalse,
+    );
+    expect(const ReadingFilter(query: 'ショーペンハウエル').matches(work), isTrue);
+  });
+
+  test(
+      'author resolution is exact and ambiguity never merges unrelated authors',
+      () {
+    final index = ReadingAuthorIndex(philosophyAuthors);
+    const old = PhilosophyAuthor(id: 'legacy:a', name: 'ショーペンハウエル');
+    expect(index.resolve(old).id, 'schopenhauer');
+    expect(
+      index
+          .resolve(
+            const PhilosophyAuthor(
+              id: 'private:a',
+              name: ' Arthur Schopenhauer ',
+            ),
+          )
+          .id,
+      'schopenhauer',
+    );
+    const similar = PhilosophyAuthor(id: 'private:study', name: 'ショーペンハウエル研究会');
+    expect(index.resolve(similar), same(similar));
+    const personalAlias = PhilosophyAuthor(
+      id: 'private:other',
+      name: '別の人物',
+      aliases: ['ショーペンハウエル'],
+    );
+    expect(index.resolve(personalAlias), same(personalAlias));
+    final ambiguous = ReadingAuthorIndex(const [
+      PhilosophyAuthor(id: 'a', name: 'A', aliases: ['同名']),
+      PhilosophyAuthor(id: 'b', name: 'B', aliases: ['同名']),
+    ]);
+    const unknown = PhilosophyAuthor(id: 'private:c', name: '同名');
+    expect(ambiguous.resolve(unknown), same(unknown));
+  });
+
   test('page progress adds only the delta and round trips without marking read',
       () {
     const initial = ReadingCycle(
@@ -500,12 +674,12 @@ void main() {
         expect(sum % 11, 0, reason: edition.isbn);
       }
     }
-    expect(philosophyCatalogEditions.length, 167);
+    expect(philosophyCatalogEditions.length, 169);
     expect(
       philosophyCatalogEditions
           .where((b) => b.edition.language == '日本語')
           .length,
-      166,
+      168,
     );
     final books = philosophyCatalogEditions
         .where((b) => b.workId == 'confucius:analects')

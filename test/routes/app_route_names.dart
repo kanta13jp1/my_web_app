@@ -147,6 +147,7 @@ const List<String> kAllAppRoutes = <String>[
   '/financial-report',
   '/fitness-health-tracker',
   '/focus-capture',
+  '/echo-pump',
   '/focus-timer',
   '/form-builder',
   '/freelance-manager',

@@ -894,3 +894,146 @@ test('unknown total shows reached page and gains percentage after editing the ed
   await restoredField(page,/^読んだページ/,'11');
   await capture(page,info,'total-added-position-reloaded');
 });
+
+test('author title and spelling searches preserve legacy reading data across reload', async ({ request, page }, info) => {
+  test.setTimeout(120000);
+  const id = '44444444-4444-4444-8444-444444444444';
+  const work = { id: 'legacy:reading-about-books', title: '読書について', original_title: 'On Reading',
+    author_info: { id: 'legacy:schopenhauer', name: 'ショーペンハウエル', aliases: [], centuries: ['不明'], regions: ['不明'], traditions: [], source: '', note: '' },
+    centuries: ['不明'], genres: ['認識論'], source: '', note: '既存の著作メモ' };
+  const added = await request.post('http://127.0.0.1:7359', { data: { action: 'reading.add', id, work } });
+  expect(added.ok()).toBeTruthy();
+  const saved = await request.post('http://127.0.0.1:7359', { data: { action: 'reading.save', id, revision: 0, work,
+    cycles: [{ id: 'legacy-cycle', started_at: '2026-10-12', status: 'reading', edition: { total_pages: 160, translator: '斎藤忍随', publisher: '岩波書店', isbn: '9784003363225' },
+      entries: [{ id: 'legacy-entry', date: '2026-10-14', pages: 91, start_page: 1, end_page: 91, understanding: 3, impression: '既存の感想を保持', questions: '既存の疑問', concepts: '既存の概念' }] }] } });
+  expect(saved.ok()).toBeTruthy();
+  const list = async () => (await (await request.post('http://127.0.0.1:7359', { data: { action: 'reading.list' } })).json()).items.find((r: { id: string }) => r.id === id);
+  const original = await list();
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+  for (const query of ['読書について', 'On Reading', 'ショーペンハウエル', 'ショーペンハウアー']) {
+    await field(page, /^著者・著作を検索/, query);
+    const author = page.getByRole('button', { name: /^ショーペンハウアー / });
+    await expect(author).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /^ショーペンハウエル / })).toHaveCount(0);
+    await expect(author).toBeVisible();
+  }
+  await field(page, /^著者・著作を検索/, '読書について');
+  await expect(page.getByRole('button', { name: /該当する著作: 読書について/ })).toHaveCount(1);
+  await capture(page, info, 'author-title-search');
+  await page.getByRole('button', { name: /^ショーペンハウアー / }).click();
+  await expect(page.getByRole('button', { name: /^意志と表象としての世界 / })).toHaveCount(0);
+  await page.getByRole('button', { name: /^読書について ショーペンハウアー/ }).click();
+  await expectReadingSummary(page, '91ページまで／全160ページ・56.9％');
+  await expect(page.getByRole('group', { name: /既存の感想を保持/ }).last()).toBeVisible();
+  await page.reload();
+  await field(page, /^著者・著作を検索/, '読書について');
+  await page.getByRole('button', { name: /^ショーペンハウアー / }).click();
+  await page.getByRole('button', { name: /^読書について ショーペンハウアー/ }).click();
+  await expectReadingSummary(page, '91ページまで／全160ページ・56.9％');
+  await capture(page, info, 'legacy-record-reloaded');
+  expect(await list()).toEqual(original);
+});
+
+test('duplicate shared and legacy works preserve both reading cycles across search and reload', async ({ request, page }, info) => {
+  test.setTimeout(180000);
+  const ids = ['55555555-5555-4555-8555-555555555555', '66666666-6666-4666-8666-666666666666'];
+  for (let i = 0; i < ids.length; i++) {
+    const work = { id: i === 0 ? 'plato:republic' : 'legacy:republic', title: '国家', original_title: 'Republic',
+      author_info: { id: i === 0 ? 'plato' : 'legacy:plato', name: i === 0 ? 'プラトン' : 'Plato' },
+      note: i === 0 ? '共有側メモ' : '既存側メモ' };
+    expect((await request.post('http://127.0.0.1:7359', { data: { action: 'reading.add', id: ids[i], work } })).ok()).toBeTruthy();
+    expect((await request.post('http://127.0.0.1:7359', { data: { action: 'reading.save', id: ids[i], revision: 0, work,
+      cycles: [{ id: 'same-cycle', started_at: i === 0 ? '2026-10-12' : '2026-10-14', finished_at: i === 0 ? '2026-10-14' : null, status: i === 0 ? 'read' : 'reading',
+        edition: { total_pages: i === 0 ? 100 : 160, publisher: i === 0 ? '保持版A' : '保持版B', translator: '保持訳者', isbn: i === 0 ? '9784003363225' : '9784003361566' },
+        entries: [{ id: 'entry-' + i, date: '2026-10-14', pages: (i + 1) * 10, start_page: 1, end_page: (i + 1) * 10, understanding: 3, impression: i === 0 ? '保持感想A' : '保持感想B' }] }] } })).ok()).toBeTruthy();
+  }
+  const list = async () => (await (await request.post('http://127.0.0.1:7359', { data: { action: 'reading.list' } })).json()).items;
+  const before = await list();
+  const search = async () => {
+    await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
+    await field(page, /^著者・著作を検索/, '国家');
+    await expect(page.getByRole('button', { name: /^プラトン / })).toHaveCount(1);
+    await page.getByRole('button', { name: /^プラトン / }).click();
+    await expect(page.getByRole('button', { name: /^国家 プラトン/ })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /^国家 Plato/ })).toHaveCount(0);
+  };
+  await page.goto('/');
+  await search();
+  await capture(page, info, 'grouped-work-search');
+  await page.getByRole('tab', { name: '進捗', exact: true }).click();
+  await expectReadingSummary(page, '読書中 1 著作・読了 1 著作');
+  await expectReadingSummary(page, '対象 1 著作');
+  await expectReadingSummary(page, '読書記録の合計 30 ページ');
+  await capture(page, info, 'grouped-progress');
+  await page.getByRole('tab', { name: '著作', exact: true }).click();
+  await page.getByRole('button', { name: /^国家 プラトン/ }).click();
+  await expect(page.getByText(/同じ著作の記録をまとめて表示/)).toBeVisible();
+  await expect(page.getByText('共有側メモ', { exact: true })).toBeVisible();
+  await expect(page.getByText('既存側メモ', { exact: true })).toBeVisible();
+  await expectReadingSummary(page, '10ページまで／全100ページ・10.0％');
+  const second = page.getByRole('group', { name: /保持版B/ }).filter({ has: page.getByRole('button', { name: '版を編集', exact: true }) }).last();
+  await revealReadingControl(page, second.getByRole('button', { name: '版を編集', exact: true }));
+  await expectReadingSummary(page, '20ページまで／全160ページ・12.5％');
+  await capture(page, info, 'grouped-cycles');
+  expect(await list()).toEqual(before);
+  await second.getByRole('button', { name: '版を編集', exact: true }).click();
+  await field(page, /^出版社/, '保持版B編集');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: /^出版社/ })).toHaveCount(0);
+  await page.reload();
+  await search();
+  await page.getByRole('button', { name: /^国家 プラトン/ }).click();
+  const edited = page.getByRole('group', { name: /保持版B編集/ }).filter({ has: page.getByRole('button', { name: '版を編集', exact: true }) }).last();
+  await revealReadingControl(page, edited.getByRole('button', { name: '版を編集', exact: true }));
+  await expectReadingSummary(page, '20ページまで／全160ページ・12.5％');
+  await capture(page, info, 'grouped-reloaded');
+  const after = await list();
+  expect(after.find((record: { id: string }) => record.id === ids[0])).toEqual(before.find((record: { id: string }) => record.id === ids[0]));
+  const original = before.find((record: { id: string }) => record.id === ids[1]);
+  const changed = after.find((record: { id: string }) => record.id === ids[1]);
+  expect(changed.metadata.work).toEqual(original.metadata.work);
+  expect(changed.metadata.cycles[0].entries).toEqual(original.metadata.cycles[0].entries);
+  expect(changed.metadata.cycles[0].edition).toEqual({ ...original.metadata.cycles[0].edition, publisher: '保持版B編集' });
+});
+
+test('Metaphysics Iwanami upper and lower volumes can be selected, restored and edited independently', async ({ page }, info) => {
+  test.setTimeout(180000);
+  const volumes=[
+    {label:'形而上学（上）・岩波書店',isbn:'9784003360439',pages:'420',year:'1959',volume:'岩波文庫 青604-3・上巻',source:'https://www.hanmoto.com/bd/isbn/9784003360439'},
+    {label:'形而上学（下）・岩波書店',isbn:'9784003360446',pages:'458',year:'1961',volume:'岩波文庫 青604-4・下巻',source:'https://www.books.or.jp/book-details/9784003360446'},
+  ];
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+  await openWork(page,'形而上学');
+  for (const [index,book] of volumes.entries()) {
+    await page.getByRole('button',{name:index===0?'読書を始める':'別の版・再読を始める',exact:true}).click();
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await restoredField(page,/^書籍情報を検索/,'形而上学');
+    const candidate=page.getByRole('button',{name:new RegExp('^'+book.label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))});
+    await revealReadingControl(page,candidate);await candidate.click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    await restoredField(page,/^出版社/,'岩波書店');await restoredField(page,/^訳者/,'出隆');
+    await restoredField(page,/^ISBN/,book.isbn);await restoredField(page,/^総ページ数/,book.pages);
+    await restoredField(page,/^出版年/,book.year);await restoredField(page,/^巻・版の名前/,book.volume);
+    await restoredField(page,/^版情報の出典URL/,book.source);
+    await restoredField(page,/^書籍・購入URL/,'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn);
+    await capture(page,info,'metaphysics-'+book.isbn+'-prefilled');
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'形而上学');
+  }
+  await editRegisteredEdition(page,volumes[1].isbn);
+  await field(page,/^出版社/,'岩波書店・手元の版を確認');
+  await page.getByRole('button',{name:'保存',exact:true}).click();await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+  for(const [index,book] of volumes.entries()) {
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await openWork(page,'形而上学');
+    await editRegisteredEdition(page,book.isbn);
+    await restoredField(page,/^出版社/,index===0?'岩波書店':'岩波書店・手元の版を確認');
+    await restoredField(page,/^訳者/,'出隆');await restoredField(page,/^ISBN/,book.isbn);
+    await restoredField(page,/^総ページ数/,book.pages);await restoredField(page,/^巻・版の名前/,book.volume);
+    await restoredField(page,/^版情報の出典URL/,book.source);
+    await capture(page,info,'metaphysics-'+book.isbn+'-reloaded');
+    await page.getByRole('button',{name:'キャンセル',exact:true}).click();
+  }
+});

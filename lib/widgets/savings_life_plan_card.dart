@@ -38,6 +38,9 @@ class SavingsLifePlanCard extends StatefulWidget {
 
 class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
   final _form = GlobalKey<FormState>();
+  final _goalName = TextEditingController();
+  final _target = TextEditingController();
+  bool _deadlineSelected = false;
   final _cashBalance = TextEditingController();
   final _income = TextEditingController();
   final _living = TextEditingController();
@@ -65,6 +68,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
     final start = SavingsLifePlanService.day(widget.today);
     _plan = SavingsLifePlan(
       start: start,
+      target: 0,
       targetDate: SavingsLifePlanService.anniversary(start, 12),
     );
     _deadline = _plan.targetDate;
@@ -120,6 +124,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
         _plan = plan;
         _deadline = plan.targetDate;
         _saved = saved != null;
+        _deadlineSelected = saved != null;
+        _goalName.text = plan.goalName;
+        _target.text = plan.target > 0 ? plan.target.toString() : '';
         _edited = false;
         _cashBalance.text = plan.cashBalance?.toString() ?? '';
         _income.text = widget.suggestedIncome?.toString() ?? '';
@@ -190,6 +197,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
     if (chosen != null && mounted) {
       setState(() {
         _deadline = SavingsLifePlanService.day(chosen);
+        _deadlineSelected = true;
         _edited = true;
       });
     }
@@ -197,10 +205,15 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
+    if (!_deadlineSelected) {
+      setState(() => _message = '目標期限を選択してください。');
+      return;
+    }
     final next = SavingsLifePlan(
       start: _plan.start,
       targetDate: _deadline,
-      target: _plan.target,
+      target: _amount(_target.text)!,
+      goalName: _goalName.text.trim(),
       cashBalance: _amount(_cashBalance.text, signed: true),
       income: widget.suggestedIncome,
       livingCosts: _amount(_living.text),
@@ -253,6 +266,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
     TextEditingController controller, {
     bool positive = false,
     bool readOnly = false,
+    String? positiveError,
     bool signed = false,
   }) =>
       SizedBox(
@@ -271,7 +285,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
           validator: (value) => _amount(value ?? '', signed: signed) == null ||
                   (positive && _amount(value ?? '') == 0)
               ? (positive
-                  ? '生活に必要な1円以上の金額を入力してください'
+                  ? (positiveError ?? '生活に必要な1円以上の金額を入力してください')
                   : (signed
                       ? '-100,000,000〜100,000,000円の整数を入力してください'
                       : '0〜100,000,000円の整数を入力してください'))
@@ -314,15 +328,17 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '1年後の同棲準備資金100万円・節約生活の計画',
+              '貯蓄目標と生活費の計画',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
-              '${SavingsLifePlan.dateText(_plan.start)} → ${SavingsLifePlan.dateText(_plan.targetDate)}',
+              _saved
+                  ? '${SavingsLifePlan.dateText(_plan.start)} → ${SavingsLifePlan.dateText(_plan.targetDate)}'
+                  : '目標は未設定です。目的・金額・期限を入力してください。',
             ),
             const Text(
-              '目標は、翌1給与サイクル分の生活費・固定費・返済・予備費を別に確保した後、同棲準備に丸々使える100万円です。収入増・副業収入は前提にしません。投資評価額・借入可能額は含めません。',
+              '目的・目標額・期限を自分で設定します。翌1給与サイクル分の生活費・固定費・返済・予備費を確保した後の自由資金を計画します。投資評価額・借入可能額は含めません。',
             ),
             const Text('計画と日々のチェックは本人用にこのブラウザーへ保存します。他端末との同期はありません。'),
             if (_loading)
@@ -349,7 +365,11 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
               TextButton.icon(
                 onPressed: _busy ? null : _chooseDeadline,
                 icon: const Icon(Icons.event),
-                label: Text('目標期限 ${SavingsLifePlan.dateText(_deadline)} を変更'),
+                label: Text(
+                  _deadlineSelected
+                      ? '目標期限 ${SavingsLifePlan.dateText(_deadline)} を変更'
+                      : '目標期限を設定',
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: _busy || widget.propose == null ? null : _suggest,
@@ -388,6 +408,26 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                     _field('登録済みの手取り収入（収入増なし）', _income, readOnly: true),
                     _field('毎月の生活費（食費・交通・日用品等）', _living, positive: true),
                     _field('毎月の予備費（臨時支出用）', _reserve),
+                    SizedBox(
+                      width: min(300, MediaQuery.sizeOf(context).width - 80),
+                      child: TextFormField(
+                        key: const Key('savings-goal-name'),
+                        controller: _goalName,
+                        enabled: !_busy,
+                        maxLength: 80,
+                        decoration: const InputDecoration(
+                          labelText: '目標の名前（任意）',
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (_) => setState(() => _edited = true),
+                      ),
+                    ),
+                    _field(
+                      '目標額',
+                      _target,
+                      positive: true,
+                      positiveError: '目標額は1円以上で入力してください',
+                    ),
                   ],
                 ),
               ),
@@ -412,7 +452,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                 Text('生活費・返済・予備費を引いた余力：月 ${_yen(result.monthlyCapacity)}'),
                 Text('翌1サイクルの別枠確保：${_yen(result.protectedCash)}'),
                 Text(
-                  '期限時点で必要な現金・預金：${_yen(_plan.target + result.protectedCash)}（自由資金100万円＋別枠確保）',
+                  '期限時点で必要な現金・預金：${_yen(_plan.target + result.protectedCash)}（目標額＋別枠確保）',
                 ),
                 Text('現在の自由資金：${_yen(max(0, result.currentFreeCash))}'),
                 if (result.currentFreeCash < 0)
@@ -439,10 +479,10 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                     ),
                   ),
                   const Text(
-                    '食事・通勤・医療と返済を守り、不要な固定費・購入を見直す必要があります。収入増で不足を埋めません。削減可能額が足りなければ1年以内の達成は困難です。日々の使用可能額は提示しません。',
+                    '食事・通勤・医療と返済を守り、不要な固定費・購入を見直す必要があります。収入増で不足を埋めません。削減可能額が足りなければ設定期限までの達成は困難です。日々の使用可能額は提示しません。',
                   ),
                 ] else
-                  const Text('入力条件が続く場合、期限までの自由資金100万円を計画できます（達成保証ではありません）。'),
+                  const Text('入力条件が続く場合、期限までの貯蓄目標を計画できます（達成保証ではありません）。'),
                 Text('積立後の生活費上限：月 ${_yen(result.monthlyLivingCeiling)}'),
                 const Text(
                   '新規借入・運用益・未確認のボーナスを収入に含めません。口座別・支払日ごとの不足は既存マネーカレンダーで別途確認してください。',
@@ -540,7 +580,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                 _check('evening', '夜：夕食・食器洗い・歯磨き、生活費を見直す'),
                 _check('payments', '支払日・口座残高を確認（引落済みには変更しない）'),
                 _check('savings', '給料日の積立予定と目標用貯蓄を確認（振替は実行しない）'),
-                _check('work', '同棲準備の節約を1件見直す・休息時間を確保'),
+                _check('work', '目標に向けた支出を1件見直す・休息時間を確保'),
               ],
               if (_message != null)
                 Padding(
@@ -558,6 +598,8 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
   @override
   void dispose() {
     for (final controller in [
+      _goalName,
+      _target,
       _cashBalance,
       _income,
       _living,

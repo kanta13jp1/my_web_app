@@ -51,6 +51,35 @@ class PhilosophyAuthor {
       };
 }
 
+// Presentation-only resolution uses exact, uniquely known catalog names.
+// Persisted author/work/record IDs and metadata remain untouched.
+class ReadingAuthorIndex {
+  ReadingAuthorIndex(Iterable<PhilosophyAuthor> authors) {
+    for (final author in authors) {
+      _ids[author.id] = author;
+      for (final name in [author.name, ...author.aliases]) {
+        final key = readingSearchText(name);
+        if (key.isNotEmpty) {
+          _names.putIfAbsent(key, () => <String>{}).add(author.id);
+        }
+      }
+    }
+  }
+
+  final _ids = <String, PhilosophyAuthor>{};
+  final _names = <String, Set<String>>{};
+
+  PhilosophyAuthor resolve(PhilosophyAuthor author) {
+    final byId = _ids[author.id];
+    if (byId != null) return byId;
+    final ids = _names[readingSearchText(author.name)];
+    return ids?.length == 1 ? _ids[ids!.single]! : author;
+  }
+}
+
+String readingSearchText(String value) =>
+    value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
 class PhilosophyWork {
   const PhilosophyWork({
     required this.id,
@@ -93,6 +122,68 @@ class PhilosophyWork {
         'note': note,
         'source': source,
       };
+}
+
+// A read-only work identity projection. Raw records remain independently editable.
+class ReadingWorkIndex {
+  ReadingWorkIndex(
+    Iterable<PhilosophyWork> catalog,
+    Iterable<PhilosophyWork> existing,
+    this.authors,
+  ) {
+    final trusted = catalog.toList();
+    final catalogIds = {for (final work in trusted) work.id: work};
+    final groups = <String, List<PhilosophyWork>>{};
+    for (final work in existing) {
+      final author = authors.resolve(work.author);
+      final matches = trusted.where((candidate) {
+        if (candidate.author.id != author.id) return false;
+        final titles = [candidate.title, candidate.originalTitle]
+            .map(readingSearchText)
+            .where((title) => title.isNotEmpty)
+            .toSet();
+        final names = [work.title, work.originalTitle]
+            .map(readingSearchText)
+            .where((title) => title.isNotEmpty);
+        return names.any(titles.contains);
+      }).toList();
+      final candidate = catalogIds[work.id] ??
+          (matches.length == 1 &&
+                  (work.originalTitle.trim().isEmpty ||
+                      matches.single.originalTitle.trim().isEmpty ||
+                      readingSearchText(work.originalTitle) ==
+                          readingSearchText(matches.single.originalTitle))
+              ? matches.single
+              : null);
+      if (candidate != null) {
+        _resolved[work.id] = candidate;
+      } else {
+        final title = readingSearchText(work.title);
+        final key = title.isEmpty
+            ? work.id
+            : '${author.id}\u0000$title\u0000${readingSearchText(work.originalTitle)}';
+        groups.putIfAbsent(key, () => []).add(work);
+      }
+    }
+    for (final group in groups.values) {
+      group.sort((a, b) => a.id.compareTo(b.id));
+      final first = group.first;
+      final display = PhilosophyWork.fromJson({
+        ...first.toJson(),
+        'author_info': authors.resolve(first.author).toJson(),
+      });
+      for (final work in group) {
+        _resolved[work.id] = display;
+      }
+    }
+    // An explicit catalog ID remains authoritative even when stored metadata differs.
+    _resolved.addAll(catalogIds);
+  }
+
+  final ReadingAuthorIndex authors;
+  final _resolved = <String, PhilosophyWork>{};
+  PhilosophyWork resolve(PhilosophyWork work) => _resolved[work.id] ?? work;
+  String idFor(String id) => _resolved[id]?.id ?? id;
 }
 
 class ReadingEdition {
@@ -507,13 +598,28 @@ class ReadingFilter {
   final String? genre;
   final String? authorId;
 
-  bool authorMatches(PhilosophyAuthor author) =>
-      (century == null || author.centuries.contains(century)) &&
-      (region == null || author.regions.contains(region)) &&
-      [author.name, ...author.aliases]
-          .join(' ')
-          .toLowerCase()
-          .contains(query.toLowerCase());
+  bool authorMatches(
+    PhilosophyAuthor author, {
+    Iterable<PhilosophyWork> works = const [],
+  }) {
+    final related = works.where((work) => work.author.id == author.id);
+    final eligible = related.where(
+      (work) => genre == null || work.genres.contains(genre),
+    );
+    return (century == null || author.centuries.contains(century)) &&
+        (region == null || author.regions.contains(region)) &&
+        (genre == null || eligible.isNotEmpty) &&
+        ([author.name, ...author.aliases].any(
+              (name) =>
+                  readingSearchText(name).contains(readingSearchText(query)),
+            ) ||
+            eligible.any(titleMatches));
+  }
+
+  bool titleMatches(PhilosophyWork work) =>
+      [work.title, work.originalTitle].any(
+        (title) => readingSearchText(title).contains(readingSearchText(query)),
+      );
 
   bool matches(PhilosophyWork work) =>
       (authorId == null || work.author.id == authorId) &&
@@ -523,29 +629,38 @@ class ReadingFilter {
       [work.title, work.originalTitle, work.author.name, ...work.author.aliases]
           .join(' ')
           .toLowerCase()
-          .contains(query.toLowerCase());
+          .contains(readingSearchText(query));
 }
 
 class ReadingProgress {
   ReadingProgress(
     Iterable<PhilosophyWork> works,
-    Iterable<ReadingRecord> records,
-  ) {
-    final ids = works.map((w) => w.id).toSet();
+    Iterable<ReadingRecord> records, {
+    String Function(PhilosophyWork)? workId,
+  }) {
+    final identify = workId ?? ((PhilosophyWork work) => work.id);
+    final ids = works.map(identify).toSet();
+    final uniqueRecords = <String, ReadingRecord>{};
+    for (final record in records) {
+      final previous = uniqueRecords[record.id];
+      if (previous == null || record.revision > previous.revision) {
+        uniqueRecords[record.id] = record;
+      }
+    }
+    final included = uniqueRecords.values
+        .where((record) => ids.contains(identify(record.work)));
     total = ids.length;
-    completed = records
-        .where((r) => r.isRead && ids.contains(r.work.id))
-        .map((r) => r.work.id)
+    completed = included
+        .where((record) => record.isRead)
+        .map((record) => identify(record.work))
         .toSet()
         .length;
-    reading = records
-        .where((r) => r.status == 'reading' && ids.contains(r.work.id))
-        .map((r) => r.work.id)
+    reading = included
+        .where((record) => record.status == 'reading')
+        .map((record) => identify(record.work))
         .toSet()
         .length;
-    pages = records
-        .where((r) => ids.contains(r.work.id))
-        .fold(0, (total, record) => total + record.pagesRead);
+    pages = included.fold(0, (total, record) => total + record.pagesRead);
   }
 
   late final int total;
