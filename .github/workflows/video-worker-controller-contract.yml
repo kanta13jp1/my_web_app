@@ -1,0 +1,32 @@
+name: Video Worker Controller Contract
+
+on:
+  pull_request:
+    paths:
+      - 'services/video-worker-controller/**'
+      - '.github/workflows/video-worker-controller-contract.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: video-worker-controller-contract-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  controller-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify controller syntax
+        working-directory: services/video-worker-controller
+        run: node --check server.js
+      - name: Verify unit and HTTP contracts without cloud credentials
+        working-directory: services/video-worker-controller
+        run: node --test server.test.js http.test.js
