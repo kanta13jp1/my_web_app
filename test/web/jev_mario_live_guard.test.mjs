@@ -81,3 +81,12 @@ test('castle exit return stays inactive before the axe and outside a playing cas
  const g=new World11(32),guard=new LiveGuard();g.p.x=3380;g.phase='won';
  assert.equal(guard.decide(g,'noop'),'noop');assert.equal(guard.interventions,0);
 });
+
+
+test('small castle exit return jumps into the axe vertical span without changing its collider',()=>{
+ const g=new World11(32),guard=new LiveGuard();
+ Object.assign(g.p,{x:3380,y:192,h:16,vx:0,vy:0,grounded:true});
+ const before=JSON.stringify(g.snapshot());
+ assert.equal(guard.decide(g,'right'),'left_jump');
+ assert.equal(JSON.stringify(g.snapshot()),before);
+});

@@ -20,7 +20,8 @@ export class LiveGuard {
   const descent=target?itemDescent(world,target,this.descentSide):null;
   // Once beyond the axe, further rightward travel is not course progress.
   // Return through the real collision rule; never award a clear in the guard.
-  const exit=world.room==='castle'&&world.p.x>=196*16+16?'left':null;
+  // A small grounded player is below the axe: return with a real jump to touch it.
+  const exit=world.room==='castle'&&world.p.x>=196*16+16?(world.p.y>=192?'left_jump':'left'):null;
   const pipe=pipeRoute(world);let item=!target||exit||pipe||!['overworld','castle'].includes(world.room)||(world.room==='castle'&&(level>0||(world.power&&(world.p.crouching||proposed.includes('down')))))?null:(descent??(this.pickupUntil>world.frames&&!world.p.grounded&&world.p.vy<0?this.pickupAction:itemIntent(world,target))),route=exit??pipe??item;if(route)proposed=route;
   if(world.frames<this.next&&proposed===this.proposed&&level===this.level)return edge(world,this.action??proposed);
   this.level=level;this.proposed=proposed;this.next=world.frames+(route?1:6);this.lastReason=exit?'castle_exit_return':pipe?'pipe_geometry_route':item?'item_pickup_route':null;
