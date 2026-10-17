@@ -9,6 +9,14 @@ import 'package:my_web_app/widgets/expense_classification_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// The page contains unrelated continuously animating UI; wait only for the
+// requested input/menu frames, then assert the actual target state.
+Future<void> _pumpFrames(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
+  await tester.pump();
+}
+
 void main() {
   final requests = <http.Request>[];
   setUpAll(() async {
@@ -47,7 +55,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await _pumpFrames(tester);
       Finder field(String label) => find.byWidgetPredicate(
             (w) => w is TextField && w.decoration?.labelText == label,
           );
@@ -67,7 +75,7 @@ void main() {
 
       await tester.ensureVisible(memo);
       await tester.enterText(memo, text);
-      await tester.pumpAndSettle();
+      await _pumpFrames(tester);
       expect(
         tester
             .widget<ExpenseClassificationReview>(
@@ -78,11 +86,11 @@ void main() {
       );
       await tester.ensureVisible(amount);
       await tester.enterText(amount, '1234');
-      await tester.pumpAndSettle();
+      await _pumpFrames(tester);
       retained();
       await tester.ensureVisible(memo);
       await tester.tap(memo);
-      await tester.pumpAndSettle();
+      await _pumpFrames(tester);
       retained();
       final source = find.ancestor(
         of: find.text('入出金元'),
@@ -90,17 +98,17 @@ void main() {
       );
       await tester.ensureVisible(source);
       await tester.tap(source);
-      await tester.pumpAndSettle();
+      await _pumpFrames(tester);
       await tester.tap(find.text('銀行口座').last);
-      await tester.pumpAndSettle();
+      await _pumpFrames(tester);
       retained();
       final type = find.byKey(const Key('asset_flow_type_dropdown'));
       for (final value in ['収入', '振替', '支出']) {
         await tester.ensureVisible(type);
         await tester.tap(type);
-        await tester.pumpAndSettle();
+        await _pumpFrames(tester);
         await tester.tap(find.text(value).last);
-        await tester.pumpAndSettle();
+        await _pumpFrames(tester);
         retained();
         final activeMemo = field(value == '振替' ? 'メモ（任意）' : '内容');
         expect(
@@ -118,10 +126,10 @@ void main() {
           .first;
       await tester.ensureVisible(dateIcon);
       await tester.tap(dateIcon);
-      await tester.pumpAndSettle();
+      await _pumpFrames(tester);
       await tester.tap(find.text('1').last);
       await tester.tap(find.text('OK'));
-      await tester.pumpAndSettle();
+      await _pumpFrames(tester);
       retained();
       expect(Supabase.instance.client.auth.currentUser, isNull);
       expect(

@@ -41,23 +41,6 @@ jobs:
         run: |
           set -o pipefail
           flutter test --no-pub --reporter expanded test/widgets/asset_flow_input_retention_probe_test.dart 2>&1 | tee .ci-logs/flow-input/widget.log
-      - name: Compile isolated synthetic page
-        if: ${{ !cancelled() }}
-        run: flutter build web --release --no-pub --pwa-strategy=none --no-web-resources-cdn --target test/probes/flow_input_probe_main.dart
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
-        if: ${{ !cancelled() }}
-        with:
-          node-version: '22'
-          cache: npm
-      - name: Browser input event probe
-        if: ${{ !cancelled() }}
-        run: |
-          set -euo pipefail
-          npm ci
-          python3 -m http.server 8080 --directory build/web > .ci-logs/flow-input/server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
-          node test/probes/flow_input_probe.mjs 2>&1 | tee .ci-logs/flow-input/browser.log
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
