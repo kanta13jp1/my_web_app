@@ -2616,7 +2616,8 @@ const philosophyCatalogEditions = [
       sourceUrl: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000001443442',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003362563',
     ),
-    note: 'NDL書誌の責任表示に従い、波多野精一・宮本和吉の訳と篠田英雄の改訳を区別。出版社提供書誌360ページとNDL数量352,21pに差があるため、ページ数は空欄とし手元の版で確認してください。',
+    note:
+        'NDL書誌の責任表示に従い、波多野精一・宮本和吉の訳と篠田英雄の改訳を区別。出版社提供書誌360ページとNDL数量352,21pに差があるため、ページ数は空欄とし手元の版で確認してください。',
   ),
   PhilosophyCatalogEdition(
     'rousseau:inequality',
