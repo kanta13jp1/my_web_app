@@ -21,6 +21,9 @@ void main() {
         expect(tester.takeException(), isNull);
       }
 
+      expect(find.byKey(const Key('echo-title-screen')), findsOneWidget);
+      expect(find.byKey(const Key('echo-power-b')), findsNothing);
+      await tap('echo-start');
       await tap('echo-power-b');
       await tap('echo-power-a');
       await tap('echo-move-hall');

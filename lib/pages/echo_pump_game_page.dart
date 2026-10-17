@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/echo_pump_game.dart';
+import '../widgets/echo_pump_title_screen.dart';
 
 class EchoPumpGamePage extends StatefulWidget {
   const EchoPumpGamePage({super.key});
@@ -11,11 +12,25 @@ class EchoPumpGamePage extends StatefulWidget {
 
 class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
   EchoPumpGame _game = EchoPumpGame();
+  bool _started = false;
 
   void _act(VoidCallback action) => setState(action);
 
+  void _startGame() {
+    if (_started) {
+      return;
+    }
+    setState(() {
+      _game = EchoPumpGame();
+      _started = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_started) {
+      return EchoPumpTitleScreen(onStart: _startGame);
+    }
     return Theme(
       data: ThemeData.dark(useMaterial3: true).copyWith(
         colorScheme: ColorScheme.fromSeed(
