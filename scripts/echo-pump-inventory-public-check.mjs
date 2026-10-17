@@ -63,6 +63,7 @@ try {
    await shot('inventory-still-stopped');
    await button('所持品を閉じる').click();await text('ターン 0').waitFor();
    await button('保守メモを調べる').click();await text('夜間保守メモ 1 / 2').waitFor();
+   await page.waitForFunction(n=>window.__roomAudit.plays.filter(x=>x.src.includes('/step.wav')).length>n,stopped);
    assert((await steps())>stopped);await button('メモを閉じる').click();
    observed.resumedSteps=await steps();
    await inventory().click();await text('所持数 0').waitFor();await button('所持品を閉じる').click();await text('ターン 0').waitFor();
