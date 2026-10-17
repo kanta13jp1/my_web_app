@@ -46,7 +46,9 @@ class EchoPumpPlayerOutput implements EchoPumpAudioOutput {
     } else {
       await player.setVolume(volume);
       if (_closed) return;
-      await player.resume();
+      if (player.state != PlayerState.playing) {
+        await player.resume();
+      }
     }
     if (_closed) await player.stop();
   }

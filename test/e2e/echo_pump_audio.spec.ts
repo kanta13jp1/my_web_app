@@ -61,8 +61,10 @@ test('real BGM and SE play, volume and mute work, leaving closes audio', async (
   await page.getByRole('checkbox', { name: 'B 整備', exact: true }).click();
   await expect.poll(() => hasPlayed(page, 'power')).toBe(true);
   const gainBefore = await page.evaluate(() => (window as any).__echoAudioAudit.gains[0].gain.value);
+  const bgmPlaysBefore = await page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/bgm.wav')).length);
   await page.getByRole('slider').press('ArrowLeft');
   await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.gains[0].gain.value)).toBeLessThan(gainBefore);
+  expect(await page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/bgm.wav')).length)).toBe(bgmPlaysBefore);
   await page.screenshot({ path: info.outputPath('audio-on.png') });
   await page.getByRole('button', { name: '音をOFF', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.media.every((m: HTMLMediaElement) => m.paused || m.ended || !m.getAttribute('src')))).toBe(true);
