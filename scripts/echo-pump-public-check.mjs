@@ -11,7 +11,13 @@ const browser=await chromium.launch({headless:true});
 try {
   for(const [name,viewport] of [['desktop',{width:1440,height:1300}],['mobile',{width:390,height:1000}]]) {
     const context=await browser.newContext({viewport,locale:'ja-JP',reducedMotion:'no-preference',recordVideo:{dir:`${out}/${name}`,size:viewport}});
-    const page=await context.newPage(), video=page.video(), errors=[];
+    const page=await context.newPage(), video=page.video(), errors=[], consoleCounts={};
+    page.on('console',message=>{
+      if(!['error','warning'].includes(message.type())) return;
+      const text=message.text();
+      const category=/known-race|RenderBox/.test(text)?'layout':/font|preload/i.test(text)?'font-or-preload':/permission|unload/i.test(text)?'browser-policy':'other';
+      const key=message.type()+':'+category; consoleCounts[key]=(consoleCounts[key]||0)+1;
+    });
     page.on('pageerror',e=>errors.push(e.message));
     await page.addInitScript(()=>{
       window.__roomAudit={plays:[],media:[]};
@@ -58,7 +64,7 @@ try {
       await page.waitForFunction(()=>window.__roomAudit.media.every(m=>m.paused||m.ended||!m.getAttribute('src')));
       assert.deepEqual(errors,[]); passed=true;
     } finally {
-      reports.push({name,passed,errors,audio:await page.evaluate(()=>window.__roomAudit.plays).catch(()=>[])});
+      reports.push({name,passed,errors,consoleCounts,audio:await page.evaluate(()=>window.__roomAudit.plays).catch(()=>[])});
       await shot('final').catch(()=>{});await context.close();if(video) reports[reports.length-1].video=await video.path();
       writeFileSync(`${out}/report.json`,JSON.stringify({before,expected,reports},null,2));
     }
