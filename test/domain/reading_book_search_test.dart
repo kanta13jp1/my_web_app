@@ -6,6 +6,53 @@ import 'package:my_web_app/data/services/reading_book_search.dart';
 import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 
 void main() {
+  final iwanamiCases = (jsonDecode(
+    r'''[{"work":"plato:apology","title":"ソクラテスの弁明・クリトン","isbn":"9784003360118","translator":"久保勉","year":"1964","pages":118,"volume":"岩波文庫 青601-1","editor":"","note":"「ソクラテスの弁明」と「クリトン」の合本。118ページは合本全体の値です。","source":"https://www.hanmoto.com/bd/isbn/9784003360118"},{"work":"aristotle:nicomachean-ethics","title":"ニコマコス倫理学（上）","isbn":"9784003360415","translator":"高田三郎","year":"1971","pages":294,"volume":"岩波文庫 青604-1・上巻","editor":"","note":"上下二巻のうち上巻。ページ数は出版社提供書誌のこの巻の値です。改版・刷による差は手元の本で確認してください。","source":"https://www.hanmoto.com/bd/isbn/9784003360415"},{"work":"aristotle:nicomachean-ethics","title":"ニコマコス倫理学（下）","isbn":"9784003360422","translator":"高田三郎","year":"1973","pages":302,"volume":"岩波文庫 青604-2・下巻","editor":"","note":"上下二巻のうち下巻。ページ数は出版社提供書誌のこの巻の値です。改版・刷による差は手元の本で確認してください。","source":"https://www.hanmoto.com/bd/isbn/9784003360422"},{"work":"descartes:discourse","title":"方法序説","isbn":"9784003361313","translator":"谷川多佳子","year":"1997","pages":160,"volume":"岩波文庫 青613-1","editor":"","note":"","source":"https://www.hanmoto.com/bd/isbn/9784003361313"},{"work":"descartes:meditations","title":"省察","isbn":"9784003361320","translator":"三木清","year":"1949","pages":167,"volume":"岩波文庫 青613-2","editor":"","note":"東京都立大学図書館書誌の1949年刊・167ページ。手元の刷の発行年は別途確認してください。","source":"https://opactmu.lib.tmu.ac.jp/iwjs0013opc/catdbl.do?hidden_return_link=true&pkey=BB00123729"},{"work":"rousseau:social-contract","title":"社会契約論","isbn":"9784003362334","translator":"桑原武夫・前川貞次郎","year":"1954","pages":246,"volume":"岩波文庫 青623-3","editor":"","note":"","source":"https://www.hanmoto.com/bd/isbn/9784003362334"},{"work":"mill:liberty","title":"自由論","isbn":"9784003900024","translator":"関口正司","year":"2020","pages":302,"volume":"岩波文庫・関口正司訳","editor":"","note":"","source":"https://www.hanmoto.com/bd/isbn/9784003900024"},{"work":"marcus-aurelius:meditations","title":"自省録","isbn":"9784003361016","translator":"神谷美恵子","year":"2007","pages":null,"volume":"岩波文庫 青610-1・改版","editor":"","note":"同じISBNのページ数に書誌間の差があるため未設定です。手元の本の総ページ数を登録してください。出版年は改版の書誌年です。","source":"https://www.hanmoto.com/bd/isbn/9784003361016"},{"work":"marx:manifesto","title":"共産党宣言","isbn":"9784003412459","translator":"大内兵衛・向坂逸郎","year":"1971","pages":116,"volume":"岩波文庫 白124-5・改訳","editor":"","note":"マルクスとエンゲルスの共著。訳者2名は国立情報学研究所CiNii Booksの改訳書誌でも確認。","source":"https://www.hanmoto.com/bd/isbn/9784003412459"},{"work":"zhuangzi:zhuangzi","title":"荘子 第1冊","isbn":"9784003320617","translator":"金谷治（訳注）","year":"1971","pages":268,"volume":"岩波文庫 青206-1・第1冊","editor":"","note":"全四冊のうち第1冊。ページ数はこの冊のみの値です。金谷治の役割は訳注（図書館書誌で確認）。","source":"https://www.hanmoto.com/bd/isbn/9784003320617"},{"work":"zhuangzi:zhuangzi","title":"荘子 第2冊","isbn":"9784003320624","translator":"金谷治（訳注）","year":"1975","pages":284,"volume":"岩波文庫 青206-2・第2冊","editor":"","note":"全四冊のうち第2冊。ページ数はこの冊のみの値です。金谷治の役割は訳注（図書館書誌で確認）。","source":"https://www.hanmoto.com/bd/isbn/9784003320624"},{"work":"zhuangzi:zhuangzi","title":"荘子 第3冊","isbn":"9784003320631","translator":"金谷治（訳注）","year":"1982","pages":334,"volume":"岩波文庫 青206-3・第3冊","editor":"","note":"全四冊のうち第3冊。ページ数はこの冊のみの値です。金谷治の役割は訳注（図書館書誌で確認）。","source":"https://www.hanmoto.com/bd/isbn/9784003320631"},{"work":"zhuangzi:zhuangzi","title":"荘子 第4冊","isbn":"9784003320648","translator":"金谷治（訳注）","year":"1983","pages":330,"volume":"岩波文庫 青206-4・第4冊","editor":"","note":"全四冊のうち第4冊。ページ数はこの冊のみの値です。金谷治の役割は訳注（図書館書誌で確認）。","source":"https://www.hanmoto.com/bd/isbn/9784003320648"},{"work":"wang-yangming:instructions","title":"伝習録","isbn":"9784003321218","translator":"山田準・鈴木直治（訳註）","year":"1936","pages":493,"volume":"岩波文庫 青212-1","editor":"","note":"出版年は出版社提供書誌の昭和11年（1936年）。手元の刷の発行年は別途確認してください。","source":"https://www.hanmoto.com/bd/isbn/9784003321218"},{"work":"dogen:zuimonki","title":"正法眼蔵随聞記","isbn":"9784003331941","translator":"","year":"1982","pages":176,"volume":"岩波文庫 青319-4・改版","editor":"懐奘（編）・和辻哲郎（校訂）","note":"現代語訳とは区別し、編者・校訂者を編集者欄に記録。役割は大学図書館書誌で確認。","source":"https://www.hanmoto.com/bd/isbn/9784003331941"}]''',
+  ) as List)
+      .cast<Map<String, dynamic>>();
+  for (final expected in iwanamiCases) {
+    test('verified Iwanami title and ISBN search: ${expected['isbn']}',
+        () async {
+      final work =
+          philosophyWorks.singleWhere((work) => work.id == expected['work']);
+      final client = MockClient(
+        (_) => throw StateError('Catalog must work offline'),
+      );
+      final isbn = expected['isbn'] as String;
+      final body = isbn.substring(3, 12);
+      final sum = List.generate(
+        9,
+        (i) => int.parse(body[i]) * (10 - i),
+      ).reduce((a, b) => a + b);
+      final check = (11 - sum % 11) % 11;
+      final isbn10 = '$body${check == 10 ? 'X' : check}';
+      for (final query in [
+        work.title,
+        isbn,
+        isbn10,
+      ]) {
+        final matches = await const ReadingBookSearch().search(
+          query,
+          author: work.author.name,
+          client: client,
+        );
+        final edition =
+            matches.singleWhere((book) => book.edition.isbn == isbn).edition;
+        expect(edition.publisher, '岩波書店');
+        expect(edition.translator, expected['translator']);
+        expect(edition.editor, expected['editor']);
+        expect(edition.totalPages, expected['pages']);
+        expect(edition.year, expected['year']);
+        expect(edition.volume, expected['volume']);
+        expect(edition.sourceUrl, expected['source']);
+        expect(
+          edition.bookUrl,
+          'https://www.amazon.co.jp/s/?i=stripbooks&k=$isbn',
+        );
+      }
+    });
+  }
+
   test('Aristotle Metaphysics has separate sourced Iwanami volumes offline',
       () async {
     final client = MockClient(

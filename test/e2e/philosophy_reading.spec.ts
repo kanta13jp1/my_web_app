@@ -188,15 +188,22 @@ test('catalog edition prefills publisher, translator and editor; ISBN link and U
   await expect(page.getByText('哲学書の読書管理', { exact: true })).toBeVisible({ timeout: 60000 });
   await openWork(page, '正法眼蔵随聞記');
   await page.getByRole('button', { name: /版・入手先/ }).click();
-  await expect(page.getByRole('button', { name: 'この版の書誌出典を開く', exact: true })).toBeVisible();
+  const card = page.getByRole('group', { name: '版候補: 正法眼蔵随聞記・ちくま学芸文庫', exact: true });
+  const source = card.getByRole('button', { name: 'この版の書誌出典を開く', exact: true });
+  await revealReadingControl(page, source);
+  await expect(source).toBeVisible();
   await context.route('https://www.amazon.co.jp/**', route => route.fulfill({ contentType: 'text/html', body: '<title>Book search fixture</title>' }));
+  const isbnLink = card.getByRole('button', { name: 'Amazonで書籍を検索（ISBN）', exact: true });
+  await revealReadingControl(page, isbnLink);
   const popupPromise = page.waitForEvent('popup');
-  await page.getByRole('button', { name: 'Amazonで書籍を検索（ISBN）', exact: true }).click();
+  await isbnLink.click();
   const popup = await popupPromise;
   await popup.waitForLoadState('domcontentloaded');
   expect(new URL(popup.url()).searchParams.get('k')).toBe('9784480080226');
   await popup.close();
-  await page.getByRole('button', { name: 'この版で読書を始める', exact: true }).click();
+  const start = card.getByRole('button', { name: 'この版で読書を始める', exact: true });
+  await revealReadingControl(page, start);
+  await start.click();
   await restoredField(page, /^出版社/, '筑摩書房');
   await restoredField(page, /^訳者/, '水野弥穂子');
   await restoredField(page, /^編集者・編者/, '懐奘（記録・編纂）');
@@ -1034,6 +1041,55 @@ test('Metaphysics Iwanami upper and lower volumes can be selected, restored and 
     await restoredField(page,/^総ページ数/,book.pages);await restoredField(page,/^巻・版の名前/,book.volume);
     await restoredField(page,/^版情報の出典URL/,book.source);
     await capture(page,info,'metaphysics-'+book.isbn+'-reloaded');
+    await page.getByRole('button',{name:'キャンセル',exact:true}).click();
+  }
+});
+
+
+test('Iwanami catalog audit editions preserve single, split, unknown-total and editor-only records', async ({ page }, info) => {
+  test.setTimeout(600000);
+  const books=[{"work": "plato:apology", "title": "ソクラテスの弁明・クリトン", "isbn": "9784003360118", "translator": "久保勉", "year": "1964", "pages": 118, "volume": "岩波文庫 青601-1", "editor": "", "note": "「ソクラテスの弁明」と「クリトン」の合本。118ページは合本全体の値です。", "source": "https://www.hanmoto.com/bd/isbn/9784003360118"}, {"work": "aristotle:nicomachean-ethics", "title": "ニコマコス倫理学（上）", "isbn": "9784003360415", "translator": "高田三郎", "year": "1971", "pages": 294, "volume": "岩波文庫 青604-1・上巻", "editor": "", "note": "上下二巻のうち上巻。ページ数は出版社提供書誌のこの巻の値です。改版・刷による差は手元の本で確認してください。", "source": "https://www.hanmoto.com/bd/isbn/9784003360415"}, {"work": "aristotle:nicomachean-ethics", "title": "ニコマコス倫理学（下）", "isbn": "9784003360422", "translator": "高田三郎", "year": "1973", "pages": 302, "volume": "岩波文庫 青604-2・下巻", "editor": "", "note": "上下二巻のうち下巻。ページ数は出版社提供書誌のこの巻の値です。改版・刷による差は手元の本で確認してください。", "source": "https://www.hanmoto.com/bd/isbn/9784003360422"}, {"work": "descartes:discourse", "title": "方法序説", "isbn": "9784003361313", "translator": "谷川多佳子", "year": "1997", "pages": 160, "volume": "岩波文庫 青613-1", "editor": "", "note": "", "source": "https://www.hanmoto.com/bd/isbn/9784003361313"}, {"work": "marcus-aurelius:meditations", "title": "自省録", "isbn": "9784003361016", "translator": "神谷美恵子", "year": "2007", "pages": null, "volume": "岩波文庫 青610-1・改版", "editor": "", "note": "同じISBNのページ数に書誌間の差があるため未設定です。手元の本の総ページ数を登録してください。出版年は改版の書誌年です。", "source": "https://www.hanmoto.com/bd/isbn/9784003361016"}, {"work": "zhuangzi:zhuangzi", "title": "荘子 第1冊", "isbn": "9784003320617", "translator": "金谷治（訳注）", "year": "1971", "pages": 268, "volume": "岩波文庫 青206-1・第1冊", "editor": "", "note": "全四冊のうち第1冊。ページ数はこの冊のみの値です。金谷治の役割は訳注（図書館書誌で確認）。", "source": "https://www.hanmoto.com/bd/isbn/9784003320617"}, {"work": "dogen:zuimonki", "title": "正法眼蔵随聞記", "isbn": "9784003331941", "translator": "", "year": "1982", "pages": 176, "volume": "岩波文庫 青319-4・改版", "editor": "懐奘（編）・和辻哲郎（校訂）", "note": "現代語訳とは区別し、編者・校訂者を編集者欄に記録。役割は大学図書館書誌で確認。", "source": "https://www.hanmoto.com/bd/isbn/9784003331941"}];
+  for(const [index,book] of books.entries()) {
+    await page.goto('/');
+    await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+    const titles: Record<string,string>={'plato:apology':'ソクラテスの弁明','aristotle:nicomachean-ethics':'ニコマコス倫理学','descartes:discourse':'方法序説','zhuangzi:zhuangzi':'荘子','dogen:zuimonki':'正法眼蔵随聞記','marcus-aurelius:meditations':'自省録'};
+    const open=async()=>{await openWork(page,titles[book.work]);};
+    await open();
+    const start=page.getByRole('button',{name:/^(読書を始める|別の版・再読を始める)$/});
+    await revealReadingControl(page,start);await start.click();
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await restoredField(page,/^書籍情報を検索/,titles[book.work]);
+    const candidate=page.getByRole('button',{name:new RegExp('^'+book.title+'・岩波文庫')});
+    await revealReadingControl(page,candidate);await candidate.click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+    const verify=async(volume=book.volume)=>{
+      await restoredField(page,/^出版社/,'岩波書店');
+      await restoredField(page,/^訳者/,book.translator);
+      await restoredField(page,/^編集者・編者/,book.editor);
+      await restoredField(page,/^ISBN/,book.isbn);
+      await restoredField(page,/^総ページ数/,book.pages===null?'':String(book.pages));
+      await restoredField(page,/^出版年/,book.year);
+      await restoredField(page,/^巻・版の名前/,volume);
+      await restoredField(page,/^書籍・購入URL/,'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn);
+      await restoredField(page,/^版情報の出典URL/,book.source);
+    };
+    await verify();await capture(page,info,'iwanami-'+book.isbn+'-prefilled');
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await open();
+    await editRegisteredEdition(page,book.isbn);await verify();
+    // Editing a registered book searches by its ISBN automatically.
+    await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+    await restoredField(page,/^書籍情報を検索/,book.isbn);
+    await revealReadingControl(page,candidate);await candidate.click();
+    await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();await verify();
+    const volume=book.volume+'・手元の版を確認';
+    await field(page,/^巻・版の名前/,volume);
+    await page.getByRole('button',{name:'保存',exact:true}).click();
+    await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+    await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await open();
+    await editRegisteredEdition(page,book.isbn);await verify(volume);
+    await capture(page,info,'iwanami-'+book.isbn+'-edited-reloaded');
     await page.getByRole('button',{name:'キャンセル',exact:true}).click();
   }
 });
