@@ -170,14 +170,12 @@ class ReadingBookSearch {
       // One physical book may contain several separately tracked works.
       // Keep their catalog links, but show an identical edition only once.
       final seen = <String>{};
-      return matches
-          .where(
-            (book) {
-              final identity = jsonEncode([book.title, book.edition.toJson()]);
-              return seen.add(identity);
-            },
-          )
-          .toList();
+      return matches.where(
+        (book) {
+          final identity = jsonEncode([book.title, book.edition.toJson()]);
+          return seen.add(identity);
+        },
+      ).toList();
     }
     if (!isIsbn && RegExp(r'^[0-9Xx\s-]+$').hasMatch(text)) return [];
     final ownedClient = client == null;
