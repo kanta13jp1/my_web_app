@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../models/echo_pump_game.dart';
 import 'echo_pump_cast.dart';
+import 'echo_pump_room_stage.dart';
 
 const _mint = Color(0xFF9BE0CF);
 const _warning = Color(0xFFFFB49B);
 
 /// Establishing artwork, with live game state kept in real accessible widgets.
 class EchoPumpScene extends StatelessWidget {
-  const EchoPumpScene({super.key, required this.game});
+  const EchoPumpScene({
+    super.key,
+    required this.game,
+    this.onExploreMove,
+    this.onFootstep,
+  });
+
+  final ValueChanged<PumpRoom>? onExploreMove;
+  final VoidCallback? onFootstep;
 
   final EchoPumpGame game;
 
@@ -68,7 +77,14 @@ class EchoPumpScene extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  EchoPumpCast(game: game),
+                  if (game.room == PumpRoom.control && !game.finished)
+                    EchoPumpRoomStage(
+                      key: ObjectKey(game),
+                      onMove: onExploreMove,
+                      onFootstep: onFootstep,
+                    )
+                  else
+                    EchoPumpCast(game: game),
                   const SizedBox(height: 20),
                   Wrap(
                     spacing: 20,

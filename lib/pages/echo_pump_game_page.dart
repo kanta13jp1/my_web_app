@@ -7,6 +7,7 @@ import '../widgets/echo_pump_title_screen.dart';
 import '../widgets/echo_pump_intro.dart';
 import '../widgets/echo_pump_visuals.dart';
 import '../widgets/echo_pump_guidance.dart';
+import '../widgets/echo_pump_inventory.dart';
 
 class EchoPumpGamePage extends StatefulWidget {
   const EchoPumpGamePage({super.key, this.audio});
@@ -26,6 +27,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
   EchoPumpCue? _visualCue = EchoPumpCue.start;
   PumpRoom _fromRoom = PumpRoom.control;
   bool _blocked = false;
+  bool _inventoryOpen = false;
 
   late final EchoPumpAudio _audio;
 
@@ -80,6 +82,29 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
     }
   }
 
+  Future<void> _openInventory(BuildContext inventoryContext) async {
+    if (_inventoryOpen) return;
+    _inventoryOpen = true;
+    final inspectedGame = _game;
+    EchoPumpInventoryAction? result;
+    try {
+      result = await showDialog<EchoPumpInventoryAction>(
+        context: inventoryContext,
+        useRootNavigator: false,
+        builder: (_) => EchoPumpInventoryDialog(game: inspectedGame),
+      );
+    } finally {
+      _inventoryOpen = false;
+    }
+    if (!mounted || !identical(inspectedGame, _game)) return;
+    if (result == EchoPumpInventoryAction.repair &&
+        !_game.finished &&
+        _game.hasFuse &&
+        _game.room == PumpRoom.pump) {
+      _act(_game.repair, EchoPumpCue.repair);
+    }
+  }
+
   void _beginIntro() {
     if (_started || _introPlaying) return;
     setState(() => _introPlaying = true);
@@ -117,7 +142,11 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       return EchoPumpTitleScreen(onStart: _beginIntro);
     }
     return Theme(
-      data: ThemeData.dark(useMaterial3: true).copyWith(
+      data: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: true,
+        fontFamily: 'NotoSansJP',
+      ).copyWith(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF64D8C2),
           brightness: Brightness.dark,
@@ -128,6 +157,14 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
         appBar: AppBar(
           title: const Text('残響ポンプ室'),
           actions: [
+            Builder(
+              builder: (inventoryContext) => IconButton(
+                key: const Key('echo-inventory-toolbar'),
+                tooltip: '所持品を開く',
+                onPressed: () => _openInventory(inventoryContext),
+                icon: const Icon(Icons.inventory_2_outlined),
+              ),
+            ),
             IconButton(
               tooltip: '最初からやり直す',
               onPressed: () =>
@@ -144,21 +181,31 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  EchoPumpScene(game: _game),
+                  EchoPumpScene(
+                    game: _game,
+                    onExploreMove: (room) {
+                      if (_game.room == PumpRoom.control && !_game.finished) {
+                        _act(() => _game.move(room), EchoPumpCue.step);
+                      }
+                    },
+                    onFootstep: () {
+                      if (_game.room == PumpRoom.control && !_game.finished) {
+                        _audio.cue(EchoPumpCue.step);
+                      }
+                    },
+                  ),
                   const SizedBox(height: 12),
+                  Builder(
+                    builder: (inventoryContext) => EchoPumpInventoryStrip(
+                      game: _game,
+                      onOpen: () => _openInventory(inventoryContext),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      Chip(
-                        label: Text(
-                          _game.repaired
-                              ? '修理済み'
-                              : _game.hasFuse
-                                  ? 'ヒューズ所持'
-                                  : 'ヒューズ未回収',
-                        ),
-                      ),
                       Chip(
                         label: Text(
                           _game.sealed ? '敵：封鎖済み' : '敵：${_game.enemy.label}',
@@ -313,19 +360,11 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                       ),
                     ]),
                   if (_game.room == PumpRoom.workshop)
-                    _panel('工具棚', [
-                      FilledButton(
-                        key: const Key('echo-collect'),
-                        onPressed: _game.finished ||
-                                _game.hasFuse ||
-                                _game.repaired
-                            ? null
-                            : () =>
-                                _act(_game.collectFuse, EchoPumpCue.collect),
-                        child: const Text('ヒューズを回収'),
-                      ),
-                      const Text('B系統が必要。敵が工具庫へ来る前に、別の音へ誘おう。'),
-                    ]),
+                    EchoPumpFuseShelf(
+                      game: _game,
+                      onCollect: () =>
+                          _act(_game.collectFuse, EchoPumpCue.collect),
+                    ),
                   if (_game.room == PumpRoom.pump)
                     _panel('ポンプ制御', [
                       Wrap(
@@ -364,8 +403,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                       ),
                     ]),
                   const SizedBox(height: 12),
-                  const Text('最小版：BGM・SEは下の「音をON」で再生 / 3D・射撃・保存なし。'
-                      '再読込で最初から。敵の位置は全表示。'),
+                  const Text('音は下のボタンでONにできます。保存はされません。'
+                      '再読み込みすると最初から始まります。'),
                 ],
               ),
             ),
