@@ -176,11 +176,23 @@ class SupabaseEvernoteNoteHistoryDatabaseGateway
         .eq('id', noteVersionId)
         .single();
     final version = Map<String, dynamic>.from(response);
-    final attachmentResponse = await _client
-        .from('evernote_note_history_attachments')
-        .select('file_path,file_size,mime_type,content_sha256')
-        .eq('note_version_id', noteVersionId)
-        .order('file_path');
+    final attachmentResponse = <Map<String, dynamic>>[];
+    String? cursor;
+    while (true) {
+      var query = _client
+          .from('evernote_note_history_attachments')
+          .select('file_path,file_size,mime_type,content_sha256')
+          .eq('note_version_id', noteVersionId);
+      if (cursor != null) query = query.gt('file_path', cursor);
+      final page = await query.order('file_path').limit(100);
+      if (page.isEmpty) break;
+      attachmentResponse.addAll(page);
+      final next = page.last['file_path']?.toString();
+      if (next == null || next.isEmpty || next == cursor) {
+        throw StateError('History attachment pagination did not advance.');
+      }
+      cursor = next;
+    }
     return EvernoteHistoryVersionSnapshot(
       id: version['id']?.toString() ?? '',
       title: version['title']?.toString() ?? '',
