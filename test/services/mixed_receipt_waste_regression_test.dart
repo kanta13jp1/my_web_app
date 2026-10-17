@@ -6,7 +6,7 @@ void main() {
     final snapshot = AssetWasteTrainingSnapshotInputs.build(
       monthFlows: <Map<String, dynamic>>[<String, dynamic>{
         'action_type': 'expense', 'amount': 736,
-        'description': '[cash] food116yen tobacco620yen (たばこ代)',
+        'description': '[cash] ドーナツ税込116円、マールボロBOX620円（たばこ代）',
         'occurred_at': '2026-10-09T10:47:00',
       }],
       now: DateTime(2026, 10, 17),
@@ -16,6 +16,6 @@ void main() {
       todayViolationCount: 0, compliantStreakDays: 0, lockdownActive: false,
     );
     expect(snapshot.totalExpense, 736);
-    expect(snapshot.wasteExpense, lessThan(736), reason: 'A mixed receipt must not count its food amount as smoking. Exact components need explicit reconciliation.',);
+    expect(snapshot.wasteExpense, 620, reason: 'A mixed receipt must not count its food amount as smoking. Exact components need explicit reconciliation.',);
   });
 }
