@@ -1,12 +1,15 @@
 name: Echo Pump Prototype
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - lib/models/echo_pump_game.dart
       - lib/pages/echo_pump_game_page.dart
       - lib/services/echo_pump_audio.dart
       - lib/widgets/echo_pump_audio_controls.dart
+      - lib/widgets/echo_pump_cast.dart
+      - test/widgets/echo_pump_cast_test.dart
       - lib/widgets/echo_pump_guidance.dart
       - test/widgets/echo_pump_guidance_test.dart
       - test/services/echo_pump_audio_test.dart
@@ -47,6 +50,9 @@ jobs:
       - run: flutter pub get
       - name: Analyze and test the prototype
         run: |
+          dart format lib/widgets/echo_pump_cast.dart test/widgets/echo_pump_cast_test.dart
+          dart analyze lib/widgets/echo_pump_cast.dart test/widgets/echo_pump_cast_test.dart
+          flutter test test/widgets/echo_pump_cast_test.dart
           python3 scripts/generate_echo_pump_audio.py --check
           dart format --output=none --set-exit-if-changed lib/widgets/echo_pump_guidance.dart test/widgets/echo_pump_guidance_test.dart
           dart analyze lib/widgets/echo_pump_guidance.dart test/widgets/echo_pump_guidance_test.dart
@@ -85,6 +91,8 @@ jobs:
         with:
           name: echo-pump-evidence-${{ github.run_id }}
           path: |
+            lib/widgets/echo_pump_cast.dart
+            test/widgets/echo_pump_cast_test.dart
             playwright-report/
             test-results/
             echo-server.log
