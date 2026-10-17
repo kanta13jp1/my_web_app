@@ -31,6 +31,19 @@
       "changes": [
         {
           "category": "feature",
+          "id": "pr-5819",
+          "links": [
+            {
+              "title": "PR #5819",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5819"
+            }
+          ],
+          "mergedAt": "2026-10-17T06:24:15Z",
+          "summary": "#5819 資産管理：定期収入を検索して操作ボタンへ直接移動できるようにする"
+        },
+        {
+          "category": "feature",
           "id": "pr-5818",
           "links": [
             {
@@ -405,19 +418,6 @@
           ],
           "mergedAt": "2026-10-15T13:26:41Z",
           "summary": "#5791 銀行CSVの符号付き残高と給与行の確認根拠を保持"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5788",
-          "links": [
-            {
-              "title": "PR #5788",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5788"
-            }
-          ],
-          "mergedAt": "2026-10-15T12:38:03Z",
-          "summary": "#5788 振替元本のカレンダー表示と手数料・税込表記の分類を修正する"
         }
       ],
       "date": "2026-10-17",
