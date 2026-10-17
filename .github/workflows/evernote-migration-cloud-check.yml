@@ -421,6 +421,37 @@ jobs:
             mkdir -p "/tmp/merge-evidence/files/$(dirname "$path")"
             cp -- "$path" "/tmp/merge-evidence/files/$path"
           done < /tmp/merge-evidence/conflicts.txt
+      - name: Prepare review-only integration candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Preserve current main infrastructure and its unrelated asset fixture.
+          # The original conflict files remain in the evidence artifact above.
+          git checkout origin/main -- \
+            .github/workflows/cloud-development.yml \
+            AGENTS.md \
+            docs/CLOUD_FIRST_DEVELOPMENT.md \
+            docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md \
+            pubspec.lock \
+            test/widgets/asset_management_page_smoke_test.dart
+          if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+            echo 'Unreviewed additional conflicts; refuse candidate.'
+            exit 1
+          fi
+          mkdir -p /tmp/merge-evidence/candidate
+          git diff --name-only --diff-filter=D origin/main > /tmp/merge-evidence/deleted.txt
+          git diff --name-only --diff-filter=ACMT origin/main > /tmp/merge-evidence/candidate-paths.txt
+          git diff --stat origin/main > /tmp/merge-evidence/candidate-stat.txt
+          while IFS= read -r path; do
+            [ -n "$path" ] || continue
+            case "$path" in
+              *.enex|*.enex.gz|*.enex.zip) exit 1 ;;
+            esac
+            test -f "$path"
+            mkdir -p "/tmp/merge-evidence/candidate/$(dirname "$path")"
+            cp -- "$path" "/tmp/merge-evidence/candidate/$path"
+          done < /tmp/merge-evidence/candidate-paths.txt
+          # This is source evidence only: no commit, push, build or deploy.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
