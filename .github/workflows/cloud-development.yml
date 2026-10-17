@@ -30,12 +30,19 @@ jobs:
     timeout-minutes: 2
     permissions: {}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
       - name: Verify immutable approved release
         env:
           EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
         run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
           [[ "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
-          test "$EXPECTED_HEAD_SHA" = "$GITHUB_SHA"
+          test "$actual_head_sha" = "$EXPECTED_HEAD_SHA"
+          test "$actual_head_sha" = "$GITHUB_SHA"
   ci:
     name: Run CI Checks
     needs: verify
@@ -914,20 +921,6 @@ jobs:
             exit 1
           fi
           echo "Release tag $TAG verified at $GITHUB_SHA."
-
-      - name: Broadcast release notification
-        if: steps.changes.outputs.web == 'true'
-        continue-on-error: true
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: |
-          curl -fsS -X POST \
-            "$SUPABASE_URL/functions/v1/core-hub" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
-            -H "Content-Type: application/json" \
-            -d "{\"action\":\"notification.broadcast_release\",\"version\":\"${{ steps.version.outputs.version }}\",\"commit\":\"${{ github.sha }}\",\"releaseUrl\":\"https://github.com/kanta13jp1/my_web_app/releases/tag/${{ steps.version.outputs.tag }}\"}" \
-            || true
 
       # Positive evidence only; missing/unknown classifier outputs never suppress gates.
       - name: Confirmed production no-op
