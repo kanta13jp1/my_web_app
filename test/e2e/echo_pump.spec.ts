@@ -1,5 +1,26 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  const issues: string[] = [];
+  page.on('console', message => {
+    if (message.type() === 'error') issues.push(`console: ${message.text()}`);
+  });
+  page.on('requestfailed', request => issues.push(`request: ${request.url()}`));
+  page.on('response', response => {
+    if (response.status() >= 500) issues.push(`http: ${response.status()} ${response.url()}`);
+  });
+  page.on('pageerror', error => issues.push(`page: ${error.message}`));
+  (page as any).__echoIssues = issues;
+});
+
+test.afterEach(async ({ page }, info) => {
+  const issues: string[] = (page as any).__echoIssues;
+  await info.attach('browser-issues', {
+    body: JSON.stringify(issues), contentType: 'application/json',
+  });
+  expect(issues).toEqual([]);
+});
+
 test('power, escape and retry work in the browser', async ({ page }, info) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -7,6 +28,15 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   const button = (name: string) => page.getByRole('button', { name, exact: true });
   await expect(button('A 搬入')).toBeVisible({ timeout: 30000 });
   await page.screenshot({ path: info.outputPath('start.png'), fullPage: true });
+  await page.evaluate(async () => {
+    await Promise.all(document.getAnimations({ subtree: true }).map(animation =>
+      animation.finished.catch(() => undefined)));
+  });
+  // Flutter paints on canvas: capture settled frames as the motion fallback.
+  for (let frame = 0; frame < 3; frame++) {
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: info.outputPath(`frame-${frame}.png`) });
+  }
   const click = async (name: string) => {
     await button(name).click();
   };
@@ -23,4 +53,19 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   await page.reload();
   await expect(button('A 搬入')).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test('contact failure can recover with retry', async ({ page }) => {
+  await page.goto('/');
+  const button = (name: string) => page.getByRole('button', { name, exact: true });
+  await expect(button('中央廊下へ')).toBeVisible({ timeout: 30000 });
+  await expect(button('出口へ')).toBeDisabled();
+  for (let contact = 0; contact < 3; contact++) {
+    await button('中央廊下へ').click();
+    await button('ポンプ室へ').click();
+  }
+  await expect(button('リトライ')).toBeVisible();
+  await expect(button('1ターン待つ')).toBeDisabled();
+  await button('リトライ').click();
+  await expect(button('中央廊下へ')).toBeEnabled();
 });
