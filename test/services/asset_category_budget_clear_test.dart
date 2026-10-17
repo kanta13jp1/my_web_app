@@ -15,4 +15,22 @@ void main() {
         reason: 'A cleared budget must remain distinguishable from no local setting before mirror restore.',
     );
   });
+  test('never configured remains eligible for mirror restore', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+    const store = AssetCategoryBudgetStore();
+    expect(await store.hasSavedSetting(prefs: prefs), isFalse);
+    expect(await store.load(prefs: prefs), isEmpty);
+  });
+  test('cleared setting survives a fresh store and can be configured again', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+    const store = AssetCategoryBudgetStore();
+    await store.save(<String, double>{}, prefs: prefs);
+    const restoredStore = AssetCategoryBudgetStore();
+    expect(await restoredStore.hasSavedSetting(prefs: prefs), isTrue);
+    expect(await restoredStore.load(prefs: prefs), isEmpty);
+    await restoredStore.save(<String, double>{'food': 5000}, prefs: prefs);
+    expect(await store.load(prefs: prefs), <String, double>{'food': 5000});
+  });
 }

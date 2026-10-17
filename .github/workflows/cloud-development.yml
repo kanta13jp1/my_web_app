@@ -30,9 +30,10 @@ jobs:
           set -euo pipefail
           mkdir -p .ci-logs/recurring-income
           flutter pub get
-          dart format lib/services/asset_category_budget_store.dart test/services/asset_category_budget_clear_test.dart
-          flutter analyze --no-pub lib/services/asset_category_budget_store.dart test/services/asset_category_budget_clear_test.dart
+          dart format lib/services/asset_category_budget_store.dart lib/pages/asset_management_page.dart test/services/asset_category_budget_clear_test.dart
+          flutter analyze --no-pub lib/services/asset_category_budget_store.dart lib/pages/asset_management_page.dart test/services/asset_category_budget_clear_test.dart
           flutter test --no-pub --reporter expanded test/services/asset_category_budget_clear_test.dart | tee .ci-logs/recurring-income/tests.log
+          flutter test --no-pub --reporter expanded test/widgets/asset_management_page_smoke_test.dart --plain-name 'budget save' | tee .ci-logs/recurring-income/widgets.log
       - name: Preserve sources
         if: always()
         run: |
