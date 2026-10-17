@@ -62,9 +62,8 @@ void main() {
           bucketId: 'evernote-migration-archives',
           objectPath: 'owner/source.enex',
           contentType: 'application/xml',
-          previousUploadUrl: redirectMethod == 'HEAD'
-              ? Uri.parse('$endpoint/upload-1')
-              : null,
+          previousUploadUrl:
+              redirectMethod == 'HEAD' ? Uri.parse('$endpoint/upload-1') : null,
         ),
         throwsStateError,
       );
