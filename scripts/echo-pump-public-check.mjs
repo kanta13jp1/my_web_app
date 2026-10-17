@@ -10,7 +10,7 @@ const before=await version(), reports=[];
 const browser=await chromium.launch({headless:true});
 try {
   for(const [name,viewport] of [['desktop',{width:1440,height:1300}],['mobile',{width:390,height:1000}]]) {
-    const context=await browser.newContext({viewport,locale:'ja-JP',reducedMotion:'no-preference',recordVideo:{dir:out,size:viewport}});
+    const context=await browser.newContext({viewport,locale:'ja-JP',reducedMotion:'no-preference',recordVideo:{dir:`${out}/${name}`,size:viewport}});
     const page=await context.newPage(), video=page.video(), errors=[];
     page.on('pageerror',e=>errors.push(e.message));
     await page.addInitScript(()=>{
@@ -59,7 +59,7 @@ try {
       assert.deepEqual(errors,[]); passed=true;
     } finally {
       reports.push({name,passed,errors,audio:await page.evaluate(()=>window.__roomAudit.plays).catch(()=>[])});
-      await shot('final').catch(()=>{});await context.close();if(video) await video.saveAs(`${out}/${name}-flow.webm`);
+      await shot('final').catch(()=>{});await context.close();if(video) reports[reports.length-1].video=await video.path();
       writeFileSync(`${out}/report.json`,JSON.stringify({before,expected,reports},null,2));
     }
   }
