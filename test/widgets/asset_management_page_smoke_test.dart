@@ -942,13 +942,18 @@ void main() {
     }
   }
 
-  testWidgets('fixed cost persistence failure retains edited input', (tester) async {
+  testWidgets('fixed cost persistence failure retains edited input',
+      (tester) async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       AssetRecurringFixedCostStore.prefsKey: jsonEncode(
         AssetRecurringFixedCostStore.encodeMirrorValue(
           const <AssetRecurringFixedCost>[
-            AssetRecurringFixedCost(id: 'synthetic_cost', name: 'Synthetic utility',
-              amount: 2000, paymentDay: 7,),
+            AssetRecurringFixedCost(
+              id: 'synthetic_cost',
+              name: 'Synthetic utility',
+              amount: 2000,
+              paymentDay: 7,
+            ),
           ],
         ),
       ),
@@ -957,9 +962,13 @@ void main() {
     AssetRecurringTombstoneSyncService.resetSharedForTest();
     await tester.binding.setSurfaceSize(const Size(1200, 3000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(const MaterialApp(home: AssetManagementPage(
-      debugRecurringFixedCostStore: _ThrowingRecurringFixedCostStore(),
-    ),),);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: AssetManagementPage(
+          debugRecurringFixedCostStore: _ThrowingRecurringFixedCostStore(),
+        ),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 500));
     try {
       final edit = find.byTooltip('Synthetic utility を編集');
@@ -974,8 +983,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       final persisted = await const AssetRecurringFixedCostStore().load();
       expect(persisted.single.name, 'Synthetic utility');
-      expect(find.byType(RecurringFixedCostEditorDialog), findsOneWidget,
-        reason: 'Failed persistence must keep entered data for retry',);
+      expect(
+        find.byType(RecurringFixedCostEditorDialog),
+        findsOneWidget,
+        reason: 'Failed persistence must keep entered data for retry',
+      );
       expect(find.text('Synthetic utility changed'), findsOneWidget);
     } finally {
       await _unmount(tester);

@@ -16,15 +16,26 @@ Future<void> _open(
   WidgetTester tester,
   Future<void> Function(AssetRecurringFixedCost) save,
 ) async {
-  await tester.pumpWidget(MaterialApp(home: Builder(builder: (context) {
-    return Scaffold(
-        body: TextButton(
-            onPressed: () {
-              showRecurringFixedCostEditor(context,
-                  existing: _cost, onSave: save,);
-            },
-            child: const Text('open'),),);
-  },),),);
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Builder(
+        builder: (context) {
+          return Scaffold(
+            body: TextButton(
+              onPressed: () {
+                showRecurringFixedCostEditor(
+                  context,
+                  existing: _cost,
+                  onSave: save,
+                );
+              },
+              child: const Text('open'),
+            ),
+          );
+        },
+      ),
+    ),
+  );
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();
 }
@@ -42,13 +53,16 @@ void main() {
     await tester.pump();
     expect(calls, 1);
     expect(find.byType(RecurringFixedCostEditorDialog), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-        isNull,);
     expect(
-        tester
-            .widget<TextButton>(find.widgetWithText(TextButton, 'キャンセル'))
-            .onPressed,
-        isNull,);
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, 'キャンセル'))
+          .onPressed,
+      isNull,
+    );
     await tester.tap(find.text('保存中…'));
     await tester.pump();
     expect(calls, 1);
@@ -67,7 +81,9 @@ void main() {
       saved = cost;
     });
     await tester.enterText(
-        find.widgetWithText(TextFormField, '名称'), 'Edited utility',);
+      find.widgetWithText(TextFormField, '名称'),
+      'Edited utility',
+    );
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(find.text('保存できませんでした。入力を保持しています。'), findsOneWidget);
