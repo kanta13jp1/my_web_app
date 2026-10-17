@@ -106,6 +106,39 @@ begin
 end
 $$;
 
+-- Imported history and attachment evidence must survive premature deletion.
+do $$
+declare
+  v_table text;
+begin
+  foreach v_table in array array[
+    'note_versions', 'evernote_note_history_attachments'
+  ] loop
+    begin
+      execute format(
+        'delete from public.%I where user_id = (select auth.uid()) '
+        'and note_id = (select target_note_id '
+        'from public.evernote_migration_items '
+        'where batch_id = 101 and source_item_key = %L)',
+        v_table,
+        'id:note-101'
+      );
+      raise exception 'Premature deletion removed imported history evidence.';
+    exception when check_violation then
+      if sqlerrm <>
+        'Imported Evernote history evidence cannot be deleted before the source.' then
+        raise;
+      end if;
+    end;
+  end loop;
+  if (select count(*) from public.note_versions
+      where source_system = 'evernote') <> 1
+     or (select count(*) from public.evernote_note_history_attachments) <> 1 then
+    raise exception 'Rejected deletion did not preserve recovery evidence.';
+  end if;
+end
+$$;
+
 -- A retry must update the deterministic source row, not duplicate it.
 select public.evernote_commit_note_history_version(
   101,

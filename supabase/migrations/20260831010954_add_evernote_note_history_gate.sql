@@ -232,6 +232,49 @@ grant all on sequence
   public.evernote_note_history_attachments_id_seq
   to service_role;
 
+-- Preserve imported recovery evidence until every associated source is deleted.
+create or replace function
+  evernote_migration_private.protect_imported_history_evidence()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not exists (
+    select 1 from public.evernote_migration_items
+    where user_id = old.user_id and target_note_id = old.note_id
+      and status = 'source_deleted'
+  ) or exists (
+    select 1 from public.evernote_migration_items
+    where user_id = old.user_id and target_note_id = old.note_id
+      and status <> 'source_deleted'
+  ) then
+    raise exception using
+      errcode = '23514',
+      message = 'Imported Evernote history evidence cannot be deleted before the source.';
+  end if;
+  return old;
+end
+$$;
+
+revoke all on function
+  evernote_migration_private.protect_imported_history_evidence()
+  from public, anon, authenticated, service_role;
+
+create trigger protect_imported_note_history_version
+  before delete on public.note_versions
+  for each row
+  when (old.source_system = 'evernote')
+  execute function
+    evernote_migration_private.protect_imported_history_evidence();
+
+create trigger protect_imported_note_history_attachment
+  before delete on public.evernote_note_history_attachments
+  for each row
+  execute function
+    evernote_migration_private.protect_imported_history_evidence();
+
 alter table public.evernote_migration_items
   add column if not exists history_status text not null default 'pending',
   add column if not exists source_history_version_count bigint not null default 0,
