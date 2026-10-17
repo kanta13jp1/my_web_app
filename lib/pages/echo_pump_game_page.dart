@@ -247,9 +247,9 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                               onSelected: _game.finished
                                   ? null
                                   : (_) => _act(
-                                      () => _game.togglePower(circuit),
-                                      EchoPumpCue.power,
-                                    ),
+                                        () => _game.togglePower(circuit),
+                                        EchoPumpCue.power,
+                                      ),
                             ),
                         ],
                       ),
