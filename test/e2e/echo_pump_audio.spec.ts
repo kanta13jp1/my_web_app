@@ -146,6 +146,12 @@ test('inventory waits for delayed in-flight footsteps, stays quiet, then resumes
   expect(await page.evaluate(t => (window as any).__inventoryDelay.calls.filter((time: number) => time >= t).length, openedAt)).toBe(0);
   expect(await page.evaluate(() => (window as any).__inventoryDelay.calls.length)).toBe(calls);
   expect(await page.evaluate(() => (window as any).__echoAudioAudit.media.filter((m: HTMLMediaElement) => (m.currentSrc || m.src).includes('/step.wav') && !m.paused && !m.ended).length)).toBe(0);
+  await info.attach('inventory-audio-state', {
+    body: JSON.stringify(await page.evaluate(() => ({
+      media: (window as any).__echoAudioAudit.media.map((m: HTMLMediaElement) => ({ src: m.currentSrc || m.src, paused: m.paused, loop: m.loop, ended: m.ended, time: m.currentTime })),
+      contexts: (window as any).__echoAudioAudit.contexts.map((c: AudioContext) => c.state),
+    }))), contentType: 'application/json',
+  });
   expect(await page.evaluate(() => (window as any).__echoAudioAudit.media.some((m: HTMLMediaElement) => m.loop && !m.paused))).toBe(true);
   await page.screenshot({ path: info.outputPath('inventory-quiet-after-delayed-step.png') });
   await button('所持品を閉じる').click();

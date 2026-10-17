@@ -59,9 +59,17 @@ class EchoPumpPlayerOutput implements EchoPumpAudioOutput {
     if (_closed) return;
     final request = ++_effectRequest;
     final player = _effect ??= AudioPlayer();
-    await player.stop();
-    if (_closed || request != _effectRequest) return;
-    await player.play(AssetSource('echo_pump/${cue.name}.wav'), volume: volume);
+    try {
+      await player.stop();
+      if (_closed || request != _effectRequest) return;
+      await player.play(
+        AssetSource('echo_pump/${cue.name}.wav'),
+        volume: volume,
+      );
+    } catch (_) {
+      // A stopped platform play may reject; cancellation is not a BGM failure.
+      if (!_closed && request == _effectRequest) rethrow;
+    }
     if (_closed || request != _effectRequest) await player.stop();
   }
 
