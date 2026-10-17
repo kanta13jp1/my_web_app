@@ -51,10 +51,9 @@ class EvernoteEnmlMarkdownConverter {
           resource.hash.trim().toLowerCase(): resource,
     };
     final unresolved = <String>{};
-    var encryptedSectionCount = 0;
     final buffer = StringBuffer();
     for (final child in document.rootElement.children) {
-      encryptedSectionCount += _writeNode(
+      _writeNode(
         child,
         buffer,
         resourcesByHash,
@@ -66,7 +65,12 @@ class EvernoteEnmlMarkdownConverter {
     return EvernoteEnmlMarkdownResult(
       markdown: _normalize(buffer.toString()),
       unresolvedResourceHashes: unresolved.toList(growable: false)..sort(),
-      encryptedSectionCount: encryptedSectionCount,
+      // Inventory encryption independently of rendering branches that flatten
+      // descendants (for example code blocks and link labels).
+      encryptedSectionCount: document.descendants
+          .whereType<XmlElement>()
+          .where((element) => element.localName.toLowerCase() == 'en-crypt')
+          .length,
     );
   }
 
