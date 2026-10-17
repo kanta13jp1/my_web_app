@@ -63,11 +63,13 @@ void main() {
                 );
           await expectLater(
             operation,
-            throwsA(isA<StateError>().having(
-              (error) => error.message,
-              'failed check',
-              contains('resource_sha256'),
-            )),
+            throwsA(
+              isA<StateError>().having(
+                (error) => error.message,
+                'failed check',
+                contains('resource_sha256'),
+              ),
+            ),
           );
           expect(database.verifyCalls, isEmpty);
         });
