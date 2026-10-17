@@ -7,14 +7,16 @@ void main() {
     for (final target in [
       EchoRoomTarget.door,
       EchoRoomTarget.memo,
-      EchoRoomTarget.door
+      EchoRoomTarget.door,
     ]) {
       final route = EchoPumpRoomWalk.route(from, target);
       for (var frame = 0; frame <= 1000; frame++) {
         expect(
-            EchoPumpRoomWalk.isWalkable(
-                EchoPumpRoomWalk.sample(route, frame / 1000)),
-            isTrue);
+          EchoPumpRoomWalk.isWalkable(
+            EchoPumpRoomWalk.sample(route, frame / 1000),
+          ),
+          isTrue,
+        );
       }
       final end = EchoPumpRoomWalk.sample(route, 1);
       expect(end.x, EchoPumpRoomWalk.destinations[target]!.x);
@@ -32,9 +34,11 @@ void main() {
         final next = EchoPumpRoomWalk.route(stopped, target);
         for (var i = 0; i <= 100; i++) {
           expect(
-              EchoPumpRoomWalk.isWalkable(
-                  EchoPumpRoomWalk.sample(next, i / 100)),
-              isTrue);
+            EchoPumpRoomWalk.isWalkable(
+              EchoPumpRoomWalk.sample(next, i / 100),
+            ),
+            isTrue,
+          );
         }
       }
     }
@@ -50,13 +54,15 @@ void main() {
 
   test('walls, central equipment and invalid starts are rejected', () {
     for (final point in [
-      EchoRoomPoint(0.5, 0.7),
-      EchoRoomPoint(0, 0),
-      EchoRoomPoint(double.nan, 0.9)
+      const EchoRoomPoint(0.5, 0.7),
+      const EchoRoomPoint(0, 0),
+      const EchoRoomPoint(double.nan, 0.9),
     ]) {
       expect(EchoPumpRoomWalk.isWalkable(point), isFalse);
-      expect(() => EchoPumpRoomWalk.route(point, EchoRoomTarget.memo),
-          throwsArgumentError);
+      expect(
+        () => EchoPumpRoomWalk.route(point, EchoRoomTarget.memo),
+        throwsArgumentError,
+      );
     }
     expect(() => EchoPumpRoomWalk.sample([], 0), throwsArgumentError);
   });

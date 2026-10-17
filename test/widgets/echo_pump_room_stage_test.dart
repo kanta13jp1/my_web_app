@@ -5,25 +5,33 @@ import 'package:my_web_app/models/echo_pump_game.dart';
 import 'package:my_web_app/widgets/echo_pump_room_stage.dart';
 
 void main() {
-  Future<void> show(WidgetTester tester,
-      {VoidCallback? step,
-      ValueChanged<PumpRoom>? move,
-      bool reduced = false,
-      double textScale = 1,
-      AssetBundle? bundle}) async {
+  Future<void> show(
+    WidgetTester tester, {
+    VoidCallback? step,
+    ValueChanged<PumpRoom>? move,
+    bool reduced = false,
+    double textScale = 1,
+    AssetBundle? bundle,
+  }) async {
     final stage = EchoPumpRoomStage(onFootstep: step, onMove: move);
-    await tester.pumpWidget(MaterialApp(
-      builder: (context, child) => MediaQuery(
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
           data: MediaQueryData(
-              disableAnimations: reduced,
-              textScaler: TextScaler.linear(textScale)),
-          child: child!),
-      home: Scaffold(
+            disableAnimations: reduced,
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: child!,
+        ),
+        home: Scaffold(
           body: SingleChildScrollView(
-              child: bundle == null
-                  ? stage
-                  : DefaultAssetBundle(bundle: bundle, child: stage))),
-    ));
+            child: bundle == null
+                ? stage
+                : DefaultAssetBundle(bundle: bundle, child: stage),
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -43,11 +51,13 @@ void main() {
     expect(before, isNotNull);
     expect(find.text('歩行中…'), findsOneWidget);
     expect(
-        tester
-            .widget<OutlinedButton>(
-                find.widgetWithText(OutlinedButton, '中央廊下の扉を調べる'))
-            .onPressed,
-        isNull);
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, '中央廊下の扉を調べる'),
+          )
+          .onPressed,
+      isNull,
+    );
     await tester.pumpAndSettle();
     expect(steps, 2);
     expect(find.text('夜間保守メモ 1 / 2'), findsOneWidget);
@@ -67,10 +77,13 @@ void main() {
       (tester) async {
     final game = EchoPumpGame();
     var moves = 0;
-    await show(tester, move: (room) {
-      moves++;
-      game.move(room);
-    });
+    await show(
+      tester,
+      move: (room) {
+        moves++;
+        game.move(room);
+      },
+    );
     await tester.tap(find.text('設備寄りに見る'));
     await tester.pumpAndSettle();
     expect(find.text('全景へ'), findsOneWidget);

@@ -36,7 +36,7 @@ abstract final class EchoPumpRoomWalk {
       from,
       EchoRoomPoint(from.x, 0.9),
       EchoRoomPoint(to.x, 0.9),
-      to
+      to,
     ];
     final result = <EchoRoomPoint>[];
     for (final point in points) {
@@ -64,7 +64,9 @@ abstract final class EchoPumpRoomWalk {
       if (remaining <= distance && distance > 0) {
         final t = remaining / distance;
         return EchoRoomPoint(
-            from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
+          from.x + (to.x - from.x) * t,
+          from.y + (to.y - from.y) * t,
+        );
       }
       remaining -= distance;
     }
