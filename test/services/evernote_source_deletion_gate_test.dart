@@ -28,7 +28,8 @@ void main() {
     'failed',
     'unknown',
   ]) {
-    test('$status cannot pass source deletion with verified features alone', () {
+    test('$status cannot pass source deletion with verified features alone',
+        () {
       expect(item(status: status).sourceDeletionGatePassed, isFalse);
     });
   }

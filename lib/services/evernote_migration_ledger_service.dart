@@ -115,7 +115,8 @@ class EvernoteMigrationItem {
 
   bool get sourceDeletionGatePassed =>
       targetNoteId != null &&
-      <String>{'verified', 'source_deleting', 'source_deleted'}.contains(status) &&
+      <String>{'verified', 'source_deleting', 'source_deleted'}
+          .contains(status) &&
       historyDeletionGatePassed &&
       taskDeletionGatePassed;
 
