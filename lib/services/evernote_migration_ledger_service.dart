@@ -60,6 +60,110 @@ class EvernoteMigrationBatch {
   }
 }
 
+class EvernoteMigrationItem {
+  const EvernoteMigrationItem({
+    required this.id,
+    required this.batchId,
+    required this.sourceItemKey,
+    required this.status,
+    required this.historyStatus,
+    required this.sourceHistoryVersionCount,
+    required this.importedHistoryVersionCount,
+    required this.verifiedHistoryVersionCount,
+    this.taskStatus = 'pending',
+    this.sourceTaskCount = 0,
+    this.importedTaskCount = 0,
+    this.verifiedTaskCount = 0,
+    this.sourceTaskReminderCount = 0,
+    this.importedTaskReminderCount = 0,
+    this.verifiedTaskReminderCount = 0,
+    this.sourceNoteReminderPresent = false,
+    this.noteReminderVerified = false,
+    this.sourceNoteId,
+    this.targetNoteId,
+    this.noteTitle,
+  });
+
+  final int id;
+  final int batchId;
+  final String sourceItemKey;
+  final String? sourceNoteId;
+  final int? targetNoteId;
+  final String status;
+  final String historyStatus;
+  final int sourceHistoryVersionCount;
+  final int importedHistoryVersionCount;
+  final int verifiedHistoryVersionCount;
+  final String taskStatus;
+  final int sourceTaskCount;
+  final int importedTaskCount;
+  final int verifiedTaskCount;
+  final int sourceTaskReminderCount;
+  final int importedTaskReminderCount;
+  final int verifiedTaskReminderCount;
+  final bool sourceNoteReminderPresent;
+  final bool noteReminderVerified;
+  final String? noteTitle;
+
+  bool get isImported => targetNoteId != null;
+
+  bool get historyDeletionGatePassed =>
+      historyStatus == 'verified' || historyStatus == 'reviewed_no_versions';
+
+  bool get taskDeletionGatePassed =>
+      taskStatus == 'verified' || taskStatus == 'verified_no_features';
+
+  bool get sourceDeletionGatePassed =>
+      targetNoteId != null &&
+      <String>{'verified', 'source_deleting', 'source_deleted'}
+          .contains(status) &&
+      historyDeletionGatePassed &&
+      taskDeletionGatePassed;
+
+  String get displayTitle {
+    final title = noteTitle?.trim();
+    if (title != null && title.isNotEmpty) return title;
+    final sourceId = sourceNoteId?.trim();
+    if (sourceId != null && sourceId.isNotEmpty) return sourceId;
+    return sourceItemKey;
+  }
+
+  factory EvernoteMigrationItem.fromJson(Map<String, dynamic> json) {
+    final noteValue = json['notes'];
+    final note = noteValue is Map
+        ? Map<String, dynamic>.from(noteValue)
+        : const <String, dynamic>{};
+    final targetNoteId = _nullableInt(json['target_note_id']);
+    return EvernoteMigrationItem(
+      id: _asIntValue(json['id']),
+      batchId: _asIntValue(json['batch_id']),
+      sourceItemKey: json['source_item_key']?.toString() ?? '',
+      sourceNoteId: _emptyStringToNull(json['source_note_id']),
+      targetNoteId: targetNoteId,
+      status: json['status']?.toString() ?? 'previewed',
+      historyStatus: json['history_status']?.toString() ?? 'pending',
+      sourceHistoryVersionCount:
+          _asIntValue(json['source_history_version_count']),
+      importedHistoryVersionCount:
+          _asIntValue(json['imported_history_version_count']),
+      verifiedHistoryVersionCount:
+          _asIntValue(json['verified_history_version_count']),
+      taskStatus: json['task_status']?.toString() ?? 'pending',
+      sourceTaskCount: _asIntValue(json['source_task_count']),
+      importedTaskCount: _asIntValue(json['imported_task_count']),
+      verifiedTaskCount: _asIntValue(json['verified_task_count']),
+      sourceTaskReminderCount: _asIntValue(json['source_task_reminder_count']),
+      importedTaskReminderCount:
+          _asIntValue(json['imported_task_reminder_count']),
+      verifiedTaskReminderCount:
+          _asIntValue(json['verified_task_reminder_count']),
+      sourceNoteReminderPresent: json['source_note_reminder_present'] == true,
+      noteReminderVerified: json['note_reminder_verified'] == true,
+      noteTitle: _emptyStringToNull(note['title']),
+    );
+  }
+}
+
 class EvernoteMigrationProgress {
   final int batchCount;
   final int sourceNoteCount;
@@ -185,16 +289,16 @@ class EvernoteMigrationLedgerService {
 
   Future<List<EvernoteMigrationBatch>> loadBatches({
     required String userId,
-    int limit = 20,
+    int? limit,
   }) async {
     final ownerId = userId.trim();
     if (ownerId.isEmpty) return const <EvernoteMigrationBatch>[];
-    final rows = await _client
-        .from('evernote_migration_batches')
-        .select()
-        .eq('user_id', ownerId)
-        .order('updated_at', ascending: false)
-        .limit(limit.clamp(1, 100));
+    final rows = await _loadLedgerRows(
+      table: 'evernote_migration_batches',
+      columns: '*',
+      ownerId: ownerId,
+      limit: limit?.clamp(1, 100),
+    );
     return rows
         .map(
           (row) => EvernoteMigrationBatch.fromJson(
@@ -202,6 +306,76 @@ class EvernoteMigrationLedgerService {
           ),
         )
         .toList(growable: false);
+  }
+
+  Future<List<EvernoteMigrationItem>> loadItems({
+    required String userId,
+    int? limit,
+  }) async {
+    final ownerId = userId.trim();
+    if (ownerId.isEmpty) return const <EvernoteMigrationItem>[];
+    final rows = await _loadLedgerRows(
+      table: 'evernote_migration_items',
+      columns:
+          'updated_at,id,batch_id,source_item_key,source_note_id,target_note_id,status,'
+          'history_status,source_history_version_count,'
+          'imported_history_version_count,verified_history_version_count,'
+          'task_status,source_task_count,imported_task_count,'
+          'verified_task_count,source_task_reminder_count,'
+          'imported_task_reminder_count,verified_task_reminder_count,'
+          'source_note_reminder_present,note_reminder_verified,'
+          'notes!evernote_migration_items_target_note_fkey(title)',
+      ownerId: ownerId,
+      limit: limit?.clamp(1, 1000),
+    );
+    return rows
+        .map(
+          (row) => EvernoteMigrationItem.fromJson(
+            Map<String, dynamic>.from(row),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  Future<List<Map<String, dynamic>>> _loadLedgerRows({
+    required String table,
+    required String columns,
+    required String ownerId,
+    int? limit,
+  }) async {
+    if (limit != null) {
+      return await _client
+          .from(table)
+          .select(columns)
+          .eq('user_id', ownerId)
+          .order('updated_at', ascending: false)
+          .order('id', ascending: false)
+          .limit(limit);
+    }
+    const pageSize = 100;
+    final rows = <Map<String, dynamic>>[];
+    int? afterId;
+    while (true) {
+      var query = _client.from(table).select(columns).eq('user_id', ownerId);
+      if (afterId != null) query = query.gt('id', afterId);
+      final page = await query.order('id', ascending: true).limit(pageSize);
+      if (page.isEmpty) break;
+      rows.addAll(page);
+      final nextId = _asIntValue(page.last['id']);
+      if (nextId <= (afterId ?? 0)) {
+        throw StateError('The migration ledger cursor did not advance.');
+      }
+      afterId = nextId;
+      if (page.length < pageSize) break;
+    }
+    rows.sort((left, right) {
+      final dateOrder = (right['updated_at']?.toString() ?? '')
+          .compareTo(left['updated_at']?.toString() ?? '');
+      return dateOrder != 0
+          ? dateOrder
+          : _asIntValue(right['id']).compareTo(_asIntValue(left['id']));
+    });
+    return rows;
   }
 
   static String _sourceItemKey(ImportedNoteDraft note, int index) {
@@ -218,4 +392,21 @@ class EvernoteMigrationLedgerService {
     final trimmed = value?.trim();
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
+}
+
+int _asIntValue(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int? _nullableInt(dynamic value) {
+  if (value == null) return null;
+  final parsed = _asIntValue(value);
+  return parsed <= 0 ? null : parsed;
+}
+
+String? _emptyStringToNull(dynamic value) {
+  final text = value?.toString().trim();
+  return text == null || text.isEmpty ? null : text;
 }
