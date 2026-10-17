@@ -72,6 +72,7 @@ try {
    await bottom();await shot('fuse-shelf');
    const collectBefore=await cueCount('collect');await button('ヒューズを回収').click();
    assert.equal(await button('ヒューズを回収').isEnabled(),false);
+   await page.waitForFunction(n=>window.__roomAudit.plays.filter(x=>x.src.includes('/collect.wav')).length>n,collectBefore);
    await inventory().click();await text('所持数 1').waitFor();
    assert.equal(await button('このヒューズで修理').count(),0);
    await shot('inventory-carried');await button('所持品を閉じる').click();await text('ターン 5').waitFor();
@@ -80,6 +81,7 @@ try {
    await button('中央廊下へ').click();await button('ポンプ室へ').click();
    await inventory().click();await text('所持数 1').waitFor();await shot('inventory-use');
    const repairBefore=await cueCount('repair');await button('このヒューズで修理').click();await text('ターン 8').waitFor();
+   await page.waitForFunction(n=>window.__roomAudit.plays.filter(x=>x.src.includes('/repair.wav')).length>n,repairBefore);
    await inventory().click();await text('ポンプへ装着済み').waitFor();await text('所持数 0').waitFor();
    assert.equal(await button('このヒューズで修理').count(),0);await shot('inventory-installed');
    await button('所持品を閉じる').click();await text('ターン 8').waitFor();
