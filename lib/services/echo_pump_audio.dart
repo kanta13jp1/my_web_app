@@ -181,7 +181,7 @@ class EchoPumpAudio extends ChangeNotifier {
     if (_closed) return Future<void>.value();
     _effectsSuspended = true;
     _effectGeneration++;
-    unawaited(_output.silenceEffects().catchError((Object _) {}));
+    // Keep platform operations serial: concurrent stops can interrupt play setup.
     _enqueue(() async {
       if (_effectsSuspended) await _output.silenceEffects();
     });

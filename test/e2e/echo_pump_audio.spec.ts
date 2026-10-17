@@ -159,4 +159,19 @@ test('inventory waits for delayed in-flight footsteps, stays quiet, then resumes
   await button('管理室へ').click();
   await expect.poll(() => page.evaluate(() => (window as any).__inventoryDelay.calls.length)).toBeGreaterThan(calls);
   await expect(page.getByText('ターン 2', { exact: true }).first()).toBeVisible();
+  // Repeat after the player is warm; menu stops must never overlap platform play.
+  for (let cycle = 0; cycle < 2; cycle++) {
+    await button('中央廊下へ').click();
+    await button('所持品を開く').click();
+    await expect(page.getByText('所持品は空', { exact: true })).toBeVisible();
+    const visibleAt = await page.evaluate(() => performance.now());
+    await page.waitForTimeout(1000);
+    expect(await page.evaluate(t => (window as any).__inventoryDelay.calls.filter((time: number) => time >= t).length, visibleAt)).toBe(0);
+    expect(await page.evaluate(() => (window as any).__echoAudioAudit.media.some((m: HTMLMediaElement) => (m.currentSrc || m.src).includes('/bgm.wav') && !m.paused))).toBe(true);
+    await button('所持品を閉じる').click();
+    const beforeMove = await page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/step.wav')).length);
+    await button('管理室へ').click();
+    await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/step.wav')).length)).toBeGreaterThan(beforeMove);
+  }
+
 });
