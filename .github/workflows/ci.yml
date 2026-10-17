@@ -149,6 +149,7 @@ jobs:
           python scripts/generate_infrastructure_map_test.py
           python scripts/cicd_efficiency_test.py
           python scripts/ci_parallel_test.py
+          python scripts/run_vm_test_shard_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
           python scripts/check_rootless_container_setup_test.py
@@ -658,7 +659,7 @@ jobs:
         if: steps.changes.outputs.flutter == 'true'
         id: flutter_test
         # Keep coverage while bounding Dart VM workers on Windows-sized runners.
-        run: flutter test --coverage --concurrency=2 --total-shards=2 --shard-index=${{ matrix.shard }}
+        run: python scripts/run_vm_test_shard.py --total-shards=2 --shard-index=${{ matrix.shard }}
         continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
 
       - name: Upload VM shard coverage
@@ -666,7 +667,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: vm-coverage-${{ matrix.shard }}
-          path: coverage/lcov.info
+          path: |
+            coverage/lcov.info
+            .ci-logs/vm-shard.json
           if-no-files-found: error
 
       - name: VM shard summary

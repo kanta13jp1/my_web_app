@@ -22,7 +22,7 @@ class ParallelCiTest(unittest.TestCase):
     def test_native_shards_cover_whole_vm_suite_without_changing_worker_limit(self):
         self.assertIn('shard: [0, 1]', self.vm)
         self.assertIn('fail-fast: false', self.vm)
-        self.assertIn('flutter test --coverage --concurrency=2 --total-shards=2 --shard-index=${{ matrix.shard }}', self.vm)
+        self.assertIn('python scripts/run_vm_test_shard.py --total-shards=2 --shard-index=${{ matrix.shard }}', self.vm)
         self.assertNotIn('needs:', self.vm)
         self.assertNotIn('flutter test --coverage', self.static)
         self.assertIn('flutter test --platform chrome test/web_import_smoke_test.dart', self.static)
