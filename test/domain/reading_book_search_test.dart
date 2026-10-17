@@ -6,10 +6,12 @@ import 'package:my_web_app/data/services/reading_book_search.dart';
 import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 
 void main() {
-
-  test('historical Iwanami first volume keeps unknown ISBN and scope', () async {
-    final client = MockClient((_) => throw StateError('Offline historical edition'));
-    final results = await const ReadingBookSearch().search('意志と表象としての世界', author: 'ショーペンハウアー', client: client);
+  test('historical Iwanami first volume keeps unknown ISBN and scope',
+      () async {
+    final client =
+        MockClient((_) => throw StateError('Offline historical edition'));
+    final results = await const ReadingBookSearch()
+        .search('意志と表象としての世界', author: 'ショーペンハウアー', client: client);
     final book = results.singleWhere((b) => b.edition.translator == '岡本信二郎');
     expect(book.edition.isbn, isEmpty);
     expect(book.edition.totalPages, isNull);

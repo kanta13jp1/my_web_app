@@ -569,7 +569,11 @@ void main() {
       expect(philosophyWorks.any((w) => w.id == book.workId), isTrue);
       expect(isReadingHttpsUrl(book.edition.sourceUrl), isTrue);
       expect(book.edition.publisher, isNotEmpty);
-      if (book.edition.isbn.isEmpty) {
+      if (book.edition.isbn.isEmpty && book.workId == 'schopenhauer:world') {
+        expect(book.edition.volume, '岩波文庫 2843-2844・正篇第1巻');
+        expect(book.edition.sourceUrl, 'https://ci.nii.ac.jp/ncid/BA31007223');
+        expect(book.note, contains('未記載'));
+      } else if (book.edition.isbn.isEmpty) {
         expect(book.workId, 'husserl:ideas');
         expect(book.edition.volume, '1-1');
         expect(

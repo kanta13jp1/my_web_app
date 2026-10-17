@@ -3193,9 +3193,11 @@ const philosophyCatalogEditions = [
       year: '1941',
       volume: '岩波文庫 2843-2844・正篇第1巻',
       sourceUrl: 'https://ci.nii.ac.jp/ncid/BA31007223',
-      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=意志と表象としての世界+岡本信二郎+岩波文庫',
+      bookUrl:
+          'https://www.amazon.co.jp/s/?i=stripbooks&k=意志と表象としての世界+岡本信二郎+岩波文庫',
     ),
-    note: 'CiNiiで確認できる正篇第1巻のみ。全著作を収録する版とは扱いません。ISBN・総ページ数は書誌で未記載のため空欄。手元の本に応じて編集できます。',
+    note:
+        'CiNiiで確認できる正篇第1巻のみ。全著作を収録する版とは扱いません。ISBN・総ページ数は書誌で未記載のため空欄。手元の本に応じて編集できます。',
   ),
 ];
 
