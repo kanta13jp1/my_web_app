@@ -480,7 +480,7 @@ class _CopyCodeButtonState extends State<_CopyCodeButton> {
             ),
             const SizedBox(width: 4),
             Text(
-              _copied ? 'Copied!' : 'Copy',
+              _copied ? 'コピーしました。' : 'Copy',
               style: TextStyle(
                 fontSize: 11,
                 color: _copied ? const Color(0xFF10B981) : Colors.white54,

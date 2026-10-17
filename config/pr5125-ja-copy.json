@@ -197,5 +197,13 @@
   "Sign in again before uploading the Evernote batch.": "Evernoteのデータを送信する前に、もう一度ログインしてください。",
   "Sign in again before reading the Evernote batch.": "Evernoteのデータを読み込む前に、もう一度ログインしてください。",
   "Invalid Storage object path.": "保存先の指定が正しくありません。",
-  "Evernote commit did not return a target note id.": "Evernoteの取込結果に、保存先のノート識別子がありません。"
+  "Evernote commit did not return a target note id.": "Evernoteの取込結果に、保存先のノート識別子がありません。",
+  "Copied!": "コピーしました。",
+  "Custom mapping": "独自の項目対応表",
+  "No header and data rows were found.": "見出し行とデータ行が見つかりませんでした。",
+  "Required": "必須",
+  "Optional": "任意",
+  "$severity source field \"${mapping.sourceField}\" is missing.": "$severity 項目「${mapping.sourceField}」が取込元にありません。",
+  "Mapping save failed.": "項目対応表の保存に失敗しました。",
+  "Expected a JSON object response.": "想定した形式の応答を取得できませんでした。"
 }

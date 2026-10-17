@@ -40,6 +40,7 @@ jobs:
           flutter analyze lib/preview test/preview
           flutter analyze lib/pages/import_page.dart lib/pages/note_editor_page.dart lib/pages/note_list_page.dart lib/pages/note_collections_page.dart lib/pages/note_navigation_page.dart lib/pages/space_sharing_page.dart lib/widgets/evernote_cloud_migration_controls.dart lib/widgets/note_editor/ai_assistant_menu.dart lib/services/import_service.dart lib/services/note_collection_service.dart lib/services/evernote_migration_commit_service.dart
           flutter test test/preview
+          flutter analyze lib/services/external_format_service.dart lib/widgets/markdown_preview.dart
           python scripts/check_pr5125_japanese.py
       - name: Capture mechanical formatting patch
         if: always()

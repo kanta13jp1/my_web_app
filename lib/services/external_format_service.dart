@@ -78,7 +78,7 @@ class ExternalFormatProfile {
         json['mappings'] as List<dynamic>? ?? const <dynamic>[];
     return ExternalFormatProfile(
       id: json['id']?.toString() ?? 'custom',
-      label: json['label']?.toString() ?? 'Custom mapping',
+      label: json['label']?.toString() ?? '独自の項目対応表',
       delimiter: json['delimiter']?.toString() ?? ',',
       mappings: mappingsJson
           .whereType<Map>()
@@ -224,7 +224,7 @@ class ExternalFormatService {
       return const ExternalFormatTransformResult(
         outputFields: <String>[],
         rows: <Map<String, String>>[],
-        warnings: <String>['No header and data rows were found.'],
+        warnings: <String>['見出し行とデータ行が見つかりませんでした。'],
       );
     }
 
@@ -247,9 +247,9 @@ class ExternalFormatService {
     for (final mapping in activeMappings) {
       final sourceKey = mapping.sourceField.trim().toLowerCase();
       if (sourceKey.isEmpty || !headerIndex.containsKey(sourceKey)) {
-        final severity = mapping.requiredField ? 'Required' : 'Optional';
+        final severity = mapping.requiredField ? '必須' : '任意';
         warnings.add(
-          '$severity source field "${mapping.sourceField}" is missing.',
+          '$severity 項目「${mapping.sourceField}」が取込元にありません。',
         );
       }
     }
@@ -316,7 +316,7 @@ class ExternalFormatService {
     );
     final data = _asMap(response.data);
     if (data['success'] != true) {
-      throw Exception(data['error']?.toString() ?? 'Mapping save failed.');
+      throw Exception(data['error']?.toString() ?? '項目対応表の保存に失敗しました。');
     }
   }
 
@@ -333,7 +333,7 @@ class ExternalFormatService {
   Map<String, dynamic> _asMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
     if (value is Map) return Map<String, dynamic>.from(value);
-    throw Exception('Expected a JSON object response.');
+    throw Exception('想定した形式の応答を取得できませんでした。');
   }
 
   List<List<String>> _parseDelimited(String input, String delimiter) {
