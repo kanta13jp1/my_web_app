@@ -14,6 +14,7 @@ import 'note_editor_page.dart';
 
 enum _NoteCardAction {
   markOrganized,
+  retryClassification,
   duplicate,
   publish,
   unpublish,
@@ -62,6 +63,7 @@ class _NoteListPageState extends State<NoteListPage> {
   late final SupabaseClient _supabase;
   late final PublicMemoService _publicMemoService;
   late final NoteSemanticSearchDataSource _semanticSearchService;
+  late final InboxCaptureService _inboxCaptureService;
   static const String _draftKeyPrefix = 'note_editor_draft_';
   static const int _notesPageSize = 500;
   bool _isLoading = true;
@@ -88,6 +90,7 @@ class _NoteListPageState extends State<NoteListPage> {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _publicMemoService = PublicMemoService(_supabase);
+    _inboxCaptureService = InboxCaptureService(_supabase);
     _semanticSearchService =
         widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
     inboxCaptureRevision.addListener(_handleInboxCapture);
@@ -295,7 +298,8 @@ class _NoteListPageState extends State<NoteListPage> {
           .from('notes')
           .select(
             'id, title, content, created_at, is_pinned, is_favorite, '
-            'reminder_date, tags, capture_status, capture_source, inbox_saved_at',
+            'reminder_date, tags, capture_status, capture_source, inbox_saved_at, '
+            'classification_status, classification_category, classification_source, classified_at',
           )
           .eq('user_id', userId)
           .eq('is_archived', false)
@@ -338,6 +342,13 @@ class _NoteListPageState extends State<NoteListPage> {
 
   bool _isInbox(Map<String, dynamic> note) =>
       note['capture_status'] == inboxCaptureStatus;
+
+  bool _isQuickInbox(Map<String, dynamic> note) =>
+      _isInbox(note) && note['capture_source'] == inboxCaptureSource;
+
+  String _classificationStatus(Map<String, dynamic> note) =>
+      note['classification_status']?.toString() ??
+      classifiedClassificationStatus;
 
   List<String> _noteTags(Map<String, dynamic> note) {
     return NoteTagService.normalize(note['tags']);
@@ -538,6 +549,73 @@ class _NoteListPageState extends State<NoteListPage> {
         SnackBar(content: Text('Inboxの更新に失敗しました: $e')),
       );
     }
+  }
+
+  Future<void> _retryNoteClassification(
+    BuildContext context,
+    Map<String, dynamic> note,
+  ) async {
+    final noteId = _noteNumericId(note);
+    if (noteId == null || !_isQuickInbox(note)) return;
+    try {
+      await _inboxCaptureService.requestClassification(noteId);
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AI整理を再実行しました')),
+      );
+      await _fetchNotes();
+    } catch (error) {
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('AI整理の再実行に失敗しました: $error')),
+      );
+    }
+  }
+
+  Widget _buildClassificationChip(Map<String, dynamic> note) {
+    final status = _classificationStatus(note);
+    final category = (note['classification_category']?.toString() ?? '').trim();
+    final (label, icon, color) = switch (status) {
+      pendingClassificationStatus => (
+          'AI整理中',
+          Icons.auto_awesome_outlined,
+          const Color(0xFFD97706),
+        ),
+      failedClassificationStatus => (
+          'AI整理失敗',
+          Icons.error_outline,
+          const Color(0xFFB91C1C),
+        ),
+      _ => (
+          category.isEmpty ? 'AI整理済み' : 'AI: $category',
+          Icons.auto_awesome,
+          const Color(0xFF6366F1),
+        ),
+    };
+    return Container(
+      key: ValueKey<String>('note_classification_${_noteId(note)}'),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _toggleFavorite(
@@ -1197,6 +1275,13 @@ class _NoteListPageState extends State<NoteListPage> {
                 ),
               ),
             ],
+            if (_isQuickInbox(note)) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _buildClassificationChip(note),
+              ),
+            ],
             if (tags.isNotEmpty) ...[
               const SizedBox(height: 8),
               Wrap(
@@ -1281,6 +1366,9 @@ class _NoteListPageState extends State<NoteListPage> {
                   case _NoteCardAction.markOrganized:
                     _markNoteOrganized(context, note);
                     break;
+                  case _NoteCardAction.retryClassification:
+                    _retryNoteClassification(context, note);
+                    break;
                   case _NoteCardAction.duplicate:
                     _duplicateNote(context, note);
                     break;
@@ -1310,6 +1398,24 @@ class _NoteListPageState extends State<NoteListPage> {
                         Icon(Icons.inventory_2_outlined, size: 18),
                         SizedBox(width: 8),
                         Text('整理済みにする'),
+                      ],
+                    ),
+                  ),
+                if (_isQuickInbox(note) &&
+                    _classificationStatus(note) !=
+                        classifiedClassificationStatus)
+                  PopupMenuItem<_NoteCardAction>(
+                    value: _NoteCardAction.retryClassification,
+                    child: Row(
+                      children: <Widget>[
+                        const Icon(Icons.refresh, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          _classificationStatus(note) ==
+                                  failedClassificationStatus
+                              ? 'AI整理を再試行'
+                              : 'AI整理を再実行',
+                        ),
                       ],
                     ),
                   ),
