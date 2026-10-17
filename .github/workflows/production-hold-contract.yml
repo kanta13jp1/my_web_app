@@ -1,0 +1,24 @@
+name: Production deployment hold contract
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deploy-prod.yml'
+      - '.github/workflows/deploy-core-hub.yml'
+      - '.github/workflows/production-hold-contract.yml'
+      - 'scripts/production_deploy_hold_test.py'
+  workflow_dispatch:
+concurrency:
+  group: production-hold-contract-${{ github.ref }}
+  cancel-in-progress: false
+permissions: {}
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - run: python scripts/production_deploy_hold_test.py
