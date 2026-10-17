@@ -45,7 +45,8 @@ void main() {
     Finder actorImage(String asset) => find.descendant(
           of: find.byKey(const Key('echo-room-actor')),
           matching: find.byWidgetPredicate(
-            (widget) => widget is Image &&
+            (widget) =>
+                widget is Image &&
                 widget.image is AssetImage &&
                 (widget.image as AssetImage).assetName == asset,
           ),
@@ -81,10 +82,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('歩行中…'), findsOneWidget);
-    expect(find.descendant(
-      of: find.byKey(const Key('echo-room-actor')),
-      matching: find.byType(Image),
-    ), findsOneWidget);
+    expect(
+        find.descendant(
+          of: find.byKey(const Key('echo-room-actor')),
+          matching: find.byType(Image),
+        ),
+        findsOneWidget);
     await tester.pumpAndSettle();
     expect(find.text('夜間保守メモ 1 / 2'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -96,7 +99,8 @@ void main() {
     await show(tester, bundle: bundle);
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
     await tester.runAsync(() async {
-      bundle.complete(await rootBundle.load('assets/echo_pump/character_walk.png'));
+      bundle.complete(
+          await rootBundle.load('assets/echo_pump/character_walk.png'));
       await Future<void>.delayed(const Duration(milliseconds: 50));
     });
     await tester.pumpAndSettle();
@@ -244,7 +248,8 @@ class _DelayedWalkArt extends CachingAssetBundle {
   bool requested = false;
 
   void complete(ByteData bytes) => _pending.complete(bytes);
-  void fail() => _pending.completeError(StateError('Synthetic walk preload failure'));
+  void fail() =>
+      _pending.completeError(StateError('Synthetic walk preload failure'));
 
   @override
   Future<ByteData> load(String key) {
