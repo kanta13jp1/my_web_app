@@ -4950,7 +4950,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     var isSaving = false;
     String? saveError;
 
-    await showDialog<void>(
+    final dialogRoute = DialogRoute<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) {
@@ -5133,6 +5133,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       },
     );
+
+    await Navigator.of(context).push(dialogRoute);
+    await dialogRoute.completed;
 
     nameController.dispose();
     amountController.dispose();
