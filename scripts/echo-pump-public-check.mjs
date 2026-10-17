@@ -44,7 +44,22 @@ try {
     async function played(file) {
       await page.waitForFunction(file => window.__echoPublicAudit.plays.some(x => x.includes(`/${file}.wav`)), file, {timeout: 15000});
     }
-    let passed = false, audio, frameHashes = [];
+    let passed = false, audio, frameHashes = [], otherAnimationHashes = {};
+    async function sampleAnimation(stem, message) {
+      await page.mouse.move(viewport.width / 2, viewport.height / 2);
+      await page.mouse.wheel(0, -30000);
+      await page.waitForTimeout(80);
+      const box = await page.locator(`[aria-label="${message}"]`).first().boundingBox();
+      assert(box && box.width > 100 && box.height > 40 && box.y >= 0 && box.y + box.height < viewport.height - 40);
+      const hashes = [];
+      for (let i = 0; i < 3; i++) {
+        const bytes = await page.screenshot({path: `${out}/${stem}-frame-${i}.png`, clip: box});
+        hashes.push(createHash('sha256').update(bytes).digest('hex'));
+        if (i < 2) await page.waitForTimeout(260);
+      }
+      assert(new Set(hashes).size > 1, `${stem} animation must change pixels inside its own rectangle`);
+      return hashes;
+    }
     try {
       await page.goto(`${origin}/echo-pump`, {waitUntil: 'domcontentloaded'});
       const activate = page.locator('flt-semantics-placeholder');
@@ -60,19 +75,8 @@ try {
       await click('B 整備'); await played('power');
       await click('A 搬入');
       await click('中央廊下へ');
-      await page.mouse.move(viewport.width / 2, viewport.height / 2);
-      await page.mouse.wheel(0, -30000);
-      await page.waitForTimeout(80);
       if (name === 'desktop') {
-        const action = page.locator('[aria-label="中央廊下へ移動した。"]');
-        const box = await action.first().boundingBox();
-        assert(box && box.width > 100 && box.height > 40 && box.y >= 0 && box.y + box.height < viewport.height - 40);
-        for (let i = 0; i < 3; i++) {
-          const bytes = await page.screenshot({path: `${out}/movement-frame-${i}.png`, clip: box});
-          frameHashes.push(createHash('sha256').update(bytes).digest('hex'));
-          if (i < 2) await page.waitForTimeout(260);
-        }
-        assert(new Set(frameHashes).size > 1, 'Movement animation must produce changing pixels in its own rectangle');
+        frameHashes = await sampleAnimation('movement', '中央廊下へ移動した。');
       }
       await played('step');
       await page.screenshot({path: `${out}/${name}-movement.png`});
@@ -81,6 +85,8 @@ try {
           await click(label);
           if (label === 'ヒューズを回収') assert(await page.locator('[aria-label*="回収：完了"]').count());
           if (label === 'ヒューズで修理') assert(await page.locator('[aria-label*="修理：完了"]').count());
+          if (label === '隔壁を閉じる') otherAnimationHashes.seal = await sampleAnimation('seal', '隔壁を閉鎖！ 敵を点検槽に封じ込めた。');
+          if (label === '排水ポンプを起動') otherAnimationHashes.drain = await sampleAnimation('drain', '排水完了。管理室から出口へ戻ろう。');
         }
         await button('リトライ').waitFor({timeout: 15000});
         await played('escape');
@@ -94,7 +100,7 @@ try {
       assert.deepEqual(errors, []);
       passed = true;
     } finally {
-      const report = {name, passed, errors, events, audio, frameHashes};
+      const report = {name, passed, errors, events, audio, frameHashes, otherAnimationHashes};
       reports.push(report);
       writeFileSync(`${out}/${name}-result.json`, JSON.stringify(report, null, 2));
       await context.close();
