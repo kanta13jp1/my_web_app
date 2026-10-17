@@ -52,6 +52,7 @@ try {
       await button('ゲーム開始').waitFor({timeout: 60000});
       assert.equal(await page.evaluate(() => window.__echoPublicAudit.media.length), 0);
       await click('音をON'); await played('bgm');
+      await page.waitForFunction(() => window.__echoPublicAudit.contexts.some(c => c.state === 'running') && window.__echoPublicAudit.media.some(m => m.loop && !m.paused && m.currentTime > 0.1), null, {timeout: 15000});
       await click('ゲーム開始'); await click('スキップして開始');
       await button('B 整備').waitFor({timeout: 15000});
       assert(await page.locator('[aria-label*="回収：次の目標"]').count());
@@ -87,7 +88,7 @@ try {
         await page.mouse.wheel(0, -30000); await page.waitForTimeout(250);
         await page.screenshot({path: `${out}/desktop-complete.png`});
       }
-      audio = await page.evaluate(() => ({plays: window.__echoPublicAudit.plays, contexts: window.__echoPublicAudit.contexts.map(c => c.state)}));
+      audio = await page.evaluate(() => ({plays: window.__echoPublicAudit.plays, contexts: window.__echoPublicAudit.contexts.map(c => c.state), media: window.__echoPublicAudit.media.map(m => ({src: m.currentSrc || m.src, paused: m.paused, currentTime: m.currentTime, ended: m.ended, muted: m.muted}))}));
       await click('音をOFF');
       await page.waitForFunction(() => window.__echoPublicAudit.media.every(m => m.paused || m.ended || !m.getAttribute('src')), null, {timeout: 10000});
       assert.deepEqual(errors, []);
