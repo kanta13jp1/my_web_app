@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { changedSource, decodeDaemonLine, launchArgs, reloadRequest, measure } from './measure_flutter_dev_loop.mjs';
+import { changedSource, decodeDaemonLine, launchArgs, reloadRequest, measure, semanticVolume } from './measure_flutter_dev_loop.mjs';
+
+test('Flutter normalized slider position does not hide a changed application value', () => {
+  const before = { now: '1', text: 'BGM・SEの音量 50パーセント' };
+  const after = { now: '1', text: 'BGM・SEの音量 30パーセント' };
+  assert.notEqual(semanticVolume(before), semanticVolume(after));
+  assert.equal(semanticVolume(after), after.text);
+  assert.throws(() => semanticVolume({ now: '1', text: null }));
+});
 
 test('daemon messages distinguish protocol replies from ordinary output', () => {
   assert.deepEqual(decodeDaemonLine('Compiling 123 modules...'), []);

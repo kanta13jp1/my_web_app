@@ -25,6 +25,12 @@ export function changedSource(original, sample) {
   return original.replace(token, `BGM・SE 計測${sample} / 音量 `);
 }
 
+export function semanticVolume(attributes) {
+  // Flutter normalizes aria-valuenow to 1; the application value is in valuetext.
+  if (!attributes.text) throw new Error('Slider has no semantic value text');
+  return attributes.text;
+}
+
 export function launchArgs(entry, mockPort) {
   if (!['normal', 'isolated'].includes(entry)) throw new Error('Unknown entry');
   return ['run', '--machine', '--debug', '-d', 'chrome', '--web-port=7359',
@@ -120,11 +126,11 @@ export async function measure(entry) {
     await page.getByRole('button', { name: '音をON', exact: true }).waitFor({ state: 'visible', timeout: 120000 });
     report.page_url = page.url();
     const slider = page.getByRole('slider').first();
-    const initialVolume = await slider.getAttribute('aria-valuenow');
-    if (initialVolume === null) throw new Error('Slider has no semantic value');
+    const readVolume = async () => semanticVolume({ text: await slider.getAttribute('aria-valuetext') });
+    const initialVolume = await readVolume();
     await slider.press('ArrowLeft');
-    await expect.poll(() => slider.getAttribute('aria-valuenow')).not.toBe(initialVolume);
-    const retainedVolume = await slider.getAttribute('aria-valuenow');
+    await expect.poll(readVolume).not.toBe(initialVolume);
+    const retainedVolume = await readVolume();
     report.initial_volume = initialVolume; report.adjusted_volume = retainedVolume;
     report.interactive_ready_seconds = (performance.now() - start) / 1000;
     await page.screenshot({ path: path.join(output, 'startup.png') });
@@ -140,7 +146,7 @@ export async function measure(entry) {
       await page.getByText(`BGM・SE 計測${sample} / 音量`, { exact: false }).first()
         .waitFor({ state: 'visible', timeout: 30000 });
       const seconds = (performance.now() - sampleStart) / 1000;
-      const volume = await slider.getAttribute('aria-valuenow');
+      const volume = await readVolume();
       if (volume !== retainedVolume || navigations !== 0) throw new Error('Reload did not preserve app state');
       report.hot_reload.push({ sample, seconds, rpc_seconds: rpcSeconds, reply,
         full_restart: message.params.fullRestart, state_preserved: true, navigations });
