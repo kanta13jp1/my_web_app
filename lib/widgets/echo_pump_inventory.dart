@@ -51,7 +51,11 @@ class _FuseJourney extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final current = game.repaired ? 2 : game.hasFuse ? 1 : 0;
+    final current = game.repaired
+        ? 2
+        : game.hasFuse
+            ? 1
+            : 0;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 320),
       child: Row(
@@ -61,7 +65,8 @@ class _FuseJourney extends StatelessWidget {
             if (i > 0)
               const Padding(
                 padding: EdgeInsets.only(left: 4, right: 4, top: 6),
-                child: Icon(Icons.arrow_forward, size: 18, color: Colors.white38),
+                child:
+                    Icon(Icons.arrow_forward, size: 18, color: Colors.white38),
               ),
             Expanded(
               child: Column(
@@ -79,7 +84,8 @@ class _FuseJourney extends StatelessWidget {
                   Text(
                     ['工具庫', '所持', '装着'][i],
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: i == current ? _mint : Colors.white54),
+                    style:
+                        TextStyle(color: i == current ? _mint : Colors.white54),
                   ),
                 ],
               ),

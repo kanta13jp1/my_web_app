@@ -90,6 +90,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
     try {
       result = await showDialog<EchoPumpInventoryAction>(
         context: inventoryContext,
+        useRootNavigator: false,
         builder: (_) => EchoPumpInventoryDialog(game: inspectedGame),
       );
     } finally {

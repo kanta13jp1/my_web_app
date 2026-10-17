@@ -12,10 +12,16 @@ void main() {
     VoidCallback? step,
     ValueChanged<PumpRoom>? move,
     bool reduced = false,
+    bool nested = false,
     double textScale = 1,
     AssetBundle? bundle,
   }) async {
     final stage = EchoPumpRoomStage(onFootstep: step, onMove: move);
+    final content = Scaffold(
+      body: SingleChildScrollView(
+        child: bundle == null ? stage : DefaultAssetBundle(bundle: bundle, child: stage),
+      ),
+    );
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
@@ -25,13 +31,11 @@ void main() {
           ),
           child: child!,
         ),
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: bundle == null
-                ? stage
-                : DefaultAssetBundle(bundle: bundle, child: stage),
-          ),
-        ),
+        home: nested
+            ? Navigator(
+                onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => content),
+              )
+            : content,
       ),
     );
     await tester.pumpAndSettle();
@@ -199,10 +203,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('an inventory-like modal stops walking and footsteps',
+  testWidgets('a local inventory-like modal stops walking in a nested navigator',
       (tester) async {
     var steps = 0;
-    await show(tester, step: () => steps++);
+    await show(tester, step: () => steps++, nested: true);
     await tester.tap(find.text('保守メモを調べる'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -210,6 +214,7 @@ void main() {
     unawaited(
       showDialog<void>(
         context: context,
+      useRootNavigator: false,
         builder: (_) => const AlertDialog(title: Text('所持品テスト')),
       ),
     );
