@@ -449,20 +449,22 @@ void main() {
     }
   }
 
-
   for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
     for (final invalid in ['Infinity', 'abc', '-1']) {
-      testWidgets('budget save retains invalid input $invalid at ${size.width}', (tester) async {
+      testWidgets('budget save retains invalid input $invalid at ${size.width}',
+          (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_management_display_mode_v1': AssetManagementDisplayMode.full.storageId,
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
           'asset_category_budgets_v1': jsonEncode({'食費': 5000}),
         });
         await tester.binding.setSurfaceSize(size);
         addTearDown(() => tester.binding.setSurfaceSize(null));
-        await tester.pumpWidget(MaterialApp(home: AssetManagementPage(
+        await tester.pumpWidget(MaterialApp(
+            home: AssetManagementPage(
           debugNow: DateTime(2026, 6, 20),
           debugCalendarNow: DateTime(2026, 6, 20),
-        )));
+        ),),);
         await tester.pump(const Duration(milliseconds: 300));
         await tester.pump(const Duration(milliseconds: 300));
         final edit = find.byKey(const Key('asset_category_budget_edit'));
@@ -471,14 +473,23 @@ void main() {
         await tester.tap(edit);
         await tester.pumpAndSettle();
         final dialog = find.byType(AlertDialog);
-        final field = find.descendant(of: dialog, matching: find.byType(TextField)).first;
+        final field =
+            find.descendant(of: dialog, matching: find.byType(TextField)).first;
         await tester.enterText(field, invalid);
         await tester.tap(find.byKey(const Key('asset_category_budget_save')));
         await tester.pumpAndSettle();
-        expect(dialog, findsOneWidget, reason: 'invalid input must remain editable');
-        expect(find.descendant(of: dialog, matching: find.byType(TextField)).evaluate().any((e) => (e.widget as TextField).controller!.text == invalid), isTrue);
+        expect(dialog, findsOneWidget,
+            reason: 'invalid input must remain editable',);
+        expect(
+            find
+                .descendant(of: dialog, matching: find.byType(TextField))
+                .evaluate()
+                .any(
+                    (e) => (e.widget as TextField).controller!.text == invalid,),
+            isTrue,);
         final prefs = await SharedPreferences.getInstance();
-        expect(jsonDecode(prefs.getString('asset_category_budgets_v1')!), {'食費': 5000});
+        expect(jsonDecode(prefs.getString('asset_category_budgets_v1')!),
+            {'食費': 5000},);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pumpAndSettle();
