@@ -44,7 +44,9 @@ void main() {
           if (filter != null) expect(filter, startsWith('gt.'));
           // Simulate an API cap smaller than the requested page size.
           response = rows
-              .where((row) => (row['file_path'] as String).compareTo(cursor) > 0)
+              .where(
+                (row) => (row['file_path'] as String).compareTo(cursor) > 0,
+              )
               .take(50)
               .toList();
           pages++;
