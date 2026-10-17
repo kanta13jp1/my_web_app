@@ -250,9 +250,13 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Semantics(
+              container: true,
+              header: true,
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(height: 8),
             ...children,
