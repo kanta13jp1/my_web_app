@@ -4,6 +4,7 @@ import gzip
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -30,10 +31,23 @@ def main():
               'conditions': {'mode': 'release', 'samples': 1, 'fresh_runner': True,
                              'dependencies_and_queue_excluded': True,
                              'backend': 'loopback synthetic only', 'production_published': False}}
+    index_path = root / 'web/index.html'
+    original_index = index_path.read_bytes()
+    index = original_index.decode('utf-8')
+    matches = re.findall(r'<base\s+href=["\'][^"\']*["\']\s*/?>', index)
+    if len(matches) != 1:
+        raise SystemExit('Expected exactly one base href before temporary build configuration')
+    index = index.replace(matches[0], '<base href="$FLUTTER_BASE_HREF">')
+    report['source_index_before'] = hashlib.sha256(original_index).hexdigest()
+    index_path.write_text(index, encoding='utf-8')
     start = time.monotonic()
-    with (output / 'build.log').open('w') as log:
-        code = subprocess.call(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
-    report['build_seconds'] = time.monotonic() - start
+    try:
+        with (output / 'build.log').open('w') as log:
+            code = subprocess.call(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
+        report['build_seconds'] = time.monotonic() - start
+    finally:
+        index_path.write_bytes(original_index)
+        report['source_index_restored'] = index_path.read_bytes() == original_index
     report['exit_code'] = code
     if code == 0:
         web = root / 'build/web'

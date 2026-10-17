@@ -6,6 +6,7 @@
 手動`echo-pump-prototype.yml`の`profile=release-prototype`に固定SHAを指定する。
 通常と専用は同じSHA、Flutter 3.38.x、release、PWA無効、ローカルWebエンジン、同じbase href・合成接続先を使い、別の新しいランナーで各1回測る。
 依存準備とキュー待ちは除外する。全ファイルのサイズ・SHA256、main.dart.jsの元サイズとgzipサイズを記録する。
+既存indexのbase hrefは固定値のため、CI内のビルド時だけFlutterのプレースホルダーへ置換し、終了時に元のバイト列へ復元して確認する。本体ソースの変更はコミットしない。
 pubspec・依存関係・アセット宣言は共有のままで、入口を変えるだけで全アセットが減るとは仮定しない。
 
 ビルド後は`/prototype/echo-pump/`へ置いたものとしてHTTP配信し、PCと狭幅で表示・ゲーム開始・直接再読込・ブラウザーでホストへ戻る操作を確認する。
