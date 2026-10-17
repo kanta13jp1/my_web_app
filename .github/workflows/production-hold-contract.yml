@@ -7,6 +7,9 @@ on:
       - '.github/workflows/production-hold-contract.yml'
       - 'scripts/production_deploy_hold_test.py'
   workflow_dispatch:
+concurrency:
+  group: production-hold-contract-${{ github.ref }}
+  cancel-in-progress: false
 permissions: {}
 jobs:
   contract:
