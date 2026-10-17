@@ -107,7 +107,8 @@ async function revealReadingControl(page: Page, control: ReturnType<Page['getByR
 async function editRegisteredEdition(page: Page, isbn: string) {
   const cycle = page.getByRole('group', { name: new RegExp(`ISBN: ${isbn}`) })
     .filter({ has: page.getByRole('button', { name: '版を編集', exact: true }) }).last();
-  const edit = cycle.getByRole('button', { name: '版を編集', exact: true });
+  const edit = isbn ? cycle.getByRole('button', { name: '版を編集', exact: true })
+    : page.getByRole('button', { name: '版を編集', exact: true }).last();
   await revealReadingControl(page, edit);
   await edit.click();
 }
@@ -1126,7 +1127,7 @@ test('Remaining Iwanami editions preserve alternate titles, shared books, split 
     await page.getByRole('button',{name:'保存',exact:true}).click();
     await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
     await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await open();
-    if(book.isbn) await editRegisteredEdition(page,book.isbn); else await page.getByRole('button',{name:'版を編集',exact:true}).last().click();await verify();
+    await editRegisteredEdition(page,book.isbn);await verify();
     // Editing a registered book searches by its ISBN automatically.
     await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
     await restoredField(page,/^書籍情報を検索/,book.isbn || titles[book.work]);
@@ -1137,7 +1138,7 @@ test('Remaining Iwanami editions preserve alternate titles, shared books, split 
     await page.getByRole('button',{name:'保存',exact:true}).click();
     await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
     await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await open();
-    if(book.isbn) await editRegisteredEdition(page,book.isbn); else await page.getByRole('button',{name:'版を編集',exact:true}).last().click();await verify(volume);
+    await editRegisteredEdition(page,book.isbn);await verify(volume);
     await capture(page,info,'remaining-iwanami-'+book.isbn+'-edited-reloaded');
     await page.getByRole('button',{name:'キャンセル',exact:true}).click();
   }
