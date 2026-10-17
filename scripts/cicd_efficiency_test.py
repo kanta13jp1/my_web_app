@@ -220,7 +220,7 @@ class CicdEfficiencyTest(unittest.TestCase):
         )[0]
         push = workflow.split("  push:", 1)[1].split("  workflow_call:", 1)[0]
         lint_job = workflow.split("  lint-and-test:", 1)[1].split(
-            "  security-check:", 1
+            "  vm-tests:", 1
         )[0]
         security_job = workflow.split("  security-check:", 1)[1].split(
             "  pr-comment:", 1
