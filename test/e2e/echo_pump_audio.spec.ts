@@ -64,6 +64,8 @@ test('real BGM and SE play, volume and mute work, leaving closes audio', async (
   const gainBefore = await page.evaluate(() => (window as any).__echoAudioAudit.gains[0].gain.value);
   const bgmPlaysBefore = await page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/bgm.wav')).length);
   const slider = page.getByRole('slider');
+  // Flutter temporarily disables its semantic range after pointer input.
+  await expect(slider).toBeEnabled();
   await slider.focus();
   await expect(slider).toBeFocused();
   // Flutter applies focus during its render frame after the power toggle.

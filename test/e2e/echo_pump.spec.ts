@@ -33,7 +33,7 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   await expect(button('A 搬入')).toBeVisible({ timeout: 30000 });
   await page.waitForLoadState('networkidle');
   await expect(page.getByText('管理室', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('安全な管理室 / 室内の確認はターンを消費しません。', { exact: true })).toBeVisible();
+  await expect(page.getByText('安全な管理室 / 室内の確認はターンを消費しません。', { exact: true }).filter({ visible: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('start.png'), fullPage: true });
   await page.evaluate(async () => {
     await Promise.all(document.getAnimations({ subtree: true }).map(animation =>
