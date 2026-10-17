@@ -3,6 +3,9 @@ import { test, expect, Page } from '@playwright/test';
 test.setTimeout(60000);
 
 test.beforeEach(async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  (page as any).__echoPageErrors = errors;
   // Observe the real playback promises, audio contexts and gain values.
   // The original methods still perform all decoding and playback.
   await page.addInitScript(() => {
@@ -26,6 +29,14 @@ test.beforeEach(async ({ page }) => {
   });
   await page.goto('/');
   await expect(page.getByRole('button', { name: '音をON', exact: true })).toBeVisible({ timeout: 30000 });
+});
+
+test.afterEach(async ({ page }, info) => {
+  const errors: string[] = (page as any).__echoPageErrors;
+  await info.attach('uncaught-page-errors', {
+    body: JSON.stringify(errors), contentType: 'application/json',
+  });
+  expect(errors).toEqual([]);
 });
 
 async function hasPlayed(page: Page, file: string) {

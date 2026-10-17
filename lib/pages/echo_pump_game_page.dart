@@ -56,7 +56,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       _audio.cue(EchoPumpCue.fail);
     } else if (_game.health < health) {
       _audio.cue(EchoPumpCue.damage);
-    } else if (cue != null && (_game.turn != turn || cue == EchoPumpCue.start)) {
+    } else if (cue != null &&
+        (_game.turn != turn || cue == EchoPumpCue.start)) {
       _audio.cue(cue);
     }
   }
@@ -111,7 +112,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
           actions: [
             IconButton(
               tooltip: '最初からやり直す',
-              onPressed: () => _act(() => _game = EchoPumpGame(), EchoPumpCue.start),
+              onPressed: () =>
+                  _act(() => _game = EchoPumpGame(), EchoPumpCue.start),
               icon: const Icon(Icons.refresh),
             ),
           ],
@@ -171,7 +173,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                         const SizedBox(height: 8),
                         FilledButton.icon(
                           key: const Key('echo-retry'),
-                          onPressed: () => _act(() => _game = EchoPumpGame(), EchoPumpCue.start),
+                          onPressed: () => _act(
+                              () => _game = EchoPumpGame(), EchoPumpCue.start),
                           icon: const Icon(Icons.replay),
                           label: const Text('リトライ'),
                         ),
@@ -206,7 +209,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                                     (room == PumpRoom.inspection &&
                                         _game.sealed)
                                 ? null
-                                : () => _act(() => _game.move(room), EchoPumpCue.step),
+                                : () => _act(
+                                    () => _game.move(room), EchoPumpCue.step),
                             child: Text('${room.label}へ'),
                           ),
                         OutlinedButton.icon(
@@ -238,8 +242,9 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                               selected: _game.power.contains(circuit),
                               onSelected: _game.finished
                                   ? null
-                                  : (_) =>
-                                      _act(() => _game.togglePower(circuit), EchoPumpCue.power),
+                                  : (_) => _act(
+                                      () => _game.togglePower(circuit),
+                                      EchoPumpCue.power),
                             ),
                         ],
                       ),
@@ -250,10 +255,12 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                     _panel('工具棚', [
                       FilledButton(
                         key: const Key('echo-collect'),
-                        onPressed:
-                            _game.finished || _game.hasFuse || _game.repaired
-                                ? null
-                                : () => _act(_game.collectFuse, EchoPumpCue.collect),
+                        onPressed: _game.finished ||
+                                _game.hasFuse ||
+                                _game.repaired
+                            ? null
+                            : () =>
+                                _act(_game.collectFuse, EchoPumpCue.collect),
                         child: const Text('ヒューズを回収'),
                       ),
                       const Text('B系統が必要。敵が工具庫へ来る前に、別の音へ誘おう。'),

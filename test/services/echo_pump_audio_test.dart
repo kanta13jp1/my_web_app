@@ -69,7 +69,8 @@ void main() {
     expect(output.effects, [EchoPumpCue.power]);
   });
 
-  test('background stops sound and resume does not replay old effects', () async {
+  test('background stops sound and resume does not replay old effects',
+      () async {
     audio.setEnabled(true);
     await audio.settled;
     audio.cue(EchoPumpCue.step);
@@ -83,7 +84,8 @@ void main() {
     expect(output.effects, isEmpty);
   });
 
-  test('ending pauses BGM but allows the ending cue, retry resumes BGM', () async {
+  test('ending pauses BGM but allows the ending cue, retry resumes BGM',
+      () async {
     audio.setEnabled(true);
     await audio.settled;
     audio.setMusicActive(false);
@@ -110,7 +112,8 @@ void main() {
     expect(audio.volume, 0);
   });
 
-  test('blocked playback turns sound off and supports an explicit retry', () async {
+  test('blocked playback turns sound off and supports an explicit retry',
+      () async {
     output.failMusic = true;
     audio.setEnabled(true);
     await audio.settled;
@@ -123,7 +126,8 @@ void main() {
     expect(output.playing, isTrue);
   });
 
-  test('muting during initialization cancels pending effects and late music', () async {
+  test('muting during initialization cancels pending effects and late music',
+      () async {
     output.gate = Completer<void>();
     audio.setEnabled(true);
     await Future<void>.delayed(Duration.zero);

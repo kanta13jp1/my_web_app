@@ -7,7 +7,8 @@ import '../services/echo_pump_audio_test.dart' show FakeOutput;
 
 void main() {
   for (final width in [320.0, 1200.0]) {
-    testWidgets('audio controls and gameplay remain usable at $width', (tester) async {
+    testWidgets('audio controls and gameplay remain usable at $width',
+        (tester) async {
       tester.view.physicalSize = Size(width, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -40,7 +41,8 @@ void main() {
     });
   }
 
-  testWidgets('audio failure still allows starting and operating the game', (tester) async {
+  testWidgets('audio failure still allows starting and operating the game',
+      (tester) async {
     final output = FakeOutput()..failMusic = true;
     final audio = EchoPumpAudio(output: output);
     addTearDown(audio.dispose);

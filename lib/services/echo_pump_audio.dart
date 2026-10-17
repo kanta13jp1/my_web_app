@@ -3,7 +3,18 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
-enum EchoPumpCue { start, step, power, collect, repair, seal, drain, damage, escape, fail }
+enum EchoPumpCue {
+  start,
+  step,
+  power,
+  collect,
+  repair,
+  seal,
+  drain,
+  damage,
+  escape,
+  fail
+}
 
 /// Keeps platform playback separate from game rules and testable state.
 abstract interface class EchoPumpAudioOutput {
