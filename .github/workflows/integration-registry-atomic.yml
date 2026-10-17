@@ -1,0 +1,41 @@
+name: Integration registry atomic history
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/*integration_registry_atomic_versions.sql'
+      - 'supabase/functions/enterprise-hub/integration_registry*'
+      - 'scripts/registry_atomic_test.py'
+      - '.github/workflows/integration-registry-atomic.yml'
+permissions: {}
+concurrency:
+  group: registry-atomic-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: registry-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Concurrent writes and fail-closed migration
+        env:
+          PGHOST: localhost
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: registry-ci-only
+        run: python3 scripts/registry_atomic_test.py
