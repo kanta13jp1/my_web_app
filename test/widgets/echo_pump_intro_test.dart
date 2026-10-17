@@ -9,7 +9,7 @@ void main() {
     var finishes = 0;
     await tester.pumpWidget(
       MaterialApp(
-      home: EchoPumpIntro(onFinished: () => finishes++),
+        home: EchoPumpIntro(onFinished: () => finishes++),
       ),
     );
     await tester.pump(const Duration(seconds: 2));
@@ -30,7 +30,7 @@ void main() {
     var finishes = 0;
     await tester.pumpWidget(
       MaterialApp(
-      home: EchoPumpIntro(onFinished: () => finishes++),
+        home: EchoPumpIntro(onFinished: () => finishes++),
       ),
     );
     await tester.pump(const Duration(seconds: 2));
@@ -54,7 +54,7 @@ void main() {
     var finishes = 0;
     await tester.pumpWidget(
       MaterialApp(
-      home: EchoPumpIntro(onFinished: () => finishes++),
+        home: EchoPumpIntro(onFinished: () => finishes++),
       ),
     );
     await tester.pump(const Duration(seconds: 1));
@@ -72,17 +72,17 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       var finishes = 0;
       await tester.pumpWidget(
-      MaterialApp(
-        home: MediaQuery(
-          data: MediaQueryData(
-            size: size,
-            textScaler: const TextScaler.linear(2),
-            disableAnimations: true,
+        MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(
+              size: size,
+              textScaler: const TextScaler.linear(2),
+              disableAnimations: true,
+            ),
+            child: EchoPumpIntro(onFinished: () => finishes++),
           ),
-          child: EchoPumpIntro(onFinished: () => finishes++),
         ),
-        ),
-    );
+      );
       await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
       expect(finishes, 0);
