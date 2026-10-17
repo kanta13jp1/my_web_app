@@ -120,6 +120,10 @@ flutter:
     - docs/technical/
 
   fonts:
+    # Offline preview alias: never fetch the default Roboto font from Google.
+    - family: Roboto
+      fonts:
+        - asset: web/assets/fonts/NotoSans-Regular.ttf
     - family: NotoSansJP
       fonts:
         - asset: web/assets/fonts/NotoSansJP-Regular.ttf
@@ -129,3 +133,4 @@ flutter:
     - family: NotoColorEmoji
       fonts:
         - asset: web/assets/fonts/NotoColorEmoji.ttf
+

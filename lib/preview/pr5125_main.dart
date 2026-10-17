@@ -99,6 +99,7 @@ class Preview5125App extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: Colors.teal,
         fontFamily: 'NotoSansJP',
+        fontFamilyFallback: const ['NotoSansJP', 'NotoSans', 'NotoColorEmoji'],
       ),
       builder: (context, child) => Column(
         children: [

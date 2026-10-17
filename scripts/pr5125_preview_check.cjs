@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
   fs.mkdirSync('preview-evidence', { recursive: true });
   const browser = await chromium.launch();
   const screens = ['note-list','note-editor','import','note-collections','note-tags','note-navigation','note-tasks','space-sharing'];
-  const labels = {'note-list':'架空データ：秋の読書メモ','note-editor':'秋の読書メモ',import:'Import','note-collections':'ノートブック・スタック・Space','note-tags':'階層タグ','note-navigation':'保存済み検索・ショートカット','note-tasks':'ノートタスク','space-sharing':'Space共有'};
+  const labels = {'note-list':'架空データ：秋の読書メモ','note-editor':'メモを編集',import:'Import','note-collections':'ノートブック・スタック・Space','note-tags':'階層タグ','note-navigation':'保存済み検索・ショートカット','note-tasks':'ノートタスク','space-sharing':'Space共有'};
   const report = [];
   try {
     for (const [device, viewport] of Object.entries({pc:{width:1440,height:1000},mobile:{width:390,height:844}})) {
