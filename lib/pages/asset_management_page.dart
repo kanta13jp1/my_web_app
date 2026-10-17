@@ -1143,7 +1143,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   );
   static const String _duplicateIgnoredMirrorKey =
       'subscription_duplicate_ignored';
-  AssetCategoryBudgetStore get _categoryBudgetStore => widget.categoryBudgetStore;
+  AssetCategoryBudgetStore get _categoryBudgetStore =>
+      widget.categoryBudgetStore;
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
   final DrinkChallengeStore _drinkChallengeStore = const DrinkChallengeStore();
   Map<String, DrinkRecordStatus> _drinkRecords = <String, DrinkRecordStatus>{};
@@ -19165,7 +19166,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       Text(
                         saveError!,
                         key: const Key('asset_category_budget_save_error'),
-                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error),
                       ),
                     const SizedBox(height: 8),
                     for (final category in categories)
@@ -19173,11 +19175,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
                           children: [
-                            Expanded(child: Text(category, style: const TextStyle(fontSize: 13))),
+                            Expanded(
+                                child: Text(category,
+                                    style: const TextStyle(fontSize: 13))),
                             SizedBox(
                               width: 130,
                               child: TextField(
-                                key: ValueKey('asset_category_budget_input_$category'),
+                                key: ValueKey(
+                                    'asset_category_budget_input_$category'),
                                 controller: controllers[category],
                                 enabled: !isSaving,
                                 keyboardType: TextInputType.number,
@@ -19202,34 +19207,47 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               ElevatedButton(
                 key: const Key('asset_category_budget_save'),
-                onPressed: isSaving ? null : () async {
-                  final next = <String, double>{};
-                  for (final category in categories) {
-                    final text = controllers[category]!.text.replaceAll(',', '').trim();
-                    if (text.isEmpty) continue;
-                    final parsed = double.tryParse(text);
-                    if (parsed == null || !parsed.isFinite || parsed < 0) {
-                      setDialogState(() {
-                        saveError = '$category は0以上の金額を入力してください。空欄は予算なしです。';
-                      });
-                      return;
-                    }
-                    if (parsed > 0) next[category] = parsed;
-                  }
-                  setDialogState(() { isSaving = true; saveError = null; });
-                  try {
-                    await _saveCategoryBudgets(next);
-                    if (dialogContext.mounted) Navigator.pop(dialogContext);
-                  } catch (error) {
-                    debugPrint('Error saving category budgets: $error');
-                    if (dialogContext.mounted) {
-                      setDialogState(() {
-                        isSaving = false;
-                        saveError = '予算を保存できませんでした。入力を確認し、もう一度保存してください。';
-                      });
-                    }
-                  }
-                },
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final next = <String, double>{};
+                        for (final category in categories) {
+                          final text = controllers[category]!
+                              .text
+                              .replaceAll(',', '')
+                              .trim();
+                          if (text.isEmpty) continue;
+                          final parsed = double.tryParse(text);
+                          if (parsed == null ||
+                              !parsed.isFinite ||
+                              parsed < 0) {
+                            setDialogState(() {
+                              saveError =
+                                  '$category は0以上の金額を入力してください。空欄は予算なしです。';
+                            });
+                            return;
+                          }
+                          if (parsed > 0) next[category] = parsed;
+                        }
+                        setDialogState(() {
+                          isSaving = true;
+                          saveError = null;
+                        });
+                        try {
+                          await _saveCategoryBudgets(next);
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                        } catch (error) {
+                          debugPrint('Error saving category budgets: $error');
+                          if (dialogContext.mounted) {
+                            setDialogState(() {
+                              isSaving = false;
+                              saveError = '予算を保存できませんでした。入力を確認し、もう一度保存してください。';
+                            });
+                          }
+                        }
+                      },
                 child: Text(isSaving ? '保存中…' : '保存'),
               ),
             ],
