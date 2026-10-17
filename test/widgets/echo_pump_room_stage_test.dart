@@ -104,7 +104,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
     await tester.runAsync(() async {
       bundle.complete(
-          await rootBundle.load('assets/echo_pump/character_walk.png'),
+        await rootBundle.load('assets/echo_pump/character_walk.png'),
       );
       await precacheImage(
         AssetImage('assets/echo_pump/character_walk.png', bundle: bundle),
