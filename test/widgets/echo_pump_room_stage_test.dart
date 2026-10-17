@@ -199,6 +199,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('an inventory-like modal stops walking and footsteps', (tester) async {
+    var steps = 0;
+    await show(tester, step: () => steps++);
+    await tester.tap(find.text('保守メモを調べる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final context = tester.element(find.byType(EchoPumpRoomStage));
+    unawaited(showDialog<void>(
+      context: context,
+      builder: (_) => const AlertDialog(title: Text('所持品テスト')),
+    ));
+    await tester.pumpAndSettle();
+    final stopped = steps;
+    await tester.pump(const Duration(seconds: 2));
+    expect(steps, stopped);
+    expect(find.text('歩行中…'), findsNothing);
+    expect(find.text('夜間保守メモ 1 / 2'), findsNothing);
+    Navigator.of(context).pop();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('保守メモを調べる'));
+    await tester.pumpAndSettle();
+    expect(find.text('夜間保守メモ 1 / 2'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('leaving during walking stops callbacks and disposes the ticker',
       (tester) async {
     var steps = 0;
