@@ -174,7 +174,9 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                         FilledButton.icon(
                           key: const Key('echo-retry'),
                           onPressed: () => _act(
-                              () => _game = EchoPumpGame(), EchoPumpCue.start),
+                            () => _game = EchoPumpGame(),
+                            EchoPumpCue.start,
+                          ),
                           icon: const Icon(Icons.replay),
                           label: const Text('リトライ'),
                         ),
@@ -210,7 +212,9 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                                         _game.sealed)
                                 ? null
                                 : () => _act(
-                                    () => _game.move(room), EchoPumpCue.step),
+                                      () => _game.move(room),
+                                      EchoPumpCue.step,
+                                    ),
                             child: Text('${room.label}へ'),
                           ),
                         OutlinedButton.icon(
@@ -244,7 +248,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                                   ? null
                                   : (_) => _act(
                                       () => _game.togglePower(circuit),
-                                      EchoPumpCue.power),
+                                      EchoPumpCue.power,
+                                    ),
                             ),
                         ],
                       ),
