@@ -378,3 +378,53 @@ jobs:
             -f supabase/tests/evernote_note_tasks_contract.sql
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/tests/evernote_note_history_contract.sql
+
+  merge-audit:
+    name: Read-only main integration conflict inventory
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Audit merge without pushing or deploying
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          git config user.name 'Integration audit only'
+          git config user.email 'integration-audit@users.noreply.github.com'
+          main_sha="$(git rev-parse origin/main)"
+          mkdir -p /tmp/merge-evidence
+          printf 'head=%s\nmain=%s\n' "$EXPECTED_HEAD_SHA" "$main_sha" > /tmp/merge-evidence/revisions.txt
+          set +e
+          git merge --no-commit --no-ff "$main_sha" > /tmp/merge-evidence/merge-output.txt 2>&1
+          merge_status=$?
+          set -e
+          if [ "$merge_status" -gt 1 ]; then
+            cat /tmp/merge-evidence/merge-output.txt
+            exit "$merge_status"
+          fi
+          git diff --name-only --diff-filter=U > /tmp/merge-evidence/conflicts.txt
+          git diff --cc > /tmp/merge-evidence/conflicts.patch
+          git diff --stat HEAD > /tmp/merge-evidence/merge-stat.txt
+          cat /tmp/merge-evidence/revisions.txt
+          cat /tmp/merge-evidence/conflicts.txt
+          while IFS= read -r path; do
+            [ -n "$path" ] || continue
+            mkdir -p "/tmp/merge-evidence/files/$(dirname "$path")"
+            cp -- "$path" "/tmp/merge-evidence/files/$path"
+          done < /tmp/merge-evidence/conflicts.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: evernote-main-merge-audit
+          path: /tmp/merge-evidence/
+          retention-days: 1
+          if-no-files-found: error
