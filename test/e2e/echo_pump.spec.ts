@@ -52,6 +52,10 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
   ]) {
     await click(label);
     if (label === '隔壁を閉じる') {
+      await page.mouse.move(100, 200);
+      await page.mouse.wheel(0, -30000);
+      await page.waitForTimeout(650);
+      await page.screenshot({ path: info.outputPath('character-sealed.png') });
       // Flutter's semantic nodes do not scroll the painted canvas themselves.
       const viewport = page.viewportSize()!;
       await page.mouse.move(viewport.width / 2, viewport.height / 2);
@@ -63,6 +67,10 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
     }
   }
   await expect(button('リトライ')).toBeVisible();
+  await page.mouse.move(100, 200);
+  await page.mouse.wheel(0, -30000);
+  await page.waitForTimeout(650);
+  await page.screenshot({ path: info.outputPath('character-escaped.png') });
   await page.screenshot({ path: info.outputPath('escaped.png'), fullPage: true });
   await click('リトライ');
   await expect(button('B 整備')).toBeVisible();
@@ -131,4 +139,30 @@ test('intro can pause, resume and finish automatically', async ({ page }, info) 
   await page.screenshot({ path: info.outputPath('intro-third.png') });
   await expect(page.getByRole('checkbox', { name: 'A 搬入', exact: true })).toBeVisible({ timeout: 15000 });
   await expect(page.getByRole('button', { name: 'スキップして開始', exact: true })).toHaveCount(0);
+});
+
+
+test('character art, locations and threat update with play', async ({ page }, info) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'ゲーム開始', exact: true }).click();
+  await page.getByRole('button', { name: 'スキップして開始', exact: true }).click();
+  const cast = (label: string) => page.getByText(label, { exact: true }).or(page.getByLabel(label, { exact: true })).first();
+  await expect(cast('あなた / 保守員：管理室、安全な拠点')).toBeVisible();
+  await expect(cast('敵 / 音を追う影：ポンプ室、別区画')).toBeVisible();
+  for (const name of ['character_technician.png', 'character_stalker.png']) {
+    const response = await page.request.get(`/assets/assets/echo_pump/${name}`);
+    expect(response.ok()).toBeTruthy();
+    expect(response.headers()['content-type']).toContain('image/png');
+    expect((await response.body()).length).toBeGreaterThan(100000);
+  }
+  await page.screenshot({ path: info.outputPath('character-start.png') });
+  await page.getByRole('checkbox', { name: 'B 整備', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'A 搬入', exact: true }).click();
+  await page.getByRole('button', { name: '中央廊下へ', exact: true }).click();
+  await page.mouse.move(100, 200);
+  await page.mouse.wheel(0, -20000);
+  await expect(cast('あなた / 保守員：中央廊下、探索中')).toBeVisible();
+  await expect(cast('敵 / 音を追う影：搬入区画、接近注意')).toBeVisible();
+  await page.waitForTimeout(650);
+  await page.screenshot({ path: info.outputPath('character-nearby.png') });
 });

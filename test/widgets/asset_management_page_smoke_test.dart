@@ -26,6 +26,7 @@ import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'package:my_web_app/widgets/subscription_audit_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -940,6 +941,374 @@ void main() {
       });
     }
   }
+
+  testWidgets('fixed cost persistence failure retains edited input',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+        AssetRecurringFixedCostStore.encodeMirrorValue(
+          const <AssetRecurringFixedCost>[
+            AssetRecurringFixedCost(
+              id: 'synthetic_cost',
+              name: 'Synthetic utility',
+              amount: 2000,
+              paymentDay: 7,
+            ),
+          ],
+        ),
+      ),
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1200, 3000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: AssetManagementPage(
+          debugRecurringFixedCostStore: _ThrowingRecurringFixedCostStore(),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final edit = find.byTooltip('Synthetic utility を編集');
+      expect(edit, findsOneWidget);
+      await tester.ensureVisible(edit);
+      await tester.tap(edit);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(RecurringFixedCostEditorDialog), findsOneWidget);
+      final name = find.widgetWithText(TextFormField, '名称');
+      await tester.enterText(name, 'Synthetic utility changed');
+      await tester.tap(find.widgetWithText(FilledButton, '保存'));
+      await tester.pump(const Duration(milliseconds: 500));
+      final persisted = await const AssetRecurringFixedCostStore().load();
+      expect(persisted.single.name, 'Synthetic utility');
+      expect(
+        find.byType(RecurringFixedCostEditorDialog),
+        findsOneWidget,
+        reason: 'Failed persistence must keep entered data for retry',
+      );
+      expect(find.text('Synthetic utility changed'), findsOneWidget);
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance recorded 1200',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'pay_date': '2026-05-25',
+              'net_amount': 300000,
+              'confidence': 1,
+            },
+          ],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'action_type': 'spend',
+              'amount': 200000,
+              'description': 'synthetic living expense',
+              'occurred_at': '2026-06-15T12:00:00',
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance no_expense 1200',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'pay_date': '2026-05-25',
+              'net_amount': 300000,
+              'confidence': 1,
+            },
+          ],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance no_income 1200',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'action_type': 'spend',
+              'amount': 200000,
+              'description': 'synthetic living expense',
+              'occurred_at': '2026-06-15T12:00:00',
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance recorded 390',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(390, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'pay_date': '2026-05-25',
+              'net_amount': 300000,
+              'confidence': 1,
+            },
+          ],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'action_type': 'spend',
+              'amount': 200000,
+              'description': 'synthetic living expense',
+              'occurred_at': '2026-06-15T12:00:00',
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance no_expense 390',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(390, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'pay_date': '2026-05-25',
+              'net_amount': 300000,
+              'confidence': 1,
+            },
+          ],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance no_income 390',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(390, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'action_type': 'spend',
+              'amount': 200000,
+              'description': 'synthetic living expense',
+              'occurred_at': '2026-06-15T12:00:00',
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
   group('AssetManagementPage smoke', () {
     testWidgets('mobile chat reserves space outside the scrolling content', (
       tester,
