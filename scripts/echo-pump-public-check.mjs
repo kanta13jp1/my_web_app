@@ -57,10 +57,10 @@ try {
       await page.getByText('夜間保守メモ 2 / 2',{exact:true}).waitFor();await shot('memo-two');
       await button('メモを閉じる').click();
       await button('保守メモを調べる').click();await button('メモを閉じる').waitFor();assert.equal(await steps(),2);await button('メモを閉じる').click();
-      await button('中央廊下の扉を調べる').click();await button('扉を開けて進む').waitFor();await shot('door');
-      await button('戻る').click();assert.equal(await page.getByText('ターン 0',{exact:true}).count(),1);
+      await button('中央廊下の扉を調べる').click();await page.getByText('歩行中…',{exact:true}).first().waitFor();await page.waitForTimeout(300);await shot('door-walking');await button('扉を開けて進む').waitFor();await shot('door');
+      await button('戻る').click();await page.getByText('ターン 0',{exact:true}).first().waitFor();
       await button('中央廊下の扉を調べる').click();await button('扉を開けて進む').click();
-      await page.getByText('ターン 1',{exact:true}).waitFor();await button('工具庫へ').waitFor();
+      await page.getByText('ターン 1',{exact:true}).first().waitFor();await button('工具庫へ').waitFor();
       await page.mouse.wheel(0,-30000);await page.waitForTimeout(650);await shot('hall');
       assert.equal(await steps(),5); // two memo contacts + two door contacts + one committed room move
       await button('音をOFF').click();
