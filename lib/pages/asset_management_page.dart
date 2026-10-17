@@ -10858,12 +10858,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _now,
       salaryDay: _salaryDay,
     );
-    return MainAccountBalanceWindow(
+    return MainAccountBalanceWindow.fromHistory(
       previousCycleEndBalance: _historicalAccountBalanceBefore(
         mainAccount.name,
         cycleStart,
       ),
       currentBalance: mainAccount.balance,
+      observations: {
+        for (final entry in _assetData.entries)
+          if (DateTime.tryParse(entry.key) != null &&
+              entry.value.containsKey(mainAccount.name))
+            DateTime.parse(entry.key): entry.value[mainAccount.name]!,
+      },
+      cycleStart: cycleStart,
+      asOf: _now,
     );
   }
 
