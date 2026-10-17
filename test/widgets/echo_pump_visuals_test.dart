@@ -53,6 +53,11 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.bySemanticsLabel('ポンプ室 ● 現在地'), findsOneWidget);
         expect(find.text('中央廊下 ● 現在地'), findsNothing);
+        await tester.ensureVisible(find.text('区画の接続一覧'));
+        await tester.tap(find.text('区画の接続一覧'));
+        await tester.pumpAndSettle();
+        expect(find.text('管理室：中央廊下・出口'), findsOneWidget);
+        expect(find.text('ポンプ室：中央廊下・点検槽'), findsOneWidget);
         expect(tester.takeException(), isNull);
       } finally {
         semantics.dispose();

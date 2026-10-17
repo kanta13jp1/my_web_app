@@ -222,6 +222,23 @@ class EchoPumpFacilityMap extends StatelessWidget {
             '機械音の行き先 → ${game.noiseRoom!.label}',
             style: const TextStyle(color: _mint),
           ),
+        ExpansionTile(
+          title: const Text('区画の接続一覧'),
+          tilePadding: EdgeInsets.zero,
+          children: [
+            for (final entry in EchoPumpGame.connections.entries)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${entry.key.label}：'
+                    '${entry.value.map((room) => room.label).join('・')}',
+                  ),
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }
