@@ -2489,7 +2489,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  AssetLiabilityMonthlyState _currentAssetLiabilityMonthlyState() {
+  AssetLiabilityMonthlyState _currentAssetLiabilityMonthlyState({
+    List<AssetLiabilityIncomePlan>? incomePlans,
+  }) {
     return AssetLiabilityMonthlyState(
       confirmedPaymentDays: Map<String, double>.from(_confirmedPaymentDays),
       paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
@@ -2510,7 +2512,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
         _cardStatementLines,
       ),
-      incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
+      incomePlans: List<AssetLiabilityIncomePlan>.from(incomePlans ?? _monthlyIncomePlans),
       transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
       // 端末間 last-write-wins 用に、保存(=編集)時刻を毎回刻む。
       updatedAt: DateTime.now(),
@@ -4268,18 +4270,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  Future<void> _saveRecurringIncomeTemplates() async {
-    try {
-      await _assetLiabilityRepository.saveRecurringIncomeTemplates(
-        List<AssetLiabilityRecurringIncomeTemplate>.from(
-          _recurringIncomeTemplates,
-        ),
-      );
-    } catch (e) {
-      debugPrint('Error saving recurring income templates: $e');
-    }
-  }
-
   void _updateDefaultPaymentSourceAccount(
     String liabilityId,
     String? sourceAccountId,
@@ -4760,7 +4750,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _deletingRecurringIncomeTemplateIds = <String>{};
 
   Future<void> _deleteRecurringIncomeTemplate(String templateId) async {
-    if (_deletingRecurringIncomeTemplateIds.contains(templateId)) return;
+    if (_deletingRecurringIncomeTemplateIds.isNotEmpty) return;
     final month = _assetLiabilityStateMonth(_now);
     final monthKey = _assetLiabilityStateMonthKey(month);
     final templates = _recurringIncomeTemplates
@@ -4769,7 +4759,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final plans = _monthlyIncomePlans
         .where((plan) => plan.id != 'recurring_${templateId}_$monthKey')
         .toList(growable: false);
-    final nextState = _currentAssetLiabilityMonthlyState().copyWith(
+    final nextState = _currentAssetLiabilityMonthlyState(
       incomePlans: plans,
     );
     setState(() => _deletingRecurringIncomeTemplateIds.add(templateId));
@@ -4958,6 +4948,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityRecurringIncomeTemplate? existing,
     AssetLiabilityRecurringIncomeTemplate? prefill,
   }) async {
+    if (_deletingRecurringIncomeTemplateIds.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('削除の保存中です。完了してから編集してください。')),
+      );
+      return;
+    }
     // existing(編集)優先。なければ prefill(検出結果からの追加)を初期値に使う。
     final initial = existing ?? prefill;
     final nameController = TextEditingController(text: initial?.name ?? '');
