@@ -4,6 +4,7 @@ import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_service.dart';
 
 import '../models/asset_liability_workbook.dart';
+import 'asset_payment_calendar_service.dart';
 
 /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) をデータ駆動で表す内部記述子。
 ///
@@ -391,8 +392,23 @@ class AssetLiabilityPlanningService {
         .toList()
       ..sort(_compareDebtPriority);
 
+    final sourceKinds = {
+      for (final account in accounts) account.id: account.kind,
+    };
+    final cardFundedFixedCostIds = {
+      for (final row in debtMasterRows)
+        if (AssetCalendarDebtInput.fromDebtRow(
+          row,
+          sourceAccountKindsById: sourceKinds,
+        ).isCardFundedFixedCost)
+          row.id,
+    };
     final directDebtRows = debtMasterRows
-        .where((row) => row.isDirectCashflowTarget)
+        .where(
+          (row) =>
+              row.isDirectCashflowTarget &&
+              !cardFundedFixedCostIds.contains(row.id),
+        )
         .toList(growable: false);
     final paymentDayRisks = _buildPaymentDayRisks(
       rows: directDebtRows,
@@ -400,6 +416,7 @@ class AssetLiabilityPlanningService {
       salaryDay: salaryDay,
     );
     final cashflowRows = _buildCashflowRows(
+      cardFundedFixedCostIds: cardFundedFixedCostIds,
       rows: debtMasterRows,
       incomePlans: resolvedIncomePlans,
       baseDate: baseDate,
@@ -434,7 +451,12 @@ class AssetLiabilityPlanningService {
       (sum, row) => sum + row.minimumPaymentEstimate,
     );
     final directPaymentCashflowRows = cashflowRows
-        .where((row) => row.isPayment && row.isDirectCashflowTarget)
+        .where(
+          (row) =>
+              row.isPayment &&
+              row.isDirectCashflowTarget &&
+              !cardFundedFixedCostIds.contains(row.accountId),
+        )
         .toList(growable: false);
     final monthlyScheduledPaymentTotal = directPaymentCashflowRows.fold<double>(
       0,
@@ -1555,6 +1577,7 @@ class AssetLiabilityPlanningService {
   }
 
   List<AssetLiabilityCashflowRow> _buildCashflowRows({
+    required Set<String> cardFundedFixedCostIds,
     required List<AssetLiabilityDebtRow> rows,
     required List<AssetLiabilityIncomePlan> incomePlans,
     required DateTime baseDate,
@@ -1608,6 +1631,7 @@ class AssetLiabilityPlanningService {
         paymentDay,
       );
       final overdue = row.isDirectCashflowTarget &&
+          !cardFundedFixedCostIds.contains(row.id) &&
           row.requiresAction &&
           paymentDate.isBefore(_dateOnly(baseDate));
       result.add(
@@ -1708,7 +1732,9 @@ class AssetLiabilityPlanningService {
           final before = runningCash;
           final delta = row.isIncome
               ? (row.received ? 0 : row.paymentAmount)
-              : (!row.isDirectCashflowTarget || row.paid
+              : (!row.isDirectCashflowTarget ||
+                      cardFundedFixedCostIds.contains(row.accountId) ||
+                      row.paid
                   ? 0
                   : -row.paymentAmount);
           final after = before + delta;
