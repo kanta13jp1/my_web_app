@@ -555,6 +555,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyTransferSuggestionSection = GlobalKey();
   final _keyIncomePlanSection = GlobalKey();
   final _keyRecurringIncomeEditorButton = GlobalKey();
+  final _keyCategoryBudgetCard = GlobalKey();
   // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
   final _keyDebtControlReviewSection = GlobalKey();
   // セクション検索(アプリバーの🔍)からの各カードへのジャンプ用アンカー。
@@ -6157,6 +6158,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           sublabel: '資産/負債 管理ボード → 収入予定へ移動',
           icon: Icons.event_repeat_outlined,
           onTap: () => _scrollTo(_keyRecurringIncomeEditorButton),
+        ),
+      );
+    }
+
+    if (_keyCategoryBudgetCard.currentContext != null &&
+        matches('予算を設定 予算設定 カテゴリ別の月次予算 予算 カテゴリ予実')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '予算を設定',
+          sublabel: '予算/カテゴリ予実へ移動',
+          icon: Icons.pie_chart_outline,
+          onTap: () => _scrollTo(_keyCategoryBudgetCard),
         ),
       );
     }
@@ -19121,6 +19134,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final start = breakdown.periodStart;
     final end = breakdown.periodEndInclusive;
     return Padding(
+      key: _keyCategoryBudgetCard,
       padding: const EdgeInsets.only(bottom: 16),
       child: AssetCategoryBudgetCard(
         report: report,

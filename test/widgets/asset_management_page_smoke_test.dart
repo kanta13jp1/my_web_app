@@ -701,6 +701,245 @@ void main() {
       });
     }
   }
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final invalid in ['Infinity', 'abc', '-1']) {
+      testWidgets('budget save retains invalid input $invalid at ${size.width}',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_category_budgets_v1': '{"食費":10000}',
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
+        });
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        final edit = find.byKey(const Key('asset_category_budget_edit'));
+        expect(edit, findsOneWidget);
+        await tester.ensureVisible(edit);
+        await tester.tap(edit);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        final dialog = find.byType(AlertDialog);
+        final field =
+            find.descendant(of: dialog, matching: find.byType(TextField)).first;
+        await tester.enterText(field, invalid);
+        await tester.tap(find.byKey(const Key('asset_category_budget_save')));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          dialog,
+          findsOneWidget,
+          reason: 'invalid input must remain editable',
+        );
+        expect(
+          find
+              .descendant(of: dialog, matching: find.byType(TextField))
+              .evaluate()
+              .any(
+                (e) => (e.widget as TextField).controller!.text == invalid,
+              ),
+          isTrue,
+        );
+        final prefs = await SharedPreferences.getInstance();
+        expect(
+          jsonDecode(prefs.getString('asset_category_budgets_v1')!),
+          {'食費': 5000},
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+      });
+    }
+  }
+
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final mode in ['normal', 'retry', 'pending', 'clear']) {
+      testWidgets('budget save lifecycle $mode at ${size.width}',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_category_budgets_v1': '{"食費":10000}',
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
+        });
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final store = _BudgetSaveProbe()..fail = mode == 'retry';
+        if (mode == 'pending') store.pending = Completer<void>();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              categoryBudgetStore: store,
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+            ),
+          ),
+        );
+        Future<void> settle() async {
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+        }
+
+        await settle();
+        try {
+          final edit = find.byKey(const Key('asset_category_budget_edit'));
+          await tester.ensureVisible(edit);
+          await tester.tap(edit);
+          await settle();
+          final field =
+              find.byKey(const ValueKey('asset_category_budget_input_食費'));
+          expect(field, findsOneWidget);
+          await tester.enterText(field, mode == 'clear' ? '' : '7,500');
+          final save = find.byKey(const Key('asset_category_budget_save'));
+          await tester.tap(save);
+          await settle();
+          if (mode == 'retry') {
+            expect(find.byType(AlertDialog), findsOneWidget);
+            expect(
+              find.byKey(const Key('asset_category_budget_save_error')),
+              findsOneWidget,
+            );
+            expect(tester.widget<TextField>(field).controller!.text, '7,500');
+            expect(await store.load(), {'食費': 5000});
+            store.fail = false;
+            await tester.tap(save);
+            await settle();
+          } else if (mode == 'pending') {
+            expect(tester.widget<ElevatedButton>(save).onPressed, isNull);
+            expect(
+              tester
+                  .widget<TextButton>(
+                    find.widgetWithText(TextButton, 'キャンセル'),
+                  )
+                  .onPressed,
+              isNull,
+            );
+            expect(tester.widget<TextField>(field).enabled, isFalse);
+            expect(store.attempts, 1);
+            expect(await store.load(), {'食費': 5000});
+            store.pending!.complete();
+            await settle();
+          }
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(store.attempts, mode == 'retry' ? 2 : 1);
+          expect(
+            await store.load(),
+            mode == 'clear' ? <String, double>{} : {'食費': 7500},
+          );
+          expect(tester.takeException(), isNull);
+          if (mode == 'clear') {
+            expect(
+              find.byKey(const Key('asset_category_budget_card')),
+              findsNothing,
+            );
+          } else {
+            await tester.ensureVisible(edit);
+            await tester.tap(edit);
+            await settle();
+            expect(tester.widget<TextField>(field).controller!.text, '7500');
+            await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+            await settle();
+            expect(tester.takeException(), isNull);
+          }
+        } finally {
+          if (store.pending != null && !store.pending!.isCompleted) {
+            store.pending!.complete();
+          }
+          await tester.pumpWidget(const SizedBox.shrink());
+          await settle();
+        }
+      });
+    }
+  }
+
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final query in ['予算を設定', '予算設定']) {
+      testWidgets('budget search reaches editor $query at ${size.width}',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_category_budgets_v1': '{"食費":10000}',
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
+        });
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 1000.0},
+              },
+            ),
+          ),
+        );
+        Future<void> settle() async {
+          await tester.pump();
+          await tester.pump();
+          await tester.pump(const Duration(seconds: 1));
+          await tester.pump();
+        }
+
+        await settle();
+        try {
+          await tester
+              .tap(find.byKey(const Key('asset_section_search_appbar_button')));
+          await settle();
+          final search = find.byWidgetPredicate(
+            (w) =>
+                w is TextField &&
+                (w.decoration?.hintText?.startsWith('カード名・項目名で検索') ?? false),
+          );
+          expect(search, findsOneWidget);
+          await tester.enterText(search, query);
+          await settle();
+          final destination = find.descendant(
+            of: find.byType(ListTile),
+            matching: find.text('予算を設定'),
+          );
+          expect(destination, findsOneWidget);
+          await tester.ensureVisible(destination);
+          await tester.tap(destination);
+          await settle();
+          final editor = find
+              .ancestor(
+                of: find.text('予算を設定'),
+                matching:
+                    find.byWidgetPredicate((widget) => widget is TextButton),
+              )
+              .first;
+          expect(editor, findsOneWidget);
+          final center = tester.getCenter(editor);
+          expect(center.dy, greaterThan(56));
+          expect(center.dy, lessThan(size.height));
+          await tester.tap(editor);
+          await settle();
+          expect(find.text('カテゴリ別の月次予算'), findsOneWidget);
+          await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+          await settle();
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(tester.takeException(), isNull);
+        } finally {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await settle();
+        }
+      });
+    }
+  }
   group('AssetManagementPage smoke', () {
     testWidgets('mobile chat reserves space outside the scrolling content', (
       tester,
