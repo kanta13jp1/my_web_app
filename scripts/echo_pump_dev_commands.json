@@ -13,7 +13,12 @@
     "lib/widgets/echo_pump_visuals.dart",
     "lib/widgets/echo_pump_inventory.dart",
     "test/widgets/echo_pump_inventory_test.dart",
-    "lib/widgets/echo_pump_machinery.dart"
+    "lib/widgets/echo_pump_machinery.dart",
+    "lib/widgets/echo_pump_motor_art.dart",
+    "test/widgets/echo_pump_motor_art_test.dart",
+    "lib/widgets/echo_pump_door_transition.dart",
+    "lib/services/echo_pump_motion_stub.dart",
+    "lib/services/echo_pump_motion_web.dart"
   ],
   [
     "dart",
@@ -26,7 +31,12 @@
     "test/widgets/echo_pump_room_stage_test.dart",
     "lib/widgets/echo_pump_inventory.dart",
     "test/widgets/echo_pump_inventory_test.dart",
-    "lib/widgets/echo_pump_machinery.dart"
+    "lib/widgets/echo_pump_machinery.dart",
+    "lib/widgets/echo_pump_motor_art.dart",
+    "test/widgets/echo_pump_motor_art_test.dart",
+    "lib/widgets/echo_pump_door_transition.dart",
+    "lib/services/echo_pump_motion_stub.dart",
+    "lib/services/echo_pump_motion_web.dart"
   ],
   [
     "flutter",
@@ -34,7 +44,8 @@
     "test/widgets/echo_pump_cast_test.dart",
     "test/models/echo_pump_room_walk_test.dart",
     "test/widgets/echo_pump_room_stage_test.dart",
-    "test/widgets/echo_pump_inventory_test.dart"
+    "test/widgets/echo_pump_inventory_test.dart",
+    "test/widgets/echo_pump_motor_art_test.dart"
   ],
   [
     "python3",
