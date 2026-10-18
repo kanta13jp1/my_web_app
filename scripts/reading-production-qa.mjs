@@ -140,7 +140,7 @@ async function verifyCatalogRelease(page, account, version) {
         // Reproduce the ten-cycle mobile history using only this run's disposable record.
         const current=record.metadata.cycles.at(-1);
         const history=Array.from({length:9},()=>({...current,id:randomUUID(),entries:[]}));
-        await action(account.token,{action:'reading.save',id:record.id,revision:record.metadata.revision,work:record.metadata.work,cycles:[...history,current]});
+        await action(account.token,{action:'reading.save',id:record.id,revision:record.metadata.reading_revision,work:record.metadata.work,cycles:[...history,current]});
         record=(await action(account.token,{action:'reading.list'})).items.find(x=>x.id===record.id);
         assert.equal(record.metadata.cycles.length,10);
       }
