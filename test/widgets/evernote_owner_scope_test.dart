@@ -9,13 +9,15 @@ void main() {
       (tester) async {
     final owners = StreamController<String?>();
     addTearDown(owners.close);
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
       home: EvernoteOwnerScope(
         initialOwnerId: 'owner-a',
         ownerChanges: owners.stream,
         builder: (_) => const _CachedProbe(),
       ),
-    ));
+      ),
+    );
     await tester.tap(find.text('Populate'));
     await tester.pump();
     expect(find.text('private rows / error / loading'), findsOneWidget);
@@ -39,7 +41,8 @@ void main() {
     final release = Completer<void>();
     var builds = 0;
     addTearDown(owners.close);
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
       home: EvernoteOwnerScope(
         initialOwnerId: 'owner-a',
         ownerChanges: owners.stream,
@@ -47,7 +50,8 @@ void main() {
           release: builds++ == 0 ? release.future : null,
         ),
       ),
-    ));
+      ),
+    );
     owners.add('owner-b');
     await tester.pump();
     expect(find.text('empty'), findsOneWidget);

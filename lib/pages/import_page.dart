@@ -29,7 +29,8 @@ class ImportPage extends StatelessWidget {
     final auth = Supabase.instance.client.auth;
     return EvernoteOwnerScope(
       initialOwnerId: auth.currentUser?.id,
-      ownerChanges: auth.onAuthStateChange.map((state) => state.session?.user.id),
+      ownerChanges:
+          auth.onAuthStateChange.map((state) => state.session?.user.id),
       builder: (_) => const _ImportOwnerPage(),
     );
   }
