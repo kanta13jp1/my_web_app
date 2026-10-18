@@ -10,9 +10,15 @@ const _walkArt = AssetImage('assets/echo_pump/character_walk.png');
 
 /// A small, safe-room exploration layer over the existing turn-based game.
 class EchoPumpRoomStage extends StatefulWidget {
-  const EchoPumpRoomStage({super.key, this.onMove, this.onFootstep});
+  const EchoPumpRoomStage({
+    super.key,
+    this.onMove,
+    this.onFootstep,
+    this.canInteract,
+  });
   final ValueChanged<PumpRoom>? onMove;
   final VoidCallback? onFootstep;
+  final bool Function()? canInteract;
 
   @override
   State<EchoPumpRoomStage> createState() => _EchoPumpRoomStageState();
@@ -30,6 +36,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
   int _artRequest = 0;
   bool _walkArtReady = false;
   bool _routeActive = true;
+  bool get _canInteract => widget.canInteract?.call() ?? true;
 
   @override
   void initState() {
@@ -80,6 +87,11 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
 
   void _tick() {
     if (!_walking || !mounted || !_routeActive) return;
+    if (!_canInteract) {
+      _walk.stop(canceled: true);
+      setState(() => _walking = false);
+      return;
+    }
     final next = EchoPumpRoomWalk.sample(_route, _walk.value);
     if ((next.x - _position.x).abs() > 0.0001) _left = next.x < _position.x;
     setState(() => _position = next);
@@ -95,7 +107,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
   }
 
   Future<void> _approach(EchoRoomTarget target) async {
-    if (_walking || !_foreground || !_routeActive) return;
+    if (_walking || !_foreground || !_routeActive || !_canInteract) return;
     final reduced = MediaQuery.disableAnimationsOf(context);
     _route = EchoPumpRoomWalk.route(_position, target);
     _steps = 0;
@@ -112,7 +124,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
     } on TickerCanceled {
       return;
     }
-    if (!mounted || !_foreground) return;
+    if (!mounted || !_foreground || !_canInteract) return;
     setState(() {
       _position = EchoPumpRoomWalk.destinations[target]!;
       _walking = false;
