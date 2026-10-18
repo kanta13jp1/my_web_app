@@ -19,15 +19,30 @@ import '../services/import_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../widgets/evernote_cloud_migration_controls.dart';
 import '../widgets/evernote_history_review_panel.dart';
+import '../widgets/evernote_owner_scope.dart';
 
-class ImportPage extends StatefulWidget {
+class ImportPage extends StatelessWidget {
   const ImportPage({super.key});
 
   @override
-  State<ImportPage> createState() => _ImportPageState();
+  Widget build(BuildContext context) {
+    final auth = Supabase.instance.client.auth;
+    return EvernoteOwnerScope(
+      initialOwnerId: auth.currentUser?.id,
+      ownerChanges: auth.onAuthStateChange.map((state) => state.session?.user.id),
+      builder: (_) => const _ImportOwnerPage(),
+    );
+  }
 }
 
-class _ImportPageState extends State<ImportPage> {
+class _ImportOwnerPage extends StatefulWidget {
+  const _ImportOwnerPage();
+
+  @override
+  State<_ImportOwnerPage> createState() => _ImportPageState();
+}
+
+class _ImportPageState extends State<_ImportOwnerPage> {
   bool _isLoading = false;
   bool _isImporting = false;
   final GrowthAcquisitionService _acquisitionService =
