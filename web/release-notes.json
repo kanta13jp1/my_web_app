@@ -31,6 +31,19 @@
       "changes": [
         {
           "category": "feature",
+          "id": "pr-5865",
+          "links": [
+            {
+              "title": "PR #5865",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5865"
+            }
+          ],
+          "mergedAt": "2026-10-18T13:14:32Z",
+          "summary": "#5865 Blender MCP製の排水ポンプで故障・停止・通電の状態を表示する"
+        },
+        {
+          "category": "feature",
           "id": "pr-5866",
           "links": [
             {
@@ -405,19 +418,6 @@
           ],
           "mergedAt": "2026-10-17T13:41:04Z",
           "summary": "#5831 CIのVMテストを事前分割しWeb検証と並列化して待ち時間を短縮"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5829",
-          "links": [
-            {
-              "title": "PR #5829",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5829"
-            }
-          ],
-          "mergedAt": "2026-10-17T13:24:24Z",
-          "summary": "#5829 混合レシートの食品を浪費トレーニングの喫煙額から除外"
         }
       ],
       "date": "2026-10-18",
