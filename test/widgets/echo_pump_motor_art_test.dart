@@ -1,10 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../lib/widgets/echo_pump_motor_art.dart';
+import 'package:my_web_app/widgets/echo_pump_motor_art.dart';
 
 class _MissingPumpBundle extends CachingAssetBundle {
   @override
