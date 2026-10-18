@@ -7,13 +7,14 @@ on:
       - scripts/requirements-testcontainers.txt
       - scripts/check_python_dependency_compatibility.py
       - .github/workflows/python-dependency-compatibility.yml
-permissions:
-  contents: read
+permissions: {}
 concurrency:
   group: python-dependency-compatibility-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 jobs:
   offline-compatibility:
+    permissions:
+      contents: read
     name: Python dependency compatibility (${{ matrix.profile }})
     runs-on: ubuntu-latest
     timeout-minutes: 12
