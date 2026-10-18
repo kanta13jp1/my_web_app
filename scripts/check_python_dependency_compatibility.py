@@ -59,7 +59,7 @@ def check_security():
 
 if __name__ == "__main__":
     profile = sys.argv[1]
-    if profile not in ("root", "security"):
+    if profile not in ("root", "root-minimum", "security"):
         raise SystemExit("Unsupported profile")
     with patch.object(socket.socket, "connect", deny_network), patch.object(socket, "create_connection", deny_network):
-        (check_root if profile == "root" else check_security)()
+        (check_root if profile.startswith("root") else check_security)()
