@@ -33,7 +33,7 @@ try{
    await button('工具庫へ').click();const response=await image;
    observed.png={url:response.url(),sha256:createHash('sha256').update(await response.body()).digest('hex')};assert.equal(observed.png.sha256,pngHash);
    await page.mouse.move(150,250);await page.mouse.wheel(0,30000);await page.waitForTimeout(400);await shot('fuse-shelf');
-   stage='collect';await button('ヒューズを回収').click();assert.equal(await button('ヒューズを回収').isEnabled(),false);
+   stage='collect';await button('ヒューズを回収').click();await page.getByRole('button',{name:'ヒューズを回収',exact:true,disabled:true}).waitFor();
    await inventory().click();await text('所持数 1').waitFor();assert.equal(await button('このヒューズで修理').count(),0);await shot('inventory-carried');
    await button('所持品を閉じる').click();await text('ターン 5').waitFor();observed.collected={quantity:1,turn:5};
    stage='install';await button('中央廊下へ').click();await button('ポンプ室へ').click();await inventory().click();await text('所持数 1').waitFor();await shot('inventory-use');
