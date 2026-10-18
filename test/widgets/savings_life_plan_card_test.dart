@@ -93,7 +93,8 @@ void main() {
     expect(find.textContaining('生活費の日割り目安'), findsNothing);
     expect(find.textContaining('朝食・食器洗い・歯磨き'), findsOneWidget);
   });
-  testWidgets('edited income survives parent updates, save and reload without other writes',
+  testWidgets(
+      'edited income survives parent updates, save and reload without other writes',
       (tester) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('financial_records', 'unchanged');
@@ -126,18 +127,19 @@ void main() {
     expect(find.text('必要な積立：月 ¥70,834'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('income above the confirmed ceiling cannot be saved', (tester) async {
+  testWidgets('income above the confirmed ceiling cannot be saved',
+      (tester) async {
     await open(tester);
     final prefs = await SharedPreferences.getInstance();
     final before = prefs.getString('savings_life_plan_v1:fixture');
     await tester.enterText(find.byType(TextFormField).at(0), '400000');
     await tester.enterText(find.byType(TextFormField).at(2), '50000');
-    await tester.enterText(find.byKey(const Key('savings-plan-income')), '400001');
+    await tester.enterText(
+        find.byKey(const Key('savings-plan-income')), '400001');
     await tester.ensureVisible(find.text('計画を保存・再計算'));
     await tester.tap(find.text('計画を保存・再計算'));
     await tester.pumpAndSettle();
     expect(find.text('登録済みの手取り以下の金額を入力してください'), findsOneWidget);
     expect(prefs.getString('savings_life_plan_v1:fixture'), before);
   });
-
 }

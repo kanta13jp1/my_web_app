@@ -79,8 +79,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
   @override
   void didUpdateWidget(covariant SavingsLifePlanCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!_incomeEdited &&
-        oldWidget.suggestedIncome != widget.suggestedIncome) {
+    if (!_incomeEdited && oldWidget.suggestedIncome != widget.suggestedIncome) {
       _income.text = widget.suggestedIncome?.toString() ?? '';
     }
     if (SavingsLifePlan.dateText(oldWidget.today) != _day) {
