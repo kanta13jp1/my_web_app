@@ -306,6 +306,8 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     '書店',
     '文庫',
   ]),
+  // 明示された酒の品目は、コンビニ等の店舗名による食費判定より優先する。
+  _SalarySpendingCategoryRule('娯楽・浪費', <String>['酒']),
   _SalarySpendingCategoryRule('食費', <String>[
     '食費',
     '食品',
