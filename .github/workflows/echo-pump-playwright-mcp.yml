@@ -9,10 +9,14 @@ on:
         description: Verify the released keyboard feature
         type: boolean
         default: false
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: echo-pump-mcp-${{ github.ref }}-${{ inputs.expect_keyboard || false }}
+  cancel-in-progress: false
 jobs:
   probe:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

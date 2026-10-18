@@ -12,7 +12,8 @@ test('opt-in keyboard, repeat guard, modal guard and reload', async ({ page }, i
   await expect(page.getByText('ターン 0', {exact: true})).toBeVisible();
   const toggle = page.getByRole('switch', {name: /キーボード操作を有効にする/});
   await toggle.click();
-  await expect(page.getByText(/W：1ターン待つ/)).toBeAttached();
+  await expect(toggle).toBeChecked();
+  await expect(toggle).toHaveAccessibleName(/W：1ターン待つ/);
   await page.keyboard.down('w');
   await page.keyboard.down('w');
   await page.keyboard.up('w');

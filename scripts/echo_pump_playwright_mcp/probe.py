@@ -38,8 +38,12 @@ async def main():
    tools={t.name:t for t in listing.tools}
    async def click(label):
     nonlocal snapshot
-    snapshot=await call('browser_snapshot',{})
-    line=next((s for s in snapshot.splitlines() if label in s and any(role in s for role in ['button','link','switch','checkbox'])),None)
+    line=None
+    for _ in range(16):
+     snapshot=await call('browser_snapshot',{})
+     line=next((s for s in snapshot.splitlines() if label in s and any(role in s for role in ['button','link','switch','checkbox'])),None)
+     if line is not None:break
+     await asyncio.sleep(.5)
     if line is None:raise RuntimeError('missing control '+label)
     ref=re.search(r'\[ref=([^\]]+)\]',line).group(1)
     props=tools['browser_click'].inputSchema['properties']
@@ -72,7 +76,7 @@ async def main():
     assert 'ターン 2' in snapshot,snapshot
     (OUT/'keyboard-on.txt').write_text(snapshot,encoding='utf8')
     await call('browser_take_screenshot',{'filename':str((OUT/'keyboard-desktop.png').resolve()),'fullPage':True})
-    assert 'Returning 0 messages' in await call('browser_console_messages',{'level':'error'})
+    assert re.search(r'Errors:\s*0\b',await call('browser_console_messages',{'level':'error'}))
     await click('キーボード操作を有効にする')
     await call('browser_press_key',{'key':'w'})
     snapshot=await call('browser_snapshot',{})
@@ -92,7 +96,7 @@ async def main():
     evidence['keyboard_verified']={'desktop':True,'mobile_width':True,'initial_off':True,'off_no_turn':True,'modal_no_turn':True,'reload_off':True}
    await call('browser_take_screenshot',{'filename':str((OUT/'baseline-desktop.png').resolve()),'fullPage':True})
    console=await call('browser_console_messages',{'level':'error'})
-   assert 'Returning 0 messages' in console,console
+   assert re.search(r'Errors:\s*0\b',console),console
    await call('browser_close',{})
    if 'public_before' in evidence:
     evidence['public_after']=public_version()
