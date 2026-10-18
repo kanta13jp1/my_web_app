@@ -3,7 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../services/echo_pump_motion_stub.dart'
-    if (dart.library.js_interop) '../services/echo_pump_motion_web.dart' as motion;
+    if (dart.library.js_interop) '../services/echo_pump_motion_web.dart'
+    as motion;
 
 import '../models/echo_pump_game.dart';
 
@@ -46,7 +47,8 @@ class _DoorTransitionState extends State<EchoPumpDoorTransition>
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
-    if (MediaQuery.disableAnimationsOf(context) || motion.prefersReducedMotion) {
+    if (MediaQuery.disableAnimationsOf(context) ||
+        motion.prefersReducedMotion) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _finish();
       });

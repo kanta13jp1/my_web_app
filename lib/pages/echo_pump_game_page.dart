@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/echo_pump_motion_stub.dart'
-    if (dart.library.js_interop) '../services/echo_pump_motion_web.dart' as motion;
+    if (dart.library.js_interop) '../services/echo_pump_motion_web.dart'
+    as motion;
 
 import '../models/echo_pump_game.dart';
 import '../services/echo_pump_audio.dart';
@@ -96,7 +97,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
     if (_game.room != destination || _game.room == from || _game.turn == turn) {
       return;
     }
-    if (MediaQuery.disableAnimationsOf(context) || motion.prefersReducedMotion) {
+    if (MediaQuery.disableAnimationsOf(context) ||
+        motion.prefersReducedMotion) {
       return;
     }
     _moving = true;
