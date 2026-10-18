@@ -144,7 +144,7 @@ test('plan-only income is editable and survives save and independent reload', as
   await enterAmount(page, '計画に使う手取り収入（収入増なし）', '390000');
   await enterAmount(page, '毎月の生活費（食費・交通・日用品等）', '50000');
   await page.getByRole('button', { name: '計画を保存・再計算' }).click();
-  await expect(page.getByText('計画をこのブラウザーに保存しました。', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '必要な積立：月 ¥70,834', exact: true })).toBeVisible();
   await page.reload();
   const income = page.getByRole('textbox', { name: '計画に使う手取り収入（収入増なし）' });
   await income.click();
