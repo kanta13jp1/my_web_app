@@ -17,7 +17,8 @@ void main() {
         sourceResourceCount: 0,
       );
 
-  test('empty and partial inventories do not mark aggregate stages complete', () {
+  test('empty and partial inventories do not mark aggregate stages complete',
+      () {
     for (final value in [progress(0, 0, 0, 0), progress(100, 1, 1, 1)]) {
       expect(value.importCompleted, isFalse);
       expect(value.verificationCompleted, isFalse);
