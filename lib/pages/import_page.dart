@@ -1472,9 +1472,9 @@ class _ImportPageState extends State<ImportPage> {
       _evernoteMigrationBatches,
     );
     final hasPreview = progress.sourceNoteCount > 0;
-    final hasImported = progress.importedNoteCount > 0;
-    final hasVerified = progress.verifiedNoteCount > 0;
-    final hasSourceDeleted = progress.sourceDeletedNoteCount > 0;
+    final hasImported = progress.importCompleted;
+    final hasVerified = progress.verificationCompleted;
+    final hasSourceDeleted = progress.sourceDeletionCompleted;
 
     return Card(
       key: const Key('evernote-migration-progress-panel'),

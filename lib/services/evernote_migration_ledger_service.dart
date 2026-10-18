@@ -208,6 +208,15 @@ class EvernoteMigrationProgress {
     );
   }
 
+  bool get importCompleted =>
+      sourceNoteCount > 0 && importedNoteCount == sourceNoteCount;
+
+  bool get verificationCompleted =>
+      importCompleted && verifiedNoteCount == sourceNoteCount;
+
+  bool get sourceDeletionCompleted =>
+      verificationCompleted && sourceDeletedNoteCount == sourceNoteCount;
+
   double get overallFraction {
     if (sourceNoteCount == 0) return 0;
     final denominator = sourceNoteCount * 4;
