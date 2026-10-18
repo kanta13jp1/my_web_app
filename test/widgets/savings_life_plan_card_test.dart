@@ -135,7 +135,9 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(0), '400000');
     await tester.enterText(find.byType(TextFormField).at(2), '50000');
     await tester.enterText(
-        find.byKey(const Key('savings-plan-income')), '400001');
+      find.byKey(const Key('savings-plan-income')),
+      '400001',
+    );
     await tester.ensureVisible(find.text('計画を保存・再計算'));
     await tester.tap(find.text('計画を保存・再計算'));
     await tester.pumpAndSettle();
