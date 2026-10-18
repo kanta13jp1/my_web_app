@@ -1,5 +1,6 @@
 name: Schedule watch diagnostics tests
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - scripts/schedule_resilience_watch.py
