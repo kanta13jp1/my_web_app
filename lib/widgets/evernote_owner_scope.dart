@@ -24,7 +24,6 @@ class EvernoteOwnerScope extends StatelessWidget {
       );
 }
 
-
 bool isEvernoteOwnerActive({
   required bool mounted,
   required String? currentOwnerId,
