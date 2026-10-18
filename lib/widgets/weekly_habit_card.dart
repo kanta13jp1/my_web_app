@@ -56,20 +56,24 @@ class _WeeklyHabitCardState extends State<WeeklyHabitCard>
   void _refreshDay() {
     final next = _japanToday();
     if (!mounted || next == _today) return;
-    setState(() {
-      if (_selected == _today) _selected = next;
-      _today = next;
-    });
+    setState(
+      () {
+        if (_selected == _today) _selected = next;
+        _today = next;
+      },
+    );
   }
 
   Future<void> _load() async {
     final generation = ++_loadGeneration;
-    setState(() {
-      _loading = true;
-      _store = null;
-      _data = WeeklyHabitState.initial();
-      _error = null;
-    });
+    setState(
+      () {
+        _loading = true;
+        _store = null;
+        _data = WeeklyHabitState.initial();
+        _error = null;
+      },
+    );
     try {
       final id = widget.userId;
       if (id != null) {
@@ -77,18 +81,21 @@ class _WeeklyHabitCardState extends State<WeeklyHabitCard>
         final store = WeeklyHabitStore(preferences, userId: id);
         final data = store.load();
         if (!mounted || generation != _loadGeneration) return;
-        setState(() {
-          _store = store;
-          _data = data;
-        });
+        setState(
+          () {
+            _store = store;
+            _data = data;
+          },
+        );
       }
     } catch (_) {
       if (mounted && generation == _loadGeneration) {
         setState(() => _error = '習慣の読込に失敗しました。元の保存内容は変更していません。');
       }
     } finally {
-      if (mounted && generation == _loadGeneration)
+      if (mounted && generation == _loadGeneration) {
         setState(() => _loading = false);
+      }
     }
   }
 
@@ -96,14 +103,17 @@ class _WeeklyHabitCardState extends State<WeeklyHabitCard>
     final store = _store;
     final generation = _loadGeneration;
     if (store == null || _saving || _selected.isAfter(_japanToday())) return;
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
+    setState(
+      () {
+        _saving = true;
+        _error = null;
+      },
+    );
     try {
       await store.save(next);
-      if (mounted && generation == _loadGeneration)
+      if (mounted && generation == _loadGeneration) {
         setState(() => _data = next);
+      }
     } catch (_) {
       if (mounted && generation == _loadGeneration) {
         setState(() => _error = '保存できませんでした。達成・設定は変更していません。');
@@ -125,42 +135,51 @@ class _WeeklyHabitCardState extends State<WeeklyHabitCard>
         content: SingleChildScrollView(
           child: Form(
             key: formKey,
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextFormField(
-                controller: title,
-                maxLength: 60,
-                decoration: const InputDecoration(labelText: '習慣'),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? '習慣を入力してください'
-                    : null,
-              ),
-              TextFormField(
-                controller: minimum,
-                maxLength: 200,
-                minLines: 2,
-                maxLines: 5,
-                decoration: const InputDecoration(labelText: '達成とする最低ライン'),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? '最低ラインを入力してください'
-                    : null,
-              ),
-            ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: title,
+                  maxLength: 60,
+                  decoration: const InputDecoration(labelText: '習慣'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? '習慣を入力してください'
+                      : null,
+                ),
+                TextFormField(
+                  controller: minimum,
+                  maxLength: 200,
+                  minLines: 2,
+                  maxLines: 5,
+                  decoration: const InputDecoration(labelText: '達成とする最低ライン'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? '最低ラインを入力してください'
+                      : null,
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
           FilledButton(
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  Navigator.pop(
-                      context,
-                      WeeklyHabit(habit.weekday, title.text.trim(),
-                          minimum.text.trim()));
-                }
-              },
-              child: const Text('保存')),
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(
+                  context,
+                  WeeklyHabit(
+                    habit.weekday,
+                    title.text.trim(),
+                    minimum.text.trim(),
+                  ),
+                );
+              }
+            },
+            child: const Text('保存'),
+          ),
         ],
       ),
     );
@@ -204,88 +223,103 @@ class _WeeklyHabitCardState extends State<WeeklyHabitCard>
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('寝る前の曜日習慣', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          const Text('最低ラインで達成。未達を翌日に上乗せせず、睡眠を削らない。'),
-          const Text('洗い物・入浴は普段も必要に応じて行い、木・金は特に溜めない日。'),
-          const SizedBox(height: 8),
-          const Text('このアカウントの端末・ブラウザー内に保存（端末間同期なし）。ブラウザーデータを削除すると消えます。'),
-          if (widget.userId == null) const Text('記録にはログインしてください。現在は初期設定の見本です。'),
-          if (_loading) const LinearProgressIndicator(),
-          if (_error != null) ...[
-            Text(_error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            TextButton(
-                onPressed: _saving ? null : _load, child: const Text('再読込')),
-          ],
-          Wrap(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('寝る前の曜日習慣', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            const Text('最低ラインで達成。未達を翌日に上乗せせず、睡眠を削らない。'),
+            const Text('洗い物・入浴は普段も必要に応じて行い、木・金は特に溜めない日。'),
+            const SizedBox(height: 8),
+            const Text('このアカウントの端末・ブラウザー内に保存（端末間同期なし）。ブラウザーデータを削除すると消えます。'),
+            if (widget.userId == null)
+              const Text('記録にはログインしてください。現在は初期設定の見本です。'),
+            if (_loading) const LinearProgressIndicator(),
+            if (_error != null) ...[
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              TextButton(
+                onPressed: _saving ? null : _load,
+                child: const Text('再読込'),
+              ),
+            ],
+            Wrap(
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                    '$dateKey（${weekdays[_selected.weekday - 1]}）日本時間${_selected == _today ? '・今日' : '・過去の日'}'),
+                  '$dateKey（${weekdays[_selected.weekday - 1]}）日本時間${_selected == _today ? '・今日' : '・過去の日'}',
+                ),
                 TextButton(
-                    onPressed: _loading || _saving ? null : _chooseDate,
-                    child: const Text('日付を選ぶ')),
+                  onPressed: _loading || _saving ? null : _chooseDate,
+                  child: const Text('日付を選ぶ'),
+                ),
                 TextButton(
-                    onPressed: _saving
-                        ? null
-                        : () {
-                            _refreshDay();
-                            setState(() => _selected = _today);
-                          },
-                    child: const Text('今日へ')),
-              ]),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(completion?.title ?? habit.title),
-            subtitle: Text(completion?.minimum ?? habit.minimum),
-            value: completion != null,
-            onChanged: canWrite
-                ? (value) =>
-                    _save(_data.withCompleted(_selected, value ?? false))
-                : null,
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
-          if (_saving) const Text('保存中…'),
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            title: const Text('曜日ごとの設定'),
-            children: [
-              for (final item in _data.habits)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('${weekdays[item.weekday - 1]}：${item.title}'),
-                  subtitle: Text(item.minimum),
-                  trailing: IconButton(
+                  onPressed: _saving
+                      ? null
+                      : () {
+                          _refreshDay();
+                          setState(() => _selected = _today);
+                        },
+                  child: const Text('今日へ'),
+                ),
+              ],
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(completion?.title ?? habit.title),
+              subtitle: Text(completion?.minimum ?? habit.minimum),
+              value: completion != null,
+              onChanged: canWrite
+                  ? (value) =>
+                      _save(_data.withCompleted(_selected, value ?? false))
+                  : null,
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+            if (_saving) const Text('保存中…'),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('曜日ごとの設定'),
+              children: [
+                for (final item in _data.habits)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('${weekdays[item.weekday - 1]}：${item.title}'),
+                    subtitle: Text(item.minimum),
+                    trailing: IconButton(
                       tooltip: '${weekdays[item.weekday - 1]}曜日を編集',
                       icon: const Icon(Icons.edit_outlined),
-                      onPressed: canWrite ? () => _edit(item) : null),
-                ),
-            ],
-          ),
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            title: Text('達成履歴（${history.length}日）'),
-            children: [
-              if (history.isEmpty)
-                const ListTile(title: Text('達成記録はまだありません。自動で達成にはなりません。')),
-              for (final date in history.take(30))
-                ListTile(
-                  title: Text('$date：${_data.completions[date]!.title}'),
-                  subtitle: Text(_data.completions[date]!.minimum),
-                  onTap: _saving ||
-                          date.compareTo(WeeklyHabitState.dateKey(_today)) > 0
-                      ? null
-                      : () => setState(() =>
-                          _selected = DateTime.parse('${date}T00:00:00Z')),
-                ),
-              if (history.length > 30)
-                const Text('直近30件を表示。以前の記録は「日付を選ぶ」から確認できます。'),
-            ],
-          ),
-        ]),
+                      onPressed: canWrite ? () => _edit(item) : null,
+                    ),
+                  ),
+              ],
+            ),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text('達成履歴（${history.length}日）'),
+              children: [
+                if (history.isEmpty)
+                  const ListTile(title: Text('達成記録はまだありません。自動で達成にはなりません。')),
+                for (final date in history.take(30))
+                  ListTile(
+                    title: Text('$date：${_data.completions[date]!.title}'),
+                    subtitle: Text(_data.completions[date]!.minimum),
+                    onTap: _saving ||
+                            date.compareTo(WeeklyHabitState.dateKey(_today)) > 0
+                        ? null
+                        : () => setState(
+                              () => _selected =
+                                  DateTime.parse('${date}T00:00:00Z'),
+                            ),
+                  ),
+                if (history.length > 30)
+                  const Text('直近30件を表示。以前の記録は「日付を選ぶ」から確認できます。'),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

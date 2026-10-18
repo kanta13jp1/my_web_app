@@ -36,7 +36,7 @@ class WeeklyHabitState {
   WeeklyHabitState({
     required this.habits,
     required this.completions,
-  });
+  },);
 
   final List<WeeklyHabit> habits;
   final Map<String, WeeklyHabitCompletion> completions;
