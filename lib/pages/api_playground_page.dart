@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ApiPlaygroundPage extends StatefulWidget {
   const ApiPlaygroundPage({super.key});
@@ -11,7 +10,6 @@ class ApiPlaygroundPage extends StatefulWidget {
 }
 
 class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
-  String? _apiKey;
   List<Map<String, dynamic>> _models = [];
   Map<String, dynamic>? _selectedModel;
   String? _selectedMethod;
@@ -22,52 +20,35 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
   @override
   void initState() {
     super.initState();
-    _loadApiKeyAndFetchModels();
+    _fetchModels();
   }
 
-  Future<void> _loadApiKeyAndFetchModels() async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = prefs.getString('gemini_api_key');
-
-    if (key == null) {
-      setState(() => _responseBody = 'APIキーが設定されていません。');
-      return;
-    }
-
-    setState(() {
-      _apiKey = key;
-      _isLoading = true;
-    });
+  Future<void> _fetchModels() async {
+    setState(() => _isLoading = true);
 
     try {
-      final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models?key=$key',
+      final response = await Supabase.instance.client.functions.invoke(
+        'ai-hub',
+        body: const {'action': 'provider.models'},
       );
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data =
-            json.decode(response.body) as Map<String, dynamic>;
-        final models = (data['models'] as List<dynamic>? ?? const <dynamic>[])
-            .whereType<Map>()
-            .map((model) => Map<String, dynamic>.from(model))
-            .toList();
-        setState(() {
-          _models = models;
-          // デフォルトでリストの先頭を選択（もしあれば）
-          if (_models.isNotEmpty) {
-            _onModelSelected(_models.first);
-          }
-        });
-      } else {
-        setState(
-          () => _responseBody =
-              'モデル一覧の取得に失敗しました: ${response.statusCode}\n${response.body}',
-        );
+      final data = Map<String, dynamic>.from(response.data as Map);
+      final models = (data['models'] as List<dynamic>? ?? const <dynamic>[])
+          .whereType<Map>()
+          .map((model) => Map<String, dynamic>.from(model))
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _models = models;
+        if (_models.isEmpty) {
+          _responseBody = '利用可能なサーバー管理モデルがありません。';
+        }
+      });
+      if (_models.isNotEmpty) {
+        _onModelSelected(_models.first);
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _responseBody = 'エラーが発生しました: $e');
+      setState(() => _responseBody = 'モデル一覧の取得に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -97,7 +78,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
   }
 
   Future<void> _executeApi() async {
-    if (_apiKey == null || _selectedModel == null || _selectedMethod == null) {
+    if (_selectedModel == null || _selectedMethod == null) {
       return;
     }
 
@@ -108,78 +89,24 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
 
     try {
       final modelName = (_selectedModel!['name'] ?? '').toString();
+      final provider = (_selectedModel!['provider'] ?? '').toString();
       final method = _selectedMethod!;
-
-      // エンドポイントの構築
-      // 例: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=...
-      final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/$modelName:$method?key=$_apiKey',
-      );
-
-      // メソッドに応じたリクエストボディの作成
-      Map<String, dynamic> body;
       final text = _inputController.text;
-
-      switch (method) {
-        case 'generateContent':
-        case 'countTokens':
-          // 一般的なチャットモデル用
-          body = {
-            'contents': [
-              {
-                'parts': [
-                  {'text': text},
-                ],
-              }
-            ],
-          };
-          break;
-        case 'embedContent':
-          // 新しいEmbeddingモデル用
-          body = {
-            'content': {
-              'parts': [
-                {'text': text},
-              ],
-            },
-          };
-          break;
-        case 'embedText':
-          // レガシーなEmbeddingモデル用 (PaLM系など)
-          body = {'text': text};
-          break;
-        default:
-          // サポート外または汎用的なメソッドの場合、単純にtextを送ってみる（エラーになる可能性あり）
-          body = {
-            'contents': [
-              {
-                'parts': [
-                  {'text': text},
-                ],
-              }
-            ],
-          };
-      }
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(body),
+      final body = method == 'embedContent'
+          ? <String, dynamic>{'action': 'provider.embed', 'text': text}
+          : <String, dynamic>{
+              'action': 'provider.generate',
+              'provider': provider,
+              'model': modelName,
+              'message': text,
+            };
+      final response = await Supabase.instance.client.functions.invoke(
+        'ai-hub',
+        body: body,
       );
-
-      // JSONを整形して表示
-      try {
-        final decoded = json.decode(response.body);
-        const encoder = JsonEncoder.withIndent('  ');
-        setState(() {
-          _responseBody = encoder.convert(decoded);
-        });
-      } catch (_) {
-        if (!mounted) return;
-        setState(() {
-          _responseBody = response.body;
-        });
-      }
+      if (!mounted) return;
+      const encoder = JsonEncoder.withIndent('  ');
+      setState(() => _responseBody = encoder.convert(response.data));
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -206,6 +133,16 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Text(
+                  'APIキーはSupabase Edge FunctionのSecretで管理され、ブラウザーには送信されません。',
+                  style: TextStyle(height: 1.5),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             // モデル選択ドロップダウン
             if (_models.isNotEmpty)
               DropdownButtonFormField<String>(
