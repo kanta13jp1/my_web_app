@@ -33,8 +33,10 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y blender xvfb
           python3 -m venv /tmp/blender-lab-venv
-          /tmp/blender-lab-venv/bin/pip install "git+https://github.com/ahujasid/mcp-for-blender.git@$BLENDER_UPSTREAM_SHA"
-          curl -fL "https://raw.githubusercontent.com/ahujasid/mcp-for-blender/$BLENDER_UPSTREAM_SHA/addon.py" -o /tmp/blender-lab-addon.py
+          /tmp/blender-lab-venv/bin/pip download --no-deps --only-binary=:all: mcp-for-blender==2.1.9 -d /tmp/blender-wheel
+          echo 'a5cbc6cf316fa7433566eb505a0c26ca22e28c10083bd1b09a23d9e357821ccc  /tmp/blender-wheel/mcp_for_blender-2.1.9-py3-none-any.whl' | sha256sum -c -
+          /tmp/blender-lab-venv/bin/pip install /tmp/blender-wheel/*.whl
+          /tmp/blender-lab-venv/bin/python -c "import pathlib,blender_mcp; p=pathlib.Path(blender_mcp.__file__).parent; pathlib.Path('/tmp/blender-lab-addon.py').write_bytes((p/'bundled/addon.py').read_bytes())"
       - name: Exercise upstream MCP against real Blender
         env:
           BLENDER_ADDON_PATH: /tmp/blender-lab-addon.py
