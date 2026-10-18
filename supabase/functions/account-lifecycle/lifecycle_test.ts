@@ -8,6 +8,7 @@ import {
   ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS,
   blockingDependencyCount,
   importedHistoryBlockerCount,
+  storageInventoryExhausted,
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
@@ -163,4 +164,24 @@ Deno.test("missing or invalid history counts fail closed before cleanup", () => 
       "imported_history_count_unavailable",
     );
   }
+});
+
+
+Deno.test("Storage cleanup requires an empty page, not a short server-capped page", () => {
+  assertFalse(storageInventoryExhausted(50));
+  assertFalse(storageInventoryExhausted(1000));
+  assertEquals(storageInventoryExhausted(0), true);
+  let remaining = 205;
+  let removed = 0;
+  let requests = 0;
+  while (requests < 10) {
+    const pageSize = Math.min(50, remaining);
+    requests += 1;
+    if (storageInventoryExhausted(pageSize)) break;
+    removed += pageSize;
+    remaining -= pageSize;
+  }
+  assertEquals(removed, 205);
+  assertEquals(remaining, 0);
+  assertEquals(requests, 6);
 });

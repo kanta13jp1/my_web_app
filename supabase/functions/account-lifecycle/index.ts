@@ -12,6 +12,7 @@ import {
   bearerToken,
   blockingDependencyCount,
   importedHistoryBlockerCount,
+  storageInventoryExhausted,
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
@@ -515,7 +516,7 @@ async function deleteOwnedStorageObjects(
       );
     }
     const objects = Array.isArray(data) ? data as JsonRecord[] : [];
-    if (objects.length === 0) return deleted;
+    if (storageInventoryExhausted(objects.length)) return deleted;
 
     const byBucket = new Map<string, string[]>();
     for (const object of objects) {
@@ -536,7 +537,7 @@ async function deleteOwnedStorageObjects(
       }
       deleted += paths.length;
     }
-    if (objects.length < 1000) return deleted;
+    // A server row cap may return a short page; re-query until empty.
   }
   throw new StorageDeletionError(
     "storage deletion failed: batch limit exceeded",

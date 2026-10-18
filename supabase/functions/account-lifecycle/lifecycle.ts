@@ -177,3 +177,9 @@ export function importedHistoryBlockerCount(count: unknown): number {
   }
   return count;
 }
+
+
+// SQL's requested limit does not guarantee the REST server's returned page size.
+export function storageInventoryExhausted(returnedRows: number): boolean {
+  return returnedRows === 0;
+}
