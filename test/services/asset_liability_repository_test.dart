@@ -603,9 +603,9 @@ void main() {
         expect(localAfter.paidAccountNames, contains('yokohama_bank'));
         expect(
           remote.monthState('2026-05')?.paidAccountNames,
-          contains('mobit'),
+          isNot(contains('mobit')),
         );
-        expect(remote.calls, contains('saveMonth:user-1:2026-05'));
+        expect(remote.calls, isNot(contains('saveMonth:user-1:2026-05')));
       },
     );
 
@@ -680,9 +680,9 @@ void main() {
         );
         expect(
           remote.monthState('2026-05')?.billingConfirmedAccountIds,
-          contains('mobit'),
+          isNot(contains('mobit')),
         );
-        expect(remote.calls, contains('saveMonth:user-1:2026-05'));
+        expect(remote.calls, isNot(contains('saveMonth:user-1:2026-05')));
       },
     );
 
@@ -714,6 +714,168 @@ void main() {
 
       // 同一キーの衝突は this(ローカル) を優先する。
       expect(merged.paymentOverrides['mobit'], 70000);
+    });
+
+    test('a read started before a save cannot erase the new paid flag',
+        () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _DelayedMonthReadRemoteStore();
+      final month = DateTime(2026, 9);
+      remote.seedMonth(month, const AssetLiabilityMonthlyState());
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final read = repository.loadMonth(month);
+      await remote.started.future;
+      final save = repository.saveMonth(
+        month: month,
+        state: const AssetLiabilityMonthlyState(paidAccountNames: {'rent'}),
+      );
+      remote.release.complete();
+      await read;
+      await save;
+      expect((await local.loadMonth(month)).paidAccountNames, {'rent'});
+      expect(remote.monthState('2026-09')!.paidAccountNames, {'rent'});
+    });
+
+    test('a corrupt journal retains latest local edits and blocks upload',
+        () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'asset_monthly_state_pending_base_v1:user-1:2026-09',
+        'broken',
+      );
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final errors = <Object>[];
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+        onSyncError: (error, _) => errors.add(error),
+      );
+      final month = DateTime(2026, 9);
+      await repository.saveMonth(
+        month: month,
+        state: const AssetLiabilityMonthlyState(paidAccountNames: {'rent'}),
+      );
+      expect((await local.loadMonth(month)).paidAccountNames, {'rent'});
+      expect(remote.calls, isNot(contains('saveMonth:user-1:2026-09')));
+      expect(errors, hasLength(1));
+    });
+
+    test('a pending offline edit survives repository recreation', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final month = DateTime(2026, 9);
+      remote.seedMonth(
+        month,
+        const AssetLiabilityMonthlyState(
+          paidAccountNames: {'rent'},
+        ),
+      );
+      FeatureFlaggedAssetLiabilityRepository createRepository() =>
+          FeatureFlaggedAssetLiabilityRepository(
+            localRepository: local,
+            remoteStore: remote,
+            syncEnabled: true,
+            remoteWritesEnabled: true,
+            userIdProvider: () => 'user-1',
+          );
+      final first = createRepository();
+      await first.loadMonth(month);
+      remote.failSaves = true;
+      const edited = AssetLiabilityMonthlyState(
+        paidAccountNames: {'rent'},
+        paymentOverrides: {'other': 1200},
+      );
+      await first.saveMonth(month: month, state: edited);
+      remote.seedMonth(
+        month,
+        AssetLiabilityMonthlyState(
+          paidAccountNames: const {'rent', 'paypay'},
+          updatedAt: DateTime.utc(2026, 10, 1),
+        ),
+      );
+      remote.failSaves = false;
+      final second = createRepository();
+      expect((await second.loadMonth(month)).paymentOverrides['other'], 1200);
+      await second.saveMonth(month: month, state: edited);
+      expect(remote.monthState('2026-09')!.paymentOverrides['other'], 1200);
+      expect(
+        remote.monthState('2026-09')!.paidAccountNames,
+        {'rent', 'paypay'},
+      );
+    });
+
+    test('newer empty remote month propagates an explicit last uncheck',
+        () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final month = DateTime(2026, 9);
+      await local.saveMonth(
+        month: month,
+        state: AssetLiabilityMonthlyState(
+          paidAccountNames: const {'rent'},
+          updatedAt: DateTime.utc(2026, 9, 25),
+        ),
+      );
+      remote.seedMonth(
+        month,
+        AssetLiabilityMonthlyState(
+          updatedAt: DateTime.utc(2026, 10, 1),
+        ),
+      );
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      expect((await repository.loadMonth(month)).paidAccountNames, isEmpty);
+      expect(remote.calls, isNot(contains('saveMonth:user-1:2026-09')));
+    });
+
+    test('saving another field preserves remote paid flags and amounts',
+        () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final month = DateTime(2026, 9);
+      remote.seedMonth(
+        month,
+        const AssetLiabilityMonthlyState(
+          paidAccountNames: {'rent', 'famipay', 'paypay'},
+          actualPaymentAmounts: {
+            'rent': 63000,
+            'famipay': 11000,
+            'paypay': 17080,
+          },
+        ),
+      );
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      await repository.saveMonth(
+        month: month,
+        state: const AssetLiabilityMonthlyState(
+          paymentOverrides: {'other': 1200},
+        ),
+      );
+      final saved = remote.monthState('2026-09')!;
+      expect(saved.paidAccountNames, {'rent', 'famipay', 'paypay'});
+      expect(saved.actualPaymentAmounts['paypay'], 17080);
+      expect(saved.paymentOverrides['other'], 1200);
     });
 
     test(
@@ -1377,7 +1539,7 @@ void main() {
       },
     );
 
-    test('uploads local monthly state when remote is empty', () async {
+    test('missing remote month stays read-only until explicit sync', () async {
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
       final repository = FeatureFlaggedAssetLiabilityRepository(
@@ -1393,6 +1555,13 @@ void main() {
       final restored = await repository.loadMonth(month);
 
       expect(restored.paymentOverrides['mobit'], 70000);
+      expect(remote.monthState('2026-05'), isNull);
+      expect(
+        remote.calls.where((call) => call.startsWith('saveMonth:')),
+        isEmpty,
+      );
+
+      await repository.syncMonth(month);
       expect(remote.monthState('2026-05')?.paymentOverrides['mobit'], 70000);
     });
 
@@ -1860,6 +2029,7 @@ void main() {
       // transfer_tasks を取りこぼし、リモートへ一切書かれず端末間で同期されなかった
       // (= paid_account_ids と同型の潜在バグ)。
       final state = AssetLiabilityMonthlyState(
+        confirmedPaymentDays: const <String, double>{'aupay_card': 13},
         paidAccountNames: const <String>{'kddi_provider'},
         billingConfirmedAccountIds: const <String>{'mobit', 'paypay_card'},
         transferTasks: <AssetLiabilityTransferTask>[
@@ -1899,6 +2069,7 @@ void main() {
       // 取りこぼしていた 2 キーが monthly_states payload に含まれること。
       expect(payload.containsKey('billing_confirmed_account_ids'), isTrue);
       expect(payload.containsKey('transfer_tasks'), isTrue);
+      expect(payload['confirmed_payment_days'], {'aupay_card': 13});
       expect(
         payload['billing_confirmed_account_ids'],
         containsAll(<String>['mobit', 'paypay_card']),
@@ -1916,6 +2087,7 @@ void main() {
       expect(
         payload.keys.toSet(),
         <String>{
+          'confirmed_payment_days',
           'payment_overrides',
           'actual_payment_amounts',
           'payment_difference_reasons',
@@ -1936,6 +2108,7 @@ void main() {
         'save split and load merge round-trip preserves billing confirmations '
         'and transfer tasks across the two tables', () {
       final state = AssetLiabilityMonthlyState(
+        confirmedPaymentDays: const <String, double>{'aupay_card': 13},
         billingConfirmedAccountIds: const <String>{'mobit'},
         transferTasks: <AssetLiabilityTransferTask>[
           AssetLiabilityTransferTask(
@@ -1980,6 +2153,7 @@ void main() {
         mergedPayload,
       ).toState();
 
+      expect(restored.confirmedPaymentDays, {'aupay_card': 13});
       expect(restored.billingConfirmedAccountIds, contains('mobit'));
       expect(restored.transferTasks.single.id, 'transfer_bank_topup');
       expect(restored.transferTasks.single.amount, 10000);
@@ -2172,6 +2346,26 @@ class _FakeAssetLiabilityRepository extends AssetLiabilityRepository {
     _snapshots.removeWhere((current) => current.monthKey == snapshot.monthKey);
     _snapshots.add(snapshot);
     _snapshots.sort((a, b) => a.monthKey.compareTo(b.monthKey));
+  }
+}
+
+class _DelayedMonthReadRemoteStore extends _RecordingAssetLiabilityRemoteStore {
+  final started = Completer<void>();
+  final release = Completer<void>();
+  bool _first = true;
+
+  @override
+  Future<AssetLiabilityMonthlyState?> loadMonth({
+    required String userId,
+    required DateTime month,
+  }) async {
+    final snapshot = await super.loadMonth(userId: userId, month: month);
+    if (_first) {
+      _first = false;
+      started.complete();
+      await release.future;
+    }
+    return snapshot;
   }
 }
 

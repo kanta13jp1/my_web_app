@@ -78,6 +78,8 @@ import {
   buildWbsReschedulePlan,
 } from "./wbs_reschedule_realistic.ts";
 
+import { handleReading, ReadingError, readingActions } from "./reading.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -9615,6 +9617,10 @@ ${reportText ? `> ${reportText}` : ""}`,
     const userId = await getUserId(req);
     if (!userId) return json({ error: "Unauthorized" }, 401);
 
+    if (readingActions.has(action)) {
+      return json(await handleReading(admin, userId, action, body));
+    }
+
     switch (action) {
       case "mcp_file.connectors": {
         const connectors = connectorsAvailableToUser(
@@ -9932,35 +9938,6 @@ ${reportText ? `> ${reportText}` : ""}`,
       }
       case "contact.delete": {
         await deleteItem(admin, "contact", userId, String(body.id ?? ""));
-        return json({ success: true });
-      }
-
-      // ── Reading List ────────────────────────────────────────────────────────
-      case "reading.list":
-        return json({
-          success: true,
-          items: await listItems(admin, "reading", userId),
-        });
-      case "reading.add": {
-        const item = await addItem(admin, "reading", userId, {
-          url: body.url,
-          title: body.title,
-          author: body.author ?? "",
-          status: "unread",
-        });
-        return json({ success: true, item });
-      }
-      case "reading.mark_read": {
-        const { error } = await admin.from("hub_data")
-          .update({
-            metadata: {
-              user_id: userId,
-              status: "read",
-              read_at: new Date().toISOString(),
-            },
-          })
-          .eq("id", String(body.id ?? "")).eq("source", "reading");
-        if (error) throw new Error(error.message);
         return json({ success: true });
       }
 
@@ -10834,6 +10811,9 @@ ${reportText ? `> ${reportText}` : ""}`,
             "contact.delete",
             "reading.list",
             "reading.add",
+            "reading.save",
+            "reading.authors",
+            "reading.author.add",
             "reading.mark_read",
             "tag.list",
             "tag.create",
@@ -10931,7 +10911,7 @@ ${reportText ? `> ${reportText}` : ""}`,
         }, 400);
     }
   } catch (e) {
-    if (e instanceof ToolsHubRequestError) {
+    if (e instanceof ReadingError || e instanceof ToolsHubRequestError) {
       return json({ error: e.message }, e.status);
     }
     return json({ error: String(e) }, 500);

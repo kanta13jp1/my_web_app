@@ -33,6 +33,8 @@
   .checks { display: flex; gap: 18px; margin: 12px 0; flex-wrap: wrap; font-size: 14px; }
   .checks label { display: inline-flex; gap: 6px; align-items: center; margin: 0; color: var(--text); }
   #status { font-size: 13px; margin-top: 10px; color: var(--muted); word-break: break-all; }
+  #input-check { padding: 10px; border: 1px solid var(--border); border-radius: 6px; overflow-wrap: anywhere; }
+  #input-check[data-kind=error] { color: var(--error); }
   #status[data-kind=error] { color: var(--error); }
   #status[data-kind=ok] { color: var(--ok); }
   progress { width: 100%; margin-top: 8px; }
@@ -140,6 +142,8 @@
       <label><input id="calibrated" type="checkbox" checked> <span data-i18n="opt.calibrated"></span></label>
       <label><input id="debias" type="checkbox"> <span data-i18n="opt.debias"></span></label>
     </div>
+    <p class="note" data-i18n="input.limits"></p>
+    <p id="input-check" role="status" aria-live="polite" aria-atomic="true"></p>
     <button id="run" disabled data-i18n="run"></button><span id="run-status"></span>
   </section>
 

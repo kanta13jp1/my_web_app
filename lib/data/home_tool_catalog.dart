@@ -3,6 +3,7 @@ import 'dart:async';
 import '../pages/aero_lab_page.dart';
 import '../pages/sound_bloom_page.dart';
 import '../pages/lumen_path_page.dart';
+import '../pages/kinetic_forge_page.dart';
 import '../pages/flow_city_page.dart';
 
 import 'package:flutter/material.dart';
@@ -1933,6 +1934,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
           Navigator.of(context).pushNamed('/proactive-form-check'),
     ),
     HomeToolEntry(
+      id: 'echo-pump',
+      sectionId: 'personal',
+      title: '残響ポンプ室',
+      subtitle: '電源と音で敵を誘導する、短い脱出ホラーの見取り図版',
+      icon: Icons.flashlight_on,
+      color: const Color(0xFF26796C),
+      keywords: const <String>['ゲーム', 'ホラー', '脱出', 'ポンプ', '残響', 'echo'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/echo-pump'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',
@@ -2418,6 +2429,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF287D70),
       keywords: const <String>['交通', '信号', '比較', 'FLOW CITY', 'Astra'],
       onOpen: (context) => _pushPage(context, const FlowCityPage()),
+    ),
+    HomeToolEntry(
+      id: 'kinetic-forge',
+      sectionId: 'growth',
+      title: '描画実験室 · KINETIC FORGE',
+      subtitle: '坂を描き、球を放って、失敗からコースを改善する',
+      icon: Icons.route_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['描画', 'コース', '実験', 'KINETIC FORGE', 'Astra'],
+      onOpen: (context) => _pushPage(context, const KineticForgePage()),
     ),
     HomeToolEntry(
       id: 'lumen-path',

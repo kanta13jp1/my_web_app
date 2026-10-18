@@ -8,6 +8,7 @@ import '../models/user_profile.dart';
 import 'ai_hub_chat_service.dart';
 import 'asset_management_ai_provider_router.dart';
 import 'asset_management_insight_service.dart';
+import 'asset_payment_status_summary.dart';
 
 class AssetManagementAiSummaryFeatureFlag {
   static const String dartDefineName = 'ASSET_MANAGEMENT_AI_SUMMARY_ENABLED';
@@ -387,7 +388,7 @@ class AssetManagementAiSummaryService {
   Map<String, dynamic> buildPayload(AssetManagementInsightReport report) {
     return <String, dynamic>{
       // Invalidate saved summaries when the response policy changes.
-      'response_policy_version': 3,
+      'response_policy_version': 4,
       'user_profile': _profileToDetailedJson(report.userProfile),
       'workbook': _workbookToDetailedJson(report.workbook),
       // Contract lifecycle is not a debt balance or a confirmed invoice.
@@ -518,6 +519,7 @@ class AssetManagementAiSummaryService {
       if (critical > 3) 'ほか${critical - 3}件は下の要対応項目を確認してください。',
       emergency,
       movement,
+      assetPaymentStatusPrompt(report.workbook),
       '金額はDartルールで計算済みです。AIは要約のみを行います。',
     ].join(' ');
   }
@@ -541,7 +543,7 @@ class AssetManagementAiSummaryService {
       '',
       if (previousAnalyses.isNotEmpty) ...[
         '## これまでのAI分析履歴（過去スナップショットの数値のみ・現在の事実ではない）',
-        jsonEncode(_previousAnalysesToJson(previousAnalyses)),
+        '履歴データは上記の詳細ペイロード内 previous_ai_analyses を参照してください。',
         '',
       ],
       '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。今月未払い合計（monthly_unpaid_payment_total）に言及する際は、AIに渡す詳細ペイロードの unpaid_direct_payments を参照し、各項目の名称・支払日・金額の内訳を箇条書きで具体的に示してください（合計金額だけで終わらせず、何が未払いなのかを明示すること）。金額はDart計算値を正として扱い、追加計算は概算と明記してください。敬意のある具体的な説明にしてください。確認済みの事実・予定・推定・未確認を区別し、未確認事項は確認方法を示してください。生年月日・性格・運勢による財務判断や、趣味・人格への侮辱を禁止します。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
@@ -1468,6 +1470,43 @@ class AssetManagementAiSummaryService {
     validateAmount('現金同等資産', workbook.cashLikeTotal);
     validateAmount('今月支払予定合計', workbook.monthlyScheduledPaymentTotal);
     validateAmount('今月未払い合計', workbook.monthlyUnpaidPaymentTotal);
+
+    final paymentGroups = assetPaymentStatusGroups(workbook);
+    final paymentSegments = text.split(RegExp(r'[\r\n。]+'));
+    for (final entry in paymentGroups.entries) {
+      final expectedTotal = entry.value
+          .fold<double>(
+            0,
+            (sum, row) => sum + row.paymentAmount,
+          )
+          .round();
+      for (final segment in paymentSegments) {
+        if (!segment.contains(entry.key)) continue;
+        if (RegExp(r'期限超過(?:では|で|は)(?:ない|ありません)|期限超過に含め(?:ない|ません)')
+            .hasMatch(segment)) {
+          continue;
+        }
+        final count = RegExp(r'([0-9]+)件').firstMatch(segment);
+        if (count != null && int.parse(count.group(1)!) != entry.value.length) {
+          errors.add('${entry.key}の件数が確定内訳と不一致');
+        }
+        final total =
+            RegExp(r'合計[^0-9]{0,12}([0-9][0-9,]*)\s*円').firstMatch(segment);
+        if (total != null && _parseYen('${total.group(1)}円') != expectedTotal) {
+          errors.add('${entry.key}の合計が確定内訳と不一致');
+        }
+      }
+    }
+    for (final row in paymentGroups['本日期日']!) {
+      for (final segment in paymentSegments) {
+        if (segment.contains(row.accountName) &&
+            segment.contains('期限超過') &&
+            !RegExp(r'期限超過(?:では|で|は)(?:ない|ありません)|期限超過に含め(?:ない|ません)')
+                .hasMatch(segment)) {
+          errors.add('${row.accountName}は本日期日で期限超過ではありません');
+        }
+      }
+    }
 
     const unpaidLanguage = <String>[
       '未払い',
