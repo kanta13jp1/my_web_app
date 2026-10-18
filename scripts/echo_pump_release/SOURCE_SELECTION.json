@@ -1,0 +1,21 @@
+{
+  "pr": 5864,
+  "base": "7735b196fdb528ad0ac86f02c47768a6c92fab66",
+  "merge": "9f28409baba27b1c318410a06b8f733bba50f8ab",
+  "selected_files": [
+    ".github/workflows/echo-pump-prototype.yml",
+    "lib/pages/echo_pump_game_page.dart",
+    "lib/services/echo_pump_motion_stub.dart",
+    "lib/services/echo_pump_motion_web.dart",
+    "lib/widgets/echo_pump_door_transition.dart",
+    "scripts/echo_pump_dev_commands.json",
+    "test/e2e/echo_pump.spec.ts",
+    "test/pages/echo_pump_game_page_test.dart"
+  ],
+  "runtime_sha256": {
+    "lib/pages/echo_pump_game_page.dart": "d6f16e090eafd77ef993f59c27ade0f163de0e37d0cc3dc277bf1b2622e7aafb",
+    "lib/services/echo_pump_motion_stub.dart": "d2354cae5ecd9f00a8a81ea39f7770710258f64f7bb7e76f9e490301555fd571",
+    "lib/services/echo_pump_motion_web.dart": "a50b5f2db10d01aca8c798197a58c29841be87179e7c8584ee19517afa7696b4",
+    "lib/widgets/echo_pump_door_transition.dart": "f429635ff22fc17132744804a78c87caac8f418dac3a14844706a1cddf37bc09"
+  }
+}
