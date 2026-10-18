@@ -132,6 +132,7 @@ class _ImportPageState extends State<_ImportOwnerPage> {
   }
 
   Future<void> _loadEvernoteMigrationLedger() async {
+    if (!mounted) return;
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
     final generation = _ledgerRefreshGeneration.begin(user.id);
@@ -240,6 +241,13 @@ class _ImportPageState extends State<_ImportOwnerPage> {
         type: FileType.custom,
         allowedExtensions: const <String>['enex', 'xml'],
       );
+      if (!isEvernoteOwnerActive(
+        mounted: mounted,
+        currentOwnerId: Supabase.instance.client.auth.currentUser?.id,
+        expectedOwnerId: user.id,
+      )) {
+        return;
+      }
       if (selection == null || selection.files.isEmpty) return;
       final file = selection.files.single;
       final source = file.readStream;
@@ -261,6 +269,13 @@ class _ImportPageState extends State<_ImportOwnerPage> {
       final archiveHash = staged.preview.sourceExportSha256;
       if (archiveHash == null) {
         throw StateError('履歴ENEXのSHA-256を確認できませんでした。');
+      }
+      if (!isEvernoteOwnerActive(
+        mounted: mounted,
+        currentOwnerId: Supabase.instance.client.auth.currentUser?.id,
+        expectedOwnerId: user.id,
+      )) {
+        return;
       }
       await _evernoteNoteHistoryMigrationService.migrateFromArchive(
         userId: user.id,

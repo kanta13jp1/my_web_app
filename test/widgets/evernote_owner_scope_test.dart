@@ -5,6 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/evernote_owner_scope.dart';
 
 void main() {
+  test('history work requires a mounted matching authenticated owner', () {
+    bool allowed(bool mounted, String? owner) => isEvernoteOwnerActive(
+          mounted: mounted,
+          currentOwnerId: owner,
+          expectedOwnerId: 'a',
+        );
+    expect(allowed(true, 'a'), isTrue);
+    expect(allowed(false, 'a'), isFalse);
+    expect(allowed(true, 'b'), isFalse);
+    expect(allowed(true, null), isFalse);
+  });
+
   testWidgets('owner switches discard cached rows, errors, and loading state',
       (tester) async {
     final owners = StreamController<String?>();
