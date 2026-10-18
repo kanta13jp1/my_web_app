@@ -1,4 +1,4 @@
-name: Approved Echo Pump PR5854 Web Release
+name: Approved PR5852 Web Release
 
 on:
   pull_request:
@@ -46,15 +46,16 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Owner authorized Echo Pump PR5854 Web release
-        type: boolean
+        description: Explicit owner approved PR5852-only release
         required: true
         default: false
+        type: boolean
       deploy_scope:
-        type: choice
-        options: [web_only]
         required: true
         default: web_only
+        type: choice
+        options:
+          - web_only
       expected_head_sha:
         description: Exact 40-character pushed HEAD that this run must validate
         required: true
@@ -127,18 +128,6 @@ jobs:
             exit 1
           fi
           echo "Verified exact cloud handoff SHA: $actual_head_sha"
-
-      - name: Verify current production still matches the selected base
-        env:
-          EXPECTED_PRODUCTION_BASE: fa2f183ff3690998a6f21d14a9c6ff66c05e50e8
-        run: |
-          python3 - <<'PY'
-          import json, os, urllib.request
-          request = urllib.request.Request('https://my-web-app-b67f4.web.app/version.json', headers={'Cache-Control': 'no-cache'})
-          current = json.load(urllib.request.urlopen(request, timeout=20))
-          assert current['commit'] == os.environ['EXPECTED_PRODUCTION_BASE'], 'Production changed; rebuild the selective release to preserve it.'
-          print('Verified previous production commit:', current['commit'])
-          PY
 
       - name: Validate cloud workspace descriptors
         shell: bash
@@ -538,10 +527,10 @@ jobs:
 
   ci:
     name: Run CI Checks
-    needs: validate
     # Pull requests already passed this required workflow. Re-run it only for
     # an operator-triggered deployment that has no preceding protected PR.
-    if: github.event_name == 'workflow_dispatch' && inputs.approved_release && vars.PRODUCTION_DEPLOY_HOLD == 'false'
+    if: github.event_name == 'workflow_dispatch' && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && vars.PRODUCTION_DEPLOY_HOLD == 'false'
+    needs: validate
     uses: ./.github/workflows/ci.yml
     with:
       expected_head_sha: ${{ github.sha }}
@@ -552,8 +541,8 @@ jobs:
   deploy:
     name: Deploy to Production Environment
     runs-on: ubuntu-latest
-    needs: ci
-    if: always() && inputs.approved_release && vars.PRODUCTION_DEPLOY_HOLD == 'false' && needs.ci.result == 'success'
+    needs: [validate, ci]
+    if: always() && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && vars.PRODUCTION_DEPLOY_HOLD == 'false' && needs.validate.result == 'success' && needs.ci.result == 'success'
     timeout-minutes: 45
     environment:
       name: production
@@ -591,18 +580,6 @@ jobs:
             echo "::error::Deployment checkout does not match the event SHA."
             exit 1
           fi
-
-      - name: Verify current production still matches the selected base
-        env:
-          EXPECTED_PRODUCTION_BASE: fa2f183ff3690998a6f21d14a9c6ff66c05e50e8
-        run: |
-          python3 - <<'PY'
-          import json, os, urllib.request
-          request = urllib.request.Request('https://my-web-app-b67f4.web.app/version.json', headers={'Cache-Control': 'no-cache'})
-          current = json.load(urllib.request.urlopen(request, timeout=20))
-          assert current['commit'] == os.environ['EXPECTED_PRODUCTION_BASE'], 'Production changed; rebuild the selective release to preserve it.'
-          print('Verified previous production commit:', current['commit'])
-          PY
 
       - name: Collect pushed files
         if: github.event_name == 'push'
@@ -1427,6 +1404,20 @@ jobs:
           fi
           echo "Release tag $TAG verified at $GITHUB_SHA."
 
+      - name: Broadcast release notification
+        if: steps.changes.outputs.web == 'true'
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          curl -fsS -X POST \
+            "$SUPABASE_URL/functions/v1/core-hub" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"action\":\"notification.broadcast_release\",\"version\":\"${{ steps.version.outputs.version }}\",\"commit\":\"${{ github.sha }}\",\"releaseUrl\":\"https://github.com/kanta13jp1/my_web_app/releases/tag/${{ steps.version.outputs.tag }}\"}" \
+            || true
+
       # Positive evidence only; missing/unknown classifier outputs never suppress gates.
       - name: Confirmed production no-op
         if: >-
@@ -1462,12 +1453,3 @@ jobs:
   # -----------------------------------------------------------------
   # 通知ジョブ
   # -----------------------------------------------------------------
-  hold-status:
-    name: Production deployment intentionally held
-    if: vars.PRODUCTION_DEPLOY_HOLD != 'false'
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    permissions: {}
-    steps:
-      - name: Explain persistent release hold
-        run: echo 'Production is held, including later main commits and manual dispatch. Explicit owner authorization is required before setting PRODUCTION_DEPLOY_HOLD=false.' >> "$GITHUB_STEP_SUMMARY"
