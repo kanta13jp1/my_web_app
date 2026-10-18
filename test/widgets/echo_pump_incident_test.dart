@@ -30,6 +30,7 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     expect(find.text('設備異常 3 / 3'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 16));
     expect(done, 1);
     await tester.tap(find.text('スキップして探索へ'));
     expect(done, 1);
