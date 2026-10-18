@@ -189,40 +189,61 @@ test('character art, locations and threat update with play', async ({ page }, in
 
 
 test('door opening, blackout, closing and one committed move', async ({ page }, info) => {
+  await page.clock.install({ time: new Date('2026-10-18T00:00:00Z') });
   await page.goto('/');
   const button = (name: string) => page.getByRole('button', { name, exact: true });
   await button('ゲーム開始').click();
   await button('スキップして開始').click();
   await expect(button('出口へ')).toBeDisabled();
+  await page.clock.pauseAt(new Date('2026-10-18T00:10:00Z'));
   await button('中央廊下へ').click();
+  await page.clock.runFor(160);
   const moving = button('演出をスキップ');
   await expect(moving).toBeVisible();
-  await page.waitForTimeout(120);
-  await page.screenshot({ path: info.outputPath('door-opening.png') });
-  await page.waitForTimeout(480);
-  await page.screenshot({ path: info.outputPath('door-blackout.png') });
-  await page.waitForTimeout(480);
-  await page.screenshot({ path: info.outputPath('door-closing.png') });
+  await page.screenshot({ path: info.outputPath('door-opening.png'), scale: 'css' });
+  await page.clock.runFor(640);
+  await page.screenshot({ path: info.outputPath('door-blackout.png'), scale: 'css' });
+  await page.clock.runFor(450);
+  await page.screenshot({ path: info.outputPath('door-closing.png'), scale: 'css' });
+  await page.clock.runFor(1000);
   await expect(moving).toHaveCount(0);
   await expect(page.getByText('ターン 1', { exact: true })).toBeAttached();
   await expect(button('工具庫へ')).toBeEnabled();
-  await page.screenshot({ path: info.outputPath('door-arrived.png') });
+  await page.screenshot({ path: info.outputPath('door-arrived.png'), scale: 'css' });
 });
 
-test('door skip after rapid pointer input cannot repeat a move', async ({ page }) => {
+test('door skip after rapid pointer input cannot repeat a move', async ({ page, isMobile }) => {
+  await page.clock.install({ time: new Date('2026-10-18T00:00:00Z') });
   await page.goto('/');
   const button = (name: string) => page.getByRole('button', { name, exact: true });
   await button('ゲーム開始').click();
   await button('スキップして開始').click();
+  await expect(button('中央廊下へ')).toBeVisible();
+  await page.clock.pauseAt(new Date('2026-10-18T00:10:00Z'));
+  const physicalTap = async (x: number, y: number) => {
+    if (isMobile) await page.touchscreen.tap(x, y);
+    else await page.mouse.click(x, y);
+  };
+  const skip = async () => {
+    const box = await button('演出をスキップ').boundingBox();
+    expect(box).not.toBeNull();
+    const x = box!.x + box!.width / 2, y = box!.y + box!.height / 2;
+    expect(y).toBeLessThan(page.viewportSize()!.height);
+    await physicalTap(x, y);
+    await page.clock.runFor(400);
+    await expect(button('演出をスキップ')).toHaveCount(0);
+  };
   await button('中央廊下へ').click();
+  await page.clock.runFor(200);
   await expect(button('演出をスキップ')).toBeVisible();
-  await page.mouse.click(10, 10); // Modal barrier: cannot act on the old room.
-  await button('演出をスキップ').click();
-  await expect(button('演出をスキップ')).toHaveCount(0);
+  await physicalTap(10, 10); // Modal surface cannot act on the old room.
+  await expect(button('演出をスキップ')).toBeVisible();
+  await skip();
   await expect(page.getByText('ターン 1', { exact: true })).toBeAttached();
   await expect(button('工具庫へ')).toBeEnabled();
   await button('工具庫へ').click();
-  await button('演出をスキップ').click();
+  await page.clock.runFor(200);
+  await skip();
   await expect(page.getByText('ターン 2', { exact: true })).toBeAttached();
 });
 

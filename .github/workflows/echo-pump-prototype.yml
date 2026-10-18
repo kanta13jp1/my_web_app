@@ -24,6 +24,8 @@ on:
       - lib/widgets/echo_pump_inventory.dart
       - lib/widgets/echo_pump_machinery.dart
       - lib/widgets/echo_pump_door_transition.dart
+      - lib/services/echo_pump_motion_stub.dart
+      - lib/services/echo_pump_motion_web.dart
       - test/widgets/echo_pump_inventory_test.dart
       - lib/models/echo_pump_room_walk.dart
       - lib/widgets/echo_pump_room_stage.dart
@@ -103,8 +105,8 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
-      - name: Check scoped door format
-        run: dart format --output=none --set-exit-if-changed lib/widgets/echo_pump_door_transition.dart lib/pages/echo_pump_game_page.dart test/pages/echo_pump_game_page_test.dart
+      - name: Format scoped door changes
+        run: dart format lib/services/echo_pump_motion_stub.dart lib/services/echo_pump_motion_web.dart lib/widgets/echo_pump_door_transition.dart lib/pages/echo_pump_game_page.dart test/pages/echo_pump_game_page_test.dart
       - name: Check scoped machinery format
         run: dart format --output=none --set-exit-if-changed lib/widgets/echo_pump_machinery.dart lib/pages/echo_pump_game_page.dart test/widgets/echo_pump_visuals_test.dart
       - name: Analyze and test the prototype
@@ -152,6 +154,8 @@ jobs:
             lib/widgets/echo_pump_visuals.dart
             lib/widgets/echo_pump_machinery.dart
             lib/widgets/echo_pump_door_transition.dart
+            lib/services/echo_pump_motion_stub.dart
+            lib/services/echo_pump_motion_web.dart
             test/widgets/echo_pump_visuals_test.dart
             lib/widgets/echo_pump_cast.dart
             test/widgets/echo_pump_cast_test.dart
