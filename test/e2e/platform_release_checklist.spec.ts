@@ -21,6 +21,18 @@ async function markWeb(page: Page) {
   await note.focus();
   await expect(note).toBeFocused();
   await note.fill('Chrome で確認');
+  await expect(note).toHaveValue('Chrome で確認');
+  // Observe durability before navigating away, rather than guessing a delay.
+  // This is read-only: the post-reload UI assertions remain the acceptance test.
+  await expect.poll(() => page.evaluate(() => {
+    const key = Object.keys(localStorage)
+      .find(key => key.endsWith('platform_release_checklist_v1'));
+    if (!key) return null;
+    let saved = JSON.parse(localStorage.getItem(key)!);
+    // SharedPreferences may JSON-encode its string value as well as the document.
+    if (typeof saved === 'string') saved = JSON.parse(saved);
+    return saved.notes?.Web ?? null;
+  })).toBe('Chrome で確認');
 }
 
 test('platform release checklist starts each platform as untested', async ({ page }, info) => {
@@ -35,7 +47,6 @@ test('platform release checklist starts each platform as untested', async ({ pag
 test('platform release checklist reloads a platform result and note', async ({ page }, info) => {
   await openChecklist(page);
   await markWeb(page);
-  await page.waitForTimeout(300);
   await page.reload();
   await expect(page.locator('#seo-shell')).toBeHidden({ timeout: 30_000 });
   await expect(status(page, 'Web', '確認済み')).toBeVisible({ timeout: 30_000 });

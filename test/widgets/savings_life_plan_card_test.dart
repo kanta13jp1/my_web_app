@@ -93,4 +93,55 @@ void main() {
     expect(find.textContaining('生活費の日割り目安'), findsNothing);
     expect(find.textContaining('朝食・食器洗い・歯磨き'), findsOneWidget);
   });
+  testWidgets(
+      'edited income survives parent updates, save and reload without other writes',
+      (tester) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('financial_records', 'unchanged');
+    await prefs.setString('recurring_income_templates', 'unchanged');
+    final before = {for (final key in prefs.getKeys()) key: prefs.get(key)};
+    await open(tester);
+    final income = find.byKey(const Key('savings-plan-income'));
+    await tester.enterText(income, '390000');
+    await open(tester, income: 395000);
+    expect(tester.widget<TextFormField>(income).controller!.text, '390000');
+    await tester.enterText(find.byType(TextFormField).at(0), '400000');
+    await tester.enterText(find.byType(TextFormField).at(2), '50000');
+    await tester.ensureVisible(find.text('計画を保存・再計算'));
+    await tester.tap(find.text('計画を保存・再計算'));
+    await tester.pumpAndSettle();
+    final saved = jsonDecode(prefs.getString('savings_life_plan_v1:fixture')!)
+        as Map<String, dynamic>;
+    expect(saved['income'], 390000);
+    expect(saved['start'], '2026-10-13');
+    expect(saved['targetDate'], '2027-10-13');
+    for (final entry in before.entries) {
+      if (entry.key != 'savings_life_plan_v1:fixture') {
+        expect(prefs.get(entry.key), entry.value);
+      }
+    }
+    expect(prefs.getKeys(), before.keys.toSet());
+    await tester.pumpWidget(const SizedBox());
+    await open(tester);
+    expect(tester.widget<TextFormField>(income).controller!.text, '390000');
+    expect(find.text('必要な積立：月 ¥70,834'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('income above the confirmed ceiling cannot be saved',
+      (tester) async {
+    await open(tester);
+    final prefs = await SharedPreferences.getInstance();
+    final before = prefs.getString('savings_life_plan_v1:fixture');
+    await tester.enterText(find.byType(TextFormField).at(0), '400000');
+    await tester.enterText(find.byType(TextFormField).at(2), '50000');
+    await tester.enterText(
+      find.byKey(const Key('savings-plan-income')),
+      '400001',
+    );
+    await tester.ensureVisible(find.text('計画を保存・再計算'));
+    await tester.tap(find.text('計画を保存・再計算'));
+    await tester.pumpAndSettle();
+    expect(find.text('登録済みの手取り以下の金額を入力してください'), findsOneWidget);
+    expect(prefs.getString('savings_life_plan_v1:fixture'), before);
+  });
 }

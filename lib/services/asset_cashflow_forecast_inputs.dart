@@ -118,6 +118,7 @@ class AssetCashflowForecastInputs {
         sourceAccountKindsById: sourceAccountKindsById,
       );
       if (!debt.isDirectCashflowTarget ||
+          debt.isCardFundedFixedCost ||
           debt.balance >= 0 ||
           (debt.paymentDay ?? 0) <= 0 ||
           debt.scheduledPaymentAmount <= 0) {
