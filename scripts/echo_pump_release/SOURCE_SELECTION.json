@@ -1,0 +1,30 @@
+{
+  "base": "d21eea2feee878cc1c1554342641a9b6ce4af5cb",
+  "approved_pr": 5865,
+  "source_head": "97054f913fdcb29a5f706f53895cd5a37e57cefa",
+  "selected_files": [
+    "scripts/echo_pump_mcp_pump/bootstrap.py",
+    "scripts/echo_pump_mcp_pump/model.py",
+    "scripts/echo_pump_mcp_pump/probe.py",
+    ".github/workflows/echo-pump-mcp-pump.yml",
+    "assets/echo_pump/pump_fault.png",
+    "assets/echo_pump/pump_idle.png",
+    "assets/echo_pump/pump_live.png",
+    "assets/echo_pump/PUMP_PROVENANCE.json",
+    "lib/widgets/echo_pump_motor_art.dart",
+    "lib/widgets/echo_pump_machinery.dart",
+    "test/widgets/echo_pump_motor_art_test.dart",
+    "test/e2e/echo_pump_motor_art.spec.ts",
+    "scripts/echo_pump_dev_commands.json",
+    ".github/workflows/echo-pump-prototype.yml",
+    "scripts/echo_pump_dev_checks_test.py"
+  ],
+  "runtime_sha256": {
+    "assets/echo_pump/pump_fault.png": "c7c228a7fcd97f482814b68665583db9711fe285406a643a72828e4d0b8e0426",
+    "assets/echo_pump/pump_idle.png": "1e1b5e6173de449d3eeadfe6b66a645c5b3abe6c9cce1789411e27b641686fa4",
+    "assets/echo_pump/pump_live.png": "8f4486307823743c5605f7160346f7e82389364f57074867f8974b6d86eb3a8b",
+    "assets/echo_pump/PUMP_PROVENANCE.json": "72009a4e1e4cb1104ad19fe4c18c85e92822082706f1e366d18ad34ac1bb24f6",
+    "lib/widgets/echo_pump_motor_art.dart": "e1bedbf39d90cc9ab146c60c001928640987d91824c774b9314e25397aed442f",
+    "lib/widgets/echo_pump_machinery.dart": "72438482a531bf6bdba06fb02230e09306ae9688fba4d6e8661be75c6ea538cf"
+  }
+}
