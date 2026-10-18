@@ -54,6 +54,7 @@ import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_primary_action_card.dart';
+import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/life_waste_elimination_panel.dart';
@@ -5345,6 +5346,7 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const HomeTodayPriorityGoal(),
                             if (!showInternalOperations) ...[
                               _buildSectionHeader(
                                 '今日の1件',

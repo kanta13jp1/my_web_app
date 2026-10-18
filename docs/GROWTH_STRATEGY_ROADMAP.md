@@ -67438,3 +67438,13 @@ Persist capped device-local failure clusters and extend search/collision foresig
 - 葉ルート `/kinetic-forge`、ホーム入口、表示名、ルート一覧を同時登録。認証・課金・DB・実行時AI APIは変更しない。
 - 固定刻みモデル、3課題、PC/スマホ、タッチと非表示停止をクラウド検証。本番・動画・X投稿は検証後に実施し、現時点で完了とはしない。
 - Claude Code設計確認は利用者が第5弾について例外を承認。レビュー実施を意味しない。
+
+### daily-development セッション記録 (2026-10-07 / Claude Code Win版)
+
+- メインの作業チェックアウトは `fix/salary-deposit-payslip-signal` (未 push のコミット2件あり) だったため触れず、origin/main から独立した worktree (`daily-dev-20261007`) で作業し main へ直接 landing した。
+- `/virtual-organization` ([lib/pages/virtual_organization_page.dart](../lib/pages/virtual_organization_page.dart)) は三重の行き止まりだった。(1) `ai-hub` の `agent.create` は実装済みだが UI からの実行経路が無く、エージェントを1件も登録できない。(2) `org.get` は hub_data 行 (`{id, metadata, created_at}`) を返すのに画面は flat キーを読み、登録済みでも全行が「Agent N / 役割なし」に化ける。(3)「タスク割振り」は文章を入力させた後「準備中です」と出して入力を捨てる。
+- エージェント登録ダイアログを追加して `agent.create` へ接続。解析は純データモデル [lib/models/virtual_org_agent.dart](../lib/models/virtual_org_agent.dart) に移し、部署ごとの人数も実データから数える (従来は常に 0 人)。EF 既定の `personality: {}` (Map) を `as String?` で読むと例外になる潜在バグもモデル側で吸収した。
+- `agent.run` は `agent_run_log` に `queued` 行を積むだけで、その行を読む処理も実行する処理も repo 内に存在しない。UI を繋ぐと「割り振った」ように見えて何も起きないため接続せず、タスクタブは「自動割り振りは未提供」と明示する表示に置き換えた。実行系を作るかどうかは人間判断として持ち越す。
+- 検証: `flutter analyze` (変更4ファイル) 0件、モデル6件 + ダイアログ widget 3件 + `tab_route_url_sync_test` が緑。サーバー側の変更は無し。本番での実操作確認は未実施。
+- 残る「準備中」: `loyalty.redeem` / `wallet.pay` (金銭系・人間レビュー前提で継続持ち越し)、`/meal-log` の AI 栄養推定 (サーバー未実装・UI に内部メモ「Codex#2準備中」が露出)、`/cfo-office` の遷移先なしカード。
+- 実績は migration `20261007090000_seed_achievements_daily_dev_20261007.sql` に記録。ブログ下書きキューは2030年分まで埋まっているため手動追加は見送り。
