@@ -3,19 +3,20 @@ import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 import 'package:my_web_app/domain/models/philosophy_reading.dart';
 
 void main() {
-  test('Four Books Iwanami candidate preserves partial scope and unknown total', () {
+  test('Four Books Iwanami candidate preserves partial scope and unknown total',
+      () {
     for (final isbn in ['9784003322215', '9784000072281', '9784007610400']) {
-    final book = philosophyCatalogEditions.singleWhere(
-      (b) => b.workId == 'zhu-xi:four-books' && b.edition.isbn == isbn,
-    );
-    expect(book.label, contains('大学章句・中庸章句序を収録'));
-    expect(book.edition.volume, contains('部分収録'));
-    expect(book.note, contains('全体の訳ではなく'));
-    expect(book.note, contains('中庸章句の本文'));
-    expect(book.edition.totalPages, isNull);
-    expect(book.edition.translator, '金谷治（訳注）');
-    expect(book.edition.editor, isEmpty);
-    expect(book.edition.sourceUrl, startsWith('https://'));
+      final book = philosophyCatalogEditions.singleWhere(
+        (b) => b.workId == 'zhu-xi:four-books' && b.edition.isbn == isbn,
+      );
+      expect(book.label, contains('大学章句・中庸章句序を収録'));
+      expect(book.edition.volume, contains('部分収録'));
+      expect(book.note, contains('全体の訳ではなく'));
+      expect(book.note, contains('中庸章句の本文'));
+      expect(book.edition.totalPages, isNull);
+      expect(book.edition.translator, '金谷治（訳注）');
+      expect(book.edition.editor, isEmpty);
+      expect(book.edition.sourceUrl, startsWith('https://'));
     }
   });
 
