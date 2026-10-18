@@ -66,7 +66,9 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
       const view = page.viewportSize()!;
       await page.mouse.move(view.width / 2, view.height / 2);
       await page.mouse.wheel(0, 30000);
-      await page.waitForTimeout(1300);
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: info.outputPath(`machinery-${label}-transition.png`) });
+      await page.waitForTimeout(1200);
       await page.screenshot({ path: info.outputPath(`machinery-${label}.png`) });
     }
     if (label === '隔壁を閉じる') {
