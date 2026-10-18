@@ -15,49 +15,49 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       final semantics = tester.ensureSemantics();
       try {
-      Future<void> show(bool complete, {bool reduced = false}) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: MediaQuery(
-              data: MediaQueryData(
-                disableAnimations: reduced,
-                textScaler: const TextScaler.linear(2),
-              ),
-              child: Scaffold(
-                body: SingleChildScrollView(
-                  child: EchoPumpMachinery(
-                    repaired: complete,
-                    sealed: complete,
-                    drained: complete,
-                    powered: complete,
+        Future<void> show(bool complete, {bool reduced = false}) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: MediaQuery(
+                data: MediaQueryData(
+                  disableAnimations: reduced,
+                  textScaler: const TextScaler.linear(2),
+                ),
+                child: Scaffold(
+                  body: SingleChildScrollView(
+                    child: EchoPumpMachinery(
+                      repaired: complete,
+                      sealed: complete,
+                      drained: complete,
+                      powered: complete,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        );
-      }
+          );
+        }
 
-      await show(false);
-      expect(
-        find.bySemanticsLabel('設備断面：ヒューズ未装着、隔壁開放、水位高・冠水中、C系統停止'),
-        findsOneWidget,
-      );
-      await show(true);
-      await tester.pump(const Duration(milliseconds: 450));
-      expect(tester.hasRunningAnimations, isTrue);
-      expect(
-        find.bySemanticsLabel('設備断面：ヒューズ装着済み、隔壁閉鎖、水位低下・排水完了、C系統通電'),
-        findsOneWidget,
-      );
-      await tester.pumpAndSettle();
-      expect(tester.hasRunningAnimations, isFalse);
-      expect(tester.takeException(), isNull);
-      await show(false, reduced: true);
-      // Reduced motion shows the final committed state immediately.
-      expect(find.text('冠水中'), findsOneWidget);
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
+        await show(false);
+        expect(
+          find.bySemanticsLabel('設備断面：ヒューズ未装着、隔壁開放、水位高・冠水中、C系統停止'),
+          findsOneWidget,
+        );
+        await show(true);
+        await tester.pump(const Duration(milliseconds: 450));
+        expect(tester.hasRunningAnimations, isTrue);
+        expect(
+          find.bySemanticsLabel('設備断面：ヒューズ装着済み、隔壁閉鎖、水位低下・排水完了、C系統通電'),
+          findsOneWidget,
+        );
+        await tester.pumpAndSettle();
+        expect(tester.hasRunningAnimations, isFalse);
+        expect(tester.takeException(), isNull);
+        await show(false, reduced: true);
+        // Reduced motion shows the final committed state immediately.
+        expect(find.text('冠水中'), findsOneWidget);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
       } finally {
         semantics.dispose();
       }
