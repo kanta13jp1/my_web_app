@@ -189,8 +189,9 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       _incidentOpen = false;
       _audio.resumeEffects();
     }
-    if (!mounted || !identical(inspectedGame, _game) || finished != true)
+    if (!mounted || !identical(inspectedGame, _game) || finished != true) {
       return;
+    }
     setState(() => _inspectedIncidentGame = inspectedGame);
   }
 
