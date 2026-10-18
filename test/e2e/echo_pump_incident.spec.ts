@@ -24,7 +24,7 @@ for (const skip of [false, true]) {
     await button('ゲーム開始').click();
     await button('スキップして開始').click();
     await button('保守メモを調べる').click();
-    await expect(page.getByText('歩行中…', { exact: true })).toBeVisible();
+    await expect(page.getByText('歩行中…', { exact: true }).first()).toBeVisible();
     await button('異常灯を調べる').dispatchEvent('click');
     await expect(page.getByText('設備異常 1 / 3', { exact: true })).toBeVisible();
     await expect(page.getByText('歩行中…', { exact: true })).toHaveCount(0);
