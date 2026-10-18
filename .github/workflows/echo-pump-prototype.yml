@@ -21,6 +21,10 @@ on:
         options: [grouped, baseline]
   pull_request:
     paths:
+      - lib/widgets/echo_pump_incident.dart
+      - test/widgets/echo_pump_incident_test.dart
+      - test/pages/echo_pump_incident_flow_test.dart
+      - test/e2e/echo_pump_incident.spec.ts
       - lib/widgets/echo_pump_inventory.dart
       - test/widgets/echo_pump_inventory_test.dart
       - lib/models/echo_pump_room_walk.dart
@@ -128,7 +132,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/echo_pump.spec.ts test/e2e/echo_pump_audio.spec.ts test/e2e/echo_pump_room_stage.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/echo_pump.spec.ts test/e2e/echo_pump_audio.spec.ts test/e2e/echo_pump_room_stage.spec.ts test/e2e/echo_pump_incident.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
       - name: Preserve browser evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
