@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/hosting-transfer/**'
+      - 'web/index.html'
       - '.github/workflows/hosting-transfer.yml'
   workflow_dispatch:
 permissions: {}
