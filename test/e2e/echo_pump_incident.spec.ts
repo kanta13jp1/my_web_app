@@ -26,7 +26,7 @@ for (const skip of [false, true]) {
     await button('保守メモを調べる').click();
     await expect(page.getByText('歩行中…', { exact: true }).first()).toBeVisible();
     await button('異常灯を調べる').dispatchEvent('click');
-    await expect(page.getByText('設備異常 1 / 3', { exact: true })).toBeVisible();
+    await expect(page.getByText('予備灯だけが、揺れている。', { exact: true })).toBeVisible();
     await expect(page.getByText('歩行中…', { exact: true })).toHaveCount(0);
     const opened = await page.evaluate(() => performance.now());
     await button('演出を一時停止').click();
@@ -46,15 +46,15 @@ for (const skip of [false, true]) {
       await button('スキップして探索へ').click();
     } else {
       await button('演出を再開').click();
-      await expect(page.getByText('設備異常 2 / 3', { exact: true })).toBeVisible();
+      await expect(page.getByText('機械が軋むと、廊下の影が振り向いた。', { exact: true })).toBeVisible();
       await page.screenshot({ path: info.outputPath('incident-shadow.png') });
-      await expect(page.getByText('設備異常 3 / 3', { exact: true })).toBeVisible();
+      await expect(page.getByText('音は、誘導にもなる。', { exact: true })).toBeVisible();
     }
     await expect(button('異常灯：確認済み')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('ターン 0', { exact: true })).toBeVisible();
     await button('異常灯：確認済み').click();
     await expect(button('探索へ戻る')).toBeVisible();
-    await expect(page.getByText('設備異常 1 / 3', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('予備灯だけが、揺れている。', { exact: true })).toHaveCount(0);
     await button('探索へ戻る').click();
     const before = await page.evaluate(() => (window as any).__incidentAudio.steps);
     await button('保守メモを調べる').click();
