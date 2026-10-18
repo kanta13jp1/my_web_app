@@ -8,6 +8,7 @@ import '../widgets/echo_pump_intro.dart';
 import '../widgets/echo_pump_visuals.dart';
 import '../widgets/echo_pump_guidance.dart';
 import '../widgets/echo_pump_inventory.dart';
+import '../widgets/echo_pump_incident.dart';
 
 class EchoPumpGamePage extends StatefulWidget {
   const EchoPumpGamePage({super.key, this.audio});
@@ -28,6 +29,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
   PumpRoom _fromRoom = PumpRoom.control;
   bool _blocked = false;
   bool _inventoryOpen = false;
+  bool _incidentOpen = false;
+  EchoPumpGame? _inspectedIncidentGame;
 
   late final EchoPumpAudio _audio;
 
@@ -83,7 +86,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
   }
 
   Future<void> _openInventory(BuildContext inventoryContext) async {
-    if (_inventoryOpen) return;
+    if (_inventoryOpen || _incidentOpen) return;
     _inventoryOpen = true;
     final effectsStopped = _audio.suspendEffects();
     final inspectedGame = _game;
@@ -117,6 +120,60 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
         _game.room == PumpRoom.pump) {
       _act(_game.repair, EchoPumpCue.repair);
     }
+  }
+
+  Future<void> _inspectIncident(BuildContext incidentContext) async {
+    if (_incidentOpen || _inventoryOpen) return;
+    final inspectedGame = _game;
+    if (identical(_inspectedIncidentGame, inspectedGame)) {
+      await showDialog<void>(
+        context: incidentContext,
+        useRootNavigator: false,
+        builder: (context) => AlertDialog(
+          title: const Text('異常灯：確認済み'),
+          content: const Text('音に反応する影。設備の音を使って誘導しよう。'),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('探索へ戻る'))],
+        ),
+      );
+      return;
+    }
+    _incidentOpen = true;
+    final stopped = _audio.suspendEffects();
+    bool? finished;
+    try {
+      finished = await showDialog<bool>(
+        context: incidentContext,
+        useRootNavigator: false,
+        barrierDismissible: false,
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: Dialog(
+            clipBehavior: Clip.antiAlias,
+            insetPadding: const EdgeInsets.all(12),
+            backgroundColor: const Color(0xFF081318),
+            child: SizedBox(
+              width: 800,
+              height: (MediaQuery.sizeOf(dialogContext).height * 0.8).clamp(0, 620).toDouble(),
+              child: FutureBuilder<void>(
+                future: stopped,
+                builder: (_, snapshot) => snapshot.connectionState == ConnectionState.done
+                    ? EchoPumpIncident(onFinished: () => Navigator.pop(dialogContext, true))
+                    : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        const CircularProgressIndicator(),
+                        const Text('設備の音を確認中…'),
+                        TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('探索へ戻る')),
+                      ]),
+              ),
+            ),
+          ),
+        ),
+      );
+    } finally {
+      _incidentOpen = false;
+      _audio.resumeEffects();
+    }
+    if (!mounted || !identical(inspectedGame, _game) || finished != true) return;
+    setState(() => _inspectedIncidentGame = inspectedGame);
   }
 
   void _beginIntro() {
@@ -208,6 +265,16 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                       }
                     },
                   ),
+                  if (_game.room == PumpRoom.control && !_game.finished)
+                    Builder(builder: (incidentContext) => Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: OutlinedButton.icon(
+                        key: const Key('echo-incident-inspect'),
+                        onPressed: () => _inspectIncident(incidentContext),
+                        icon: Icon(identical(_inspectedIncidentGame, _game) ? Icons.check_circle_outline : Icons.warning_amber_rounded),
+                        label: Text(identical(_inspectedIncidentGame, _game) ? '異常灯：確認済み' : '異常灯を調べる'),
+                      ),
+                    )),
                   const SizedBox(height: 12),
                   Builder(
                     builder: (inventoryContext) => EchoPumpInventoryStrip(
