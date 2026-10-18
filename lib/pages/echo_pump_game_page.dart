@@ -67,10 +67,10 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       _visualCue = _game.escaped
           ? EchoPumpCue.escape
           : _game.health == 0
-          ? EchoPumpCue.fail
-          : _game.health < health
-          ? EchoPumpCue.damage
-          : cue;
+              ? EchoPumpCue.fail
+              : _game.health < health
+                  ? EchoPumpCue.damage
+                  : cue;
     });
     _audio.setMusicActive(!_game.finished);
     if (_game.escaped) {
@@ -99,14 +99,14 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
           future: effectsStopped,
           builder: (_, snapshot) =>
               snapshot.connectionState == ConnectionState.done
-              ? EchoPumpInventoryDialog(game: inspectedGame)
-              : const AlertDialog(
-                  title: Text('所持品を準備中…'),
-                  content: SizedBox(
-                    height: 32,
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                ),
+                  ? EchoPumpInventoryDialog(game: inspectedGame)
+                  : const AlertDialog(
+                      title: Text('所持品を準備中…'),
+                      content: SizedBox(
+                        height: 32,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
         ),
       );
     } finally {
@@ -163,8 +163,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                   .toDouble(),
               child: FutureBuilder<void>(
                 future: stopped,
-                builder: (_, snapshot) =>
-                    snapshot.connectionState == ConnectionState.done
+                builder: (_, snapshot) => snapshot.connectionState ==
+                        ConnectionState.done
                     ? EchoPumpIncident(
                         onFinished: () => Navigator.pop(dialogContext, true),
                       )
@@ -231,17 +231,16 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       return EchoPumpTitleScreen(onStart: _beginIntro);
     }
     return Theme(
-      data:
-          ThemeData(
-            brightness: Brightness.dark,
-            useMaterial3: true,
-            fontFamily: 'NotoSansJP',
-          ).copyWith(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF64D8C2),
-              brightness: Brightness.dark,
-            ),
-          ),
+      data: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: true,
+        fontFamily: 'NotoSansJP',
+      ).copyWith(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF64D8C2),
+          brightness: Brightness.dark,
+        ),
+      ),
       child: Scaffold(
         backgroundColor: const Color(0xFF10191D),
         appBar: AppBar(
@@ -395,23 +394,21 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                         for (final room in _game.destinations)
                           OutlinedButton(
                             key: Key('echo-move-${room.name}'),
-                            onPressed:
-                                _game.finished ||
+                            onPressed: _game.finished ||
                                     (room == PumpRoom.exit && !_game.drained) ||
                                     (room == PumpRoom.inspection &&
                                         _game.sealed)
                                 ? null
                                 : () => _act(
-                                    () => _game.move(room),
-                                    EchoPumpCue.step,
-                                  ),
+                                      () => _game.move(room),
+                                      EchoPumpCue.step,
+                                    ),
                             child: Text('${room.label}へ'),
                           ),
                         OutlinedButton.icon(
                           key: const Key('echo-wait'),
-                          onPressed: _game.finished
-                              ? null
-                              : () => _act(_game.wait),
+                          onPressed:
+                              _game.finished ? null : () => _act(_game.wait),
                           icon: const Icon(Icons.hearing),
                           label: const Text('1ターン待つ'),
                         ),
@@ -438,9 +435,9 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                               onSelected: _game.finished
                                   ? null
                                   : (_) => _act(
-                                      () => _game.togglePower(circuit),
-                                      EchoPumpCue.power,
-                                    ),
+                                        () => _game.togglePower(circuit),
+                                        EchoPumpCue.power,
+                                      ),
                             ),
                         ],
                       ),
@@ -491,8 +488,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                           ),
                           FilledButton(
                             key: const Key('echo-seal'),
-                            onPressed:
-                                _game.finished ||
+                            onPressed: _game.finished ||
                                     _game.sealed ||
                                     _game.enemy != PumpRoom.inspection ||
                                     !_game.power.contains(PumpCircuit.c)
@@ -502,8 +498,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                           ),
                           FilledButton(
                             key: const Key('echo-drain'),
-                            onPressed:
-                                _game.finished ||
+                            onPressed: _game.finished ||
                                     !_game.repaired ||
                                     !_game.sealed ||
                                     _game.drained ||

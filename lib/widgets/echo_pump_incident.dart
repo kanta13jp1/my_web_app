@@ -23,14 +23,13 @@ class _EchoPumpIncidentState extends State<EchoPumpIncident>
     final state = WidgetsBinding.instance.lifecycleState;
     _foreground = state == null || state == AppLifecycleState.resumed;
     WidgetsBinding.instance.addObserver(this);
-    _clock =
-        AnimationController(
-          vsync: this,
-          duration: const Duration(seconds: 9),
-          animationBehavior: AnimationBehavior.preserve,
-        )..addStatusListener((status) {
-          if (status == AnimationStatus.completed) _finish();
-        });
+    _clock = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 9),
+      animationBehavior: AnimationBehavior.preserve,
+    )..addStatusListener((status) {
+        if (status == AnimationStatus.completed) _finish();
+      });
     if (_foreground) _clock.forward();
   }
 
