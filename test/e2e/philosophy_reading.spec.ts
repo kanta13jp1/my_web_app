@@ -1143,3 +1143,50 @@ test('Remaining Iwanami editions preserve alternate titles, shared books, split 
     await page.getByRole('button',{name:'キャンセル',exact:true}).click();
   }
 });
+
+
+test('Unconfirmed Iwanami audit preserves partial Four Books scope through registration and editing', async ({page},info)=>{
+  test.setTimeout(180000);
+  await page.goto('/');
+  await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible({timeout:60000});
+  const open=async()=>{await openWork(page,'四書章句集注');};
+  await open();
+  const start=page.getByRole('button',{name:/^(読書を始める|別の版・再読を始める)$/});
+  await revealReadingControl(page,start);await start.click();
+  await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+  await restoredField(page,/^書籍情報を検索/,'四書章句集注');
+  const candidate=page.getByRole('button',{name:/^大学・中庸（大学章句・中庸章句序を収録）・岩波文庫/});
+  await revealReadingControl(page,candidate);await candidate.click();
+  await expect(page.getByText(/朱熹『大学章句』.*全体の訳ではなく/).last()).toBeVisible();
+  await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();
+  const volume='岩波文庫 青222-1・部分収録（大学章句・中庸章句序）';
+  const verify=async(pages='',name=volume)=>{
+    await restoredField(page,/^出版社/,'岩波書店');
+    await restoredField(page,/^訳者/,'金谷治（訳注）');
+    await restoredField(page,/^編集者・編者/,'');
+    await restoredField(page,/^ISBN/,'9784003322215');
+    await restoredField(page,/^総ページ数/,pages);
+    await restoredField(page,/^出版年/,'1998');
+    await restoredField(page,/^言語/,'日本語');
+    await restoredField(page,/^巻・版の名前/,name);
+    await restoredField(page,/^書籍・購入URL/,'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003322215');
+    await restoredField(page,/^版情報の出典URL/,'https://www.books.or.jp/book-details/9784003322215');
+  };
+  await verify();await capture(page,info,'unconfirmed-four-books-prefilled');
+  await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await open();
+  await editRegisteredEdition(page,'9784003322215');await verify();
+  await page.getByRole('button',{name:'書籍情報から自動入力',exact:true}).click();
+  await restoredField(page,/^書籍情報を検索/,'9784003322215');
+  await revealReadingControl(page,candidate);await candidate.click();
+  await page.getByRole('button',{name:'書籍情報を設定',exact:true}).click();await verify();
+  const edited=volume+'・手元の版を確認';
+  await field(page,/^巻・版の名前/,edited);await field(page,/^総ページ数/,'280');
+  await page.getByRole('button',{name:'保存',exact:true}).click();
+  await expect(page.getByRole('textbox',{name:/^出版社/})).toHaveCount(0);
+  await page.reload();await expect(page.getByText('哲学書の読書管理',{exact:true})).toBeVisible();await open();
+  await editRegisteredEdition(page,'9784003322215');await verify('280',edited);
+  await capture(page,info,'unconfirmed-four-books-edited-reloaded');
+  await page.getByRole('button',{name:'キャンセル',exact:true}).click();
+});

@@ -2,7 +2,7 @@ import 'dart:convert';
 import '../../domain/models/philosophy_reading.dart';
 
 // Factual metadata only; attribution sources and edition sources are separate.
-const philosophyCatalogVersion = '2026-10-18-iwanami-remaining-audit';
+const philosophyCatalogVersion = '2026-10-19-iwanami-unconfirmed-32-audit';
 
 class PhilosophyCatalogEdition {
   const PhilosophyCatalogEdition(
@@ -3199,6 +3199,21 @@ const philosophyCatalogEditions = [
     note:
         'CiNiiで確認できる正篇第1巻のみ。全著作を収録する版とは扱いません。ISBN・総ページ数は書誌で未記載のため空欄。手元の本に応じて編集できます。',
   ),
+  PhilosophyCatalogEdition(
+    'zhu-xi:four-books',
+    '大学・中庸（大学章句・中庸章句序を収録）・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '金谷治（訳注）',
+      year: '1998',
+      isbn: '9784003322215',
+      volume: '岩波文庫 青222-1・部分収録（大学章句・中庸章句序）',
+      sourceUrl: 'https://www.books.or.jp/book-details/9784003322215',
+    ),
+    note:
+        '朱熹『大学章句』の序・本文と『中庸章句』の序を併収。『四書章句集注』全体の訳ではなく、論語集注・孟子集注と中庸章句の本文は収録対象に含めません。ページ数は公式Web目録274、Books270、NDL261,12pと差があるため空欄。手元の本で確認してください。',
+  ),
+
 ];
 
 final philosophyAuthors = List<PhilosophyAuthor>.unmodifiable(

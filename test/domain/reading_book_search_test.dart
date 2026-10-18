@@ -6,6 +6,24 @@ import 'package:my_web_app/data/services/reading_book_search.dart';
 import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 
 void main() {
+  test('partial Four Books edition searches canonical title, contained text and ISBN offline', () async {
+    final client = MockClient((_) => throw StateError('Offline curated source'));
+    for (final query in ['四書章句集注', '大学・中庸', '大学章句', '9784003322215', '4003322215']) {
+      final results = await const ReadingBookSearch().search(query, author: '朱熹', client: client);
+      final book = results.singleWhere((b) => b.edition.isbn == '9784003322215');
+      expect(book.workId, 'zhu-xi:four-books');
+      expect(book.edition.publisher, '岩波書店');
+      expect(book.edition.translator, '金谷治（訳注）');
+      expect(book.edition.editor, isEmpty);
+      expect(book.edition.totalPages, isNull);
+      expect(book.edition.year, '1998');
+      expect(book.edition.volume, contains('部分収録'));
+      expect(book.edition.sourceUrl, 'https://www.books.or.jp/book-details/9784003322215');
+      expect(Uri.parse(book.edition.bookUrl).queryParameters['k'], '9784003322215');
+      expect(book.note, contains('全体の訳ではなく'));
+    }
+  });
+
   test('historical Iwanami first volume keeps unknown ISBN and scope',
       () async {
     final client =
