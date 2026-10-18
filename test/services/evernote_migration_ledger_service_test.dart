@@ -23,7 +23,7 @@ void main() {
             ...(items ? _itemJson() : _batchJson()),
             'id': index + 1,
           };
-        }).where((row) => (row['id'] as int) > cursor).take(100).toList();
+        }).where((row) => (row['id'] as int) > cursor).take(50).toList();
         return http.Response(
           jsonEncode(rows),
           200,
@@ -36,7 +36,7 @@ void main() {
           : (await service.loadBatches(userId: 'user-a')).map((row) => row.id);
       expect(ids.toSet(), hasLength(205));
       expect(ids.first, 205);
-      expect(cursors, <int>[0, 100, 200]);
+      expect(cursors, <int>[0, 50, 100, 150, 200, 205]);
     });
   }
   test('retry after a partial manifest write reuses keys and preserves status',

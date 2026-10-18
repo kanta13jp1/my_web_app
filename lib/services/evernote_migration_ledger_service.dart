@@ -375,7 +375,7 @@ class EvernoteMigrationLedgerService {
         throw StateError('The migration ledger cursor did not advance.');
       }
       afterId = nextId;
-      if (page.length < pageSize) break;
+      // A server cap can shorten a page; only an empty page ends the scan.
     }
     rows.sort((left, right) {
       final dateOrder = (right['updated_at']?.toString() ?? '')
