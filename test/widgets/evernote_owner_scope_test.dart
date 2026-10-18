@@ -11,12 +11,12 @@ void main() {
     addTearDown(owners.close);
     await tester.pumpWidget(
       MaterialApp(
-      home: EvernoteOwnerScope(
-        initialOwnerId: 'owner-a',
-        ownerChanges: owners.stream,
-        builder: (_) => const _CachedProbe(),
-      ),
-      ),
+        home: EvernoteOwnerScope(
+          initialOwnerId: 'owner-a',
+          ownerChanges: owners.stream,
+          builder: (_) => const _CachedProbe(),
+        ),
+        ),
     );
     await tester.tap(find.text('Populate'));
     await tester.pump();
@@ -43,14 +43,14 @@ void main() {
     addTearDown(owners.close);
     await tester.pumpWidget(
       MaterialApp(
-      home: EvernoteOwnerScope(
-        initialOwnerId: 'owner-a',
-        ownerChanges: owners.stream,
-        builder: (_) => _CachedProbe(
-          release: builds++ == 0 ? release.future : null,
+        home: EvernoteOwnerScope(
+          initialOwnerId: 'owner-a',
+          ownerChanges: owners.stream,
+          builder: (_) => _CachedProbe(
+            release: builds++ == 0 ? release.future : null,
+          ),
         ),
-      ),
-      ),
+        ),
     );
     owners.add('owner-b');
     await tester.pump();
