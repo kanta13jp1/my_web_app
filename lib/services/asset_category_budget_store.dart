@@ -14,6 +14,17 @@ class AssetCategoryBudgetStore {
 
   const AssetCategoryBudgetStore();
 
+  Future<bool> hasSavedSetting({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final raw = store.getString(prefsKey);
+    if (raw == null || raw.isEmpty) return false;
+    try {
+      return jsonDecode(raw) is Map;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<Map<String, double>> load({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     final raw = store.getString(prefsKey);
@@ -33,18 +44,16 @@ class AssetCategoryBudgetStore {
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     final sanitized = encodeMirrorValue(budgets);
-    if (sanitized.isEmpty) {
-      await store.remove(prefsKey);
-      return;
+    if (!await store.setString(prefsKey, jsonEncode(sanitized))) {
+      throw StateError('Could not save category budgets');
     }
-    await store.setString(prefsKey, jsonEncode(sanitized));
   }
 
   /// 予算マップを `asset_pref_mirror.value` (jsonb) 形へ変換する。正の金額のみ残す。
   static Map<String, dynamic> encodeMirrorValue(Map<String, double> budgets) {
     return <String, dynamic>{
       for (final entry in budgets.entries)
-        if (entry.value > 0) entry.key: entry.value,
+        if (entry.value.isFinite && entry.value > 0) entry.key: entry.value,
     };
   }
 
@@ -56,7 +65,7 @@ class AssetCategoryBudgetStore {
       return result;
     }
     value.forEach((dynamic key, dynamic raw) {
-      if (key is String && raw is num && raw > 0) {
+      if (key is String && raw is num && raw.isFinite && raw > 0) {
         result[key] = raw.toDouble();
       }
     });

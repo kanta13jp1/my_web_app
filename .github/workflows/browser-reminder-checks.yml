@@ -1,0 +1,75 @@
+name: Browser reminder checks
+on:
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        required: true
+        type: string
+  pull_request:
+    paths:
+      - lib/services/browser_reminder*.dart
+      - lib/widgets/browser_reminder_settings.dart
+      - lib/pages/notifications_page.dart
+      - test/services/browser_reminder_controller_test.dart
+      - test/widgets/browser_reminder_settings_test.dart
+      - test/fixtures/browser_reminder_app.dart
+      - test/e2e/browser_reminder.spec.ts
+      - .github/workflows/browser-reminder-checks.yml
+permissions: {}
+concurrency:
+  group: browser-reminder-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Assert exact dispatched commit
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Format scoped Dart files
+        run: |
+          dart format lib/services/browser_reminder*.dart lib/widgets/browser_reminder_settings.dart test/services/browser_reminder_controller_test.dart test/widgets/browser_reminder_settings_test.dart test/fixtures/browser_reminder_app.dart
+          mkdir -p reminder-format
+          git diff --binary -- lib/services/browser_reminder*.dart lib/widgets/browser_reminder_settings.dart test/services/browser_reminder_controller_test.dart test/widgets/browser_reminder_settings_test.dart test/fixtures/browser_reminder_app.dart > reminder-format/format.patch
+      - name: Analyze scoped implementation
+        run: flutter analyze lib/services/browser_reminder_controller.dart lib/services/browser_reminder_platform.dart lib/services/browser_reminder_platform_stub.dart lib/services/browser_reminder_platform_web.dart lib/widgets/browser_reminder_settings.dart lib/pages/notifications_page.dart test/services/browser_reminder_controller_test.dart test/widgets/browser_reminder_settings_test.dart test/fixtures/browser_reminder_app.dart
+      - name: Controller and responsive widget tests
+        run: flutter test test/services/browser_reminder_controller_test.dart test/widgets/browser_reminder_settings_test.dart --concurrency=2
+      - name: Build real browser adapter fixture
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/browser_reminder_app.dart
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci && npx playwright install --with-deps chromium
+      - name: Verify browser notification boundary and controls
+        run: |
+          python3 scripts/serve_spa.py build/web --port 7361 > reminder-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7361/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7361 npx playwright test test/e2e/browser_reminder.spec.ts --project=chromium --workers=1 --retries=0
+      - name: Preserve validation evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: browser-reminder-evidence
+          retention-days: 2
+          path: |
+            reminder-format/
+            playwright-report/
+            test-results/
+            reminder-server.log

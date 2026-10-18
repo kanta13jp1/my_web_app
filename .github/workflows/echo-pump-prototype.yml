@@ -1,0 +1,284 @@
+name: Echo Pump Prototype
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact 40-character branch SHA to validate
+        required: true
+        type: string
+      profile:
+        description: Quick feedback or full browser regression
+        required: true
+        default: full
+        type: choice
+        options: [full, quick, interactive, release-prototype]
+      check_mode:
+        description: Grouped checks or the captured sequential baseline
+        required: true
+        default: grouped
+        type: choice
+        options: [grouped, baseline]
+  pull_request:
+    paths:
+      - lib/widgets/echo_pump_inventory.dart
+      - lib/widgets/echo_pump_machinery.dart
+      - test/widgets/echo_pump_inventory_test.dart
+      - lib/models/echo_pump_room_walk.dart
+      - lib/widgets/echo_pump_room_stage.dart
+      - test/models/echo_pump_room_walk_test.dart
+      - test/widgets/echo_pump_room_stage_test.dart
+      - test/e2e/echo_pump_room_stage.spec.ts
+      - lib/models/echo_pump_game.dart
+      - lib/pages/echo_pump_game_page.dart
+      - lib/services/echo_pump_audio.dart
+      - lib/widgets/echo_pump_audio_controls.dart
+      - lib/widgets/echo_pump_cast.dart
+      - test/widgets/echo_pump_cast_test.dart
+      - lib/widgets/echo_pump_guidance.dart
+      - test/widgets/echo_pump_guidance_test.dart
+      - test/services/echo_pump_audio_test.dart
+      - test/widgets/echo_pump_audio_controls_test.dart
+      - test/e2e/echo_pump_audio.spec.ts
+      - scripts/generate_echo_pump_audio.py
+      - lib/widgets/echo_pump_title_screen.dart
+      - lib/widgets/echo_pump_intro.dart
+      - test/widgets/echo_pump_intro_test.dart
+      - lib/widgets/echo_pump_visuals.dart
+      - test/widgets/echo_pump_visuals_test.dart
+      - test/widgets/echo_pump_title_screen_test.dart
+      - assets/echo_pump/**
+      - pubspec.yaml
+      - test/models/echo_pump_game_test.dart
+      - test/pages/echo_pump_game_page_test.dart
+      - test/fixtures/echo_pump_app.dart
+      - test/e2e/echo_pump.spec.ts
+      - .github/workflows/echo-pump-prototype.yml
+      - scripts/echo_pump_dev_checks.py
+      - scripts/measure_flutter_release.py
+      - scripts/verify_flutter_release.mjs
+      - docs/ECHO_PUMP_STANDALONE_TRIAL.md
+      - scripts/measure_flutter_dev_loop.mjs
+      - scripts/measure_flutter_dev_loop.test.mjs
+      - scripts/echo_pump_dev_commands.json
+      - scripts/echo_pump_dev_checks_test.py
+      - docs/ECHO_PUMP_DEVELOPMENT_LOOP.md
+
+permissions: {}
+
+concurrency:
+  group: echo-pump-${{ github.ref }}-${{ inputs.check_mode || 'grouped' }}-${{ inputs.profile || 'full' }}
+  cancel-in-progress: true
+
+jobs:
+  prototype:
+    if: github.event_name != 'workflow_dispatch' || !contains(fromJSON('["interactive","release-prototype"]'), inputs.profile)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      DEV_CHECK_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.check_mode || 'grouped' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Verify exact manual source
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$(git rev-parse HEAD)" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Manual feature check must match the requested immutable SHA."
+            exit 1
+          fi
+      - name: Verify release measurement syntax
+        run: |
+          python3 -m py_compile scripts/measure_flutter_release.py
+          node --check scripts/verify_flutter_release.mjs
+      - name: Verify development check contracts
+        run: python3 scripts/echo_pump_dev_checks_test.py
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Check scoped machinery format
+        run: dart format --output=none --set-exit-if-changed lib/widgets/echo_pump_machinery.dart lib/pages/echo_pump_game_page.dart test/widgets/echo_pump_visuals_test.dart
+      - name: Analyze and test the prototype
+        run: python3 scripts/echo_pump_dev_checks.py --mode "$DEV_CHECK_MODE"
+      - name: Build isolated browser fixture
+        if: github.event_name != 'workflow_dispatch' || inputs.profile != 'quick'
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/echo_pump_app.dart
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        if: github.event_name != 'workflow_dispatch' || inputs.profile != 'quick'
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install browser testing tools
+        if: github.event_name != 'workflow_dispatch' || inputs.profile != 'quick'
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Play on desktop and mobile
+        if: github.event_name != 'workflow_dispatch' || inputs.profile != 'quick'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7358 > echo-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/echo_pump.spec.ts test/e2e/echo_pump_audio.spec.ts test/e2e/echo_pump_room_stage.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: echo-pump-evidence-${{ github.run_id }}
+          include-hidden-files: true
+          path: |
+            .ci-logs/echo-pump-dev-checks.json
+            lib/models/echo_pump_room_walk.dart
+            lib/widgets/echo_pump_room_stage.dart
+            lib/widgets/echo_pump_inventory.dart
+            test/widgets/echo_pump_inventory_test.dart
+            test/models/echo_pump_room_walk_test.dart
+            test/widgets/echo_pump_room_stage_test.dart
+            lib/widgets/echo_pump_visuals.dart
+            lib/widgets/echo_pump_machinery.dart
+            test/widgets/echo_pump_visuals_test.dart
+            lib/widgets/echo_pump_cast.dart
+            test/widgets/echo_pump_cast_test.dart
+            test-results/**/*.png
+            test-results/**/error-context.md
+            echo-server.log
+            lib/widgets/echo_pump_intro.dart
+            lib/pages/echo_pump_game_page.dart
+            test/widgets/echo_pump_intro_test.dart
+            test/pages/echo_pump_game_page_test.dart
+          if-no-files-found: ignore
+          retention-days: 3
+
+  interactive-benchmark:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'interactive'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: [normal, isolated]
+    env:
+      BENCH_ENTRY: ${{ matrix.entry }}
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Verify exact benchmark source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$(git rev-parse HEAD)" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Benchmark source SHA mismatch."
+            exit 1
+          fi
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Verify measurement contracts
+        run: node --test scripts/measure_flutter_dev_loop.test.mjs
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Prepare dependencies outside measured interval
+        run: |
+          flutter config --no-analytics
+          flutter --version
+          flutter pub get
+          npm ci
+      - name: Measure real debug startup and stateful Hot Reload
+        run: node scripts/measure_flutter_dev_loop.mjs --entry "$BENCH_ENTRY"
+      - name: Preserve measurement and browser evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: flutter-dev-loop-${{ matrix.entry }}-${{ github.run_id }}
+          path: .ci-logs/flutter-dev-loop/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  release-prototype:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'release-prototype'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: [normal, isolated]
+    env:
+      BENCH_ENTRY: ${{ matrix.entry }}
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Verify exact prototype source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$(git rev-parse HEAD)" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Prototype source SHA mismatch."
+            exit 1
+          fi
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prepare dependencies outside measured interval
+        run: |
+          flutter config --no-analytics
+          flutter --version
+          flutter pub get
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Measure release compilation and inventory
+        run: python3 scripts/measure_flutter_release.py --entry "$BENCH_ENTRY"
+      - name: Package and read back independent static artifact
+        if: matrix.entry == 'isolated'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf .ci-logs/release-prototype/echo-pump-standalone.tar.gz -C build/web .
+          sha256sum .ci-logs/release-prototype/echo-pump-standalone.tar.gz > .ci-logs/release-prototype/PACKAGE.sha256
+          mkdir -p "$RUNNER_TEMP/echo-pump-standalone"
+          tar -xzf .ci-logs/release-prototype/echo-pump-standalone.tar.gz -C "$RUNNER_TEMP/echo-pump-standalone"
+          echo "RELEASE_ARTIFACT_ROOT=$RUNNER_TEMP/echo-pump-standalone" >> "$GITHUB_ENV"
+      - name: Verify nested deployment on desktop and mobile
+        run: node scripts/verify_flutter_release.mjs
+      - name: Preserve results and independent artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-prototype-${{ matrix.entry }}-${{ github.run_id }}
+          path: |
+            .ci-logs/release-prototype/
+            !.ci-logs/release-prototype/echo-pump-standalone.tar.gz
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve independently deployable static package
+        if: success() && matrix.entry == 'isolated'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: echo-pump-standalone-${{ github.run_id }}
+          path: .ci-logs/release-prototype/echo-pump-standalone.tar.gz
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7

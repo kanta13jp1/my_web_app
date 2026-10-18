@@ -1934,6 +1934,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
           Navigator.of(context).pushNamed('/proactive-form-check'),
     ),
     HomeToolEntry(
+      id: 'echo-pump',
+      sectionId: 'personal',
+      title: '残響ポンプ室',
+      subtitle: '電源と音で敵を誘導する、短い脱出ホラーの見取り図版',
+      icon: Icons.flashlight_on,
+      color: const Color(0xFF26796C),
+      keywords: const <String>['ゲーム', 'ホラー', '脱出', 'ポンプ', '残響', 'echo'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/echo-pump'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',

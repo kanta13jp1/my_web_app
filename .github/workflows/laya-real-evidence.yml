@@ -20,7 +20,7 @@ jobs:
           python3 -m pip install --no-deps git+https://github.com/NandhaKishorM/laya.git@42626c348753fbb17572a813127df2278a1ec527
       - name: Measure six synthetic inputs with fixed multilingual weights
         run: python3 -B scripts/laya_real_expense_evidence.py
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: laya-real-expense-evidence

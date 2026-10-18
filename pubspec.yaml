@@ -109,6 +109,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/echo_pump/
     - assets/landing_journey/
     - web/assets/fonts/
     - assets/legal/

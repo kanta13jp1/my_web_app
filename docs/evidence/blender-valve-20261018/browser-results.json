@@ -1,0 +1,32 @@
+[
+  {
+    "name": "desktop",
+    "width": 1280,
+    "height": 900,
+    "mode": "3d",
+    "open": true,
+    "reset": true,
+    "recovery": false,
+    "errors": []
+  },
+  {
+    "name": "mobile",
+    "width": 390,
+    "height": 844,
+    "mode": "3d",
+    "open": true,
+    "reset": true,
+    "recovery": false,
+    "errors": []
+  },
+  {
+    "name": "missing-model",
+    "width": 390,
+    "height": 844,
+    "mode": "fallback",
+    "open": true,
+    "reset": true,
+    "recovery": true,
+    "errors": []
+  }
+]

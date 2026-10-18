@@ -48,6 +48,7 @@ class InvestmentAsset {
     required this.userId,
     required this.assetType,
     required this.ticker,
+    this.displayName,
     required this.quantity,
     required this.buyPriceJpy,
     required this.buyDate,
@@ -61,6 +62,7 @@ class InvestmentAsset {
   final String userId;
   final InvestmentAssetType assetType;
   final String ticker;
+  final String? displayName;
   final double quantity;
   final double buyPriceJpy;
   final DateTime? buyDate;
@@ -77,6 +79,7 @@ class InvestmentAsset {
         _requiredString(row, 'asset_type'),
       ),
       ticker: _requiredString(row, 'ticker'),
+      displayName: _optionalName(row['display_name']),
       quantity: _requiredDouble(row, 'quantity'),
       buyPriceJpy: _requiredDouble(row, 'buy_price_jpy'),
       buyDate: _nullableDate(row['buy_date']),
@@ -87,11 +90,17 @@ class InvestmentAsset {
     );
   }
 
+  String get displayLabel {
+    final name = _optionalName(displayName);
+    return name == null ? ticker : '$name ($ticker)';
+  }
+
   InvestmentAssetDraft toDraft() {
     return InvestmentAssetDraft(
       assetType: assetType,
       ticker: ticker,
       existingTicker: ticker,
+      displayName: displayName,
       quantity: quantity,
       buyPriceJpy: buyPriceJpy,
       buyDate: buyDate,
@@ -105,6 +114,7 @@ class InvestmentAssetDraft {
   const InvestmentAssetDraft({
     required this.assetType,
     required this.ticker,
+    this.displayName,
     this.existingTicker,
     required this.quantity,
     required this.buyPriceJpy,
@@ -115,6 +125,7 @@ class InvestmentAssetDraft {
 
   final InvestmentAssetType assetType;
   final String ticker;
+  final String? displayName;
   final String? existingTicker;
   final double quantity;
   final double buyPriceJpy;
@@ -134,6 +145,7 @@ class InvestmentAssetDraft {
     return <String, dynamic>{
       'asset_type': assetType.storageKey,
       'ticker': normalizedTicker,
+      'display_name': _optionalName(displayName),
       'quantity': quantity,
       'buy_price_jpy': buyPriceJpy,
       'buy_date': _dateOnly(buyDate),
@@ -237,4 +249,9 @@ String? _dateOnly(DateTime? value) {
   final month = value.month.toString().padLeft(2, '0');
   final day = value.day.toString().padLeft(2, '0');
   return '${value.year}-$month-$day';
+}
+
+String? _optionalName(Object? value) {
+  final name = value?.toString().trim() ?? '';
+  return name.isEmpty ? null : name;
 }

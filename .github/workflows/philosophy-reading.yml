@@ -11,6 +11,7 @@ on:
       - 'lib/data/services/reading_book_search.dart'
       - 'lib/widgets/reading_book_lookup.dart'
       - 'supabase/functions/tools-hub/reading*'
+      - 'scripts/reading-production-qa.mjs'
       - 'test/**/reading*'
       - 'test/**/philosophy_reading*'
       - '.github/workflows/philosophy-reading.yml'
@@ -23,6 +24,46 @@ on:
         description: Published application commit (defaults to verification source revision)
         required: false
         type: string
+      iwanami_remaining_mobile_only:
+        description: Resume the remaining-edition audit on mobile after desktop evidence is complete
+        required: false
+        default: false
+        type: boolean
+      iwanami_remaining:
+        description: Verify the 45 Iwanami associations added in PR5841 and seven representative editions on mobile
+        required: false
+        default: false
+        type: boolean
+      iwanami_audit:
+        description: Verify all 15 added Iwanami editions on desktop and seven representative editions on mobile
+        required: false
+        default: false
+        type: boolean
+      metaphysics:
+        description: Verify Iwanami Metaphysics upper and lower volume title and ISBN search, registration and editing
+        required: false
+        default: false
+        type: boolean
+      groups:
+        description: Verify duplicate work grouping, preserved cycles and independent owner editing
+        required: false
+        default: false
+        type: boolean
+      authors:
+        description: Verify author title search, known name variants and existing record preservation
+        required: false
+        default: false
+        type: boolean
+      progress:
+        description: Verify page positions, percentages, work counts and unknown totals after release
+        required: false
+        default: false
+        type: boolean
+      catalog:
+        description: Verify alternate catalog titles and the Japanese editions added in PR5764
+        required: false
+        default: false
+        type: boolean
       production:
         description: Verify the published application using disposable test users
         required: false
@@ -41,7 +82,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:16.6
@@ -87,7 +128,7 @@ jobs:
               shutil.copyfile(file, target)
           pathlib.Path('reading-format-output/manifest.txt').write_text('\n'.join(files) + '\n')
           PY
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: reading-format-${{ github.run_id }}
           path: reading-format-output
@@ -106,6 +147,7 @@ jobs:
         run: |
           psql -h 127.0.0.1 -p 15432 -U postgres -d reading_test -v ON_ERROR_STOP=1 -f test/fixtures/reading_database.sql
           psql -h 127.0.0.1 -p 15432 -U postgres -d reading_test -v ON_ERROR_STOP=1 -f supabase/migrations/20260412025000_create_hub_data_table.sql
+          psql -h 127.0.0.1 -p 15432 -U postgres -d reading_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261016081500_reading_compare_and_swap.sql
           docker run -d --name reading-postgrest --network host -e PGRST_DB_URI=postgres://postgres:reading-fixture-only@127.0.0.1:15432/reading_test -e PGRST_DB_ANON_ROLE=anon -e PGRST_JWT_SECRET="$READING_TEST_JWT_SECRET" postgrest/postgrest:v12.2.3
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then break; fi
@@ -118,10 +160,12 @@ jobs:
         run: flutter build web --release --pwa-strategy=none
       - name: Build browser fixture using production page, repository and API
         run: flutter build web --release --pwa-strategy=none --target=test/fixtures/reading_app.dart
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
+      - name: Check production verification script syntax
+        run: node --check scripts/reading-production-qa.mjs
       - name: Install Playwright browser in cloud
         run: |
           npm ci
@@ -143,7 +187,7 @@ jobs:
           E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/philosophy_reading.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
       - name: Evidence and diagnostic logs
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: philosophy-reading-evidence-${{ github.run_id }}
           path: |
@@ -157,7 +201,7 @@ jobs:
   production:
     if: github.event_name == 'workflow_dispatch' && inputs.production && github.ref == 'refs/heads/main' && inputs.expected_head_sha == github.sha
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     environment:
       name: observability-production
       deployment: false
@@ -172,7 +216,7 @@ jobs:
         env:
           EXPECTED: ${{ inputs.expected_head_sha }}
         run: test "$(git rev-parse HEAD)" = "$EXPECTED"
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
@@ -182,6 +226,14 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Published reading catalog and authenticated persistence
         env:
+          READING_QA_IWANAMI_REMAINING_MOBILE_ONLY: ${{ inputs.iwanami_remaining_mobile_only }}
+          READING_QA_IWANAMI_REMAINING: ${{ inputs.iwanami_remaining }}
+          READING_QA_IWANAMI_AUDIT: ${{ inputs.iwanami_audit }}
+          READING_QA_METAPHYSICS: ${{ inputs.metaphysics }}
+          READING_QA_GROUPS: ${{ inputs.groups }}
+          READING_QA_AUTHORS: ${{ inputs.authors }}
+          READING_QA_PROGRESS: ${{ inputs.progress }}
+          READING_QA_CATALOG: ${{ inputs.catalog }}
           EXPECTED_PRODUCTION_SHA: ${{ inputs.production_sha || inputs.expected_head_sha }}
           SUPABASE_URL_PROD: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_ANON_KEY_PROD: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
@@ -189,7 +241,7 @@ jobs:
         run: node scripts/reading-production-qa.mjs
       - name: Published reading evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: reading-production-${{ github.run_id }}
           path: reading-production-evidence/
