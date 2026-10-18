@@ -211,3 +211,9 @@ Deno.test("malformed Storage inventory cannot masquerade as completed cleanup", 
     );
   }
 });
+
+Deno.test("Storage inventory preserves whitespace-distinct object keys", () => {
+  const keys = ["file.txt", " file.txt", "file.txt "];
+  const rows = keys.map((object_name) => ({ bucket_id: "notes", object_name }));
+  assertEquals(validatedStorageInventory(rows).map((row) => row.object_name), keys);
+});

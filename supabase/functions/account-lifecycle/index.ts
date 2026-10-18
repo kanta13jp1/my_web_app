@@ -526,9 +526,8 @@ async function deleteOwnedStorageObjects(
 
     const byBucket = new Map<string, string[]>();
     for (const object of objects) {
-      const bucket = asString(object.bucket_id);
-      const name = asString(object.object_name);
-      if (bucket === "" || name === "") continue;
+      const bucket = object.bucket_id;
+      const name = object.object_name;
       byBucket.set(bucket, [...(byBucket.get(bucket) ?? []), name]);
     }
     for (const [bucket, paths] of byBucket.entries()) {
