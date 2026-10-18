@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/echo_pump_keyboard.dart';
+
 import '../services/echo_pump_motion_stub.dart'
     if (dart.library.js_interop) '../services/echo_pump_motion_web.dart'
     as motion;
@@ -35,6 +37,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
   bool _blocked = false;
   bool _inventoryOpen = false;
   bool _moving = false;
+  bool _keyboardEnabled = false;
 
   late final EchoPumpAudio _audio;
 
@@ -87,6 +90,34 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
         (_game.turn != turn || cue == EchoPumpCue.start)) {
       _audio.cue(cue);
     }
+  }
+
+  bool _handleKeyboard(BuildContext keyboardContext, String command) {
+    if (!_started ||
+        _introPlaying ||
+        _moving ||
+        _inventoryOpen ||
+        _game.finished) {
+      return false;
+    }
+    if (command == 'wait') {
+      _act(_game.wait);
+      return true;
+    }
+    if (command == 'inventory') {
+      _openInventory(keyboardContext);
+      return true;
+    }
+    if (_game.room != PumpRoom.control) return false;
+    final circuit = switch (command) {
+      'a' => PumpCircuit.a,
+      'b' => PumpCircuit.b,
+      'c' => PumpCircuit.c,
+      _ => null,
+    };
+    if (circuit == null) return false;
+    _act(() => _game.togglePower(circuit), EchoPumpCue.power);
+    return true;
   }
 
   Future<void> _move(PumpRoom destination) async {
@@ -203,99 +234,112 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
           brightness: Brightness.dark,
         ),
       ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFF10191D),
-        appBar: AppBar(
-          title: const Text('残響ポンプ室'),
-          actions: [
-            Builder(
-              builder: (inventoryContext) => IconButton(
-                key: const Key('echo-inventory-toolbar'),
-                tooltip: '所持品を開く',
-                onPressed: () => _openInventory(inventoryContext),
-                icon: const Icon(Icons.inventory_2_outlined),
+      child: EchoPumpKeyboardScope(
+        enabled: _keyboardEnabled,
+        onCommand: _handleKeyboard,
+        child: Scaffold(
+          backgroundColor: const Color(0xFF10191D),
+          appBar: AppBar(
+            title: const Text('残響ポンプ室'),
+            actions: [
+              Builder(
+                builder: (inventoryContext) => IconButton(
+                  key: const Key('echo-inventory-toolbar'),
+                  tooltip: '所持品を開く',
+                  onPressed: () => _openInventory(inventoryContext),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                ),
               ),
-            ),
-            IconButton(
-              tooltip: '最初からやり直す',
-              onPressed: () =>
-                  _act(() => _game = EchoPumpGame(), EchoPumpCue.start),
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  EchoPumpScene(
-                    game: _game,
-                    onExploreMove: (room) {
-                      if (_game.room == PumpRoom.control && !_game.finished) {
-                        _move(room);
-                      }
-                    },
-                    onFootstep: () {
-                      if (_game.room == PumpRoom.control && !_game.finished) {
-                        _audio.cue(EchoPumpCue.step);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Builder(
-                    builder: (inventoryContext) => EchoPumpInventoryStrip(
-                      game: _game,
-                      onOpen: () => _openInventory(inventoryContext),
+              IconButton(
+                tooltip: '最初からやり直す',
+                onPressed: () =>
+                    _act(() => _game = EchoPumpGame(), EchoPumpCue.start),
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SwitchListTile.adaptive(
+                      key: const Key('echo-keyboard-toggle'),
+                      title: const Text('キーボード操作を有効にする'),
+                      subtitle: Text(
+                        _keyboardEnabled
+                            ? 'W：1ターン待つ / I：所持品 / 管理室でA・B・C：通電切替'
+                            : '初期OFF。ONでW・I・A・B・Cを使用。再読み込みでOFFに戻ります。',
+                      ),
+                      value: _keyboardEnabled,
+                      onChanged: (value) =>
+                          setState(() => _keyboardEnabled = value),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      Chip(
-                        label: Text(
-                          _game.sealed ? '敵：封鎖済み' : '敵：${_game.enemy.label}',
-                        ),
+                    EchoPumpScene(
+                      game: _game,
+                      onExploreMove: (room) {
+                        if (_game.room == PumpRoom.control && !_game.finished) {
+                          _move(room);
+                        }
+                      },
+                      onFootstep: () {
+                        if (_game.room == PumpRoom.control && !_game.finished) {
+                          _audio.cue(EchoPumpCue.step);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Builder(
+                      builder: (inventoryContext) => EchoPumpInventoryStrip(
+                        game: _game,
+                        onOpen: () => _openInventory(inventoryContext),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  EchoPumpProgress(game: _game),
-                  const SizedBox(height: 12),
-                  EchoPumpActionVisual(
-                    revision: _actionRevision,
-                    cue: _visualCue,
-                    from: _fromRoom,
-                    to: _game.room,
-                    message: _game.message,
-                    blocked: _blocked,
-                  ),
-                  ExpansionTile(
-                    key: const Key('echo-details'),
-                    title: const Text('詳しい目標・状況'),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(_game.objective),
-                            const SizedBox(height: 8),
-                            Text(_game.message),
-                          ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Chip(
+                          label: Text(
+                            _game.sealed ? '敵：封鎖済み' : '敵：${_game.enemy.label}',
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  if (_game.finished)
-                    _panel(
-                      _game.escaped ? '脱出成功' : '探索失敗',
-                      [
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    EchoPumpProgress(game: _game),
+                    const SizedBox(height: 12),
+                    EchoPumpActionVisual(
+                      revision: _actionRevision,
+                      cue: _visualCue,
+                      from: _fromRoom,
+                      to: _game.room,
+                      message: _game.message,
+                      blocked: _blocked,
+                    ),
+                    ExpansionTile(
+                      key: const Key('echo-details'),
+                      title: const Text('詳しい目標・状況'),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_game.objective),
+                              const SizedBox(height: 8),
+                              Text(_game.message),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_game.finished)
+                      _panel(_game.escaped ? '脱出成功' : '探索失敗', [
                         Text(
                           _game.escaped
                               ? '施設の仕組みを使って、生還できた。'
@@ -311,157 +355,163 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                           icon: const Icon(Icons.replay),
                           label: const Text('リトライ'),
                         ),
-                      ],
-                    ),
-                  _panel('施設の見取り図', [
-                    EchoPumpFacilityMap(game: _game),
-                    const SizedBox(height: 8),
-                    const Text('隣の部屋へは下の移動ボタンから進める。管理室は安全。'),
-                  ]),
-                  const ExpansionTile(
-                    title: Text('探索のヒント'),
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text('移動・通電・作業・待機の1操作で敵が1部屋動く。'
-                            '最後に入れた電源の機械音へ向かう。通電は最大2系統。'
-                            'ヒューズで修理し、敵を点検槽に封鎖してから排水する。'),
-                      ),
-                    ],
-                  ),
-                  _panel('移動・待機', [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      ]),
+                    _panel('施設の見取り図', [
+                      EchoPumpFacilityMap(game: _game),
+                      const SizedBox(height: 8),
+                      const Text('隣の部屋へは下の移動ボタンから進める。管理室は安全。'),
+                    ]),
+                    const ExpansionTile(
+                      title: Text('探索のヒント'),
                       children: [
-                        for (final room in _game.destinations)
-                          OutlinedButton(
-                            key: Key('echo-move-${room.name}'),
-                            onPressed: _game.finished ||
-                                    _moving ||
-                                    (room == PumpRoom.exit && !_game.drained) ||
-                                    (room == PumpRoom.inspection &&
-                                        _game.sealed)
-                                ? null
-                                : () => _move(room),
-                            child: Text('${room.label}へ'),
+                        Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            '移動・通電・作業・待機の1操作で敵が1部屋動く。'
+                            '最後に入れた電源の機械音へ向かう。通電は最大2系統。'
+                            'ヒューズで修理し、敵を点検槽に封鎖してから排水する。',
                           ),
-                        OutlinedButton.icon(
-                          key: const Key('echo-wait'),
-                          onPressed:
-                              _game.finished ? null : () => _act(_game.wait),
-                          icon: const Icon(Icons.hearing),
-                          label: const Text('1ターン待つ'),
                         ),
                       ],
                     ),
-                  ]),
-                  if (_game.room == PumpRoom.control)
-                    _panel('配電盤 / 最大2系統', [
-                      Text(
-                        _game.noiseRoom == null
-                            ? '稼働音なし：敵はその場に留まる。'
-                            : '音の行き先：${_game.noiseRoom!.label}',
-                      ),
-                      const SizedBox(height: 8),
+                    _panel('移動・待機', [
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          for (final circuit in PumpCircuit.values)
-                            FilterChip(
-                              key: Key('echo-power-${circuit.name}'),
-                              label: Text(circuit.label),
-                              selected: _game.power.contains(circuit),
-                              onSelected: _game.finished
+                          for (final room in _game.destinations)
+                            OutlinedButton(
+                              key: Key('echo-move-${room.name}'),
+                              onPressed: _game.finished ||
+                                      _moving ||
+                                      (room == PumpRoom.exit &&
+                                          !_game.drained) ||
+                                      (room == PumpRoom.inspection &&
+                                          _game.sealed)
                                   ? null
-                                  : (_) => _act(
-                                        () => _game.togglePower(circuit),
-                                        EchoPumpCue.power,
-                                      ),
+                                  : () => _move(room),
+                              child: Text('${room.label}へ'),
                             ),
+                          OutlinedButton.icon(
+                            key: const Key('echo-wait'),
+                            onPressed:
+                                _game.finished ? null : () => _act(_game.wait),
+                            icon: const Icon(Icons.hearing),
+                            label: const Text('1ターン待つ'),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          for (var i = 0; i < 2; i++)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Icon(
-                                Icons.bolt,
-                                color: i < _game.power.length
-                                    ? const Color(0xFF9BE0CF)
-                                    : Colors.white24,
+                    ]),
+                    if (_game.room == PumpRoom.control)
+                      _panel('配電盤 / 最大2系統', [
+                        Text(
+                          _game.noiseRoom == null
+                              ? '稼働音なし：敵はその場に留まる。'
+                              : '音の行き先：${_game.noiseRoom!.label}',
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final circuit in PumpCircuit.values)
+                              FilterChip(
+                                key: Key('echo-power-${circuit.name}'),
+                                label: Text(circuit.label),
+                                selected: _game.power.contains(circuit),
+                                onSelected: _game.finished
+                                    ? null
+                                    : (_) => _act(
+                                          () => _game.togglePower(circuit),
+                                          EchoPumpCue.power,
+                                        ),
                               ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            for (var i = 0; i < 2; i++)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Icon(
+                                  Icons.bolt,
+                                  color: i < _game.power.length
+                                      ? const Color(0xFF9BE0CF)
+                                      : Colors.white24,
+                                ),
+                              ),
+                            Text('${_game.power.length} / 2'),
+                          ],
+                        ),
+                        const ExpansionTile(
+                          title: Text('電源の使い方'),
+                          children: [
+                            Text(
+                              '3系統目を入れる前に、どれか1つを停止。'
+                              '\nA：搬入ファン / B：工具棚とコンプレッサー / C：点検槽のベルと排水',
                             ),
-                          Text('${_game.power.length} / 2'),
-                        ],
+                          ],
+                        ),
+                      ]),
+                    if (_game.room == PumpRoom.workshop)
+                      EchoPumpFuseShelf(
+                        game: _game,
+                        onCollect: () =>
+                            _act(_game.collectFuse, EchoPumpCue.collect),
                       ),
-                      const ExpansionTile(
-                        title: Text('電源の使い方'),
-                        children: [
-                          Text(
-                            '3系統目を入れる前に、どれか1つを停止。'
-                            '\nA：搬入ファン / B：工具棚とコンプレッサー / C：点検槽のベルと排水',
-                          ),
-                        ],
-                      ),
-                    ]),
-                  if (_game.room == PumpRoom.workshop)
-                    EchoPumpFuseShelf(
-                      game: _game,
-                      onCollect: () =>
-                          _act(_game.collectFuse, EchoPumpCue.collect),
+                    if (_game.room == PumpRoom.pump)
+                      _panel('ポンプ制御', [
+                        EchoPumpMachinery(
+                          repaired: _game.repaired,
+                          sealed: _game.sealed,
+                          drained: _game.drained,
+                          powered: _game.power.contains(PumpCircuit.c),
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            FilledButton(
+                              key: const Key('echo-repair'),
+                              onPressed: _game.finished || !_game.hasFuse
+                                  ? null
+                                  : () =>
+                                      _act(_game.repair, EchoPumpCue.repair),
+                              child: const Text('ヒューズで修理'),
+                            ),
+                            FilledButton(
+                              key: const Key('echo-seal'),
+                              onPressed: _game.finished ||
+                                      _game.sealed ||
+                                      _game.enemy != PumpRoom.inspection ||
+                                      !_game.power.contains(PumpCircuit.c)
+                                  ? null
+                                  : () => _act(_game.seal, EchoPumpCue.seal),
+                              child: const Text('隔壁を閉じる'),
+                            ),
+                            FilledButton(
+                              key: const Key('echo-drain'),
+                              onPressed: _game.finished ||
+                                      !_game.repaired ||
+                                      !_game.sealed ||
+                                      _game.drained ||
+                                      !_game.power.contains(PumpCircuit.c)
+                                  ? null
+                                  : () => _act(_game.drain, EchoPumpCue.drain),
+                              child: const Text('排水ポンプを起動'),
+                            ),
+                          ],
+                        ),
+                      ]),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '音は下のボタンでONにできます。保存はされません。'
+                      '再読み込みすると最初から始まります。',
                     ),
-                  if (_game.room == PumpRoom.pump)
-                    _panel('ポンプ制御', [
-                      EchoPumpMachinery(
-                        repaired: _game.repaired,
-                        sealed: _game.sealed,
-                        drained: _game.drained,
-                        powered: _game.power.contains(PumpCircuit.c),
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          FilledButton(
-                            key: const Key('echo-repair'),
-                            onPressed: _game.finished || !_game.hasFuse
-                                ? null
-                                : () => _act(_game.repair, EchoPumpCue.repair),
-                            child: const Text('ヒューズで修理'),
-                          ),
-                          FilledButton(
-                            key: const Key('echo-seal'),
-                            onPressed: _game.finished ||
-                                    _game.sealed ||
-                                    _game.enemy != PumpRoom.inspection ||
-                                    !_game.power.contains(PumpCircuit.c)
-                                ? null
-                                : () => _act(_game.seal, EchoPumpCue.seal),
-                            child: const Text('隔壁を閉じる'),
-                          ),
-                          FilledButton(
-                            key: const Key('echo-drain'),
-                            onPressed: _game.finished ||
-                                    !_game.repaired ||
-                                    !_game.sealed ||
-                                    _game.drained ||
-                                    !_game.power.contains(PumpCircuit.c)
-                                ? null
-                                : () => _act(_game.drain, EchoPumpCue.drain),
-                            child: const Text('排水ポンプを起動'),
-                          ),
-                        ],
-                      ),
-                    ]),
-                  const SizedBox(height: 12),
-                  const Text('音は下のボタンでONにできます。保存はされません。'
-                      '再読み込みすると最初から始まります。'),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
