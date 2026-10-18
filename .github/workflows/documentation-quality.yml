@@ -6,6 +6,7 @@ on:
       - '**/*.md'
       - 'scripts/documentation_links*.py'
       - 'scripts/documentation_quality_gate*.py'
+      - 'scripts/documentation_quality_base*.py'
       - 'scripts/documentation_quality_notify_test.cjs'
       - '.github/workflows/documentation-quality-notify.yml'
       - '.github/workflows/documentation-quality.yml'
@@ -28,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          fetch-depth: 1
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -40,11 +41,13 @@ jobs:
           node --test scripts/documentation_quality_notify_test.cjs
           python scripts/documentation_links_test.py
           python scripts/documentation_quality_gate_test.py
+          python scripts/documentation_quality_base_test.py
       - name: Validate Markdown and preserve all findings
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          EVENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if [ -n "$BASE_SHA" ]; then
+          if [ -n "$EVENT_BASE_SHA" ]; then
+            BASE_SHA=$(python scripts/documentation_quality_base.py --event-base "$EVENT_BASE_SHA")
             git fetch --no-tags --depth=1 origin "$BASE_SHA"
             python scripts/documentation_quality_gate.py --base "$BASE_SHA"
           else
