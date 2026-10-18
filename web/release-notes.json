@@ -31,6 +31,19 @@
       "changes": [
         {
           "category": "feature",
+          "id": "pr-5864",
+          "links": [
+            {
+              "title": "PR #5864",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5864"
+            }
+          ],
+          "mergedAt": "2026-10-18T16:04:20Z",
+          "summary": "#5864 残響ポンプ室の部屋移動に扉の開閉と暗転を追加"
+        },
+        {
+          "category": "feature",
           "id": "pr-5865",
           "links": [
             {
@@ -314,19 +327,6 @@
           ],
           "mergedAt": "2026-10-17T16:22:02Z",
           "summary": "#5840 test: ノート検索E2Eの入力を通常のキー操作に合わせる"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5830",
-          "links": [
-            {
-              "title": "PR #5830",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5830"
-            }
-          ],
-          "mergedAt": "2026-10-17T16:02:51Z",
-          "summary": "#5830 残響ポンプ室の管理室に歩行・足音・メモ・扉の探索を追加"
         },
         {
           "category": "feature",
