@@ -1,0 +1,81 @@
+name: Blender MCP Valve Lab
+on:
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact source SHA
+        required: true
+        type: string
+  pull_request:
+    paths: ['scripts/blender_lab/**', 'web/labs/blender-valve/**', '.github/workflows/blender-valve-lab.yml']
+permissions: {}
+concurrency:
+  group: blender-valve-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  practice:
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BLENDER_UPSTREAM_SHA: 7a0373ec9199183cb460068c4f96aed9c579fb4f
+      DISABLE_TELEMETRY: 'true'
+      BLENDER_MCP_SAFE_MODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Verify exact manual source
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - name: Install isolated cloud tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender xvfb python3-numpy
+          python3 -m venv /tmp/blender-lab-venv
+          /tmp/blender-lab-venv/bin/pip download --no-deps --only-binary=:all: mcp-for-blender==2.1.9 -d /tmp/blender-wheel
+          echo 'a5cbc6cf316fa7433566eb505a0c26ca22e28c10083bd1b09a23d9e357821ccc  /tmp/blender-wheel/mcp_for_blender-2.1.9-py3-none-any.whl' | sha256sum -c -
+          /tmp/blender-lab-venv/bin/pip install /tmp/blender-wheel/*.whl
+          /tmp/blender-lab-venv/bin/python -c "import pathlib,blender_mcp; p=pathlib.Path(blender_mcp.__file__).parent; pathlib.Path('/tmp/blender-lab-addon.py').write_bytes((p/'bundled/addon.py').read_bytes())"
+      - name: Exercise upstream MCP against real Blender
+        env:
+          BLENDER_ADDON_PATH: /tmp/blender-lab-addon.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          xvfb-run -a blender --factory-startup --threads 2 --python scripts/blender_lab/bootstrap.py > blender.log 2>&1 &
+          blender_pid=$!
+          trap 'kill "$blender_pid" 2>/dev/null || true; wait "$blender_pid" 2>/dev/null || true' EXIT
+          for i in {1..60}; do
+            if python3 -c 'import socket; s=socket.create_connection(("127.0.0.1",9876),1); s.close()' 2>/dev/null; then break; fi
+            sleep 1
+          done
+          /tmp/blender-lab-venv/bin/python scripts/blender_lab/probe.py
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+      - name: Bundle self-hosted viewer and browser tests
+        run: |
+          mkdir -p /tmp/blender-viewer
+          cd /tmp/blender-viewer
+          npm init -y
+          npm install --save-exact three@0.180.0 esbuild@0.25.10 @playwright/test@1.56.1
+          cd "$GITHUB_WORKSPACE"
+          NODE_PATH=/tmp/blender-viewer/node_modules /tmp/blender-viewer/node_modules/.bin/esbuild scripts/blender_lab/viewer.js --bundle --minify --format=esm --outfile=web/labs/blender-valve/viewer.js
+          cp /tmp/blender-viewer/node_modules/three/LICENSE web/labs/blender-valve/THREE-LICENSE.txt
+          /tmp/blender-viewer/node_modules/.bin/playwright install --with-deps chromium
+          NODE_PATH=/tmp/blender-viewer/node_modules node scripts/blender_lab/browser.cjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: blender-valve-practice-${{ github.run_id }}
+          path: |
+            web/labs/blender-valve/
+            blender-evidence.json
+            blender.log
+            blender-browser/
+          if-no-files-found: error
+          retention-days: 14
