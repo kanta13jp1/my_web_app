@@ -198,3 +198,28 @@ test('climax breath removes bass and percussion for one beat but preserves lead 
  tones.length=0;a.beat=48;a.next=c.currentTime;a.tick();assert.ok(tones.some(x=>x[4]===.055));assert.ok(tones.some(x=>x[3]==='pluck'));
  tones.length=0;a.effect('coin');assert.ok(tones.some(x=>x[5]!==true));
 });
+
+import {bossAccent} from '../../web/labs/jev-mario/audio.mjs';
+test('boss accents group eight eighths as three plus three plus two',()=>{
+ const hits=Array.from({length:17},(_,i)=>i).filter(bossAccent);assert.deepEqual(hits,[0,3,6,8,11,14,16]);assert.deepEqual(hits.slice(1).map((x,i)=>x-hits[i]),[3,3,2,3,3,2]);
+});
+test('grouped accents sound only near a boss and respect the phrase breath',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.track='castle';const notes=[];a.tone=(...x)=>notes.push(x);
+ for(const boss of [false,true])for(const beat of [0,1,3,6,46,47]){notes.length=0;a.beat=beat;a.next=c.currentTime;a.tick('castle',{boss});assert.equal(notes.some(x=>x[4]===.020),boss&&[0,3,6].includes(beat));}
+});
+
+import {loopSection,LOOP_STEPS} from '../../web/labs/jev-mario/audio.mjs';
+test('32-bar arrangement unfolds in four eight-bar sections then returns to its hook',()=>{
+ assert.equal(LOOP_STEPS,32*8);assert.deepEqual([0,64,128,192,256].map(b=>loopSection(b).name),['intro','development','climax','return','intro']);
+ assert.ok(loopSection(128).backing>loopSection(0).backing);assert.ok(loopSection(192).backing<loopSection(0).backing);assert.equal(loopSection(192).ornaments,false);
+ assert.deepEqual(leadLayers('overworld',128).map(n=>n.interval),[12]);
+});
+test('return thins ornaments and actual scheduler joins the next loop without duplicate anticipated attacks',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.track='overworld';const calls=[];a.tone=(...x)=>calls.push(x);
+ a.beat=192;a.next=c.currentTime;a.tick();const n=musicStep('overworld',192);assert.ok(!calls.some(x=>x[0]===n.pad&&x[3]==='triangle'));calls.length=0;a.beat=193;a.next=c.currentTime;a.tick();assert.ok(calls.some(x=>x[4]===.052));
+ a.beat=255;a.next=c.currentTime;a.tick();assert.equal(a.beat,256);const next=a.next;calls.length=0;c.currentTime=next;a.tick();assert.equal(a.beat,257);assert.equal(a.next,next+musicStep('overworld',0).step);assert.ok(!calls.some(x=>x[3]==='bass'||x[4]===.052));a.stop();assert.equal(a.nodes.size,0);
+});
+
+test('development answers the same hook with a contrasting lead timbre',async()=>{
+ const c=context(),a=new GameAudio(()=>c);await a.enable(true);a.track='overworld';a.beat=65;a.next=c.currentTime;const calls=[];a.tone=(...x)=>calls.push(x);a.tick();assert.ok(calls.some(x=>x[4]===.052&&x[3]==='pluck'));
+});

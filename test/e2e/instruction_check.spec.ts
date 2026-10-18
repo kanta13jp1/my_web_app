@@ -72,3 +72,85 @@ test('local processing and responsive layout', async ({page}) => {
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+test('historical records expose all twelve conditions and real event excerpts', async ({page}, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.getByRole('button', {name: '実行記録12件を表示する'}).click();
+  await expect(page.locator('#run-select option')).toHaveCount(12);
+  for (const version of ['old', 'new']) for (const condition of ['N','C','A','B','I','E']) {
+    await page.locator('#run-select').selectOption(`${version}-${condition}`);
+    await expect(page.locator('#evidence-panel')).toBeVisible();
+    await expect(page.locator('#run-summary')).toContainText(`条件 ${condition}`);
+    await expect(page.locator('#run-tools')).toContainText('ツール使用イベント：0件');
+    await expect(page.locator('#run-tools')).toContainText('全4イベント');
+    await expect(page.locator('#run-source')).toHaveAttribute('href', new RegExp(`/results/${version}-${condition}\\.json$`));
+  }
+  await page.locator('#run-select').selectOption('new-A');
+  await expect(page.locator('#run-answer')).toHaveText('NONE');
+  await page.locator('#run-select').selectOption('new-E');
+  await expect(page.locator('#run-answer')).toContainText('LOADMARK_A_79bd0e31');
+  await page.locator('#run-log-details summary').click();
+  await expect(page.locator('#run-events')).toContainText('元ログ 4行目');
+  await expect(page.locator('#run-events')).toContainText('"subtype": "success"');
+  await expect(page.locator('#run-events')).not.toContainText('session_id');
+  await page.locator('#evidence').scrollIntoViewIfNeeded();
+  await page.screenshot({path: info.outputPath('historical-logs.png'), fullPage: true});
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});
+test('unavailable evidence clears previous records and can recover', async ({page}) => {
+  await page.route('**/evidence.json', route => route.fulfill({status: 503, body: 'unavailable'}));
+  await page.getByRole('button', {name: '実行記録12件を表示する'}).click();
+  await expect(page.locator('#evidence-message')).toContainText('取得できませんでした');
+  await expect(page.locator('#evidence-panel')).toBeHidden();
+  await expect(page.locator('#run-select')).toBeDisabled();
+  await page.unroute('**/evidence.json');
+  await page.getByRole('button', {name: '実行記録12件を表示する'}).click();
+  await expect(page.locator('#evidence-panel')).toBeVisible();
+});
+
+test('captured inputs distinguish feature availability from both-file settings', async ({page}, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-select option')).toHaveCount(23);
+  for (const [id, text] of [
+    ['windows-278-A-telemetry-on-cache-false','どちらの目印も入力にありませんでした'],
+    ['windows-278-A-telemetry-on-cache-true','AGENTS.md側の目印'],
+    ['windows-278-E-telemetry-on-cache-false','CLAUDE.md側の目印'],
+    ['windows-278-E-telemetry-on-cache-true','AGENTS.md側の目印・CLAUDE.md側の目印'],
+    ['windows-281-A-telemetry-off','AGENTS.md側の目印'],
+  ]) {
+    await page.locator('#cause-select').selectOption(id);
+    await expect(page.locator('#cause-result')).toContainText(text);
+    await expect(page.locator('#cause-result')).toContainText('AIの返答は生成していません');
+  }
+  await page.locator('#loading-cause details summary').click();
+  await expect(page.locator('#cause-log')).toContainText('prompt.context');
+  await expect(page.locator('#cause-source')).toContainText('元記録SHA-256');
+  await page.locator('#loading-cause').scrollIntoViewIfNeeded();
+  await page.screenshot({path: info.outputPath('loading-cause.png'), fullPage: false});
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('#load-evidence').click();
+  await page.locator('#run-select').selectOption('new-A');
+  await expect(page.locator('#run-answer')).toHaveText('NONE');
+  expect(errors).toEqual([]);
+});
+test('failed or incomplete captures clear previous results and recover', async ({page}) => {
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-panel')).toBeVisible();
+  await page.route('**/cause.json', route => route.fulfill({status:503,body:'unavailable'}));
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-panel')).toBeHidden();
+  await expect(page.locator('#cause-select')).toBeDisabled();
+  await expect(page.locator('#cause-message')).toContainText('取得できません');
+  await page.unroute('**/cause.json');
+  await page.route('**/cause.json', route => route.fulfill({json:{schema:1,kind:'intercepted-request-no-model',runs:[]}}));
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-panel')).toBeHidden();
+  await expect(page.locator('#cause-message')).toContainText('記録形式');
+  await page.unroute('**/cause.json');
+  await page.locator('#load-cause').click();
+  await expect(page.locator('#cause-panel')).toBeVisible();
+});

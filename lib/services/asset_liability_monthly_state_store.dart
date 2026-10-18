@@ -9,6 +9,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AssetLiabilityMonthlyState {
   final Map<String, double> paymentOverrides;
+
+  /// This cycle only; never copied into the next cycle.
+  final Map<String, double> confirmedPaymentDays;
   final Map<String, double> actualPaymentAmounts;
   final Map<String, String> paymentDifferenceReasons;
   final Map<String, double> annualRateOverrides;
@@ -28,6 +31,7 @@ class AssetLiabilityMonthlyState {
 
   const AssetLiabilityMonthlyState({
     this.paymentOverrides = const <String, double>{},
+    this.confirmedPaymentDays = const <String, double>{},
     this.actualPaymentAmounts = const <String, double>{},
     this.paymentDifferenceReasons = const <String, String>{},
     this.annualRateOverrides = const <String, double>{},
@@ -45,6 +49,7 @@ class AssetLiabilityMonthlyState {
 
   bool get isEmpty =>
       paymentOverrides.isEmpty &&
+      confirmedPaymentDays.isEmpty &&
       actualPaymentAmounts.isEmpty &&
       paymentDifferenceReasons.isEmpty &&
       annualRateOverrides.isEmpty &&
@@ -60,6 +65,7 @@ class AssetLiabilityMonthlyState {
   /// マップ/セット/リストの総エントリ数 (= 端末間マージで「増えたか」判定に使う)。
   int get totalEntryCount =>
       paymentOverrides.length +
+      confirmedPaymentDays.length +
       actualPaymentAmounts.length +
       paymentDifferenceReasons.length +
       annualRateOverrides.length +
@@ -84,6 +90,10 @@ class AssetLiabilityMonthlyState {
   /// 既存の tombstone パターン (リボ/ウォッチリスト等で実績) を別途適用する将来課題。
   AssetLiabilityMonthlyState mergeWith(AssetLiabilityMonthlyState other) {
     return AssetLiabilityMonthlyState(
+      confirmedPaymentDays: <String, double>{
+        ...other.confirmedPaymentDays,
+        ...confirmedPaymentDays,
+      },
       paymentOverrides: <String, double>{
         ...other.paymentOverrides,
         ...paymentOverrides,
@@ -162,6 +172,8 @@ class AssetLiabilityMonthlyState {
 }
 
 class AssetLiabilityMonthlyStateStore {
+  static const String confirmedPaymentDaysPrefsKey =
+      'asset_liability_confirmed_payment_days_v1';
   static const String paymentPrefsKey =
       'asset_liability_monthly_payment_overrides_v1';
   static const String actualPaymentPrefsKey =
@@ -252,6 +264,10 @@ class AssetLiabilityMonthlyStateStore {
     final prefs = await SharedPreferences.getInstance();
     final monthKey = formatMonthKey(month);
     return AssetLiabilityMonthlyState(
+      confirmedPaymentDays: paymentOverridesForMonth(
+        _safeGetString(prefs, confirmedPaymentDaysPrefsKey),
+        monthKey,
+      ),
       paymentOverrides: paymentOverridesForMonth(
         _safeGetString(prefs, paymentPrefsKey),
         monthKey,
@@ -313,6 +329,16 @@ class AssetLiabilityMonthlyStateStore {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final monthKey = formatMonthKey(month);
+
+    final allDays = decodePaymentOverrides(
+      _safeGetString(prefs, confirmedPaymentDaysPrefsKey),
+    );
+    if (state.confirmedPaymentDays.isEmpty) {
+      allDays.remove(monthKey);
+    } else {
+      allDays[monthKey] = Map<String, double>.from(state.confirmedPaymentDays);
+    }
+    await prefs.setString(confirmedPaymentDaysPrefsKey, jsonEncode(allDays));
 
     final allPayments = decodePaymentOverrides(
       _safeGetString(prefs, paymentPrefsKey),
@@ -1608,6 +1634,10 @@ class AssetLiabilityMonthlyStateStore {
     ];
 
     return AssetLiabilityMonthlyState(
+      confirmedPaymentDays: <String, double>{
+        for (final entry in state.confirmedPaymentDays.entries)
+          legacyKeyToAccountId[entry.key] ?? entry.key: entry.value,
+      },
       paymentOverrides: migratedPayments,
       actualPaymentAmounts: migratedActualPayments,
       paymentDifferenceReasons: migratedDifferenceReasons,

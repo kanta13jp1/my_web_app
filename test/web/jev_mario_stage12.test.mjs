@@ -378,3 +378,45 @@ test('first sky jumps progress from a wide landing to a narrower landing',()=>{
  const g=skyLevel(),count=(a,b,y)=>Array.from({length:b-a+1},(_,i)=>g.cells.get(`${a+i},${y}`)).filter(Boolean).length;
  assert.equal(count(20,29,12),10);assert.equal(count(32,41,10),8);assert.equal(g.cells.get('40,10'),undefined);assert.equal(g.cells.get('44,11'),'platform');
 });
+
+import {world21Level} from '../../web/labs/jev-mario/world11.mjs';
+test('optional gap rewards leave the lower crossing and pit intact',()=>{
+ const g=world21Level();for(const x of [44,45,46]){assert.equal(g.contents.get(`${x},8`),'loose');assert.equal(g.cells.get(`${x},8`),undefined);assert.equal(g.cells.get(`${x},13`),undefined);}
+ assert.equal(g.cells.get('43,13'),'ground');assert.equal(g.cells.get('47,13'),'ground');
+});
+test('an exposed flower outranks a nearby unopened power-up block',()=>{
+ const g=new World11();g.power=1;g.p.x=21*16;g.camera=0;g.items.push({x:g.p.x+35,y:g.p.y,kind:'flower',taken:false});assert.equal(itemTargets(g)[0].block,false);assert.equal(itemTargets(g)[0].kind,'flower');
+});
+
+test('3-3 elevated approach guards a fall beyond the former 24-frame horizon',async()=>{
+ const {clone,advance}=await import('../../web/labs/jev-mario/search-assist.mjs');const {LiveGuard}=await import('../../web/labs/jev-mario/live-guard.mjs');
+ const g=new World11(11);g.enemies=[];g.contents.clear();Object.assign(g.p,{x:1296,y:144,vx:2.3,vy:0,grounded:true});g.camera=1200;
+ assert.equal(advance(clone(g),'right',24).phase,'playing');assert.equal(advance(clone(g),'right',64).phase,'dead');
+ const before=JSON.stringify(g.snapshot()),guard=new LiveGuard(),action=guard.decide(g,'right');assert.notEqual(action,'right');assert.equal(JSON.stringify(g.snapshot()),before);assert.equal(advance(clone(g),action,64).phase,'playing');assert.equal(guard.lastReason,'live_collision_guard');
+});
+
+import {pipeRoute} from '../../web/labs/jev-mario/pipe-route.mjs';
+test('bonus room reward can be collected and the return preserves the main course',async()=>{
+ const {advance}=await import('../../web/labs/jev-mario/search-assist.mjs');
+ for(const power of [0,1]){
+  const g=new World11();g.power=power;g.p.h=power?28:16;Object.assign(g.p,{x:57*16+8,y:144-g.p.h,grounded:true});
+  const cells=g.cells,contents=g.contents;assert.equal(g.enterRoom(),true);
+  assert.equal(g.items[0].kind,power?'flower':'mushroom');assert.equal(g.contents.size,19);assert.equal(g.tile(0,1),undefined);assert.equal(g.tile(0,4),'brick');assert.equal(g.p.y,80);
+  for(let n=0;n<300&&g.room==='underground';n++)advance(g,pipeRoute(g)??'right_jump',8);
+  assert.equal(g.pickups[power?'flower':'mushroom'],1);assert.equal(g.room,'overworld');
+  assert.equal(g.cells,cells);assert.equal(g.contents,contents);assert.equal(g.phase,'playing');
+ }
+});
+
+test('1-1 pipe section is followed by a walkable coin breather before the next gap',()=>{
+ const g=new World11(),enemyCount=g.enemies.length;
+ for(let col=59;col<=68;col++)assert.equal(g.tile(col,13),'ground');
+ assert.equal(g.tile(69,13),undefined,'the following challenge remains a gap');
+ Object.assign(g.p,{x:59*16,y:192,vx:0,vy:0,grounded:true});g.buttons('right');
+ for(let i=0;i<85;i++)g.step();
+ assert.equal(g.coins,4);assert.equal(g.score,800);assert.equal(g.phase,'playing');
+ assert.equal(g.deaths,0);assert.equal(g.lives,3);assert.equal(g.invincible,0);
+ assert.equal(g.enemies.length,enemyCount);assert.ok(g.p.x<69*16);
+ assert.ok(g.p.grounded,'rewards require no jump');
+ g.reset();assert.equal(g.coins,0);assert.equal(g.contents.get('60,12'),'loose');
+});
