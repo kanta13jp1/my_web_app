@@ -13,7 +13,8 @@
     "lib/widgets/echo_pump_visuals.dart",
     "lib/widgets/echo_pump_inventory.dart",
     "test/widgets/echo_pump_inventory_test.dart",
-    "lib/widgets/echo_pump_machinery.dart"
+    "lib/widgets/echo_pump_machinery.dart",
+    "lib/widgets/echo_pump_door_transition.dart"
   ],
   [
     "dart",
@@ -26,7 +27,8 @@
     "test/widgets/echo_pump_room_stage_test.dart",
     "lib/widgets/echo_pump_inventory.dart",
     "test/widgets/echo_pump_inventory_test.dart",
-    "lib/widgets/echo_pump_machinery.dart"
+    "lib/widgets/echo_pump_machinery.dart",
+    "lib/widgets/echo_pump_door_transition.dart"
   ],
   [
     "flutter",
