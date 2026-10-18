@@ -67448,3 +67448,8 @@ Persist capped device-local failure clusters and extend search/collision foresig
 - 検証: `flutter analyze` (変更4ファイル) 0件、モデル6件 + ダイアログ widget 3件 + `tab_route_url_sync_test` が緑。サーバー側の変更は無し。本番での実操作確認は未実施。
 - 残る「準備中」: `loyalty.redeem` / `wallet.pay` (金銭系・人間レビュー前提で継続持ち越し)、`/meal-log` の AI 栄養推定 (サーバー未実装・UI に内部メモ「Codex#2準備中」が露出)、`/cfo-office` の遷移先なしカード。
 - 実績は migration `20261007090000_seed_achievements_daily_dev_20261007.sql` に記録。ブログ下書きキューは2030年分まで埋まっているため手動追加は見送り。
+
+
+## 2026-10-18 Hosting通信量の削減（PR5861）
+
+同梱日本語フォントのCSS preloadとCanvasKit Fetchの二重転送を除去。フォント本体/文字/SEO描画安定化は維持。クラウドの日本語環境でPC各3回/mobile各1回の初回・離脱後再訪問を比較し、Hosting転送量はPC中央値で初回23.019→15.083MB（34.48%減）、再訪19.558→11.622MB（40.58%減）。16サンプルで正常描画・日本語フォントFetch維持・重複取得除去を確認。マージ/本番反映は未実施。条件と限界はdocs/HOSTING_TRANSFER_MEASUREMENT.mdを参照。
