@@ -276,16 +276,16 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         self.assertEqual(targets["notion-sync"].event, "schedule")
         self.assertEqual(targets["deploy-prod"].event, "push")
 
-    def test_health_monitor_requires_two_missed_delivery_opportunities(self) -> None:
+    def test_health_monitor_tolerates_github_schedule_throttling(self) -> None:
         targets = {target.key: target for target in TARGETS}
         health_monitor = targets["health-monitor"]
 
-        self.assertEqual(health_monitor.max_age_hours, 6)
+        self.assertEqual(health_monitor.max_age_hours, 12)
         delayed = evaluate_target(
             health_monitor,
             [
                 run(
-                    created_at=(NOW - timedelta(hours=3, minutes=36))
+                    created_at=(NOW - timedelta(hours=9, minutes=30))
                     .isoformat()
                     .replace("+00:00", "Z")
                 )
@@ -297,7 +297,7 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
             health_monitor,
             [
                 run(
-                    created_at=(NOW - timedelta(hours=6, minutes=1))
+                    created_at=(NOW - timedelta(hours=12, minutes=1))
                     .isoformat()
                     .replace("+00:00", "Z")
                 )

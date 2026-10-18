@@ -58,3 +58,25 @@ test('unreachable reward behind camera does not block a usable pipe, reachable r
 test('retry guard checks an airborne stationary jump loop without waiting for landing',()=>{const g=new World11();g.enemies=[];g.contents.clear();Object.assign(g.p,{x:300,y:180,vx:0,vy:-1,grounded:false});const records=[{stage:1,room:'overworld',x:300,y:180,count:12,kind:'stalled',failedActions:{jump:12}}];const guard=new LiveGuard();const old=structuredClone(g.p),action=guard.decide(g,'jump',records);assert.notEqual(action,'jump');assert.equal(guard.lastReason,'retry_escape');assert.deepEqual(g.p,old);});
 
 test('castle reward detours cannot indefinitely postpone forward stall recovery',()=>{const g=new World11(32);let worker;const session=new StudentSession(()=>worker={terminate(){},postMessage(){}},()=>g.frames*1000/60,null);session.start({ready(){},update(){},error(){assert.fail();}});worker.onmessage({data:{type:'ready'}});session.guard.decide=()=> 'noop';session.tick(g);for(const frame of [60,120,180]){g.frames=frame;g.pickups.life++;session.tick(g);}assert.equal(session.failures.length,1);assert.equal(session.failures[0].kind,'stalled');g.frames=181;g.p.x+=24;session.tick(g);assert.equal(session.progress.frame,181);session.stop();});
+
+
+test('stalled clusters cover the current position past an earlier forward boundary',()=>{
+ const store=storage(),memory=new RetryMemory(store),g=new World11(22);g.p.x=1360;
+ memory.record(g,'stalled','left');g.p.x=1392;
+ memory.record(g,'stalled','left');memory.record(g,'stalled','left');
+ const loaded=new RetryMemory(store);
+ assert.equal(loaded.records.length,2,'a stall outside the previous guard horizon needs its own cluster');
+ assert.equal(stalledActionPenalty(g,loaded.records,'left'),24);
+ assert.equal(stalledActionPenalty(g,loaded.records,'right'),0);
+ assert.equal(retryLevel(g,loaded.records),2);
+ g.p.x=1450;assert.equal(stalledActionPenalty(g,loaded.records,'left'),0);
+});
+
+test('stalled clustering keeps its inclusive forward edge and existing death clusters',()=>{
+ const g=new World11(22),stalls=new RetryMemory(null);g.p.x=1360;
+ stalls.record(g,'stalled','left');g.p.x=1384;stalls.record(g,'stalled','left');
+ assert.equal(stalls.records.length,1);assert.equal(stalledActionPenalty(g,stalls.records,'left'),24);
+ g.p.x=1385;stalls.record(g,'stalled','left');assert.equal(stalls.records.length,2);
+ const deaths=new RetryMemory(null);g.phase='dead';g.p.x=1360;deaths.record(g);
+ g.p.x=1392;deaths.record(g);assert.equal(deaths.records.length,1);assert.equal(deaths.records[0].count,2);
+});

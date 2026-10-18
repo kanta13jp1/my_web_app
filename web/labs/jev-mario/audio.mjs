@@ -1,5 +1,8 @@
 // Original scores and synthesized effects; no sampled Nintendo soundtrack.
 export const MAX_VOICES=64,MAX_MUSIC_VOICES=48;
+// 32 bars of 4/4: eight eighth-note steps per bar, four eight-bar sections.
+export const LOOP_STEPS=256;
+export function loopSection(beat){const section=Math.floor((beat%LOOP_STEPS)/64);return {name:['intro','development','climax','return'][section],backing:[1,1,1.12,.65][section],ornaments:section!==3};}
 // Four-note hook: E-G-A-G. Transposition keeps its contour across rooms.
 export const MOTIF=[0,3,5,3];
 function theme(root){return [0,0,5,0].flatMap((shift,phrase)=>{const r=root+shift;return [...MOTIF.map(n=>r+n),0,0,r+7,0,...MOTIF.map(n=>r+12+n),0,r+(phrase%2?2:5),r,0];});}
@@ -48,7 +51,7 @@ export function bassStep(track,beat,hurry=false){
 export function leadLayers(track,beat,boss=false){
  if(track==='underwater')return [];
  if(track==='castle'&&boss)return [{interval:12,type:'pluck',gain:.018},{interval:-12,type:'triangle',gain:.012}];
- return beat%64>=48?[{interval:12,type:'pluck',gain:.016}]:[];
+ return beat%64>=48||Math.floor((beat%LOOP_STEPS)/64)===2?[{interval:12,type:'pluck',gain:.016}]:[];
 }
 export const effects={firework:[48,36],swim:[60,67],bridge:[43,38,31,24],impact:[42,30],skid:[79,67,79],flag:[84,81,79,76,72,67],tally:[84],kick:[43,31],appear:[48,53,57,60,65],life:[72,79,76,84,81,88],jump:[48,60,72],coin:[88,95],bump:[38,32],break:[43,35,28],item:[60,64,67,72],stomp:[48,36],hurt:[65,53,41],pipe:[55,48,41],fire:[65,48],hurry:[79,84,88,84,79,84],death:[72,68,63,58,51,44],clear:[60,64,67,72,76,79,84]};
 export class GameAudio{
@@ -108,13 +111,16 @@ export class GameAudio{
   while(this.next<now+.08){
    const {step,lead,leadType,harmony,bass,counter,pad,fifth,answer,bell,accent,echo,turn,pickup,reply,lowAnswer,spark,cadence,duty}=musicStep(track,this.beat,hurry),t=this.next;
    // Phrase entries arrive just before their next grid beat, without a duplicate attack.
+   const section=loopSection(this.beat);
+   const retreat=track!=='underwater'&&this.beat%64>=46&&this.beat%64<48;
    const water=track==='underwater',anticipated=!water&&this.beat>0&&this.beat%8===0;
-   const playLead=(note,time,duration,type,duty,beat)=>{this.tone(note,time,duration,type,.052,true,0,duty);if(note)for(const layer of leadLayers(track,beat,boss))this.tone(note+layer.interval,time,duration,layer.type,layer.gain,true);};
+   const playLead=(note,time,duration,type,duty,beat)=>{this.tone(note,time,duration,section.name==='development'?'pluck':type,.052,true,0,duty);if(note)for(const layer of leadLayers(track,beat,boss))this.tone(note+layer.interval,time,duration,layer.type,layer.gain,true);};
    if((water&&this.beat%2===0)||(!water&&!anticipated))playLead(water?scores.underwater[Math.floor(this.beat/2)%scores.underwater.length]:lead,t,step*(water?1.7:this.beat%4===3?.55:.82),leadType,duty,this.beat);
    if(!water&&this.beat%8===7){const next=musicStep(track,this.beat+1,hurry);playLead(next.lead,t+step*.72,step*1.10,next.leadType,next.duty,this.beat+1);} 
-   for(const n of ostinatoStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,n.type,n.gain,true,0,n.duty);
+   for(const n of ostinatoStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,n.type,n.gain*section.backing,true,0,n.duty);
    // Offbeat comping and broken triads keep the lead audible without dense chords.
-   if(this.beat%2===0||track==='star')this.tone(harmony,t+step*.08,step*.65,'square',track==='underwater'?.013:.018,true,0,.5);
+   if(this.beat%2===0||track==='star')this.tone(harmony,t+step*.08,step*.65,'square',(track==='underwater'?.013:.018)*section.backing,true,0,.5);
+   if(section.ornaments){
    if(this.beat%32===9)this.tone(reply,t+step*.65,step*.55,'triangle',.006,true);
    if(this.beat%16===5)this.tone(lowAnswer,t+step*.4,step*.8,'triangle',.010,true);
    if(this.beat%32===21)this.tone(spark,t+step*.75,step*.35,'sine',.004,true);
@@ -127,18 +133,21 @@ export class GameAudio{
    if(this.beat%4===2)this.tone(answer,t+step*.45,step*.40,'triangle',track==='castle'?.009:.014,true);
    if(this.beat%8===0)this.tone(fifth,t+step*.3,step*5.5,'sine',.012,true);
    if(this.beat%8===0)this.tone(pad,t+step*.20,step*6.5,'triangle',track==='castle'?.009:.012,true);
+   }
+   if(track==='castle'&&boss&&!retreat&&bossAccent(this.beat))this.tone(counter,t,step*.45,'pluck',.020,true);
    if(this.beat%4===0)this.tone(counter,t+step*.16,step*3.2,'pluck',track==='underwater'?.023:.017,true);
    // Keep percussion on its grid; bass anticipates alternate quarter notes.
-   for(const n of bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'bass',.105,true);
-   if(track==='overworld'||track==='star'){
+   for(const n of retreat?[]:bassStep(track,this.beat,hurry))this.tone(n.note,t+n.offset,n.duration,'bass',.105,true);
+   if(!retreat&&(track==='overworld'||track==='star')){
     if(this.beat%4===0)this.tone(32,t,.035,'triangle',.055,true,-12);
     if(this.beat%2===1)this.noise(t,this.beat%4===3?.045:.018,this.beat%4===3?.018:.009,true);
-   }else if(track==='castle'&&this.beat%4===2)this.noise(t,.055,.016,true);
-   else if(track==='underground'&&this.beat%8===6)this.noise(t,.022,.009,true);
+   }else if(!retreat&&track==='castle'&&this.beat%4===2)this.noise(t,.055,.016,true);
+   else if(!retreat&&track==='underground'&&this.beat%8===6)this.noise(t,.022,.009,true);
    // A quiet phrase response adds articulation without stacking a dense chord.
-   if(this.beat%16===7||this.beat%16===14){this.tone(harmony+12,t+step*.72,step*.28,'triangle',.006,true);}
+   if(section.ornaments&&(this.beat%16===7||this.beat%16===14)){this.tone(harmony+12,t+step*.72,step*.28,'triangle',.006,true);}
    // Short broken triad answers the phrase instead of sustaining a dense chord.
-   if(this.beat%32===30)for(const [i,n]of [bass+12,harmony,fifth].entries())this.tone(n,t+step*(.12+i*.25),step*.35,'triangle',.010,true);
+   if(section.ornaments&&this.beat%32===30)for(const [i,n]of [bass+12,harmony,fifth].entries())this.tone(n,t+step*(.12+i*.25),step*.35,'triangle',.010,true);
+   // Keep the absolute beat: the last offbeat already anticipates the next intro.
    this.next+=step;this.beat++;
   }
 
@@ -170,3 +179,6 @@ export class GameAudio{
  }
  stop(){for(const o of this.nodes){try{o.stop();}catch{}o.disconnect();}this.nodes.clear();this.music.clear();this.beat=0;this.next=0;this.track='';this.musicUntil=0;if(this.musicGain){this.musicGain.gain.cancelScheduledValues?.(this.context.currentTime);this.musicGain.gain.value=1;}}
 }
+
+// Keep 4/4: grouped eighth-note attacks are spaced 3 + 3 + 2.
+export const bossAccent=beat=>[0,3,6].includes(beat%8);

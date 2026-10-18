@@ -33,10 +33,13 @@ showRetryMemory();
 $('character').onchange=()=>{stop('キャラクターを変更しました');world.character=$('character').value;drawWorld(context,world);};
 const presentation=$('presentation'),presentationContext=presentation.getContext('2d');
 let decision={},effectiveAction='noop',watchMode=false,transition=null;
+function setGameView(value){watchMode=value==='dashboard';$('game-view').value=watchMode?'dashboard':'game';presentation.hidden=!watchMode;canvas.hidden=watchMode;}
+$('game-view').onchange=()=>{setGameView($('game-view').value);(watchMode?presentation:canvas).focus();};
+setGameView('game');
 function resetDecision(){decision={};effectiveAction='noop';}
-for(const id of ['play-local','play-student','start','restart-local','reset'])$(id).addEventListener('click',resetDecision);
+for(const id of ['play-local','play-student','start','restart-local','reset'])$(id).addEventListener('click',()=>{resetDecision();if(['play-local','play-student','start'].includes(id))setGameView('game');});
 for(const id of ['stage','mode'])$(id).addEventListener('change',resetDecision);
-for(const [button,target] of [['watch-student','play-student'],['watch-manual','play-local'],['watch-stop','stop']])$(button).onclick=()=>{watchMode=true;$(target).click();presentation.focus();};
+for(const [button,target] of [['watch-student','play-student'],['watch-manual','play-local'],['watch-stop','stop']])$(button).onclick=()=>{$(target).click();if(button!=='watch-stop')setGameView('dashboard');(watchMode?presentation:canvas).focus();};
 $('watch-record').onclick=()=>{if(recording.active||recordStarting)return; $('record-layout').value='dashboard';$('record-start').click();};
 const assist=new ReactionAssist();let proposedAction='noop',interventions=[],lastIntervention='';
 const assistanceEnabled=()=>isRecreation()&&metadata.controller==='jev_plus_local';
@@ -75,7 +78,7 @@ $('record-start').onclick=async()=>{
     recording.canvas=$('record-layout').value==='dashboard'?presentation:canvas;
     if(recording.start(output)){
       $('record-status').textContent='● 録画中（最大60秒）'+(output?'・ゲーム音あり':'・音声なし');
-      recording.canvas.focus();
+      (watchMode?presentation:canvas).focus();
     }
   }catch{ $('record-status').textContent='録画を開始できませんでした。再試行してください。'; }
   finally{recordStarting=false;recording.changed();}
@@ -165,7 +168,7 @@ $('rom').addEventListener('change', async e => {
 });
 $('manual').onclick = () => { stop(); if (!nes) return status('先にROMを選んでください'); gameRunning = true; status('手動操作中。EnterでSTART、Xでジャンプ、Zでダッシュ。'); };
 $('reset').onclick = () => { stop(); if (nes && romBytes) { nes.loadROM(romBytes); frameCount = 0; status('リセットしました'); } };
-$('play-local').onclick = () => { stop(); if(world.phase !== 'playing') world.reset(); metadata.controller='manual';beginAttempt('manual');gameRunning=true; void unlockAudio(); canvas.focus(); status('手動プレイ中（API呼び出しなし）'); };
+$('play-local').onclick = () => { setGameView('game'); stop(); if(world.phase !== 'playing') world.reset(); metadata.controller='manual';beginAttempt('manual');gameRunning=true; void unlockAudio(); canvas.focus(); status('手動プレイ中（API呼び出しなし）'); };
 $('restart-local').onclick = () => { stop(); world.reset(); {drawWorld(context,world);showPose();} $('progress').textContent=stageName()+'をリセットしました'; };
 $('play-student').onclick=()=>startStudent();
 function startStudent(continuing=false){
@@ -214,11 +217,13 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) stop(
 window.addEventListener('pagehide', () => stop());
 function finishStage(){
  const retry=world.phase==='dead'&&world.lives>0;
+ const failureReason=world.phase!=='dead'?null:world.time===0?'時間切れ':world.deathY>250?'落下':'敵・仕掛けとの接触';
  if(student.active&&world.phase==='dead'){student.noteFailure(world);showRetryMemory();}
  const resume=(retry||world.phase==='won'&&world.stage<LAST_COURSE)?{retry,kind:student.active?'student':loop.active?'api':'manual',remaining:loop.limit-loop.attempts,deadline:loop.deadline,cadence:loop.cadence,maxAge:loop.maxAge}:null;
  const result={course_id:world.stage,...courseInfo(world.stage),phase:world.phase,frames:world.frames,score:world.score,lives:world.lives,deaths:world.deaths,fireworks:world.fireworksTotal,items_collected:{...world.pickups},student:student.active?structuredClone(student.stats):undefined};
+ if(failureReason)result.failure_reason=failureReason;
  metadata.stage_results??=[];metadata.stage_results.push(result);
- internalTransition=true;stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス！残り${world.lives}機。同じステージの最初から再開します`:'ゲームオーバー。最初から再挑戦できます');
+ internalTransition=true;stop(world.phase==='won'?stageName()+'クリア！'+(resume?' 次のステージへ進みます':' 全ステージ終了'):retry?`ミス（${failureReason}）。残り${world.lives}機。同じステージの最初から再開します`:`ゲームオーバー（${failureReason}）。最初から再挑戦できます`);
  internalTransition=false;transition=resume;
 }
 function finalizeStageResult(){const r=metadata.stage_results?.at(-1);if(r&&!r.finalized){r.score=world.score;r.fireworks=world.fireworksFired;r.finalized=true;campaign.observe(world);if(!transition)saveAttempt(world.phase);}}

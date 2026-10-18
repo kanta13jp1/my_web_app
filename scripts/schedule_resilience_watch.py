@@ -74,9 +74,9 @@ TARGETS = (
     # Require two missed delivery opportunities before opening a high-priority alert.
     WorkflowTarget("cs-check", "cs-check.yml", 6),
     WorkflowTarget("competitor-monitoring", "competitor-monitoring.yml", 30),
-    # A two-hour GitHub schedule may be delayed or drop an individual run.
-    # Require two missed delivery opportunities before opening a high-priority alert.
-    WorkflowTarget("health-monitor", "health-monitor.yml", 6),
+    # A two-hour GitHub schedule is routinely throttled: observed gaps reach ~9h
+    # (10+ gaps over 6h in 100 runs). Alert only past 12h to avoid noise (#5713).
+    WorkflowTarget("health-monitor", "health-monitor.yml", 12),
     WorkflowTarget("notion-sync", "notion-sync.yml", 10),
     WorkflowTarget(
         "supabase-backup-restore",
