@@ -1,0 +1,36 @@
+name: Hosting Transfer Audit
+on:
+  pull_request:
+    paths:
+      - 'scripts/hosting-transfer/**'
+      - '.github/workflows/hosting-transfer.yml'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: hosting-transfer-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+      - name: Install isolated browser measurement dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/transfer-audit" --no-audit --no-fund playwright@1.56.1
+          "$RUNNER_TEMP/transfer-audit/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Measure public page cold and warm visits
+        env:
+          NODE_PATH: ${{ runner.temp }}/transfer-audit/node_modules
+        run: node scripts/hosting-transfer/audit.cjs
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: hosting-transfer
+          path: transfer-results/
+          retention-days: 7
