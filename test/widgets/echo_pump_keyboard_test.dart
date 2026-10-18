@@ -48,7 +48,8 @@ void main() {
           .widget<OutlinedButton>(find.byKey(const Key('echo-move-hall')))
           .onPressed!;
       move();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
       expect(find.byKey(const Key('echo-door-transition')), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
       await tester.pump();
