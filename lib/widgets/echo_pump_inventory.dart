@@ -97,7 +97,7 @@ class _FuseJourney extends StatelessWidget {
   }
 }
 
-/// Original vector artwork; no downloaded or copyrighted game artwork.
+/// Original Blender MCP render with vector fallback for loading or failure.
 class EchoPumpFuseArt extends StatelessWidget {
   const EchoPumpFuseArt({super.key, this.present = true});
   final bool present;
@@ -107,9 +107,22 @@ class EchoPumpFuseArt extends StatelessWidget {
         label: present ? '交換ヒューズの図' : '交換ヒューズの輪郭',
         image: true,
         child: SizedBox(
-          width: 148,
-          height: 88,
-          child: CustomPaint(painter: _FusePainter(present)),
+          width: 224,
+          height: 144,
+          child: present
+              ? Image.asset(
+                  'assets/echo_pump/fuse_blender.png',
+                  key: const Key('echo-fuse-blender'),
+                  fit: BoxFit.contain,
+                  excludeFromSemantics: true,
+                  frameBuilder: (context, child, frame, synchronous) =>
+                      synchronous || frame != null
+                          ? child
+                          : CustomPaint(painter: _FusePainter(present)),
+                  errorBuilder: (context, error, stack) =>
+                      CustomPaint(painter: _FusePainter(present)),
+                )
+              : CustomPaint(painter: _FusePainter(present)),
         ),
       );
 }
