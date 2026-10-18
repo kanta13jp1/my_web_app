@@ -16,7 +16,7 @@ void main() {
           ownerChanges: owners.stream,
           builder: (_) => const _CachedProbe(),
         ),
-        ),
+      ),
     );
     await tester.tap(find.text('Populate'));
     await tester.pump();
@@ -50,7 +50,7 @@ void main() {
             release: builds++ == 0 ? release.future : null,
           ),
         ),
-        ),
+      ),
     );
     owners.add('owner-b');
     await tester.pump();
