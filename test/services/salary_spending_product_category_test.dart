@@ -11,7 +11,7 @@ void main() {
     expect(service.categorize('ファミマ おにぎり'), '食費');
   });
 
-  test('explicit alcohol evidence precedes convenience store food fallback', () {
+  test('alcohol evidence precedes convenience store fallback', () {
     expect(service.categorize('ファミリーマート ウイスキー（酒購入）'), '娯楽・浪費');
     expect(service.categorize('ファミマ 酒'), '娯楽・浪費');
     expect(service.categorize('セブン 酒購入'), '娯楽・浪費');
@@ -68,6 +68,9 @@ void main() {
     expect(budget.totalActual, 3315);
     expect(budget.totalBudget, 4000);
     expect(budget.rows.singleWhere((row) => row.category == '書籍').actual, 935);
-    expect(budget.rows.singleWhere((row) => row.category == '娯楽・浪費').actual, 1842);
+    expect(
+      budget.rows.singleWhere((row) => row.category == '娯楽・浪費').actual,
+      1842,
+    );
   });
 }
