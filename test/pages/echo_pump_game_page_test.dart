@@ -7,16 +7,23 @@ import 'package:my_web_app/models/echo_pump_game.dart';
 void main() {
   for (final width in [320.0, 1200.0]) {
     for (final mode in ['complete', 'skip', 'reduce']) {
-      testWidgets('door $mode at $width with enlarged text finishes once', (tester) async {
+      testWidgets('door $mode at $width with enlarged text finishes once',
+          (tester) async {
         tester.view.physicalSize = Size(width, 900);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         var completions = 0;
-        await tester.pumpWidget(MaterialApp(home: MediaQuery(
-          data: MediaQueryData(disableAnimations: mode == 'reduce', textScaler: const TextScaler.linear(2)),
-          child: EchoPumpDoorTransition(from: PumpRoom.control, to: PumpRoom.hall, onFinished: () => completions++),
-        )));
+        await tester.pumpWidget(MaterialApp(
+            home: MediaQuery(
+          data: MediaQueryData(
+              disableAnimations: mode == 'reduce',
+              textScaler: const TextScaler.linear(2),),
+          child: EchoPumpDoorTransition(
+              from: PumpRoom.control,
+              to: PumpRoom.hall,
+              onFinished: () => completions++,),
+        ),),);
         if (mode == 'complete') {
           await tester.pump(const Duration(milliseconds: 400));
           expect(completions, 0);
@@ -35,7 +42,8 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
-    testWidgets('rapid move and skip consume one turn at $width', (tester) async {
+    testWidgets('rapid move and skip consume one turn at $width',
+        (tester) async {
       tester.view.physicalSize = Size(width, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -45,8 +53,14 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('echo-intro-skip')));
       await tester.pumpAndSettle();
-      expect(tester.widget<OutlinedButton>(find.byKey(const Key('echo-move-exit'))).onPressed, isNull);
-      final move = tester.widget<OutlinedButton>(find.byKey(const Key('echo-move-hall'))).onPressed!;
+      expect(
+          tester
+              .widget<OutlinedButton>(find.byKey(const Key('echo-move-exit')))
+              .onPressed,
+          isNull,);
+      final move = tester
+          .widget<OutlinedButton>(find.byKey(const Key('echo-move-hall')))
+          .onPressed!;
       move();
       move();
       await tester.pump(const Duration(milliseconds: 200));

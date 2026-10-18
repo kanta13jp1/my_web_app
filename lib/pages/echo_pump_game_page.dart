@@ -90,7 +90,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
     final from = _game.room;
     final turn = _game.turn;
     _act(() => _game.move(destination), EchoPumpCue.step);
-    if (_game.room != destination || _game.room == from || _game.turn == turn) return;
+    if (_game.room != destination || _game.room == from || _game.turn == turn)
+      return;
     _moving = true;
     try {
       await showDialog<void>(
@@ -327,7 +328,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                         for (final room in _game.destinations)
                           OutlinedButton(
                             key: Key('echo-move-${room.name}'),
-                            onPressed: _game.finished || _moving ||
+                            onPressed: _game.finished ||
+                                    _moving ||
                                     (room == PumpRoom.exit && !_game.drained) ||
                                     (room == PumpRoom.inspection &&
                                         _game.sealed)
