@@ -50,10 +50,8 @@ class EvernoteSearchQuery {
   bool get isFullySupported =>
       errors.isEmpty && unsupportedOperators.isEmpty && _expression != null;
 
-  bool get requiresStoredFeatures => RegExp(
-        r'(^|\s|\()(?:(?:resource|source|todo|encryption|contains):)',
-        caseSensitive: false,
-      ).hasMatch(raw);
+  bool get requiresStoredFeatures =>
+      _expression?.requiresStoredFeatures ?? false;
 
   bool matches(
     EvernoteSearchDocument document, {
@@ -412,6 +410,8 @@ class _SearchParser {
 abstract class _SearchExpression {
   const _SearchExpression();
 
+  bool get requiresStoredFeatures => false;
+
   bool evaluate(EvernoteSearchDocument document, DateTime now);
 }
 
@@ -428,6 +428,9 @@ class _NotExpression extends _SearchExpression {
   final _SearchExpression expression;
 
   @override
+  bool get requiresStoredFeatures => expression.requiresStoredFeatures;
+
+  @override
   bool evaluate(EvernoteSearchDocument document, DateTime now) =>
       !expression.evaluate(document, now);
 }
@@ -442,6 +445,10 @@ class _BinaryExpression extends _SearchExpression {
   final _SearchExpression left;
   final _TokenKind operator;
   final _SearchExpression right;
+
+  @override
+  bool get requiresStoredFeatures =>
+      left.requiresStoredFeatures || right.requiresStoredFeatures;
 
   @override
   bool evaluate(EvernoteSearchDocument document, DateTime now) {
@@ -464,6 +471,15 @@ class _AtomExpression extends _SearchExpression {
   final String value;
   final bool exactPhrase;
   final bool wildcard;
+
+  @override
+  bool get requiresStoredFeatures => const <String>{
+        'resource',
+        'source',
+        'todo',
+        'encryption',
+        'contains',
+      }.contains(modifier);
 
   @override
   bool evaluate(EvernoteSearchDocument document, DateTime now) {
