@@ -82,3 +82,67 @@ test('HTTP upstream failure remains retryable without exposing provider details'
   assert.deepEqual(await response.json(), { error: 'worker_wake_unavailable' });
   assert.equal(response.headers.get('cache-control'), 'no-store');
 });
+
+
+test('HTTP target status requires authentication before cloud reads', async t => {
+  let calls = 0;
+  const request = await harness(t, async () => { calls++; throw new Error('unexpected_cloud_request'); });
+  for (const authorization of [undefined, 'Bearer invalid']) {
+    const response = await request('/target-status', {
+      headers: authorization ? { Authorization: authorization } : {},
+    });
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { error: 'unauthorized' });
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+  }
+  assert.equal(calls, 0);
+});
+
+for (const state of ['RUNNING', 'STAGING', 'PROVISIONING', 'TERMINATED']) {
+  test(`HTTP target status observes ${state} without starting it`, async t => {
+    const calls = [];
+    const request = await harness(t, async (url, options = {}) => {
+      calls.push({ url, options });
+      return new Response(JSON.stringify({ status: state }));
+    });
+    const response = await request('/target-status', { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { target: 'present', state });
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.equal(calls.length, 1);
+    assert.match(calls[0].url, /\/instances\/contract-worker$/);
+    assert.equal(calls[0].options.method || 'GET', 'GET');
+    assert.equal(calls[0].options.headers.Authorization, 'Bearer synthetic-access-token');
+  });
+}
+
+for (const scenario of [
+  { name: 'missing target', status: 404, body: { error: { message: 'private provider detail' } } },
+  { name: 'permission denied', status: 403, body: {} },
+  { name: 'upstream failure', status: 503, body: {} },
+  { name: 'transitioning target', status: 200, body: { status: 'STOPPING' } },
+  { name: 'unknown state', status: 200, body: { status: 'private unexpected state' } },
+  { name: 'missing state', status: 200, body: {} },
+  { name: 'network failure', throws: true },
+]) {
+  test(`HTTP target status fails closed for ${scenario.name}`, async t => {
+    const methods = [];
+    const request = await harness(t, async (_url, options = {}) => {
+      methods.push(options.method || 'GET');
+      if (scenario.throws) throw new Error('private network detail');
+      return new Response(JSON.stringify(scenario.body), { status: scenario.status });
+    });
+    const response = await request('/target-status', { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { error: 'worker_target_unavailable' });
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.deepEqual(methods, ['GET']);
+  });
+}
+
+test('HTTP target status rejects unsupported methods without cloud reads', async t => {
+  const request = await harness(t);
+  const response = await request('/target-status', wake({ job_id: jobId }));
+  assert.equal(response.status, 404);
+  assert.deepEqual(await response.json(), { error: 'not_found' });
+});
