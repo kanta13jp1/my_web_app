@@ -8,6 +8,7 @@ import '../widgets/echo_pump_intro.dart';
 import '../widgets/echo_pump_visuals.dart';
 import '../widgets/echo_pump_guidance.dart';
 import '../widgets/echo_pump_inventory.dart';
+import '../widgets/echo_pump_machinery.dart';
 
 class EchoPumpGamePage extends StatefulWidget {
   const EchoPumpGamePage({super.key, this.audio});
@@ -381,6 +382,13 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                     ),
                   if (_game.room == PumpRoom.pump)
                     _panel('ポンプ制御', [
+                      EchoPumpMachinery(
+                        repaired: _game.repaired,
+                        sealed: _game.sealed,
+                        drained: _game.drained,
+                        powered: _game.power.contains(PumpCircuit.c),
+                      ),
+                      const SizedBox(height: 16),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,

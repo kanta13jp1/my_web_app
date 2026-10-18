@@ -94,7 +94,13 @@ test('first walk keeps the protagonist while the preloaded sheet is delayed', as
 });
 
 
-test('find, inspect and install the fuse without spending turns on the inventory', async ({ page }, info) => {
+for (const missingArt of [false, true]) {
+test(`find, inspect and install the fuse ${missingArt ? 'with image failure' : 'with Blender art'} without spending turns on the inventory`, async ({ page }, info) => {
+  let imageRequests = 0;
+  await page.route('**/assets/echo_pump/fuse_blender.png', async route => {
+    imageRequests++;
+    if (missingArt) await route.abort(); else await route.continue();
+  });
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   const button = (name: string) => page.getByRole('button', { name, exact: true });
@@ -118,6 +124,7 @@ test('find, inspect and install the fuse without spending turns on the inventory
   await button('所持品を開く').click();
   await expect(page.getByText('所持数 1', { exact: true })).toBeVisible();
   await expect(button('このヒューズで修理')).toHaveCount(0);
+  expect(imageRequests).toBeGreaterThan(0);
   await page.screenshot({ path: info.outputPath('inventory-carried.png'), scale: 'css' });
   await button('所持品を閉じる').click();
   await expect(page.getByText('ターン 5', { exact: true })).toBeVisible();
@@ -135,3 +142,5 @@ test('find, inspect and install the fuse without spending turns on the inventory
   await expect(page.getByText('ターン 8', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+}
