@@ -1,4 +1,4 @@
-import asyncio,json,os,re,time
+import asyncio,json,os,re,time,urllib.request
 from pathlib import Path
 from mcp import ClientSession,StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -9,6 +9,13 @@ BASE=os.environ.get('MCP_GAME_URL','https://my-web-app-b67f4.web.app/echo-pump')
 FEATURE=os.environ.get('MCP_EXPECT_KEYBOARD')=='1'
 async def main():
  evidence={'url':BASE,'started_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'calls':[],'execution':'Codex-orchestrated Actions Python MCP SDK -> Microsoft Playwright MCP -> isolated Chromium'}
+ def public_version():
+  request=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json?mcp='+os.environ.get('GITHUB_RUN_ID','0'),headers={'Cache-Control':'no-cache'})
+  with urllib.request.urlopen(request,timeout=30) as response:return json.load(response)
+ if BASE.startswith('https://my-web-app-b67f4.web.app/'):
+  evidence['public_before']=public_version()
+  expected=os.environ.get('EXPECTED_PRODUCTION_SHA')
+  if expected:assert evidence['public_before']['commit']==expected,evidence['public_before']
  params=StdioServerParameters(command='node',args=['/tmp/echo-mcp/node_modules/@playwright/mcp/cli.js','--headless','--browser','chromium','--isolated','--viewport-size','1440,1000','--output-dir',str(OUT.resolve())])
  async with stdio_client(params) as (read,write):
   async with ClientSession(read,write) as session:
@@ -65,6 +72,7 @@ async def main():
     assert 'ターン 2' in snapshot,snapshot
     (OUT/'keyboard-on.txt').write_text(snapshot,encoding='utf8')
     await call('browser_take_screenshot',{'filename':str((OUT/'keyboard-desktop.png').resolve()),'fullPage':True})
+    assert 'Returning 0 messages' in await call('browser_console_messages',{'level':'error'})
     await click('キーボード操作を有効にする')
     await call('browser_press_key',{'key':'w'})
     snapshot=await call('browser_snapshot',{})
@@ -86,6 +94,9 @@ async def main():
    console=await call('browser_console_messages',{'level':'error'})
    assert 'Returning 0 messages' in console,console
    await call('browser_close',{})
+   if 'public_before' in evidence:
+    evidence['public_after']=public_version()
+    assert evidence['public_before']==evidence['public_after'],'Public version changed during MCP verification'
    evidence['completed']=True
    (OUT/'evidence.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
  print(json.dumps({'completed':True,'calls':len(evidence['calls']),'tools':len(evidence['tools'])}))
