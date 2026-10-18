@@ -6,6 +6,7 @@ from mcp.client.stdio import stdio_client
 OUT=Path(os.environ.get('MCP_EVIDENCE_DIR','mcp-browser-evidence'))
 OUT.mkdir(parents=True,exist_ok=True)
 BASE=os.environ.get('MCP_GAME_URL','https://my-web-app-b67f4.web.app/echo-pump')
+FEATURE=os.environ.get('MCP_EXPECT_KEYBOARD')=='1'
 async def main():
  evidence={'url':BASE,'started_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'calls':[],'execution':'Codex-orchestrated Actions Python MCP SDK -> Microsoft Playwright MCP -> isolated Chromium'}
  params=StdioServerParameters(command='node',args=['/tmp/echo-mcp/node_modules/@playwright/mcp/cli.js','--headless','--browser','chromium','--isolated','--viewport-size','1440,1000','--output-dir',str(OUT.resolve())])
@@ -31,7 +32,7 @@ async def main():
    async def click(label):
     nonlocal snapshot
     snapshot=await call('browser_snapshot',{})
-    line=next((s for s in snapshot.splitlines() if label in s and ('button' in s or 'link' in s)),None)
+    line=next((s for s in snapshot.splitlines() if label in s and any(role in s for role in ['button','link','switch','checkbox'])),None)
     if line is None:raise RuntimeError('missing control '+label)
     ref=re.search(r'\[ref=([^\]]+)\]',line).group(1)
     props=tools['browser_click'].inputSchema['properties']
@@ -44,8 +45,46 @@ async def main():
    after=await call('browser_snapshot',{})
    (OUT/'before-key.txt').write_text(before,encoding='utf8')
    (OUT/'after-key.txt').write_text(after,encoding='utf8')
+   assert 'ターン 0' in before and 'ターン 0' in after
+   if FEATURE:
+    for label,key,turn in [('キーボード操作を有効にする','w',1)]:
+     await click(label)
+     await call('browser_press_key',{'key':key})
+     snapshot=await call('browser_snapshot',{})
+     assert f'ターン {turn}' in snapshot,snapshot
+    await call('browser_press_key',{'key':'i'})
+    snapshot=await call('browser_snapshot',{})
+    assert '所持品は空' in snapshot,snapshot
+    await call('browser_press_key',{'key':'w'})
+    await call('browser_press_key',{'key':'b'})
+    await click('所持品を閉じる')
+    snapshot=await call('browser_snapshot',{})
+    assert 'ターン 1' in snapshot,snapshot
+    await call('browser_press_key',{'key':'b'})
+    snapshot=await call('browser_snapshot',{})
+    assert 'ターン 2' in snapshot,snapshot
+    (OUT/'keyboard-on.txt').write_text(snapshot,encoding='utf8')
+    await call('browser_take_screenshot',{'filename':str((OUT/'keyboard-desktop.png').resolve()),'fullPage':True})
+    await click('キーボード操作を有効にする')
+    await call('browser_press_key',{'key':'w'})
+    snapshot=await call('browser_snapshot',{})
+    assert 'ターン 2' in snapshot,snapshot
+    await call('browser_resize',{'width':390,'height':1000})
+    await call('browser_navigate',{'url':BASE})
+    await click('ゲーム開始')
+    await click('スキップ')
+    await call('browser_press_key',{'key':'w'})
+    snapshot=await call('browser_snapshot',{})
+    assert 'ターン 0' in snapshot,snapshot
+    await click('キーボード操作を有効にする')
+    await call('browser_press_key',{'key':'w'})
+    snapshot=await call('browser_snapshot',{})
+    assert 'ターン 1' in snapshot,snapshot
+    await call('browser_take_screenshot',{'filename':str((OUT/'keyboard-mobile.png').resolve()),'fullPage':True})
+    evidence['keyboard_verified']={'desktop':True,'mobile_width':True,'initial_off':True,'off_no_turn':True,'modal_no_turn':True,'reload_off':True}
    await call('browser_take_screenshot',{'filename':str((OUT/'baseline-desktop.png').resolve()),'fullPage':True})
-   await call('browser_console_messages',{'level':'error'})
+   console=await call('browser_console_messages',{'level':'error'})
+   assert 'Returning 0 messages' in console,console
    await call('browser_close',{})
    evidence['completed']=True
    (OUT/'evidence.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')

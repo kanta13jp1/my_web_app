@@ -4,6 +4,11 @@ on:
     branches: [codex/echo-pump-playwright-mcp]
     paths: ['scripts/echo_pump_playwright_mcp/**', '.github/workflows/echo-pump-playwright-mcp.yml']
   workflow_dispatch:
+    inputs:
+      expect_keyboard:
+        description: Verify the released keyboard feature
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -26,6 +31,8 @@ jobs:
           /tmp/echo-mcp/node_modules/.bin/playwright install --with-deps chromium
           cp /tmp/echo-mcp/package-lock.json mcp-package-lock.json
       - name: Probe actual public game through MCP
+        env:
+          MCP_EXPECT_KEYBOARD: ${{ inputs.expect_keyboard && '1' || '0' }}
         run: python scripts/echo_pump_playwright_mcp/probe.py
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
