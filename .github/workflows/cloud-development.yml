@@ -1,6 +1,48 @@
 name: Approved PR5865 Web Release
 
 on:
+  pull_request:
+    paths:
+      - .agents/skills/site-trust-improvement-loop/**
+      - lib/models/savings_life_plan.dart
+      - lib/services/savings_life_plan_service.dart
+      - lib/services/savings_life_plan_store.dart
+      - lib/services/savings_plan_proposal_service.dart
+      - test/services/savings_plan_proposal_service_test.dart
+      - lib/widgets/savings_life_plan_card.dart
+      - test/services/savings_life_plan_service_test.dart
+      - test/services/savings_life_plan_store_test.dart
+      - test/widgets/savings_life_plan_card_test.dart
+      - test/fixtures/savings_life_plan_app.dart
+      - test/e2e/savings_life_plan.spec.ts
+      - lib/models/asset_balance_observation.dart
+      - lib/widgets/asset_balance_history_control.dart
+      - test/models/asset_balance_observation_test.dart
+      - test/widgets/asset_balance_history_control_test.dart
+      - test/fixtures/asset_balance_history_app.dart
+      - test/e2e/asset_balance_history.spec.ts
+      - .devcontainer/**
+      - .github/workflows/cloud-development.yml
+      - lib/widgets/slide_number_check_card.dart
+      - lib/services/slide_number_check.dart
+      - test/fixtures/slide_number_check_app.dart
+      - test/e2e/slide_number_check.spec.ts
+      - lib/pages/ai_search_page.dart
+      - test/pages/ai_search_page_test.dart
+      - test/fixtures/ai_search_app.dart
+      - test/e2e/ai_search_pending.spec.ts
+      - lib/models/platform_release_checklist.dart
+      - lib/pages/platform_release_checklist_page.dart
+      - test/e2e/platform_release_checklist.spec.ts
+      - scripts/cloud_ci_handoff.py
+      - scripts/cloud_ci_handoff_test.py
+      - scripts/cloud_first_route.py
+      - scripts/cloud_first_route_test.py
+      - scripts/serve_spa.py
+      - docs/CLOUD_FIRST_DEVELOPMENT.md
+      - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
+      - docs/CLAUDE_CODE_SETUP_RUNBOOK.md
+      - AGENTS.md
   workflow_dispatch:
     inputs:
       approved_release:
