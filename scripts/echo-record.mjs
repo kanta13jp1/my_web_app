@@ -1,11 +1,11 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import {mkdirSync,writeFileSync,statSync} from 'node:fs';
+import {mkdirSync,writeFileSync,statSync,readFileSync} from 'node:fs';
 import {spawn,execFileSync} from 'node:child_process';
 const origin='https://my-web-app-b67f4.web.app',out='echo-recording';
 const expected=process.env.EXPECTED_PRODUCTION_SHA;
 assert.match(expected??'',/^[a-f0-9]{40}$/);
-mkdirSync(out,{recursive:true});
+mkdirSync(out,{recursive:true});writeFileSync(out+'/record-source.mjs',readFileSync(new URL(import.meta.url)));
 async function version(){const v=await(await fetch(origin+'/version.json',{cache:'no-store'})).json();assert.equal(v.commit,expected);return v;}
 const before=await version(),errors=[],events=[];
 const browser=await chromium.launch({headless:false,ignoreDefaultArgs:['--mute-audio']});
@@ -24,18 +24,21 @@ async function load(){await page.goto(origin+'/echo-pump',{waitUntil:'domcontent
 async function shot(name,retain,delay=2500){if(retain){await page.screenshot({path:out+'/'+name+'.png'});await hold(delay);}}
 async function run(retain){
  await click('ゲーム開始');await click('スキップして開始');
- for(const name of ['B 整備','A 搬入']){await page.getByRole('checkbox',{name,exact:true}).click();await hold(400);}
- await click('中央廊下へ');await click('工具庫へ');
- await page.mouse.move(700,600);await page.mouse.wheel(0,30000);await hold(500);
- await shot('fuse-shelf',retain,3500);
- await click('ヒューズを回収');await b('ヒューズを回収').filter({visible:true}).waitFor();
- await inv().click();await txt('所持数 1').waitFor();mark('carried-one');await shot('inventory-carried',retain,4500);
- await click('所持品を閉じる');await txt('ターン 5').waitFor();
- await click('中央廊下へ');await click('ポンプ室へ');
- await inv().click();await txt('所持数 1').waitFor();await shot('inventory-use',retain,4000);
- await click('このヒューズで修理');await txt('ターン 8').waitFor();
- await inv().click();await txt('ポンプへ装着済み').waitFor();await txt('所持数 0').waitFor();mark('installed-zero');await shot('inventory-installed',retain,4500);
- await click('所持品を閉じる');
+ const route=['B 整備','A 搬入','中央廊下へ','工具庫へ','ヒューズを回収','中央廊下へ','ポンプ室へ','ヒューズで修理','中央廊下へ','管理室へ','B 整備','C 排水','1ターン待つ','1ターン待つ','中央廊下へ','ポンプ室へ','隔壁を閉じる','排水ポンプを起動','中央廊下へ','管理室へ','出口へ'];
+ for(const label of route){
+  const action=page.getByRole(/^[ABC] /.test(label)?'checkbox':'button',{name:label,exact:true});
+  if(['ヒューズで修理','隔壁を閉じる','排水ポンプを起動'].includes(label)){
+   await page.mouse.move(700,500);await page.mouse.wheel(0,30000);await hold(350);
+  }
+  await action.click({timeout:15000});mark(label);
+  if(['ヒューズで修理','隔壁を閉じる','排水ポンプを起動'].includes(label)){
+   await page.mouse.wheel(0,30000);await hold(300);
+   if(retain)await page.screenshot({path:out+'/'+({'ヒューズで修理':'repair','隔壁を閉じる':'seal','排水ポンプを起動':'drain'}[label])+'-transition.png'});
+   await hold(1500);
+   await shot(label==='ヒューズで修理'?'idle':label==='隔壁を閉じる'?'sealed':'live',retain,2500);
+  }else await hold(650);
+ }
+ await b('リトライ').waitFor({timeout:15000});mark('escape-confirmed');await shot('escape',retain,2500);
 }
 let ready,after;
 try{
@@ -45,10 +48,10 @@ try{
  await click('音をON',1000);await hold(1800);await run(true);await hold(2000);
  after=await version();assert.deepEqual(errors,[]);
 }finally{
- writeFileSync(out+'/evidence.json',JSON.stringify({before,after,ready,events,errors,method:'Actual public fuse collect/view/install UI, rehearsed for fonts; clean headed Chromium + dedicated audio sink; no cookies/microphone/state injection'},null,2));
+ writeFileSync(out+'/evidence.json',JSON.stringify({before,after,ready,events,errors,method:'Actual public repair/seal/drain/escape UI, rehearsed for fonts; clean headed Chromium + dedicated audio sink; no cookies/microphone/state injection'},null,2));
  await context.close();await browser.close();audio.stdin.write('q');await stopped;
 }
-const raw=await video.path(),final=out+'/echo-pump-fuse-x.mp4';
+const raw=await video.path(),final=out+'/echo-pump-pump-x.mp4';
 execFileSync('ffmpeg',['-y','-ss',String(ready),'-i',raw,'-ss',String(ready),'-i',out+'/browser-audio.wav','-map','0:v:0','-map','1:a:0','-shortest','-c:v','libx264','-preset','medium','-b:v','550k','-pix_fmt','yuv420p','-c:a','aac','-b:a','64k','-movflags','+faststart',final],{stdio:'inherit'});
 const probe=JSON.parse(execFileSync('ffprobe',['-v','quiet','-show_format','-show_streams','-of','json',final],{encoding:'utf8'}));
 assert(statSync(final).size<5000000);assert(+probe.format.duration>25&&+probe.format.duration<65);
