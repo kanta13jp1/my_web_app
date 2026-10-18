@@ -2,8 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/evernote_migration_ledger_service.dart';
 
 void main() {
-  EvernoteMigrationProgress progress(int source, int imported, int verified,
-          int deleted) =>
+  EvernoteMigrationProgress progress(
+    int source,
+    int imported,
+    int verified,
+    int deleted,
+  ) =>
       EvernoteMigrationProgress(
         batchCount: 1,
         sourceNoteCount: source,
