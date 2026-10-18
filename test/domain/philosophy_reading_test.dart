@@ -569,7 +569,11 @@ void main() {
       expect(philosophyWorks.any((w) => w.id == book.workId), isTrue);
       expect(isReadingHttpsUrl(book.edition.sourceUrl), isTrue);
       expect(book.edition.publisher, isNotEmpty);
-      if (book.edition.isbn.isEmpty) {
+      if (book.edition.isbn.isEmpty && book.workId == 'schopenhauer:world') {
+        expect(book.edition.volume, '岩波文庫 2843-2844・正篇第1巻');
+        expect(book.edition.sourceUrl, 'https://ci.nii.ac.jp/ncid/BA31007223');
+        expect(book.note, contains('未記載'));
+      } else if (book.edition.isbn.isEmpty) {
         expect(book.workId, 'husserl:ideas');
         expect(book.edition.volume, '1-1');
         expect(
@@ -649,6 +653,11 @@ void main() {
           .contains(book.workId)) {
         expect(edition.translator, isEmpty);
         expect(book.note, contains('日本語原著'));
+      } else if (book.workId == 'dogen:shobogenzo' &&
+          edition.isbn.startsWith('97840033319')) {
+        expect(edition.translator, isEmpty);
+        expect(edition.editor, '水野弥穂子（校注）');
+        expect(book.note, contains('現代語訳とは区別'));
       } else if (edition.isbn == '9784003331941') {
         expect(edition.translator, isEmpty);
         expect(edition.editor, '懐奘（編）・和辻哲郎（校訂）');
@@ -661,6 +670,12 @@ void main() {
         ReadingEdition.fromJson(edition.toJson()).toJson(),
         edition.toJson(),
       );
+      if (edition.isbn.isEmpty && book.workId == 'schopenhauer:world') {
+        expect(edition.translator, '岡本信二郎');
+        expect(edition.volume, contains('正篇第1巻'));
+        expect(book.note, contains('未記載'));
+        continue;
+      }
       if (edition.isbn.isEmpty) {
         expect(book.workId, 'husserl:ideas');
         expect(edition.volume, '1-1');
@@ -678,12 +693,12 @@ void main() {
         expect(sum % 11, 0, reason: edition.isbn);
       }
     }
-    expect(philosophyCatalogEditions.length, 184);
+    expect(philosophyCatalogEditions.length, 229);
     expect(
       philosophyCatalogEditions
           .where((b) => b.edition.language == '日本語')
           .length,
-      183,
+      228,
     );
     final books = philosophyCatalogEditions
         .where((b) => b.workId == 'confucius:analects')
@@ -716,7 +731,7 @@ void main() {
       philosophyCatalogEditions
           .where((b) => b.workId == 'kant:pure-reason')
           .length,
-      7,
+      10,
     );
     expect(
       philosophyCatalogEditions
