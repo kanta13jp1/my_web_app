@@ -146,11 +146,16 @@ class AssetCalendarReflection {
       final outside = RegExp(r'飲み屋|居酒屋|外飲み|飲みに行').hasMatch(description) ||
           (dining && RegExp(r'ビール|飲酒|ハイボール').hasMatch(description));
       final purchase = RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入').hasMatch(description);
+      final explicitTobaccoPurchase = RegExp(
+        r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro',
+        caseSensitive: false,
+      ).hasMatch(description);
       final tobacco = RegExp(
             r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro',
             caseSensitive: false,
           ).hasMatch(description) &&
-          !RegExp(r'禁煙|未購入|購入なし|買わな|購入しな|書籍|本の購入').hasMatch(description);
+          !RegExp(r'未購入|購入なし|買わな|購入しな|書籍|本の購入').hasMatch(description) &&
+          (!description.contains('禁煙') || explicitTobaccoPurchase);
       final kinds = <AssetReflectionKind>{
         if (dining) AssetReflectionKind.dining,
         if (outside) AssetReflectionKind.drinkingOut,
