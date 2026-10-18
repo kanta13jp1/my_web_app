@@ -188,6 +188,14 @@ void main() {
         () async {
       late http.Request captured;
       final service = _service((request) async {
+        if (request.url.queryParameters.containsKey('id')) {
+          return http.Response(
+            '[]',
+            200,
+            headers: const {'content-type': 'application/json'},
+            request: request,
+          );
+        }
         captured = request;
         return http.Response(
           jsonEncode(<Map<String, dynamic>>[_batchJson()]),
@@ -213,6 +221,14 @@ void main() {
         () async {
       late http.Request captured;
       final service = _service((request) async {
+        if (request.url.queryParameters.containsKey('id')) {
+          return http.Response(
+            '[]',
+            200,
+            headers: const {'content-type': 'application/json'},
+            request: request,
+          );
+        }
         captured = request;
         return http.Response(
           jsonEncode(<Map<String, dynamic>>[_itemJson()]),
