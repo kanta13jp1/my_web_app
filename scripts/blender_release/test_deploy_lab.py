@@ -1,9 +1,14 @@
 import tempfile
 import unittest
 from pathlib import Path
-from deploy_lab import FILES, PREFIX, additions, preserved_map
+from deploy_lab import FILES, PREFIX, additions, preserved_map, release_matches
 
 class OverlaySafety(unittest.TestCase):
+    def test_release_identity_accepts_api_alias_only_for_same_id_and_version(self):
+        live=('sites/demo/channels/live/releases/123','sites/demo/versions/v1')
+        self.assertTrue(release_matches(live,'sites/demo/releases/123','sites/demo/versions/v1'))
+        self.assertFalse(release_matches(live,'sites/demo/releases/999','sites/demo/versions/v1'))
+        self.assertFalse(release_matches(live,'sites/demo/releases/123','sites/demo/versions/v2'))
     def test_preserves_every_existing_unrelated_file(self):
         original={'/index.html':'a','/version.json':'b','/main.dart.js':'c','/echo-pump/index.html':'d'}
         result=preserved_map(original,{PREFIX+'index.html':'new'})

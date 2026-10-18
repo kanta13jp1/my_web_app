@@ -42,6 +42,10 @@ def preserved_map(before, extra):
         raise RuntimeError('Existing content changed')
     return result
 
+def release_matches(live, created_name, version):
+    # Legacy releases.create and channels.get may spell the resource differently.
+    return live[1] == version and live[0].rsplit('/',1)[-1] == created_name.rsplit('/',1)[-1]
+
 def run(publish=False):
     import requests
     from google.oauth2.service_account import Credentials
@@ -117,7 +121,8 @@ def run(publish=False):
         created=request('POST',f'sites/{SITE}/releases',params={'versionName':new},
                         json={'message':'Approved Blender valve lab static addition'})
         evidence.update(release=created['name'],stage='release_returned');save()
-        if current()!=(created['name'],new):raise RuntimeError('Live does not match returned release')
+        if not release_matches(current(),created['name'],new):
+            raise RuntimeError('Live does not match returned release')
         for name, metadata in details.items():
             response=plain.get(f'https://{SITE}.web.app{PREFIX}{name}?verify={os.environ["GITHUB_RUN_ID"]}',timeout=30)
             response.raise_for_status()
