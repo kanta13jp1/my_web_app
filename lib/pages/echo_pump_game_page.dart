@@ -273,6 +273,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                 children: [
                   EchoPumpScene(
                     game: _game,
+                    canInteract: () => !_inventoryOpen && !_incidentOpen,
                     onExploreMove: (room) {
                       if (_game.room == PumpRoom.control && !_game.finished) {
                         _act(() => _game.move(room), EchoPumpCue.step);

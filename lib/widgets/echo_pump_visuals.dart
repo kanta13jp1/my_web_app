@@ -14,10 +14,12 @@ class EchoPumpScene extends StatelessWidget {
     required this.game,
     this.onExploreMove,
     this.onFootstep,
+    this.canInteract,
   });
 
   final ValueChanged<PumpRoom>? onExploreMove;
   final VoidCallback? onFootstep;
+  final bool Function()? canInteract;
 
   final EchoPumpGame game;
 
@@ -82,6 +84,7 @@ class EchoPumpScene extends StatelessWidget {
                       key: ObjectKey(game),
                       onMove: onExploreMove,
                       onFootstep: onFootstep,
+                      canInteract: canInteract,
                     )
                   else
                     EchoPumpCast(game: game),
