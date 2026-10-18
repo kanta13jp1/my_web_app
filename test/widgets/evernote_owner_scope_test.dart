@@ -37,20 +37,24 @@ void main() {
       (tester) async {
     final owners = StreamController<String?>();
     final release = Completer<void>();
+    var builds = 0;
     addTearDown(owners.close);
     await tester.pumpWidget(MaterialApp(
       home: EvernoteOwnerScope(
         initialOwnerId: 'owner-a',
         ownerChanges: owners.stream,
-        builder: (_) => _CachedProbe(release: release.future),
+        builder: (_) => _CachedProbe(
+          release: builds++ == 0 ? release.future : null,
+        ),
       ),
     ));
     owners.add('owner-b');
     await tester.pump();
-    await tester.pumpWidget(const SizedBox());
+    expect(find.text('empty'), findsOneWidget);
     release.complete();
     await tester.pump();
     expect(tester.takeException(), isNull);
+    expect(find.text('empty'), findsOneWidget);
     expect(find.text('private rows / error / loading'), findsNothing);
   });
 }
