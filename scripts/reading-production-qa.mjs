@@ -136,6 +136,14 @@ async function verifyCatalogRelease(page, account, version) {
       await expect(page.getByText('読む版を登録',{exact:true})).toHaveCount(0);
       let record=(await action(account.token,{action:'reading.list'})).items.find(x=>x.metadata.work?.id===book.workId);
       assert(record,`Missing saved catalog work: ${book.title}`);
+      if(process.env.READING_QA_IWANAMI_REMAINING_MOBILE_ONLY === 'true' && mode==='mobile' && book.workId==='marx:capital') {
+        // Reproduce the ten-cycle mobile history using only this run's disposable record.
+        const current=record.metadata.cycles.at(-1);
+        const history=Array.from({length:9},()=>({...current,id:randomUUID(),entries:[]}));
+        await action(account.token,{action:'reading.save',id:record.id,revision:record.metadata.revision,work:record.metadata.work,cycles:[...history,current]});
+        record=(await action(account.token,{action:'reading.list'})).items.find(x=>x.id===record.id);
+        assert.equal(record.metadata.cycles.length,10);
+      }
       const number=record.metadata.cycles.length;
       const cycle=page.getByRole('group',{name:new RegExp(`第${number}回[\\s\\S]*`)}).filter({has:page.getByRole('button',{name:'版を編集',exact:true})}).last();
       const edit=cycle.getByRole('button',{name:'版を編集',exact:true});
