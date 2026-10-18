@@ -8,13 +8,14 @@ on:
         type: string
   pull_request:
     paths: ['scripts/blender_lab/**', 'web/labs/blender-valve/**', '.github/workflows/blender-valve-lab.yml']
-permissions:
-  contents: read
+permissions: {}
 concurrency:
   group: blender-valve-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   practice:
+    permissions:
+      contents: read
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -23,6 +24,8 @@ jobs:
       BLENDER_MCP_SAFE_MODE: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Verify exact manual source
         if: github.event_name == 'workflow_dispatch'
         env:
