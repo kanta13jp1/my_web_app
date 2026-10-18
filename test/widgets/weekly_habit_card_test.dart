@@ -65,7 +65,7 @@ void main() {
             {'weekday': d, 'title': '旧$d', 'minimum': '最低$d'},
         ],
         'completions': {
-          '2026-10-21': {'title': '旧3', 'minimum': '最低3'}
+          '2026-10-21': {'title': '旧3', 'minimum': '最低3'},
         },
       };
       final migrated = WeeklyHabitState.fromJson(legacy);
@@ -73,7 +73,9 @@ void main() {
       expect(migrated.completions['2026-10-21/legacy-3']!.minimum, '最低3');
       expect(migrated.completions.length, 1);
       expect(
-          WeeklyHabitState.fromJson(migrated.toJson()).completions.length, 1);
+        WeeklyHabitState.fromJson(migrated.toJson()).completions.length,
+        1,
+      );
     },
   );
   test(
@@ -92,7 +94,7 @@ void main() {
           ...valid,
           'habits': [
             {'id': 'bad', 'weekday': 8, 'title': 'a', 'minimum': 'b'},
-          ]
+          ],
         },
       ]) {
         expect(() => WeeklyHabitState.fromJson(bad), throwsFormatException);
@@ -113,7 +115,9 @@ void main() {
         1,
       );
       expect(
-          WeeklyHabitStore(prefs, userId: 'bob').load().completions, isEmpty);
+        WeeklyHabitStore(prefs, userId: 'bob').load().completions,
+        isEmpty,
+      );
       await prefs.setString(store.key, 'broken');
       expect(store.load, throwsFormatException);
       expect(prefs.getString(store.key), 'broken');
