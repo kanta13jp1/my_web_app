@@ -38,6 +38,7 @@ class _ImportPageState extends State<ImportPage> {
   late EvernoteNoteHistoryMigrationService _evernoteNoteHistoryMigrationService;
   late EvernoteCloudStageService _evernoteCloudStageService;
   bool _migrationLedgerInitialized = false;
+  final _ledgerRefreshGeneration = EvernoteLedgerRefreshGeneration();
   bool _isMigrationLedgerLoading = false;
   String? _migrationLedgerError;
   List<EvernoteMigrationBatch> _evernoteMigrationBatches =
@@ -117,6 +118,13 @@ class _ImportPageState extends State<ImportPage> {
   Future<void> _loadEvernoteMigrationLedger() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
+    final generation = _ledgerRefreshGeneration.begin(user.id);
+    bool isCurrent() =>
+        mounted &&
+        _ledgerRefreshGeneration.isCurrent(
+          generation,
+          Supabase.instance.client.auth.currentUser?.id,
+        );
     if (mounted) {
       setState(() {
         _isMigrationLedgerLoading = true;
@@ -124,24 +132,19 @@ class _ImportPageState extends State<ImportPage> {
       });
     }
     try {
-      final batchesFuture = _evernoteMigrationLedgerService.loadBatches(
+      final snapshot = await _evernoteMigrationLedgerService.loadSnapshot(
         userId: user.id,
       );
-      final itemsFuture = _evernoteMigrationLedgerService.loadItems(
-        userId: user.id,
-      );
-      final batches = await batchesFuture;
-      final items = await itemsFuture;
-      if (!mounted) return;
+      if (!isCurrent()) return;
       setState(() {
-        _evernoteMigrationBatches = batches;
-        _evernoteMigrationItems = items;
+        _evernoteMigrationBatches = snapshot.batches;
+        _evernoteMigrationItems = snapshot.items;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!isCurrent()) return;
       setState(() => _migrationLedgerError = error.toString());
     } finally {
-      if (mounted) setState(() => _isMigrationLedgerLoading = false);
+      if (isCurrent()) setState(() => _isMigrationLedgerLoading = false);
     }
   }
 

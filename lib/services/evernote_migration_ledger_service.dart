@@ -230,6 +230,19 @@ class EvernoteMigrationProgress {
   int get overallPercent => (overallFraction * 100).round();
 }
 
+class EvernoteLedgerRefreshGeneration {
+  int _generation = 0;
+  String? _ownerId;
+
+  int begin(String ownerId) {
+    _ownerId = ownerId;
+    return ++_generation;
+  }
+
+  bool isCurrent(int generation, String? ownerId) =>
+      generation == _generation && ownerId != null && ownerId == _ownerId;
+}
+
 class EvernoteMigrationLedgerService {
   final SupabaseClient _client;
 
@@ -294,6 +307,18 @@ class EvernoteMigrationLedgerService {
           );
     }
     return batch;
+  }
+
+  Future<({List<EvernoteMigrationBatch> batches, List<EvernoteMigrationItem> items})>
+      loadSnapshot({required String userId}) async {
+    final results = await Future.wait<Object>([
+      loadBatches(userId: userId),
+      loadItems(userId: userId),
+    ]);
+    return (
+      batches: results[0] as List<EvernoteMigrationBatch>,
+      items: results[1] as List<EvernoteMigrationItem>,
+    );
   }
 
   Future<List<EvernoteMigrationBatch>> loadBatches({
