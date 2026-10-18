@@ -20,6 +20,7 @@ jobs:
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
+      - run: flutter pub get
       - name: Format only feature Dart files
         run: |
           dart format lib/pages/echo_pump_game_page.dart lib/widgets/echo_pump_incident.dart test/widgets/echo_pump_incident_test.dart test/pages/echo_pump_incident_flow_test.dart

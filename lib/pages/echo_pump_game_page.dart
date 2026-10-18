@@ -67,10 +67,10 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       _visualCue = _game.escaped
           ? EchoPumpCue.escape
           : _game.health == 0
-              ? EchoPumpCue.fail
-              : _game.health < health
-                  ? EchoPumpCue.damage
-                  : cue;
+          ? EchoPumpCue.fail
+          : _game.health < health
+          ? EchoPumpCue.damage
+          : cue;
     });
     _audio.setMusicActive(!_game.finished);
     if (_game.escaped) {
@@ -99,14 +99,14 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
           future: effectsStopped,
           builder: (_, snapshot) =>
               snapshot.connectionState == ConnectionState.done
-                  ? EchoPumpInventoryDialog(game: inspectedGame)
-                  : const AlertDialog(
-                      title: Text('所持品を準備中…'),
-                      content: SizedBox(
-                        height: 32,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                    ),
+              ? EchoPumpInventoryDialog(game: inspectedGame)
+              : const AlertDialog(
+                  title: Text('所持品を準備中…'),
+                  content: SizedBox(
+                    height: 32,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
         ),
       );
     } finally {
@@ -132,7 +132,12 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
         builder: (context) => AlertDialog(
           title: const Text('異常灯：確認済み'),
           content: const Text('音に反応する影。設備の音を使って誘導しよう。'),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('探索へ戻る'))],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('探索へ戻る'),
+            ),
+          ],
         ),
       );
       return;
@@ -153,16 +158,28 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
             backgroundColor: const Color(0xFF081318),
             child: SizedBox(
               width: 800,
-              height: (MediaQuery.sizeOf(dialogContext).height * 0.8).clamp(0, 620).toDouble(),
+              height: (MediaQuery.sizeOf(dialogContext).height * 0.8)
+                  .clamp(0, 620)
+                  .toDouble(),
               child: FutureBuilder<void>(
                 future: stopped,
-                builder: (_, snapshot) => snapshot.connectionState == ConnectionState.done
-                    ? EchoPumpIncident(onFinished: () => Navigator.pop(dialogContext, true))
-                    : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        const CircularProgressIndicator(),
-                        const Text('設備の音を確認中…'),
-                        TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('探索へ戻る')),
-                      ]),
+                builder: (_, snapshot) =>
+                    snapshot.connectionState == ConnectionState.done
+                    ? EchoPumpIncident(
+                        onFinished: () => Navigator.pop(dialogContext, true),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const Text('設備の音を確認中…'),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(dialogContext, false),
+                            child: const Text('探索へ戻る'),
+                          ),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -172,7 +189,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       _incidentOpen = false;
       _audio.resumeEffects();
     }
-    if (!mounted || !identical(inspectedGame, _game) || finished != true) return;
+    if (!mounted || !identical(inspectedGame, _game) || finished != true)
+      return;
     setState(() => _inspectedIncidentGame = inspectedGame);
   }
 
@@ -213,16 +231,17 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       return EchoPumpTitleScreen(onStart: _beginIntro);
     }
     return Theme(
-      data: ThemeData(
-        brightness: Brightness.dark,
-        useMaterial3: true,
-        fontFamily: 'NotoSansJP',
-      ).copyWith(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF64D8C2),
-          brightness: Brightness.dark,
-        ),
-      ),
+      data:
+          ThemeData(
+            brightness: Brightness.dark,
+            useMaterial3: true,
+            fontFamily: 'NotoSansJP',
+          ).copyWith(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF64D8C2),
+              brightness: Brightness.dark,
+            ),
+          ),
       child: Scaffold(
         backgroundColor: const Color(0xFF10191D),
         appBar: AppBar(
@@ -266,15 +285,25 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                     },
                   ),
                   if (_game.room == PumpRoom.control && !_game.finished)
-                    Builder(builder: (incidentContext) => Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: OutlinedButton.icon(
-                        key: const Key('echo-incident-inspect'),
-                        onPressed: () => _inspectIncident(incidentContext),
-                        icon: Icon(identical(_inspectedIncidentGame, _game) ? Icons.check_circle_outline : Icons.warning_amber_rounded),
-                        label: Text(identical(_inspectedIncidentGame, _game) ? '異常灯：確認済み' : '異常灯を調べる'),
+                    Builder(
+                      builder: (incidentContext) => Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: OutlinedButton.icon(
+                          key: const Key('echo-incident-inspect'),
+                          onPressed: () => _inspectIncident(incidentContext),
+                          icon: Icon(
+                            identical(_inspectedIncidentGame, _game)
+                                ? Icons.check_circle_outline
+                                : Icons.warning_amber_rounded,
+                          ),
+                          label: Text(
+                            identical(_inspectedIncidentGame, _game)
+                                ? '異常灯：確認済み'
+                                : '異常灯を調べる',
+                          ),
+                        ),
                       ),
-                    )),
+                    ),
                   const SizedBox(height: 12),
                   Builder(
                     builder: (inventoryContext) => EchoPumpInventoryStrip(
@@ -323,26 +352,23 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                     ],
                   ),
                   if (_game.finished)
-                    _panel(
-                      _game.escaped ? '脱出成功' : '探索失敗',
-                      [
-                        Text(
-                          _game.escaped
-                              ? '施設の仕組みを使って、生還できた。'
-                              : '敵の位置と音の行き先を確認してみよう。',
+                    _panel(_game.escaped ? '脱出成功' : '探索失敗', [
+                      Text(
+                        _game.escaped
+                            ? '施設の仕組みを使って、生還できた。'
+                            : '敵の位置と音の行き先を確認してみよう。',
+                      ),
+                      const SizedBox(height: 8),
+                      FilledButton.icon(
+                        key: const Key('echo-retry'),
+                        onPressed: () => _act(
+                          () => _game = EchoPumpGame(),
+                          EchoPumpCue.start,
                         ),
-                        const SizedBox(height: 8),
-                        FilledButton.icon(
-                          key: const Key('echo-retry'),
-                          onPressed: () => _act(
-                            () => _game = EchoPumpGame(),
-                            EchoPumpCue.start,
-                          ),
-                          icon: const Icon(Icons.replay),
-                          label: const Text('リトライ'),
-                        ),
-                      ],
-                    ),
+                        icon: const Icon(Icons.replay),
+                        label: const Text('リトライ'),
+                      ),
+                    ]),
                   _panel('施設の見取り図', [
                     EchoPumpFacilityMap(game: _game),
                     const SizedBox(height: 8),
@@ -353,9 +379,11 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                     children: [
                       Padding(
                         padding: EdgeInsets.all(16),
-                        child: Text('移動・通電・作業・待機の1操作で敵が1部屋動く。'
-                            '最後に入れた電源の機械音へ向かう。通電は最大2系統。'
-                            'ヒューズで修理し、敵を点検槽に封鎖してから排水する。'),
+                        child: Text(
+                          '移動・通電・作業・待機の1操作で敵が1部屋動く。'
+                          '最後に入れた電源の機械音へ向かう。通電は最大2系統。'
+                          'ヒューズで修理し、敵を点検槽に封鎖してから排水する。',
+                        ),
                       ),
                     ],
                   ),
@@ -367,21 +395,23 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                         for (final room in _game.destinations)
                           OutlinedButton(
                             key: Key('echo-move-${room.name}'),
-                            onPressed: _game.finished ||
+                            onPressed:
+                                _game.finished ||
                                     (room == PumpRoom.exit && !_game.drained) ||
                                     (room == PumpRoom.inspection &&
                                         _game.sealed)
                                 ? null
                                 : () => _act(
-                                      () => _game.move(room),
-                                      EchoPumpCue.step,
-                                    ),
+                                    () => _game.move(room),
+                                    EchoPumpCue.step,
+                                  ),
                             child: Text('${room.label}へ'),
                           ),
                         OutlinedButton.icon(
                           key: const Key('echo-wait'),
-                          onPressed:
-                              _game.finished ? null : () => _act(_game.wait),
+                          onPressed: _game.finished
+                              ? null
+                              : () => _act(_game.wait),
                           icon: const Icon(Icons.hearing),
                           label: const Text('1ターン待つ'),
                         ),
@@ -408,9 +438,9 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                               onSelected: _game.finished
                                   ? null
                                   : (_) => _act(
-                                        () => _game.togglePower(circuit),
-                                        EchoPumpCue.power,
-                                      ),
+                                      () => _game.togglePower(circuit),
+                                      EchoPumpCue.power,
+                                    ),
                             ),
                         ],
                       ),
@@ -461,7 +491,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                           ),
                           FilledButton(
                             key: const Key('echo-seal'),
-                            onPressed: _game.finished ||
+                            onPressed:
+                                _game.finished ||
                                     _game.sealed ||
                                     _game.enemy != PumpRoom.inspection ||
                                     !_game.power.contains(PumpCircuit.c)
@@ -471,7 +502,8 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                           ),
                           FilledButton(
                             key: const Key('echo-drain'),
-                            onPressed: _game.finished ||
+                            onPressed:
+                                _game.finished ||
                                     !_game.repaired ||
                                     !_game.sealed ||
                                     _game.drained ||
@@ -484,8 +516,10 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                       ),
                     ]),
                   const SizedBox(height: 12),
-                  const Text('音は下のボタンでONにできます。保存はされません。'
-                      '再読み込みすると最初から始まります。'),
+                  const Text(
+                    '音は下のボタンでONにできます。保存はされません。'
+                    '再読み込みすると最初から始まります。',
+                  ),
                 ],
               ),
             ),
