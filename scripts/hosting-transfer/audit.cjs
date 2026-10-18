@@ -1,7 +1,7 @@
 const {chromium}=require('playwright');
 const fs=require('node:fs');
 (async()=>{
- const browser=await chromium.launch({headless:true});const runs=[];
+ const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const runs=[];
  try {for(let sample=1;sample<=3;sample++){
   const context=await browser.newContext({viewport:{width:1365,height:900},serviceWorkers:'block'});
   const page=await context.newPage();await page.addInitScript(()=>{window.__auditFrame=false;addEventListener('flutter-first-frame',()=>window.__auditFrame=true);});
@@ -13,7 +13,7 @@ const fs=require('node:fs');
   for(const visit of ['cold','warm']){
    rows=new Map();const start=Date.now();
    await page.goto('https://my-web-app-b67f4.web.app/',{waitUntil:'domcontentloaded',timeout:60000});
-   await page.waitForFunction(()=>window.__auditFrame,{timeout:90000});const firstFrameMs=Date.now()-start;
+   let firstFrameMs=null;try{await page.waitForFunction(()=>window.__auditFrame,null,{timeout:90000});firstFrameMs=Date.now()-start;}catch{}
    await page.waitForTimeout(8000);
    const resources=[...rows.values()].sort((a,b)=>b.bytes-a.bytes);
    runs.push({sample,visit,firstFrameMs,windowMs:Date.now()-start,totalEncodedBytes:resources.reduce((n,r)=>n+r.bytes,0),resources});
