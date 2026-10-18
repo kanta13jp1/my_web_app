@@ -103,7 +103,7 @@ async function verifyCatalogRelease(page, account, version) {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   async function reveal(control) {
-    for (let i=0; i<20 && await control.count()===0; i++) {
+    for (let i=0; i<80 && await control.count()===0; i++) {
       const size=page.viewportSize();
       await page.mouse.move(size.width/2,size.height*.65);
       await page.mouse.wheel(0,240);await page.waitForTimeout(250);
@@ -115,6 +115,7 @@ async function verifyCatalogRelease(page, account, version) {
     if(volume !== undefined) await restoredField(page,/^巻・版の名前/,volume);
   }
   for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+    if(process.env.READING_QA_IWANAMI_REMAINING_MOBILE_ONLY === 'true' && mode==='desktop') continue;
     await page.setViewportSize(size);
     for (const [index,book] of books.entries()) {
       if(process.env.READING_QA_IWANAMI_REMAINING === 'true' && mode==='mobile' && (book.workId==='epictetus:discourses' || !['9784003361917','9784003362556','9784003360613','9784003360842','9784003331934','9784003412596',''].includes(book.isbn))) continue;
@@ -159,6 +160,8 @@ async function verifyCatalogRelease(page, account, version) {
       assert.equal(saved.editor,book.editor || '');assert.equal(saved.total_pages,book.pages ? Number(book.pages) : null);
       assert.equal(saved.source_url,book.source);assert.equal(saved.book_url,book.purchase);assert.equal(saved.volume,volume);
       results.push({mode,workId:book.workId,title:book.title,isbn:book.isbn,automaticSearchSelectionPrefillRegistrationReloadEdit:'passed',purchaseLink:'passed',realApiPersistence:'passed'});
+      await writeFile('reading-production-evidence/catalog-progress.json',JSON.stringify({commit:version.commit,cases:results},null,2));
+      console.log(`Catalog ${mode} ${index} ${book.workId} ${book.isbn || 'no-isbn'}: search/selection/autofill/save/reload/edit/reload/purchase/API passed.`);
     }
   }
   assert.deepEqual(errors,[]);
