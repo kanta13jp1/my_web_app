@@ -31,6 +31,19 @@
       "changes": [
         {
           "category": "feature",
+          "id": "pr-5861",
+          "links": [
+            {
+              "title": "PR #5861",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5861"
+            }
+          ],
+          "mergedAt": "2026-10-18T16:30:13Z",
+          "summary": "#5861 Hostingの通信量を測定し大きな転送を削減する"
+        },
+        {
+          "category": "feature",
           "id": "pr-5864",
           "links": [
             {
@@ -405,19 +418,6 @@
           ],
           "mergedAt": "2026-10-17T14:18:31Z",
           "summary": "#5832 混合レシートの履歴と予算を照合済み内訳へ修正"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5831",
-          "links": [
-            {
-              "title": "PR #5831",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5831"
-            }
-          ],
-          "mergedAt": "2026-10-17T13:41:04Z",
-          "summary": "#5831 CIのVMテストを事前分割しWeb検証と並列化して待ち時間を短縮"
         }
       ],
       "date": "2026-10-18",
