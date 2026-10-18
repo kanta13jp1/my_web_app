@@ -57,9 +57,12 @@ for (const skip of [false, true]) {
     await expect(page.getByText('予備灯だけが、揺れている。', { exact: true })).toHaveCount(0);
     await button('探索へ戻る').click();
     const before = await page.evaluate(() => (window as any).__incidentAudio.steps);
+    await button('中央廊下の扉を調べる').click();
+    await expect(button('扉を開けて進む')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => (window as any).__incidentAudio.steps)).toBeGreaterThan(before);
+    await button('戻る').click();
     await button('保守メモを調べる').click();
     await expect(page.getByText('夜間保守メモ 1 / 2', { exact: true })).toBeVisible();
-    await expect.poll(() => page.evaluate(() => (window as any).__incidentAudio.steps)).toBeGreaterThan(before);
     await button('メモを閉じる').click();
     await button('中央廊下の扉を調べる').click();
     await button('扉を開けて進む').click();
