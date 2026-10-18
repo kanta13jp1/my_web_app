@@ -353,12 +353,13 @@ class IntegrationCodeMappingCsvParser {
   String encode(List<IntegrationCodeMappingEntry> entries) {
     String quote(String value) => '"${value.replaceAll('"', '""')}"';
     return <String>[
-      'old_code,new_code,description',
+      'old_code,new_code,description,active',
       ...entries.map(
         (entry) => <String>[
           entry.oldCode,
           entry.newCode,
           entry.description,
+          entry.active.toString(),
         ].map(quote).join(','),
       ),
     ].join('\n');
@@ -392,6 +393,11 @@ class IntegrationCodeMappingCsvParser {
       ],
       required: false,
     );
+    final activeIndex = _headerIndex(
+      headers,
+      const <String>['active'],
+      required: false,
+    );
     final entries = <IntegrationCodeMappingEntry>[];
     final seen = <(String, String)>{};
     for (var rowIndex = 1; rowIndex < rows.length; rowIndex++) {
@@ -404,12 +410,21 @@ class IntegrationCodeMappingCsvParser {
           'Row ${rowIndex + 1} requires old_code and new_code.',
         );
       }
+      final activeValue = activeIndex == null
+          ? 'true'
+          : _cell(row, activeIndex).toLowerCase();
+      if (activeValue != 'true' && activeValue != 'false') {
+        throw FormatException(
+          'Row ${rowIndex + 1} requires active to be true or false.',
+        );
+      }
       final key = (oldCode, newCode);
       if (!seen.add(key)) continue;
       entries.add(
         IntegrationCodeMappingEntry(
           oldCode: oldCode,
           newCode: newCode,
+          active: activeValue == 'true',
           description:
               descriptionIndex == null ? '' : _cell(row, descriptionIndex),
         ),

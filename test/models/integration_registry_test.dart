@@ -49,6 +49,33 @@ A^@B,C
       expect(restored.single.description, original.single.description);
     });
 
+    test('CSV roundtrip preserves disabled mapping entries', () {
+      const original = <IntegrationCodeMappingEntry>[
+        IntegrationCodeMappingEntry(
+          oldCode: 'OLD',
+          newCode: 'NEW',
+          active: false,
+        ),
+      ];
+      final restored = parser.parse(parser.encode(original));
+      expect(restored.single.active, isFalse);
+      expect(restored.single.oldCode, 'OLD');
+      expect(restored.single.newCode, 'NEW');
+      expect(
+        parser.parse('old_code,new_code\nOLD,NEW').single.active,
+        isTrue,
+      );
+    });
+
+    test('rejects ambiguous active values instead of enabling entries', () {
+      for (final value in <String>['', 'no', '0']) {
+        expect(
+          () => parser.parse('old_code,new_code,active\nOLD,NEW,$value'),
+          throwsFormatException,
+        );
+      }
+    });
+
     test('accepts source and target header aliases', () {
       final entries = parser.parse('''
 source_code,target_code,note
