@@ -125,6 +125,49 @@ class WasteTrackingService {
     return null;
   }
 
+  /// 明記された食品とたばこの内訳だけを使う。推測で税や差額を配賦しない。
+  static int reconciledWasteAmount(String description, int totalAmount) {
+    if (extractWasteCategory(description) != '喫煙') {
+      return totalAmount;
+    }
+    final tobacco = RegExp(
+      r'(?:たばこ|タバコ|煙草|マールボロ(?:BOX)?)[^0-9]{0,6}([0-9,]+)\s*円',
+    ).allMatches(description).toList();
+    final food = RegExp(
+      r'(?:食品|ドーナツ)(?:税込)?\s*([0-9,]+)\s*円',
+    ).allMatches(description).toList();
+    if (tobacco.length != 1 || food.length != 1) {
+      return totalAmount;
+    }
+    final tobaccoAmount =
+        int.tryParse(tobacco.single.group(1)!.replaceAll(',', ''));
+    final foodAmount = int.tryParse(food.single.group(1)!.replaceAll(',', ''));
+    if (tobaccoAmount == null ||
+        foodAmount == null ||
+        tobaccoAmount <= 0 ||
+        foodAmount <= 0 ||
+        tobaccoAmount + foodAmount != totalAmount) {
+      return totalAmount;
+    }
+    return tobaccoAmount;
+  }
+
+  /// 一件の履歴の総額は変えず、照合できる場合だけ分類内訳を表示する。
+  static String expenseClassificationLabel(
+    String description,
+    int totalAmount,
+  ) {
+    final waste = reconciledWasteAmount(
+      description,
+      totalAmount,
+    );
+    if (waste > 0 && waste < totalAmount) {
+      return '内訳:食品${totalAmount - waste}円・喫煙$waste円';
+    }
+    final category = extractWasteCategory(description);
+    return category == null ? '' : '浪費:$category';
+  }
+
   static String? normalizeCategory(String? category) {
     final normalized = category?.trim();
     if (normalized == null || normalized.isEmpty) {

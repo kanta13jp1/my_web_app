@@ -1,3 +1,6 @@
+import 'waste_tracking_service.dart';
+import '../models/asset_income_source_evidence.dart';
+
 class SalarySpendingEntry {
   const SalarySpendingEntry({
     required this.date,
@@ -55,7 +58,7 @@ class SalarySpendingBreakdown {
   final DateTime periodStart;
   final DateTime periodEndExclusive;
   final double totalExpense;
-  final double salaryIncomeTotal;
+  final double? salaryIncomeTotal;
   final int expenseEntryCount;
   final List<SalarySpendingCategorySlice> sections;
 
@@ -63,7 +66,7 @@ class SalarySpendingBreakdown {
       periodEndExclusive.subtract(const Duration(days: 1));
 
   double? get remainingAfterExpense =>
-      salaryIncomeTotal > 0 ? salaryIncomeTotal - totalExpense : null;
+      salaryIncomeTotal == null ? null : salaryIncomeTotal! - totalExpense;
 
   SalarySpendingCategorySlice? get topSection =>
       sections.isEmpty ? null : sections.first;
@@ -86,6 +89,7 @@ class SalarySpendingBreakdownService {
     '投資・貯蓄',
     '医療',
     '日用品',
+    '書籍',
     '娯楽・浪費',
     '借入返済',
     '手数料・税金',
@@ -98,6 +102,7 @@ class SalarySpendingBreakdownService {
     Iterable<SalarySpendingEntry> expenses = const <SalarySpendingEntry>[],
     Iterable<SalaryIncomeEntry> incomes = const <SalaryIncomeEntry>[],
     int salaryDay = defaultSalaryDay,
+    IncomeEvidenceProjection? incomeEvidence,
   }) {
     final normalizedSalaryDay = salaryDay.clamp(1, 28).toInt();
     final periodStart = salaryPeriodStartFor(
@@ -124,30 +129,39 @@ class SalarySpendingBreakdownService {
       if (amount <= 0) {
         continue;
       }
-      final category = categorize(entry.description);
-      totalsByCategory[category] = (totalsByCategory[category] ?? 0) + amount;
-      countsByCategory[category] = (countsByCategory[category] ?? 0) + 1;
-      samplesByCategory.putIfAbsent(category, () => <String>[]);
-      if (samplesByCategory[category]!.length < 2) {
-        final sample = entry.description.trim().isEmpty
-            ? entry.sourceLabel
-            : entry.description.trim();
-        samplesByCategory[category]!.add(sample);
+      final smoking = amount.isFinite && amount == amount.truncateToDouble()
+          ? WasteTrackingService.reconciledWasteAmount(
+              entry.description,
+              amount.toInt(),
+            )
+          : amount;
+      final reconciled = smoking > 0 && smoking < amount;
+      final allocations = reconciled
+          ? <String, double>{
+              '食費': amount - smoking,
+              '娯楽・浪費': smoking.toDouble(),
+            }
+          : <String, double>{categorize(entry.description): amount};
+      for (final allocation in allocations.entries) {
+        final category = allocation.key;
+        totalsByCategory[category] =
+            (totalsByCategory[category] ?? 0) + allocation.value;
+        countsByCategory[category] = (countsByCategory[category] ?? 0) + 1;
+        samplesByCategory.putIfAbsent(category, () => <String>[]);
+        if (samplesByCategory[category]!.length < 2) {
+          samplesByCategory[category]!.add(
+            entry.description.trim().isEmpty
+                ? entry.sourceLabel
+                : entry.description.trim(),
+          );
+        }
       }
       totalExpense += amount;
       expenseEntryCount += 1;
     }
 
-    final incomeEntries = incomes.toList(growable: false);
-    var salaryIncomeTotal = 0.0;
-    for (final entry in incomeEntries) {
-      if (!_isInRange(entry.date, periodStart, periodEndExclusive)) {
-        continue;
-      }
-      if (_looksLikeSalary(entry.description) || incomeEntries.length == 1) {
-        salaryIncomeTotal += entry.amount.abs();
-      }
-    }
+    // Legacy income lists contain no identity evidence and cannot certify a total.
+    final salaryIncomeTotal = incomeEvidence?.combinedRecordedTotal?.toDouble();
 
     final sections = totalsByCategory.entries
         .map(
@@ -202,6 +216,15 @@ class SalarySpendingBreakdownService {
 
   String categorize(String description) {
     final text = description.toLowerCase();
+    // 金融機関名を含む手数料を返済元本へ分類しない。
+    // fee の部分一致は coffee 等も拾うため単語境界を使う。
+    if (text.contains('手数料') || RegExp(r'\bfees?\b').hasMatch(text)) {
+      return '手数料・税金';
+    }
+    if (RegExp(r'\btax(?:es)? payment\b').hasMatch(text) &&
+        !RegExp(r'\btax[- ]free\b').hasMatch(text)) {
+      return '手数料・税金';
+    }
     for (final rule in _categoryRules) {
       for (final keyword in rule.keywords) {
         if (text.contains(keyword.toLowerCase())) {
@@ -222,19 +245,6 @@ class SalarySpendingBreakdownService {
     final lastDay = DateTime(firstOfMonth.year, firstOfMonth.month + 1, 0).day;
     final safeDay = day.clamp(1, lastDay).toInt();
     return DateTime(firstOfMonth.year, firstOfMonth.month, safeDay);
-  }
-
-  static bool _looksLikeSalary(String description) {
-    final text = description.toLowerCase();
-    return text.contains('給料') ||
-        text.contains('給与') ||
-        text.contains('給与明細') ||
-        text.contains('payslip') ||
-        text.contains('pay slip') ||
-        text.contains('salary') ||
-        text.contains('payroll') ||
-        text.contains('賞与') ||
-        text.contains('収入');
   }
 }
 
@@ -290,13 +300,21 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     'セゾン',
     'カードローン',
   ]),
+  // 商品種別を総合通販の店舗名より先に判定する。購入は読書実績にしない。
+  _SalarySpendingCategoryRule('書籍', <String>[
+    '書籍',
+    '書店',
+    '文庫',
+  ]),
   _SalarySpendingCategoryRule('食費', <String>[
     '食費',
+    '食品',
     'スーパー',
     'コンビニ',
     'セブン',
     'ローソン',
     'ファミマ',
+    'ファミリーマート',
     'restaurant',
     'lunch',
     'dinner',
@@ -393,5 +411,16 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     'ギャンブル',
     'casino',
   ]),
-  _SalarySpendingCategoryRule('手数料・税金', <String>['手数料', '税', 'fee', 'tax']),
+  // 「税込」「税抜」など価格の注記だけでは税金の支払と判定しない。
+  _SalarySpendingCategoryRule('手数料・税金', <String>[
+    '税金',
+    '納税',
+    '所得税',
+    '住民税',
+    '固定資産税',
+    '自動車税',
+    '国税',
+    '地方税',
+    '印紙税',
+  ]),
 ];

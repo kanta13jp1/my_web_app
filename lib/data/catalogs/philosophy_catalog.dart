@@ -2,7 +2,7 @@ import 'dart:convert';
 import '../../domain/models/philosophy_reading.dart';
 
 // Factual metadata only; attribution sources and edition sources are separate.
-const philosophyCatalogVersion = '2026-10-12-remaining-japanese-editions';
+const philosophyCatalogVersion = '2026-10-17-iwanami-edition-audit';
 
 class PhilosophyCatalogEdition {
   const PhilosophyCatalogEdition(
@@ -20,6 +20,64 @@ class PhilosophyCatalogEdition {
 // Verified publisher/library bibliographies. Unknown fields remain empty.
 // A volume's page count is never treated as the complete work's page count.
 const philosophyCatalogEditions = [
+  PhilosophyCatalogEdition(
+    'al-farabi:virtuous-city',
+    '中世思想原典集成11 イスラーム哲学・平凡社（有徳都市の住民がもつ見解の諸原理）',
+    ReadingEdition(
+      publisher: '平凡社',
+      translator: '竹下政孝',
+      editor: '上智大学中世思想研究所（編訳・監修）',
+      year: '2000',
+      isbn: '9784582734218',
+      volume: '11 イスラーム哲学',
+      totalPages: 1161,
+      sourceUrl:
+          'https://catalog.library.metro.tokyo.lg.jp/winj/opac/switch-detail-iccap.do?bibid=1105284612',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784582734218',
+    ),
+    note: '「有徳都市の住民がもつ見解の諸原理」を収録。ISBN・1161ページは巻全体の値です。竹下政孝はこの収録作品の訳者です。',
+  ),
+  PhilosophyCatalogEdition(
+    'husserl:ideas',
+    'イデーン1-1・みすず書房（純粋現象学への全般的序論・前半）',
+    ReadingEdition(
+      publisher: 'みすず書房',
+      translator: '渡辺二郎',
+      year: '1979',
+      volume: '1-1',
+      sourceUrl: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000001441684',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=イデーン1-1+フッサール+みすず書房',
+    ),
+    note: 'イデーンIの前半のみ。1-2は後半です。旧版書誌のISBNは未記載、数量は434,15pのためページ数を単一値に推測しません。',
+  ),
+  PhilosophyCatalogEdition(
+    'spinoza:ethics',
+    'エチカ（倫理学）上・岩波文庫（畠中尚志訳）',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '畠中尚志',
+      year: '1975',
+      isbn: '9784003361542',
+      volume: '上・岩波文庫',
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003361542',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361542',
+    ),
+    note: '上巻のみ。刊行年は出版社書誌の初刊年です。同じISBNの刷・改版でページ数が異なるため、手元の本で確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'spinoza:ethics',
+    'エチカ（倫理学）下・岩波文庫（畠中尚志訳）',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '畠中尚志',
+      year: '1951',
+      isbn: '9784003361559',
+      volume: '下・岩波文庫 青615-5',
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003361559',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361559',
+    ),
+    note: '下巻のみ。刊行年は出版社書誌の初刊年です。同じISBNの刷・改版でページ数が異なるため、手元の本で確認してください。',
+  ),
   PhilosophyCatalogEdition(
     'aristotle:nicomachean-ethics',
     'ニコマコス倫理学（上）・光文社古典新訳文庫',
@@ -419,8 +477,7 @@ const philosophyCatalogEditions = [
       year: '2008',
       isbn: '9784003320518',
       volume: '岩波文庫',
-      sourceUrl:
-          'https://lib-opac.mc.beppu-u.ac.jp/webopac/catdbl.do?hidden_return_link=true&pkey=BB00112034',
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003320518',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003320518',
     ),
     note: '出版社書誌と図書館書誌でページ数表記が異なるため、手元の本で確認してください。',
@@ -469,6 +526,36 @@ const philosophyCatalogEditions = [
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784476011609',
     ),
     note: '羅什漢訳を基準にサンスクリット詩頌と対照した訳注。入手先では中古を含む在庫・版を確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'aristotle:metaphysics',
+    '形而上学（上）・岩波書店（岩波文庫）',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '出隆',
+      year: '1959',
+      isbn: '9784003360439',
+      volume: '岩波文庫 青604-3・上巻',
+      totalPages: 420,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003360439',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360439',
+    ),
+    note: '上下二巻のうち上巻。ページ数はこの巻のみの値です。出版年は書誌の初版年で、手元の刷の発行年は別途確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'aristotle:metaphysics',
+    '形而上学（下）・岩波書店（岩波文庫）',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '出隆',
+      year: '1961',
+      isbn: '9784003360446',
+      volume: '岩波文庫 青604-4・下巻',
+      totalPages: 458,
+      sourceUrl: 'https://www.books.or.jp/book-details/9784003360446',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360446',
+    ),
+    note: '上下二巻のうち下巻。ページ数はこの巻のみの値です。出版年は書誌の初版年で、手元の刷の発行年は別途確認してください。',
   ),
   PhilosophyCatalogEdition(
     'aristotle:metaphysics',
@@ -1738,8 +1825,9 @@ const philosophyCatalogEditions = [
       translator: '高村夏輝',
       year: '2005',
       isbn: '9784480089045',
+      totalPages: 288,
       volume: 'ちくま学芸文庫',
-      sourceUrl: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000007687640',
+      sourceUrl: 'https://www.chikumashobo.co.jp/product/9784480089045/',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784480089045',
     ),
   ),
@@ -2199,6 +2287,231 @@ const philosophyCatalogEditions = [
       sourceUrl: 'https://www.kotensinyaku.jp/books/book61/',
       bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784334751623',
     ),
+  ),
+  PhilosophyCatalogEdition(
+    'plato:apology',
+    'ソクラテスの弁明・クリトン・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '久保勉',
+      year: '1964',
+      isbn: '9784003360118',
+      volume: '岩波文庫 青601-1',
+      totalPages: 118,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003360118',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360118',
+    ),
+    note: '「ソクラテスの弁明」と「クリトン」の合本。118ページは合本全体の値です。',
+  ),
+  PhilosophyCatalogEdition(
+    'aristotle:nicomachean-ethics',
+    'ニコマコス倫理学（上）・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '高田三郎',
+      year: '1971',
+      isbn: '9784003360415',
+      volume: '岩波文庫 青604-1・上巻',
+      totalPages: 294,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003360415',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360415',
+    ),
+    note: '上下二巻のうち上巻。ページ数は出版社提供書誌のこの巻の値です。改版・刷による差は手元の本で確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'aristotle:nicomachean-ethics',
+    'ニコマコス倫理学（下）・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '高田三郎',
+      year: '1973',
+      isbn: '9784003360422',
+      volume: '岩波文庫 青604-2・下巻',
+      totalPages: 302,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003360422',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003360422',
+    ),
+    note: '上下二巻のうち下巻。ページ数は出版社提供書誌のこの巻の値です。改版・刷による差は手元の本で確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'descartes:discourse',
+    '方法序説・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '谷川多佳子',
+      year: '1997',
+      isbn: '9784003361313',
+      volume: '岩波文庫 青613-1',
+      totalPages: 160,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003361313',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361313',
+    ),
+    note: '出版年は出版社提供書誌の初版年です。手元の刷の発行年とは区別してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'descartes:meditations',
+    '省察・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '三木清',
+      year: '1949',
+      isbn: '9784003361320',
+      volume: '岩波文庫 青613-2',
+      totalPages: 167,
+      sourceUrl:
+          'https://opactmu.lib.tmu.ac.jp/iwjs0013opc/catdbl.do?hidden_return_link=true&pkey=BB00123729',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361320',
+    ),
+    note: '東京都立大学図書館書誌の1949年刊・167ページ。手元の刷の発行年は別途確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'rousseau:social-contract',
+    '社会契約論・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '桑原武夫・前川貞次郎',
+      year: '1954',
+      isbn: '9784003362334',
+      volume: '岩波文庫 青623-3',
+      totalPages: 246,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003362334',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003362334',
+    ),
+    note: '出版年は出版社提供書誌の初版年です。手元の刷の発行年とは区別してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'mill:liberty',
+    '自由論・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '関口正司',
+      year: '2020',
+      isbn: '9784003900024',
+      volume: '岩波文庫・関口正司訳',
+      totalPages: 302,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003900024',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003900024',
+    ),
+    note: '出版年は出版社提供書誌の初版年です。手元の刷の発行年とは区別してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'marcus-aurelius:meditations',
+    '自省録・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '神谷美恵子',
+      year: '2007',
+      isbn: '9784003361016',
+      volume: '岩波文庫 青610-1・改版',
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003361016',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003361016',
+    ),
+    note: '同じISBNのページ数に書誌間の差があるため未設定です。手元の本の総ページ数を登録してください。出版年は改版の書誌年です。',
+  ),
+  PhilosophyCatalogEdition(
+    'marx:manifesto',
+    '共産党宣言・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '大内兵衛・向坂逸郎',
+      year: '1971',
+      isbn: '9784003412459',
+      volume: '岩波文庫 白124-5・改訳',
+      totalPages: 116,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003412459',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003412459',
+    ),
+    note: 'マルクスとエンゲルスの共著。訳者2名は国立情報学研究所CiNii Booksの改訳書誌でも確認。',
+  ),
+  PhilosophyCatalogEdition(
+    'zhuangzi:zhuangzi',
+    '荘子 第1冊・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '金谷治（訳注）',
+      year: '1971',
+      isbn: '9784003320617',
+      volume: '岩波文庫 青206-1・第1冊',
+      totalPages: 268,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003320617',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003320617',
+    ),
+    note: '全四冊のうち第1冊。ページ数はこの冊のみの値です。金谷治の役割は訳注（図書館書誌で確認）。',
+  ),
+  PhilosophyCatalogEdition(
+    'zhuangzi:zhuangzi',
+    '荘子 第2冊・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '金谷治（訳注）',
+      year: '1975',
+      isbn: '9784003320624',
+      volume: '岩波文庫 青206-2・第2冊',
+      totalPages: 284,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003320624',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003320624',
+    ),
+    note: '全四冊のうち第2冊。ページ数はこの冊のみの値です。金谷治の役割は訳注（図書館書誌で確認）。',
+  ),
+  PhilosophyCatalogEdition(
+    'zhuangzi:zhuangzi',
+    '荘子 第3冊・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '金谷治（訳注）',
+      year: '1982',
+      isbn: '9784003320631',
+      volume: '岩波文庫 青206-3・第3冊',
+      totalPages: 334,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003320631',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003320631',
+    ),
+    note: '全四冊のうち第3冊。ページ数はこの冊のみの値です。金谷治の役割は訳注（図書館書誌で確認）。',
+  ),
+  PhilosophyCatalogEdition(
+    'zhuangzi:zhuangzi',
+    '荘子 第4冊・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '金谷治（訳注）',
+      year: '1983',
+      isbn: '9784003320648',
+      volume: '岩波文庫 青206-4・第4冊',
+      totalPages: 330,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003320648',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003320648',
+    ),
+    note: '全四冊のうち第4冊。ページ数はこの冊のみの値です。金谷治の役割は訳注（図書館書誌で確認）。',
+  ),
+  PhilosophyCatalogEdition(
+    'wang-yangming:instructions',
+    '伝習録・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      translator: '山田準・鈴木直治（訳註）',
+      year: '1936',
+      isbn: '9784003321218',
+      volume: '岩波文庫 青212-1',
+      totalPages: 493,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003321218',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003321218',
+    ),
+    note: '出版年は出版社提供書誌の昭和11年（1936年）。手元の刷の発行年は別途確認してください。',
+  ),
+  PhilosophyCatalogEdition(
+    'dogen:zuimonki',
+    '正法眼蔵随聞記・岩波文庫',
+    ReadingEdition(
+      publisher: '岩波書店',
+      editor: '懐奘（編）・和辻哲郎（校訂）',
+      year: '1982',
+      isbn: '9784003331941',
+      volume: '岩波文庫 青319-4・改版',
+      totalPages: 176,
+      sourceUrl: 'https://www.hanmoto.com/bd/isbn/9784003331941',
+      bookUrl: 'https://www.amazon.co.jp/s/?i=stripbooks&k=9784003331941',
+    ),
+    note: '現代語訳とは区別し、編者・校訂者を編集者欄に記録。役割は大学図書館書誌で確認。',
   ),
 ];
 
@@ -2916,7 +3229,9 @@ const _authorsJson = r'''[
     "id": "schopenhauer",
     "name": "ショーペンハウアー",
     "aliases": [
-      "Arthur Schopenhauer"
+      "Arthur Schopenhauer",
+      "ショーペンハウエル",
+      "ショーペンハウア"
     ],
     "centuries": [
       "19世紀"
@@ -4185,7 +4500,7 @@ const _worksJson = r'''[
       "宗教哲学"
     ],
     "source": "https://plato.stanford.edu/entries/ibn-rushd/",
-    "note": "邦題には表記の異同がある。"
+    "note": "邦題には表記の異同がある。 日本語の書籍版は今回の出典調査では未確認（2026-10-13）。別著作・原語版を日本語訳として扱わず、ISBN・訳者などは確認後に登録してください。"
   },
   {
     "id": "aquinas:summa",
@@ -4891,7 +5206,9 @@ const _worksJson = r'''[
       "id": "schopenhauer",
       "name": "ショーペンハウアー",
       "aliases": [
-        "Arthur Schopenhauer"
+        "Arthur Schopenhauer",
+      "ショーペンハウエル",
+      "ショーペンハウア"
       ],
       "centuries": [
         "19世紀"
@@ -5697,7 +6014,7 @@ const _worksJson = r'''[
       "政治哲学"
     ],
     "source": "https://vcresearch.berkeley.edu/faculty/judith-butler",
-    "note": "2024年。原著名で掲載。"
+    "note": "2024年。原著名で掲載。 日本語の書籍版は今回の出典調査では未確認（2026-10-13）。別著作・原語版を日本語訳として扱わず、ISBN・訳者などは確認後に登録してください。"
   },
   {
     "id": "sen:idea-justice",

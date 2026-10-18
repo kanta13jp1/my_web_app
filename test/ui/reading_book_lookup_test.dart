@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/reading_book_lookup.dart';
@@ -5,6 +6,117 @@ import 'package:my_web_app/data/services/reading_book_search.dart';
 import 'package:my_web_app/domain/models/philosophy_reading.dart';
 
 void main() {
+  testWidgets('anthology coverage note is visible before confirming metadata',
+      (tester) async {
+    ReadingEdition? selected;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ReadingBookLookup(
+              initialQuery: '収録作品',
+              onSelected: (edition) => selected = edition,
+              search: (_) async => [
+                const ReadingBookResult(
+                  '抄訳候補',
+                  ReadingEdition(publisher: '出版社'),
+                  note: '原著全体の完訳ではありません。',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('原著全体の完訳ではありません。'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('抄訳候補'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('版の注記: 原著全体の完訳ではありません。'),
+      findsNWidgets(2),
+    );
+    expect(
+      selected,
+      isNull,
+    );
+    await tester.tap(find.text('書籍情報を設定'));
+    await tester.pumpAndSettle();
+    expect(
+      selected?.publisher,
+      '出版社',
+    );
+  });
+  testWidgets('changing an automatic query discards its late response',
+      (tester) async {
+    final pending = Completer<List<ReadingBookResult>>();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ReadingBookLookup(
+            initialQuery: '古い検索',
+            onSelected: (_) {},
+            search: (query) async => query == '古い検索'
+                ? pending.future
+                : [
+                    const ReadingBookResult('新しい結果', ReadingEdition()),
+                  ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), '新しい検索');
+    await tester.pump();
+    await tester.tap(find.text('書籍情報を検索'));
+    await tester.pumpAndSettle();
+    expect(find.text('新しい結果'), findsOneWidget);
+    pending.complete(
+      [
+        const ReadingBookResult('古い結果', ReadingEdition()),
+      ],
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('古い結果'), findsNothing);
+    expect(find.text('新しい結果'), findsOneWidget);
+  });
+
+  testWidgets(
+      'initial title searches once without typing or selecting metadata',
+      (tester) async {
+    var calls = 0;
+    ReadingEdition? selected;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ReadingBookLookup(
+            initialQuery: '読書について',
+            onSelected: (value) => selected = value,
+            search: (query) async {
+              calls++;
+              expect(query, '読書について');
+              return [
+                const ReadingBookResult(
+                  '岩波文庫',
+                  ReadingEdition(publisher: '岩波書店'),
+                ),
+              ];
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(calls, 1);
+    expect(find.text('岩波文庫'), findsOneWidget);
+    expect(selected, isNull);
+    await tester.pump();
+    expect(calls, 1);
+  });
+
   testWidgets(
       'a result is applied only after confirmation; cancel keeps existing data',
       (tester) async {
@@ -55,7 +167,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('書籍情報を取得できませんでした。再検索または手入力できます。'), findsOneWidget);
     expect(
-      tester.widget<TextButton>(find.byType(TextButton)).onPressed,
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, '書籍情報を検索'))
+          .onPressed,
       isNotNull,
     );
   });

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'waste_tracking_service.dart';
 
 import 'asset_waste_training_ai_service.dart';
 
@@ -54,7 +55,8 @@ class AssetWasteTrainingSnapshotInputs {
         continue;
       }
 
-      wasteExpense += amount;
+      wasteExpense +=
+          WasteTrackingService.reconciledWasteAmount(description, amount);
       wasteEntryCount += 1;
       final occurredAt = DateTime.tryParse(
         item['occurred_at']?.toString() ?? '',

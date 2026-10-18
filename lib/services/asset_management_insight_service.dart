@@ -7,6 +7,7 @@ import 'asset_debt_discipline_monitor.dart';
 import 'asset_debt_trend_analyzer.dart';
 import 'asset_management_available_money.dart';
 import 'asset_triage_guide_service.dart';
+import 'asset_payment_status_summary.dart';
 
 // Use the planner's resolved salary-cycle date throughout advice and prompts.
 // Rows omitted from cashflow (for example card-billed items) have no independent
@@ -1699,6 +1700,8 @@ class AssetManagementInsightPromptBuilder {
       ..writeln()
       ..writeln('## 支払日別リスク')
       ..write(_paymentDayRiskLines(workbook))
+      ..writeln()
+      ..write(assetPaymentStatusPrompt(workbook))
       ..writeln()
       ..writeln('## 今月キャッシュフロー')
       ..write(_cashflowLines(workbook))
