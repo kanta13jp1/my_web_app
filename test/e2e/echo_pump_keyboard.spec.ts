@@ -25,6 +25,8 @@ test('opt-in keyboard, repeat guard, modal guard and reload', async ({ page }, i
   await page.keyboard.press('w');
   await page.keyboard.press('b');
   await page.getByRole('button', {name: '所持品を閉じる', exact: true}).click();
+  // Semantics detach before Flutter finishes the closing route transition.
+  await page.waitForTimeout(1000);
   await expect(page.getByText('ターン 1', {exact: true})).toBeVisible();
   await page.keyboard.press('b');
   await expect(page.getByRole('checkbox', {name: 'B 整備', exact: true})).toBeChecked();
