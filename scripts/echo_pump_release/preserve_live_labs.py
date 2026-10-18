@@ -52,7 +52,7 @@ def run(mode):
     for f in rows:
         p=root/f['path'].lstrip('/')
         if not p.resolve().is_relative_to(root):raise RuntimeError('Unexpected live file path')
-        if not f['path'].startswith(PREFIX) and not p.is_file():missing.append(f['path'])
+        if f['path'] not in {'/__/firebase/init.js','/__/firebase/init.json'} and not f['path'].startswith(PREFIX) and not p.is_file():missing.append(f['path'])
     if missing:raise RuntimeError('Other current public files would be removed; stop: '+repr(missing))
     for name,digest in selected.items():
         data=public(PREFIX+name)
