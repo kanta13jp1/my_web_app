@@ -90,7 +90,7 @@ test('unaffordable plan shows gap while retaining food and repayment', async ({ 
   await page.goto('/?income=250000');
   await configureGoal(page);
   await enterAmount(page, '現在の現金・預金（計画の起点）', '0');
-  await expect(page.getByRole('textbox', { name: '登録済みの手取り収入（収入増なし）' })).toHaveAttribute('readonly', /^(readonly)?$/);
+  await expect(page.getByRole('textbox', { name: '計画に使う手取り収入（収入増なし）' })).toBeEditable();
   await enterAmount(page, '毎月の生活費（食費・交通・日用品等）', '60000');
   await page.getByRole('button', { name: '計画を保存・再計算' }).click();
   await expect(page.getByRole('heading', { name: '現計画では月 ¥115,000 不足', exact: true })).toBeVisible();
@@ -128,4 +128,29 @@ test('unavailable AI is labelled as a provisional proposal, not an AI success', 
   await page.getByRole('textbox', { name: '毎月の生活費（食費・交通・日用品等）' }).click();
   await expect(page.getByRole('textbox', { name: '毎月の生活費（食費・交通・日用品等）' })).toHaveValue('60000');
   await expect(page.getByText(/架空家計・模擬AI応答/)).toHaveCount(0);
+});
+
+
+test('plan-only income is editable and survives save and independent reload', async ({ page }) => {
+  const financialWrites: string[] = [];
+  page.on('request', request => {
+    if (/supabase|\/rest\/v1\//.test(request.url()) && !['GET', 'HEAD', 'OPTIONS'].includes(request.method())) {
+      financialWrites.push(`${request.method()} ${request.url()}`);
+    }
+  });
+  await page.goto('/');
+  await configureGoal(page);
+  await enterAmount(page, '現在の現金・預金（計画の起点）', '400000');
+  await enterAmount(page, '計画に使う手取り収入（収入増なし）', '390000');
+  await enterAmount(page, '毎月の生活費（食費・交通・日用品等）', '50000');
+  await page.getByRole('button', { name: '計画を保存・再計算' }).click();
+  await expect(page.getByText('計画をこのブラウザーに保存しました。', { exact: true })).toBeVisible();
+  await page.reload();
+  const income = page.getByRole('textbox', { name: '計画に使う手取り収入（収入増なし）' });
+  await income.click();
+  await expect(income).toHaveValue('390000');
+  await expect(income).toBeEditable();
+  await page.getByRole('button', { name: '月ごとの目標と現計画の見込み' }).click();
+  await expect(page.getByRole('heading', { name: '2027-10-13 自由資金目標 ¥1,000,000 / 現計画 ¥1,830,000', exact: true })).toBeVisible();
+  expect(financialWrites).toEqual([]);
 });

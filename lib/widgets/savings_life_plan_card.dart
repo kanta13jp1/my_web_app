@@ -55,6 +55,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
   bool _loadFailed = false;
   bool _saved = false;
   bool _edited = false;
+  bool _incomeEdited = false;
   String? _message;
   SavingsPlanProposal? _proposal;
 
@@ -78,7 +79,8 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
   @override
   void didUpdateWidget(covariant SavingsLifePlanCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.suggestedIncome != widget.suggestedIncome) {
+    if (!_incomeEdited &&
+        oldWidget.suggestedIncome != widget.suggestedIncome) {
       _income.text = widget.suggestedIncome?.toString() ?? '';
     }
     if (SavingsLifePlan.dateText(oldWidget.today) != _day) {
@@ -129,7 +131,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
         _target.text = plan.target > 0 ? plan.target.toString() : '';
         _edited = false;
         _cashBalance.text = plan.cashBalance?.toString() ?? '';
-        _income.text = widget.suggestedIncome?.toString() ?? '';
+        _income.text =
+            (plan.income ?? widget.suggestedIncome)?.toString() ?? '';
+        _incomeEdited = plan.income != null;
         _living.text = plan.livingCosts?.toString() ?? '';
         _reserve.text = plan.reserve.toString();
       });
@@ -168,7 +172,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
       setState(() {
         _proposal = proposal;
         _cashBalance.text = proposal.input.cashBalance.toString();
-        _income.text = widget.suggestedIncome?.toString() ?? '';
+        if (!_incomeEdited) {
+          _income.text = widget.suggestedIncome?.toString() ?? '';
+        }
         _living.text = proposal.livingCosts.toString();
         _reserve.text = proposal.reserve.toString();
         _edited = true;
@@ -215,7 +221,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
       target: _amount(_target.text)!,
       goalName: _goalName.text.trim(),
       cashBalance: _amount(_cashBalance.text, signed: true),
-      income: widget.suggestedIncome,
+      income: _amount(_income.text),
       livingCosts: _amount(_living.text),
       reserve: _amount(_reserve.text)!,
       guidance: _proposal?.rationale ?? _plan.guidance,
@@ -231,6 +237,7 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
       setState(() {
         _plan = next;
         _saved = true;
+        _incomeEdited = true;
         _edited = false;
         _message = '計画をこのブラウザーに保存しました。';
       });
@@ -265,16 +272,20 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
     String label,
     TextEditingController controller, {
     bool positive = false,
-    bool readOnly = false,
+    Key? fieldKey,
+    int? maximum,
     String? positiveError,
     bool signed = false,
   }) =>
       SizedBox(
         width: min(300, MediaQuery.sizeOf(context).width - 80),
         child: TextFormField(
+          key: fieldKey,
           controller: controller,
-          readOnly: readOnly,
-          onChanged: (_) => setState(() => _edited = true),
+          onChanged: (_) => setState(() {
+            _edited = true;
+            if (identical(controller, _income)) _incomeEdited = true;
+          }),
           enabled: !_busy,
           keyboardType: TextInputType.numberWithOptions(signed: signed),
           decoration: InputDecoration(
@@ -289,7 +300,9 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                   : (signed
                       ? '-100,000,000〜100,000,000円の整数を入力してください'
                       : '0〜100,000,000円の整数を入力してください'))
-              : null,
+              : maximum != null && _amount(value ?? '')! > maximum
+                  ? '登録済みの手取り以下の金額を入力してください'
+                  : null,
         ),
       );
 
@@ -405,7 +418,12 @@ class _SavingsLifePlanCardState extends State<SavingsLifePlanCard> {
                   runSpacing: 16,
                   children: [
                     _field('現在の現金・預金（計画の起点）', _cashBalance, signed: true),
-                    _field('登録済みの手取り収入（収入増なし）', _income, readOnly: true),
+                    _field(
+                      '計画に使う手取り収入（収入増なし）',
+                      _income,
+                      fieldKey: const Key('savings-plan-income'),
+                      maximum: widget.suggestedIncome,
+                    ),
                     _field('毎月の生活費（食費・交通・日用品等）', _living, positive: true),
                     _field('毎月の予備費（臨時支出用）', _reserve),
                     SizedBox(
