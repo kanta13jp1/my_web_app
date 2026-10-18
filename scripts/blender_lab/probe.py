@@ -17,6 +17,8 @@ OUT.mkdir(parents=True, exist_ok=True)
 evidence = {'started_utc': datetime.now(timezone.utc).isoformat(),
             'execution': 'Codex-orchestrated GitHub Actions; MCP Python SDK client, not native Desktop tool discovery',
             'upstream_sha': os.environ['BLENDER_UPSTREAM_SHA'], 'calls': []}
+evidence['installed_distribution'] = {'name': 'mcp-for-blender', 'version': '2.1.9',
+    'wheel_sha256': 'a5cbc6cf316fa7433566eb505a0c26ca22e28c10083bd1b09a23d9e357821ccc'}
 
 async def run():
     params = StdioServerParameters(command=sys.executable, args=['-m', 'blender_mcp.server'],

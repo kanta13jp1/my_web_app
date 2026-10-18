@@ -31,7 +31,7 @@ jobs:
       - name: Install isolated cloud tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y blender xvfb
+          sudo apt-get install -y blender xvfb python3-numpy
           python3 -m venv /tmp/blender-lab-venv
           /tmp/blender-lab-venv/bin/pip download --no-deps --only-binary=:all: mcp-for-blender==2.1.9 -d /tmp/blender-wheel
           echo 'a5cbc6cf316fa7433566eb505a0c26ca22e28c10083bd1b09a23d9e357821ccc  /tmp/blender-wheel/mcp_for_blender-2.1.9-py3-none-any.whl' | sha256sum -c -

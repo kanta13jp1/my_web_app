@@ -5,6 +5,9 @@ import sys
 from pathlib import Path
 
 import bpy
+import numpy
+
+print('BLENDER_RUNTIME', bpy.app.version_string, sys.version, numpy.__version__, flush=True)
 
 addon_path = Path(os.environ['BLENDER_ADDON_PATH']).resolve()
 spec = importlib.util.spec_from_file_location('blender_mcp_addon', addon_path)
