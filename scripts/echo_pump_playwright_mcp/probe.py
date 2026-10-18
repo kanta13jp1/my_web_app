@@ -69,6 +69,8 @@ async def main():
     await call('browser_press_key',{'key':'w'})
     await call('browser_press_key',{'key':'b'})
     await click('所持品を閉じる')
+    # Dialog route remains non-current during its closing animation.
+    await call('browser_wait_for',{'time':1})
     snapshot=await call('browser_snapshot',{})
     assert 'ターン 1' in snapshot,snapshot
     await call('browser_press_key',{'key':'b'})
