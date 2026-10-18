@@ -90,8 +90,9 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
     final from = _game.room;
     final turn = _game.turn;
     _act(() => _game.move(destination), EchoPumpCue.step);
-    if (_game.room != destination || _game.room == from || _game.turn == turn)
+    if (_game.room != destination || _game.room == from || _game.turn == turn) {
       return;
+    }
     _moving = true;
     try {
       await showDialog<void>(
