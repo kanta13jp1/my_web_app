@@ -214,6 +214,12 @@ async function summary(page: Page, info: TestInfo, observed: Awaited<ReturnType<
 test.afterEach(async ({ page }, info) => {
   const observed = observations.get(page);
   if (!observed) return;
+  // Keep a closed, credential-free receipt in the CI log as well as the
+  // short-lived artifact. Never log the input operations or raw exceptions.
+  console.log('AUTH_DIAGNOSTIC ' + JSON.stringify({
+    project: info.project.name, phase: observed.phase, auth: observed.auth,
+    submit: observed.submitDiagnostics,
+  }));
   // Always retain value-free diagnostics, including on failure. Do not capture
   // credentials, full DOM, login screenshots, input values, traces or headers.
   const inputs = page.isClosed() ? [] : await page.locator('input,textarea').evaluateAll(nodes => nodes.map(n => ({

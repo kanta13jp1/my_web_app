@@ -95,6 +95,17 @@ existing deterministic callback-race widget tests remain separate.
 
 ## Evidence and interpretation
 
+On 2026-10-18, run 37191510251 remained a failure: the three failed cases
+completed the normal pointer action but received no token response within the
+bound; desktop nonbuyer passed. Its short-lived artifact was no longer listed,
+so request counts and input-validation flags could not be recovered. Do not
+infer no request or a rejected password from that missing evidence.
+
+The bounded evidence-recovery correction prints only the closed Auth counters,
+click categories, phase and value-free submit diagnostics to the CI log too.
+It leaves all interactions, four scenarios, assertions and time bounds intact.
+Retrieve the new artifact immediately and preserve an immutable local copy.
+
 The 2026-10-04 diagnosis records token request/response/failure counts and separate
 normal-click start/completion/error categories, plus empty-input booleans, button
 geometry/hit-test booleans and presence of two known validation messages. Values,
