@@ -3,7 +3,8 @@ import argparse,gzip,hashlib,json,os,re,urllib.request
 from pathlib import Path
 SITE='my-web-app-b67f4'
 PREFIX='/labs/blender-valve/'
-NAMES={'index.html','viewer.js','valve.glb','valve.blend','valve.png','THREE-LICENSE.txt'}
+EXPECTED_RAW={'index.html': '2f745e5507f9de8ee6f26c147ab8d1ce2564f4ead45785b9aaa42f2560c54369', 'viewer.js': 'e5092c7b75d33288b9f89fa3abc7a5996641ac75c5f8b24e300c7eb235413188', 'valve.glb': 'fb4f13445da78845915db407b62df42783beefd8e02632af7d25e4aa9fd0562d', 'valve.blend': '89a8ded73d4489d8d680d7d15034ef87dfc1aeba1d4788d49bae02d134900343', 'valve.png': '87b025b1fa3427c7ae99e6c86ba596de13a2fdef40c2bd72785dfdb20be391ec', 'THREE-LICENSE.txt': 'bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601'}
+NAMES=set(EXPECTED_RAW)
 def validated_files(rows):
     result={}
     for f in rows:
@@ -56,8 +57,8 @@ def run(mode):
     if missing:raise RuntimeError('Other current public files would be removed; stop: '+repr(missing))
     for name,digest in selected.items():
         data=public(PREFIX+name)
-        if not data or len(data)>5_000_000 or hashlib.sha256(gzip.compress(data,mtime=0)).hexdigest()!=digest:
-            raise RuntimeError('Public lab bytes do not match Hosting manifest: '+name)
+        if not data or len(data)>5_000_000 or hashlib.sha256(data).hexdigest()!=EXPECTED_RAW[name]:
+            raise RuntimeError('Public lab bytes do not match pre-release verified snapshot: '+name)
         target=Path('build/web')/PREFIX.lstrip('/')/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
         raw_hashes[name]=hashlib.sha256(data).hexdigest()
     if get(f'sites/{SITE}/channels/live')['release']['version']['name']!=version:raise RuntimeError('Live changed during preservation')
