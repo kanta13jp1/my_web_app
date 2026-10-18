@@ -309,8 +309,11 @@ class EvernoteMigrationLedgerService {
     return batch;
   }
 
-  Future<({List<EvernoteMigrationBatch> batches, List<EvernoteMigrationItem> items})>
-      loadSnapshot({required String userId}) async {
+  Future<
+      ({
+        List<EvernoteMigrationBatch> batches,
+        List<EvernoteMigrationItem> items,
+      })> loadSnapshot({required String userId}) async {
     final results = await Future.wait<Object>([
       loadBatches(userId: userId),
       loadItems(userId: userId),

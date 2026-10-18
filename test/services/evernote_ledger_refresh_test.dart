@@ -7,7 +7,8 @@ import 'package:my_web_app/services/evernote_migration_ledger_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
-  test('older refresh cannot publish success, error, or loading completion', () {
+  test('older refresh cannot publish success, error, or loading completion',
+      () {
     final generation = EvernoteLedgerRefreshGeneration();
     final first = generation.begin('owner-a');
     final second = generation.begin('owner-a');
@@ -19,8 +20,12 @@ void main() {
     expect(generation.isCurrent(second, 'owner-a'), isFalse);
   });
 
-  for (final failedTable in ['evernote_migration_batches', 'evernote_migration_items']) {
-    test('snapshot handles early $failedTable failure while other query waits', () async {
+  for (final failedTable in [
+    'evernote_migration_batches',
+    'evernote_migration_items',
+  ]) {
+    test('snapshot handles early $failedTable failure while other query waits',
+        () async {
       final release = Completer<void>();
       final failureSent = Completer<void>();
       final client = SupabaseClient(
@@ -47,7 +52,8 @@ void main() {
       );
       addTearDown(client.dispose);
       final result = expectLater(
-        EvernoteMigrationLedgerService(client: client).loadSnapshot(userId: 'owner-a'),
+        EvernoteMigrationLedgerService(client: client)
+            .loadSnapshot(userId: 'owner-a'),
         throwsA(isA<PostgrestException>()),
       );
       await failureSent.future;
