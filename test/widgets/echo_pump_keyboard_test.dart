@@ -49,9 +49,13 @@ void main() {
           .onPressed!;
       move();
       await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byKey(const Key('echo-door-transition')), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
+      await tester.pump();
+      expect(find.byKey(const Key('echo-door-transition')), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyI);
       await tester.pump();
+      expect(find.byKey(const Key('echo-door-transition')), findsOneWidget);
       await tester.tap(find.byKey(const Key('echo-door-skip')));
       await tester.pumpAndSettle();
       expect(find.text('ターン 3'), findsOneWidget);
