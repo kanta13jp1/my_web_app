@@ -157,6 +157,35 @@ begin
 end
 $$;
 
+-- A verified shortcut must not silently change its same-owner destination.
+do $$
+declare
+  v_original uuid;
+  v_replacement uuid;
+begin
+  select target_saved_search_id into v_original
+  from public.note_shortcuts where source_key = 'shortcut:saved-project';
+  insert into public.note_saved_searches (user_id, name, query)
+  values (auth.uid(), 'Replacement fixture', 'tag:replacement')
+  returning id into v_replacement;
+  begin
+    update public.note_shortcuts
+    set target_saved_search_id = v_replacement
+    where source_key = 'shortcut:saved-project';
+    raise exception 'Verified same-owner shortcut target was reassigned.';
+  exception when check_violation then
+    if sqlerrm <>
+       'Verified Evernote shortcut targets are fixed until source deletion.' then
+      raise;
+    end if;
+  end;
+  if (select target_saved_search_id from public.note_shortcuts
+      where source_key = 'shortcut:saved-project') is distinct from v_original then
+    raise exception 'Rejected shortcut update changed the verified destination.';
+  end if;
+  delete from public.note_saved_searches where id = v_replacement;
+end
+$$;
 -- Native CRUD and deterministic reordering remain available.
 insert into public.note_saved_searches (
   user_id,

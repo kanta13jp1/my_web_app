@@ -343,6 +343,20 @@ begin
       message = 'Imported Evernote navigation source evidence is immutable.';
   end if;
 
+  if not v_source_deleted and tg_table_name = 'note_shortcuts' then
+    if exists (
+      select 1 from public.evernote_navigation_migrations
+      where user_id = old.user_id and status = 'verified'
+    ) and (
+      new.target_note_id is distinct from old.target_note_id
+      or new.target_collection_id is distinct from old.target_collection_id
+      or new.target_saved_search_id is distinct from old.target_saved_search_id
+    ) then
+      raise exception using
+        errcode = '23514',
+        message = 'Verified Evernote shortcut targets are fixed until source deletion.';
+    end if;
+  end if;
   if not v_source_deleted and tg_table_name = 'note_saved_searches' then
     if new.name is distinct from old.name
        or new.query is distinct from old.query then
