@@ -1,21 +1,27 @@
 {
-  "pr": 5864,
-  "base": "7735b196fdb528ad0ac86f02c47768a6c92fab66",
-  "merge": "9f28409baba27b1c318410a06b8f733bba50f8ab",
+  "preserved_asset_sha256": {
+    "assets/echo_pump/pump_fault.png": "c7c228a7fcd97f482814b68665583db9711fe285406a643a72828e4d0b8e0426",
+    "assets/echo_pump/pump_idle.png": "1e1b5e6173de449d3eeadfe6b66a645c5b3abe6c9cce1789411e27b641686fa4",
+    "assets/echo_pump/pump_live.png": "8f4486307823743c5605f7160346f7e82389364f57074867f8974b6d86eb3a8b"
+  },
+  "base": "0b002a465106a8c25bbf782877721ac59b81324a",
+  "approved_pr": 5873,
+  "source_head": "d810615d427962b7454925cb12e1b73961104f24",
   "selected_files": [
+    ".github/workflows/echo-pump-playwright-mcp.yml",
     ".github/workflows/echo-pump-prototype.yml",
     "lib/pages/echo_pump_game_page.dart",
-    "lib/services/echo_pump_motion_stub.dart",
-    "lib/services/echo_pump_motion_web.dart",
-    "lib/widgets/echo_pump_door_transition.dart",
+    "lib/widgets/echo_pump_keyboard.dart",
+    "scripts/echo_pump_dev_checks_test.py",
     "scripts/echo_pump_dev_commands.json",
-    "test/e2e/echo_pump.spec.ts",
-    "test/pages/echo_pump_game_page_test.dart"
+    "scripts/echo_pump_playwright_mcp/probe.py",
+    "test/e2e/echo_pump_keyboard.spec.ts",
+    "test/pages/echo_pump_game_page_test.dart",
+    "test/widgets/echo_pump_keyboard_test.dart"
   ],
   "runtime_sha256": {
-    "lib/pages/echo_pump_game_page.dart": "d6f16e090eafd77ef993f59c27ade0f163de0e37d0cc3dc277bf1b2622e7aafb",
-    "lib/services/echo_pump_motion_stub.dart": "d2354cae5ecd9f00a8a81ea39f7770710258f64f7bb7e76f9e490301555fd571",
-    "lib/services/echo_pump_motion_web.dart": "a50b5f2db10d01aca8c798197a58c29841be87179e7c8584ee19517afa7696b4",
-    "lib/widgets/echo_pump_door_transition.dart": "f429635ff22fc17132744804a78c87caac8f418dac3a14844706a1cddf37bc09"
-  }
+    "lib/pages/echo_pump_game_page.dart": "ba79b2a9778afe5aa5ece08b3eebf05d0496f955a43a1aca626fbd3c67876894",
+    "lib/widgets/echo_pump_keyboard.dart": "20a42911fcfafbf70e4367cb6cf485752981a2bd349ea82db3d4e32ec81c85b2"
+  },
+  "authority": "Current user explicitly requested research, application, production verification, Zenn update and X sharing. No paid generation, DB or auth change."
 }

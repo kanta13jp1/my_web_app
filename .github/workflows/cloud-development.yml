@@ -1,4 +1,4 @@
-name: Approved PR5864 Web Release
+name: Approved PR5873 Web Release
 
 on:
   pull_request:
@@ -46,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Explicit owner approved PR5864-only release
+        description: Explicit owner approved PR5873-only release
         required: true
         default: false
         type: boolean
@@ -135,16 +135,16 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='7735b196fdb528ad0ac86f02c47768a6c92fab66', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='0b002a465106a8c25bbf782877721ac59b81324a', 'Production changed; rebuild selection'
           PY
 
       - name: Verify approved source selection and merged PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5864 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          git fetch --no-tags --depth=1 origin 7735b196fdb528ad0ac86f02c47768a6c92fab66
-          python3 scripts/echo_pump_release/verify_door_scope.py
+          test "$(gh pr view 5873 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          git fetch --no-tags --depth=1 origin 0b002a465106a8c25bbf782877721ac59b81324a
+          python3 scripts/echo_pump_release/verify_pump_scope.py
 
       - name: Validate cloud workspace descriptors
         shell: bash
@@ -603,7 +603,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='7735b196fdb528ad0ac86f02c47768a6c92fab66', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='0b002a465106a8c25bbf782877721ac59b81324a', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -623,7 +623,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text('lib/pages/echo_pump_game_page.dart\nlib/services/echo_pump_motion_stub.dart\nlib/services/echo_pump_motion_web.dart\nlib/widgets/echo_pump_door_transition.dart\n')
+          Path('.deploy-logs/changed-files.txt').write_text('lib/widgets/echo_pump_machinery.dart\nlib/widgets/echo_pump_motor_art.dart\nassets/echo_pump/pump_fault.png\nassets/echo_pump/pump_idle.png\nassets/echo_pump/pump_live.png\n')
           PY
 
       - name: Reject mixed public-blog deployments
@@ -1318,7 +1318,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: 7735b196fdb528ad0ac86f02c47768a6c92fab66
+          EXPECTED_PUBLIC_BASE: 0b002a465106a8c25bbf782877721ac59b81324a
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1350,7 +1350,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=7735b196fdb528ad0ac86f02c47768a6c92fab66 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=0b002a465106a8c25bbf782877721ac59b81324a /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           npx -y firebase-tools@latest deploy \
             --only hosting \
@@ -1502,7 +1502,7 @@ jobs:
 
 
   public-check:
-    name: Verify published door transitions
+    name: Verify published pump game
     needs: deploy
     if: needs.deploy.result == 'success'
     runs-on: ubuntu-latest
@@ -1516,16 +1516,28 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
-      - run: node --check scripts/echo_pump_release/public_door.mjs
+      - run: node --check scripts/echo_pump_release/public_pump.mjs
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium
-      - name: Verify desktop and mobile door opening, blackout, skip and arrival
+      - name: Install fixed Playwright MCP
+        run: |
+          python3 -m pip install mcp==1.26.0
+          npm install --prefix /tmp/echo-mcp --save-exact @playwright/mcp@0.0.83
+          /tmp/echo-mcp/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify public keyboard through real MCP
+        env:
+          MCP_EXPECT_KEYBOARD: '1'
+          EXPECTED_PRODUCTION_SHA: ${{ github.sha }}
+        run: python3 scripts/echo_pump_playwright_mcp/probe.py
+      - name: Verify desktop, mobile, missing images and retry on public game
         env:
           EXPECTED_PRODUCTION_SHA: ${{ github.sha }}
-        run: node scripts/echo_pump_release/public_door.mjs
+        run: node scripts/echo_pump_release/public_pump.mjs
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
-          name: echo-door-public-${{ github.run_id }}
-          path: echo-door-public/
+          name: echo-pump-public-${{ github.run_id }}
+          path: |
+            echo-pump-public/
+            mcp-browser-evidence/
           retention-days: 14

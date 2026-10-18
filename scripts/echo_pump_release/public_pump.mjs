@@ -16,10 +16,12 @@ async function version() {
 }
 const before = await version(), reports = [];
 const selection=JSON.parse(readFileSync('scripts/echo_pump_release/SOURCE_SELECTION.json','utf8'));
-for (const [path,digest] of Object.entries(selection.runtime_sha256).filter(([p])=>p.endsWith('.png'))) {
+const preservedAssets=[];
+for (const [path,digest] of Object.entries({...selection.runtime_sha256,...selection.preserved_asset_sha256}).filter(([p])=>p.endsWith('.png'))) {
  const response=await fetch(origin+'/assets/'+path+'?verify='+Date.now());
  assert(response.ok);
  assert.equal(createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'),digest,path);
+ preservedAssets.push({path,sha256:digest});
 }
 const browser = await chromium.launch();
 try {
@@ -76,12 +78,12 @@ try {
         await shot('final').catch(()=>{});
         writeFileSync(`${out}/${id}-body.txt`,await page.locator('body').innerText().catch(()=>''));
         reports.push({id,viewport,missing,stage,passed,states:[...states],errors});
-        writeFileSync(out+'/REPORT.json',JSON.stringify({before,expected,reports},null,2));
+        writeFileSync(out+'/REPORT.json',JSON.stringify({before,expected,preservedAssets,reports},null,2));
         await context.close();
       }
     }
   }
   const after=await version();
-  writeFileSync(out+'/REPORT.json',JSON.stringify({before,after,expected,reports},null,2));
+  writeFileSync(out+'/REPORT.json',JSON.stringify({before,after,expected,preservedAssets,reports},null,2));
   assert(reports.every(r=>r.passed));
 } finally { await browser.close(); }
