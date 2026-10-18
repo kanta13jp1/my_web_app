@@ -1,0 +1,53 @@
+name: Python Dependency Compatibility
+on:
+  pull_request:
+    paths:
+      - requirements.txt
+      - scripts/requirements-high-risk-security-review.txt
+      - scripts/requirements-testcontainers.txt
+      - scripts/check_python_dependency_compatibility.py
+      - .github/workflows/python-dependency-compatibility.yml
+permissions:
+  contents: read
+concurrency:
+  group: python-dependency-compatibility-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  offline-compatibility:
+    name: Python dependency compatibility (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [root, security]
+    env:
+      PYTHONNOUSERSITE: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout merge ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Install isolated dependency set
+        env:
+          PROFILE: ${{ matrix.profile }}
+        run: |
+          python -m venv /tmp/dependency-check
+          if [ "$PROFILE" = root ]; then
+            /tmp/dependency-check/bin/python -m pip install -r requirements.txt
+          else
+            /tmp/dependency-check/bin/python -m pip install --require-hashes -r scripts/requirements-high-risk-security-review.txt
+          fi
+          /tmp/dependency-check/bin/python -m pip check
+      - name: Verify SDKs without network or credentials
+        env:
+          PROFILE: ${{ matrix.profile }}
+        run: /tmp/dependency-check/bin/python scripts/check_python_dependency_compatibility.py "$PROFILE"
+      - name: Existing unbilled security-review regression tests
+        if: matrix.profile == 'security'
+        run: /tmp/dependency-check/bin/python -m unittest scripts.test_run_dual_security_review -v
