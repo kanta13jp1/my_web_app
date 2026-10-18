@@ -117,7 +117,7 @@ async function verifyCatalogRelease(page, account, version) {
   for(const [mode,size] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
     await page.setViewportSize(size);
     for (const [index,book] of books.entries()) {
-      if(process.env.READING_QA_IWANAMI_REMAINING === 'true' && mode==='mobile' && !['9784003361917','9784003362556','9784003360613','9784003360842','9784003331934','9784003412596',''].includes(book.isbn)) continue;
+      if(process.env.READING_QA_IWANAMI_REMAINING === 'true' && mode==='mobile' && (book.workId==='epictetus:discourses' || !['9784003361917','9784003362556','9784003360613','9784003360842','9784003331934','9784003412596',''].includes(book.isbn))) continue;
       if(process.env.READING_QA_IWANAMI_AUDIT === 'true' && mode==='mobile' && !['9784003360118','9784003360415','9784003360422','9784003361313','9784003320617','9784003331941','9784003361016'].includes(book.isbn)) continue;
       book.purchase ||= 'https://www.amazon.co.jp/s/?i=stripbooks&k='+book.isbn;
       await page.goto(base+'/reading-list');await semantics(page);await openWork(page,book.title);
