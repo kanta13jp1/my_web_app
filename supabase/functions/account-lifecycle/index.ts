@@ -13,6 +13,7 @@ import {
   blockingDependencyCount,
   importedHistoryBlockerCount,
   storageInventoryExhausted,
+  validatedStorageInventory,
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
@@ -515,7 +516,12 @@ async function deleteOwnedStorageObjects(
         deleted,
       );
     }
-    const objects = Array.isArray(data) ? data as JsonRecord[] : [];
+    let objects;
+    try {
+      objects = validatedStorageInventory(data);
+    } catch {
+      throw new StorageDeletionError("storage inventory invalid", deleted);
+    }
     if (storageInventoryExhausted(objects.length)) return deleted;
 
     const byBucket = new Map<string, string[]>();

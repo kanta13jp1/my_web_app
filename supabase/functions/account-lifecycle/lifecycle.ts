@@ -183,3 +183,19 @@ export function importedHistoryBlockerCount(count: unknown): number {
 export function storageInventoryExhausted(returnedRows: number): boolean {
   return returnedRows === 0;
 }
+
+
+export function validatedStorageInventory(
+  data: unknown,
+): Array<{ bucket_id: string; object_name: string }> {
+  if (
+    !Array.isArray(data) || data.some((row) =>
+      typeof row !== "object" || row === null ||
+      typeof row.bucket_id !== "string" || row.bucket_id.trim() === "" ||
+      typeof row.object_name !== "string" || row.object_name.trim() === ""
+    )
+  ) {
+    throw new Error("storage_inventory_invalid");
+  }
+  return data;
+}

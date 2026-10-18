@@ -9,6 +9,7 @@ import {
   blockingDependencyCount,
   importedHistoryBlockerCount,
   storageInventoryExhausted,
+  validatedStorageInventory,
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
@@ -184,4 +185,29 @@ Deno.test("Storage cleanup requires an empty page, not a short server-capped pag
   assertEquals(removed, 205);
   assertEquals(remaining, 0);
   assertEquals(requests, 6);
+});
+
+
+Deno.test("Storage inventory accepts only an explicit valid array", () => {
+  assertEquals(validatedStorageInventory([]), []);
+  const rows = [{ bucket_id: "notes", object_name: "owner/a b.txt" }];
+  assertEquals(validatedStorageInventory(rows), rows);
+});
+
+Deno.test("malformed Storage inventory cannot masquerade as completed cleanup", () => {
+  for (
+    const value of [
+      null, undefined, {}, "[]", [null], [{}],
+      [{ bucket_id: "notes", object_name: 123 }],
+      [{ bucket_id: " ", object_name: "file" }],
+      [{ bucket_id: "notes", object_name: "" }],
+      [{ bucket_id: "notes", object_name: "valid" }, {}],
+    ]
+  ) {
+    assertThrows(
+      () => validatedStorageInventory(value),
+      Error,
+      "storage_inventory_invalid",
+    );
+  }
 });
