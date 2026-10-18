@@ -2689,5 +2689,35 @@
         }
       ]
     }
-  }
+  },
+  "individually_verified_editions": [
+    {
+      "isbn": "9784003322215",
+      "isbn10": "4003322215",
+      "year": "1998",
+      "series": "岩波文庫 青222-1",
+      "label": "岩波文庫",
+      "source": "https://www.books.or.jp/book-details/9784003322215",
+      "volume": "岩波文庫 青222-1・部分収録（大学章句・中庸章句序）"
+    },
+    {
+      "isbn": "9784000072281",
+      "isbn10": "4000072285",
+      "year": "2003",
+      "series": "ワイド版岩波文庫 228",
+      "label": "ワイド版岩波文庫",
+      "source": "https://ci.nii.ac.jp/ncid/BA62894477",
+      "volume": "ワイド版岩波文庫 228・部分収録（大学章句・中庸章句序）"
+    },
+    {
+      "isbn": "9784007610400",
+      "isbn10": "4007610401",
+      "year": "2026",
+      "series": "大活字版岩波文庫 青222-1",
+      "label": "大活字版岩波文庫",
+      "source": "https://www.books.or.jp/book-details/9784007610400",
+      "volume": "大活字版岩波文庫 青222-1・部分収録（大学章句・中庸章句序）"
+    }
+  ],
+  "full_work_translation_confirmed": false
 }
