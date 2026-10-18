@@ -95,7 +95,7 @@ class _WeeklyHabitCardState extends State<WeeklyHabitCard>
   Future<void> _save(WeeklyHabitState next) async {
     final store = _store;
     final generation = _loadGeneration;
-    if (store == null || _saving) return;
+    if (store == null || _saving || _selected.isAfter(_japanToday())) return;
     setState(() {
       _saving = true;
       _error = null;
@@ -275,9 +275,11 @@ class _WeeklyHabitCardState extends State<WeeklyHabitCard>
                 ListTile(
                   title: Text('$date：${_data.completions[date]!.title}'),
                   subtitle: Text(_data.completions[date]!.minimum),
-                  onTap: _saving
+                  onTap: _saving ||
+                          date.compareTo(WeeklyHabitState.dateKey(_today)) > 0
                       ? null
-                      : () => setState(() => _selected = DateTime.parse(date)),
+                      : () => setState(() =>
+                          _selected = DateTime.parse('${date}T00:00:00Z')),
                 ),
               if (history.length > 30)
                 const Text('直近30件を表示。以前の記録は「日付を選ぶ」から確認できます。'),

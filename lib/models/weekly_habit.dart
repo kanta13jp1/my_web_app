@@ -79,54 +79,64 @@ class WeeklyHabitState {
   }
 
   Map<String, Object> toJson() => {
+        'version': 1,
         'habits': habits.map((habit) => habit.toJson()).toList(),
         'completions':
             completions.map((key, value) => MapEntry(key, value.toJson())),
       };
 
   factory WeeklyHabitState.fromJson(Map<String, dynamic> json) {
-    final initial = WeeklyHabitState.initial();
     final raw = json['habits'];
-    final habits = <int, WeeklyHabit>{
-      for (final habit in initial.habits) habit.weekday: habit,
-    };
-    if (raw is List) {
-      for (final item in raw) {
-        if (item is! Map) continue;
-        final day = item['weekday'];
-        final title = item['title'];
-        final minimum = item['minimum'];
-        if (day is int &&
-            day >= 1 &&
-            day <= 7 &&
-            title is String &&
-            title.trim().isNotEmpty &&
-            minimum is String &&
-            minimum.trim().isNotEmpty) {
-          habits[day] = WeeklyHabit(day, title, minimum);
-        }
+    final records = json['completions'];
+    if (json['version'] != 1 ||
+        raw is! List ||
+        records is! Map ||
+        raw.length != 7) {
+      throw const FormatException('Unsupported weekly habit schema');
+    }
+    final habits = <int, WeeklyHabit>{};
+    for (final item in raw) {
+      if (item is! Map) throw const FormatException('Invalid weekly habit');
+      final day = item['weekday'];
+      final title = item['title'];
+      final minimum = item['minimum'];
+      if (day is! int ||
+          day < 1 ||
+          day > 7 ||
+          habits.containsKey(day) ||
+          title is! String ||
+          title.trim().isEmpty ||
+          title.length > 60 ||
+          minimum is! String ||
+          minimum.trim().isEmpty ||
+          minimum.length > 200) {
+        throw const FormatException('Invalid weekly habit');
       }
+      habits[day] = WeeklyHabit(day, title, minimum);
     }
     final completions = <String, WeeklyHabitCompletion>{};
-    final records = json['completions'];
-    if (records is Map) {
-      for (final entry in records.entries) {
-        final key = entry.key;
-        final value = entry.value;
-        final date = key is String ? DateTime.tryParse(key) : null;
-        if (date != null &&
-            dateKey(date) == key &&
-            value is Map &&
-            value['title'] is String &&
-            value['minimum'] is String) {
-          completions[key as String] = WeeklyHabitCompletion(
-            value['title'] as String,
-            value['minimum'] as String,
-          );
-        }
+    for (final entry in records.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      final date = key is String ? DateTime.tryParse(key) : null;
+      if (date == null ||
+          date.year < 2000 ||
+          dateKey(date) != key ||
+          value is! Map ||
+          value['title'] is! String ||
+          (value['title'] as String).trim().isEmpty ||
+          value['minimum'] is! String ||
+          (value['minimum'] as String).trim().isEmpty) {
+        throw const FormatException('Invalid weekly habit completion');
       }
+      completions[key as String] = WeeklyHabitCompletion(
+        value['title'] as String,
+        value['minimum'] as String,
+      );
     }
     return WeeklyHabitState(
-        habits: habits.values.toList(), completions: completions);
+      habits: [for (var day = 1; day <= 7; day++) habits[day]!],
+      completions: completions,
+    );
   }
 }

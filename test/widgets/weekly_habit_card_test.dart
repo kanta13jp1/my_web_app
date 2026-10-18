@@ -8,6 +8,60 @@ import 'package:my_web_app/widgets/weekly_habit_card.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  test(
+      'unknown fields survive compatibility while corrupt containers reject loading',
+      () {
+    final valid = WeeklyHabitState.initial().toJson();
+    expect(
+        WeeklyHabitState.fromJson({...valid, 'future_field': true})
+            .habits
+            .length,
+        7);
+    for (final corrupt in [
+      {...valid, 'version': 2},
+      {...valid, 'habits': 'broken'},
+      {...valid, 'habits': []},
+      {...valid, 'completions': []},
+      {
+        ...valid,
+        'completions': {
+          '2026-02-31': {'title': 'a', 'minimum': 'b'}
+        }
+      },
+    ]) {
+      expect(() => WeeklyHabitState.fromJson(corrupt), throwsFormatException);
+    }
+  });
+
+  testWidgets('today history selection stays on JST day and follows midnight',
+      (tester) async {
+    var now = DateTime.utc(2026, 10, 19, 14, 59);
+    final prefs = await SharedPreferences.getInstance();
+    await WeeklyHabitStore(prefs, userId: 'alice').save(
+      WeeklyHabitState.initial()
+          .withCompleted(DateTime.utc(2026, 10, 19), true),
+    );
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SingleChildScrollView(
+      child: WeeklyHabitCard(userId: 'alice', now: () => now),
+    ))));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('達成履歴（1日）'));
+    await tester.tap(find.text('達成履歴（1日）'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('2026-10-19：ギターの練習'));
+    await tester.tap(find.text('2026-10-19：ギターの練習'));
+    await tester.pumpAndSettle();
+    expect(find.text('2026-10-19（月）日本時間・今日'), findsOneWidget);
+    now = DateTime.utc(2026, 10, 19, 15);
+    await tester.pump(const Duration(minutes: 1));
+    await tester.pumpAndSettle();
+    expect(find.text('2026-10-20（火）日本時間・今日'), findsOneWidget);
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, false);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   test('JST midnight changes the weekday independently of device timezone', () {
     expect(WeeklyHabitState.japanDate(DateTime.parse('2026-10-18T14:59:59Z')),
         DateTime.utc(2026, 10, 18));
